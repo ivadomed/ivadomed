@@ -23,9 +23,9 @@ setup(
     ],
     packages=find_packages(exclude=['docs', 'tests']),
     install_requires=requirements,
-    #entry_points={
-        #'console_scripts': [
-        #    'cmdname=ivadomed.mod:function',
-        #],
-    #},
+    entry_points={
+        'console_scripts': [
+            'ivadomed=ivadomed.main:run_main',
+        ],
+    },
 )
