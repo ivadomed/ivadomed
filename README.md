@@ -1,5 +1,13 @@
-# ivado-medical-imaging
-Private repos for IVADO project: Transformative adversarial networks for medical imaging applications
+# IVADO Medical Imaging
+This is a repository for the collaboration between MILA and NeuroPoly for the IVADO project on medical imaging.
 
-## Summary of the project
-Following the concept of Generative adversarial networks (GANs), we propose to explore transformative adversarial training techniques where our goal is to transform medical imaging data to a target reference space as a way of normalizing them for image intensity, patient anatomy as well as the many other parameters associated with the variability inherent to medical images. This approach will be investigated both for data normalization and data augmentation strategy, and will be tested in several multi-center clinical data for lesion segmentation and/or classification (diagnosis).
+## Installing
+This project requires Python 3.6 and PyTorch >= 1.0, to install all requirements, please use `pip` as described below:
+
+```
+~$ git clone https://github.com/neuropoly/ivado-medical-imaging.git
+~$ cd ivado-medical-imaging
+~$ pip install -e .
+```
+
+And all dependencies will be installed into your own system.
