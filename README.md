@@ -11,3 +11,12 @@ This project requires Python 3.6 and PyTorch >= 1.0, to install all requirements
 ```
 
 And all dependencies will be installed into your own system.
+
+## Training
+To train the network, use the `ivadomed` command-line tool that will be available on your path after installation, example below:
+
+```
+ivadomed config.json
+```
+
+The `config.json` is a configuration example.
