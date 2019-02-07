@@ -1,3 +1,5 @@
 torch>=1.0.1
 bids-neuropoly>=0.1
 medicaltorch>=0.2
+tensorboardX>=1.6
+tqdm>=4.30
