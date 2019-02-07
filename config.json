@@ -1,0 +1,11 @@
+{
+	"command": "train",
+	"gpu": 0,
+	"bids_path": "~/Devel/bids_neuropoly/tests/bids_amu_2017-virginie/",
+	"batch_size": 16,
+	"dropout_rate": 0.4,
+	"batch_norm_momentum": 0.1,
+	"num_epochs": 200,
+	"initial_lr": 0.001,
+	"log_directory": "log_train",
+}
