@@ -13,7 +13,7 @@ This project requires Python 3.6 and PyTorch >= 1.0, to install all requirements
 And all dependencies will be installed into your own system.
 
 ## Data
-The working dataset is derived from the 
+The working dataset is derived from the [Spinal Cord MRI Public Database](https://osf.io/76jkx/)
 
 The data structure is compatible with [BIDS](http://bids.neuroimaging.io/) and is exemplified below:
 ~~~
