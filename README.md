@@ -22,18 +22,18 @@ site/
 └── participants.tsv
 └── sub-01
     └── anat
-             └── sub-01_T1w_reg.nii.gz --> Processed (i.e. different than in the original SpineGeneric database)
-             └── sub-01_T1w_reg.json
-             └── sub-01_T2w_reg.nii.gz --> Processed
-             └── sub-01_T2w_reg.json
-             └── sub-01_acq-MTon_MTS_reg.nii.gz --> Processed
-             └── sub-01_acq-MTon_MTS_reg.json
-             └── sub-01_acq-MToff_MTS_reg.nii.gz --> Processed
-             └── sub-01_acq-MToff_MTS_reg.json
-             └── sub-01_acq-T1w_MTS.nii.gz --> Unprocessed (i.e. same as in the original SpineGeneric database)
-             └── sub-01_acq-T1w_MTS.json
-             └── sub-01_T2star_reg.nii.gz --> Processed
-             └── sub-01_T2star_reg.json
+        └── sub-01_T1w_reg.nii.gz --> Processed (i.e. different than in the original SpineGeneric database)
+        └── sub-01_T1w_reg.json
+        └── sub-01_T2w_reg.nii.gz --> Processed
+        └── sub-01_T2w_reg.json
+        └── sub-01_acq-MTon_MTS_reg.nii.gz --> Processed
+        └── sub-01_acq-MTon_MTS_reg.json
+        └── sub-01_acq-MToff_MTS_reg.nii.gz --> Processed
+        └── sub-01_acq-MToff_MTS_reg.json
+        └── sub-01_acq-T1w_MTS.nii.gz --> Unprocessed (i.e. same as in the original SpineGeneric database)
+        └── sub-01_acq-T1w_MTS.json
+        └── sub-01_T2star_reg.nii.gz --> Processed
+        └── sub-01_T2star_reg.json
 └── derivatives
     └── labels
         └── sub-01
