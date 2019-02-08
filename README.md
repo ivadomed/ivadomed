@@ -34,11 +34,6 @@ site/
              └── sub-01_acq-T1w_MTS.json
              └── sub-01_T2star_reg.nii.gz --> Processed
              └── sub-01_T2star_reg.json
-    └── dwi
-             └── sub-01_dwi.nii.gz
-             └── sub-01_dwi.bval
-             └── sub-01_dwi.bvec
-             └── sub-01_dwi.json
 └── derivatives
     └── labels
         └── sub-01
