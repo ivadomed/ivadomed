@@ -3,7 +3,7 @@ import json
 
 import torch
 import torch.backends.cudnn as cudnn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 from torchvision import transforms
 from torch import optim
 
@@ -40,9 +40,13 @@ def cmd_train(context):
         mt_transforms.NormalizeInstance(),
     ])
 
-    ds_train = loader.BidsDataset(context["bids_path"],
-                                  transform=train_transform,
-                                  slice_filter_fn=mt_filters.SliceFilter())
+    train_datasets = []
+    for bids_ds in context["bids_path_train"]:
+        ds_train = loader.BidsDataset(bids_ds,
+                                      transform=train_transform,
+                                      slice_filter_fn=mt_filters.SliceFilter())
+        train_datasets.append(ds_train)
+    ds_train = ConcatDataset(train_datasets)
 
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=True, pin_memory=True,
