@@ -75,7 +75,8 @@ else
 fi
 
 # Segmentation-based registrations of T2w, T2s and T1w to T1w_MTS scan
-sct_register_multimodal -i ${ofolder_seg}/${file_seg_t2w}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=slicereg,metric=MeanSquares,poly=3 -x linear
+sct_register_multimodal -i ${ofolder_seg}/${file_seg_t2w}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=slicereg,metric=MeanSquares,poly=3 -x linear -ofolder ${ofolder_seg}
+
 # TOOD: move segmentation to the right place
 # TODO: apply warping field to {file_t2w} -- use bspline interpolation
 
