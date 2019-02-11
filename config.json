@@ -1,11 +1,20 @@
 {
 	"command": "train",
-	"gpu": 0,
-	"bids_path": "~/Devel/bids_neuropoly/tests/bids_amu_2017-virginie/",
+	"gpu": 4,
+	"bids_path_train": [
+		"/home/chper_local/Devel/ivado-medical-imaging/data/BIDS_MILA_spineG_results/barcelona_spineGeneric",
+		"/home/chper_local/Devel/ivado-medical-imaging/data/BIDS_MILA_spineG_results/cardiff_spineGeneric"
+	],
+	"bids_path_validation": [
+		"/home/chper_local/Devel/ivado-medical-imaging/data/BIDS_MILA_spineG_results/barcelona_spineGeneric"
+	],
+	"bids_path_test": [
+		"/home/chper_local/Devel/ivado-medical-imaging/data/BIDS_MILA_spineG_results/barcelona_spineGeneric"
+	],
 	"batch_size": 16,
 	"dropout_rate": 0.4,
 	"batch_norm_momentum": 0.1,
 	"num_epochs": 200,
 	"initial_lr": 0.001,
-	"log_directory": "log_train",
+	"log_directory": "log_train"
 }
