@@ -44,7 +44,7 @@ sct_crop_image -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_crop.nii.gz -start 3
 file_t1w_mts="${file_t1w_mts}_crop"
 
 # Check if manual segmentation already exists
-if [ -e "${file_t1w_mts}_seg_manual.nii.gz" ]; then
+if [ -e "${ofolder_seg}/${file_t1w_mts}_seg_manual.nii.gz" ]; then
   file_seg="${file_t1w_mts}_seg_manual"
 else
   # Segment spinal cord
@@ -60,11 +60,29 @@ sct_register_multimodal -i ${PATH_IN}/${file_mtoff}.nii.gz -d ${file_t1w_mts}.ni
 sct_register_multimodal -i ${PATH_IN}/${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline
 
 # Put other scans in the same voxel space as the T1w_MTS volume (for subsequent cord segmentation)
-# sct_register_multimodal -i ${file_t2w}.nii.gz -d ${file_t1w_mts}.nii.gz -m ${ofolder_reg}/${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -ofolder ${ofolder_reg}
-# T2star
-# sct_register_multimodal -i ${file_t2s}.nii.gz -d ${file_t1w_mts}.nii.gz -m ${ofolder_reg}/${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -ofolder ${ofolder_reg}
-# T1w
-# sct_register_multimodal -i ${file_t1w}.nii.gz -d ${file_t1w_mts}.nii.gz -m ${ofolder_reg}/${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -ofolder ${ofolder_reg}
+sct_register_multimodal -i ${PATH_IN}/${file_t2w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
+file_t2w="${file_t2w}_reg"
+sct_register_multimodal -i ${PATH_IN}/${file_t2s}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
+sct_register_multimodal -i ${PATH_IN}/${file_t1w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
+
+# Run segmentation on other scans
+if [ -e "${ofolder_seg}/${file_t2w}_seg_manual.nii.gz" ]; then
+  file_seg_t2w="${file_t2w}_seg_manual"
+else
+  # Segment spinal cord
+  sct_deepseg_sc -i ${file_t2w}_reg.nii.gz -c t2 -ofolder ${ofolder_seg}
+  file_seg_t2w="${file_t2w}_seg"
+fi
+
+# Segmentation-based registrations of T2w, T2s and T1w to T1w_MTS scan
+sct_register_multimodal -i ${ofolder_seg}/${file_seg_t2w}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=slicereg,metric=MeanSquares,poly=3 -x linear
+
+# 
+
+# TODO: do the same for T1w and T2s
+
+# TODO: average all segmentations together.
+
 
 # # copying the T1w_mts file, which everything else is registered into :
 # rsync -avzh "${file_t1w_mts}.nii.gz" ${ofolder_reg}/
