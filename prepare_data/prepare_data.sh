@@ -62,8 +62,10 @@ sct_register_multimodal -i ${PATH_IN}/${file_mton}.nii.gz -d ${file_t1w_mts}.nii
 # Put other scans in the same voxel space as the T1w_MTS volume (for subsequent cord segmentation)
 sct_register_multimodal -i ${PATH_IN}/${file_t2w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
 file_t2w="${file_t2w}_reg"
-sct_register_multimodal -i ${PATH_IN}/${file_t2s}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
-sct_register_multimodal -i ${PATH_IN}/${file_t1w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
+# sct_register_multimodal -i ${PATH_IN}/${file_t2s}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
+# file_t2s="${file_t2s}_reg"
+# sct_register_multimodal -i ${PATH_IN}/${file_t1w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
+# file_t1w="${file_t1w}_reg"
 
 # Run segmentation on other scans
 if [ -e "${ofolder_seg}/${file_t2w}_seg_manual.nii.gz" ]; then
@@ -75,27 +77,12 @@ else
 fi
 
 # Segmentation-based registrations of T2w, T2s and T1w to T1w_MTS scan
-sct_register_multimodal -i ${ofolder_seg}/${file_seg_t2w}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=slicereg,metric=MeanSquares,poly=3 -x linear -ofolder ${ofolder_seg}
+sct_register_multimodal -i ${ofolder_seg}/${file_seg_t2w}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=centermass -x linear -ofolder ${ofolder_seg}
 
-# TOOD: move segmentation to the right place
 # TODO: apply warping field to {file_t2w} -- use bspline interpolation
-
-
+sct_apply_transfo -i ${file_t2w} -d ${file_t1w_mts} -w ${ofolder_seg}/warp_${file_seg_t2w}2${file_seg}.nii.gz
 # TODO: do the same for T1w and T2s
 # TODO: average all segmentations together.
-
-
-# # copying the T1w_mts file, which everything else is registered into :
-# rsync -avzh "${file_t1w_mts}.nii.gz" ${ofolder_reg}/
-
-# # Cropping images to remove first 3 and last 3 slices :
-
-# sct_crop_image -i ${ofolder_reg}/${file_mton}_reg.nii.gz -o ${ofolder_reg}/${file_mton}_reg_crop.nii.gz -start 3 -end -3 -dim 2
-# sct_crop_image -i ${ofolder_reg}/${file_mtoff}_reg.nii.gz -o ${ofolder_reg}/${file_mtoff}_reg_crop.nii.gz -start 3 -end -3 -dim 2
-# sct_crop_image -i ${ofolder_reg}/${file_t2w}_reg.nii.gz -o ${ofolder_reg}/${file_t2w}_reg_crop.nii.gz -start 3 -end -3 -dim 2
-# sct_crop_image -i ${ofolder_reg}/${file_t2s}_reg.nii.gz -o ${ofolder_reg}/${file_t2s}_reg_crop.nii.gz -start 3 -end -3 -dim 2
-# sct_crop_image -i ${ofolder_reg}/${file_t1w}_reg.nii.gz -o ${ofolder_reg}/${file_t1w}_reg_crop.nii.gz -start 3 -end -3 -dim 2
-# sct_crop_image -i ${ofolder_reg}/${file_t1w_mts}.nii.gz -o ${ofolder_reg}/${file_t1w_mts}_crop.nii.gz -start 3 -end -3 -dim 2 #not registered
 
 # # Delete useless images
 # # rm "${ofolder_reg}/${file_t1w_mts}_mask.nii.gz"
@@ -105,17 +92,9 @@ sct_register_multimodal -i ${ofolder_seg}/${file_seg_t2w}.nii.gz -d ${ofolder_se
 # # rm ${ofolder_reg}/*_reg.nii.gz #delete "registered but not cropped" images
 # # rm ${ofolder_reg}/${file_t1w_mts}.nii.gz
 
-
-# # copying the json files and renaming them :
-# rsync -avzh "${file_t1w_mts}.json" ${ofolder_reg}/
-# mv ${ofolder_reg}/${file_t1w_mts}.json ${ofolder_reg}/${file_t1w_mts}_crop.json #not registered
-# rsync -avzh "${file_mton}.json" ${ofolder_reg}/
-# mv ${ofolder_reg}/${file_mton}.json ${ofolder_reg}/${file_mton}_reg_crop.json
-# rsync -avzh "${file_mtoff}.json" ${ofolder_reg}/
-# mv ${ofolder_reg}/${file_mtoff}.json ${ofolder_reg}/${file_mtoff}_reg_crop.json
-# rsync -avzh "${file_t2w}.json" ${ofolder_reg}/
-# mv ${ofolder_reg}/${file_t2w}.json ${ofolder_reg}/${file_t2w}_reg_crop.json
-# rsync -avzh "${file_t2s}.json" ${ofolder_reg}/
-# mv ${ofolder_reg}/${file_t2s}.json ${ofolder_reg}/${file_t2s}_reg_crop.json
-# rsync -avzh "${file_t1w}.json" ${ofolder_reg}/
-# mv ${ofolder_reg}/${file_t1w}.json ${ofolder_reg}/${file_t1w}_reg_crop.json
+# copying the json files and renaming them :
+rsync -avzh ${PATH_IN}/${sub}_acq-T1w_MTS.json ${file_t1w_mts}.json
+rsync -avzh ${PATH_IN}/${sub}_acq-MTon_MTS.json ${file_mton}.json
+rsync -avzh ${PATH_IN}/${sub}_acq-MToff_MTS.json ${file_mtoff}.json
+rsync -avzh ${PATH_IN}/${sub}_T2w.json ${file_t2w}.json
+rsync -avzh ${PATH_IN}/../../dataset_description.json ../../
