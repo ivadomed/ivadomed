@@ -98,3 +98,5 @@ rsync -avzh ${PATH_IN}/${sub}_acq-MTon_MTS.json ${file_mton}.json
 rsync -avzh ${PATH_IN}/${sub}_acq-MToff_MTS.json ${file_mtoff}.json
 rsync -avzh ${PATH_IN}/${sub}_T2w.json ${file_t2w}.json
 rsync -avzh ${PATH_IN}/../../dataset_description.json ../../
+rsync -avzh ${PATH_IN}/../../participants.json ../../
+rsync -avzh ${PATH_IN}/../../participants.tsv ../../
