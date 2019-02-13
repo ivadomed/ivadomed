@@ -61,9 +61,9 @@ fi
 sct_create_mask -i ${file_t1w_mts}.nii.gz -p centerline,"${ofolder_seg}/${file_seg}.nii.gz" -size 55mm -o ${file_t1w_mts}_mask.nii.gz
 
 # Image-based registrations of MToff and MTon to T1w_MTS scan
-sct_register_multimodal -i ${PATH_IN}/${file_mtoff}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
+sct_register_multimodal -i ${PATH_IN}/${file_mtoff}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${ofolder_seg}/${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
 file_mtoff="${file_mtoff}_reg"
-sct_register_multimodal -i ${PATH_IN}/${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
+sct_register_multimodal -i ${PATH_IN}/${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${ofolder_seg}/${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
 file_mton="${file_mton}_reg"
 
 # Put other scans in the same voxel space as the T1w_MTS volume (for subsequent cord segmentation)
@@ -120,6 +120,11 @@ rsync -avzh ${PATH_IN}/../../dataset_description.json ../../
 rsync -avzh ${PATH_IN}/../../participants.json ../../
 rsync -avzh ${PATH_IN}/../../participants.tsv ../../
 
+# Average all segmentations together. Note: we do not include the T2s because it only has 15 slices
+sct_image -i ${ofolder_seg}/${file_seg}.nii.gz,${ofolder_seg}/${file_seg_t1w}_reg.nii.gz,${ofolder_seg}/${file_seg_t2w}_reg.nii.gz -concat t -o ${ofolder_seg}/tmp.concat.nii.gz
+sct_maths -i ${ofolder_seg}/tmp.concat.nii.gz -mean t -o ${ofolder_seg}/tmp.concat_mean.nii.gz
+sct_maths -i ${ofolder_seg}/tmp.concat_mean.nii.gz -bin 0.5 -o ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz
+
 # Delete temporary files (they interfer with the BIDS wrapper)
 rm *_mask.nii.gz
 rm warp*
@@ -130,12 +135,6 @@ rm ${ofolder_seg}/${sub}_T1w_reg_seg.nii.gz
 rm ${ofolder_seg}/${sub}_acq-T1w_MTS_crop_seg_reg.nii.gz
 rm ${ofolder_seg}/${sub}_T2star_reg_seg.nii.gz
 rm ${ofolder_seg}/${sub}_T2w_reg_seg.nii.gz
-
-# Average all segmentations together. Note: we do not include the T2s because it only has 15 slices
-sct_image -i ${ofolder_seg}/${sub}_acq-T1w_MTS_crop_seg.nii.gz,${ofolder_seg}/${sub}_T1w_reg_seg_reg.nii.gz,${ofolder_seg}/${sub}_T2w_reg_seg_reg.nii.gz -concat t -o ${ofolder_seg}/tmp.concat.nii.gz
-sct_maths -i ${ofolder_seg}/tmp.concat.nii.gz -mean t -o ${ofolder_seg}/tmp.concat_mean.nii.gz
-sct_maths -i ${ofolder_seg}/tmp.concat_mean.nii.gz -bin 0.5 -o ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz
-# Cleaning
 rm ${ofolder_seg}/${sub}_*reg.*
 rm ${ofolder_seg}/${sub}_*seg.*
 rm ${ofolder_seg}/tmp.*
