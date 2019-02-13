@@ -62,12 +62,12 @@ fi
 # Processing of one subject
 do_one_subject_parallel() {
   local subject="$1"
-  echo "cd ${PATH_DATA}/${site}; ${task} $(basename $subject) ${PATH_OUTPUT}/$site"
+  echo "cd ${PATH_DATA}/${site}; ${task} $(basename $subject) ${PATH_OUTPUT}/$site ${PATH_QC}"
 }
 do_one_subject() {
   local subject="$1"
   cd ${PATH_DATA}/${site}
-  ${task} $(basename $subject) ${PATH_OUTPUT}/$site
+  ${task} $(basename $subject) ${PATH_OUTPUT}/$site ${PATH_QC}
 }
 
 # Run processing with or without "GNU parallel", depending if it is installed or not
