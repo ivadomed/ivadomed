@@ -72,15 +72,16 @@ if [ -e "${ofolder_seg}/${file_t2w}_seg_manual.nii.gz" ]; then
   file_seg_t2w="${file_t2w}_seg_manual"
 else
   # Segment spinal cord
-  sct_deepseg_sc -i ${file_t2w}_reg.nii.gz -c t2 -ofolder ${ofolder_seg}
+  sct_deepseg_sc -i ${file_t2w}.nii.gz -c t2 -ofolder ${ofolder_seg}
   file_seg_t2w="${file_t2w}_seg"
 fi
 
 # Segmentation-based registrations of T2w, T2s and T1w to T1w_MTS scan
 sct_register_multimodal -i ${ofolder_seg}/${file_seg_t2w}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=centermass -x linear -ofolder ${ofolder_seg}
 
-# TODO: apply warping field to {file_t2w} -- use bspline interpolation
-sct_apply_transfo -i ${file_t2w} -d ${file_t1w_mts} -w ${ofolder_seg}/warp_${file_seg_t2w}2${file_seg}.nii.gz
+# Apply warping field to native files (to avoid 2x interpolation) -- use bspline interpolation
+sct_apply_transfo -i ${PATH_IN}/${sub}_T2w.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t2w}2${file_seg}.nii.gz
+
 # TODO: do the same for T1w and T2s
 # TODO: average all segmentations together.
 
