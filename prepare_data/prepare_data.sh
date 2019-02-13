@@ -57,15 +57,17 @@ sct_create_mask -i ${file_t1w_mts}.nii.gz -p centerline,"${ofolder_seg}/${file_s
 
 # Image-based registrations of MToff and MTon to T1w_MTS scan
 sct_register_multimodal -i ${PATH_IN}/${file_mtoff}.nii.gz -d ${file_t1w_mts}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline
+file_mtoff="${file_mtoff}_reg"
 sct_register_multimodal -i ${PATH_IN}/${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline
+file_mton="${file_mton}_reg"
 
 # Put other scans in the same voxel space as the T1w_MTS volume (for subsequent cord segmentation)
 sct_register_multimodal -i ${PATH_IN}/${file_t2w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
 file_t2w="${file_t2w}_reg"
-# sct_register_multimodal -i ${PATH_IN}/${file_t2s}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
-# file_t2s="${file_t2s}_reg"
-# sct_register_multimodal -i ${PATH_IN}/${file_t1w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
-# file_t1w="${file_t1w}_reg"
+sct_register_multimodal -i ${PATH_IN}/${file_t2s}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
+file_t2s="${file_t2s}_reg"
+sct_register_multimodal -i ${PATH_IN}/${file_t1w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
+file_t1w="${file_t1w}_reg"
 
 # Run segmentation on other scans
 if [ -e "${ofolder_seg}/${file_t2w}_seg_manual.nii.gz" ]; then
@@ -75,14 +77,33 @@ else
   sct_deepseg_sc -i ${file_t2w}.nii.gz -c t2 -ofolder ${ofolder_seg}
   file_seg_t2w="${file_t2w}_seg"
 fi
+# T2s
+if [ -e "${ofolder_seg}/${file_t2s}_seg_manual.nii.gz" ]; then
+  file_seg_t2s="${file_t2s}_seg_manual"
+else
+  # Segment spinal cord
+  sct_deepseg_sc -i ${file_t2s}.nii.gz -c t2s -ofolder ${ofolder_seg}
+  file_seg_t2s="${file_t2s}_seg"
+fi
+# T1w
+if [ -e "${ofolder_seg}/${file_t1w}_seg_manual.nii.gz" ]; then
+  file_seg_t1w="${file_t1w}_seg_manual"
+else
+  # Segment spinal cord
+  sct_deepseg_sc -i ${file_t1w}.nii.gz -c t1 -ofolder ${ofolder_seg}
+  file_seg_t1w="${file_t1w}_seg"
+fi
 
 # Segmentation-based registrations of T2w, T2s and T1w to T1w_MTS scan
 sct_register_multimodal -i ${ofolder_seg}/${file_seg_t2w}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=centermass -x linear -ofolder ${ofolder_seg}
+sct_register_multimodal -i ${ofolder_seg}/${file_seg_t2s}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=centermass -x linear -ofolder ${ofolder_seg}
+sct_register_multimodal -i ${ofolder_seg}/${file_seg_t1w}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=centermass -x linear -ofolder ${ofolder_seg}
 
 # Apply warping field to native files (to avoid 2x interpolation) -- use bspline interpolation
 sct_apply_transfo -i ${PATH_IN}/${sub}_T2w.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t2w}2${file_seg}.nii.gz
+sct_apply_transfo -i ${PATH_IN}/${sub}_T2star.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t2s}2${file_seg}.nii.gz
+sct_apply_transfo -i ${PATH_IN}/${sub}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t1w}2${file_seg}.nii.gz
 
-# TODO: do the same for T1w and T2s
 # TODO: average all segmentations together.
 
 # # Delete useless images
@@ -98,6 +119,8 @@ rsync -avzh ${PATH_IN}/${sub}_acq-T1w_MTS.json ${file_t1w_mts}.json
 rsync -avzh ${PATH_IN}/${sub}_acq-MTon_MTS.json ${file_mton}.json
 rsync -avzh ${PATH_IN}/${sub}_acq-MToff_MTS.json ${file_mtoff}.json
 rsync -avzh ${PATH_IN}/${sub}_T2w.json ${file_t2w}.json
+rsync -avzh ${PATH_IN}/${sub}_T2star.json ${file_t2s}.json
+rsync -avzh ${PATH_IN}/${sub}_T1.json ${file_t1w}.json
 rsync -avzh ${PATH_IN}/../../dataset_description.json ../../
 rsync -avzh ${PATH_IN}/../../participants.json ../../
 rsync -avzh ${PATH_IN}/../../participants.tsv ../../
