@@ -106,21 +106,19 @@ sct_apply_transfo -i ${PATH_IN}/${sub}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w $
 
 # TODO: average all segmentations together.
 
-# # Delete useless images
-# # rm "${ofolder_reg}/${file_t1w_mts}_mask.nii.gz"
-# # rm "${ofolder_reg}/${file_t1w_mts}_reg.nii.gz"
-# # rm *image_in_RPI_resampled*
-# # rm ${ofolder_reg}/*warp* #delete warping fields
-# # rm ${ofolder_reg}/*_reg.nii.gz #delete "registered but not cropped" images
-# # rm ${ofolder_reg}/${file_t1w_mts}.nii.gz
-
 # copying the json files and renaming them :
 rsync -avzh ${PATH_IN}/${sub}_acq-T1w_MTS.json ${file_t1w_mts}.json
 rsync -avzh ${PATH_IN}/${sub}_acq-MTon_MTS.json ${file_mton}.json
 rsync -avzh ${PATH_IN}/${sub}_acq-MToff_MTS.json ${file_mtoff}.json
 rsync -avzh ${PATH_IN}/${sub}_T2w.json ${file_t2w}.json
 rsync -avzh ${PATH_IN}/${sub}_T2star.json ${file_t2s}.json
-rsync -avzh ${PATH_IN}/${sub}_T1.json ${file_t1w}.json
+rsync -avzh ${PATH_IN}/${sub}_T1w.json ${file_t1w}.json
 rsync -avzh ${PATH_IN}/../../dataset_description.json ../../
 rsync -avzh ${PATH_IN}/../../participants.json ../../
 rsync -avzh ${PATH_IN}/../../participants.tsv ../../
+
+# Delete temporary files (they interfer with the BIDS wrapper)
+rm *_mask.nii.gz
+rm warp*
+rm *crop_reg*
+rm ${sub}_acq-T1w_MTS.nii.gz
