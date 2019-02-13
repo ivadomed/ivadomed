@@ -44,8 +44,8 @@ rsync -avzh ${PATH_IN}/${file_t1w_mts}.nii.gz .
 sct_crop_image -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_crop.nii.gz -start 3 -end -3 -dim 2
 file_t1w_mts="${file_t1w_mts}_crop"
 
-# Resample to fixed resolution (because some center are using interpolation)
-sct_resample -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_r.nii.gz -mm 0.9x0.9x5 -x spline
+# Resample to fixed resolution
+sct_resample -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_r.nii.gz -mm 0.5x0.5x5 -x spline
 file_t1w_mts="${file_t1w_mts}_r"
 
 # Check if manual segmentation already exists
@@ -61,9 +61,9 @@ fi
 sct_create_mask -i ${file_t1w_mts}.nii.gz -p centerline,"${ofolder_seg}/${file_seg}.nii.gz" -size 55mm -o ${file_t1w_mts}_mask.nii.gz
 
 # Image-based registrations of MToff and MTon to T1w_MTS scan
-sct_register_multimodal -i ${PATH_IN}/${file_mtoff}.nii.gz -d ${file_t1w_mts}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
+sct_register_multimodal -i ${PATH_IN}/${file_mtoff}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
 file_mtoff="${file_mtoff}_reg"
-sct_register_multimodal -i ${PATH_IN}/${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
+sct_register_multimodal -i ${PATH_IN}/${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
 file_mton="${file_mton}_reg"
 
 # Put other scans in the same voxel space as the T1w_MTS volume (for subsequent cord segmentation)
