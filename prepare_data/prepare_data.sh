@@ -128,7 +128,8 @@ sct_maths -i ${ofolder_seg}/tmp.concat_mean.nii.gz -bin 0.5 -o ${ofolder_seg}/${
 # Delete temporary files (they interfer with the BIDS wrapper)
 rm *_mask.nii.gz
 rm warp*
-rm *crop_reg*
+rm *r_reg.*
+rm *crop.*
 rm ${sub}_acq-T1w_MTS.nii.gz
 rm ${ofolder_seg}/warp*
 rm ${ofolder_seg}/${sub}_T1w_reg_seg.nii.gz
