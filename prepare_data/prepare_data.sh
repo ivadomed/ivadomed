@@ -17,6 +17,7 @@ trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 # Retrieve input params
 sub=$1
 PATH_OUTPUT_wSITE=$2
+PATH_QC=$3
 
 # Create BIDS architecture
 PATH_IN="`pwd`/${sub}/anat"
@@ -43,12 +44,16 @@ rsync -avzh ${PATH_IN}/${file_t1w_mts}.nii.gz .
 sct_crop_image -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_crop.nii.gz -start 3 -end -3 -dim 2
 file_t1w_mts="${file_t1w_mts}_crop"
 
+# Resample to fixed resolution (because some center are using interpolation)
+sct_resample -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_r.nii.gz -mm 0.9x0.9x5 -x spline
+file_t1w_mts="${file_t1w_mts}_r"
+
 # Check if manual segmentation already exists
 if [ -e "${ofolder_seg}/${file_t1w_mts}_seg_manual.nii.gz" ]; then
   file_seg="${file_t1w_mts}_seg_manual"
 else
   # Segment spinal cord
-  sct_deepseg_sc -i ${file_t1w_mts}.nii.gz -c t1 -ofolder ${ofolder_seg}
+  sct_deepseg_sc -i ${file_t1w_mts}.nii.gz -c t1 -ofolder ${ofolder_seg} -qc ${PATH_QC}
   file_seg="${file_t1w_mts}_seg"
 fi
 
@@ -56,9 +61,9 @@ fi
 sct_create_mask -i ${file_t1w_mts}.nii.gz -p centerline,"${ofolder_seg}/${file_seg}.nii.gz" -size 55mm -o ${file_t1w_mts}_mask.nii.gz
 
 # Image-based registrations of MToff and MTon to T1w_MTS scan
-sct_register_multimodal -i ${PATH_IN}/${file_mtoff}.nii.gz -d ${file_t1w_mts}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline
+sct_register_multimodal -i ${PATH_IN}/${file_mtoff}.nii.gz -d ${file_t1w_mts}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
 file_mtoff="${file_mtoff}_reg"
-sct_register_multimodal -i ${PATH_IN}/${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline
+sct_register_multimodal -i ${PATH_IN}/${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
 file_mton="${file_mton}_reg"
 
 # Put other scans in the same voxel space as the T1w_MTS volume (for subsequent cord segmentation)
@@ -74,7 +79,7 @@ if [ -e "${ofolder_seg}/${file_t2w}_seg_manual.nii.gz" ]; then
   file_seg_t2w="${file_t2w}_seg_manual"
 else
   # Segment spinal cord
-  sct_deepseg_sc -i ${file_t2w}.nii.gz -c t2 -ofolder ${ofolder_seg}
+  sct_deepseg_sc -i ${file_t2w}.nii.gz -c t2 -ofolder ${ofolder_seg} -qc ${PATH_QC}
   file_seg_t2w="${file_t2w}_seg"
 fi
 # T2s
@@ -82,7 +87,7 @@ if [ -e "${ofolder_seg}/${file_t2s}_seg_manual.nii.gz" ]; then
   file_seg_t2s="${file_t2s}_seg_manual"
 else
   # Segment spinal cord
-  sct_deepseg_sc -i ${file_t2s}.nii.gz -c t2s -ofolder ${ofolder_seg}
+  sct_deepseg_sc -i ${file_t2s}.nii.gz -c t2s -ofolder ${ofolder_seg} -qc ${PATH_QC}
   file_seg_t2s="${file_t2s}_seg"
 fi
 # T1w
@@ -90,7 +95,7 @@ if [ -e "${ofolder_seg}/${file_t1w}_seg_manual.nii.gz" ]; then
   file_seg_t1w="${file_t1w}_seg_manual"
 else
   # Segment spinal cord
-  sct_deepseg_sc -i ${file_t1w}.nii.gz -c t1 -ofolder ${ofolder_seg}
+  sct_deepseg_sc -i ${file_t1w}.nii.gz -c t1 -ofolder ${ofolder_seg} -qc ${PATH_QC}
   file_seg_t1w="${file_t1w}_seg"
 fi
 
