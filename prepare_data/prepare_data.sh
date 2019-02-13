@@ -3,12 +3,12 @@
 # Generate segmentation and co-register all multimodal data.
 #
 # Usage:
-#   ./prepare_data.sh <subject_ID>
+#   ./prepare_data.sh <subject_ID> <output path>
 #
 # Where subject_ID refers to the subject ID according to the BIDS format.
 #
 # Example:
-#   ./prepare_data.sh sub-03
+#   ./prepare_data.sh sub-03 /users/jondoe/bids_data_results/site-01
 #
 
 # Exit if user presses CTRL+C (Linux) or CMD+C (OSX)
@@ -129,7 +129,7 @@ rm ${ofolder_seg}/${sub}_T2w_reg_seg.nii.gz
 # Average all segmentations together. Note: we do not include the T2s because it only has 15 slices
 sct_image -i ${ofolder_seg}/${sub}_acq-T1w_MTS_crop_seg.nii.gz,${ofolder_seg}/${sub}_T1w_reg_seg_reg.nii.gz,${ofolder_seg}/${sub}_T2w_reg_seg_reg.nii.gz -concat t -o ${ofolder_seg}/tmp.concat.nii.gz
 sct_maths -i ${ofolder_seg}/tmp.concat.nii.gz -mean t -o ${ofolder_seg}/tmp.concat_mean.nii.gz
-sct_maths -i ${ofolder_seg}/tmp.concat_mean.nii.gz -bin 0.5 -o ${ofolder_seg}/${sub}_acq-T1w_MTS_T2w_T1w_seg_mean_bin.nii.gz
+sct_maths -i ${ofolder_seg}/tmp.concat_mean.nii.gz -bin 0.5 -o ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz
 # Cleaning
 rm ${ofolder_seg}/${sub}_*reg.*
 rm ${ofolder_seg}/${sub}_*seg.*
