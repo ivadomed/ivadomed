@@ -104,8 +104,6 @@ sct_apply_transfo -i ${PATH_IN}/${sub}_T2w.nii.gz -d ${file_t1w_mts}.nii.gz -w $
 sct_apply_transfo -i ${PATH_IN}/${sub}_T2star.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t2s}2${file_seg}.nii.gz
 sct_apply_transfo -i ${PATH_IN}/${sub}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t1w}2${file_seg}.nii.gz
 
-# TODO: average all segmentations together.
-
 # copying the json files and renaming them :
 rsync -avzh ${PATH_IN}/${sub}_acq-T1w_MTS.json ${file_t1w_mts}.json
 rsync -avzh ${PATH_IN}/${sub}_acq-MTon_MTS.json ${file_mton}.json
@@ -122,3 +120,17 @@ rm *_mask.nii.gz
 rm warp*
 rm *crop_reg*
 rm ${sub}_acq-T1w_MTS.nii.gz
+rm ${ofolder_seg}/warp*
+rm ${ofolder_seg}/${sub}_T1w_reg_seg.nii.gz
+rm ${ofolder_seg}/${sub}_acq-T1w_MTS_crop_seg_reg.nii.gz
+rm ${ofolder_seg}/${sub}_T2star_reg_seg.nii.gz
+rm ${ofolder_seg}/${sub}_T2w_reg_seg.nii.gz
+
+# Average all segmentations together. Note: we do not include the T2s because it only has 15 slices
+sct_image -i ${ofolder_seg}/sub-01_acq-T1w_MTS_crop_seg.nii.gz,${ofolder_seg}/sub-01_T1w_reg_seg_reg.nii.gz,${ofolder_seg}/sub-01_T2w_reg_seg_reg.nii.gz -concat t -o ${ofolder_seg}/tmp.concat.nii.gz
+sct_maths -i ${ofolder_seg}/tmp.concat.nii.gz -mean t -o ${ofolder_seg}/tmp.concat_mean.nii.gz
+sct_maths -i ${ofolder_seg}/tmp.concat_mean.nii.gz -bin 0.5 -o ${ofolder_seg}/${sub}_acq-T1w_MTS_T2w_T1w_seg_mean_bin.nii.gz
+# Cleaning
+rm ${ofolder_seg}/${sub}_*reg.*
+rm ${ofolder_seg}/${sub}_*seg.*
+rm ${ofolder_seg}/tmp.*
