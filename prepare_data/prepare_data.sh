@@ -124,10 +124,17 @@ rsync -avzh ${PATH_IN}/../../dataset_description.json ../../
 rsync -avzh ${PATH_IN}/../../participants.json ../../
 rsync -avzh ${PATH_IN}/../../participants.tsv ../../
 
-# Average all segmentations together. Note: we do not include the T2s because it only has 15 slices
+# Average all segmentations together and then binarize. Note: we do not include the T2s because it only has 15 slices
 sct_image -i ${ofolder_seg}/${file_seg}.nii.gz,${ofolder_seg}/${file_seg_t1w}_reg.nii.gz,${ofolder_seg}/${file_seg_t2w}_reg.nii.gz -concat t -o ${ofolder_seg}/tmp.concat.nii.gz
 sct_maths -i ${ofolder_seg}/tmp.concat.nii.gz -mean t -o ${ofolder_seg}/tmp.concat_mean.nii.gz
 sct_maths -i ${ofolder_seg}/tmp.concat_mean.nii.gz -bin 0.5 -o ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz
+
+# Duplicate segmentation to be used by other contrasts
+cp ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz ${ofolder_seg}/${file_mtoff}_seg-manual.nii.gz 
+cp ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz ${ofolder_seg}/${file_mton}_seg-manual.nii.gz 
+cp ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz ${ofolder_seg}/${file_t2w}_seg-manual.nii.gz 
+cp ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz ${ofolder_seg}/${file_t2s}_seg-manual.nii.gz 
+cp ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz ${ofolder_seg}/${file_t1w}_seg-manual.nii.gz 
 
 # Delete temporary files (they interfer with the BIDS wrapper)
 rm *_mask.nii.gz
