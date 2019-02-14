@@ -66,10 +66,14 @@ file_mtoff="${file_mtoff}_reg"
 sct_register_multimodal -i ${PATH_IN}/${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${ofolder_seg}/${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
 file_mton="${file_mton}_reg"
 
+# For some vendors, T2s scans are 4D. So we need to average them.
+sct_maths -i ${PATH_IN}/${file_t2s}.nii.gz -mean t -o ${file_t2s}_mean.nii.gz
+file_t2s="${file_t2s}_mean"
+
 # Put other scans in the same voxel space as the T1w_MTS volume (for subsequent cord segmentation)
 sct_register_multimodal -i ${PATH_IN}/${file_t2w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
 file_t2w="${file_t2w}_reg"
-sct_register_multimodal -i ${PATH_IN}/${file_t2s}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
+sct_register_multimodal -i ${file_t2s}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
 file_t2s="${file_t2s}_reg"
 sct_register_multimodal -i ${PATH_IN}/${file_t1w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
 file_t1w="${file_t1w}_reg"
