@@ -134,6 +134,8 @@ rm *_mask.nii.gz
 rm warp*
 rm *_r_reg.*
 rm *crop.*
+rm *mean.*
+rm *T2star_reg.*
 rm ${sub}_acq-T1w_MTS.nii.gz
 rm ${ofolder_seg}/warp*
 rm ${ofolder_seg}/${sub}_T1w_reg_seg.nii.gz
