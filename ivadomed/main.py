@@ -122,7 +122,7 @@ def cmd_train(context):
     for bids_ds in tqdm(context["bids_path_validation"], desc="Loading validation set"):
         ds_val = loader.BidsDataset(bids_ds,
                                     transform=val_transform,
-                                    slice_filter_fn=mt_filters.SliceFilter())
+                                    slice_filter_fn=SliceFilter())
         validation_datasets.append(ds_val)
     ds_val = ConcatDataset(validation_datasets)
     print(f"Loaded {len(ds_val)} axial slices for the validation set.")
@@ -136,7 +136,7 @@ def cmd_train(context):
     for bids_ds in tqdm(context["bids_path_test"], desc="Loading test set"):
         ds_test = loader.BidsDataset(bids_ds,
                                      transform=val_transform,
-                                     slice_filter_fn=mt_filters.SliceFilter())
+                                     slice_filter_fn=SliceFilter())
         test_datasets.append(ds_test)
     ds_test = ConcatDataset(test_datasets)
     print(f"Loaded {len(ds_test)} axial slices for the test set.")
