@@ -25,11 +25,11 @@ The `config.json` is a configuration example. During the training, you can open 
 These are the metrics computed for the validation dataset. It contains results for pixel-wise accuracy, Dice score, mIoU (mean intersection over union), pixel-wise precision, recall and specificity.
 ![](/images/validation_metrics.png)
 
-### TensorBoard - Training samples
+### TensorBoard - Training set samples
 These are visualizations of the training samples (after data augmentation), their ground truths and predictions from the network.
 ![](/images/train_vis.png)
 
-### TensorBoard - Training samples
+### TensorBoard - Validation set samples
 These are visualizations of the validation samples, their ground truths and predictions from the network.
 ![](/images/validation_vis.png)
 
