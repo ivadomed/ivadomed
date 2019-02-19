@@ -12,6 +12,27 @@ This project requires Python 3.6 and PyTorch >= 1.0, to install all requirements
 
 And all dependencies will be installed into your own system.
 
+## Training
+To train the network, use the `ivadomed` command-line tool that will be available on your path after installation, example below:
+
+```
+ivadomed config.json
+```
+
+The `config.json` is a configuration example. During the training, you can open TensorBoard and it will show the following statistics and visualization:
+
+### TensorBoard - Validation Metrics
+These are the metrics computed for the validation dataset. It contains results for pixel-wise accuracy, Dice score, mIoU (mean intersection over union), pixel-wise precision, recall and specificity.
+![](/images/validation_metrics.png)
+
+### TensorBoard - Training samples
+These are visualizations of the training samples (after data augmentation), their ground truths and predictions from the network.
+![](/images/train_vis.png)
+
+### TensorBoard - Training samples
+These are visualizations of the validation samples, their ground truths and predictions from the network.
+![](/images/validation_vis.png)
+
 ## Data
 The working dataset is derived from the [Spinal Cord MRI Public Database](https://osf.io/76jkx/)
 
@@ -42,14 +63,6 @@ site/
 ~~~
 
 
-## Training
-To train the network, use the `ivadomed` command-line tool that will be available on your path after installation, example below:
-
-```
-ivadomed config.json
-```
-
-The `config.json` is a configuration example.
 
 ## Contributors
 [List of contributors](https://github.com/neuropoly/ivado-medical-imaging/graphs/contributors)
