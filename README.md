@@ -33,6 +33,10 @@ These are visualizations of the training samples (after data augmentation), thei
 These are visualizations of the validation samples, their ground truths and predictions from the network.
 ![](/images/validation_vis.png)
 
+### TensorBoard - Losses
+This is the visualization of the losses during the training (using 50 epochs in that example).
+![](/images/losses.png)
+
 ## Data
 The working dataset is derived from the [Spinal Cord MRI Public Database](https://osf.io/76jkx/)
 
