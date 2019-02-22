@@ -19,10 +19,10 @@
 		"/data/chper/spineGeneric_results_201902142122/barcelona_spineGeneric"
 	],
 	"batch_size": 18,
-	"dropout_rate": 0.4,
+	"dropout_rate": 0.3,
 	"batch_norm_momentum": 0.1,
 	"num_epochs": 100,
 	"initial_lr": 0.001,
-	"log_directory": "log_training_1",
+	"log_directory": "log_baseline",
 	"film": true
 }
