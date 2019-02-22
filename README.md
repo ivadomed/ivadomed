@@ -37,6 +37,13 @@ These are visualizations of the validation samples, their ground truths and pred
 This is the visualization of the losses during the training (using 50 epochs in that example).
 ![](/images/losses.png)
 
+## Baseline results
+If you use the `configs/config.json` file for training, it should produce the following metrics in the evaluation set:
+
+| Model    | Accuracy | Dice  | Haussdorf | mIoU  | Precision | Recall | Specificity |
+|----------|----------|-------|-----------|-------|-----------|--------|-------------|
+| Baseline | 99.85    | 95.42 | 1.193     | 91.67 | 94.92     | 96.07  | 99.92       |
+
 ## Data
 The working dataset is derived from the [Spinal Cord MRI Public Database](https://osf.io/76jkx/)
 
