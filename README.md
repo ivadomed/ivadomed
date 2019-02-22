@@ -16,7 +16,7 @@ And all dependencies will be installed into your own system.
 To train the network, use the `ivadomed` command-line tool that will be available on your path after installation, example below:
 
 ```
-ivadomed config.json
+ivadomed configs/config.json
 ```
 
 The `config.json` is a configuration example. During the training, you can open TensorBoard and it will show the following statistics and visualization:
