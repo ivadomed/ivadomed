@@ -24,7 +24,8 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
 class BidsDataset(MRI2DBidsSegDataset):
     def __init__(self, root_dir, slice_axis=2, cache=True,
                  transform=None, slice_filter_fn=None,
-                 canonical=False, labeled=True):
+                 canonical=False, labeled=True,
+                 normalize_metadata=False):
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
 
@@ -62,4 +63,4 @@ class BidsDataset(MRI2DBidsSegDataset):
                                         cord_label_filename, metadata))
 
         super().__init__(self.filename_pairs, slice_axis, cache,
-                         transform, slice_filter_fn, canonical)
+                         transform, slice_filter_fn, canonical, normalize_metadata)
