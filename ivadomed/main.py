@@ -78,12 +78,13 @@ def cmd_train(context):
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
-            sample_metadata = batch["input_metadata"]
-            print(batch["input_metadata"])
-            bids_metadata = sample_metadata[0]["bids_metadata"]
+            batch_metadata = batch["input_metadata"]
+            # bids_metadata = batch_metadata["bids_metadata"]
             if int(context["normalize_metadata"]):
-		bids_metadata = loader.normalize_metadata(bids_metadata, metadata_clustering_models)
-
+                batch_metadata = loader.normalize_metadata(batch_metadata, metadata_clustering_models)
+                for sample in batch_metadata:
+                    print(sample["bids_metadata"]["FlipAngle"], sample["bids_metadata"]["EchoTime"], sample["bids_metadata"]["RepetitionTime"])
+            
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
 

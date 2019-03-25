@@ -84,7 +84,6 @@ def clustering_fit(datasets, key_lst):
         k_data = [value for dataset in datasets for value in dataset[k]]
         print(k_data)
         X = np.array(list(zip(k_data, np.zeros(len(k_data)))))
-        print(X)
         bandwidth = estimate_bandwidth(X, quantile=0.1)
         ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
         ms.fit(X)
@@ -92,25 +91,18 @@ def clustering_fit(datasets, key_lst):
         del ms
     return model_dct
 
-    def normalize_metadata(self, cluster_models=None):
-        repetitionTime_values = self.metadata["RepetitionTime"]
-        echoTime_values = self.metadata["EchoTime"]
+def normalize_metadata(batch_in, clustering_models):
+    batch_out = []
+    for sample in batch_in:
+        flip_angle = sample["bids_metadata"]["FlipAngle"]
+        sample["bids_metadata"]["FlipAngle"] = _rescale_value(value_in=flip_angle, range_in=[0.0, 360.0], range_out=[0.0, 90.0])
 
-        if cluster_models is None:
-            repetitionTime_clusterModel = fit_cluster(repetitionTime_values)
-            echoTime_clusterModel = fit_cluster(echoTime_values)
-        else:
-            repetitionTime_clusterModel = cluster_models["RepetitionTime"]
-            echoTime_clusterModel = cluster_models["EchoTime"]
+        repetition_time = [sample["bids_metadata"]["RepetitionTime"]]
+        sample["bids_metadata"]["RepetitionTime"] = clustering_models["RepetitionTime"].predict(np.array(list(zip(repetition_time, np.zeros(1)))))[0]
 
-        for index, item in enumerate(self.filename_pairs):
-            flip_angle = self.filename_pairs[index][2]["FlipAngle"]
-            self.filename_pairs[index][2]["FlipAngle"] = rescale_value(value_in=flip_angle,
-                                                                        range_in=[0.0, 360.0],
-                                                                        range_out=[0.0, 90.0])
+        echo_time = [sample["bids_metadata"]["EchoTime"]]
+        sample["bids_metadata"]["EchoTime"] = clustering_models["EchoTime"].predict(np.array(list(zip(echo_time, np.zeros(1)))))[0]
 
-            repetition_time = [self.filename_pairs[index][2]["RepetitionTime"]]
-            self.filename_pairs[index][2]["RepetitionTime"] = repetitionTime_clusterModel.predict(np.array(zip(repetition_time, np.zeros(len(repetition_time)))))
+        batch_out.append(sample)
 
-            echo_time = [self.filename_pairs[index][2]["EchoTime"]]
-            self.filename_pairs[index][2]["EchoTime"] = echoTime_clusterModel.predict(np.array(zip(echo_time, np.zeros(len(echo_time)))))
+    return batch_out
