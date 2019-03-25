@@ -1,6 +1,6 @@
 from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
-
+from sklearn.cluster import MeanShift, estimate_bandwidth
 
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
     def __init__(self, input_filename, gt_filename, metadata):
@@ -51,19 +51,19 @@ class BidsDataset(MRI2DBidsSegDataset):
                 print("{} without FlipAngle, skipping.".format(subject))
                 continue
             else:
-                self.metadata["FlipAngle"] = metadata["FlipAngle"]
+                self.metadata["FlipAngle"].append(metadata["FlipAngle"])
 
             if "EchoTime" not in metadata:
                 print("{} without EchoTime, skipping.".format(subject))
                 continue
             else:
-                self.metadata["EchoTime"] = metadata["EchoTime"]
+                self.metadata["EchoTime"].append(metadata["EchoTime"])
 
             if "RepetitionTime" not in metadata:
                 print("{} without RepetitionTime, skipping.".format(subject))
                 continue
             else:
-                self.metadata["RepetitionTime"] = metadata["RepetitionTime"]
+                self.metadata["RepetitionTime"].append(metadata["RepetitionTime"])
 
             self.filename_pairs.append((subject.record.absolute_path,
                                         cord_label_filename, metadata))
@@ -76,3 +76,28 @@ class BidsDataset(MRI2DBidsSegDataset):
         delta_out = range_out[1] - range_out[0]
         return (delta_out * (value_in - range_in[0]) / delta_in) + range_out[0]
 
+    def fit_cluster(x):
+        X = np.array(zip(x, np.zeros(len(x))))
+        bandwidth = estimate_bandwidth(X, quantile=0.1)
+        ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
+        ms.fit(X)
+        return ms
+
+    def normalize_metadata(self, clusters=None):
+        repetitionTime_values = self.metadata["RepetitionTime"]
+        echoTime_values = self.metadata["EchoTime"]
+
+        repetitionTime_clusterModel = fit_cluster(repetitionTime_values)
+        echoTime_clusterModel = fit_cluster(echoTime_values)
+
+        for index, item in enumerate(self.filename_pairs):
+            flip_angle = self.filename_pairs[index][2]["FlipAngle"]
+            self.filename_pairs[index][2]["FlipAngle"] = rescale_value(value_in=flip_angle,
+                                                                        range_in=[0.0, 360.0],
+                                                                        range_out=[0.0, 90.0])
+
+            repetition_time = [self.filename_pairs[index][2]["RepetitionTime"]]
+            self.filename_pairs[index][2]["RepetitionTime"] = repetitionTime_clusterModel.predict(np.array(zip(repetition_time, np.zeros(len(repetition_time)))))
+
+            echo_time = [self.filename_pairs[index][2]["EchoTime"]]
+            self.filename_pairs[index][2]["EchoTime"] = echoTime_clusterModel.predict(np.array(zip(echo_time, np.zeros(len(echo_time)))))
