@@ -87,8 +87,12 @@ class BidsDataset(MRI2DBidsSegDataset):
         repetitionTime_values = self.metadata["RepetitionTime"]
         echoTime_values = self.metadata["EchoTime"]
 
-        repetitionTime_clusterModel = fit_cluster(repetitionTime_values)
-        echoTime_clusterModel = fit_cluster(echoTime_values)
+        if cluster_models is None:
+            repetitionTime_clusterModel = fit_cluster(repetitionTime_values)
+            echoTime_clusterModel = fit_cluster(echoTime_values)
+        else:
+            repetitionTime_clusterModel = cluster_models["RepetitionTime"]
+            echoTime_clusterModel = cluster_models["EchoTime"]
 
         for index, item in enumerate(self.filename_pairs):
             flip_angle = self.filename_pairs[index][2]["FlipAngle"]
