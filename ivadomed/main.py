@@ -48,7 +48,7 @@ def cmd_train(context):
         train_datasets.append(ds_train)
     ds_train = ConcatDataset(train_datasets)
     if int(context["normalize_metadata"]):
-        ds_train = ds_train.normalize_metadata(cluster_models=None)
+        ds_train.normalize_metadata(cluster_models=None)
 
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=True, pin_memory=True,
