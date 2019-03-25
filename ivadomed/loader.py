@@ -1,6 +1,8 @@
 from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
+
 from sklearn.cluster import MeanShift, estimate_bandwidth
+import numpy as np
 
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
     def __init__(self, input_filename, gt_filename, metadata):
@@ -71,17 +73,24 @@ class BidsDataset(MRI2DBidsSegDataset):
         super().__init__(self.filename_pairs, slice_axis, cache,
                          transform, slice_filter_fn, canonical)
 
-    def rescale_value(value_in, range_in, range_out):
-        delta_in = range_in[1] - range_in[0]
-        delta_out = range_out[1] - range_out[0]
-        return (delta_out * (value_in - range_in[0]) / delta_in) + range_out[0]
+def _rescale_value(value_in, range_in, range_out):
+    delta_in = range_in[1] - range_in[0]
+    delta_out = range_out[1] - range_out[0]
+    return (delta_out * (value_in - range_in[0]) / delta_in) + range_out[0]
 
-    def fit_cluster(x):
-        X = np.array(zip(x, np.zeros(len(x))))
+def clustering_fit(datasets, key_lst):
+    model_dct = {}
+    for k in key_lst:
+        k_data = [value for dataset in datasets for value in dataset[k]]
+        print(k_data)
+        X = np.array(list(zip(k_data, np.zeros(len(k_data)))))
+        print(X)
         bandwidth = estimate_bandwidth(X, quantile=0.1)
         ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
         ms.fit(X)
-        return ms
+        model_dct[k] = ms
+        del ms
+    return model_dct
 
     def normalize_metadata(self, cluster_models=None):
         repetitionTime_values = self.metadata["RepetitionTime"]

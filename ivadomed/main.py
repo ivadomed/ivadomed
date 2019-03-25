@@ -40,13 +40,15 @@ def cmd_train(context):
         mt_transforms.NormalizeInstance(),
     ])
 
-    train_datasets = []
+    train_datasets, train_metadata = [], []
     for bids_ds in context["bids_path_train"]:
         ds_train = loader.BidsDataset(bids_ds,
                                       transform=train_transform,
                                       slice_filter_fn=mt_filters.SliceFilter())
         train_datasets.append(ds_train)
+        train_metadata.append(ds_train.metadata)
     ds_train = ConcatDataset(train_datasets)
+    metadata_clustering_models = loader.clustering_fit(train_metadata, ["RepetitionTime", "EchoTime"])
 
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=True, pin_memory=True,
@@ -80,7 +82,7 @@ def cmd_train(context):
             print(batch["input_metadata"])
             bids_metadata = sample_metadata[0]["bids_metadata"]
             if int(context["normalize_metadata"]):
-		bids_metadata = normalize_metadata(bids_metadata, metadata_clustering_models)
+		bids_metadata = loader.normalize_metadata(bids_metadata, metadata_clustering_models)
 
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
