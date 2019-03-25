@@ -27,6 +27,7 @@ class BidsDataset(MRI2DBidsSegDataset):
                  canonical=False, labeled=True):
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
+        self.metadata = {}
 
         for subject in self.bids_ds.get_subjects():
             if not subject.has_derivative("labels"):
@@ -49,14 +50,20 @@ class BidsDataset(MRI2DBidsSegDataset):
             if "FlipAngle" not in metadata:
                 print("{} without FlipAngle, skipping.".format(subject))
                 continue
+            else:
+                self.metadata["FlipAngle"] = metadata["FlipAngle"]
 
             if "EchoTime" not in metadata:
                 print("{} without EchoTime, skipping.".format(subject))
                 continue
+            else:
+                self.metadata["EchoTime"] = metadata["EchoTime"]
 
             if "RepetitionTime" not in metadata:
                 print("{} without RepetitionTime, skipping.".format(subject))
                 continue
+            else:
+                self.metadata["RepetitionTime"] = metadata["RepetitionTime"]
 
             self.filename_pairs.append((subject.record.absolute_path,
                                         cord_label_filename, metadata))
@@ -68,3 +75,4 @@ class BidsDataset(MRI2DBidsSegDataset):
         delta_in = range_in[1] - range_in[0]
         delta_out = range_out[1] - range_out[0]
         return (delta_out * (value_in - range_in[0]) / delta_in) + range_out[0]
+
