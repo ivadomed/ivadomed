@@ -51,7 +51,7 @@ class BidsDataset(MRI2DBidsSegDataset):
                 print("{} without FlipAngle, skipping.".format(subject))
                 continue
             elif "FlipAngle" in metadata and normalize_metadata:
-            	metadata["FlipAngle"] = normalize_value(value_in=metadata["FlipAngle"],
+            	metadata["FlipAngle"] = rescale_value(value_in=metadata["FlipAngle"],
             											range_in=[0.0, 360.0],
             											range_out=[0.0, 90.0])
 
@@ -68,3 +68,8 @@ class BidsDataset(MRI2DBidsSegDataset):
 
         super().__init__(self.filename_pairs, slice_axis, cache,
                          transform, slice_filter_fn, canonical, normalize_metadata)
+
+    def rescale_value(value_in, range_in, range_out):
+        delta_in = range_in[1] - range_in[0]
+        delta_out = range_out[1] - range_out[0]
+        return (delta_out * (value_in - range_in[0]) / delta_in) + range_out[0]
