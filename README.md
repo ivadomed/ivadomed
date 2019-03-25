@@ -73,7 +73,9 @@ site/
                 └── sub-01_T1w_seg.nii.gz --> Spinal cord segmentation
 ~~~
 
+### Data processing
 
+The generation of labels is done automatically using the [Spinal Cord Toolbox](https://github.com/neuropoly/spinalcordtoolbox). The processing scripts are located in `prepare_data/`.
 
 ## Contributors
 [List of contributors](https://github.com/neuropoly/ivado-medical-imaging/graphs/contributors)
