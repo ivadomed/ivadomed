@@ -47,8 +47,6 @@ def cmd_train(context):
                                       slice_filter_fn=mt_filters.SliceFilter())
         train_datasets.append(ds_train)
     ds_train = ConcatDataset(train_datasets)
-    if int(context["normalize_metadata"]):
-        ds_train.normalize_metadata(cluster_models=None)
 
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=True, pin_memory=True,
@@ -79,7 +77,10 @@ def cmd_train(context):
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
             sample_metadata = batch["input_metadata"]
-            bids_metadata = sample_metadata["bids_metadata"]
+            print(batch["input_metadata"])
+            bids_metadata = sample_metadata[0]["bids_metadata"]
+            if int(context["normalize_metadata"]):
+		bids_metadata = normalize_metadata(bids_metadata, metadata_clustering_models)
 
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
