@@ -83,7 +83,7 @@ class BidsDataset(MRI2DBidsSegDataset):
         ms.fit(X)
         return ms
 
-    def normalize_metadata(self, clusters=None):
+    def normalize_metadata(self, cluster_models=None):
         repetitionTime_values = self.metadata["RepetitionTime"]
         echoTime_values = self.metadata["EchoTime"]
 
