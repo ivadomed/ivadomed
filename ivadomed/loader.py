@@ -50,6 +50,10 @@ class BidsDataset(MRI2DBidsSegDataset):
             if "FlipAngle" not in metadata:
                 print("{} without FlipAngle, skipping.".format(subject))
                 continue
+            elif "FlipAngle" in metadata and normalize_metadata:
+            	metadata["FlipAngle"] = normalize_value(value_in=metadata["FlipAngle"],
+            											range_in=[0.0, 360.0],
+            											range_out=[0.0, 90.0])
 
             if "EchoTime" not in metadata:
                 print("{} without EchoTime, skipping.".format(subject))
