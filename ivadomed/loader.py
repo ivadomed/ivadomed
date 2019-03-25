@@ -27,7 +27,7 @@ class BidsDataset(MRI2DBidsSegDataset):
                  canonical=False, labeled=True):
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
-        self.metadata = {}
+        self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": []}
 
         for subject in self.bids_ds.get_subjects():
             if not subject.has_derivative("labels"):
