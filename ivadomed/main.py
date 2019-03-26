@@ -80,7 +80,7 @@ def cmd_train(context):
             input_samples, gt_samples = batch["input"], batch["gt"]
             batch_metadata = batch["input_metadata"]
             # bids_metadata = batch_metadata["bids_metadata"]
-            if int(context["normalize_metadata"]):
+            if context["normalize_metadata"]:
                 batch_metadata = loader.normalize_metadata(batch_metadata, metadata_clustering_models)
                 for sample in batch_metadata:
                     print(sample["bids_metadata"]["FlipAngle"], sample["bids_metadata"]["EchoTime"], sample["bids_metadata"]["RepetitionTime"])
