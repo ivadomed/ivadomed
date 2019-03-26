@@ -3,6 +3,7 @@ from medicaltorch import datasets as mt_datasets
 
 from sklearn.cluster import MeanShift, estimate_bandwidth
 import numpy as np
+from copy import deepcopy
 
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
     def __init__(self, input_filename, gt_filename, metadata):
@@ -96,28 +97,35 @@ def clustering_fit(datasets, key_lst):
         del ms
     return model_dct
 
-def normalize_metadata(batch_in, clustering_models, debugging):
-    batch_out = []
+def normalize_metadata(ds_lst_in, clustering_models, debugging):
+    ds_lst_out = []
     MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
-    for sample in batch_in:
-        flip_angle = sample["bids_metadata"]["FlipAngle"]
-        sample["bids_metadata"]["FlipAngle"] = _rescale_value(value_in=flip_angle, range_in=[0.0, 360.0], range_out=[0.0, 90.0])
+    for ds_in in ds_lst_in:
+        ds_out = []
+        for idx, subject in enumerate(ds_in):
+            s_out = deepcopy(subject)
 
-        repetition_time = [sample["bids_metadata"]["RepetitionTime"]]
-        sample["bids_metadata"]["RepetitionTime"] = clustering_models["RepetitionTime"].predict(np.array(list(zip(repetition_time, np.zeros(1)))))[0]
+            flip_angle = subject["input_metadata"]["bids_metadata"]["FlipAngle"]
+            s_out["input_metadata"]["bids_metadata"]["FlipAngle"] = _rescale_value(value_in=flip_angle, range_in=[0.0, 360.0], range_out=[0.0, 90.0])
 
-        echo_time = [sample["bids_metadata"]["EchoTime"]]
-        sample["bids_metadata"]["EchoTime"] = clustering_models["EchoTime"].predict(np.array(list(zip(echo_time, np.zeros(1)))))[0]
+            repetition_time = [subject["input_metadata"]["bids_metadata"]["RepetitionTime"]]
+            s_out["input_metadata"]["bids_metadata"]["RepetitionTime"] = clustering_models["RepetitionTime"].predict(np.array(list(zip(repetition_time, np.zeros(1)))))[0]
 
-        manufacturer = sample["bids_metadata"]["Manufacturer"]
-        sample["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
+            echo_time = [subject["input_metadata"]["bids_metadata"]["EchoTime"]]
+            s_out["input_metadata"]["bids_metadata"]["EchoTime"] = clustering_models["EchoTime"].predict(np.array(list(zip(echo_time, np.zeros(1)))))[0]
 
-        batch_out.append(sample)
+            manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
+            s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
 
-        if debugging:
-            print("\nFlip Angle: {} --> {}".format(flip_angle, sample["bids_metadata"]["FlipAngle"]))
-            print("Repetition Time: {} --> {}".format(repetition_time[0], sample["bids_metadata"]["RepetitionTime"]))
-            print("Echo Time: {} --> {}".format(echo_time[0], sample["bids_metadata"]["EchoTime"]))
-            print("Manufacturer: {} --> {}".format(manufacturer, sample["bids_metadata"]["Manufacturer"]))
+            ds_out.append(s_out)
 
-    return batch_out
+            if debugging:
+                print("\nFlip Angle: {} --> {}".format(flip_angle, s_out["input_metadata"]["bids_metadata"]["FlipAngle"]))
+                print("Repetition Time: {} --> {}".format(repetition_time[0], s_out["input_metadata"]["bids_metadata"]["RepetitionTime"]))
+                print("Echo Time: {} --> {}".format(echo_time[0], s_out["input_metadata"]["bids_metadata"]["EchoTime"]))
+                print("Manufacturer: {} --> {}".format(manufacturer, s_out["input_metadata"]["bids_metadata"]["Manufacturer"]))
+            del s_out, subject
+
+        ds_lst_out.append(ds_out)
+
+    return ds_lst_out
