@@ -51,7 +51,8 @@ If you use the `configs/config.json` file for training, it should produce the fo
 | Baseline | 99.85    | 95.42 | 1.193     | 91.67 | 94.92     | 96.07  | 99.92       |
 
 ## Data
-The working dataset is derived from the [Spinal Cord MRI Public Database](https://osf.io/76jkx/)
+
+The working dataset is derived from the [Spinal Cord MRI Public Database](https://osf.io/76jkx/). The processed dataset that should be used for training the model is available [here](https://osf.io/agp3q/). When training a model, make sure to indicate the [checksum SH2](https://osf.io/agp3q/?show=revision) inside the `config.json` file.
 
 The data structure is compatible with [BIDS](http://bids.neuroimaging.io/) and is exemplified below:
 ~~~
