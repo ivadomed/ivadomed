@@ -98,6 +98,7 @@ def clustering_fit(datasets, key_lst):
 
 def normalize_metadata(batch_in, clustering_models, debugging):
     batch_out = []
+    MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
     for sample in batch_in:
         flip_angle = sample["bids_metadata"]["FlipAngle"]
         sample["bids_metadata"]["FlipAngle"] = _rescale_value(value_in=flip_angle, range_in=[0.0, 360.0], range_out=[0.0, 90.0])
@@ -108,11 +109,15 @@ def normalize_metadata(batch_in, clustering_models, debugging):
         echo_time = [sample["bids_metadata"]["EchoTime"]]
         sample["bids_metadata"]["EchoTime"] = clustering_models["EchoTime"].predict(np.array(list(zip(echo_time, np.zeros(1)))))[0]
 
+        manufacturer = sample["bids_metadata"]["Manufacturer"]
+        sample["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
+
         batch_out.append(sample)
 
         if debugging:
             print("\nFlip Angle: {} --> {}".format(flip_angle, sample["bids_metadata"]["FlipAngle"]))
             print("Repetition Time: {} --> {}".format(repetition_time[0], sample["bids_metadata"]["RepetitionTime"]))
             print("Echo Time: {} --> {}".format(echo_time[0], sample["bids_metadata"]["EchoTime"]))
+            print("Manufacturer: {} --> {}".format(manufacturer, sample["bids_metadata"]["Manufacturer"]))
 
     return batch_out
