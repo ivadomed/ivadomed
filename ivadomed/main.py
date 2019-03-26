@@ -47,8 +47,12 @@ def cmd_train(context):
                                       slice_filter_fn=mt_filters.SliceFilter())
         train_datasets.append(ds_train)
         train_metadata.append(ds_train.metadata)
+
+    if context["film"]:
+        metadata_clustering_models = loader.clustering_fit(train_metadata, ["RepetitionTime", "EchoTime"])
+        train_datasets = loader.normalize_metadata(train_datasets, metadata_clustering_models, context["debugging"])
+
     ds_train = ConcatDataset(train_datasets)
-    metadata_clustering_models = loader.clustering_fit(train_metadata, ["RepetitionTime", "EchoTime"])
 
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=True, pin_memory=True,
@@ -80,8 +84,6 @@ def cmd_train(context):
             input_samples, gt_samples = batch["input"], batch["gt"]
             batch_metadata = batch["input_metadata"]
             # bids_metadata = batch_metadata["bids_metadata"]
-            if context["film"]:
-                batch_metadata = loader.normalize_metadata(batch_metadata, metadata_clustering_models, context["debugging"])
             
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
