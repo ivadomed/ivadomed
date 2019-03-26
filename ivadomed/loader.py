@@ -91,7 +91,7 @@ def clustering_fit(datasets, key_lst):
         del ms
     return model_dct
 
-def normalize_metadata(batch_in, clustering_models):
+def normalize_metadata(batch_in, clustering_models, debugging):
     batch_out = []
     for sample in batch_in:
         flip_angle = sample["bids_metadata"]["FlipAngle"]
@@ -104,5 +104,10 @@ def normalize_metadata(batch_in, clustering_models):
         sample["bids_metadata"]["EchoTime"] = clustering_models["EchoTime"].predict(np.array(list(zip(echo_time, np.zeros(1)))))[0]
 
         batch_out.append(sample)
+
+        if debugging:
+            print("\nFlip Angle: {} --> {}".format(flip_angle, sample["bids_metadata"]["FlipAngle"]))
+            print("Repetition Time: {} --> {}".format(repetition_time[0], sample["bids_metadata"]["RepetitionTime"]))
+            print("Echo Time: {} --> {}".format(echo_time[0], sample["bids_metadata"]["EchoTime"]))
 
     return batch_out
