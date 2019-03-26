@@ -82,7 +82,6 @@ def clustering_fit(datasets, key_lst):
     model_dct = {}
     for k in key_lst:
         k_data = [value for dataset in datasets for value in dataset[k]]
-        print(k_data)
         X = np.array(list(zip(k_data, np.zeros(len(k_data)))))
         bandwidth = estimate_bandwidth(X, quantile=0.1)
         ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
