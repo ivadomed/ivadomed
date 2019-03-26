@@ -81,9 +81,7 @@ def cmd_train(context):
             batch_metadata = batch["input_metadata"]
             # bids_metadata = batch_metadata["bids_metadata"]
             if context["normalize_metadata"]:
-                batch_metadata = loader.normalize_metadata(batch_metadata, metadata_clustering_models)
-                for sample in batch_metadata:
-                    print(sample["bids_metadata"]["FlipAngle"], sample["bids_metadata"]["EchoTime"], sample["bids_metadata"]["RepetitionTime"])
+                batch_metadata = loader.normalize_metadata(batch_metadata, metadata_clustering_models, context["debugging"])
             
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
