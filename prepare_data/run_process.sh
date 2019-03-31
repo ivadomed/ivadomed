@@ -63,12 +63,14 @@ fi
 # Processing of one subject
 do_one_subject_parallel() {
   local subject="$1"
-  echo "cd ${PATH_DATA}/${site}; ${task} $(basename $subject) ${PATH_OUTPUT}/$site ${PATH_QC}"
+  subj_basename=`basename $subject`
+  echo "cd ${PATH_DATA}/${site}; ${task} $(basename $subject) ${PATH_OUTPUT}/$site ${PATH_QC} > ${PATH_LOG}/${site}_${subj_basename}.log"
 }
 do_one_subject() {
   local subject="$1"
   cd ${PATH_DATA}/${site}
-  ${task} $(basename $subject) ${PATH_OUTPUT}/$site ${PATH_QC}
+  subj_basename=`basename $subject`
+  ${task} $(basename $subject) ${PATH_OUTPUT}/$site ${PATH_QC}  > ${PATH_LOG}/${site}_${subj_basename}.log
 }
 
 # Run processing with or without "GNU parallel", depending if it is installed or not
@@ -78,7 +80,7 @@ if [ -x "$(command -v parallel)" ]; then
     mkdir -p ${PATH_OUTPUT}/${site}
     find ${PATH_DATA}/${site} -mindepth 1 -maxdepth 1 -type d | while read subject; do
       subj_basename=`basename $subject`
-      do_one_subject_parallel $subject  # > ${PATH_LOG}/${site}_${subj_basename}.log
+      do_one_subject_parallel $subject
     done
   done \
   | parallel -j ${JOBS} --halt-on-error soon,fail=1 sh -c "{}"
@@ -87,8 +89,7 @@ else
   for site in ${SITES[@]}; do
     mkdir -p ${PATH_OUTPUT}/${site}
     find ${PATH_DATA}/${site} -mindepth 1 -maxdepth 1 -type d | while read subject; do
-      subj_basename=`basename $subject`
-      do_one_subject $subject > ${PATH_LOG}/${site}_${subj_basename}.log
+      do_one_subject $subject
     done
   done
 fi
