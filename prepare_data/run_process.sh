@@ -11,7 +11,7 @@
 #   ./run_process.sh generate_ground_truth.sh
 #
 # Note:
-#   Make sure to copy the file parameters_template.sh into parameters.sh and 
+#   Make sure to copy the file parameters_template.sh into parameters.sh and
 #   edit it with the proper list of subjects and variable.
 
 # Authors: Nicolas Pinon, Julien Cohen-Adad
@@ -79,7 +79,7 @@ if [ -x "$(command -v parallel)" ]; then
       do_one_subject_parallel $subject
     done
   done \
-  | parallel --halt-on-error soon,fail=1 sh -c "{}"
+  | parallel -j ${JOBS} --halt-on-error soon,fail=1 sh -c "{}"
 else
   echo 'GNU parallel is not installed. Processing subjects sequentially.' >&2
   for site in ${SITES[@]}; do
