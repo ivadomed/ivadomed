@@ -53,6 +53,7 @@ echo "--> " ${SITES[@]}
 
 # Create output folder folder ("-p" creates parent folders if needed)
 mkdir -p ${PATH_OUTPUT}
+mkdir -p ${PATH_LOG}
 
 if [ ! -d "$PATH_OUTPUT" ]; then
   printf "\n${Red}${On_Black}ERROR: Cannot create folder: $PATH_OUTPUT. Exit.${Color_Off}\n\n"
@@ -76,7 +77,8 @@ if [ -x "$(command -v parallel)" ]; then
   for site in ${SITES[@]}; do
     mkdir -p ${PATH_OUTPUT}/${site}
     find ${PATH_DATA}/${site} -mindepth 1 -maxdepth 1 -type d | while read subject; do
-      do_one_subject_parallel $subject
+      subj_basename=`basename $subject`
+      do_one_subject_parallel $subject  # > ${PATH_LOG}/${site}_${subj_basename}.log
     done
   done \
   | parallel -j ${JOBS} --halt-on-error soon,fail=1 sh -c "{}"
@@ -85,7 +87,8 @@ else
   for site in ${SITES[@]}; do
     mkdir -p ${PATH_OUTPUT}/${site}
     find ${PATH_DATA}/${site} -mindepth 1 -maxdepth 1 -type d | while read subject; do
-      do_one_subject $subject
+      subj_basename=`basename $subject`
+      do_one_subject $subject > ${PATH_LOG}/${site}_${subj_basename}.log
     done
   done
 fi

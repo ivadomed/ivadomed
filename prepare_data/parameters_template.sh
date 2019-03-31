@@ -22,6 +22,7 @@ export PATH_DATA="${PATH_PARENT}/spineGeneric_multiSubjects"
 # Do not add "/" at the end. Path should be absolute (i.e. do not use "~")
 export PATH_OUTPUT="${PATH_PARENT}/spineGeneric_result"
 export PATH_QC="${PATH_PARENT}/spineGeneric_qc"
+export PATH_LOG="${PATH_PARENT}/spineGeneric_log"
 
 # Misc
 export JOBS="20"  # Number of jobs for parallel processing
