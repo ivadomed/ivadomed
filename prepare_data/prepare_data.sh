@@ -3,26 +3,29 @@
 # Generate segmentation and co-register all multimodal data.
 #
 # Usage:
-#   ./prepare_data.sh <subject_ID> <output path>
+#   ./prepare_data.sh <SUBJECTject_ID> <output path>
 #
-# Where subject_ID refers to the subject ID according to the BIDS format.
+# Where SUBJECTject_ID refers to the SUBJECTject ID according to the BIDS format.
 #
 # Example:
-#   ./prepare_data.sh sub-03 /users/jondoe/bids_data_results/site-01
+#   ./prepare_data.sh SUBJECT-03 /users/jondoe/bids_data_results/site-01
 #
 
 # Exit if user presses CTRL+C (Linux) or CMD+C (OSX)
 trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
 # Retrieve input params
-sub=$1
-PATH_OUTPUT_wSITE=$2
-PATH_QC=$3
+SUBJECT=$1
+SITE=$2
+PATH_OUTPUT=$3
+PATH_QC=$4
+PATH_LOG=$5
 
 # Create BIDS architecture
-PATH_IN="`pwd`/${sub}/anat"
-ofolder_seg="${PATH_OUTPUT_wSITE}/derivatives/labels/${sub}/anat"
-ofolder_reg="${PATH_OUTPUT_wSITE}/${sub}/anat"
+PATH_OUTPUT_wSITE=${PATH_OUTPUT}/${SITE}
+PATH_IN="`pwd`/${SUBJECT}/anat"
+ofolder_seg="${PATH_OUTPUT_wSITE}/derivatives/labels/${SUBJECT}/anat"
+ofolder_reg="${PATH_OUTPUT_wSITE}/${SUBJECT}/anat"
 mkdir -p ${ofolder_reg}
 mkdir -p ${ofolder_seg}
 
@@ -30,12 +33,12 @@ mkdir -p ${ofolder_seg}
 cd ${ofolder_reg}
 
 # Set filenames
-file_t1w_mts="${sub}_acq-T1w_MTS"
-file_mton="${sub}_acq-MTon_MTS"
-file_mtoff="${sub}_acq-MToff_MTS"
-file_t2w="${sub}_T2w"
-file_t2s="${sub}_T2star"
-file_t1w="${sub}_T1w"
+file_t1w_mts="${SUBJECT}_acq-T1w_MTS"
+file_mton="${SUBJECT}_acq-MTon_MTS"
+file_mtoff="${SUBJECT}_acq-MToff_MTS"
+file_t2w="${SUBJECT}_T2w"
+file_t2s="${SUBJECT}_T2star"
+file_t1w="${SUBJECT}_T1w"
 
 # Copy reference volume
 rsync -avzh ${PATH_IN}/${file_t1w_mts}.nii.gz .
@@ -70,7 +73,7 @@ file_mton="${file_mton}_reg"
 sct_maths -i ${PATH_IN}/${file_t2s}.nii.gz -mean t -o ${file_t2s}_mean.nii.gz
 file_t2s="${file_t2s}_mean"
 
-# Put other scans in the same voxel space as the T1w_MTS volume (for subsequent cord segmentation)
+# Put other scans in the same voxel space as the T1w_MTS volume (for SUBJECTsequent cord segmentation)
 sct_register_multimodal -i ${PATH_IN}/${file_t2w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
 file_t2w="${file_t2w}_reg"
 sct_register_multimodal -i ${file_t2s}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
@@ -103,23 +106,23 @@ else
   file_seg_t1w="${file_t1w}_seg"
 fi
 
-# Segmentation-based registrations of T2w, T2s and T1w to T1w_MTS scan
+# Registration of T2w, T2s and T1w to T1w_MTS scan
 sct_register_multimodal -i ${ofolder_seg}/${file_seg_t2w}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=centermass -x linear -ofolder ${ofolder_seg}
 sct_register_multimodal -i ${ofolder_seg}/${file_seg_t2s}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=centermass -x linear -ofolder ${ofolder_seg}
 sct_register_multimodal -i ${ofolder_seg}/${file_seg_t1w}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=centermass -x linear -ofolder ${ofolder_seg}
 
 # Apply warping field to native files (to avoid 2x interpolation) -- use bspline interpolation
-sct_apply_transfo -i ${PATH_IN}/${sub}_T2w.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t2w}2${file_seg}.nii.gz
-sct_apply_transfo -i ${PATH_IN}/${sub}_T2star.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t2s}2${file_seg}.nii.gz
-sct_apply_transfo -i ${PATH_IN}/${sub}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t1w}2${file_seg}.nii.gz
+sct_apply_transfo -i ${PATH_IN}/${SUBJECT}_T2w.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t2w}2${file_seg}.nii.gz
+sct_apply_transfo -i ${PATH_IN}/${SUBJECT}_T2star.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t2s}2${file_seg}.nii.gz
+sct_apply_transfo -i ${PATH_IN}/${SUBJECT}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t1w}2${file_seg}.nii.gz
 
-# copying the json files and renaming them :
-rsync -avzh ${PATH_IN}/${sub}_acq-T1w_MTS.json ${file_t1w_mts}.json
-rsync -avzh ${PATH_IN}/${sub}_acq-MTon_MTS.json ${file_mton}.json
-rsync -avzh ${PATH_IN}/${sub}_acq-MToff_MTS.json ${file_mtoff}.json
-rsync -avzh ${PATH_IN}/${sub}_T2w.json ${file_t2w}.json
-rsync -avzh ${PATH_IN}/${sub}_T2star.json ${file_t2s}.json
-rsync -avzh ${PATH_IN}/${sub}_T1w.json ${file_t1w}.json
+# Copy json files and rename them
+rsync -avzh ${PATH_IN}/${SUBJECT}_acq-T1w_MTS.json ${file_t1w_mts}.json
+rsync -avzh ${PATH_IN}/${SUBJECT}_acq-MTon_MTS.json ${file_mton}.json
+rsync -avzh ${PATH_IN}/${SUBJECT}_acq-MToff_MTS.json ${file_mtoff}.json
+rsync -avzh ${PATH_IN}/${SUBJECT}_T2w.json ${file_t2w}.json
+rsync -avzh ${PATH_IN}/${SUBJECT}_T2star.json ${file_t2s}.json
+rsync -avzh ${PATH_IN}/${SUBJECT}_T1w.json ${file_t1w}.json
 rsync -avzh ${PATH_IN}/../../dataset_description.json ../../
 rsync -avzh ${PATH_IN}/../../participants.json ../../
 rsync -avzh ${PATH_IN}/../../participants.tsv ../../
@@ -135,3 +138,20 @@ cp ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz ${ofolder_seg}/${file_mton}_
 cp ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz ${ofolder_seg}/${file_t2w}_seg-manual.nii.gz
 cp ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz ${ofolder_seg}/${file_t2s}_seg-manual.nii.gz
 cp ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz ${ofolder_seg}/${file_t1w}_seg-manual.nii.gz
+
+# Verify presence of output files and write log file if error
+FILES_TO_CHECK=(
+  "${file_t1w_mts}.nii.gz"
+  "${file_mton}.nii.gz"
+  "${file_mtoff}.nii.gz"
+  "${file_t2w}.nii.gz"
+  "${file_t2s}.nii.gz"
+  "${file_t1w}.nii.gz"
+  "${file_seg_t2s}.nii.gz"
+  "${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz"
+)
+for file in ${FILES_TO_CHECK[@]}; do
+  if [ ! -e $file ]; then
+    echo "${SITE}/${file}.nii.gz does not exist" >> $PATH_LOG/error.log
+  fi
+done
