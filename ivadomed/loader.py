@@ -116,7 +116,11 @@ def normalize_metadata(ds_lst_in, clustering_models, debugging):
             s_out["input_metadata"]["bids_metadata"]["EchoTime"] = clustering_models["EchoTime"].predict(np.array(list(zip(echo_time, np.zeros(1)))))[0]
 
             manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
-            s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
+            if manufacturer in MANUFACTURER_CATEGORY:
+                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
+            else:
+                print("{} with unknown manufacturer.".format(subject))
+                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1
 
             ds_out.append(s_out)
 
