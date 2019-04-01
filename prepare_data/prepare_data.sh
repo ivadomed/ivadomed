@@ -147,7 +147,7 @@ FILES_TO_CHECK=(
   "${file_t2w}.nii.gz"
   "${file_t2s}.nii.gz"
   "${file_t1w}.nii.gz"
-  "${file_seg_t2s}.nii.gz"
+  "${ofolder_seg}/${file_seg_t2s}.nii.gz"
   "${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz"
 )
 for file in ${FILES_TO_CHECK[@]}; do
