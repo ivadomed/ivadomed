@@ -5,6 +5,8 @@ from sklearn.cluster import MeanShift, estimate_bandwidth
 import numpy as np
 from copy import deepcopy
 
+MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
+
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
     def __init__(self, input_filename, gt_filename, metadata):
         super().__init__(input_filename, gt_filename)
@@ -99,7 +101,6 @@ def clustering_fit(datasets, key_lst):
 
 def normalize_metadata(ds_lst_in, clustering_models, debugging):
     ds_lst_out = []
-    MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
     for ds_in in ds_lst_in:
         ds_out = []
         for idx, subject in enumerate(ds_in):
