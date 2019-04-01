@@ -152,6 +152,6 @@ FILES_TO_CHECK=(
 )
 for file in ${FILES_TO_CHECK[@]}; do
   if [ ! -e $file ]; then
-    echo "${SITE}/${file}.nii.gz does not exist" >> $PATH_LOG/error.log
+    echo "${SITE}/${file} does not exist" >> $PATH_LOG/error.log
   fi
 done
