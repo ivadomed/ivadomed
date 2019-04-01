@@ -63,14 +63,12 @@ fi
 # Processing of one subject
 do_one_subject_parallel() {
   local subject="$1"
-  subj_basename=`basename $subject`
-  echo "cd ${PATH_DATA}/${site}; ${task} $(basename $subject) ${PATH_OUTPUT}/$site ${PATH_QC} > ${PATH_LOG}/${site}_${subj_basename}.log"
+  echo "cd ${PATH_DATA}/${site}; ${task} $(basename $subject) $site $PATH_OUTPUT $PATH_QC $PATH_LOG > ${PATH_LOG}/${site}_${subject}.log"
 }
 do_one_subject() {
   local subject="$1"
   cd ${PATH_DATA}/${site}
-  subj_basename=`basename $subject`
-  ${task} $(basename $subject) ${PATH_OUTPUT}/$site ${PATH_QC}  > ${PATH_LOG}/${site}_${subj_basename}.log
+  ${task} $(basename $subject) $PATH_OUTPUT $PATH_QC $PATH_LOG > ${PATH_LOG}/${site}_${subject}.log
 }
 
 # Run processing with or without "GNU parallel", depending if it is installed or not
@@ -78,8 +76,8 @@ if [ -x "$(command -v parallel)" ]; then
   echo 'GNU parallel is installed! Processing subjects in parallel using multiple cores.' >&2
   for site in ${SITES[@]}; do
     mkdir -p ${PATH_OUTPUT}/${site}
-    find ${PATH_DATA}/${site} -mindepth 1 -maxdepth 1 -type d | while read subject; do
-      subj_basename=`basename $subject`
+    find ${PATH_DATA}/${site} -mindepth 1 -maxdepth 1 -type d | while read site_subject; do
+      subject=`basename $site_subject`
       do_one_subject_parallel $subject
     done
   done \
@@ -88,7 +86,8 @@ else
   echo 'GNU parallel is not installed. Processing subjects sequentially.' >&2
   for site in ${SITES[@]}; do
     mkdir -p ${PATH_OUTPUT}/${site}
-    find ${PATH_DATA}/${site} -mindepth 1 -maxdepth 1 -type d | while read subject; do
+    find ${PATH_DATA}/${site} -mindepth 1 -maxdepth 1 -type d | while read site_subject; do
+      subject=`basename $site_subject`
       do_one_subject $subject
     done
   done
