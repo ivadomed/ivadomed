@@ -14,9 +14,12 @@ class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
     def __init__(self, input_filename, gt_filename, metadata):
         super().__init__(input_filename, gt_filename)
         self.metadata = metadata
+        self.metadata["input_filename"] = input_filename
+        self.metadata["gt_filename"] = gt_filename
 
     def get_pair_slice(self, slice_index, slice_axis=2):
         dreturn = super().get_pair_slice(slice_index, slice_axis)
+        self.metadata["slice_index"] = slice_index
         dreturn["input_metadata"]["bids_metadata"] = self.metadata
         return dreturn
 
@@ -43,11 +46,12 @@ class BidsDataset(MRI2DBidsSegDataset):
                 continue
             derivatives = subject.get_derivatives("labels")
             cord_label_filename = None
+
             for deriv in derivatives:
                 if deriv.endswith("seg-manual.nii.gz"):
                     cord_label_filename = deriv
+
             if cord_label_filename is None:
-                print("Subject without cord label.")
                 continue
 
             if not subject.has_metadata():

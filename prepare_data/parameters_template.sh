@@ -21,3 +21,4 @@ export PATH_DATA="${PATH_PARENT}/spineGeneric_multiSubjects"
 # Paths to where to save the new dataset.
 # Do not add "/" at the end. Path should be absolute (i.e. do not use "~")
 export PATH_OUTPUT="${PATH_PARENT}/spineGeneric_result"
+export PATH_QC="${PATH_PARENT}/spineGeneric_qc"

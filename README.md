@@ -2,7 +2,7 @@
 This is a repository for the collaboration between MILA and NeuroPoly for the IVADO project on medical imaging.
 
 ## Installing
-This project requires Python 3.6 and PyTorch >= 1.0, to install all requirements, please use `pip` as described below:
+This project requires Python 3.6 and PyTorch >= 1.0.1, to install all requirements, please use `pip` as described below:
 
 ```
 ~$ git clone https://github.com/neuropoly/ivado-medical-imaging.git
@@ -11,6 +11,38 @@ This project requires Python 3.6 and PyTorch >= 1.0, to install all requirements
 ```
 
 And all dependencies will be installed into your own system.
+
+## Training
+To train the network, use the `ivadomed` command-line tool that will be available on your path after installation, example below:
+
+```
+ivadomed configs/config.json
+```
+
+The `config.json` is a configuration example. During the training, you can open TensorBoard and it will show the following statistics and visualization:
+
+### TensorBoard - Validation Metrics
+These are the metrics computed for the validation dataset. It contains results for pixel-wise accuracy, Dice score, mIoU (mean intersection over union), pixel-wise precision, recall and specificity.
+![](/images/validation_metrics.png)
+
+### TensorBoard - Training set samples
+These are visualizations of the training samples (after data augmentation), their ground truths and predictions from the network.
+![](/images/train_vis.png)
+
+### TensorBoard - Validation set samples
+These are visualizations of the validation samples, their ground truths and predictions from the network.
+![](/images/validation_vis.png)
+
+### TensorBoard - Losses
+This is the visualization of the losses during the training (using 50 epochs in that example).
+![](/images/losses.png)
+
+## Baseline results
+If you use the `configs/config.json` file for training, it should produce the following metrics in the evaluation set:
+
+| Model    | Accuracy | Dice  | Haussdorf | mIoU  | Precision | Recall | Specificity |
+|----------|----------|-------|-----------|-------|-----------|--------|-------------|
+| Baseline | 99.85    | 95.42 | 1.193     | 91.67 | 94.92     | 96.07  | 99.92       |
 
 ## Data
 The working dataset is derived from the [Spinal Cord MRI Public Database](https://osf.io/76jkx/)
@@ -42,14 +74,6 @@ site/
 ~~~
 
 
-## Training
-To train the network, use the `ivadomed` command-line tool that will be available on your path after installation, example below:
-
-```
-ivadomed config.json
-```
-
-The `config.json` is a configuration example.
 
 ## Contributors
 [List of contributors](https://github.com/neuropoly/ivado-medical-imaging/graphs/contributors)
