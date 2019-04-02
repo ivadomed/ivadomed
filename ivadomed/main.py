@@ -46,9 +46,9 @@ def cmd_train(context):
                                       transform=train_transform,
                                       slice_filter_fn=mt_filters.SliceFilter())
         train_datasets.append(ds_train)
-        train_metadata.append(ds_train.metadata)
+        train_metadata.append(ds_train.metadata)  # store the metadata of the training data, used for fitting the clustering models
 
-    if context["film"]:
+    if context["film"]:  # normalize metadata before sending to the network
         metadata_clustering_models = loader.clustering_fit(train_metadata, ["RepetitionTime", "EchoTime", "FlipAngle"])
         train_datasets = loader.normalize_metadata(train_datasets, metadata_clustering_models, context["debugging"])
 
