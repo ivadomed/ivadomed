@@ -128,6 +128,10 @@ def cmd_train(context):
                                     transform=val_transform,
                                     slice_filter_fn=SliceFilter())
         validation_datasets.append(ds_val)
+
+    if context["film"]:  # normalize metadata before sending to network
+        validation_datasets = loader.normalize_metadata(validation_datasets, metadata_clustering_models, context["debugging"])
+
     ds_val = ConcatDataset(validation_datasets)
     print(f"Loaded {len(ds_val)} axial slices for the validation set.")
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
@@ -142,6 +146,10 @@ def cmd_train(context):
                                      transform=val_transform,
                                      slice_filter_fn=SliceFilter())
         test_datasets.append(ds_test)
+
+    if context["film"]:  # normalize metadata before sending to network
+        test_datasets = loader.normalize_metadata(test_datasets, metadata_clustering_models, context["debugging"])
+    
     ds_test = ConcatDataset(test_datasets)
     print(f"Loaded {len(ds_test)} axial slices for the test set.")
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
