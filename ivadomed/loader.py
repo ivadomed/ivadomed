@@ -106,8 +106,8 @@ def normalize_metadata(ds_lst_in, clustering_models, debugging):
         for idx, subject in enumerate(ds_in):
             s_out = deepcopy(subject)
 
-            flip_angle = subject["input_metadata"]["bids_metadata"]["FlipAngle"]
-            s_out["input_metadata"]["bids_metadata"]["FlipAngle"] = _rescale_value(value_in=flip_angle, range_in=[0.0, 360.0], range_out=[0.0, 90.0])
+            flip_angle = [subject["input_metadata"]["bids_metadata"]["FlipAngle"]]
+            s_out["input_metadata"]["bids_metadata"]["FlipAngle"] = clustering_models["FlipAngle"].predict(np.array(list(zip(flip_angle, np.zeros(1)))))[0]
 
             repetition_time = [subject["input_metadata"]["bids_metadata"]["RepetitionTime"]]
             s_out["input_metadata"]["bids_metadata"]["RepetitionTime"] = clustering_models["RepetitionTime"].predict(np.array(list(zip(repetition_time, np.zeros(1)))))[0]
@@ -125,7 +125,7 @@ def normalize_metadata(ds_lst_in, clustering_models, debugging):
             ds_out.append(s_out)
 
             if debugging:
-                print("\nFlip Angle: {} --> {}".format(flip_angle, s_out["input_metadata"]["bids_metadata"]["FlipAngle"]))
+                print("\nFlip Angle: {} --> {}".format(flip_angle[0], s_out["input_metadata"]["bids_metadata"]["FlipAngle"]))
                 print("Repetition Time: {} --> {}".format(repetition_time[0], s_out["input_metadata"]["bids_metadata"]["RepetitionTime"]))
                 print("Echo Time: {} --> {}".format(echo_time[0], s_out["input_metadata"]["bids_metadata"]["EchoTime"]))
                 print("Manufacturer: {} --> {}".format(manufacturer, s_out["input_metadata"]["bids_metadata"]["Manufacturer"]))

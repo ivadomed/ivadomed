@@ -49,7 +49,7 @@ def cmd_train(context):
         train_metadata.append(ds_train.metadata)
 
     if context["film"]:
-        metadata_clustering_models = loader.clustering_fit(train_metadata, ["RepetitionTime", "EchoTime"])
+        metadata_clustering_models = loader.clustering_fit(train_metadata, ["RepetitionTime", "EchoTime", "FlipAngle"])
         train_datasets = loader.normalize_metadata(train_datasets, metadata_clustering_models, context["debugging"])
 
     ds_train = ConcatDataset(train_datasets)
