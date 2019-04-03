@@ -22,15 +22,11 @@ PATH_QC=$4
 PATH_LOG=$5
 
 # Create BIDS architecture
-PATH_OUTPUT_wSITE=${PATH_OUTPUT}/${SITE}
 PATH_IN="`pwd`/${SUBJECT}/anat"
-ofolder_seg="${PATH_OUTPUT_wSITE}/derivatives/labels/${SUBJECT}/anat"
-ofolder_reg="${PATH_OUTPUT_wSITE}/${SUBJECT}/anat"
+ofolder_seg="${PATH_OUTPUT}/${SITE}/derivatives/labels/${SUBJECT}/anat"
+ofolder_reg="${PATH_OUTPUT}/${SITE}/${SUBJECT}/anat"
 mkdir -p ${ofolder_reg}
 mkdir -p ${ofolder_seg}
-
-# Go to output anat folder, where most of the outputs will be located
-cd ${ofolder_reg}
 
 # Set filenames
 file_t1w_mts="${SUBJECT}_acq-T1w_MTS"
@@ -40,10 +36,32 @@ file_t2w="${SUBJECT}_T2w"
 file_t2s="${SUBJECT}_T2star"
 file_t1w="${SUBJECT}_T1w"
 
-# Copy reference volume
-rsync -avzh ${PATH_IN}/${file_t1w_mts}.nii.gz .
+# Check if manual segmentation already exists. If it does, copy it locally. If it does not, perform seg.
+segment_if_does_not_exist(){
+  local file="$1"
+  local contrast="$2"
+  if [ -e "${PATH_SEGMANUAL}/${file}_seg_manual.nii.gz" ]; then
+    rsync -avzh ${PATH_SEGMANUAL}/${file}_seg_manual.nii.gz ${file}_seg.nii.gz
+  else
+    # Segment spinal cord
+    sct_deepseg_sc -i ${file}.nii.gz -c $contrast -qc ${PATH_QC}
+  fi
+  # Update global variable with segmentation file name
+  FILESEG="${file}_seg"
+}
 
-# Crop to because image quality is not good at the edge
+# Go to output anat folder, where most of the outputs will be located
+cd ${ofolder_reg}
+
+# Copy images from source database
+rsync -avzh ${PATH_IN}/${file_t1w_mts}.nii.gz .
+rsync -avzh ${PATH_IN}/${file_mton}.nii.gz .
+rsync -avzh ${PATH_IN}/${file_mtoff}.nii.gz .
+rsync -avzh ${PATH_IN}/${file_t2w}.nii.gz .
+rsync -avzh ${PATH_IN}/${file_t2s}.nii.gz .
+rsync -avzh ${PATH_IN}/${file_t1w}.nii.gz .
+
+# Crop to avoid imperfect slab profile at the edge (altered contrast)
 sct_crop_image -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_crop.nii.gz -start 3 -end -3 -dim 2
 file_t1w_mts="${file_t1w_mts}_crop"
 
@@ -51,107 +69,64 @@ file_t1w_mts="${file_t1w_mts}_crop"
 sct_resample -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_r.nii.gz -mm 0.5x0.5x5 -x spline
 file_t1w_mts="${file_t1w_mts}_r"
 
-# Check if manual segmentation already exists
-if [ -e "${ofolder_seg}/${file_t1w_mts}_seg_manual.nii.gz" ]; then
-  file_seg="${file_t1w_mts}_seg_manual"
-else
-  # Segment spinal cord
-  sct_deepseg_sc -i ${file_t1w_mts}.nii.gz -c t1 -ofolder ${ofolder_seg} -qc ${PATH_QC}
-  file_seg="${file_t1w_mts}_seg"
-fi
-
+# Segment spinal cord on T1w scan (only if it does not exist)
+segment_if_does_not_exist $file_t1w_mts "t1"
+file_seg=$FILESEG
+ 
 # Create mask
-sct_create_mask -i ${file_t1w_mts}.nii.gz -p centerline,"${ofolder_seg}/${file_seg}.nii.gz" -size 55mm -o ${file_t1w_mts}_mask.nii.gz
+sct_create_mask -i ${file_t1w_mts}.nii.gz -p centerline,${file_seg}.nii.gz -size 55mm -o ${file_t1w_mts}_mask.nii.gz
 
 # Image-based registrations of MToff and MTon to T1w_MTS scan
-sct_register_multimodal -i ${PATH_IN}/${file_mtoff}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${ofolder_seg}/${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
+sct_register_multimodal -i ${file_mtoff}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
 file_mtoff="${file_mtoff}_reg"
-sct_register_multimodal -i ${PATH_IN}/${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${ofolder_seg}/${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
+sct_register_multimodal -i ${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
 file_mton="${file_mton}_reg"
 
 # For some vendors, T2s scans are 4D. So we need to average them.
-sct_maths -i ${PATH_IN}/${file_t2s}.nii.gz -mean t -o ${file_t2s}_mean.nii.gz
+sct_maths -i ${file_t2s}.nii.gz -mean t -o ${file_t2s}_mean.nii.gz
 file_t2s="${file_t2s}_mean"
 
-# Put other scans in the same voxel space as the T1w_MTS volume (for SUBJECTsequent cord segmentation)
-sct_register_multimodal -i ${PATH_IN}/${file_t2w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
+# Put other scans in the same voxel space as the T1w_MTS volume (for subsequent cord segmentation)
+sct_register_multimodal -i ${file_t2w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
 file_t2w="${file_t2w}_reg"
 sct_register_multimodal -i ${file_t2s}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
 file_t2s="${file_t2s}_reg"
-sct_register_multimodal -i ${PATH_IN}/${file_t1w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
+sct_register_multimodal -i ${file_t1w}.nii.gz -d ${file_t1w_mts}.nii.gz -identity 1 -x spline
 file_t1w="${file_t1w}_reg"
 
 # Run segmentation on other scans
-if [ -e "${ofolder_seg}/${file_t2w}_seg_manual.nii.gz" ]; then
-  file_seg_t2w="${file_t2w}_seg_manual"
-else
-  # Segment spinal cord
-  sct_deepseg_sc -i ${file_t2w}.nii.gz -c t2 -ofolder ${ofolder_seg} -qc ${PATH_QC}
-  file_seg_t2w="${file_t2w}_seg"
-fi
-# T2s
-if [ -e "${ofolder_seg}/${file_t2s}_seg_manual.nii.gz" ]; then
-  file_seg_t2s="${file_t2s}_seg_manual"
-else
-  # Segment spinal cord
-  sct_deepseg_sc -i ${file_t2s}.nii.gz -c t2s -ofolder ${ofolder_seg} -qc ${PATH_QC}
-  file_seg_t2s="${file_t2s}_seg"
-fi
-# T1w
-if [ -e "${ofolder_seg}/${file_t1w}_seg_manual.nii.gz" ]; then
-  file_seg_t1w="${file_t1w}_seg_manual"
-else
-  # Segment spinal cord
-  sct_deepseg_sc -i ${file_t1w}.nii.gz -c t1 -ofolder ${ofolder_seg} -qc ${PATH_QC}
-  file_seg_t1w="${file_t1w}_seg"
-fi
+segment_if_does_not_exist $file_t2w "t2"
+file_seg_t2w=$FILESEG
+segment_if_does_not_exist $file_t2s "t2s"
+file_seg_t2s=$FILESEG
+segment_if_does_not_exist $file_t1w "t1"
+file_seg_t1w=$FILESEG
 
 # Registration of T2w, T2s and T1w to T1w_MTS scan
-sct_register_multimodal -i ${ofolder_seg}/${file_seg_t2w}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=centermass -x linear -ofolder ${ofolder_seg}
-sct_register_multimodal -i ${ofolder_seg}/${file_seg_t2s}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=centermass -x linear -ofolder ${ofolder_seg}
-sct_register_multimodal -i ${ofolder_seg}/${file_seg_t1w}.nii.gz -d ${ofolder_seg}/${file_seg}.nii.gz -param step=1,type=im,algo=centermass -x linear -ofolder ${ofolder_seg}
+sct_register_multimodal -i ${file_seg_t2w}.nii.gz -d ${file_seg}.nii.gz -param step=1,type=im,algo=centermass -x linear
+sct_register_multimodal -i ${file_seg_t2s}.nii.gz -d ${file_seg}.nii.gz -param step=1,type=im,algo=centermass -x linear
+sct_register_multimodal -i ${file_seg_t1w}.nii.gz -d ${file_seg}.nii.gz -param step=1,type=im,algo=centermass -x linear
 
 # Apply warping field to native files (to avoid 2x interpolation) -- use bspline interpolation
-sct_apply_transfo -i ${PATH_IN}/${SUBJECT}_T2w.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t2w}2${file_seg}.nii.gz
-sct_apply_transfo -i ${PATH_IN}/${SUBJECT}_T2star.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t2s}2${file_seg}.nii.gz
-sct_apply_transfo -i ${PATH_IN}/${SUBJECT}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w ${ofolder_seg}/warp_${file_seg_t1w}2${file_seg}.nii.gz
-
-# Copy json files and rename them
-rsync -avzh ${PATH_IN}/${SUBJECT}_acq-T1w_MTS.json ${file_t1w_mts}.json
-rsync -avzh ${PATH_IN}/${SUBJECT}_acq-MTon_MTS.json ${file_mton}.json
-rsync -avzh ${PATH_IN}/${SUBJECT}_acq-MToff_MTS.json ${file_mtoff}.json
-rsync -avzh ${PATH_IN}/${SUBJECT}_T2w.json ${file_t2w}.json
-rsync -avzh ${PATH_IN}/${SUBJECT}_T2star.json ${file_t2s}.json
-rsync -avzh ${PATH_IN}/${SUBJECT}_T1w.json ${file_t1w}.json
-rsync -avzh ${PATH_IN}/../../dataset_description.json ../../
-rsync -avzh ${PATH_IN}/../../participants.json ../../
-rsync -avzh ${PATH_IN}/../../participants.tsv ../../
+sct_apply_transfo -i ${SUBJECT}_T2w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2w}2${file_seg}.nii.gz
+sct_apply_transfo -i ${SUBJECT}_T2star.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2s}2${file_seg}.nii.gz
+sct_apply_transfo -i ${SUBJECT}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t1w}2${file_seg}.nii.gz
 
 # Average all segmentations together and then binarize. Note: we do not include the T2s because it only has 15 slices
-sct_image -i ${ofolder_seg}/${file_seg}.nii.gz,${ofolder_seg}/${file_seg_t1w}_reg.nii.gz,${ofolder_seg}/${file_seg_t2w}_reg.nii.gz -concat t -o ${ofolder_seg}/tmp.concat.nii.gz
-sct_maths -i ${ofolder_seg}/tmp.concat.nii.gz -mean t -o ${ofolder_seg}/tmp.concat_mean.nii.gz
-sct_maths -i ${ofolder_seg}/tmp.concat_mean.nii.gz -bin 0.5 -o ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz
-
-# Duplicate segmentation to be used by other contrasts
-cp ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz ${ofolder_seg}/${file_mtoff}_seg-manual.nii.gz
-cp ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz ${ofolder_seg}/${file_mton}_seg-manual.nii.gz
-cp ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz ${ofolder_seg}/${file_t2w}_seg-manual.nii.gz
-cp ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz ${ofolder_seg}/${file_t2s}_seg-manual.nii.gz
-cp ${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz ${ofolder_seg}/${file_t1w}_seg-manual.nii.gz
+sct_image -i ${file_seg}.nii.gz,${file_seg_t1w}_reg.nii.gz,${file_seg_t2w}_reg.nii.gz -concat t -o tmp.concat.nii.gz
+sct_maths -i tmp.concat.nii.gz -mean t -o tmp.concat_mean.nii.gz
+sct_maths -i tmp.concat_mean.nii.gz -bin 0.5 -o ${file_t1w_mts}_seg-manual.nii.gz
 
 # Verify presence of output files and write log file if error
 FILES_TO_CHECK=(
-  "${file_t1w_mts}.nii.gz"
-  "${file_mton}.nii.gz"
-  "${file_mtoff}.nii.gz"
-  "${file_t2w}.nii.gz"
-  "${file_t2s}.nii.gz"
-  "${file_t1w}.nii.gz"
-  "${ofolder_seg}/${file_seg_t2s}.nii.gz"
-  "${ofolder_seg}/${file_t1w_mts}_seg-manual.nii.gz"
+  "${file_seg}.nii.gz"
+  "${file_seg_t2w}.nii.gz"
+  "${file_seg_t2s}.nii.gz"
+  "${file_seg_t1w}.nii.gz"
+  "${file_t1w_mts}_seg-manual.nii.gz"
 )
 for file in ${FILES_TO_CHECK[@]}; do
   if [ ! -e $file ]; then
-    echo "${SITE}/${file} does not exist" >> $PATH_LOG/error.log
+    echo "${SITE}/${file} does not exist" >> $PATH_LOG/_error_prepare_data.log
   fi
 done
