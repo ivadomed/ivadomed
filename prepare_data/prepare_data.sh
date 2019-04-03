@@ -40,8 +40,8 @@ file_t1w="${SUBJECT}_T1w"
 segment_if_does_not_exist(){
   local file="$1"
   local contrast="$2"
-  if [ -e "${PATH_SEGMANUAL}/${file}_seg_manual.nii.gz" ]; then
-    rsync -avzh ${PATH_SEGMANUAL}/${file}_seg_manual.nii.gz ${file}_seg.nii.gz
+  if [ -e "${PATH_SEGMANUAL}/${SITE}/${file}_seg-manual.nii.gz" ]; then
+    rsync -avzh "${PATH_SEGMANUAL}/${SITE}/${file}_seg-manual.nii.gz" ${file}_seg.nii.gz
   else
     # Segment spinal cord
     sct_deepseg_sc -i ${file}.nii.gz -c $contrast -qc ${PATH_QC}
@@ -72,7 +72,7 @@ file_t1w_mts="${file_t1w_mts}_r"
 # Segment spinal cord on T1w scan (only if it does not exist)
 segment_if_does_not_exist $file_t1w_mts "t1"
 file_seg=$FILESEG
- 
+
 # Create mask
 sct_create_mask -i ${file_t1w_mts}.nii.gz -p centerline,${file_seg}.nii.gz -size 55mm -o ${file_t1w_mts}_mask.nii.gz
 
