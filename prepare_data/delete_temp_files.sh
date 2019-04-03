@@ -1,6 +1,8 @@
 #!/bin/bash
 #
 # Delete temporary files. Run this script once all files have been verified.
+# Usage:
+#   ./delete_temp_files.sh <SUBJECT> <SITE> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
 
 # Retrieve input params
 SUBJECT=$1
