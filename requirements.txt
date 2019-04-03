@@ -3,3 +3,4 @@ bids-neuropoly>=0.1
 medicaltorch>=0.2
 tensorboardX>=1.6
 tqdm>=4.30
+scikit-learn>=0.20.3

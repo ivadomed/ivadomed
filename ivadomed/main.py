@@ -102,14 +102,18 @@ def cmd_train(context):
 
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
-
-    # Training dataset --------------------------------------------------------
-    train_datasets = []
+    train_datasets, train_metadata = [], []
     for bids_ds in tqdm(context["bids_path_train"], desc="Loading training set"):
         ds_train = loader.BidsDataset(bids_ds,
                                       transform=train_transform,
                                       slice_filter_fn=SliceFilter())
         train_datasets.append(ds_train)
+        train_metadata.append(ds_train.metadata)  # store the metadata of the training data, used for fitting the clustering models
+
+    if context["film"]:  # normalize metadata before sending to the network
+        metadata_clustering_models = loader.clustering_fit(train_metadata, ["RepetitionTime", "EchoTime", "FlipAngle"])
+        train_datasets = loader.normalize_metadata(train_datasets, metadata_clustering_models, context["debugging"])
+
     ds_train = ConcatDataset(train_datasets)
     print(f"Loaded {len(ds_train)} axial slices for the training set.")
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
@@ -124,6 +128,10 @@ def cmd_train(context):
                                     transform=val_transform,
                                     slice_filter_fn=SliceFilter())
         validation_datasets.append(ds_val)
+
+    if context["film"]:  # normalize metadata before sending to network
+        validation_datasets = loader.normalize_metadata(validation_datasets, metadata_clustering_models, context["debugging"])
+
     ds_val = ConcatDataset(validation_datasets)
     print(f"Loaded {len(ds_val)} axial slices for the validation set.")
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
@@ -138,6 +146,10 @@ def cmd_train(context):
                                      transform=val_transform,
                                      slice_filter_fn=SliceFilter())
         test_datasets.append(ds_test)
+
+    if context["film"]:  # normalize metadata before sending to network
+        test_datasets = loader.normalize_metadata(test_datasets, metadata_clustering_models, context["debugging"])
+    
     ds_test = ConcatDataset(test_datasets)
     print(f"Loaded {len(ds_test)} axial slices for the test set.")
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
@@ -174,6 +186,7 @@ def cmd_train(context):
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
+            batch_metadata = batch["input_metadata"]
 
             # The variable sample_metadata is where the MRI phyisics parameters are,
             # to get the metadata for the first sample for example, just use:

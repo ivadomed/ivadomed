@@ -1,6 +1,14 @@
 from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
 
+from sklearn.cluster import MeanShift, estimate_bandwidth
+
+import numpy as np
+from copy import deepcopy
+
+
+MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
+
 
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
     def __init__(self, input_filename, gt_filename, metadata):
@@ -30,6 +38,7 @@ class BidsDataset(MRI2DBidsSegDataset):
                  canonical=False, labeled=True):
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
+        self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": [], "Manufacturer": []}
 
         for subject in self.bids_ds.get_subjects():
             if not subject.has_derivative("labels"):
@@ -53,17 +62,90 @@ class BidsDataset(MRI2DBidsSegDataset):
             if "FlipAngle" not in metadata:
                 print("{} without FlipAngle, skipping.".format(subject))
                 continue
+            else:
+                self.metadata["FlipAngle"].append(metadata["FlipAngle"])
 
             if "EchoTime" not in metadata:
                 print("{} without EchoTime, skipping.".format(subject))
                 continue
+            else:
+                self.metadata["EchoTime"].append(metadata["EchoTime"])
 
             if "RepetitionTime" not in metadata:
                 print("{} without RepetitionTime, skipping.".format(subject))
                 continue
+            else:
+                self.metadata["RepetitionTime"].append(metadata["RepetitionTime"])
+
+            if "Manufacturer" not in metadata:
+                print("{} without Manufacturer, skipping.".format(subject))
+                continue
+            else:
+                self.metadata["Manufacturer"].append(metadata["Manufacturer"])
 
             self.filename_pairs.append((subject.record.absolute_path,
                                         cord_label_filename, metadata))
 
         super().__init__(self.filename_pairs, slice_axis, cache,
                          transform, slice_filter_fn, canonical)
+
+
+def _rescale_value(value_in, range_in, range_out):
+    delta_in = range_in[1] - range_in[0]
+    delta_out = range_out[1] - range_out[0]
+    return (delta_out * (value_in - range_in[0]) / delta_in) + range_out[0]
+
+
+def clustering_fit(datasets, key_lst):
+    model_dct = {}
+    for k in key_lst:
+        k_data = [value for dataset in datasets for value in dataset[k]]
+        X = np.array(list(zip(k_data, np.zeros(len(k_data)))))  # format the data before sending to the clustering algo
+        bandwidth = estimate_bandwidth(X, quantile=0.1)  # estimate the bandwidth to use with the mean-shift algo
+        clf = MeanShift(bandwidth=bandwidth, bin_seeding=True)  # mean shift clustering using a flat kernel
+        clf.fit(X)
+        model_dct[k] = clf
+        del clf
+    return model_dct
+
+
+def normalize_metadata(ds_lst_in, clustering_models, debugging):
+    ds_lst_out = []
+    for ds_in in ds_lst_in:
+        ds_out = []
+        for idx, subject in enumerate(ds_in):
+            s_out = deepcopy(subject)
+
+            # categorize flip angle value using meanShift
+            flip_angle = [subject["input_metadata"]["bids_metadata"]["FlipAngle"]]
+            s_out["input_metadata"]["bids_metadata"]["FlipAngle"] = clustering_models["FlipAngle"].predict(np.array(list(zip(flip_angle, np.zeros(1)))))[0]
+
+            # categorize repetition time value using meanShift
+            repetition_time = [subject["input_metadata"]["bids_metadata"]["RepetitionTime"]]
+            s_out["input_metadata"]["bids_metadata"]["RepetitionTime"] = clustering_models["RepetitionTime"].predict(np.array(list(zip(repetition_time, np.zeros(1)))))[0]
+
+            # categorize echo time value using meanShift
+            echo_time = [subject["input_metadata"]["bids_metadata"]["EchoTime"]]
+            s_out["input_metadata"]["bids_metadata"]["EchoTime"] = clustering_models["EchoTime"].predict(np.array(list(zip(echo_time, np.zeros(1)))))[0]
+
+            # categorize manufacturer info based on the MANUFACTURER_CATEGORY dictionary
+            manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
+            if manufacturer in MANUFACTURER_CATEGORY:
+                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
+            else:
+                print("{} with unknown manufacturer.".format(subject))
+                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
+
+            ds_out.append(s_out)
+
+            if debugging:
+                print("\nFlip Angle: {} --> {}".format(flip_angle[0], s_out["input_metadata"]["bids_metadata"]["FlipAngle"]))
+                print("Repetition Time: {} --> {}".format(repetition_time[0], s_out["input_metadata"]["bids_metadata"]["RepetitionTime"]))
+                print("Echo Time: {} --> {}".format(echo_time[0], s_out["input_metadata"]["bids_metadata"]["EchoTime"]))
+                print("Manufacturer: {} --> {}".format(manufacturer, s_out["input_metadata"]["bids_metadata"]["Manufacturer"]))
+
+            del s_out, subject
+
+        ds_lst_out.append(ds_out)
+
+    return ds_lst_out
