@@ -92,3 +92,33 @@ class Unet(Module):
         preds = torch.sigmoid(x11)
 
         return preds
+
+
+class FiLMlayer(Module):
+    """Applies Feature-wise Linear Modulation to the incoming data as described
+    in the paper `FiLM: Visual Reasoning with a General Conditioning Layer`:
+        https://arxiv.org/abs/1709.07871
+    """
+    def __init__(self):
+        super(FilmLayer, self).__init__()
+
+        self.batch_size = None
+        self.channels = None
+        self.height = None
+        self.width = None
+        self.feature_size = None
+
+    def forward(self, feature_maps, context):
+        self.batch_size, self.channels, self.height, self.width = feature_maps.data.shape
+
+        self.feature_size = feature_maps.data.shape[1]
+
+        film_params = torch.stack([context]*self.height, dim=2)
+        film_params = torch.stack([context]*self.width, dim=3)
+
+        gammas = film_params[:, :self.feature_size, :, :]
+        betas = film_params[:, self.feature_size:, :, :]
+
+        output = gammas * feature_maps + betas
+
+        return output
