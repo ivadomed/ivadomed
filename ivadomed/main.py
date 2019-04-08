@@ -200,7 +200,10 @@ def cmd_train(context):
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
 
-            preds = model(var_input)
+            if context["film"]:
+                preds = model(var_input, sample_metadata)  # Input the metadata related to the input samples
+            else:
+                preds = model(var_input)
 
             loss = mt_losses.dice_loss(preds, var_gt)
             train_loss_total += loss.item()
