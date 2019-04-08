@@ -157,9 +157,14 @@ def cmd_train(context):
                              collate_fn=mt_datasets.mt_collate,
                              num_workers=1)
 
-    # Traditional U-Net model
-    model = models.Unet(drop_rate=context["dropout_rate"],
-                        bn_momentum=context["batch_norm_momentum"])
+    if context["film"]:
+        # Modulated U-net model with FiLM layers
+        model = models.FiLMedUnet(drop_rate=context["dropout_rate"],
+                            bn_momentum=context["batch_norm_momentum"])
+    else:
+        # Traditional U-Net model
+        model = models.Unet(drop_rate=context["dropout_rate"],
+                            bn_momentum=context["batch_norm_momentum"])
     model.cuda()
 
     num_epochs = context["num_epochs"]
@@ -186,15 +191,10 @@ def cmd_train(context):
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
-            batch_metadata = batch["input_metadata"]
 
             # The variable sample_metadata is where the MRI phyisics parameters are,
             # to get the metadata for the first sample for example, just use:
             # ---> bids_metadata_example = sample_metadata[0]["bids_metadata"]
-            #
-            # The variables: FlipAngle, EchoTime and RepetitionTime, will be
-            # used as input to the branch that will predict the FiLM parameters.
-
             sample_metadata = batch["input_metadata"]
 
             var_input = input_samples.cuda()
