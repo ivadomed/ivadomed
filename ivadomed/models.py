@@ -102,14 +102,12 @@ class FiLMlayer(Module):
     def __init__(self):
         super(FilmLayer, self).__init__()
 
-        self.batch_size = None
-        self.channels = None
         self.height = None
         self.width = None
         self.feature_size = None
 
     def forward(self, feature_maps, context):
-        self.batch_size, self.channels, self.height, self.width = feature_maps.data.shape
+        _, _, self.height, self.width = feature_maps.data.shape
 
         self.feature_size = feature_maps.data.shape[1]
 
@@ -122,3 +120,67 @@ class FiLMlayer(Module):
         output = gammas * feature_maps + betas
 
         return output
+
+
+class FiLMedUnet(Module):
+    def __init__(self, drop_rate=0.4, bn_momentum=0.1):
+        super(FiLMedUnet, self).__init__()
+
+        #Downsampling path
+        self.conv1 = DownConv(1, 64, drop_rate, bn_momentum)
+        self.film1 = FilmLayer().cuda()
+        self.mp1 = nn.MaxPool2d(2)
+
+        self.conv2 = DownConv(64, 128, drop_rate, bn_momentum)
+        self.film2 = FilmLayer().cuda()
+        self.mp2 = nn.MaxPool2d(2)
+
+        self.conv3 = DownConv(128, 256, drop_rate, bn_momentum)
+        self.film3 = FilmLayer().cuda()
+        self.mp3 = nn.MaxPool2d(2)
+
+        # Bottom
+        self.conv4 = DownConv(256, 256, drop_rate, bn_momentum)
+        self.film4 = FilmLayer().cuda()
+
+        # Upsampling path
+        self.up1 = UpConv(512, 256, drop_rate, bn_momentum)
+        self.film5 = FilmLayer().cuda()
+        self.up2 = UpConv(384, 128, drop_rate, bn_momentum)
+        self.film6 = FilmLayer().cuda()
+        self.up3 = UpConv(192, 64, drop_rate, bn_momentum)
+        self.film7 = FilmLayer().cuda()
+
+        self.conv9 = nn.Conv2d(64, 1, kernel_size=3, padding=1)
+        self.film8 = FilmLayer().cuda()
+
+    def forward(self, x, context):
+        x1 = self.conv1(x)
+        x2 = self.film1(x1, context)
+        x3 = self.mp1(x2)
+
+        x4 = self.conv2(x3)
+        x5 = self.film2(x4, context)
+        x6 = self.mp2(x5)
+
+        x7 = self.conv3(x6)
+        x8 = self.film3(x7, context)
+        x9 = self.mp3(x8)
+
+        # Bottom
+        x10 = self.conv4(x9)
+        x11 = self.film4(x10, context)
+
+        # Up-sampling
+        x12 = self.up1(x11, x8)
+        x13 = self.film5(x12, context)
+        x14 = self.up2(x13, x5)
+        x15 = self.film6(x14, context)
+        x16 = self.up3(x15, x2)
+        x17 = self.film7(x16, context)
+
+        x18 = self.conv9(x17)
+        x19 = self.film8(x18, context)
+        preds = torch.sigmoid(x19)
+
+        return preds
