@@ -195,13 +195,14 @@ def cmd_train(context):
             # The variable sample_metadata is where the MRI phyisics parameters are,
             # to get the metadata for the first sample for example, just use:
             # ---> bids_metadata_example = sample_metadata[0]["bids_metadata"]
-            sample_metadata = batch["input_metadata"].cuda()
+            sample_metadata = batch["input_metadata"]
 
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
+            var_metadata = sample_metadata.cuda()
 
             if context["film"]:
-                preds = model(var_input, sample_metadata)  # Input the metadata related to the input samples
+                preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
             else:
                 preds = model(var_input)
 
@@ -252,12 +253,18 @@ def cmd_train(context):
 
         for i, batch in enumerate(val_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
+            sample_metadata = batch["input_metadata"].cuda()
 
             with torch.no_grad():
                 var_input = input_samples.cuda()
                 var_gt = gt_samples.cuda(non_blocking=True)
+                var_metadata = sample_metadata.cuda()
 
-                preds = model(var_input)
+                if context["film"]:
+                    preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
+                else:
+                    preds = model(var_input)
+
                 loss = mt_losses.dice_loss(preds, var_gt)
                 val_loss_total += loss.item()
 
