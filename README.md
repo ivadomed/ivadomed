@@ -50,6 +50,8 @@ If you use the `configs/config.json` file for training, it should produce the fo
 |----------|----------|-------|-----------|-------|-----------|--------|-------------|
 | Baseline | 99.85    | 95.42 | 1.193     | 91.67 | 94.92     | 96.07  | 99.92       |
 
+For more details on the meaning of the evaluation metrics, please see [Prados et al. (look for: Validation Metrics)](https://www.sciencedirect.com/science/article/pii/S1053811917302185#s0050).
+
 ## Data
 
 The working dataset is derived from the [Spinal Cord MRI Public Database](https://osf.io/76jkx/). The processed dataset that should be used for training the model is available [here](https://osf.io/agp3q/). When training a model, make sure to indicate the [checksum SH2](https://osf.io/agp3q/?show=revision) inside the `config.json` file.
