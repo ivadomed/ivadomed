@@ -195,7 +195,7 @@ def cmd_train(context):
             # The variable sample_metadata is where the MRI phyisics parameters are,
             # to get the metadata for the first sample for example, just use:
             # ---> bids_metadata_example = sample_metadata[0]["bids_metadata"]
-            sample_metadata = batch["input_metadata"]
+            sample_metadata = batch["input_metadata"].cuda()
 
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
