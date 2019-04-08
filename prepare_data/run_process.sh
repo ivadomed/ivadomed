@@ -25,6 +25,15 @@ Green='\033[0;92m'  # Yellow
 Red='\033[0;91m'  # Red
 On_Black='\033[40m'  # Black
 
+create_folder() {
+  local folder="$1"
+  mkdir -p $folder  # "-p" creates parent folders if needed
+  if [ ! -d "$folder" ]; then
+    printf "\n${Red}${On_Black}ERROR: Cannot create folder: $folder. Exit.${Color_Off}\n\n"
+    exit 1
+  fi
+}
+
 # Initialization
 unset SITES
 # unset SUBJECTS
@@ -51,25 +60,9 @@ else
 fi
 echo "--> " ${SITES[@]}
 
-# Create output folder folder ("-p" creates parent folders if needed)
-mkdir -p ${PATH_OUTPUT}
-mkdir -p ${PATH_LOG}
-
-if [ ! -d "$PATH_OUTPUT" ]; then
-  printf "\n${Red}${On_Black}ERROR: Cannot create folder: $PATH_OUTPUT. Exit.${Color_Off}\n\n"
-  exit 1
-fi
-
-# Processing of one subject
-do_one_subject_parallel() {
-  local subject="$1"
-  echo "cd ${PATH_DATA}/${site}; ${task} $(basename $subject) $site $PATH_OUTPUT $PATH_QC $PATH_LOG > ${PATH_LOG}/${site}_${subject}.log"
-}
-do_one_subject() {
-  local subject="$1"
-  cd ${PATH_DATA}/${site}
-  ${task} $(basename $subject) $PATH_OUTPUT $PATH_QC $PATH_LOG > ${PATH_LOG}/${site}_${subject}.log
-}
+# Create folders
+create_folder $PATH_LOG
+create_folder $PATH_OUTPUT
 
 # Run processing with or without "GNU parallel", depending if it is installed or not
 if [ -x "$(command -v parallel)" ]; then
@@ -78,7 +71,7 @@ if [ -x "$(command -v parallel)" ]; then
     mkdir -p ${PATH_OUTPUT}/${site}
     find ${PATH_DATA}/${site} -mindepth 1 -maxdepth 1 -type d | while read site_subject; do
       subject=`basename $site_subject`
-      do_one_subject_parallel $subject
+      echo "cd ${PATH_DATA}/${site}; ${task} $(basename $subject) $site $PATH_OUTPUT $PATH_QC $PATH_LOG > ${PATH_LOG}/${site}_${subject}.log"
     done
   done \
   | parallel -j ${JOBS} --halt-on-error soon,fail=1 sh -c "{}"
@@ -88,7 +81,8 @@ else
     mkdir -p ${PATH_OUTPUT}/${site}
     find ${PATH_DATA}/${site} -mindepth 1 -maxdepth 1 -type d | while read site_subject; do
       subject=`basename $site_subject`
-      do_one_subject $subject
+      cd ${PATH_DATA}/${site}
+      ${task} $(basename $subject) $PATH_OUTPUT $PATH_QC $PATH_LOG > ${PATH_LOG}/${site}_${subject}.log
     done
   done
 fi
