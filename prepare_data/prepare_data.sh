@@ -53,6 +53,9 @@ segment_if_does_not_exist(){
 # Go to output anat folder, where most of the outputs will be located
 cd ${ofolder_reg}
 
+# Work in a local temp directory (more convenient)
+mkdir tmp; cd tmp
+
 # Copy images from source database
 rsync -avzh ${PATH_IN}/${file_t1w_mts}.nii.gz .
 rsync -avzh ${PATH_IN}/${file_mton}.nii.gz .
@@ -77,9 +80,9 @@ file_seg=$FILESEG
 sct_create_mask -i ${file_t1w_mts}.nii.gz -p centerline,${file_seg}.nii.gz -size 55mm -o ${file_t1w_mts}_mask.nii.gz
 
 # Image-based registrations of MToff and MTon to T1w_MTS scan
-sct_register_multimodal -i ${file_mtoff}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
+sct_register_multimodal -i ${file_mtoff}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline
 file_mtoff="${file_mtoff}_reg"
-sct_register_multimodal -i ${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline -qc ${PATH_QC}
+sct_register_multimodal -i ${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline
 file_mton="${file_mton}_reg"
 
 # For some vendors, T2s scans are 4D. So we need to average them.
@@ -102,7 +105,7 @@ file_seg_t2s=$FILESEG
 segment_if_does_not_exist $file_t1w "t1"
 file_seg_t1w=$FILESEG
 
-# Registration of T2w, T2s and T1w to T1w_MTS scan
+# Registration of T2w, T2s and T1w to T1w_MTS scan using the segmentations
 sct_register_multimodal -i ${file_seg_t2w}.nii.gz -d ${file_seg}.nii.gz -param step=1,type=im,algo=slicereg -x linear
 sct_register_multimodal -i ${file_seg_t2s}.nii.gz -d ${file_seg}.nii.gz -param step=1,type=im,algo=slicereg -x linear
 sct_register_multimodal -i ${file_seg_t1w}.nii.gz -d ${file_seg}.nii.gz -param step=1,type=im,algo=slicereg -x linear
@@ -110,12 +113,14 @@ sct_register_multimodal -i ${file_seg_t1w}.nii.gz -d ${file_seg}.nii.gz -param s
 # Apply warping field to native files (to avoid 2x interpolation) -- use bspline interpolation
 sct_apply_transfo -i ${SUBJECT}_T2w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2w}2${file_seg}.nii.gz
 sct_apply_transfo -i ${SUBJECT}_T2star.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2s}2${file_seg}.nii.gz
-sct_apply_transfo -i ${SUBJECT}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t1w}2${file_seg}.nii.gz
+sct_apply_transfo -i ${SUBJECT}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t1w}2${file_seg}.nii.gz -o ${SUBJECT}_T1w_reg.nii.gz
 
 # Average all segmentations together and then binarize. Note: we do not include the T2s because it only has 15 slices
 sct_image -i ${file_seg}.nii.gz,${file_seg_t1w}_reg.nii.gz,${file_seg_t2w}_reg.nii.gz -concat t -o tmp.concat.nii.gz
 sct_maths -i tmp.concat.nii.gz -mean t -o tmp.concat_mean.nii.gz
 sct_maths -i tmp.concat_mean.nii.gz -bin 0.5 -o ${file_t1w_mts}_seg-manual.nii.gz
+
+# TODO: QC
 
 # Verify presence of output files and write log file if error
 FILES_TO_CHECK=(
