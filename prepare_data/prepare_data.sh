@@ -111,9 +111,9 @@ sct_register_multimodal -i ${file_seg_t2s}.nii.gz -d ${file_seg}.nii.gz -param s
 sct_register_multimodal -i ${file_seg_t1w}.nii.gz -d ${file_seg}.nii.gz -param step=1,type=im,algo=slicereg -x linear
 
 # Apply warping field to native files (to avoid 2x interpolation) -- use bspline interpolation
-sct_apply_transfo -i ${SUBJECT}_T2w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2w}2${file_seg}.nii.gz
-sct_apply_transfo -i ${SUBJECT}_T2star.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2s}2${file_seg}.nii.gz
-sct_apply_transfo -i ${SUBJECT}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t1w}2${file_seg}.nii.gz -o ${SUBJECT}_T1w_reg.nii.gz
+sct_apply_transfo -i ${SUBJECT}_T2w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2w}2${file_seg}.nii.gz -o ../${SUBJECT}_T2w_reg.nii.gz
+sct_apply_transfo -i ${SUBJECT}_T2star.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2s}2${file_seg}.nii.gz -o ../${SUBJECT}_T2star_reg.nii.gz
+sct_apply_transfo -i ${SUBJECT}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t1w}2${file_seg}.nii.gz -o ../${SUBJECT}_T1w_reg.nii.gz
 
 # Average all segmentations together and then binarize. Note: we do not include the T2s because it only has 15 slices
 sct_image -i ${file_seg}.nii.gz,${file_seg_t1w}_reg.nii.gz,${file_seg_t2w}_reg.nii.gz -concat t -o tmp.concat.nii.gz
