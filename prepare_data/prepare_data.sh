@@ -44,7 +44,7 @@ segment_if_does_not_exist(){
     rsync -avzh "${PATH_SEGMANUAL}/${SITE}/${file}_seg-manual.nii.gz" ${file}_seg.nii.gz
   else
     # Segment spinal cord
-    sct_deepseg_sc -i ${file}.nii.gz -c $contrast -qc ${PATH_QC}
+    sct_deepseg_sc -i ${file}.nii.gz -c $contrast -qc ${PATH_QC} -qc-dataset ${SITE} -qc-subject ${SUBJECT}
   fi
   # Update global variable with segmentation file name
   FILESEG="${file}_seg"
