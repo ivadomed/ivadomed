@@ -22,7 +22,7 @@ In its current state, this pipeline uses [SCT development version](https://githu
 
 **Manually correct the segmentations:**
 
-Check the following files:
+Check the following files under e.g. `result/balgrist_spineGeneric/sub-01/anat/tmp`:
 
 | Image  | Segmentation  |
 |:---|:---|
