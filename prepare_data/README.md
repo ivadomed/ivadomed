@@ -8,19 +8,32 @@ In its current state, this pipeline uses [SCT development version](https://githu
 
 ## How to run
 
+#### Initial steps, check for folder integrity
+
 - Copy the file `parameters_template.sh` and rename it as `parameters.sh`.
 - Edit the file `parameters.sh` and modify the variables according to your needs.
-- Make sure input files are present: `./run_process.sh check_input_files.sh`
-- Process data: `./run_process.sh prepare_data.sh`
+- Make sure input files are present:
+~~~
+./run_process.sh check_input_files.sh
+~~~
 
-**Perform QC:**
+#### Run first processing
+
+Loop across subjects and run full processing:
+
+~~~
+./run_process.sh prepare_data.sh
+~~~
+
+#### Perform QC
+
 - Open qc/index.html
 - Search only for "deepseg" QC entries (use "search" field)
 - Take a screenshot of the browser when you spot a problem (wait for the segmentation to appear before taking the screenshot)
 - If the data are of **very** bad quality, also take a screenshot (this time, wait for the segmentation to disappear)
 - Copy all screenshots under qc_feedback/
 
-**Manually correct the segmentations:**
+#### Manually correct the segmentations
 
 Check the following files under e.g. `result/balgrist_spineGeneric/sub-01/anat/tmp`:
 
@@ -36,4 +49,30 @@ Check the following files under e.g. `result/balgrist_spineGeneric/sub-01/anat/t
 - Save with suffix `-manual`.
 - Move to a folder named seg_manual/$SITE/$FILENAME. E.g.: `spineGeneric_201903031331/seg_manual/amu_spineGeneric/sub-01_acq-T1w_MTS_crop_r_seg-manual.nii.gz`
 
-Once QC and manual correction is done, re-run processing and then delete useless files, copy json sidecars, move segmentations to derivatives/: `./run_process.sh delete_temp_files.sh`
+#### Re-run processing (using manually-corrected segmentations)
+
+Make sure to udpate the field `PATH_SEGMANUAL` in the file `parameters.sh`, then re-run:
+
+~~~
+./run_process.sh prepare_data.sh
+~~~
+
+#### Copy files, final QC
+
+Copy final files to anat/, copy json sidecars, move segmentations to derivatives/ and generate another QC:
+
+~~~
+./run_process.sh final_qc.sh
+~~~
+
+- Open the new QC: qc2/index.html
+- Make sure that the final segmentation properly overlays on each contrast and that each contrast has sufficient image quality.
+- If you spot any problem, take a screenshot of the browser and copy screenshots under qc2_feedback/
+
+#### Clean temporary files
+
+Once QC and manual correction is done, remove tmp/ folder:
+
+~~~
+./run_process.sh delete_temp_files.sh
+~~~
