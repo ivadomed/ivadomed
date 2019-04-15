@@ -66,7 +66,10 @@ Copy final files to anat/, copy json sidecars, move segmentations to derivatives
 ~~~
 
 - Open the new QC: qc2/index.html
-- Make sure that the final segmentation properly overlays on each contrast and that each contrast has sufficient image quality.
+- Make sure that:
+  - the final segmentation properly overlays on each contrast,
+  - there is no missing slice (can happen for t2s data),
+  - each contrast has sufficient image quality.
 - If you spot any problem, take a screenshot of the browser and copy screenshots under qc2_feedback/
 
 #### Clean temporary files
