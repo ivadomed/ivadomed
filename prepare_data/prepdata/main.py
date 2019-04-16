@@ -33,21 +33,23 @@ def remove_slice(fname_im, fname_seg):
             z_top = iz
         else:
             break
-    # Remove edge slices
-    data_im_crop = data_im[..., z_bottom:z_top]
-    data_seg_crop = data_seg[..., z_bottom:z_top]
-    # Calculate the translation (in voxel space)
-    translation_vox = [0, 0, z_bottom]
-    # Update affine transformation, accounting for the number of slices removed (voxel coordinate system is shifted)
-    transfo = affine_im[0:3, 0:3]
-    translation = np.dot(transfo, np.transpose(translation_vox))
-    affine_im_new = np.copy(affine_im)
-    affine_im_new[0:3, 3] = affine_im_new[0:3, 3] + translation
-    # Overwrite image and segmentation
-    nii_im_new = nib.Nifti1Image(data_im_crop, affine_im_new)
-    nib.save(nii_im_new, fname_im)
-    nii_seg_new = nib.Nifti1Image(data_seg_crop, affine_im_new)
-    nib.save(nii_seg_new, fname_seg)
+    # If some slices are empty, crop image and segmentation
+    if z_bottom or z_top:
+        # Remove edge slices
+        data_im_crop = data_im[..., z_bottom:z_top]
+        data_seg_crop = data_seg[..., z_bottom:z_top]
+        # Calculate the translation (in voxel space)
+        translation_vox = [0, 0, z_bottom]
+        # Update affine transformation, accounting for the number of slices removed (voxel coordinate system is shifted)
+        transfo = affine_im[0:3, 0:3]
+        translation = np.dot(transfo, np.transpose(translation_vox))
+        affine_im_new = np.copy(affine_im)
+        affine_im_new[0:3, 3] = affine_im_new[0:3, 3] + translation
+        # Overwrite image and segmentation
+        nii_im_new = nib.Nifti1Image(data_im_crop, affine_im_new)
+        nib.save(nii_im_new, fname_im)
+        nii_seg_new = nib.Nifti1Image(data_seg_crop, affine_im_new)
+        nib.save(nii_seg_new, fname_seg)
 
 
 def run_main():
