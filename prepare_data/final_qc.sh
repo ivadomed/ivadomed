@@ -5,7 +5,7 @@
 #   ./delete_temp_files.sh <SUBJECT> <SITE> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
 #
 # For full verbose, uncomment the next line
-# set -x
+set -x
 
 # Retrieve input params
 SUBJECT=$1
@@ -55,6 +55,19 @@ rsync -avzh tmp/${file_t1w_mts}_crop_r_seg-manual.nii.gz ${ofolder_seg}/${file_m
 rsync -avzh tmp/${file_t1w_mts}_crop_r_seg-manual.nii.gz ${ofolder_seg}/${file_t2w}_seg-manual.nii.gz
 rsync -avzh tmp/${file_t1w_mts}_crop_r_seg-manual.nii.gz ${ofolder_seg}/${file_t2s}_seg-manual.nii.gz
 rsync -avzh tmp/${file_t1w_mts}_crop_r_seg-manual.nii.gz ${ofolder_seg}/${file_t1w}_seg-manual.nii.gz
+
+# Remove empty slices at the edge
+FILES=(
+  "${file_t1w_mts}"
+  "${file_mton}"
+  "${file_mtoff}"
+  "${file_t2w}"
+  "${file_t2s}"
+  "${file_t1w}"
+)
+for file in ${FILES[@]}; do
+  prepdata -i ${file}.nii.gz -s ${ofolder_seg}/${file}_seg-manual.nii.gz remove-slice
+done
 
 # Copy json files and rename them
 rsync -avzh ${PATH_IN}/${SUBJECT}_acq-T1w_MTS.json ${file_t1w_mts}.json
