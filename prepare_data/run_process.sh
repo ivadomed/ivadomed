@@ -82,7 +82,7 @@ else
     find ${PATH_DATA}/${site} -mindepth 1 -maxdepth 1 -type d | while read site_subject; do
       subject=`basename $site_subject`
       cd ${PATH_DATA}/${site}
-      ${task} $(basename $subject) $PATH_OUTPUT $PATH_QC $PATH_LOG >> ${PATH_LOG}/${site}_${subject}.log
+      ${task} $(basename $subject) $site $PATH_OUTPUT $PATH_QC $PATH_LOG >> ${PATH_LOG}/${site}_${subject}.log
     done
   done
 fi
