@@ -36,7 +36,7 @@ class BidsDataset(MRI2DBidsSegDataset):
     def __init__(self, root_dir, slice_axis=2, cache=True,
                  transform=None, slice_filter_fn=None,
                  canonical=False, labeled=True):
-        print(root_dir)
+
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
         self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": [], "Manufacturer": []}
@@ -137,13 +137,14 @@ def normalize_metadata(ds_lst_in, clustering_models, debugging):
                 print("{} with unknown manufacturer.".format(subject))
                 s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
 
-            ds_out.append(s_out)
-
             if debugging:
                 print("\nFlip Angle: {} --> {}".format(flip_angle[0], s_out["input_metadata"]["bids_metadata"]["FlipAngle"]))
                 print("Repetition Time: {} --> {}".format(repetition_time[0], s_out["input_metadata"]["bids_metadata"]["RepetitionTime"]))
                 print("Echo Time: {} --> {}".format(echo_time[0], s_out["input_metadata"]["bids_metadata"]["EchoTime"]))
                 print("Manufacturer: {} --> {}".format(manufacturer, s_out["input_metadata"]["bids_metadata"]["Manufacturer"]))
+
+            s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
+            ds_out.append(s_out)
 
             del s_out, subject
 
