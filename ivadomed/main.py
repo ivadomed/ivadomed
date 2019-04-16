@@ -149,7 +149,7 @@ def cmd_train(context):
 
     if context["film"]:  # normalize metadata before sending to network
         test_datasets = loader.normalize_metadata(test_datasets, metadata_clustering_models, context["debugging"])
-    
+
     ds_test = ConcatDataset(test_datasets)
     print(f"Loaded {len(ds_test)} axial slices for the test set.")
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
@@ -199,7 +199,7 @@ def cmd_train(context):
 
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
-            var_metadata = sample_metadata.cuda()
+            var_metadata = sample_metadata
 
             if context["film"]:
                 preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
@@ -258,7 +258,7 @@ def cmd_train(context):
             with torch.no_grad():
                 var_input = input_samples.cuda()
                 var_gt = gt_samples.cuda(non_blocking=True)
-                var_metadata = sample_metadata.cuda()
+                var_metadata = sample_metadata
 
                 if context["film"]:
                     preds = model(var_input, var_metadata)  # Input the metadata related to the input samples

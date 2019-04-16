@@ -12,8 +12,7 @@
 		"../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/perform_spineGeneric",
 		"../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/sherbrooke_spineGeneric",
 		"../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/ucl_spineGeneric",
-		"../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/unf_spineGeneric",
-		"../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/zurich_spineGeneric"
+		"../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/unf_spineGeneric"
 	],
 	"bids_path_test": [
 		"../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/barcelona_spineGeneric"
