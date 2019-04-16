@@ -159,8 +159,8 @@ def cmd_train(context):
 
     if context["film"]:
         # Modulated U-net model with FiLM layers
-        print(len(train_metadata.keys()))
-        model = models.FiLMedUnet(n_metadata=len(train_metadata.keys()),
+        print(len(train_metadata[0].keys()))
+        model = models.FiLMedUnet(n_metadata=len(train_metadata[0].keys()),
                             drop_rate=context["dropout_rate"],
                             bn_momentum=context["batch_norm_momentum"])
     else:
@@ -201,8 +201,8 @@ def cmd_train(context):
 
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
-            var_metadata = sample_metadata
-
+            var_metadata = [sample_metadata[k]['bids_metadata'] for k in range(len(sample_metadata))]
+            print(var_metadata)
             if context["film"]:
                 preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
             else:
