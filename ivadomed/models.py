@@ -95,7 +95,7 @@ class Unet(Module):
 
 
 class MLP(Module):
-    def __init__(self, n_features, drop_rate=0.25, n_hid=64):
+    def __init__(self, n_features, n_channels, drop_rate=0.25, n_hid=64):
         super(MLP, self).__init__()
         self.model = nn.Sequential(
             nn.Dropout(drop_rate),
@@ -107,7 +107,7 @@ class MLP(Module):
             nn.ReLU(),
             nn.BatchNorm1d(n_hid // 4),
             nn.Dropout(drop_rate),
-            nn.Linear(n_hid // 4, 2),
+            nn.Linear(n_hid // 4, n_channels * 2),
         )
         for m in self.model:
             if isinstance(m, nn.Linear):
