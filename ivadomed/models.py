@@ -123,7 +123,7 @@ class FiLMlayer(Module):
     in the paper `FiLM: Visual Reasoning with a General Conditioning Layer`:
         https://arxiv.org/abs/1709.07871
     """
-    def __init__(self, n_metadata; n_channels):
+    def __init__(self, n_metadata, n_channels):
         super(FiLMlayer, self).__init__()
 
         self.batch_size = None
@@ -138,22 +138,14 @@ class FiLMlayer(Module):
         self.feature_size = feature_maps.data.shape[1]
 
         context = torch.Tensor(context).cuda()
-        print(context.size())
 
         film_params = self.generator(context)
-        print(film_params.size())
-        print(film_params.data[0,:])
         film_params = film_params.unsqueeze(-1).unsqueeze(-1)
-        print(film_params.size())
         film_params = film_params.repeat(1, 1, self.height, self.width)
-        print(film_params.size())
-        print(film_params.data[0,0,:])
 
-        gammas = film_params[:, 0, :, :]
-        betas = film_params[:, 1, :, :]
-        print(gammas.size())
-        print(betas.size())
-        print(feature_maps.size())
+        gammas = film_params[:, : self.feature_size, :, :]
+        betas = film_params[:, self.feature_size :, :, :]
+        print(gammas.data[0,0,0,0], betas.data[0,0,0,0])
         output = gammas * feature_maps + betas
 
         return output
