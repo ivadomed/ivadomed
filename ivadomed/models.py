@@ -145,7 +145,7 @@ class FiLMlayer(Module):
 
         gammas = film_params[:, : self.feature_size, :, :]
         betas = film_params[:, self.feature_size :, :, :]
-        print(gammas.data[0,0,0,0], betas.data[0,0,0,0])
+
         output = gammas * feature_maps + betas
 
         return output

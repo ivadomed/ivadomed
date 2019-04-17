@@ -202,7 +202,7 @@ def cmd_train(context):
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
             var_metadata = [sample_metadata[k]['bids_metadata'] for k in range(len(sample_metadata))]
-            print(var_metadata)
+
             if context["film"]:
                 preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
             else:
@@ -255,12 +255,12 @@ def cmd_train(context):
 
         for i, batch in enumerate(val_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
-            sample_metadata = batch["input_metadata"].cuda()
+            sample_metadata = batch["input_metadata"]
 
             with torch.no_grad():
                 var_input = input_samples.cuda()
                 var_gt = gt_samples.cuda(non_blocking=True)
-                var_metadata = sample_metadata
+                var_metadata = [sample_metadata[k]['bids_metadata'] for k in range(len(sample_metadata))]
 
                 if context["film"]:
                     preds = model(var_input, var_metadata)  # Input the metadata related to the input samples

@@ -19,5 +19,5 @@
 	"initial_lr": 0.001,
 	"log_directory": "log_baseline",
 	"film": true,
-        "debugging": true
+        "debugging": false
 }
