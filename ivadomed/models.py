@@ -123,14 +123,14 @@ class FiLMlayer(Module):
     in the paper `FiLM: Visual Reasoning with a General Conditioning Layer`:
         https://arxiv.org/abs/1709.07871
     """
-    def __init__(self, n_metadata):
+    def __init__(self, n_metadata; n_channels):
         super(FiLMlayer, self).__init__()
 
         self.batch_size = None
         self.height = None
         self.width = None
         self.feature_size = None
-        self.generator = MLP(n_metadata)
+        self.generator = MLP(n_metadata, n_channels)
 
     def forward(self, feature_maps, context):
         self.batch_size, _, self.height, self.width = feature_maps.data.shape
@@ -165,31 +165,31 @@ class FiLMedUnet(Module):
 
         #Downsampling path
         self.conv1 = DownConv(1, 64, drop_rate, bn_momentum)
-        self.film1 = FiLMlayer(n_metadata).cuda()
+        self.film1 = FiLMlayer(n_metadata, 64).cuda()
         self.mp1 = nn.MaxPool2d(2)
 
         self.conv2 = DownConv(64, 128, drop_rate, bn_momentum)
-        self.film2 = FiLMlayer(n_metadata).cuda()
+        self.film2 = FiLMlayer(n_metadata, 128).cuda()
         self.mp2 = nn.MaxPool2d(2)
 
         self.conv3 = DownConv(128, 256, drop_rate, bn_momentum)
-        self.film3 = FiLMlayer(n_metadata).cuda()
+        self.film3 = FiLMlayer(n_metadata, 256).cuda()
         self.mp3 = nn.MaxPool2d(2)
 
         # Bottom
         self.conv4 = DownConv(256, 256, drop_rate, bn_momentum)
-        self.film4 = FiLMlayer(n_metadata).cuda()
+        self.film4 = FiLMlayer(n_metadata, 256).cuda()
 
         # Upsampling path
         self.up1 = UpConv(512, 256, drop_rate, bn_momentum)
-        self.film5 = FiLMlayer(n_metadata).cuda()
+        self.film5 = FiLMlayer(n_metadata, 256).cuda()
         self.up2 = UpConv(384, 128, drop_rate, bn_momentum)
-        self.film6 = FiLMlayer(n_metadata).cuda()
+        self.film6 = FiLMlayer(n_metadata, 128).cuda()
         self.up3 = UpConv(192, 64, drop_rate, bn_momentum)
-        self.film7 = FiLMlayer(n_metadata).cuda()
+        self.film7 = FiLMlayer(n_metadata, 64).cuda()
 
         self.conv9 = nn.Conv2d(64, 1, kernel_size=3, padding=1)
-        self.film8 = FiLMlayer(n_metadata).cuda()
+        self.film8 = FiLMlayer(n_metadata, 1).cuda()
 
     def forward(self, x, context):
         x1 = self.conv1(x)
