@@ -36,7 +36,7 @@ class BidsDataset(MRI2DBidsSegDataset):
     def __init__(self, root_dir, slice_axis=2, cache=True,
                  transform=None, slice_filter_fn=None,
                  canonical=False, labeled=True):
-        print(root_dir)
+
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
         self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": [], "Manufacturer": []}

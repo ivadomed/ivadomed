@@ -6,7 +6,6 @@
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/balgrist_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/nottwil_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/sherbrooke_spineGeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/ucl_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/nwu_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/stanford_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/unf_spineGeneric",
@@ -15,23 +14,18 @@
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/milan_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/mni_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/brno_spineGeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/brno-prisma_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/oxford-ohba_spineGeneric",
+            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/tokyo-750w_spineGeneric",
+            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/tokyo-ingenia_spineGeneric"
+	],
+	"bids_path_validation": [
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/tokyo-skyra_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/juntendo-750w_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/oxford-fmrib_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/vall-hebron_spineGeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/tokyo-750w_spineGeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/tokyo-ingenia_spineGeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/vuiis-ingenia_spineGeneric"
-	],
-	"bids_path_validation": [
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/geneva_spinegeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/vuiis-achieva_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/cardiff_spineGeneric"
 	],
 	"bids_path_test": [
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/queensland_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/barcelona_spineGeneric"
 	],
 	"batch_size": 18,

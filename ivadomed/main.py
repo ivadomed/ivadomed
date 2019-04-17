@@ -159,7 +159,6 @@ def cmd_train(context):
 
     if context["film"]:
         # Modulated U-net model with FiLM layers
-        print(len(train_metadata[0].keys()))
         model = models.FiLMedUnet(n_metadata=len(train_metadata[0].keys()),
                             drop_rate=context["dropout_rate"],
                             bn_momentum=context["batch_norm_momentum"])
