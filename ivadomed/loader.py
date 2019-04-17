@@ -36,7 +36,7 @@ class BidsDataset(MRI2DBidsSegDataset):
     def __init__(self, root_dir, slice_axis=2, cache=True,
                  transform=None, slice_filter_fn=None,
                  canonical=False, labeled=True):
-
+        print(root_dir)
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
         self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": [], "Manufacturer": []}
@@ -64,19 +64,19 @@ class BidsDataset(MRI2DBidsSegDataset):
                 print("{} without FlipAngle, skipping.".format(subject))
                 continue
             else:
-                self.metadata["FlipAngle"].append(metadata["FlipAngle"])
+                self.metadata["FlipAngle"].append(float(metadata["FlipAngle"]))
 
             if "EchoTime" not in metadata:
                 print("{} without EchoTime, skipping.".format(subject))
                 continue
             else:
-                self.metadata["EchoTime"].append(metadata["EchoTime"])
+                self.metadata["EchoTime"].append(float(metadata["EchoTime"]))
 
             if "RepetitionTime" not in metadata:
                 print("{} without RepetitionTime, skipping.".format(subject))
                 continue
             else:
-                self.metadata["RepetitionTime"].append(metadata["RepetitionTime"])
+                self.metadata["RepetitionTime"].append(float(metadata["RepetitionTime"]))
 
             if "Manufacturer" not in metadata:
                 print("{} without Manufacturer, skipping.".format(subject))
