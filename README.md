@@ -8,17 +8,24 @@ This is a repository for the collaboration between MILA and NeuroPoly for the IV
 
 
 ## Installing
-This project requires Python 3.6 and PyTorch >= 1.0.1, to install all requirements, please use `pip` as described below:
+
+This project requires Python 3.6 and PyTorch >= 1.0.1. We recommend you work under a virtual environment:
+
+~~~
+virtualenv venv-ivadomed --python=python3.6
+source venv-ivadomed/bin/activate
+~~~
+
+Then, install all requirements using `pip`:
 
 ```
-~$ git clone https://github.com/neuropoly/ivado-medical-imaging.git
-~$ cd ivado-medical-imaging
-~$ pip install -e .
+git clone https://github.com/neuropoly/ivado-medical-imaging.git
+cd ivado-medical-imaging
+pip install -e .
 ```
-
-And all dependencies will be installed into your own system.
 
 ## Training
+
 To train the network, use the `ivadomed` command-line tool that will be available on your path after installation, example below:
 
 ```

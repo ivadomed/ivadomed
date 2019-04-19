@@ -3,12 +3,12 @@
 # Generate segmentation and co-register all multimodal data.
 #
 # Usage:
-#   ./prepare_data.sh <SUBJECTject_ID> <output path>
+#   ./prepdata.sh <SUBJECT_ID> <output path>
 #
-# Where SUBJECTject_ID refers to the SUBJECTject ID according to the BIDS format.
+# Where SUBJECT_ID refers to the SUBJECT ID according to the BIDS format.
 #
 # Example:
-#   ./prepare_data.sh SUBJECT-03 /users/jondoe/bids_data_results/site-01
+#   ./prepdata.sh SUBJECT-03 /users/jondoe/bids_data_results/site-01
 #
 
 # Exit if user presses CTRL+C (Linux) or CMD+C (OSX)
@@ -119,8 +119,6 @@ sct_apply_transfo -i ${SUBJECT}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${f
 sct_image -i ${file_seg}.nii.gz,${file_seg_t1w}_reg.nii.gz,${file_seg_t2w}_reg.nii.gz -concat t -o tmp.concat.nii.gz
 sct_maths -i tmp.concat.nii.gz -mean t -o tmp.concat_mean.nii.gz
 sct_maths -i tmp.concat_mean.nii.gz -bin 0.5 -o ${file_t1w_mts}_seg-manual.nii.gz
-
-# TODO: QC
 
 # Verify presence of output files and write log file if error
 FILES_TO_CHECK=(
