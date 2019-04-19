@@ -94,7 +94,12 @@ class Unet(Module):
         return preds
 
 
-class MLP(Module):
+class FiLMgenerator(Module):
+    """The FiLM generator processes the conditioning information
+    and produces parameters that describe how the target network should alter its computation.
+
+    Here, the FiLM generator is a multi-layer perceptron.
+    """
     def __init__(self, n_features, n_channels, drop_rate=0.25, n_hid=64):
         super(MLP, self).__init__()
         self.model = nn.Sequential(
@@ -130,28 +135,36 @@ class FiLMlayer(Module):
         self.height = None
         self.width = None
         self.feature_size = None
-        self.generator = MLP(n_metadata, n_channels)
+        self.generator = FiLMgenerator(n_metadata, n_channels)
 
     def forward(self, feature_maps, context):
-        self.batch_size, _, self.height, self.width = feature_maps.data.shape
-
-        self.feature_size = feature_maps.data.shape[1]
+        _, self.feature_size, self.height, self.width = feature_maps.data.shape
 
         context = torch.Tensor(context).cuda()
 
+        # Estimate the FiLM parameters using a FiLM generator from the contioning metadata
         film_params = self.generator(context)
+
+        # FiLM applies a different affine transformation to each channel,
+        # consistent across spatial locations
         film_params = film_params.unsqueeze(-1).unsqueeze(-1)
         film_params = film_params.repeat(1, 1, self.height, self.width)
 
         gammas = film_params[:, : self.feature_size, :, :]
         betas = film_params[:, self.feature_size :, :, :]
 
+        # Apply the linear modulation
         output = gammas * feature_maps + betas
 
         return output
 
 
 class FiLMedUnet(Module):
+    """A U-Net model, modulated using FiLM.
+
+    A FiLM layer has been added after each convolution layer.
+    """
+
     def __init__(self, n_metadata, drop_rate=0.4, bn_momentum=0.1):
         super(FiLMedUnet, self).__init__()
 
