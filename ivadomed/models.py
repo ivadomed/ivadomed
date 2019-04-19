@@ -101,7 +101,7 @@ class FiLMgenerator(Module):
     Here, the FiLM generator is a multi-layer perceptron.
     """
     def __init__(self, n_features, n_channels, drop_rate=0.25, n_hid=64):
-        super(MLP, self).__init__()
+        super(FiLMgenerator, self).__init__()
         self.model = nn.Sequential(
             nn.Dropout(drop_rate),
             nn.Linear(n_features, n_hid),
