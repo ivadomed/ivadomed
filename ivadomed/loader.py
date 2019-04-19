@@ -92,12 +92,26 @@ class BidsDataset(MRI2DBidsSegDataset):
 
 
 def _rescale_value(value_in, range_in, range_out):
+    """This function rescales a metadata value into a certain range of values.
+
+    :param value_in (float): input value of the metadata
+    :param range_in (list of floats): initial range of values
+    :param range_out (list of floats): range of output values
+    :return: rescaled value
+    """
     delta_in = range_in[1] - range_in[0]
     delta_out = range_out[1] - range_out[0]
     return (delta_out * (value_in - range_in[0]) / delta_in) + range_out[0]
 
 
 def clustering_fit(datasets, key_lst):
+    """This function creates clustering models for each metadata type,
+    using MeanShift algorithm.
+
+    :param datasets (list of lists): data for each dataset
+    :param key_lst (list of strings): names of metadata to cluster
+    :return: clustering model for each metadata type
+    """
     model_dct = {}
     for k in key_lst:
         k_data = [value for dataset in datasets for value in dataset[k]]
