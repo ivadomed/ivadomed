@@ -135,13 +135,13 @@ class FiLMlayer(Module):
         self.feature_size = None
         self.generator = FiLMgenerator(n_metadata, n_channels)
 
-    def forward(self, feature_maps, context):
+    def forward(self, feature_maps, context, generator_weights):
         _, self.feature_size, self.height, self.width = feature_maps.data.shape
 
         context = torch.Tensor(context).cuda()
 
         # Estimate the FiLM parameters using a FiLM generator from the contioning metadata
-        film_params = self.generator(context)
+        film_params, new_generator_weights = self.generator(context, generator_weights)
 
         # FiLM applies a different affine transformation to each channel,
         # consistent across spatial locations
@@ -154,7 +154,7 @@ class FiLMlayer(Module):
         # Apply the linear modulation
         output = gammas * feature_maps + betas
 
-        return output
+        return output, new_generator_weights
 
 
 class FiLMedUnet(Module):
