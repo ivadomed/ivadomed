@@ -102,25 +102,23 @@ class FiLMgenerator(Module):
     """
     def __init__(self, n_features, n_channels, drop_rate=0.25, n_hid=64):
         super(FiLMgenerator, self).__init__()
-        self.model = nn.Sequential(
-            nn.Dropout(drop_rate),
-            nn.Linear(n_features, n_hid),
-            nn.ReLU(),
-            nn.BatchNorm1d(n_hid),
-            nn.Dropout(drop_rate),
-            nn.Linear(n_hid, n_hid // 4),
-            nn.ReLU(),
-            nn.BatchNorm1d(n_hid // 4),
-            nn.Dropout(drop_rate),
-            nn.Linear(n_hid // 4, n_channels * 2),
-        )
-        for m in self.model:
-            if isinstance(m, nn.Linear):
-                nn.init.kaiming_normal_(m.weight)
-                nn.init.constant_(m.bias, 0)
+        self.dropOut1 = nn.Dropout(drop_rate)
+        self.linear1 = nn.Linear(n_features, n_hid)
+        self.relu1 = nn.ReLU()
+        self.batchNorm1 = nn.BatchNorm1d(n_hid)
+        self.dropOut2 = nn.Dropout(drop_rate)
+        self.linear2 = nn.Linear(n_hid, n_channels * 2)
 
-    def forward(self, x):
-        return self.model(x)
+    def forward(self, x, y=None):
+        x = self.dropOut1(x)
+        x = self.linear1(x)
+        x = self.relu1(x)
+        x = self.batchNorm1(x)
+        x_prelast = self.dropOut2(x)
+        if y is not None:
+            x_prelast = torch.cat([x_prelast, y], dim=1)
+        out = self.linear2(x_prelast)
+        return out, x_prelast
 
 
 class FiLMlayer(Module):
