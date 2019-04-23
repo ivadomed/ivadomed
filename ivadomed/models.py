@@ -100,25 +100,25 @@ class FiLMgenerator(Module):
 
     Here, the FiLM generator is a multi-layer perceptron.
     """
-    def __init__(self, n_features, n_channels, drop_rate=0.25, n_hid=64):
+    def __init__(self, n_features, n_channels, n_hid=64):
         super(FiLMgenerator, self).__init__()
-        self.dropOut1 = nn.Dropout(drop_rate)
         self.linear1 = nn.Linear(n_features, n_hid)
         self.relu1 = nn.ReLU()
-        self.batchNorm1 = nn.BatchNorm1d(n_hid)
-        self.dropOut2 = nn.Dropout(drop_rate)
-        self.linear2 = nn.Linear(n_hid, n_channels * 2)
+        self.linear2 = nn.Linear(n_hid, n_hid // 4)
+        self.relu2 = nn.ReLU()
+        self.linear3 = nn.Linear(n_hid // 4, n_channels * 2)
 
-    def forward(self, x, y=None):
-        x = self.dropOut1(x)
+    def forward(self, x, shared_weights=None):
         x = self.linear1(x)
         x = self.relu1(x)
-        x = self.batchNorm1(x)
-        x_prelast = self.dropOut2(x)
-        if y is not None:
-            x_prelast = torch.cat([x_prelast, y], dim=1)
-        out = self.linear2(x_prelast)
-        return out, x_prelast
+
+        if shared_weights is not None:  # weight sharing
+            self.linear2.weight = shared_weights
+        x = self.linear2(x)
+        x = self.relu2(x)
+
+        out = self.linear3(x)
+        return out, self.linear2.weight
 
 
 class FiLMlayer(Module):
@@ -135,13 +135,13 @@ class FiLMlayer(Module):
         self.feature_size = None
         self.generator = FiLMgenerator(n_metadata, n_channels)
 
-    def forward(self, feature_maps, context, generator_weights):
+    def forward(self, feature_maps, context, w_shared):
         _, self.feature_size, self.height, self.width = feature_maps.data.shape
 
         context = torch.Tensor(context).cuda()
 
         # Estimate the FiLM parameters using a FiLM generator from the contioning metadata
-        film_params, new_generator_weights = self.generator(context, generator_weights)
+        film_params, new_w_shared = self.generator(context, w_shared)
 
         # FiLM applies a different affine transformation to each channel,
         # consistent across spatial locations
@@ -154,7 +154,7 @@ class FiLMlayer(Module):
         # Apply the linear modulation
         output = gammas * feature_maps + betas
 
-        return output, new_generator_weights
+        return output, new_w_shared
 
 
 class FiLMedUnet(Module):
