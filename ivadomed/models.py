@@ -196,31 +196,31 @@ class FiLMedUnet(Module):
 
     def forward(self, x, context):
         x1 = self.conv1(x)
-        x2 = self.film1(x1, context)
+        x2, w_film1 = self.film1(x1, context, None)
         x3 = self.mp1(x2)
 
         x4 = self.conv2(x3)
-        x5 = self.film2(x4, context)
+        x5, w_film2 = self.film2(x4, context, w_film1)
         x6 = self.mp2(x5)
 
         x7 = self.conv3(x6)
-        x8 = self.film3(x7, context)
+        x8, w_film3 = self.film3(x7, context, w_film2)
         x9 = self.mp3(x8)
 
         # Bottom
         x10 = self.conv4(x9)
-        x11 = self.film4(x10, context)
+        x11, w_film4 = self.film4(x10, context, w_film3)
 
         # Up-sampling
         x12 = self.up1(x11, x8)
-        x13 = self.film5(x12, context)
+        x13, w_film5 = self.film5(x12, context, w_film4)
         x14 = self.up2(x13, x5)
-        x15 = self.film6(x14, context)
+        x15, w_film6 = self.film6(x14, context, w_film5)
         x16 = self.up3(x15, x2)
-        x17 = self.film7(x16, context)
+        x17, w_film7 = self.film7(x16, context, w_film6)
 
         x18 = self.conv9(x17)
-        x19 = self.film8(x18, context)
+        x19, w_film8 = self.film8(x18, context, w_film7)
         preds = torch.sigmoid(x19)
 
         return preds
