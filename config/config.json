@@ -34,6 +34,6 @@
 	"num_epochs": 100,
 	"initial_lr": 0.001,
 	"log_directory": "log_baseline",
-	"film": true,
+	"film": false,
         "debugging": true
 }
