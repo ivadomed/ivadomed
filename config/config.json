@@ -3,24 +3,15 @@
 	"gpu": 4,
 	"bids_path_train": [
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/amu_spineGeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/balgrist_spineGeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/nottwil_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/sherbrooke_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/nwu_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/stanford_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/unf_spineGeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/tehran_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/perform_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/milan_spineGeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/mni_spineGeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/brno_spineGeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/oxford-ohba_spineGeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/tokyo-750w_spineGeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/tokyo-ingenia_spineGeneric"
+            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/mni_spineGeneric"
 	],
 	"bids_path_validation": [
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/tokyo-skyra_spineGeneric",
-            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/juntendo-750w_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/oxford-fmrib_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/vall-hebron_spineGeneric",
             "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/cardiff_spineGeneric"
@@ -32,7 +23,7 @@
 	"dropout_rate": 0.3,
 	"batch_norm_momentum": 0.1,
 	"num_epochs": 100,
-	"initial_lr": 0.001,
+	"initial_lr": 0.0001,
 	"log_directory": "log_baseline",
 	"film": false,
         "debugging": true

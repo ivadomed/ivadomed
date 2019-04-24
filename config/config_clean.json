@@ -1,0 +1,26 @@
+{
+	"command": "train",
+	"gpu": 4,
+	"bids_path_train": [
+		"../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/barcelona_spineGeneric",
+		"../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/amu_spineGeneric",
+            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/mni_spineGeneric",
+            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/unf_spineGeneric",
+		"../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/milan_spineGeneric"
+	],
+	"bids_path_validation": [
+            "../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/cardiff_spineGeneric",
+		"../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/perform_spineGeneric"
+	],
+	"bids_path_test": [
+		"../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/barcelona_spineGeneric"
+	],
+	"batch_size": 18,
+	"dropout_rate": 0.3,
+	"batch_norm_momentum": 0.1,
+	"num_epochs": 100,
+	"initial_lr": 0.001,
+	"log_directory": "log_baseline",
+	"film": false,
+        "debugging": false
+}
