@@ -22,10 +22,10 @@ And all dependencies will be installed into your own system.
 To train the network, use the `ivadomed` command-line tool that will be available on your path after installation, example below:
 
 ```
-ivadomed configs/config.json
+ivadomed config/config.json
 ```
 
-The `config.json` is a configuration example. During the training, you can open TensorBoard and it will show the following statistics and visualization:
+The `config.json` is a configuration example. A description of each parameter is provided in the code (ivadomed/main.py). During the training, you can open TensorBoard and it will show the following statistics and visualization:
 
 ### TensorBoard - Validation Metrics
 These are the metrics computed for the validation dataset. It contains results for pixel-wise accuracy, Dice score, mIoU (mean intersection over union), pixel-wise precision, recall and specificity.

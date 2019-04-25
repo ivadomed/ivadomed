@@ -73,7 +73,20 @@ def cmd_train(context):
     """Main command do train the network.
 
     :param context: this is a dictionary with all data from the
-                    configuration file
+                    configuration file:
+                        - 'command': run the specified command (e.g. train, test)
+                        - 'gpu': ID of the used GPU
+                        - 'bids_path_train': list of relative paths of the BIDS folders of each training center
+                        - 'bids_path_validation': list of relative paths of the BIDS folders of each validation center
+                        - 'bids_path_test': list of relative paths of the BIDS folders of each test center
+                        - 'batch_size'
+                        - 'dropout_rate'
+                        - 'batch_norm_momentum'
+                        - 'num_epochs'
+                        - 'initial_lr': initial learning rate
+                        - 'log_directory': folder name where log files are saved
+                        - 'film': indicates if FiLM is used or not
+                        - 'debugging': allows extended verbosity and intermediate outputs
     """
     # Set the GPU
     gpu_number = int(context["gpu"])
