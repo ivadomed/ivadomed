@@ -11,6 +11,9 @@
 #   ./prepdata.sh SUBJECT-03 /users/jondoe/bids_data_results/site-01
 #
 
+# Immediately exit if error
+set -e
+
 # Exit if user presses CTRL+C (Linux) or CMD+C (OSX)
 trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
