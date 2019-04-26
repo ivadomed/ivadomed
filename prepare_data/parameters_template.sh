@@ -26,3 +26,4 @@ export PATH_SEGMANUAL="${PATH_PARENT}/spineGeneric/seg_manual"  # Location of ma
 
 # Misc
 export JOBS=20  # Number of jobs for parallel processing
+export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1  # Number of jobs for ANTs routine. Set to 1 if ANTs functions crash when CPU saturates.
