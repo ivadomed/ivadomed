@@ -8,6 +8,13 @@ In its current state, this pipeline uses [SCT development version](https://githu
 
 ## How to run
 
+#### Activate environment
+
+See [README](../README.md)
+~~~
+source PATH_TO_YOUR_VENV/venv-ivadomed/bin/activate
+~~~
+
 #### Initial steps, check for folder integrity
 
 - Copy the file `parameters_template.sh` and rename it as `parameters.sh`.
