@@ -84,5 +84,5 @@ Copy final files to anat/, copy json sidecars, move segmentations to derivatives
 Once QC and manual correction is done, remove tmp/ folder:
 
 ~~~
-./run_process.sh delete_temp_files.sh
+./run_process.sh delete_tmp_files.sh
 ~~~
