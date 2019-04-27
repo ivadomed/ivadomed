@@ -1,6 +1,7 @@
 from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
 
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.cluster import MeanShift, estimate_bandwidth
 
 import numpy as np
@@ -112,41 +113,53 @@ def clustering_fit(datasets, key_lst):
     :param key_lst (list of strings): names of metadata to cluster
     :return: clustering model for each metadata type
     """
-    model_dct = {}
+    model_dct, encoder_dct = {}, {}
     for k in key_lst:
         k_data = [value for dataset in datasets for value in dataset[k]]
+
         X = np.array(list(zip(k_data, np.zeros(len(k_data)))))  # format the data before sending to the clustering algo
         bandwidth = estimate_bandwidth(X, quantile=0.1)  # estimate the bandwidth to use with the mean-shift algo
         clf = MeanShift(bandwidth=bandwidth, bin_seeding=True)  # mean shift clustering using a flat kernel
         clf.fit(X)
         model_dct[k] = clf
         del clf
+
     return model_dct
 
 
 def normalize_metadata(ds_lst_in, clustering_models, debugging):
+
+    # Initialise One Hot Encoders
+    encoder_dct = {}
+    for k in clustering_models:
+        encoder_dct[k] = OneHotEncoder(categories=[range(clustering_models[k].cluster_centers_.shape[0])])
+    encoder_dct["Manufacturer"] = OneHotEncoder(categories=[range(len(MANUFACTURER_CATEGORY))])
+
     ds_lst_out = []
     for ds_in in ds_lst_in:
         ds_out = []
         for idx, subject in enumerate(ds_in):
             s_out = deepcopy(subject)
 
-            # categorize flip angle value using meanShift
+            # categorize flip angle value using meanShift and OneHotEncoder
             flip_angle = [subject["input_metadata"]["bids_metadata"]["FlipAngle"]]
-            s_out["input_metadata"]["bids_metadata"]["FlipAngle"] = clustering_models["FlipAngle"].predict(np.array(list(zip(flip_angle, np.zeros(1)))))[0]
+            int_value = clustering_models["FlipAngle"].predict(np.array(list(zip(flip_angle, np.zeros(1)))))
+            s_out["input_metadata"]["bids_metadata"]["FlipAngle"] = encoder_dct["FlipAngle"].fit_transform(int_value.reshape(-1,1)).toarray()
 
-            # categorize repetition time value using meanShift
+            # categorize repetition time value using meanShift and OneHotEncoder
             repetition_time = [subject["input_metadata"]["bids_metadata"]["RepetitionTime"]]
-            s_out["input_metadata"]["bids_metadata"]["RepetitionTime"] = clustering_models["RepetitionTime"].predict(np.array(list(zip(repetition_time, np.zeros(1)))))[0]
+            int_value = clustering_models["RepetitionTime"].predict(np.array(list(zip(repetition_time, np.zeros(1)))))
+            s_out["input_metadata"]["bids_metadata"]["RepetitionTime"] = encoder_dct["RepetitionTime"].fit_transform(int_value.reshape(-1,1)).toarray()
 
-            # categorize echo time value using meanShift
+            # categorize echo time value using meanShift and OneHotEncoder
             echo_time = [subject["input_metadata"]["bids_metadata"]["EchoTime"]]
-            s_out["input_metadata"]["bids_metadata"]["EchoTime"] = clustering_models["EchoTime"].predict(np.array(list(zip(echo_time, np.zeros(1)))))[0]
+            int_value = clustering_models["EchoTime"].predict(np.array(list(zip(echo_time, np.zeros(1)))))
+            s_out["input_metadata"]["bids_metadata"]["EchoTime"] = encoder_dct["EchoTime"].fit_transform(int_value.reshape(-1,1)).toarray()
 
             # categorize manufacturer info based on the MANUFACTURER_CATEGORY dictionary
             manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
             if manufacturer in MANUFACTURER_CATEGORY:
-                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
+                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = encoder_dct["Manufacturer"].fit_transform(np.array(MANUFACTURER_CATEGORY[manufacturer]).reshape(-1,1)).toarray()
             else:
                 print("{} with unknown manufacturer.".format(subject))
                 s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
