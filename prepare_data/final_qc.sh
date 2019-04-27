@@ -4,8 +4,8 @@
 # Usage:
 #   ./delete_temp_files.sh <SUBJECT> <SITE> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
 #
-# For full verbose, uncomment the next line
-set -x
+# -x: Full verbose, -e: Exit if error
+set -ex
 
 # Retrieve input params
 SUBJECT=$1
