@@ -5,7 +5,7 @@
 #   ./delete_temp_files.sh <SUBJECT> <SITE> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
 #
 # -x: Full verbose, -e: Exit if error
-set -ex
+set -x
 
 # Retrieve input params
 SUBJECT=$1
