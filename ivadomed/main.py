@@ -1,6 +1,7 @@
 import sys
 import json
 import time
+import shutil
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -196,6 +197,7 @@ def cmd_train(context):
     writer = SummaryWriter(log_dir=context["log_directory"])
 
     # Training loop -----------------------------------------------------------
+    best_validation_loss = float("inf")
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
         start_time = time.time()
 
@@ -217,9 +219,9 @@ def cmd_train(context):
 
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
-            var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
 
             if context["film"]:
+                var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
                 preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
             else:
                 preds = model(var_input)
@@ -276,9 +278,9 @@ def cmd_train(context):
             with torch.no_grad():
                 var_input = input_samples.cuda()
                 var_gt = gt_samples.cuda(non_blocking=True)
-                var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
 
                 if context["film"]:
+                    var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
                     preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
                 else:
                     preds = model(var_input)
@@ -332,6 +334,12 @@ def cmd_train(context):
         total_time = end_time - start_time
         tqdm.write("Epoch {} took {:.2f} seconds.".format(epoch, total_time))
 
+        if val_loss_total_avg < best_validation_loss:
+            best_validation_loss = val_loss_total_avg
+            torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
+
+    torch.save(net, "./"+context["log_directory"]+"/final_model.pt")
+
     return
 
 
@@ -346,8 +354,8 @@ def run_main():
     command = context["command"]
 
     if command == 'train':
-        return cmd_train(context)
-
+        cmd_train(context)
+        shutil.copyfile(sys.argv[1], "./"+context["log_directory"]+"/config_file.json")
 
 if __name__ == "__main__":
     run_main()
