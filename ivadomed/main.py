@@ -118,6 +118,7 @@ def cmd_train(context):
     train_datasets, train_metadata = [], []
     for bids_ds in tqdm(context["bids_path_train"], desc="Loading training set"):
         ds_train = loader.BidsDataset(bids_ds,
+                                      contrast_lst=context["contrast_train_validation"],
                                       transform=train_transform,
                                       slice_filter_fn=SliceFilter())
         train_datasets.append(ds_train)
@@ -137,6 +138,7 @@ def cmd_train(context):
     validation_datasets = []
     for bids_ds in tqdm(context["bids_path_validation"], desc="Loading validation set"):
         ds_val = loader.BidsDataset(bids_ds,
+                                    contrast_lst=context["contrast_train_validation"],
                                     transform=val_transform,
                                     slice_filter_fn=SliceFilter())
         validation_datasets.append(ds_val)
@@ -155,6 +157,7 @@ def cmd_train(context):
     test_datasets = []
     for bids_ds in tqdm(context["bids_path_test"], desc="Loading test set"):
         ds_test = loader.BidsDataset(bids_ds,
+                                     contrast_lst=context["contrast_test"],
                                      transform=val_transform,
                                      slice_filter_fn=SliceFilter())
         test_datasets.append(ds_test)
