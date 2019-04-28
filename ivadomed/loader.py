@@ -34,7 +34,7 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
 
 
 class BidsDataset(MRI2DBidsSegDataset):
-    def __init__(self, root_dir, slice_axis=2, cache=True,
+    def __init__(self, root_dir, contrast_lst, slice_axis=2, cache=True,
                  transform=None, slice_filter_fn=None,
                  canonical=False, labeled=True):
 
@@ -43,50 +43,52 @@ class BidsDataset(MRI2DBidsSegDataset):
         self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": [], "Manufacturer": []}
 
         for subject in self.bids_ds.get_subjects():
-            if not subject.has_derivative("labels"):
-                print("Subject without derivative, skipping.")
-                continue
-            derivatives = subject.get_derivatives("labels")
-            cord_label_filename = None
+            if subject.record["modality"] in contrast_lst:
 
-            for deriv in derivatives:
-                if deriv.endswith("seg-manual.nii.gz"):
-                    cord_label_filename = deriv
+                if not subject.has_derivative("labels"):
+                    print("Subject without derivative, skipping.")
+                    continue
+                derivatives = subject.get_derivatives("labels")
+                cord_label_filename = None
 
-            if cord_label_filename is None:
-                continue
+                for deriv in derivatives:
+                    if deriv.endswith("seg-manual.nii.gz"):
+                        cord_label_filename = deriv
 
-            if not subject.has_metadata():
-                print("Subject without metadata.")
-                continue
+                if cord_label_filename is None:
+                    continue
 
-            metadata = subject.metadata()
-            if "FlipAngle" not in metadata:
-                print("{} without FlipAngle, skipping.".format(subject))
-                continue
-            else:
-                self.metadata["FlipAngle"].append(float(metadata["FlipAngle"]))
+                if not subject.has_metadata():
+                    print("Subject without metadata.")
+                    continue
 
-            if "EchoTime" not in metadata:
-                print("{} without EchoTime, skipping.".format(subject))
-                continue
-            else:
-                self.metadata["EchoTime"].append(float(metadata["EchoTime"]))
+                metadata = subject.metadata()
+                if "FlipAngle" not in metadata:
+                    print("{} without FlipAngle, skipping.".format(subject))
+                    continue
+                else:
+                    self.metadata["FlipAngle"].append(float(metadata["FlipAngle"]))
 
-            if "RepetitionTime" not in metadata:
-                print("{} without RepetitionTime, skipping.".format(subject))
-                continue
-            else:
-                self.metadata["RepetitionTime"].append(float(metadata["RepetitionTime"]))
+                if "EchoTime" not in metadata:
+                    print("{} without EchoTime, skipping.".format(subject))
+                    continue
+                else:
+                    self.metadata["EchoTime"].append(float(metadata["EchoTime"]))
 
-            if "Manufacturer" not in metadata:
-                print("{} without Manufacturer, skipping.".format(subject))
-                continue
-            else:
-                self.metadata["Manufacturer"].append(metadata["Manufacturer"])
+                if "RepetitionTime" not in metadata:
+                    print("{} without RepetitionTime, skipping.".format(subject))
+                    continue
+                else:
+                    self.metadata["RepetitionTime"].append(float(metadata["RepetitionTime"]))
 
-            self.filename_pairs.append((subject.record.absolute_path,
-                                        cord_label_filename, metadata))
+                if "Manufacturer" not in metadata:
+                    print("{} without Manufacturer, skipping.".format(subject))
+                    continue
+                else:
+                    self.metadata["Manufacturer"].append(metadata["Manufacturer"])
+
+                self.filename_pairs.append((subject.record.absolute_path,
+                                            cord_label_filename, metadata))
 
         super().__init__(self.filename_pairs, slice_axis, cache,
                          transform, slice_filter_fn, canonical)
