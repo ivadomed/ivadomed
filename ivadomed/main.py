@@ -73,7 +73,20 @@ def cmd_train(context):
     """Main command do train the network.
 
     :param context: this is a dictionary with all data from the
-                    configuration file
+                    configuration file:
+                        - 'command': run the specified command (e.g. train, test)
+                        - 'gpu': ID of the used GPU
+                        - 'bids_path_train': list of relative paths of the BIDS folders of each training center
+                        - 'bids_path_validation': list of relative paths of the BIDS folders of each validation center
+                        - 'bids_path_test': list of relative paths of the BIDS folders of each test center
+                        - 'batch_size'
+                        - 'dropout_rate'
+                        - 'batch_norm_momentum'
+                        - 'num_epochs'
+                        - 'initial_lr': initial learning rate
+                        - 'log_directory': folder name where log files are saved
+                        - 'film': indicates if FiLM is used or not
+                        - 'debugging': allows extended verbosity and intermediate outputs
     """
     # Set the GPU
     gpu_number = int(context["gpu"])
@@ -112,8 +125,7 @@ def cmd_train(context):
 
     if context["film"]:  # normalize metadata before sending to the network
         metadata_clustering_models = loader.clustering_fit(train_metadata, ["RepetitionTime", "EchoTime", "FlipAngle"])
-        train_datasets = loader.normalize_metadata(train_datasets, metadata_clustering_models, context["debugging"])
-
+        train_datasets, train_onehotencoder = loader.normalize_metadata(train_datasets, metadata_clustering_models, context["debugging"], True)
     ds_train = ConcatDataset(train_datasets)
     print(f"Loaded {len(ds_train)} axial slices for the training set.")
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
@@ -130,7 +142,7 @@ def cmd_train(context):
         validation_datasets.append(ds_val)
 
     if context["film"]:  # normalize metadata before sending to network
-        validation_datasets = loader.normalize_metadata(validation_datasets, metadata_clustering_models, context["debugging"])
+        validation_datasets = loader.normalize_metadata(validation_datasets, metadata_clustering_models, context["debugging"], False)
 
     ds_val = ConcatDataset(validation_datasets)
     print(f"Loaded {len(ds_val)} axial slices for the validation set.")
@@ -148,8 +160,8 @@ def cmd_train(context):
         test_datasets.append(ds_test)
 
     if context["film"]:  # normalize metadata before sending to network
-        test_datasets = loader.normalize_metadata(test_datasets, metadata_clustering_models, context["debugging"])
-    
+        test_datasets = loader.normalize_metadata(test_datasets, metadata_clustering_models, context["debugging"], False)
+
     ds_test = ConcatDataset(test_datasets)
     print(f"Loaded {len(ds_test)} axial slices for the test set.")
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
@@ -157,9 +169,15 @@ def cmd_train(context):
                              collate_fn=mt_datasets.mt_collate,
                              num_workers=1)
 
-    # Traditional U-Net model
-    model = models.Unet(drop_rate=context["dropout_rate"],
-                        bn_momentum=context["batch_norm_momentum"])
+    if context["film"]:
+        # Modulated U-net model with FiLM layers
+        model = models.FiLMedUnet(n_metadata=len([ll for l in train_onehotencoder.categories_ for ll in l]),
+                            drop_rate=context["dropout_rate"],
+                            bn_momentum=context["batch_norm_momentum"])
+    else:
+        # Traditional U-Net model
+        model = models.Unet(drop_rate=context["dropout_rate"],
+                            bn_momentum=context["batch_norm_momentum"])
     model.cuda()
 
     num_epochs = context["num_epochs"]
@@ -186,21 +204,20 @@ def cmd_train(context):
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
-            batch_metadata = batch["input_metadata"]
 
             # The variable sample_metadata is where the MRI phyisics parameters are,
             # to get the metadata for the first sample for example, just use:
             # ---> bids_metadata_example = sample_metadata[0]["bids_metadata"]
-            #
-            # The variables: FlipAngle, EchoTime and RepetitionTime, will be
-            # used as input to the branch that will predict the FiLM parameters.
-
             sample_metadata = batch["input_metadata"]
 
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
+            var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
 
-            preds = model(var_input)
+            if context["film"]:
+                preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
+            else:
+                preds = model(var_input)
 
             loss = mt_losses.dice_loss(preds, var_gt)
             train_loss_total += loss.item()
@@ -249,12 +266,18 @@ def cmd_train(context):
 
         for i, batch in enumerate(val_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
+            sample_metadata = batch["input_metadata"]
 
             with torch.no_grad():
                 var_input = input_samples.cuda()
                 var_gt = gt_samples.cuda(non_blocking=True)
+                var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
 
-                preds = model(var_input)
+                if context["film"]:
+                    preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
+                else:
+                    preds = model(var_input)
+
                 loss = mt_losses.dice_loss(preds, var_gt)
                 val_loss_total += loss.item()
 
