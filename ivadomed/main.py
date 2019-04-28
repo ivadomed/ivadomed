@@ -79,6 +79,8 @@ def cmd_train(context):
                         - 'bids_path_train': list of relative paths of the BIDS folders of each training center
                         - 'bids_path_validation': list of relative paths of the BIDS folders of each validation center
                         - 'bids_path_test': list of relative paths of the BIDS folders of each test center
+                        - 'contrast_train_validation': list of image modalities included in the training and validation datasets
+                        - 'contrast_test': list of image modalities included in the testing dataset
                         - 'batch_size'
                         - 'dropout_rate'
                         - 'batch_norm_momentum'
