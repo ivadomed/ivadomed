@@ -125,8 +125,7 @@ def cmd_train(context):
 
     if context["film"]:  # normalize metadata before sending to the network
         metadata_clustering_models = loader.clustering_fit(train_metadata, ["RepetitionTime", "EchoTime", "FlipAngle"])
-        train_datasets = loader.normalize_metadata(train_datasets, metadata_clustering_models, context["debugging"])
-
+        train_datasets, train_onehotencoder = loader.normalize_metadata(train_datasets, metadata_clustering_models, context["debugging"], True)
     ds_train = ConcatDataset(train_datasets)
     print(f"Loaded {len(ds_train)} axial slices for the training set.")
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
@@ -143,7 +142,7 @@ def cmd_train(context):
         validation_datasets.append(ds_val)
 
     if context["film"]:  # normalize metadata before sending to network
-        validation_datasets = loader.normalize_metadata(validation_datasets, metadata_clustering_models, context["debugging"])
+        validation_datasets = loader.normalize_metadata(validation_datasets, metadata_clustering_models, context["debugging"], False)
 
     ds_val = ConcatDataset(validation_datasets)
     print(f"Loaded {len(ds_val)} axial slices for the validation set.")
@@ -161,7 +160,7 @@ def cmd_train(context):
         test_datasets.append(ds_test)
 
     if context["film"]:  # normalize metadata before sending to network
-        test_datasets = loader.normalize_metadata(test_datasets, metadata_clustering_models, context["debugging"])
+        test_datasets = loader.normalize_metadata(test_datasets, metadata_clustering_models, context["debugging"], False)
 
     ds_test = ConcatDataset(test_datasets)
     print(f"Loaded {len(ds_test)} axial slices for the test set.")
@@ -172,7 +171,7 @@ def cmd_train(context):
 
     if context["film"]:
         # Modulated U-net model with FiLM layers
-        model = models.FiLMedUnet(n_metadata=len(train_metadata[0].keys()),
+        model = models.FiLMedUnet(n_metadata=len([ll for l in train_onehotencoder.categories_ for ll in l]),
                             drop_rate=context["dropout_rate"],
                             bn_momentum=context["batch_norm_momentum"])
     else:
@@ -213,7 +212,7 @@ def cmd_train(context):
 
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
-            var_metadata = [sample_metadata[k]['bids_metadata'] for k in range(len(sample_metadata))]
+            var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
 
             if context["film"]:
                 preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
@@ -272,8 +271,8 @@ def cmd_train(context):
             with torch.no_grad():
                 var_input = input_samples.cuda()
                 var_gt = gt_samples.cuda(non_blocking=True)
-                var_metadata = [sample_metadata[k]['bids_metadata'] for k in range(len(sample_metadata))]
-
+                var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
+                print(var_metadata)
                 if context["film"]:
                     preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
                 else:

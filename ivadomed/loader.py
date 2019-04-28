@@ -127,13 +127,12 @@ def clustering_fit(datasets, key_lst):
     return model_dct
 
 
-def normalize_metadata(ds_lst_in, clustering_models, debugging):
+def normalize_metadata(ds_lst_in, clustering_models, debugging, train_set=False):
 
-    # Initialise One Hot Encoders
-    encoder_dct = {}
-    for k in clustering_models:
-        encoder_dct[k] = OneHotEncoder(categories=[range(clustering_models[k].cluster_centers_.shape[0])])
-    encoder_dct["Manufacturer"] = OneHotEncoder(categories=[range(len(MANUFACTURER_CATEGORY))])
+    if train_set:
+        # Initialise One Hot Encoder
+        ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
+        X_train_ohe = []
 
     ds_lst_out = []
     for ds_in in ds_lst_in:
@@ -141,25 +140,25 @@ def normalize_metadata(ds_lst_in, clustering_models, debugging):
         for idx, subject in enumerate(ds_in):
             s_out = deepcopy(subject)
 
-            # categorize flip angle value using meanShift and OneHotEncoder
+            # categorize flip angle value using meanShift
             flip_angle = [subject["input_metadata"]["bids_metadata"]["FlipAngle"]]
             int_value = clustering_models["FlipAngle"].predict(np.array(list(zip(flip_angle, np.zeros(1)))))
-            s_out["input_metadata"]["bids_metadata"]["FlipAngle"] = encoder_dct["FlipAngle"].fit_transform(int_value.reshape(-1,1)).toarray()
+            s_out["input_metadata"]["bids_metadata"]["FlipAngle"] = int_value[0]
 
-            # categorize repetition time value using meanShift and OneHotEncoder
+            # categorize repetition time value using meanShift
             repetition_time = [subject["input_metadata"]["bids_metadata"]["RepetitionTime"]]
             int_value = clustering_models["RepetitionTime"].predict(np.array(list(zip(repetition_time, np.zeros(1)))))
-            s_out["input_metadata"]["bids_metadata"]["RepetitionTime"] = encoder_dct["RepetitionTime"].fit_transform(int_value.reshape(-1,1)).toarray()
+            s_out["input_metadata"]["bids_metadata"]["RepetitionTime"] = int_value[0]
 
-            # categorize echo time value using meanShift and OneHotEncoder
+            # categorize echo time value using meanShift
             echo_time = [subject["input_metadata"]["bids_metadata"]["EchoTime"]]
             int_value = clustering_models["EchoTime"].predict(np.array(list(zip(echo_time, np.zeros(1)))))
-            s_out["input_metadata"]["bids_metadata"]["EchoTime"] = encoder_dct["EchoTime"].fit_transform(int_value.reshape(-1,1)).toarray()
+            s_out["input_metadata"]["bids_metadata"]["EchoTime"] = int_value[0]
 
             # categorize manufacturer info based on the MANUFACTURER_CATEGORY dictionary
             manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
             if manufacturer in MANUFACTURER_CATEGORY:
-                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = encoder_dct["Manufacturer"].fit_transform(np.array(MANUFACTURER_CATEGORY[manufacturer]).reshape(-1,1)).toarray()
+                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
             else:
                 print("{} with unknown manufacturer.".format(subject))
                 s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
@@ -171,10 +170,18 @@ def normalize_metadata(ds_lst_in, clustering_models, debugging):
                 print("Manufacturer: {} --> {}".format(manufacturer, s_out["input_metadata"]["bids_metadata"]["Manufacturer"]))
 
             s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
+
+            if train_set:
+                X_train_ohe.append(s_out["input_metadata"]["bids_metadata"])
             ds_out.append(s_out)
 
             del s_out, subject
 
         ds_lst_out.append(ds_out)
 
-    return ds_lst_out
+    if train_set:
+        X_train_ohe = np.vstack(X_train_ohe)
+        ohe.fit(X_train_ohe)
+        return ds_lst_out, ohe
+    else:
+        return ds_lst_out
