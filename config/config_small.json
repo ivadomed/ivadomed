@@ -12,6 +12,8 @@
 	"bids_path_test": [
 		"../duke/projects/ivado-medical-imaging/spineGeneric_201903031331/result/barcelona_spineGeneric"
 	],
+        "contrast_train_validation": ["T1w_reg", "T2w_reg", "acq-MToff_MTS_reg", "acq-MTon_MTS_reg", "acq-T1w_MTS_crop_r"],
+        "contrast_test": ["T2star_mean_reg"],
 	"batch_size": 18,
 	"dropout_rate": 0.3,
 	"batch_norm_momentum": 0.1,
