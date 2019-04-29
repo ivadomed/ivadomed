@@ -130,6 +130,11 @@ def cmd_train(context):
     if context["film"]:  # normalize metadata before sending to the network
         metadata_clustering_models = loader.clustering_fit(train_metadata, ["RepetitionTime", "EchoTime", "FlipAngle"])
         train_datasets, train_onehotencoder = loader.normalize_metadata(train_datasets, metadata_clustering_models, context["debugging"], True)
+
+        # save clustering and OneHotEncoding models
+        pickle.dump(metadata_clustering_models, open("./"+context["log_directory"]+"/clustering_models.pkl", 'wb'))
+        pickle.dump(train_onehotencoder, open("./"+context["log_directory"]+"/one_hot_encoder.pkl", 'wb'))
+
     ds_train = ConcatDataset(train_datasets)
     print(f"Loaded {len(ds_train)} axial slices for the training set.")
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
