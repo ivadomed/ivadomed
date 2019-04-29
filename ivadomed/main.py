@@ -338,9 +338,43 @@ def cmd_train(context):
             best_validation_loss = val_loss_total_avg
             torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
 
-    torch.save(net, "./"+context["log_directory"]+"/final_model.pt")
+    torch.save(model, "./"+context["log_directory"]+"/final_model.pt")
 
     return
+
+
+def cmd_test(context):
+    # Set the GPU
+    gpu_number = int(context["gpu"])
+    torch.cuda.set_device(gpu_number)
+
+    # These are the validation/testing transformations
+    val_transform = transforms.Compose([
+        mt_transforms.CenterCrop2D((128, 128)),
+        mt_transforms.ToTensor(),
+        mt_transforms.NormalizeInstance(),
+    ])
+
+    # Test dataset ------------------------------------------------------------
+    test_datasets = []
+    for bids_ds in tqdm(context["bids_path_test"], desc="Loading test set"):
+        ds_test = loader.BidsDataset(bids_ds,
+                                     contrast_lst=context["contrast_test"],
+                                     transform=val_transform,
+                                     slice_filter_fn=SliceFilter())
+        test_datasets.append(ds_test)
+
+    if context["film"]:  # normalize metadata before sending to network
+        test_datasets = loader.normalize_metadata(test_datasets, metadata_clustering_models, context["debugging"], False)
+
+    ds_test = ConcatDataset(test_datasets)
+    print(f"Loaded {len(ds_test)} axial slices for the test set.")
+    test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
+                             shuffle=True, pin_memory=True,
+                             collate_fn=mt_datasets.mt_collate,
+                             num_workers=1)
+
+
 
 
 def run_main():
