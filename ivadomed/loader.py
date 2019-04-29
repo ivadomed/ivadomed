@@ -121,7 +121,7 @@ def clustering_fit(datasets, key_lst):
 
         X = np.array(list(zip(k_data, np.zeros(len(k_data)))))  # format the data before sending to the clustering algo
         bandwidth = estimate_bandwidth(X, quantile=0.1)  # estimate the bandwidth to use with the mean-shift algo
-        clf = MeanShift(bandwidth=bandwidth, bin_seeding=True)  # mean shift clustering using a flat kernel
+        clf = MeanShift(bandwidth=bandwidth if bandwidth > 0.0 else None, bin_seeding=True)  # mean shift clustering using a flat kernel
         clf.fit(X)
         model_dct[k] = clf
         del clf

@@ -2,6 +2,7 @@ import sys
 import json
 import time
 import shutil
+import pickle
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -131,10 +132,6 @@ def cmd_train(context):
         metadata_clustering_models = loader.clustering_fit(train_metadata, ["RepetitionTime", "EchoTime", "FlipAngle"])
         train_datasets, train_onehotencoder = loader.normalize_metadata(train_datasets, metadata_clustering_models, context["debugging"], True)
 
-        # save clustering and OneHotEncoding models
-        pickle.dump(metadata_clustering_models, open("./"+context["log_directory"]+"/clustering_models.pkl", 'wb'))
-        pickle.dump(train_onehotencoder, open("./"+context["log_directory"]+"/one_hot_encoder.pkl", 'wb'))
-
     ds_train = ConcatDataset(train_datasets)
     print(f"Loaded {len(ds_train)} axial slices for the training set.")
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
@@ -160,25 +157,6 @@ def cmd_train(context):
                             shuffle=True, pin_memory=True,
                             collate_fn=mt_datasets.mt_collate,
                             num_workers=1)
-
-    # Test dataset ------------------------------------------------------------
-    test_datasets = []
-    for bids_ds in tqdm(context["bids_path_test"], desc="Loading test set"):
-        ds_test = loader.BidsDataset(bids_ds,
-                                     contrast_lst=context["contrast_test"],
-                                     transform=val_transform,
-                                     slice_filter_fn=SliceFilter())
-        test_datasets.append(ds_test)
-
-    if context["film"]:  # normalize metadata before sending to network
-        test_datasets = loader.normalize_metadata(test_datasets, metadata_clustering_models, context["debugging"], False)
-
-    ds_test = ConcatDataset(test_datasets)
-    print(f"Loaded {len(ds_test)} axial slices for the test set.")
-    test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
-                             shuffle=True, pin_memory=True,
-                             collate_fn=mt_datasets.mt_collate,
-                             num_workers=1)
 
     if context["film"]:
         # Modulated U-net model with FiLM layers
@@ -343,7 +321,11 @@ def cmd_train(context):
             best_validation_loss = val_loss_total_avg
             torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
 
+    # save final model
     torch.save(model, "./"+context["log_directory"]+"/final_model.pt")
+    # save clustering and OneHotEncoding models
+    pickle.dump(metadata_clustering_models, open("./"+context["log_directory"]+"/clustering_models.pkl", 'wb'))
+    pickle.dump(train_onehotencoder, open("./"+context["log_directory"]+"/one_hot_encoder.pkl", 'wb'))
 
     return
 
@@ -360,7 +342,6 @@ def cmd_test(context):
         mt_transforms.NormalizeInstance(),
     ])
 
-    # Test dataset ------------------------------------------------------------
     test_datasets = []
     for bids_ds in tqdm(context["bids_path_test"], desc="Loading test set"):
         ds_test = loader.BidsDataset(bids_ds,
@@ -370,7 +351,12 @@ def cmd_test(context):
         test_datasets.append(ds_test)
 
     if context["film"]:  # normalize metadata before sending to network
+        with open("./"+context["log_directory"]+"/clustering_models.pkl", 'rb') as file:
+            metadata_clustering_models = pickle.load(file)
         test_datasets = loader.normalize_metadata(test_datasets, metadata_clustering_models, context["debugging"], False)
+
+        with open("./"+context["log_directory"]+"/one_hot_encoder.pkl", 'rb') as file:
+            one_hot_encoder = pickle.load(file)
 
     ds_test = ConcatDataset(test_datasets)
     print(f"Loaded {len(ds_test)} axial slices for the test set.")
@@ -379,8 +365,47 @@ def cmd_test(context):
                              collate_fn=mt_datasets.mt_collate,
                              num_workers=1)
 
+    model = torch.load("./"+context["log_directory"]+"/final_model.pt")
+    model.cuda()
+    model.eval()
 
+    metric_fns = [mt_metrics.dice_score,
+                  # mt_metrics.hausdorff_score,
+                  mt_metrics.precision_score,
+                  mt_metrics.recall_score,
+                  mt_metrics.specificity_score,
+                  mt_metrics.intersection_over_union,
+                  mt_metrics.accuracy_score]
 
+    metric_mgr = mt_metrics.MetricManager(metric_fns)
+
+    for i, batch in enumerate(test_loader):
+        input_samples, gt_samples = batch["input"], batch["gt"]
+        sample_metadata = batch["input_metadata"]
+
+        with torch.no_grad():
+            test_input = input_samples.cuda()
+            test_gt = gt_samples.cuda(non_blocking=True)
+
+            if context["film"]:
+                test_metadata = [one_hot_encoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
+                preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
+            else:
+                preds = model(test_input)
+
+        # Metrics computation
+        gt_npy = gt_samples.numpy().astype(np.uint8)
+        gt_npy = gt_npy.squeeze(axis=1)
+
+        preds_npy = preds.data.cpu().numpy()
+        preds_npy = threshold_predictions(preds_npy)
+        preds_npy = preds_npy.astype(np.uint8)
+
+        metric_mgr(preds_npy, gt_npy)
+
+    metrics_dict = metric_mgr.get_results()
+    metric_mgr.reset()
+    print(metrics_dict)
 
 def run_main():
     if len(sys.argv) <= 1:
@@ -395,6 +420,8 @@ def run_main():
     if command == 'train':
         cmd_train(context)
         shutil.copyfile(sys.argv[1], "./"+context["log_directory"]+"/config_file.json")
+    elif command == 'test':
+        cmd_test(context)
 
 if __name__ == "__main__":
     run_main()
