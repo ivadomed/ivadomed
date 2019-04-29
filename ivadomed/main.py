@@ -323,9 +323,9 @@ def cmd_train(context):
 
     # save final model
     torch.save(model, "./"+context["log_directory"]+"/final_model.pt")
-    # save clustering and OneHotEncoding models
-    pickle.dump(metadata_clustering_models, open("./"+context["log_directory"]+"/clustering_models.pkl", 'wb'))
-    pickle.dump(train_onehotencoder, open("./"+context["log_directory"]+"/one_hot_encoder.pkl", 'wb'))
+    if context["film"]:  # save clustering and OneHotEncoding models
+        pickle.dump(metadata_clustering_models, open("./"+context["log_directory"]+"/clustering_models.pkl", 'wb'))
+        pickle.dump(train_onehotencoder, open("./"+context["log_directory"]+"/one_hot_encoder.pkl", 'wb'))
 
     return
 
