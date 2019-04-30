@@ -20,7 +20,7 @@ PATH_LOG=$5
 
 cd ${SUBJECT}/anat
 rm straightening.cache
-rm sub-01_acq-T1w_MTS_seg.nii.gz
-rm sub-01_T1w_seg.nii.gz
-rm sub-01_T2star_seg.nii.gz
-rm sub-01_T2w_seg.nii.gz
+rm ${SUBJECT}_acq-T1w_MTS_seg.nii.gz
+rm ${SUBJECT}_T1w_seg.nii.gz
+rm ${SUBJECT}_T2star_seg.nii.gz
+rm ${SUBJECT}_T2w_seg.nii.gz
