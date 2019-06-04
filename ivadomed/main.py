@@ -177,7 +177,7 @@ def cmd_train(context):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
 
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(log_dir=context["log_directory"])
+    writer = SummaryWriter(logdir=context["log_directory"])
 
     # Training loop -----------------------------------------------------------
     best_validation_loss = float("inf")
