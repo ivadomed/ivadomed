@@ -24,6 +24,8 @@ from tqdm import tqdm
 from ivadomed import loader as loader
 from ivadomed import models
 
+from dev.plot_film_parameters import visualize_pca
+
 import numpy as np
 
 from PIL import Image
@@ -179,30 +181,9 @@ def cmd_train(context):
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(logdir=context["log_directory"])
 
-    # Create lists containing gammas and betas after each FiLM layer.
-    gammas_list1 = []
-    betas_list1 = []
-
-    gammas_list2 = []
-    betas_list2 = []
-
-    gammas_list3 = []
-    betas_list3 = []
-
-    gammas_list4 = []
-    betas_list4 = []
-
-    gammas_list5 = []
-    betas_list5 = []
-
-    gammas_list6 = []
-    betas_list6 = []
-
-    gammas_list7 = []
-    betas_list7 = []
-
-    gammas_list8 = []
-    betas_list8 = []
+    # Create dict containing gammas and betas after each FiLM layer.
+    gammas_dict = {i:[] for i in range(1,9)}
+    betas_dict = {i:[] for i in range(1,9)}
 
     # Training loop -----------------------------------------------------------
     best_validation_loss = float("inf")
@@ -330,29 +311,29 @@ def cmd_train(context):
             if epoch == num_epochs and i < 142:
 
                 # Fill the lists of gammas and betas
-                gammas_list1.append(model.film1.gammas[:, :, 0, 0].cpu().numpy())
-                betas_list1.append(model.film1.betas[:, :, 0, 0].cpu().numpy())
+                gammas_dict[1].append(model.film1.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[1].append(model.film1.betas[:, :, 0, 0].cpu().numpy())
 
-                gammas_list2.append(model.film2.gammas[:, :, 0, 0].cpu().numpy())
-                betas_list2.append(model.film2.betas[:, :, 0, 0].cpu().numpy())
+                gammas_dict[2].append(model.film2.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[2].append(model.film2.betas[:, :, 0, 0].cpu().numpy())
 
-                gammas_list3.append(model.film3.gammas[:, :, 0, 0].cpu().numpy())
-                betas_list3.append(model.film3.betas[:, :, 0, 0].cpu().numpy())
+                gammas_dict[3].append(model.film3.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[3].append(model.film3.betas[:, :, 0, 0].cpu().numpy())
 
-                gammas_list4.append(model.film4.gammas[:, :, 0, 0].cpu().numpy())
-                betas_list4.append(model.film4.betas[:, :, 0, 0].cpu().numpy())
+                gammas_dict[4].append(model.film4.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[4].append(model.film4.betas[:, :, 0, 0].cpu().numpy())
 
-                gammas_list5.append(model.film5.gammas[:, :, 0, 0].cpu().numpy())
-                betas_list5.append(model.film5.betas[:, :, 0, 0].cpu().numpy())
+                gammas_dict[5].append(model.film5.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[5].append(model.film5.betas[:, :, 0, 0].cpu().numpy())
 
-                gammas_list6.append(model.film6.gammas[:, :, 0, 0].cpu().numpy())
-                betas_list6.append(model.film6.betas[:, :, 0, 0].cpu().numpy())
+                gammas_dict[6].append(model.film6.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[6].append(model.film6.betas[:, :, 0, 0].cpu().numpy())
 
-                gammas_list7.append(model.film7.gammas[:, :, 0, 0].cpu().numpy())
-                betas_list7.append(model.film7.betas[:, :, 0, 0].cpu().numpy())
+                gammas_dict[7].append(model.film7.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[7].append(model.film7.betas[:, :, 0, 0].cpu().numpy())
 
-                gammas_list8.append(model.film8.gammas[:, :, 0, 0].cpu().numpy())
-                betas_list8.append(model.film8.betas[:, :, 0, 0].cpu().numpy())
+                gammas_dict[8].append(model.film8.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[8].append(model.film8.betas[:, :, 0, 0].cpu().numpy())
 
         metrics_dict = metric_mgr.get_results()
         metric_mgr.reset()
@@ -380,6 +361,14 @@ def cmd_train(context):
         pickle.dump(metadata_clustering_models, open("./"+context["log_directory"]+"/clustering_models.pkl", 'wb'))
         pickle.dump(train_onehotencoder, open("./"+context["log_directory"]+"/one_hot_encoder.pkl", 'wb'))
 
+    # convert list of gammas/betas into numpy arrays
+    gammas_dict = {i:np.array(gammas_dict[i]) for i in range(1,9)}
+    betas_dict = {i:np.array(betas_dict[i]) for i in range(1,9)}
+
+    # create graph for gammas/betas values
+    num_batch = 142
+    for i in range(1,9):
+        visualize_pca(gammas_dict[i], i, num_batch, context["log_directory"] + f"/pca_gammas_layer_{i}.png")
     return
 
 
