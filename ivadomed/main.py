@@ -179,7 +179,7 @@ def cmd_train(context):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
 
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(logdir=context["log_directory"])
+    writer = SummaryWriter(log_dir=context["log_directory"])
 
     # Create dict containing gammas and betas after each FiLM layer.
     gammas_dict = {i:[] for i in range(1,9)}
@@ -367,8 +367,8 @@ def cmd_train(context):
 
     # create graph for gammas/betas values
     num_batch = 142
-    for i in range(1,9):
-        visualize_pca(gammas_dict[i], i, num_batch, context["log_directory"] + f"/pca_gammas_layer_{i}.png")
+    for i in range(1,8):
+        visualize_pca(gammas_dict[i], i, num_batch, context["log_directory"] + f"/PCA/pca_gammas_layer_{i}.png")
     return
 
 

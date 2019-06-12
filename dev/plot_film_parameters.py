@@ -37,7 +37,7 @@ def visualize_pca(data, layer_no, num_batch, fname_out):
         pca_df = pd.concat([pca_df, pca_df2])
 
     # Create the graph and save it
-    fig = plt.figure()
+    fig = plt.figure(figsize=(16,10))
     plt.title(f"PCA for gammas: Layer {layer_no}")
     sns.scatterplot(
         x="pca1", y="pca2",
@@ -46,7 +46,7 @@ def visualize_pca(data, layer_no, num_batch, fname_out):
         data=pca_df,
         legend="full",
         alpha=1)
-    fid.savefig(fname_out)
+    fig.savefig(fname_out)
 
 
 def visualize_tsne(data, num_batch, fname_out):
