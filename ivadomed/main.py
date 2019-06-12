@@ -368,7 +368,7 @@ def cmd_train(context):
     # create graph for gammas/betas values
     num_batch = 142
     for i in range(1,8):
-        visualize_pca(gammas_dict[i], i, num_batch, context["log_directory"] + f"/PCA/pca_gammas_layer_{i}.png")
+        visualize_pca(gammas_dict[i], i, num_batch, context["log_directory"] + f"/pca_gammas_layer_{i}.png")
     return
 
 
