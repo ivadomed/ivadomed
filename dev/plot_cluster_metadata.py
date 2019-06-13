@@ -36,22 +36,26 @@ def run_main(context):
 
     out_dir = context["log_directory"]
     metadata_dct = {}
-    for subset in ['train', 'validation', 'test']:
-        metadata_dct[subset] = {}
-        for bids_ds in tqdm(context["bids_path_"+subset], desc="Loading "+subset+" set"):
-            ds = loader.BidsDataset(bids_ds,
-                                  contrast_lst=context["contrast_train_validation"] if subset != "test" else context["contrast_test"], 
-                                  transform=no_transform,
-                                  slice_filter_fn=SliceFilter())
-            for m in metadata_type:
-                if m in metadata_dct:
-                    metadata_dct[subset][m] = [v for m_lst in [metadata_dct[subset][m], ds.metadata[m]] for v in m_lst]
-                else:
-                    metadata_dct[subset][m] = ds.metadata[m]
-    pickle.dump(metadata_dct, open("dev_metadata.pkl", 'wb'))
-#        out_dir_subset = os.path.join(out_dir, subset)
-#        if not os.path.isdir(out_dir_subset):
-#            os.makedirs(out_dir_subset)
+#    for subset in ['train', 'validation', 'test']:
+#        metadata_dct[subset] = {}
+#        for bids_ds in tqdm(context["bids_path_"+subset], desc="Loading "+subset+" set"):
+#            ds = loader.BidsDataset(bids_ds,
+#                                  contrast_lst=context["contrast_train_validation"] if subset != "test" else context["contrast_test"], 
+#                                  transform=no_transform,
+#                                  slice_filter_fn=SliceFilter())
+#            for m in metadata_type:
+#                if m in metadata_dct:
+#                    metadata_dct[subset][m] = [v for m_lst in [metadata_dct[subset][m], ds.metadata[m]] for v in m_lst]
+#                else:
+#                    metadata_dct[subset][m] = ds.metadata[m]
+#    pickle.dump(metadata_dct, open("dev_metadata.pkl", 'wb'))
+    metadata_dct = pickle.load(open("dev_metadata.pkl", "rb"))
+    cluster_dct = pickle.load(open(os.path.join(out_dir, "clustering_models.pkl"), "rb"))
+
+    out_dir = os.path.join(out_dir, "cluster_metadata")
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+
 #        for m in metadata_type:
 #            plot_hist(metadata_dct[m], os.path.join(out_dir_subset, m+'.png'))
 
