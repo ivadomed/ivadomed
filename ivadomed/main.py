@@ -177,7 +177,7 @@ def cmd_train(context):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
 
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(logdir=context["log_directory"])
+    writer = SummaryWriter(log_dir=context["log_directory"])
 
     # Training loop -----------------------------------------------------------
     best_validation_loss = float("inf")
@@ -202,6 +202,9 @@ def cmd_train(context):
 
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
+
+            # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
+            var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
             if context["film"]:
                 var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
@@ -261,6 +264,9 @@ def cmd_train(context):
             with torch.no_grad():
                 var_input = input_samples.cuda()
                 var_gt = gt_samples.cuda(non_blocking=True)
+
+                # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
+                var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
                 if context["film"]:
                     var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
@@ -386,6 +392,8 @@ def cmd_test(context):
         with torch.no_grad():
             test_input = input_samples.cuda()
             test_gt = gt_samples.cuda(non_blocking=True)
+
+            test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
             if context["film"]:
                 test_metadata = [one_hot_encoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
