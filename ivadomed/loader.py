@@ -63,30 +63,18 @@ class BidsDataset(MRI2DBidsSegDataset):
                     print("Subject without metadata.")
                     continue
 
+                def _check_isMetadata(metadata_type, metadata):
+                    if metadata_type not in metadata:
+                        print("{} without {}, skipping.".format(metadata_type, subject))
+                        return False
+                    else:
+                        value = metadata[metadata_type] if metadata_type == "Manufacturer" else float(metadata[metadata_type])
+                        self.metadata[metadata_type].append(value)
+                        return True
+
                 metadata = subject.metadata()
-                if "FlipAngle" not in metadata:
-                    print("{} without FlipAngle, skipping.".format(subject))
+                if not all([_check_isMetadata(m, metadata) for m in self.metadata.keys()]):
                     continue
-                else:
-                    self.metadata["FlipAngle"].append(float(metadata["FlipAngle"]))
-
-                if "EchoTime" not in metadata:
-                    print("{} without EchoTime, skipping.".format(subject))
-                    continue
-                else:
-                    self.metadata["EchoTime"].append(float(metadata["EchoTime"]))
-
-                if "RepetitionTime" not in metadata:
-                    print("{} without RepetitionTime, skipping.".format(subject))
-                    continue
-                else:
-                    self.metadata["RepetitionTime"].append(float(metadata["RepetitionTime"]))
-
-                if "Manufacturer" not in metadata:
-                    print("{} without Manufacturer, skipping.".format(subject))
-                    continue
-                else:
-                    self.metadata["Manufacturer"].append(metadata["Manufacturer"])
 
                 self.filename_pairs.append((subject.record.absolute_path,
                                             cord_label_filename, metadata, subject.record["modality"]))
