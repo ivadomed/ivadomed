@@ -12,11 +12,12 @@ MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 
 
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
-    def __init__(self, input_filename, gt_filename, metadata):
+    def __init__(self, input_filename, gt_filename, metadata, contrast):
         super().__init__(input_filename, gt_filename)
         self.metadata = metadata
         self.metadata["input_filename"] = input_filename
         self.metadata["gt_filename"] = gt_filename
+        self.metadata["contrast"] = contrast  # eg T2w
 
     def get_pair_slice(self, slice_index, slice_axis=2):
         dreturn = super().get_pair_slice(slice_index, slice_axis)
@@ -27,9 +28,9 @@ class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
 
 class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
     def _load_filenames(self):
-        for input_filename, gt_filename, bids_metadata in self.filename_pairs:
+        for input_filename, gt_filename, bids_metadata, contrast in self.filename_pairs:
             segpair = BIDSSegPair2D(input_filename, gt_filename,
-                                    bids_metadata)
+                                    bids_metadata, contrast)
             self.handlers.append(segpair)
 
 
@@ -88,7 +89,7 @@ class BidsDataset(MRI2DBidsSegDataset):
                     self.metadata["Manufacturer"].append(metadata["Manufacturer"])
 
                 self.filename_pairs.append((subject.record.absolute_path,
-                                            cord_label_filename, metadata))
+                                            cord_label_filename, metadata, subject.record["modality"]))
 
         super().__init__(self.filename_pairs, slice_axis, cache,
                          transform, slice_filter_fn, canonical)
@@ -172,6 +173,8 @@ def normalize_metadata(ds_lst_in, clustering_models, debugging, train_set=False)
                 print("Manufacturer: {} --> {}".format(manufacturer, s_out["input_metadata"]["bids_metadata"]["Manufacturer"]))
 
             s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
+
+            s_out["input_metadata"]["contrast"] = subject["input_metadata"]["bids_metadata"]["contrast"]
 
             if train_set:
                 X_train_ohe.append(s_out["input_metadata"]["bids_metadata"])
