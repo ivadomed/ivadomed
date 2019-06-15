@@ -28,15 +28,25 @@ def plot_hist(data, fname_out):
 
 
 def plot_decision_boundaries(data, model, x_range, fname_out):
+    fig = plt.figure()
+
     x_min, x_max = x_range[0], x_range[1]
     y_min, y_max = 0, (x_max - x_min) * 0.2
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, x_range[2]),
+                     np.arange(y_min, y_max, x_range[2]))
 
-    xx = np.meshgrid(np.arange(x_min, x_max, x_range[2]))
-    Z = model.predict(np.c_[xx.ravel()]).reshape(xx.shape)
 
-    plt.contourf(xx, yy, Z, alpha=0.4)
-    plt.scatter(X[:, 0], X[:, 1], c=y, alpha=0.8)
+    Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+    plt.contourf(xx, yy, Z, cmap=plt.cm.Paired, alpha=0.8)
 
+   #plt.scatter(X[:, 0], X[:, 1], cmap=plt.cm.Paired)
+   plt.xlabel('Spectrum')
+   plt.xlim(xx.min(), xx.max())
+   plt.ylim(yy.min(), yy.max())
+   plt.yticks(())
+
+   fig.savefig(fname_out)
 
 def run_main(context):
 
@@ -70,7 +80,7 @@ def run_main(context):
         os.makedirs(out_dir)
 
     for m in metadata_type:
-        plot_decision_boundaries(metadata_dct[m], cluster_dct[m], metadata_range[m], os.path.join(out_dir, m+'.png'))
+        plot_decision_boundaries(metadata_dct[metadata_dct.keys()][m], cluster_dct[m], metadata_range[m], os.path.join(out_dir, m+'.png'))
 #        for m in metadata_type:
 #            plot_hist(metadata_dct[m], os.path.join(out_dir_subset, m+'.png'))
 
