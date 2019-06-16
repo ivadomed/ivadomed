@@ -12,11 +12,12 @@ MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 
 
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
-    def __init__(self, input_filename, gt_filename, metadata):
+    def __init__(self, input_filename, gt_filename, metadata, contrast):
         super().__init__(input_filename, gt_filename)
         self.metadata = metadata
         self.metadata["input_filename"] = input_filename
         self.metadata["gt_filename"] = gt_filename
+        self.metadata["contrast"] = contrast  # eg T2w
 
     def get_pair_slice(self, slice_index, slice_axis=2):
         dreturn = super().get_pair_slice(slice_index, slice_axis)
@@ -27,9 +28,9 @@ class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
 
 class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
     def _load_filenames(self):
-        for input_filename, gt_filename, bids_metadata in self.filename_pairs:
+        for input_filename, gt_filename, bids_metadata, contrast in self.filename_pairs:
             segpair = BIDSSegPair2D(input_filename, gt_filename,
-                                    bids_metadata)
+                                    bids_metadata, contrast)
             self.handlers.append(segpair)
 
 
@@ -62,33 +63,21 @@ class BidsDataset(MRI2DBidsSegDataset):
                     print("Subject without metadata.")
                     continue
 
+                def _check_isMetadata(metadata_type, metadata):
+                    if metadata_type not in metadata:
+                        print("{} without {}, skipping.".format(metadata_type, subject))
+                        return False
+                    else:
+                        value = metadata[metadata_type] if metadata_type == "Manufacturer" else float(metadata[metadata_type])
+                        self.metadata[metadata_type].append(value)
+                        return True
+
                 metadata = subject.metadata()
-                if "FlipAngle" not in metadata:
-                    print("{} without FlipAngle, skipping.".format(subject))
+                if not all([_check_isMetadata(m, metadata) for m in self.metadata.keys()]):
                     continue
-                else:
-                    self.metadata["FlipAngle"].append(float(metadata["FlipAngle"]))
-
-                if "EchoTime" not in metadata:
-                    print("{} without EchoTime, skipping.".format(subject))
-                    continue
-                else:
-                    self.metadata["EchoTime"].append(float(metadata["EchoTime"]))
-
-                if "RepetitionTime" not in metadata:
-                    print("{} without RepetitionTime, skipping.".format(subject))
-                    continue
-                else:
-                    self.metadata["RepetitionTime"].append(float(metadata["RepetitionTime"]))
-
-                if "Manufacturer" not in metadata:
-                    print("{} without Manufacturer, skipping.".format(subject))
-                    continue
-                else:
-                    self.metadata["Manufacturer"].append(metadata["Manufacturer"])
 
                 self.filename_pairs.append((subject.record.absolute_path,
-                                            cord_label_filename, metadata))
+                                            cord_label_filename, metadata, subject.record["modality"]))
 
         super().__init__(self.filename_pairs, slice_axis, cache,
                          transform, slice_filter_fn, canonical)
@@ -172,6 +161,8 @@ def normalize_metadata(ds_lst_in, clustering_models, debugging, train_set=False)
                 print("Manufacturer: {} --> {}".format(manufacturer, s_out["input_metadata"]["bids_metadata"]["Manufacturer"]))
 
             s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
+
+            s_out["input_metadata"]["contrast"] = subject["input_metadata"]["bids_metadata"]["contrast"]
 
             if train_set:
                 X_train_ohe.append(s_out["input_metadata"]["bids_metadata"])
