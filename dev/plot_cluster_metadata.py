@@ -4,6 +4,7 @@ import json
 import pickle
 import numpy as np
 from tqdm import tqdm
+from itertools import groupby
 from torchvision import transforms
 import matplotlib.pyplot as plt
 
@@ -12,22 +13,10 @@ from ivadomed.main import SliceFilter
 from medicaltorch import transforms as mt_transforms
 
 metadata_type = ['FlipAngle', 'EchoTime', 'RepetitionTime']
-metadata_range = {'FlipAngle': [0, 360, 0.5], 'EchoTime': [10**(-5), 10**(-1), 10**(-3)], 'RepetitionTime': [10**(-5), 10**(-1), 10**(-3)]}
-
-def plot_hist(data, fname_out):
-    fig = plt.figure()
-    n, bins, patches = plt.hist(x=data, bins='auto', color='#0504aa',
-                            alpha=0.7, rwidth=0.85)
-    plt.grid(axis='y', alpha=0.75)
-    plt.xlabel('Value')
-    plt.ylabel('Frequency')
-    maxfreq = n.max()
-    plt.ylim(ymax=np.ceil(maxfreq / 10) * 10 if maxfreq % 10 else maxfreq + 10)
-
-    fig.savefig(fname_out)
+metadata_range = {'FlipAngle': [0, 180, 0.5], 'EchoTime': [10**(-3), 10**(0), 10**(-3)], 'RepetitionTime': [10**(-3), 10**(1), 10**(-2)]}
 
 
-def plot_decision_boundaries(data, model, x_range, fname_out):
+def plot_decision_boundaries(data, model, x_range, metadata_name, fname_out):
     fig = plt.figure()
 
     x_min, x_max = x_range[0], x_range[1]
@@ -38,15 +27,23 @@ def plot_decision_boundaries(data, model, x_range, fname_out):
 
     Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
-    plt.contourf(xx, yy, Z, cmap=plt.cm.Paired, alpha=0.8)
+    print(Z.shape)
+    print([zz[0] for zz in groupby(list(Z[0,:]))])
 
-   #plt.scatter(X[:, 0], X[:, 1], cmap=plt.cm.Paired)
-   plt.xlabel('Spectrum')
-   plt.xlim(xx.min(), xx.max())
-   plt.ylim(yy.min(), yy.max())
-   plt.yticks(())
+    plt.contourf(xx, yy, Z, cmap=plt.cm.jet, alpha=0.8)
 
-   fig.savefig(fname_out)
+    for s, y_val in zip(['train', 'validation', 'test'], [0.25, 0.5, 0.75]):
+        plt.scatter(data[s][metadata_name], [(y_max-y_min) * y_val for v in data[s][metadata_name]], c='k')
+
+    plt.xlabel(metadata_name)
+    plt.xlim(xx.min(), xx.max())
+    plt.ylim(yy.min(), yy.max())
+    plt.yticks(())
+    if metadata_name != 'FlipAngle':
+        plt.xscale('log')
+
+    fig.savefig(fname_out)
+
 
 def run_main(context):
 
@@ -57,12 +54,13 @@ def run_main(context):
     ])
 
     out_dir = context["log_directory"]
+    """
     metadata_dct = {}
     for subset in ['train', 'validation', 'test']:
         metadata_dct[subset] = {}
         for bids_ds in tqdm(context["bids_path_"+subset], desc="Loading "+subset+" set"):
             ds = loader.BidsDataset(bids_ds,
-                                  contrast_lst=context["contrast_train_validation"] if subset != "test" else context["contrast_test"], 
+                                  contrast_lst=context["contrast_train_validation"] if subset != "test" else context["contrast_test"],
                                   transform=no_transform,
                                   slice_filter_fn=SliceFilter())
 
@@ -71,8 +69,9 @@ def run_main(context):
                     metadata_dct[subset][m] = [v for m_lst in [metadata_dct[subset][m], ds.metadata[m]] for v in m_lst]
                 else:
                     metadata_dct[subset][m] = ds.metadata[m]
-#    pickle.dump(metadata_dct, open("dev_metadata.pkl", 'wb'))
-#    metadata_dct = pickle.load(open("dev_metadata.pkl", "rb"))
+    pickle.dump(metadata_dct, open("dev_metadata.pkl", 'wb'))
+    """
+    metadata_dct = pickle.load(open("dev_metadata.pkl", "rb"))
     cluster_dct = pickle.load(open(os.path.join(out_dir, "clustering_models.pkl"), "rb"))
 
     out_dir = os.path.join(out_dir, "cluster_metadata")
@@ -80,7 +79,9 @@ def run_main(context):
         os.makedirs(out_dir)
 
     for m in metadata_type:
-        plot_decision_boundaries(metadata_dct[metadata_dct.keys()][m], cluster_dct[m], metadata_range[m], os.path.join(out_dir, m+'.png'))
+        values = [v for s in ['train', 'validation', 'test'] for v in metadata_dct[s][m]]
+        print('{}: Min={}, Max={}, Median={}\n'.format(m, min(values), max(values), np.median(values)))
+        plot_decision_boundaries(metadata_dct, cluster_dct[m], metadata_range[m], m, os.path.join(out_dir, m+'.png'))
 #        for m in metadata_type:
 #            plot_hist(metadata_dct[m], os.path.join(out_dir_subset, m+'.png'))
 
