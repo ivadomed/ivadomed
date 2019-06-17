@@ -94,9 +94,17 @@ def cmd_train(context):
                         - 'film': indicates if FiLM is used or not
                         - 'debugging': allows extended verbosity and intermediate outputs
     """
-    # Set the GPU
-    gpu_number = int(context["gpu"])
-    torch.cuda.set_device(gpu_number)
+    ##### DEFINE DEVICE #####
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    cuda_available = torch.cuda.is_available()
+    if not cuda_available:
+        print("cuda is not available.")
+        print("Working on {}.".format(device))
+    if cuda_available:
+        # Set the GPU
+        gpu_number = int(context["gpu"])
+        torch.cuda.set_device(gpu_number)
+        print("using GPU number {}".format(gpu_number))
 
     # These are the training transformations
     train_transform = transforms.Compose([
@@ -169,7 +177,8 @@ def cmd_train(context):
         # Traditional U-Net model
         model = models.Unet(drop_rate=context["dropout_rate"],
                             bn_momentum=context["batch_norm_momentum"])
-    model.cuda()
+    if cuda_available:
+        model.cuda()
 
     num_epochs = context["num_epochs"]
     initial_lr = context["initial_lr"]
@@ -179,7 +188,7 @@ def cmd_train(context):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
 
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(log_dir=context["log_directory"])
+    writer = SummaryWriter(logdir=context["log_directory"])
 
     # Create dict containing gammas and betas after each FiLM layer.
     gammas_dict = {i:[] for i in range(1,9)}
@@ -206,8 +215,12 @@ def cmd_train(context):
             # ---> bids_metadata_example = sample_metadata[0]["bids_metadata"]
             sample_metadata = batch["input_metadata"]
 
-            var_input = input_samples.cuda()
-            var_gt = gt_samples.cuda(non_blocking=True)
+            if cuda_available:
+                var_input = input_samples.cuda()
+                var_gt = gt_samples.cuda(non_blocking=True)
+            else:
+                var_input = input_samples
+                var_gt = gt_samples
 
             if context["film"]:
                 var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
@@ -265,8 +278,12 @@ def cmd_train(context):
             sample_metadata = batch["input_metadata"]
 
             with torch.no_grad():
-                var_input = input_samples.cuda()
-                var_gt = gt_samples.cuda(non_blocking=True)
+                if cuda_available:
+                    var_input = input_samples.cuda()
+                    var_gt = gt_samples.cuda(non_blocking=True)
+                else:
+                    var_input = input_samples
+                    var_gt = gt_samples
 
                 if context["film"]:
                     var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
@@ -373,9 +390,17 @@ def cmd_train(context):
 
 
 def cmd_test(context):
-    # Set the GPU
-    gpu_number = int(context["gpu"])
-    torch.cuda.set_device(gpu_number)
+    ##### DEFINE DEVICE #####
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    cuda_available = torch.cuda.is_available()
+    if not cuda_available:
+        print("cuda is not available.")
+        print("Working on {}.".format(device))
+    if cuda_available:
+        # Set the GPU
+        gpu_number = int(context["gpu"])
+        torch.cuda.set_device(gpu_number)
+        print("using GPU number {}".format(gpu_number))
 
     # These are the validation/testing transformations
     val_transform = transforms.Compose([
@@ -408,7 +433,9 @@ def cmd_test(context):
                              num_workers=1)
 
     model = torch.load("./"+context["log_directory"]+"/final_model.pt")
-    model.cuda()
+
+    if cuda_available:
+        model.cuda()
     model.eval()
 
     metric_fns = [mt_metrics.dice_score,
@@ -426,8 +453,12 @@ def cmd_test(context):
         sample_metadata = batch["input_metadata"]
 
         with torch.no_grad():
-            test_input = input_samples.cuda()
-            test_gt = gt_samples.cuda(non_blocking=True)
+            if cuda_available:
+                test_input = input_samples.cuda()
+                test_gt = gt_samples.cuda(non_blocking=True)
+            else:
+                test_input = input_samples
+                test_gt = gt_samples
 
             if context["film"]:
                 test_metadata = [one_hot_encoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]

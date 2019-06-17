@@ -140,7 +140,10 @@ class FiLMlayer(Module):
     def forward(self, feature_maps, context, w_shared):
         _, self.feature_size, self.height, self.width = feature_maps.data.shape
 
-        context = torch.Tensor(context).cuda()
+        if torch.cuda.is_available():
+            context = torch.Tensor(context).cuda()
+        else:
+            context = torch.Tensor(context)
 
         # Estimate the FiLM parameters using a FiLM generator from the contioning metadata
         film_params, new_w_shared = self.generator(context, w_shared)
