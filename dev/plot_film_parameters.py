@@ -1,3 +1,6 @@
+import sys
+import os
+import json
 import matplotlib
 
 matplotlib.use('TkAgg')
@@ -67,7 +70,7 @@ def visualize_tsne(data, num_batch, fname_out):
     print('t-SNE done!')
 
     # Visualize
-    fig = plt.figure()
+    fig = plt.figure(figsize=(16,10))
     sns.scatterplot(
         x="tsne-2d-one",
         y="tsne-2d-two",
@@ -80,3 +83,38 @@ def visualize_tsne(data, num_batch, fname_out):
     plt.xlim(-260, 500)
     plt.ylim(-500, 500)
     fig.savefig(fname_out)
+
+def run_main(context):
+
+    log_dir = context["log_directory"]
+
+    num_batch = 142
+
+    gammas = {i: np.load(log_dir + f"/gammas_layer_{i}.npy") for i in range(1, 9)}
+    betas = {i: np.load(log_dir + f"/betas_layer_{i}.npy") for i in range(1, 9)}
+
+    out_dir = log_dir + "/FiLM-parameters-visualization/"
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+
+    # save histograms with gammas and betas values
+    for layer_no in range(1,9):
+        plot_histogram(gammas[layer_no], layer_no, out_dir + f"hist_gammas_{layer_no}.png")
+        plot_histogram(betas[layer_no], layer_no, out_dir + f"hist_betas_{layer_no}.png")
+
+    # save PCA for betas and gammas except for the last layer due to gammas/betas shapes
+    for layer_no in range(1,8):
+        visualize_pca(gammas[layer_no], layer_no, num_batch, out_dir + f"pca_gammas_{layer_no}.png")
+        visualize_pca(betas[layer_no], layer_no, num_batch, out_dir + f"pca_betas_{layer_no}.png")
+
+    # save tsne for betas and gammas
+    for layer_no in range(1,9):
+        visualize_tsne(gammas[layer_no], num_batch, out_dir + f"tsne_gammas_{layer_no}.png")
+        visualize_tsne(betas[layer_no], num_batch, out_dir + f"tsne_betas_{layer_no}.png")
+
+if __name__ == "__main__":
+
+    with open("config/config.json", "r") as fhandle:
+        context = json.load(fhandle)
+
+    run_main(context)
