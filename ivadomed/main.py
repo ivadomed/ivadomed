@@ -382,10 +382,11 @@ def cmd_train(context):
     gammas_dict = {i:np.array(gammas_dict[i]) for i in range(1,9)}
     betas_dict = {i:np.array(betas_dict[i]) for i in range(1,9)}
 
-    # create graph for gammas/betas values
-    num_batch = 142
-    for i in range(1,8):
-        visualize_pca(gammas_dict[i], i, num_batch, context["log_directory"] + f"/pca_gammas_layer_{i}.png")
+    # save the numpy arrays for gammas/betas inside files.npy in log_directory
+    for i in range(1,9):
+        np.save(context["log_directory"] + f"/gammas_layer_{i}.npy", gammas_dict[i])
+        np.save(context["log_directory"] + f"/betas_layer_{i}.npy", betas_dict[i])
+
     return
 
 
