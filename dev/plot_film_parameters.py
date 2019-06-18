@@ -25,7 +25,7 @@ def plot_histogram(data, layer_no, fname_out):
     fig.savefig(fname_out)
 
 
-def visualize_pca(data, contrast_images, layer_no, fname_out):
+def visualize_pca(data, contrast_images, num_batch, layer_no, fname_out):
     pca_df = pd.DataFrame()
 
     pca = PCA(n_components=3)
@@ -51,7 +51,7 @@ def visualize_pca(data, contrast_images, layer_no, fname_out):
     fig.savefig(fname_out)
 
 
-def visualize_tsne(data, contrast_images, layer_no, fname_out):
+def visualize_tsne(data, contrast_images, num_batch, layer_no, fname_out):
     tsne_df = pd.DataFrame()
 
     tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
@@ -104,13 +104,13 @@ def run_main(context):
 
     # save PCA for betas and gammas except for the last layer due to gammas/betas shapes
     for layer_no in range(1,8):
-        visualize_pca(gammas[layer_no], contrast_images, layer_no, out_dir + f"pca_gammas_{layer_no}.png")
-        visualize_pca(betas[layer_no], contrast_images, layer_no, out_dir + f"pca_betas_{layer_no}.png")
+        visualize_pca(gammas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"pca_gammas_{layer_no}.png")
+        visualize_pca(betas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"pca_betas_{layer_no}.png")
 
     # save tsne for betas and gammas
     for layer_no in range(1,9):
-        visualize_tsne(gammas[layer_no], contrast_images, layer_no, out_dir + f"tsne_gammas_{layer_no}.png")
-        visualize_tsne(betas[layer_no], contrast_images, layer_no, out_dir + f"tsne_betas_{layer_no}.png")
+        visualize_tsne(gammas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"tsne_gammas_{layer_no}.png")
+        visualize_tsne(betas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"tsne_betas_{layer_no}.png")
 
 if __name__ == "__main__":
     fname_config_file = sys.argv[1]
