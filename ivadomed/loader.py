@@ -65,7 +65,7 @@ class BidsDataset(MRI2DBidsSegDataset):
 
                 def _check_isMetadata(metadata_type, metadata):
                     if metadata_type not in metadata:
-                        print("{} without {}, skipping.".format(metadata_type, subject))
+                        print("{} without {}, skipping.".format(subject, metadata_type))
                         return False
                     else:
                         value = metadata[metadata_type] if metadata_type == "Manufacturer" else float(metadata[metadata_type])
