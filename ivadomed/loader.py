@@ -83,6 +83,44 @@ class BidsDataset(MRI2DBidsSegDataset):
                          transform, slice_filter_fn, canonical)
 
 
+class Kde_model():
+    def __init__(self):
+        self.kde = KernelDensity()
+        self.minima = None
+
+    def train(self, data, value_range, gridsearch_bandwidth_range):
+        # reshape data to fit sklearn
+        data = np.array(data).reshape(-1,1)
+
+        # use grid search cross-validation to optimize the bandwidth
+        params = {'bandwidth': gridsearch_bandwidth_range}
+        grid = GridSearchCV(KernelDensity(), params, cv=5, iid=False)
+        grid.fit(data)
+
+        # use the best estimator to compute the kernel density estimate
+        self.kde = grid.best_estimator_
+
+        # fit kde with the best bandwidth
+        self.kde.fit(data)
+
+        s = value_range
+        e = self.kde.score_samples(s.reshape(-1,1))
+
+        # find local minima
+        self.minima = s[argrelextrema(e, np.less)[0]]
+
+    def predict(self, data):
+        # len - 1
+        class_lst = []
+        for d in data[:,0]:
+            x = [i for i, m in enumerate(self.minima) if d < m]
+            class_cur = min(x) if len(x) else len(self.minima)
+
+            class_lst.append(class_cur)
+
+        return np.array(class_lst).reshape(-1,1)
+
+
 def clustering_fit(datasets, key_lst):
     """This function creates clustering models for each metadata type,
     using MeanShift algorithm.
