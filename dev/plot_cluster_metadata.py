@@ -1,3 +1,8 @@
+# Usage:
+#	python dev/plot_cluster_metadata.py <config_file>
+# Example:
+#	python dev/plot_cluster_metadata.py config/config_pr28.json
+
 import sys
 import os
 import json
@@ -8,53 +13,12 @@ from itertools import groupby
 from torchvision import transforms
 import matplotlib.pyplot as plt
 
-from scipy.signal import argrelextrema
-from sklearn.neighbors.kde import KernelDensity
-from sklearn.model_selection import GridSearchCV
-
 from ivadomed import loader as loader
 from ivadomed.main import SliceFilter
 from medicaltorch import transforms as mt_transforms
 
 metadata_type = ['FlipAngle', 'EchoTime', 'RepetitionTime']
 metadata_range = {'FlipAngle': [0, 180, 0.5], 'EchoTime': [10**(-3), 10**(0), 10**(-3)], 'RepetitionTime': [10**(-3), 10**(1), 10**(-2)]}
-
-
-class Kde_model():
-    def __init__(self):
-        self.kde = KernelDensity()
-        self.minima = None
-
-    def train(self, data, range_min, range_max, m):
-        # reshape data to fit sklearn
-        data = np.array(data).reshape(-1,1)
-
-        # use grid search cross-validation to optimize the bandwidth
-        params = {'bandwidth': np.logspace(-3, 1, 50) if m == 'FlipAngle' else np.logspace(-15, 1, 50)}  #, 'kernel': ['gaussian', 'tophat', 'exponential', 'linear', 'cosine'], 'algorithm': ['auto', 'kd_tree', 'ball_tree']}
-        grid = GridSearchCV(KernelDensity(), params, cv=5, iid=False)
-        grid.fit(data)
-
-        # use the best estimator to compute the kernel density estimate
-        self.kde = grid.best_estimator_
-
-        # fit kde with the best bandwidth
-        self.kde.fit(data)
-
-        s = np.linspace(range_min, range_max, 1000) if m == 'FlipAngle' else np.logspace(-3, 1, 1000)
-        e = self.kde.score_samples(s.reshape(-1,1))
-
-        # find local minima
-        self.minima = s[argrelextrema(e, np.less)[0]]
-
-    def predict(self, data):
-        class_lst = []
-        for d in data[:,0]:
-            x = [i for i, m in enumerate(self.minima) if d < m]
-            class_cur = min(x) if len(x) else len(self.minima)
-
-            class_lst.append(class_cur)
-
-        return np.array(class_lst).reshape(-1,1)
 
 
 def plot_decision_boundaries(data, model, x_range, metadata_name, fname_out):
@@ -81,7 +45,7 @@ def plot_decision_boundaries(data, model, x_range, metadata_name, fname_out):
         plt.xscale('log')
 
     fig.savefig(fname_out)
-
+    print('\tSave as: '+fname_out)
 
 def run_main(context):
 
@@ -106,14 +70,10 @@ def run_main(context):
                     metadata_dct[subset][m] = [v for m_lst in [metadata_dct[subset][m], ds.metadata[m]] for v in m_lst]
                 else:
                     metadata_dct[subset][m] = ds.metadata[m]
-    pickle.dump(metadata_dct, open("dev_metadata.pkl", 'wb'))
-    metadata_dct = pickle.load(open("dev_metadata.pkl", "rb"))
-    # cluster_dct = pickle.load(open(os.path.join(out_dir, "clustering_models.pkl"), "rb"))
-    cluster_dct = {}
-    for m in metadata_type:
-        model = Kde_model()
-        model.train(metadata_dct['train'][m], metadata_range[m][0], metadata_range[m][1], m)
-        cluster_dct[m] = model
+    # pickle.dump(metadata_dct, open("dev_metadata.pkl", 'wb'))
+    # metadata_dct = pickle.load(open("dev_metadata.pkl", "rb"))
+
+    cluster_dct = pickle.load(open(os.path.join(out_dir, "clustering_models.pkl"), "rb"))
 
     out_dir = os.path.join(out_dir, "cluster_metadata")
     if not os.path.isdir(out_dir):
@@ -121,7 +81,7 @@ def run_main(context):
 
     for m in metadata_type:
         values = [v for s in ['train', 'validation', 'test'] for v in metadata_dct[s][m]]
-        print('{}: Min={}, Max={}, Median={}\n'.format(m, min(values), max(values), np.median(values)))
+        print('\n{}: Min={}, Max={}, Median={}'.format(m, min(values), max(values), np.median(values)))
         plot_decision_boundaries(metadata_dct, cluster_dct[m], metadata_range[m], m, os.path.join(out_dir, m+'.png'))
 
 if __name__ == "__main__":
