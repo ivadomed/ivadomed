@@ -112,15 +112,9 @@ class Kde_model():
         self.minima = s[argrelextrema(e, np.less)[0]]
 
     def predict(self, data):
-        # len - 1
-        class_lst = []
-        for d in data[:,0]:
-            x = [i for i, m in enumerate(self.minima) if d < m]
-            class_cur = min(x) if len(x) else len(self.minima)
-
-            class_lst.append(class_cur)
-
-        return np.array(class_lst).reshape(-1,1)
+        x = [i for i, m in enumerate(self.minima) if data < m]
+        pred = min(x) if len(x) else len(self.minima)
+        return pred
 
 
 def clustering_fit(datasets, key_lst):
@@ -160,34 +154,23 @@ def normalize_metadata(ds_lst_in, clustering_models, debugging, train_set=False)
         for idx, subject in enumerate(ds_in):
             s_out = deepcopy(subject)
 
-            # categorize flip angle value using meanShift
-            flip_angle = [subject["input_metadata"]["bids_metadata"]["FlipAngle"]]
-            int_value = clustering_models["FlipAngle"].predict(np.array(list(zip(flip_angle, np.zeros(1)))))
-            s_out["input_metadata"]["bids_metadata"]["FlipAngle"] = int_value[0]
-
-            # categorize repetition time value using meanShift
-            repetition_time = [subject["input_metadata"]["bids_metadata"]["RepetitionTime"]]
-            int_value = clustering_models["RepetitionTime"].predict(np.array(list(zip(repetition_time, np.zeros(1)))))
-            s_out["input_metadata"]["bids_metadata"]["RepetitionTime"] = int_value[0]
-
-            # categorize echo time value using meanShift
-            echo_time = [subject["input_metadata"]["bids_metadata"]["EchoTime"]]
-            int_value = clustering_models["EchoTime"].predict(np.array(list(zip(echo_time, np.zeros(1)))))
-            s_out["input_metadata"]["bids_metadata"]["EchoTime"] = int_value[0]
+            # categorize flip angle, repetition time and echo time values using KDE
+            for m in ['FlipAngle', 'RepetitionTime', 'EchoTime']:
+                v = subject["input_metadata"]["bids_metadata"][m]
+                p = clustering_models[m].predict(v)
+                s_out["input_metadata"]["bids_metadata"][m] = p
+                if debugging:
+                    print("{}: {} --> {}".format(m, v, p))
 
             # categorize manufacturer info based on the MANUFACTURER_CATEGORY dictionary
             manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
             if manufacturer in MANUFACTURER_CATEGORY:
                 s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
+                if debugging:
+                    print("Manufacturer: {} --> {}".format(manufacturer, MANUFACTURER_CATEGORY[manufacturer]))
             else:
                 print("{} with unknown manufacturer.".format(subject))
                 s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
-
-            if debugging:
-                print("\nFlip Angle: {} --> {}".format(flip_angle[0], s_out["input_metadata"]["bids_metadata"]["FlipAngle"]))
-                print("Repetition Time: {} --> {}".format(repetition_time[0], s_out["input_metadata"]["bids_metadata"]["RepetitionTime"]))
-                print("Echo Time: {} --> {}".format(echo_time[0], s_out["input_metadata"]["bids_metadata"]["EchoTime"]))
-                print("Manufacturer: {} --> {}".format(manufacturer, s_out["input_metadata"]["bids_metadata"]["Manufacturer"]))
 
             s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
 
