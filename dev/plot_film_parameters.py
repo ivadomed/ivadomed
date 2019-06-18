@@ -91,7 +91,7 @@ def run_main(context):
 
     gammas = {i: np.load(log_dir + f"/gammas_layer_{i}.npy") for i in range(1, 9)}
     betas = {i: np.load(log_dir + f"/betas_layer_{i}.npy") for i in range(1, 9)}
-    contrast_images = np.load(log_dir + "contrast_images.npy")
+    contrast_images = np.load(log_dir + "/contrast_images.npy")
 
     out_dir = log_dir + "/FiLM-parameters-visualization/"
     if not os.path.isdir(out_dir):
