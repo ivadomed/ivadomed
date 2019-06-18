@@ -25,7 +25,7 @@ def plot_histogram(data, layer_no, fname_out):
     fig.savefig(fname_out)
 
 
-def visualize_pca(data, layer_no, num_batch, fname_out):
+def visualize_pca(data, contrast_images, layer_no, fname_out):
     pca_df = pd.DataFrame()
 
     pca = PCA(n_components=3)
@@ -36,7 +36,7 @@ def visualize_pca(data, layer_no, num_batch, fname_out):
         pca_df2['pca1'] = pca_result[:, 0]
         pca_df2['pca2'] = pca_result[:, 1]
         pca_df2['pca3'] = pca_result[:, 2]
-        pca_df2['batch'] = 'batch ' + str(i + 1)
+        pca_df2['contrast'] = contrast_images[i]
         pca_df = pd.concat([pca_df, pca_df2])
 
     # Create the graph and save it
@@ -44,15 +44,14 @@ def visualize_pca(data, layer_no, num_batch, fname_out):
     plt.title(f"PCA: Layer {layer_no}")
     sns.scatterplot(
         x="pca1", y="pca2",
-        hue="batch",
-        palette=sns.color_palette("hls", num_batch),
+        hue="contrast",
         data=pca_df,
         legend="full",
         alpha=1)
     fig.savefig(fname_out)
 
 
-def visualize_tsne(data, layer_no, num_batch, fname_out):
+def visualize_tsne(data, contrast_images, layer_no, fname_out):
     tsne_df = pd.DataFrame()
 
     tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
@@ -63,7 +62,7 @@ def visualize_tsne(data, layer_no, num_batch, fname_out):
 
         tsne_df2['tsne-2d-one'] = tsne_results[:, 0]
         tsne_df2['tsne-2d-two'] = tsne_results[:, 1]
-        tsne_df2['batch'] = 'batch ' + str(i + 1)
+        tsne_df2['contrast'] = contrast_images[i]
 
         tsne_df = pd.concat([tsne_df, tsne_df2])
 
@@ -75,8 +74,7 @@ def visualize_tsne(data, layer_no, num_batch, fname_out):
     sns.scatterplot(
         x="tsne-2d-one",
         y="tsne-2d-two",
-        hue="batch",
-        palette=sns.color_palette("hls", num_batch),
+        hue="contrast",
         data=tsne_df,
         legend="full",
         alpha=1
@@ -93,6 +91,7 @@ def run_main(context):
 
     gammas = {i: np.load(log_dir + f"/gammas_layer_{i}.npy") for i in range(1, 9)}
     betas = {i: np.load(log_dir + f"/betas_layer_{i}.npy") for i in range(1, 9)}
+    contrast_images = np.load(log_dir + "contrast_images.npy")
 
     out_dir = log_dir + "/FiLM-parameters-visualization/"
     if not os.path.isdir(out_dir):
@@ -105,13 +104,13 @@ def run_main(context):
 
     # save PCA for betas and gammas except for the last layer due to gammas/betas shapes
     for layer_no in range(1,8):
-        visualize_pca(gammas[layer_no], layer_no, num_batch, out_dir + f"pca_gammas_{layer_no}.png")
-        visualize_pca(betas[layer_no], layer_no, num_batch, out_dir + f"pca_betas_{layer_no}.png")
+        visualize_pca(gammas[layer_no], contrast_images, layer_no, out_dir + f"pca_gammas_{layer_no}.png")
+        visualize_pca(betas[layer_no], contrast_images, layer_no, out_dir + f"pca_betas_{layer_no}.png")
 
     # save tsne for betas and gammas
     for layer_no in range(1,9):
-        visualize_tsne(gammas[layer_no], layer_no, num_batch, out_dir + f"tsne_gammas_{layer_no}.png")
-        visualize_tsne(betas[layer_no], layer_no, num_batch, out_dir + f"tsne_betas_{layer_no}.png")
+        visualize_tsne(gammas[layer_no], contrast_images, layer_no, out_dir + f"tsne_gammas_{layer_no}.png")
+        visualize_tsne(betas[layer_no], contrast_images, layer_no, out_dir + f"tsne_betas_{layer_no}.png")
 
 if __name__ == "__main__":
     fname_config_file = sys.argv[1]

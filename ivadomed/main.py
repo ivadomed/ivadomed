@@ -24,8 +24,6 @@ from tqdm import tqdm
 from ivadomed import loader as loader
 from ivadomed import models
 
-from dev.plot_film_parameters import visualize_pca
-
 import numpy as np
 
 from PIL import Image
@@ -194,6 +192,9 @@ def cmd_train(context):
     gammas_dict = {i:[] for i in range(1,9)}
     betas_dict = {i:[] for i in range(1,9)}
 
+    # Create a list containing the contrast of all batch images
+    var_contrast_list = []
+
     # Training loop -----------------------------------------------------------
     best_validation_loss = float("inf")
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
@@ -331,7 +332,10 @@ def cmd_train(context):
                 writer.add_image('Validation/Ground Truth', grid_img, epoch)
 
             # Store the values of gammas and betas after the last epoch for each batch
-            if epoch == num_epochs and i < 142:
+            if epoch == num_epochs and i < int(len(ds_val)/context["batch_size"])+1:
+
+                # Get all the contrasts of all batches
+                var_contrast_list.append(var_contrast)
 
                 # Fill the lists of gammas and betas
                 gammas_dict[1].append(model.film1.gammas[:, :, 0, 0].cpu().numpy())
@@ -378,20 +382,24 @@ def cmd_train(context):
             best_validation_loss = val_loss_total_avg
             torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
 
-    # save final model
+    # Save final model
     torch.save(model, "./"+context["log_directory"]+"/final_model.pt")
     if context["film"]:  # save clustering and OneHotEncoding models
         pickle.dump(metadata_clustering_models, open("./"+context["log_directory"]+"/clustering_models.pkl", 'wb'))
         pickle.dump(train_onehotencoder, open("./"+context["log_directory"]+"/one_hot_encoder.pkl", 'wb'))
 
-    # convert list of gammas/betas into numpy arrays
+    # Convert list of gammas/betas into numpy arrays
     gammas_dict = {i:np.array(gammas_dict[i]) for i in range(1,9)}
     betas_dict = {i:np.array(betas_dict[i]) for i in range(1,9)}
 
-    # save the numpy arrays for gammas/betas inside files.npy in log_directory
+    # Save the numpy arrays for gammas/betas inside files.npy in log_directory
     for i in range(1,9):
         np.save(context["log_directory"] + f"/gammas_layer_{i}.npy", gammas_dict[i])
         np.save(context["log_directory"] + f"/betas_layer_{i}.npy", betas_dict[i])
+
+    # Convert into numpy and save the contrasts of all batch images
+    contrast_images = np.array(var_contrast_list)
+    np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
 
     return
 
