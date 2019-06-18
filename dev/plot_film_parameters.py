@@ -15,10 +15,10 @@ from sklearn.manifold import TSNE
 
 
 def plot_histogram(data, layer_no, fname_out):
-    bins = np.linspace(-6, 6, 100)
+    bins = np.linspace(-10, 10, 100)
 
     fig = plt.figure(figsize=(12, 12))
-    plt.title(f'Layer {layer_no}')
+    plt.title(f'Histogram: Layer {layer_no}')
     plt.xlabel('Value')
     plt.ylabel('Frequency')
     plt.hist(data.ravel(), bins)
@@ -41,7 +41,7 @@ def visualize_pca(data, layer_no, num_batch, fname_out):
 
     # Create the graph and save it
     fig = plt.figure(figsize=(16,10))
-    plt.title(f"PCA for gammas: Layer {layer_no}")
+    plt.title(f"PCA: Layer {layer_no}")
     sns.scatterplot(
         x="pca1", y="pca2",
         hue="batch",
@@ -52,7 +52,7 @@ def visualize_pca(data, layer_no, num_batch, fname_out):
     fig.savefig(fname_out)
 
 
-def visualize_tsne(data, num_batch, fname_out):
+def visualize_tsne(data, layer_no, num_batch, fname_out):
     tsne_df = pd.DataFrame()
 
     tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
@@ -71,6 +71,7 @@ def visualize_tsne(data, num_batch, fname_out):
 
     # Visualize
     fig = plt.figure(figsize=(16,10))
+    plt.title(f"t-SNE: Layer {layer_no}")
     sns.scatterplot(
         x="tsne-2d-one",
         y="tsne-2d-two",
@@ -109,12 +110,13 @@ def run_main(context):
 
     # save tsne for betas and gammas
     for layer_no in range(1,9):
-        visualize_tsne(gammas[layer_no], num_batch, out_dir + f"tsne_gammas_{layer_no}.png")
-        visualize_tsne(betas[layer_no], num_batch, out_dir + f"tsne_betas_{layer_no}.png")
+        visualize_tsne(gammas[layer_no], layer_no, num_batch, out_dir + f"tsne_gammas_{layer_no}.png")
+        visualize_tsne(betas[layer_no], layer_no, num_batch, out_dir + f"tsne_betas_{layer_no}.png")
 
 if __name__ == "__main__":
+    fname_config_file = sys.argv[1]
 
-    with open("config/config.json", "r") as fhandle:
+    with open(fname_config_file, "r") as fhandle:
         context = json.load(fhandle)
 
     run_main(context)
