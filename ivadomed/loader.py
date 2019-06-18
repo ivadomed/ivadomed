@@ -125,7 +125,7 @@ def clustering_fit(datasets, key_lst):
     :param key_lst (list of strings): names of metadata to cluster
     :return: clustering model for each metadata type
     """
-    KDE_HYPARAM = {'FlipAngle': {'range': np.linspace(0, 360, 1000), 'gridsearch': np.logspace(-4, 1, 50)},
+    KDE_PARAM = {'FlipAngle': {'range': np.linspace(0, 360, 1000), 'gridsearch': np.logspace(-4, 1, 50)},
                     'RepetitionTime': {'range': np.logspace(-1, 1, 1000), 'gridsearch': np.logspace(-15, 1, 50)},
                     'EchoTime': {'range': np.logspace(-3, 1 , 1000), 'gridsearch': np.logspace(-15, 1, 50)}}
 
@@ -134,7 +134,7 @@ def clustering_fit(datasets, key_lst):
         k_data = [value for dataset in datasets for value in dataset[k]]
 
         kde = Kde_model()
-        kde.train(data, KDE_PARAM[k]['range'], KDE_PARAM[k]['gridsearch'])
+        kde.train(k_data, KDE_PARAM[k]['range'], KDE_PARAM[k]['gridsearch'])
         model_dct[k] = kde
         del kde
 
