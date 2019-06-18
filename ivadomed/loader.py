@@ -2,7 +2,9 @@ from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
 
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.cluster import MeanShift, estimate_bandwidth
+from scipy.signal import argrelextrema
+from sklearn.neighbors.kde import KernelDensity
+from sklearn.model_selection import GridSearchCV
 
 import numpy as np
 from copy import deepcopy
@@ -123,22 +125,24 @@ class Kde_model():
 
 def clustering_fit(datasets, key_lst):
     """This function creates clustering models for each metadata type,
-    using MeanShift algorithm.
+    using Kernel Density Estimation algorithm.
 
     :param datasets (list of lists): data for each dataset
     :param key_lst (list of strings): names of metadata to cluster
     :return: clustering model for each metadata type
     """
-    model_dct, encoder_dct = {}, {}
+    KDE_HYPARAM = {'FlipAngle': {'range': np.linspace(0, 360, 1000), 'gridsearch': np.logspace(-4, 1, 50)},
+                    'RepetitionTime': {'range': np.logspace(-1, 1, 1000), 'gridsearch': np.logspace(-15, 1, 50)},
+                    'EchoTime': {'range': np.logspace(-3, 1 , 1000), 'gridsearch': np.logspace(-15, 1, 50)}}
+
+    model_dct = {}
     for k in key_lst:
         k_data = [value for dataset in datasets for value in dataset[k]]
 
-        X = np.array(list(zip(k_data, np.zeros(len(k_data)))))  # format the data before sending to the clustering algo
-        bandwidth = estimate_bandwidth(X, quantile=0.1)  # estimate the bandwidth to use with the mean-shift algo
-        clf = MeanShift(bandwidth=bandwidth if bandwidth > 0.0 else None, bin_seeding=True)  # mean shift clustering using a flat kernel
-        clf.fit(X)
-        model_dct[k] = clf
-        del clf
+        kde = Kde_model()
+        kde.train(data, KDE_PARAM[k]['range'], KDE_PARAM[k]['gridsearch'])
+        model_dct[k] = kde
+        del kde
 
     return model_dct
 
