@@ -98,18 +98,18 @@ def run_main(context):
 
     # save histograms with gammas and betas values
     for layer_no in range(1,9):
-        plot_histogram(gammas[layer_no], layer_no, out_dir + f"hist_gamma_{layer_no}.png")
-        plot_histogram(betas[layer_no], layer_no, out_dir + f"hist_beta_{layer_no}.png")
+        plot_histogram(gammas[layer_no], layer_no, out_dir + f"/hist_gamma_{layer_no}.png")
+        plot_histogram(betas[layer_no], layer_no, out_dir + f"/hist_beta_{layer_no}.png")
 
     # save PCA for betas and gammas except for the last layer due to gammas/betas shapes
     for layer_no in range(1,8):
-        visualize_pca(gammas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"pca_gamma_{layer_no}.png")
-        visualize_pca(betas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"pca_beta_{layer_no}.png")
+        visualize_pca(gammas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"/pca_gamma_{layer_no}.png")
+        visualize_pca(betas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"/pca_beta_{layer_no}.png")
 
     # save tsne for betas and gammas
     for layer_no in range(1,9):
-        visualize_tsne(gammas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"tsne_gamma_{layer_no}.png")
-        visualize_tsne(betas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"tsne_beta_{layer_no}.png")
+        visualize_tsne(gammas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"/tsne_gamma_{layer_no}.png")
+        visualize_tsne(betas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"/tsne_beta_{layer_no}.png")
 
 if __name__ == "__main__":
     fname_config_file = sys.argv[1]
