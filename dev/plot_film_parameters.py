@@ -85,32 +85,31 @@ def visualize_tsne(data, contrast_images, num_batch, layer_no, fname_out):
 
 def run_main(context):
 
-    log_dir = context["log_directory"]
+    out_dir = context["log_directory"] + "/film-parameters-visualization"
 
     num_batch = 142
 
-    gammas = {i: np.load(log_dir + f"/gammas_layer_{i}.npy") for i in range(1, 9)}
-    betas = {i: np.load(log_dir + f"/betas_layer_{i}.npy") for i in range(1, 9)}
-    contrast_images = np.load(log_dir + "/contrast_images.npy")
+    gammas = {i: np.load(out_dir + f"/film-parameters/gamma_layer_{i}.npy") for i in range(1, 9)}
+    betas = {i: np.load(out_dir + f"/film-parameters/beta_layer_{i}.npy") for i in range(1, 9)}
+    contrast_images = np.load(context["log_directory"] + "/contrast_images.npy")
 
-    out_dir = log_dir + "/FiLM-parameters-visualization/"
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
 
     # save histograms with gammas and betas values
     for layer_no in range(1,9):
-        plot_histogram(gammas[layer_no], layer_no, out_dir + f"hist_gammas_{layer_no}.png")
-        plot_histogram(betas[layer_no], layer_no, out_dir + f"hist_betas_{layer_no}.png")
+        plot_histogram(gammas[layer_no], layer_no, out_dir + f"hist_gamma_{layer_no}.png")
+        plot_histogram(betas[layer_no], layer_no, out_dir + f"hist_beta_{layer_no}.png")
 
     # save PCA for betas and gammas except for the last layer due to gammas/betas shapes
     for layer_no in range(1,8):
-        visualize_pca(gammas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"pca_gammas_{layer_no}.png")
-        visualize_pca(betas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"pca_betas_{layer_no}.png")
+        visualize_pca(gammas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"pca_gamma_{layer_no}.png")
+        visualize_pca(betas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"pca_beta_{layer_no}.png")
 
     # save tsne for betas and gammas
     for layer_no in range(1,9):
-        visualize_tsne(gammas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"tsne_gammas_{layer_no}.png")
-        visualize_tsne(betas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"tsne_betas_{layer_no}.png")
+        visualize_tsne(gammas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"tsne_gamma_{layer_no}.png")
+        visualize_tsne(betas[layer_no], contrast_images, num_batch, layer_no, out_dir + f"tsne_beta_{layer_no}.png")
 
 if __name__ == "__main__":
     fname_config_file = sys.argv[1]
