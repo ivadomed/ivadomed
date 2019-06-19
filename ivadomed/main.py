@@ -394,13 +394,9 @@ def cmd_train(context):
     betas_dict = {i:np.array(betas_dict[i]) for i in range(1,9)}
 
     # Save the numpy arrays for gammas/betas inside files.npy in log_directory
-    param_outdir = os.path.join(context["log_directory"], "/film-parameters-visualization/film-parameters")
-    if not os.path.isdir(param_outdir):
-        os.makedirs(param_outdir)
-
     for i in range(1,9):
-        np.save(param_outdir + f"/gamma_layer_{i}.npy", gammas_dict[i])
-        np.save(param_outdir + f"/beta_layer_{i}.npy", betas_dict[i])
+        np.save(context["log_directory"] + f"/gamma_layer_{i}.npy", gammas_dict[i])
+        np.save(context["log_directory"] + f"/beta_layer_{i}.npy", betas_dict[i])
 
     # Convert into numpy and save the contrasts of all batch images
     contrast_images = np.array(var_contrast_list)

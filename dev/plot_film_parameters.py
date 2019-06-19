@@ -85,14 +85,15 @@ def visualize_tsne(data, contrast_images, num_batch, layer_no, fname_out):
 
 def run_main(context):
 
-    out_dir = context["log_directory"] + "/film-parameters-visualization"
+    log_dir = context["log_directory"]
 
     num_batch = 142
 
-    gammas = {i: np.load(out_dir + f"/film-parameters/gamma_layer_{i}.npy") for i in range(1, 9)}
-    betas = {i: np.load(out_dir + f"/film-parameters/beta_layer_{i}.npy") for i in range(1, 9)}
-    contrast_images = np.load(context["log_directory"] + "/contrast_images.npy")
+    gammas = {i: np.load(log_dir + f"/gamma_layer_{i}.npy") for i in range(1, 9)}
+    betas = {i: np.load(log_dir + f"/beta_layer_{i}.npy") for i in range(1, 9)}
+    contrast_images = np.load(log_dir + "/contrast_images.npy")
 
+    out_dir = context["log_directory"] + "/film-parameters-visualization"
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
 
