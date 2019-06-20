@@ -131,14 +131,11 @@ def clustering_fit(datasets, key_lst):
 
     model_dct = {}
     for k in key_lst:
-        print(k)
         k_data = [value for dataset in datasets for value in dataset[k]]
 
         kde = Kde_model()
         kde.train(k_data, KDE_PARAM[k]['range'], KDE_PARAM[k]['gridsearch'])
         model_dct[k] = kde
-
-        del kde
 
     return model_dct
 
