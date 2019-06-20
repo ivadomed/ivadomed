@@ -224,10 +224,9 @@ def cmd_train(context):
                 var_input = input_samples
                 var_gt = gt_samples
 
-            # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
-            var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
-
             if context["film"]:
+                # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
+                var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
                 var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
                 preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
             else:
@@ -290,10 +289,9 @@ def cmd_train(context):
                     var_input = input_samples
                     var_gt = gt_samples
 
-                # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
-                var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
-
                 if context["film"]:
+                    # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
+                    var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
                     var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
                     preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
                 else:
@@ -333,7 +331,7 @@ def cmd_train(context):
                 writer.add_image('Validation/Ground Truth', grid_img, epoch)
 
             # Store the values of gammas and betas after the last epoch for each batch
-            if epoch == num_epochs and i < int(len(ds_val)/context["batch_size"])+1:
+            if context["film"] and epoch == num_epochs and i < int(len(ds_val)/context["batch_size"])+1:
 
                 # Get all the contrasts of all batches
                 var_contrast_list.append(var_contrast)
@@ -389,18 +387,18 @@ def cmd_train(context):
         pickle.dump(metadata_clustering_models, open("./"+context["log_directory"]+"/clustering_models.pkl", 'wb'))
         pickle.dump(train_onehotencoder, open("./"+context["log_directory"]+"/one_hot_encoder.pkl", 'wb'))
 
-    # Convert list of gammas/betas into numpy arrays
-    gammas_dict = {i:np.array(gammas_dict[i]) for i in range(1,9)}
-    betas_dict = {i:np.array(betas_dict[i]) for i in range(1,9)}
+        # Convert list of gammas/betas into numpy arrays
+        gammas_dict = {i:np.array(gammas_dict[i]) for i in range(1,9)}
+        betas_dict = {i:np.array(betas_dict[i]) for i in range(1,9)}
 
-    # Save the numpy arrays for gammas/betas inside files.npy in log_directory
-    for i in range(1,9):
-        np.save(context["log_directory"] + f"/gamma_layer_{i}.npy", gammas_dict[i])
-        np.save(context["log_directory"] + f"/beta_layer_{i}.npy", betas_dict[i])
+        # Save the numpy arrays for gammas/betas inside files.npy in log_directory
+        for i in range(1,9):
+            np.save(context["log_directory"] + f"/gamma_layer_{i}.npy", gammas_dict[i])
+            np.save(context["log_directory"] + f"/beta_layer_{i}.npy", betas_dict[i])
 
-    # Convert into numpy and save the contrasts of all batch images
-    contrast_images = np.array(var_contrast_list)
-    np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
+        # Convert into numpy and save the contrasts of all batch images
+        contrast_images = np.array(var_contrast_list)
+        np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
 
     return
 
