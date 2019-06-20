@@ -6,12 +6,12 @@
 import sys
 import os
 import json
-import pickle
 import numpy as np
 from tqdm import tqdm
 from itertools import groupby
 from torchvision import transforms
 import matplotlib.pyplot as plt
+from sklearn.externals import joblib
 
 from ivadomed import loader as loader
 from ivadomed.main import SliceFilter
@@ -70,10 +70,8 @@ def run_main(context):
                     metadata_dct[subset][m] = [v for m_lst in [metadata_dct[subset][m], ds.metadata[m]] for v in m_lst]
                 else:
                     metadata_dct[subset][m] = ds.metadata[m]
-    # pickle.dump(metadata_dct, open("dev_metadata.pkl", 'wb'))
-    # metadata_dct = pickle.load(open("dev_metadata.pkl", "rb"))
 
-    cluster_dct = pickle.load(open(os.path.join(out_dir, "clustering_models.pkl"), "rb"))
+    cluster_dct = joblib.load(os.path.join(out_dir, "clustering_models.joblib"))
 
     out_dir = os.path.join(out_dir, "cluster_metadata")
     if not os.path.isdir(out_dir):
