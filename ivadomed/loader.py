@@ -10,6 +10,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from glob import glob
 from copy import deepcopy
+from tqdm import tqdm
 
 
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
@@ -39,7 +40,7 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
 
 
 class BidsDataset(MRI2DBidsSegDataset):
-    def __init__(self, root_dir, contrast_lst, slice_axis=2, cache=True,
+    def __init__(self, root_dir, subject_lst, contrast_lst, slice_axis=2, cache=True,
                  transform=None, slice_filter_fn=None,
                  canonical=False, labeled=True):
 
@@ -47,7 +48,10 @@ class BidsDataset(MRI2DBidsSegDataset):
         self.filename_pairs = []
         self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": [], "Manufacturer": []}
 
-        for subject in self.bids_ds.get_subjects():
+        # Selecting subjects from Training / Validation / Testing
+        bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
+
+        for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
 
                 if not subject.has_derivative("labels"):
