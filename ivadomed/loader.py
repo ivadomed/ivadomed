@@ -129,11 +129,11 @@ class Kde_model():
         return pred
 
 
-def clustering_fit(datasets, key_lst):
+def clustering_fit(dataset, key_lst):
     """This function creates clustering models for each metadata type,
     using Kernel Density Estimation algorithm.
 
-    :param datasets (list of lists): data for each dataset
+    :param datasets (list): data
     :param key_lst (list of strings): names of metadata to cluster
     :return: clustering model for each metadata type
     """
@@ -143,7 +143,7 @@ def clustering_fit(datasets, key_lst):
 
     model_dct = {}
     for k in key_lst:
-        k_data = [value for dataset in datasets for value in dataset[k]]
+        k_data = [value for value in dataset[k]]
 
         kde = Kde_model()
         kde.train(k_data, KDE_PARAM[k]['range'], KDE_PARAM[k]['gridsearch'])
@@ -152,52 +152,48 @@ def clustering_fit(datasets, key_lst):
     return model_dct
 
 
-def normalize_metadata(ds_lst_in, clustering_models, debugging, train_set=False):
+def normalize_metadata(ds_in, clustering_models, debugging, train_set=False):
 
     if train_set:
         # Initialise One Hot Encoder
         ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
         X_train_ohe = []
 
-    ds_lst_out = []
-    for ds_in in ds_lst_in:
-        ds_out = []
-        for idx, subject in enumerate(ds_in):
-            s_out = deepcopy(subject)
+    ds_out = []
+    for idx, subject in enumerate(ds_in):
+        s_out = deepcopy(subject)
 
-            # categorize flip angle, repetition time and echo time values using KDE
-            for m in ['FlipAngle', 'RepetitionTime', 'EchoTime']:
-                v = subject["input_metadata"]["bids_metadata"][m]
-                p = clustering_models[m].predict(v)
-                s_out["input_metadata"]["bids_metadata"][m] = p
-                if debugging:
-                    print("{}: {} --> {}".format(m, v, p))
+        # categorize flip angle, repetition time and echo time values using KDE
+        for m in ['FlipAngle', 'RepetitionTime', 'EchoTime']:
+            v = subject["input_metadata"]["bids_metadata"][m]
+            p = clustering_models[m].predict(v)
+            s_out["input_metadata"]["bids_metadata"][m] = p
+            if debugging:
+                print("{}: {} --> {}".format(m, v, p))
 
-            # categorize manufacturer info based on the MANUFACTURER_CATEGORY dictionary
-            manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
-            if manufacturer in MANUFACTURER_CATEGORY:
-                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
-                if debugging:
-                    print("Manufacturer: {} --> {}".format(manufacturer, MANUFACTURER_CATEGORY[manufacturer]))
-            else:
-                print("{} with unknown manufacturer.".format(subject))
-                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
+        # categorize manufacturer info based on the MANUFACTURER_CATEGORY dictionary
+        manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
+        if manufacturer in MANUFACTURER_CATEGORY:
+            s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
+            if debugging:
+                print("Manufacturer: {} --> {}".format(manufacturer, MANUFACTURER_CATEGORY[manufacturer]))
+        else:
+            print("{} with unknown manufacturer.".format(subject))
+            s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
 
-            s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
+        s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
 
-            s_out["input_metadata"]["contrast"] = subject["input_metadata"]["bids_metadata"]["contrast"]
+        s_out["input_metadata"]["contrast"] = subject["input_metadata"]["bids_metadata"]["contrast"]
 
-            if train_set:
-                X_train_ohe.append(s_out["input_metadata"]["bids_metadata"])
-            ds_out.append(s_out)
+        if train_set:
+            X_train_ohe.append(s_out["input_metadata"]["bids_metadata"])
+        ds_out.append(s_out)
 
-            del s_out, subject
-
-        ds_lst_out.append(ds_out)
+        del s_out, subject
 
     if train_set:
         X_train_ohe = np.vstack(X_train_ohe)
         ohe.fit(X_train_ohe)
-        return ds_lst_out, ohe
+        return ds_out, ohe
     else:
-        return ds_lst_out
+        return ds_out
