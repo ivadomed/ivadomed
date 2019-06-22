@@ -123,6 +123,7 @@ def cmd_train(context):
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
     ds_train = loader.BidsDataset(context["bids_path"],
+                                  subject_lst=train_path_lst,
                                   contrast_lst=context["contrast_train_validation"],
                                   transform=train_transform,
                                   slice_filter_fn=SliceFilter())
@@ -139,6 +140,7 @@ def cmd_train(context):
 
     # Validation dataset ------------------------------------------------------
     ds_val = loader.BidsDataset(context["bids_path"],
+                                subject_lst=valid_path_lst,
                                 contrast_lst=context["contrast_train_validation"],
                                 transform=val_transform,
                                 slice_filter_fn=SliceFilter())
