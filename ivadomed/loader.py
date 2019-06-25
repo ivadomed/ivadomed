@@ -2,7 +2,9 @@ from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
 
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.cluster import MeanShift, estimate_bandwidth
+from scipy.signal import argrelextrema
+from sklearn.neighbors.kde import KernelDensity
+from sklearn.model_selection import GridSearchCV
 
 import numpy as np
 from copy import deepcopy
@@ -83,37 +85,57 @@ class BidsDataset(MRI2DBidsSegDataset):
                          transform, slice_filter_fn, canonical)
 
 
-def _rescale_value(value_in, range_in, range_out):
-    """This function rescales a metadata value into a certain range of values.
+class Kde_model():
+    def __init__(self):
+        self.kde = KernelDensity()
+        self.minima = None
 
-    :param value_in (float): input value of the metadata
-    :param range_in (list of floats): initial range of values
-    :param range_out (list of floats): range of output values
-    :return: rescaled value
-    """
-    delta_in = range_in[1] - range_in[0]
-    delta_out = range_out[1] - range_out[0]
-    return (delta_out * (value_in - range_in[0]) / delta_in) + range_out[0]
+    def train(self, data, value_range, gridsearch_bandwidth_range):
+        # reshape data to fit sklearn
+        data = np.array(data).reshape(-1,1)
+
+        # use grid search cross-validation to optimize the bandwidth
+        params = {'bandwidth': gridsearch_bandwidth_range}
+        grid = GridSearchCV(KernelDensity(), params, cv=5, iid=False)
+        grid.fit(data)
+
+        # use the best estimator to compute the kernel density estimate
+        self.kde = grid.best_estimator_
+
+        # fit kde with the best bandwidth
+        self.kde.fit(data)
+
+        s = value_range
+        e = self.kde.score_samples(s.reshape(-1,1))
+
+        # find local minima
+        self.minima = s[argrelextrema(e, np.less)[0]]
+
+    def predict(self, data):
+        x = [i for i, m in enumerate(self.minima) if data < m]
+        pred = min(x) if len(x) else len(self.minima)
+        return pred
 
 
 def clustering_fit(datasets, key_lst):
     """This function creates clustering models for each metadata type,
-    using MeanShift algorithm.
+    using Kernel Density Estimation algorithm.
 
     :param datasets (list of lists): data for each dataset
     :param key_lst (list of strings): names of metadata to cluster
     :return: clustering model for each metadata type
     """
-    model_dct, encoder_dct = {}, {}
+    KDE_PARAM = {'FlipAngle': {'range': np.linspace(0, 360, 1000), 'gridsearch': np.logspace(-4, 1, 50)},
+                    'RepetitionTime': {'range': np.logspace(-1, 1, 1000), 'gridsearch': np.logspace(-4, 1, 50)},
+                    'EchoTime': {'range': np.logspace(-3, 1 , 1000), 'gridsearch': np.logspace(-4, 1, 50)}}
+
+    model_dct = {}
     for k in key_lst:
         k_data = [value for dataset in datasets for value in dataset[k]]
 
-        X = np.array(list(zip(k_data, np.zeros(len(k_data)))))  # format the data before sending to the clustering algo
-        bandwidth = estimate_bandwidth(X, quantile=0.1)  # estimate the bandwidth to use with the mean-shift algo
-        clf = MeanShift(bandwidth=bandwidth if bandwidth > 0.0 else None, bin_seeding=True)  # mean shift clustering using a flat kernel
-        clf.fit(X)
-        model_dct[k] = clf
-        del clf
+        kde = Kde_model()
+        kde.train(k_data, KDE_PARAM[k]['range'], KDE_PARAM[k]['gridsearch'])
+        model_dct[k] = kde
 
     return model_dct
 
@@ -131,34 +153,23 @@ def normalize_metadata(ds_lst_in, clustering_models, debugging, train_set=False)
         for idx, subject in enumerate(ds_in):
             s_out = deepcopy(subject)
 
-            # categorize flip angle value using meanShift
-            flip_angle = [subject["input_metadata"]["bids_metadata"]["FlipAngle"]]
-            int_value = clustering_models["FlipAngle"].predict(np.array(list(zip(flip_angle, np.zeros(1)))))
-            s_out["input_metadata"]["bids_metadata"]["FlipAngle"] = int_value[0]
-
-            # categorize repetition time value using meanShift
-            repetition_time = [subject["input_metadata"]["bids_metadata"]["RepetitionTime"]]
-            int_value = clustering_models["RepetitionTime"].predict(np.array(list(zip(repetition_time, np.zeros(1)))))
-            s_out["input_metadata"]["bids_metadata"]["RepetitionTime"] = int_value[0]
-
-            # categorize echo time value using meanShift
-            echo_time = [subject["input_metadata"]["bids_metadata"]["EchoTime"]]
-            int_value = clustering_models["EchoTime"].predict(np.array(list(zip(echo_time, np.zeros(1)))))
-            s_out["input_metadata"]["bids_metadata"]["EchoTime"] = int_value[0]
+            # categorize flip angle, repetition time and echo time values using KDE
+            for m in ['FlipAngle', 'RepetitionTime', 'EchoTime']:
+                v = subject["input_metadata"]["bids_metadata"][m]
+                p = clustering_models[m].predict(v)
+                s_out["input_metadata"]["bids_metadata"][m] = p
+                if debugging:
+                    print("{}: {} --> {}".format(m, v, p))
 
             # categorize manufacturer info based on the MANUFACTURER_CATEGORY dictionary
             manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
             if manufacturer in MANUFACTURER_CATEGORY:
                 s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
+                if debugging:
+                    print("Manufacturer: {} --> {}".format(manufacturer, MANUFACTURER_CATEGORY[manufacturer]))
             else:
                 print("{} with unknown manufacturer.".format(subject))
                 s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
-
-            if debugging:
-                print("\nFlip Angle: {} --> {}".format(flip_angle[0], s_out["input_metadata"]["bids_metadata"]["FlipAngle"]))
-                print("Repetition Time: {} --> {}".format(repetition_time[0], s_out["input_metadata"]["bids_metadata"]["RepetitionTime"]))
-                print("Echo Time: {} --> {}".format(echo_time[0], s_out["input_metadata"]["bids_metadata"]["EchoTime"]))
-                print("Manufacturer: {} --> {}".format(manufacturer, s_out["input_metadata"]["bids_metadata"]["Manufacturer"]))
 
             s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
 
