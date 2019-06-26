@@ -119,9 +119,6 @@ def cmd_train(context):
 
     # Randomly split dataset between training / validation / testing
     train_path_lst, valid_path_lst, test_path_lst = loader.split_dataset(context["bids_path"], context["random_seed"])
-    # save the subject distribution
-    split_dct = {'train': train_path_lst, 'valid': valid_path_lst, 'test': test_path_lst}
-    joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
 
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
@@ -331,6 +328,9 @@ def cmd_train(context):
     if context["film"]:  # save clustering and OneHotEncoding models
         joblib.dump(metadata_clustering_models, "./"+context["log_directory"]+"/clustering_models.joblib")
         joblib.dump(train_onehotencoder, "./"+context["log_directory"]+"/one_hot_encoder.joblib")
+    # save the subject distribution
+    split_dct = {'train': train_path_lst, 'valid': valid_path_lst, 'test': test_path_lst}
+    joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
 
     return
 

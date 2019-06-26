@@ -8,7 +8,7 @@
 	"batch_size": 18,
 	"dropout_rate": 0.3,
 	"batch_norm_momentum": 0.1,
-	"num_epochs": 300,
+	"num_epochs": 500,
 	"initial_lr": 0.001,
 	"log_directory": "log_gm",
 	"film": true,
