@@ -176,7 +176,7 @@ def cmd_train(context):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
 
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(log_dir=context["log_directory"])
+    writer = SummaryWriter(logdir=context["log_directory"])
 
     # Training loop -----------------------------------------------------------
     best_validation_loss = float("inf")
@@ -202,10 +202,10 @@ def cmd_train(context):
             var_input = input_samples.cuda()
             var_gt = gt_samples.cuda(non_blocking=True)
 
-            # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
-            var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
-
             if context["film"]:
+                # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
+                var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+
                 var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
                 preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
             else:
@@ -264,10 +264,10 @@ def cmd_train(context):
                 var_input = input_samples.cuda()
                 var_gt = gt_samples.cuda(non_blocking=True)
 
-                # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
-                var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
-
                 if context["film"]:
+                    # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
+                    var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+
                     var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
                     preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
                 else:
@@ -356,11 +356,10 @@ def cmd_test(context):
 
     if context["film"]:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load("./"+context["log_directory"]+"/clustering_models.joblib")
-        test_datasets = loader.normalize_metadata(test_datasets, metadata_clustering_models, context["debugging"], False)
+        ds_test = loader.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"], False)
 
         one_hot_encoder = joblib.load("./"+context["log_directory"]+"/one_hot_encoder.joblib")
 
-    ds_test = ConcatDataset(test_datasets)
     print(f"Loaded {len(ds_test)} axial slices for the test set.")
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
                              shuffle=True, pin_memory=True,
@@ -389,9 +388,9 @@ def cmd_test(context):
             test_input = input_samples.cuda()
             test_gt = gt_samples.cuda(non_blocking=True)
 
-            test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
-
             if context["film"]:
+                test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+
                 test_metadata = [one_hot_encoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
                 preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
             else:
