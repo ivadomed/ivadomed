@@ -1,9 +1,7 @@
 {
 	"command": "train",
 	"gpu": 4,
-	"bids_path": [
-		"../duke/projects/ivado-medical-imaging/gm_challenge_16"
-	],
+	"bids_path": "../duke/projects/ivado-medical-imaging/gm_challenge_16",
         "random_seed": 2019,
         "contrast_train_validation": ["T2star"],
         "contrast_test": ["T2star"],

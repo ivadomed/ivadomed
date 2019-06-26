@@ -5,8 +5,10 @@ from sklearn.preprocessing import OneHotEncoder
 from scipy.signal import argrelextrema
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
 
 import numpy as np
+from glob import glob
 from copy import deepcopy
 
 
@@ -83,6 +85,16 @@ class BidsDataset(MRI2DBidsSegDataset):
 
         super().__init__(self.filename_pairs, slice_axis, cache,
                          transform, slice_filter_fn, canonical)
+
+
+def split_dataset(path_folder, random_seed, train_frac=0.8):
+    folder_lst = [f.split('/')[-2] for f in glob(path_folder+"/*/")]
+
+    X_train, X_tmp = train_test_split(folder_lst, train_size=train_frac, random_state=random_seed)
+
+    X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
+
+    return X_train, X_val, X_test
 
 
 class Kde_model():

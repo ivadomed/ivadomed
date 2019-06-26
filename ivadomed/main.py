@@ -117,6 +117,9 @@ def cmd_train(context):
         mt_transforms.NormalizeInstance(),
     ])
 
+    # Randomly split dataset between training / validation / testing
+    train_path_lst, valid_path_lst, test_path_lst = loader.split_dataset(context["bids_path"], context["random_seed"])
+
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
     train_datasets, train_metadata = [], []
