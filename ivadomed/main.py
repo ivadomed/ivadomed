@@ -119,6 +119,9 @@ def cmd_train(context):
 
     # Randomly split dataset between training / validation / testing
     train_path_lst, valid_path_lst, test_path_lst = loader.split_dataset(context["bids_path"], context["random_seed"])
+    # save the subject distribution
+    split_dct = {'train': train_path_lst, 'valid': valid_path_lst, 'test': test_path_lst}
+    joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
 
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
@@ -173,7 +176,7 @@ def cmd_train(context):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
 
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(logdir=context["log_directory"])
+    writer = SummaryWriter(log_dir=context["log_directory"])
 
     # Training loop -----------------------------------------------------------
     best_validation_loss = float("inf")
@@ -344,13 +347,12 @@ def cmd_test(context):
         mt_transforms.NormalizeInstance(),
     ])
 
-    test_datasets = []
-    for bids_ds in tqdm(context["bids_path_test"], desc="Loading test set"):
-        ds_test = loader.BidsDataset(bids_ds,
-                                     contrast_lst=context["contrast_test"],
-                                     transform=val_transform,
-                                     slice_filter_fn=SliceFilter())
-        test_datasets.append(ds_test)
+    test_path_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
+    ds_test = loader.BidsDataset(context["bids_path"],
+                                 subject_lst=test_path_lst,
+                                 contrast_lst=context["contrast_test"],
+                                 transform=val_transform,
+                                 slice_filter_fn=SliceFilter())
 
     if context["film"]:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load("./"+context["log_directory"]+"/clustering_models.joblib")
