@@ -3,7 +3,7 @@ import json
 import os
 import time
 import shutil
-import pickle
+from sklearn.externals import joblib
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -384,8 +384,8 @@ def cmd_train(context):
     # Save final model
     torch.save(model, "./"+context["log_directory"]+"/final_model.pt")
     if context["film"]:  # save clustering and OneHotEncoding models
-        pickle.dump(metadata_clustering_models, open("./"+context["log_directory"]+"/clustering_models.pkl", 'wb'))
-        pickle.dump(train_onehotencoder, open("./"+context["log_directory"]+"/one_hot_encoder.pkl", 'wb'))
+        joblib.dump(metadata_clustering_models, "./"+context["log_directory"]+"/clustering_models.joblib")
+        joblib.dump(train_onehotencoder, "./"+context["log_directory"]+"/one_hot_encoder.joblib")
 
         # Convert list of gammas/betas into numpy arrays
         gammas_dict = {i:np.array(gammas_dict[i]) for i in range(1,9)}
@@ -432,12 +432,10 @@ def cmd_test(context):
         test_datasets.append(ds_test)
 
     if context["film"]:  # normalize metadata before sending to network
-        with open("./"+context["log_directory"]+"/clustering_models.pkl", 'rb') as file:
-            metadata_clustering_models = pickle.load(file)
+        metadata_clustering_models = joblib.load("./"+context["log_directory"]+"/clustering_models.joblib")
         test_datasets = loader.normalize_metadata(test_datasets, metadata_clustering_models, context["debugging"], False)
 
-        with open("./"+context["log_directory"]+"/one_hot_encoder.pkl", 'rb') as file:
-            one_hot_encoder = pickle.load(file)
+        one_hot_encoder = joblib.load("./"+context["log_directory"]+"/one_hot_encoder.joblib")
 
     ds_test = ConcatDataset(test_datasets)
     print(f"Loaded {len(ds_test)} axial slices for the test set.")
