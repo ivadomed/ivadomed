@@ -474,9 +474,8 @@ def cmd_test(context):
                 test_input = input_samples
                 test_gt = gt_samples
 
-            test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
-
             if context["film"]:
+                test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
                 test_metadata = [one_hot_encoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
                 preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
             else:
