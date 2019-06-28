@@ -118,12 +118,12 @@ def cmd_train(context):
     ])
 
     # Randomly split dataset between training / validation / testing
-    train_path_lst, valid_path_lst, test_path_lst = loader.split_dataset(context["bids_path"], context["random_seed"])
+    train_lst, valid_lst, test_lst = loader.split_dataset(context["bids_path"], context["center_test"], context["random_seed"])
 
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
     ds_train = loader.BidsDataset(context["bids_path"],
-                                  subject_lst=train_path_lst,
+                                  subject_lst=train_lst,
                                   contrast_lst=context["contrast_train_validation"],
                                   transform=train_transform,
                                   slice_filter_fn=SliceFilter())
@@ -140,7 +140,7 @@ def cmd_train(context):
 
     # Validation dataset ------------------------------------------------------
     ds_val = loader.BidsDataset(context["bids_path"],
-                                subject_lst=valid_path_lst,
+                                subject_lst=valid_lst,
                                 contrast_lst=context["contrast_train_validation"],
                                 transform=val_transform,
                                 slice_filter_fn=SliceFilter())
@@ -329,7 +329,7 @@ def cmd_train(context):
         joblib.dump(metadata_clustering_models, "./"+context["log_directory"]+"/clustering_models.joblib")
         joblib.dump(train_onehotencoder, "./"+context["log_directory"]+"/one_hot_encoder.joblib")
     # save the subject distribution
-    split_dct = {'train': train_path_lst, 'valid': valid_path_lst, 'test': test_path_lst}
+    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
     joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
 
     return
@@ -347,9 +347,9 @@ def cmd_test(context):
         mt_transforms.NormalizeInstance(),
     ])
 
-    test_path_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
+    test_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
     ds_test = loader.BidsDataset(context["bids_path"],
-                                 subject_lst=test_path_lst,
+                                 subject_lst=test_lst,
                                  contrast_lst=context["contrast_test"],
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter())

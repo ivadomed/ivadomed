@@ -91,12 +91,20 @@ class BidsDataset(MRI2DBidsSegDataset):
                          transform, slice_filter_fn, canonical)
 
 
-def split_dataset(path_folder, random_seed, train_frac=0.8):
-    folder_lst = [f.split('/')[-2] for f in glob(path_folder+"/*/")]
+def split_dataset(path_folder, center_test_lst, random_seed, train_frac=0.8):
+    # read participants.tsv as pandas dataframe
+    df = bids.BIDS(path_folder).participants.content
 
-    X_train, X_tmp = train_test_split(folder_lst, train_size=train_frac, random_state=random_seed)
+    # make sure that subjects coming from some centers are unseen by training
+    X_test_blind = df[df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
+    X_remain = df[~df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
 
+    # split using sklearn function
+    X_train, X_tmp = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
     X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
+
+    # Testing dataset is made of subjects from unseen and seen centers
+    X_test = X_test+X_test_blind
 
     return X_train, X_val, X_test
 
