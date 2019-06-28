@@ -195,31 +195,31 @@ class FiLMedUnet(Module):
 
     def forward(self, x, context):
         x1 = self.conv1(x)
-        x1, w_film = self.film0(x1, context, None) if self.film0 else x1, None
+        x1, w_film = self.film0(x1, context, None) if self.film0 else [x1, None]
         x2 = self.mp1(x1)
 
         x3 = self.conv2(x2)
-        x3, w_film = self.film1(x3, context, w_film) if self.film1 else x3, None
+        x3, w_film = self.film1(x3, context, w_film) if self.film1 else [x3, None]
         x4 = self.mp2(x3)
 
         x5 = self.conv3(x4)
-        x5, w_film = self.film2(x5, context, w_film) if self.film2 else x5, None
+        x5, w_film = self.film2(x5, context, w_film) if self.film2 else [x5, None]
         x6 = self.mp3(x5)
 
         # Bottom
         x7 = self.conv4(x6)
-        x7, w_film = self.film3(x7, context, w_film) if self.film3 else x7, None
+        x7, w_film = self.film3(x7, context, w_film) if self.film3 else [x7, None]
 
         # Up-sampling
         x8 = self.up1(x7, x5)
-        x8, w_film = self.film4(x8, context, w_film) if self.film4 else x8, None
+        x8, w_film = self.film4(x8, context, w_film) if self.film4 else [x8, None]
         x9 = self.up2(x8, x3)
-        x9, w_film = self.film5(x9, context, w_film) if self.film5 else x9, None
+        x9, w_film = self.film5(x9, context, w_film) if self.film5 else [x9, None]
         x10 = self.up3(x9, x1)
-        x10, w_film = self.film6(x10, context, w_film) if self.film6 else x10, None
+        x10, w_film = self.film6(x10, context, w_film) if self.film6 else [x10, None]
 
         x11 = self.conv9(x10)
-        x11, w_film = self.film7(x11, context, w_film) if self.film7 else x11, None
+        x11, w_film = self.film7(x11, context, w_film) if self.film7 else [x11, None]
         preds = torch.sigmoid(x11)
 
         return preds

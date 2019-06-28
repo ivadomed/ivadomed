@@ -13,6 +13,6 @@
 	"initial_lr": 0.0001,
 	"log_directory": "log_gm",
 	"film": true,
-        "film_layers": [1, 1, 1, 1, 1, 1, 1],
+        "film_layers": [1, 1, 1, 1, 1, 0, 0, 0],
         "debugging": false
 }
