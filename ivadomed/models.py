@@ -162,36 +162,36 @@ class FiLMedUnet(Module):
     A FiLM layer has been added after each convolution layer.
     """
 
-    def __init__(self, n_metadata, drop_rate=0.4, bn_momentum=0.1):
+    def __init__(self, n_metadata, film_bool=[1]*8, drop_rate=0.4, bn_momentum=0.1):
         super(FiLMedUnet, self).__init__()
 
         #Downsampling path
         self.conv1 = DownConv(1, 64, drop_rate, bn_momentum)
-        self.film1 = FiLMlayer(n_metadata, 64)
+        self.film0 = FiLMlayer(n_metadata, 64) if film_bool[0] else None
         self.mp1 = nn.MaxPool2d(2)
 
         self.conv2 = DownConv(64, 128, drop_rate, bn_momentum)
-        self.film2 = FiLMlayer(n_metadata, 128)
+        self.film1 = FiLMlayer(n_metadata, 128) if film_bool[1] else None
         self.mp2 = nn.MaxPool2d(2)
 
         self.conv3 = DownConv(128, 256, drop_rate, bn_momentum)
-        self.film3 = FiLMlayer(n_metadata, 256)
+        self.film2 = FiLMlayer(n_metadata, 256) if film_bool[2] else None
         self.mp3 = nn.MaxPool2d(2)
 
         # Bottom
         self.conv4 = DownConv(256, 256, drop_rate, bn_momentum)
-        self.film4 = FiLMlayer(n_metadata, 256)
+        self.film3 = FiLMlayer(n_metadata, 256) if film_bool[3] else None
 
         # Upsampling path
         self.up1 = UpConv(512, 256, drop_rate, bn_momentum)
-        self.film5 = FiLMlayer(n_metadata, 256)
+        self.film4 = FiLMlayer(n_metadata, 256) if film_bool[4] else None
         self.up2 = UpConv(384, 128, drop_rate, bn_momentum)
-        self.film6 = FiLMlayer(n_metadata, 128)
+        self.film5 = FiLMlayer(n_metadata, 128) if film_bool[5] else None
         self.up3 = UpConv(192, 64, drop_rate, bn_momentum)
-        self.film7 = FiLMlayer(n_metadata, 64)
+        self.film6 = FiLMlayer(n_metadata, 64) if film_bool[6] else None
 
         self.conv9 = nn.Conv2d(64, 1, kernel_size=3, padding=1)
-        self.film8 = FiLMlayer(n_metadata, 1)
+        self.film7 = FiLMlayer(n_metadata, 1) if film_bool[7] else None
 
     def forward(self, x, context):
         x1 = self.conv1(x)
