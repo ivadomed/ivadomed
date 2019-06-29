@@ -10,7 +10,7 @@
 # Author: Julien Cohen-Adad
 
 # Uncomment for full verbose
-set -v
+# set -v
 
 # Immediately exit if error
 set -e
@@ -43,14 +43,15 @@ file_t1w="${SUBJECT}_T1w"
 segment_if_does_not_exist(){
   local file="$1"
   local contrast="$2"
+  FILESEG="${file}_seg"
   if [ -e "${PATH_SEGMANUAL}/${file}_seg-manual.nii.gz" ]; then
-    rsync -avzh "${PATH_SEGMANUAL}/${file}_seg-manual.nii.gz" ${file}_seg.nii.gz
+    echo "Found manual segmentation: ${PATH_SEGMANUAL}/${FILESEG}-manual.nii.gz"
+    cp "${PATH_SEGMANUAL}/${FILESEG}-manual.nii.gz" ${FILESEG}.nii.gz
+    sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc -qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
     # Segment spinal cord
     sct_deepseg_sc -i ${file}.nii.gz -c $contrast -qc ${PATH_QC} -qc-subject ${SUBJECT}
   fi
-  # Update global variable with segmentation file name
-  FILESEG="${file}_seg"
 }
 
 # Go to output anat folder, where most of the outputs will be located
@@ -89,8 +90,8 @@ sct_register_multimodal -i ${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg $
 file_mton="${file_mton}_reg"
 
 # Generate QC for assessing registration of MT scans
-sct_qc -i ${file_mtoff}.nii.gz -s ${file_seg}.nii.gz -qc-subject ${SUBJECT} -p sct_deepseg_sc
-sct_qc -i ${file_mton}.nii.gz -s ${file_seg}.nii.gz -qc-subject ${SUBJECT} -p sct_deepseg_sc 
+sct_qc -i ${file_mtoff}.nii.gz -s ${file_seg}.nii.gz -qc $PATH_QC -qc-subject ${SUBJECT} -p sct_deepseg_sc
+sct_qc -i ${file_mton}.nii.gz -s ${file_seg}.nii.gz -qc $PATH_QC -qc-subject ${SUBJECT} -p sct_deepseg_sc
 
 # For some vendors, T2s scans are 4D. So we need to average them.
 sct_maths -i ${file_t2s}.nii.gz -mean t -o ${file_t2s}_mean.nii.gz
