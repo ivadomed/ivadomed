@@ -61,7 +61,7 @@ create_folder $PATH_OUTPUT
 # if variable ONLY_PROCESS_THESE_SUBJECTS does not exist, fetch all folders in directory
 if [ -z ${ONLY_PROCESS_THESE_SUBJECTS} ]; then
   # Look into PATH_DATA and fetch all folders
-  list_path_subject=`find ${PATH_DATA} -mindepth 1 -maxdepth 1 -type d`
+  list_path_subject=`find ${PATH_DATA}/sub-* -mindepth 1 -maxdepth 1 -type d`
 else
   # Prepend PATH_DATA to each subject
   echo "Only processing: ${ONLY_PROCESS_THESE_SUBJECTS[*]}"
