@@ -3,22 +3,19 @@
 # Check the presence of input files.
 #
 # Usage:
-#   ./check_input_files.sh <SUBJECT> <SITE> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
+#   ./check_input_files.sh <SUBJECT> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
 
 # Exit if user presses CTRL+C (Linux) or CMD+C (OSX)
 trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
 # Retrieve input params
 SUBJECT=$1
-SITE=$2
-PATH_OUTPUT=$3
-PATH_QC=$4
-PATH_LOG=$5
-
-# Create BIDS architecture
-PATH_IN="`pwd`/${SUBJECT}/anat"
+PATH_OUTPUT=$2
+PATH_QC=$3
+PATH_LOG=$4
 
 # Set filenames
+PATH_IN="`pwd`/${SUBJECT}/anat"
 file_t1w_mts="${SUBJECT}_acq-T1w_MTS"
 file_mton="${SUBJECT}_acq-MTon_MTS"
 file_mtoff="${SUBJECT}_acq-MToff_MTS"
@@ -37,6 +34,6 @@ FILES_TO_CHECK=(
 )
 for file in ${FILES_TO_CHECK[@]}; do
   if [ ! -e $file ]; then
-    echo "${SITE}/${file} does not exist" >> $PATH_LOG/_error_check_input_files.log
+    echo "${file} does not exist" >> $PATH_LOG/_error_check_input_files.log
   fi
 done
