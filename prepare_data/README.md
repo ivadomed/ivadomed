@@ -21,7 +21,7 @@ source PATH_TO_YOUR_VENV/venv-ivadomed/bin/activate
 - Edit the file `parameters.sh` and modify the variables according to your needs.
 - Make sure input files are present:
 ~~~
-./run_process.sh check_input_files.sh
+./run_process.sh parameters.sh check_input_files.sh
 ~~~
 
 #### Run first processing
@@ -29,10 +29,12 @@ source PATH_TO_YOUR_VENV/venv-ivadomed/bin/activate
 Loop across subjects and run full processing:
 
 ~~~
-./run_process.sh prepare_data.sh
+./run_process.sh parameters.sh prepare_data.sh
 ~~~
 
 #### Perform QC
+
+##### Spinal cord segmentations
 
 - Open qc/index.html
 - Search only for "deepseg" QC entries (use "search" field)
@@ -40,9 +42,16 @@ Loop across subjects and run full processing:
 - If the data are of **very** bad quality, also take a screenshot (this time, wait for the segmentation to disappear)
 - Copy all screenshots under qc_feedback/
 
-#### Manually correct the segmentations
+##### Registration of MT scans
 
-Check the following files under e.g. `result/balgrist_spineGeneric/sub-01/anat/tmp`:
+- Search for "register_multimodal"
+- Take a screenshot of the browser when you spot a problem (wait for the segmentation to appear before taking the screenshot)
+- If the data are of **very** bad quality, also take a screenshot (this time, wait for the segmentation to disappear)
+- Copy all screenshots under qc_feedback/
+
+##### Manually correct the segmentations
+
+Check the following files under e.g. `result/sub-balgrist01/anat/tmp`:
 
 | Image  | Segmentation  |
 |:---|:---|
@@ -54,14 +63,14 @@ Check the following files under e.g. `result/balgrist_spineGeneric/sub-01/anat/t
 - Open the segmentation with `fsleyes`
 - Manually correct it
 - Save with suffix `-manual`.
-- Move to a folder named seg_manual/$SITE/$FILENAME. E.g.: `spineGeneric_201903031331/seg_manual/amu_spineGeneric/sub-01_acq-T1w_MTS_crop_r_seg-manual.nii.gz`
+- Move to a folder named seg_manual/$FILENAME. E.g.: `spineGeneric_201903031331/seg_manual/sub-amu01_acq-T1w_MTS_crop_r_seg-manual.nii.gz`
 
 #### Re-run processing (using manually-corrected segmentations)
 
 Make sure to udpate the field `PATH_SEGMANUAL` in the file `parameters.sh`, then re-run:
 
 ~~~
-./run_process.sh prepare_data.sh
+./run_process.sh parameters.sh prepare_data.sh
 ~~~
 
 #### Copy files, final QC
@@ -69,7 +78,7 @@ Make sure to udpate the field `PATH_SEGMANUAL` in the file `parameters.sh`, then
 Copy final files to anat/, copy json sidecars, move segmentations to derivatives/ and generate another QC:
 
 ~~~
-./run_process.sh final_qc.sh
+./run_process.sh parameters.sh final_qc.sh
 ~~~
 
 - Open the new QC: qc2/index.html
