@@ -88,6 +88,9 @@ file_mtoff="${file_mtoff}_reg"
 sct_register_multimodal -i ${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline
 file_mton="${file_mton}_reg"
 
+# Generate QC for assessing registration of MT scans
+sct_qc -i $file_mtoff -s $file_seg -qc-subject ${SUBJECT} -p sct_deepseg_sc 
+
 # For some vendors, T2s scans are 4D. So we need to average them.
 sct_maths -i ${file_t2s}.nii.gz -mean t -o ${file_t2s}_mean.nii.gz
 file_t2s="${file_t2s}_mean"
