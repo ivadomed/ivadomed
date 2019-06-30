@@ -61,7 +61,10 @@ Check the following files under e.g. `result/sub-balgrist01/anat/tmp`:
 | sub-XX_T2star_mean_reg.nii.gz | sub-XX_T2star_mean_reg_seg.nii.gz |
 
 - Open the segmentation with `fsleyes`
-- Manually correct it
+- Manually correct it:
+  - If the segmentation is leaking, remove the leak (use CMD+F to switch the overlay on/off)
+  - If the segmentation exists in one slice but only consists of a few pixels, because the image quality is bad or because it is no more covering the cord (e.g. brainstem), remove all pixels in the current slice (better to have no segmentation than partial segmentation).
+  - If the spinal cord is only partially visible (this can happen in T2star scans due to the registration), zero all pixels in the slice.
 - Save with suffix `-manual`.
 - Move to a folder named seg_manual/$FILENAME. E.g.: `spineGeneric_201903031331/seg_manual/sub-amu01_acq-T1w_MTS_crop_r_seg-manual.nii.gz`
 
