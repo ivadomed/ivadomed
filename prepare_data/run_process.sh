@@ -73,14 +73,14 @@ if [ -x "$(command -v parallel)" ]; then
   echo 'GNU parallel is installed! Processing subjects in parallel using multiple cores.' >&2
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
-    echo "${PATH_SCRIPT}/_run_with_log.sh $task $subject $PATH_OUTPUT $PATH_QC $PATH_LOG"
+    echo "${PATH_SCRIPT}/_run_with_log.sh $task $subject $PATH_OUTPUT $PATH_QC $PATH_LOG $TO_EXCLUDE"
   done \
   | parallel -j ${JOBS} --halt-on-error soon,fail=1 bash -c "{}"
 else
   echo 'GNU parallel is not installed. Processing subjects sequentially.' >&2
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
-    ${PATH_SCRIPT}/_run_with_log.sh $task $subject $PATH_OUTPUT $PATH_QC $PATH_LOG
+    ${PATH_SCRIPT}/_run_with_log.sh $task $subject $PATH_OUTPUT $PATH_QC $PATH_LOG $TO_EXCLUDE
   done
 fi
 
