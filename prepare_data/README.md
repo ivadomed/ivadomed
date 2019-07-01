@@ -74,7 +74,7 @@ If some images are of unacceptable quality, they could be excluded from the fina
 
 #### Re-run processing (using manually-corrected segmentations)
 
-Make sure to udpate the field `PATH_SEGMANUAL` in the file `parameters.sh`, then re-run:
+Make sure to update the field `PATH_SEGMANUAL` in the file `parameters.sh`, then re-run:
 
 ~~~
 ./run_process.sh parameters.sh prepare_data.sh
