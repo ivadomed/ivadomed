@@ -68,6 +68,10 @@ Check the following files under e.g. `result/sub-balgrist01/anat/tmp`:
 - Save with suffix `-manual`.
 - Move to a folder named seg_manual/$FILENAME. E.g.: `spineGeneric_201903031331/seg_manual/sub-amu01_acq-T1w_MTS_crop_r_seg-manual.nii.gz`
 
+#### Exclude images
+
+If some images are of unacceptable quality, they could be excluded from the final output dataset. List images to exclude in **parameters.sh** using the field `TO_EXCLUDE`. Note: Only write the file prefix (see **parameters_template.sh** for examples).
+
 #### Re-run processing (using manually-corrected segmentations)
 
 Make sure to udpate the field `PATH_SEGMANUAL` in the file `parameters.sh`, then re-run:
