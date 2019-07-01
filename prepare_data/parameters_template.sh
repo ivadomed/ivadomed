@@ -24,6 +24,23 @@ export PATH_SEGMANUAL="${PATH_PARENT}/seg_manual"
 #   "sub-amu02"
 # )
 
+# List of images to exclude because of poor quality
+# export TO_EXCLUDE=(
+  # "sub-brno02_T1w"
+  # "sub-brno03_T2w"
+  # "sub-unf04_T2star"
+  # "sub-unf03_acq-MToff_MTS"
+  # "sub-unf05_acq-MTon_MTS"
+  # "sub-unf05_acq-T1w_MTS"
+# )
+
+file_t1w_mts="${SUBJECT}_acq-T1w_MTS"
+file_mton="${SUBJECT}_acq-MTon_MTS"
+file_mtoff="${SUBJECT}_acq-MToff_MTS"
+file_t2w="${SUBJECT}_T2w"
+file_t2s="${SUBJECT}_T2star"
+file_t1w="${SUBJECT}_T1w"
+
 # Number of jobs for parallel processing
 # To know the number of available cores, run: getconf _NPROCESSORS_ONLN
 # We recommend not using more than half the number of available cores.
