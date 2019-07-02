@@ -63,24 +63,8 @@ contains() {
 # SCRIPT STARTS HERE
 # ==============================================================================
 
-# echo $TO_EXCLUDE
-# echo "TESTING $file_mtoff:"
-# contains $TO_EXCLUDE $file_mtoff
-# echo "RESULTS: $?"
-# exit 0
-
 # Go to output anat folder, where most of the outputs will be located
 cd ${ofolder_reg}
-
-# Copy files to appropriate locations
-# cp tmp/${file_t1w_mts}_crop_r.nii.gz ${file_t1w_mts}.nii.gz
-# cp tmp/${file_mton}_reg.nii.gz ${file_mton}.nii.gz
-# cp tmp/${file_mtoff}_reg.nii.gz ${file_mtoff}.nii.gz
-
-# Rename current files (remove "_reg")
-# mv ${file_t1w}_reg.nii.gz ${file_t1w}.nii.gz
-# mv ${file_t2w}_reg.nii.gz ${file_t2w}.nii.gz
-# mv ${file_t2s}_reg.nii.gz ${file_t2s}.nii.gz
 
 for i in ${!FILES_SRC[@]}; do
   # Copy and rename file
@@ -95,8 +79,7 @@ for i in ${!FILES_SRC[@]}; do
   cp ${PATH_IN}/${FILES_DEST[$i]}.json ${FILES_DEST[$i]}.json
 done
 
-# TODO: Copy the following json files:
-# Copy json files and rename them
+# TODO: Copy the following json files manually:
 # cp ${PATH_IN}/../../dataset_description.json ../../
 # cp ${PATH_IN}/../../participants.json ../../
 # cp ${PATH_IN}/../../participants.tsv ../../
