@@ -3,9 +3,12 @@
 # Delete temporary files. Run this script once all files have been verified.
 # Usage:
 #   ./delete_temp_files.sh <SUBJECT> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
-#
-# -x: Full verbose, -e: Exit if error
-set -x
+
+# Uncomment for full verbose
+set -v
+
+# Immediately exit if error
+set -e
 
 # Retrieve input params
 SUBJECT=$1
