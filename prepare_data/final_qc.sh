@@ -3,9 +3,12 @@
 # Delete temporary files. Run this script once all files have been verified.
 # Usage:
 #   ./delete_temp_files.sh <SUBJECT> <PATH_OUTPUT> <PATH_QC> <PATH_LOG> <TO_EXCLUDE>
-#
-# -x: Full verbose, -e: Exit if error
-# set -x
+
+# Uncomment for full verbose
+# set -v
+
+# Immediately exit if error
+set -e
 
 
 # PARAMETERS & VARIABLES
@@ -54,8 +57,11 @@ FILES_DEST=(
 # FUNCTIONS
 # ==============================================================================
 
+# Check if a string is contained in a list.
+# Usage: contains LIST STR
+# Source: https://stackoverflow.com/questions/8063228/how-do-i-check-if-a-variable-exists-in-a-list-in-bash
 contains() {
-  [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && echo 0 || echo 1
+  [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && echo 1 || echo 0
 }
 
 
@@ -67,16 +73,21 @@ contains() {
 cd ${ofolder_reg}
 
 for i in ${!FILES_SRC[@]}; do
-  # Copy and rename file
-  cp tmp/${FILES_SRC[$i]}.nii.gz ${FILES_DEST[$i]}.nii.gz
-  # Duplicate segmentation to be used by other contrasts
-  cp tmp/${file_t1w_mts}_crop_r_seg-manual.nii.gz ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz
-  # Remove empty slices at the edge
-  prepdata -i ${FILES_DEST[$i]}.nii.gz -s ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz remove-slice
-  # Generate final QC
-  sct_qc -i ${FILES_DEST[$i]}.nii.gz -s ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz -p sct_deepseg_sc -qc ${PATH_QC}2 -qc-subject ${SUBJECT}
-  # Copy json file and rename them
-  cp ${PATH_IN}/${FILES_DEST[$i]}.json ${FILES_DEST[$i]}.json
+  exclude_file=`contains $TO_EXCLUDE ${FILES_DEST[$i]}`
+  if [[ $exclude_file -eq 1 ]]; then
+    echo "File excluded: ${FILES_DEST[$i]}.nii.gz"
+  else
+    # Copy and rename file
+    cp tmp/${FILES_SRC[$i]}.nii.gz ${FILES_DEST[$i]}.nii.gz
+    # Duplicate segmentation to be used by other contrasts
+    cp tmp/${file_t1w_mts}_crop_r_seg-manual.nii.gz ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz
+    # Remove empty slices at the edge
+    prepdata -i ${FILES_DEST[$i]}.nii.gz -s ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz remove-slice
+    # Generate final QC
+    sct_qc -i ${FILES_DEST[$i]}.nii.gz -s ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz -p sct_deepseg_sc -qc ${PATH_QC}2 -qc-subject ${SUBJECT}
+    # Copy json file and rename them
+    cp ${PATH_IN}/${FILES_DEST[$i]}.json ${FILES_DEST[$i]}.json
+  fi
 done
 
 # TODO: Copy the following json files manually:
