@@ -16,10 +16,9 @@ set -e
 
 # Retrieve input params
 SUBJECT=$1
-PATH_OUTPUT=$2
-PATH_QC=$3
-PATH_LOG=$4
-TO_EXCLUDE=$5
+FILEPARAM=$2
+
+source $FILEPARAM
 
 # Create BIDS architecture
 PATH_IN="`pwd`/${SUBJECT}/anat"
@@ -61,7 +60,10 @@ FILES_DEST=(
 # Usage: contains LIST STR
 # Source: https://stackoverflow.com/questions/8063228/how-do-i-check-if-a-variable-exists-in-a-list-in-bash
 contains() {
-  [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && echo 1 || echo 0
+  local list="$1"
+  local item="$2"
+  [[ $list =~ (^|[[:space:]])*$item*($|[[:space:]]) ]] && echo 1 || echo 0
+  # [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && echo 1 || echo 0
 }
 
 
@@ -72,19 +74,27 @@ contains() {
 # Go to output anat folder, where most of the outputs will be located
 cd ${ofolder_reg}
 
+# TO_EXCLUDE=(
+#   "sub-amu01_acq-MTon_MTS"
+#   "sub-amu03_acq-MTon_MTS"
+# )
+
+echo -e ${TO_EXCLUDE[@]}
+
 for i in ${!FILES_SRC[@]}; do
-  exclude_file=`contains $TO_EXCLUDE ${FILES_DEST[$i]}`
+  exclude_file=`contains ${TO_EXCLUDE[@]} ${FILES_DEST[$i]}`
+  echo "i: $i, ${FILES_DEST[$i]}, $exclude_file"
   if [[ $exclude_file -eq 1 ]]; then
-    echo "File excluded: ${FILES_DEST[$i]}.nii.gz"
+    echo -e "\nWARNING: File excluded: ${FILES_DEST[$i]}.nii.gz"
   else
     # Copy and rename file
     cp tmp/${FILES_SRC[$i]}.nii.gz ${FILES_DEST[$i]}.nii.gz
     # Duplicate segmentation to be used by other contrasts
     cp tmp/${file_t1w_mts}_crop_r_seg-manual.nii.gz ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz
     # Remove empty slices at the edge
-    prepdata -i ${FILES_DEST[$i]}.nii.gz -s ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz remove-slice
+    # prepdata -i ${FILES_DEST[$i]}.nii.gz -s ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz remove-slice
     # Generate final QC
-    sct_qc -i ${FILES_DEST[$i]}.nii.gz -s ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz -p sct_deepseg_sc -qc ${PATH_QC}2 -qc-subject ${SUBJECT}
+    # sct_qc -i ${FILES_DEST[$i]}.nii.gz -s ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz -p sct_deepseg_sc -qc ${PATH_QC}2 -qc-subject ${SUBJECT}
     # Copy json file and rename them
     cp ${PATH_IN}/${FILES_DEST[$i]}.json ${FILES_DEST[$i]}.json
   fi
