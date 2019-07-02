@@ -21,7 +21,7 @@ source PATH_TO_YOUR_VENV/venv-ivadomed/bin/activate
 - Edit the file `parameters.sh` and modify the variables according to your needs.
 - Make sure input files are present:
 ~~~
-./run_process.sh check_input_files.sh
+./run_process.sh parameters.sh check_input_files.sh
 ~~~
 
 #### Run first processing
@@ -29,10 +29,12 @@ source PATH_TO_YOUR_VENV/venv-ivadomed/bin/activate
 Loop across subjects and run full processing:
 
 ~~~
-./run_process.sh prepare_data.sh
+./run_process.sh parameters.sh prepare_data.sh
 ~~~
 
 #### Perform QC
+
+##### Spinal cord segmentations
 
 - Open qc/index.html
 - Search only for "deepseg" QC entries (use "search" field)
@@ -40,9 +42,16 @@ Loop across subjects and run full processing:
 - If the data are of **very** bad quality, also take a screenshot (this time, wait for the segmentation to disappear)
 - Copy all screenshots under qc_feedback/
 
-#### Manually correct the segmentations
+##### Registration of MT scans
 
-Check the following files under e.g. `result/balgrist_spineGeneric/sub-01/anat/tmp`:
+- Search for "register_multimodal"
+- Take a screenshot of the browser when you spot a problem (wait for the segmentation to appear before taking the screenshot)
+- If the data are of **very** bad quality, also take a screenshot (this time, wait for the segmentation to disappear)
+- Copy all screenshots under qc_feedback/
+
+##### Manually correct the segmentations
+
+Check the following files under e.g. `result/sub-balgrist01/anat/tmp`:
 
 | Image  | Segmentation  |
 |:---|:---|
@@ -52,16 +61,23 @@ Check the following files under e.g. `result/balgrist_spineGeneric/sub-01/anat/t
 | sub-XX_T2star_mean_reg.nii.gz | sub-XX_T2star_mean_reg_seg.nii.gz |
 
 - Open the segmentation with `fsleyes`
-- Manually correct it
+- Manually correct it:
+  - If the segmentation is leaking, remove the leak (use CMD+F to switch the overlay on/off)
+  - If the segmentation exists in one slice but only consists of a few pixels, because the image quality is bad or because it is no more covering the cord (e.g. brainstem), remove all pixels in the current slice (better to have no segmentation than partial segmentation).
+  - If the spinal cord is only partially visible (this can happen in T2star scans due to the registration), zero all pixels in the slice.
 - Save with suffix `-manual`.
-- Move to a folder named seg_manual/$SITE/$FILENAME. E.g.: `spineGeneric_201903031331/seg_manual/amu_spineGeneric/sub-01_acq-T1w_MTS_crop_r_seg-manual.nii.gz`
+- Move to a folder named seg_manual/$FILENAME. E.g.: `spineGeneric_201903031331/seg_manual/sub-amu01_acq-T1w_MTS_crop_r_seg-manual.nii.gz`
+
+#### Exclude images
+
+If some images are of unacceptable quality, they could be excluded from the final output dataset. List images to exclude in **parameters.sh** using the field `TO_EXCLUDE`. Note: Only write the file prefix (see **parameters_template.sh** for examples).
 
 #### Re-run processing (using manually-corrected segmentations)
 
-Make sure to udpate the field `PATH_SEGMANUAL` in the file `parameters.sh`, then re-run:
+Make sure to update the field `PATH_SEGMANUAL` in the file `parameters.sh`, then re-run:
 
 ~~~
-./run_process.sh prepare_data.sh
+./run_process.sh parameters.sh prepare_data.sh
 ~~~
 
 #### Copy files, final QC
@@ -69,7 +85,7 @@ Make sure to udpate the field `PATH_SEGMANUAL` in the file `parameters.sh`, then
 Copy final files to anat/, copy json sidecars, move segmentations to derivatives/ and generate another QC:
 
 ~~~
-./run_process.sh final_qc.sh
+./run_process.sh parameters.sh final_qc.sh
 ~~~
 
 - Open the new QC: qc2/index.html
