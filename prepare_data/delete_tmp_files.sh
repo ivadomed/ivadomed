@@ -2,17 +2,16 @@
 #
 # Delete temporary files. Run this script once all files have been verified.
 # Usage:
-#   ./delete_temp_files.sh <SUBJECT> <SITE> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
+#   ./delete_temp_files.sh <SUBJECT> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
 #
 # -x: Full verbose, -e: Exit if error
 set -x
 
 # Retrieve input params
 SUBJECT=$1
-SITE=$2
-PATH_OUTPUT=$3
-PATH_QC=$4
-PATH_LOG=$5
+PATH_OUTPUT=$2
+PATH_QC=$3
+PATH_LOG=$4
 
 # Create BIDS architecture
 ofolder_reg="${PATH_OUTPUT}/${SITE}/${SUBJECT}/anat"
