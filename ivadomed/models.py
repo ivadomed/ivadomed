@@ -133,25 +133,31 @@ class FiLMlayer(Module):
         self.width = None
         self.feature_size = None
         self.generator = FiLMgenerator(n_metadata, n_channels)
+        # Add the parameters gammas and betas to access them out of the class.
+        self.gammas = None
+        self.betas = None
 
     def forward(self, feature_maps, context, w_shared):
         _, self.feature_size, self.height, self.width = feature_maps.data.shape
 
-        context = torch.Tensor(context).cuda()
+        if torch.cuda.is_available():
+            context = torch.Tensor(context).cuda()
+        else:
+            context = torch.Tensor(context)
 
         # Estimate the FiLM parameters using a FiLM generator from the contioning metadata
         film_params, new_w_shared = self.generator(context, w_shared)
 
         # FiLM applies a different affine transformation to each channel,
-        # consistent across spatial locations
+        # consistent accross spatial locations
         film_params = film_params.unsqueeze(-1).unsqueeze(-1)
         film_params = film_params.repeat(1, 1, self.height, self.width)
 
-        gammas = film_params[:, : self.feature_size, :, :]
-        betas = film_params[:, self.feature_size :, :, :]
+        self.gammas = film_params[:, : self.feature_size, :, :]
+        self.betas = film_params[:, self.feature_size :, :, :]
 
         # Apply the linear modulation
-        output = gammas * feature_maps + betas
+        output = self.gammas * feature_maps + self.betas
 
         return output, new_w_shared
 
