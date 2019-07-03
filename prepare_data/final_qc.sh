@@ -56,14 +56,23 @@ FILES_DEST=(
 # FUNCTIONS
 # ==============================================================================
 
-# Check if a string is contained in a list.
+# Check if an item is contained in at least one element of a list. If so, return 1.
 # Usage: contains LIST STR
 # Source: https://stackoverflow.com/questions/8063228/how-do-i-check-if-a-variable-exists-in-a-list-in-bash
 contains() {
-  local list="$1"
-  local item="$2"
-  [[ $list =~ (^|[[:space:]])*$item*($|[[:space:]]) ]] && echo 1 || echo 0
-  # [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && echo 1 || echo 0
+  local item="$1"
+  shift  # Shift all arguments to the left (original $1 gets lost)
+  local list=("$@")
+  # echo ${list[@]}
+  # echo $item
+  local result=0
+  for i in ${list[@]}; do
+    # if [[ $i == $item ]]; then
+    if [[ "$i" == "$item" ]]; then
+      result=1
+    fi
+  done
+  echo $result
 }
 
 
@@ -82,8 +91,8 @@ cd ${ofolder_reg}
 echo -e ${TO_EXCLUDE[@]}
 
 for i in ${!FILES_SRC[@]}; do
-  exclude_file=`contains ${TO_EXCLUDE[@]} ${FILES_DEST[$i]}`
-  echo "i: $i, ${FILES_DEST[$i]}, $exclude_file"
+  exclude_file=`contains ${FILES_DEST[$i]} "${TO_EXCLUDE[@]}"`
+  # echo "i: $i, ${FILES_DEST[$i]}, $exclude_file"
   if [[ $exclude_file -eq 1 ]]; then
     echo -e "\nWARNING: File excluded: ${FILES_DEST[$i]}.nii.gz"
   else
@@ -92,9 +101,9 @@ for i in ${!FILES_SRC[@]}; do
     # Duplicate segmentation to be used by other contrasts
     cp tmp/${file_t1w_mts}_crop_r_seg-manual.nii.gz ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz
     # Remove empty slices at the edge
-    # prepdata -i ${FILES_DEST[$i]}.nii.gz -s ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz remove-slice
+    prepdata -i ${FILES_DEST[$i]}.nii.gz -s ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz remove-slice
     # Generate final QC
-    # sct_qc -i ${FILES_DEST[$i]}.nii.gz -s ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz -p sct_deepseg_sc -qc ${PATH_QC}2 -qc-subject ${SUBJECT}
+    sct_qc -i ${FILES_DEST[$i]}.nii.gz -s ${ofolder_seg}/${FILES_DEST[$i]}_seg-manual.nii.gz -p sct_deepseg_sc -qc ${PATH_QC}2 -qc-subject ${SUBJECT}
     # Copy json file and rename them
     cp ${PATH_IN}/${FILES_DEST[$i]}.json ${FILES_DEST[$i]}.json
   fi
