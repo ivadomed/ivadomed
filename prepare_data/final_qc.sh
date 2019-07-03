@@ -29,26 +29,26 @@ ofolder_reg="${PATH_OUTPUT}/${SUBJECT}/anat"
 file_t1w_mts="${SUBJECT}_acq-T1w_MTS"
 file_mton="${SUBJECT}_acq-MTon_MTS"
 file_mtoff="${SUBJECT}_acq-MToff_MTS"
+file_t1w="${SUBJECT}_T1w"
 file_t2w="${SUBJECT}_T2w"
 file_t2s="${SUBJECT}_T2star"
-file_t1w="${SUBJECT}_T1w"
 
 FILES_SRC=(
   "${file_t1w_mts}_crop_r"
   "${file_mton}_reg"
   "${file_mtoff}_reg"
+  "${file_t1w}_reg2"
   "${file_t2w}_reg2"
   "${file_t2s}_reg2"
-  "${file_t1w}_reg2"
 )
 
 FILES_DEST=(
   "${file_t1w_mts}"
   "${file_mton}"
   "${file_mtoff}"
+  "${file_t1w}"
   "${file_t2w}"
   "${file_t2s}"
-  "${file_t1w}"
 )
 
 
