@@ -49,6 +49,7 @@ time_start=$(date +%x_%r)
 
 # Load config file
 source $1
+fileparam="`pwd`/$1"
 
 # build syntax for process execution
 task="`pwd`/$2"
@@ -73,14 +74,14 @@ if [ -x "$(command -v parallel)" ]; then
   echo 'GNU parallel is installed! Processing subjects in parallel using multiple cores.' >&2
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
-    echo "${PATH_SCRIPT}/_run_with_log.sh $task $subject $PATH_OUTPUT $PATH_QC $PATH_LOG $TO_EXCLUDE"
+    echo "${PATH_SCRIPT}/_run_with_log.sh $task $subject $fileparam"
   done \
   | parallel -j ${JOBS} --halt-on-error soon,fail=1 bash -c "{}"
 else
   echo 'GNU parallel is not installed. Processing subjects sequentially.' >&2
   for path_subject in ${list_path_subject[@]}; do
     subject=`basename $path_subject`
-    ${PATH_SCRIPT}/_run_with_log.sh $task $subject $PATH_OUTPUT $PATH_QC $PATH_LOG $TO_EXCLUDE
+    ${PATH_SCRIPT}/_run_with_log.sh $task $subject $fileparam
   done
 fi
 

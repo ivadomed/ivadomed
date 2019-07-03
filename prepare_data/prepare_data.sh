@@ -20,9 +20,9 @@ trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
 # Retrieve input params
 SUBJECT=$1
-PATH_OUTPUT=$2
-PATH_QC=$3
-PATH_LOG=$4
+FILEPARAM=$2
+
+source $FILEPARAM
 
 # Create BIDS architecture
 PATH_IN="`pwd`/${SUBJECT}/anat"
