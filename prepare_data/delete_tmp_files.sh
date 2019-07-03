@@ -5,7 +5,7 @@
 #   ./delete_temp_files.sh <SUBJECT> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
 
 # Uncomment for full verbose
-set -v
+#set -v
 
 # Immediately exit if error
 set -e
@@ -17,7 +17,7 @@ FILEPARAM=$2
 source $FILEPARAM
 
 # Create BIDS architecture
-ofolder_reg="${PATH_OUTPUT}/${SITE}/${SUBJECT}/anat"
+ofolder_reg="${PATH_OUTPUT}/${SUBJECT}/anat"
 
 # Go to output anat folder, where most of the outputs will be located
 cd ${ofolder_reg}
