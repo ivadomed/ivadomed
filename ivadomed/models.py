@@ -201,33 +201,33 @@ class FiLMedUnet(Module):
 
         x3 = self.conv2(x2)
         if self.film1:
-            x3, w_film = self.film1(x3, context, None if w_film not in locals() else w_film)
+            x3, w_film = self.film1(x3, context, None if 'w_film' not in locals() else w_film)
         x4 = self.mp2(x3)
 
         x5 = self.conv3(x4)
         if self.film2:
-            x5, w_film = self.film2(x5, context, None if w_film not in locals() else w_film)
+            x5, w_film = self.film2(x5, context, None if 'w_film' not in locals() else w_film)
         x6 = self.mp3(x5)
 
         # Bottom
         x7 = self.conv4(x6)
         if self.film3:
-            x7, w_film = self.film3(x7, context, None if w_film not in locals() else w_film)
+            x7, w_film = self.film3(x7, context, None if 'w_film' not in locals() else w_film)
 
         # Up-sampling
         x8 = self.up1(x7, x5)
         if self.film4:
-            x8, w_film = self.film4(x8, context, None if w_film not in locals() else w_film)
+            x8, w_film = self.film4(x8, context, None if 'w_film' not in locals() else w_film)
         x9 = self.up2(x8, x3)
         if self.film5:
-            x9, w_film = self.film5(x9, context, None if w_film not in locals() else w_film)
+            x9, w_film = self.film5(x9, context, None if 'w_film' not in locals() else w_film)
         x10 = self.up3(x9, x1)
         if self.film6:
-            x10, w_film = self.film6(x10, context, None if w_film not in locals() else w_film)
+            x10, w_film = self.film6(x10, context, None if 'w_film' not in locals() else w_film)
 
         x11 = self.conv9(x10)
         if self.film7:
-            x11, w_film = self.film7(x11, context, None if w_film not in locals() else w_film)
+            x11, w_film = self.film7(x11, context, None if 'w_film' not in locals() else w_film)
         preds = torch.sigmoid(x11)
 
         return preds
