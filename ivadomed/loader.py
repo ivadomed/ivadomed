@@ -76,7 +76,14 @@ class BidsDataset(MRI2DBidsSegDataset):
                         print("{} without {}, skipping.".format(subject, metadata_type))
                         return False
                     else:
-                        value = metadata[metadata_type] if metadata_type == "Manufacturer" else float(metadata[metadata_type])
+                        if metadata_type == "Manufacturer":
+                            value = metadata[metadata_type]
+                        else:
+                            if isinstance(metadata[metadata_type], (int, float)):
+                                value = float(metadata[metadata_type])
+                            else:  # eg multi-echo data have 3 echo times
+                                value = np.mean([float(v) for v in metadata[metadata_type].split(',')])
+
                         self.metadata[metadata_type].append(value)
                         return True
 
@@ -95,16 +102,16 @@ def split_dataset(path_folder, center_test_lst, random_seed, train_frac=0.8):
     # read participants.tsv as pandas dataframe
     df = bids.BIDS(path_folder).participants.content
 
-    # make sure that subjects coming from some centers are unseen by training
-    X_test_blind = df[df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
+    # make sure that subjects coming from some centers are unseen during training
+    X_test = df[df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
     X_remain = df[~df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
 
     # split using sklearn function
     X_train, X_tmp = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
-    X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
-
-    # Testing dataset is made of subjects from unseen and seen centers
-    X_test = X_test+X_test_blind
+    if len(X_test):  # X_test contains data from centers unseen during the training, eg SpineGeneric
+        X_val = X_tmp
+    else:  # X_test contains data from centers seen during the training, eg gm_challenge
+        X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
 
     return X_train, X_val, X_test
 

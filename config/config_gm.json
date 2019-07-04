@@ -5,7 +5,7 @@
         "random_seed": 1313,
         "contrast_train_validation": ["T2star"],
         "contrast_test": ["T2star"],
-        "center_test": ["ucl"],
+        "center_test": [],
 	"batch_size": 64,
 	"dropout_rate": 0.3,
 	"batch_norm_momentum": 0.1,
