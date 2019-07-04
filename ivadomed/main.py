@@ -97,13 +97,13 @@ def cmd_train(context):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
-        print("cuda is not available.")
+        print("Cuda is not available.")
         print("Working on {}.".format(device))
     if cuda_available:
         # Set the GPU
         gpu_number = int(context["gpu"])
         torch.cuda.set_device(gpu_number)
-        print("using GPU number {}".format(gpu_number))
+        print("Using GPU number {}".format(gpu_number))
 
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet
     film_bool = bool(sum(context["film_layers"]))
@@ -189,7 +189,7 @@ def cmd_train(context):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
 
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(log_dir=context["log_directory"])
+    writer = SummaryWriter(logdir=context["log_directory"])
 
     # Create dict containing gammas and betas after each FiLM layer.
     gammas_dict = {i:[] for i in range(1,9)}
