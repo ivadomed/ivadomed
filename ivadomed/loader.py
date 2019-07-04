@@ -5,9 +5,12 @@ from sklearn.preprocessing import OneHotEncoder
 from scipy.signal import argrelextrema
 from sklearn.neighbors.kde import KernelDensity
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
 
 import numpy as np
+from glob import glob
 from copy import deepcopy
+from tqdm import tqdm
 
 
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
@@ -37,7 +40,7 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
 
 
 class BidsDataset(MRI2DBidsSegDataset):
-    def __init__(self, root_dir, contrast_lst, slice_axis=2, cache=True,
+    def __init__(self, root_dir, subject_lst, contrast_lst, slice_axis=2, cache=True,
                  transform=None, slice_filter_fn=None,
                  canonical=False, labeled=True):
 
@@ -45,7 +48,10 @@ class BidsDataset(MRI2DBidsSegDataset):
         self.filename_pairs = []
         self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": [], "Manufacturer": []}
 
-        for subject in self.bids_ds.get_subjects():
+        # Selecting subjects from Training / Validation / Testing
+        bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
+
+        for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
 
                 if not subject.has_derivative("labels"):
@@ -85,6 +91,24 @@ class BidsDataset(MRI2DBidsSegDataset):
                          transform, slice_filter_fn, canonical)
 
 
+def split_dataset(path_folder, center_test_lst, random_seed, train_frac=0.8):
+    # read participants.tsv as pandas dataframe
+    df = bids.BIDS(path_folder).participants.content
+
+    # make sure that subjects coming from some centers are unseen by training
+    X_test_blind = df[df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
+    X_remain = df[~df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
+
+    # split using sklearn function
+    X_train, X_tmp = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
+    X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
+
+    # Testing dataset is made of subjects from unseen and seen centers
+    X_test = X_test+X_test_blind
+
+    return X_train, X_val, X_test
+
+
 class Kde_model():
     def __init__(self):
         self.kde = KernelDensity()
@@ -117,11 +141,11 @@ class Kde_model():
         return pred
 
 
-def clustering_fit(datasets, key_lst):
+def clustering_fit(dataset, key_lst):
     """This function creates clustering models for each metadata type,
     using Kernel Density Estimation algorithm.
 
-    :param datasets (list of lists): data for each dataset
+    :param datasets (list): data
     :param key_lst (list of strings): names of metadata to cluster
     :return: clustering model for each metadata type
     """
@@ -131,7 +155,7 @@ def clustering_fit(datasets, key_lst):
 
     model_dct = {}
     for k in key_lst:
-        k_data = [value for dataset in datasets for value in dataset[k]]
+        k_data = [value for value in dataset[k]]
 
         kde = Kde_model()
         kde.train(k_data, KDE_PARAM[k]['range'], KDE_PARAM[k]['gridsearch'])
@@ -140,52 +164,48 @@ def clustering_fit(datasets, key_lst):
     return model_dct
 
 
-def normalize_metadata(ds_lst_in, clustering_models, debugging, train_set=False):
+def normalize_metadata(ds_in, clustering_models, debugging, train_set=False):
 
     if train_set:
         # Initialise One Hot Encoder
         ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
         X_train_ohe = []
 
-    ds_lst_out = []
-    for ds_in in ds_lst_in:
-        ds_out = []
-        for idx, subject in enumerate(ds_in):
-            s_out = deepcopy(subject)
+    ds_out = []
+    for idx, subject in enumerate(ds_in):
+        s_out = deepcopy(subject)
 
-            # categorize flip angle, repetition time and echo time values using KDE
-            for m in ['FlipAngle', 'RepetitionTime', 'EchoTime']:
-                v = subject["input_metadata"]["bids_metadata"][m]
-                p = clustering_models[m].predict(v)
-                s_out["input_metadata"]["bids_metadata"][m] = p
-                if debugging:
-                    print("{}: {} --> {}".format(m, v, p))
+        # categorize flip angle, repetition time and echo time values using KDE
+        for m in ['FlipAngle', 'RepetitionTime', 'EchoTime']:
+            v = subject["input_metadata"]["bids_metadata"][m]
+            p = clustering_models[m].predict(v)
+            s_out["input_metadata"]["bids_metadata"][m] = p
+            if debugging:
+                print("{}: {} --> {}".format(m, v, p))
 
-            # categorize manufacturer info based on the MANUFACTURER_CATEGORY dictionary
-            manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
-            if manufacturer in MANUFACTURER_CATEGORY:
-                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
-                if debugging:
-                    print("Manufacturer: {} --> {}".format(manufacturer, MANUFACTURER_CATEGORY[manufacturer]))
-            else:
-                print("{} with unknown manufacturer.".format(subject))
-                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
+        # categorize manufacturer info based on the MANUFACTURER_CATEGORY dictionary
+        manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
+        if manufacturer in MANUFACTURER_CATEGORY:
+            s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
+            if debugging:
+                print("Manufacturer: {} --> {}".format(manufacturer, MANUFACTURER_CATEGORY[manufacturer]))
+        else:
+            print("{} with unknown manufacturer.".format(subject))
+            s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
 
-            s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
+        s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
 
-            s_out["input_metadata"]["contrast"] = subject["input_metadata"]["bids_metadata"]["contrast"]
+        s_out["input_metadata"]["contrast"] = subject["input_metadata"]["bids_metadata"]["contrast"]
 
-            if train_set:
-                X_train_ohe.append(s_out["input_metadata"]["bids_metadata"])
-            ds_out.append(s_out)
+        if train_set:
+            X_train_ohe.append(s_out["input_metadata"]["bids_metadata"])
+        ds_out.append(s_out)
 
-            del s_out, subject
-
-        ds_lst_out.append(ds_out)
+        del s_out, subject
 
     if train_set:
         X_train_ohe = np.vstack(X_train_ohe)
         ohe.fit(X_train_ohe)
-        return ds_lst_out, ohe
+        return ds_out, ohe
     else:
-        return ds_lst_out
+        return ds_out

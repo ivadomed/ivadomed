@@ -126,22 +126,21 @@ def cmd_train(context):
         mt_transforms.NormalizeInstance(),
     ])
 
+    # Randomly split dataset between training / validation / testing
+    train_lst, valid_lst, test_lst = loader.split_dataset(context["bids_path"], context["center_test"], context["random_seed"])
+
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
-    train_datasets, train_metadata = [], []
-    for bids_ds in tqdm(context["bids_path_train"], desc="Loading training set"):
-        ds_train = loader.BidsDataset(bids_ds,
-                                      contrast_lst=context["contrast_train_validation"],
-                                      transform=train_transform,
-                                      slice_filter_fn=SliceFilter())
-        train_datasets.append(ds_train)
-        train_metadata.append(ds_train.metadata)  # store the metadata of the training data, used for fitting the clustering models
+    ds_train = loader.BidsDataset(context["bids_path"],
+                                  subject_lst=train_lst,
+                                  contrast_lst=context["contrast_train_validation"],
+                                  transform=train_transform,
+                                  slice_filter_fn=SliceFilter())
 
     if context["film"]:  # normalize metadata before sending to the network
-        metadata_clustering_models = loader.clustering_fit(train_metadata, ["RepetitionTime", "EchoTime", "FlipAngle"])
-        train_datasets, train_onehotencoder = loader.normalize_metadata(train_datasets, metadata_clustering_models, context["debugging"], True)
+        metadata_clustering_models = loader.clustering_fit(ds_train.metadata, ["RepetitionTime", "EchoTime", "FlipAngle"])
+        ds_train, train_onehotencoder = loader.normalize_metadata(ds_train, metadata_clustering_models, context["debugging"], True)
 
-    ds_train = ConcatDataset(train_datasets)
     print(f"Loaded {len(ds_train)} axial slices for the training set.")
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=True, pin_memory=True,
@@ -149,18 +148,15 @@ def cmd_train(context):
                               num_workers=1)
 
     # Validation dataset ------------------------------------------------------
-    validation_datasets = []
-    for bids_ds in tqdm(context["bids_path_validation"], desc="Loading validation set"):
-        ds_val = loader.BidsDataset(bids_ds,
-                                    contrast_lst=context["contrast_train_validation"],
-                                    transform=val_transform,
-                                    slice_filter_fn=SliceFilter())
-        validation_datasets.append(ds_val)
+    ds_val = loader.BidsDataset(context["bids_path"],
+                                subject_lst=valid_lst,
+                                contrast_lst=context["contrast_train_validation"],
+                                transform=val_transform,
+                                slice_filter_fn=SliceFilter())
 
     if context["film"]:  # normalize metadata before sending to network
-        validation_datasets = loader.normalize_metadata(validation_datasets, metadata_clustering_models, context["debugging"], False)
+        ds_val = loader.normalize_metadata(ds_val, metadata_clustering_models, context["debugging"], False)
 
-    ds_val = ConcatDataset(validation_datasets)
     print(f"Loaded {len(ds_val)} axial slices for the validation set.")
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
                             shuffle=True, pin_memory=True,
@@ -227,6 +223,7 @@ def cmd_train(context):
             if context["film"]:
                 # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
                 var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+
                 var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
                 preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
             else:
@@ -292,6 +289,7 @@ def cmd_train(context):
                 if context["film"]:
                     # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
                     var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+
                     var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
                     preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
                 else:
@@ -400,6 +398,10 @@ def cmd_train(context):
         contrast_images = np.array(var_contrast_list)
         np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
 
+    # save the subject distribution
+    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
+    joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
+
     return
 
 
@@ -423,21 +425,19 @@ def cmd_test(context):
         mt_transforms.NormalizeInstance(),
     ])
 
-    test_datasets = []
-    for bids_ds in tqdm(context["bids_path_test"], desc="Loading test set"):
-        ds_test = loader.BidsDataset(bids_ds,
-                                     contrast_lst=context["contrast_test"],
-                                     transform=val_transform,
-                                     slice_filter_fn=SliceFilter())
-        test_datasets.append(ds_test)
+    test_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
+    ds_test = loader.BidsDataset(context["bids_path"],
+                                 subject_lst=test_lst,
+                                 contrast_lst=context["contrast_test"],
+                                 transform=val_transform,
+                                 slice_filter_fn=SliceFilter())
 
     if context["film"]:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load("./"+context["log_directory"]+"/clustering_models.joblib")
-        test_datasets = loader.normalize_metadata(test_datasets, metadata_clustering_models, context["debugging"], False)
+        ds_test = loader.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"], False)
 
         one_hot_encoder = joblib.load("./"+context["log_directory"]+"/one_hot_encoder.joblib")
 
-    ds_test = ConcatDataset(test_datasets)
     print(f"Loaded {len(ds_test)} axial slices for the test set.")
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
                              shuffle=True, pin_memory=True,
@@ -474,6 +474,7 @@ def cmd_test(context):
 
             if context["film"]:
                 test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+
                 test_metadata = [one_hot_encoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
                 preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
             else:
@@ -492,6 +493,7 @@ def cmd_test(context):
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
     print(metrics_dict)
+
 
 def run_main():
     if len(sys.argv) <= 1:
