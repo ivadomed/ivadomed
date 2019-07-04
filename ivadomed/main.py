@@ -105,6 +105,10 @@ def cmd_train(context):
         torch.cuda.set_device(gpu_number)
         print("using GPU number {}".format(gpu_number))
 
+    # Boolean which determines if the selected architecture is FiLMedUnet or Unet
+    film_bool = bool(sum(context["film_layers"]))
+    print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
+
     # These are the training transformations
     train_transform = transforms.Compose([
         mt_transforms.CenterCrop2D((128, 128)),
@@ -137,7 +141,7 @@ def cmd_train(context):
                                   transform=train_transform,
                                   slice_filter_fn=SliceFilter())
 
-    if context["film"]:  # normalize metadata before sending to the network
+    if film_bool:  # normalize metadata before sending to the network
         metadata_clustering_models = loader.clustering_fit(ds_train.metadata, ["RepetitionTime", "EchoTime", "FlipAngle"])
         ds_train, train_onehotencoder = loader.normalize_metadata(ds_train, metadata_clustering_models, context["debugging"], True)
 
@@ -154,7 +158,7 @@ def cmd_train(context):
                                 transform=val_transform,
                                 slice_filter_fn=SliceFilter())
 
-    if context["film"]:  # normalize metadata before sending to network
+    if film_bool:  # normalize metadata before sending to network
         ds_val = loader.normalize_metadata(ds_val, metadata_clustering_models, context["debugging"], False)
 
     print(f"Loaded {len(ds_val)} axial slices for the validation set.")
@@ -163,7 +167,7 @@ def cmd_train(context):
                             collate_fn=mt_datasets.mt_collate,
                             num_workers=1)
 
-    if context["film"]:
+    if film_bool:
         # Modulated U-net model with FiLM layers
         model = models.FiLMedUnet(n_metadata=len([ll for l in train_onehotencoder.categories_ for ll in l]),
                             film_bool=context["film_layers"],
@@ -173,6 +177,7 @@ def cmd_train(context):
         # Traditional U-Net model
         model = models.Unet(drop_rate=context["dropout_rate"],
                             bn_momentum=context["batch_norm_momentum"])
+
     if cuda_available:
         model.cuda()
 
@@ -184,7 +189,7 @@ def cmd_train(context):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
 
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(logdir=context["log_directory"])
+    writer = SummaryWriter(log_dir=context["log_directory"])
 
     # Create dict containing gammas and betas after each FiLM layer.
     gammas_dict = {i:[] for i in range(1,9)}
@@ -209,9 +214,7 @@ def cmd_train(context):
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
 
-            # The variable sample_metadata is where the MRI phyisics parameters are,
-            # to get the metadata for the first sample for example, just use:
-            # ---> bids_metadata_example = sample_metadata[0]["bids_metadata"]
+            # The variable sample_metadata is where the MRI phyisics parameters are
             sample_metadata = batch["input_metadata"]
 
             if cuda_available:
@@ -221,7 +224,7 @@ def cmd_train(context):
                 var_input = input_samples
                 var_gt = gt_samples
 
-            if context["film"]:
+            if film_bool:
                 # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
                 var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
@@ -287,7 +290,7 @@ def cmd_train(context):
                     var_input = input_samples
                     var_gt = gt_samples
 
-                if context["film"]:
+                if film_bool:
                     # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
                     var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
@@ -330,7 +333,7 @@ def cmd_train(context):
                 writer.add_image('Validation/Ground Truth', grid_img, epoch)
 
             # Store the values of gammas and betas after the last epoch for each batch
-            if context["film"] and epoch == num_epochs and i < int(len(ds_val)/context["batch_size"])+1:
+            if film_bool and epoch == num_epochs and i < int(len(ds_val)/context["batch_size"])+1:
 
                 # Get all the contrasts of all batches
                 var_contrast_list.append(var_contrast)
@@ -382,7 +385,7 @@ def cmd_train(context):
 
     # Save final model
     torch.save(model, "./"+context["log_directory"]+"/final_model.pt")
-    if context["film"]:  # save clustering and OneHotEncoding models
+    if film_bool:  # save clustering and OneHotEncoding models
         joblib.dump(metadata_clustering_models, "./"+context["log_directory"]+"/clustering_models.joblib")
         joblib.dump(train_onehotencoder, "./"+context["log_directory"]+"/one_hot_encoder.joblib")
 
@@ -419,6 +422,10 @@ def cmd_test(context):
         torch.cuda.set_device(gpu_number)
         print("using GPU number {}".format(gpu_number))
 
+    # Boolean which determines if the selected architecture is FiLMedUnet or Unet
+    film_bool = bool(sum(context["film_layers"]))
+    print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
+
     # These are the validation/testing transformations
     val_transform = transforms.Compose([
         mt_transforms.CenterCrop2D((128, 128)),
@@ -433,7 +440,7 @@ def cmd_test(context):
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter())
 
-    if context["film"]:  # normalize metadata before sending to network
+    if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load("./"+context["log_directory"]+"/clustering_models.joblib")
         ds_test = loader.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"], False)
 
@@ -473,7 +480,7 @@ def cmd_test(context):
                 test_input = input_samples
                 test_gt = gt_samples
 
-            if context["film"]:
+            if film_bool:
                 test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
                 test_metadata = [one_hot_encoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
