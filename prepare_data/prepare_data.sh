@@ -120,7 +120,7 @@ sct_register_multimodal -i ${file_seg_t1w}.nii.gz -d ${file_seg}.nii.gz -param s
 
 # Apply warping field to native files (to avoid 2x interpolation) -- use bspline interpolation
 sct_apply_transfo -i ${SUBJECT}_T2w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2w}2${file_seg}.nii.gz -o ${SUBJECT}_T2w_reg2.nii.gz
-sct_apply_transfo -i ${SUBJECT}_T2star.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2s}2${file_seg}.nii.gz -o ${SUBJECT}_T2star_reg2.nii.gz
+sct_apply_transfo -i ${SUBJECT}_T2star_mean.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2s}2${file_seg}.nii.gz -o ${SUBJECT}_T2star_reg2.nii.gz
 sct_apply_transfo -i ${SUBJECT}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t1w}2${file_seg}.nii.gz -o ${SUBJECT}_T1w_reg2.nii.gz
 
 # Average all segmentations together and then binarize. Note: we do not include the T2s because it only has 15 slices
