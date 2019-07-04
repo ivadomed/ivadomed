@@ -3,13 +3,14 @@
 # Generate segmentation and co-register all multimodal data.
 #
 # Usage:
-#   ./prepdata.sh <SUBJECT_ID> <output path>
+#   ./prepare_data.sh <SUBJECT_ID> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
 #
 # Where SUBJECT_ID refers to the SUBJECT ID according to the BIDS format.
 #
-# Example:
-#   ./prepdata.sh SUBJECT-03 /users/jondoe/bids_data_results/site-01
-#
+# Author: Julien Cohen-Adad
+
+# Uncomment for full verbose
+# set -v
 
 # Immediately exit if error
 set -e
@@ -19,15 +20,14 @@ trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
 # Retrieve input params
 SUBJECT=$1
-SITE=$2
-PATH_OUTPUT=$3
-PATH_QC=$4
-PATH_LOG=$5
+FILEPARAM=$2
+
+source $FILEPARAM
 
 # Create BIDS architecture
 PATH_IN="`pwd`/${SUBJECT}/anat"
-ofolder_seg="${PATH_OUTPUT}/${SITE}/derivatives/labels/${SUBJECT}/anat"
-ofolder_reg="${PATH_OUTPUT}/${SITE}/${SUBJECT}/anat"
+ofolder_seg="${PATH_OUTPUT}/derivatives/labels/${SUBJECT}/anat"
+ofolder_reg="${PATH_OUTPUT}/${SUBJECT}/anat"
 mkdir -p ${ofolder_reg}
 mkdir -p ${ofolder_seg}
 
@@ -43,14 +43,15 @@ file_t1w="${SUBJECT}_T1w"
 segment_if_does_not_exist(){
   local file="$1"
   local contrast="$2"
-  if [ -e "${PATH_SEGMANUAL}/${SITE}/${file}_seg-manual.nii.gz" ]; then
-    rsync -avzh "${PATH_SEGMANUAL}/${SITE}/${file}_seg-manual.nii.gz" ${file}_seg.nii.gz
+  FILESEG="${file}_seg"
+  if [ -e "${PATH_SEGMANUAL}/${file}_seg-manual.nii.gz" ]; then
+    echo "Found manual segmentation: ${PATH_SEGMANUAL}/${FILESEG}-manual.nii.gz"
+    cp "${PATH_SEGMANUAL}/${FILESEG}-manual.nii.gz" ${FILESEG}.nii.gz
+    sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc -qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
     # Segment spinal cord
-    sct_deepseg_sc -i ${file}.nii.gz -c $contrast -qc ${PATH_QC} -qc-dataset ${SITE} -qc-subject ${SUBJECT}
+    sct_deepseg_sc -i ${file}.nii.gz -c $contrast -qc ${PATH_QC} -qc-subject ${SUBJECT}
   fi
-  # Update global variable with segmentation file name
-  FILESEG="${file}_seg"
 }
 
 # Go to output anat folder, where most of the outputs will be located
@@ -60,12 +61,12 @@ cd ${ofolder_reg}
 mkdir tmp; cd tmp
 
 # Copy images from source database
-rsync -avzh ${PATH_IN}/${file_t1w_mts}.nii.gz .
-rsync -avzh ${PATH_IN}/${file_mton}.nii.gz .
-rsync -avzh ${PATH_IN}/${file_mtoff}.nii.gz .
-rsync -avzh ${PATH_IN}/${file_t2w}.nii.gz .
-rsync -avzh ${PATH_IN}/${file_t2s}.nii.gz .
-rsync -avzh ${PATH_IN}/${file_t1w}.nii.gz .
+cp ${PATH_IN}/${file_t1w_mts}.nii.gz .
+cp ${PATH_IN}/${file_mton}.nii.gz .
+cp ${PATH_IN}/${file_mtoff}.nii.gz .
+cp ${PATH_IN}/${file_t2w}.nii.gz .
+cp ${PATH_IN}/${file_t2s}.nii.gz .
+cp ${PATH_IN}/${file_t1w}.nii.gz .
 
 # Crop to avoid imperfect slab profile at the edge (altered contrast)
 sct_crop_image -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_crop.nii.gz -start 3 -end -3 -dim 2
@@ -87,6 +88,10 @@ sct_register_multimodal -i ${file_mtoff}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg 
 file_mtoff="${file_mtoff}_reg"
 sct_register_multimodal -i ${file_mton}.nii.gz -d ${file_t1w_mts}.nii.gz -dseg ${file_seg}.nii.gz -m ${file_t1w_mts}_mask.nii.gz -param step=1,type=im,algo=slicereg,metric=CC,poly=2 -x spline
 file_mton="${file_mton}_reg"
+
+# Generate QC for assessing registration of MT scans
+sct_qc -i ${file_mtoff}.nii.gz -s ${file_seg}.nii.gz -qc $PATH_QC -qc-subject ${SUBJECT} -p sct_deepseg_sc
+sct_qc -i ${file_mton}.nii.gz -s ${file_seg}.nii.gz -qc $PATH_QC -qc-subject ${SUBJECT} -p sct_deepseg_sc
 
 # For some vendors, T2s scans are 4D. So we need to average them.
 sct_maths -i ${file_t2s}.nii.gz -mean t -o ${file_t2s}_mean.nii.gz
@@ -114,9 +119,9 @@ sct_register_multimodal -i ${file_seg_t2s}.nii.gz -d ${file_seg}.nii.gz -param s
 sct_register_multimodal -i ${file_seg_t1w}.nii.gz -d ${file_seg}.nii.gz -param step=1,type=im,algo=slicereg -x linear
 
 # Apply warping field to native files (to avoid 2x interpolation) -- use bspline interpolation
-sct_apply_transfo -i ${SUBJECT}_T2w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2w}2${file_seg}.nii.gz -o ../${SUBJECT}_T2w_reg.nii.gz
-sct_apply_transfo -i ${SUBJECT}_T2star.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2s}2${file_seg}.nii.gz -o ../${SUBJECT}_T2star_reg.nii.gz
-sct_apply_transfo -i ${SUBJECT}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t1w}2${file_seg}.nii.gz -o ../${SUBJECT}_T1w_reg.nii.gz
+sct_apply_transfo -i ${SUBJECT}_T2w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2w}2${file_seg}.nii.gz -o ${SUBJECT}_T2w_reg2.nii.gz
+sct_apply_transfo -i ${SUBJECT}_T2star_mean.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t2s}2${file_seg}.nii.gz -o ${SUBJECT}_T2star_reg2.nii.gz
+sct_apply_transfo -i ${SUBJECT}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t1w}2${file_seg}.nii.gz -o ${SUBJECT}_T1w_reg2.nii.gz
 
 # Average all segmentations together and then binarize. Note: we do not include the T2s because it only has 15 slices
 sct_image -i ${file_seg}.nii.gz,${file_seg_t1w}_reg.nii.gz,${file_seg_t2w}_reg.nii.gz -concat t -o tmp.concat.nii.gz
@@ -133,6 +138,6 @@ FILES_TO_CHECK=(
 )
 for file in ${FILES_TO_CHECK[@]}; do
   if [ ! -e $file ]; then
-    echo "${SITE}/${file} does not exist" >> $PATH_LOG/_error_prepare_data.log
+    echo "${file} does not exist" >> $PATH_LOG/_error_prepare_data.log
   fi
 done
