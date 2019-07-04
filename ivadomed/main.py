@@ -1,5 +1,6 @@
 import sys
 import json
+import os
 import time
 import shutil
 from sklearn.externals import joblib
@@ -92,9 +93,17 @@ def cmd_train(context):
                         - 'film': indicates if FiLM is used or not
                         - 'debugging': allows extended verbosity and intermediate outputs
     """
-    # Set the GPU
-    gpu_number = int(context["gpu"])
-    torch.cuda.set_device(gpu_number)
+    ##### DEFINE DEVICE #####
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    cuda_available = torch.cuda.is_available()
+    if not cuda_available:
+        print("cuda is not available.")
+        print("Working on {}.".format(device))
+    if cuda_available:
+        # Set the GPU
+        gpu_number = int(context["gpu"])
+        torch.cuda.set_device(gpu_number)
+        print("using GPU number {}".format(gpu_number))
 
     # These are the training transformations
     train_transform = transforms.Compose([
@@ -163,7 +172,8 @@ def cmd_train(context):
         # Traditional U-Net model
         model = models.Unet(drop_rate=context["dropout_rate"],
                             bn_momentum=context["batch_norm_momentum"])
-    model.cuda()
+    if cuda_available:
+        model.cuda()
 
     num_epochs = context["num_epochs"]
     initial_lr = context["initial_lr"]
@@ -174,6 +184,13 @@ def cmd_train(context):
 
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(logdir=context["log_directory"])
+
+    # Create dict containing gammas and betas after each FiLM layer.
+    gammas_dict = {i:[] for i in range(1,9)}
+    betas_dict = {i:[] for i in range(1,9)}
+
+    # Create a list containing the contrast of all batch images
+    var_contrast_list = []
 
     # Training loop -----------------------------------------------------------
     best_validation_loss = float("inf")
@@ -196,8 +213,12 @@ def cmd_train(context):
             # ---> bids_metadata_example = sample_metadata[0]["bids_metadata"]
             sample_metadata = batch["input_metadata"]
 
-            var_input = input_samples.cuda()
-            var_gt = gt_samples.cuda(non_blocking=True)
+            if cuda_available:
+                var_input = input_samples.cuda()
+                var_gt = gt_samples.cuda(non_blocking=True)
+            else:
+                var_input = input_samples
+                var_gt = gt_samples
 
             if context["film"]:
                 # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
@@ -258,8 +279,12 @@ def cmd_train(context):
             sample_metadata = batch["input_metadata"]
 
             with torch.no_grad():
-                var_input = input_samples.cuda()
-                var_gt = gt_samples.cuda(non_blocking=True)
+                if cuda_available:
+                    var_input = input_samples.cuda()
+                    var_gt = gt_samples.cuda(non_blocking=True)
+                else:
+                    var_input = input_samples
+                    var_gt = gt_samples
 
                 if context["film"]:
                     # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
@@ -303,6 +328,37 @@ def cmd_train(context):
                                             scale_each=True)
                 writer.add_image('Validation/Ground Truth', grid_img, epoch)
 
+            # Store the values of gammas and betas after the last epoch for each batch
+            if context["film"] and epoch == num_epochs and i < int(len(ds_val)/context["batch_size"])+1:
+
+                # Get all the contrasts of all batches
+                var_contrast_list.append(var_contrast)
+
+                # Fill the lists of gammas and betas
+                gammas_dict[1].append(model.film1.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[1].append(model.film1.betas[:, :, 0, 0].cpu().numpy())
+
+                gammas_dict[2].append(model.film2.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[2].append(model.film2.betas[:, :, 0, 0].cpu().numpy())
+
+                gammas_dict[3].append(model.film3.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[3].append(model.film3.betas[:, :, 0, 0].cpu().numpy())
+
+                gammas_dict[4].append(model.film4.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[4].append(model.film4.betas[:, :, 0, 0].cpu().numpy())
+
+                gammas_dict[5].append(model.film5.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[5].append(model.film5.betas[:, :, 0, 0].cpu().numpy())
+
+                gammas_dict[6].append(model.film6.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[6].append(model.film6.betas[:, :, 0, 0].cpu().numpy())
+
+                gammas_dict[7].append(model.film7.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[7].append(model.film7.betas[:, :, 0, 0].cpu().numpy())
+
+                gammas_dict[8].append(model.film8.gammas[:, :, 0, 0].cpu().numpy())
+                betas_dict[8].append(model.film8.betas[:, :, 0, 0].cpu().numpy())
+
         metrics_dict = metric_mgr.get_results()
         metric_mgr.reset()
 
@@ -323,11 +379,25 @@ def cmd_train(context):
             best_validation_loss = val_loss_total_avg
             torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
 
-    # save final model
+    # Save final model
     torch.save(model, "./"+context["log_directory"]+"/final_model.pt")
     if context["film"]:  # save clustering and OneHotEncoding models
         joblib.dump(metadata_clustering_models, "./"+context["log_directory"]+"/clustering_models.joblib")
         joblib.dump(train_onehotencoder, "./"+context["log_directory"]+"/one_hot_encoder.joblib")
+
+        # Convert list of gammas/betas into numpy arrays
+        gammas_dict = {i:np.array(gammas_dict[i]) for i in range(1,9)}
+        betas_dict = {i:np.array(betas_dict[i]) for i in range(1,9)}
+
+        # Save the numpy arrays for gammas/betas inside files.npy in log_directory
+        for i in range(1,9):
+            np.save(context["log_directory"] + f"/gamma_layer_{i}.npy", gammas_dict[i])
+            np.save(context["log_directory"] + f"/beta_layer_{i}.npy", betas_dict[i])
+
+        # Convert into numpy and save the contrasts of all batch images
+        contrast_images = np.array(var_contrast_list)
+        np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
+
     # save the subject distribution
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
     joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
@@ -336,9 +406,17 @@ def cmd_train(context):
 
 
 def cmd_test(context):
-    # Set the GPU
-    gpu_number = int(context["gpu"])
-    torch.cuda.set_device(gpu_number)
+    ##### DEFINE DEVICE #####
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    cuda_available = torch.cuda.is_available()
+    if not cuda_available:
+        print("cuda is not available.")
+        print("Working on {}.".format(device))
+    if cuda_available:
+        # Set the GPU
+        gpu_number = int(context["gpu"])
+        torch.cuda.set_device(gpu_number)
+        print("using GPU number {}".format(gpu_number))
 
     # These are the validation/testing transformations
     val_transform = transforms.Compose([
@@ -367,7 +445,9 @@ def cmd_test(context):
                              num_workers=1)
 
     model = torch.load("./"+context["log_directory"]+"/final_model.pt")
-    model.cuda()
+
+    if cuda_available:
+        model.cuda()
     model.eval()
 
     metric_fns = [mt_metrics.dice_score,
@@ -385,8 +465,12 @@ def cmd_test(context):
         sample_metadata = batch["input_metadata"]
 
         with torch.no_grad():
-            test_input = input_samples.cuda()
-            test_gt = gt_samples.cuda(non_blocking=True)
+            if cuda_available:
+                test_input = input_samples.cuda()
+                test_gt = gt_samples.cuda(non_blocking=True)
+            else:
+                test_input = input_samples
+                test_gt = gt_samples
 
             if context["film"]:
                 test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
@@ -409,6 +493,7 @@ def cmd_test(context):
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
     print(metrics_dict)
+
 
 def run_main():
     if len(sys.argv) <= 1:
