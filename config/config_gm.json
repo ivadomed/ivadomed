@@ -5,13 +5,13 @@
         "random_seed": 1313,
         "contrast_train_validation": ["T2star"],
         "contrast_test": ["T2star"],
-        "center_test": ["ucl"],
+        "center_test": [],
 	"batch_size": 64,
 	"dropout_rate": 0.3,
 	"batch_norm_momentum": 0.1,
 	"num_epochs": 500,
 	"initial_lr": 0.0001,
 	"log_directory": "log_gm",
-	"film": true,
+        "film_layers": [0, 1, 1, 0, 1, 0, 0, 0],
         "debugging": false
 }

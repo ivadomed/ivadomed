@@ -168,64 +168,72 @@ class FiLMedUnet(Module):
     A FiLM layer has been added after each convolution layer.
     """
 
-    def __init__(self, n_metadata, drop_rate=0.4, bn_momentum=0.1):
+    def __init__(self, n_metadata, film_bool=[1]*8, drop_rate=0.4, bn_momentum=0.1):
         super(FiLMedUnet, self).__init__()
 
         #Downsampling path
         self.conv1 = DownConv(1, 64, drop_rate, bn_momentum)
-        self.film1 = FiLMlayer(n_metadata, 64)
+        self.film0 = FiLMlayer(n_metadata, 64) if film_bool[0] else None
         self.mp1 = nn.MaxPool2d(2)
 
         self.conv2 = DownConv(64, 128, drop_rate, bn_momentum)
-        self.film2 = FiLMlayer(n_metadata, 128)
+        self.film1 = FiLMlayer(n_metadata, 128) if film_bool[1] else None
         self.mp2 = nn.MaxPool2d(2)
 
         self.conv3 = DownConv(128, 256, drop_rate, bn_momentum)
-        self.film3 = FiLMlayer(n_metadata, 256)
+        self.film2 = FiLMlayer(n_metadata, 256) if film_bool[2] else None
         self.mp3 = nn.MaxPool2d(2)
 
         # Bottom
         self.conv4 = DownConv(256, 256, drop_rate, bn_momentum)
-        self.film4 = FiLMlayer(n_metadata, 256)
+        self.film3 = FiLMlayer(n_metadata, 256) if film_bool[3] else None
 
         # Upsampling path
         self.up1 = UpConv(512, 256, drop_rate, bn_momentum)
-        self.film5 = FiLMlayer(n_metadata, 256)
+        self.film4 = FiLMlayer(n_metadata, 256) if film_bool[4] else None
         self.up2 = UpConv(384, 128, drop_rate, bn_momentum)
-        self.film6 = FiLMlayer(n_metadata, 128)
+        self.film5 = FiLMlayer(n_metadata, 128) if film_bool[5] else None
         self.up3 = UpConv(192, 64, drop_rate, bn_momentum)
-        self.film7 = FiLMlayer(n_metadata, 64)
+        self.film6 = FiLMlayer(n_metadata, 64) if film_bool[6] else None
 
         self.conv9 = nn.Conv2d(64, 1, kernel_size=3, padding=1)
-        self.film8 = FiLMlayer(n_metadata, 1)
+        self.film7 = FiLMlayer(n_metadata, 1) if film_bool[7] else None
 
     def forward(self, x, context):
         x1 = self.conv1(x)
-        x2, w_film1 = self.film1(x1, context, None)
-        x3 = self.mp1(x2)
+        if self.film0:
+            x1, w_film = self.film0(x1, context, None)
+        x2 = self.mp1(x1)
 
-        x4 = self.conv2(x3)
-        x5, w_film2 = self.film2(x4, context, w_film1)
-        x6 = self.mp2(x5)
+        x3 = self.conv2(x2)
+        if self.film1:
+            x3, w_film = self.film1(x3, context, None if 'w_film' not in locals() else w_film)
+        x4 = self.mp2(x3)
 
-        x7 = self.conv3(x6)
-        x8, w_film3 = self.film3(x7, context, w_film2)
-        x9 = self.mp3(x8)
+        x5 = self.conv3(x4)
+        if self.film2:
+            x5, w_film = self.film2(x5, context, None if 'w_film' not in locals() else w_film)
+        x6 = self.mp3(x5)
 
         # Bottom
-        x10 = self.conv4(x9)
-        x11, w_film4 = self.film4(x10, context, w_film3)
+        x7 = self.conv4(x6)
+        if self.film3:
+            x7, w_film = self.film3(x7, context, None if 'w_film' not in locals() else w_film)
 
         # Up-sampling
-        x12 = self.up1(x11, x8)
-        x13, w_film5 = self.film5(x12, context, w_film4)
-        x14 = self.up2(x13, x5)
-        x15, w_film6 = self.film6(x14, context, w_film5)
-        x16 = self.up3(x15, x2)
-        x17, w_film7 = self.film7(x16, context, w_film6)
+        x8 = self.up1(x7, x5)
+        if self.film4:
+            x8, w_film = self.film4(x8, context, None if 'w_film' not in locals() else w_film)
+        x9 = self.up2(x8, x3)
+        if self.film5:
+            x9, w_film = self.film5(x9, context, None if 'w_film' not in locals() else w_film)
+        x10 = self.up3(x9, x1)
+        if self.film6:
+            x10, w_film = self.film6(x10, context, None if 'w_film' not in locals() else w_film)
 
-        x18 = self.conv9(x17)
-        x19, w_film8 = self.film8(x18, context, w_film7)
-        preds = torch.sigmoid(x19)
+        x11 = self.conv9(x10)
+        if self.film7:
+            x11, w_film = self.film7(x11, context, None if 'w_film' not in locals() else w_film)
+        preds = torch.sigmoid(x11)
 
         return preds

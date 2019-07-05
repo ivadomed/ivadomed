@@ -29,12 +29,12 @@ def plot_decision_boundaries(data, model, x_range, metadata_name, fname_out):
     xx, yy = np.meshgrid(np.arange(x_min, x_max, x_range[2]),
                      np.arange(y_min, y_max, x_range[2]))
 
-    Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
-    Z = Z.reshape(xx.shape)
+    Z = [model.predict(v) for v in xx.ravel()]
+    Z = np.asarray(Z).reshape(xx.shape)
 
     plt.contourf(xx, yy, Z, cmap=plt.cm.jet, alpha=0.8)
 
-    for s, y_val in zip(['train', 'validation', 'test'], [0.25, 0.5, 0.75]):
+    for s, y_val in zip(['train', 'valid', 'test'], [0.25, 0.5, 0.75]):
         plt.scatter(data[s][metadata_name], [(y_max-y_min) * y_val for v in data[s][metadata_name]], c='k')
 
     plt.xlabel(metadata_name)
@@ -56,20 +56,21 @@ def run_main(context):
     ])
 
     out_dir = context["log_directory"]
+    split_dct = joblib.load(os.path.join(out_dir, "split_datasets.joblib"))
     metadata_dct = {}
-    for subset in ['train', 'validation', 'test']:
+    for subset in ['train', 'valid', 'test']:
         metadata_dct[subset] = {}
-        for bids_ds in tqdm(context["bids_path_"+subset], desc="Loading "+subset+" set"):
-            ds = loader.BidsDataset(bids_ds,
-                                  contrast_lst=context["contrast_train_validation"] if subset != "test" else context["contrast_test"],
-                                  transform=no_transform,
-                                  slice_filter_fn=SliceFilter())
+        ds = loader.BidsDataset(context["bids_path"],
+                              subject_lst=split_dct[subset],
+                              contrast_lst=context["contrast_train_validation"] if subset != "test" else context["contrast_test"],
+                              transform=no_transform,
+                              slice_filter_fn=SliceFilter())
 
-            for m in metadata_type:
-                if m in metadata_dct:
-                    metadata_dct[subset][m] = [v for m_lst in [metadata_dct[subset][m], ds.metadata[m]] for v in m_lst]
-                else:
-                    metadata_dct[subset][m] = ds.metadata[m]
+        for m in metadata_type:
+            if m in metadata_dct:
+                metadata_dct[subset][m] = [v for m_lst in [metadata_dct[subset][m], ds.metadata[m]] for v in m_lst]
+            else:
+                metadata_dct[subset][m] = ds.metadata[m]
 
     cluster_dct = joblib.load(os.path.join(out_dir, "clustering_models.joblib"))
 
@@ -78,7 +79,7 @@ def run_main(context):
         os.makedirs(out_dir)
 
     for m in metadata_type:
-        values = [v for s in ['train', 'validation', 'test'] for v in metadata_dct[s][m]]
+        values = [v for s in ['train', 'valid', 'test'] for v in metadata_dct[s][m]]
         print('\n{}: Min={}, Max={}, Median={}'.format(m, min(values), max(values), np.median(values)))
         plot_decision_boundaries(metadata_dct, cluster_dct[m], metadata_range[m], m, os.path.join(out_dir, m+'.png'))
 
