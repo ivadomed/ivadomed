@@ -343,36 +343,36 @@ def cmd_train(context):
 
                 # Fill the lists of gammas and betas
                 if film_layers[0]:
-                    gammas_dict[1].append(model.film1.gammas[:, :, 0, 0].cpu().numpy())
-                    betas_dict[1].append(model.film1.betas[:, :, 0, 0].cpu().numpy())
+                    gammas_dict[1].append(model.film0.gammas[:, :, 0, 0].cpu().numpy())
+                    betas_dict[1].append(model.film0.betas[:, :, 0, 0].cpu().numpy())
 
                 if film_layers[1]:
-                    gammas_dict[2].append(model.film2.gammas[:, :, 0, 0].cpu().numpy())
-                    betas_dict[2].append(model.film2.betas[:, :, 0, 0].cpu().numpy())
+                    gammas_dict[2].append(model.film1.gammas[:, :, 0, 0].cpu().numpy())
+                    betas_dict[2].append(model.film1.betas[:, :, 0, 0].cpu().numpy())
 
                 if film_layers[2]:
-                    gammas_dict[3].append(model.film3.gammas[:, :, 0, 0].cpu().numpy())
-                    betas_dict[3].append(model.film3.betas[:, :, 0, 0].cpu().numpy())
+                    gammas_dict[3].append(model.film2.gammas[:, :, 0, 0].cpu().numpy())
+                    betas_dict[3].append(model.film2.betas[:, :, 0, 0].cpu().numpy())
 
                 if film_layers[3]:
-                    gammas_dict[4].append(model.film4.gammas[:, :, 0, 0].cpu().numpy())
-                    betas_dict[4].append(model.film4.betas[:, :, 0, 0].cpu().numpy())
+                    gammas_dict[4].append(model.film3.gammas[:, :, 0, 0].cpu().numpy())
+                    betas_dict[4].append(model.film3.betas[:, :, 0, 0].cpu().numpy())
 
                 if film_layers[4]:
-                    gammas_dict[5].append(model.film5.gammas[:, :, 0, 0].cpu().numpy())
-                    betas_dict[5].append(model.film5.betas[:, :, 0, 0].cpu().numpy())
+                    gammas_dict[5].append(model.film4.gammas[:, :, 0, 0].cpu().numpy())
+                    betas_dict[5].append(model.film4.betas[:, :, 0, 0].cpu().numpy())
 
                 if film_layers[5]:
-                    gammas_dict[6].append(model.film6.gammas[:, :, 0, 0].cpu().numpy())
-                    betas_dict[6].append(model.film6.betas[:, :, 0, 0].cpu().numpy())
+                    gammas_dict[6].append(model.film5.gammas[:, :, 0, 0].cpu().numpy())
+                    betas_dict[6].append(model.film5.betas[:, :, 0, 0].cpu().numpy())
 
                 if film_layers[6]:
-                    gammas_dict[7].append(model.film7.gammas[:, :, 0, 0].cpu().numpy())
-                    betas_dict[7].append(model.film7.betas[:, :, 0, 0].cpu().numpy())
+                    gammas_dict[7].append(model.film6.gammas[:, :, 0, 0].cpu().numpy())
+                    betas_dict[7].append(model.film6.betas[:, :, 0, 0].cpu().numpy())
 
                 if film_layers[7]:
-                    gammas_dict[8].append(model.film8.gammas[:, :, 0, 0].cpu().numpy())
-                    betas_dict[8].append(model.film8.betas[:, :, 0, 0].cpu().numpy())
+                    gammas_dict[8].append(model.film7.gammas[:, :, 0, 0].cpu().numpy())
+                    betas_dict[8].append(model.film7.betas[:, :, 0, 0].cpu().numpy())
 
         metrics_dict = metric_mgr.get_results()
         metric_mgr.reset()
