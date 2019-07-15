@@ -1,9 +1,7 @@
 import sys
 import os
 import json
-import matplotlib
 
-#matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 import pandas as pd
@@ -15,6 +13,13 @@ from sklearn.manifold import TSNE
 
 
 def plot_histogram(data, layer_no, fname_out):
+    """
+    Save the histograms showing the frequency of the values inside gammas or betas tensors for one layer.
+
+    :param data: input data, which are gammas or betas for one layer
+    :param layer_no: number of the layer to consider
+    :param fname_out: directory to save the figure
+    """
     bins = np.linspace(-10, 10, 100)
 
     fig = plt.figure(figsize=(12, 12))
@@ -26,6 +31,14 @@ def plot_histogram(data, layer_no, fname_out):
 
 
 def visualize_pca(data, contrast_images, layer_no, fname_out):
+    """
+    Save the PCA graphs showing gammas or betas tensors for one layer.
+
+    :param data: input data, which are gammas or betas for one layer
+    :param contrast_images: numpy array with the contrast of all the images
+    :param layer_no: number of the layer to consider
+    :param fname_out: directory to save the figure
+    """
     pca_df = pd.DataFrame()
 
     pca = PCA(n_components=3)
@@ -52,6 +65,14 @@ def visualize_pca(data, contrast_images, layer_no, fname_out):
 
 
 def visualize_tsne(data, contrast_images, layer_no, fname_out):
+    """
+    Save the t-SNE graphs showing gammas or betas tensors for one layer.
+
+    :param data: input data, which are gammas or betas for one layer
+    :param contrast_images: numpy array with the contrast of all the images
+    :param layer_no: number of the layer to consider
+    :param fname_out: directory to save the figure
+    """
     tsne_df = pd.DataFrame()
 
     tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
@@ -84,7 +105,13 @@ def visualize_tsne(data, contrast_images, layer_no, fname_out):
     fig.savefig(fname_out)
 
 def run_main(context):
+    """
+    Main command to create and save the graphs to visualize the film parameters.
 
+    :param context: this is a dictionary with all data from the
+                    configuration file from which we only use:
+                        - 'log_directory': folder name where log files are saved
+    """
     log_dir = context["log_directory"]
 
     gammas = {}
@@ -95,8 +122,6 @@ def run_main(context):
         if np.load(log_dir + f"/beta_layer_{i}.npy", allow_pickle=True).size != 0:
             betas[i] = np.load(log_dir + f"/beta_layer_{i}.npy", allow_pickle=True)
 
-    #gammas = {i: np.load(log_dir + f"/gamma_layer_{i}.npy", allow_pickle=True) for i in range(1, 9)}
-    #betas = {i: np.load(log_dir + f"/beta_layer_{i}.npy", allow_pickle=True) for i in range(1, 9)}
     contrast_images = np.load(log_dir + "/contrast_images.npy", allow_pickle=True)
 
     out_dir = context["log_directory"] + "/film-parameters-visualization"

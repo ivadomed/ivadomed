@@ -73,7 +73,7 @@ class SliceFilter(mt_filters.SliceFilter):
 
 
 def cmd_train(context):
-    """Main command do train the network.
+    """Main command to train the network.
 
     :param context: this is a dictionary with all data from the
                     configuration file:
