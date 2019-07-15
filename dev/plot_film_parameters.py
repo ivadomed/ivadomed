@@ -87,26 +87,40 @@ def run_main(context):
 
     log_dir = context["log_directory"]
 
-    gammas = {i: np.load(log_dir + f"/gamma_layer_{i}.npy") for i in range(1, 9)}
-    betas = {i: np.load(log_dir + f"/beta_layer_{i}.npy") for i in range(1, 9)}
-    contrast_images = np.load(log_dir + "/contrast_images.npy")
+    gammas = {}
+    betas = {}
+    for i in range(1, 9):
+        if np.load(log_dir + f"/gamma_layer_{i}.npy", allow_pickle=True).size != 0:
+            gammas[i] = np.load(log_dir + f"/gamma_layer_{i}.npy", allow_pickle=True)
+        if np.load(log_dir + f"/beta_layer_{i}.npy", allow_pickle=True).size != 0:
+            betas[i] = np.load(log_dir + f"/beta_layer_{i}.npy", allow_pickle=True)
+
+    #gammas = {i: np.load(log_dir + f"/gamma_layer_{i}.npy", allow_pickle=True) for i in range(1, 9)}
+    #betas = {i: np.load(log_dir + f"/beta_layer_{i}.npy", allow_pickle=True) for i in range(1, 9)}
+    contrast_images = np.load(log_dir + "/contrast_images.npy", allow_pickle=True)
 
     out_dir = context["log_directory"] + "/film-parameters-visualization"
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
 
     # save histograms with gammas and betas values
-    for layer_no in range(1,9):
+    for layer_no in gammas.keys():
         plot_histogram(gammas[layer_no], layer_no, out_dir + f"/hist_gamma_{layer_no}.png")
         plot_histogram(betas[layer_no], layer_no, out_dir + f"/hist_beta_{layer_no}.png")
 
     # save PCA for betas and gammas except for the last layer due to gammas/betas shapes
-    for layer_no in range(1,8):
-        visualize_pca(gammas[layer_no], contrast_images, layer_no, out_dir + f"/pca_gamma_{layer_no}.png")
-        visualize_pca(betas[layer_no], contrast_images, layer_no, out_dir + f"/pca_beta_{layer_no}.png")
+    for layer_no in gammas.keys():
+        try:
+            visualize_pca(gammas[layer_no], contrast_images, layer_no, out_dir + f"/pca_gamma_{layer_no}.png")
+        except ValueError:
+            print(f"No PCA for gamma from the film layer {i} because of a too small dimension.")
+        try:
+            visualize_pca(betas[layer_no], contrast_images, layer_no, out_dir + f"/pca_beta_{layer_no}.png")
+        except ValueError:
+            print(f"No PCA for beta from the film layer {i} because of a too small dimension.")
 
     # save tsne for betas and gammas
-    for layer_no in range(1,9):
+    for layer_no in gammas.keys():
         visualize_tsne(gammas[layer_no], contrast_images, layer_no, out_dir + f"/tsne_gamma_{layer_no}.png")
         visualize_tsne(betas[layer_no], contrast_images, layer_no, out_dir + f"/tsne_beta_{layer_no}.png")
 
