@@ -13,6 +13,7 @@
         "initial_lr": 0.0001,
         "log_directory": "log_sc",
         "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
-	"mixup": True,
+	"mixup_bool": true,
+	"mixup_alpha": 0.1,
         "debugging": false
 }

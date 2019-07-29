@@ -105,9 +105,13 @@ def cmd_train(context):
         torch.cuda.set_device(gpu_number)
         print("Using GPU number {}".format(gpu_number))
 
-    # Boolean which determines if the selected architecture is FiLMedUnet or Unet
+    # Boolean which determines if the selected architecture is FiLMedUnet or Unet or MixupUnet
     film_bool = bool(sum(context["film_layers"]))
     print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
+    mixup_bool = False if film_bool else bool(context["mixup_bool"])
+    mixup_alpha = float(context["mixup_alpha"])
+    if not film_bool and mixup_bool:
+        print('\twith Mixup (alpha={})\n'.format(mixup_alpha))
 
     # These are the training transformations
     train_transform = transforms.Compose([
@@ -189,7 +193,7 @@ def cmd_train(context):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
 
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(logdir=context["log_directory"])
+    writer = SummaryWriter(log_dir=context["log_directory"])
 
     # Create dict containing gammas and betas after each FiLM layer.
     gammas_dict = {i:[] for i in range(1,9)}
