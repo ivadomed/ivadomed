@@ -32,6 +32,21 @@ from PIL import Image
 cudnn.benchmark = True
 
 
+def mixup(data, targets, alpha):
+    """Compute the mixup data.
+    Return mixed inputs and targets.
+    """
+    indices = torch.randperm(data.size(0))
+    data2 = data[indices]
+    targets2 = targets[indices]
+
+    lam = torch.FloatTensor([np.random.beta(alpha, alpha)])
+    data = data * lam + data2 * (1 - lam)
+    targets = targets * lam + targets2 * (1 - lam)
+
+    return data, targets
+
+
 def threshold_predictions(predictions, thr=0.5):
     """This function will threshold predictions.
 
@@ -217,6 +232,10 @@ def cmd_train(context):
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
+
+            # mixup data
+            if mixup_bool and not film_bool:
+                input_samples, gt_samples = mixup(input_samples, gt_samples, mixup_alpha)
 
             # The variable sample_metadata is where the MRI phyisics parameters are
             sample_metadata = batch["input_metadata"]
