@@ -151,13 +151,13 @@ def cmd_train(context):
     # These are the training transformations
     train_transform = transforms.Compose([
         mt_transforms.CenterCrop2D((128, 128)),
-        mt_transforms.ElasticTransform(alpha_range=(28.0, 30.0),
-                                      sigma_range=(3.5, 4.0),
-                                      p=0.3),
+        # mt_transforms.ElasticTransform(alpha_range=(28.0, 30.0),
+         #                             sigma_range=(3.5, 4.0),
+         #                             p=0.3),
         mt_transforms.RandomAffine(degrees=4.6,
                                    scale=(0.98, 1.02),
                                    translate=(0.03, 0.03)),
-        mt_transforms.RandomTensorChannelShift((-0.10, 0.10)),
+        # mt_transforms.RandomTensorChannelShift((-0.10, 0.10)),
         mt_transforms.ToTensor(),
         mt_transforms.NormalizeInstance(),
     ])
