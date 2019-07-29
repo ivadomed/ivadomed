@@ -26,6 +26,7 @@ from ivadomed import loader as loader
 from ivadomed import models
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from PIL import Image
 
@@ -50,12 +51,25 @@ def mixup(data, targets, alpha):
     return data, targets, lambda_tensor
 
 
-def save_mixup_samples(x, y, ofolder, fname):
-    for idx in range(x.shape[0]):
-        x_cur, y_cur = x[idx, 0, :, :], y[idx, 0, :, :]
-        fname_cur = os.path.join(ofolder, fname+str(idx).zfill(2)
-        fname_x_cur = fname_cur+'_img.png'
-        fname_y_cur = fname_cur+'_gt.png'
+def save_mixup_sample(x, y, fname):
+
+    fname_x = fname+'img.png'
+    fname_y = fname+'gt.png'
+
+    plt.figure(figsize=(10, 10))
+    plt.subplot(1, 1, 1)
+    plt.axis("off")
+    plt.imshow(x, interpolation='nearest', aspect='auto', cmap='gray')
+    plt.savefig(fname_x, bbox_inches='tight', pad_inches=0, dpi=100)
+    plt.close()
+
+    plt.figure(figsize=(10, 10))
+    plt.subplot(1, 1, 1)
+    plt.axis("off")
+    plt.imshow(y, interpolation='nearest', aspect='auto', cmap='jet', vmin=0, vmax=2)
+    plt.savefig(fname_y, bbox_inches='tight', pad_inches=0, dpi=100)
+    plt.close()
+
 
 def threshold_predictions(predictions, thr=0.5):
     """This function will threshold predictions.
@@ -250,8 +264,11 @@ def cmd_train(context):
                 # if debugging and first epoch, then save samples as png in ofolder
                 if context["debugging"] and epoch == 1:
                     mixup_folder = os.path.join(context["log_directory"], 'mixup')
-                    mixup_fname_pref = str(i).zfill(2)+'_'+str(lamda_tensor.data.numpy()[0])+'_'
-                    save_mixup_samples(input_samples.data.numpy(), gt_samples.data.numpy(), mixup_folder, mixup_fname_pref)
+                    if not os.path.isdir(mixup_folder):
+                        os.makedirs(mixup_folder)
+                    random_idx = np.random.randint(0, input_samples.size()[0])
+                    mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3)+'_'+str(lambda_tensor.data.numpy()[0])+'_'+str(random_idx).zfill(3)+'_')
+                    save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :], gt_samples.data.numpy()[random_idx,0,:,:], mixup_fname_pref)
 
             # The variable sample_metadata is where the MRI phyisics parameters are
             sample_metadata = batch["input_metadata"]
