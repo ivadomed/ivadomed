@@ -3,6 +3,7 @@ import json
 import os
 import time
 import shutil
+import random
 from sklearn.externals import joblib
 
 import torch
@@ -53,21 +54,16 @@ def mixup(data, targets, alpha):
 
 def save_mixup_sample(x, y, fname):
 
-    fname_x = fname+'img.png'
-    fname_y = fname+'gt.png'
-
-    plt.figure(figsize=(10, 10))
-    plt.subplot(1, 1, 1)
+    plt.figure(figsize=(20, 10))
+    plt.subplot(1, 2, 1)
     plt.axis("off")
     plt.imshow(x, interpolation='nearest', aspect='auto', cmap='gray')
-    plt.savefig(fname_x, bbox_inches='tight', pad_inches=0, dpi=100)
-    plt.close()
 
-    plt.figure(figsize=(10, 10))
-    plt.subplot(1, 1, 1)
+    plt.subplot(1, 2, 2)
     plt.axis("off")
-    plt.imshow(y, interpolation='nearest', aspect='auto', cmap='jet', vmin=0, vmax=2)
-    plt.savefig(fname_y, bbox_inches='tight', pad_inches=0, dpi=100)
+    plt.imshow(y, interpolation='nearest', aspect='auto', cmap='jet', vmin=0, vmax=1)
+
+    plt.savefig(fname, bbox_inches='tight', pad_inches=0, dpi=100)
     plt.close()
 
 
@@ -156,8 +152,8 @@ def cmd_train(context):
     train_transform = transforms.Compose([
         mt_transforms.CenterCrop2D((128, 128)),
         mt_transforms.ElasticTransform(alpha_range=(28.0, 30.0),
-                                       sigma_range=(3.5, 4.0),
-                                       p=0.3),
+                                      sigma_range=(3.5, 4.0),
+                                      p=0.3),
         mt_transforms.RandomAffine(degrees=4.6,
                                    scale=(0.98, 1.02),
                                    translate=(0.03, 0.03)),
@@ -262,13 +258,21 @@ def cmd_train(context):
                 input_samples, gt_samples, lambda_tensor = mixup(input_samples, gt_samples, mixup_alpha)
 
                 # if debugging and first epoch, then save samples as png in ofolder
-                if context["debugging"] and epoch == 1:
+                if context["debugging"] and epoch == 1 and random.random() < 0.1:
                     mixup_folder = os.path.join(context["log_directory"], 'mixup')
                     if not os.path.isdir(mixup_folder):
                         os.makedirs(mixup_folder)
                     random_idx = np.random.randint(0, input_samples.size()[0])
-                    mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3)+'_'+str(lambda_tensor.data.numpy()[0])+'_'+str(random_idx).zfill(3)+'_')
-                    save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :], gt_samples.data.numpy()[random_idx,0,:,:], mixup_fname_pref)
+                    val_gt = np.unique(gt_samples.data.numpy()[random_idx,0,:,:])
+                    # val_gt_str = '_'.join([str(round(v,2)) for v in val_gt if v])
+                    mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3)+'_'+str(lambda_tensor.data.numpy()[0])+'_'+str(random_idx).zfill(3)+'.png')
+                    save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :],
+                                            gt_samples.data.numpy()[random_idx,0,:,:],
+                                            mixup_fname_pref)
+
+                # Binarize the mixup targets
+                gt_samples = torch.gt(gt_samples, 0.35)
+                print(np.unique(gt_samples.data.numpy()))
 
             # The variable sample_metadata is where the MRI phyisics parameters are
             sample_metadata = batch["input_metadata"]
