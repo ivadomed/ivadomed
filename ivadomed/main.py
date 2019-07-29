@@ -34,7 +34,7 @@ cudnn.benchmark = True
 
 def mixup(data, targets, alpha):
     """Compute the mixup data.
-    Return mixed inputs and targets, lambda.
+    Return mixed inputs, pairs of targets, lambda.
     """
     indices = torch.randperm(data.size(0))
     data2 = data[indices]
@@ -47,7 +47,7 @@ def mixup(data, targets, alpha):
     data = data * lambda_tensor + data2 * (1 - lambda_tensor)
     targets = targets * lambda_tensor + targets2 * (1 - lambda_tensor)
 
-    return data, targets, lambda_tensor
+    return data, targets, targets2, lambda_tensor
 
 
 def threshold_predictions(predictions, thr=0.5):
@@ -238,7 +238,7 @@ def cmd_train(context):
 
             # mixup data
             if mixup_bool and not film_bool:
-                input_samples, gt_samples, lambda_tensor = mixup(input_samples, gt_samples, mixup_alpha)
+                input_samples, gt_samples, gt_samples2, lambda_tensor = mixup(input_samples, gt_samples, mixup_alpha)
 
             # The variable sample_metadata is where the MRI phyisics parameters are
             sample_metadata = batch["input_metadata"]
