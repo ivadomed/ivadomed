@@ -50,6 +50,13 @@ def mixup(data, targets, alpha):
     return data, targets, lambda_tensor
 
 
+def save_mixup_samples(x, y, ofolder, fname):
+    for idx in range(x.shape[0]):
+        x_cur, y_cur = x[idx, 0, :, :], y[idx, 0, :, :]
+        fname_cur = os.path.join(ofolder, fname+str(idx).zfill(2)
+        fname_x_cur = fname_cur+'_img.png'
+        fname_y_cur = fname_cur+'_gt.png'
+
 def threshold_predictions(predictions, thr=0.5):
     """This function will threshold predictions.
 
@@ -239,7 +246,13 @@ def cmd_train(context):
             # mixup data
             if mixup_bool and not film_bool:
                 input_samples, gt_samples, lambda_tensor = mixup(input_samples, gt_samples, mixup_alpha)
-                print(input_samples.shape, np.max(gt_samples), lambda_tensor)
+
+                # if debugging and first epoch, then save samples as png in ofolder
+                if context["debugging"] and epoch == 1:
+                    mixup_folder = os.path.join(context["log_directory"], 'mixup')
+                    mixup_fname_pref = str(i).zfill(2)+'_'+str(lamda_tensor.data.numpy()[0])+'_'
+                    save_mixup_samples(input_samples.data.numpy(), gt_samples.data.numpy(), mixup_folder, mixup_fname_pref)
+
             # The variable sample_metadata is where the MRI phyisics parameters are
             sample_metadata = batch["input_metadata"]
 
