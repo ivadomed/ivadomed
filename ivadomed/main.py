@@ -164,7 +164,7 @@ def cmd_train(context):
     var_contrast_list = []
 
     # Loss
-    if context["loss"] is in ["dice", "cross_entropy"]:
+    if context["loss"] in ["dice", "cross_entropy"]:
         if context["loss"] == "cross_entropy":
             loss_fct = nn.BCELoss()
     else:
@@ -197,6 +197,7 @@ def cmd_train(context):
                     mixup_folder = os.path.join(context["log_directory"], 'mixup')
                     if not os.path.isdir(mixup_folder):
                         os.makedirs(mixup_folder)
+                    print(lambda_tensor.data.numpy()[0])
                     random_idx = np.random.randint(0, input_samples.size()[0])
                     val_gt = np.unique(gt_samples.data.numpy()[random_idx,0,:,:])
                     mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3)+'_'+str(lambda_tensor.data.numpy()[0])+'_'+str(random_idx).zfill(3)+'.png')
