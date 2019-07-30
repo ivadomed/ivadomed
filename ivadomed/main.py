@@ -189,14 +189,10 @@ def cmd_train(context):
                         os.makedirs(mixup_folder)
                     random_idx = np.random.randint(0, input_samples.size()[0])
                     val_gt = np.unique(gt_samples.data.numpy()[random_idx,0,:,:])
-                    # val_gt_str = '_'.join([str(round(v,2)) for v in val_gt if v])
                     mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3)+'_'+str(lambda_tensor.data.numpy()[0])+'_'+str(random_idx).zfill(3)+'.png')
                     save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :],
                                             gt_samples.data.numpy()[random_idx,0,:,:],
                                             mixup_fname_pref)
-
-                # Binarize the mixup targets
-                gt_samples = torch.gt(gt_samples, 0.35).float()
 
             # The variable sample_metadata is where the MRI phyisics parameters are
             sample_metadata = batch["input_metadata"]
