@@ -7,6 +7,7 @@ import random
 from sklearn.externals import joblib
 
 import torch
+import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader, ConcatDataset
 from torchvision import transforms
@@ -153,7 +154,7 @@ def cmd_train(context):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
 
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(logdir=context["log_directory"])
+    writer = SummaryWriter(log_dir=context["log_directory"])
 
     # Create dict containing gammas and betas after each FiLM layer.
     gammas_dict = {i:[] for i in range(1,9)}
@@ -162,8 +163,17 @@ def cmd_train(context):
     # Create a list containing the contrast of all batch images
     var_contrast_list = []
 
+    # Loss
+    if context["loss"] is in ["dice", "cross_entropy"]:
+        if context["loss"] == "cross_entropy":
+            loss_fct = nn.BCELoss()
+    else:
+        print("Unknown Loss function, please choose between 'dice' or 'cross_entropy'")
+        exit()
+
     # Training loop -----------------------------------------------------------
     best_validation_loss = float("inf")
+    bce_loss = nn.BCELoss()
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
         start_time = time.time()
 
@@ -213,7 +223,10 @@ def cmd_train(context):
             else:
                 preds = model(var_input)
 
-            loss = mt_losses.dice_loss(preds, var_gt)
+            if context["loss"] == "dice":
+                loss = mt_losses.dice_loss(preds, var_gt)
+            else:
+                loss = loss_fct(preds, var_gt)
             train_loss_total += loss.item()
 
             optimizer.zero_grad()
@@ -279,7 +292,8 @@ def cmd_train(context):
                 else:
                     preds = model(var_input)
 
-                loss = mt_losses.dice_loss(preds, var_gt)
+                # loss = mt_losses.dice_loss(preds, var_gt)
+                loss = bce_loss(preds, var_gt)
                 val_loss_total += loss.item()
 
             # Metrics computation
