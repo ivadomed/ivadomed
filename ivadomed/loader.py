@@ -39,7 +39,7 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
 
 
 class BidsDataset(MRI2DBidsSegDataset):
-    def __init__(self, root_dir, subject_lst, contrast_lst, contrast_balance=None, slice_axis=2, cache=True,
+    def __init__(self, root_dir, subject_lst, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
                  transform=None, slice_filter_fn=None,
                  canonical=False, labeled=True):
 
