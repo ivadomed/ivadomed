@@ -50,16 +50,21 @@ class BidsDataset(MRI2DBidsSegDataset):
         # Selecting subjects from Training / Validation / Testing
         bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
 
+        # Create a dictionary with the number of subjects for each contrast
+        tot = {subject.record["modality"]: len([s for s in bids_subjects if str(subject.record["modality"]) in s]) for subject in tqdm(bids_subjects, desc="Loading dataset")}
+        print("Number of subjects per contrast: {}".format(tot))
+
         # Create a counter that helps to balance the contrasts
-        c = 0
+        c = {subject.record["modality"]: 0 for subject in tqdm(bids_subjects, desc="Loading dataset")}
+        print("Counter per contrast: {}".format(c))
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
 
                 # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
                 if subject.record["modality"] in contrast_balance.keys():
-                    c = c + 1
-                    if c / len(subject_lst) > contrast_balance[subject.record["modality"]]:
+                    c[subject.record["modality"]] = c[subject.record["modality"]] + 1
+                    if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_balance[subject.record["modality"]]:
                         print("{} from {}, skipped because over contrast threshold."
                               .format(subject.record["modality"], subject))
                         continue
