@@ -294,7 +294,10 @@ def cmd_train(context):
                     preds = model(var_input)
 
                 # loss = mt_losses.dice_loss(preds, var_gt)
-                loss = bce_loss(preds, var_gt)
+                if context["loss"] == "dice":
+                    loss = mt_losses.dice_loss(preds, var_gt)
+                else:
+                    loss = loss_fct(preds, var_gt)
                 val_loss_total += loss.item()
 
             # Metrics computation
