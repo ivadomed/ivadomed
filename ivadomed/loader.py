@@ -51,12 +51,12 @@ class BidsDataset(MRI2DBidsSegDataset):
         bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
 
         # Create a dictionary with the number of subjects for each contrast
-        tot = {}
+        tot = {contrast: len([s for s in bids_subjects if contrast in s]) for contrast in contrast_lst}
         # Create a counter that helps to balance the contrasts
-        c = {}
-        for subject in tqdm(bids_subjects, desc="Loading dataset"):
-            tot[subject.record["modality"]] = len([s for s in bids_subjects if str(subject.record["modality"]) in s])
-            c[subject.record["modality"]] = 0
+        c = {contrast: 0 for contrast in contrast_lst}
+        #for contrast in contrast_lst:
+        #    tot[contrast] = len([s for s in bids_subjects if contrast in s])
+        #    c[contrast] = 0
 
         print("Number of subjects per contrast: {}".format(tot))
         print("Counter per contrast: {}".format(c))
