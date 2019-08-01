@@ -67,8 +67,6 @@ class BidsDataset(MRI2DBidsSegDataset):
                 if subject.record["modality"] in contrast_balance.keys():
                     c[subject.record["modality"]] = c[subject.record["modality"]] + 1
                     if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_balance[subject.record["modality"]]:
-                        print("{} from {}, skipped because over contrast threshold."
-                              .format(subject.record["modality"], subject))
                         continue
 
                 if not subject.has_derivative("labels"):
