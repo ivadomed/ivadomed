@@ -11,16 +11,48 @@ import numpy as np
 from glob import glob
 from copy import deepcopy
 from tqdm import tqdm
-
+import nibabel as nib
 
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 
 
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
-    def __init__(self, input_filename, gt_filename, metadata, contrast):
-        print(input_filename)
-        print(gt_filename)
-        super().__init__(input_filename, gt_filename)
+    def __init__(self, input_filename, gt_filename, metadata, contrast, cache=True, canonical=False):
+        # super().__init__(input_filename, gt_filename)
+
+        self.input_filename = input_filename
+        self.gt_filename = gt_filename
+        self.canonical = canonical
+        self.cache = cache
+
+        self.input_handle = nib.load(self.input_filename)
+
+        # Unlabeled data (inference time)
+        if self.gt_filename is None:
+            self.gt_handle = None
+        else:
+            self.gt_handle = nib.load(self.gt_filename)
+
+        if len(self.input_handle.shape) > 3:
+            raise RuntimeError("4-dimensional volumes not supported.")
+
+        # Sanity check for dimensions, should be the same
+        input_shape, gt_shape = self.get_pair_shapes()
+
+        if self.gt_handle is not None:
+            if not np.allclose(input_shape, gt_shape):
+                raise RuntimeError('Input and ground truth with different dimensions.')
+
+        if self.canonical:
+            self.input_handle = nib.as_closest_canonical(self.input_handle)
+
+            # Unlabeled data
+            if self.gt_handle is not None:
+                self.gt_handle = nib.as_closest_canonical(self.gt_handle)
+
+
+
+
         self.metadata = metadata
         self.metadata["input_filename"] = input_filename
         self.metadata["gt_filename"] = gt_filename
