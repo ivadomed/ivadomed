@@ -13,6 +13,8 @@ from copy import deepcopy
 from tqdm import tqdm
 import nibabel as nib
 
+from spinalcordtoolbox.image import Image
+
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 
 
@@ -25,15 +27,15 @@ class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
         self.canonical = canonical
         self.cache = cache
 
-        self.input_handle = nib.load(self.input_filename)
+        self.input_handle = Image(self.input_filename)
 
         # Unlabeled data (inference time)
         if self.gt_filename is None:
             self.gt_handle = None
         else:
-            self.gt_handle = nib.load(self.gt_filename)
+            self.gt_handle = Image(self.gt_filename)
 
-        if len(self.input_handle.shape) > 3:
+        if len(self.input_handle.data.shape) > 3:
             raise RuntimeError("4-dimensional volumes not supported.")
 
         # Sanity check for dimensions, should be the same
