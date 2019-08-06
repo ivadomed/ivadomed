@@ -18,6 +18,8 @@ MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
     def __init__(self, input_filename, gt_filename, metadata, contrast):
+        print(input_filename)
+        print(gt_filename)
         super().__init__(input_filename, gt_filename)
         self.metadata = metadata
         self.metadata["input_filename"] = input_filename
@@ -61,7 +63,7 @@ class BidsDataset(MRI2DBidsSegDataset):
                 cord_label_filename = None
 
                 for deriv in derivatives:
-                    if deriv.endswith("seg-manual.nii.gz"):
+                    if deriv.endswith(subject.record["modality"]+"_seg-manual.nii.gz"):
                         cord_label_filename = deriv
 
                 if cord_label_filename is None:
