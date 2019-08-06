@@ -1,6 +1,6 @@
 {
 	"command": "train",
-	"gpu": 4,
+	"gpu": 5,
 	"bids_path": "../duke/projects/ivado-medical-imaging/spineGeneric_201907041011/result/",
         "random_seed": 1313,
         "contrast_train_validation": ["T1w", "T2w", "T2star", "acq-MToff_MTS", "acq-MTon_MTS", "acq-T1w_MTS"],
@@ -11,7 +11,10 @@
         "batch_norm_momentum": 0.1,
         "num_epochs": 100,
         "initial_lr": 0.0001,
+	"loss": "cross_entropy",
         "log_directory": "log_sc",
-        "film_layers": [1, 0, 0, 0, 0, 0, 0, 0],
+        "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
+	"mixup_bool": true,
+	"mixup_alpha": 2,
         "debugging": false
 }
