@@ -7,4 +7,3 @@ scikit-learn>=0.20.3
 nibabel
 matplotlib>=3.0.3
 seaborn
-transforms3d
