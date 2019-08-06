@@ -26,7 +26,7 @@ def run_main():
     contrast_lst_noDuplicate = list(set(contrast_lst))
     print('\n{} contrasts found.\n'.format(str(len(contrast_lst_noDuplicate))))
 
-    print("['{}']".format("', '".join(contrast_lst_noDuplicate)))
+    print('["{}"]'.format('", "'.join(contrast_lst_noDuplicate)))
 
 if __name__ == "__main__":
     run_main()
