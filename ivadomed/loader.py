@@ -37,8 +37,7 @@ class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
             raise RuntimeError("4-dimensional volumes not supported.")
 
         # Sanity check for dimensions, should be the same
-        input_shape, gt_shape = self.get_pair_shapes()
-
+        input_shape, gt_shape = self.input_handle.data.shape, self.gt_handle.data.shape
         if self.gt_handle is not None:
             if not np.allclose(input_shape, gt_shape):
                 raise RuntimeError('Input and ground truth with different dimensions.')
@@ -49,9 +48,6 @@ class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
             # Unlabeled data
             if self.gt_handle is not None:
                 self.gt_handle = nib.as_closest_canonical(self.gt_handle)
-
-
-
 
         self.metadata = metadata
         self.metadata["input_filename"] = input_filename
