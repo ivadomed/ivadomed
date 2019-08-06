@@ -19,21 +19,19 @@ MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 
 
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
-    def __init__(self, input_filename, gt_filename, metadata, contrast, cache=True, canonical=False):
-        # super().__init__(input_filename, gt_filename)
-
+    def __init__(self, input_filename, gt_filename, metadata, contrast, oreintation='RPI', cache=True, canonical=False):
         self.input_filename = input_filename
         self.gt_filename = gt_filename
         self.canonical = canonical
         self.cache = cache
 
-        self.input_handle = Image(self.input_filename)
+        self.input_handle = Image(self.input_filename).change_orientation('RPI')
 
         # Unlabeled data (inference time)
         if self.gt_filename is None:
             self.gt_handle = None
         else:
-            self.gt_handle = Image(self.gt_filename)
+            self.gt_handle = Image(self.gt_filename).change_orientation('RPI')
 
         if len(self.input_handle.data.shape) > 3:
             raise RuntimeError("4-dimensional volumes not supported.")
