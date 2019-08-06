@@ -52,7 +52,7 @@ class BidsDataset(MRI2DBidsSegDataset):
         
         # Create a list with the filenames for all contrasts and subjects
         subjects_tot = []
-        for subject in tqdm(bids_subjects, desc="Loading dataset"):
+        for subject in bids_subjects:
             subjects_tot.append(str(subject.record["absolute_path"]))
 
         # Create a dictionary with the number of subjects for each contrast
