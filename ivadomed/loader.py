@@ -13,41 +13,13 @@ from copy import deepcopy
 from tqdm import tqdm
 import nibabel as nib
 
-from spinalcordtoolbox.image import Image
 
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 
 
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
-    def __init__(self, input_filename, gt_filename, metadata, contrast, oreintation='RPI', cache=True, canonical=False):
-        self.input_filename = input_filename
-        self.gt_filename = gt_filename
-        self.canonical = canonical
-        self.cache = cache
-
-        self.input_handle = Image(self.input_filename).change_orientation('RPI')
-
-        # Unlabeled data (inference time)
-        if self.gt_filename is None:
-            self.gt_handle = None
-        else:
-            self.gt_handle = Image(self.gt_filename).change_orientation('RPI')
-
-        if len(self.input_handle.data.shape) > 3:
-            raise RuntimeError("4-dimensional volumes not supported.")
-
-        # Sanity check for dimensions, should be the same
-        input_shape, gt_shape = self.input_handle.data.shape, self.gt_handle.data.shape
-        if self.gt_handle is not None:
-            if not np.allclose(input_shape, gt_shape):
-                raise RuntimeError('Input and ground truth with different dimensions.')
-
-        if self.canonical:
-            self.input_handle = nib.as_closest_canonical(self.input_handle)
-
-            # Unlabeled data
-            if self.gt_handle is not None:
-                self.gt_handle = nib.as_closest_canonical(self.gt_handle)
+    def __init__(self, input_filename, gt_filename, metadata, contrast, cache=True, canonical=True):
+        super().__init__(input_filename, gt_filename, canonical=canonical)
 
         self.metadata = metadata
         self.metadata["input_filename"] = input_filename
@@ -72,7 +44,7 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
 class BidsDataset(MRI2DBidsSegDataset):
     def __init__(self, root_dir, subject_lst, contrast_lst, slice_axis=2, cache=True,
                  transform=None, metadata_bool=True, slice_filter_fn=None,
-                 canonical=False, labeled=True):
+                 canonical=True, labeled=True):
 
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
