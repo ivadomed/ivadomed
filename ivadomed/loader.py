@@ -56,9 +56,11 @@ class BidsDataset(MRI2DBidsSegDataset):
             subjects_tot.append(str(subject.record["absolute_path"]))
 
         # Create a dictionary with the number of subjects for each contrast
-        tot = {contrast: len([s for s in subjects_tot if str("_"+ contrast) in s]) for contrast in contrast_lst}
+        tot = {subject.record["modality"]: len([s for s in subjects_tot if str("_" + subject.record["modality"]) in s]) for subject in bids_subjects}
         # Create a counter that helps to balance the contrasts
-        c = {contrast: 0 for contrast in contrast_lst}
+        c = {subject.record["modality"]: 0 for subject in bids_subjects}
+
+        print("tot = ", tot)
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
