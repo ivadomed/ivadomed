@@ -73,6 +73,11 @@ def cmd_train(context):
     mixup_alpha = float(context["mixup_alpha"])
     if not film_bool and mixup_bool:
         print('\twith Mixup (alpha={})\n'.format(mixup_alpha))
+    metadata_bool = bool(context["metadata_bool"])
+    if metadata_bool:
+        print('\tInclude subjects with acquisition metadata available only.\n')
+    else:
+        print('\tInclude all subjects, with or without acquisition metadata.\n')
 
     # These are the training transformations
     train_transform = transforms.Compose([
@@ -103,6 +108,7 @@ def cmd_train(context):
     ds_train = loader.BidsDataset(context["bids_path"],
                                   subject_lst=train_lst,
                                   contrast_lst=context["contrast_train_validation"],
+                                  metadata_bool=metadata_bool,
                                   transform=train_transform,
                                   slice_filter_fn=SliceFilter())
 
@@ -120,6 +126,7 @@ def cmd_train(context):
     ds_val = loader.BidsDataset(context["bids_path"],
                                 subject_lst=valid_lst,
                                 contrast_lst=context["contrast_train_validation"],
+                                metadata_bool=metadata_bool,
                                 transform=val_transform,
                                 slice_filter_fn=SliceFilter())
 
@@ -206,7 +213,8 @@ def cmd_train(context):
                                             mixup_fname_pref)
 
             # The variable sample_metadata is where the MRI phyisics parameters are
-            sample_metadata = batch["input_metadata"]
+            if metadata_bool:
+                sample_metadata = batch["input_metadata"]
 
             if cuda_available:
                 var_input = input_samples.cuda()
@@ -274,7 +282,8 @@ def cmd_train(context):
 
         for i, batch in enumerate(val_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
-            sample_metadata = batch["input_metadata"]
+            if metadata_bool:
+                sample_metadata = batch["input_metadata"]
 
             with torch.no_grad():
                 if cuda_available:
@@ -409,6 +418,10 @@ def cmd_test(context):
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet
     film_bool = bool(sum(context["film_layers"]))
     print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
+    if bool(context["metadata_bool"]):
+        print('\tInclude subjects with acquisition metadata available only.\n')
+    else:
+        print('\tInclude all subjects, with or without acquisition metadata.\n')
 
     # These are the validation/testing transformations
     val_transform = transforms.Compose([
@@ -421,6 +434,7 @@ def cmd_test(context):
     ds_test = loader.BidsDataset(context["bids_path"],
                                  subject_lst=test_lst,
                                  contrast_lst=context["contrast_test"],
+                                 metadata_bool=bool(context["metadata_bool"]),
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter())
 
@@ -454,7 +468,8 @@ def cmd_test(context):
 
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
-        sample_metadata = batch["input_metadata"]
+        if bool(context["metadata_bool"]):
+            sample_metadata = batch["input_metadata"]
 
         with torch.no_grad():
             if cuda_available:
