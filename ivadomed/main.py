@@ -427,6 +427,7 @@ def cmd_test(context):
 
     # These are the validation/testing transformations
     val_transform = transforms.Compose([
+        mt_transforms.Resample(wspace=0.75, hspace=0.75, labeled=False),
         mt_transforms.CenterCrop2D((128, 128)),
         mt_transforms.ToTensor(),
         mt_transforms.NormalizeInstance(),
