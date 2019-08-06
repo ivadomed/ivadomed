@@ -15,5 +15,6 @@
         "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
 	"mixup_bool": true,
 	"mixup_alpha": 2,
+	"metadata_bool": false,
         "debugging": false
 }
