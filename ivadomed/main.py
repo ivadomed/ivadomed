@@ -81,6 +81,7 @@ def cmd_train(context):
 
     # These are the training transformations
     train_transform = transforms.Compose([
+        mt_transforms.Resample(wspace=0.75, hspace=0.75),
         mt_transforms.CenterCrop2D((128, 128)),
         mt_transforms.ElasticTransform(alpha_range=(28.0, 30.0),
                                      sigma_range=(3.5, 4.0),
@@ -95,6 +96,7 @@ def cmd_train(context):
 
     # These are the validation/testing transformations
     val_transform = transforms.Compose([
+        mt_transforms.Resample(wspace=0.75, hspace=0.75),
         mt_transforms.CenterCrop2D((128, 128)),
         mt_transforms.ToTensor(),
         mt_transforms.NormalizeInstance(),
