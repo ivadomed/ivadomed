@@ -69,11 +69,12 @@ class BidsDataset(MRI2DBidsSegDataset):
                 if cord_label_filename is None:
                     continue
 
-                if metadata_bool:
-                    if not subject.has_metadata():
-                        print("Subject without metadata.")
-                        continue
+                if not subject.has_metadata():
+                    print("Subject without metadata.")
+                    continue
 
+                metadata = subject.metadata()
+                if metadata_bool:
                     def _check_isMetadata(metadata_type, metadata):
                         if metadata_type not in metadata:
                             print("{} without {}, skipping.".format(subject, metadata_type))
@@ -90,11 +91,8 @@ class BidsDataset(MRI2DBidsSegDataset):
                             self.metadata[metadata_type].append(value)
                             return True
 
-                    metadata = subject.metadata()
                     if not all([_check_isMetadata(m, metadata) for m in self.metadata.keys()]):
                         continue
-                else:
-                    metadata = None
 
                 self.filename_pairs.append((subject.record.absolute_path,
                                             cord_label_filename, metadata, subject.record["modality"]))
