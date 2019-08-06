@@ -41,7 +41,7 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
 
 class BidsDataset(MRI2DBidsSegDataset):
     def __init__(self, root_dir, subject_lst, contrast_lst, slice_axis=2, cache=True,
-                 transform=None, slice_filter_fn=None,
+                 transform=None, metadata_bool=True, slice_filter_fn=None,
                  canonical=False, labeled=True):
 
         self.bids_ds = bids.BIDS(root_dir)
@@ -67,29 +67,32 @@ class BidsDataset(MRI2DBidsSegDataset):
                 if cord_label_filename is None:
                     continue
 
-                if not subject.has_metadata():
-                    print("Subject without metadata.")
-                    continue
+                if metadata_bool:
+                    if not subject.has_metadata():
+                        print("Subject without metadata.")
+                        continue
 
-                def _check_isMetadata(metadata_type, metadata):
-                    if metadata_type not in metadata:
-                        print("{} without {}, skipping.".format(subject, metadata_type))
-                        return False
-                    else:
-                        if metadata_type == "Manufacturer":
-                            value = metadata[metadata_type]
+                    def _check_isMetadata(metadata_type, metadata):
+                        if metadata_type not in metadata:
+                            print("{} without {}, skipping.".format(subject, metadata_type))
+                            return False
                         else:
-                            if isinstance(metadata[metadata_type], (int, float)):
-                                value = float(metadata[metadata_type])
-                            else:  # eg multi-echo data have 3 echo times
-                                value = np.mean([float(v) for v in metadata[metadata_type].split(',')])
+                            if metadata_type == "Manufacturer":
+                                value = metadata[metadata_type]
+                            else:
+                                if isinstance(metadata[metadata_type], (int, float)):
+                                    value = float(metadata[metadata_type])
+                                else:  # eg multi-echo data have 3 echo times
+                                    value = np.mean([float(v) for v in metadata[metadata_type].split(',')])
 
-                        self.metadata[metadata_type].append(value)
-                        return True
+                            self.metadata[metadata_type].append(value)
+                            return True
 
-                metadata = subject.metadata()
-                if not all([_check_isMetadata(m, metadata) for m in self.metadata.keys()]):
-                    continue
+                    metadata = subject.metadata()
+                    if not all([_check_isMetadata(m, metadata) for m in self.metadata.keys()]):
+                        continue
+                else:
+                    metadata = None
 
                 self.filename_pairs.append((subject.record.absolute_path,
                                             cord_label_filename, metadata, subject.record["modality"]))
