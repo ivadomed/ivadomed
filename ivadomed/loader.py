@@ -55,10 +55,10 @@ class BidsDataset(MRI2DBidsSegDataset):
         for subject in bids_subjects:
             subjects_tot.append(str(subject.record["absolute_path"]))
 
-        # Create a dictionary with the number of subjects for each contrast
-        tot = {subject.record["modality"]: len([s for s in subjects_tot if str("_" + subject.record["modality"]) in s]) for subject in bids_subjects}
+        # Create a dictionary with the number of subjects for each contrast of contrast_balance
+        tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast]) for contrast in contrast_balance.keys()}
         # Create a counter that helps to balance the contrasts
-        c = {subject.record["modality"]: 0 for subject in bids_subjects}
+        c = {contrast:0 for contrast in contrast_balance.keys()}
 
         print("tot = ", tot)
 
