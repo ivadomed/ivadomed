@@ -3,9 +3,11 @@ import json
 import os
 import time
 import shutil
+import random
 from sklearn.externals import joblib
 
 import torch
+import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader, ConcatDataset
 from torchvision import transforms
@@ -24,52 +26,11 @@ from tqdm import tqdm
 
 from ivadomed import loader as loader
 from ivadomed import models
+from ivadomed.utils import *
 
 import numpy as np
 
-from PIL import Image
-
 cudnn.benchmark = True
-
-
-def threshold_predictions(predictions, thr=0.5):
-    """This function will threshold predictions.
-
-    :param predictions: input data (predictions)
-    :param thr: threshold to use, default to 0.5
-    :return: thresholded input
-    """
-    thresholded_preds = predictions[:]
-    low_values_indices = thresholded_preds < thr
-    thresholded_preds[low_values_indices] = 0
-    low_values_indices = thresholded_preds >= thr
-    thresholded_preds[low_values_indices] = 1
-    return thresholded_preds
-
-
-class SliceFilter(mt_filters.SliceFilter):
-    """This class extends the SliceFilter that already
-    filters for empty labels and inputs. It will filter
-    slices that has only zeros after cropping. To avoid
-    feeding empty inputs into the network.
-    """
-    def __call__(self, sample):
-        super_ret = super().__call__(sample)
-
-        # Already filtered by base class
-        if not super_ret:
-            return super_ret
-
-        # Filter slices where there are no values after cropping
-        input_img = Image.fromarray(sample['input'], mode='F')
-        input_cropped = transforms.functional.center_crop(input_img, (128, 128))
-        input_cropped = np.array(input_cropped)
-        count = np.count_nonzero(input_cropped)
-
-        if count <= 0:
-            return False
-
-        return True
 
 
 def cmd_train(context):
@@ -105,16 +66,20 @@ def cmd_train(context):
         torch.cuda.set_device(gpu_number)
         print("Using GPU number {}".format(gpu_number))
 
-    # Boolean which determines if the selected architecture is FiLMedUnet or Unet
+    # Boolean which determines if the selected architecture is FiLMedUnet or Unet or MixupUnet
     film_bool = bool(sum(context["film_layers"]))
     print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
+    mixup_bool = False if film_bool else bool(context["mixup_bool"])
+    mixup_alpha = float(context["mixup_alpha"])
+    if not film_bool and mixup_bool:
+        print('\twith Mixup (alpha={})\n'.format(mixup_alpha))
 
     # These are the training transformations
     train_transform = transforms.Compose([
         mt_transforms.CenterCrop2D((128, 128)),
         mt_transforms.ElasticTransform(alpha_range=(28.0, 30.0),
-                                       sigma_range=(3.5, 4.0),
-                                       p=0.3),
+                                     sigma_range=(3.5, 4.0),
+                                     p=0.1),
         mt_transforms.RandomAffine(degrees=4.6,
                                    scale=(0.98, 1.02),
                                    translate=(0.03, 0.03)),
@@ -199,8 +164,17 @@ def cmd_train(context):
     # Create a list containing the contrast of all batch images
     var_contrast_list = []
 
+    # Loss
+    if context["loss"] in ["dice", "cross_entropy"]:
+        if context["loss"] == "cross_entropy":
+            loss_fct = nn.BCELoss()
+    else:
+        print("Unknown Loss function, please choose between 'dice' or 'cross_entropy'")
+        exit()
+
     # Training loop -----------------------------------------------------------
     best_validation_loss = float("inf")
+    bce_loss = nn.BCELoss()
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
         start_time = time.time()
 
@@ -214,6 +188,23 @@ def cmd_train(context):
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
+
+            # mixup data
+            if mixup_bool and not film_bool:
+                input_samples, gt_samples, lambda_tensor = mixup(input_samples, gt_samples, mixup_alpha)
+
+                # if debugging and first epoch, then save samples as png in ofolder
+                if context["debugging"] and epoch == 1 and random.random() < 0.1:
+                    mixup_folder = os.path.join(context["log_directory"], 'mixup')
+                    if not os.path.isdir(mixup_folder):
+                        os.makedirs(mixup_folder)
+                    print(lambda_tensor.data.numpy()[0])
+                    random_idx = np.random.randint(0, input_samples.size()[0])
+                    val_gt = np.unique(gt_samples.data.numpy()[random_idx,0,:,:])
+                    mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3)+'_'+str(lambda_tensor.data.numpy()[0])+'_'+str(random_idx).zfill(3)+'.png')
+                    save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :],
+                                            gt_samples.data.numpy()[random_idx,0,:,:],
+                                            mixup_fname_pref)
 
             # The variable sample_metadata is where the MRI phyisics parameters are
             sample_metadata = batch["input_metadata"]
@@ -234,7 +225,10 @@ def cmd_train(context):
             else:
                 preds = model(var_input)
 
-            loss = mt_losses.dice_loss(preds, var_gt)
+            if context["loss"] == "dice":
+                loss = mt_losses.dice_loss(preds, var_gt)
+            else:
+                loss = loss_fct(preds, var_gt)
             train_loss_total += loss.item()
 
             optimizer.zero_grad()
@@ -300,7 +294,11 @@ def cmd_train(context):
                 else:
                     preds = model(var_input)
 
-                loss = mt_losses.dice_loss(preds, var_gt)
+                # loss = mt_losses.dice_loss(preds, var_gt)
+                if context["loss"] == "dice":
+                    loss = mt_losses.dice_loss(preds, var_gt)
+                else:
+                    loss = loss_fct(preds, var_gt)
                 val_loss_total += loss.item()
 
             # Metrics computation
