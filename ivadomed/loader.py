@@ -60,8 +60,6 @@ class BidsDataset(MRI2DBidsSegDataset):
         # Create a counter that helps to balance the contrasts
         c = {contrast:0 for contrast in contrast_balance.keys()}
 
-        print("tot = ", tot)
-
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
 
