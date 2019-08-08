@@ -103,6 +103,7 @@ def cmd_train(context):
     ds_train = loader.BidsDataset(context["bids_path"],
                                   subject_lst=train_lst,
                                   contrast_lst=context["contrast_train_validation"],
+                                  contrast_balance=context["contrast_balance"],
                                   transform=train_transform,
                                   slice_filter_fn=SliceFilter())
 
