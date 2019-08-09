@@ -13,7 +13,6 @@ from copy import deepcopy
 from tqdm import tqdm
 import nibabel as nib
 
-
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 
 
@@ -42,7 +41,7 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
 
 
 class BidsDataset(MRI2DBidsSegDataset):
-    def __init__(self, root_dir, subject_lst, contrast_lst, slice_axis=2, cache=True,
+    def __init__(self, root_dir, subject_lst, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
                  transform=None, metadata_bool=True, slice_filter_fn=None,
                  canonical=True, labeled=True):
 
@@ -53,8 +52,24 @@ class BidsDataset(MRI2DBidsSegDataset):
         # Selecting subjects from Training / Validation / Testing
         bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
 
+        # Create a list with the filenames for all contrasts and subjects
+        subjects_tot = []
+        for subject in bids_subjects:
+            subjects_tot.append(str(subject.record["absolute_path"]))
+
+        # Create a dictionary with the number of subjects for each contrast of contrast_balance
+        tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast]) for contrast in contrast_balance.keys()}
+        # Create a counter that helps to balance the contrasts
+        c = {contrast:0 for contrast in contrast_balance.keys()}
+
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
+
+                # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
+                if subject.record["modality"] in contrast_balance.keys():
+                    c[subject.record["modality"]] = c[subject.record["modality"]] + 1
+                    if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_balance[subject.record["modality"]]:
+                        continue
 
                 if not subject.has_derivative("labels"):
                     print("Subject without derivative, skipping.")
@@ -126,7 +141,7 @@ class Kde_model():
 
     def train(self, data, value_range, gridsearch_bandwidth_range):
         # reshape data to fit sklearn
-        data = np.array(data).reshape(-1,1)
+        data = np.array(data).reshape(-1, 1)
 
         # use grid search cross-validation to optimize the bandwidth
         params = {'bandwidth': gridsearch_bandwidth_range}
@@ -140,7 +155,7 @@ class Kde_model():
         self.kde.fit(data)
 
         s = value_range
-        e = self.kde.score_samples(s.reshape(-1,1))
+        e = self.kde.score_samples(s.reshape(-1, 1))
 
         # find local minima
         self.minima = s[argrelextrema(e, np.less)[0]]
@@ -160,8 +175,8 @@ def clustering_fit(dataset, key_lst):
     :return: clustering model for each metadata type
     """
     KDE_PARAM = {'FlipAngle': {'range': np.linspace(0, 360, 1000), 'gridsearch': np.logspace(-4, 1, 50)},
-                    'RepetitionTime': {'range': np.logspace(-1, 1, 1000), 'gridsearch': np.logspace(-4, 1, 50)},
-                    'EchoTime': {'range': np.logspace(-3, 1 , 1000), 'gridsearch': np.logspace(-4, 1, 50)}}
+                 'RepetitionTime': {'range': np.logspace(-1, 1, 1000), 'gridsearch': np.logspace(-4, 1, 50)},
+                 'EchoTime': {'range': np.logspace(-3, 1, 1000), 'gridsearch': np.logspace(-4, 1, 50)}}
 
     model_dct = {}
     for k in key_lst:
@@ -175,7 +190,6 @@ def clustering_fit(dataset, key_lst):
 
 
 def normalize_metadata(ds_in, clustering_models, debugging, train_set=False):
-
     if train_set:
         # Initialise One Hot Encoder
         ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
@@ -201,9 +215,11 @@ def normalize_metadata(ds_in, clustering_models, debugging, train_set=False):
                 print("Manufacturer: {} --> {}".format(manufacturer, MANUFACTURER_CATEGORY[manufacturer]))
         else:
             print("{} with unknown manufacturer.".format(subject))
-            s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
+            s_out["input_metadata"]["bids_metadata"][
+                "Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
 
-        s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
+        s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in
+                                                    ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
 
         s_out["input_metadata"]["contrast"] = subject["input_metadata"]["bids_metadata"]["contrast"]
 

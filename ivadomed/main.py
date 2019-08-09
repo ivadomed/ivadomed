@@ -111,6 +111,7 @@ def cmd_train(context):
                                   subject_lst=train_lst,
                                   contrast_lst=context["contrast_train_validation"],
                                   metadata_bool=metadata_bool,
+                                  contrast_balance=context["contrast_balance"],
                                   transform=train_transform,
                                   slice_filter_fn=SliceFilter())
 
