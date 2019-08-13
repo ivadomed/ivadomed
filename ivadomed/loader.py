@@ -11,13 +11,15 @@ import numpy as np
 from glob import glob
 from copy import deepcopy
 from tqdm import tqdm
+import nibabel as nib
 
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 
 
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
-    def __init__(self, input_filename, gt_filename, metadata, contrast):
-        super().__init__(input_filename, gt_filename)
+    def __init__(self, input_filename, gt_filename, metadata, contrast, cache=True, canonical=True):
+        super().__init__(input_filename, gt_filename, canonical=canonical)
+
         self.metadata = metadata
         self.metadata["input_filename"] = input_filename
         self.metadata["gt_filename"] = gt_filename
@@ -40,8 +42,8 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
 
 class BidsDataset(MRI2DBidsSegDataset):
     def __init__(self, root_dir, subject_lst, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
-                 transform=None, slice_filter_fn=None,
-                 canonical=False, labeled=True):
+                 transform=None, metadata_bool=True, slice_filter_fn=None,
+                 canonical=True, labeled=True):
 
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
@@ -49,7 +51,7 @@ class BidsDataset(MRI2DBidsSegDataset):
 
         # Selecting subjects from Training / Validation / Testing
         bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
-        
+
         # Create a list with the filenames for all contrasts and subjects
         subjects_tot = []
         for subject in bids_subjects:
@@ -76,7 +78,7 @@ class BidsDataset(MRI2DBidsSegDataset):
                 cord_label_filename = None
 
                 for deriv in derivatives:
-                    if deriv.endswith("seg-manual.nii.gz"):
+                    if deriv.endswith(subject.record["modality"]+"_seg-manual.nii.gz"):
                         cord_label_filename = deriv
 
                 if cord_label_filename is None:
@@ -86,25 +88,26 @@ class BidsDataset(MRI2DBidsSegDataset):
                     print("Subject without metadata.")
                     continue
 
-                def _check_isMetadata(metadata_type, metadata):
-                    if metadata_type not in metadata:
-                        print("{} without {}, skipping.".format(subject, metadata_type))
-                        return False
-                    else:
-                        if metadata_type == "Manufacturer":
-                            value = metadata[metadata_type]
-                        else:
-                            if isinstance(metadata[metadata_type], (int, float)):
-                                value = float(metadata[metadata_type])
-                            else:  # eg multi-echo data have 3 echo times
-                                value = np.mean([float(v) for v in metadata[metadata_type].split(',')])
-
-                        self.metadata[metadata_type].append(value)
-                        return True
-
                 metadata = subject.metadata()
-                if not all([_check_isMetadata(m, metadata) for m in self.metadata.keys()]):
-                    continue
+                if metadata_bool:
+                    def _check_isMetadata(metadata_type, metadata):
+                        if metadata_type not in metadata:
+                            print("{} without {}, skipping.".format(subject, metadata_type))
+                            return False
+                        else:
+                            if metadata_type == "Manufacturer":
+                                value = metadata[metadata_type]
+                            else:
+                                if isinstance(metadata[metadata_type], (int, float)):
+                                    value = float(metadata[metadata_type])
+                                else:  # eg multi-echo data have 3 echo times
+                                    value = np.mean([float(v) for v in metadata[metadata_type].split(',')])
+
+                            self.metadata[metadata_type].append(value)
+                            return True
+
+                    if not all([_check_isMetadata(m, metadata) for m in self.metadata.keys()]):
+                        continue
 
                 self.filename_pairs.append((subject.record.absolute_path,
                                             cord_label_filename, metadata, subject.record["modality"]))

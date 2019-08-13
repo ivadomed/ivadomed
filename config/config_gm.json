@@ -4,6 +4,7 @@
 	"bids_path": "../duke/projects/ivado-medical-imaging/gm_challenge_16",
         "random_seed": 1313,
         "contrast_train_validation": ["T2star"],
+        "contrast_balance": {},
         "contrast_test": ["T2star"],
         "center_test": [],
 	"batch_size": 64,
@@ -11,7 +12,11 @@
 	"batch_norm_momentum": 0.1,
 	"num_epochs": 500,
 	"initial_lr": 0.0001,
+        "loss": "dice",
 	"log_directory": "log_gm",
         "film_layers": [0, 1, 1, 0, 1, 0, 0, 0],
+	"mixup_bool": false,
+	"mixup_alpha": 2,
+	"metadata_bool": true,
         "debugging": false
 }

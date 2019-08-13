@@ -15,7 +15,8 @@
 	"loss": "cross_entropy",
         "log_directory": "log_sc",
         "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
-	"mixup_bool": true,
+	"mixup_bool": false,
 	"mixup_alpha": 2,
+	"metadata_bool": true,
         "debugging": false
 }
