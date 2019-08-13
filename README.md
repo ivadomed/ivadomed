@@ -54,6 +54,11 @@ Please find below a description of each parameter:
 - `metadata_bool`: indicates if you want to include only images with TR, TE, FlipAngle, and Manufaturer available info ('true'), or if you want to include all available subjects ('false'). Note: Please use 'false' when comparing `Unet` vs. `MixedUp-Unet` ; use 'true' when comparing `Unet` vs. `FiLMed-Unet`.
 - 'debugging': allows extended verbosity and intermediate outputs (choice: false or true).
 
+Please find below the original articles of methods we implemented in this project:
+- [U-net](https://arxiv.org/pdf/1505.04597.pdf)
+- [FiLM](https://arxiv.org/pdf/1709.07871.pdf)
+- [mixup](https://arxiv.org/pdf/1710.09412.pdf)
+
 During the training, you can open TensorBoard and it will show the following statistics and visualization:
 
 ### TensorBoard - Validation Metrics
