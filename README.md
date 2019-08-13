@@ -90,28 +90,28 @@ The working dataset are:
  
 The data structure is compatible with [BIDS](http://bids.neuroimaging.io/) and is exemplified below:
 ~~~
-site/
+bids_folder/
 └── dataset_description.json
 └── participants.tsv
-└── sub-01
+└── sub-amu01
     └── anat
-        └── sub-01_T1w_reg.nii.gz --> Processed (i.e. different than in the original SpineGeneric database)
-        └── sub-01_T1w_reg.json
-        └── sub-01_T2w_reg.nii.gz --> Processed
-        └── sub-01_T2w_reg.json
-        └── sub-01_acq-MTon_MTS_reg.nii.gz --> Processed
-        └── sub-01_acq-MTon_MTS_reg.json
-        └── sub-01_acq-MToff_MTS_reg.nii.gz --> Processed
-        └── sub-01_acq-MToff_MTS_reg.json
-        └── sub-01_acq-T1w_MTS.nii.gz --> Unprocessed (i.e. same as in the original SpineGeneric database)
-        └── sub-01_acq-T1w_MTS.json
-        └── sub-01_T2star_reg.nii.gz --> Processed
-        └── sub-01_T2star_reg.json
+        └── sub-amu01_T1w_reg.nii.gz --> Processed (i.e. different than in the original SpineGeneric database)
+        └── sub-amu01_T1w_reg.json
+        └── sub-amu01_T2w_reg.nii.gz --> Processed
+        └── sub-amu01_T2w_reg.json
+        └── sub-amu01_acq-MTon_MTS_reg.nii.gz --> Processed
+        └── sub-amu01_acq-MTon_MTS_reg.json
+        └── sub-amu01_acq-MToff_MTS_reg.nii.gz --> Processed
+        └── sub-amu01_acq-MToff_MTS_reg.json
+        └── sub-amu01_acq-T1w_MTS.nii.gz --> Unprocessed (i.e. same as in the original SpineGeneric database)
+        └── sub-amu01_acq-T1w_MTS.json
+        └── sub-amu01_T2star_reg.nii.gz --> Processed
+        └── sub-amu01_T2star_reg.json
 └── derivatives
     └── labels
-        └── sub-01
+        └── sub-amu01
             └── anat
-                └── sub-01_T1w_seg.nii.gz --> Spinal cord segmentation
+                └── sub-amu01_T1w_seg.nii.gz --> Spinal cord segmentation
 ~~~
 
 ### Data processing
