@@ -37,22 +37,7 @@ def cmd_train(context):
     """Main command to train the network.
 
     :param context: this is a dictionary with all data from the
-                    configuration file:
-                        - 'command': run the specified command (e.g. train, test)
-                        - 'gpu': ID of the used GPU
-                        - 'bids_path_train': list of relative paths of the BIDS folders of each training center
-                        - 'bids_path_validation': list of relative paths of the BIDS folders of each validation center
-                        - 'bids_path_test': list of relative paths of the BIDS folders of each test center
-                        - 'contrast_train_validation': list of image modalities included in the training and validation datasets
-                        - 'contrast_test': list of image modalities included in the testing dataset
-                        - 'batch_size'
-                        - 'dropout_rate'
-                        - 'batch_norm_momentum'
-                        - 'num_epochs'
-                        - 'initial_lr': initial learning rate
-                        - 'log_directory': folder name where log files are saved
-                        - 'film': indicates if FiLM is used or not
-                        - 'debugging': allows extended verbosity and intermediate outputs
+                    configuration file
     """
     ##### DEFINE DEVICE #####
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
