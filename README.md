@@ -83,8 +83,11 @@ For more details on the meaning of the evaluation metrics, please see [Prados et
 
 ## Data
 
-The working dataset is derived from the [Spinal Cord MRI Public Database](https://osf.io/76jkx/). The processed dataset that should be used for training the model is available [here](https://osf.io/agp3q/). When training a model, make sure to indicate the [checksum SH2](https://osf.io/agp3q/?show=revision) inside the `config.json` file.
-
+The working dataset are:
+1. derived from the [Spinal Cord MRI Public Database](https://openneuro.org/datasets/ds001919).
+2. the spinal cord grey matter segmentation [challenge dataset](https://www.sciencedirect.com/science/article/pii/S1053811917302185#s0050).
+3. private multi-center dataset (`duke/sct_testing/large`).
+ 
 The data structure is compatible with [BIDS](http://bids.neuroimaging.io/) and is exemplified below:
 ~~~
 site/
