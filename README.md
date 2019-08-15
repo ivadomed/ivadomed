@@ -32,7 +32,34 @@ To train the network, use the `ivadomed` command-line tool that will be availabl
 ivadomed config/config.json
 ```
 
-The `config.json` is a configuration example. A description of each parameter is provided in the code (ivadomed/main.py). During the training, you can open TensorBoard and it will show the following statistics and visualization:
+The `config.json` is a configuration example.
+Please find below a description of each parameter:
+- `command`: run the specified command (choice: "train", "test").
+- `gpu`: ID of the used GPU.
+- `bids_path`: relative path of the BIDS folder.
+- `random_seed`: seed used by the random number generator to split the dataset between training/validation/testing.
+- `contrast_train_validation`: list of image modalities included in the training and validation datasets.
+- `contrast_balance`: used to under-represent some modalities in the training set (e.g. `{'T1w': 0.1}` will include only 10% of the available `T1w` images into the training set).
+- `contrast_test`: list of image modalities included in the testing dataset.
+- `batch_size`: int.
+- `dropout_rate`: float (e.g. 0.4).
+- `batch_norm_momentum`: float (e.g. 0.1).
+- `num_epochs`: int.
+- `initial_lr`: initial learning rate.
+- `loss`: choice between 'dice' and 'cross_entropy'. Note: Please use 'cross_entropy' when comparing `Unet` vs. `MixedUp-Unet`.
+- `log_directory`: folder name where log files are saved.
+- `film_layers`: indicates on which layer(s) of the U-net you want to apply a FiLM modulation: list of 8 elements (because Unet has 8 layers), set to 0 for no FiLM modulation, set 1 otherwise. Note: When running `Unet` or `MixedUp-Unet`, please fill this list with zeros only.
+- `mixup_bool`: indicates if mixup is applied to the training data (choice: false or true). Note: Please use 'false' when comparing `Unet` vs. `FiLMed-Unet`.
+- `mixup_alpha`: alpha parameter of the Beta distribution (float).
+- `metadata_bool`: indicates if you want to include only images with TR, TE, FlipAngle, and Manufaturer available info ('true'), or if you want to include all available subjects ('false'). Note: Please use 'false' when comparing `Unet` vs. `MixedUp-Unet` ; use 'true' when comparing `Unet` vs. `FiLMed-Unet`.
+- 'debugging': allows extended verbosity and intermediate outputs (choice: false or true).
+
+Please find below the original articles of methods we implemented in this project:
+- [U-net](https://arxiv.org/pdf/1505.04597.pdf)
+- [FiLM](https://arxiv.org/pdf/1709.07871.pdf)
+- [mixup](https://arxiv.org/pdf/1710.09412.pdf)
+
+During the training, you can open TensorBoard and it will show the following statistics and visualization:
 
 ### TensorBoard - Validation Metrics
 These are the metrics computed for the validation dataset. It contains results for pixel-wise accuracy, Dice score, mIoU (mean intersection over union), pixel-wise precision, recall and specificity.
@@ -61,32 +88,35 @@ For more details on the meaning of the evaluation metrics, please see [Prados et
 
 ## Data
 
-The working dataset is derived from the [Spinal Cord MRI Public Database](https://osf.io/76jkx/). The processed dataset that should be used for training the model is available [here](https://osf.io/agp3q/). When training a model, make sure to indicate the [checksum SH2](https://osf.io/agp3q/?show=revision) inside the `config.json` file.
-
+The working dataset are:
+1. derived from the [Spinal Cord MRI Public Database](https://openneuro.org/datasets/ds001919).
+2. the spinal cord grey matter segmentation [challenge dataset](https://www.sciencedirect.com/science/article/pii/S1053811917302185#s0050).
+3. private multi-center dataset (`duke/sct_testing/large`).
+ 
 The data structure is compatible with [BIDS](http://bids.neuroimaging.io/) and is exemplified below:
 ~~~
-site/
+bids_folder/
 └── dataset_description.json
 └── participants.tsv
-└── sub-01
+└── sub-amu01
     └── anat
-        └── sub-01_T1w_reg.nii.gz --> Processed (i.e. different than in the original SpineGeneric database)
-        └── sub-01_T1w_reg.json
-        └── sub-01_T2w_reg.nii.gz --> Processed
-        └── sub-01_T2w_reg.json
-        └── sub-01_acq-MTon_MTS_reg.nii.gz --> Processed
-        └── sub-01_acq-MTon_MTS_reg.json
-        └── sub-01_acq-MToff_MTS_reg.nii.gz --> Processed
-        └── sub-01_acq-MToff_MTS_reg.json
-        └── sub-01_acq-T1w_MTS.nii.gz --> Unprocessed (i.e. same as in the original SpineGeneric database)
-        └── sub-01_acq-T1w_MTS.json
-        └── sub-01_T2star_reg.nii.gz --> Processed
-        └── sub-01_T2star_reg.json
+        └── sub-amu01_T1w_reg.nii.gz --> Processed (i.e. different than in the original SpineGeneric database)
+        └── sub-amu01_T1w_reg.json
+        └── sub-amu01_T2w_reg.nii.gz --> Processed
+        └── sub-amu01_T2w_reg.json
+        └── sub-amu01_acq-MTon_MTS_reg.nii.gz --> Processed
+        └── sub-amu01_acq-MTon_MTS_reg.json
+        └── sub-amu01_acq-MToff_MTS_reg.nii.gz --> Processed
+        └── sub-amu01_acq-MToff_MTS_reg.json
+        └── sub-amu01_acq-T1w_MTS.nii.gz --> Unprocessed (i.e. same as in the original SpineGeneric database)
+        └── sub-amu01_acq-T1w_MTS.json
+        └── sub-amu01_T2star_reg.nii.gz --> Processed
+        └── sub-amu01_T2star_reg.json
 └── derivatives
     └── labels
-        └── sub-01
+        └── sub-amu01
             └── anat
-                └── sub-01_T1w_seg.nii.gz --> Spinal cord segmentation
+                └── sub-amu01_T1w_seg.nii.gz --> Spinal cord segmentation
 ~~~
 
 ### Data processing
