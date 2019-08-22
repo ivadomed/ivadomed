@@ -149,7 +149,7 @@ def cmd_train(context):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
 
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(logdir=context["log_directory"])
+    writer = SummaryWriter(log_dir=context["log_directory"])
 
     # Create dict containing gammas and betas after each FiLM layer.
     gammas_dict = {i:[] for i in range(1,9)}
@@ -413,7 +413,7 @@ def cmd_test(context):
 
     # These are the validation/testing transformations
     val_transform = transforms.Compose([
-        mt_transforms.Resample(wspace=0.75, hspace=0.75, labeled=False),
+        mt_transforms.Resample(wspace=0.75, hspace=0.75),
         mt_transforms.CenterCrop2D((128, 128)),
         mt_transforms.ToTensor(),
         mt_transforms.NormalizeInstance(),
