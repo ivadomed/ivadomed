@@ -41,7 +41,7 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
 
 
 class BidsDataset(MRI2DBidsSegDataset):
-    def __init__(self, root_dir, subject_lst, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
+    def __init__(self, root_dir, subject_lst, gt_prefixe, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
                  transform=None, metadata_bool=True, slice_filter_fn=None,
                  canonical=True, labeled=True):
 
@@ -78,7 +78,7 @@ class BidsDataset(MRI2DBidsSegDataset):
                 cord_label_filename = None
 
                 for deriv in derivatives:
-                    if deriv.endswith(subject.record["modality"]+"_seg-manual.nii.gz"):
+                    if deriv.endswith(subject.record["modality"]+gt_prefixe+".nii.gz"):
                         cord_label_filename = deriv
 
                 if cord_label_filename is None:
