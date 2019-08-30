@@ -62,6 +62,9 @@ Please find below the original articles of methods we implemented in this projec
 
 During the training, you can open TensorBoard and it will show the following statistics and visualization:
 
+```
+tensorboard --logdir=./log_sc
+```
 ### TensorBoard - Validation Metrics
 These are the metrics computed for the validation dataset. It contains results for pixel-wise accuracy, Dice score, mIoU (mean intersection over union), pixel-wise precision, recall and specificity.
 ![](/images/validation_metrics.png)
