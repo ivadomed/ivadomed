@@ -94,6 +94,7 @@ def cmd_train(context):
     # the slices without labels and then concatenating all the datasets together
     ds_train = loader.BidsDataset(context["bids_path"],
                                   subject_lst=train_lst,
+                                  gt_suffix=context["gt_suffix"],
                                   contrast_lst=context["contrast_train_validation"],
                                   metadata_bool=metadata_bool,
                                   contrast_balance=context["contrast_balance"],
@@ -113,6 +114,7 @@ def cmd_train(context):
     # Validation dataset ------------------------------------------------------
     ds_val = loader.BidsDataset(context["bids_path"],
                                 subject_lst=valid_lst,
+                                gt_suffix=context["gt_suffix"],
                                 contrast_lst=context["contrast_train_validation"],
                                 metadata_bool=metadata_bool,
                                 transform=val_transform,
@@ -422,6 +424,7 @@ def cmd_test(context):
     test_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
     ds_test = loader.BidsDataset(context["bids_path"],
                                  subject_lst=test_lst,
+                                 gt_suffix=context["gt_suffix"],
                                  contrast_lst=context["contrast_test"],
                                  metadata_bool=bool(context["metadata_bool"]),
                                  transform=val_transform,

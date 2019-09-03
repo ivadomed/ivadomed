@@ -36,6 +36,7 @@ The `config.json` is a configuration example.
 Please find below a description of each parameter:
 - `command`: run the specified command (choice: "train", "test").
 - `gpu`: ID of the used GPU.
+- `gt_suffix`: suffix of the derivative file containing the ground-truth of interest (e.g. "_seg-manual", "_lesin-manual").
 - `bids_path`: relative path of the BIDS folder.
 - `random_seed`: seed used by the random number generator to split the dataset between training/validation/testing.
 - `contrast_train_validation`: list of image modalities included in the training and validation datasets.
