@@ -1,7 +1,7 @@
 {
 	"command": "train",
 	"gpu": 4,
-        "gt_prefixe": "_seg-manual",
+        "gt_suffix": "_seg-manual",
 	"bids_path_train": "../duke/projects/ivado-medical-imaging/spineGeneric_201907041011/result/",
 	"random_seed": 1313,
 	"contrast_train_validation": ["T1w", "T2w", "T2star", "acq-MToff_MTS", "acq-MTon_MTS", "acq-T1w_MTS"],

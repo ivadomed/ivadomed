@@ -1,7 +1,7 @@
 {
 	"command": "train",
 	"gpu": 4,
-        "gt_prefixe": "_seg-manual",
+        "gt_suffix": "_seg-manual",
 	"bids_path": "../duke/projects/ivado-medical-imaging/gm_challenge_16",
         "random_seed": 1313,
         "contrast_train_validation": ["T2star"],
