@@ -8,6 +8,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 
 import numpy as np
+import json
 from glob import glob
 from copy import deepcopy
 from tqdm import tqdm
@@ -18,7 +19,6 @@ MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
     def __init__(self, input_filename, gt_filename, metadata, contrast, cache=True, canonical=True):
-        print(input_filename)
         super().__init__(input_filename, gt_filename, canonical=canonical)
 
         self.metadata = metadata
@@ -43,12 +43,17 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
 
 class BidsDataset(MRI2DBidsSegDataset):
     def __init__(self, root_dir, subject_lst, gt_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
-                 transform=None, metadata_bool=True, slice_filter_fn=None,
+                 transform=None, metadata_choice=False, slice_filter_fn=None,
                  canonical=True, labeled=True):
 
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
-        self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": [], "Manufacturer": []}
+        if metadata_choice == 'mri_params':
+            self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": [], "Manufacturer": []}
+        elif metadata_choice == 'contrast':
+            self.metadata = {"contrast": []}
+            with open("config/contrast_dct.json", "r") as fhandle:
+                contrast_dct = json.load(fhandle)
 
         # Selecting subjects from Training / Validation / Testing
         bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
@@ -61,7 +66,7 @@ class BidsDataset(MRI2DBidsSegDataset):
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
         tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast]) for contrast in contrast_balance.keys()}
         # Create a counter that helps to balance the contrasts
-        c = {contrast:0 for contrast in contrast_balance.keys()}
+        c = {contrast: 0 for contrast in contrast_balance.keys()}
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
@@ -90,7 +95,7 @@ class BidsDataset(MRI2DBidsSegDataset):
                     continue
 
                 metadata = subject.metadata()
-                if metadata_bool:
+                if metadata_choice == 'mri_params':
                     def _check_isMetadata(metadata_type, metadata):
                         if metadata_type not in metadata:
                             print("{} without {}, skipping.".format(subject, metadata_type))
@@ -109,6 +114,9 @@ class BidsDataset(MRI2DBidsSegDataset):
 
                     if not all([_check_isMetadata(m, metadata) for m in self.metadata.keys()]):
                         continue
+                elif metadata_choice == 'contrast':
+                    print(subject.record["modality"], contrast_dct[subject.record["modality"]])
+                    self.metadata['contrast'] = contrast_dct[subject.record["modality"]]
 
                 self.filename_pairs.append((subject.record.absolute_path,
                                             cord_label_filename, metadata, subject.record["modality"]))
@@ -167,12 +175,22 @@ class Kde_model():
         return pred
 
 
-def clustering_fit(dataset, key_lst):
+class contrast_fit():
+
+    def __init__():
+        self.contrast_class_dct = {"T1w": 0, "T2w": 1, "T2star": 2, "acq-MToff_MTS": 3, "acq-MTon_MTS": 4, "acq-T1w_MTS": 5}
+
+    def predict(self, data):
+        return self.contrast_class_dct[data]
+
+
+def clustering_fit(dataset, key_lst, metadata_type):
     """This function creates clustering models for each metadata type,
     using Kernel Density Estimation algorithm.
 
     :param datasets (list): data
     :param key_lst (list of strings): names of metadata to cluster
+    :param metadata_type: if 'mri_params', then a KDE model is used. If 'contrast', then a simple mapping is used.
     :return: clustering model for each metadata type
     """
     KDE_PARAM = {'FlipAngle': {'range': np.linspace(0, 360, 1000), 'gridsearch': np.logspace(-4, 1, 50)},
@@ -183,8 +201,14 @@ def clustering_fit(dataset, key_lst):
     for k in key_lst:
         k_data = [value for value in dataset[k]]
 
-        kde = Kde_model()
-        kde.train(k_data, KDE_PARAM[k]['range'], KDE_PARAM[k]['gridsearch'])
+        if metadata_type == 'mri_params':
+            kde = Kde_model()
+            kde.train(k_data, KDE_PARAM[k]['range'], KDE_PARAM[k]['gridsearch'])
+        elif metadata_type == 'contrast':
+            kde = contrast_fit()
+        else:
+            print("Unknown metadata type, please choose between 'contrast' or 'mri_params'")
+
         model_dct[k] = kde
 
     return model_dct
