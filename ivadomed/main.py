@@ -58,8 +58,8 @@ def cmd_train(context):
     mixup_alpha = float(context["mixup_alpha"])
     if not film_bool and mixup_bool:
         print('\twith Mixup (alpha={})\n'.format(mixup_alpha))
-    metadata_bool = bool(context["metadata_bool"])
-    if metadata_bool:
+    metadata_bool = bool(context["metadata"])
+    if context["metadata"] == "mri_params":
         print('\tInclude subjects with acquisition metadata available only.\n')
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
@@ -116,7 +116,7 @@ def cmd_train(context):
                                 subject_lst=valid_lst,
                                 gt_suffix=context["gt_suffix"],
                                 contrast_lst=context["contrast_train_validation"],
-                                metadata_bool=metadata_bool,
+                                metadata_choice=context["metadata"],
                                 transform=val_transform,
                                 slice_filter_fn=SliceFilter())
 
@@ -408,7 +408,7 @@ def cmd_test(context):
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet
     film_bool = bool(sum(context["film_layers"]))
     print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
-    if bool(context["metadata_bool"]):
+    if context["metadata"] == "mri_params":
         print('\tInclude subjects with acquisition metadata available only.\n')
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
@@ -426,7 +426,7 @@ def cmd_test(context):
                                  subject_lst=test_lst,
                                  gt_suffix=context["gt_suffix"],
                                  contrast_lst=context["contrast_test"],
-                                 metadata_bool=bool(context["metadata_bool"]),
+                                 metadata_choice=context["metadata"],
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter())
 
@@ -460,7 +460,7 @@ def cmd_test(context):
 
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
-        if bool(context["metadata_bool"]):
+        if bool(context["metadata"]):
             sample_metadata = batch["input_metadata"]
 
         with torch.no_grad():
