@@ -115,7 +115,6 @@ class BidsDataset(MRI2DBidsSegDataset):
                     if not all([_check_isMetadata(m, metadata) for m in self.metadata.keys()]):
                         continue
                 elif metadata_choice == 'contrast':
-                    print(subject.record["modality"], contrast_dct[subject.record["modality"]])
                     self.metadata['contrast'] = contrast_dct[subject.record["modality"]]
 
                 self.filename_pairs.append((subject.record.absolute_path,

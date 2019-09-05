@@ -96,13 +96,14 @@ def cmd_train(context):
                                   subject_lst=train_lst,
                                   gt_suffix=context["gt_suffix"],
                                   contrast_lst=context["contrast_train_validation"],
-                                  metadata_bool=metadata_bool,
+                                  metadata_choice=context["metadata"],
                                   contrast_balance=context["contrast_balance"],
                                   transform=train_transform,
                                   slice_filter_fn=SliceFilter())
 
     if film_bool:  # normalize metadata before sending to the network
-        metadata_clustering_models = loader.clustering_fit(ds_train.metadata, ["RepetitionTime", "EchoTime", "FlipAngle"])
+        metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"] if context["metadata"] == "mri_params" else ["contrast"]
+        metadata_clustering_models = loader.clustering_fit(ds_train.metadata, metadata_vector, context["metadata"])
         ds_train, train_onehotencoder = loader.normalize_metadata(ds_train, metadata_clustering_models, context["debugging"], True)
 
     print(f"Loaded {len(ds_train)} axial slices for the training set.")
