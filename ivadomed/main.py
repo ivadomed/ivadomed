@@ -102,9 +102,16 @@ def cmd_train(context):
                                   slice_filter_fn=SliceFilter())
 
     if film_bool:  # normalize metadata before sending to the network
-        metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"] if context["metadata"] == "mri_params" else ["contrast"]
-        metadata_clustering_models = loader.clustering_fit(ds_train.metadata, metadata_vector, context["metadata"])
-        ds_train, train_onehotencoder = loader.normalize_metadata(ds_train, metadata_clustering_models, context["debugging"], True)
+        if context["metadata"] == "mri_params":
+            metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"] if context["metadata"] == "mri_params" else ["contrast"]
+            metadata_clustering_models = loader.clustering_fit(ds_train.metadata, metadata_vector, context["metadata"])
+        else:
+            metadata_clustering_models = None
+        ds_train, train_onehotencoder = loader.normalize_metadata(ds_train,
+                                                                   metadata_clustering_models,
+                                                                   context["debugging"],
+                                                                   context["metadata"],
+                                                                   True)
 
     print(f"Loaded {len(ds_train)} axial slices for the training set.")
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
@@ -122,7 +129,11 @@ def cmd_train(context):
                                 slice_filter_fn=SliceFilter())
 
     if film_bool:  # normalize metadata before sending to network
-        ds_val = loader.normalize_metadata(ds_val, metadata_clustering_models, context["debugging"], False)
+        ds_val = loader.normalize_metadata(ds_val,
+                                            metadata_clustering_models,
+                                            context["debugging"],
+                                            context["metadata"],
+                                            False)
 
     print(f"Loaded {len(ds_val)} axial slices for the validation set.")
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
@@ -433,7 +444,11 @@ def cmd_test(context):
 
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load("./"+context["log_directory"]+"/clustering_models.joblib")
-        ds_test = loader.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"], False)
+        ds_test = loader.normalize_metadata(ds_test,
+                                              metadata_clustering_models,
+                                              context["debugging"],
+                                              context["metadata"],
+                                              False)
 
         one_hot_encoder = joblib.load("./"+context["log_directory"]+"/one_hot_encoder.joblib")
 
