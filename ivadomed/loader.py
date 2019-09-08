@@ -94,23 +94,23 @@ class BidsDataset(MRI2DBidsSegDataset):
 
                 metadata = subject.metadata()
                 if metadata_choice == 'mri_params':
-                    def _check_isMetadata(metadata_type, metadata):
-                        if metadata_type not in metadata:
-                            print("{} without {}, skipping.".format(subject, metadata_type))
+                    def _check_isMRIparam(mri_param_type, mri_param):
+                        if mri_param_type not in mri_param:
+                            print("{} without {}, skipping.".format(subject, mri_param_type))
                             return False
                         else:
-                            if metadata_type == "Manufacturer":
-                                value = metadata[metadata_type]
+                            if mri_param_type == "Manufacturer":
+                                value = mri_param[mri_param_type]
                             else:
-                                if isinstance(metadata[metadata_type], (int, float)):
-                                    value = float(metadata[metadata_type])
+                                if isinstance(mri_param[mri_param_type], (int, float)):
+                                    value = float(mri_param[mri_param_type])
                                 else:  # eg multi-echo data have 3 echo times
-                                    value = np.mean([float(v) for v in metadata[metadata_type].split(',')])
+                                    value = np.mean([float(v) for v in mri_param[mri_param_type].split(',')])
 
-                            self.metadata[metadata_type].append(value)
+                            self.mri_param[mri_param_type].append(value)
                             return True
 
-                    if not all([_check_isMetadata(m, metadata) for m in self.metadata.keys()]):
+                    if not all([_check_isMRIparam(m, metadata) for m in self.metadata.keys()]):
                         continue
 
                 self.filename_pairs.append((subject.record.absolute_path,

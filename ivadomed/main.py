@@ -58,7 +58,7 @@ def cmd_train(context):
     mixup_alpha = float(context["mixup_alpha"])
     if not film_bool and mixup_bool:
         print('\twith Mixup (alpha={})\n'.format(mixup_alpha))
-    metadata_bool = bool(context["metadata"])
+    metadata_bool = False if context["metadata"] == "without" else True
     if context["metadata"] == "mri_params":
         print('\tInclude subjects with acquisition metadata available only.\n')
     else:
