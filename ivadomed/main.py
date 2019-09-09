@@ -286,8 +286,6 @@ def cmd_train(context):
 
         for i, batch in enumerate(val_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
-            if metadata_bool:
-                sample_metadata = batch["input_metadata"]
 
             with torch.no_grad():
                 if cuda_available:
@@ -298,6 +296,7 @@ def cmd_train(context):
                     var_gt = gt_samples
 
                 if film_bool:
+                    sample_metadata = batch["input_metadata"]
                     # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
                     var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
@@ -477,9 +476,7 @@ def cmd_test(context):
     metric_mgr = mt_metrics.MetricManager(metric_fns)
 
     for i, batch in enumerate(test_loader):
-        input_samples, gt_samples = batch["input"], batch["gt"]
-        if context["metadata"] != "without":
-            sample_metadata = batch["input_metadata"]
+        input_samples, gt_samples = batch["input"], batch["gt"]    
 
         with torch.no_grad():
             if cuda_available:
@@ -490,6 +487,7 @@ def cmd_test(context):
                 test_gt = gt_samples
 
             if film_bool:
+                sample_metadata = batch["input_metadata"]
                 test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
                 test_metadata = [one_hot_encoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
