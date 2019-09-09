@@ -166,7 +166,7 @@ def cmd_train(context):
         if context["loss"] == "cross_entropy":
             loss_fct = nn.BCELoss()
         elif context["loss"] == "focal":
-            loss_fct = losses.FocalLoss(gamma=0.3)
+            loss_fct = losses.FocalLoss(gamma=2)
     else:
         print("Unknown Loss function, please choose between 'dice' or 'cross_entropy'")
         exit()
@@ -359,7 +359,7 @@ def cmd_train(context):
         }, epoch)
 
         tqdm.write(f"Epoch {epoch} validation loss: {val_loss_total_avg:.4f}.")
-
+        tqdm.write(f"\tDice score: {metrics_dict['dice_score']:.4f}.")
         end_time = time.time()
         total_time = end_time - start_time
         tqdm.write("Epoch {} took {:.2f} seconds.".format(epoch, total_time))

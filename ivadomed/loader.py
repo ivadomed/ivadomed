@@ -18,7 +18,6 @@ MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
     def __init__(self, input_filename, gt_filename, metadata, contrast, cache=True, canonical=True):
-        print(input_filename)
         super().__init__(input_filename, gt_filename, canonical=canonical)
 
         self.metadata = metadata
