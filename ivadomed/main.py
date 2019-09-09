@@ -52,13 +52,13 @@ def cmd_train(context):
         print("Using GPU number {}".format(gpu_number))
 
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet or MixupUnet
-    film_bool = bool(sum(context["film_layers"]))
+    metadata_bool = False if context["metadata"] == "without" else True
+    film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
     print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
     if not film_bool and mixup_bool:
         print('\twith Mixup (alpha={})\n'.format(mixup_alpha))
-    metadata_bool = False if context["metadata"] == "without" else True
     if context["metadata"] == "mri_params":
         print('\tInclude subjects with acquisition metadata available only.\n')
     else:
@@ -214,9 +214,7 @@ def cmd_train(context):
                                             gt_samples.data.numpy()[random_idx,0,:,:],
                                             mixup_fname_pref)
 
-            # The variable sample_metadata is where the MRI phyisics parameters are
-            if metadata_bool:
-                sample_metadata = batch["input_metadata"]
+            # The variable sample_metadata is where the MRI physics parameters are
 
             if cuda_available:
                 var_input = input_samples.cuda()
@@ -227,6 +225,7 @@ def cmd_train(context):
 
             if film_bool:
                 # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
+                sample_metadata = batch["input_metadata"]
                 var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
                 var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
