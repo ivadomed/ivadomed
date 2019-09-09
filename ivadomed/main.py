@@ -54,6 +54,9 @@ def cmd_train(context):
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet or MixupUnet
     metadata_bool = False if context["metadata"] == "without" else True
     film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
+    if(bool(sum(context["film_layers"])) and not(metadata_bool)):
+        print('\tWarning FiLM disabled since metadata is disabled')
+
     print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
