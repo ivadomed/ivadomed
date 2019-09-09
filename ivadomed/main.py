@@ -476,7 +476,7 @@ def cmd_test(context):
 
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
-        if bool(context["metadata"]):
+        if context["metadata"] != "without":
             sample_metadata = batch["input_metadata"]
 
         with torch.no_grad():
