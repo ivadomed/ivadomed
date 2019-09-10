@@ -107,7 +107,7 @@ class BidsDataset(MRI2DBidsSegDataset):
                                 else:  # eg multi-echo data have 3 echo times
                                     value = np.mean([float(v) for v in mri_param[mri_param_type].split(',')])
 
-                            self.mri_param[mri_param_type].append(value)
+                            self.metadata[mri_param_type].append(value)
                             return True
 
                     if not all([_check_isMRIparam(m, metadata) for m in self.metadata.keys()]):
