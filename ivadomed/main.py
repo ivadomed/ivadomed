@@ -59,8 +59,8 @@ def cmd_train(context):
     mixup_alpha = float(context["mixup_alpha"])
     if not film_bool and mixup_bool:
         print('\twith Mixup (alpha={})\n'.format(mixup_alpha))
-    metadata_bool = bool(context["metadata_bool"])
-    if metadata_bool:
+    metadata_bool = False if context["metadata"] == "without" else True
+    if context["metadata"] == "mri_params":
         print('\tInclude subjects with acquisition metadata available only.\n')
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
@@ -97,14 +97,22 @@ def cmd_train(context):
                                   subject_lst=train_lst,
                                   gt_suffix=context["gt_suffix"],
                                   contrast_lst=context["contrast_train_validation"],
-                                  metadata_bool=metadata_bool,
+                                  metadata_choice=context["metadata"],
                                   contrast_balance=context["contrast_balance"],
                                   transform=train_transform,
                                   slice_filter_fn=SliceFilter())
 
     if film_bool:  # normalize metadata before sending to the network
-        metadata_clustering_models = loader.clustering_fit(ds_train.metadata, ["RepetitionTime", "EchoTime", "FlipAngle"])
-        ds_train, train_onehotencoder = loader.normalize_metadata(ds_train, metadata_clustering_models, context["debugging"], True)
+        if context["metadata"] == "mri_params":
+            metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
+            metadata_clustering_models = loader.clustering_fit(ds_train.metadata, metadata_vector)
+        else:
+            metadata_clustering_models = None
+        ds_train, train_onehotencoder = loader.normalize_metadata(ds_train,
+                                                                   metadata_clustering_models,
+                                                                   context["debugging"],
+                                                                   context["metadata"],
+                                                                   True)
 
     print(f"Loaded {len(ds_train)} axial slices for the training set.")
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
@@ -117,12 +125,16 @@ def cmd_train(context):
                                 subject_lst=valid_lst,
                                 gt_suffix=context["gt_suffix"],
                                 contrast_lst=context["contrast_train_validation"],
-                                metadata_bool=metadata_bool,
+                                metadata_choice=context["metadata"],
                                 transform=val_transform,
                                 slice_filter_fn=SliceFilter())
 
     if film_bool:  # normalize metadata before sending to network
-        ds_val = loader.normalize_metadata(ds_val, metadata_clustering_models, context["debugging"], False)
+        ds_val = loader.normalize_metadata(ds_val,
+                                            metadata_clustering_models,
+                                            context["debugging"],
+                                            context["metadata"],
+                                            False)
 
     print(f"Loaded {len(ds_val)} axial slices for the validation set.")
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
@@ -173,7 +185,6 @@ def cmd_train(context):
 
     # Training loop -----------------------------------------------------------
     best_validation_loss = float("inf")
-    bce_loss = nn.BCELoss()
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
         start_time = time.time()
 
@@ -183,7 +194,7 @@ def cmd_train(context):
         writer.add_scalar('learning_rate', lr, epoch)
 
         model.train()
-        train_loss_total = 0.0
+        train_loss_total, dice_train_loss_total = 0.0, 0.0
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
@@ -228,6 +239,8 @@ def cmd_train(context):
                 loss = mt_losses.dice_loss(preds, var_gt)
             else:
                 loss = loss_fct(preds, var_gt)
+                if context["loss"] == "focal":
+                    dice_train_loss_total += mt_losses.dice_loss(preds, var_gt).item()
             train_loss_total += loss.item()
 
             optimizer.zero_grad()
@@ -256,10 +269,13 @@ def cmd_train(context):
         train_loss_total_avg = train_loss_total / num_steps
 
         tqdm.write(f"Epoch {epoch} training loss: {train_loss_total_avg:.4f}.")
+        if context["loss"] == 'focal':
+            dice_train_loss_total_avg = dice_train_loss_total / num_steps
+            tqdm.write(f"\tDice training loss: {dice_train_loss_total_avg:.4f}.")
 
         # Validation loop -----------------------------------------------------
         model.eval()
-        val_loss_total = 0.0
+        val_loss_total, dice_val_loss_total = 0.0, 0.0
         num_steps = 0
 
         metric_fns = [mt_metrics.dice_score,
@@ -294,11 +310,12 @@ def cmd_train(context):
                 else:
                     preds = model(var_input)
 
-                # loss = mt_losses.dice_loss(preds, var_gt)
                 if context["loss"] == "dice":
                     loss = mt_losses.dice_loss(preds, var_gt)
                 else:
                     loss = loss_fct(preds, var_gt)
+                    if context["loss"] == "focal":
+                        dice_val_loss_total += mt_losses.dice_loss(preds, var_gt).item()
                 val_loss_total += loss.item()
 
             # Metrics computation
@@ -359,7 +376,10 @@ def cmd_train(context):
         }, epoch)
 
         tqdm.write(f"Epoch {epoch} validation loss: {val_loss_total_avg:.4f}.")
-        tqdm.write(f"\tDice score: {metrics_dict['dice_score']:.4f}.")
+        if context["loss"] == 'focal':
+            dice_val_loss_total_avg = dice_val_loss_total / num_steps
+            tqdm.write(f"\tDice validation loss: {dice_val_loss_total_avg:.4f}.")
+
         end_time = time.time()
         total_time = end_time - start_time
         tqdm.write("Epoch {} took {:.2f} seconds.".format(epoch, total_time))
@@ -410,7 +430,7 @@ def cmd_test(context):
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet
     film_bool = bool(sum(context["film_layers"]))
     print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
-    if bool(context["metadata_bool"]):
+    if context["metadata"] == "mri_params":
         print('\tInclude subjects with acquisition metadata available only.\n')
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
@@ -428,13 +448,17 @@ def cmd_test(context):
                                  subject_lst=test_lst,
                                  gt_suffix=context["gt_suffix"],
                                  contrast_lst=context["contrast_test"],
-                                 metadata_bool=bool(context["metadata_bool"]),
+                                 metadata_choice=context["metadata"],
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter())
 
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load("./"+context["log_directory"]+"/clustering_models.joblib")
-        ds_test = loader.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"], False)
+        ds_test = loader.normalize_metadata(ds_test,
+                                              metadata_clustering_models,
+                                              context["debugging"],
+                                              context["metadata"],
+                                              False)
 
         one_hot_encoder = joblib.load("./"+context["log_directory"]+"/one_hot_encoder.joblib")
 
@@ -462,7 +486,7 @@ def cmd_test(context):
 
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
-        if bool(context["metadata_bool"]):
+        if context["metadata"] != "without":
             sample_metadata = batch["input_metadata"]
 
         with torch.no_grad():

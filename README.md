@@ -50,10 +50,10 @@ Please find below a description of each parameter:
 - `loss`: choice between `'dice'`, `'focal'` and `'cross_entropy'`. Note: Please use `'cross_entropy'` when comparing `Unet` vs. `MixedUp-Unet`.
 - `log_directory`: folder name where log files are saved.
 - `film_layers`: indicates on which layer(s) of the U-net you want to apply a FiLM modulation: list of 8 elements (because Unet has 8 layers), set to 0 for no FiLM modulation, set 1 otherwise. Note: When running `Unet` or `MixedUp-Unet`, please fill this list with zeros only.
-- `mixup_bool`: indicates if mixup is applied to the training data (choice: false or true). Note: Please use 'false' when comparing `Unet` vs. `FiLMed-Unet`.
+- `mixup_bool`: indicates if mixup is applied to the training data (choice: `false` or `true`). Note: Please use `false` when comparing `Unet` vs. `FiLMed-Unet`.
 - `mixup_alpha`: alpha parameter of the Beta distribution (float).
-- `metadata_bool`: indicates if you want to include only images with TR, TE, FlipAngle, and Manufaturer available info ('true'), or if you want to include all available subjects ('false'). Note: Please use 'false' when comparing `Unet` vs. `MixedUp-Unet` ; use 'true' when comparing `Unet` vs. `FiLMed-Unet`.
-- 'debugging': allows extended verbosity and intermediate outputs (choice: false or true).
+- `metadata`: choice between `"without"`, `"mri_params"`, and `"contrast"`. If `"mri_params"`, then vectors of [FlipAngle, EchoTime, RepetitionTime, Manufacturer] are input to the FiLM generator. If `"contrast"`, then image contrasts (according to `config/contrast_dct.json`) are input to the FiLM generator. Note1: if `"mri_params"`, then only images with TR, TE, FlipAngle, and Manufaturer available info are included. Note2: please use '"without"' when comparing `Unet` vs. `MixedUp-Unet` ; otherwise compare `Unet` vs. `FiLMed-Unet`.
+- 'debugging': allows extended verbosity and intermediate outputs (choice: `false` or `true`).
 
 Please find below the original articles of methods we implemented in this project:
 - [U-net](https://arxiv.org/pdf/1505.04597.pdf)

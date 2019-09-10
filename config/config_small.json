@@ -5,7 +5,7 @@
 	"bids_path_train": "../duke/projects/ivado-medical-imaging/spineGeneric_201907041011/result/",
 	"random_seed": 1313,
 	"contrast_train_validation": ["T1w", "T2w", "T2star", "acq-MToff_MTS", "acq-MTon_MTS", "acq-T1w_MTS"],
-	"contrast_balance": {"T1w": 0.1},
+	"contrast_balance": {},
 	"contrast_test": ["T1w", "T2w", "T2star", "acq-MToff_MTS", "acq-MTon_MTS", "acq-T1w_MTS"],
 	"center_test": ["stanford", "amu", "queensland", "cardiff", "barcelona", "strasbourg", "perform", "milan", "geneva", "mni"],
 	"batch_size": 18,
@@ -18,6 +18,6 @@
 	"film_layers": [1, 0, 0, 0, 0, 0, 0, 0],
 	"mixup_bool": false,
 	"mixup_alpha": 2,
-	"metadata_bool": true,
+	"metadata": "contrast",
         "debugging": false
 }

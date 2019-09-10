@@ -8,13 +8,16 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 
 import numpy as np
+import json
 from glob import glob
 from copy import deepcopy
 from tqdm import tqdm
 import nibabel as nib
 
+with open("config/contrast_dct.json", "r") as fhandle:
+    GENERIC_CONTRAST = json.load(fhandle)
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
-
+CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2, "acq-MToff_MTS": 3, "acq-MTon_MTS": 4, "acq-T1w_MTS": 5}
 
 class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
     def __init__(self, input_filename, gt_filename, metadata, contrast, cache=True, canonical=True):
@@ -42,12 +45,13 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
 
 class BidsDataset(MRI2DBidsSegDataset):
     def __init__(self, root_dir, subject_lst, gt_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
-                 transform=None, metadata_bool=True, slice_filter_fn=None,
+                 transform=None, metadata_choice=False, slice_filter_fn=None,
                  canonical=True, labeled=True):
 
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
-        self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": [], "Manufacturer": []}
+        if metadata_choice == 'mri_params':
+            self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": [], "Manufacturer": []}
 
         # Selecting subjects from Training / Validation / Testing
         bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
@@ -60,7 +64,7 @@ class BidsDataset(MRI2DBidsSegDataset):
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
         tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast]) for contrast in contrast_balance.keys()}
         # Create a counter that helps to balance the contrasts
-        c = {contrast:0 for contrast in contrast_balance.keys()}
+        c = {contrast: 0 for contrast in contrast_balance.keys()}
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
@@ -89,24 +93,24 @@ class BidsDataset(MRI2DBidsSegDataset):
                     continue
 
                 metadata = subject.metadata()
-                if metadata_bool:
-                    def _check_isMetadata(metadata_type, metadata):
-                        if metadata_type not in metadata:
-                            print("{} without {}, skipping.".format(subject, metadata_type))
+                if metadata_choice == 'mri_params':
+                    def _check_isMRIparam(mri_param_type, mri_param):
+                        if mri_param_type not in mri_param:
+                            print("{} without {}, skipping.".format(subject, mri_param_type))
                             return False
                         else:
-                            if metadata_type == "Manufacturer":
-                                value = metadata[metadata_type]
+                            if mri_param_type == "Manufacturer":
+                                value = mri_param[mri_param_type]
                             else:
-                                if isinstance(metadata[metadata_type], (int, float)):
-                                    value = float(metadata[metadata_type])
+                                if isinstance(mri_param[mri_param_type], (int, float)):
+                                    value = float(mri_param[mri_param_type])
                                 else:  # eg multi-echo data have 3 echo times
-                                    value = np.mean([float(v) for v in metadata[metadata_type].split(',')])
+                                    value = np.mean([float(v) for v in mri_param[mri_param_type].split(',')])
 
-                            self.metadata[metadata_type].append(value)
+                            self.mri_param[mri_param_type].append(value)
                             return True
 
-                    if not all([_check_isMetadata(m, metadata) for m in self.metadata.keys()]):
+                    if not all([_check_isMRIparam(m, metadata) for m in self.metadata.keys()]):
                         continue
 
                 self.filename_pairs.append((subject.record.absolute_path,
@@ -184,12 +188,13 @@ def clustering_fit(dataset, key_lst):
 
         kde = Kde_model()
         kde.train(k_data, KDE_PARAM[k]['range'], KDE_PARAM[k]['gridsearch'])
+
         model_dct[k] = kde
 
     return model_dct
 
 
-def normalize_metadata(ds_in, clustering_models, debugging, train_set=False):
+def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train_set=False):
     if train_set:
         # Initialise One Hot Encoder
         ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
@@ -199,27 +204,31 @@ def normalize_metadata(ds_in, clustering_models, debugging, train_set=False):
     for idx, subject in enumerate(ds_in):
         s_out = deepcopy(subject)
 
-        # categorize flip angle, repetition time and echo time values using KDE
-        for m in ['FlipAngle', 'RepetitionTime', 'EchoTime']:
-            v = subject["input_metadata"]["bids_metadata"][m]
-            p = clustering_models[m].predict(v)
-            s_out["input_metadata"]["bids_metadata"][m] = p
-            if debugging:
-                print("{}: {} --> {}".format(m, v, p))
+        if metadata_type == 'mri_params':
+            # categorize flip angle, repetition time and echo time values using KDE
+            for m in ['FlipAngle', 'RepetitionTime', 'EchoTime']:
+                v = subject["input_metadata"]["bids_metadata"][m]
+                p = clustering_models[m].predict(v)
+                s_out["input_metadata"]["bids_metadata"][m] = p
+                if debugging:
+                    print("{}: {} --> {}".format(m, v, p))
 
-        # categorize manufacturer info based on the MANUFACTURER_CATEGORY dictionary
-        manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
-        if manufacturer in MANUFACTURER_CATEGORY:
-            s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
-            if debugging:
-                print("Manufacturer: {} --> {}".format(manufacturer, MANUFACTURER_CATEGORY[manufacturer]))
+            # categorize manufacturer info based on the MANUFACTURER_CATEGORY dictionary
+            manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
+            if manufacturer in MANUFACTURER_CATEGORY:
+                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
+                if debugging:
+                    print("Manufacturer: {} --> {}".format(manufacturer, MANUFACTURER_CATEGORY[manufacturer]))
+            else:
+                print("{} with unknown manufacturer.".format(subject))
+                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
+
+            s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in
+                                                        ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
         else:
-            print("{} with unknown manufacturer.".format(subject))
-            s_out["input_metadata"]["bids_metadata"][
-                "Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
-
-        s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in
-                                                    ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
+            generic_contrast = GENERIC_CONTRAST[subject["input_metadata"]["bids_metadata"]["contrast"]]
+            label_contrast = CONTRAST_CATEGORY[generic_contrast]
+            s_out["input_metadata"]["bids_metadata"] = [label_contrast]
 
         s_out["input_metadata"]["contrast"] = subject["input_metadata"]["bids_metadata"]["contrast"]
 
