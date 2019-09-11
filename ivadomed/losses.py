@@ -32,10 +32,9 @@ class GeneralizedDiceLoss(nn.Module):
     Generalized Dice Loss: https://arxiv.org/pdf/1707.03237
     """
 
-    def __init__(self, epsilon=1e-5, weight=None, ignore_index=None):
+    def __init__(self, epsilon=1e-3):
         super(GeneralizedDiceLoss, self).__init__()
         self.epsilon = epsilon
-        self.ignore_index = ignore_index
 
     def forward(self, input, target):
         if not (target.size() == input.size()):

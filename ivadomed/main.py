@@ -174,17 +174,20 @@ def cmd_train(context):
     var_contrast_list = []
 
     # Loss
-    if context["loss"]["name"] in ["dice", "cross_entropy", "focal"]:
+    if context["loss"]["name"] in ["dice", "cross_entropy", "focal", "gdl"]:
         if context["loss"]["name"] == "cross_entropy":
             loss_fct = nn.BCELoss()
-            print("Loss function: {}.".format(context["loss"]["name"]))
         elif context["loss"]["name"] == "focal":
             loss_fct = losses.FocalLoss(gamma=context["loss"]["params"]["gamma"])
             print("Loss function: {}, with gamma={}.".format(context["loss"]["name"], context["loss"]["params"]["gamma"]))
-        else:
+        elif context["loss"]["name"] == "gdl":
+            loss_fct = losses.GeneralizedDiceLoss()
+
+        if context["loss"]["name"] != "focal":
             print("Loss function: {}.".format(context["loss"]["name"]))
+
     else:
-        print("Unknown Loss function, please choose between 'dice', 'focal' or 'cross_entropy'")
+        print("Unknown Loss function, please choose between 'dice', 'focal', 'gdl' or 'cross_entropy'")
         exit()
 
     # Training loop -----------------------------------------------------------
@@ -243,8 +246,8 @@ def cmd_train(context):
                 loss = mt_losses.dice_loss(preds, var_gt)
             else:
                 loss = loss_fct(preds, var_gt)
-                if context["loss"]["name"] == "focal":
-                    dice_train_loss_total += mt_losses.dice_loss(preds, var_gt).item()
+                # To compare the new loss with the Dice Loss
+                dice_train_loss_total += mt_losses.dice_loss(preds, var_gt).item()  # Note: we may have an error here when using mixup. We need to implement a Dice loss which allows probabilistic GT.
             train_loss_total += loss.item()
 
             optimizer.zero_grad()
@@ -273,7 +276,7 @@ def cmd_train(context):
         train_loss_total_avg = train_loss_total / num_steps
 
         tqdm.write(f"Epoch {epoch} training loss: {train_loss_total_avg:.4f}.")
-        if context["loss"]["name"] == 'focal':
+        if context["loss"]["name"] != 'dice':
             dice_train_loss_total_avg = dice_train_loss_total / num_steps
             tqdm.write(f"\tDice training loss: {dice_train_loss_total_avg:.4f}.")
 
@@ -318,8 +321,7 @@ def cmd_train(context):
                     loss = mt_losses.dice_loss(preds, var_gt)
                 else:
                     loss = loss_fct(preds, var_gt)
-                    if context["loss"]["name"] == "focal":
-                        dice_val_loss_total += mt_losses.dice_loss(preds, var_gt).item()
+                    dice_val_loss_total += mt_losses.dice_loss(preds, var_gt).item()
                 val_loss_total += loss.item()
 
             # Metrics computation
@@ -380,7 +382,7 @@ def cmd_train(context):
         }, epoch)
 
         tqdm.write(f"Epoch {epoch} validation loss: {val_loss_total_avg:.4f}.")
-        if context["loss"]["name"] == 'focal':
+        if context["loss"]["name"] != 'dice':
             dice_val_loss_total_avg = dice_val_loss_total / num_steps
             tqdm.write(f"\tDice validation loss: {dice_val_loss_total_avg:.4f}.")
 
