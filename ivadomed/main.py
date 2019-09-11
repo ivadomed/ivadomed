@@ -4,7 +4,7 @@ import os
 import time
 import shutil
 import random
-from sklearn.externals import joblib
+import joblib
 
 import torch
 import torch.nn as nn
@@ -402,6 +402,7 @@ def cmd_train(context):
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
     joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
 
+    writer.close()
     return
 
 
@@ -476,7 +477,7 @@ def cmd_test(context):
     metric_mgr = mt_metrics.MetricManager(metric_fns)
 
     for i, batch in enumerate(test_loader):
-        input_samples, gt_samples = batch["input"], batch["gt"]    
+        input_samples, gt_samples = batch["input"], batch["gt"]
 
         with torch.no_grad():
             if cuda_available:
