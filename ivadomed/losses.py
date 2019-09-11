@@ -2,7 +2,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class FocalLoss(nn.Module):
+    """
+    Focal Loss: https://arxiv.org/abs/1708.02002
+    """
+
     def __init__(self, gamma):
         super().__init__()
         self.gamma = gamma
@@ -20,3 +25,33 @@ class FocalLoss(nn.Module):
 
         # Note: works in log space to be numerically stable (ie to avoid NaNs when training).
         return loss.mean()
+
+
+class GeneralizedDiceLoss(nn.Module):
+    """
+    Generalized Dice Loss: https://arxiv.org/pdf/1707.03237
+    """
+
+    def __init__(self, epsilon=1e-5, weight=None, ignore_index=None):
+        super(GeneralizedDiceLoss, self).__init__()
+        self.epsilon = epsilon
+        self.ignore_index = ignore_index
+
+    def forward(self, input, target):
+        if not (target.size() == input.size()):
+            raise ValueError("Target size ({}) must be the same as input size ({})".format(target.size(), input.size()))
+
+        input = input.view(-1)
+        target = target.view(-1)
+
+        target = target.float()
+        target_sum = target.sum(-1)
+        class_weights = nn.Parameter(1. / (target_sum * target_sum).clamp(min=self.epsilon))
+
+        intersect = (input * target).sum(-1) * class_weights
+        intersect = intersect.sum()
+
+        denominator = ((input + target).sum(-1) * class_weights).sum()
+
+        return 1. - 2. * intersect / denominator.clamp(min=self.epsilon)
+
