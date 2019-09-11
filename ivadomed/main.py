@@ -189,8 +189,6 @@ def cmd_train(context):
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
         start_time = time.time()
 
-        scheduler.step()
-
         lr = scheduler.get_lr()[0]
         writer.add_scalar('learning_rate', lr, epoch)
 
@@ -246,6 +244,7 @@ def cmd_train(context):
             loss.backward()
 
             optimizer.step()
+            scheduler.step()
             num_steps += 1
 
             # Only write sample at the first step
