@@ -4,7 +4,7 @@ import os
 import time
 import shutil
 import random
-from sklearn.externals import joblib
+import joblib
 
 import torch
 import torch.nn as nn
@@ -189,8 +189,6 @@ def cmd_train(context):
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
         start_time = time.time()
 
-        scheduler.step()
-
         lr = scheduler.get_lr()[0]
         writer.add_scalar('learning_rate', lr, epoch)
 
@@ -246,6 +244,7 @@ def cmd_train(context):
             loss.backward()
 
             optimizer.step()
+            scheduler.step()
             num_steps += 1
 
             # Only write sample at the first step
@@ -402,6 +401,7 @@ def cmd_train(context):
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
     joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
 
+    writer.close()
     return
 
 
@@ -476,7 +476,7 @@ def cmd_test(context):
     metric_mgr = mt_metrics.MetricManager(metric_fns)
 
     for i, batch in enumerate(test_loader):
-        input_samples, gt_samples = batch["input"], batch["gt"]    
+        input_samples, gt_samples = batch["input"], batch["gt"]
 
         with torch.no_grad():
             if cuda_available:

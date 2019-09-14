@@ -36,7 +36,7 @@ The `config.json` is a configuration example.
 Please find below a description of each parameter:
 - `command`: run the specified command (choice: "train", "test").
 - `gpu`: ID of the used GPU.
-- `gt_suffix`: suffix of the derivative file containing the ground-truth of interest (e.g. "_seg-manual", "_lesin-manual").
+- `gt_suffix`: suffix of the derivative file containing the ground-truth of interest (e.g. "_seg-manual", "_lesion-manual").
 - `bids_path`: relative path of the BIDS folder.
 - `random_seed`: seed used by the random number generator to split the dataset between training/validation/testing.
 - `contrast_train_validation`: list of image modalities included in the training and validation datasets.
@@ -96,7 +96,7 @@ The working dataset are:
 1. derived from the [Spinal Cord MRI Public Database](https://openneuro.org/datasets/ds001919).
 2. the spinal cord grey matter segmentation [challenge dataset](https://www.sciencedirect.com/science/article/pii/S1053811917302185#s0050).
 3. private multi-center dataset (`duke/sct_testing/large`).
- 
+
 The data structure is compatible with [BIDS](http://bids.neuroimaging.io/) and is exemplified below:
 ~~~
 bids_folder/
