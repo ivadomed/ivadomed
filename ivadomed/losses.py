@@ -38,11 +38,26 @@ class FocalLoss(nn.Module):
         return loss.mean()
 
 
+class MixedLoss(nn.Module):
+    """
+    Motivated by https://arxiv.org/pdf/1809.00076.pdf
+    :param alpha: to bring the dice and focal losses at similar scale.
+    :param gamma: gamma value used in the focal loss.
+    """
+    def __init__(self, alpha, gamma):
+        super().__init__()
+        self.alpha = alpha
+        self.focal = FocalLoss(gamma)
+
+    def forward(self, input, target):
+        loss = self.alpha * self.focal(input, target) - torch.log(dice_loss(input, target))
+        return loss.mean()
+
+
 class GeneralizedDiceLoss(nn.Module):
     """
     Generalized Dice Loss: https://arxiv.org/pdf/1707.03237
     """
-
     def __init__(self, epsilon=1e-5):
         super(GeneralizedDiceLoss, self).__init__()
         self.epsilon = epsilon
