@@ -16,7 +16,6 @@ from torch import optim
 
 from medicaltorch import transforms as mt_transforms
 from medicaltorch import datasets as mt_datasets
-from medicaltorch import losses as mt_losses
 from medicaltorch import filters as mt_filters
 from medicaltorch import metrics as mt_metrics
 
@@ -243,11 +242,11 @@ def cmd_train(context):
                 preds = model(var_input)
 
             if context["loss"]["name"] == "dice":
-                loss = mt_losses.dice_loss(preds, var_gt)
+                loss = losses.dice_loss(preds, var_gt)
             else:
                 loss = loss_fct(preds, var_gt)
                 # To compare the new loss with the Dice Loss
-                dice_train_loss_total += mt_losses.dice_loss(preds, var_gt).item()  # Note: we may have an error here when using mixup. We need to implement a Dice loss which allows probabilistic GT.
+                dice_train_loss_total += losses.dice_loss(preds, var_gt).item()  # Note: we may have an error here when using mixup. We need to implement a Dice loss which allows probabilistic GT.
             train_loss_total += loss.item()
 
             optimizer.zero_grad()
@@ -318,10 +317,10 @@ def cmd_train(context):
                     preds = model(var_input)
 
                 if context["loss"]["name"] == "dice":
-                    loss = mt_losses.dice_loss(preds, var_gt)
+                    loss = losses.dice_loss(preds, var_gt)
                 else:
                     loss = loss_fct(preds, var_gt)
-                    dice_val_loss_total += mt_losses.dice_loss(preds, var_gt).item()
+                    dice_val_loss_total += losses.dice_loss(preds, var_gt).item()
                 val_loss_total += loss.item()
 
             # Metrics computation
