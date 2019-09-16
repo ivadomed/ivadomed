@@ -38,7 +38,7 @@ class FocalLoss(nn.Module):
         return loss.mean()
 
 
-class MixedLoss(nn.Module):
+class FocalDiceLoss(nn.Module):
     """
     Motivated by https://arxiv.org/pdf/1809.00076.pdf
     :param alpha: to bring the dice and focal losses at similar scale.
