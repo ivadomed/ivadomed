@@ -3,6 +3,17 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+def dice_loss(input, target):
+    # input = torch.sigmoid(input)
+    smooth = 1.0
+
+    iflat = input.view(-1)
+    tflat = target.view(-1)
+    intersection = (iflat * tflat).sum()
+
+    return ((2.0 * intersection + smooth) / (iflat.sum() + tflat.sum() + smooth))
+
+
 class FocalLoss(nn.Module):
     """
     Focal Loss: https://arxiv.org/abs/1708.02002
@@ -32,7 +43,7 @@ class GeneralizedDiceLoss(nn.Module):
     Generalized Dice Loss: https://arxiv.org/pdf/1707.03237
     """
 
-    def __init__(self, epsilon=1e-3):
+    def __init__(self, epsilon=1e-5):
         super(GeneralizedDiceLoss, self).__init__()
         self.epsilon = epsilon
 
