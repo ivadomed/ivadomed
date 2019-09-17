@@ -249,10 +249,11 @@ def cmd_train(context):
                 loss = losses.dice_loss(preds, var_gt)
             else:
                 loss = loss_fct(preds, var_gt)
-                # To compare the new loss with the Dice Loss
-                dice_train_loss_total += losses.dice_loss(preds, var_gt).item()  # Note: we may have an error here when using mixup. We need to implement a Dice loss which allows probabilistic GT.
                 if context["loss"]["name"] == "focal_dice":
-                    focal_train_loss_total += focal_loss_fct(preds, var_gt)
+                    focal_train_loss_total += focal_loss_fct(preds, var_gt).item()
+                    dice_train_loss_total += torch.log(losses.dice_loss(preds, var_gt)).item()
+                else:
+                    dice_train_loss_total += losses.dice_loss(preds, var_gt).item()
             train_loss_total += loss.item()
 
             optimizer.zero_grad()
@@ -282,12 +283,14 @@ def cmd_train(context):
         train_loss_total_avg = train_loss_total / num_steps
 
         tqdm.write(f"Epoch {epoch} training loss: {train_loss_total_avg:.4f}.")
-        if context["loss"]["name"] != 'dice':
-            dice_train_loss_total_avg = dice_train_loss_total / num_steps
-            tqdm.write(f"\tDice training loss: {dice_train_loss_total_avg:.4f}.")
         if context["loss"]["name"] == 'focal_dice':
             focal_train_loss_total_avg = focal_train_loss_total / num_steps
+            dice_train_loss_total_avg = dice_train_loss_total / num_steps
             tqdm.write(f"\tFocal training loss: {focal_train_loss_total_avg:.4f}.")
+            tqdm.write(f"\tLog Dice training loss: {dice_train_loss_total_avg:.4f}.")
+        elif context["loss"]["name"] != 'dice':
+            dice_train_loss_total_avg = dice_train_loss_total / num_steps
+            tqdm.write(f"\tDice training loss: {dice_train_loss_total_avg:.4f}.")
 
         # Validation loop -----------------------------------------------------
         model.eval()
@@ -329,10 +332,11 @@ def cmd_train(context):
                     loss = losses.dice_loss(preds, var_gt)
                 else:
                     loss = loss_fct(preds, var_gt)
-                    dice_val_loss_total += losses.dice_loss(preds, var_gt).item()
                     if context["loss"]["name"] == "focal_dice":
-                        focal_val_loss_total += focal_loss_fct(preds, var_gt)
-
+                        focal_val_loss_total += focal_loss_fct(preds, var_gt).item()
+                        dice_val_loss_total += torch.log(losses.dice_loss(preds, var_gt)).item()
+                    else:
+                        dice_val_loss_total += losses.dice_loss(preds, var_gt).item()
                 val_loss_total += loss.item()
 
             # Metrics computation
@@ -393,12 +397,14 @@ def cmd_train(context):
         }, epoch)
 
         tqdm.write(f"Epoch {epoch} validation loss: {val_loss_total_avg:.4f}.")
-        if context["loss"]["name"] != 'dice':
-            dice_val_loss_total_avg = dice_val_loss_total / num_steps
-            tqdm.write(f"\tDice validation loss: {dice_val_loss_total_avg:.4f}.")
         if context["loss"]["name"] == 'focal_dice':
             focal_val_loss_total_avg = focal_val_loss_total / num_steps
+            dice_val_loss_total_avg = dice_val_loss_total / num_steps
             tqdm.write(f"\tFocal validation loss: {focal_val_loss_total_avg:.4f}.")
+            tqdm.write(f"\tLog Dice validation loss: {dice_val_loss_total_avg:.4f}.")
+        elif context["loss"]["name"] != 'dice':
+            dice_val_loss_total_avg = dice_val_loss_total / num_steps
+            tqdm.write(f"\tDice validation loss: {dice_val_loss_total_avg:.4f}.")
 
         end_time = time.time()
         total_time = end_time - start_time
