@@ -246,7 +246,7 @@ def cmd_train(context):
                 preds = model(var_input)
 
             if context["loss"]["name"] == "dice":
-                loss = losses.dice_loss(preds, var_gt)
+                loss = - losses.dice_loss(preds, var_gt)
             else:
                 loss = loss_fct(preds, var_gt)
                 if context["loss"]["name"] == "focal_dice":
@@ -297,7 +297,7 @@ def cmd_train(context):
         val_loss_total, dice_val_loss_total, focal_val_loss_total = 0.0, 0.0, 0.0
         num_steps = 0
 
-        metric_fns = [mt_metrics.dice_score,
+        metric_fns = [dice_score,  # from ivadomed/utils.py
                       mt_metrics.hausdorff_score,
                       mt_metrics.precision_score,
                       mt_metrics.recall_score,
@@ -329,7 +329,7 @@ def cmd_train(context):
                     preds = model(var_input)
 
                 if context["loss"]["name"] == "dice":
-                    loss = losses.dice_loss(preds, var_gt)
+                    loss = - losses.dice_loss(preds, var_gt)
                 else:
                     loss = loss_fct(preds, var_gt)
                     if context["loss"]["name"] == "focal_dice":
@@ -396,6 +396,7 @@ def cmd_train(context):
             'val_loss': val_loss_total_avg,
         }, epoch)
 
+        print(metrics_dict)
         tqdm.write(f"Epoch {epoch} validation loss: {val_loss_total_avg:.4f}.")
         if context["loss"]["name"] == 'focal_dice':
             focal_val_loss_total_avg = focal_val_loss_total / num_steps
@@ -501,8 +502,8 @@ def cmd_test(context):
         model.cuda()
     model.eval()
 
-    metric_fns = [mt_metrics.dice_score,
-                  # mt_metrics.hausdorff_score,
+    metric_fns = [dice_score,  # from ivadomed/utils.py
+                  mt_metrics.hausdorff_score,
                   mt_metrics.precision_score,
                   mt_metrics.recall_score,
                   mt_metrics.specificity_score,
