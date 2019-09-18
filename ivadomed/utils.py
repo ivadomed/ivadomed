@@ -21,7 +21,7 @@ def dice_score(im1, im2, eps=1.0):
     im_sum = im1.sum() + im2.sum() + eps
 
     intersection = np.logical_and(im1, im2)
-    return 2. * intersection.sum() / im_sum
+    return (2. * intersection.sum() + eps)/ im_sum
 
 
 def mixup(data, targets, alpha):
