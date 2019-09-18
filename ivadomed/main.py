@@ -542,7 +542,9 @@ def cmd_test(context):
         preds_npy = preds.data.cpu().numpy()
         preds_npy = threshold_predictions(preds_npy)
         preds_npy = preds_npy.astype(np.uint8)
+        preds_npy = preds_npy.squeeze(axis=1)
 
+        
         metric_mgr(preds_npy, gt_npy)
 
     metrics_dict = metric_mgr.get_results()
