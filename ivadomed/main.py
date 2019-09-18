@@ -5,6 +5,8 @@ import time
 import shutil
 import random
 import joblib
+from math import exp
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -27,8 +29,6 @@ from ivadomed import loader as loader
 from ivadomed import models
 from ivadomed import losses
 from ivadomed.utils import *
-
-import numpy as np
 
 cudnn.benchmark = True
 
@@ -285,9 +285,11 @@ def cmd_train(context):
         tqdm.write(f"Epoch {epoch} training loss: {train_loss_total_avg:.4f}.")
         if context["loss"]["name"] == 'focal_dice':
             focal_train_loss_total_avg = focal_train_loss_total / num_steps
-            dice_train_loss_total_avg = dice_train_loss_total / num_steps
+            log_dice_train_loss_total_avg = dice_train_loss_total / num_steps
+            dice_train_loss_total_avg = exp(log_dice_train_loss_total_avg)
             tqdm.write(f"\tFocal training loss: {focal_train_loss_total_avg:.4f}.")
-            tqdm.write(f"\tLog Dice training loss: {dice_train_loss_total_avg:.4f}.")
+            tqdm.write(f"\tLog Dice training loss: {log_dice_train_loss_total_avg:.4f}.")
+            tqdm.write(f"\tDice training loss: {dice_train_loss_total_avg:.4f}.")
         elif context["loss"]["name"] != 'dice':
             dice_train_loss_total_avg = dice_train_loss_total / num_steps
             tqdm.write(f"\tDice training loss: {dice_train_loss_total_avg:.4f}.")
@@ -396,13 +398,14 @@ def cmd_train(context):
             'val_loss': val_loss_total_avg,
         }, epoch)
 
-        print(metrics_dict)
         tqdm.write(f"Epoch {epoch} validation loss: {val_loss_total_avg:.4f}.")
         if context["loss"]["name"] == 'focal_dice':
             focal_val_loss_total_avg = focal_val_loss_total / num_steps
-            dice_val_loss_total_avg = dice_val_loss_total / num_steps
+            log_dice_val_loss_total_avg = dice_val_loss_total / num_steps
+            dice_val_loss_total_avg = exp(log_dice_val_loss_total_avg)
             tqdm.write(f"\tFocal validation loss: {focal_val_loss_total_avg:.4f}.")
-            tqdm.write(f"\tLog Dice validation loss: {dice_val_loss_total_avg:.4f}.")
+            tqdm.write(f"\tLog Dice validation loss: {log_dice_val_loss_total_avg:.4f}.")
+            tqdm.write(f"\tDice validation loss: {dice_val_loss_total_avg:.4f}.")
         elif context["loss"]["name"] != 'dice':
             dice_val_loss_total_avg = dice_val_loss_total / num_steps
             tqdm.write(f"\tDice validation loss: {dice_val_loss_total_avg:.4f}.")
