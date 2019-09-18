@@ -13,11 +13,11 @@
 	"batch_norm_momentum": 0.1,
 	"num_epochs": 100,
 	"initial_lr": 0.001,
-        "loss": {"name": "focal_dice", "params": {"gamma": 1, "alpha": 10}},
+        "loss": {"name": "dice"},
 	"log_directory": "log_sc_small",
 	"film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
-	"mixup_bool": false,
+	"mixup_bool": true,
 	"mixup_alpha": 2,
-	"metadata": "contrast",
+	"metadata": "without",
         "debugging": false
 }
