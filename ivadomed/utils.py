@@ -7,6 +7,23 @@ import matplotlib.pyplot as plt
 from medicaltorch import filters as mt_filters
 from medicaltorch import transforms as mt_transforms
 
+
+def dice_score(im1, im2, eps=1.0):
+    """
+    Computes the Dice coefficient between im1 and im2.
+    """
+    im1 = np.asarray(im1).astype(np.bool)
+    im2 = np.asarray(im2).astype(np.bool)
+
+    if im1.shape != im2.shape:
+        raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
+
+    im_sum = im1.sum() + im2.sum() + eps
+
+    intersection = np.logical_and(im1, im2)
+    return 2. * intersection.sum() / im_sum
+
+
 def mixup(data, targets, alpha):
     """Compute the mixup data.
     Return mixed inputs and targets, lambda.
