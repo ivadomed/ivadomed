@@ -8,7 +8,7 @@ from medicaltorch import filters as mt_filters
 from medicaltorch import transforms as mt_transforms
 
 
-def dice_score(im1, im2, eps=1.0):
+def dice_score(im1, im2):
     """
     Computes the Dice coefficient between im1 and im2.
     """
@@ -18,10 +18,12 @@ def dice_score(im1, im2, eps=1.0):
     if im1.shape != im2.shape:
         raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
 
-    im_sum = im1.sum() + im2.sum() + eps
+    im_sum = im1.sum() + im2.sum()
+    if im_sum == 0:
+        return None
 
     intersection = np.logical_and(im1, im2)
-    return (2. * intersection.sum() + eps)/ im_sum
+    return (2. * intersection.sum())/ im_sum
 
 
 def mixup(data, targets, alpha):
