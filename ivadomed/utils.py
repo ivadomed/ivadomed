@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image
 from torchvision import transforms
 import matplotlib.pyplot as plt
+from collections import defaultdict
 
 from medicaltorch import filters as mt_filters
 from medicaltorch import transforms as mt_transforms
@@ -10,6 +11,19 @@ from medicaltorch import metrics as mt_metrics
 
 
 class IvadoMetricManager(mt_metrics.MetricManager):
+    def __init__(self, metric_fns):
+        super().__init__(metric_fns)
+
+        self.result_dict = defaultdict(list)
+
+    def __call__(self, prediction, ground_truth):
+        self.num_samples += len(prediction)
+        for metric_fn in self.metric_fns:
+            for p, gt in zip(prediction, ground_truth):
+                res = metric_fn(p, gt)
+                dict_key = metric_fn.__name__
+                self.result_dict[dict_key].append(res)
+
     def get_results(self):
         res_dict = {}
         for key, val in self.result_dict.items():
