@@ -307,7 +307,7 @@ def cmd_train(context):
                       mt_metrics.intersection_over_union,
                       mt_metrics.accuracy_score]
 
-        metric_mgr = mt_metrics.MetricManager(metric_fns)
+        metric_mgr = IvadoMetricManager(metric_fns)
 
         for i, batch in enumerate(val_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
@@ -513,7 +513,7 @@ def cmd_test(context):
                   mt_metrics.intersection_over_union,
                   mt_metrics.accuracy_score]
 
-    metric_mgr = mt_metrics.MetricManager(metric_fns)
+    metric_mgr = IvadoMetricManager(metric_fns)
 
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
@@ -544,7 +544,6 @@ def cmd_test(context):
         preds_npy = preds_npy.astype(np.uint8)
         preds_npy = preds_npy.squeeze(axis=1)
 
-        
         metric_mgr(preds_npy, gt_npy)
 
     metrics_dict = metric_mgr.get_results()
