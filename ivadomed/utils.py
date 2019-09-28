@@ -6,6 +6,15 @@ import matplotlib.pyplot as plt
 
 from medicaltorch import filters as mt_filters
 from medicaltorch import transforms as mt_transforms
+from medicaltorch import metrics as mt_metrics
+
+
+class IvadoMetricManager(mt_metrics.MetricManager):
+    def get_results(self):
+        res_dict = {}
+        for key, val in self.result_dict.items():
+            res_dict[key] = np.nanmean(val)
+        return res_dict
 
 
 def dice_score(im1, im2):
@@ -20,7 +29,7 @@ def dice_score(im1, im2):
 
     im_sum = im1.sum() + im2.sum()
     if im_sum == 0:
-        return None
+        return np.nan
 
     intersection = np.logical_and(im1, im2)
     return (2. * intersection.sum())/ im_sum
