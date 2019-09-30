@@ -47,7 +47,7 @@ Please find below a description of each parameter:
 - `batch_norm_momentum`: float (e.g. 0.1).
 - `num_epochs`: int.
 - `initial_lr`: initial learning rate.
-- `loss`: choice between 'dice' and 'cross_entropy'. Note: Please use 'cross_entropy' when comparing `Unet` vs. `MixedUp-Unet`.
+- `loss`: dictionary with a key `'name'` for the choice between `'dice'`, `'focal'`, `'focal_dice'`, `'gdl'` and `'cross_entropy'` and a (optional) key `'params'` (e.g.`{"name": "focal", "params": {"gamma": 0.5}}`.
 - `log_directory`: folder name where log files are saved.
 - `film_layers`: indicates on which layer(s) of the U-net you want to apply a FiLM modulation: list of 8 elements (because Unet has 8 layers), set to 0 for no FiLM modulation, set 1 otherwise. Note: When running `Unet` or `MixedUp-Unet`, please fill this list with zeros only.
 - `mixup_bool`: indicates if mixup is applied to the training data (choice: `false` or `true`). Note: Please use `false` when comparing `Unet` vs. `FiLMed-Unet`.

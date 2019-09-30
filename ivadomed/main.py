@@ -5,6 +5,8 @@ import time
 import shutil
 import random
 import joblib
+from math import exp
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -16,7 +18,6 @@ from torch import optim
 
 from medicaltorch import transforms as mt_transforms
 from medicaltorch import datasets as mt_datasets
-from medicaltorch import losses as mt_losses
 from medicaltorch import filters as mt_filters
 from medicaltorch import metrics as mt_metrics
 
@@ -26,9 +27,8 @@ from tqdm import tqdm
 
 from ivadomed import loader as loader
 from ivadomed import models
+from ivadomed import losses
 from ivadomed.utils import *
-
-import numpy as np
 
 cudnn.benchmark = True
 
@@ -176,16 +176,28 @@ def cmd_train(context):
     var_contrast_list = []
 
     # Loss
-    if context["loss"] in ["dice", "cross_entropy"]:
-        if context["loss"] == "cross_entropy":
+    if context["loss"]["name"] in ["dice", "cross_entropy", "focal", "gdl", "focal_dice"]:
+        if context["loss"]["name"] == "cross_entropy":
             loss_fct = nn.BCELoss()
+        elif context["loss"]["name"] == "focal":
+            loss_fct = losses.FocalLoss(gamma=context["loss"]["params"]["gamma"])
+            print("\nLoss function: {}, with gamma={}.\n".format(context["loss"]["name"], context["loss"]["params"]["gamma"]))
+        elif context["loss"]["name"] == "gdl":
+            loss_fct = losses.GeneralizedDiceLoss()
+        elif context["loss"]["name"] == "focal_dice":
+            loss_fct = losses.FocalDiceLoss(gamma=context["loss"]["params"]["gamma"], alpha=context["loss"]["params"]["alpha"])
+            print("\nLoss function: {}, with gamma={} and alpha={}.\n".format(context["loss"]["name"], context["loss"]["params"]["gamma"], context["loss"]["params"]["alpha"]))
+            focal_loss_fct = losses.FocalLoss(gamma=context["loss"]["params"]["gamma"]) # for tuning alpha
+
+        if not context["loss"]["name"].startswith("focal"):
+            print("\nLoss function: {}.\n".format(context["loss"]["name"]))
+
     else:
-        print("Unknown Loss function, please choose between 'dice' or 'cross_entropy'")
+        print("Unknown Loss function, please choose between 'dice', 'focal', 'focal_dice', 'gdl' or 'cross_entropy'")
         exit()
 
     # Training loop -----------------------------------------------------------
     best_validation_loss = float("inf")
-    bce_loss = nn.BCELoss()
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
         start_time = time.time()
 
@@ -193,7 +205,7 @@ def cmd_train(context):
         writer.add_scalar('learning_rate', lr, epoch)
 
         model.train()
-        train_loss_total = 0.0
+        train_loss_total, dice_train_loss_total, focal_train_loss_total = 0.0, 0.0, 0.0
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
@@ -207,7 +219,6 @@ def cmd_train(context):
                     mixup_folder = os.path.join(context["log_directory"], 'mixup')
                     if not os.path.isdir(mixup_folder):
                         os.makedirs(mixup_folder)
-                    print(lambda_tensor.data.numpy()[0])
                     random_idx = np.random.randint(0, input_samples.size()[0])
                     val_gt = np.unique(gt_samples.data.numpy()[random_idx,0,:,:])
                     mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3)+'_'+str(lambda_tensor.data.numpy()[0])+'_'+str(random_idx).zfill(3)+'.png')
@@ -234,10 +245,15 @@ def cmd_train(context):
             else:
                 preds = model(var_input)
 
-            if context["loss"] == "dice":
-                loss = mt_losses.dice_loss(preds, var_gt)
+            if context["loss"]["name"] == "dice":
+                loss = - losses.dice_loss(preds, var_gt)
             else:
                 loss = loss_fct(preds, var_gt)
+                if context["loss"]["name"] == "focal_dice":
+                    focal_train_loss_total += focal_loss_fct(preds, var_gt).item()
+                    dice_train_loss_total += torch.log(losses.dice_loss(preds, var_gt)).item()
+                else:
+                    dice_train_loss_total += losses.dice_loss(preds, var_gt).item()
             train_loss_total += loss.item()
 
             optimizer.zero_grad()
@@ -267,13 +283,23 @@ def cmd_train(context):
         train_loss_total_avg = train_loss_total / num_steps
 
         tqdm.write(f"Epoch {epoch} training loss: {train_loss_total_avg:.4f}.")
+        if context["loss"]["name"] == 'focal_dice':
+            focal_train_loss_total_avg = focal_train_loss_total / num_steps
+            log_dice_train_loss_total_avg = dice_train_loss_total / num_steps
+            dice_train_loss_total_avg = exp(log_dice_train_loss_total_avg)
+            tqdm.write(f"\tFocal training loss: {focal_train_loss_total_avg:.4f}.")
+            tqdm.write(f"\tLog Dice training loss: {log_dice_train_loss_total_avg:.4f}.")
+            tqdm.write(f"\tDice training loss: {dice_train_loss_total_avg:.4f}.")
+        elif context["loss"]["name"] != 'dice':
+            dice_train_loss_total_avg = dice_train_loss_total / num_steps
+            tqdm.write(f"\tDice training loss: {dice_train_loss_total_avg:.4f}.")
 
         # Validation loop -----------------------------------------------------
         model.eval()
-        val_loss_total = 0.0
+        val_loss_total, dice_val_loss_total, focal_val_loss_total = 0.0, 0.0, 0.0
         num_steps = 0
 
-        metric_fns = [mt_metrics.dice_score,
+        metric_fns = [dice_score,  # from ivadomed/utils.py
                       mt_metrics.hausdorff_score,
                       mt_metrics.precision_score,
                       mt_metrics.recall_score,
@@ -281,7 +307,7 @@ def cmd_train(context):
                       mt_metrics.intersection_over_union,
                       mt_metrics.accuracy_score]
 
-        metric_mgr = mt_metrics.MetricManager(metric_fns)
+        metric_mgr = IvadoMetricManager(metric_fns)
 
         for i, batch in enumerate(val_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
@@ -304,11 +330,15 @@ def cmd_train(context):
                 else:
                     preds = model(var_input)
 
-                # loss = mt_losses.dice_loss(preds, var_gt)
-                if context["loss"] == "dice":
-                    loss = mt_losses.dice_loss(preds, var_gt)
+                if context["loss"]["name"] == "dice":
+                    loss = - losses.dice_loss(preds, var_gt)
                 else:
                     loss = loss_fct(preds, var_gt)
+                    if context["loss"]["name"] == "focal_dice":
+                        focal_val_loss_total += focal_loss_fct(preds, var_gt).item()
+                        dice_val_loss_total += torch.log(losses.dice_loss(preds, var_gt)).item()
+                    else:
+                        dice_val_loss_total += losses.dice_loss(preds, var_gt).item()
                 val_loss_total += loss.item()
 
             # Metrics computation
@@ -369,6 +399,16 @@ def cmd_train(context):
         }, epoch)
 
         tqdm.write(f"Epoch {epoch} validation loss: {val_loss_total_avg:.4f}.")
+        if context["loss"]["name"] == 'focal_dice':
+            focal_val_loss_total_avg = focal_val_loss_total / num_steps
+            log_dice_val_loss_total_avg = dice_val_loss_total / num_steps
+            dice_val_loss_total_avg = exp(log_dice_val_loss_total_avg)
+            tqdm.write(f"\tFocal validation loss: {focal_val_loss_total_avg:.4f}.")
+            tqdm.write(f"\tLog Dice validation loss: {log_dice_val_loss_total_avg:.4f}.")
+            tqdm.write(f"\tDice validation loss: {dice_val_loss_total_avg:.4f}.")
+        elif context["loss"]["name"] != 'dice':
+            dice_val_loss_total_avg = dice_val_loss_total / num_steps
+            tqdm.write(f"\tDice validation loss: {dice_val_loss_total_avg:.4f}.")
 
         end_time = time.time()
         total_time = end_time - start_time
@@ -465,15 +505,15 @@ def cmd_test(context):
         model.cuda()
     model.eval()
 
-    metric_fns = [mt_metrics.dice_score,
-                  # mt_metrics.hausdorff_score,
+    metric_fns = [dice_score,  # from ivadomed/utils.py
+                  mt_metrics.hausdorff_score,
                   mt_metrics.precision_score,
                   mt_metrics.recall_score,
                   mt_metrics.specificity_score,
                   mt_metrics.intersection_over_union,
                   mt_metrics.accuracy_score]
 
-    metric_mgr = mt_metrics.MetricManager(metric_fns)
+    metric_mgr = IvadoMetricManager(metric_fns)
 
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
@@ -502,6 +542,7 @@ def cmd_test(context):
         preds_npy = preds.data.cpu().numpy()
         preds_npy = threshold_predictions(preds_npy)
         preds_npy = preds_npy.astype(np.uint8)
+        preds_npy = preds_npy.squeeze(axis=1)
 
         metric_mgr(preds_npy, gt_npy)
 
