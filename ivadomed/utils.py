@@ -27,7 +27,10 @@ class IvadoMetricManager(mt_metrics.MetricManager):
     def get_results(self):
         res_dict = {}
         for key, val in self.result_dict.items():
-            res_dict[key] = np.nanmean(val)
+            if np.all(np.isnan(val)):  # if all values are np.nan
+                res_dict[key] = None
+            else:
+                res_dict[key] = np.nanmean(val)
         return res_dict
 
 

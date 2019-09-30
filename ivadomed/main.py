@@ -389,6 +389,7 @@ def cmd_train(context):
 
 
         metrics_dict = metric_mgr.get_results()
+        print(metrics_dict)
         metric_mgr.reset()
 
         writer.add_scalars('Validation/Metrics', metrics_dict, epoch)
