@@ -31,5 +31,9 @@
         "acq-sup_T2w": "T2w",
         "acq-sagcerv_T2w": "T2w",
         "acq-ax_T2star": "T2star",
-        "acq-sagthor_T2w": "T2w"
+        "acq-sagthor_T2w": "T2w",
+        "acq-wat_T1w": "T1w",
+        "acq-inn_T1w": "T1w",
+        "acq-fat_T1w": "T1w",
+        "acq-opp_T1w": "T1w"
 }
