@@ -67,6 +67,9 @@ def cmd_train(context):
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
 
+    # Write the metrics, images, etc to TensorBoard format
+    writer = SummaryWriter(log_dir=context["log_directory"])
+
     # These are the training transformations
     train_transform = transforms.Compose([
         mt_transforms.Resample(wspace=0.75, hspace=0.75),
@@ -167,9 +170,6 @@ def cmd_train(context):
     # Using Adam with cosine annealing learning rate
     optimizer = optim.Adam(model.parameters(), lr=initial_lr)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
-
-    # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(log_dir=context["log_directory"])
 
     # Create dict containing gammas and betas after each FiLM layer.
     gammas_dict = {i:[] for i in range(1,9)}
@@ -498,7 +498,7 @@ def cmd_test(context):
                              collate_fn=mt_datasets.mt_collate,
                              num_workers=1)
 
-    model = torch.load("./"+context["log_directory"]+"/final_model.pt")
+    model = torch.load("./"+context["log_directory"]+"/best_model.pt")
 
     if cuda_available:
         model.cuda()
