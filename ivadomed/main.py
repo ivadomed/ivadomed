@@ -67,6 +67,9 @@ def cmd_train(context):
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
 
+    # Write the metrics, images, etc to TensorBoard format
+    writer = SummaryWriter(log_dir=context["log_directory"])
+
     # These are the training transformations
     train_transform = transforms.Compose([
         mt_transforms.Resample(wspace=0.75, hspace=0.75),
@@ -92,6 +95,9 @@ def cmd_train(context):
 
     # Randomly split dataset between training / validation / testing
     train_lst, valid_lst, test_lst = loader.split_dataset(context["bids_path"], context["center_test"], context["random_seed"])
+    # save the subject distribution
+    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
+    joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
 
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
@@ -164,9 +170,6 @@ def cmd_train(context):
     # Using Adam with cosine annealing learning rate
     optimizer = optim.Adam(model.parameters(), lr=initial_lr)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
-
-    # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(log_dir=context["log_directory"])
 
     # Create dict containing gammas and betas after each FiLM layer.
     gammas_dict = {i:[] for i in range(1,9)}
@@ -437,10 +440,6 @@ def cmd_train(context):
         contrast_images = np.array(var_contrast_list)
         np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
 
-    # save the subject distribution
-    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
-
     writer.close()
     return
 
@@ -499,7 +498,7 @@ def cmd_test(context):
                              collate_fn=mt_datasets.mt_collate,
                              num_workers=1)
 
-    model = torch.load("./"+context["log_directory"]+"/final_model.pt")
+    model = torch.load("./"+context["log_directory"]+"/best_model.pt")
 
     if cuda_available:
         model.cuda()
