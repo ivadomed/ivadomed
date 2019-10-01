@@ -92,6 +92,9 @@ def cmd_train(context):
 
     # Randomly split dataset between training / validation / testing
     train_lst, valid_lst, test_lst = loader.split_dataset(context["bids_path"], context["center_test"], context["random_seed"])
+    # save the subject distribution
+    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
+    joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
 
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
@@ -436,10 +439,6 @@ def cmd_train(context):
         # Convert into numpy and save the contrasts of all batch images
         contrast_images = np.array(var_contrast_list)
         np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
-
-    # save the subject distribution
-    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
 
     writer.close()
     return
