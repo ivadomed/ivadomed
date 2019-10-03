@@ -263,7 +263,7 @@ def cmd_train(context):
             loss.backward()
 
             optimizer.step()
-            scheduler.step()
+
             num_steps += 1
 
             # Only write sample at the first step
@@ -284,7 +284,8 @@ def cmd_train(context):
                 writer.add_image('Train/Ground Truth', grid_img, epoch)
 
         train_loss_total_avg = train_loss_total / num_steps
-
+        scheduler.step()
+        
         tqdm.write(f"Epoch {epoch} training loss: {train_loss_total_avg:.4f}.")
         if context["loss"]["name"] == 'focal_dice':
             focal_train_loss_total_avg = focal_train_loss_total / num_steps
