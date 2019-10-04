@@ -4,7 +4,6 @@ import torch.nn.functional as F
 
 
 def dice_loss(input, target):
-    # input = torch.sigmoid(input)
     smooth = 1.0
 
     iflat = input.view(-1)
@@ -15,27 +14,26 @@ def dice_loss(input, target):
 
 
 class FocalLoss(nn.Module):
-    """
-    Focal Loss: https://arxiv.org/abs/1708.02002
-    """
-
-    def __init__(self, gamma):
-        super().__init__()
+    def __init__(self, gamma=2, alpha=0.25, eps=1e-7):
+        super(FocalLoss, self).__init__()
         self.gamma = gamma
+        self.alpha = alpha
+        self.eps = eps
 
     def forward(self, input, target):
-        if not (target.size() == input.size()):
-            raise ValueError("Target size ({}) must be the same as input size ({})".format(target.size(), input.size()))
+        input = input.clamp(self.eps, 1. - self.eps)
 
-        max_val = (-input).clamp(min=0)
-        loss = input - input * target + max_val + ((-max_val).exp() + (-input - max_val).exp()).log()
+        # compute the negative likelyhood
+        logpt = - F.binary_cross_entropy(input, target)
+        pt    = torch.exp(logpt)
 
-        # This gives us the log sigmoid of 1-p if y is 0 and of p if y is 1
-        invprobs = F.logsigmoid(-input * (target * 2 - 1))
-        loss = (invprobs * self.gamma).exp() * loss
+        # compute the loss
+        loss = -((1 - pt) ** self.gamma) * logpt
 
-        # Note: works in log space to be numerically stable (ie to avoid NaNs when training).
-        return loss.mean()
+        # loss = self.alpha * loss
+
+        return loss.sum()
+        #return loss.mean()
 
 
 class FocalDiceLoss(nn.Module):
