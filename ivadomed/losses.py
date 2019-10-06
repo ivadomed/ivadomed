@@ -23,9 +23,9 @@ class FocalLoss(nn.Module):
     def forward(self, input, target):
         input = input.clamp(self.eps, 1. - self.eps)
 
-        # compute the negative likelyhood
-        logpt = - F.binary_cross_entropy(input, target)
-        pt    = torch.exp(logpt)
+        # compute the likelihood -- cross entropy
+        logpt = (input.log()*target + (1-target)*(1-input).log())
+        pt = torch.exp(logpt)
 
         # compute the loss
         loss = -((1 - pt) ** self.gamma) * logpt
