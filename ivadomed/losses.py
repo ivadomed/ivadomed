@@ -23,17 +23,17 @@ class FocalLoss(nn.Module):
     def forward(self, input, target):
         input = input.clamp(self.eps, 1. - self.eps)
 
-        # compute the likelihood -- cross entropy
-        logpt = (input.log()*target + (1-target)*(1-input).log())
-        pt = torch.exp(logpt)
+        cross_entropy = - (target * torch.log(input) + (1 - target) * torch.log(1-input))  # eq1
+        logpt = - cross_entropy
+        pt = torch.exp(logpt)  # eq2
 
-        # compute the loss
-        loss = -((1 - pt) ** self.gamma) * logpt
+        at = self.alpha * target + (1 - self.alpha) * (1 - target)
+        balanced_cross_entropy = - at * logpt  # eq3
 
-        # loss = self.alpha * loss
+        focal_loss = balanced_cross_entropy * ((1 - pt) ** self.gamma)  # eq5
 
-        return loss.sum()
-        #return loss.mean()
+        return focal_loss.sum()
+        #return focal_loss.mean()
 
 
 class FocalDiceLoss(nn.Module):
