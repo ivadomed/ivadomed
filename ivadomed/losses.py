@@ -39,16 +39,28 @@ class FocalLoss(nn.Module):
 class FocalDiceLoss(nn.Module):
     """
     Motivated by https://arxiv.org/pdf/1809.00076.pdf
-    :param alpha: to bring the dice and focal losses at similar scale.
+    :param beta: to bring the dice and focal losses at similar scale.
     :param gamma: gamma value used in the focal loss.
+    :param alpha: alpha value used in the focal loss.
     """
-    def __init__(self, alpha, gamma):
+    def __init__(self, beta=1, gamma=2, alpha=0.25):
         super().__init__()
-        self.alpha = alpha
-        self.focal = FocalLoss(gamma)
+        self.beta = beta
+        self.focal = FocalLoss(gamma, alpha)
 
     def forward(self, input, target):
-        loss = self.alpha * self.focal(input, target) - torch.log(dice_loss(input, target))
+        dc_loss = dice_loss(input, target)
+        fc_loss = self.focal(input, target)
+
+        # used to fine tune beta
+        with torch.no_grad():
+            print('DICE loss:', dc_loss.cpu().numpy(), 'Focal loss:', focal_loss.cpu().numpy())
+            log_dc_loss = torch.log(torch.clamp(dc_loss, 1e-7))
+            print('Log DICE loss:', log_dc_loss.cpu().numpy(), 'Focal loss:', focal_loss.cpu().numpy())
+            print('*'*20)
+
+        loss = self.beta * fc_loss - torch.log(torch.clamp(dc_loss, 1e-7))
+        print(loss.size())
         return loss.mean()
 
 
