@@ -53,15 +53,16 @@ class FocalDiceLoss(nn.Module):
         fc_loss = self.focal(input, target)
 
         # used to fine tune beta
-        with torch.no_grad():
-            print('DICE loss:', dc_loss.cpu().numpy(), 'Focal loss:', focal_loss.cpu().numpy())
-            log_dc_loss = torch.log(torch.clamp(dc_loss, 1e-7))
-            print('Log DICE loss:', log_dc_loss.cpu().numpy(), 'Focal loss:', focal_loss.cpu().numpy())
-            print('*'*20)
+        # with torch.no_grad():
+        #     print('DICE loss:', dc_loss.cpu().numpy(), 'Focal loss:', fc_loss.cpu().numpy())
+        #     log_dc_loss = torch.log(torch.clamp(dc_loss, 1e-7))
+        #     log_fc_loss = torch.log(torch.clamp(fc_loss, 1e-7))
+        #     print('Log DICE loss:', log_dc_loss.cpu().numpy(), 'Log Focal loss:', log_fc_loss.cpu().numpy())
+        #     print('*'*20)
 
-        loss = self.beta * fc_loss - torch.log(torch.clamp(dc_loss, 1e-7))
-        print(loss.size())
-        return loss.mean()
+        loss = torch.log(torch.clamp(fc_loss, 1e-7)) - self.beta * torch.log(torch.clamp(dc_loss, 1e-7))
+
+        return loss
 
 
 class GeneralizedDiceLoss(nn.Module):

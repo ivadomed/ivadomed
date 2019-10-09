@@ -187,7 +187,7 @@ def cmd_train(context):
             loss_fct = losses.FocalLoss(gamma=context["loss"]["params"]["gamma"],
                                             alpha=context["loss"]["params"]["alpha"])
             print("\nLoss function: {}, with gamma={}, alpha={}.\n".format(context["loss"]["name"],
-                                                                            context["loss"]["params"]["gamma"]),
+                                                                            context["loss"]["params"]["gamma"],
                                                                             context["loss"]["params"]["alpha"]))
         elif context["loss"]["name"] == "gdl":
             loss_fct = losses.GeneralizedDiceLoss()
