@@ -40,7 +40,7 @@ Please find below a description of each parameter:
 - `bids_path`: relative path of the BIDS folder.
 - `random_seed`: seed used by the random number generator to split the dataset between training/validation/testing.
 - `contrast_train_validation`: list of image modalities included in the training and validation datasets.
-- `contrast_balance`: used to under-represent some modalities in the training set (e.g. `{'T1w': 0.1}` will include only 10% of the available `T1w` images into the training set).
+- `contrast_balance`: used to under-represent some modalities in the training set (e.g. `{"T1w": 0.1}` will include only 10% of the available `T1w` images into the training set).
 - `contrast_test`: list of image modalities included in the testing dataset.
 - `batch_size`: int.
 - `dropout_rate`: float (e.g. 0.4).
