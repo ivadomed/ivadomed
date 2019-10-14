@@ -14,14 +14,13 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader, ConcatDataset
 from torchvision import transforms
 import torchvision.utils as vutils
+from torch.utils.tensorboard import SummaryWriter
 from torch import optim
 
 from medicaltorch import transforms as mt_transforms
 from medicaltorch import datasets as mt_datasets
 from medicaltorch import filters as mt_filters
 from medicaltorch import metrics as mt_metrics
-
-from tensorboardX import SummaryWriter
 
 from tqdm import tqdm
 
