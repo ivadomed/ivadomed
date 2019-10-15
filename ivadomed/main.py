@@ -133,6 +133,7 @@ def cmd_train(context):
                                 gt_suffix=context["gt_suffix"],
                                 contrast_lst=context["contrast_train_validation"],
                                 metadata_choice=context["metadata"],
+                                contrast_balance=context["contrast_balance"],
                                 transform=val_transform,
                                 slice_filter_fn=SliceFilter())
 
@@ -466,6 +467,7 @@ def cmd_test(context):
                                  gt_suffix=context["gt_suffix"],
                                  contrast_lst=context["contrast_test"],
                                  metadata_choice=context["metadata"],
+                                 contrast_balance=context["contrast_balance"],
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter())
 
