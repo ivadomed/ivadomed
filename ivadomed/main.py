@@ -134,6 +134,7 @@ def cmd_train(context):
                                 gt_suffix=context["gt_suffix"],
                                 contrast_lst=context["contrast_train_validation"],
                                 metadata_choice=context["metadata"],
+                                contrast_balance=context["contrast_balance"],
                                 transform=val_transform,
                                 slice_filter_fn=SliceFilter())
 
@@ -285,7 +286,7 @@ def cmd_train(context):
 
         train_loss_total_avg = train_loss_total / num_steps
         scheduler.step()
-        
+
         tqdm.write(f"Epoch {epoch} training loss: {train_loss_total_avg:.4f}.")
         if context["loss"]["name"] == 'focal_dice':
             focal_train_loss_total_avg = focal_train_loss_total / num_steps
@@ -480,6 +481,7 @@ def cmd_test(context):
                                  gt_suffix=context["gt_suffix"],
                                  contrast_lst=context["contrast_test"],
                                  metadata_choice=context["metadata"],
+                                 contrast_balance=context["contrast_balance"],
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter())
 
