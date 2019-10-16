@@ -4,7 +4,6 @@ import torch.nn.functional as F
 
 
 def dice_loss(input, target):
-    # input = torch.sigmoid(input)
     smooth = 1.0
 
     iflat = input.view(-1)
@@ -15,43 +14,55 @@ def dice_loss(input, target):
 
 
 class FocalLoss(nn.Module):
-    """
-    Focal Loss: https://arxiv.org/abs/1708.02002
-    """
-
-    def __init__(self, gamma):
-        super().__init__()
+    def __init__(self, gamma=2, alpha=0.25, eps=1e-7):
+        super(FocalLoss, self).__init__()
         self.gamma = gamma
+        self.alpha = alpha
+        self.eps = eps
 
     def forward(self, input, target):
-        if not (target.size() == input.size()):
-            raise ValueError("Target size ({}) must be the same as input size ({})".format(target.size(), input.size()))
+        input = input.clamp(self.eps, 1. - self.eps)
 
-        max_val = (-input).clamp(min=0)
-        loss = input - input * target + max_val + ((-max_val).exp() + (-input - max_val).exp()).log()
+        cross_entropy = - (target * torch.log(input) + (1 - target) * torch.log(1-input))  # eq1
+        logpt = - cross_entropy
+        pt = torch.exp(logpt)  # eq2
 
-        # This gives us the log sigmoid of 1-p if y is 0 and of p if y is 1
-        invprobs = F.logsigmoid(-input * (target * 2 - 1))
-        loss = (invprobs * self.gamma).exp() * loss
+        at = self.alpha * target + (1 - self.alpha) * (1 - target)
+        balanced_cross_entropy = - at * logpt  # eq3
 
-        # Note: works in log space to be numerically stable (ie to avoid NaNs when training).
-        return loss.mean()
+        focal_loss = balanced_cross_entropy * ((1 - pt) ** self.gamma)  # eq5
+
+        return focal_loss.sum()
+        #return focal_loss.mean()
 
 
 class FocalDiceLoss(nn.Module):
     """
     Motivated by https://arxiv.org/pdf/1809.00076.pdf
-    :param alpha: to bring the dice and focal losses at similar scale.
+    :param beta: to bring the dice and focal losses at similar scale.
     :param gamma: gamma value used in the focal loss.
+    :param alpha: alpha value used in the focal loss.
     """
-    def __init__(self, alpha, gamma):
+    def __init__(self, beta=1, gamma=2, alpha=0.25):
         super().__init__()
-        self.alpha = alpha
-        self.focal = FocalLoss(gamma)
+        self.beta = beta
+        self.focal = FocalLoss(gamma, alpha)
 
     def forward(self, input, target):
-        loss = self.alpha * self.focal(input, target) - torch.log(dice_loss(input, target))
-        return loss.mean()
+        dc_loss = dice_loss(input, target)
+        fc_loss = self.focal(input, target)
+
+        # used to fine tune beta
+        # with torch.no_grad():
+        #     print('DICE loss:', dc_loss.cpu().numpy(), 'Focal loss:', fc_loss.cpu().numpy())
+        #     log_dc_loss = torch.log(torch.clamp(dc_loss, 1e-7))
+        #     log_fc_loss = torch.log(torch.clamp(fc_loss, 1e-7))
+        #     print('Log DICE loss:', log_dc_loss.cpu().numpy(), 'Log Focal loss:', log_fc_loss.cpu().numpy())
+        #     print('*'*20)
+
+        loss = torch.log(torch.clamp(fc_loss, 1e-7)) - self.beta * torch.log(torch.clamp(dc_loss, 1e-7))
+
+        return loss
 
 
 class GeneralizedDiceLoss(nn.Module):
