@@ -11,7 +11,7 @@ import random
 import matplotlib.pyplot as plt
 from spinalcordtoolbox.image import Image
 from scipy.ndimage.measurements import label
-from scipy.ndimage.morphology import binary_dilation, binary_fill_holes
+from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 
 
 def save_sample(img, fname_out):
@@ -71,6 +71,8 @@ def dilate_mask(mask, nb_dilation_it=3):
 
     # fill binary holes
     mask_bin = binary_fill_holes((mask_soft > 0).astype(np.int))
+    # binary closing
+    mask_bin = binary_closing(mask_bin.astype(np.int))
     # recover the soft-value assigned to the filled-holes
     mask_out = mask_bin * mask_after_dilation
 
