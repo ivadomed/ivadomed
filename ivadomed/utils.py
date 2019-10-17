@@ -90,15 +90,70 @@ class DilateGT(mt_transforms.MTTransform):
     :param nb_dilation_it: Number of dilation iterations1.
     """
     def __init__(self, nb_dilation_it):
-        self.nb_dilation_it = nb_dilation_it
+        self.n_dil_it = nb_dilation_it
+
+    @staticmethod
+    def dilate_mask(arr, label_values):
+        arr_bin, arr_soft = arr.astype(np.int), arr.astype(np.float)
+
+        for lb in label_values:
+            # binary dilation with 1 iteration
+            arr_dilated = binary_dilation(arr_bin, iterations=1)
+
+            # isolate new voxels, i.e. the ones from the dilation
+            new_voxels = np.logical_xor(arr_dilated, arr_bin).astype(np.int)
+
+            # assign a soft value (]0, 1[) to the new voxels
+            soft_new_voxels = lb * new_voxels
+
+            # add the new voxels to the input mask
+            arr_soft += soft_new_voxels
+            arr_bin = (arr_soft > 0).astype(np.int)
+
+        return arr_soft, arr_bin
+
+    @staticmethod
+    def random_holes(arr_in, arr_dil, arr_dil_bin):
+        for idx in range(arr_in.shape[0]):
+            # coordinates of the new voxels, i.e. the ones from the dilation
+            new_voxels_xx, new_voxels_yy = np.where(np.logical_xor(arr_dil_bin[idx, 0], arr_in[idx, 0]))
+            nb_new_voxels = new_voxels_xx.shape[0]
+
+            # ratio of voxels added to the input mask from the dilated mask
+            new_voxel_ratio = random.random()
+            # randomly select new voxel indexes to remove
+            idx_to_remove = random.sample(range(nb_new_voxels),
+                                            int(round(nb_new_voxels * (1 - new_voxel_ratio))))
+            # set to zero the here-above randomly selected new voxels
+            arr_dil[idx, 0, new_voxels_xx[idx_to_remove], new_voxels_yy[idx_to_remove]] = 0.0
+
+       arr_dil_bin = (arr_dil > 0).astype(np.int)
+
+       return arr_dil, arr_dil_bin
+
+    @staticmethod
+    def post_processing():
+        pass
 
     def __call__(self, sample):
         gt_data = sample['gt']
+        gt_data_np = gt_data.numpy()
 
-        # XX
+        # values of the voxels added to the input mask
+        soft_label_values = [x / (self.n_dil_it+1) for x in range(self.n_dil_it, 0, -1)]
 
+        # dilation
+        gt_dil, gt_dil_bin = dilate_mask(gt_data_np, soft_label_values)
+
+        # random holes in dilated area
+        gt_holes, gt_holes_bin = random_holes(gt_data, gt_dil, gt_dil_bin)
+
+        # post-processing
+        gt_pp = post_processing()
+
+        gt_t = gt_pp
         rdict = {
-            'gt': gt_data,
+            'gt': gt_t,
         }
         sample.update(rdict)
         return sample
