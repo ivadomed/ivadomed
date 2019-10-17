@@ -7,7 +7,7 @@
 # Example: python class_balance.py -c config/config.json
 #
 # Contributors: charley
-# Last modified: 16-10-2019
+# Last modified: 17-10-2019
 #
 ##############################################################
 
@@ -33,9 +33,9 @@ def get_parser():
 
 
 def print_stats(arr):
-    print('\tMean: {}'.format(np.mean(arr)))
-    print('\tMedian: {}'.format(np.median(arr)))
-    print('\tInter-quartile range: [{}, {}]'.format(np.percentile(arr, 25), np.percentile(arr, 75)))
+    print('\tMean: {} %'.format(np.mean(arr)))
+    print('\tMedian: {} %'.format(np.median(arr)))
+    print('\tInter-quartile range: [{}, {}] %'.format(np.percentile(arr, 25), np.percentile(arr, 75)))
 
 
 def run_main(args):
@@ -58,7 +58,7 @@ def run_main(args):
         ds = loader.BidsDataset(context["bids_path"],
                                  subject_lst=ds_lst,
                                  gt_suffix=context["gt_suffix"],
-                                 contrast_lst=context["contrast_test"],
+                                 contrast_lst=context["contrast_test"] if ds_name == 'test' else context["contrast_train_validation"],
                                  metadata_choice=context["metadata"],
                                  contrast_balance=context["contrast_balance"],
                                  transform=transform_lst,
@@ -66,25 +66,26 @@ def run_main(args):
 
         print("Loaded {} axial slices for the {} set.".format(len(ds), ds_name))
         ds_loader = DataLoader(ds, batch_size=1,
-                             shuffle=True, pin_memory=True,
+                             shuffle=False, pin_memory=False,
                              collate_fn=mt_datasets.mt_collate,
                              num_workers=1)
 
         balance_lst = []
         for i, batch in enumerate(ds_loader):
-            gt_sample = batch["gt"].numpy().astype(np.int)
+            gt_sample = batch["gt"].numpy().astype(np.int)[0, 0, :, :]
             nb_ones = (gt_sample == 1).sum()
             nb_voxels = gt_sample.size
-            balance_lst.append(nb_ones * 1.0 / nb_voxels)
+            balance_lst.append(nb_ones * 100.0 / nb_voxels)
 
         balance_dct[ds_name] = balance_lst
 
     for ds_name in balance_dct:
-        print('\nBalance class in {} set:'.format(ds_name))
+        print('\nClass balance in {} set:'.format(ds_name))
         print_stats(balance_dct[ds_name])
 
-    print('\nBalance class in full set:')
+    print('\nClass balance in full set:')
     print_stats([e for d in balance_dct for e in balance_dct[d]])
+
 
 if __name__ == '__main__':
     parser = get_parser()
