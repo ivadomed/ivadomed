@@ -113,10 +113,10 @@ class DilateGT(mt_transforms.MTTransform):
         return arr_soft, arr_bin
 
     @staticmethod
-    def random_holes(arr_in, arr_dil, arr_dil_bin):
+    def random_holes(arr_in, arr_soft, arr_bin):
         for idx in range(arr_in.shape[0]):
             # coordinates of the new voxels, i.e. the ones from the dilation
-            new_voxels_xx, new_voxels_yy = np.where(np.logical_xor(arr_dil_bin[idx, 0], arr_in[idx, 0]))
+            new_voxels_xx, new_voxels_yy = np.where(np.logical_xor(arr_bin[idx, 0], arr_in[idx, 0]))
             nb_new_voxels = new_voxels_xx.shape[0]
 
             # ratio of voxels added to the input mask from the dilated mask
@@ -125,15 +125,29 @@ class DilateGT(mt_transforms.MTTransform):
             idx_to_remove = random.sample(range(nb_new_voxels),
                                             int(round(nb_new_voxels * (1 - new_voxel_ratio))))
             # set to zero the here-above randomly selected new voxels
-            arr_dil[idx, 0, new_voxels_xx[idx_to_remove], new_voxels_yy[idx_to_remove]] = 0.0
+            arr_soft[idx, 0, new_voxels_xx[idx_to_remove], new_voxels_yy[idx_to_remove]] = 0.0
 
-       arr_dil_bin = (arr_dil > 0).astype(np.int)
+       arr_bin = (arr_soft > 0).astype(np.int)
 
-       return arr_dil, arr_dil_bin
+       return arr_soft, arr_bin
 
     @staticmethod
-    def post_processing():
-        pass
+    def post_processing(arr_in, arr_soft, arr_bin, arr_dil):
+        # remove new object that are not connected to the input mask
+        arr_labeled, lb_nb = label(arr_bin)
+        connected_to_in = arr_labeled * arr_in
+        for lb in range(1, lb_nb+1):
+            if np.sum(connected_to_in == lb) == 0:
+                arr_soft[arr_labeled == lb] = 0
+
+        # fill binary holes
+        arr_bin_filled = binary_fill_holes((arr_soft > 0).astype(np.int))
+        # binary closing
+        arr_bin_closed = binary_closing(arr_bin_filled.astype(np.int))
+        # recover the soft-value assigned to the filled-holes
+        arr_soft_out = arr_bin_closed * arr_dil
+
+        return arr_soft_out
 
     def __call__(self, sample):
         gt_data = sample['gt']
@@ -146,16 +160,17 @@ class DilateGT(mt_transforms.MTTransform):
         gt_dil, gt_dil_bin = dilate_mask(gt_data_np, soft_label_values)
 
         # random holes in dilated area
-        gt_holes, gt_holes_bin = random_holes(gt_data, gt_dil, gt_dil_bin)
+        gt_holes, gt_holes_bin = random_holes(gt_data_np, gt_dil, gt_dil_bin)
 
         # post-processing
-        gt_pp = post_processing()
+        gt_pp = post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
 
-        gt_t = gt_pp
+        gt_t = F.to_tensor(gt_pp)
         rdict = {
             'gt': gt_t,
         }
         sample.update(rdict)
+
         return sample
 
 
