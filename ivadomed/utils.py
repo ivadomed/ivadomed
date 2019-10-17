@@ -1,9 +1,12 @@
 import torch
+import random
 import numpy as np
 from PIL import Image
-from torchvision import transforms
+import torchvision.transforms.functional as F
 import matplotlib.pyplot as plt
 from collections import defaultdict
+from scipy.ndimage.measurements import label
+from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 
 from medicaltorch import filters as mt_filters
 from medicaltorch import transforms as mt_transforms
@@ -203,7 +206,7 @@ class SliceFilter(mt_filters.SliceFilter):
 
         # Filter slices where there are no values after cropping
         input_img = Image.fromarray(sample['input'], mode='F')
-        input_cropped = transforms.functional.center_crop(input_img, (128, 128))
+        input_cropped = F.center_crop(input_img, (128, 128))
         input_cropped = np.array(input_cropped)
         count = np.count_nonzero(input_cropped)
 
