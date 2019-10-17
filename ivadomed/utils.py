@@ -85,6 +85,25 @@ def save_mixup_sample(x, y, fname):
     plt.close()
 
 
+class DilateGT(mt_transforms.MTTransform):
+    """Randomly dilate a tensor ground-truth.
+    :param nb_dilation_it: Number of dilation iterations1.
+    """
+    def __init__(self, nb_dilation_it):
+        self.nb_dilation_it = nb_dilation_it
+
+    def __call__(self, sample):
+        gt_data = sample['gt']
+
+        # XX
+
+        rdict = {
+            'gt': gt_data,
+        }
+        sample.update(rdict)
+        return sample
+
+
 def threshold_predictions(predictions, thr=0.5):
     """This function will threshold predictions.
     :param predictions: input data (predictions)
