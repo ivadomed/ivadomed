@@ -95,8 +95,7 @@ class DilateGT(mt_transforms.MTTransform):
     def __init__(self, nb_dilation_it):
         self.n_dil_it = nb_dilation_it
 
-    @staticmethod
-    def dilate_mask(arr, label_values):
+    def dilate_mask(self, arr, label_values):
         arr_bin, arr_soft = arr.astype(np.int), arr.astype(np.float)
 
         for lb in label_values:
@@ -115,8 +114,7 @@ class DilateGT(mt_transforms.MTTransform):
 
         return arr_soft, arr_bin
 
-    @staticmethod
-    def random_holes(arr_in, arr_soft, arr_bin):
+    def random_holes(self, arr_in, arr_soft, arr_bin):
         for idx in range(arr_in.shape[0]):
             # coordinates of the new voxels, i.e. the ones from the dilation
             new_voxels_xx, new_voxels_yy = np.where(np.logical_xor(arr_bin[idx, 0], arr_in[idx, 0]))
@@ -130,12 +128,11 @@ class DilateGT(mt_transforms.MTTransform):
             # set to zero the here-above randomly selected new voxels
             arr_soft[idx, 0, new_voxels_xx[idx_to_remove], new_voxels_yy[idx_to_remove]] = 0.0
 
-       arr_bin = (arr_soft > 0).astype(np.int)
+        arr_bin = (arr_soft > 0).astype(np.int)
 
-       return arr_soft, arr_bin
+        return arr_soft, arr_bin
 
-    @staticmethod
-    def post_processing(arr_in, arr_soft, arr_bin, arr_dil):
+    def post_processing(self, arr_in, arr_soft, arr_bin, arr_dil):
         # remove new object that are not connected to the input mask
         arr_labeled, lb_nb = label(arr_bin)
         connected_to_in = arr_labeled * arr_in
@@ -160,13 +157,13 @@ class DilateGT(mt_transforms.MTTransform):
         soft_label_values = [x / (self.n_dil_it+1) for x in range(self.n_dil_it, 0, -1)]
 
         # dilation
-        gt_dil, gt_dil_bin = dilate_mask(gt_data_np, soft_label_values)
+        gt_dil, gt_dil_bin = self.dilate_mask(gt_data_np, soft_label_values)
 
         # random holes in dilated area
-        gt_holes, gt_holes_bin = random_holes(gt_data_np, gt_dil, gt_dil_bin)
+        gt_holes, gt_holes_bin = self.random_holes(gt_data_np, gt_dil, gt_dil_bin)
 
         # post-processing
-        gt_pp = post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
+        gt_pp = self.post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
 
         gt_t = F.to_tensor(gt_pp)
         rdict = {
