@@ -165,11 +165,12 @@ class DilateGT(mt_transforms.MTTransform):
         # post-processing
         gt_pp = self.post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
 
-        gt_t = F.to_tensor(gt_pp)
+        gt_t = F.to_tensor(gt_pp[:, 0])  # input of F.to_tensor needs to have 3 dimensions
+        gt_t = torch.transpose(gt_t, 0, 1)
+
         rdict = {
-            'gt': gt_t,
+            'gt': gt_t.unsqueeze_(1),  # add dimension back
         }
-        sample.update(rdict)
 
         return sample
 
