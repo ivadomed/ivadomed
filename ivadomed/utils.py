@@ -6,7 +6,7 @@ import torchvision.transforms.functional as F
 import matplotlib.pyplot as plt
 from collections import defaultdict
 from scipy.ndimage.measurements import label
-from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
+from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing, generate_binary_structure
 
 from medicaltorch import filters as mt_filters
 from medicaltorch import transforms as mt_transforms
@@ -117,7 +117,7 @@ class DilateGT(mt_transforms.MTTransform):
     def random_holes(self, arr_in, arr_soft, arr_bin):
         for idx in range(arr_in.shape[0]):
             # coordinates of the new voxels, i.e. the ones from the dilation
-            new_voxels_xx, new_voxels_yy = np.where(np.logical_xor(arr_bin[idx, 0], arr_in[idx, 0]))
+            new_voxels_xx, new_voxels_yy = np.where(np.logical_xor(arr_bin[idx], arr_in[idx]))
             nb_new_voxels = new_voxels_xx.shape[0]
 
             # ratio of voxels added to the input mask from the dilated mask
@@ -126,7 +126,7 @@ class DilateGT(mt_transforms.MTTransform):
             idx_to_remove = random.sample(range(nb_new_voxels),
                                             int(round(nb_new_voxels * (1 - new_voxel_ratio))))
             # set to zero the here-above randomly selected new voxels
-            arr_soft[idx, 0, new_voxels_xx[idx_to_remove], new_voxels_yy[idx_to_remove]] = 0.0
+            arr_soft[idx, new_voxels_xx[idx_to_remove], new_voxels_yy[idx_to_remove]] = 0.0
 
         arr_bin = (arr_soft > 0).astype(np.int)
 
@@ -140,12 +140,15 @@ class DilateGT(mt_transforms.MTTransform):
             if np.sum(connected_to_in == lb) == 0:
                 arr_soft[arr_labeled == lb] = 0
 
-        # fill binary holes
-        arr_bin_filled = binary_fill_holes((arr_soft > 0).astype(np.int))
         # binary closing
-        arr_bin_closed = binary_closing(arr_bin_filled.astype(np.int))
+        struct = np.expand_dims(generate_binary_structure(2, 2), 0)
+        arr_bin_closed = binary_closing((arr_soft > 0).astype(np.int), structure=struct)
+
+        # fill binary holes
+        arr_bin_filled = binary_fill_holes(arr_bin_closed.astype(np.int), structure=struct)
+
         # recover the soft-value assigned to the filled-holes
-        arr_soft_out = arr_bin_closed * arr_dil
+        arr_soft_out = arr_bin_filled * arr_dil
 
         return arr_soft_out
 
@@ -153,24 +156,29 @@ class DilateGT(mt_transforms.MTTransform):
         gt_data = sample['gt']
         gt_data_np = gt_data.numpy()
 
+        # index of samples where ones
+        idx_ones = np.unique(np.where(gt_data_np)[0])
+
         # values of the voxels added to the input mask
         soft_label_values = [x / (self.n_dil_it+1) for x in range(self.n_dil_it, 0, -1)]
 
         # dilation
-        gt_dil, gt_dil_bin = self.dilate_mask(gt_data_np, soft_label_values)
+        gt_dil, gt_dil_bin = self.dilate_mask(gt_data_np[idx_ones,0], soft_label_values)
 
         # random holes in dilated area
-        gt_holes, gt_holes_bin = self.random_holes(gt_data_np, gt_dil, gt_dil_bin)
+        gt_holes, gt_holes_bin = self.random_holes(gt_data_np[idx_ones,0], gt_dil, gt_dil_bin)
 
         # post-processing
-        gt_pp = self.post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
+        gt_pp = self.post_processing(gt_data_np[idx_ones,0], gt_holes, gt_holes_bin, gt_dil)
+        gt_out = gt_data_np.astype(np.float64)
+        gt_out[idx_ones,0] = gt_pp
 
-        gt_t = F.to_tensor(gt_pp[:, 0])  # input of F.to_tensor needs to have 3 dimensions
-        gt_t = torch.transpose(gt_t, 0, 1)
-
+        gt_t = F.to_tensor(gt_out[:,0])  # input of F.to_tensor needs to have 3 dimensions
+        gt_t = gt_t.permute(1, 2, 0)
         rdict = {
             'gt': gt_t.unsqueeze_(1),  # add dimension back
         }
+        sample.update(rdict)
 
         return sample
 
