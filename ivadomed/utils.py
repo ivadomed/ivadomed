@@ -156,32 +156,33 @@ class DilateGT(mt_transforms.MTTransform):
         return arr_soft_out
 
     def __call__(self, sample):
-        gt_data = sample['gt']
-        gt_data_np = gt_data.numpy()
+        if self.n_dil_it > 0:
+            gt_data = sample['gt']
+            gt_data_np = gt_data.numpy()
 
-        # index of samples where ones
-        idx_ones = np.unique(np.where(gt_data_np)[0])
+            # index of samples where ones
+            idx_ones = np.unique(np.where(gt_data_np)[0])
 
-        # values of the voxels added to the input mask
-        soft_label_values = [x / (self.n_dil_it+1) for x in range(self.n_dil_it, 0, -1)]
+            # values of the voxels added to the input mask
+            soft_label_values = [x / (self.n_dil_it+1) for x in range(self.n_dil_it, 0, -1)]
 
-        # dilation
-        gt_dil, gt_dil_bin = self.dilate_mask(gt_data_np[idx_ones,0], soft_label_values)
+            # dilation
+            gt_dil, gt_dil_bin = self.dilate_mask(gt_data_np[idx_ones,0], soft_label_values)
 
-        # random holes in dilated area
-        gt_holes, gt_holes_bin = self.random_holes(gt_data_np[idx_ones,0], gt_dil, gt_dil_bin)
+            # random holes in dilated area
+            gt_holes, gt_holes_bin = self.random_holes(gt_data_np[idx_ones,0], gt_dil, gt_dil_bin)
 
-        # post-processing
-        gt_pp = self.post_processing(gt_data_np[idx_ones,0], gt_holes, gt_holes_bin, gt_dil)
-        gt_out = gt_data_np.astype(np.float64)
-        gt_out[idx_ones,0] = gt_pp
+            # post-processing
+            gt_pp = self.post_processing(gt_data_np[idx_ones,0], gt_holes, gt_holes_bin, gt_dil)
+            gt_out = gt_data_np.astype(np.float64)
+            gt_out[idx_ones,0] = gt_pp
 
-        gt_t = F.to_tensor(gt_out[:,0])  # input of F.to_tensor needs to have 3 dimensions
-        gt_t = gt_t.permute(1, 2, 0)
-        rdict = {
-            'gt': gt_t.unsqueeze_(1),  # add dimension back
-        }
-        sample.update(rdict)
+            gt_t = F.to_tensor(gt_out[:,0])  # input of F.to_tensor needs to have 3 dimensions
+            gt_t = gt_t.permute(1, 2, 0)
+            rdict = {
+                'gt': gt_t.unsqueeze_(1),  # add dimension back
+            }
+            sample.update(rdict)
 
         return sample
 
