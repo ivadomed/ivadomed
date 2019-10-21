@@ -19,5 +19,6 @@
 	"mixup_bool": false,
 	"mixup_alpha": 2,
 	"metadata": "contrast",
+        "gt_dilation": 0,
         "debugging": true
 }
