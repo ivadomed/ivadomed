@@ -97,10 +97,11 @@ class DilateGT(mt_transforms.MTTransform):
 
     def dilate_mask(self, arr, label_values):
         arr_bin, arr_soft = arr.astype(np.int), arr.astype(np.float)
+        struct = np.expand_dims(generate_binary_structure(2, 1), 0)  # to restrict the dilation along the two last dimensions
 
         for lb in label_values:
             # binary dilation with 1 iteration
-            arr_dilated = binary_dilation(arr_bin, iterations=1)
+            arr_dilated = binary_dilation(arr_bin, iterations=1, structure=struct)
 
             # isolate new voxels, i.e. the ones from the dilation
             new_voxels = np.logical_xor(arr_dilated, arr_bin).astype(np.int)
@@ -115,6 +116,7 @@ class DilateGT(mt_transforms.MTTransform):
         return arr_soft, arr_bin
 
     def random_holes(self, arr_in, arr_soft, arr_bin):
+        arr_soft_out = np.copy(arr_soft)
         for idx in range(arr_in.shape[0]):
             # coordinates of the new voxels, i.e. the ones from the dilation
             new_voxels_xx, new_voxels_yy = np.where(np.logical_xor(arr_bin[idx], arr_in[idx]))
@@ -126,11 +128,11 @@ class DilateGT(mt_transforms.MTTransform):
             idx_to_remove = random.sample(range(nb_new_voxels),
                                             int(round(nb_new_voxels * (1 - new_voxel_ratio))))
             # set to zero the here-above randomly selected new voxels
-            arr_soft[idx, new_voxels_xx[idx_to_remove], new_voxels_yy[idx_to_remove]] = 0.0
+            arr_soft_out[idx, new_voxels_xx[idx_to_remove], new_voxels_yy[idx_to_remove]] = 0.0
 
-        arr_bin = (arr_soft > 0).astype(np.int)
+        arr_bin_out = (arr_soft_out > 0).astype(np.int)
 
-        return arr_soft, arr_bin
+        return arr_soft_out, arr_bin_out
 
     def post_processing(self, arr_in, arr_soft, arr_bin, arr_dil):
         # remove new object that are not connected to the input mask
@@ -141,11 +143,10 @@ class DilateGT(mt_transforms.MTTransform):
                 arr_soft[arr_labeled == lb] = 0
 
         # binary closing
-        struct = np.expand_dims(generate_binary_structure(2, 2), 0)
-        arr_bin_closed = binary_closing((arr_soft > 0).astype(np.int), structure=struct)
-
+        struct = np.expand_dims(generate_binary_structure(2, 1), 0)
+        arr_bin_closed = binary_closing((arr_soft > 0).astype(bool), structure=struct)
         # fill binary holes
-        arr_bin_filled = binary_fill_holes(arr_bin_closed.astype(np.int), structure=struct)
+        arr_bin_filled = binary_fill_holes(arr_bin_closed, structure=struct)
 
         # recover the soft-value assigned to the filled-holes
         arr_soft_out = arr_bin_filled * arr_dil
