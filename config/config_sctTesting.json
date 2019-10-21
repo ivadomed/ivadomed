@@ -1,5 +1,5 @@
 {
-	"command": "test",
+	"command": "train",
 	"gpu": 4,
         "gt_suffix": "_lesion-manual",
 	"bids_path": "../duke/sct_testing/large/",
@@ -13,12 +13,12 @@
         "batch_norm_momentum": 0.1,
         "num_epochs": 100,
         "initial_lr": 0.001,
-        "loss": {"name": "focal_dice", "params": {"gamma": 2, "beta": 4, "alpha": 0.25}},
+        "loss": {"name": "dice"},
         "log_directory": "log_large",
-        "film_layers": [1, 0, 0, 0, 0, 0, 0, 0],
+        "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
 	"mixup_bool": false,
 	"mixup_alpha": 2,
-	"metadata": "contrast",
+	"metadata": "without",
         "gt_dilation": 2,
         "debugging": false
 }
