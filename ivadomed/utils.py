@@ -90,7 +90,7 @@ def save_mixup_sample(x, y, fname):
 
 class DilateGT(mt_transforms.MTTransform):
     """Randomly dilate a tensor ground-truth.
-    :param nb_dilation_it: Number of dilation iterations1.
+    :param nb_dilation_it: Number of dilation iterations. If <= 0, then no dilation will be perfomed.
     """
     def __init__(self, nb_dilation_it):
         self.n_dil_it = nb_dilation_it
