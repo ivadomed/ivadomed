@@ -51,6 +51,8 @@ def run_test(args):
     # dummy data
     a=torch.zeros([16, 1, 128, 128], dtype=torch.int32)
     a[8,0,25:105,50:100] = 1
+    a[10,0,10:20,10:20] = 1
+    a[10,0,100:120,80:120] = 1
     sample = {'gt': a}
     gt_in_np = a.numpy()
 
