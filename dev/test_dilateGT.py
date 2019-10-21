@@ -7,7 +7,7 @@
 # Example: python dev/test_dilateGT.py -o test_dilate
 #
 # Contributors: charley
-# Last modified: 18-10-2019
+# Last modified: 21-10-2019
 #
 ##############################################################
 
