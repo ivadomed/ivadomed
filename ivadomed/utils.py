@@ -135,15 +135,17 @@ class DilateGT(mt_transforms.MTTransform):
         return arr_soft_out, arr_bin_out
 
     def post_processing(self, arr_in, arr_soft, arr_bin, arr_dil):
+        struct = np.expand_dims(generate_binary_structure(2, 1), 0)  # to restrict operations along the two last dimensions
+
         # remove new object that are not connected to the input mask
-        arr_labeled, lb_nb = label(arr_bin)
-        connected_to_in = arr_labeled * arr_in
-        for lb in range(1, lb_nb+1):
-            if np.sum(connected_to_in == lb) == 0:
-                arr_soft[arr_labeled == lb] = 0
+        for idx in range(arr_bin.shape[0]):  # a loop is needed because "label" function restrictions
+            arr_labeled, lb_nb = label(arr_bin[idx])
+            connected_to_in = arr_labeled * arr_in[idx]
+            for lb in range(1, lb_nb+1):
+                if np.sum(connected_to_in == lb) == 0:
+                    arr_soft[idx][arr_labeled == lb] = 0
 
         # binary closing
-        struct = np.expand_dims(generate_binary_structure(2, 1), 0)
         arr_bin_closed = binary_closing((arr_soft > 0).astype(bool), structure=struct)
         # fill binary holes
         arr_bin_filled = binary_fill_holes(arr_bin_closed, structure=struct)
