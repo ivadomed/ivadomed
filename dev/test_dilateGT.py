@@ -7,7 +7,7 @@
 # Example: python dev/test_dilateGT.py -o test_dilate
 #
 # Contributors: charley
-# Last modified: 21-10-2019
+# Last modified: 24-10-2019
 #
 ##############################################################
 
@@ -46,7 +46,7 @@ def run_test(args):
         print('\nWarning: ofolder already exists')
 
     # init
-    transform = DilateGT(5)
+    transform = DilateGT(0.5)
 
     # dummy data
     a=torch.zeros([16, 1, 128, 128], dtype=torch.int32)
