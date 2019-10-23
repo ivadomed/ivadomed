@@ -46,7 +46,7 @@ def run_test(args):
         print('\nWarning: ofolder already exists')
 
     # init
-    transform = DilateGT(0.5)
+    transform = DilateGT(0.3)
 
     # dummy data
     a=torch.zeros([16, 1, 128, 128], dtype=torch.int32)

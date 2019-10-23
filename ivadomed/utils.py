@@ -1,3 +1,4 @@
+import math
 import torch
 import random
 import numpy as np
@@ -100,7 +101,7 @@ class DilateGT(mt_transforms.MTTransform):
         self.dil_factor = dilation_factor
 
 
-    def dilate_lesion(arr_bin, arr_soft, label_values):
+    def dilate_lesion(self, arr_bin, arr_soft, label_values):
         for lb in label_values:
             # binary dilation with 1 iteration
             arr_dilated = binary_dilation(arr_bin, iterations=1)
@@ -115,7 +116,7 @@ class DilateGT(mt_transforms.MTTransform):
             arr_soft += soft_new_voxels
             arr_bin = (arr_soft > 0).astype(np.int)
 
-       return arr_bin, arr_soft
+        return arr_bin, arr_soft
 
 
     def dilate_arr(self, arr, dil_factor):
@@ -132,21 +133,21 @@ class DilateGT(mt_transforms.MTTransform):
             arr_bin_lst, arr_soft_lst = [], []
             for obj_idx in range(1, lb_nb+1):
                 arr_bin_obj = (arr_labeled == obj_idx).astype(np.int)
-                arr_soft_obj = np.copy(arr_bin_obj_idx).astype(np.float)
+                arr_soft_obj = np.copy(arr_bin_obj).astype(np.float)
                 # compute the number of dilation iterations depending on the size of the lesion
-                nb_it = int(dil_factor * math.sqrt(arr_obj.sum()))
+                nb_it = int(dil_factor * math.sqrt(arr_bin_obj.sum()))
                 # values of the voxels added to the input mask
                 soft_label_values = [x / (nb_it+1) for x in range(nb_it, 0, -1)]
                 # dilate lesion
-                arr_bin_dil, arr_soft_dil = dilate_lesion(arr_bin_obj, arr_soft_obj, soft_label_values)
+                arr_bin_dil, arr_soft_dil = self.dilate_lesion(arr_bin_obj, arr_soft_obj, soft_label_values)
                 arr_bin_lst.append(arr_bin_dil)
                 arr_soft_lst.append(arr_soft_dil)
 
             # sum dilated objects
-            arr_bin_idx, arr_soft_idx = np.sum(arr_bin_lst), np.sum(arr_soft_lst)
+            arr_bin_idx = np.sum(np.array(arr_bin_lst), axis=0)
+            arr_soft_idx = np.sum(np.array(arr_soft_lst), axis=0)
             # clip values in case dilated voxels overlap
-            arr_bin_clip, arr_soft_clip = np.clip(arr_bin_idx, a_max=1), np.clip(arr_soft_idx, a_max=1.0)
-
+            arr_bin_clip, arr_soft_clip = np.clip(arr_bin_idx, 0, 1), np.clip(arr_soft_idx, 0.0, 1.0)
             # save result
             arr_bin_out[idx] = arr_bin_clip
             arr_soft_out[idx] = arr_soft_clip
@@ -173,6 +174,7 @@ class DilateGT(mt_transforms.MTTransform):
 
         return arr_soft_out, arr_bin_out
 
+
     def post_processing(self, arr_in, arr_soft, arr_bin, arr_dil):
         struct = np.expand_dims(generate_binary_structure(2, 1), 0)  # to restrict operations along the two last dimensions
 
@@ -193,6 +195,7 @@ class DilateGT(mt_transforms.MTTransform):
         arr_soft_out = arr_bin_filled * arr_dil
 
         return arr_soft_out
+
 
     def __call__(self, sample):
         if self.dil_factor > 0:
