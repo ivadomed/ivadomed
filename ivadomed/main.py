@@ -73,7 +73,7 @@ def cmd_train(context):
     train_transform = transforms.Compose([
         mt_transforms.Resample(wspace=0.75, hspace=0.75),
         mt_transforms.CenterCrop2D((128, 128)),
-        DilateGT(nb_dilation_it=context["gt_dilation"]),  # in ivadomed/utils.py
+        DilateGT(dilation_factor=context["gt_dilation"]),  # in ivadomed/utils.py
         mt_transforms.ElasticTransform(alpha_range=(28.0, 30.0),
                                      sigma_range=(3.5, 4.0),
                                      p=0.1),

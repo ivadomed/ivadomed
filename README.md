@@ -53,7 +53,7 @@ Please find below a description of each parameter:
 - `mixup_bool`: indicates if mixup is applied to the training data (choice: `false` or `true`). Note: Please use `false` when comparing `Unet` vs. `FiLMed-Unet`.
 - `mixup_alpha`: alpha parameter of the Beta distribution (float).
 - `metadata`: choice between `"without"`, `"mri_params"`, and `"contrast"`. If `"mri_params"`, then vectors of [FlipAngle, EchoTime, RepetitionTime, Manufacturer] are input to the FiLM generator. If `"contrast"`, then image contrasts (according to `config/contrast_dct.json`) are input to the FiLM generator. Note1: if `"mri_params"`, then only images with TR, TE, FlipAngle, and Manufaturer available info are included. Note2: please use '"without"' when comparing `Unet` vs. `MixedUp-Unet` ; otherwise compare `Unet` vs. `FiLMed-Unet`.
-- `gt_dilation`: int, number of iterations of ground-truth dilation, data augmentation of the training set. Please use `0` to prevent the use of this method in the training routine.
+- `gt_dilation`: float, controls the number of iterations of ground-truth dilation depending on the size of each individual lesion, data augmentation of the training set. Please use `0` to prevent the use of this method in the training routine.
 - 'debugging': allows extended verbosity and intermediate outputs (choice: `false` or `true`).
 
 Please find below the original articles of methods we implemented in this project:
