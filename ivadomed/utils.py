@@ -90,10 +90,14 @@ def save_mixup_sample(x, y, fname):
 
 class DilateGT(mt_transforms.MTTransform):
     """Randomly dilate a tensor ground-truth.
-    :param nb_dilation_it: Number of dilation iterations. If <= 0, then no dilation will be perfomed.
+    :param dilation_factor: float, controls the number of dilation iterations.
+                            For each individual lesion, the number of dilation iterations is computed as follows:
+                                nb_it = int(round(dilation_factor * sqrt(lesion_area)))
+                            If dilation_factor <= 0, then no dilation will be perfomed.
     """
-    def __init__(self, nb_dilation_it):
-        self.n_dil_it = nb_dilation_it
+
+    def __init__(self, dilation_factor):
+        self.dil_factor = dilation_factor
 
 
     def dilate_lesion(arr_bin, arr_soft, label_values):
@@ -114,7 +118,7 @@ class DilateGT(mt_transforms.MTTransform):
        return arr_bin, arr_soft
 
 
-    def dilate_arr(self, arr, relative_dil=0.5):
+    def dilate_arr(self, arr, dil_factor):
         # init output arrays
         arr_bin_out = np.zeros(arr.shape, dtype=np.int)
         arr_soft_out = np.zeros(arr.shape, dtype=np.float)
@@ -130,7 +134,7 @@ class DilateGT(mt_transforms.MTTransform):
                 arr_bin_obj = (arr_labeled == obj_idx).astype(np.int)
                 arr_soft_obj = np.copy(arr_bin_obj_idx).astype(np.float)
                 # compute the number of dilation iterations depending on the size of the lesion
-                nb_it = int(relative_dil * math.sqrt(arr_obj.sum()))
+                nb_it = int(dil_factor * math.sqrt(arr_obj.sum()))
                 # values of the voxels added to the input mask
                 soft_label_values = [x / (nb_it+1) for x in range(nb_it, 0, -1)]
                 # dilate lesion
@@ -191,18 +195,15 @@ class DilateGT(mt_transforms.MTTransform):
         return arr_soft_out
 
     def __call__(self, sample):
-        if self.n_dil_it > 0:
+        if self.dil_factor > 0:
             gt_data = sample['gt']
             gt_data_np = gt_data.numpy()
 
             # index of samples where ones
             idx_ones = np.unique(np.where(gt_data_np)[0])
 
-            # values of the voxels added to the input mask
-            soft_label_values = [x / (self.n_dil_it+1) for x in range(self.n_dil_it, 0, -1)]
-
             # dilation
-            gt_dil, gt_dil_bin = self.dilate_mask(gt_data_np[idx_ones,0], soft_label_values)
+            gt_dil, gt_dil_bin = self.dilate_arr(gt_data_np[idx_ones,0], self.dil_factor)
 
             # random holes in dilated area
             gt_holes, gt_holes_bin = self.random_holes(gt_data_np[idx_ones,0], gt_dil, gt_dil_bin)
