@@ -95,13 +95,11 @@ class DilateGT(mt_transforms.MTTransform):
     def __init__(self, nb_dilation_it):
         self.n_dil_it = nb_dilation_it
 
-    def dilate_mask(self, arr, label_values):
-        arr_bin, arr_soft = arr.astype(np.int), arr.astype(np.float)
-        struct = np.expand_dims(generate_binary_structure(2, 1), 0)  # to restrict the dilation along the two last dimensions
 
+    def dilate_lesion(arr_bin, arr_soft, label_values):
         for lb in label_values:
             # binary dilation with 1 iteration
-            arr_dilated = binary_dilation(arr_bin, iterations=1, structure=struct)
+            arr_dilated = binary_dilation(arr_bin, iterations=1)
 
             # isolate new voxels, i.e. the ones from the dilation
             new_voxels = np.logical_xor(arr_dilated, arr_bin).astype(np.int)
@@ -113,7 +111,44 @@ class DilateGT(mt_transforms.MTTransform):
             arr_soft += soft_new_voxels
             arr_bin = (arr_soft > 0).astype(np.int)
 
-        return arr_soft, arr_bin
+       return arr_bin, arr_soft
+
+
+    def dilate_arr(self, arr, relative_dil=0.5):
+        # init output arrays
+        arr_bin_out = np.zeros(arr.shape, dtype=np.int)
+        arr_soft_out = np.zeros(arr.shape, dtype=np.float)
+
+        # loop across each axial slice
+        for idx in range(arr.shape[0]):
+            # identify each object
+            arr_labeled, lb_nb = label(arr[idx].astype(np.int))
+
+            # loop across each object of each axial slice
+            arr_bin_lst, arr_soft_lst = [], []
+            for obj_idx in range(1, lb_nb+1):
+                arr_bin_obj = (arr_labeled == obj_idx).astype(np.int)
+                arr_soft_obj = np.copy(arr_bin_obj_idx).astype(np.float)
+                # compute the number of dilation iterations depending on the size of the lesion
+                nb_it = int(relative_dil * math.sqrt(arr_obj.sum()))
+                # values of the voxels added to the input mask
+                soft_label_values = [x / (nb_it+1) for x in range(nb_it, 0, -1)]
+                # dilate lesion
+                arr_bin_dil, arr_soft_dil = dilate_lesion(arr_bin_obj, arr_soft_obj, soft_label_values)
+                arr_bin_lst.append(arr_bin_dil)
+                arr_soft_lst.append(arr_soft_dil)
+
+            # sum dilated objects
+            arr_bin_idx, arr_soft_idx = np.sum(arr_bin_lst), np.sum(arr_soft_lst)
+            # clip values in case dilated voxels overlap
+            arr_bin_clip, arr_soft_clip = np.clip(arr_bin_idx, a_max=1), np.clip(arr_soft_idx, a_max=1.0)
+
+            # save result
+            arr_bin_out[idx] = arr_bin_clip
+            arr_soft_out[idx] = arr_soft_clip
+
+        return arr_soft_out, arr_bin_out
+
 
     def random_holes(self, arr_in, arr_soft, arr_bin):
         arr_soft_out = np.copy(arr_soft)
