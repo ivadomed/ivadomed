@@ -200,8 +200,8 @@ class DilateGT(mt_transforms.MTTransform):
     def __call__(self, sample):
         if self.dil_factor > 0:
             gt_data = sample['gt']
-            gt_data_np = gt_data.numpy()
-
+            gt_data_np = np.array(gt_data)
+            print(gt_data_np.shape)
             # index of samples where ones
             idx_ones = np.unique(np.where(gt_data_np)[0])
 
