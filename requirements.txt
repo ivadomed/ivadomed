@@ -1,4 +1,4 @@
-torch==1.2.0
+torch>=1.2.0
 bids-neuropoly>=0.1
 medicaltorch>=0.2
 tensorboard
