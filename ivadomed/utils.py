@@ -120,76 +120,64 @@ class DilateGT(mt_transforms.MTTransform):
 
 
     def dilate_arr(self, arr, dil_factor):
-        # init output arrays
-        arr_bin_out = np.zeros(arr.shape, dtype=np.int)
-        arr_soft_out = np.zeros(arr.shape, dtype=np.float)
+        # identify each object
+        arr_labeled, lb_nb = label(arr.astype(np.int))
 
-        # loop across each axial slice
-        for idx in range(arr.shape[0]):
-            # identify each object
-            arr_labeled, lb_nb = label(arr[idx].astype(np.int))
+        # loop across each object
+        arr_bin_lst, arr_soft_lst = [], []
+        for obj_idx in range(1, lb_nb+1):
+            arr_bin_obj = (arr_labeled == obj_idx).astype(np.int)
+            arr_soft_obj = np.copy(arr_bin_obj).astype(np.float)
+            # compute the number of dilation iterations depending on the size of the lesion
+            nb_it = int(round(dil_factor * math.sqrt(arr_bin_obj.sum())))
+            # values of the voxels added to the input mask
+            soft_label_values = [x / (nb_it+1) for x in range(nb_it, 0, -1)]
+            # dilate lesion
+            arr_bin_dil, arr_soft_dil = self.dilate_lesion(arr_bin_obj, arr_soft_obj, soft_label_values)
+            arr_bin_lst.append(arr_bin_dil)
+            arr_soft_lst.append(arr_soft_dil)
 
-            # loop across each object of each axial slice
-            arr_bin_lst, arr_soft_lst = [], []
-            for obj_idx in range(1, lb_nb+1):
-                arr_bin_obj = (arr_labeled == obj_idx).astype(np.int)
-                arr_soft_obj = np.copy(arr_bin_obj).astype(np.float)
-                # compute the number of dilation iterations depending on the size of the lesion
-                nb_it = int(dil_factor * math.sqrt(arr_bin_obj.sum()))
-                # values of the voxels added to the input mask
-                soft_label_values = [x / (nb_it+1) for x in range(nb_it, 0, -1)]
-                # dilate lesion
-                arr_bin_dil, arr_soft_dil = self.dilate_lesion(arr_bin_obj, arr_soft_obj, soft_label_values)
-                arr_bin_lst.append(arr_bin_dil)
-                arr_soft_lst.append(arr_soft_dil)
+        # sum dilated objects
+        arr_bin_idx = np.sum(np.array(arr_bin_lst), axis=0)
+        arr_soft_idx = np.sum(np.array(arr_soft_lst), axis=0)
+        # clip values in case dilated voxels overlap
+        arr_bin_clip, arr_soft_clip = np.clip(arr_bin_idx, 0, 1), np.clip(arr_soft_idx, 0.0, 1.0)
 
-            # sum dilated objects
-            arr_bin_idx = np.sum(np.array(arr_bin_lst), axis=0)
-            arr_soft_idx = np.sum(np.array(arr_soft_lst), axis=0)
-            # clip values in case dilated voxels overlap
-            arr_bin_clip, arr_soft_clip = np.clip(arr_bin_idx, 0, 1), np.clip(arr_soft_idx, 0.0, 1.0)
-            # save result
-            arr_bin_out[idx] = arr_bin_clip
-            arr_soft_out[idx] = arr_soft_clip
-
-        return arr_soft_out, arr_bin_out
+        return arr_soft_clip.astype(np.float), arr_bin_clip.astype(np.int)
 
 
     def random_holes(self, arr_in, arr_soft, arr_bin):
         arr_soft_out = np.copy(arr_soft)
-        for idx in range(arr_in.shape[0]):
-            # coordinates of the new voxels, i.e. the ones from the dilation
-            new_voxels_xx, new_voxels_yy = np.where(np.logical_xor(arr_bin[idx], arr_in[idx]))
-            nb_new_voxels = new_voxels_xx.shape[0]
 
-            # ratio of voxels added to the input mask from the dilated mask
-            new_voxel_ratio = random.random()
-            # randomly select new voxel indexes to remove
-            idx_to_remove = random.sample(range(nb_new_voxels),
+        # coordinates of the new voxels, i.e. the ones from the dilation
+        new_voxels_xx, new_voxels_yy = np.where(np.logical_xor(arr_bin, arr_in))
+        nb_new_voxels = new_voxels_xx.shape[0]
+
+        # ratio of voxels added to the input mask from the dilated mask
+        new_voxel_ratio = random.random()
+        # randomly select new voxel indexes to remove
+        idx_to_remove = random.sample(range(nb_new_voxels),
                                             int(round(nb_new_voxels * (1 - new_voxel_ratio))))
-            # set to zero the here-above randomly selected new voxels
-            arr_soft_out[idx, new_voxels_xx[idx_to_remove], new_voxels_yy[idx_to_remove]] = 0.0
 
+        # set to zero the here-above randomly selected new voxels
+        arr_soft_out[new_voxels_xx[idx_to_remove], new_voxels_yy[idx_to_remove]] = 0.0
         arr_bin_out = (arr_soft_out > 0).astype(np.int)
 
         return arr_soft_out, arr_bin_out
 
 
     def post_processing(self, arr_in, arr_soft, arr_bin, arr_dil):
-        struct = np.expand_dims(generate_binary_structure(2, 1), 0)  # to restrict operations along the two last dimensions
-
         # remove new object that are not connected to the input mask
-        for idx in range(arr_bin.shape[0]):  # a loop is needed because "label" function restrictions
-            arr_labeled, lb_nb = label(arr_bin[idx])
-            connected_to_in = arr_labeled * arr_in[idx]
-            for lb in range(1, lb_nb+1):
-                if np.sum(connected_to_in == lb) == 0:
-                    arr_soft[idx][arr_labeled == lb] = 0
+        arr_labeled, lb_nb = label(arr_bin)
+        connected_to_in = arr_labeled * arr_in
+        for lb in range(1, lb_nb+1):
+            if np.sum(connected_to_in == lb) == 0:
+                arr_soft[arr_labeled == lb] = 0
 
         # binary closing
-        arr_bin_closed = binary_closing((arr_soft > 0).astype(bool), structure=struct)
+        arr_bin_closed = binary_closing((arr_soft > 0).astype(bool))
         # fill binary holes
-        arr_bin_filled = binary_fill_holes(arr_bin_closed, structure=struct)
+        arr_bin_filled = binary_fill_holes(arr_bin_closed)
 
         # recover the soft-value assigned to the filled-holes
         arr_soft_out = arr_bin_filled * arr_dil
@@ -198,28 +186,23 @@ class DilateGT(mt_transforms.MTTransform):
 
 
     def __call__(self, sample):
-        if self.dil_factor > 0:
-            gt_data = sample['gt']
-            gt_data_np = np.array(gt_data)
-            print(gt_data_np.shape)
-            # index of samples where ones
-            idx_ones = np.unique(np.where(gt_data_np)[0])
+        gt_data = sample['gt']
+        gt_data_np = np.array(gt_data)
 
+        if self.dil_factor > 0 and np.sum(gt_data):
             # dilation
-            gt_dil, gt_dil_bin = self.dilate_arr(gt_data_np[idx_ones,0], self.dil_factor)
+            gt_dil, gt_dil_bin = self.dilate_arr(gt_data_np, self.dil_factor)
 
             # random holes in dilated area
-            gt_holes, gt_holes_bin = self.random_holes(gt_data_np[idx_ones,0], gt_dil, gt_dil_bin)
+            gt_holes, gt_holes_bin = self.random_holes(gt_data_np, gt_dil, gt_dil_bin)
 
             # post-processing
-            gt_pp = self.post_processing(gt_data_np[idx_ones,0], gt_holes, gt_holes_bin, gt_dil)
+            gt_pp = self.post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
             gt_out = gt_data_np.astype(np.float64)
-            gt_out[idx_ones,0] = gt_pp
 
-            gt_t = F.to_tensor(gt_out[:,0])  # input of F.to_tensor needs to have 3 dimensions
-            gt_t = gt_t.permute(1, 2, 0)
+            gt_t = Image.fromarray(gt_pp)
             rdict = {
-                'gt': gt_t.unsqueeze_(1),  # add dimension back
+                'gt': gt_t,
             }
             sample.update(rdict)
 
