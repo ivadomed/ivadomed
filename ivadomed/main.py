@@ -170,13 +170,13 @@ def cmd_train(context):
 
     # Using Adam
     optimizer = optim.Adam(model.parameters(), lr=initial_lr)
-    if context["scheduler"]["name"] == "CosineAnnealing":
+    if context["lr_scheduler"]["name"] == "CosineAnnealing":
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
-    elif context["scheduler"]["name"] == "CosineAnnealingWarmRestarts":
-        T_0, T_mult = context["scheduler"]["T_0"], context["scheduler"]["T_mult"]
-        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0, T_mult)
-    elif context["scheduler"]["name"] == "CyclicLR":
-        base_lr, max_lr = context["scheduler"]["base_lr"], context["scheduler"]["max_lr"]
+    elif context["lr_scheduler"]["name"] == "CosineAnnealingWarmRestarts":
+        T_0 = context["lr_scheduler"]["T_0"]
+        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0)
+    elif context["lr_scheduler"]["name"] == "CyclicLR":
+        base_lr, max_lr = context["lr_scheduler"]["base_lr"], context["lr_scheduler"]["max_lr"]
         scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr, max_lr)
     else:
         print("Unknown LR Scheduler name, please choose between 'CosineAnnealing', 'CosineAnnealingWarmRestarts', or 'CyclicLR'")
