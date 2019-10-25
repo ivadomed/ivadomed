@@ -168,9 +168,19 @@ def cmd_train(context):
     num_epochs = context["num_epochs"]
     initial_lr = context["initial_lr"]
 
-    # Using Adam with cosine annealing learning rate
+    # Using Adam
     optimizer = optim.Adam(model.parameters(), lr=initial_lr)
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
+    if context["scheduler"]["name"] == "CosineAnnealing":
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
+    elif context["scheduler"]["name"] == "CosineAnnealingWarmRestarts":
+        T_0, T_mult = context["scheduler"]["T_0"], context["scheduler"]["T_mult"]
+        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0, T_mult)
+    elif context["scheduler"]["name"] == "CyclicLR":
+        base_lr, max_lr = context["scheduler"]["base_lr"], context["scheduler"]["max_lr"]
+        scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr, max_lr)
+    else:
+        print("Unknown LR Scheduler name, please choose between 'CosineAnnealing', 'CosineAnnealingWarmRestarts', or 'CyclicLR'")
+        exit()
 
     # Create dict containing gammas and betas after each FiLM layer.
     gammas_dict = {i:[] for i in range(1,9)}
