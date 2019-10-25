@@ -169,6 +169,7 @@ def cmd_train(context):
     initial_lr = context["initial_lr"]
 
     # Using Adam
+    step_scheduler_batch = False
     optimizer = optim.Adam(model.parameters(), lr=initial_lr)
     if context["lr_scheduler"]["name"] == "CosineAnnealing":
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
@@ -178,6 +179,7 @@ def cmd_train(context):
     elif context["lr_scheduler"]["name"] == "CyclicLR":
         base_lr, max_lr = context["lr_scheduler"]["base_lr"], context["lr_scheduler"]["max_lr"]
         scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr, max_lr)
+        step_scheduler_batch = True
     else:
         print("Unknown LR Scheduler name, please choose between 'CosineAnnealing', 'CosineAnnealingWarmRestarts', or 'CyclicLR'")
         exit()
@@ -279,6 +281,8 @@ def cmd_train(context):
             loss.backward()
 
             optimizer.step()
+            if step_scheduler_batch:
+                scheduler.step()
 
             num_steps += 1
 
@@ -300,7 +304,8 @@ def cmd_train(context):
                 writer.add_image('Train/Ground Truth', grid_img, epoch)
 
         train_loss_total_avg = train_loss_total / num_steps
-        scheduler.step()
+        if not step_scheduler_batch:
+            scheduler.step()
 
         tqdm.write(f"Epoch {epoch} training loss: {train_loss_total_avg:.4f}.")
         if context["loss"]["name"] != 'dice':
