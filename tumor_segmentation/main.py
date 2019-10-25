@@ -13,7 +13,6 @@ import joblib
 import torchvision.utils as vutils
 from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
-from medicaltorch import metrics as mt_metrics
 from medicaltorch import losses as mt_losses
 from sklearn.model_selection import train_test_split
 from ivadomed import loader
@@ -47,7 +46,7 @@ def cmd_train(context):
 
     training_set, val_set, test_set = split_dataset(context['bids_path'], random_seed=context['random_seed'])
     train_transforms = transforms.Compose([
-        mt_transforms.CenterCrop2D((128, 512)),
+        mt_transforms.CenterCrop2D((256, 256)),
         mt_transforms.ElasticTransform(alpha_range=(28.0, 30.0),
                                        sigma_range=(3.5, 4.0),
                                        p=0.1),
@@ -60,7 +59,7 @@ def cmd_train(context):
     ])
 
     val_transforms = transforms.Compose([
-        mt_transforms.CenterCrop2D((128, 512)),
+        mt_transforms.CenterCrop2D((256, 256)),
         mt_transforms.ToTensor(),
         mt_transforms.NormalizeInstance()
     ])
@@ -274,8 +273,6 @@ def run_main():
     if command == 'train':
         cmd_train(context)
         shutil.copyfile(sys.argv[1], "./"+context["log_directory"]+"/config_file.json")
-    # elif command == 'test':
-    #     cmd_test(context)
 
 if __name__ == "__main__":
     run_main()
