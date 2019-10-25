@@ -1,0 +1,18 @@
+{
+	"command": "train",
+	"gpu": 0,
+    "gt_suffix": "_seg-tumor",
+	"bids_path": "/usr/Spine_Cord_Data/Tumor_BIDS",
+	"random_seed": 1313,
+	"contrast_train_validation": ["T1w", "T2w"],
+	"contrast_balance": {},
+	"contrast_test": ["T1w", "T2w"],
+	"batch_size": 18,
+	"dropout_rate": 0.3,
+	"batch_norm_momentum": 0.1,
+	"num_epochs": 100,
+	"initial_lr": 0.001,
+    "loss": "dice",
+	"log_directory": "log",
+    "debugging": false
+}

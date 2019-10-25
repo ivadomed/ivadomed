@@ -42,6 +42,23 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
                                     bids_metadata, contrast)
             self.handlers.append(segpair)
 
+    def _prepare_indexes(self):
+        for segpair in self.handlers:
+            input_data_shape, _ = segpair.get_pair_shapes()
+            for segpair_slice in range(input_data_shape[self.slice_axis]):
+
+                # Check if slice pair should be used or not
+                if self.slice_filter_fn:
+                    slice_pair = segpair.get_pair_slice(segpair_slice,
+                                                        self.slice_axis)
+
+                    filter_fn_ret = self.slice_filter_fn(slice_pair)
+                    if not filter_fn_ret:
+                        continue
+
+                item = (segpair, segpair_slice)
+                self.indexes.append(item)
+
 
 class BidsDataset(MRI2DBidsSegDataset):
     def __init__(self, root_dir, subject_lst, gt_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
