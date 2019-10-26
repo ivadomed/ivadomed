@@ -154,6 +154,14 @@ def split_dataset(path_folder, center_test_lst, random_seed, train_frac=0.8):
 
     return X_train, X_val, X_test
 
+def split_dataset_with_participant_id(path_folder, random_seed, train_frac=0.6, test_frac=0.2):
+    # read participants.tsv as pandas dataframe
+    df = bids.BIDS(path_folder).participants.content
+    # Separate dataset in test, train and validation using sklearn function
+    X_train, X_remain = train_test_split(df['participant_id'].tolist(), train_size=train_frac, random_state=random_seed)
+    X_test, X_val = train_test_split(X_remain, train_size=test_frac/(1 - train_frac), random_state=random_seed)
+    return X_train, X_val, X_test
+
 
 class Kde_model():
     def __init__(self):
