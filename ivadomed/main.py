@@ -455,20 +455,23 @@ def cmd_test(context):
         print('\tInclude all subjects, with or without acquisition metadata.\n')
 
     # These are the validation/testing transformations
-    val_transform = transforms.Compose([
-        mt_transforms.Resample(wspace=0.75, hspace=0.75),
-        mt_transforms.CenterCrop2D((128, 128)),
-        mt_transforms.ToTensor(),
-        mt_transforms.NormalizeInstance(),
-    ])
+    validation_transform_list = []
+    for transform in context["data_augmentation_training"].keys():
+        parameters = context["data_augmentation_training"][transform]
+        validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+
+    val_transform = transforms.Compose(validation_transform_list)
+
 
     test_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
+    axis_dct = {'sagittal': 0, 'frontal': 1, 'axial': 2}
     ds_test = loader.BidsDataset(context["bids_path"],
                                  subject_lst=test_lst,
                                  gt_suffix=context["gt_suffix"],
                                  contrast_lst=context["contrast_test"],
                                  metadata_choice=context["metadata"],
                                  contrast_balance=context["contrast_balance"],
+                                 slice_axis=axis_dct[context["slice_axis"]],
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter())
 
@@ -482,7 +485,7 @@ def cmd_test(context):
 
         one_hot_encoder = joblib.load("./"+context["log_directory"]+"/one_hot_encoder.joblib")
 
-    print(f"Loaded {len(ds_test)} axial slices for the test set.")
+    print(f"Loaded {len(ds_test)} {context['slice_axis']} slices for the test set.")
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
                              shuffle=True, pin_memory=True,
                              collate_fn=mt_datasets.mt_collate,
