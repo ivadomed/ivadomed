@@ -19,12 +19,14 @@
     "mixup_bool": false,
     "mixup_alpha": 2,
     "metadata": "without",
-    "gt_dilation": 0,
     "slice_axis": "sagittal",
     "data_augmentation_training": {
       "Resample": {
         "wspace": 0.75,
         "hspace": 0.75
+      },
+      "DilateGT": {
+        "dilation_factor": 0
       },
       "CenterCrop2D": {
         "size": [256, 256]
