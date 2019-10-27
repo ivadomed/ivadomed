@@ -1,4 +1,5 @@
 torch==1.2.0
+torchvision==0.2.1
 bids-neuropoly>=0.1
 medicaltorch>=0.2
 tensorboard
