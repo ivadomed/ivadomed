@@ -53,6 +53,7 @@ def cmd_train(context):
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet or MixupUnet
     metadata_bool = False if context["metadata"] == "without" else True
     film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
+    regularizer_bool = context["regularizer_bool"]
     if(bool(sum(context["film_layers"])) and not(metadata_bool)):
         print('\tWarning FiLM disabled since metadata is disabled')
 
@@ -157,6 +158,11 @@ def cmd_train(context):
                             film_bool=context["film_layers"],
                             drop_rate=context["dropout_rate"],
                             bn_momentum=context["batch_norm_momentum"])
+    elif regularizer_bool:
+        model = models.RegularizedUnet(drop_rate=context["dropout_rate"],
+                            bn_momentum=context["batch_norm_momentum"])
+        regularizer = models.Regularizer(65536,2)
+
     else:
         # Traditional U-Net model
         model = models.Unet(drop_rate=context["dropout_rate"],
@@ -164,7 +170,8 @@ def cmd_train(context):
 
     if cuda_available:
         model.cuda()
-
+        if regularizer_bool:
+            regularizer.cuda()
     num_epochs = context["num_epochs"]
     initial_lr = context["initial_lr"]
 
@@ -255,6 +262,9 @@ def cmd_train(context):
 
                 var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
                 preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
+            elif regularizer_bool:
+                preds,latent = model(var_input)
+                domain_out = regularizer(torch.flatten(latent, start_dim=1))
             else:
                 preds = model(var_input)
 
@@ -330,6 +340,9 @@ def cmd_train(context):
 
                     var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
                     preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
+                elif regularizer_bool:
+                    preds,latent = model(var_input)
+                    domain_out = regularizer(torch.flatten(latent, start_dim=1))
                 else:
                     preds = model(var_input)
 
@@ -448,6 +461,7 @@ def cmd_test(context):
 
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet
     film_bool = bool(sum(context["film_layers"]))
+    regularizer_bool = context["regularizer_bool"]
     print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
     if context["metadata"] == "mri_params":
         print('\tInclude subjects with acquisition metadata available only.\n')
@@ -492,6 +506,8 @@ def cmd_test(context):
 
     if cuda_available:
         model.cuda()
+        if regularizer_bool:
+            regularizer.cuda()
     model.eval()
 
     metric_fns = [dice_score,  # from ivadomed/utils.py

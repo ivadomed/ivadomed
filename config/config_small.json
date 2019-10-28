@@ -18,6 +18,7 @@
 	"film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
 	"mixup_bool": true,
 	"mixup_alpha": 2,
+	"regularizer_bool": false,
 	"metadata": "without",
         "gt_dilation": 0,
         "debugging": false

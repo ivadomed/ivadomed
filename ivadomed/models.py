@@ -237,3 +237,79 @@ class FiLMedUnet(Module):
         preds = torch.sigmoid(x11)
 
         return preds
+
+class RegularizedUnet(Module):
+    """A reference U-Net model.
+
+    .. seealso::
+
+    """
+    def __init__(self, drop_rate=0.4, bn_momentum=0.1):
+        super(RegularizedUnet, self).__init__()
+
+        #Downsampling path
+        self.conv1 = DownConv(1, 64, drop_rate, bn_momentum)
+        self.mp1 = nn.MaxPool2d(2)
+
+        self.conv2 = DownConv(64, 128, drop_rate, bn_momentum)
+        self.mp2 = nn.MaxPool2d(2)
+
+        self.conv3 = DownConv(128, 256, drop_rate, bn_momentum)
+        self.mp3 = nn.MaxPool2d(2)
+
+        # Bottom
+        self.conv4 = DownConv(256, 256, drop_rate, bn_momentum)
+
+        # Upsampling path
+        self.up1 = UpConv(512, 256, drop_rate, bn_momentum)
+        self.up2 = UpConv(384, 128, drop_rate, bn_momentum)
+        self.up3 = UpConv(192, 64, drop_rate, bn_momentum)
+
+        self.conv9 = nn.Conv2d(64, 1, kernel_size=3, padding=1)
+
+    def forward(self, x):
+        x1 = self.conv1(x)
+        x2 = self.mp1(x1)
+
+        x3 = self.conv2(x2)
+        x4 = self.mp2(x3)
+
+        x5 = self.conv3(x4)
+        x6 = self.mp3(x5)
+
+        # Bottom
+        x7 = self.conv4(x6)
+
+        latent = x7
+        # Up-sampling
+        x8 = self.up1(x7, x5)
+        x9 = self.up2(x8, x3)
+        x10 = self.up3(x9, x1)
+
+        x11 = self.conv9(x10)
+        preds = torch.sigmoid(x11)
+
+        return preds,latent
+
+class Regularizer(Module):
+    """The FiLM generator processes the conditioning information
+    and produces parameters that describe how the target network should alter its computation.
+
+    Here, the FiLM generator is a multi-layer perceptron.
+    """
+    def __init__(self, n_features, n_centers, n_hid=64):
+        super(Regularizer, self).__init__()
+        self.linear1 = nn.Linear(n_features, n_hid)
+        self.sig1 = nn.Sigmoid()
+        self.linear2 = nn.Linear(n_hid, n_hid // 4)
+        self.sig2 = nn.Sigmoid()
+        self.linear3 = nn.Linear(n_hid // 4, n_centers * 2)
+        self.sm = nn.Softmax()
+    def forward(self, x):
+        x = self.linear1(x)
+        x = self.sig1(x)
+        x = self.linear2(x)
+        x = self.sig2(x)
+        x = self.linear3(x)
+        out = self.sm(x)
+        return out
