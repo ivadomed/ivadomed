@@ -168,9 +168,21 @@ def cmd_train(context):
     num_epochs = context["num_epochs"]
     initial_lr = context["initial_lr"]
 
-    # Using Adam with cosine annealing learning rate
+    # Using Adam
+    step_scheduler_batch = False
     optimizer = optim.Adam(model.parameters(), lr=initial_lr)
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
+    if context["lr_scheduler"]["name"] == "CosineAnnealing":
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
+    elif context["lr_scheduler"]["name"] == "CosineAnnealingWarmRestarts":
+        T_0 = context["lr_scheduler"]["T_0"]
+        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0)
+    elif context["lr_scheduler"]["name"] == "CyclicLR":
+        base_lr, max_lr = context["lr_scheduler"]["base_lr"], context["lr_scheduler"]["max_lr"]
+        scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr, max_lr)
+        step_scheduler_batch = True
+    else:
+        print("Unknown LR Scheduler name, please choose between 'CosineAnnealing', 'CosineAnnealingWarmRestarts', or 'CyclicLR'")
+        exit()
 
     # Create dict containing gammas and betas after each FiLM layer.
     gammas_dict = {i:[] for i in range(1,9)}
@@ -269,6 +281,8 @@ def cmd_train(context):
             loss.backward()
 
             optimizer.step()
+            if step_scheduler_batch:
+                scheduler.step()
 
             num_steps += 1
 
@@ -290,7 +304,8 @@ def cmd_train(context):
                 writer.add_image('Train/Ground Truth', grid_img, epoch)
 
         train_loss_total_avg = train_loss_total / num_steps
-        scheduler.step()
+        if not step_scheduler_batch:
+            scheduler.step()
 
         tqdm.write(f"Epoch {epoch} training loss: {train_loss_total_avg:.4f}.")
         if context["loss"]["name"] != 'dice':
