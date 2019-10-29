@@ -129,7 +129,7 @@ def cmd_train(context):
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=True, pin_memory=True,
                               collate_fn=mt_datasets.mt_collate,
-                              num_workers=1)
+                              num_workers=0)
 
     # Validation dataset ------------------------------------------------------
     ds_val = loader.BidsDataset(context["bids_path"],
@@ -153,7 +153,7 @@ def cmd_train(context):
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
                             shuffle=True, pin_memory=True,
                             collate_fn=mt_datasets.mt_collate,
-                            num_workers=1)
+                            num_workers=0)
 
     if film_bool:
         # Modulated U-net model with FiLM layers
@@ -508,7 +508,7 @@ def cmd_test(context):
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
                              shuffle=True, pin_memory=True,
                              collate_fn=mt_datasets.mt_collate,
-                             num_workers=1)
+                             num_workers=0)
 
     model = torch.load("./"+context["log_directory"]+"/best_model.pt")
 
