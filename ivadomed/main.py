@@ -72,10 +72,10 @@ def cmd_train(context):
     # These are the training transformations
     training_transform_list = []
     for transform in context["transformation_training"].keys():
+        parameters = context["transformation_training"][transform]
         if transform == "DilateGT": # DilateGT is not a method of mt_transforms
-            training_transform_list.append(DilateGT(**context["transformation_training"][transform]))
+            training_transform_list.append(DilateGT(**parameters))
         else:
-            parameters = context["transformation_training"][transform]
             training_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
     train_transform = transforms.Compose(training_transform_list)
