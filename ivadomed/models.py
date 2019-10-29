@@ -102,21 +102,24 @@ class FiLMgenerator(Module):
     def __init__(self, n_features, n_channels, n_hid=64):
         super(FiLMgenerator, self).__init__()
         self.linear1 = nn.Linear(n_features, n_hid)
-        self.relu1 = nn.ReLU()
+        self.sig1 = nn.Sigmoid()
         self.linear2 = nn.Linear(n_hid, n_hid // 4)
-        self.relu2 = nn.ReLU()
+        self.sig2 = nn.Sigmoid()
         self.linear3 = nn.Linear(n_hid // 4, n_channels * 2)
+        self.sig3 = nn.Sigmoid()
 
     def forward(self, x, shared_weights=None):
         x = self.linear1(x)
-        x = self.relu1(x)
+        x = self.sig1(x)
 
         if shared_weights is not None:  # weight sharing
             self.linear2.weight = shared_weights
-        x = self.linear2(x)
-        x = self.relu2(x)
 
-        out = self.linear3(x)
+        x = self.linear2(x)
+        x = self.sig2(x)
+        x = self.linear3(x)
+
+        out = self.sig3(x)
         return out, self.linear2.weight
 
 
