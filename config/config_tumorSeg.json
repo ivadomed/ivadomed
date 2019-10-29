@@ -2,7 +2,7 @@
     "command": "train",
     "gpu": 7,
     "gt_suffix": "_seg-manual",
-    "bids_path": "/home/GRAMES.POLYMTL.CA/anlemj/results/data",
+    "bids_path": "C:\\Users\\andre\\Desktop\\Git\\IVADO_medical_imaging\\bids_amu_2017-virginie",
     "random_seed": 1313,
     "contrast_train_validation": ["T2w"],
     "contrast_balance": {},
@@ -20,7 +20,10 @@
     "mixup_alpha": 2,
     "metadata": "without",
     "slice_axis": "sagittal",
-    "data_augmentation_training": {
+    "split_method": "per_patient",
+    "train_fraction": 0.6,
+    "test_fraction": 0.2,
+    "transformation_training": {
       "Resample": {
         "wspace": 0.75,
         "hspace": 0.75
@@ -47,14 +50,13 @@
       "ToTensor": {},
       "NormalizeInstance": {}
     },
-    "data_augmentation_validation": {
+    "transformation_validation": {
       "Resample": {
         "wspace": 0.75,
         "hspace": 0.75
       },
-      "Crop": {
-        "height": 256,
-        "width":  256
+      "CenterCrop2D": {
+        "size": [256, 256]
       },
       "ToTensor": {},
       "NormalizeInstance": {}

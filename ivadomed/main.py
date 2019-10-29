@@ -71,26 +71,33 @@ def cmd_train(context):
 
     # These are the training transformations
     training_transform_list = []
-    for transform in context["data_augmentation_training"].keys():
-        parameters = context["data_augmentation_training"][transform]
-        training_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+    for transform in context["transformation_training"].keys():
+        if transform == "DilateGT": # DilateGT is not a method of mt_transforms
+            training_transform_list.append(DilateGT(**context["transformation_training"][transform]))
+        else:
+            parameters = context["transformation_training"][transform]
+            training_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
     train_transform = transforms.Compose(training_transform_list)
 
     # These are the validation/testing transformations
     validation_transform_list = []
-    for transform in context["data_augmentation_training"].keys():
-        parameters = context["data_augmentation_training"][transform]
-        validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+    for transform in context["transformation_validation"].keys():
+        if transform == "DilateGT": # DilateGT is not a method of mt_transforms
+            validation_transform_list.append(DilateGT(**context["transformation_validation"][transform]))
+        else:
+            parameters = context["transformation_validation"][transform]
+            validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
     val_transform = transforms.Compose(validation_transform_list)
 
     # Randomly split dataset between training / validation / testing
-    if len(context["center_test"]):
-        train_lst, valid_lst, test_lst = loader.split_dataset(context["bids_path"], context["center_test"], context["random_seed"])
-    else:
-        print('\tNo center test was specified.\n')
-        train_lst, valid_lst, test_lst = loader.split_dataset_with_participant_id(context["bids_path"], context["random_seed"])
+    train_lst, valid_lst, test_lst = loader.split_dataset(path_folder=context["bids_path"],
+                                                          center_test_lst=context["center_test"],
+                                                          split_method=context["split_method"],
+                                                          random_seed=context["random_seed"],
+                                                          train_frac=context["train_fraction"],
+                                                          test_frac=context["test_fraction"])
 
     # save the subject distribution
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
@@ -456,9 +463,12 @@ def cmd_test(context):
 
     # These are the validation/testing transformations
     validation_transform_list = []
-    for transform in context["data_augmentation_training"].keys():
-        parameters = context["data_augmentation_training"][transform]
-        validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+    for transform in context["transformation_validation"].keys():
+        if transform == "DilateGT": # DilateGT is not a method of mt_transforms
+            validation_transform_list.append(DilateGT(**context["transformation_validation"][transform]))
+        else:
+            parameters = context["transformation_validation"][transform]
+            validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
     val_transform = transforms.Compose(validation_transform_list)
 
