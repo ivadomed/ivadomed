@@ -100,7 +100,7 @@ def cmd_train(context):
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
     joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
 
-    axis_dct = {'sagittal': 0, 'frontal': 1, 'axial': 2}
+    axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
     ds_train = loader.BidsDataset(context["bids_path"],
@@ -468,7 +468,7 @@ def cmd_test(context):
 
 
     test_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
-    axis_dct = {'sagittal': 0, 'frontal': 1, 'axial': 2}
+    axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     ds_test = loader.BidsDataset(context["bids_path"],
                                  subject_lst=test_lst,
                                  gt_suffix=context["gt_suffix"],
