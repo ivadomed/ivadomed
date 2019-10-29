@@ -83,11 +83,8 @@ def cmd_train(context):
     # These are the validation/testing transformations
     validation_transform_list = []
     for transform in context["transformation_validation"].keys():
-        if transform == "DilateGT": # DilateGT is not a method of mt_transforms
-            validation_transform_list.append(DilateGT(**context["transformation_validation"][transform]))
-        else:
-            parameters = context["transformation_validation"][transform]
-            validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+        parameters = context["transformation_validation"][transform]
+        validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
     val_transform = transforms.Compose(validation_transform_list)
 
@@ -464,11 +461,8 @@ def cmd_test(context):
     # These are the validation/testing transformations
     validation_transform_list = []
     for transform in context["transformation_validation"].keys():
-        if transform == "DilateGT": # DilateGT is not a method of mt_transforms
-            validation_transform_list.append(DilateGT(**context["transformation_validation"][transform]))
-        else:
-            parameters = context["transformation_validation"][transform]
-            validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+        parameters = context["transformation_validation"][transform]
+        validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
     val_transform = transforms.Compose(validation_transform_list)
 
