@@ -42,6 +42,23 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
                                     bids_metadata, contrast)
             self.handlers.append(segpair)
 
+    def _prepare_indexes(self):
+        for segpair in self.handlers:
+            input_data_shape, _ = segpair.get_pair_shapes()
+            for segpair_slice in range(input_data_shape[self.slice_axis]):
+
+                # Check if slice pair should be used or not
+                if self.slice_filter_fn:
+                    slice_pair = segpair.get_pair_slice(segpair_slice,
+                                                        self.slice_axis)
+
+                    filter_fn_ret = self.slice_filter_fn(slice_pair)
+                    if not filter_fn_ret:
+                        continue
+
+                item = (segpair, segpair_slice)
+                self.indexes.append(item)
+
 
 class BidsDataset(MRI2DBidsSegDataset):
     def __init__(self, root_dir, subject_lst, gt_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
@@ -120,23 +137,31 @@ class BidsDataset(MRI2DBidsSegDataset):
                          transform, slice_filter_fn, canonical)
 
 
-def split_dataset(path_folder, center_test_lst, random_seed, train_frac=0.8):
+def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
     # read participants.tsv as pandas dataframe
     df = bids.BIDS(path_folder).participants.content
+    X_test = []
+    X_train = []
+    X_val = []
+    if split_method == 'per_center':
+        # make sure that subjects coming from some centers are unseen during training
+        X_test = df[df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
+        X_remain = df[~df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
 
-    # make sure that subjects coming from some centers are unseen during training
-    X_test = df[df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
-    X_remain = df[~df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
-
-    # split using sklearn function
-    X_train, X_tmp = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
-    if len(X_test):  # X_test contains data from centers unseen during the training, eg SpineGeneric
-        X_val = X_tmp
-    else:  # X_test contains data from centers seen during the training, eg gm_challenge
-        X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
+        # split using sklearn function
+        X_train, X_tmp = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
+        if len(X_test):  # X_test contains data from centers unseen during the training, eg SpineGeneric
+            X_val = X_tmp
+        else:  # X_test contains data from centers seen during the training, eg gm_challenge
+            X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
+    elif split_method == 'per_patient':
+        # Separate dataset in test, train and validation using sklearn function
+        X_train, X_remain = train_test_split(df['participant_id'].tolist(), train_size=train_frac, random_state=random_seed)
+        X_test, X_val = train_test_split(X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
+    else:
+        print(f" {split_method} is not a supported split method")
 
     return X_train, X_val, X_test
-
 
 class Kde_model():
     def __init__(self):

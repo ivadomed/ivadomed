@@ -1,0 +1,65 @@
+{
+    "command": "train",
+    "gpu": 7,
+    "gt_suffix": "_seg-manual",
+    "bids_path": "C:\\Users\\andre\\Desktop\\Git\\IVADO_medical_imaging\\bids_amu_2017-virginie",
+    "random_seed": 1313,
+    "contrast_train_validation": ["T2w"],
+    "contrast_balance": {},
+    "contrast_test": ["T2w"],
+    "center_test": [],
+    "batch_size": 18,
+    "dropout_rate": 0.3,
+    "batch_norm_momentum": 0.1,
+    "num_epochs": 100,
+    "initial_lr": 0.001,
+    "loss": {"name": "dice"},
+    "log_directory": "log",
+    "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
+    "mixup_bool": false,
+    "mixup_alpha": 2,
+    "metadata": "without",
+    "slice_axis": "sagittal",
+    "split_method": "per_patient",
+    "train_fraction": 0.6,
+    "test_fraction": 0.2,
+    "transformation_training": {
+      "Resample": {
+        "wspace": 0.75,
+        "hspace": 0.75
+      },
+      "DilateGT": {
+        "dilation_factor": 0
+      },
+      "CenterCrop2D": {
+        "size": [256, 256]
+      },
+      "ElasticTransform": {
+        "alpha_range": [28.0, 30.0],
+        "sigma_range":  [3.5, 4.5],
+        "p": 0.1
+      },
+      "RandomAffine": {
+        "degrees": 4.6,
+        "translate": [0.03, 0.03],
+        "scale": [0.98, 1.02]
+      },
+      "RandomTensorChannelShift": {
+        "shift_range": [-0.1, 0.1]
+      },
+      "ToTensor": {},
+      "NormalizeInstance": {}
+    },
+    "transformation_validation": {
+      "Resample": {
+        "wspace": 0.75,
+        "hspace": 0.75
+      },
+      "CenterCrop2D": {
+        "size": [256, 256]
+      },
+      "ToTensor": {},
+      "NormalizeInstance": {}
+    },
+    "debugging": true
+}

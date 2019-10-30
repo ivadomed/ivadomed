@@ -70,35 +70,37 @@ def cmd_train(context):
     writer = SummaryWriter(log_dir=context["log_directory"])
 
     # These are the training transformations
-    train_transform = transforms.Compose([
-        mt_transforms.Resample(wspace=0.75, hspace=0.75),
-        mt_transforms.CenterCrop2D((128, 128)),
-        DilateGT(dilation_factor=context["gt_dilation"]),  # in ivadomed/utils.py
-        mt_transforms.ElasticTransform(alpha_range=(28.0, 30.0),
-                                     sigma_range=(3.5, 4.0),
-                                     p=0.1),
-        mt_transforms.RandomAffine(degrees=4.6,
-                                   scale=(0.98, 1.02),
-                                   translate=(0.03, 0.03)),
-        mt_transforms.RandomTensorChannelShift((-0.10, 0.10)),
-        mt_transforms.ToTensor(),
-        mt_transforms.NormalizeInstance(),
-    ])
+    training_transform_list = []
+    for transform in context["transformation_training"].keys():
+        parameters = context["transformation_training"][transform]
+        if transform == "DilateGT": # DilateGT is not a method of mt_transforms
+            training_transform_list.append(DilateGT(**parameters))
+        else:
+            training_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+
+    train_transform = transforms.Compose(training_transform_list)
 
     # These are the validation/testing transformations
-    val_transform = transforms.Compose([
-        mt_transforms.Resample(wspace=0.75, hspace=0.75),
-        mt_transforms.CenterCrop2D((128, 128)),
-        mt_transforms.ToTensor(),
-        mt_transforms.NormalizeInstance(),
-    ])
+    validation_transform_list = []
+    for transform in context["transformation_validation"].keys():
+        parameters = context["transformation_validation"][transform]
+        validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+
+    val_transform = transforms.Compose(validation_transform_list)
 
     # Randomly split dataset between training / validation / testing
-    train_lst, valid_lst, test_lst = loader.split_dataset(context["bids_path"], context["center_test"], context["random_seed"])
+    train_lst, valid_lst, test_lst = loader.split_dataset(path_folder=context["bids_path"],
+                                                          center_test_lst=context["center_test"],
+                                                          split_method=context["split_method"],
+                                                          random_seed=context["random_seed"],
+                                                          train_frac=context["train_fraction"],
+                                                          test_frac=context["test_fraction"])
+
     # save the subject distribution
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
     joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
 
+    axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
     ds_train = loader.BidsDataset(context["bids_path"],
@@ -107,6 +109,7 @@ def cmd_train(context):
                                   contrast_lst=context["contrast_train_validation"],
                                   metadata_choice=context["metadata"],
                                   contrast_balance=context["contrast_balance"],
+                                  slice_axis=axis_dct[context["slice_axis"]],
                                   transform=train_transform,
                                   slice_filter_fn=SliceFilter())
 
@@ -122,7 +125,7 @@ def cmd_train(context):
                                                                    context["metadata"],
                                                                    True)
 
-    print(f"Loaded {len(ds_train)} axial slices for the training set.")
+    print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=True, pin_memory=True,
                               collate_fn=mt_datasets.mt_collate,
@@ -135,6 +138,7 @@ def cmd_train(context):
                                 contrast_lst=context["contrast_train_validation"],
                                 metadata_choice=context["metadata"],
                                 contrast_balance=context["contrast_balance"],
+                                slice_axis=axis_dct[context["slice_axis"]],
                                 transform=val_transform,
                                 slice_filter_fn=SliceFilter())
 
@@ -145,7 +149,7 @@ def cmd_train(context):
                                             context["metadata"],
                                             False)
 
-    print(f"Loaded {len(ds_val)} axial slices for the validation set.")
+    print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
                             shuffle=True, pin_memory=True,
                             collate_fn=mt_datasets.mt_collate,
@@ -470,20 +474,23 @@ def cmd_test(context):
         print('\tInclude all subjects, with or without acquisition metadata.\n')
 
     # These are the validation/testing transformations
-    val_transform = transforms.Compose([
-        mt_transforms.Resample(wspace=0.75, hspace=0.75),
-        mt_transforms.CenterCrop2D((128, 128)),
-        mt_transforms.ToTensor(),
-        mt_transforms.NormalizeInstance(),
-    ])
+    validation_transform_list = []
+    for transform in context["transformation_validation"].keys():
+        parameters = context["transformation_validation"][transform]
+        validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+
+    val_transform = transforms.Compose(validation_transform_list)
+
 
     test_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
+    axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     ds_test = loader.BidsDataset(context["bids_path"],
                                  subject_lst=test_lst,
                                  gt_suffix=context["gt_suffix"],
                                  contrast_lst=context["contrast_test"],
                                  metadata_choice=context["metadata"],
                                  contrast_balance=context["contrast_balance"],
+                                 slice_axis=axis_dct[context["slice_axis"]],
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter())
 
@@ -497,7 +504,7 @@ def cmd_test(context):
 
         one_hot_encoder = joblib.load("./"+context["log_directory"]+"/one_hot_encoder.joblib")
 
-    print(f"Loaded {len(ds_test)} axial slices for the test set.")
+    print(f"Loaded {len(ds_test)} {context['slice_axis']} slices for the test set.")
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
                              shuffle=True, pin_memory=True,
                              collate_fn=mt_datasets.mt_collate,
