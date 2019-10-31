@@ -18,8 +18,7 @@ from ivadomed import main as ivado
 import logging
 import pandas as pd
 
-
-LOG_FILENAME = 'log.out'
+LOG_FILENAME = 'log.txt'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 
 
@@ -29,7 +28,7 @@ def worker(config):
     ID = current.name[-1]
     #Offset because Lucas uses GPU 0,1
     config["gpu"] =  int(ID) + 1
-    print(config["gpu"])
+    #print(config["gpu"])
 
     #Call ivado cmd_train
     try:
