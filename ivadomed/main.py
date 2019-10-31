@@ -175,7 +175,7 @@ def cmd_train(context):
     # Using Adam
     step_scheduler_batch = False
     optimizer = optim.Adam(model.parameters(), lr=initial_lr)
-    if context["lr_scheduler"]["name"] == "CosineAnnealing":
+    if context["lr_scheduler"]["name"] == "CosineAnnealingLR":
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
     elif context["lr_scheduler"]["name"] == "CosineAnnealingWarmRestarts":
         T_0 = context["lr_scheduler"]["T_0"]
@@ -185,7 +185,7 @@ def cmd_train(context):
         scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr, max_lr)
         step_scheduler_batch = True
     else:
-        print("Unknown LR Scheduler name, please choose between 'CosineAnnealing', 'CosineAnnealingWarmRestarts', or 'CyclicLR'")
+        print("Unknown LR Scheduler name, please choose between 'CosineAnnealingLR', 'CosineAnnealingWarmRestarts', or 'CyclicLR'")
         exit()
 
     # Create dict containing gammas and betas after each FiLM layer.
