@@ -40,7 +40,7 @@ def worker(config):
         raise
 
     # Save config file in log dir
-    config_copy = open(config["log_directory"] + "config.json","w")
+    config_copy = open(config["log_directory"] + "/config.json","w")
     json.dump(config, config_copy, indent=4)
 
     return config["log_directory"],perf
@@ -87,5 +87,5 @@ if __name__ == '__main__':
     out = pool.map(worker,config_list)
 
     df = pd.DataFrame(out, columns =['config_log', 'val_score'])
-    df = df.sort_values(by=['val_score'],ascending=False)
+    df = df.sort_values(by=['val_score'])
     print(df)
