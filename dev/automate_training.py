@@ -24,13 +24,16 @@ from itertools import product
 LOG_FILENAME = 'log.txt'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 
+
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, help="Base config file path.")
     parser.add_argument("--all-combin", dest='all_combin', action='store_true', help="To run all combinations of config")
     parser.add_argument("-g", "--n-gpus", type=int, dest='n_gpus', required=True, help="Number of GPUs to use")
     parser.set_defaults(all_combin=False)
+
     return parser
+
 
 def worker(config):
     current = mp.current_process()
