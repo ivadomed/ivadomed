@@ -124,7 +124,7 @@ if __name__ == '__main__':
     #for el in config_list:
         #print(el["log_directory"])
         #print(el)
-        
+
     #exit()
 
     #CUDA problem when forking process
@@ -145,4 +145,6 @@ if __name__ == '__main__':
     results_df = pd.DataFrame(best_val, columns =['log_directory', 'best_val'])
     results_df = config_df.set_index('log_directory').join(results_df.set_index('log_directory'))
     results_df = results_df.sort_values(by=['best_val'])
-    print(df.drop(["log_directory"]))
+
+    results_df.to_pickle(output_df.pkl)
+    print(results_df.drop(["log_directory"]))
