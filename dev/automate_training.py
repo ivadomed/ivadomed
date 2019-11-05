@@ -5,7 +5,7 @@
 # Usage: python dev/training_scheduler.py config/config.json
 #
 # Contributors: olivier
-# Last modified: 31-10-2019
+# Last modified: 5-11-2019
 #
 ##############################################################
 
@@ -72,6 +72,19 @@ if __name__ == '__main__':
     #Parameters to test
     batch_sizes = [8, 16, 32, 64]
     initial_lrs = [1e-2, 1e-3, 1e-4, 1e-5]
+
+    #Other parameters
+    #gt_dilations = [0, 0.5, 1]
+    #metadatas = ["without", "contrast", "mri_params"]
+    #film_layers = [ [1, 0, 0, 0, 0, 0, 0, 0],
+    #                [0, 0, 0, 0, 1, 0, 0, 0],
+    #                [0, 0, 0, 0, 0, 0, 0, 1],
+    #                [1, 1, 1, 1, 1, 1, 1, 1]]
+    #mixup_bools = [False, True]
+    #mixup_alphas = [2]
+    #losses = [{"name": "dice"}, {"name": "focal", "params": {"gamma": 0.5}}]
+    #lr_schedulers = [{"name": "CosineAnnealingWarmRestarts", "T_0": 10}]
+
 
     #Dict with key corresponding to name of the param in the config file
     param_dict = {"batch_size":batch_sizes, "initial_lr":initial_lrs}
