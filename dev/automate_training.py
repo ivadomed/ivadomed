@@ -28,6 +28,7 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, help="Base config file path.")
     parser.add_argument("--all-combin", dest='all_combin', action='store_true', help="To run all combinations of config")
+    parser.add_argument("-g", "--n-gpus", type=int, dest='n_gpus', help="Number of GPUs to use")
     parser.set_defaults(all_combin=False)
     return parser
 
@@ -67,7 +68,7 @@ if __name__ == '__main__':
         initial_config = json.load(fhandle)
 
     #Number of GPUs we want to use
-    n_gpus = 2
+    n_gpus = args.n_gpus
 
     #Parameters to test
     batch_sizes = [8, 16, 32, 64]
