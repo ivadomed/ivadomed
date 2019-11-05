@@ -124,15 +124,8 @@ if __name__ == '__main__':
     #for el in config_list:
         #print(el["log_directory"])
         #print(el)
-
-    config_df = pd.DataFrame.from_dict(config_list)
-    keep = list(param_dict.keys())
-    keep.append("log_directory")
-    config_df = config_df[keep]
-    print(config_df)
-
-
-    exit()
+        
+    #exit()
 
     #CUDA problem when forking process
     #https://github.com/pytorch/pytorch/issues/2517
@@ -143,6 +136,11 @@ if __name__ == '__main__':
     best_val = pool.map(worker,config_list)
 
 
+    #Merge config and results in a df
+    config_df = pd.DataFrame.from_dict(config_list)
+    keep = list(param_dict.keys())
+    keep.append("log_directory")
+    config_df = config_df[keep]
 
     results_df = pd.DataFrame(best_val, columns =['log_directory', 'best_val'])
     results_df = config_df.set_index('log_directory').join(results_df.set_index('log_directory'))
