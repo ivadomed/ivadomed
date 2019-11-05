@@ -107,7 +107,8 @@ if __name__ == '__main__':
                 value = combination[param]
                 new_config[param] = value
                 new_config["log_directory"] = new_config["log_directory"] + "-" + param + "=" + str(value)
-                config_list.append(copy.deepcopy(new_config))
+
+            config_list.append(copy.deepcopy(new_config))
     else:
         for param in param_dict:
 
