@@ -146,5 +146,5 @@ if __name__ == '__main__':
     results_df = config_df.set_index('log_directory').join(results_df.set_index('log_directory'))
     results_df = results_df.sort_values(by=['best_val'])
 
-    results_df.to_pickle(output_df.pkl)
-    print(results_df.drop(["log_directory"]))
+    results_df.to_pickle("output_df.pkl")
+    print(results_df.drop(["log_directory"],axis=1))
