@@ -2,7 +2,7 @@
 #
 # This script automates the training  of a networks on multiple GPUs to deal with hyperparameter optimisation
 #
-# Usage: python dev/training_scheduler.py config/config.json
+# Usage: python dev/training_scheduler.py -c path/to/config.json -g number_of_gpus
 #
 # Contributors: olivier
 # Last modified: 5-11-2019
@@ -28,13 +28,13 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, help="Base config file path.")
     parser.add_argument("--all-combin", dest='all_combin', action='store_true', help="To run all combinations of config")
-    parser.add_argument("-g", "--n-gpus", type=int, dest='n_gpus', help="Number of GPUs to use")
+    parser.add_argument("-g", "--n-gpus", type=int, dest='n_gpus', required=True, help="Number of GPUs to use")
     parser.set_defaults(all_combin=False)
     return parser
 
 def worker(config):
     current = mp.current_process()
-    #ID of process (can be assigned to a GPU)
+    #ID of process used to assign a GPU
     ID = current.name[-1]
     #Offset because Lucas uses GPU 0,1
     config["gpu"] =  int(ID) + 1
@@ -42,17 +42,18 @@ def worker(config):
 
     #Call ivado cmd_train
     try:
-        perf = ivado.cmd_train(config)
+        #Save best validation score
+        best_val = ivado.cmd_train(config)
     except:
         logging.exception('Got exception on main handler')
         print("Unexpected error:", sys.exc_info()[0])
         raise
 
-    # Save config file in log dir
+    # Save config file in log directory
     config_copy = open(config["log_directory"] + "/config.json","w")
     json.dump(config, config_copy, indent=4)
 
-    return config["log_directory"],perf
+    return config["log_directory"],best_val
 
 
 if __name__ == '__main__':
@@ -122,7 +123,15 @@ if __name__ == '__main__':
     #for el in config_list:
         #print(el["log_directory"])
         #print(el)
-    #exit()
+
+    config_df = pd.DataFrame.from_dict(config_list)
+    keep = list(param_dict.keys())
+    keep.append("log_directory")
+    config_df = config_df[keep]
+    print(config_df)
+
+
+    exit()
 
     #CUDA problem when forking process
     #https://github.com/pytorch/pytorch/issues/2517
@@ -130,8 +139,11 @@ if __name__ == '__main__':
 
     #Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
     pool = mp.Pool(processes = n_gpus)
-    out = pool.map(worker,config_list)
+    best_val = pool.map(worker,config_list)
 
-    df = pd.DataFrame(out, columns =['config_log', 'val_score'])
-    df = df.sort_values(by=['val_score'])
-    print(df)
+
+
+    results_df = pd.DataFrame(best_val, columns =['log_directory', 'best_val'])
+    results_df = config_df.set_index('log_directory').join(results_df.set_index('log_directory'))
+    results_df = results_df.sort_values(by=['best_val'])
+    print(df.drop(["log_directory"]))
