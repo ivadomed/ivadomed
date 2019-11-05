@@ -9,15 +9,16 @@
 #
 ##############################################################
 
-import sys
-import json
-import torch.multiprocessing as mp
+import argparse
 import copy
-#import time
-from ivadomed import main as ivado
+import json
 import logging
 import pandas as pd
-import argparse
+import sys
+import torch.multiprocessing as mp
+#import time
+
+from ivadomed import main as ivado
 from itertools import product
 
 LOG_FILENAME = 'log.txt'
@@ -25,8 +26,8 @@ logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config", help="Base config file path.", required=True)
-    parser.add_argument("--all-combin", dest='all_combin', action='store_true')
+    parser.add_argument("-c", "--config", required=True, help="Base config file path.")
+    parser.add_argument("--all-combin", dest='all_combin', action='store_true', help="To run all combinations of config")
     parser.set_defaults(all_combin=False)
     return parser
 
@@ -95,7 +96,7 @@ if __name__ == '__main__':
     else:
         for param in param_dict:
 
-            #Change only one parameter at a time
+            #Change only one parameter for each config
             new_config = copy.deepcopy(initial_config)
 
             for value in param_dict[param]:
@@ -107,8 +108,7 @@ if __name__ == '__main__':
     #for el in config_list:
         #print(el["log_directory"])
         #print(el)
-
-    exit()
+    #exit()
 
     #CUDA problem when forking process
     #https://github.com/pytorch/pytorch/issues/2517
