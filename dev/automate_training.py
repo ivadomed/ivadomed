@@ -17,10 +17,18 @@ import copy
 from ivadomed import main as ivado
 import logging
 import pandas as pd
+import argparse
+from itertools import product
 
 LOG_FILENAME = 'log.txt'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 
+def get_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--config", help="Base config file path.", required=True)
+    parser.add_argument("--all-combin", dest='all_combin', action='store_true')
+    parser.set_defaults(all_combin=False)
+    return parser
 
 def worker(config):
     current = mp.current_process()
@@ -47,12 +55,14 @@ def worker(config):
 
 if __name__ == '__main__':
 
-    if len(sys.argv) <= 1:
-        print("\n training_scheduler [initial_config.json]\n")
-        exit()
+    #if len(sys.argv) <= 1:
+    #    print("\n training_scheduler [initial_config.json]\n")
+    #    exit()
 
+    parser = get_parser()
+    args = parser.parse_args()
     #Load initial config
-    with open(sys.argv[1], "r") as fhandle:
+    with open(args.config, "r") as fhandle:
         initial_config = json.load(fhandle)
 
     #Number of GPUs we want to use
@@ -66,16 +76,39 @@ if __name__ == '__main__':
     param_dict = {"batch_size":batch_sizes, "initial_lr":initial_lrs}
 
     config_list = []
-    for param in param_dict:
+    if args.all_combin:
 
-        #Change only one parameter at a time
-        new_config = copy.deepcopy(initial_config)
+        #Cartesian product (all combinations)
+        combinations = (dict(zip(param_dict.keys(), values)) for values in product(*param_dict.values()))
 
-        for value in param_dict[param]:
+        for combination in combinations:
 
-            new_config[param] = value
-            new_config["log_directory"] = initial_config["log_directory"] + "_" + param + "_" + str(value)
-            config_list.append(copy.deepcopy(new_config))
+            #Change multiple parameters for each config
+            new_config = copy.deepcopy(initial_config)
+
+            for param in combination:
+
+                value = combination[param]
+                new_config[param] = value
+                new_config["log_directory"] = new_config["log_directory"] + "-" + param + "=" + str(value)
+                config_list.append(copy.deepcopy(new_config))
+    else:
+        for param in param_dict:
+
+            #Change only one parameter at a time
+            new_config = copy.deepcopy(initial_config)
+
+            for value in param_dict[param]:
+
+                new_config[param] = value
+                new_config["log_directory"] = initial_config["log_directory"] + "_" + param + "_" + str(value)
+                config_list.append(copy.deepcopy(new_config))
+
+    #for el in config_list:
+        #print(el["log_directory"])
+        #print(el)
+
+    exit()
 
     #CUDA problem when forking process
     #https://github.com/pytorch/pytorch/issues/2517
