@@ -78,15 +78,36 @@ if __name__ == '__main__':
     #Other parameters
     #gt_dilations = [0, 0.5, 1]
     #metadatas = ["without", "contrast", "mri_params"]
+
     #film_layers = [ [1, 0, 0, 0, 0, 0, 0, 0],
     #                [0, 0, 0, 0, 1, 0, 0, 0],
     #                [0, 0, 0, 0, 0, 0, 0, 1],
     #                [1, 1, 1, 1, 1, 1, 1, 1]]
+
     #mixup_bools = [False, True]
     #mixup_alphas = [2]
-    #losses = [{"name": "dice"}, {"name": "focal", "params": {"gamma": 0.5}}]
-    #lr_schedulers = [{"name": "CosineAnnealingWarmRestarts", "T_0": 10}]
 
+
+    #losses = [{"name": "dice"}]
+    #Example for focal loss
+    """
+    base_loss = {"name": "focal", "params": {"gamma": 0.5, "alpha" : 0.2}}
+    alphas = [0.2, 0.5, 0.75, 1, 5]
+    gammas = [0.5, 1, 1.5, 2]
+    for combination in product(*[alphas, gammas]):
+        new_loss = copy.deepcopy(base_loss)
+        new_loss["params"]["alpha"] = combination[0]
+        new_loss["params"]["gamma"] = combination[1]
+        losses.append(new_loss)
+    #print(losses)
+    """
+
+    #Example for lr_schedulers
+    """
+    lr_schedulers = [{"name": "CosineAnnealingLR"},
+                    {"name": "CosineAnnealingWarmRestarts", "T_0": 10}
+                    {"name": "CyclicLR", "base_lr" : X, "max_lr" : Y}]
+    """
 
     #Dict with key corresponding to name of the param in the config file
     param_dict = {"batch_size":batch_sizes, "initial_lr":initial_lrs}
