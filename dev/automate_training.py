@@ -61,12 +61,9 @@ def worker(config):
 
 if __name__ == '__main__':
 
-    #if len(sys.argv) <= 1:
-    #    print("\n training_scheduler [initial_config.json]\n")
-    #    exit()
-
     parser = get_parser()
     args = parser.parse_args()
+
     #Load initial config
     with open(args.config, "r") as fhandle:
         initial_config = json.load(fhandle)
@@ -95,6 +92,7 @@ if __name__ == '__main__':
     param_dict = {"batch_size":batch_sizes, "initial_lr":initial_lrs}
 
     config_list = []
+    #Test all combinations (change multiple parameters for each test)
     if args.all_combin:
 
         #Cartesian product (all combinations)
@@ -102,7 +100,6 @@ if __name__ == '__main__':
 
         for combination in combinations:
 
-            #Change multiple parameters for each config
             new_config = copy.deepcopy(initial_config)
 
             for param in combination:
@@ -112,10 +109,10 @@ if __name__ == '__main__':
                 new_config["log_directory"] = new_config["log_directory"] + "-" + param + "=" + str(value)
 
             config_list.append(copy.deepcopy(new_config))
+    #Change a single parameter for each test
     else:
         for param in param_dict:
 
-            #Change only one parameter for each config
             new_config = copy.deepcopy(initial_config)
 
             for value in param_dict[param]:
@@ -124,11 +121,8 @@ if __name__ == '__main__':
                 new_config["log_directory"] = initial_config["log_directory"] + "-" + param + "=" + str(value)
                 config_list.append(copy.deepcopy(new_config))
 
-    #for el in config_list:
-        #print(el["log_directory"])
-        #print(el)
 
-    #exit()
+
 
     #CUDA problem when forking process
     #https://github.com/pytorch/pytorch/issues/2517
@@ -150,4 +144,4 @@ if __name__ == '__main__':
     results_df = results_df.sort_values(by=['best_val'])
 
     results_df.to_pickle("output_df.pkl")
-    print(results_df.drop(["log_directory"],axis=1))
+    print(results_df)
