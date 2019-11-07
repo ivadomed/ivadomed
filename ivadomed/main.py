@@ -226,7 +226,7 @@ def cmd_train(context):
         exit()
 
     # Training loop -----------------------------------------------------------
-    best_validation_loss = float("inf")
+    best_validation_loss, best_validation_dice = float("inf"),float("inf")
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
         start_time = time.time()
 
@@ -427,6 +427,7 @@ def cmd_train(context):
 
         if val_loss_total_avg < best_validation_loss:
             best_validation_loss = val_loss_total_avg
+            best_validation_dice = dice_val_loss_total_avg
             torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
 
     # Save final model
@@ -449,7 +450,7 @@ def cmd_train(context):
         np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
 
     writer.close()
-    return best_validation_loss
+    return best_validation_dice
 
 
 def cmd_test(context):
