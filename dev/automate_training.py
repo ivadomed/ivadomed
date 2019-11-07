@@ -5,7 +5,7 @@
 # Usage: python dev/training_scheduler.py -c path/to/config.json -g number_of_gpus
 #
 # Contributors: olivier
-# Last modified: 5-11-2019
+# Last modified: 6-11-2019
 #
 ##############################################################
 
@@ -29,7 +29,6 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, help="Base config file path.")
     parser.add_argument("--all-combin", dest='all_combin', action='store_true', help="To run all combinations of config")
-    parser.add_argument("-g", "--n-gpus", type=int, dest='n_gpus', required=True, help="Number of GPUs to use")
     parser.set_defaults(all_combin=False)
 
     return parser
@@ -38,10 +37,10 @@ def get_parser():
 def worker(config):
     current = mp.current_process()
     #ID of process used to assign a GPU
-    ID = current.name[-1]
-    #Offset because Lucas uses GPU 0,1
-    config["gpu"] =  int(ID) + 1
-    #print(config["gpu"])
+    ID = int(current.name[-1]) - 1
+
+    #Use GPU i from the array specified in the config file
+    config["gpu"] = config["gpu"][ID]
 
     #Call ivado cmd_train
     try:
@@ -67,9 +66,6 @@ if __name__ == '__main__':
     #Load initial config
     with open(args.config, "r") as fhandle:
         initial_config = json.load(fhandle)
-
-    #Number of GPUs we want to use
-    n_gpus = args.n_gpus
 
     #Parameters to test
     batch_sizes = [8, 16, 32, 64]
@@ -150,7 +146,7 @@ if __name__ == '__main__':
     mp.set_start_method('spawn')
 
     #Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
-    pool = mp.Pool(processes = n_gpus)
+    pool = mp.Pool(processes = len(initial_config["gpu"]))
     best_val = pool.map(worker,config_list)
 
 
