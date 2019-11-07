@@ -8,19 +8,15 @@ import joblib
 from math import exp
 import numpy as np
 
-import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
-from torch.utils.data import DataLoader, ConcatDataset
+from torch.utils.data import DataLoader
 from torchvision import transforms
 import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 from torch import optim
 
-from medicaltorch import transforms as mt_transforms
 from medicaltorch import datasets as mt_datasets
-from medicaltorch import filters as mt_filters
-from medicaltorch import metrics as mt_metrics
 
 from tqdm import tqdm
 
@@ -111,7 +107,8 @@ def cmd_train(context):
                                   contrast_balance=context["contrast_balance"],
                                   slice_axis=axis_dct[context["slice_axis"]],
                                   transform=train_transform,
-                                  slice_filter_fn=SliceFilter())
+                                  slice_filter_fn=SliceFilter(),
+                                  multichannel=context['multichannel'])
 
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
@@ -140,7 +137,8 @@ def cmd_train(context):
                                 contrast_balance=context["contrast_balance"],
                                 slice_axis=axis_dct[context["slice_axis"]],
                                 transform=val_transform,
-                                slice_filter_fn=SliceFilter())
+                                slice_filter_fn=SliceFilter(),
+                                multichannel=context['multichannel'])
 
     if film_bool:  # normalize metadata before sending to network
         ds_val = loader.normalize_metadata(ds_val,

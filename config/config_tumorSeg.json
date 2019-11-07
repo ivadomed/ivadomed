@@ -1,8 +1,8 @@
 {
     "command": "train",
-    "gpu": 7,
+    "gpu": 0,
     "gt_suffix": "_seg-manual",
-    "bids_path": "C:\\Users\\andre\\Desktop\\Git\\IVADO_medical_imaging\\bids_amu_2017-virginie",
+    "bids_path": "/home/andreanne/Documents/results/data",
     "random_seed": 1313,
     "contrast_train_validation": ["T2w"],
     "contrast_balance": {},
@@ -15,10 +15,12 @@
     "initial_lr": 0.001,
     "loss": {"name": "dice"},
     "log_directory": "log",
+    "lr_scheduler": {"name": "CosineAnnealingLR", "base_lr": 1e-5, "max_lr": 1e-2},
     "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
     "mixup_bool": false,
     "mixup_alpha": 2,
     "metadata": "without",
+    "multichannel": true,
     "slice_axis": "sagittal",
     "split_method": "per_patient",
     "train_fraction": 0.6,
@@ -32,7 +34,7 @@
         "dilation_factor": 0
       },
       "CenterCrop2D": {
-        "size": [256, 256]
+        "size": [40, 40]
       },
       "ElasticTransform": {
         "alpha_range": [28.0, 30.0],
