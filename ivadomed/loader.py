@@ -37,27 +37,73 @@ class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
 
 class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
     def _load_filenames(self):
-        for input_filename, gt_filename, bids_metadata, contrast in self.filename_pairs:
-            segpair = BIDSSegPair2D(input_filename, gt_filename,
+        for input_filename, target_filename, bids_metadata, contrast, roi_filename in self.filename_pairs:
+            segpair = BIDSSegPair2D(input_filename, target_filename,
+                                    bids_metadata, contrast, roi_filename)
+            roipair = BIDSSegPair2D(input_filename, roi_filename,
                                     bids_metadata, contrast)
-            self.handlers.append(segpair)
+
+            self.handlers.append([segpair, roipair])
 
     def _prepare_indexes(self):
-        for segpair in self.handlers:
-            input_data_shape, _ = segpair.get_pair_shapes()
-            for segpair_slice in range(input_data_shape[self.slice_axis]):
+        for seg_roi_pairs in self.handlers:
+            input_data_shape, _ = seg_roi_pairs[0].get_pair_shapes()
+            for idx_pair_slice in range(input_data_shape[self.slice_axis]):
 
                 # Check if slice pair should be used or not
                 if self.slice_filter_fn:
-                    slice_pair = segpair.get_pair_slice(segpair_slice,
-                                                        self.slice_axis)
-
-                    filter_fn_ret = self.slice_filter_fn(slice_pair)
-                    if not filter_fn_ret:
+                    slice_pair_seg = seg_roi_pairs[0].get_pair_slice(idx_pair_slice,
+                                                            self.slice_axis)
+                    slice_pair_roi = seg_roi_pairs[1].get_pair_slice(idx_pair_slice,
+                                                            self.slice_axis)
+                    filter_fn_ret_seg = self.slice_filter_fn(slice_pair_seg)
+                    filter_fn_ret_roi = self.slice_filter_fn(slice_pair_roi)
+                    if (not filter_fn_ret_seg) or (not filter_fn_ret_roi):
                         continue
 
-                item = (segpair, segpair_slice)
+                item = (seg_roi_pairs[0], seg_roi_pairs[1], idx_pair_slice)
                 self.indexes.append(item)
+
+    def __getitem__(self, index):
+        """Return the specific index pair slices (input, target),
+        or (input, target, roi).
+        :param index: slice index.
+        """
+        segpair, roipair, pair_slice = self.indexes[index]
+        seg_pair_slice = segpair.get_pair_slice(pair_slice,
+                                                self.slice_axis)
+        roi_pair_slice = roipair.get_pair_slice(pair_slice,
+                                                self.slice_axis)
+
+        # Consistency with torchvision, returning PIL Image
+        # Using the "Float mode" of PIL, the only mode
+        # supporting unbounded float32 values
+        input_img = Image.fromarray(seg_pair_slice["input"], mode='F')
+
+        # Handle unlabeled data
+        if seg_pair_slice["gt"] is None:
+            gt_img = None
+        else:
+            gt_img = Image.fromarray(seg_pair_slice["gt"], mode='F')
+
+        if roi_pair_slice["gt"] is None:
+            roi_img = None
+        else:
+            roi_img = Image.fromarray(roi_pair_slice["gt"], mode='F')
+
+        data_dict = {
+            'input': input_img,
+            'target': gt_img,
+            'roi': roi_img,
+            'input_metadata': seg_pair_slice['input_metadata'],
+            'target_metadata': seg_pair_slice['gt_metadata'],
+            'roi_metadata': roi_pair_slice['gt_metadata'],
+        }
+
+        if self.transform is not None:
+            data_dict = self.transform(data_dict)
+
+        return data_dict
 
 
 class BidsDataset(MRI2DBidsSegDataset):
