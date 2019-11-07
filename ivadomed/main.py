@@ -105,7 +105,7 @@ def cmd_train(context):
     # the slices without labels and then concatenating all the datasets together
     ds_train = loader.BidsDataset(context["bids_path"],
                                   subject_lst=train_lst,
-                                  gt_suffix=context["gt_suffix"],
+                                  target_suffix=context["gt_suffix"],
                                   contrast_lst=context["contrast_train_validation"],
                                   metadata_choice=context["metadata"],
                                   contrast_balance=context["contrast_balance"],
@@ -134,7 +134,7 @@ def cmd_train(context):
     # Validation dataset ------------------------------------------------------
     ds_val = loader.BidsDataset(context["bids_path"],
                                 subject_lst=valid_lst,
-                                gt_suffix=context["gt_suffix"],
+                                target_suffix=context["gt_suffix"],
                                 contrast_lst=context["contrast_train_validation"],
                                 metadata_choice=context["metadata"],
                                 contrast_balance=context["contrast_balance"],
@@ -486,7 +486,7 @@ def cmd_test(context):
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     ds_test = loader.BidsDataset(context["bids_path"],
                                  subject_lst=test_lst,
-                                 gt_suffix=context["gt_suffix"],
+                                 target_suffix=context["gt_suffix"],
                                  contrast_lst=context["contrast_test"],
                                  metadata_choice=context["metadata"],
                                  contrast_balance=context["contrast_balance"],

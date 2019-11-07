@@ -61,7 +61,7 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
 
 
 class BidsDataset(MRI2DBidsSegDataset):
-    def __init__(self, root_dir, subject_lst, gt_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
                  transform=None, metadata_choice=False, slice_filter_fn=None,
                  canonical=True, labeled=True):
 
@@ -96,13 +96,13 @@ class BidsDataset(MRI2DBidsSegDataset):
                     print("Subject without derivative, skipping.")
                     continue
                 derivatives = subject.get_derivatives("labels")
-                cord_label_filename = None
+                target_filename = None
 
                 for deriv in derivatives:
-                    if deriv.endswith(subject.record["modality"]+gt_suffix+".nii.gz"):
-                        cord_label_filename = deriv
+                    if deriv.endswith(subject.record["modality"]+target_suffix+".nii.gz"):
+                        target_filename = deriv
 
-                if cord_label_filename is None:
+                if target_filename is None:
                     continue
 
                 if not subject.has_metadata():
@@ -131,7 +131,7 @@ class BidsDataset(MRI2DBidsSegDataset):
                         continue
 
                 self.filename_pairs.append((subject.record.absolute_path,
-                                            cord_label_filename, metadata, subject.record["modality"]))
+                                            target_filename, metadata, subject.record["modality"]))
 
         super().__init__(self.filename_pairs, slice_axis, cache,
                          transform, slice_filter_fn, canonical)
