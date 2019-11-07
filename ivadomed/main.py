@@ -161,7 +161,11 @@ def cmd_train(context):
                             bn_momentum=context["batch_norm_momentum"])
     else:
         # Traditional U-Net model
-        model = models.Unet(drop_rate=context["dropout_rate"],
+        in_channel = 1
+        if context['multichannel']:
+            in_channel = len(context['contrast_train_validation'])
+        model = models.Unet(in_channel=in_channel,
+                            drop_rate=context["dropout_rate"],
                             bn_momentum=context["batch_norm_momentum"])
 
     if cuda_available:

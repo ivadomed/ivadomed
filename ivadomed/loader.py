@@ -265,7 +265,7 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
             input_metadata.append(data_dict['input_metadata'])
 
         if len(input_tensors) > 1:
-            data_dict['input'] = torch.stack(input_tensors, dim=0)
+            data_dict['input'] = torch.squeeze(torch.stack(input_tensors, dim=0))
             data_dict['input_metadata'] = input_metadata
 
         return data_dict
