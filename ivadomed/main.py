@@ -450,7 +450,7 @@ def cmd_train(context):
         np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
 
     writer.close()
-    return best_validation_dice
+    return best_validation_dice,best_validation_loss
 
 
 def cmd_test(context):

@@ -5,7 +5,7 @@
 # Usage: python dev/training_scheduler.py -c path/to/config.json -g number_of_gpus
 #
 # Contributors: olivier
-# Last modified: 6-11-2019
+# Last modified: 8-11-2019
 #
 ##############################################################
 
@@ -45,7 +45,7 @@ def worker(config):
     #Call ivado cmd_train
     try:
         #Save best validation score
-        best_val = ivado.cmd_train(config)
+        best_dice,best_loss = ivado.cmd_train(config)
     except:
         logging.exception('Got exception on main handler')
         print("Unexpected error:", sys.exc_info()[0])
@@ -55,7 +55,7 @@ def worker(config):
     config_copy = open(config["log_directory"] + "/config.json","w")
     json.dump(config, config_copy, indent=4)
 
-    return config["log_directory"],best_val
+    return config["log_directory"],best_dice,best_loss
 
 
 if __name__ == '__main__':
@@ -147,7 +147,7 @@ if __name__ == '__main__':
 
     #Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
     pool = mp.Pool(processes = len(initial_config["gpu"]))
-    best_val = pool.map(worker,config_list)
+    validation_scores = pool.map(worker,config_list)
 
 
     #Merge config and results in a df
@@ -156,9 +156,9 @@ if __name__ == '__main__':
     keep.append("log_directory")
     config_df = config_df[keep]
 
-    results_df = pd.DataFrame(best_val, columns =['log_directory', 'best_val'])
+    results_df = pd.DataFrame(validation_scores, columns =['log_directory', 'best_dice','best_loss'])
     results_df = config_df.set_index('log_directory').join(results_df.set_index('log_directory'))
-    results_df = results_df.sort_values(by=['best_val'])
+    results_df = results_df.sort_values(by=['best_loss'])
 
     results_df.to_pickle("output_df.pkl")
     print(results_df)
