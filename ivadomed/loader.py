@@ -355,8 +355,8 @@ class BidsDataset(MRI2DBidsSegDataset):
                     multichannel_subjects[id]["modalities"].append(subject.record["modality"])
 
                 else:
-                    self.filename_pairs.append((subject.record.absolute_path,
-                                                cord_label_filename, metadata, subject.record["modality"]))
+                    self.filename_pairs.append(([subject.record.absolute_path],
+                                                cord_label_filename, [metadata], [subject.record["modality"]]))
 
         if multichannel:
             for subject in multichannel_subjects.values():
@@ -481,7 +481,7 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
             s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in
                                                         ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
         else:
-            generic_contrast = GENERIC_CONTRAST[subject["input_metadata"]["bids_metadata"]["contrast"]]
+            generic_contrast = GENERIC_CONTRAST[subject["input_metadata"]["bids_metadata"]["contrast"][0]] # FILM is only single channel
             label_contrast = CONTRAST_CATEGORY[generic_contrast]
             s_out["input_metadata"]["bids_metadata"] = [label_contrast]
 
