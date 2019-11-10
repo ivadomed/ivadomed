@@ -47,21 +47,22 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
 
     def _prepare_indexes(self):
         for seg_roi_pairs in self.handlers:
-            input_data_shape, _ = seg_roi_pairs[0].get_pair_shapes()
+            seg_pair, roi_pair = seg_roi_pairs
+            input_data_shape, _ = seg_pair.get_pair_shapes()
             for idx_pair_slice in range(input_data_shape[self.slice_axis]):
 
                 # Check if slice pair should be used or not
                 if self.slice_filter_fn:
-                    slice_pair_seg = seg_roi_pairs[0].get_pair_slice(idx_pair_slice,
+                    slice_pair_seg = seg_pair.get_pair_slice(idx_pair_slice,
                                                             self.slice_axis)
-                    slice_pair_roi = seg_roi_pairs[1].get_pair_slice(idx_pair_slice,
+                    slice_pair_roi = roi_pair.get_pair_slice(idx_pair_slice,
                                                             self.slice_axis)
                     filter_fn_ret_seg = self.slice_filter_fn(slice_pair_seg)
                     filter_fn_ret_roi = self.slice_filter_fn(slice_pair_roi)
                     if (not filter_fn_ret_seg) or (not filter_fn_ret_roi):
                         continue
 
-                item = (seg_roi_pairs[0], seg_roi_pairs[1], idx_pair_slice)
+                item = (seg_pair, roi_pair, idx_pair_slice)
                 self.indexes.append(item)
 
     def __getitem__(self, index):
