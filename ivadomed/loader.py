@@ -87,6 +87,7 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
         else:
             gt_img = Image.fromarray(seg_pair_slice["gt"], mode='F')
 
+        # Handle cases where no ROI provided
         if roi_pair_slice["gt"] is None:
             roi_img = None
         else:
