@@ -49,6 +49,7 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
         for seg_roi_pairs in self.handlers:
             seg_pair, roi_pair = seg_roi_pairs
             input_data_shape, _ = seg_pair.get_pair_shapes()
+
             for idx_pair_slice in range(input_data_shape[self.slice_axis]):
 
                 # Check if slice pair should be used or not
