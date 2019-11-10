@@ -179,8 +179,8 @@ class BidsDataset(MRI2DBidsSegDataset):
                         continue
 
                 self.filename_pairs.append((subject.record.absolute_path,
-                                            target_filename, metadata, subject.record["modality"]),
-                                            roi_filename)
+                                            target_filename, metadata, subject.record["modality"],
+                                            roi_filename))
 
         super().__init__(self.filename_pairs, slice_axis, cache,
                          transform, slice_filter_fn, canonical)
