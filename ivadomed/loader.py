@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 
 import numpy as np
 import json
+from PIL import Image
 from glob import glob
 from copy import deepcopy
 from tqdm import tqdm
