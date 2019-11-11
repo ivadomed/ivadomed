@@ -6,12 +6,67 @@ from PIL import Image
 import torchvision.transforms.functional as F
 import matplotlib.pyplot as plt
 from collections import defaultdict
-from scipy.ndimage.measurements import label
+from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing, generate_binary_structure
 
 from medicaltorch import filters as mt_filters
 from medicaltorch import transforms as mt_transforms
 from medicaltorch import metrics as mt_metrics
+
+
+class ROICrop2D(mt_transforms.CenterCrop2D):
+    """Make a crop of a specified size around a ROI.
+    :param segmentation: if it is a segmentation task.
+                         When this is True (default), the crop
+                         will also be applied to the ground truth.
+    """
+    def __init__(self, size, labeled=True):
+        super().__init__(size, labeled)
+
+    def __call__(self, sample):
+        rdict = {}
+        input_data = sample['input']
+        roi_data = sample['roi']
+
+        w, h = input_data.size
+        th, tw = self.size
+        th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
+
+        # compute center of mass of the ROI
+        x_roi, y_roi = center_of_mass(sample['roi'])
+        x_roi, y_roi = int(round(x_roi)), int(round(y_roi))
+
+        # compute top left corner of the crop area
+        fh = y_roi - th_half
+        fw = x_roi - tw_half
+
+        params = (fh, fw, w, h)
+        self.propagate_params(sample, params)
+
+        # crop data
+        input_data = F.crop(img=input_data,
+                            top=fh,
+                            left=fw,
+                            height=th,
+                            width=tw)
+        rdict['input'] = input_data
+
+        if self.labeled:
+            gt_data = sample['gt']
+            gt_metadata = sample['gt_metadata']
+            gt_data = F.crop(img=input_data,
+                            top=fh,
+                            left=fw,
+                            height=th,
+                            width=tw)
+            gt_metadata["__centercrop"] = (fh, fw, w, h)
+            rdict['gt'] = gt_data
+
+        sample.update(rdict)
+        return sample
+
+    def undo_transform(self, sample):  # not implemented yet, todo
+        pass
 
 
 class IvadoMetricManager(mt_metrics.MetricManager):
