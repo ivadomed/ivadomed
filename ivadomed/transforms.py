@@ -8,7 +8,7 @@ from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_
 from medicaltorch import transforms as mt_transforms
 
 
-def get_transforms():
+def get_transform_names():
     return ['DilateGT', 'ROICrop2D']
 
 
