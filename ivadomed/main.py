@@ -28,9 +28,9 @@ from ivadomed import loader as loader
 from ivadomed import models
 from ivadomed import losses
 from ivadomed.utils import *
+import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
-
 
 def cmd_train(context):
     """Main command to train the network.
@@ -73,8 +73,8 @@ def cmd_train(context):
     training_transform_list = []
     for transform in context["transformation_training"].keys():
         parameters = context["transformation_training"][transform]
-        if transform == "DilateGT": # DilateGT is not a method of mt_transforms
-            training_transform_list.append(DilateGT(**parameters))
+        if transform in ivadomed_transforms.get_transform_names():
+            training_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
         else:
             training_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
@@ -84,7 +84,10 @@ def cmd_train(context):
     validation_transform_list = []
     for transform in context["transformation_validation"].keys():
         parameters = context["transformation_validation"][transform]
-        validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+        if transform in ivadomed_transforms.get_transform_names():
+            validation_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
+        else:
+            validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
     val_transform = transforms.Compose(validation_transform_list)
 
@@ -479,7 +482,10 @@ def cmd_test(context):
     validation_transform_list = []
     for transform in context["transformation_validation"].keys():
         parameters = context["transformation_validation"][transform]
-        validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+        if transform in ivadomed_transforms.get_transform_names():
+            validation_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
+        else:
+            validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
     val_transform = transforms.Compose(validation_transform_list)
 
