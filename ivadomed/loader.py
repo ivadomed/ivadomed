@@ -40,7 +40,7 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
     def _load_filenames(self):
         for input_filename, target_filename, bids_metadata, contrast, roi_filename in self.filename_pairs:
             segpair = BIDSSegPair2D(input_filename, target_filename,
-                                    bids_metadata, contrast, roi_filename)
+                                    bids_metadata, contrast)
             roipair = BIDSSegPair2D(input_filename, roi_filename,
                                     bids_metadata, contrast)
             self.handlers.append([segpair, roipair])
