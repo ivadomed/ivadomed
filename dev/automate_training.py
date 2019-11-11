@@ -5,7 +5,7 @@
 # Usage: python dev/training_scheduler.py -c path/to/config.json -g number_of_gpus
 #
 # Contributors: olivier
-# Last modified: 8-11-2019
+# Last modified: 11-11-2019
 #
 ##############################################################
 
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     with open(args.config, "r") as fhandle:
         initial_config = json.load(fhandle)
 
-    ### Parameters to test
+    ### Hyperparameters values to test
 
     ## Step 1 : batch size, initial LR and LR scheduler
 
@@ -129,6 +129,22 @@ if __name__ == '__main__':
 
 
 
+    # Split dataset if not already done
+    if initial_config.get("split_path") is None:
+        train_lst, valid_lst, test_lst = loader.split_dataset(path_folder=initial_config["bids_path"],
+                                                      center_test_lst=initial_config["center_test"],
+                                                      split_method=initial_config["split_method"],
+                                                      random_seed=initial_config["random_seed"],
+                                                      train_frac=initial_config["train_fraction"],
+                                                      test_frac=initial_config["test_fraction"])
+
+        # save the subject distribution
+        split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
+        split_path = "./"+"common_split_datasets.joblib"
+        joblib.dump(split_dct, split_path)
+        initial_config["split_path"] = split_path
+
+
     #Dict with key corresponding to name of the param in the config file
     param_dict = {"batch_size":batch_sizes, "initial_lr":initial_lrs}
 
@@ -161,6 +177,7 @@ if __name__ == '__main__':
                 new_config[param] = value
                 new_config["log_directory"] = initial_config["log_directory"] + "-" + param + "=" + str(value)
                 config_list.append(copy.deepcopy(new_config))
+
 
 
 

@@ -89,16 +89,21 @@ def cmd_train(context):
     val_transform = transforms.Compose(validation_transform_list)
 
     # Randomly split dataset between training / validation / testing
-    train_lst, valid_lst, test_lst = loader.split_dataset(path_folder=context["bids_path"],
+    if context.get("split_path") is None:
+        train_lst, valid_lst, test_lst = loader.split_dataset(path_folder=context["bids_path"],
                                                           center_test_lst=context["center_test"],
                                                           split_method=context["split_method"],
                                                           random_seed=context["random_seed"],
                                                           train_frac=context["train_fraction"],
                                                           test_frac=context["test_fraction"])
 
-    # save the subject distribution
-    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
+        # save the subject distribution
+        split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
+        joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
+
+    else:
+        train_lst = joblib.load(context["split_path"])['train']
+        valid_lst = joblib.load(context["split_path"])['valid']
 
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     # This code will iterate over the folders and load the data, filtering
