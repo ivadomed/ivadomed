@@ -19,6 +19,7 @@ import torch.multiprocessing as mp
 #import time
 
 from ivadomed import main as ivado
+from ivadomed import loader
 from itertools import product
 
 LOG_FILENAME = 'log.txt'
