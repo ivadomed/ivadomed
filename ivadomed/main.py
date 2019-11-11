@@ -115,7 +115,7 @@ def cmd_train(context):
                                   contrast_balance=context["contrast_balance"],
                                   slice_axis=axis_dct[context["slice_axis"]],
                                   transform=train_transform,
-                                  slice_filter_fn=None)
+                                  slice_filter_fn=SliceFilter())
 
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
@@ -145,7 +145,7 @@ def cmd_train(context):
                                 contrast_balance=context["contrast_balance"],
                                 slice_axis=axis_dct[context["slice_axis"]],
                                 transform=val_transform,
-                                slice_filter_fn=None)
+                                slice_filter_fn=SliceFilter())
 
     if film_bool:  # normalize metadata before sending to network
         ds_val = loader.normalize_metadata(ds_val,
@@ -501,7 +501,7 @@ def cmd_test(context):
                                  contrast_balance=context["contrast_balance"],
                                  slice_axis=axis_dct[context["slice_axis"]],
                                  transform=val_transform,
-                                 slice_filter_fn=None)
+                                 slice_filter_fn=SliceFilter())
 
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load("./"+context["log_directory"]+"/clustering_models.joblib")
