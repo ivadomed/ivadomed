@@ -92,13 +92,13 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
             roi_img = None
         else:
             roi_img = Image.fromarray(roi_pair_slice["gt"], mode='F')
-        print(roi_img, gt_img.size, input_img.size)
+
         data_dict = {
             'input': input_img,
-            'target': gt_img,
+            'gt': gt_img,
             'roi': roi_img,
             'input_metadata': seg_pair_slice['input_metadata'],
-            'target_metadata': seg_pair_slice['gt_metadata'],
+            'gt_metadata': seg_pair_slice['gt_metadata'],
             'roi_metadata': roi_pair_slice['gt_metadata'],
         }
 
