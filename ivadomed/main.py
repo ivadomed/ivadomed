@@ -432,7 +432,10 @@ def cmd_train(context):
 
         if val_loss_total_avg < best_validation_loss:
             best_validation_loss = val_loss_total_avg
-            best_validation_dice = dice_val_loss_total_avg
+            if context["loss"]["name"] != 'dice':
+                best_validation_dice = dice_val_loss_total_avg
+            else:
+                best_validation_dice = best_validation_loss
             torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
 
     # Save final model
