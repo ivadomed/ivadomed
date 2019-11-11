@@ -67,28 +67,27 @@ if __name__ == '__main__':
     with open(args.config, "r") as fhandle:
         initial_config = json.load(fhandle)
 
-    #Parameters to test
-    batch_sizes = [8, 16, 32, 64]
-    initial_lrs = [1e-2, 1e-3, 1e-4, 1e-5]
+    ### Parameters to test
 
-    #Other parameters
-    #gt_dilations = [0, 0.5, 1]
-    #metadatas = ["without", "contrast", "mri_params"]
+    ## Step 1 : batch size, initial LR and LR scheduler
 
-    #film_layers = [ [1, 0, 0, 0, 0, 0, 0, 0],
-    #                [0, 0, 0, 0, 1, 0, 0, 0],
-    #                [0, 0, 0, 0, 0, 0, 0, 1],
-    #                [1, 1, 1, 1, 1, 1, 1, 1]]
+    #batch_sizes = [8, 16, 32, 64]
+    #initial_lrs = [1e-2, 1e-3, 1e-4, 1e-5]
 
-    #mixup_bools = [False, True]
-    #mixup_alphas = [2]
+    """
+    lr_schedulers = [{"name": "CosineAnnealingLR"},
+                    {"name": "CosineAnnealingWarmRestarts", "T_0": 10}
+                    {"name": "CyclicLR", "base_lr" : X, "max_lr" : Y}]
+    """
 
+    ## Step 2 : Losses (dice, cross_entropy, focal, mixed, gdl)
 
-    #losses = [{"name": "dice"}]
-    #Example for focal loss
+    #losses = [{"name": "dice"}, {"name": "cross_entropy"}, {"name": "gdl"}]
+
+    #Focal loss
     """
     base_loss = {"name": "focal", "params": {"gamma": 0.5, "alpha" : 0.2}}
-    alphas = [0.2, 0.5, 0.75, 1, 5]
+    alphas = [0.2, 0.5, 0.75, 1]
     gammas = [0.5, 1, 1.5, 2]
     for combination in product(*[alphas, gammas]):
         new_loss = copy.deepcopy(base_loss)
@@ -98,12 +97,37 @@ if __name__ == '__main__':
     #print(losses)
     """
 
-    #Example for lr_schedulers
+    # Focal dice
+
     """
-    lr_schedulers = [{"name": "CosineAnnealingLR"},
-                    {"name": "CosineAnnealingWarmRestarts", "T_0": 10}
-                    {"name": "CyclicLR", "base_lr" : X, "max_lr" : Y}]
+    base_loss = {"name": "focal_dice", "params": {"gamma": 0.5, "alpha" : 0.2, beta : "1"}}
+    betas = [0.25, 0.5, 1, 2, 4]
+    for beta in betas:
+        new_loss = copy.deepcopy(base_loss)
+        new_loss["params"]["beta"] = beta
+        losses.append(new_loss)
+    #print(losses)
     """
+
+    ## Step 3 : FiLM
+
+    #metadatas = ["contrast"]
+
+    #film_layers = [ [1, 0, 0, 0, 0, 0, 0, 0],
+    #                [0, 0, 0, 0, 1, 0, 0, 0],
+    #                [0, 0, 0, 0, 0, 0, 0, 1],
+    #                [1, 1, 1, 1, 1, 1, 1, 1]]
+
+    ## Step 4 : Mixup
+
+    #mixup_bools = [True]
+    #mixup_alphas = [0.5, 1, 2]
+
+    ## Step 5 : Dilation
+
+    #gt_dilations = [0, 0.5, 1]
+
+
 
     #Dict with key corresponding to name of the param in the config file
     param_dict = {"batch_size":batch_sizes, "initial_lr":initial_lrs}
