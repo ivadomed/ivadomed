@@ -42,7 +42,6 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
                                     bids_metadata, contrast, roi_filename)
             roipair = BIDSSegPair2D(input_filename, roi_filename,
                                     bids_metadata, contrast)
-
             self.handlers.append([segpair, roipair])
 
     def _prepare_indexes(self):
@@ -51,15 +50,15 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
             for idx_pair_slice in range(input_data_shape[self.slice_axis]):
-
                 # Check if slice pair should be used or not
                 if self.slice_filter_fn:
-                    slice_pair_seg = seg_pair.get_pair_slice(idx_pair_slice,
-                                                            self.slice_axis)
-                    slice_pair_roi = roi_pair.get_pair_slice(idx_pair_slice,
-                                                            self.slice_axis)
-                    filter_fn_ret_seg = self.slice_filter_fn(slice_pair_seg)
-                    filter_fn_ret_roi = self.slice_filter_fn(slice_pair_roi)
+                    slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice,
+                                                                self.slice_axis)
+                    slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice,
+                                                                self.slice_axis)
+
+                    filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
+                    filter_fn_ret_roi = self.slice_filter_fn(slice_roi_pair)
                     if (not filter_fn_ret_seg) or (not filter_fn_ret_roi):
                         continue
 
@@ -93,7 +92,7 @@ class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
             roi_img = None
         else:
             roi_img = Image.fromarray(roi_pair_slice["gt"], mode='F')
-
+        print(roi_img, gt_img.size, input_img.size)
         data_dict = {
             'input': input_img,
             'target': gt_img,
