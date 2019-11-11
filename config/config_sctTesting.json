@@ -54,8 +54,8 @@
 			"wspace": 0.75,
 			"hspace": 0.75
 			},
-		"CenterCrop2D": {
-			"size": [128, 128]
+		"ROICrop2D": {
+			"size": [64, 64]
 			},
 		"ToTensor": {},
 		"NormalizeInstance": {}

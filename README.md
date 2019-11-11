@@ -37,7 +37,7 @@ Please find below a description of each parameter:
 - `command`: run the specified command (choice: "train", "test").
 - `gpu`: ID of the used GPU.
 - `target_suffix`: suffix of the derivative file containing the ground-truth of interest (e.g. "_seg-manual", "_lesion-manual").
-- `roi_suffix`: suffix of the derivative file containing the ROI used to crop (e.g. "_seg-manual"). Please use "null" if you do not want to use a ROI to crop.
+- `roi_suffix`: suffix of the derivative file containing the ROI used to crop (e.g. "_seg-manual") with `ROICrop2D` as transform. Please use "null" if you do not want to use a ROI to crop (ie use `CenterCrop2D`).
 - `bids_path`: relative path of the BIDS folder.
 - `random_seed`: seed used by the random number generator to split the dataset between training/validation/testing.
 - `contrast_train_validation`: list of image modalities included in the training and validation datasets.
