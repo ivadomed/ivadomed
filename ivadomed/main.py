@@ -490,8 +490,11 @@ def cmd_test(context):
 
     val_transform = transforms.Compose(validation_transform_list)
 
+    if context.get("split_path") is None:
+        test_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
+    else:
+        test_lst = joblib.load(context["split_path"])['test']
 
-    test_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     ds_test = loader.BidsDataset(context["bids_path"],
                                  subject_lst=test_lst,
