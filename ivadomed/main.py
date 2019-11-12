@@ -89,16 +89,21 @@ def cmd_train(context):
     val_transform = transforms.Compose(validation_transform_list)
 
     # Randomly split dataset between training / validation / testing
-    train_lst, valid_lst, test_lst = loader.split_dataset(path_folder=context["bids_path"],
+    if context.get("split_path") is None:
+        train_lst, valid_lst, test_lst = loader.split_dataset(path_folder=context["bids_path"],
                                                           center_test_lst=context["center_test"],
                                                           split_method=context["split_method"],
                                                           random_seed=context["random_seed"],
                                                           train_frac=context["train_fraction"],
                                                           test_frac=context["test_fraction"])
 
-    # save the subject distribution
-    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
+        # save the subject distribution
+        split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
+        joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
+
+    else:
+        train_lst = joblib.load(context["split_path"])['train']
+        valid_lst = joblib.load(context["split_path"])['valid']
 
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     # This code will iterate over the folders and load the data, filtering
@@ -129,7 +134,7 @@ def cmd_train(context):
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=True, pin_memory=True,
                               collate_fn=mt_datasets.mt_collate,
-                              num_workers=1)
+                              num_workers=0)
 
     # Validation dataset ------------------------------------------------------
     ds_val = loader.BidsDataset(context["bids_path"],
@@ -153,7 +158,7 @@ def cmd_train(context):
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
                             shuffle=True, pin_memory=True,
                             collate_fn=mt_datasets.mt_collate,
-                            num_workers=1)
+                            num_workers=0)
 
     if film_bool:
         # Modulated U-net model with FiLM layers
@@ -226,7 +231,7 @@ def cmd_train(context):
         exit()
 
     # Training loop -----------------------------------------------------------
-    best_validation_loss = float("inf")
+    best_validation_loss, best_validation_dice = float("inf"),float("inf")
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
         start_time = time.time()
 
@@ -427,6 +432,10 @@ def cmd_train(context):
 
         if val_loss_total_avg < best_validation_loss:
             best_validation_loss = val_loss_total_avg
+            if context["loss"]["name"] != 'dice':
+                best_validation_dice = dice_val_loss_total_avg
+            else:
+                best_validation_dice = best_validation_loss
             torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
 
     # Save final model
@@ -449,7 +458,7 @@ def cmd_train(context):
         np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
 
     writer.close()
-    return
+    return best_validation_dice,best_validation_loss
 
 
 def cmd_test(context):
@@ -481,8 +490,11 @@ def cmd_test(context):
 
     val_transform = transforms.Compose(validation_transform_list)
 
+    if context.get("split_path") is None:
+        test_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
+    else:
+        test_lst = joblib.load(context["split_path"])['test']
 
-    test_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     ds_test = loader.BidsDataset(context["bids_path"],
                                  subject_lst=test_lst,
@@ -508,7 +520,7 @@ def cmd_test(context):
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
                              shuffle=True, pin_memory=True,
                              collate_fn=mt_datasets.mt_collate,
-                             num_workers=1)
+                             num_workers=0)
 
     model = torch.load("./"+context["log_directory"]+"/best_model.pt")
 
