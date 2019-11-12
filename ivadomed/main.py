@@ -184,10 +184,11 @@ def cmd_train(context):
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
     elif context["lr_scheduler"]["name"] == "CosineAnnealingWarmRestarts":
         T_0 = context["lr_scheduler"]["T_0"]
-        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0)
+        T_mult=context["lr_scheduler"]["T_mult"]
+        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0, T_mult)
     elif context["lr_scheduler"]["name"] == "CyclicLR":
         base_lr, max_lr = context["lr_scheduler"]["base_lr"], context["lr_scheduler"]["max_lr"]
-        scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr, max_lr)
+        scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr, max_lr, mode="triangular2" , cycle_momentum=False)
         step_scheduler_batch = True
     else:
         print("Unknown LR Scheduler name, please choose between 'CosineAnnealingLR', 'CosineAnnealingWarmRestarts', or 'CyclicLR'")
