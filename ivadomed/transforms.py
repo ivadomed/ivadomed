@@ -9,7 +9,53 @@ from medicaltorch import transforms as mt_transforms
 
 
 def get_transform_names():
-    return ['DilateGT', 'ROICrop2D']
+    return ['DilateGT', 'ROICrop2D', 'Resample']
+
+class Resample(mt_transforms.Resample):
+    """This class extends mt_transforms.Resample:
+        resample the ROI image if provided."""
+    def __init__(self, wspace, hspace,
+                 interpolation=Image.BILINEAR,
+                 labeled=True):
+        super().__init__(wspace, hspace, interpolation, labeled)
+
+    def resample_bin(self, data, wshape, hshape):
+        data = data.resize((wshape, hshape), resample=self.interpolation)
+        np_data = np.array(data)
+        np_data[np_data >= 0.5] = 1.0
+        np_data[np_data < 0.5] = 0.0
+        data = Image.fromarray(np_data, mode='F')
+        return data
+
+    def __call__(self, sample):
+        rdict = {}
+        input_data = sample['input']
+        input_metadata = sample['input_metadata']
+
+        # Voxel dimension in mm
+        hzoom, wzoom = input_metadata["zooms"]
+        hshape, wshape = input_metadata["data_shape"]
+
+        hfactor = hzoom / self.hspace
+        wfactor = wzoom / self.wspace
+
+        hshape_new = int(hshape * hfactor)
+        wshape_new = int(wshape * wfactor)
+
+        input_data = input_data.resize((wshape_new, hshape_new),
+                                       resample=self.interpolation)
+        rdict['input'] = input_data
+
+        if self.labeled:
+            gt_data = sample['gt']
+            rdict['gt'] = self.resample_bin(gt_data, wshape_new, hshape_new)
+
+        if sample['roi'] is not None:
+            roi_data = sample['roi']
+            rdict['roi'] = self.resample_bin(roi_data, wshape_new, hshape_new)
+
+        sample.update(rdict)
+        return sample
 
 
 class ROICrop2D(mt_transforms.CenterCrop2D):
@@ -25,11 +71,12 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
         rdict = {}
         input_data = sample['input']
         roi_data = sample['roi']
-
+        print(np.unique(np.array(roi_data)), np.sum(np.array(roi_data)), np.unique(np.array(sample['gt'])), np.sum(np.array(sample['gt'])))
+        print(np.array(roi_data).shape, np.array(input_data).shape, np.array(sample['gt']).shape)
         w, h = input_data.size
         th, tw = self.size
         th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
-
+        print(w, h, th, tw, th_half, tw_half)
         # compute center of mass of the ROI
         x_roi, y_roi = center_of_mass(np.array(roi_data).astype(np.int))
         x_roi, y_roi = int(round(x_roi)), int(round(y_roi))
@@ -37,18 +84,21 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
         # compute top left corner of the crop area
         fh = y_roi - th_half
         fw = x_roi - tw_half
-
+        print(y_roi, x_roi, fh, fw)
         params = (fh, fw, w, h)
         self.propagate_params(sample, params)
 
         # crop data
         input_data = F.crop(input_data, fh, fw, th, tw)
+        print(np.sum(np.array(F.crop(roi_data, fh, fw, th, tw))))
+        save_crop(np.array(input_data))
         rdict['input'] = input_data
 
         if self.labeled:
             gt_data = sample['gt']
             gt_metadata = sample['gt_metadata']
-            gt_data = F.crop(input_data, fh, fw, th, tw)
+            gt_data = F.crop(gt_data, fh, fw, th, tw)
+            print(np.sum(np.array(gt_data)))
             gt_metadata["__centercrop"] = (fh, fw, w, h)
             rdict['gt'] = gt_data
 
