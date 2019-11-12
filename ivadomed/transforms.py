@@ -91,7 +91,6 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
 
         # crop data
         input_data = F.crop(input_data, fw, fh, tw, th)
-        save_crop(np.array(input_data))
         rdict['input'] = input_data
 
         if self.labeled:
