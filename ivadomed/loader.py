@@ -123,7 +123,7 @@ class BidsDataset(MRI2DBidsSegDataset):
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"], subject["metadata"], subject["modalities"]))
 
         super().__init__(self.filename_pairs, slice_axis, cache,
-                         transform, slice_filter_fn, canonical, multichannel)
+                         transform, slice_filter_fn, canonical)
 
 
 def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
