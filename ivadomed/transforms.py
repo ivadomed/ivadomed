@@ -9,7 +9,10 @@ from medicaltorch import transforms as mt_transforms
 
 
 def get_transform_names():
+    """Function used in the main to differentiate the IVADO transfroms
+       from the mt_transforms."""
     return ['DilateGT', 'ROICrop2D', 'Resample']
+
 
 class Resample(mt_transforms.Resample):
     """This class extends mt_transforms.Resample:
