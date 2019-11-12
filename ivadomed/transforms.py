@@ -63,7 +63,7 @@ class Resample(mt_transforms.Resample):
 
 class ROICrop2D(mt_transforms.CenterCrop2D):
     """Make a crop of a specified size around a ROI.
-    :param segmentation: if it is a segmentation task.
+    :param labeled: if it is a segmentation task.
                          When this is True (default), the crop
                          will also be applied to the ground truth.
     """
@@ -74,12 +74,11 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
         rdict = {}
         input_data = sample['input']
         roi_data = sample['roi']
-        print(np.unique(np.array(roi_data)), np.sum(np.array(roi_data)), np.unique(np.array(sample['gt'])), np.sum(np.array(sample['gt'])))
-        print(np.array(roi_data).shape, np.array(input_data).shape, np.array(sample['gt']).shape)
+
         w, h = input_data.size
         th, tw = self.size
         th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
-        print(w, h, th, tw, th_half, tw_half)
+
         # compute center of mass of the ROI
         x_roi, y_roi = center_of_mass(np.array(roi_data).astype(np.int))
         x_roi, y_roi = int(round(x_roi)), int(round(y_roi))
@@ -87,21 +86,18 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
         # compute top left corner of the crop area
         fh = y_roi - th_half
         fw = x_roi - tw_half
-        print(y_roi, x_roi, fh, fw)
         params = (fh, fw, w, h)
         self.propagate_params(sample, params)
 
         # crop data
-        input_data = F.crop(input_data, fh, fw, th, tw)
-        print(np.sum(np.array(F.crop(roi_data, fh, fw, th, tw))))
+        input_data = F.crop(input_data, fw, fh, tw, th)
         save_crop(np.array(input_data))
         rdict['input'] = input_data
 
         if self.labeled:
             gt_data = sample['gt']
             gt_metadata = sample['gt_metadata']
-            gt_data = F.crop(gt_data, fh, fw, th, tw)
-            print(np.sum(np.array(gt_data)))
+            gt_data = F.crop(gt_data, fw, fh, tw, th)
             gt_metadata["__centercrop"] = (fh, fw, w, h)
             rdict['gt'] = gt_data
 
