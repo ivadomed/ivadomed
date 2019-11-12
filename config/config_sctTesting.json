@@ -34,7 +34,7 @@
 			"dilation_factor": 0
 			},
                 "ROICrop2D": {
-                        "size": [64, 64]
+                        "size": [48, 48]
 			},
 		"ElasticTransform": {
 			"alpha_range": [28.0, 30.0],
@@ -55,7 +55,7 @@
 			"hspace": 0.75
 			},
 		"ROICrop2D": {
-			"size": [64, 64]
+			"size": [48, 48]
 			},
 		"ToTensor": {},
 		"NormalizeInstance": {}
