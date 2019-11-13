@@ -22,11 +22,11 @@ class Resample(mt_transforms.Resample):
                  labeled=True):
         super().__init__(wspace, hspace, interpolation, labeled)
 
-    def resample_bin(self, data, wshape, hshape):
+    def resample_bin(self, data, wshape, hshape, thr=0.5):
         data = data.resize((wshape, hshape), resample=self.interpolation)
         np_data = np.array(data)
-        np_data[np_data >= 0.5] = 1.0
-        np_data[np_data < 0.5] = 0.0
+        np_data[np_data > thr] = 1.0
+        np_data[np_data <= thr] = 0.0
         data = Image.fromarray(np_data, mode='F')
         return data
 
@@ -55,7 +55,7 @@ class Resample(mt_transforms.Resample):
 
         if sample['roi'] is not None:
             roi_data = sample['roi']
-            rdict['roi'] = self.resample_bin(roi_data, wshape_new, hshape_new)
+            rdict['roi'] = self.resample_bin(roi_data, wshape_new, hshape_new, 0.0)
 
         sample.update(rdict)
         return sample
