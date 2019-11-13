@@ -28,9 +28,9 @@ from ivadomed import loader as loader
 from ivadomed import models
 from ivadomed import losses
 from ivadomed.utils import *
+import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
-
 
 def cmd_train(context):
     """Main command to train the network.
@@ -73,8 +73,8 @@ def cmd_train(context):
     training_transform_list = []
     for transform in context["transformation_training"].keys():
         parameters = context["transformation_training"][transform]
-        if transform == "DilateGT": # DilateGT is not a method of mt_transforms
-            training_transform_list.append(DilateGT(**parameters))
+        if transform in ivadomed_transforms.get_transform_names():
+            training_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
         else:
             training_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
@@ -84,7 +84,10 @@ def cmd_train(context):
     validation_transform_list = []
     for transform in context["transformation_validation"].keys():
         parameters = context["transformation_validation"][transform]
-        validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+        if transform in ivadomed_transforms.get_transform_names():
+            validation_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
+        else:
+            validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
     val_transform = transforms.Compose(validation_transform_list)
 
@@ -110,13 +113,14 @@ def cmd_train(context):
     # the slices without labels and then concatenating all the datasets together
     ds_train = loader.BidsDataset(context["bids_path"],
                                   subject_lst=train_lst,
-                                  gt_suffix=context["gt_suffix"],
+                                  target_suffix=context["target_suffix"],
+                                  roi_suffix=context["roi_suffix"],
                                   contrast_lst=context["contrast_train_validation"],
                                   metadata_choice=context["metadata"],
                                   contrast_balance=context["contrast_balance"],
                                   slice_axis=axis_dct[context["slice_axis"]],
                                   transform=train_transform,
-                                  slice_filter_fn=SliceFilter())
+                                  slice_filter_fn=SliceFilter(nb_nonzero_thr=10))
 
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
@@ -139,13 +143,14 @@ def cmd_train(context):
     # Validation dataset ------------------------------------------------------
     ds_val = loader.BidsDataset(context["bids_path"],
                                 subject_lst=valid_lst,
-                                gt_suffix=context["gt_suffix"],
+                                target_suffix=context["target_suffix"],
+                                roi_suffix=context["roi_suffix"],
                                 contrast_lst=context["contrast_train_validation"],
                                 metadata_choice=context["metadata"],
                                 contrast_balance=context["contrast_balance"],
                                 slice_axis=axis_dct[context["slice_axis"]],
                                 transform=val_transform,
-                                slice_filter_fn=SliceFilter())
+                                slice_filter_fn=SliceFilter(nb_nonzero_thr=10))
 
     if film_bool:  # normalize metadata before sending to network
         ds_val = loader.normalize_metadata(ds_val,
@@ -486,7 +491,10 @@ def cmd_test(context):
     validation_transform_list = []
     for transform in context["transformation_validation"].keys():
         parameters = context["transformation_validation"][transform]
-        validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+        if transform in ivadomed_transforms.get_transform_names():
+            validation_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
+        else:
+            validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
     val_transform = transforms.Compose(validation_transform_list)
 
@@ -498,13 +506,14 @@ def cmd_test(context):
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     ds_test = loader.BidsDataset(context["bids_path"],
                                  subject_lst=test_lst,
-                                 gt_suffix=context["gt_suffix"],
+                                 target_suffix=context["target_suffix"],
+                                 roi_suffix=context["roi_suffix"],
                                  contrast_lst=context["contrast_test"],
                                  metadata_choice=context["metadata"],
                                  contrast_balance=context["contrast_balance"],
                                  slice_axis=axis_dct[context["slice_axis"]],
                                  transform=val_transform,
-                                 slice_filter_fn=SliceFilter())
+                                 slice_filter_fn=SliceFilter(nb_nonzero_thr=10))
 
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load("./"+context["log_directory"]+"/clustering_models.joblib")

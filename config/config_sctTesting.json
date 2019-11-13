@@ -1,7 +1,8 @@
 {
 	"command": "train",
 	"gpu": 4,
-        "gt_suffix": "_lesion-manual",
+        "target_suffix": "_lesion-manual",
+        "roi_suffix": "_seg-manual",
 	"bids_path": "../duke/sct_testing/large/",
         "random_seed": 1313,
         "contrast_train_validation": ["acq-sag00015_T2w", "acq-inf_T2w", "acq-sag_T2w", "acq-c1c3_T2star", "acq-sup_T2star", "acq-sagstircsp_T2w", "acq-sagtsp_T2w", "acq-axcsp_T2w", "acq-sup_T2w", "acq-ax00012_T2w", "acq-sagcerv_T2w", "acq-axtop00100_T2w", "acq-axmid00100_T2w", "acq-inf_T2star", "acq-axtop_T2w", "acq-axtsp_T2w", "acq-sagcsp_T2w", "acq-wat_T1w", "acq-axlow_T2w", "T2star", "T2w", "acq-ax_T2star", "acq-inn_T1w", "acq-fat_T1w", "acq-sagstirtsp_T2w", "acq-axbottom_T2w", "acq-sagstir_T2w", "acq-ax_T2w", "acq-ax00014_T2w", "acq-c4c7_T2star", "acq-axmid00005_T2w", "acq-sagthor_T2w", "acq-opp_T1w", "T1w"],
@@ -13,7 +14,7 @@
         "batch_norm_momentum": 0.1,
         "num_epochs": 100,
         "initial_lr": 0.001,
-        "lr_scheduler": {"name": "CyclicLR", "base_lr": 1e-5, "max_lr": 1e-2},
+        "lr_scheduler": {"name": "CosineAnnealingWarmRestarts", "T_0": 10},
         "loss": {"name": "dice"},
         "log_directory": "log_large",
         "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
@@ -32,8 +33,8 @@
 		"DilateGT": {
 			"dilation_factor": 0
 			},
-		"CenterCrop2D": {
-			"size": [128, 128]
+                "ROICrop2D": {
+                        "size": [48, 48]
 			},
 		"ElasticTransform": {
 			"alpha_range": [28.0, 30.0],
@@ -53,8 +54,8 @@
 			"wspace": 0.75,
 			"hspace": 0.75
 			},
-		"CenterCrop2D": {
-			"size": [128, 128]
+		"ROICrop2D": {
+			"size": [48, 48]
 			},
 		"ToTensor": {},
 		"NormalizeInstance": {}
