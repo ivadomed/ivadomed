@@ -518,7 +518,7 @@ def cmd_test(context):
                                  contrast_balance=context["contrast_balance"],
                                  slice_axis=axis_dct[context["slice_axis"]],
                                  transform=val_transform,
-                                 slice_filter_fn=SliceFilter(nb_nonzero_thr=10),
+                                 slice_filter_fn=SliceFilter(**context["slice_filter"]),
                                  multichannel=context["multichannel"])
 
     if film_bool:  # normalize metadata before sending to network
