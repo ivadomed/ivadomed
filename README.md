@@ -1,4 +1,4 @@
-https://github.com/neuropoly/ivado-medical-imaging/workflows/Python%20package/badge.svg
+![](https://github.com/neuropoly/ivado-medical-imaging/workflows/Python%20package/badge.svg)
 
 # IVADO Medical Imaging
 This is a repository for the collaboration between MILA and NeuroPoly for the IVADO project on medical imaging.
