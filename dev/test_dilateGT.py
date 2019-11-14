@@ -18,7 +18,7 @@ import torch
 from torchvision import transforms
 import matplotlib.pyplot as plt
 
-from ivadomed.utils import DilateGT
+from ivadomed.transforms import DilateGT
 from medicaltorch.datasets import MRI2DSegmentationDataset
 from medicaltorch import transforms as mt_transforms
 
