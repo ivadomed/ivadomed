@@ -284,7 +284,7 @@ def cmd_train(context):
                 sample_metadata = batch["input_metadata"]
                 var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
-                var_metadata = [train_onehotencoder.transform([sample_metadata[k]]).tolist()[0] for k in range(len(sample_metadata))]
+                var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in range(len(sample_metadata))]
                 preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
             else:
                 preds = model(var_input)
@@ -362,7 +362,7 @@ def cmd_train(context):
                     # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
                     var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
-                    var_metadata = [train_onehotencoder.transform([sample_metadata[k]]).tolist()[0] for k in range(len(sample_metadata))]
+                    var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in range(len(sample_metadata))]
                     preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
                 else:
                     preds = model(var_input)
@@ -568,7 +568,7 @@ def cmd_test(context):
                 sample_metadata = batch["input_metadata"]
                 test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
-                test_metadata = [one_hot_encoder.transform([sample_metadata[k]]).tolist()[0] for k in range(len(sample_metadata))]
+                test_metadata = [one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k in range(len(sample_metadata))]
                 preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
             else:
                 preds = model(test_input)
