@@ -52,7 +52,7 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                                                   "deriv_path": None,
                                                   "roi_filename": None,
                                                   "metadata": [],
-                                                  "modalities": []} for subject in subject_lst}
+                                                  "contrasts": []} for subject in subject_lst}
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
@@ -83,8 +83,8 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                     continue
 
                 metadata = subject.metadata()
-                # add modality to metadata
-                metadata['modality'] = subject.record["modality"]
+                # add contrast to metadata
+                metadata['contrast'] = subject.record["modality"]
 
                 if metadata_choice == 'mri_params':
                     def _check_isMRIparam(mri_param_type, mri_param):
@@ -221,7 +221,7 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
     for idx, subject in enumerate(ds_in):
         s_out = deepcopy(subject)
         print(subject["input_metadata"])
-        print(subject["input_metadata"]["bids_metadata"])
+        print(' ')
         if metadata_type == 'mri_params':
             # categorize flip angle, repetition time and echo time values using KDE
             for m in ['FlipAngle', 'RepetitionTime', 'EchoTime']:
@@ -248,7 +248,7 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
             label_contrast = CONTRAST_CATEGORY[generic_contrast]
             s_out["input_metadata"]["bids_metadata"] = [label_contrast]
 
-        s_out["input_metadata"]["contrast"] = subject["input_metadata"]["bids_metadata"]["contrast"]
+        s_out["input_metadata"]["modality"] = subject["input_metadata"]["bids_metadata"]["contrast"]
 
         if train_set:
             X_train_ohe.append(s_out["input_metadata"]["bids_metadata"])
