@@ -20,10 +20,16 @@
 	"mixup_bool": false,
 	"mixup_alpha": 2,
 	"metadata": "without",
+	"multichannel": false,
     "train_fraction": 0.6,
 	"test_fraction": 0.2,
     "slice_axis": "axial",
     "split_method": "per_patient",
+	"slice_filter": {
+      "filter_empty_mask": false,
+      "filter_empty_input": true,
+      "nb_nonzero_thr": 10
+    },
     "transformation_training": {
 		"Resample": {
 			"wspace": 0.75,

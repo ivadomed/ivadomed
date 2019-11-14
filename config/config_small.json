@@ -20,6 +20,7 @@
 	"mixup_bool": true,
 	"mixup_alpha": 2,
 	"metadata": "without",
+	"multichannel": false,
 	"train_fraction": 0.6,
 	"test_fraction": 0.2,
     "slice_axis": "axial",
