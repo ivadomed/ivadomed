@@ -83,6 +83,9 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                     continue
 
                 metadata = subject.metadata()
+                # add modality to metadata
+                metadata['modality'] = subject.record["modality"]
+
                 if metadata_choice == 'mri_params':
                     def _check_isMRIparam(mri_param_type, mri_param):
                         if mri_param_type not in mri_param:
@@ -217,7 +220,8 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
     ds_out = []
     for idx, subject in enumerate(ds_in):
         s_out = deepcopy(subject)
-
+        print(subject["input_metadata"])
+        print(subject["input_metadata"]["bids_metadata"])
         if metadata_type == 'mri_params':
             # categorize flip angle, repetition time and echo time values using KDE
             for m in ['FlipAngle', 'RepetitionTime', 'EchoTime']:
