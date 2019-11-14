@@ -220,8 +220,6 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
     ds_out = []
     for idx, subject in enumerate(ds_in):
         s_out = deepcopy(subject)
-        print(subject["input_metadata"])
-        print(' ')
         if metadata_type == 'mri_params':
             # categorize flip angle, repetition time and echo time values using KDE
             for m in ['FlipAngle', 'RepetitionTime', 'EchoTime']:
@@ -241,17 +239,17 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
                 print("{} with unknown manufacturer.".format(subject))
                 s_out["input_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
 
-            s_out["input_metadata"] = [s_out["input_metadata"][k] for k in
+            s_out["input_metadata"]["film_input"] = [s_out["input_metadata"][k] for k in
                                                         ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
         else:
-            generic_contrast = GENERIC_CONTRAST[subject["input_metadata"]["contrast"][0]] # FILM is only single channel
+            generic_contrast = GENERIC_CONTRAST[subject["input_metadata"]["contrast"]]
             label_contrast = CONTRAST_CATEGORY[generic_contrast]
-            s_out["input_metadata"] = [label_contrast]
+            s_out["input_metadata"]["film_input"] = [label_contrast]
 
         s_out["input_metadata"]["contrast"] = subject["input_metadata"]["contrast"]
 
         if train_set:
-            X_train_ohe.append(s_out["input_metadata"])
+            X_train_ohe.append(s_out["input_metadata"]["film_input"])
         ds_out.append(s_out)
 
         del s_out, subject
