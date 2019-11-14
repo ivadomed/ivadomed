@@ -225,33 +225,33 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
         if metadata_type == 'mri_params':
             # categorize flip angle, repetition time and echo time values using KDE
             for m in ['FlipAngle', 'RepetitionTime', 'EchoTime']:
-                v = subject["input_metadata"]["bids_metadata"][m]
+                v = subject["input_metadata"][m]
                 p = clustering_models[m].predict(v)
-                s_out["input_metadata"]["bids_metadata"][m] = p
+                s_out["input_metadata"][m] = p
                 if debugging:
                     print("{}: {} --> {}".format(m, v, p))
 
             # categorize manufacturer info based on the MANUFACTURER_CATEGORY dictionary
-            manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
+            manufacturer = subject["input_metadata"]["Manufacturer"]
             if manufacturer in MANUFACTURER_CATEGORY:
-                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
+                s_out["input_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
                 if debugging:
                     print("Manufacturer: {} --> {}".format(manufacturer, MANUFACTURER_CATEGORY[manufacturer]))
             else:
                 print("{} with unknown manufacturer.".format(subject))
-                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
+                s_out["input_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
 
-            s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in
+            s_out["input_metadata"] = [s_out["input_metadata"][k] for k in
                                                         ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
         else:
-            generic_contrast = GENERIC_CONTRAST[subject["input_metadata"]["bids_metadata"]["contrast"][0]] # FILM is only single channel
+            generic_contrast = GENERIC_CONTRAST[subject["input_metadata"]["contrast"][0]] # FILM is only single channel
             label_contrast = CONTRAST_CATEGORY[generic_contrast]
-            s_out["input_metadata"]["bids_metadata"] = [label_contrast]
+            s_out["input_metadata"] = [label_contrast]
 
-        s_out["input_metadata"]["modality"] = subject["input_metadata"]["bids_metadata"]["contrast"]
+        s_out["input_metadata"]["contrast"] = subject["input_metadata"]["contrast"]
 
         if train_set:
-            X_train_ohe.append(s_out["input_metadata"]["bids_metadata"])
+            X_train_ohe.append(s_out["input_metadata"])
         ds_out.append(s_out)
 
         del s_out, subject
