@@ -17,6 +17,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torch import optim
 
 from medicaltorch import datasets as mt_datasets
+from medicaltorch import transforms as mt_transforms
 
 from tqdm import tqdm
 
@@ -24,9 +25,9 @@ from ivadomed import loader as loader
 from ivadomed import models
 from ivadomed import losses
 from ivadomed.utils import *
+import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
-
 
 def cmd_train(context):
     """Main command to train the network.
@@ -71,8 +72,8 @@ def cmd_train(context):
     training_transform_list = []
     for transform in context["transformation_training"].keys():
         parameters = context["transformation_training"][transform]
-        if transform == "DilateGT": # DilateGT is not a method of mt_transforms
-            training_transform_list.append(DilateGT(**parameters))
+        if transform in ivadomed_transforms.get_transform_names():
+            training_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
         else:
             training_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
@@ -82,35 +83,44 @@ def cmd_train(context):
     validation_transform_list = []
     for transform in context["transformation_validation"].keys():
         parameters = context["transformation_validation"][transform]
-        validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+        if transform in ivadomed_transforms.get_transform_names():
+            validation_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
+        else:
+            validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
     val_transform = transforms.Compose(validation_transform_list)
 
     # Randomly split dataset between training / validation / testing
-    train_lst, valid_lst, test_lst = loader.split_dataset(path_folder=context["bids_path"],
+    if context.get("split_path") is None:
+        train_lst, valid_lst, test_lst = loader.split_dataset(path_folder=context["bids_path"],
                                                           center_test_lst=context["center_test"],
                                                           split_method=context["split_method"],
                                                           random_seed=context["random_seed"],
                                                           train_frac=context["train_fraction"],
                                                           test_frac=context["test_fraction"])
 
-    # save the subject distribution
-    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
+        # save the subject distribution
+        split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
+        joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
+
+    else:
+        train_lst = joblib.load(context["split_path"])['train']
+        valid_lst = joblib.load(context["split_path"])['valid']
 
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
     ds_train = loader.BidsDataset(context["bids_path"],
                                   subject_lst=train_lst,
-                                  gt_suffix=context["gt_suffix"],
+                                  target_suffix=context["target_suffix"],
+                                  roi_suffix=context["roi_suffix"],
                                   contrast_lst=context["contrast_train_validation"],
                                   metadata_choice=context["metadata"],
                                   contrast_balance=context["contrast_balance"],
                                   slice_axis=axis_dct[context["slice_axis"]],
                                   transform=train_transform,
-                                  slice_filter_fn=SliceFilter(),
-                                  multichannel=context['multichannel'])
+                                  multichannel=context['multichannel'],
+                                  slice_filter_fn=SliceFilter(nb_nonzero_thr=10))
 
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
@@ -128,19 +138,20 @@ def cmd_train(context):
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=True, pin_memory=True,
                               collate_fn=mt_datasets.mt_collate,
-                              num_workers=1)
+                              num_workers=0)
 
     # Validation dataset ------------------------------------------------------
     ds_val = loader.BidsDataset(context["bids_path"],
                                 subject_lst=valid_lst,
-                                gt_suffix=context["gt_suffix"],
+                                target_suffix=context["target_suffix"],
+                                roi_suffix=context["roi_suffix"],
                                 contrast_lst=context["contrast_train_validation"],
                                 metadata_choice=context["metadata"],
                                 contrast_balance=context["contrast_balance"],
                                 slice_axis=axis_dct[context["slice_axis"]],
                                 transform=val_transform,
-                                slice_filter_fn=SliceFilter(),
-                                multichannel=context['multichannel'])
+                                multichannel=context['multichannel'],
+                                slice_filter_fn=SliceFilter(nb_nonzero_thr=10))
 
     if film_bool:  # normalize metadata before sending to network
         ds_val = loader.normalize_metadata(ds_val,
@@ -153,7 +164,7 @@ def cmd_train(context):
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
                             shuffle=True, pin_memory=True,
                             collate_fn=mt_datasets.mt_collate,
-                            num_workers=1)
+                            num_workers=0)
 
     if film_bool:
         # Modulated U-net model with FiLM layers
@@ -230,7 +241,7 @@ def cmd_train(context):
         exit()
 
     # Training loop -----------------------------------------------------------
-    best_validation_loss = float("inf")
+    best_validation_loss, best_validation_dice = float("inf"),float("inf")
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
         start_time = time.time()
 
@@ -431,6 +442,10 @@ def cmd_train(context):
 
         if val_loss_total_avg < best_validation_loss:
             best_validation_loss = val_loss_total_avg
+            if context["loss"]["name"] != 'dice':
+                best_validation_dice = dice_val_loss_total_avg
+            else:
+                best_validation_dice = best_validation_loss
             torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
 
     # Save final model
@@ -453,7 +468,7 @@ def cmd_train(context):
         np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
 
     writer.close()
-    return
+    return best_validation_dice,best_validation_loss
 
 
 def cmd_test(context):
@@ -481,22 +496,30 @@ def cmd_test(context):
     validation_transform_list = []
     for transform in context["transformation_validation"].keys():
         parameters = context["transformation_validation"][transform]
-        validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+        if transform in ivadomed_transforms.get_transform_names():
+            validation_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
+        else:
+            validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
 
     val_transform = transforms.Compose(validation_transform_list)
 
+    if context.get("split_path") is None:
+        test_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
+    else:
+        test_lst = joblib.load(context["split_path"])['test']
 
-    test_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     ds_test = loader.BidsDataset(context["bids_path"],
                                  subject_lst=test_lst,
-                                 gt_suffix=context["gt_suffix"],
+                                 target_suffix=context["target_suffix"],
+                                 roi_suffix=context["roi_suffix"],
                                  contrast_lst=context["contrast_test"],
                                  metadata_choice=context["metadata"],
                                  contrast_balance=context["contrast_balance"],
                                  slice_axis=axis_dct[context["slice_axis"]],
                                  transform=val_transform,
-                                 slice_filter_fn=SliceFilter())
+                                 slice_filter_fn=SliceFilter(nb_nonzero_thr=10),
+                                 multichannel=context["multichannel"])
 
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load("./"+context["log_directory"]+"/clustering_models.joblib")
@@ -512,7 +535,7 @@ def cmd_test(context):
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
                              shuffle=True, pin_memory=True,
                              collate_fn=mt_datasets.mt_collate,
-                             num_workers=1)
+                             num_workers=0)
 
     model = torch.load("./"+context["log_directory"]+"/best_model.pt")
 
