@@ -120,7 +120,7 @@ def cmd_train(context):
                                   slice_axis=axis_dct[context["slice_axis"]],
                                   transform=train_transform,
                                   multichannel=context['multichannel'],
-                                  slice_filter_fn=SliceFilter(nb_nonzero_thr=10))
+                                  slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
@@ -151,7 +151,7 @@ def cmd_train(context):
                                 slice_axis=axis_dct[context["slice_axis"]],
                                 transform=val_transform,
                                 multichannel=context['multichannel'],
-                                slice_filter_fn=SliceFilter(nb_nonzero_thr=10))
+                                slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     if film_bool:  # normalize metadata before sending to network
         ds_val = loader.normalize_metadata(ds_val,
