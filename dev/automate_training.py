@@ -5,7 +5,6 @@
 # Usage: python dev/training_scheduler.py -c path/to/config.json -g number_of_gpus
 #
 # Contributors: olivier
-# Last modified: 14-11-2019
 #
 ##############################################################
 
