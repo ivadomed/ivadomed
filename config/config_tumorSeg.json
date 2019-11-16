@@ -21,7 +21,7 @@
     "mixup_bool": false,
     "mixup_alpha": 2,
     "metadata": "contrast",
-    "multichannel": false,
+    "multichannel": true,
     "slice_axis": "sagittal",
     "split_method": "per_patient",
     "train_fraction": 0.6,

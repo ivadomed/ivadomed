@@ -24,6 +24,11 @@
 	"train_fraction": 0.6,
 	"test_fraction": 0.2,
     "slice_axis": "axial",
+	"slice_filter": {
+      "filter_empty_mask": true,
+      "filter_empty_input": true,
+      "nb_nonzero_thr": 10
+    },
     "split_method": "per_center",
     "transformation_training": {
 		"Resample": {

@@ -26,7 +26,7 @@
     "slice_axis": "axial",
     "split_method": "per_patient",
 	"slice_filter": {
-      "filter_empty_mask": false,
+      "filter_empty_mask": true,
       "filter_empty_input": true,
       "nb_nonzero_thr": 10
     },
