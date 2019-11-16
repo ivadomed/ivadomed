@@ -48,11 +48,14 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
 
         multichannel_subjects = {}
         if multichannel:
-            multichannel_subjects = {subject: {"absolute_paths": [],
+            num_contrast = len(contrast_lst)
+            idx_dict = {}
+            for idx, contrast in enumerate(contrast_lst):
+                idx_dict[contrast] = idx
+            multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
                                                   "deriv_path": None,
                                                   "roi_filename": None,
-                                                  "metadata": [],
-                                                  "contrasts": []} for subject in subject_lst}
+                                                  "metadata": [None] * num_contrast} for subject in subject_lst}
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
@@ -108,12 +111,13 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
 
                 # Fill multichannel dictionary
                 if multichannel:
+                    idx = idx_dict[subject.record["modality"]]
                     subj_id = subject.record["subject_id"]
-                    multichannel_subjects[subj_id]["absolute_paths"].append(subject.record.absolute_path)
+                    multichannel_subjects[subj_id]["absolute_paths"][idx] = subject.record.absolute_path
                     multichannel_subjects[subj_id]["deriv_path"] = target_filename
-                    multichannel_subjects[subj_id]["metadata"].append(subject.metadata())
+                    multichannel_subjects[subj_id]["metadata"][idx] = subject.metadata()
                     if roi_filename:
-                        multichannel_subjects[subj_id]["roi_filename"].append(roi_filename)
+                        multichannel_subjects[subj_id]["roi_filename"][idx] = roi_filename
 
                 else:
                     self.filename_pairs.append(([subject.record.absolute_path],
@@ -121,7 +125,8 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
 
         if multichannel:
             for subject in multichannel_subjects.values():
-                if len(subject["absolute_paths"]):
+                if subject["deriv_path"]:
+
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
 
