@@ -22,10 +22,12 @@
     "mixup_alpha": 2,
     "metadata": "contrast",
     "multichannel": true,
+    "n_classes": 1,
     "slice_axis": "sagittal",
     "split_method": "per_patient",
     "train_fraction": 0.6,
     "test_fraction": 0.2,
+    "unet3D": true,
     "slice_filter": {
       "filter_empty_mask": false,
       "filter_empty_input": true,

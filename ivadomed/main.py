@@ -165,18 +165,19 @@ def cmd_train(context):
                             shuffle=True, pin_memory=True,
                             collate_fn=mt_datasets.mt_collate,
                             num_workers=0)
-
+    in_channel = 1
+    if context['multichannel']:
+        in_channel = len(context['contrast_train_validation'])
     if film_bool:
         # Modulated U-net model with FiLM layers
         model = models.FiLMedUnet(n_metadata=len([ll for l in train_onehotencoder.categories_ for ll in l]),
                             film_bool=context["film_layers"],
                             drop_rate=context["dropout_rate"],
                             bn_momentum=context["batch_norm_momentum"])
+    elif context["unet3D"]:
+        model = models.UNet3D(in_channel, context["n_classes"])
     else:
         # Traditional U-Net model
-        in_channel = 1
-        if context['multichannel']:
-            in_channel = len(context['contrast_train_validation'])
         model = models.Unet(in_channel=in_channel,
                             drop_rate=context["dropout_rate"],
                             bn_momentum=context["batch_norm_momentum"])
