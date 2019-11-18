@@ -239,9 +239,9 @@ def cmd_train(context):
     # Training loop -----------------------------------------------------------
     best_validation_loss, best_validation_dice = float("inf"),float("inf")
 
-    patience = 5
+    patience = context["early_stopping_patience"]
     patience_count = 0
-    epsilon = 0.001
+    epsilon = context["early_stopping_epsilon"]
     val_losses = []
 
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
