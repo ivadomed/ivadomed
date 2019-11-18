@@ -237,7 +237,14 @@ def cmd_train(context):
         exit()
 
     # Training loop -----------------------------------------------------------
+
     best_training_dice, best_training_loss, best_validation_loss, best_validation_dice = float("inf"),float("inf"), float("inf"),float("inf")
+
+    patience = context["early_stopping_patience"]
+    patience_count = 0
+    epsilon = context["early_stopping_epsilon"]
+    val_losses = []
+
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
         start_time = time.time()
 
@@ -246,6 +253,8 @@ def cmd_train(context):
 
         model.train()
         train_loss_total, dice_train_loss_total = 0.0, 0.0
+
+
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
@@ -447,6 +456,14 @@ def cmd_train(context):
                 best_validation_dice = best_validation_loss
                 best_training_dice = best_training_loss
             torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
+
+        #Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
+        val_losses.append(val_loss_total_avg)
+
+        if (val_losses[-2] - val_losses[-1]) * 100 / val_losses[-1] < epsilon:
+            patience_count += 1
+        if patience_count >= patience:
+                break
 
     # Save final model
     torch.save(model, "./"+context["log_directory"]+"/final_model.pt")
