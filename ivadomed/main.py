@@ -237,7 +237,8 @@ def cmd_train(context):
         exit()
 
     # Training loop -----------------------------------------------------------
-    best_validation_loss, best_validation_dice = float("inf"),float("inf")
+
+    best_training_dice, best_training_loss, best_validation_loss, best_validation_dice = float("inf"),float("inf"), float("inf"),float("inf")
 
     patience = context["early_stopping_patience"]
     patience_count = 0
@@ -446,10 +447,14 @@ def cmd_train(context):
 
         if val_loss_total_avg < best_validation_loss:
             best_validation_loss = val_loss_total_avg
+            best_training_loss = train_loss_total_avg
+
             if context["loss"]["name"] != 'dice':
                 best_validation_dice = dice_val_loss_total_avg
+                best_training_dice = dice_train_loss_total_avg
             else:
                 best_validation_dice = best_validation_loss
+                best_training_dice = best_training_loss
             torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
 
         #Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
@@ -480,7 +485,7 @@ def cmd_train(context):
         np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
 
     writer.close()
-    return best_validation_dice,best_validation_loss
+    return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
 
 def cmd_test(context):
