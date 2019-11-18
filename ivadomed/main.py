@@ -452,10 +452,10 @@ def cmd_train(context):
                 best_validation_dice = best_validation_loss
             torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
 
-        #Early stopping : break if val loss doesn't improve by at least epsilon for N=patience epochs
+        #Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
         val_losses.append(val_loss_total_avg)
 
-        if (val_losses[-2] - val_losses[-1]) < epsilon:
+        if (val_losses[-2] - val_losses[-1]) * 100 / val_losses[-1] < epsilon:
             patience_count += 1
         if patience_count >= patience:
                 break

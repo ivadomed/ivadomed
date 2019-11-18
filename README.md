@@ -63,7 +63,8 @@ Please find below a description of each parameter:
 - `data_augmentation_validation`: this parameter is a dictionnary containing the validation/test transformations. The choices are the same as `data_augmentation_training`.
 - `debugging`: allows extended verbosity and intermediate outputs (choice: `false` or `true`).
 - `split_path`: (optional) path to joblib file containing the list of training / validation / test subjects, used to ensure reproducible experiments
-
+- `early_stopping_epsilon`: Threshold (percentage) for an improvement in the validation loss the be considered meaningful
+- `early_stopping_patience`: Number of epochs after which the training is stopped if the validation loss improvement not meaningful (less than `early_stopping_epsilon`)
 Please find below the original articles of methods we implemented in this project:
 - [U-net](https://arxiv.org/pdf/1505.04597.pdf)
 - [FiLM](https://arxiv.org/pdf/1709.07871.pdf)
