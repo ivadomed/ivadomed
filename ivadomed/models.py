@@ -41,7 +41,7 @@ class UpConv(Module):
 class Unet(Module):
     """A reference U-Net model.
 
-    .. seealso::
+    .. see also::
         Ronneberger, O., et al (2015). U-Net: Convolutional
         Networks for Biomedical Image Segmentation
         ArXiv link: https://arxiv.org/abs/1505.04597
@@ -49,7 +49,7 @@ class Unet(Module):
     def __init__(self, drop_rate=0.4, bn_momentum=0.1):
         super(Unet, self).__init__()
 
-        #Downsampling path
+        # Downsampling path
         self.conv1 = DownConv(1, 64, drop_rate, bn_momentum)
         self.mp1 = nn.MaxPool2d(2)
 
@@ -157,7 +157,7 @@ class FiLMlayer(Module):
         film_params = film_params.repeat(1, 1, self.height, self.width)
 
         self.gammas = film_params[:, : self.feature_size, :, :]
-        self.betas = film_params[:, self.feature_size :, :, :]
+        self.betas = film_params[:, self.feature_size:, :, :]
 
         # Apply the linear modulation
         output = self.gammas * feature_maps + self.betas
@@ -171,10 +171,10 @@ class FiLMedUnet(Module):
     A FiLM layer has been added after each convolution layer.
     """
 
-    def __init__(self, n_metadata, film_bool=[1]*8, drop_rate=0.4, bn_momentum=0.1):
+    def __init__(self, n_metadata, film_bool=[1] * 8, drop_rate=0.4, bn_momentum=0.1):
         super(FiLMedUnet, self).__init__()
 
-        #Downsampling path
+        # Downsampling path
         self.conv1 = DownConv(1, 64, drop_rate, bn_momentum)
         self.film0 = FiLMlayer(n_metadata, 64) if film_bool[0] else None
         self.mp1 = nn.MaxPool2d(2)
@@ -239,4 +239,105 @@ class FiLMedUnet(Module):
             x11, w_film = self.film7(x11, context, None if 'w_film' not in locals() else w_film)
         preds = torch.sigmoid(x11)
 
+        return preds
+
+
+class HeMISEncoder(Module):
+    """Encoding part of the Unet for each modality
+    It returns the features map for the skip connections
+
+            """
+
+    def __init__(self, drop_rate=0.4, bn_momentum=0.1):
+        super(HeMISEncoder, self).__init__()
+        # Down-sampling path
+        self.conv1 = DownConv(1, 64, drop_rate, bn_momentum)
+        self.mp1 = nn.MaxPool2d(2)
+
+        self.conv2 = DownConv(64, 128, drop_rate, bn_momentum)
+        self.mp2 = nn.MaxPool2d(2)
+
+        self.conv3 = DownConv(128, 256, drop_rate, bn_momentum)
+        self.mp3 = nn.MaxPool2d(2)
+
+        # Bottom
+        self.conv4 = DownConv(256, 256, drop_rate, bn_momentum)
+
+    def forward(self, x):
+        # Down-sampling path
+        x1 = self.conv1(x)
+        x2 = self.mp1(x1)
+
+        x3 = self.conv2(x2)
+        x4 = self.mp2(x3)
+
+        x5 = self.conv3(x4)
+        x6 = self.mp3(x5)
+
+        # Bottom level
+        x7 = self.conv4(x6)
+        return x1, x3, x5, x7
+
+
+class HeMISUnet(Module):
+    """A U-Net model inspired by HeMIS to deal with missing modalities.
+        1) It has as many encoders as modalities but only one decoder.
+        2) Skip connections are the concatenations of the means and var of all encoders skip connections
+
+        Param:
+        Modalities: list of all the possible modalities. ['T1', 'T2', 'T2S', 'F']
+
+        see also::
+        Havaei, M., Guizard, N., Chapados, N., Bengio, Y.:
+        Hemis: Hetero-modal image segmentation.
+        ArXiv link: https://arxiv.org/abs/1607.05194
+        ---
+        Reuben Dorent and Samuel Joutard and Marc Modat and Sébastien Ourselin and Tom Vercauteren
+        Hetero-Modal Variational Encoder-Decoder for Joint Modality Completion and Segmentation
+        ArXiv link: https://arxiv.org/abs/1907.11150
+        """
+
+    def __init__(self, Modalities):
+        super(HeMISUnet, self).__init__()
+
+        self.Modalities = Modalities
+        self.n_mod = len(Modalities)
+
+        # Down-sampling
+        self.Down = nn.ModuleDict([['Down_{}'.format(Mod), HeMIS_Encoder()] for Mod in self.Modalities])
+
+        # Up-sampling path
+        self.up1 = UpConv(1024, 512)
+        self.up2 = UpConv(768, 256)
+        self.up3 = UpConv(384, 128)
+        self.conv9 = nn.Conv2d(128, 1, kernel_size=3, padding=1)
+
+    def forward(self, x_mods):
+        # X is  list like X = [x_T1, x_T2, x_T2S, x_F]
+        x1_mods, x3_mods, x5_mods, x7_mods = [], [], [], []
+
+        # Down-sampling
+        for i, Mod in enumerate(self.Modalities):
+            x1, x3, x5, x7 = self.Down['Down_{}'.format(Mod)](x_mods[i])
+
+            # TODO
+            # Add a condition to remove null tensors i.e. missing modalities
+
+            x1_mods.append(x1.unsqueeze(0))
+            x3_mods.append(x3.unsqueeze(0))
+            x5_mods.append(x5.unsqueeze(0))
+            x7_mods.append(x7.unsqueeze(0))
+
+        # Abstraction
+        x7 = torch.cat([torch.cat(x7_mods, 0).mean(0).unsqueeze(0), torch.cat(x7_mods, 0).var(0).unsqueeze(0)], 0)
+        x5 = torch.cat([torch.cat(x5_mods, 0).mean(0).unsqueeze(0), torch.cat(x5_mods, 0).var(0).unsqueeze(0)], 0)
+        x3 = torch.cat([torch.cat(x3_mods, 0).mean(0).unsqueeze(0), torch.cat(x3_mods, 0).var(0).unsqueeze(0)], 0)
+        x1 = torch.cat([torch.cat(x1_mods, 0).mean(0).unsqueeze(0), torch.cat(x1_mods, 0).var(0).unsqueeze(0)], 0)
+
+        # Up-sampling
+        x8 = self.up1(x7, x5)
+        x9 = self.up2(x8, x3)
+        x10 = self.up3(x9, x1)
+        x11 = self.conv9(x10)
+        preds = torch.sigmoid(x11)
         return preds
