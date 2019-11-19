@@ -464,6 +464,7 @@ def cmd_train(context):
             if (val_losses[-2] - val_losses[-1]) * 100 / val_losses[-1] < epsilon:
                 patience_count += 1
         if patience_count >= patience:
+            print(f"Stopping training due to {patience} epochs without improvements")
             break
 
     # Save final model
