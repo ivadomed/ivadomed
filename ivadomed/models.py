@@ -41,11 +41,12 @@ class UpConv(Module):
 class Unet(Module):
     """A reference U-Net model.
 
-    .. see also::
+    .. seealso::
         Ronneberger, O., et al (2015). U-Net: Convolutional
         Networks for Biomedical Image Segmentation
         ArXiv link: https://arxiv.org/abs/1505.04597
     """
+
     def __init__(self, drop_rate=0.4, bn_momentum=0.1):
         super(Unet, self).__init__()
 
@@ -99,6 +100,7 @@ class FiLMgenerator(Module):
 
     Here, the FiLM generator is a multi-layer perceptron.
     """
+
     def __init__(self, n_features, n_channels, n_hid=64):
         super(FiLMgenerator, self).__init__()
         self.linear1 = nn.Linear(n_features, n_hid)
@@ -128,6 +130,7 @@ class FiLMlayer(Module):
     in the paper `FiLM: Visual Reasoning with a General Conditioning Layer`:
         https://arxiv.org/abs/1709.07871
     """
+
     def __init__(self, n_metadata, n_channels):
         super(FiLMlayer, self).__init__()
 
@@ -245,7 +248,6 @@ class FiLMedUnet(Module):
 class HeMISEncoder(Module):
     """Encoding part of the Unet for each modality
     It returns the features map for the skip connections
-
             """
 
     def __init__(self, drop_rate=0.4, bn_momentum=0.1):
@@ -297,14 +299,13 @@ class HeMISUnet(Module):
         ArXiv link: https://arxiv.org/abs/1907.11150
         """
 
-    def __init__(self, Modalities):
+    def __init__(self, modalities):
         super(HeMISUnet, self).__init__()
 
-        self.Modalities = Modalities
-        self.n_mod = len(Modalities)
+        self.modalities = modalities
 
         # Down-sampling
-        self.Down = nn.ModuleDict([['Down_{}'.format(Mod), HeMIS_Encoder()] for Mod in self.Modalities])
+        self.Down = nn.ModuleDict([['Down_{}'.format(Mod), HeMISEncoder()] for Mod in self.Modalities])
 
         # Up-sampling path
         self.up1 = UpConv(1024, 512)
@@ -317,7 +318,7 @@ class HeMISUnet(Module):
         x1_mods, x3_mods, x5_mods, x7_mods = [], [], [], []
 
         # Down-sampling
-        for i, Mod in enumerate(self.Modalities):
+        for i, Mod in enumerate(self.modalities):
             x1, x3, x5, x7 = self.Down['Down_{}'.format(Mod)](x_mods[i])
 
             # TODO
