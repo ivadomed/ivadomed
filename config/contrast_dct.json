@@ -35,5 +35,8 @@
         "acq-wat_T1w": "T1w",
         "acq-inn_T1w": "T1w",
         "acq-fat_T1w": "T1w",
-        "acq-opp_T1w": "T1w"
+        "acq-opp_T1w": "T1w",
+        "t1": "T1w",
+        "t2": "T2w",
+        "t2s": "T2star"
 }

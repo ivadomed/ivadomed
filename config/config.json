@@ -21,12 +21,18 @@
     "mixup_bool": false,
     "mixup_alpha": 2,
     "metadata": "contrast",
+	"multichannel": false,
   	"train_fraction": 0.6,
 	"test_fraction": 0.2,
     "early_stopping_patience": 10,
 	"early_stopping_epsilon": 0.001,
     "slice_axis": "axial",
     "split_method": "per_center",
+	"slice_filter": {
+      "filter_empty_mask": true,
+      "filter_empty_input": true,
+      "nb_nonzero_thr": 10
+    },
     "transformation_training": {
 		"Resample": {
 			"wspace": 0.75,

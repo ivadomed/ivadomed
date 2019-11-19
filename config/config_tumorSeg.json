@@ -1,12 +1,13 @@
 {
     "command": "train",
-    "gpu": 7,
-    "gt_suffix": "_seg-manual",
-    "bids_path": "C:\\Users\\andre\\Desktop\\Git\\IVADO_medical_imaging\\bids_amu_2017-virginie",
+    "gpu": 0,
+    "target_suffix": "_seg-manual",
+    "roi_suffix": null,
+    "bids_path": "/home/andreanne/Documents/dataset/bids_amu_2017-virginie",
     "random_seed": 1313,
-    "contrast_train_validation": ["T2w"],
+    "contrast_train_validation": ["acq-inf_T2star", "acq-sup_T2star"],
     "contrast_balance": {},
-    "contrast_test": ["T2w"],
+    "contrast_test": ["acq-inf_T2star", "acq-sup_T2star"],
     "center_test": [],
     "batch_size": 18,
     "dropout_rate": 0.3,
@@ -15,16 +16,23 @@
     "initial_lr": 0.001,
     "loss": {"name": "dice"},
     "log_directory": "log",
+    "lr_scheduler": {"name": "CosineAnnealingLR", "base_lr": 1e-5, "max_lr": 1e-2},
     "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
     "mixup_bool": false,
     "mixup_alpha": 2,
-    "metadata": "without",
+    "metadata": "contrast",
+    "multichannel": true,
     "slice_axis": "sagittal",
     "split_method": "per_patient",
     "train_fraction": 0.6,
     "test_fraction": 0.2,
+    "slice_filter": {
+      "filter_empty_mask": false,
+      "filter_empty_input": true,
+      "nb_nonzero_thr": 10
+    },
     "early_stopping_patience": 10,
-	"early_stopping_epsilon": 0.001,
+	  "early_stopping_epsilon": 0.001,
     "transformation_training": {
       "Resample": {
         "wspace": 0.75,
@@ -34,7 +42,7 @@
         "dilation_factor": 0
       },
       "CenterCrop2D": {
-        "size": [256, 256]
+        "size": [40, 40]
       },
       "ElasticTransform": {
         "alpha_range": [28.0, 30.0],

@@ -124,13 +124,14 @@ class SliceFilter(mt_filters.SliceFilter):
             return False
 
         # Filter slices where there are no values after cropping
-        input_img = Image.fromarray(sample['input'], mode='F')
-        input_cropped = F.center_crop(input_img, (128, 128))
-        input_cropped = np.array(input_cropped)
-        count = np.count_nonzero(input_cropped)
+        for sample in sample['input']:
+            input_img = Image.fromarray(sample, mode='F')
+            input_cropped = F.center_crop(input_img, (128, 128))
+            input_cropped = np.array(input_cropped)
+            count = np.count_nonzero(input_cropped)
 
-        if count <= 0:
-            return False
+            if count <= 0:
+                return False
 
         return True
 
