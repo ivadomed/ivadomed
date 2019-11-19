@@ -460,10 +460,11 @@ def cmd_train(context):
         #Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
         val_losses.append(val_loss_total_avg)
 
-        if (val_losses[-2] - val_losses[-1]) * 100 / val_losses[-1] < epsilon:
-            patience_count += 1
+        if epoch > 1:
+            if (val_losses[-2] - val_losses[-1]) * 100 / val_losses[-1] < epsilon:
+                patience_count += 1
         if patience_count >= patience:
-                break
+            break
 
     # Save final model
     torch.save(model, "./"+context["log_directory"]+"/final_model.pt")
