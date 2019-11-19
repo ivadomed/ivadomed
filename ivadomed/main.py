@@ -461,7 +461,7 @@ def cmd_train(context):
         val_losses.append(val_loss_total_avg)
 
         if epoch > 1:
-            if (val_losses[-2] - val_losses[-1]) * 100 / val_losses[-1] < epsilon:
+            if (val_losses[-2] - val_losses[-1]) * 100 / abs(val_losses[-1]) < epsilon:
                 patience_count += 1
         if patience_count >= patience:
             print(f"Stopping training due to {patience} epochs without improvements")
