@@ -23,6 +23,8 @@
 	"multichannel": false,
     "train_fraction": 0.6,
 	"test_fraction": 0.2,
+	"early_stopping_patience": 10,
+	"early_stopping_epsilon": 0.001,
     "slice_axis": "axial",
     "split_method": "per_patient",
 	"slice_filter": {

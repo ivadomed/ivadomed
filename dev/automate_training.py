@@ -47,7 +47,7 @@ def worker(config):
     #Call ivado cmd_train
     try:
         #Save best validation score
-        best_dice,best_loss = ivado.cmd_train(config)
+        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = ivado.cmd_train(config)
     except:
         logging.exception('Got exception on main handler')
         print("Unexpected error:", sys.exc_info()[0])
@@ -57,7 +57,7 @@ def worker(config):
     config_copy = open(config["log_directory"] + "/config.json","w")
     json.dump(config, config_copy, indent=4)
 
-    return config["log_directory"],best_dice,best_loss
+    return config["log_directory"], best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
 
 if __name__ == '__main__':
@@ -199,9 +199,9 @@ if __name__ == '__main__':
     keep.append("log_directory")
     config_df = config_df[keep]
 
-    results_df = pd.DataFrame(validation_scores, columns =['log_directory', 'best_dice','best_loss'])
+    results_df = pd.DataFrame(validation_scores, columns =['log_directory', 'best_training_dice','best_training_loss', 'best_validation_dice', 'best_validation_loss'])
     results_df = config_df.set_index('log_directory').join(results_df.set_index('log_directory'))
-    results_df = results_df.sort_values(by=['best_loss'])
+    results_df = results_df.sort_values(by=['best_validation_loss'])
 
     results_df.to_pickle("output_df.pkl")
     print(results_df)

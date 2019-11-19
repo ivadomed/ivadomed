@@ -194,10 +194,11 @@ def cmd_train(context):
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
     elif context["lr_scheduler"]["name"] == "CosineAnnealingWarmRestarts":
         T_0 = context["lr_scheduler"]["T_0"]
-        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0)
+        T_mult=context["lr_scheduler"]["T_mult"]
+        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0, T_mult)
     elif context["lr_scheduler"]["name"] == "CyclicLR":
         base_lr, max_lr = context["lr_scheduler"]["base_lr"], context["lr_scheduler"]["max_lr"]
-        scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr, max_lr)
+        scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr, max_lr, mode="triangular2" , cycle_momentum=False)
         step_scheduler_batch = True
     else:
         print("Unknown LR Scheduler name, please choose between 'CosineAnnealingLR', 'CosineAnnealingWarmRestarts', or 'CyclicLR'")
@@ -241,7 +242,14 @@ def cmd_train(context):
         exit()
 
     # Training loop -----------------------------------------------------------
-    best_validation_loss, best_validation_dice = float("inf"),float("inf")
+
+    best_training_dice, best_training_loss, best_validation_loss, best_validation_dice = float("inf"),float("inf"), float("inf"),float("inf")
+
+    patience = context["early_stopping_patience"]
+    patience_count = 0
+    epsilon = context["early_stopping_epsilon"]
+    val_losses = []
+
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
         start_time = time.time()
 
@@ -250,6 +258,8 @@ def cmd_train(context):
 
         model.train()
         train_loss_total, dice_train_loss_total = 0.0, 0.0
+
+
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
@@ -442,11 +452,23 @@ def cmd_train(context):
 
         if val_loss_total_avg < best_validation_loss:
             best_validation_loss = val_loss_total_avg
+            best_training_loss = train_loss_total_avg
+
             if context["loss"]["name"] != 'dice':
                 best_validation_dice = dice_val_loss_total_avg
+                best_training_dice = dice_train_loss_total_avg
             else:
                 best_validation_dice = best_validation_loss
+                best_training_dice = best_training_loss
             torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
+
+        #Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
+        val_losses.append(val_loss_total_avg)
+
+        if (val_losses[-2] - val_losses[-1]) * 100 / val_losses[-1] < epsilon:
+            patience_count += 1
+        if patience_count >= patience:
+                break
 
     # Save final model
     torch.save(model, "./"+context["log_directory"]+"/final_model.pt")
@@ -468,7 +490,7 @@ def cmd_train(context):
         np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
 
     writer.close()
-    return best_validation_dice,best_validation_loss
+    return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
 
 def cmd_test(context):

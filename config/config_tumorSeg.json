@@ -31,6 +31,8 @@
       "filter_empty_input": true,
       "nb_nonzero_thr": 10
     },
+    "early_stopping_patience": 10,
+	  "early_stopping_epsilon": 0.001,
     "transformation_training": {
       "Resample": {
         "wspace": 0.75,
