@@ -47,11 +47,11 @@ class Unet(Module):
         ArXiv link: https://arxiv.org/abs/1505.04597
     """
 
-    def __init__(self, drop_rate=0.4, bn_momentum=0.1):
+    def __init__(self, in_channel=1, drop_rate=0.4, bn_momentum=0.1):
         super(Unet, self).__init__()
 
-        # Downsampling path
-        self.conv1 = DownConv(1, 64, drop_rate, bn_momentum)
+        #Downsampling path
+        self.conv1 = DownConv(in_channel, 64, drop_rate, bn_momentum)
         self.mp1 = nn.MaxPool2d(2)
 
         self.conv2 = DownConv(64, 128, drop_rate, bn_momentum)

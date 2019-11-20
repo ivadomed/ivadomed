@@ -14,108 +14,26 @@ from glob import glob
 from copy import deepcopy
 from tqdm import tqdm
 import nibabel as nib
+from PIL import Image
+import torch
 
 with open("config/contrast_dct.json", "r") as fhandle:
     GENERIC_CONTRAST = json.load(fhandle)
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2, "acq-MToff_MTS": 3, "acq-MTon_MTS": 4, "acq-T1w_MTS": 5}
 
-class BIDSSegPair2D(mt_datasets.SegmentationPair2D):
-    def __init__(self, input_filename, gt_filename, metadata, contrast, cache=True, canonical=True):
-        super().__init__(input_filename, gt_filename, canonical=canonical)
 
-        self.metadata = metadata
-        self.metadata["input_filename"] = input_filename
-        self.metadata["gt_filename"] = gt_filename
-        self.metadata["contrast"] = contrast  # eg T2w
-
-    def get_pair_slice(self, slice_index, slice_axis=2):
-        dreturn = super().get_pair_slice(slice_index, slice_axis)
-        self.metadata["slice_index"] = slice_index
-        dreturn["input_metadata"]["bids_metadata"] = self.metadata
-        return dreturn
-
-
-class MRI2DBidsSegDataset(mt_datasets.MRI2DSegmentationDataset):
-    def _load_filenames(self):
-        for input_filename, target_filename, bids_metadata, contrast, roi_filename in self.filename_pairs:
-            segpair = BIDSSegPair2D(input_filename, target_filename,
-                                    bids_metadata, contrast)
-            roipair = BIDSSegPair2D(input_filename, roi_filename,
-                                    bids_metadata, contrast)
-            self.handlers.append([segpair, roipair])
-
-    def _prepare_indexes(self):
-        for seg_roi_pairs in self.handlers:
-            seg_pair, roi_pair = seg_roi_pairs
-            input_data_shape, _ = seg_pair.get_pair_shapes()
-
-            for idx_pair_slice in range(input_data_shape[self.slice_axis]):
-                # filter empty roi slices
-                slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice,
-                                                            self.slice_axis)
-                if self.slice_filter_fn and slice_roi_pair['gt'] is not None:
-                    filter_fn_ret_roi = self.slice_filter_fn(slice_roi_pair)
-                    if (not filter_fn_ret_roi):
-                        continue
-
-                item = (seg_pair, roi_pair, idx_pair_slice)
-                self.indexes.append(item)
-
-    def __getitem__(self, index):
-        """Return the specific index pair slices (input, target),
-        or (input, target, roi).
-        :param index: slice index.
-        """
-        segpair, roipair, pair_slice = self.indexes[index]
-        seg_pair_slice = segpair.get_pair_slice(pair_slice,
-                                                self.slice_axis)
-        roi_pair_slice = roipair.get_pair_slice(pair_slice,
-                                                self.slice_axis)
-
-        # Consistency with torchvision, returning PIL Image
-        # Using the "Float mode" of PIL, the only mode
-        # supporting unbounded float32 values
-        input_img = Image.fromarray(seg_pair_slice["input"], mode='F')
-
-        # Handle unlabeled data
-        if seg_pair_slice["gt"] is None:
-            gt_img = None
-        else:
-            gt_img = Image.fromarray(seg_pair_slice["gt"], mode='F')
-
-        # Handle cases where no ROI provided
-        if roi_pair_slice["gt"] is None:
-            roi_img = None
-        else:
-            roi_img = Image.fromarray(roi_pair_slice["gt"], mode='F')
-
-        data_dict = {
-            'input': input_img,
-            'gt': gt_img,
-            'roi': roi_img,
-            'input_metadata': seg_pair_slice['input_metadata'],
-            'gt_metadata': seg_pair_slice['gt_metadata'],
-            'roi_metadata': roi_pair_slice['gt_metadata'],
-        }
-
-        if self.transform is not None:
-            data_dict = self.transform(data_dict)
-
-        return data_dict
-
-
-class BidsDataset(MRI2DBidsSegDataset):
+class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
                  transform=None, metadata_choice=False, slice_filter_fn=None,
-                 canonical=True, labeled=True, roi_suffix=None):
+                 canonical=True, labeled=True, roi_suffix=None, multichannel=False):
+
 
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
         if metadata_choice == 'mri_params':
             self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": [], "Manufacturer": []}
 
-        # Selecting subjects from Training / Validation / Testing
         bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
 
         # Create a list with the filenames for all contrasts and subjects
@@ -127,6 +45,17 @@ class BidsDataset(MRI2DBidsSegDataset):
         tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast]) for contrast in contrast_balance.keys()}
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
+
+        multichannel_subjects = {}
+        if multichannel:
+            num_contrast = len(contrast_lst)
+            idx_dict = {}
+            for idx, contrast in enumerate(contrast_lst):
+                idx_dict[contrast] = idx
+            multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
+                                                  "deriv_path": None,
+                                                  "roi_filename": None,
+                                                  "metadata": [None] * num_contrast} for subject in subject_lst}
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
@@ -157,6 +86,9 @@ class BidsDataset(MRI2DBidsSegDataset):
                     continue
 
                 metadata = subject.metadata()
+                # add contrast to metadata
+                metadata['contrast'] = subject.record["modality"]
+
                 if metadata_choice == 'mri_params':
                     def _check_isMRIparam(mri_param_type, mri_param):
                         if mri_param_type not in mri_param:
@@ -177,9 +109,25 @@ class BidsDataset(MRI2DBidsSegDataset):
                     if not all([_check_isMRIparam(m, metadata) for m in self.metadata.keys()]):
                         continue
 
-                self.filename_pairs.append((subject.record.absolute_path,
-                                            target_filename, metadata, subject.record["modality"],
-                                            roi_filename))
+                # Fill multichannel dictionary
+                if multichannel:
+                    idx = idx_dict[subject.record["modality"]]
+                    subj_id = subject.record["subject_id"]
+                    multichannel_subjects[subj_id]["absolute_paths"][idx] = subject.record.absolute_path
+                    multichannel_subjects[subj_id]["deriv_path"] = target_filename
+                    multichannel_subjects[subj_id]["metadata"][idx] = subject.metadata()
+                    if roi_filename:
+                        multichannel_subjects[subj_id]["roi_filename"][idx] = roi_filename
+
+                else:
+                    self.filename_pairs.append(([subject.record.absolute_path],
+                                                target_filename, roi_filename, [metadata]))
+
+        if multichannel:
+            for subject in multichannel_subjects.values():
+                if not None in subject["absolute_paths"]:
+                    self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
+                                                subject["roi_filename"], subject["metadata"]))
 
         super().__init__(self.filename_pairs, slice_axis, cache,
                          transform, slice_filter_fn, canonical)
@@ -276,37 +224,36 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
     ds_out = []
     for idx, subject in enumerate(ds_in):
         s_out = deepcopy(subject)
-
         if metadata_type == 'mri_params':
             # categorize flip angle, repetition time and echo time values using KDE
             for m in ['FlipAngle', 'RepetitionTime', 'EchoTime']:
-                v = subject["input_metadata"]["bids_metadata"][m]
+                v = subject["input_metadata"][m]
                 p = clustering_models[m].predict(v)
-                s_out["input_metadata"]["bids_metadata"][m] = p
+                s_out["input_metadata"][m] = p
                 if debugging:
                     print("{}: {} --> {}".format(m, v, p))
 
             # categorize manufacturer info based on the MANUFACTURER_CATEGORY dictionary
-            manufacturer = subject["input_metadata"]["bids_metadata"]["Manufacturer"]
+            manufacturer = subject["input_metadata"]["Manufacturer"]
             if manufacturer in MANUFACTURER_CATEGORY:
-                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
+                s_out["input_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
                 if debugging:
                     print("Manufacturer: {} --> {}".format(manufacturer, MANUFACTURER_CATEGORY[manufacturer]))
             else:
                 print("{} with unknown manufacturer.".format(subject))
-                s_out["input_metadata"]["bids_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
+                s_out["input_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
 
-            s_out["input_metadata"]["bids_metadata"] = [s_out["input_metadata"]["bids_metadata"][k] for k in
+            s_out["input_metadata"]["film_input"] = [s_out["input_metadata"][k] for k in
                                                         ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
         else:
-            generic_contrast = GENERIC_CONTRAST[subject["input_metadata"]["bids_metadata"]["contrast"]]
+            generic_contrast = GENERIC_CONTRAST[subject["input_metadata"]["contrast"]]
             label_contrast = CONTRAST_CATEGORY[generic_contrast]
-            s_out["input_metadata"]["bids_metadata"] = [label_contrast]
+            s_out["input_metadata"]["film_input"] = [label_contrast]
 
-        s_out["input_metadata"]["contrast"] = subject["input_metadata"]["bids_metadata"]["contrast"]
+        s_out["input_metadata"]["contrast"] = subject["input_metadata"]["contrast"]
 
         if train_set:
-            X_train_ohe.append(s_out["input_metadata"]["bids_metadata"])
+            X_train_ohe.append(s_out["input_metadata"]["film_input"])
         ds_out.append(s_out)
 
         del s_out, subject

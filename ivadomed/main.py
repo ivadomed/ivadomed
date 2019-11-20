@@ -8,19 +8,16 @@ import joblib
 from math import exp
 import numpy as np
 
-import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
-from torch.utils.data import DataLoader, ConcatDataset
+from torch.utils.data import DataLoader
 from torchvision import transforms
 import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 from torch import optim
 
-from medicaltorch import transforms as mt_transforms
 from medicaltorch import datasets as mt_datasets
-from medicaltorch import filters as mt_filters
-from medicaltorch import metrics as mt_metrics
+from medicaltorch import transforms as mt_transforms
 
 from tqdm import tqdm
 
@@ -53,6 +50,8 @@ def cmd_train(context):
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet or MixupUnet
     metadata_bool = False if context["metadata"] == "without" else True
     film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
+    if film_bool:
+        context["multichannel"] = False
     if(bool(sum(context["film_layers"])) and not(metadata_bool)):
         print('\tWarning FiLM disabled since metadata is disabled')
 
@@ -120,7 +119,8 @@ def cmd_train(context):
                                   contrast_balance=context["contrast_balance"],
                                   slice_axis=axis_dct[context["slice_axis"]],
                                   transform=train_transform,
-                                  slice_filter_fn=SliceFilter(nb_nonzero_thr=10))
+                                  multichannel=context['multichannel'],
+                                  slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
@@ -150,7 +150,8 @@ def cmd_train(context):
                                 contrast_balance=context["contrast_balance"],
                                 slice_axis=axis_dct[context["slice_axis"]],
                                 transform=val_transform,
-                                slice_filter_fn=SliceFilter(nb_nonzero_thr=10))
+                                multichannel=context['multichannel'],
+                                slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     if film_bool:  # normalize metadata before sending to network
         ds_val = loader.normalize_metadata(ds_val,
@@ -173,7 +174,11 @@ def cmd_train(context):
                             bn_momentum=context["batch_norm_momentum"])
     else:
         # Traditional U-Net model
-        model = models.Unet(drop_rate=context["dropout_rate"],
+        in_channel = 1
+        if context['multichannel']:
+            in_channel = len(context['contrast_train_validation'])
+        model = models.Unet(in_channel=in_channel,
+                            drop_rate=context["dropout_rate"],
                             bn_momentum=context["batch_norm_momentum"])
 
     if cuda_available:
@@ -237,7 +242,14 @@ def cmd_train(context):
         exit()
 
     # Training loop -----------------------------------------------------------
-    best_validation_loss, best_validation_dice = float("inf"),float("inf")
+
+    best_training_dice, best_training_loss, best_validation_loss, best_validation_dice = float("inf"),float("inf"), float("inf"),float("inf")
+
+    patience = context["early_stopping_patience"]
+    patience_count = 0
+    epsilon = context["early_stopping_epsilon"]
+    val_losses = []
+
     for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
         start_time = time.time()
 
@@ -246,6 +258,8 @@ def cmd_train(context):
 
         model.train()
         train_loss_total, dice_train_loss_total = 0.0, 0.0
+
+
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
@@ -280,7 +294,7 @@ def cmd_train(context):
                 sample_metadata = batch["input_metadata"]
                 var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
-                var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
+                var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in range(len(sample_metadata))]
                 preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
             else:
                 preds = model(var_input)
@@ -358,7 +372,7 @@ def cmd_train(context):
                     # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
                     var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
-                    var_metadata = [train_onehotencoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
+                    var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in range(len(sample_metadata))]
                     preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
                 else:
                     preds = model(var_input)
@@ -438,11 +452,23 @@ def cmd_train(context):
 
         if val_loss_total_avg < best_validation_loss:
             best_validation_loss = val_loss_total_avg
+            best_training_loss = train_loss_total_avg
+
             if context["loss"]["name"] != 'dice':
                 best_validation_dice = dice_val_loss_total_avg
+                best_training_dice = dice_train_loss_total_avg
             else:
                 best_validation_dice = best_validation_loss
+                best_training_dice = best_training_loss
             torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
+
+        #Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
+        val_losses.append(val_loss_total_avg)
+
+        if (val_losses[-2] - val_losses[-1]) * 100 / val_losses[-1] < epsilon:
+            patience_count += 1
+        if patience_count >= patience:
+                break
 
     # Save final model
     torch.save(model, "./"+context["log_directory"]+"/final_model.pt")
@@ -464,7 +490,7 @@ def cmd_train(context):
         np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
 
     writer.close()
-    return best_validation_dice,best_validation_loss
+    return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
 
 def cmd_test(context):
@@ -514,7 +540,8 @@ def cmd_test(context):
                                  contrast_balance=context["contrast_balance"],
                                  slice_axis=axis_dct[context["slice_axis"]],
                                  transform=val_transform,
-                                 slice_filter_fn=SliceFilter(nb_nonzero_thr=10))
+                                 slice_filter_fn=SliceFilter(**context["slice_filter"]),
+                                 multichannel=context["multichannel"])
 
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load("./"+context["log_directory"]+"/clustering_models.joblib")
@@ -563,7 +590,7 @@ def cmd_test(context):
                 sample_metadata = batch["input_metadata"]
                 test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
-                test_metadata = [one_hot_encoder.transform([sample_metadata[k]['bids_metadata']]).tolist()[0] for k in range(len(sample_metadata))]
+                test_metadata = [one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k in range(len(sample_metadata))]
                 preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
             else:
                 preds = model(test_input)
