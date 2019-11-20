@@ -264,3 +264,42 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
         return ds_out, ohe
     else:
         return ds_out
+
+
+class BalancedSampler(torch.utils.data.sampler.Sampler):
+    """Estimate sampling weights in order to rebalance the
+    class distributions from an imbalanced dataset.
+    """
+
+    def __init__(self, dataset):
+        self.indices = list(range(len(dataset)))
+        print(self.indices)
+
+        self.nb_samples = len(self.indices)
+
+        cmpt_label = {}
+        for idx in self.indices:
+            label = self._get_label(dataset, idx)
+            if label in cmpt_label:
+                cmpt_label[label] += 1
+            else:
+                cmpt_label[label] = 1
+
+        weights = [1.0 / label_to_count[self._get_label(dataset, idx)]
+                   for idx in self.indices]
+        print(weights)
+        self.weights = torch.DoubleTensor(weights)
+
+    def _get_label(self, dataset, idx):
+         sample_gt = dataset[idx]['gt'].numpy()
+         if np.any(sample_gt):
+             return 1
+         else:
+             return 0
+
+    def __iter__(self):
+        return (self.indices[i] for i in torch.multinomial(
+            self.weights, self.nb_samples, replacement=True))
+
+    def __len__(self):
+        return self.num_samples
