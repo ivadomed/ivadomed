@@ -122,6 +122,8 @@ def cmd_train(context):
                                   multichannel=context['multichannel'],
                                   slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
+    loader.BalancedSampler(ds_train)
+
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
             metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
