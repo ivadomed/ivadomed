@@ -273,7 +273,6 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 
     def __init__(self, dataset):
         self.indices = list(range(len(dataset)))
-        print(self.indices)
 
         self.nb_samples = len(self.indices)
 
@@ -285,13 +284,13 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
             else:
                 cmpt_label[label] = 1
 
-        weights = [1.0 / label_to_count[self._get_label(dataset, idx)]
+        weights = [1.0 / cmpt_label[self._get_label(dataset, idx)]
                    for idx in self.indices]
-        print(weights)
+
         self.weights = torch.DoubleTensor(weights)
 
     def _get_label(self, dataset, idx):
-         sample_gt = dataset[idx]['gt'].numpy()
+         sample_gt = np.array(dataset[idx]['gt'])
          if np.any(sample_gt):
              return 1
          else:
