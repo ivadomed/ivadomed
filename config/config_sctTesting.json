@@ -26,6 +26,7 @@
 	"split_method": "per_patient",
 	"train_fraction": 0.6,
 	"test_fraction": 0.2,
+        "balance_samples": true,
 	"slice_filter": {
       "filter_empty_mask": true,
       "filter_empty_input": true,

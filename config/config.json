@@ -27,6 +27,7 @@
     "early_stopping_patience": 10,
 	"early_stopping_epsilon": 0.001,
     "slice_axis": "axial",
+    "balance_samples": false,
     "split_method": "per_center",
 	"slice_filter": {
       "filter_empty_mask": true,
