@@ -38,19 +38,21 @@ class UpConv(Module):
         return x
 
 
-class Unet(Module):
-    """A reference U-Net model.
+class Encoder(Module):
+    """Encoding part of the U-Net model.
+        It returns the features map for the skip connections
 
-    .. seealso::
+        see also::
         Ronneberger, O., et al (2015). U-Net: Convolutional
         Networks for Biomedical Image Segmentation
         ArXiv link: https://arxiv.org/abs/1505.04597
-    """
+
+            """
 
     def __init__(self, in_channel=1, drop_rate=0.4, bn_momentum=0.1):
-        super(Unet, self).__init__()
+        super(Encoder, self).__init__()
 
-        #Downsampling path
+        # Down-sampling path
         self.conv1 = DownConv(in_channel, 64, drop_rate, bn_momentum)
         self.mp1 = nn.MaxPool2d(2)
 
@@ -63,14 +65,8 @@ class Unet(Module):
         # Bottom
         self.conv4 = DownConv(256, 256, drop_rate, bn_momentum)
 
-        # Upsampling path
-        self.up1 = UpConv(512, 256, drop_rate, bn_momentum)
-        self.up2 = UpConv(384, 128, drop_rate, bn_momentum)
-        self.up3 = UpConv(192, 64, drop_rate, bn_momentum)
-
-        self.conv9 = nn.Conv2d(64, 1, kernel_size=3, padding=1)
-
     def forward(self, x):
+        # Down-sampling path
         x1 = self.conv1(x)
         x2 = self.mp1(x1)
 
@@ -80,8 +76,36 @@ class Unet(Module):
         x5 = self.conv3(x4)
         x6 = self.mp3(x5)
 
-        # Bottom
+        # Bottom level
         x7 = self.conv4(x6)
+        return x1, x3, x5, x7
+
+
+class Unet(Module):
+    """A reference U-Net model.
+
+    .. seealso::
+        Ronneberger, O., et al (2015). U-Net: Convolutional
+        Networks for Biomedical Image Segmentation
+        ArXiv link: https://arxiv.org/abs/1505.04597
+    """
+
+    def __init__(self, in_channel=1, drop_rate=0.4, bn_momentum=0.1):
+        super(Unet, self).__init__()
+
+        # Encoder path
+        self.encoder = Encoder(in_channel, drop_rate, bn_momentum)
+
+        # Upsampling path
+        self.up1 = UpConv(512, 256, drop_rate, bn_momentum)
+        self.up2 = UpConv(384, 128, drop_rate, bn_momentum)
+        self.up3 = UpConv(192, 64, drop_rate, bn_momentum)
+
+        self.conv9 = nn.Conv2d(64, 1, kernel_size=3, padding=1)
+
+    def forward(self, x):
+        # Encoding part
+        x1, x3, x5, x7 = self.encoder(x)
 
         # Up-sampling
         x8 = self.up1(x7, x5)
@@ -245,42 +269,6 @@ class FiLMedUnet(Module):
         return preds
 
 
-class HeMISEncoder(Module):
-    """Encoding part of the Unet for each modality
-    It returns the features map for the skip connections
-            """
-
-    def __init__(self, drop_rate=0.4, bn_momentum=0.1):
-        super(HeMISEncoder, self).__init__()
-        # Down-sampling path
-        self.conv1 = DownConv(1, 64, drop_rate, bn_momentum)
-        self.mp1 = nn.MaxPool2d(2)
-
-        self.conv2 = DownConv(64, 128, drop_rate, bn_momentum)
-        self.mp2 = nn.MaxPool2d(2)
-
-        self.conv3 = DownConv(128, 256, drop_rate, bn_momentum)
-        self.mp3 = nn.MaxPool2d(2)
-
-        # Bottom
-        self.conv4 = DownConv(256, 256, drop_rate, bn_momentum)
-
-    def forward(self, x):
-        # Down-sampling path
-        x1 = self.conv1(x)
-        x2 = self.mp1(x1)
-
-        x3 = self.conv2(x2)
-        x4 = self.mp2(x3)
-
-        x5 = self.conv3(x4)
-        x6 = self.mp3(x5)
-
-        # Bottom level
-        x7 = self.conv4(x6)
-        return x1, x3, x5, x7
-
-
 class HeMISUnet(Module):
     """A U-Net model inspired by HeMIS to deal with missing modalities.
         1) It has as many encoders as modalities but only one decoder.
@@ -305,7 +293,7 @@ class HeMISUnet(Module):
         self.modalities = modalities
 
         # Down-sampling
-        self.Down = nn.ModuleDict([['Down_{}'.format(Mod), HeMISEncoder()] for Mod in self.Modalities])
+        self.Down = nn.ModuleDict([['Down_{}'.format(Mod), Encoder()] for Mod in self.Modalities])
 
         # Up-sampling path
         self.up1 = UpConv(1024, 512)
@@ -341,4 +329,5 @@ class HeMISUnet(Module):
         x10 = self.up3(x9, x1)
         x11 = self.conv9(x10)
         preds = torch.sigmoid(x11)
+
         return preds
