@@ -137,8 +137,15 @@ def cmd_train(context):
                                                                    True)
 
     print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
+
+    if context['balance_samples']:
+        sampler_train = loader.BalancedSampler(ds_train) if context['balance_samples'] else None
+        shuffle_train = False
+    else:
+        sampler_train, shuffle_train = None, True
+
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
-                              shuffle=True, pin_memory=True,
+                              shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
                               collate_fn=mt_datasets.mt_collate,
                               num_workers=0)
 
@@ -163,8 +170,15 @@ def cmd_train(context):
                                             False)
 
     print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")
+
+    if context['balance_samples']:
+        sampler_val = loader.BalancedSampler(ds_val) if context['balance_samples'] else None
+        shuffle_val = False
+    else:
+        sampler_val, shuffle_val = None, True
+
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
-                            shuffle=True, pin_memory=True,
+                            shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
                             collate_fn=mt_datasets.mt_collate,
                             num_workers=0)
 
