@@ -139,7 +139,7 @@ def cmd_train(context):
     print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
 
     if context['balance_samples']:
-        sampler_train = loader.BalancedSampler(ds_train) if context['balance_samples'] else None
+        sampler_train = loader.BalancedSampler(ds_train)
         shuffle_train = False
     else:
         sampler_train, shuffle_train = None, True
@@ -172,7 +172,7 @@ def cmd_train(context):
     print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")
 
     if context['balance_samples']:
-        sampler_val = loader.BalancedSampler(ds_val) if context['balance_samples'] else None
+        sampler_val = loader.BalancedSampler(ds_val)
         shuffle_val = False
     else:
         sampler_val, shuffle_val = None, True
