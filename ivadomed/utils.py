@@ -119,8 +119,8 @@ class SliceFilter(mt_filters.SliceFilter):
         if not super_ret:
             return super_ret
 
-        # Filter slices with less that nb_ones_thr voxels
-        if np.count_nonzero(sample['gt']) <= self.nb_nonzero_thr:
+        # Filter GT slices not empty with less that nb_ones_thr voxels
+        if self.filter_empty_mask and np.any(sample['gt']) and np.count_nonzero(sample['gt']) <= self.nb_nonzero_thr:
             return False
 
         # Filter slices where there are no values after cropping
