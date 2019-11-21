@@ -52,6 +52,9 @@ Please find below a description of each parameter:
 - `loss`: dictionary with a key `"name"` for the choice between `"dice"`, `"focal"`, `"focal_dice"`, `"gdl"` and `"cross_entropy"` and a (optional) key `"params"` (e.g.`{"name": "focal", "params": {"gamma": 0.5}}`.
 - `log_directory`: folder name where log files are saved.
 - `film_layers`: indicates on which layer(s) of the U-net you want to apply a FiLM modulation: list of 8 elements (because Unet has 8 layers), set to 0 for no FiLM modulation, set 1 otherwise. Note: When running `Unet` or `MixedUp-Unet`, please fill this list with zeros only.
+- `depth`: number of down-sampling operations.
+- `out_channel`: number of segmentation class.
+- `missing_modality`: ot use HeMIS-U-Net (choice: `false` or `true`).
 - `mixup_bool`: indicates if mixup is applied to the training data (choice: `false` or `true`). Note: Please use `false` when comparing `Unet` vs. `FiLMed-Unet`.
 - `mixup_alpha`: alpha parameter of the Beta distribution (float).
 - `metadata`: choice between `"without"`, `"mri_params"`, and `"contrast"`. If `"mri_params"`, then vectors of [FlipAngle, EchoTime, RepetitionTime, Manufacturer] are input to the FiLM generator. If `"contrast"`, then image contrasts (according to `config/contrast_dct.json`) are input to the FiLM generator. Note1: if `"mri_params"`, then only images with TR, TE, FlipAngle, and Manufaturer available info are included. Note2: please use '"without"' when comparing `Unet` vs. `MixedUp-Unet` ; otherwise compare `Unet` vs. `FiLMed-Unet`.

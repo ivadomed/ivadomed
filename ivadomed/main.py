@@ -178,6 +178,8 @@ def cmd_train(context):
         if context['multichannel']:
             in_channel = len(context['contrast_train_validation'])
         model = models.Unet(in_channel=in_channel,
+                            out_channel=context['out_channel'],
+                            depth=context['depth'],
                             drop_rate=context["dropout_rate"],
                             bn_momentum=context["batch_norm_momentum"])
 

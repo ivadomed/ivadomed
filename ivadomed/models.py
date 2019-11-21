@@ -40,45 +40,85 @@ class UpConv(Module):
 
 class Encoder(Module):
     """Encoding part of the U-Net model.
-        It returns the features map for the skip connections
+            It returns the features map for the skip connections
 
-        see also::
-        Ronneberger, O., et al (2015). U-Net: Convolutional
-        Networks for Biomedical Image Segmentation
-        ArXiv link: https://arxiv.org/abs/1505.04597
+            see also::
+            Ronneberger, O., et al (2015). U-Net: Convolutional
+            Networks for Biomedical Image Segmentation
+            ArXiv link: https://arxiv.org/abs/1505.04597
 
-            """
-
-    def __init__(self, in_channel=1, drop_rate=0.4, bn_momentum=0.1):
+                """
+    def __init__(self, in_channel=1,depth=3, drop_rate=0.4, bn_momentum=0.1):
         super(Encoder, self).__init__()
+        self.depth = depth
 
-        # Down-sampling path
-        self.conv1 = DownConv(in_channel, 64, drop_rate, bn_momentum)
-        self.mp1 = nn.MaxPool2d(2)
+        self.down_path = nn.ModuleList()
+        # first block
+        self.down_path.append(DownConv(in_channel, 64, drop_rate, bn_momentum))
+        self.down_path.append(nn.MaxPool2d(2))
 
-        self.conv2 = DownConv(64, 128, drop_rate, bn_momentum)
-        self.mp2 = nn.MaxPool2d(2)
-
-        self.conv3 = DownConv(128, 256, drop_rate, bn_momentum)
-        self.mp3 = nn.MaxPool2d(2)
+        # other blocks
+        in_channel = 64
+        for i in range(depth - 1):
+            self.down_path.append(DownConv(in_channel, in_channel * 2, drop_rate, bn_momentum))
+            self.down_path.append(nn.MaxPool2d(2))
+            in_channel = in_channel * 2
 
         # Bottom
-        self.conv4 = DownConv(256, 256, drop_rate, bn_momentum)
+        self.conv_bottom = DownConv(in_channel, in_channel, drop_rate, bn_momentum)
 
     def forward(self, x):
+        features = []
         # Down-sampling path
-        x1 = self.conv1(x)
-        x2 = self.mp1(x1)
-
-        x3 = self.conv2(x2)
-        x4 = self.mp2(x3)
-
-        x5 = self.conv3(x4)
-        x6 = self.mp3(x5)
+        for i in range(self.depth):
+            x = self.down_path[i*2](x)
+            features.append(x)
+            x = self.down_path[i*2 + 1](x)
 
         # Bottom level
-        x7 = self.conv4(x6)
-        return x1, x3, x5, x7
+        features.append(self.conv_bottom(x))
+
+        return features
+
+
+class Decoder(Module):
+    """Encoding part of the U-Net model.
+            It returns the features map for the skip connections
+
+            see also::
+            Ronneberger, O., et al (2015). U-Net: Convolutional
+            Networks for Biomedical Image Segmentation
+            ArXiv link: https://arxiv.org/abs/1505.04597
+
+                """
+    def __init__(self, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1):
+        super(Decoder, self).__init__()
+        self.depth = depth
+        self.out_channel = out_channel
+        # Up-Sampling path
+        self.up_path = nn.ModuleList()
+        in_channel = 64 * 2 ** self.depth
+        self.up_path.append(UpConv(in_channel, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
+
+        for i in range(1, depth):
+            in_channel //= 2
+            self.up_path.append(UpConv(in_channel + 64 * 2**(self.depth - i -1), 64 * 2**(self.depth - i - 1), drop_rate, bn_momentum))
+
+        # Last Convolution
+        self.last_conv = nn.Conv2d(64, out_channel, kernel_size=3, padding=1)
+
+    def forward(self, features):
+        x = features[-1]
+        for i in reversed(range(self.depth)):
+            x = self.up_path[-i - 1](x, features[i])
+
+        # Last convolution
+        x = self.last_conv(x)
+        if self.out_channel > 1:
+            preds = F.softmax(x, dim=1)
+        else:
+            preds = torch.sigmoid(x)
+        return preds
 
 
 class Unet(Module):
@@ -90,30 +130,20 @@ class Unet(Module):
         ArXiv link: https://arxiv.org/abs/1505.04597
     """
 
-    def __init__(self, in_channel=1, drop_rate=0.4, bn_momentum=0.1):
+    def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1):
         super(Unet, self).__init__()
 
         # Encoder path
-        self.encoder = Encoder(in_channel, drop_rate, bn_momentum)
+        self.encoder = Encoder(in_channel, depth, drop_rate, bn_momentum)
 
-        # Upsampling path
-        self.up1 = UpConv(512, 256, drop_rate, bn_momentum)
-        self.up2 = UpConv(384, 128, drop_rate, bn_momentum)
-        self.up3 = UpConv(192, 64, drop_rate, bn_momentum)
-
-        self.conv9 = nn.Conv2d(64, 1, kernel_size=3, padding=1)
+        # Decoder path
+        self.decoder = Decoder(out_channel, depth, drop_rate, bn_momentum)
 
     def forward(self, x):
         # Encoding part
-        x1, x3, x5, x7 = self.encoder(x)
+        features = self.encoder(x)
 
-        # Up-sampling
-        x8 = self.up1(x7, x5)
-        x9 = self.up2(x8, x3)
-        x10 = self.up3(x9, x1)
-
-        x11 = self.conv9(x10)
-        preds = torch.sigmoid(x11)
+        preds = self.decoder(features)
 
         return preds
 
