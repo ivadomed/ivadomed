@@ -14,6 +14,7 @@ import ivadomed.transforms as ivadomed_transforms
 cudnn.benchmark = True
 
 GPU_NUMBER = 0
+BATCH_SIZE = 8
 PATH_BIDS = '../duke/projects/ivado-medical-imaging/testing_data/lesion_data/'
 
 def test_sampler():
@@ -43,8 +44,7 @@ def test_sampler():
                                   multichannel=False,
                                   slice_filter_fn=SliceFilter(nb_nonzero_thr=10))
 
-    print(f"Loaded {len(ds_train)} axial slices for the training set.")
-    train_loader = DataLoader(ds_train, batch_size=8,
+    train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
                               collate_fn=mt_datasets.mt_collate,
                               num_workers=0)
