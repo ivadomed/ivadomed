@@ -52,7 +52,6 @@ class Encoder(Module):
     def __init__(self, in_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1):
         super(Encoder, self).__init__()
         self.depth = depth
-        print(self.depth)
         self.down_path = nn.ModuleList()
         # first block
         self.down_path.append(DownConv(in_channel, 64, drop_rate, bn_momentum))
