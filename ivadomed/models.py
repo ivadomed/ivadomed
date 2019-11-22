@@ -48,10 +48,11 @@ class Encoder(Module):
             ArXiv link: https://arxiv.org/abs/1505.04597
 
                 """
-    def __init__(self, in_channel=1,depth=3, drop_rate=0.4, bn_momentum=0.1):
+
+    def __init__(self, in_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1):
         super(Encoder, self).__init__()
         self.depth = depth
-
+        print(self.depth)
         self.down_path = nn.ModuleList()
         # first block
         self.down_path.append(DownConv(in_channel, 64, drop_rate, bn_momentum))
@@ -59,6 +60,7 @@ class Encoder(Module):
 
         # other blocks
         in_channel = 64
+
         for i in range(depth - 1):
             self.down_path.append(DownConv(in_channel, in_channel * 2, drop_rate, bn_momentum))
             self.down_path.append(nn.MaxPool2d(2))
@@ -71,9 +73,9 @@ class Encoder(Module):
         features = []
         # Down-sampling path
         for i in range(self.depth):
-            x = self.down_path[i*2](x)
+            x = self.down_path[i * 2](x)
             features.append(x)
-            x = self.down_path[i*2 + 1](x)
+            x = self.down_path[i * 2 + 1](x)
 
         # Bottom level
         features.append(self.conv_bottom(x))
@@ -91,21 +93,29 @@ class Decoder(Module):
             ArXiv link: https://arxiv.org/abs/1505.04597
 
                 """
-    def __init__(self, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1):
+
+    def __init__(self, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, hemis=False):
         super(Decoder, self).__init__()
         self.depth = depth
         self.out_channel = out_channel
         # Up-Sampling path
         self.up_path = nn.ModuleList()
-        in_channel = 64 * 2 ** self.depth
+        if hemis:
+            in_channel = 64 * 2 ** (self.depth + 1)
+            self.depth += 1
+        else:
+            in_channel = 64 * 2 ** self.depth
+
         self.up_path.append(UpConv(in_channel, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
 
         for i in range(1, depth):
             in_channel //= 2
-            self.up_path.append(UpConv(in_channel + 64 * 2**(self.depth - i -1), 64 * 2**(self.depth - i - 1), drop_rate, bn_momentum))
+            self.up_path.append(
+                UpConv(in_channel + 64 * 2 ** (self.depth - i - 1), 64 * 2 ** (self.depth - i - 1), drop_rate,
+                       bn_momentum))
 
         # Last Convolution
-        self.last_conv = nn.Conv2d(64, out_channel, kernel_size=3, padding=1)
+        self.last_conv = nn.Conv2d(in_channel // 2, out_channel, kernel_size=3, padding=1)
 
     def forward(self, features):
         x = features[-1]
@@ -317,47 +327,38 @@ class HeMISUnet(Module):
         ArXiv link: https://arxiv.org/abs/1907.11150
         """
 
-    def __init__(self, modalities):
+    def __init__(self, modalities, depth=3, drop_rate=0.4, bn_momentum=0.1):
         super(HeMISUnet, self).__init__()
 
+        self.depth = depth
         self.modalities = modalities
 
-        # Down-sampling
-        self.Down = nn.ModuleDict([['Down_{}'.format(Mod), Encoder()] for Mod in self.Modalities])
+        # Encoder path
+        self.Down = nn.ModuleDict(
+            [['Down_{}'.format(Mod), Encoder(1, depth, drop_rate, bn_momentum)] for Mod in self.modalities])
 
-        # Up-sampling path
-        self.up1 = UpConv(1024, 512)
-        self.up2 = UpConv(768, 256)
-        self.up3 = UpConv(384, 128)
-        self.conv9 = nn.Conv2d(128, 1, kernel_size=3, padding=1)
+        # Decoder path
+        self.decoder = Decoder(1, depth, drop_rate, bn_momentum, hemis=True)
 
     def forward(self, x_mods):
-        # X is  list like X = [x_T1, x_T2, x_T2S, x_F]
-        x1_mods, x3_mods, x5_mods, x7_mods = [], [], [], []
+        """"
+            X is  list like X = [x_T1, x_T2, x_T2S, x_F]
+        """
+
+        features_mod = [[] for _ in range(self.depth + 1)]
 
         # Down-sampling
         for i, Mod in enumerate(self.modalities):
-            x1, x3, x5, x7 = self.Down['Down_{}'.format(Mod)](x_mods[i])
-
-            # TODO
-            # Add a condition to remove null tensors i.e. missing modalities
-
-            x1_mods.append(x1.unsqueeze(0))
-            x3_mods.append(x3.unsqueeze(0))
-            x5_mods.append(x5.unsqueeze(0))
-            x7_mods.append(x7.unsqueeze(0))
+            features = self.Down['Down_{}'.format(Mod)](x_mods[i])
+            for j in range(self.depth + 1):
+                features_mod[j].append(features[j].unsqueeze(0))
 
         # Abstraction
-        x7 = torch.cat([torch.cat(x7_mods, 0).mean(0).unsqueeze(0), torch.cat(x7_mods, 0).var(0).unsqueeze(0)], 0)
-        x5 = torch.cat([torch.cat(x5_mods, 0).mean(0).unsqueeze(0), torch.cat(x5_mods, 0).var(0).unsqueeze(0)], 0)
-        x3 = torch.cat([torch.cat(x3_mods, 0).mean(0).unsqueeze(0), torch.cat(x3_mods, 0).var(0).unsqueeze(0)], 0)
-        x1 = torch.cat([torch.cat(x1_mods, 0).mean(0).unsqueeze(0), torch.cat(x1_mods, 0).var(0).unsqueeze(0)], 0)
+        for j in range(self.depth + 1):
+            features_mod[j] = torch.cat([torch.cat(features_mod[j], 0).mean(0).unsqueeze(0), \
+                                         torch.cat(features_mod[j], 0).var(0).unsqueeze(0)], 0)
 
         # Up-sampling
-        x8 = self.up1(x7, x5)
-        x9 = self.up2(x8, x3)
-        x10 = self.up3(x9, x1)
-        x11 = self.conv9(x10)
-        preds = torch.sigmoid(x11)
+        preds = self.decoder(features_mod)
 
         return preds
