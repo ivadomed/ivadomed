@@ -29,6 +29,7 @@ import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
 
+
 def cmd_train(context):
     """Main command to train the network.
 
@@ -52,10 +53,14 @@ def cmd_train(context):
     film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
     if film_bool:
         context["multichannel"] = False
-    if(bool(sum(context["film_layers"])) and not(metadata_bool)):
+        context["missing_modality"] = False
+    elif context["multichannel"]:
+        context["missing_modality"] = False
+    if bool(sum(context["film_layers"])) and not (metadata_bool):
         print('\tWarning FiLM disabled since metadata is disabled')
+    print('\nArchitecture: {}\n' \
+          .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if context["missing_modality"] else 'Unet'))
 
-    print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
     if not film_bool and mixup_bool:
@@ -93,15 +98,15 @@ def cmd_train(context):
     # Randomly split dataset between training / validation / testing
     if context.get("split_path") is None:
         train_lst, valid_lst, test_lst = loader.split_dataset(path_folder=context["bids_path"],
-                                                          center_test_lst=context["center_test"],
-                                                          split_method=context["split_method"],
-                                                          random_seed=context["random_seed"],
-                                                          train_frac=context["train_fraction"],
-                                                          test_frac=context["test_fraction"])
+                                                              center_test_lst=context["center_test"],
+                                                              split_method=context["split_method"],
+                                                              random_seed=context["random_seed"],
+                                                              train_frac=context["train_fraction"],
+                                                              test_frac=context["test_fraction"])
 
         # save the subject distribution
         split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-        joblib.dump(split_dct, "./"+context["log_directory"]+"/split_datasets.joblib")
+        joblib.dump(split_dct, "./" + context["log_directory"] + "/split_datasets.joblib")
 
     else:
         train_lst = joblib.load(context["split_path"])['train']
@@ -120,6 +125,7 @@ def cmd_train(context):
                                   slice_axis=axis_dct[context["slice_axis"]],
                                   transform=train_transform,
                                   multichannel=context['multichannel'],
+                                  missing_modality=context['missing_modality'],
                                   slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     if film_bool:  # normalize metadata before sending to the network
@@ -129,10 +135,10 @@ def cmd_train(context):
         else:
             metadata_clustering_models = None
         ds_train, train_onehotencoder = loader.normalize_metadata(ds_train,
-                                                                   metadata_clustering_models,
-                                                                   context["debugging"],
-                                                                   context["metadata"],
-                                                                   True)
+                                                                  metadata_clustering_models,
+                                                                  context["debugging"],
+                                                                  context["metadata"],
+                                                                  True)
 
     print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
@@ -150,15 +156,17 @@ def cmd_train(context):
                                 contrast_balance=context["contrast_balance"],
                                 slice_axis=axis_dct[context["slice_axis"]],
                                 transform=val_transform,
+                                missing_modality=context['missing_modality'],
                                 multichannel=context['multichannel'],
+
                                 slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     if film_bool:  # normalize metadata before sending to network
         ds_val = loader.normalize_metadata(ds_val,
-                                            metadata_clustering_models,
-                                            context["debugging"],
-                                            context["metadata"],
-                                            False)
+                                           metadata_clustering_models,
+                                           context["debugging"],
+                                           context["metadata"],
+                                           False)
 
     print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
@@ -169,19 +177,25 @@ def cmd_train(context):
     if film_bool:
         # Modulated U-net model with FiLM layers
         model = models.FiLMedUnet(n_metadata=len([ll for l in train_onehotencoder.categories_ for ll in l]),
-                            film_bool=context["film_layers"],
-                            drop_rate=context["dropout_rate"],
-                            bn_momentum=context["batch_norm_momentum"])
+                                  film_bool=context["film_layers"],
+                                  drop_rate=context["dropout_rate"],
+                                  bn_momentum=context["batch_norm_momentum"])
     else:
         # Traditional U-Net model
         in_channel = 1
         if context['multichannel']:
             in_channel = len(context['contrast_train_validation'])
-        model = models.Unet(in_channel=in_channel,
-                            out_channel=context['out_channel'],
-                            depth=context['depth'],
-                            drop_rate=context["dropout_rate"],
-                            bn_momentum=context["batch_norm_momentum"])
+        if context["missing_modality"]:
+            model = models.HeMISUnet(modalities=context['contrast_train_validation'],
+                                     depth=context['depth'],
+                                     drop_rate=context["dropout_rate"],
+                                     bn_momentum=context["batch_norm_momentum"])
+        else:
+            model = models.Unet(in_channel=in_channel,
+                                out_channel=context['out_channel'],
+                                depth=context['depth'],
+                                drop_rate=context["dropout_rate"],
+                                bn_momentum=context["batch_norm_momentum"])
 
     if cuda_available:
         model.cuda()
@@ -196,19 +210,20 @@ def cmd_train(context):
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
     elif context["lr_scheduler"]["name"] == "CosineAnnealingWarmRestarts":
         T_0 = context["lr_scheduler"]["T_0"]
-        T_mult=context["lr_scheduler"]["T_mult"]
+        T_mult = context["lr_scheduler"]["T_mult"]
         scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0, T_mult)
     elif context["lr_scheduler"]["name"] == "CyclicLR":
         base_lr, max_lr = context["lr_scheduler"]["base_lr"], context["lr_scheduler"]["max_lr"]
-        scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr, max_lr, mode="triangular2" , cycle_momentum=False)
+        scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr, max_lr, mode="triangular2", cycle_momentum=False)
         step_scheduler_batch = True
     else:
-        print("Unknown LR Scheduler name, please choose between 'CosineAnnealingLR', 'CosineAnnealingWarmRestarts', or 'CyclicLR'")
+        print(
+            "Unknown LR Scheduler name, please choose between 'CosineAnnealingLR', 'CosineAnnealingWarmRestarts', or 'CyclicLR'")
         exit()
 
     # Create dict containing gammas and betas after each FiLM layer.
-    gammas_dict = {i:[] for i in range(1,9)}
-    betas_dict = {i:[] for i in range(1,9)}
+    gammas_dict = {i: [] for i in range(1, 9)}
+    betas_dict = {i: [] for i in range(1, 9)}
 
     # Create a list containing the contrast of all batch images
     var_contrast_list = []
@@ -220,21 +235,24 @@ def cmd_train(context):
 
         elif context["loss"]["name"] == "focal":
             loss_fct = losses.FocalLoss(gamma=context["loss"]["params"]["gamma"],
-                                            alpha=context["loss"]["params"]["alpha"])
+                                        alpha=context["loss"]["params"]["alpha"])
             print("\nLoss function: {}, with gamma={}, alpha={}.\n".format(context["loss"]["name"],
-                                                                            context["loss"]["params"]["gamma"],
-                                                                            context["loss"]["params"]["alpha"]))
+                                                                           context["loss"]["params"]["gamma"],
+                                                                           context["loss"]["params"]["alpha"]))
         elif context["loss"]["name"] == "gdl":
             loss_fct = losses.GeneralizedDiceLoss()
 
         elif context["loss"]["name"] == "focal_dice":
             loss_fct = losses.FocalDiceLoss(beta=context["loss"]["params"]["beta"],
-                                             gamma=context["loss"]["params"]["gamma"],
-                                             alpha=context["loss"]["params"]["alpha"])
+                                            gamma=context["loss"]["params"]["gamma"],
+                                            alpha=context["loss"]["params"]["alpha"])
             print("\nLoss function: {}, with beta={}, gamma={} and alpha={}.\n".format(context["loss"]["name"],
-                                                                                         context["loss"]["params"]["beta"],
-                                                                                         context["loss"]["params"]["gamma"],
-                                                                                         context["loss"]["params"]["alpha"]))
+                                                                                       context["loss"]["params"][
+                                                                                           "beta"],
+                                                                                       context["loss"]["params"][
+                                                                                           "gamma"],
+                                                                                       context["loss"]["params"][
+                                                                                           "alpha"]))
 
         if not context["loss"]["name"].startswith("focal"):
             print("\nLoss function: {}.\n".format(context["loss"]["name"]))
@@ -245,14 +263,15 @@ def cmd_train(context):
 
     # Training loop -----------------------------------------------------------
 
-    best_training_dice, best_training_loss, best_validation_loss, best_validation_dice = float("inf"),float("inf"), float("inf"),float("inf")
+    best_training_dice, best_training_loss, best_validation_loss, best_validation_dice = float("inf"), float(
+        "inf"), float("inf"), float("inf")
 
     patience = context["early_stopping_patience"]
     patience_count = 0
     epsilon = context["early_stopping_epsilon"]
     val_losses = []
 
-    for epoch in tqdm(range(1, num_epochs+1), desc="Training"):
+    for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
 
         lr = scheduler.get_lr()[0]
@@ -260,7 +279,6 @@ def cmd_train(context):
 
         model.train()
         train_loss_total, dice_train_loss_total = 0.0, 0.0
-
 
         num_steps = 0
         for i, batch in enumerate(train_loader):
@@ -276,11 +294,12 @@ def cmd_train(context):
                     if not os.path.isdir(mixup_folder):
                         os.makedirs(mixup_folder)
                     random_idx = np.random.randint(0, input_samples.size()[0])
-                    val_gt = np.unique(gt_samples.data.numpy()[random_idx,0,:,:])
-                    mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3)+'_'+str(lambda_tensor.data.numpy()[0])+'_'+str(random_idx).zfill(3)+'.png')
+                    val_gt = np.unique(gt_samples.data.numpy()[random_idx, 0, :, :])
+                    mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3) + '_' + str(
+                        lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png')
                     save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :],
-                                            gt_samples.data.numpy()[random_idx,0,:,:],
-                                            mixup_fname_pref)
+                                      gt_samples.data.numpy()[random_idx, 0, :, :],
+                                      mixup_fname_pref)
 
             # The variable sample_metadata is where the MRI physics parameters are
 
@@ -296,7 +315,8 @@ def cmd_train(context):
                 sample_metadata = batch["input_metadata"]
                 var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
-                var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in range(len(sample_metadata))]
+                var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in
+                                range(len(sample_metadata))]
                 preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
             else:
                 preds = model(var_input)
@@ -374,7 +394,8 @@ def cmd_train(context):
                     # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
                     var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
-                    var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in range(len(sample_metadata))]
+                    var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k
+                                    in range(len(sample_metadata))]
                     preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
                 else:
                     preds = model(var_input)
@@ -417,7 +438,7 @@ def cmd_train(context):
                 writer.add_image('Validation/Ground Truth', grid_img, epoch)
 
             # Store the values of gammas and betas after the last epoch for each batch
-            if film_bool and epoch == num_epochs and i < int(len(ds_val)/context["batch_size"])+1:
+            if film_bool and epoch == num_epochs and i < int(len(ds_val) / context["batch_size"]) + 1:
 
                 # Get all the contrasts of all batches
                 var_contrast_list.append(var_contrast)
@@ -431,7 +452,6 @@ def cmd_train(context):
                     layer_cur = getattr(model, attr_stg)
                     gammas_dict[idx + 1].append(layer_cur.gammas[:, :, 0, 0].cpu().numpy())
                     betas_dict[idx + 1].append(layer_cur.betas[:, :, 0, 0].cpu().numpy())
-
 
         metrics_dict = metric_mgr.get_results()
         metric_mgr.reset()
@@ -462,28 +482,28 @@ def cmd_train(context):
             else:
                 best_validation_dice = best_validation_loss
                 best_training_dice = best_training_loss
-            torch.save(model, "./"+context["log_directory"]+"/best_model.pt")
+            torch.save(model, "./" + context["log_directory"] + "/best_model.pt")
 
-        #Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
+        # Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
         val_losses.append(val_loss_total_avg)
 
         if (val_losses[-2] - val_losses[-1]) * 100 / val_losses[-1] < epsilon:
             patience_count += 1
         if patience_count >= patience:
-                break
+            break
 
     # Save final model
-    torch.save(model, "./"+context["log_directory"]+"/final_model.pt")
+    torch.save(model, "./" + context["log_directory"] + "/final_model.pt")
     if film_bool:  # save clustering and OneHotEncoding models
-        joblib.dump(metadata_clustering_models, "./"+context["log_directory"]+"/clustering_models.joblib")
-        joblib.dump(train_onehotencoder, "./"+context["log_directory"]+"/one_hot_encoder.joblib")
+        joblib.dump(metadata_clustering_models, "./" + context["log_directory"] + "/clustering_models.joblib")
+        joblib.dump(train_onehotencoder, "./" + context["log_directory"] + "/one_hot_encoder.joblib")
 
         # Convert list of gammas/betas into numpy arrays
-        gammas_dict = {i:np.array(gammas_dict[i]) for i in range(1,9)}
-        betas_dict = {i:np.array(betas_dict[i]) for i in range(1,9)}
+        gammas_dict = {i: np.array(gammas_dict[i]) for i in range(1, 9)}
+        betas_dict = {i: np.array(betas_dict[i]) for i in range(1, 9)}
 
         # Save the numpy arrays for gammas/betas inside files.npy in log_directory
-        for i in range(1,9):
+        for i in range(1, 9):
             np.save(context["log_directory"] + f"/gamma_layer_{i}.npy", gammas_dict[i])
             np.save(context["log_directory"] + f"/beta_layer_{i}.npy", betas_dict[i])
 
@@ -528,7 +548,7 @@ def cmd_test(context):
     val_transform = transforms.Compose(validation_transform_list)
 
     if context.get("split_path") is None:
-        test_lst = joblib.load("./"+context["log_directory"]+"/split_datasets.joblib")['test']
+        test_lst = joblib.load("./" + context["log_directory"] + "/split_datasets.joblib")['test']
     else:
         test_lst = joblib.load(context["split_path"])['test']
 
@@ -543,17 +563,18 @@ def cmd_test(context):
                                  slice_axis=axis_dct[context["slice_axis"]],
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter(**context["slice_filter"]),
-                                 multichannel=context["multichannel"])
+                                 multichannel=context["multichannel"],
+                                 missing_modality=context["missing_modality"])
 
     if film_bool:  # normalize metadata before sending to network
-        metadata_clustering_models = joblib.load("./"+context["log_directory"]+"/clustering_models.joblib")
+        metadata_clustering_models = joblib.load("./" + context["log_directory"] + "/clustering_models.joblib")
         ds_test = loader.normalize_metadata(ds_test,
-                                              metadata_clustering_models,
-                                              context["debugging"],
-                                              context["metadata"],
-                                              False)
+                                            metadata_clustering_models,
+                                            context["debugging"],
+                                            context["metadata"],
+                                            False)
 
-        one_hot_encoder = joblib.load("./"+context["log_directory"]+"/one_hot_encoder.joblib")
+        one_hot_encoder = joblib.load("./" + context["log_directory"] + "/one_hot_encoder.joblib")
 
     print(f"Loaded {len(ds_test)} {context['slice_axis']} slices for the test set.")
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
@@ -561,7 +582,7 @@ def cmd_test(context):
                              collate_fn=mt_datasets.mt_collate,
                              num_workers=0)
 
-    model = torch.load("./"+context["log_directory"]+"/best_model.pt")
+    model = torch.load("./" + context["log_directory"] + "/best_model.pt")
 
     if cuda_available:
         model.cuda()
@@ -592,7 +613,8 @@ def cmd_test(context):
                 sample_metadata = batch["input_metadata"]
                 test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
-                test_metadata = [one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k in range(len(sample_metadata))]
+                test_metadata = [one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k in
+                                 range(len(sample_metadata))]
                 preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
             else:
                 preds = model(test_input)
@@ -625,9 +647,10 @@ def run_main():
 
     if command == 'train':
         cmd_train(context)
-        shutil.copyfile(sys.argv[1], "./"+context["log_directory"]+"/config_file.json")
+        shutil.copyfile(sys.argv[1], "./" + context["log_directory"] + "/config_file.json")
     elif command == 'test':
         cmd_test(context)
+
 
 if __name__ == "__main__":
     run_main()
