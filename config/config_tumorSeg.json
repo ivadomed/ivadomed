@@ -27,21 +27,19 @@
     "split_method": "per_patient",
     "train_fraction": 0.6,
     "test_fraction": 0.2,
-    "unet3D": true,
+    "unet_3D": true,
     "slice_filter": {
-      "filter_empty_mask": false,
+      "filter_empty_mask": true,
       "filter_empty_input": true,
       "nb_nonzero_thr": 10
     },
     "early_stopping_patience": 10,
     "early_stopping_epsilon": 0.001,
     "transformation_training": {
-      "ToTensor": {},
-      "NormalizeInstance": {}
+      "ToTensor": {}
     },
     "transformation_validation": {
-      "ToTensor": {},
-      "NormalizeInstance": {}
+      "ToTensor": {}
     },
     "debugging": true
 }

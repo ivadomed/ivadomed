@@ -1,5 +1,6 @@
 from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
+from ivadomed.utils import *
 
 from sklearn.preprocessing import OneHotEncoder
 from scipy.signal import argrelextrema
@@ -22,7 +23,25 @@ with open("config/contrast_dct.json", "r") as fhandle:
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2, "acq-MToff_MTS": 3, "acq-MTon_MTS": 4, "acq-T1w_MTS": 5}
 
-class BidsDataset(mt_datasets.MRI3DSubVolumeSegmentationDataset):
+class Bids3DDataset(mt_datasets.MRI3DSubVolumeSegmentationDataset):
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
+                 transform=None, metadata_choice=False, slice_filter_fn=None,
+                 canonical=True, labeled=True, roi_suffix=None, multichannel=False):
+        dataset = BidsDataset(root_dir,
+                               subject_lst=subject_lst,
+                               target_suffix=target_suffix,
+                               roi_suffix=roi_suffix,
+                               contrast_lst=contrast_lst,
+                               metadata_choice=metadata_choice,
+                               contrast_balance=contrast_balance,
+                               slice_axis=slice_axis,
+                               transform=transform,
+                               multichannel=multichannel,
+                               slice_filter_fn=slice_filter_fn)
+
+        super().__init__(dataset.filename_pairs, cache, transform, canonical)
+
+class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
                  transform=None, metadata_choice=False, slice_filter_fn=None,
                  canonical=True, labeled=True, roi_suffix=None, multichannel=False):
@@ -128,116 +147,8 @@ class BidsDataset(mt_datasets.MRI3DSubVolumeSegmentationDataset):
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
 
-        super().__init__(self.filename_pairs, cache, transform, canonical)
-
-# class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
-#     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
-#                  transform=None, metadata_choice=False, slice_filter_fn=None,
-#                  canonical=True, labeled=True, roi_suffix=None, multichannel=False):
-#
-#
-#         self.bids_ds = bids.BIDS(root_dir)
-#         self.filename_pairs = []
-#         if metadata_choice == 'mri_params':
-#             self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": [], "Manufacturer": []}
-#
-#         bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
-#
-#         # Create a list with the filenames for all contrasts and subjects
-#         subjects_tot = []
-#         for subject in bids_subjects:
-#             subjects_tot.append(str(subject.record["absolute_path"]))
-#
-#         # Create a dictionary with the number of subjects for each contrast of contrast_balance
-#         tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast]) for contrast in contrast_balance.keys()}
-#         # Create a counter that helps to balance the contrasts
-#         c = {contrast: 0 for contrast in contrast_balance.keys()}
-#
-#         multichannel_subjects = {}
-#         if multichannel:
-#             num_contrast = len(contrast_lst)
-#             idx_dict = {}
-#             for idx, contrast in enumerate(contrast_lst):
-#                 idx_dict[contrast] = idx
-#             multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
-#                                                   "deriv_path": None,
-#                                                   "roi_filename": None,
-#                                                   "metadata": [None] * num_contrast} for subject in subject_lst}
-#
-#         for subject in tqdm(bids_subjects, desc="Loading dataset"):
-#             if subject.record["modality"] in contrast_lst:
-#
-#                 # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
-#                 if subject.record["modality"] in contrast_balance.keys():
-#                     c[subject.record["modality"]] = c[subject.record["modality"]] + 1
-#                     if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_balance[subject.record["modality"]]:
-#                         continue
-#
-#                 if not subject.has_derivative("labels"):
-#                     print("Subject without derivative, skipping.")
-#                     continue
-#                 derivatives = subject.get_derivatives("labels")
-#                 target_filename, roi_filename = None, None
-#
-#                 for deriv in derivatives:
-#                     if deriv.endswith(subject.record["modality"]+target_suffix+".nii.gz"):
-#                         target_filename = deriv
-#                     if not (roi_suffix is None) and deriv.endswith(subject.record["modality"]+roi_suffix+".nii.gz"):
-#                         roi_filename = deriv
-#
-#                 if (target_filename is None) or (not (roi_suffix is None) and (roi_filename is None)):
-#                     continue
-#
-#                 if not subject.has_metadata():
-#                     print("Subject without metadata.")
-#                     continue
-#
-#                 metadata = subject.metadata()
-#                 # add contrast to metadata
-#                 metadata['contrast'] = subject.record["modality"]
-#
-#                 if metadata_choice == 'mri_params':
-#                     def _check_isMRIparam(mri_param_type, mri_param):
-#                         if mri_param_type not in mri_param:
-#                             print("{} without {}, skipping.".format(subject, mri_param_type))
-#                             return False
-#                         else:
-#                             if mri_param_type == "Manufacturer":
-#                                 value = mri_param[mri_param_type]
-#                             else:
-#                                 if isinstance(mri_param[mri_param_type], (int, float)):
-#                                     value = float(mri_param[mri_param_type])
-#                                 else:  # eg multi-echo data have 3 echo times
-#                                     value = np.mean([float(v) for v in mri_param[mri_param_type].split(',')])
-#
-#                             self.metadata[mri_param_type].append(value)
-#                             return True
-#
-#                     if not all([_check_isMRIparam(m, metadata) for m in self.metadata.keys()]):
-#                         continue
-#
-#                 # Fill multichannel dictionary
-#                 if multichannel:
-#                     idx = idx_dict[subject.record["modality"]]
-#                     subj_id = subject.record["subject_id"]
-#                     multichannel_subjects[subj_id]["absolute_paths"][idx] = subject.record.absolute_path
-#                     multichannel_subjects[subj_id]["deriv_path"] = target_filename
-#                     multichannel_subjects[subj_id]["metadata"][idx] = subject.metadata()
-#                     if roi_filename:
-#                         multichannel_subjects[subj_id]["roi_filename"][idx] = roi_filename
-#
-#                 else:
-#                     self.filename_pairs.append(([subject.record.absolute_path],
-#                                                 target_filename, roi_filename, [metadata]))
-#
-#         if multichannel:
-#             for subject in multichannel_subjects.values():
-#                 if not None in subject["absolute_paths"]:
-#                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
-#                                                 subject["roi_filename"], subject["metadata"]))
-#
-#         super().__init__(self.filename_pairs, slice_axis, cache,
-#                          transform, slice_filter_fn, canonical)
+        super().__init__(self.filename_pairs, slice_axis, cache,
+                         transform, slice_filter_fn, canonical)
 
 
 def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
