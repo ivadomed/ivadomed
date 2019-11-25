@@ -5,11 +5,11 @@
     "roi_suffix": null,
     "bids_path": "/home/andreanne/Documents/dataset/bids_amu_2017-virginie",
     "random_seed": 1313,
-    "contrast_train_validation": ["acq-inf_T2star", "acq-sup_T2star"],
+    "contrast_train_validation": ["T2w"],
     "contrast_balance": {},
-    "contrast_test": ["acq-inf_T2star", "acq-sup_T2star"],
+    "contrast_test": ["T2w"],
     "center_test": [],
-    "batch_size": 18,
+    "batch_size": 4,
     "dropout_rate": 0.3,
     "batch_norm_momentum": 0.1,
     "num_epochs": 100,
@@ -20,8 +20,8 @@
     "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
     "mixup_bool": false,
     "mixup_alpha": 2,
-    "metadata": "contrast",
-    "multichannel": true,
+    "metadata": "without",
+    "multichannel": false,
     "n_classes": 1,
     "slice_axis": "sagittal",
     "split_method": "per_patient",
@@ -34,42 +34,12 @@
       "nb_nonzero_thr": 10
     },
     "early_stopping_patience": 10,
-	  "early_stopping_epsilon": 0.001,
+    "early_stopping_epsilon": 0.001,
     "transformation_training": {
-      "Resample": {
-        "wspace": 0.75,
-        "hspace": 0.75
-      },
-      "DilateGT": {
-        "dilation_factor": 0
-      },
-      "CenterCrop2D": {
-        "size": [40, 40]
-      },
-      "ElasticTransform": {
-        "alpha_range": [28.0, 30.0],
-        "sigma_range":  [3.5, 4.5],
-        "p": 0.1
-      },
-      "RandomAffine": {
-        "degrees": 4.6,
-        "translate": [0.03, 0.03],
-        "scale": [0.98, 1.02]
-      },
-      "RandomTensorChannelShift": {
-        "shift_range": [-0.1, 0.1]
-      },
       "ToTensor": {},
       "NormalizeInstance": {}
     },
     "transformation_validation": {
-      "Resample": {
-        "wspace": 0.75,
-        "hspace": 0.75
-      },
-      "CenterCrop2D": {
-        "size": [256, 256]
-      },
       "ToTensor": {},
       "NormalizeInstance": {}
     },

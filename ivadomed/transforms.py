@@ -4,6 +4,7 @@ from PIL import Image
 import torchvision.transforms.functional as F
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing, generate_binary_structure
+import nibabel as nib
 
 from medicaltorch import transforms as mt_transforms
 
@@ -105,6 +106,53 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
 
     def undo_transform(self, sample):  # not implemented yet, todo
         pass
+
+class CenterCrop3D():
+    """Make a centered crop of a specified size.
+    :param labeled: if it is a segmentation task.
+                         When this is True (default), the crop
+                         will also be applied to the ground truth.
+    """
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, input_data):
+        gt_nib = nib.load(input_data.gt_filename)
+        gt_img = gt_nib.get_fdata()
+        w, h, d = gt_img.shape
+        td, tw, th = self.size
+        fh = min(int(round((h - th) / 2.)), 0)
+        fw = min(int(round((w - tw) / 2.)), 0)
+        fd = min(int(round((d - td) / 2.)), 0)
+        crop_gt = gt_img[fw:fw + tw, fh:fh + th, fd:fd + td]
+
+        for i in range(len(input_data.input_filename)):
+            input_nib = nib.load(input_data.input_filename[i])
+            input_img = input_nib.get_fdata()
+            input_data.metadata[i]["__centercrop"] = (fd, fw, fh, d, w, h)
+            crop_input = input_img[fw:fw+tw, fh:fh+th, fd:fd+td]
+            # Pad image with mean if image smaller than crop size
+            cw, ch, cd = crop_input.shape
+            if (cw, ch, cd) != (tw, th, td):
+                w_diff = (tw - cw) / 2.
+                iw = 1 if w_diff % 1 != 0 else 0
+                h_diff = (th - ch) / 2.
+                ih = 1 if h_diff % 1 != 0 else 0
+                d_diff = (td - cd) / 2.
+                id = 1 if d_diff % 1 != 0 else 0
+                npad = ((int(w_diff) + iw, int(w_diff)),
+                        (int(h_diff) + ih, int(h_diff)),
+                        (int(d_diff) + id, int(d_diff)))
+                crop_input = np.pad(crop_input, pad_width=npad, mode='constant', constant_values=np.mean(crop_input))
+                crop_gt = np.pad(crop_gt, pad_width=npad, mode='constant', constant_values=0)
+            input_data.input_handle[i] = nib.Nifti1Image(crop_input, input_nib.affine)
+            input_data.metadata[i]["__centercrop"] = (fd, fw, fh, d, w, h)
+
+        input_data.gt_handle = nib.Nifti1Image(crop_gt, gt_nib.affine)
+
+
+        return input_data
+
 
 
 class DilateGT(mt_transforms.MTTransform):

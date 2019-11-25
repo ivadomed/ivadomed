@@ -317,21 +317,21 @@ def cmd_train(context):
             num_steps += 1
 
             # Only write sample at the first step
-            if i == 0:
-                grid_img = vutils.make_grid(input_samples,
-                                            normalize=True,
-                                            scale_each=True)
-                writer.add_image('Train/Input', grid_img, epoch)
-
-                grid_img = vutils.make_grid(preds.data.cpu(),
-                                            normalize=True,
-                                            scale_each=True)
-                writer.add_image('Train/Predictions', grid_img, epoch)
-
-                grid_img = vutils.make_grid(gt_samples,
-                                            normalize=True,
-                                            scale_each=True)
-                writer.add_image('Train/Ground Truth', grid_img, epoch)
+            # if i == 0:
+                # grid_img = vutils.make_grid(input_samples,
+                #                             normalize=True,
+                #                             scale_each=True)
+                # writer.add_image('Train/Input', grid_img, epoch)
+                #
+                # grid_img = vutils.make_grid(preds.data.cpu(),
+                #                             normalize=True,
+                #                             scale_each=True)
+                # writer.add_image('Train/Predictions', grid_img, epoch)
+                #
+                # grid_img = vutils.make_grid(gt_samples,
+                #                             normalize=True,
+                #                             scale_each=True)
+                # writer.add_image('Train/Ground Truth', grid_img, epoch)
 
         train_loss_total_avg = train_loss_total / num_steps
         if not step_scheduler_batch:
@@ -466,10 +466,11 @@ def cmd_train(context):
         #Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
         val_losses.append(val_loss_total_avg)
 
-        if (val_losses[-2] - val_losses[-1]) * 100 / val_losses[-1] < epsilon:
-            patience_count += 1
-        if patience_count >= patience:
-                break
+        if epoch > 1:
+            if (val_losses[-2] - val_losses[-1]) * 100 / val_losses[-1] < epsilon:
+                patience_count += 1
+            if patience_count >= patience:
+                    break
 
     # Save final model
     torch.save(model, "./"+context["log_directory"]+"/final_model.pt")
