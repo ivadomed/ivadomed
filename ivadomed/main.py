@@ -110,17 +110,30 @@ def cmd_train(context):
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
-    ds_train = loader.BidsDataset(context["bids_path"],
-                                  subject_lst=train_lst,
-                                  target_suffix=context["target_suffix"],
-                                  roi_suffix=context["roi_suffix"],
-                                  contrast_lst=context["contrast_train_validation"],
-                                  metadata_choice=context["metadata"],
-                                  contrast_balance=context["contrast_balance"],
-                                  slice_axis=axis_dct[context["slice_axis"]],
-                                  transform=train_transform,
-                                  multichannel=context['multichannel'],
-                                  slice_filter_fn=SliceFilter(**context["slice_filter"]))
+    if context["unet_3D"]:
+        ds_train = loader.Bids3DDataset(context["bids_path"],
+                                      subject_lst=train_lst,
+                                      target_suffix=context["target_suffix"],
+                                      roi_suffix=context["roi_suffix"],
+                                      contrast_lst=context["contrast_train_validation"],
+                                      metadata_choice=context["metadata"],
+                                      contrast_balance=context["contrast_balance"],
+                                      slice_axis=axis_dct[context["slice_axis"]],
+                                      transform=train_transform,
+                                      multichannel=context['multichannel'],
+                                      slice_filter_fn=SliceFilter(**context["slice_filter"]))
+    else:
+        ds_train = loader.BidsDataset(context["bids_path"],
+                                      subject_lst=train_lst,
+                                      target_suffix=context["target_suffix"],
+                                      roi_suffix=context["roi_suffix"],
+                                      contrast_lst=context["contrast_train_validation"],
+                                      metadata_choice=context["metadata"],
+                                      contrast_balance=context["contrast_balance"],
+                                      slice_axis=axis_dct[context["slice_axis"]],
+                                      transform=train_transform,
+                                      multichannel=context['multichannel'],
+                                      slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
@@ -141,17 +154,30 @@ def cmd_train(context):
                               num_workers=0)
 
     # Validation dataset ------------------------------------------------------
-    ds_val = loader.BidsDataset(context["bids_path"],
-                                subject_lst=valid_lst,
-                                target_suffix=context["target_suffix"],
-                                roi_suffix=context["roi_suffix"],
-                                contrast_lst=context["contrast_train_validation"],
-                                metadata_choice=context["metadata"],
-                                contrast_balance=context["contrast_balance"],
-                                slice_axis=axis_dct[context["slice_axis"]],
-                                transform=val_transform,
-                                multichannel=context['multichannel'],
-                                slice_filter_fn=SliceFilter(**context["slice_filter"]))
+    if context["unet_3D"]:
+        ds_val = loader.Bids3DDataset(context["bids_path"],
+                                    subject_lst=valid_lst,
+                                    target_suffix=context["target_suffix"],
+                                    roi_suffix=context["roi_suffix"],
+                                    contrast_lst=context["contrast_train_validation"],
+                                    metadata_choice=context["metadata"],
+                                    contrast_balance=context["contrast_balance"],
+                                    slice_axis=axis_dct[context["slice_axis"]],
+                                    transform=val_transform,
+                                    multichannel=context['multichannel'],
+                                    slice_filter_fn=SliceFilter(**context["slice_filter"]))
+    else:
+        ds_val = loader.BidsDataset(context["bids_path"],
+                                    subject_lst=valid_lst,
+                                    target_suffix=context["target_suffix"],
+                                    roi_suffix=context["roi_suffix"],
+                                    contrast_lst=context["contrast_train_validation"],
+                                    metadata_choice=context["metadata"],
+                                    contrast_balance=context["contrast_balance"],
+                                    slice_axis=axis_dct[context["slice_axis"]],
+                                    transform=val_transform,
+                                    multichannel=context['multichannel'],
+                                    slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     if film_bool:  # normalize metadata before sending to network
         ds_val = loader.normalize_metadata(ds_val,
@@ -174,7 +200,7 @@ def cmd_train(context):
                             film_bool=context["film_layers"],
                             drop_rate=context["dropout_rate"],
                             bn_momentum=context["batch_norm_momentum"])
-    elif context["unet3D"]:
+    elif context["unet_3D"]:
         model = models.UNet3D(in_channel, context["n_classes"])
     else:
         # Traditional U-Net model
@@ -317,21 +343,21 @@ def cmd_train(context):
             num_steps += 1
 
             # Only write sample at the first step
-            # if i == 0:
-                # grid_img = vutils.make_grid(input_samples,
-                #                             normalize=True,
-                #                             scale_each=True)
-                # writer.add_image('Train/Input', grid_img, epoch)
-                #
-                # grid_img = vutils.make_grid(preds.data.cpu(),
-                #                             normalize=True,
-                #                             scale_each=True)
-                # writer.add_image('Train/Predictions', grid_img, epoch)
-                #
-                # grid_img = vutils.make_grid(gt_samples,
-                #                             normalize=True,
-                #                             scale_each=True)
-                # writer.add_image('Train/Ground Truth', grid_img, epoch)
+            if i == 0 and not context["unet_3D"]:
+                grid_img = vutils.make_grid(input_samples,
+                                            normalize=True,
+                                            scale_each=True)
+                writer.add_image('Train/Input', grid_img, epoch)
+
+                grid_img = vutils.make_grid(preds.data.cpu(),
+                                            normalize=True,
+                                            scale_each=True)
+                writer.add_image('Train/Predictions', grid_img, epoch)
+
+                grid_img = vutils.make_grid(gt_samples,
+                                            normalize=True,
+                                            scale_each=True)
+                writer.add_image('Train/Ground Truth', grid_img, epoch)
 
         train_loss_total_avg = train_loss_total / num_steps
         if not step_scheduler_batch:
@@ -354,6 +380,8 @@ def cmd_train(context):
                       mt_metrics.specificity_score,
                       mt_metrics.intersection_over_union,
                       mt_metrics.accuracy_score]
+        if context["unet_3D"]:
+            metric_fns.remove(mt_metrics.hausdorff_score)
 
         metric_mgr = IvadoMetricManager(metric_fns)
 
@@ -399,7 +427,7 @@ def cmd_train(context):
             num_steps += 1
 
             # Only write sample at the first step
-            if i == 0:
+            if i == 0 and not context["unet_3D"]:
                 grid_img = vutils.make_grid(input_samples,
                                             normalize=True,
                                             scale_each=True)
