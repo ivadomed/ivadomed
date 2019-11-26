@@ -16,6 +16,7 @@ import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 from torch import optim
 
+from medicaltorch.filters import SliceFilter
 from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
 
