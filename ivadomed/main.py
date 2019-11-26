@@ -123,7 +123,7 @@ def cmd_train(context):
                                   slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
-    if 'ROICrop2D' in context["transformation_validation"].keys():
+    if 'ROICrop2D' in context["transformation_training"].keys():
         ds_train = ds_train.filter(SliceFilter(filter_empty_mask=True,
                                                   nb_nonzero_thr=context["slice_filter"]["nb_nonzero_thr"]))
 
