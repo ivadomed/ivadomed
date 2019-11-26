@@ -122,6 +122,10 @@ def cmd_train(context):
                                   multichannel=context['multichannel'],
                                   slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
+    # if ROICrop2D in transform, then apply SliceFilter to ROI slices
+    if 'ROICrop2D' in context["transformation_validation"].keys():
+        ds_train = ds_train.filter(SliceFilter(filter_empty_mask=True,
+                                                  nb_nonzero_thr=context["slice_filter"]["nb_nonzero_thr"]))
     loader.BalancedSampler(ds_train)
 
     if film_bool:  # normalize metadata before sending to the network
@@ -161,6 +165,11 @@ def cmd_train(context):
                                 transform=val_transform,
                                 multichannel=context['multichannel'],
                                 slice_filter_fn=SliceFilter(**context["slice_filter"]))
+
+    # if ROICrop2D in transform, then apply SliceFilter to ROI slices
+    if 'ROICrop2D' in context["transformation_validation"].keys():
+        ds_val = ds_val.filter(SliceFilter(filter_empty_mask=True,
+                                                  nb_nonzero_thr=context["slice_filter"]["nb_nonzero_thr"]))
 
     if film_bool:  # normalize metadata before sending to network
         ds_val = loader.normalize_metadata(ds_val,
@@ -558,6 +567,12 @@ def cmd_test(context):
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter(**context["slice_filter"]),
                                  multichannel=context["multichannel"])
+
+    # if ROICrop2D in transform, then apply SliceFilter to ROI slices
+    if 'ROICrop2D' in context["transformation_validation"].keys():
+        ds_test = ds_test.filter(SliceFilter(filter_empty_mask=True,
+                                                  nb_nonzero_thr=context["slice_filter"]["nb_nonzero_thr"]))
+
 
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load("./"+context["log_directory"]+"/clustering_models.joblib")
