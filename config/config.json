@@ -29,11 +29,8 @@
     "slice_axis": "axial",
     "balance_samples": false,
     "split_method": "per_center",
-	"slice_filter": {
-      "filter_empty_mask": true,
-      "filter_empty_input": true,
-      "nb_nonzero_thr": 10
-    },
+    "slice_filter": {"filter_empty_mask": false, "filter_empty_input": true},
+    "slice_filter_roi": 10,
     "transformation_training": {
 		"Resample": {
 			"wspace": 0.75,
