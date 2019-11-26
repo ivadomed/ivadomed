@@ -132,6 +132,29 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
         super().__init__(self.filename_pairs, slice_axis, cache,
                          transform, slice_filter_fn, canonical)
 
+    def _prepare_indexes(self):
+        for seg_roi_pairs in self.handlers:
+            seg_pair, roi_pair = seg_roi_pairs
+            input_data_shape, _ = seg_pair.get_pair_shapes()
+
+            for idx_pair_slice in range(input_data_shape[self.slice_axis]):
+                slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice,
+                                                            self.slice_axis)
+                if self.slice_filter_fn:
+                    filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
+                    if not filter_fn_ret_seg:
+                        continue
+                # if ROICrop2D, then SliceFilter is applied on ROI slices
+                if 'ROICrop2D' in self.transform:
+                    slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice,
+                                                                self.slice_axis)
+                    filter_fn_ret_roi = self.slice_filter_fn(slice_roi_pair)
+                    if not filter_fn_ret_roi:
+                        continue
+
+                item = (seg_pair, roi_pair, idx_pair_slice)
+                self.indexes.append(item)
+
 
 def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
     # read participants.tsv as pandas dataframe
