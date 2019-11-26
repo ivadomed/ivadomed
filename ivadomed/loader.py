@@ -134,8 +134,8 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
 
     def filter_roi(self, nb_nonzero_thr):
         filter_indexes = []
-        for segpair, roipair, pair_slice in self.indexes:
-            slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice,
+        for segpair, roipair, idx_pair_slice in self.indexes:
+            slice_roi_pair = roipair.get_pair_slice(idx_pair_slice,
                                                         self.slice_axis)
             roi_data = slice_roi_pair['gt']
             if not np.any(roi_data):
@@ -143,7 +143,7 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
             if np.count_nonzero(roi_data) <= nb_nonzero_thr:
                 continue
 
-           filter_indexes.append((segpair, roipair, pair_slice))
+            filter_indexes.append((segpair, roipair, idx_pair_slice))
 
         self.indexes = filter_indexes
 
