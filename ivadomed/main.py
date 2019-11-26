@@ -126,7 +126,6 @@ def cmd_train(context):
     if 'ROICrop2D' in context["transformation_validation"].keys():
         ds_train = ds_train.filter(SliceFilter(filter_empty_mask=True,
                                                   nb_nonzero_thr=context["slice_filter"]["nb_nonzero_thr"]))
-    loader.BalancedSampler(ds_train)
 
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
