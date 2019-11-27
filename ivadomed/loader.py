@@ -132,6 +132,21 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
         super().__init__(self.filename_pairs, slice_axis, cache,
                          transform, slice_filter_fn, canonical)
 
+    def filter_roi(self, nb_nonzero_thr):
+        filter_indexes = []
+        for segpair, roipair, idx_pair_slice in self.indexes:
+            slice_roi_pair = roipair.get_pair_slice(idx_pair_slice,
+                                                        self.slice_axis)
+            roi_data = slice_roi_pair['gt']
+            if not np.any(roi_data):
+                continue
+            if np.count_nonzero(roi_data) <= nb_nonzero_thr:
+                continue
+
+            filter_indexes.append((segpair, roipair, idx_pair_slice))
+
+        self.indexes = filter_indexes
+
 
 def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
     # read participants.tsv as pandas dataframe
@@ -264,3 +279,41 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
         return ds_out, ohe
     else:
         return ds_out
+
+
+class BalancedSampler(torch.utils.data.sampler.Sampler):
+    """Estimate sampling weights in order to rebalance the
+    class distributions from an imbalanced dataset.
+    """
+
+    def __init__(self, dataset):
+        self.indices = list(range(len(dataset)))
+
+        self.nb_samples = len(self.indices)
+
+        cmpt_label = {}
+        for idx in self.indices:
+            label = self._get_label(dataset, idx)
+            if label in cmpt_label:
+                cmpt_label[label] += 1
+            else:
+                cmpt_label[label] = 1
+
+        weights = [1.0 / cmpt_label[self._get_label(dataset, idx)]
+                   for idx in self.indices]
+
+        self.weights = torch.DoubleTensor(weights)
+
+    def _get_label(self, dataset, idx):
+         sample_gt = np.array(dataset[idx]['gt'])
+         if np.any(sample_gt):
+             return 1
+         else:
+             return 0
+
+    def __iter__(self):
+        return (self.indices[i] for i in torch.multinomial(
+            self.weights, self.nb_samples, replacement=True))
+
+    def __len__(self):
+        return self.num_samples
