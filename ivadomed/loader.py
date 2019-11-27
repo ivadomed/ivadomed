@@ -14,7 +14,6 @@ from glob import glob
 from copy import deepcopy
 from tqdm import tqdm
 import nibabel as nib
-from PIL import Image
 import torch
 
 with open("config/contrast_dct.json", "r") as fhandle:
@@ -24,10 +23,9 @@ CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2, "acq-MToff_MTS": 3, "acq-M
 
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
-                 transform=None, metadata_choice=False, slice_filter_fn=None,
-                 canonical=True, labeled=True, roi_suffix=None, multichannel=False):
-
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2,
+                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None,
+                 canonical=True, labeled=True, roi_suffix=None, multichannel=False, missing_modality=False):
 
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
@@ -42,7 +40,8 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
             subjects_tot.append(str(subject.record["absolute_path"]))
 
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
-        tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast]) for contrast in contrast_balance.keys()}
+        tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast]) for contrast in
+               contrast_balance.keys()}
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
 
@@ -53,9 +52,9 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
             for idx, contrast in enumerate(contrast_lst):
                 idx_dict[contrast] = idx
             multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
-                                                  "deriv_path": None,
-                                                  "roi_filename": None,
-                                                  "metadata": [None] * num_contrast} for subject in subject_lst}
+                                               "deriv_path": None,
+                                               "roi_filename": None,
+                                               "metadata": [None] * num_contrast} for subject in subject_lst}
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
@@ -63,7 +62,8 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                 # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
                 if subject.record["modality"] in contrast_balance.keys():
                     c[subject.record["modality"]] = c[subject.record["modality"]] + 1
-                    if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_balance[subject.record["modality"]]:
+                    if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_balance[
+                        subject.record["modality"]]:
                         continue
 
                 if not subject.has_derivative("labels"):
@@ -73,9 +73,9 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                 target_filename, roi_filename = None, None
 
                 for deriv in derivatives:
-                    if deriv.endswith(subject.record["modality"]+target_suffix+".nii.gz"):
+                    if deriv.endswith(subject.record["modality"] + target_suffix + ".nii.gz"):
                         target_filename = deriv
-                    if not (roi_suffix is None) and deriv.endswith(subject.record["modality"]+roi_suffix+".nii.gz"):
+                    if not (roi_suffix is None) and deriv.endswith(subject.record["modality"] + roi_suffix + ".nii.gz"):
                         roi_filename = deriv
 
                 if (target_filename is None) or (not (roi_suffix is None) and (roi_filename is None)):
@@ -136,7 +136,7 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
         filter_indexes = []
         for segpair, roipair, idx_pair_slice in self.indexes:
             slice_roi_pair = roipair.get_pair_slice(idx_pair_slice,
-                                                        self.slice_axis)
+                                                    self.slice_axis)
             roi_data = slice_roi_pair['gt']
             if not np.any(roi_data):
                 continue
@@ -167,12 +167,14 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
             X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
     elif split_method == 'per_patient':
         # Separate dataset in test, train and validation using sklearn function
-        X_train, X_remain = train_test_split(df['participant_id'].tolist(), train_size=train_frac, random_state=random_seed)
+        X_train, X_remain = train_test_split(df['participant_id'].tolist(), train_size=train_frac,
+                                             random_state=random_seed)
         X_test, X_val = train_test_split(X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
     else:
         print(f" {split_method} is not a supported split method")
 
     return X_train, X_val, X_test
+
 
 class Kde_model():
     def __init__(self):
@@ -259,7 +261,7 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
                 s_out["input_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
 
             s_out["input_metadata"]["film_input"] = [s_out["input_metadata"][k] for k in
-                                                        ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
+                                                     ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
         else:
             generic_contrast = GENERIC_CONTRAST[subject["input_metadata"]["contrast"]]
             label_contrast = CONTRAST_CATEGORY[generic_contrast]
@@ -305,11 +307,11 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         self.weights = torch.DoubleTensor(weights)
 
     def _get_label(self, dataset, idx):
-         sample_gt = np.array(dataset[idx]['gt'])
-         if np.any(sample_gt):
-             return 1
-         else:
-             return 0
+        sample_gt = np.array(dataset[idx]['gt'])
+        if np.any(sample_gt):
+            return 1
+        else:
+            return 0
 
     def __iter__(self):
         return (self.indices[i] for i in torch.multinomial(
