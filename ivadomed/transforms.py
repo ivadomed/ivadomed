@@ -1,3 +1,4 @@
+import math
 import random
 import numpy as np
 from PIL import Image
@@ -225,4 +226,3 @@ class DilateGT(mt_transforms.MTTransform):
             sample.update(rdict)
 
         return sample
-
