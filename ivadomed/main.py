@@ -52,17 +52,22 @@ def cmd_train(context):
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet or MixupUnet
     metadata_bool = False if context["metadata"] == "without" else True
     film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
+
     HeMIS = context['missing_modality']
     if film_bool:
         context["multichannel"] = False
-
+        HeMIS = False
+    elif context["multichannel"]:
+        HeMIS = False
     if bool(sum(context["film_layers"])) and not (metadata_bool):
         print('\tWarning FiLM disabled since metadata is disabled')
+
     print('\nArchitecture: {} with a depth of {}.\n' \
           .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else 'Unet', context['depth']))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
+
     if not film_bool and mixup_bool:
         print('\twith Mixup (alpha={})\n'.format(mixup_alpha))
     if context["metadata"] == "mri_params":
@@ -125,6 +130,7 @@ def cmd_train(context):
                                   slice_axis=axis_dct[context["slice_axis"]],
                                   transform=train_transform,
                                   multichannel=True if context['multichannel'] else False,
+                                  missing_modality=HeMIS,
                                   slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
@@ -167,6 +173,7 @@ def cmd_train(context):
                                 slice_axis=axis_dct[context["slice_axis"]],
                                 transform=val_transform,
                                 multichannel=True if context['multichannel'] else False,
+                                missing_modality=HeMIS,
                                 slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
@@ -204,12 +211,17 @@ def cmd_train(context):
         in_channel = 1
         if context['multichannel']:
             in_channel = len(context['multichannel'])
-
-        model = models.Unet(in_channel=in_channel,
-                            out_channel=context['out_channel'],
-                            depth=context['depth'],
-                            drop_rate=context["dropout_rate"],
-                            bn_momentum=context["batch_norm_momentum"])
+        if HeMIS:
+            model = models.HeMISUnet(modalities=context['contrast_train_validation'],
+                                     depth=context['depth'],
+                                     drop_rate=context["dropout_rate"],
+                                     bn_momentum=context["batch_norm_momentum"])
+        else:
+            model = models.Unet(in_channel=in_channel,
+                                out_channel=context['out_channel'],
+                                depth=context['depth'],
+                                drop_rate=context["dropout_rate"],
+                                bn_momentum=context["batch_norm_momentum"])
 
     if cuda_available:
         model.cuda()
@@ -543,7 +555,7 @@ def cmd_test(context):
         gpu_number = int(context["gpu"])
         torch.cuda.set_device(gpu_number)
         print("using GPU number {}".format(gpu_number))
-
+    HeMIS = context['missing_modality']
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet
     film_bool = bool(sum(context["film_layers"]))
     print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
@@ -579,7 +591,8 @@ def cmd_test(context):
                                  slice_axis=axis_dct[context["slice_axis"]],
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter(**context["slice_filter"]),
-                                 multichannel=True if context["multichannel"] else False)
+                                 multichannel=True if context["multichannel"] else False,
+                                 missing_modality=HeMIS)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():

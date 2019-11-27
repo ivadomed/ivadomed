@@ -14,7 +14,6 @@ from glob import glob
 from copy import deepcopy
 from tqdm import tqdm
 import nibabel as nib
-from PIL import Image
 import torch
 
 with open("config/contrast_dct.json", "r") as fhandle:
@@ -25,9 +24,9 @@ CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,
 
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
-                 transform=None, metadata_choice=False, slice_filter_fn=None,
-                 canonical=True, labeled=True, roi_suffix=None, multichannel=False):
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2,
+                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, canonical=True, labeled=True,
+                 roi_suffix=None, multichannel=False, missing_modality=False):
 
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
@@ -44,8 +43,10 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
             subjects_tot.append(str(subject.record["absolute_path"]))
 
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
+
         tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast])
                for contrast in contrast_balance.keys()}
+
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
 
@@ -66,7 +67,8 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                 # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
                 if subject.record["modality"] in contrast_balance.keys():
                     c[subject.record["modality"]] = c[subject.record["modality"]] + 1
-                    if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_balance[subject.record["modality"]]:
+                    if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_balance[
+                        subject.record["modality"]]:
                         continue
 
                 if not subject.has_derivative("labels"):
@@ -76,9 +78,9 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                 target_filename, roi_filename = None, None
 
                 for deriv in derivatives:
-                    if deriv.endswith(subject.record["modality"]+target_suffix+".nii.gz"):
+                    if deriv.endswith(subject.record["modality"] + target_suffix + ".nii.gz"):
                         target_filename = deriv
-                    if not (roi_suffix is None) and deriv.endswith(subject.record["modality"]+roi_suffix+".nii.gz"):
+                    if not (roi_suffix is None) and deriv.endswith(subject.record["modality"] + roi_suffix + ".nii.gz"):
                         roi_filename = deriv
 
                 if (target_filename is None) or (not (roi_suffix is None) and (roi_filename is None)):
@@ -171,10 +173,10 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
             X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
     elif split_method == 'per_patient':
         # Separate dataset in test, train and validation using sklearn function
-        X_train, X_remain = train_test_split(
-            df['participant_id'].tolist(), train_size=train_frac, random_state=random_seed)
-        X_test, X_val = train_test_split(
-            X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
+        X_train, X_remain = train_test_split(df['participant_id'].tolist(), train_size=train_frac,
+                                             random_state=random_seed)
+        X_test, X_val = train_test_split(X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
+
     else:
         print(f" {split_method} is not a supported split method")
 
