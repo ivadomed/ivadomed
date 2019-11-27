@@ -62,7 +62,10 @@ Please find below a description of each parameter:
 - `early_stopping_patience`: Number of epochs after which the training is stopped if the validation loss improvement not meaningful (less than `early_stopping_epsilon`)
 
 #### Network architecture
-- `film_layers`: indicates on which layer(s) of the U-net you want to apply a FiLM modulation: list of 8 elements (because Unet has 8 layers), set to `0` for no FiLM modulation, set `1` otherwise. Note: When running `Unet` or `MixedUp-Unet`, please fill this list with zeros only.
+- `film_layers`: indicates on which layer(s) of the U-net you want to apply a FiLM modulation: list of 8 elements (because Unet has 8 layers),$
+- `depth`: number of down-sampling operations.
+- `out_channel`: number of segmentation class.
+- `missing_modality`: to use HeMIS-U-Net (choice: `false` or `true`).
 - `metadata`: choice between `"without"`, `"mri_params"`, and `"contrast"`.
 If `"mri_params"`, then vectors of [FlipAngle, EchoTime, RepetitionTime, Manufacturer] are input to the FiLM generator. If `"contrast"`, then image contrasts (according to `config/contrast_dct.json`) are input to the FiLM generator. Notes:
     - If `"mri_params"`, then only images with TR, TE, FlipAngle, and Manufaturer available info are included.
