@@ -14,7 +14,7 @@
         "batch_norm_momentum": 0.1,
         "num_epochs": 100,
         "initial_lr": 0.001,
-        "lr_scheduler": {"name": "CosineAnnealingWarmRestarts", "T_0": 10},
+        "lr_scheduler": {"name": "CosineAnnealingWarmRestarts", "T_0": 10, "T_mult": 1},
         "loss": {"name": "dice"},
         "log_directory": "log_large",
         "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
@@ -26,11 +26,9 @@
 	"split_method": "per_patient",
 	"train_fraction": 0.6,
 	"test_fraction": 0.2,
-	"slice_filter": {
-      "filter_empty_mask": true,
-      "filter_empty_input": true,
-      "nb_nonzero_thr": 10
-    },
+        "balance_samples": true,
+	"slice_filter": {"filter_empty_mask": false, "filter_empty_input": true},
+        "slice_filter_roi": 10,
 	"early_stopping_patience": 10,
 	"early_stopping_epsilon": 0.001,
 	"transformation_training": {

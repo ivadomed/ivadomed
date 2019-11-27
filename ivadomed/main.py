@@ -16,6 +16,7 @@ import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 from torch import optim
 
+from medicaltorch.filters import SliceFilter
 from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
 
@@ -125,6 +126,10 @@ def cmd_train(context):
                                   multichannel=context['multichannel'],
                                   slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
+    # if ROICrop2D in transform, then apply SliceFilter to ROI slices
+    if 'ROICrop2D' in context["transformation_training"].keys():
+        ds_train.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
+
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
             metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
@@ -138,8 +143,15 @@ def cmd_train(context):
                                                                   True)
 
     print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
+
+    if context['balance_samples']:
+        sampler_train = loader.BalancedSampler(ds_train)
+        shuffle_train = False
+    else:
+        sampler_train, shuffle_train = None, True
+
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
-                              shuffle=True, pin_memory=True,
+                              shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
                               collate_fn=mt_datasets.mt_collate,
                               num_workers=0)
 
@@ -157,6 +169,10 @@ def cmd_train(context):
 
                                 slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
+    # if ROICrop2D in transform, then apply SliceFilter to ROI slices
+    if 'ROICrop2D' in context["transformation_validation"].keys():
+        ds_val.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
+
     if film_bool:  # normalize metadata before sending to network
         ds_val = loader.normalize_metadata(ds_val,
                                            metadata_clustering_models,
@@ -165,8 +181,15 @@ def cmd_train(context):
                                            False)
 
     print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")
+
+    if context['balance_samples']:
+        sampler_val = loader.BalancedSampler(ds_val)
+        shuffle_val = False
+    else:
+        sampler_val, shuffle_val = None, True
+
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
-                            shuffle=True, pin_memory=True,
+                            shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
                             collate_fn=mt_datasets.mt_collate,
                             num_workers=0)
 
@@ -478,8 +501,9 @@ def cmd_train(context):
         # Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
         val_losses.append(val_loss_total_avg)
 
-        if (val_losses[-2] - val_losses[-1]) * 100 / val_losses[-1] < epsilon:
-            patience_count += 1
+        if epoch > 1:
+            if (val_losses[-2] - val_losses[-1]) * 100 / abs(val_losses[-1]) < epsilon:
+                patience_count += 1
         if patience_count >= patience:
             print(f"Stopping training due to {patience} epochs without improvements")
             break
@@ -556,6 +580,10 @@ def cmd_test(context):
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter(**context["slice_filter"]),
                                  multichannel=context["multichannel"])
+
+    # if ROICrop2D in transform, then apply SliceFilter to ROI slices
+    if 'ROICrop2D' in context["transformation_validation"].keys():
+        ds_test.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load("./" + context["log_directory"] + "/clustering_models.joblib")
