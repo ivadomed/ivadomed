@@ -14,7 +14,7 @@
         "batch_norm_momentum": 0.1,
         "num_epochs": 100,
         "initial_lr": 0.001,
-        "lr_scheduler": {"name": "CosineAnnealingWarmRestarts", "T_0": 10},
+        "lr_scheduler": {"name": "CosineAnnealingWarmRestarts", "T_0": 10, "T_mult": 1},
         "loss": {"name": "dice"},
         "log_directory": "log_large",
         "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
