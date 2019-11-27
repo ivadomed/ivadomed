@@ -52,7 +52,7 @@ def cmd_train(context):
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet or MixupUnet
     metadata_bool = False if context["metadata"] == "without" else True
     film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
-    HeMIS = False if context['missing_modality'] == 'false' else True
+    HeMIS = context['missing_modality']
     if film_bool:
         context["multichannel"] = False
 
