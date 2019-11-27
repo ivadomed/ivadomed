@@ -74,9 +74,8 @@ If `"mri_params"`, then vectors of [FlipAngle, EchoTime, RepetitionTime, Manufac
 - `balance_samples`: choice between `true` and `false`. If `true`, then positive and negative GT samples are balanced in both training and validation datasets.
 - `slice_filter`:
     1. `filter_empty_input`: choice between `true` or `false`, filter empty images if `true`
-    2. `filter_empty_mask`: choice between `true` and `false`, filter empty mask slices if `true`
-    3. `nb_nonzero_thr`: int, if `filter_empty_mask=True`, it filters mask slices with less than this threshold of non zero voxels.
-    - Note : If your are using `"ROICrop2D"`, please (i) input ROI file, (ii) set `filter_empty_mask` to `true`. Note that if `roi_suffix` is provided, then the `SliceFilter` is applied to the ROI file, otherwise on the GT file.
+    2. `filter_empty_mask`: choice between `true` and `false`, filter empty GT mask slices if `true`
+- `slice_filter_roi`: int, it filters ROI mask slices with less than this threshold of non zero voxels. Active when using `"ROICrop2D"` and inputing ROI file.
 - `split_method`: choice between `"per_patient"` or `"per_center"`.
 - `train_fraction`: number between `0` and `1` representing the fraction of the dataset used as training set.
 - `test_fraction`: number between `0` and `1` representing the fraction of the dataset used as test set. This parameter is only used if the `split_method` is `"per_patient"`.
