@@ -53,13 +53,11 @@ def cmd_train(context):
     film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
     if film_bool:
         context["multichannel"] = False
-        context["missing_modality"] = False
-    elif context["multichannel"]:
-        context["missing_modality"] = False
+
     if bool(sum(context["film_layers"])) and not (metadata_bool):
         print('\tWarning FiLM disabled since metadata is disabled')
     print('\nArchitecture: {}\n' \
-          .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if context["missing_modality"] else 'Unet'))
+          .format('FiLMedUnet' if film_bool else 'Unet'))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -125,7 +123,6 @@ def cmd_train(context):
                                   slice_axis=axis_dct[context["slice_axis"]],
                                   transform=train_transform,
                                   multichannel=context['multichannel'],
-                                  missing_modality=context['missing_modality'],
                                   slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     if film_bool:  # normalize metadata before sending to the network
@@ -156,7 +153,6 @@ def cmd_train(context):
                                 contrast_balance=context["contrast_balance"],
                                 slice_axis=axis_dct[context["slice_axis"]],
                                 transform=val_transform,
-                                missing_modality=context['missing_modality'],
                                 multichannel=context['multichannel'],
 
                                 slice_filter_fn=SliceFilter(**context["slice_filter"]))
@@ -185,17 +181,12 @@ def cmd_train(context):
         in_channel = 1
         if context['multichannel']:
             in_channel = len(context['contrast_train_validation'])
-        if context["missing_modality"]:
-            model = models.HeMISUnet(modalities=context['contrast_train_validation'],
-                                     depth=context['depth'],
-                                     drop_rate=context["dropout_rate"],
-                                     bn_momentum=context["batch_norm_momentum"])
-        else:
-            model = models.Unet(in_channel=in_channel,
-                                out_channel=context['out_channel'],
-                                depth=context['depth'],
-                                drop_rate=context["dropout_rate"],
-                                bn_momentum=context["batch_norm_momentum"])
+
+        model = models.Unet(in_channel=in_channel,
+                            out_channel=context['out_channel'],
+                            depth=context['depth'],
+                            drop_rate=context["dropout_rate"],
+                            bn_momentum=context["batch_norm_momentum"])
 
     if cuda_available:
         model.cuda()
@@ -564,8 +555,7 @@ def cmd_test(context):
                                  slice_axis=axis_dct[context["slice_axis"]],
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter(**context["slice_filter"]),
-                                 multichannel=context["multichannel"],
-                                 missing_modality=context["missing_modality"])
+                                 multichannel=context["multichannel"])
 
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load("./" + context["log_directory"] + "/clustering_models.joblib")
