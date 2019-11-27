@@ -6,6 +6,7 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
+from medicaltorch.filters import SliceFilter
 from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
 
@@ -31,7 +32,8 @@ def _cmpt_slice(ds_loader, gt_roi='gt'):
             cmpt_sample += 1
     print(cmpt_label)
 
-def test_slice_filter():
+def test_slice_filter_center():
+    """Test SliceFilter when using mt_transforms.CenterCrop2D."""
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if cuda_available:
@@ -40,13 +42,13 @@ def test_slice_filter():
 
     training_transform_list = [
         ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
-        mt_transforms.CenterCrop2D(size=[250, 250])
+        mt_transforms.CenterCrop2D(size=[100, 100])
     ]
     train_transform = transforms.Compose(training_transform_list)
 
     train_lst = ['sub-bwh025']
-    roi_lst = ['_seg-manual', None]
-    empty_input_lst = [True, False]
+    roi_lst = [None]
+    empty_input_lst = [True]
     empty_mask_lst = [True, False]
     param_lst_lst = [roi_lst, empty_input_lst, empty_mask_lst]
     for roi, empty_input, empty_mask in list(itertools.product(*param_lst_lst)):
@@ -63,6 +65,53 @@ def test_slice_filter():
                                       multichannel=False,
                                       slice_filter_fn=SliceFilter(filter_empty_input=empty_input,
                                                                   filter_empty_mask=empty_mask))
+
+        print('\tNumber of loaded slices: {}'.format(len(ds_train)))
+        train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
+                                      shuffle=True, pin_memory=True,
+                                      collate_fn=mt_datasets.mt_collate,
+                                      num_workers=0)
+        print('\tNumber of Neg/Pos slices in GT.')
+        _cmpt_slice(train_loader, 'gt')
+
+
+def test_slice_filter_roi():
+    """Test SliceFilter when using ivadomed_transforms.ROICrop2D."""
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    cuda_available = torch.cuda.is_available()
+    if cuda_available:
+        torch.cuda.set_device(GPU_NUMBER)
+        print("Using GPU number {}".format(GPU_NUMBER))
+
+    training_transform_list = [
+        ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
+        ivadomed_transforms.ROICrop2D(size=[100, 100])
+    ]
+    train_transform = transforms.Compose(training_transform_list)
+
+    train_lst = ['sub-bwh025']
+    roi_lst = ['_seg-manual']
+    empty_input_lst = [True]
+    empty_mask_lst = [True, False]
+    param_lst_lst = [roi_lst, empty_input_lst, empty_mask_lst]
+    for roi, empty_input, empty_mask in list(itertools.product(*param_lst_lst)):
+        print('\nROI: {}, Empty Input: {}, Empty Mask: {}'.format(roi, empty_input, empty_mask))
+        ds_train = loader.BidsDataset(PATH_BIDS,
+                                      subject_lst=train_lst,
+                                      target_suffix="_lesion-manual",
+                                      roi_suffix=roi,
+                                      contrast_lst=['acq-ax_T2w'],
+                                      metadata_choice="without",
+                                      contrast_balance={},
+                                      slice_axis=2,
+                                      transform=train_transform,
+                                      multichannel=False,
+                                      slice_filter_fn=SliceFilter(filter_empty_input=empty_input,
+                                                                  filter_empty_mask=empty_mask))
+
+        print('\tNumber of loaded slices before filtering ROI: {}'.format(len(ds_train)))
+        ds_train.filter_roi(nb_nonzero_thr=10)
+
         print('\tNumber of loaded slices: {}'.format(len(ds_train)))
         train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                                       shuffle=True, pin_memory=True,
