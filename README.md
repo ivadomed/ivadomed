@@ -63,7 +63,7 @@ Please find below a description of each parameter:
 - `film_layers`: indicates on which layer(s) of the U-net you want to apply a FiLM modulation: list of 8 elements (because Unet has 8 layers),$
 - `depth`: number of down-sampling operations.
 - `out_channel`: number of segmentation class.
-- `missing_modality`: ot use HeMIS-U-Net (choice: `false` or `true`).
+- `missing_modality`: to use HeMIS-U-Net (choice: `false` or `true`).
 - `metadata`: choice between `"without"`, `"mri_params"`, and `"contrast"`.
 If `"mri_params"`, then vectors of [FlipAngle, EchoTime, RepetitionTime, Manufacturer] are input to the FiLM generator. If `"contrast"`, then image contrasts (according to `config/contrast_dct.json`) are input to the FiLM generator. Notes:
     - If `"mri_params"`, then only images with TR, TE, FlipAngle, and Manufaturer available info are included.
