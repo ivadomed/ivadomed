@@ -60,7 +60,9 @@ def test_sampler():
                                   slice_axis=2,
                                   transform=train_transform,
                                   multichannel=False,
-                                  slice_filter_fn=SliceFilter(nb_nonzero_thr=10))
+                                  slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=False))
+
+    ds_train.filter_roi(nb_nonzero_thr=10)
 
     print('\nLoading without sampling')
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
