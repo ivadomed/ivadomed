@@ -4,6 +4,7 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
+from medicaltorch.filters import SliceFilter
 from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
 
@@ -15,7 +16,7 @@ cudnn.benchmark = True
 
 GPU_NUMBER = 0
 BATCH_SIZE = 8
-PATH_BIDS = '../duke/projects/ivado-medical-imaging/testing_data/lesion_data/'
+PATH_BIDS = 'testing_data/'
 
 def _cmpt_label(ds_loader):
     cmpt_label, cmpt_sample = {0: 0, 1: 0}, 0
@@ -47,19 +48,21 @@ def test_sampler():
     ]
     train_transform = transforms.Compose(training_transform_list)
 
-    train_lst = ['sub-bwh025']
+    train_lst = ['sub-test001']
 
     ds_train = loader.BidsDataset(PATH_BIDS,
                                   subject_lst=train_lst,
                                   target_suffix="_lesion-manual",
                                   roi_suffix="_seg-manual",
-                                  contrast_lst=['acq-sagstir_T2w'], #['acq-ax_T2w'],
+                                  contrast_lst=['T2w'],
                                   metadata_choice="without",
                                   contrast_balance={},
                                   slice_axis=2,
                                   transform=train_transform,
                                   multichannel=False,
-                                  slice_filter_fn=SliceFilter(nb_nonzero_thr=10))
+                                  slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=False))
+
+    ds_train.filter_roi(nb_nonzero_thr=10)
 
     print('\nLoading without sampling')
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
