@@ -46,7 +46,7 @@ def test_slice_filter_center():
     ]
     train_transform = transforms.Compose(training_transform_list)
 
-    train_lst = ['sub-bwh025']
+    train_lst = ['sub-test001']
     roi_lst = [None]
     empty_input_lst = [True]
     empty_mask_lst = [True, False]
@@ -57,7 +57,7 @@ def test_slice_filter_center():
                                       subject_lst=train_lst,
                                       target_suffix="_lesion-manual",
                                       roi_suffix=roi,
-                                      contrast_lst=['acq-ax_T2w'],
+                                      contrast_lst=['T2w'],
                                       metadata_choice="without",
                                       contrast_balance={},
                                       slice_axis=2,
@@ -89,7 +89,7 @@ def test_slice_filter_roi():
     ]
     train_transform = transforms.Compose(training_transform_list)
 
-    train_lst = ['sub-bwh025']
+    train_lst = ['sub-test001']
     roi_lst = ['_seg-manual']
     empty_input_lst = [True]
     empty_mask_lst = [True, False]
@@ -100,7 +100,7 @@ def test_slice_filter_roi():
                                       subject_lst=train_lst,
                                       target_suffix="_lesion-manual",
                                       roi_suffix=roi,
-                                      contrast_lst=['acq-ax_T2w'],
+                                      contrast_lst=['T2w'],
                                       metadata_choice="without",
                                       contrast_balance={},
                                       slice_axis=2,

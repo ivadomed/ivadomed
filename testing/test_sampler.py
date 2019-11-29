@@ -48,13 +48,13 @@ def test_sampler():
     ]
     train_transform = transforms.Compose(training_transform_list)
 
-    train_lst = ['sub-bwh025']
+    train_lst = ['sub-test001']
 
     ds_train = loader.BidsDataset(PATH_BIDS,
                                   subject_lst=train_lst,
                                   target_suffix="_lesion-manual",
                                   roi_suffix="_seg-manual",
-                                  contrast_lst=['acq-sagstir_T2w'], #['acq-ax_T2w'],
+                                  contrast_lst=['T2w'],
                                   metadata_choice="without",
                                   contrast_balance={},
                                   slice_axis=2,
