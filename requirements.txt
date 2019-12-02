@@ -9,5 +9,6 @@ tensorboard
 torch==1.2.0
 torchvision==0.2.1
 tqdm>=4.30
+future
 
 medicaltorch@git+https://github.com/neuropoly/medicaltorch@master
