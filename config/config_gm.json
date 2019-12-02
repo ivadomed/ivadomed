@@ -2,6 +2,7 @@
 	"command": "train",
 	"gpu": 4,
 	"target_suffix": "_seg-manual",
+	"roi_suffix": null,
 	"bids_path": "../duke/projects/ivado-medical-imaging/gm_challenge_16",
 	"random_seed": 1313,
     "contrast_train_validation": ["T2star"],
