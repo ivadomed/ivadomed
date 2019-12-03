@@ -94,6 +94,9 @@ def test_film_contrast(film_layers=FILM_LAYERS):
             if cuda_available:
                 var_input = input_samples.cuda()
                 var_gt = gt_samples.cuda(non_blocking=True)
+            else:
+                var_input = input_samples
+                var_gt = gt_samples
 
             sample_metadata = batch["input_metadata"]
             var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in range(len(sample_metadata))]
@@ -177,6 +180,9 @@ def test_unet():
             if cuda_available:
                 var_input = input_samples.cuda()
                 var_gt = gt_samples.cuda(non_blocking=True)
+            else:
+                var_input = input_samples
+                var_gt = gt_samples
 
             preds = model(var_input)
 
