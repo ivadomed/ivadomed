@@ -75,7 +75,8 @@ def test_film_contrast(film_layers=FILM_LAYERS):
                                film_bool=film_layers,
                                drop_rate=DROPOUT,
                                bn_momentum=BN)
-    model.cuda()
+    if torch.cuda.is_available():
+        model.cuda()
 
     step_scheduler_batch = False
     optimizer = optim.Adam(model.parameters(), lr=INIT_LR)
@@ -157,7 +158,8 @@ def test_unet():
                         depth=2,
                         drop_rate=DROPOUT,
                         bn_momentum=BN)
-    model.cuda()
+    if torch.cuda.is_available():
+        model.cuda()
 
     step_scheduler_batch = False
     optimizer = optim.Adam(model.parameters(), lr=INIT_LR)
