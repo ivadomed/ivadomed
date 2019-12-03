@@ -75,7 +75,7 @@ def test_film_contrast(film_layers=FILM_LAYERS):
                                film_bool=film_layers,
                                drop_rate=DROPOUT,
                                bn_momentum=BN)
-    if torch.cuda.is_available():
+    if cuda_available:
         model.cuda()
 
     step_scheduler_batch = False
@@ -91,9 +91,9 @@ def test_film_contrast(film_layers=FILM_LAYERS):
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
-
-            var_input = input_samples.cuda()
-            var_gt = gt_samples.cuda(non_blocking=True)
+            if cuda_available:
+                var_input = input_samples.cuda()
+                var_gt = gt_samples.cuda(non_blocking=True)
 
             sample_metadata = batch["input_metadata"]
             var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in range(len(sample_metadata))]
@@ -174,8 +174,9 @@ def test_unet():
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
-            var_input = input_samples.cuda()
-            var_gt = gt_samples.cuda(non_blocking=True)
+            if cuda_available:
+                var_input = input_samples.cuda()
+                var_gt = gt_samples.cuda(non_blocking=True)
 
             preds = model(var_input)
 
