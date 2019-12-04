@@ -64,7 +64,7 @@ Please find below a description of each parameter:
 #### Network architecture
 - `film_layers`: indicates on which layer(s) of the U-net you want to apply a FiLM modulation: list of 8 elements (because Unet has 8 layers),$
 - `depth`: number of down-sampling operations.
-- `multichannel`: List of image modalities, one per channel.`false` if mono-channel network.
+- `multichannel`: List of image modalities, one per channel.`[]` if mono-channel network.
 - `out_channel`: number of segmentation class.
 - `missing_modality`: to use HeMIS-U-Net (choice: `false` or `true`).
 - `metadata`: choice between `"without"`, `"mri_params"`, and `"contrast"`.
