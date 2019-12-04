@@ -15,7 +15,7 @@ import json
 import logging
 import pandas as pd
 import sys
-import torch.multiprocessing as mp
+import multiprocessing as mp
 #import time
 
 from ivadomed import main as ivado
@@ -25,6 +25,7 @@ from itertools import product
 LOG_FILENAME = 'log.txt'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 
+gpus_available = mp.Queue()
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -36,13 +37,9 @@ def get_parser():
 
 
 def worker(config):
-    #current = mp.current_process()
-    #ID of process used to assign a GPU
-    #ID = int(current.name[-1]) - 1
 
     #Use GPU i from the array specified in the config file
-    #config["gpu"] = config["gpu"][ID]
-    config["gpu"] = queue.get()
+    config["gpu"] = gpus_available.get()
 
     #Call ivado cmd_train
     try:
@@ -57,7 +54,7 @@ def worker(config):
     config_copy = open(config["log_directory"] + "/config.json","w")
     json.dump(config, config_copy, indent=4)
 
-    queue.put(config["gpu"])
+    gpus_available.put(config["gpu"])
     return config["log_directory"], best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
 
@@ -190,11 +187,11 @@ if __name__ == '__main__':
     mp.set_start_method('spawn')
 
     #Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
-    gpus_available = mp.Queue()
+
     for gpu in initial_config["gpu"]:
         gpus_available.put(gpu)
 
-    pool = mp.pool.ThreadPool(processes = len(gpus_available))
+    pool = mp.pool.ThreadPool(processes = len(initial_config["gpu"]))
     validation_scores = pool.map(worker,config_list)
 
 
