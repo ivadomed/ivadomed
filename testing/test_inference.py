@@ -81,9 +81,9 @@ def test_inference(film_bool=False):
                              num_workers=1)
 
     if film_bool:
-        model = torch.load(os.path.join(PATH_BIDS, "model_film_test.pt"))
+        model = torch.load(PATH_BIDS + "model_film_test.pt")
     else:
-        model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt"))
+        model = torch.load(PATH_BIDS + "model_unet_test.pt")
 
     if cuda_available:
         model.cuda()
