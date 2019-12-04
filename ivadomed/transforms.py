@@ -15,6 +15,16 @@ def get_transform_names():
     return ['DilateGT', 'ROICrop2D', 'Resample']
 
 
+class UndoCompose(object):
+    def __init__(self, compose):
+        self.transforms = compose.transforms
+
+    def __call__(self, img):
+        for t in self.transforms:
+            img = t.undo_transform(img)
+        return img
+
+
 class Resample(mt_transforms.Resample):
     """This class extends mt_transforms.Resample:
         resample the ROI image if provided."""
