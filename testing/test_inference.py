@@ -128,10 +128,12 @@ def test_inference(film_bool=False):
                 preds = model(test_input)
 
         rdict = {}
-        rdict['pred'] = preds
+        # WARNING: sample['gt'] is actually the pred in the return sample
+        # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
+        rdict['gt'] = preds.cpu()
         batch.update(rdict)
         sample_lst = []
-        for smp_idx in range(len(batch['pred'])):
+        for smp_idx in range(len(batch['gt'])):
             rdict = {}
             for k in batch.keys():
                 rdict[k] = batch[k][smp_idx]
