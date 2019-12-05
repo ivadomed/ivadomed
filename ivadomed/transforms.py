@@ -21,7 +21,6 @@ class UndoCompose(object):
 
     def __call__(self, img):
         for t in self.transforms[::-1]:
-            print(t)
             img = t.undo_transform(img)
         return img
 
@@ -51,8 +50,7 @@ class Resample(mt_transforms.Resample):
         sample_undo_res = self.__call__(sample)
         # reset wspace and hspace
         self.wspace, self.hspace = wspace_, hspace_
-        print(sample_undo_res['pred'].shape, sample['pred'].shape)
-        print(sample_undo_res['input'].shape, sample['input'].shape)
+
         return sample_undo_res
 
     def __call__(self, sample):
@@ -69,7 +67,7 @@ class Resample(mt_transforms.Resample):
 
         hshape_new = int(hshape * hfactor)
         wshape_new = int(wshape * wfactor)
-        print(type(input_data))
+
         input_data = input_data.resize((wshape_new, hshape_new),
                                        resample=self.interpolation)
         rdict['input'] = input_data
@@ -89,13 +87,13 @@ class Resample(mt_transforms.Resample):
 class NormalizeInstance(mt_transforms.NormalizeInstance):
     """This class extends mt_transforms.Normalize"""
     def undo_transform(self, sample):
-        pass
+        return sample
 
 
 class ToTensor(mt_transforms.ToTensor):
     """This class extends mt_transforms.ToTensor"""
     def undo_transform(self, sample):
-        return mt_transforms.ToPIL(sample)
+        return mt_transforms.ToPIL()(sample)
 
 
 class ROICrop2D(mt_transforms.CenterCrop2D):
@@ -139,9 +137,6 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
 
         sample.update(rdict)
         return sample
-
-    def undo_transform(self, sample):  # not implemented yet, todo
-        pass
 
 
 class DilateGT(mt_transforms.MTTransform):
