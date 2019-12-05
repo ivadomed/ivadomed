@@ -2,7 +2,7 @@ import numpy as np
 import time
 
 import torch.backends.cudnn as cudnn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, dataloader
 from torchvision import transforms
 
 from medicaltorch.filters import SliceFilter
@@ -41,10 +41,11 @@ def test_inference(film_bool=False):
         ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
         ivadomed_transforms.ROICrop2D(size=[48, 48]),
         mt_transforms.ToTensor(),
-        mt_transforms.NormalizeInstance()
+        ivadomed_transforms.NormalizeInstance()
     ]
 
     val_transform = transforms.Compose(validation_transform_list)
+    val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
 
     test_lst = ['sub-test001']
 
@@ -99,8 +100,14 @@ def test_inference(film_bool=False):
 
     metric_mgr = IvadoMetricManager(metric_fns)
 
+    fname_img = ''
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
+        print(batch['input_metadata'][0]['zooms'], batch['input_metadata'][0]['data_shape'])
+
+        # if batch['input_metadata'][0]['input_filename']
+        # print(batch['input_metadata'][0]['input_filename'])
+        # print(batch['input_metadata'][0]['slice_index'])
 
         with torch.no_grad():
             if cuda_available:
@@ -119,6 +126,17 @@ def test_inference(film_bool=False):
                 preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
             else:
                 preds = model(test_input)
+
+        rdict = {}
+        rdict['pred'] = preds
+        batch.update(rdict)
+        sample_lst = []
+        for smp_idx in range(len(batch['pred'])):
+            rdict = {}
+            for k in batch.keys():
+                rdict[k] = batch[k][smp_idx]
+            rdict_undo = val_undo_transform(rdict)
+            sample_lst.append(rdict_undo)
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
