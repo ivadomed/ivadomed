@@ -100,7 +100,7 @@ def test_inference(film_bool=False):
 
     metric_mgr = IvadoMetricManager(metric_fns)
 
-    pred_tmp_lst, z_tmp_lst = [], []
+    pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
 
@@ -137,18 +137,20 @@ def test_inference(film_bool=False):
             rdict_undo = val_undo_transform(rdict)
 
             fname_ref = rdict_undo['input_metadata']['gt_filename']
-            if pred_tmp_lst and fname_ref != pred_tmp_lst[-1]['input_metadata']['gt_filename']:  # new processed file
+            if pred_tmp_lst and fname_ref != fname_tmp:  # new processed file
                 # save the completely processed file as a nii
-                fname_pred = 'XX'  # TODO
+                fname_pred = fname_ref.split('manual.nii.gz')[0] + 'pred.nii.gz'
+                print(fname_pred)
                 save_nii(pred_tmp_lst, z_tmp_lst, fname_ref, fname_pred)
                 # re-init pred_stack_lst
                 pred_stack_lst, z_tmp_lst = [], []
                 # compute image-based metrics
                 # TODO
 
-            # add new sample to pred_stack_lst
+            # add new sample to pred_tmp_lst
             pred_tmp_lst.append(np.array(rdict_undo['gt']))
             z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
+            fname_tmp = fname_ref
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
