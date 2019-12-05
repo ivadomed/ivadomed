@@ -12,7 +12,7 @@ from medicaltorch import transforms as mt_transforms
 def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
        from the mt_transforms."""
-    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance']
+    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor']
 
 
 class UndoCompose(object):
@@ -90,6 +90,12 @@ class NormalizeInstance(mt_transforms.NormalizeInstance):
     """This class extends mt_transforms.Normalize"""
     def undo_transform(self, sample):
         pass
+
+
+class ToTensor(mt_transforms.ToTensor):
+    """This class extends mt_transforms.ToTensor"""
+    def undo_transform(self, sample):
+        return mt_transforms.ToPIL(sample)
 
 
 class ROICrop2D(mt_transforms.CenterCrop2D):
