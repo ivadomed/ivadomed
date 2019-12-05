@@ -33,6 +33,10 @@ class IvadoMetricManager(mt_metrics.MetricManager):
         return res_dict
 
 
+def save(data_lst, z_lst, fname_ref, fname_out):
+    pass
+
+
 def dice_score(im1, im2):
     """
     Computes the Dice coefficient between im1 and im2.
