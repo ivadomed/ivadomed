@@ -24,6 +24,7 @@ GPU_NUMBER = 5
 BATCH_SIZE = 8
 DROPOUT = 0.4
 BN = 0.1
+SLICE_AXIS = 2
 PATH_BIDS = 'testing_data/'
 PATH_OUT = PATH_BIDS + 'tmp/'
 
@@ -57,7 +58,7 @@ def test_inference(film_bool=False):
                                   contrast_lst=['T2w', 'T2star'],
                                   metadata_choice="contrast",
                                   contrast_balance={},
-                                  slice_axis=2,
+                                  slice_axis=SLICE_AXIS,
                                   transform=val_transform,
                                   multichannel=False,
                                   slice_filter_fn=SliceFilter(filter_empty_input=True,
@@ -142,8 +143,7 @@ def test_inference(film_bool=False):
                 # save the completely processed file as a nii
                 fname_pred = PATH_OUT + fname_tmp.split('/')[-1]
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
-                print(fname_pred)
-#                save_nii(pred_tmp_lst, z_tmp_lst, fname_ref, fname_pred)
+                save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred)
                 # re-init pred_stack_lst
                 pred_stack_lst, z_tmp_lst = [], []
                 # compute image-based metrics
