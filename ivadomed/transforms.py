@@ -20,7 +20,7 @@ class UndoCompose(object):
         self.transforms = compose.transforms
 
     def __call__(self, img):
-        for t in self.transforms:
+        for t in self.transforms[::-1]:
             print(t)
             img = t.undo_transform(img)
         return img
