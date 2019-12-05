@@ -33,6 +33,10 @@ def get_parser():
     parser.add_argument("-c", "--config", required=True, help="Base config file path.")
     parser.add_argument("--all-combin", dest='all_combin', action='store_true',
                         help="To run all combinations of config")
+    parser.add_argument("--processes", dest='processes', action='store_true',
+                        help="Use processes instead of threads")
+
+    parser.set_defaults(processes=False)
     parser.set_defaults(all_combin=False)
 
     return parser
@@ -40,7 +44,7 @@ def get_parser():
 
 def worker(config):
 
-    # Use GPU i from the array specified in the config file
+    # Use an available GPU from the queue
     config["gpu"] = gpus_available.get()
 
     # Call ivado cmd_train
@@ -185,7 +189,11 @@ if __name__ == '__main__':
         gpus_available.put(gpu)
 
     # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
-    pool = mp.pool.ThreadPool(processes=len(initial_config["gpu"]))
+    if args.processes:
+        mp.set_start_method('spawn')
+        pool = mp.Pool(processes=len(initial_config["gpu"]))
+    else:
+        pool = mp.pool.ThreadPool(processes=len(initial_config["gpu"]))
     validation_scores = pool.map(worker, config_list)
 
     # Merge config and results in a df
