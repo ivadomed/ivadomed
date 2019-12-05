@@ -40,7 +40,7 @@ def test_inference(film_bool=False):
     validation_transform_list = [
         ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
         ivadomed_transforms.ROICrop2D(size=[48, 48]),
-        mt_transforms.ToTensor(),
+        ivadomed_transforms.ToTensor(),
         ivadomed_transforms.NormalizeInstance()
     ]
 
