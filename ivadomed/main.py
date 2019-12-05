@@ -124,7 +124,7 @@ def cmd_train(context):
                                   contrast_balance=context["contrast_balance"],
                                   slice_axis=axis_dct[context["slice_axis"]],
                                   transform=train_transform,
-                                  multichannel=context['multichannel'],
+                                  multichannel=True if context['multichannel'] else False,
                                   slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
@@ -166,8 +166,7 @@ def cmd_train(context):
                                 contrast_balance=context["contrast_balance"],
                                 slice_axis=axis_dct[context["slice_axis"]],
                                 transform=val_transform,
-                                multichannel=context['multichannel'],
-
+                                multichannel=True if context['multichannel'] else False,
                                 slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
@@ -204,7 +203,7 @@ def cmd_train(context):
         # Traditional U-Net model
         in_channel = 1
         if context['multichannel']:
-            in_channel = len(context['contrast_train_validation'])
+            in_channel = len(context['multichannel'])
 
         model = models.Unet(in_channel=in_channel,
                             out_channel=context['out_channel'],
@@ -580,7 +579,7 @@ def cmd_test(context):
                                  slice_axis=axis_dct[context["slice_axis"]],
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter(**context["slice_filter"]),
-                                 multichannel=context["multichannel"])
+                                 multichannel=True if context["multichannel"] else False)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
