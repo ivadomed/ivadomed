@@ -21,7 +21,7 @@
     "mixup_bool": false,
     "mixup_alpha": 2,
     "metadata": "contrast",
-    "multichannel": true,
+    "multichannel": ["acq-inf_T2star", "acq-sup_T2star"],
     "missing_modality": false,
     "out_channel": 1,
     "depth": 3,

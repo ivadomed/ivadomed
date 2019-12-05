@@ -45,9 +45,9 @@ Please find below a description of each parameter:
 - `roi_suffix`: suffix of the derivative file containing the ROI used to crop (e.g. `"_seg-manual"`) with `ROICrop2D` as transform. Please use `null` if you do not want to use a ROI to crop (ie use `CenterCrop2D`).
 - `bids_path`: relative path of the BIDS folder.
 - `random_seed`: seed used by the random number generator to split the dataset between training/validation/testing.
-- `contrast_train_validation`: list of image modalities included in the training and validation datasets.
+- `contrast_train_validation`: list of image modalities loaded for the training and validation. If multichannel network approach, please use this list for the `multichannel` parameter.
 - `contrast_balance`: used to under-represent some modalities in the dataset (e.g. `{"T1w": 0.1}` will include only 10% of the available `T1w` images into the training/validation/test set).
-- `contrast_test`: list of image modalities included in the testing dataset.
+- `contrast_test`: list of image modalities loaded in the testing dataset. If multichannel network approach, please use this list for the `multichannel` parameter.
 - `batch_size`: int.
 - `dropout_rate`: float (e.g. 0.4).
 - `batch_norm_momentum`: float (e.g. 0.1).
@@ -64,6 +64,7 @@ Please find below a description of each parameter:
 #### Network architecture
 - `film_layers`: indicates on which layer(s) of the U-net you want to apply a FiLM modulation: list of 8 elements (because Unet has 8 layers),$
 - `depth`: number of down-sampling operations.
+- `multichannel`: List of image modalities, one per channel.`[]` if mono-channel network.
 - `out_channel`: number of segmentation class.
 - `missing_modality`: to use HeMIS-U-Net (choice: `false` or `true`).
 - `metadata`: choice between `"without"`, `"mri_params"`, and `"contrast"`.
