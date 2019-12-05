@@ -143,7 +143,7 @@ def test_inference(film_bool=False):
                 # save the completely processed file as a nii
                 fname_pred = PATH_OUT + fname_tmp.split('/')[-1]
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
-                save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred)
+                save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS)
                 # re-init pred_stack_lst
                 pred_stack_lst, z_tmp_lst = [], []
                 # compute image-based metrics
