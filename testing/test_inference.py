@@ -100,14 +100,9 @@ def test_inference(film_bool=False):
 
     metric_mgr = IvadoMetricManager(metric_fns)
 
-    fname_img = ''
+    pred_tmp_lst = {}
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
-        print(batch['input_metadata'][0]['zooms'], batch['input_metadata'][0]['data_shape'])
-
-        # if batch['input_metadata'][0]['input_filename']
-        # print(batch['input_metadata'][0]['input_filename'])
-        # print(batch['input_metadata'][0]['slice_index'])
 
         with torch.no_grad():
             if cuda_available:
@@ -127,18 +122,32 @@ def test_inference(film_bool=False):
             else:
                 preds = model(test_input)
 
-        rdict = {}
         # WARNING: sample['gt'] is actually the pred in the return sample
         # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
+        rdict = {}
         rdict['gt'] = preds.cpu()
         batch.update(rdict)
-        sample_lst = []
+
+        # reconstruct 3D image
         for smp_idx in range(len(batch['gt'])):
+            # undo transformations
             rdict = {}
             for k in batch.keys():
                 rdict[k] = batch[k][smp_idx]
             rdict_undo = val_undo_transform(rdict)
-            sample_lst.append(rdict_undo)
+
+            fname_ref = rdict_undo['input_metadata']['gt_filename']
+            if fname_ref != pred_tmp_lst[-1]['input_metadata']['gt_filename']:  # new processed file
+                # save the completely processed file as a nii
+                fname_pred = 'XX'  # TODO
+                save_nii(pred_tmp_lst, fname_pred)
+                # re-init pred_tmp_lst
+                pred_tmp_lst = []
+                # compute image-based metrics
+                # TODO
+
+            # add new sample to pred_tmp_lst
+            pred_tmp_lst.append(rdict_undo)
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
