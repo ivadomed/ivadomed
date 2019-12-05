@@ -25,6 +25,7 @@ BATCH_SIZE = 8
 DROPOUT = 0.4
 BN = 0.1
 PATH_BIDS = 'testing_data/'
+PATH_OUT = PATH_BIDS + 'tmp/'
 
 def test_inference(film_bool=False):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -137,11 +138,12 @@ def test_inference(film_bool=False):
             rdict_undo = val_undo_transform(rdict)
 
             fname_ref = rdict_undo['input_metadata']['gt_filename']
-            if pred_tmp_lst and fname_ref != fname_tmp:  # new processed file
+            if pred_tmp_lst and (fname_ref != fname_tmp or (i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
                 # save the completely processed file as a nii
-                fname_pred = fname_ref.split('manual.nii.gz')[0] + 'pred.nii.gz'
+                fname_pred = PATH_OUT + fname_tmp.split('/')[-1]
+                fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
                 print(fname_pred)
-                save_nii(pred_tmp_lst, z_tmp_lst, fname_ref, fname_pred)
+#                save_nii(pred_tmp_lst, z_tmp_lst, fname_ref, fname_pred)
                 # re-init pred_stack_lst
                 pred_stack_lst, z_tmp_lst = [], []
                 # compute image-based metrics
