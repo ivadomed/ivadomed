@@ -3,7 +3,7 @@ from medicaltorch import datasets as mt_datasets
 
 from sklearn.preprocessing import OneHotEncoder
 from scipy.signal import argrelextrema
-from sklearn.neighbors.kde import KernelDensity
+from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 
