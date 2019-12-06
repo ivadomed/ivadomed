@@ -601,7 +601,7 @@ def cmd_test(context):
 
     print(f"Loaded {len(ds_test)} {context['slice_axis']} slices for the test set.")
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
-                             shuffle=True, pin_memory=True,
+                             shuffle=False, pin_memory=True,
                              collate_fn=mt_datasets.mt_collate,
                              num_workers=0)
 
@@ -665,16 +665,17 @@ def cmd_test(context):
             fname_ref = rdict_undo['input_metadata']['gt_filename']
             if pred_tmp_lst and (fname_ref != fname_tmp or (i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
                 # save the completely processed file as a nii
-                fname_pred = path_3Dpred + fname_tmp.split('/')[-1]
+                fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
-                save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS)
+                print(fname_pred)
+                save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, axis_dct[context['slice_axis']])
                 # re-init pred_stack_lst
                 pred_stack_lst, z_tmp_lst = [], []
 
-        # add new sample to pred_tmp_lst
-        pred_tmp_lst.append(np.array(rdict_undo['gt']))
-        z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
-        fname_tmp = fname_ref
+            # add new sample to pred_tmp_lst
+            pred_tmp_lst.append(np.array(rdict_undo['gt']))
+            z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
+            fname_tmp = fname_ref
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
