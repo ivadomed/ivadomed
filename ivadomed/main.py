@@ -564,6 +564,9 @@ def cmd_test(context):
 
     val_transform = transforms.Compose(validation_transform_list)
 
+    # inverse transformations
+    val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
+
     if context.get("split_path") is None:
         test_lst = joblib.load("./" + context["log_directory"] + "/split_datasets.joblib")['test']
     else:
@@ -571,7 +574,7 @@ def cmd_test(context):
 
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     ds_test = loader.BidsDataset(context["bids_path"],
-                                 subject_lst=test_lst,
+                                 subject_lst=test_lst[:2],
                                  target_suffix=context["target_suffix"],
                                  roi_suffix=context["roi_suffix"],
                                  contrast_lst=context["contrast_test"],
