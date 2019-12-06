@@ -608,6 +608,11 @@ def cmd_test(context):
         model.cuda()
     model.eval()
 
+    # create output folder for 3D prediction masks
+    path_3Dpred = os.path.join(context['log_directory'], 'pred_masks')
+    if not os.path.isdir(path_3Dpred):
+        os.makedirs(path_3Dpred)
+
     metric_fns = [dice_score,  # from ivadomed/utils.py
                   mt_metrics.hausdorff_score,
                   mt_metrics.precision_score,
@@ -639,6 +644,29 @@ def cmd_test(context):
                 preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
             else:
                 preds = model(test_input)
+
+        # WARNING: sample['gt'] is actually the pred in the return sample
+        # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
+        rdict = {}
+        rdict['gt'] = preds.cpu()
+        batch.update(rdict)
+
+        # reconstruct 3D image
+        for smp_idx in range(len(batch['gt'])):
+            # undo transformations
+            rdict = {}
+            for k in batch.keys():
+                rdict[k] = batch[k][smp_idx]
+            rdict_undo = val_undo_transform(rdict)
+
+            fname_ref = rdict_undo['input_metadata']['gt_filename']
+            if pred_tmp_lst and (fname_ref != fname_tmp or (i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
+                # save the completely processed file as a nii
+                fname_pred = path_3Dpred + fname_tmp.split('/')[-1]
+                fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
+                save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS)
+                # re-init pred_stack_lst
+                pred_stack_lst, z_tmp_lst = [], []
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
