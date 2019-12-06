@@ -355,8 +355,8 @@ def cmd_train(context):
             if i == 0:
                 # take only one modality for grid
                 if input_samples.shape[1] > 1:
-                    tensor = tensor[:, 0, :, :][:, None, :, :]
-                    tensor = torch.cat((tensor, tensor, tensor), 1)
+                    tensor = input_samples[:, 0, :, :][:, None, :, :]
+                    input_samples = torch.cat((tensor, tensor, tensor), 1)
                 grid_img = vutils.make_grid(input_samples,
                                             normalize=True,
                                             scale_each=True)
@@ -442,8 +442,8 @@ def cmd_train(context):
             if i == 0:
                 # take only one modality for grid
                 if input_samples.shape[1] > 1:
-                    tensor = tensor[:, 0, :, :][:, None, :, :]
-                    tensor = torch.cat((tensor, tensor, tensor), 1)
+                    tensor = input_samples[:, 0, :, :][:, None, :, :]
+                    input_samples = torch.cat((tensor, tensor, tensor), 1)
                 grid_img = vutils.make_grid(input_samples,
                                             normalize=True,
                                             scale_each=True)
