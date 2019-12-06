@@ -36,26 +36,27 @@ class IvadoMetricManager(mt_metrics.MetricManager):
 
 def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis):
     nib_ref = nib.load(fname_ref)
-    affine_ref = nib_ref.affine
     nib_ref_can = nib.as_closest_canonical(nib_ref)
 
     # complete missing z with zeros
     tmp_lst = []
-    for z in range(nib_ref_can.get_data_shape()[slice_axis]):
-        if z in z_lst:
+    for z in range(nib_ref_can.header.get_data_shape()[slice_axis]):
+        if not z in z_lst:
             tmp_lst.append(np.zeros(data_lst[0].shape))
         else:
             tmp_lst.append(data_lst[z_lst.index(z)])
 
-    # create RAS data
+    # create data
     data_arr = np.array(tmp_lst)
-    data_can = np.moveaxis(data_arr, 0, slice_axis)
-
+    # move axis according to slice_axis
+    data_arr = np.moveaxis(data_arr, 0, slice_axis)
     # convert to nii
-    nib_out = nib.Nifti1Image(data_orient, np.eye(4))  #affine_ref)
-    # necessary question
+    nib_out = nib.Nifti1Image(data_arr, np.eye(4))
+    # reorient to RAS
     nib_can = nib.as_closest_canonical(nib_out)
-    # todo save
+
+    # save
+    nib.save(nib_can, fname_out)
 
 
 def dice_score(im1, im2):
