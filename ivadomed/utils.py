@@ -47,16 +47,23 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis):
             tmp_lst.append(data_lst[z_lst.index(z)])
 
     # create data
-    data_arr = np.array(tmp_lst)
-    # move axis according to slice_axis
-    data_arr = np.moveaxis(data_arr, 0, slice_axis)
-    # convert to nii
-    nib_out = nib.Nifti1Image(data_arr, np.eye(4))
-    # reorient to RAS
-    nib_can = nib.as_closest_canonical(nib_out)
+    arr = np.stack(tmp_lst, axis=0)
+    # move axis according to slice_axis to RAS orientation
+    arr_ras = np.moveaxis(arr, 0, slice_axis)
+
+    # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
+    ref_orientation = nib.orientations.io_orientation(nib_ref.affine) #nib.axcodes2ornt(nib.aff2axcodes(nib_ref.affine))
+    ras_orientation = nib.orientations.io_orientation(nib_ref_can.affine) #nib.axcodes2ornt(nib.aff2axcodes(nib_ref_can.affine))
+    # Return the orientation that transforms from ras to ref_orientation
+    trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
+    # apply transformation
+    arr_pred_ref_space = nib.orientations.apply_orientation(arr_ras, trans_orient)
+    # create nii
+    nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
 
     # save
-    nib.save(nib_can, fname_out)
+    # TODO: save as original orientation
+    nib.save(nib_pred, fname_out)
 
 
 def dice_score(im1, im2):

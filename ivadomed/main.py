@@ -574,7 +574,7 @@ def cmd_test(context):
 
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     ds_test = loader.BidsDataset(context["bids_path"],
-                                 subject_lst=test_lst[:2],
+                                 subject_lst=test_lst,
                                  target_suffix=context["target_suffix"],
                                  roi_suffix=context["roi_suffix"],
                                  contrast_lst=context["contrast_test"],
@@ -667,10 +667,11 @@ def cmd_test(context):
                 # save the completely processed file as a nii
                 fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
-                print(fname_pred)
+                # WARNING: nii as RAS, TODO: save as original orientation
                 save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, axis_dct[context['slice_axis']])
                 # re-init pred_stack_lst
-                pred_stack_lst, z_tmp_lst = [], []
+                pred_tmp_lst, z_tmp_lst = [], []
+                # TODO compute image-based metrics
 
             # add new sample to pred_tmp_lst
             pred_tmp_lst.append(np.array(rdict_undo['gt']))
