@@ -618,6 +618,7 @@ def cmd_test(context):
 
     metric_mgr = IvadoMetricManager(metric_fns)
 
+    pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
 
