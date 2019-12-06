@@ -668,6 +668,11 @@ def cmd_test(context):
                 # re-init pred_stack_lst
                 pred_stack_lst, z_tmp_lst = [], []
 
+        # add new sample to pred_tmp_lst
+        pred_tmp_lst.append(np.array(rdict_undo['gt']))
+        z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
+        fname_tmp = fname_ref
+
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
         gt_npy = gt_npy.squeeze(axis=1)
