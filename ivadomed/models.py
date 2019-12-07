@@ -277,8 +277,7 @@ class FiLMEncoder(Module):
             x, w_film = self.film_bottom(x, context, None if 'w_film' not in locals() else w_film)
         features.append(x)
 
-        return features
-
+        return features, None if 'w_film' not in locals() else w_film
 
 class FiLMDecoder(Module):
     def __init__(self, n_metadata, film_bool, depth=3, drop_rate=0.4, bn_momentum=0.1):
@@ -306,16 +305,17 @@ class FiLMDecoder(Module):
         self.last_conv = nn.Conv2d(in_channel // 2, 1, kernel_size=3, padding=1)
         self.last_film = FiLMlayer(n_metadata, 1) if film_bool[-1] else None
 
-    def forward(self, features, context):
+    def forward(self, features, context, w_film):
         x = features[-1]
+
         for i in reversed(range(self.depth)):
             x = self.up_path[-(i + 1) * 2](x, features[i])
             if self.up_path[-(i + 1) * 2 + 1]:
-                x, w_film = self.up_path[-(i + 1) * 2 + 1](x, context, None if 'w_film' not in locals() else w_film)
+                x, w_film = self.up_path[-(i + 1) * 2 + 1](x, context, w_film)
 
         x = self.last_conv(x)
         if self.last_film:
-            x, w_film = self.last_film(x, context, None if 'w_film' not in locals() else w_film)
+            x, w_film = self.last_film(x, context, w_film)
         # Last convolution
         preds = torch.sigmoid(x)
         return preds
@@ -342,9 +342,9 @@ class FiLMedUnet(Module):
         # Downsampling path
 
     def forward(self, x, context):
-        features = self.encoder(x, context)
+        features, w_film = self.encoder(x, context)
 
-        preds = self.decoder(features, context)
+        preds = self.decoder(features, context, w_film)
 
         return preds
 
