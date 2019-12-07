@@ -24,11 +24,13 @@ cudnn.benchmark = True
 GPU_NUMBER = 5
 BATCH_SIZE = 8
 DROPOUT = 0.4
+DEPTH = 3
 BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01
 FILM_LAYERS = [0, 0, 0, 0, 0, 1, 1, 1]
 PATH_BIDS = 'testing_data/'
+
 
 def test_film_contrast(film_layers=FILM_LAYERS):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -72,10 +74,13 @@ def test_film_contrast(film_layers=FILM_LAYERS):
                               collate_fn=mt_datasets.mt_collate,
                               num_workers=1)
 
-    model = models.FiLMedUnet(n_metadata=len([ll for l in train_onehotencoder.categories_ for ll in l]),
-                               film_bool=film_layers,
-                               drop_rate=DROPOUT,
-                               bn_momentum=BN)
+    model = models.Unet(depth=DEPTH,
+                        film_layers=FILM_LAYERS,
+                        n_metadata=len([ll for l in train_onehotencoder.categories_ for ll in l]),
+                        drop_rate=DROPOUT,
+                        bn_momentum=BN,
+                        film_bool=True)
+
     if cuda_available:
         model.cuda()
 
@@ -263,4 +268,3 @@ def test_unet():
     print('Mean SD opt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
     print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
     print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
-
