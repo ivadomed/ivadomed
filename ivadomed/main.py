@@ -194,23 +194,24 @@ def cmd_train(context):
                             num_workers=0)
 
     if film_bool:
-        # Modulated U-net model with FiLM layers
-        model = models.FiLMedUnet(n_metadata=len([ll for l in train_onehotencoder.categories_ for ll in l]),
-                                  film_bool=context["film_layers"],
-                                  depth=context["depth"],
-                                  drop_rate=context["dropout_rate"],
-                                  bn_momentum=context["batch_norm_momentum"])
+        n_metadata = len([ll for l in train_onehotencoder.categories_ for ll in l])
     else:
-        # Traditional U-Net model
-        in_channel = 1
-        if context['multichannel']:
-            in_channel = len(context['multichannel'])
+        n_metadata = None
 
-        model = models.Unet(in_channel=in_channel,
-                            out_channel=context['out_channel'],
-                            depth=context['depth'],
-                            drop_rate=context["dropout_rate"],
-                            bn_momentum=context["batch_norm_momentum"])
+    # Traditional U-Net model
+    in_channel = 1
+
+    if context['multichannel']:
+        in_channel = len(context['multichannel'])
+
+    model = models.Unet(in_channel=in_channel,
+                        out_channel=context['out_channel'],
+                        depth=context['depth'],
+                        film_layers=context["film_layers"],
+                        n_metadata=n_metadata,
+                        drop_rate=context["dropout_rate"],
+                        bn_momentum=context["batch_norm_momentum"],
+                        film_bool=film_bool)
 
     if cuda_available:
         model.cuda()
