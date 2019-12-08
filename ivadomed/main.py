@@ -471,9 +471,17 @@ def cmd_train(context):
                 film_layers = context["film_layers"]
 
                 # Fill the lists of gammas and betas
+                depth = context["depth"]
                 for idx in [i for i, x in enumerate(film_layers) if x]:
-                    attr_stg = 'film' + str(idx)
-                    layer_cur = getattr(model, attr_stg)
+                    if idx < depth:
+                        layer_cur = model.encoder.down_path[idx * 3 + 1]
+                    elif idx == depth:
+                        layer_cur = model.encoder.film_bottom
+                    elif idx == depth * 2 + 1:
+                        layer_cur = model.decoder.last_film
+                    else:
+                        layer_cur = model.decoder.up_path[(idx - depth - 1) * 2 + 1]
+
                     gammas_dict[idx + 1].append(layer_cur.gammas[:, :, 0, 0].cpu().numpy())
                     betas_dict[idx + 1].append(layer_cur.betas[:, :, 0, 0].cpu().numpy())
 
