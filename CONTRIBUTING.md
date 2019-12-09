@@ -2,6 +2,17 @@
 
 # Contributing to IVADO Medical Imaging
 
+## Table of contents
+1. [Introduction](#introduction)
+2. [Opening an issue](#opening-an-issue)
+    1. [Before Submitting a New Issue](#before-submitting-a-new-issue)
+    2. [Submitting an Issue](#submitting-an-issue)
+3. [Contributing to IVADO Medical Imaging (Pull request)](#contributing-to-ivado-medical-imaging-pull-request)
+    1. [Opening a Branch](#opening-a-branch)
+    2. [Naming your Branch](#naming-your-branch)
+    3. [Developing](#developing)
+    4. [Committing](#committing)
+    5. [Submitting a Pull Request](#submitting-a-pull-request)
 
 
 ## Introduction 
