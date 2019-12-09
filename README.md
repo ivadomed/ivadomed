@@ -1,5 +1,5 @@
 ![](https://github.com/neuropoly/ivado-medical-imaging/workflows/Python%20package/badge.svg)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/neuropoly/ivado-medical-imaging/blob/cg/organize-repo/LICENSE.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 # IVADO Medical Imaging
 Comprehensive and open-source repository of deep learning methods for medical data segmentation.
 Collaboration between MILA and NeuroPoly for the IVADO project on medical imaging.
