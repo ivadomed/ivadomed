@@ -25,8 +25,13 @@ CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2,
+<<<<<<< HEAD
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, canonical=True, labeled=True,
                  roi_suffix=None, multichannel=False, missing_modality=False):
+=======
+                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None,
+                 canonical=True, labeled=True, roi_suffix=None, multichannel=False, missing_modality=False):
+>>>>>>> 972f964ee0e56f02abb2107abcc245fe2c26bad1
 
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
@@ -43,10 +48,15 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
             subjects_tot.append(str(subject.record["absolute_path"]))
 
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
+<<<<<<< HEAD
 
         tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast])
                for contrast in contrast_balance.keys()}
 
+=======
+        tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast]) for contrast in
+               contrast_balance.keys()}
+>>>>>>> 972f964ee0e56f02abb2107abcc245fe2c26bad1
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
 
