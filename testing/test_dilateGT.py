@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import time
 import sys
@@ -29,14 +30,12 @@ BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01
 PATH_BIDS = 'testing_data/'
-PATH_TMP = 'tmp_test_dilateGT/'
+PATH_OUT = 'tmp_test_dilateGT/'
 
 
 def save_im_gt(im, gt, fname_out):
     plt.figure()
-    plt.subplot(1, 2, 1)
-    plt.axis("off")
-
+    print(np.unique(gt))
     i_zero, i_nonzero = np.where(gt==0.0), np.nonzero(gt)
     img_jet = plt.cm.jet(plt.Normalize(vmin=0, vmax=1)(gt))
     img_jet[i_zero] = 0.0
@@ -44,11 +43,11 @@ def save_im_gt(im, gt, fname_out):
     img_out = np.copy(bkg_grey)
     img_out[i_nonzero] = img_jet[i_nonzero]
 
-    plt.subplot(1, 2, 1)
-    plt.axis("off")
-    plt.imshow(bkg_grey, interpolation='nearest', aspect='auto')
+#    plt.subplot(1, 2, 1)
+#    plt.axis("off")
+#    plt.imshow(bkg_grey, interpolation='nearest', aspect='auto')
 
-    plt.subplot(1, 2, 2)
+    plt.subplot(1, 1, 1)
     plt.axis("off")
     plt.imshow(img_out, interpolation='nearest', aspect='auto')
 
@@ -59,7 +58,7 @@ def save_im_gt(im, gt, fname_out):
 def test_dilateGT():
     training_transform_list = [
         ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
-        ivadomed_transforms.DilateGT(dilation_factor=2),
+        ivadomed_transforms.DilateGT(dilation_factor=1),
         ivadomed_transforms.ROICrop2D(size=[48, 48]),
         ivadomed_transforms.ToTensor()
     ]
@@ -79,8 +78,6 @@ def test_dilateGT():
                                   multichannel=False,
                                   slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=True))
 
-    ds_train.filter_roi(nb_nonzero_thr=10)
-
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
                               collate_fn=mt_datasets.mt_collate,
@@ -91,6 +88,9 @@ def test_dilateGT():
 
     for i, batch in enumerate(train_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
+        print(np.array(gt_samples).shape)
         for b_idx in range(len(batch['input'])):
             fname_out = os.path.join(PATH_OUT, 'im_'+str(i).zfill(2)+'_'+str(b_idx).zfill(2)+'.png')
-            save_im_gt(input_samples[b_idx], gt_samples[b_idx], fname_out)
+            save_im_gt(np.array(input_samples[b_idx, 0]),
+                        np.array(gt_samples[b_idx, 0]),
+                        fname_out)
