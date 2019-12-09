@@ -50,8 +50,8 @@ class Resample(mt_transforms.Resample):
         # undo image
         wshape, hshape = np.array(sample['input']).shape
         wzoom, hzoom = sample['input_metadata']['zooms']
-        wshape_undo = int(wshape * wzoom / self.wspace)
-        hshape_undo = int(hshape * hzoom / self.hspace)
+        wshape_undo = int(round(wshape * wzoom / self.wspace))
+        hshape_undo = int(round(hshape * hzoom / self.hspace))
         input_data_undo = sample['input'].resize((wshape_undo, hshape_undo),
                                                    resample=self.interpolation)
         rdict['input'] = input_data_undo
@@ -59,8 +59,8 @@ class Resample(mt_transforms.Resample):
         # undo pred, aka GT
         wshape, hshape = np.array(sample['gt']).shape
         wzoom, hzoom = sample['gt_metadata']['zooms']
-        wshape_undo = int(wshape * self.wspace / wzoom)
-        hshape_undo = int(hshape * self.hspace / hzoom)
+        wshape_undo = int(round(wshape * self.wspace / wzoom))
+        hshape_undo = int(round(hshape * self.hspace / hzoom))
         gt_data_undo = self.resample_bin(sample['gt'], wshape_undo, hshape_undo)
         rdict['gt'] = gt_data_undo
 
@@ -79,8 +79,8 @@ class Resample(mt_transforms.Resample):
         hfactor = hzoom / self.hspace
         wfactor = wzoom / self.wspace
 
-        hshape_new = int(hshape * hfactor)
-        wshape_new = int(wshape * wfactor)
+        hshape_new = int(round(hshape * hfactor))
+        wshape_new = int(round(wshape * wfactor))
 
         input_data = input_data.resize((wshape_new, hshape_new),
                                        resample=self.interpolation)
