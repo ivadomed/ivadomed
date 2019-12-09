@@ -238,8 +238,9 @@ def cmd_train(context):
         exit()
 
     # Create dict containing gammas and betas after each FiLM layer.
-    gammas_dict = {i: [] for i in range(1, 9)}
-    betas_dict = {i: [] for i in range(1, 9)}
+    depth = context["depth"]
+    gammas_dict = {i: [] for i in range(1, 2 * depth + 3)}
+    betas_dict = {i: [] for i in range(1, 2 * depth + 3)}
 
     # Create a list containing the contrast of all batch images
     var_contrast_list = []
@@ -471,7 +472,6 @@ def cmd_train(context):
                 film_layers = context["film_layers"]
 
                 # Fill the lists of gammas and betas
-                depth = context["depth"]
                 for idx in [i for i, x in enumerate(film_layers) if x]:
                     if idx < depth:
                         layer_cur = model.encoder.down_path[idx * 3 + 1]
@@ -533,8 +533,8 @@ def cmd_train(context):
         joblib.dump(train_onehotencoder, "./" + context["log_directory"] + "/one_hot_encoder.joblib")
 
         # Convert list of gammas/betas into numpy arrays
-        gammas_dict = {i: np.array(gammas_dict[i]) for i in range(1, 9)}
-        betas_dict = {i: np.array(betas_dict[i]) for i in range(1, 9)}
+        gammas_dict = {i: np.array(gammas_dict[i]) for i in range(1, 2 * depth + 3)}
+        betas_dict = {i: np.array(betas_dict[i]) for i in range(1, 2 * depth + 3)}
 
         # Save the numpy arrays for gammas/betas inside files.npy in log_directory
         for i in range(1, 9):
