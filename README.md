@@ -14,7 +14,7 @@ Collaboration between MILA and NeuroPoly for the IVADO project on medical imagin
 ### Physic-inform network
 We adapted the Feature-wise Linear Modulation ([FiLM](https://arxiv.org/pdf/1709.07871.pdf)) approach to the segmentation task. FiLM enabled us to modulate CNNs features based on non-image metadata.
 
-![Figure FiLM](https://github.com/neuropoly/ivado-medical-imaging/raw/master/images/film_figure.png")
+![Figure FiLM](/images/film_figure.png)
 
 ### Two-step training with class sampling
 We implemented a two-step training scheme, using class sampling, in order to mitigate the issue of class imbalance. During the first step, the CNN is trained on an equivalent proportion of positive and negative samples, negative samples being under-weighted during the data loading at each epoch. During the second step, the CNN is fine-tuned on the realistic (i.e. class-imbalanced) dataset.
