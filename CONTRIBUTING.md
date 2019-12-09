@@ -31,9 +31,7 @@ Thank you for contributing to IVADO Medical Imaging! Examples of contribution in
 
 
 
-Issues (bugs, feature requests, or others) can be submitted
-[on our project's issue page.]
-(https://github.com/neuropoly/ivado-medical-imaging/issues)
+Issues (bugs, feature requests, or others) can be submitted [on our project's issue page.](https://github.com/neuropoly/ivado-medical-imaging/issues)
 
 
 ### Before Submitting a New Issue
