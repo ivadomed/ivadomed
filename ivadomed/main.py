@@ -7,6 +7,8 @@ import random
 import joblib
 from math import exp
 import numpy as np
+from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.tree import DecisionTreeClassifier
 
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
@@ -298,7 +300,11 @@ def cmd_train(context):
 
         num_steps = 0
         for i, batch in enumerate(train_loader):
-            input_samples, gt_samples = batch["input"], batch["gt"]
+            input_list, gt_samples = batch["input"], batch["gt"]
+            if len(input_list) > 1:
+                input_samples = torch.squeeze(torch.stack(input_list, dim=1))
+            else:
+                input_samples = input_list[0]
 
             # mixup data
             if mixup_bool and not film_bool:
@@ -353,6 +359,20 @@ def cmd_train(context):
 
             num_steps += 1
 
+            if context["combined_pred"]:
+                if epoch == 1:
+                    mlpclassifier = MLPRegressor()
+                combined_preds = []
+                for img in input_list:
+                    pred = model(img.cuda())
+                    tensor_shape = pred.shape
+                    combined_preds.append(pred.view(1, -1))
+
+                combined_preds = torch.squeeze(torch.stack(combined_preds, dim=0))[:, None].data.cpu()
+                mlpclassifier = mlpclassifier.partial_fit(combined_preds, gt_samples.view(-1))
+                preds = mlpclassifier.predict(combined_preds)
+                preds = torch.from_numpy(preds.reshape(tensor_shape).astype('float32')).cuda()
+
             # Only write sample at the first step
             if i == 0:
                 # take only one modality for grid
@@ -399,7 +419,11 @@ def cmd_train(context):
         metric_mgr = IvadoMetricManager(metric_fns)
 
         for i, batch in enumerate(val_loader):
-            input_samples, gt_samples = batch["input"], batch["gt"]
+            input_list, gt_samples = batch["input"], batch["gt"]
+            if len(input_list) > 1:
+                input_samples = torch.squeeze(torch.stack(input_list, dim=1))
+            else:
+                input_samples = input_list[0]
 
             with torch.no_grad():
                 if cuda_available:
@@ -426,6 +450,18 @@ def cmd_train(context):
                     loss = loss_fct(preds, var_gt)
                     dice_val_loss_total += losses.dice_loss(preds, var_gt).item()
                 val_loss_total += loss.item()
+
+            if context["combined_pred"]:
+                combined_preds = []
+                for img in input_list:
+                    pred = model(img.cuda())
+                    tensor_shape = pred.shape
+                    combined_preds.append(pred.view(1, -1))
+
+                combined_preds = torch.squeeze(torch.stack(combined_preds, dim=0))[:, None].data.cpu()
+                mlpclassifier = mlpclassifier.partial_fit(combined_preds, gt_samples.view(-1))
+                preds = mlpclassifier.predict(combined_preds)
+                preds = torch.from_numpy(preds.reshape(tensor_shape).astype('float32')).cuda()
 
             # Metrics computation
             gt_npy = gt_samples.numpy().astype(np.uint8)
@@ -520,6 +556,9 @@ def cmd_train(context):
 
     # Save final model
     torch.save(model, "./" + context["log_directory"] + "/final_model.pt")
+    if context["combined_pred"]:
+        filename = 'combined_pred.sav'
+        joblib.dump(mlpclassifier, "./" + context["log_directory"] + filename)
     if film_bool:  # save clustering and OneHotEncoding models
         joblib.dump(metadata_clustering_models, "./" + context["log_directory"] + "/clustering_models.joblib")
         joblib.dump(train_onehotencoder, "./" + context["log_directory"] + "/one_hot_encoder.joblib")
@@ -611,7 +650,7 @@ def cmd_test(context):
                              collate_fn=mt_datasets.mt_collate,
                              num_workers=0)
 
-    model = torch.load("./" + context["log_directory"] + "/best_model.pt")
+    model = torch.load("./" + context["log_directory"] + "/best_model.pt", map_location="cuda:0")
 
     if cuda_available:
         model.cuda()
@@ -638,6 +677,8 @@ def cmd_test(context):
                 test_input = input_samples
                 test_gt = gt_samples
 
+            if context["combined_pred"]:
+                pred_model = joblib.load("./" + context["log_directory"] + "/combined_pred.sav")
             if film_bool:
                 sample_metadata = batch["input_metadata"]
                 test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
@@ -647,6 +688,25 @@ def cmd_test(context):
                 preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
             else:
                 preds = model(test_input)
+
+            writer = SummaryWriter(log_dir=context["log_directory"])
+            if input_samples.shape[1] > 1:
+                tensor = input_samples[:, 0, :, :][:, None, :, :]
+                input_samples = torch.cat((tensor, tensor, tensor), 1)
+            grid_img = vutils.make_grid(input_samples,
+                                        normalize=True,
+                                        scale_each=True)
+            writer.add_image('Test/Input', grid_img, 0)
+
+            grid_img = vutils.make_grid(preds.data.cpu(),
+                                        normalize=True,
+                                        scale_each=True)
+            writer.add_image('Test/Predictions', grid_img, 0)
+
+            grid_img = vutils.make_grid(gt_samples,
+                                        normalize=True,
+                                        scale_each=True)
+            writer.add_image('Test/Ground Truth', grid_img, 0)
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
