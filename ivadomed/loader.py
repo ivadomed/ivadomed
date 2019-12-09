@@ -3,7 +3,7 @@ from medicaltorch import datasets as mt_datasets
 
 from sklearn.preprocessing import OneHotEncoder
 from scipy.signal import argrelextrema
-from sklearn.neighbors.kde import KernelDensity
+from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 
@@ -20,7 +20,8 @@ import torch
 with open("config/contrast_dct.json", "r") as fhandle:
     GENERIC_CONTRAST = json.load(fhandle)
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
-CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2, "acq-MToff_MTS": 3, "acq-MTon_MTS": 4, "acq-T1w_MTS": 5}
+CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,
+                     "acq-MToff_MTS": 3, "acq-MTon_MTS": 4, "acq-T1w_MTS": 5}
 
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
@@ -28,13 +29,14 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                  transform=None, metadata_choice=False, slice_filter_fn=None,
                  canonical=True, labeled=True, roi_suffix=None, multichannel=False):
 
-
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
         if metadata_choice == 'mri_params':
-            self.metadata = {"FlipAngle": [], "RepetitionTime": [], "EchoTime": [], "Manufacturer": []}
+            self.metadata = {"FlipAngle": [], "RepetitionTime": [],
+                             "EchoTime": [], "Manufacturer": []}
 
-        bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
+        bids_subjects = [s for s in self.bids_ds.get_subjects(
+        ) if s.record["subject_id"] in subject_lst]
 
         # Create a list with the filenames for all contrasts and subjects
         subjects_tot = []
@@ -42,7 +44,8 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
             subjects_tot.append(str(subject.record["absolute_path"]))
 
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
-        tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast]) for contrast in contrast_balance.keys()}
+        tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast])
+               for contrast in contrast_balance.keys()}
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
 
@@ -53,9 +56,9 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
             for idx, contrast in enumerate(contrast_lst):
                 idx_dict[contrast] = idx
             multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
-                                                  "deriv_path": None,
-                                                  "roi_filename": None,
-                                                  "metadata": [None] * num_contrast} for subject in subject_lst}
+                                               "deriv_path": None,
+                                               "roi_filename": None,
+                                               "metadata": [None] * num_contrast} for subject in subject_lst}
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
@@ -83,10 +86,10 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
 
                 if not subject.has_metadata():
                     print("Subject without metadata.")
-                    continue
-
-                metadata = subject.metadata()
-                # add contrast to metadata
+                    metadata = {}
+                else:
+                    metadata = subject.metadata()
+                    # add contrast to metadata
                 metadata['contrast'] = subject.record["modality"]
 
                 if metadata_choice == 'mri_params':
@@ -101,7 +104,8 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                                 if isinstance(mri_param[mri_param_type], (int, float)):
                                     value = float(mri_param[mri_param_type])
                                 else:  # eg multi-echo data have 3 echo times
-                                    value = np.mean([float(v) for v in mri_param[mri_param_type].split(',')])
+                                    value = np.mean([float(v)
+                                                     for v in mri_param[mri_param_type].split(',')])
 
                             self.metadata[mri_param_type].append(value)
                             return True
@@ -115,7 +119,7 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                     subj_id = subject.record["subject_id"]
                     multichannel_subjects[subj_id]["absolute_paths"][idx] = subject.record.absolute_path
                     multichannel_subjects[subj_id]["deriv_path"] = target_filename
-                    multichannel_subjects[subj_id]["metadata"][idx] = subject.metadata()
+                    multichannel_subjects[subj_id]["metadata"][idx] = metadata
                     if roi_filename:
                         multichannel_subjects[subj_id]["roi_filename"][idx] = roi_filename
 
@@ -134,16 +138,14 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
 
     def filter_roi(self, nb_nonzero_thr):
         filter_indexes = []
-        for segpair, roipair, idx_pair_slice in self.indexes:
-            slice_roi_pair = roipair.get_pair_slice(idx_pair_slice,
-                                                        self.slice_axis)
+        for segpair, slice_roi_pair in self.indexes:
             roi_data = slice_roi_pair['gt']
             if not np.any(roi_data):
                 continue
             if np.count_nonzero(roi_data) <= nb_nonzero_thr:
                 continue
 
-            filter_indexes.append((segpair, roipair, idx_pair_slice))
+            filter_indexes.append((segpair, slice_roi_pair))
 
         self.indexes = filter_indexes
 
@@ -167,12 +169,15 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
             X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
     elif split_method == 'per_patient':
         # Separate dataset in test, train and validation using sklearn function
-        X_train, X_remain = train_test_split(df['participant_id'].tolist(), train_size=train_frac, random_state=random_seed)
-        X_test, X_val = train_test_split(X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
+        X_train, X_remain = train_test_split(
+            df['participant_id'].tolist(), train_size=train_frac, random_state=random_seed)
+        X_test, X_val = train_test_split(
+            X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
     else:
         print(f" {split_method} is not a supported split method")
 
     return X_train, X_val, X_test
+
 
 class Kde_model():
     def __init__(self):
@@ -253,13 +258,15 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
             if manufacturer in MANUFACTURER_CATEGORY:
                 s_out["input_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
                 if debugging:
-                    print("Manufacturer: {} --> {}".format(manufacturer, MANUFACTURER_CATEGORY[manufacturer]))
+                    print("Manufacturer: {} --> {}".format(manufacturer,
+                                                           MANUFACTURER_CATEGORY[manufacturer]))
             else:
                 print("{} with unknown manufacturer.".format(subject))
-                s_out["input_metadata"]["Manufacturer"] = -1  # if unknown manufacturer, then value set to -1
+                # if unknown manufacturer, then value set to -1
+                s_out["input_metadata"]["Manufacturer"] = -1
 
             s_out["input_metadata"]["film_input"] = [s_out["input_metadata"][k] for k in
-                                                        ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
+                                                     ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
         else:
             generic_contrast = GENERIC_CONTRAST[subject["input_metadata"]["contrast"]]
             label_contrast = CONTRAST_CATEGORY[generic_contrast]
@@ -305,11 +312,11 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         self.weights = torch.DoubleTensor(weights)
 
     def _get_label(self, dataset, idx):
-         sample_gt = np.array(dataset[idx]['gt'])
-         if np.any(sample_gt):
-             return 1
-         else:
-             return 0
+        sample_gt = np.array(dataset[idx]['gt'])
+        if np.any(sample_gt):
+            return 1
+        else:
+            return 0
 
     def __iter__(self):
         return (self.indices[i] for i in torch.multinomial(
