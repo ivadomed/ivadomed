@@ -43,16 +43,32 @@ class Resample(mt_transforms.Resample):
         return data
 
     def undo_transform(self, sample):
-        # store wspace and hspace
-        wspace_, hspace_ = self.wspace, self.hspace
-        # retrieve original wspace and hspace
-        self.wspace, self.hspace = sample['input_metadata']['zooms']
-        # resample to original resolution
-        sample_undo_res = self.__call__(sample)
-        # reset wspace and hspace
-        self.wspace, self.hspace = wspace_, hspace_
+        print('  ')
+        print(np.array(sample['input']).shape, np.array(sample['gt']).shape)
+        rdict = {}
 
-        return sample_undo_res
+        # WARNING: image and GT do not have these shape at that point
+
+        # undo image
+        wshape, hshape = np.array(sample['input']).shape
+        wzoom, hzoom = sample['input_metadata']['zooms']
+        wshape_undo = int(wshape * wzoom / self.wspace)
+        hshape_undo = int(hshape * hzoom / self.hspace)
+        input_data_undo = sample['input'].resize((wshape_undo, hshape_undo),
+                                                   resample=self.interpolation)
+        rdict['input'] = input_data_undo
+
+        # undo pred, aka GT
+        wshape, hshape = np.array(sample['gt']).shape
+        wzoom, hzoom = sample['gt_metadata']['zooms']
+        wshape_undo = int(wshape * wzoom / self.wspace)
+        hshape_undo = int(hshape * hzoom / self.hspace)
+        gt_data_undo = self.resample_bin(sample['gt'], wshape_undo, hshape_undo)
+        rdict['gt'] = gt_data_undo
+
+        sample.update(rdict)
+        print(np.array(sample['input']).shape, np.array(sample['gt']).shape)
+        return sample
 
     def __call__(self, sample):
         rdict = {}
