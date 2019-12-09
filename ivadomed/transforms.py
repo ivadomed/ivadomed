@@ -278,6 +278,8 @@ class DilateGT(mt_transforms.MTTransform):
     def __call__(self, sample):
         gt_data = sample['gt']
         gt_data_np = np.array(gt_data)
+        # binarize for processing
+        gt_data_np = (gt_data_np > 0.5).astype(np.int_)
 
         if self.dil_factor > 0 and np.sum(gt_data):
             # dilation
@@ -288,7 +290,6 @@ class DilateGT(mt_transforms.MTTransform):
 
             # post-processing
             gt_pp = self.post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
-            gt_out = gt_data_np.astype(np.float64)
 
             gt_t = Image.fromarray(gt_pp)
             rdict = {
