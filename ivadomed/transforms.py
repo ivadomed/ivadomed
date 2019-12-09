@@ -12,7 +12,7 @@ from medicaltorch import transforms as mt_transforms
 def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
        from the mt_transforms."""
-    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor']
+    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor', 'CenterCrop2D']
 
 
 class UndoCompose(object):
@@ -43,8 +43,6 @@ class Resample(mt_transforms.Resample):
         return data
 
     def undo_transform(self, sample):
-        print('  ')
-        print(np.array(sample['input']).shape, np.array(sample['gt']).shape)
         rdict = {}
 
         # WARNING: image and GT do not have these shape at that point
@@ -67,7 +65,6 @@ class Resample(mt_transforms.Resample):
         rdict['gt'] = gt_data_undo
 
         sample.update(rdict)
-        print(np.array(sample['input']).shape, np.array(sample['gt']).shape)
         return sample
 
     def __call__(self, sample):
@@ -113,7 +110,31 @@ class ToTensor(mt_transforms.ToTensor):
         return mt_transforms.ToPIL()(sample)
 
 
-class ROICrop2D(mt_transforms.CenterCrop2D):
+class CenterCrop2D(mt_transforms.CenterCrop2D):
+    """This class extends mt_transforms.CenterCrop2D"""
+    def _uncrop(self, data, params):
+        fh, fw, w, h = params
+        th, tw = self.size
+
+        pad_left = fw
+        pad_right = w - pad_left - tw
+        pad_top = fh
+        pad_bottom = h - pad_top - th
+
+        padding = (pad_left, pad_top, pad_right, pad_bottom)
+        return F.pad(data, padding)
+
+
+    def undo_transform(self, sample):
+        rdict = {}
+        rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
+        rdict['gt'] = self._uncrop(sample['gt'], sample['gt_metadata']["__centercrop"])
+
+        sample.update(rdict)
+        return sample
+
+
+class ROICrop2D(CenterCrop2D):
     """Make a crop of a specified size around a ROI.
     :param labeled: if it is a segmentation task.
                          When this is True (default), the crop
