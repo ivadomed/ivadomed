@@ -291,6 +291,10 @@ class DilateGT(mt_transforms.MTTransform):
             # post-processing
             gt_pp = self.post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
 
+            # mask with ROI
+            if sample['roi'] is not None:
+                gt_pp[np.array(sample['roi']) == 0] = 0.0
+
             gt_t = Image.fromarray(gt_pp)
             rdict = {
                 'gt': gt_t,
