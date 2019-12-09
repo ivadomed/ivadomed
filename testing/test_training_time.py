@@ -59,6 +59,18 @@ def test_unet():
                                   transform=train_transform,
                                   multichannel=False,
                                   slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=False))
+    ds_mutichannel = loader.BidsDataset(PATH_BIDS,
+                                        subject_lst=train_lst,
+                                        target_suffix="_lesion-manual",
+                                        roi_suffix="_seg-manual",
+                                        contrast_lst=['T1w', 'T2w'],
+                                        metadata_choice="without",
+                                        contrast_balance={},
+                                        slice_axis=2,
+                                        transform=train_transform,
+                                        multichannel=True,
+                                        slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=False))
+
 
     ds_train.filter_roi(nb_nonzero_thr=10)
 
@@ -73,20 +85,25 @@ def test_unet():
                               shuffle=True, pin_memory=True,
                               collate_fn=mt_datasets.mt_collate,
                               num_workers=1)
+    multichannel_loader = DataLoader(ds_mutichannel, batch_size=BATCH_SIZE,
+                                     shuffle=True, pin_memory=True,
+                                     collate_fn=mt_datasets.mt_collate,
+                                     num_workers=1)
 
-    model_list = [models.Unet(depth=DEPTH,
+    model_list = [(models.Unet(depth=DEPTH,
                               film_layers=FILM_LAYERS,
                               n_metadata=len([ll for l in train_onehotencoder.categories_ for ll in l]),
                               drop_rate=DROPOUT,
                               bn_momentum=BN,
-                              film_bool=True),
-                  models.Unet(in_channel=1,
+                              film_bool=True), train_loader, True),
+                  (models.Unet(in_channel=1,
                               out_channel=1,
                               depth=2,
                               drop_rate=DROPOUT,
-                              bn_momentum=BN)]
+                              bn_momentum=BN), train_loader, False),
+                  (models.Unet(in_channel=2), multichannel_loader, False)]
 
-    for model in model_list:
+    for model, train_loader, film_bool in model_list:
         if cuda_available:
             model.cuda()
 
@@ -120,12 +137,17 @@ def test_unet():
                     var_gt = gt_samples
 
                 sample_metadata = batch["input_metadata"]
-                var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in range(len(sample_metadata))]
+                if film_bool:
+                    var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0]
+                                    for k in range(len(sample_metadata))]
                 tot_load = time.time() - start_load
                 load_lst.append(tot_load)
 
                 start_pred = time.time()
-                preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
+                if film_bool:
+                    preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
+                else:
+                    preds = model(var_input)
                 tot_pred = time.time() - start_pred
                 pred_lst.append(tot_pred)
 

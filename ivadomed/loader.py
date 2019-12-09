@@ -121,7 +121,7 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                     multichannel_subjects[subj_id]["deriv_path"] = target_filename
                     multichannel_subjects[subj_id]["metadata"][idx] = metadata
                     if roi_filename:
-                        multichannel_subjects[subj_id]["roi_filename"][idx] = roi_filename
+                        multichannel_subjects[subj_id]["roi_filename"] = roi_filename
 
                 else:
                     self.filename_pairs.append(([subject.record.absolute_path],
@@ -138,16 +138,14 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
 
     def filter_roi(self, nb_nonzero_thr):
         filter_indexes = []
-        for segpair, roipair, idx_pair_slice in self.indexes:
-            slice_roi_pair = roipair.get_pair_slice(idx_pair_slice,
-                                                    self.slice_axis)
+        for segpair, slice_roi_pair in self.indexes:
             roi_data = slice_roi_pair['gt']
             if not np.any(roi_data):
                 continue
             if np.count_nonzero(roi_data) <= nb_nonzero_thr:
                 continue
 
-            filter_indexes.append((segpair, roipair, idx_pair_slice))
+            filter_indexes.append((segpair, slice_roi_pair))
 
         self.indexes = filter_indexes
 
@@ -216,7 +214,6 @@ class Kde_model():
 def clustering_fit(dataset, key_lst):
     """This function creates clustering models for each metadata type,
     using Kernel Density Estimation algorithm.
-
     :param datasets (list): data
     :param key_lst (list of strings): names of metadata to cluster
     :return: clustering model for each metadata type
