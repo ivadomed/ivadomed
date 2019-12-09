@@ -59,8 +59,8 @@ class Resample(mt_transforms.Resample):
         # undo pred, aka GT
         wshape, hshape = np.array(sample['gt']).shape
         wzoom, hzoom = sample['gt_metadata']['zooms']
-        wshape_undo = int(wshape * wzoom / self.wspace)
-        hshape_undo = int(hshape * hzoom / self.hspace)
+        wshape_undo = int(wshape * self.wspace / wzoom)
+        hshape_undo = int(hshape * self.hspace / hzoom)
         gt_data_undo = self.resample_bin(sample['gt'], wshape_undo, hshape_undo)
         rdict['gt'] = gt_data_undo
 
@@ -115,7 +115,6 @@ class CenterCrop2D(mt_transforms.CenterCrop2D):
     def _uncrop(self, data, params):
         fh, fw, w, h = params
         th, tw = self.size
-
         pad_left = fw
         pad_right = w - pad_left - tw
         pad_top = fh
