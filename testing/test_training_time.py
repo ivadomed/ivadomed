@@ -21,7 +21,7 @@ import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 0
+GPU_NUMBER = 5
 BATCH_SIZE = 8
 DROPOUT = 0.4
 DEPTH = 3
