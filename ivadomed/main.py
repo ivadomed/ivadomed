@@ -203,7 +203,7 @@ def cmd_train(context):
     # Traditional U-Net model
     in_channel = 1
 
-    if context['multichannel']:
+    if len(context['multichannel']) and not context["combined_pred"]:
         in_channel = len(context['multichannel'])
 
     model = models.Unet(in_channel=in_channel,
@@ -301,74 +301,71 @@ def cmd_train(context):
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_list, gt_samples = batch["input"], batch["gt"]
-            if len(input_list) > 1:
+            if len(input_list) > 1 and not context["combined_pred"]:
                 input_samples = torch.squeeze(torch.stack(input_list, dim=1))
-            else:
-                input_samples = input_list[0]
+                input_list = [input_samples]
 
-            # mixup data
-            if mixup_bool and not film_bool:
-                input_samples, gt_samples, lambda_tensor = mixup(input_samples, gt_samples, mixup_alpha)
+            combined_preds = []
+            for input_samples in input_list:
+                # mixup data
+                tensor_shape = input_samples.shape
+                if mixup_bool and not film_bool:
+                    input_samples, gt_samples, lambda_tensor = mixup(input_samples, gt_samples, mixup_alpha)
 
-                # if debugging and first epoch, then save samples as png in ofolder
-                if context["debugging"] and epoch == 1 and random.random() < 0.1:
-                    mixup_folder = os.path.join(context["log_directory"], 'mixup')
-                    if not os.path.isdir(mixup_folder):
-                        os.makedirs(mixup_folder)
-                    random_idx = np.random.randint(0, input_samples.size()[0])
-                    val_gt = np.unique(gt_samples.data.numpy()[random_idx, 0, :, :])
-                    mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3) + '_' + str(
-                        lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png')
-                    save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :],
-                                      gt_samples.data.numpy()[random_idx, 0, :, :],
-                                      mixup_fname_pref)
+                    # if debugging and first epoch, then save samples as png in ofolder
+                    if context["debugging"] and epoch == 1 and random.random() < 0.1:
+                        mixup_folder = os.path.join(context["log_directory"], 'mixup')
+                        if not os.path.isdir(mixup_folder):
+                            os.makedirs(mixup_folder)
+                        random_idx = np.random.randint(0, input_samples.size()[0])
+                        val_gt = np.unique(gt_samples.data.numpy()[random_idx, 0, :, :])
+                        mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3) + '_' + str(
+                            lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png')
+                        save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :],
+                                          gt_samples.data.numpy()[random_idx, 0, :, :],
+                                          mixup_fname_pref)
 
-            # The variable sample_metadata is where the MRI physics parameters are
+                # The variable sample_metadata is where the MRI physics parameters are
 
-            if cuda_available:
-                var_input = input_samples.cuda()
-                var_gt = gt_samples.cuda(non_blocking=True)
-            else:
-                var_input = input_samples
-                var_gt = gt_samples
+                if cuda_available:
+                    var_input = input_samples.cuda()
+                    var_gt = gt_samples.cuda(non_blocking=True)
+                else:
+                    var_input = input_samples
+                    var_gt = gt_samples
 
-            if film_bool:
-                # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
-                sample_metadata = batch["input_metadata"]
-                var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+                if film_bool:
+                    # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
+                    sample_metadata = batch["input_metadata"]
+                    var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
-                var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in
-                                range(len(sample_metadata))]
-                preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
-            else:
-                preds = model(var_input)
+                    var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in
+                                    range(len(sample_metadata))]
+                    preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
+                else:
+                    preds = model(var_input)
+                combined_preds.append(preds.view(-1, 1))
 
-            if context["loss"]["name"] == "dice":
-                loss = - losses.dice_loss(preds, var_gt)
-            else:
-                loss = loss_fct(preds, var_gt)
-                dice_train_loss_total += losses.dice_loss(preds, var_gt).item()
-            train_loss_total += loss.item()
+                if context["loss"]["name"] == "dice":
+                    loss = - losses.dice_loss(preds, var_gt)
+                else:
+                    loss = loss_fct(preds, var_gt)
+                    dice_train_loss_total += losses.dice_loss(preds, var_gt).item()
+                train_loss_total += loss.item()
 
-            optimizer.zero_grad()
-            loss.backward()
+                optimizer.zero_grad()
+                loss.backward()
 
-            optimizer.step()
-            if step_scheduler_batch:
-                scheduler.step()
+                optimizer.step()
+                if step_scheduler_batch:
+                    scheduler.step()
 
-            num_steps += 1
+                num_steps += 1
 
             if context["combined_pred"]:
                 if epoch == 1:
                     mlpclassifier = MLPRegressor()
-                combined_preds = []
-                for img in input_list:
-                    pred = model(img.cuda())
-                    tensor_shape = pred.shape
-                    combined_preds.append(pred.view(1, -1))
-
-                combined_preds = torch.squeeze(torch.stack(combined_preds, dim=0))[:, None].data.cpu()
+                combined_preds = torch.squeeze(torch.stack(combined_preds, dim=1)).data.cpu()
                 mlpclassifier = mlpclassifier.partial_fit(combined_preds, gt_samples.view(-1))
                 preds = mlpclassifier.predict(combined_preds)
                 preds = torch.from_numpy(preds.reshape(tensor_shape).astype('float32')).cuda()
@@ -420,45 +417,42 @@ def cmd_train(context):
 
         for i, batch in enumerate(val_loader):
             input_list, gt_samples = batch["input"], batch["gt"]
-            if len(input_list) > 1:
+            if len(input_list) > 1 and not context["combined_pred"]:
                 input_samples = torch.squeeze(torch.stack(input_list, dim=1))
-            else:
-                input_samples = input_list[0]
+                input_list = [input_samples]
 
-            with torch.no_grad():
-                if cuda_available:
-                    var_input = input_samples.cuda()
-                    var_gt = gt_samples.cuda(non_blocking=True)
-                else:
-                    var_input = input_samples
-                    var_gt = gt_samples
+            combined_preds = []
+            for input_samples in input_list:
+                tensor_shape = input_samples.shape
+                with torch.no_grad():
+                    if cuda_available:
+                        var_input = input_samples.cuda()
+                        var_gt = gt_samples.cuda(non_blocking=True)
+                    else:
+                        var_input = input_samples
+                        var_gt = gt_samples
 
-                if film_bool:
-                    sample_metadata = batch["input_metadata"]
-                    # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
-                    var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+                    if film_bool:
+                        sample_metadata = batch["input_metadata"]
+                        # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
+                        var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
-                    var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k
-                                    in range(len(sample_metadata))]
-                    preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
-                else:
-                    preds = model(var_input)
+                        var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k
+                                        in range(len(sample_metadata))]
+                        preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
+                    else:
+                        preds = model(var_input)
+                    combined_preds.append(preds.view(-1, 1))
 
-                if context["loss"]["name"] == "dice":
-                    loss = - losses.dice_loss(preds, var_gt)
-                else:
-                    loss = loss_fct(preds, var_gt)
-                    dice_val_loss_total += losses.dice_loss(preds, var_gt).item()
-                val_loss_total += loss.item()
+                    if context["loss"]["name"] == "dice":
+                        loss = - losses.dice_loss(preds, var_gt)
+                    else:
+                        loss = loss_fct(preds, var_gt)
+                        dice_val_loss_total += losses.dice_loss(preds, var_gt).item()
+                    val_loss_total += loss.item()
 
             if context["combined_pred"]:
-                combined_preds = []
-                for img in input_list:
-                    pred = model(img.cuda())
-                    tensor_shape = pred.shape
-                    combined_preds.append(pred.view(1, -1))
-
-                combined_preds = torch.squeeze(torch.stack(combined_preds, dim=0))[:, None].data.cpu()
+                combined_preds = torch.squeeze(torch.stack(combined_preds, dim=1)).data.cpu()
                 mlpclassifier = mlpclassifier.partial_fit(combined_preds, gt_samples.view(-1))
                 preds = mlpclassifier.predict(combined_preds)
                 preds = torch.from_numpy(preds.reshape(tensor_shape).astype('float32')).cuda()
@@ -557,8 +551,8 @@ def cmd_train(context):
     # Save final model
     torch.save(model, "./" + context["log_directory"] + "/final_model.pt")
     if context["combined_pred"]:
-        filename = 'combined_pred.sav'
-        joblib.dump(mlpclassifier, "./" + context["log_directory"] + filename)
+        filename = 'combined_pred.joblib'
+        joblib.dump(mlpclassifier, "./" + context["log_directory"] + "/" + filename)
     if film_bool:  # save clustering and OneHotEncoding models
         joblib.dump(metadata_clustering_models, "./" + context["log_directory"] + "/clustering_models.joblib")
         joblib.dump(train_onehotencoder, "./" + context["log_directory"] + "/one_hot_encoder.joblib")
@@ -667,46 +661,57 @@ def cmd_test(context):
     metric_mgr = IvadoMetricManager(metric_fns)
 
     for i, batch in enumerate(test_loader):
-        input_samples, gt_samples = batch["input"], batch["gt"]
+        input_list, gt_samples = batch["input"], batch["gt"]
+        if len(input_list) > 1 and not context["combined_pred"]:
+            input_samples = torch.squeeze(torch.stack(input_list, dim=1))
+            input_list = [input_samples]
 
-        with torch.no_grad():
-            if cuda_available:
-                test_input = input_samples.cuda()
-                test_gt = gt_samples.cuda(non_blocking=True)
-            else:
-                test_input = input_samples
-                test_gt = gt_samples
+        combined_preds = []
+        for input_samples in input_list:
+            tensor_shape = input_samples.shape
+            with torch.no_grad():
+                if cuda_available:
+                    test_input = input_samples.cuda()
+                    test_gt = gt_samples.cuda(non_blocking=True)
+                else:
+                    test_input = input_samples
+                    test_gt = gt_samples
 
-            if context["combined_pred"]:
-                pred_model = joblib.load("./" + context["log_directory"] + "/combined_pred.sav")
-            if film_bool:
-                sample_metadata = batch["input_metadata"]
-                test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+                if film_bool:
+                    sample_metadata = batch["input_metadata"]
+                    test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
-                test_metadata = [one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k in
-                                 range(len(sample_metadata))]
-                preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
-            else:
-                preds = model(test_input)
+                    test_metadata = [one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k in
+                                     range(len(sample_metadata))]
+                    preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
+                else:
+                    preds = model(test_input)
+                combined_preds.append(preds.view(-1, 1))
 
-            writer = SummaryWriter(log_dir=context["log_directory"])
-            if input_samples.shape[1] > 1:
-                tensor = input_samples[:, 0, :, :][:, None, :, :]
-                input_samples = torch.cat((tensor, tensor, tensor), 1)
-            grid_img = vutils.make_grid(input_samples,
-                                        normalize=True,
-                                        scale_each=True)
-            writer.add_image('Test/Input', grid_img, 0)
+        if context["combined_pred"]:
+            pred_model = joblib.load("./" + context["log_directory"] + "/combined_pred.joblib")
+            combined_preds = torch.squeeze(torch.stack(combined_preds, dim=1)).data.cpu()
+            preds = pred_model.predict(combined_preds)
+            preds = torch.from_numpy(preds.reshape(tensor_shape).astype('float32')).cuda()
 
-            grid_img = vutils.make_grid(preds.data.cpu(),
-                                        normalize=True,
-                                        scale_each=True)
-            writer.add_image('Test/Predictions', grid_img, 0)
+        writer = SummaryWriter(log_dir=context["log_directory"])
+        if input_samples.shape[1] > 1:
+            tensor = input_samples[:, 0, :, :][:, None, :, :]
+            input_samples = torch.cat((tensor, tensor, tensor), 1)
+        grid_img = vutils.make_grid(input_samples,
+                                    normalize=True,
+                                    scale_each=True)
+        writer.add_image('Test/Input', grid_img, i)
 
-            grid_img = vutils.make_grid(gt_samples,
-                                        normalize=True,
-                                        scale_each=True)
-            writer.add_image('Test/Ground Truth', grid_img, 0)
+        grid_img = vutils.make_grid(preds.data.cpu(),
+                                    normalize=True,
+                                    scale_each=True)
+        writer.add_image('Test/Predictions', grid_img, i)
+
+        grid_img = vutils.make_grid(gt_samples,
+                                    normalize=True,
+                                    scale_each=True)
+        writer.add_image('Test/Ground Truth', grid_img, i)
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
