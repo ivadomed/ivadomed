@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import time
 
@@ -26,7 +27,7 @@ DROPOUT = 0.4
 BN = 0.1
 SLICE_AXIS = 2
 PATH_BIDS = 'testing_data/'
-PATH_OUT = PATH_BIDS + 'tmp/'
+PATH_OUT = 'tmp/'
 
 def test_inference(film_bool=False):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -101,6 +102,9 @@ def test_inference(film_bool=False):
                   mt_metrics.accuracy_score]
 
     metric_mgr = IvadoMetricManager(metric_fns)
+
+    if not os.path.isdir(PATH_OUT):
+        os.makedirs(PATH_OUT)
 
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     for i, batch in enumerate(test_loader):
