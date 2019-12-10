@@ -240,8 +240,9 @@ def cmd_train(context):
         exit()
 
     # Create dict containing gammas and betas after each FiLM layer.
-    gammas_dict = {i: [] for i in range(1, 9)}
-    betas_dict = {i: [] for i in range(1, 9)}
+    depth = context["depth"]
+    gammas_dict = {i: [] for i in range(1, 2 * depth + 3)}
+    betas_dict = {i: [] for i in range(1, 2 * depth + 3)}
 
     # Create a list containing the contrast of all batch images
     var_contrast_list = []
@@ -502,8 +503,15 @@ def cmd_train(context):
 
                 # Fill the lists of gammas and betas
                 for idx in [i for i, x in enumerate(film_layers) if x]:
-                    attr_stg = 'film' + str(idx)
-                    layer_cur = getattr(model, attr_stg)
+                    if idx < depth:
+                        layer_cur = model.encoder.down_path[idx * 3 + 1]
+                    elif idx == depth:
+                        layer_cur = model.encoder.film_bottom
+                    elif idx == depth * 2 + 1:
+                        layer_cur = model.decoder.last_film
+                    else:
+                        layer_cur = model.decoder.up_path[(idx - depth - 1) * 2 + 1]
+
                     gammas_dict[idx + 1].append(layer_cur.gammas[:, :, 0, 0].cpu().numpy())
                     betas_dict[idx + 1].append(layer_cur.betas[:, :, 0, 0].cpu().numpy())
 
@@ -558,11 +566,11 @@ def cmd_train(context):
         joblib.dump(train_onehotencoder, "./" + context["log_directory"] + "/one_hot_encoder.joblib")
 
         # Convert list of gammas/betas into numpy arrays
-        gammas_dict = {i: np.array(gammas_dict[i]) for i in range(1, 9)}
-        betas_dict = {i: np.array(betas_dict[i]) for i in range(1, 9)}
+        gammas_dict = {i: np.array(gammas_dict[i]) for i in range(1, 2 * depth + 3)}
+        betas_dict = {i: np.array(betas_dict[i]) for i in range(1, 2 * depth + 3)}
 
         # Save the numpy arrays for gammas/betas inside files.npy in log_directory
-        for i in range(1, 9):
+        for i in range(1, 2 * depth + 3):
             np.save(context["log_directory"] + f"/gamma_layer_{i}.npy", gammas_dict[i])
             np.save(context["log_directory"] + f"/beta_layer_{i}.npy", betas_dict[i])
 
