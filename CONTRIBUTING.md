@@ -173,7 +173,7 @@ styling clean-up you may be doing on existing code.
 
 Ensure that you are the original author of your changes, and if that is
 not the case, ensure that the borrowed/adapted code is compatible with
-the XX TODO.
+the MIT license.
 
 ### Committing
 
