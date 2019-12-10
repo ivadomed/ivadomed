@@ -51,7 +51,7 @@ def test_unet():
                                   subject_lst=train_lst,
                                   target_suffix="_lesion-manual",
                                   roi_suffix="_seg-manual",
-                                  contrast_lst=['T2w'],
+                                  contrast_lst=contrasts,
                                   metadata_choice="without",
                                   contrast_balance={},
                                   slice_axis=2,
@@ -145,3 +145,5 @@ def test_unet():
     print('Mean SD opt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
     print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
     print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
+
+test_unet()

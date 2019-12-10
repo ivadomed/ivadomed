@@ -34,8 +34,7 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
 
-        bids_subjects = [s for s in self.bids_ds.get_subjects(
-        ) if s.record["subject_id"] in subject_lst]
+        bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
 
         # Create a list with the filenames for all contrasts and subjects
         subjects_tot = []
@@ -122,8 +121,8 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                     multichannel_subjects[subj_id]["absolute_paths"][idx] = subject.record.absolute_path
                     multichannel_subjects[subj_id]["deriv_path"] = target_filename
                     multichannel_subjects[subj_id]["metadata"][idx] = subject.metadata()
-                    if roi_filename:
-                        multichannel_subjects[subj_id]["roi_filename"][idx] = roi_filename
+                if roi_filename:
+                    multichannel_subjects[subj_id]["roi_filename"] = roi_filename
 
                 else:
                     self.filename_pairs.append(([subject.record.absolute_path],
