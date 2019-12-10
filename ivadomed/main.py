@@ -537,7 +537,7 @@ def cmd_train(context):
         betas_dict = {i: np.array(betas_dict[i]) for i in range(1, 2 * depth + 3)}
 
         # Save the numpy arrays for gammas/betas inside files.npy in log_directory
-        for i in range(1, 9):
+        for i in range(1, 2 * depth + 3):
             np.save(context["log_directory"] + f"/gamma_layer_{i}.npy", gammas_dict[i])
             np.save(context["log_directory"] + f"/beta_layer_{i}.npy", betas_dict[i])
 
