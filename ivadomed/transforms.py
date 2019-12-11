@@ -9,6 +9,11 @@ from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_
 from medicaltorch import transforms as mt_transforms
 
 
+##
+from random import randint
+import matplotlib.pyplot as plt
+##
+
 def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
        from the mt_transforms."""
@@ -45,20 +50,27 @@ class Resample(mt_transforms.Resample):
     def undo_transform(self, sample):
         rdict = {}
 
-        # WARNING: image and GT do not have these shape at that point
-
         # undo image
-        wshape, hshape = np.array(sample['input']).shape
-        wzoom, hzoom = sample['input_metadata']['zooms']
-        wshape_undo = int(round(wshape * wzoom / self.wspace))
-        hshape_undo = int(round(hshape * hzoom / self.hspace))
+        hshape, wshape = np.array(sample['input']).shape
+        hzoom, wzoom = sample['input_metadata']['zooms']
+        wshape_undo = int(round(wshape * self.wspace / wzoom))
+        hshape_undo = int(round(hshape * self.hspace / hzoom))
+#        print(hshape, wshape, hzoom, wzoom, hshape_undo, wshape_undo)
         input_data_undo = sample['input'].resize((wshape_undo, hshape_undo),
                                                    resample=self.interpolation)
         rdict['input'] = input_data_undo
+#        print(np.array(input_data_undo).shape)
+
+#        if randint(0,20) == 4:
+#            fig = plt.figure()
+#            ax1 = fig.add_subplot(1,1,1)
+#            im = ax1.imshow(np.array(input_data_undo), cmap='gray')
+#            plt.savefig('tmpT/'+str(randint(0,1000))+'.png')
+#            plt.close()
 
         # undo pred, aka GT
-        wshape, hshape = np.array(sample['gt']).shape
-        wzoom, hzoom = sample['gt_metadata']['zooms']
+        hshape, wshape = np.array(sample['gt']).shape
+        hzoom, wzoom = sample['gt_metadata']['zooms']
         wshape_undo = int(round(wshape * self.wspace / wzoom))
         hshape_undo = int(round(hshape * self.hspace / hzoom))
         gt_data_undo = self.resample_bin(sample['gt'], wshape_undo, hshape_undo)
@@ -119,8 +131,14 @@ class CenterCrop2D(mt_transforms.CenterCrop2D):
         pad_right = w - pad_left - tw
         pad_top = fh
         pad_bottom = h - pad_top - th
-
+        print(np.array(data).shape)
         padding = (pad_left, pad_top, pad_right, pad_bottom)
+        if randint(0,20) == 4:
+            fig = plt.figure()
+            ax1 = fig.add_subplot(1,1,1)
+            im = ax1.imshow(np.array(F.pad(data, padding)), cmap='gray')
+            plt.savefig('tmpT/'+str(randint(0,1000))+'.png')
+            plt.close()
         return F.pad(data, padding)
 
 
@@ -141,6 +159,32 @@ class ROICrop2D(CenterCrop2D):
     """
     def __init__(self, size, labeled=True):
         super().__init__(size, labeled)
+
+    def _uncrop(self, data, params):
+        fh, fw, w, h = params
+        th, tw = self.size
+        pad_left = fw
+        pad_right = w - pad_left - tw
+        pad_top = fh
+        pad_bottom = h - pad_top - th
+        padding = (pad_right, pad_bottom, pad_left, pad_top)
+        print(padding)
+        print(np.array(data).shape)
+        if randint(3,5) == 4:
+            fig = plt.figure()
+            ax1 = fig.add_subplot(1,1,1)
+            im = ax1.imshow(np.array(F.pad(data, padding)), cmap='gray')
+            plt.savefig('tmpT/'+str(randint(0,1000))+'.png')
+            plt.close()
+        return F.pad(data, padding)  # .transpose(Image.TRANSPOSE)
+
+    def undo_transform(self, sample):
+        rdict = {}
+        rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
+        rdict['gt'] = self._uncrop(sample['gt'], sample['gt_metadata']["__centercrop"])
+
+        sample.update(rdict)
+        return sample
 
     def __call__(self, sample):
         rdict = {}
