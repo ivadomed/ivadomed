@@ -109,5 +109,5 @@ def test_undo(contrast='T2w'):
         rdict_undo = val_undo_transform(rdict)
 
         before, after = np.array(gt_undone[smp_idx][0]), np.array(rdict_undo['gt'])
-        print(before.shape, after.shape)
+        print(before.shape, after.shape, np.sum(before), np.sum(after))
         print(np.array_equal(before, after))
