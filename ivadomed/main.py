@@ -581,7 +581,7 @@ def cmd_test(context):
 
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     ds_test = loader.BidsDataset(context["bids_path"],
-                                 subject_lst=test_lst,
+                                 subject_lst=test_lst[:2],
                                  target_suffix=context["target_suffix"],
                                  roi_suffix=context["roi_suffix"],
                                  contrast_lst=context["contrast_test"],
@@ -681,7 +681,7 @@ def cmd_test(context):
                 # TODO compute image-based metrics
 
             # add new sample to pred_tmp_lst
-            pred_tmp_lst.append(np.array(rdict_undo['gt']))
+            pred_tmp_lst.append(np.array(rdict_undo['input']))
             z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
             fname_tmp = fname_ref
 
