@@ -8,6 +8,7 @@ import joblib
 from math import exp
 import numpy as np
 from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.linear_model import SGDClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 import torch.nn as nn
@@ -55,8 +56,6 @@ def cmd_train(context):
     metadata_bool = False if context["metadata"] == "without" else True
     film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
     HeMIS = context['missing_modality']
-    if film_bool:
-        context["multichannel"] = False
 
     if bool(sum(context["film_layers"])) and not (metadata_bool):
         print('\tWarning FiLM disabled since metadata is disabled')
@@ -290,6 +289,9 @@ def cmd_train(context):
     epsilon = context["early_stopping_epsilon"]
     val_losses = []
 
+    # if context["combined_pred"]:
+        # mlpclassifier = SGDClassifier()
+
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
 
@@ -364,12 +366,11 @@ def cmd_train(context):
                 num_steps += 1
 
             if context["combined_pred"]:
-                if epoch == 1:
-                    mlpclassifier = MLPRegressor()
                 combined_preds = torch.squeeze(torch.stack(combined_preds, dim=1)).data.cpu()
-                mlpclassifier = mlpclassifier.partial_fit(combined_preds, gt_samples.view(-1))
-                preds = mlpclassifier.predict(combined_preds)
-                preds = torch.from_numpy(preds.reshape(tensor_shape).astype('float32')).cuda()
+                # mlpclassifier.partial_fit(combined_preds, gt_samples.view(-1), classes=[0., 1.])
+                # preds = mlpclassifier.predict(combined_preds)
+                preds = (torch.mean(combined_preds, dim=1).reshape(tensor_shape) > context["threshold"]).type(torch.float32)
+                # preds = torch.from_numpy(preds.reshape(tensor_shape).astype('float32'))
 
             # Only write sample at the first step
             if i == 0:
@@ -423,6 +424,7 @@ def cmd_train(context):
                 input_list = [input_samples]
 
             combined_preds = []
+            tmp_val = 0.0
             for input_samples in input_list:
                 tensor_shape = input_samples.shape
                 with torch.no_grad():
@@ -450,13 +452,16 @@ def cmd_train(context):
                     else:
                         loss = loss_fct(preds, var_gt)
                         dice_val_loss_total += losses.dice_loss(preds, var_gt).item()
-                    val_loss_total += loss.item()
+                    tmp_val += loss.item()
 
+            val_loss_total += tmp_val / len(input_list)
+            # val_loss_total /= len(input_list)
             if context["combined_pred"]:
                 combined_preds = torch.squeeze(torch.stack(combined_preds, dim=1)).data.cpu()
-                mlpclassifier = mlpclassifier.partial_fit(combined_preds, gt_samples.view(-1))
-                preds = mlpclassifier.predict(combined_preds)
-                preds = torch.from_numpy(preds.reshape(tensor_shape).astype('float32')).cuda()
+                # mlpclassifier.partial_fit(combined_preds, gt_samples.view(-1))
+                # preds = mlpclassifier.predict(combined_preds)
+                preds = (torch.mean(combined_preds, dim=1).reshape(tensor_shape) > context["threshold"]).type(torch.float32)
+                # preds = torch.from_numpy(preds.reshape(tensor_shape).astype('float32'))
 
             # Metrics computation
             gt_npy = gt_samples.numpy().astype(np.uint8)
@@ -558,9 +563,9 @@ def cmd_train(context):
 
     # Save final model
     torch.save(model, "./" + context["log_directory"] + "/final_model.pt")
-    if context["combined_pred"]:
-        filename = 'combined_pred.joblib'
-        joblib.dump(mlpclassifier, "./" + context["log_directory"] + "/" + filename)
+    # if context["combined_pred"]:
+    #     filename = 'combined_pred.joblib'
+    #     joblib.dump(mlpclassifier, "./" + context["log_directory"] + "/" + filename)
     if film_bool:  # save clustering and OneHotEncoding models
         joblib.dump(metadata_clustering_models, "./" + context["log_directory"] + "/clustering_models.joblib")
         joblib.dump(train_onehotencoder, "./" + context["log_directory"] + "/one_hot_encoder.joblib")
@@ -667,7 +672,7 @@ def cmd_test(context):
                   mt_metrics.accuracy_score]
 
     metric_mgr = IvadoMetricManager(metric_fns)
-
+    writer = SummaryWriter(log_dir=context["log_directory"])
     for i, batch in enumerate(test_loader):
         input_list, gt_samples = batch["input"], batch["gt"]
         if len(input_list) > 1 and not context["combined_pred"]:
@@ -697,12 +702,14 @@ def cmd_test(context):
                 combined_preds.append(preds.view(-1, 1))
 
         if context["combined_pred"]:
-            pred_model = joblib.load("./" + context["log_directory"] + "/combined_pred.joblib")
+            # pred_model = joblib.load("./" + context["log_directory"] + "/combined_pred.joblib")
             combined_preds = torch.squeeze(torch.stack(combined_preds, dim=1)).data.cpu()
-            preds = pred_model.predict(combined_preds)
-            preds = torch.from_numpy(preds.reshape(tensor_shape).astype('float32')).cuda()
+            # preds = pred_model.predict(combined_preds)
+            preds = (torch.mean(combined_preds, dim=1).reshape(tensor_shape) > context["threshold"]).type(torch.float32)
+            # preds = torch.from_numpy(preds.reshape(tensor_shape).astype('float32'))
 
-        writer = SummaryWriter(log_dir=context["log_directory"])
+
+
         if input_samples.shape[1] > 1:
             tensor = input_samples[:, 0, :, :][:, None, :, :]
             input_samples = torch.cat((tensor, tensor, tensor), 1)
@@ -732,6 +739,7 @@ def cmd_test(context):
 
         metric_mgr(preds_npy, gt_npy)
 
+    writer.close()
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
     print(metrics_dict)
