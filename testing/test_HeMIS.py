@@ -71,8 +71,6 @@ def test_unet():
                              drop_rate=DROPOUT,
                              bn_momentum=BN)
 
-    exit(0)
-    ###### WIP - No train for now
 
 
     if cuda_available:
@@ -99,6 +97,12 @@ def test_unet():
                 gen_lst.append(tot_gen)
             start_load = time.time()
             input_samples, gt_samples = batch["input"], batch["gt"]
+            print("len input = {}".format(len(input_samples)))
+            print("Batch = {}, {}".format(input_samples[0].shape, gt_samples.shape))
+            exit(0)
+            ## WIP - no train for now
+
+
             if cuda_available:
                 var_input = input_samples.cuda()
                 var_gt = gt_samples.cuda(non_blocking=True)

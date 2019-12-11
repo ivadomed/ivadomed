@@ -48,9 +48,9 @@ class Resample(mt_transforms.Resample):
 
         hshape_new = int(hshape * hfactor)
         wshape_new = int(wshape * wfactor)
-
+        
         for i, input_image in enumerate(input_data):
-            input_data[i] = input_image[i].resize((wshape_new, hshape_new),
+            input_data[i] = input_image.resize((wshape_new, hshape_new),
                                                   resample=self.interpolation)
 
         rdict['input'] = input_data
