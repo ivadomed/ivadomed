@@ -138,7 +138,7 @@ class ROICrop2D(CenterCrop2D):
         pad_right = w - pad_left - tw
         pad_top = fh
         pad_bottom = h - pad_top - th
-        padding = (pad_bottom, pad_right, pad_top, pad_left)
+        padding = (pad_top, pad_left, pad_bottom, pad_right)
         return F.pad(data, padding)
 
     def undo_transform(self, sample):
