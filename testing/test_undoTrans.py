@@ -43,7 +43,7 @@ def test_undo(contrast='T2star'):
     validation_transform_list = [
         ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
         #ivadomed_transforms.CenterCrop2D(size=[40, 48]),
-        #ivadomed_transforms.ROICrop2D(size=[40, 48]),
+        ivadomed_transforms.ROICrop2D(size=[40, 48]),
         ivadomed_transforms.ToTensor(),
         ivadomed_transforms.NormalizeInstance()
     ]
@@ -71,7 +71,6 @@ def test_undo(contrast='T2star'):
                                   multichannel=False,
                                   slice_filter_fn=SliceFilter(filter_empty_input=True,
                                                                 filter_empty_mask=False))
-    #ds_test.filter_roi(nb_nonzero_thr=10)
 
     ds_test_noTrans = loader.BidsDataset(PATH_BIDS,
                                   subject_lst=test_lst,
@@ -85,7 +84,6 @@ def test_undo(contrast='T2star'):
                                   multichannel=False,
                                   slice_filter_fn=SliceFilter(filter_empty_input=True,
                                                                 filter_empty_mask=False))
-    #ds_test_noTrans.filter_roi(nb_nonzero_thr=10)
 
     test_loader = DataLoader(ds_test, batch_size=len(ds_test),
                              shuffle=False, pin_memory=True,
@@ -114,15 +112,10 @@ def test_undo(contrast='T2star'):
         print(before.shape == after.shape, np.sum(before) == np.sum(after), np.sum(before-after) == 0.0)
         print(before.shape, after.shape, np.sum(before), np.sum(after), np.sum(before-after), np.unique(before), np.unique(after))
 
-        #print(np.array_equal(before, after))
-        # print((before == after).all())
-        # print(np.allclose(before, after))
-        # print(np.unique(before), np.unique(after))
-        if 1 in before:
-            fig = plt.figure(figsize=(20,10))
-            ax1 = fig.add_subplot(1,2,1)
-            im = ax1.imshow(np.array(before), cmap='gray')
-            ax2 = fig.add_subplot(1,2,2)
-            im = ax2.imshow(np.array(after), cmap='gray')
-            plt.savefig('tmpT/'+str(randint(0,1000))+'.png')
-            plt.close()
+        #fig = plt.figure(figsize=(20,10))
+        #ax1 = fig.add_subplot(1,2,1)
+        #im = ax1.imshow(np.array(before), cmap='gray')
+        #ax2 = fig.add_subplot(1,2,2)
+        #im = ax2.imshow(np.array(after), cmap='gray')
+        #plt.savefig('tmpT/'+str(randint(0,1000))+'.png')
+        #plt.close()

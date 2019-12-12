@@ -9,11 +9,6 @@ from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_
 from medicaltorch import transforms as mt_transforms
 
 
-##
-from random import randint
-import matplotlib.pyplot as plt
-##
-
 def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
        from the mt_transforms."""
