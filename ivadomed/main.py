@@ -38,8 +38,8 @@ def ignore(input):
     return hidden
 
 def get_list():
-    data_path = "duke/projects/ivado-medical-imaging/olivier/ms_inter_rater/data"
-    rater_path = "duke/projects/ivado-medical-imaging/olivier/ms_inter_rater/"
+    data_path = "../duke/projects/ivado-medical-imaging/olivier/ms_inter_rater/data"
+    rater_path = "../duke/projects/ivado-medical-imaging/olivier/ms_inter_rater/"
     pair_list = []
     subjects = os.listdir(data_path)
     rater_count = 8
@@ -147,8 +147,8 @@ def cmd_train(context):
 
     ds_list = get_list()
     random.shuffle(ds_list)
-    train_boundary = int(train_frac*len(ds_list))
-    val_boundary = len(ds_list) - int(test_frac*len(ds_list))
+    train_boundary = int(context["train_fraction"]*len(ds_list))
+    val_boundary = len(ds_list) - int(context["test_fraction"]*len(ds_list))
     train_list = ds_list[:train_boundary]
     val_list = ds_list[train_boundary:val_boundary]
     test_list = data[val_boundary:]
