@@ -151,7 +151,7 @@ def cmd_train(context):
     val_boundary = len(ds_list) - int(context["test_fraction"]*len(ds_list))
     train_list = ds_list[:train_boundary]
     val_list = ds_list[train_boundary:val_boundary]
-    test_list = data[val_boundary:]
+    test_list = ds_list[val_boundary:]
 
     ds_train = mt_datasets.MRI2DSegmentationDataset(train_list)
     ds_val = mt_datasets.MRI2DSegmentationDataset(val_list)
