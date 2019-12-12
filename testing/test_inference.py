@@ -21,7 +21,7 @@ import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 2
+GPU_NUMBER = 1
 BATCH_SIZE = 8
 DROPOUT = 0.4
 BN = 0.1
@@ -34,7 +34,7 @@ def test_inference(film_bool=False):
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
         print("cuda is not available.")
-        print("Working on {}.".format(device))
+        print("Working on {}.".format("cpu"))
     if cuda_available:
         # Set the GPU
         torch.cuda.set_device(GPU_NUMBER)
@@ -85,9 +85,9 @@ def test_inference(film_bool=False):
                              num_workers=1)
 
     if film_bool:
-        model = torch.load(os.path.join(PATH_BIDS, "model_film_test.pt"))
+        model = torch.load(os.path.join(PATH_BIDS, "model_film_test.pt"), map_location=device)
     else:
-        model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt"))
+        model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt"), map_location=device)
 
     if cuda_available:
         model.cuda()
@@ -172,3 +172,5 @@ def test_inference(film_bool=False):
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
     print(metrics_dict)
+
+
