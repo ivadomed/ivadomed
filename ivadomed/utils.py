@@ -35,6 +35,21 @@ class IvadoMetricManager(mt_metrics.MetricManager):
 
 
 def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis):
+    """Save the prediction as nii.
+        1. Reconstruct a 3D volume out of the slice-wise predictions.
+        2. Re-orient the 3D array accordingly to the ground-truth orientation.
+
+    Inputs:
+        data_lst: list of the slice-wise predictions.
+        z_lst: list of the slice indexes where the inference has been performed.
+              The remaining slices will be filled with zeros.
+        fname_ref: ground-truth fname
+        fname_out: output fname
+        slice_axis: orientation used to extract slices (i.e. axial, sagittal, coronal)
+
+    Return:
+
+    """
     nib_ref = nib.load(fname_ref)
     nib_ref_can = nib.as_closest_canonical(nib_ref)
 
@@ -48,9 +63,12 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis):
 
     # create data
     arr = np.stack(tmp_lst, axis=0)
+    print(arr.shape)
+    arr = np.swapaxes(arr, 1, 2)
+    print(arr.shape)
     # move axis according to slice_axis to RAS orientation
     arr_ras = np.swapaxes(arr, 0, slice_axis)
-
+    print(arr_ras.shape)
     # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
     ref_orientation = nib.orientations.io_orientation(nib_ref.affine)
     ras_orientation = nib.orientations.io_orientation(nib_ref_can.affine)
