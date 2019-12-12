@@ -26,8 +26,8 @@ BATCH_SIZE = 8
 DROPOUT = 0.4
 BN = 0.1
 SLICE_AXIS = 2
-PATH_BIDS = 'testing_data/'
-PATH_OUT = 'tmp/'
+PATH_BIDS = 'testing_data'
+PATH_OUT = 'tmp'
 
 def test_inference(film_bool=False):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -85,9 +85,9 @@ def test_inference(film_bool=False):
                              num_workers=1)
 
     if film_bool:
-        model = torch.load(PATH_BIDS + "model_film_test.pt")
+        model = torch.load(os.path.join(PATH_BIDS, "model_film_test.pt"))
     else:
-        model = torch.load(PATH_BIDS + "model_unet_test.pt")
+        model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt"))
 
     if cuda_available:
         model.cuda()
@@ -145,7 +145,7 @@ def test_inference(film_bool=False):
             fname_ref = rdict_undo['input_metadata']['gt_filename']
             if pred_tmp_lst and (fname_ref != fname_tmp or (i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
                 # save the completely processed file as a nii
-                fname_pred = PATH_OUT + fname_tmp.split('/')[-1]
+                fname_pred = os.path.join(PATH_OUT, fname_tmp.split('/')[-1])
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
                 save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS)
                 # re-init pred_stack_lst

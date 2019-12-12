@@ -21,7 +21,7 @@ cudnn.benchmark = True
 
 GPU_NUMBER = 5
 SLICE_AXIS = 2
-PATH_BIDS = 'testing_data/'
+PATH_BIDS = 'testing_data'
 
 def test_undo(contrast='T2star', tol=3):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

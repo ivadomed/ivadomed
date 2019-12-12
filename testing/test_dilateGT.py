@@ -29,9 +29,9 @@ DROPOUT = 0.4
 BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01
-PATH_BIDS = 'testing_data/'
-#PATH_BIDS = '../duke/sct_testing/large/'
-PATH_OUT = 'tmp_test_dilateGT/'
+PATH_BIDS = 'testing_data'
+#PATH_BIDS = os.path.join(.., 'duke', 'sct_testing', 'large')
+PATH_OUT = 'tmp_test_dilateGT'
 
 
 def save_im_gt(im, gt, fname_out):

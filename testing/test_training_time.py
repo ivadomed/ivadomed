@@ -28,7 +28,7 @@ BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01
 FILM_LAYERS = [0, 0, 0, 0, 0, 1, 1, 1]
-PATH_BIDS = 'testing_data/'
+PATH_BIDS = 'testing_data'
 
 def test_film_contrast(film_layers=FILM_LAYERS):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
