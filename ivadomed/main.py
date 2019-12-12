@@ -194,22 +194,24 @@ def cmd_train(context):
                             num_workers=0)
 
     if film_bool:
-        # Modulated U-net model with FiLM layers
-        model = models.FiLMedUnet(n_metadata=len([ll for l in train_onehotencoder.categories_ for ll in l]),
-                                  film_bool=context["film_layers"],
-                                  drop_rate=context["dropout_rate"],
-                                  bn_momentum=context["batch_norm_momentum"])
+        n_metadata = len([ll for l in train_onehotencoder.categories_ for ll in l])
     else:
-        # Traditional U-Net model
-        in_channel = 1
-        if context['multichannel']:
-            in_channel = len(context['multichannel'])
+        n_metadata = None
 
-        model = models.Unet(in_channel=in_channel,
-                            out_channel=context['out_channel'],
-                            depth=context['depth'],
-                            drop_rate=context["dropout_rate"],
-                            bn_momentum=context["batch_norm_momentum"])
+    # Traditional U-Net model
+    in_channel = 1
+
+    if context['multichannel']:
+        in_channel = len(context['multichannel'])
+
+    model = models.Unet(in_channel=in_channel,
+                        out_channel=context['out_channel'],
+                        depth=context['depth'],
+                        film_layers=context["film_layers"],
+                        n_metadata=n_metadata,
+                        drop_rate=context["dropout_rate"],
+                        bn_momentum=context["batch_norm_momentum"],
+                        film_bool=film_bool)
 
     if cuda_available:
         model.cuda()
@@ -236,8 +238,9 @@ def cmd_train(context):
         exit()
 
     # Create dict containing gammas and betas after each FiLM layer.
-    gammas_dict = {i: [] for i in range(1, 9)}
-    betas_dict = {i: [] for i in range(1, 9)}
+    depth = context["depth"]
+    gammas_dict = {i: [] for i in range(1, 2 * depth + 3)}
+    betas_dict = {i: [] for i in range(1, 2 * depth + 3)}
 
     # Create a list containing the contrast of all batch images
     var_contrast_list = []
@@ -470,8 +473,15 @@ def cmd_train(context):
 
                 # Fill the lists of gammas and betas
                 for idx in [i for i, x in enumerate(film_layers) if x]:
-                    attr_stg = 'film' + str(idx)
-                    layer_cur = getattr(model, attr_stg)
+                    if idx < depth:
+                        layer_cur = model.encoder.down_path[idx * 3 + 1]
+                    elif idx == depth:
+                        layer_cur = model.encoder.film_bottom
+                    elif idx == depth * 2 + 1:
+                        layer_cur = model.decoder.last_film
+                    else:
+                        layer_cur = model.decoder.up_path[(idx - depth - 1) * 2 + 1]
+
                     gammas_dict[idx + 1].append(layer_cur.gammas[:, :, 0, 0].cpu().numpy())
                     betas_dict[idx + 1].append(layer_cur.betas[:, :, 0, 0].cpu().numpy())
 
@@ -523,11 +533,11 @@ def cmd_train(context):
         joblib.dump(train_onehotencoder, "./" + context["log_directory"] + "/one_hot_encoder.joblib")
 
         # Convert list of gammas/betas into numpy arrays
-        gammas_dict = {i: np.array(gammas_dict[i]) for i in range(1, 9)}
-        betas_dict = {i: np.array(betas_dict[i]) for i in range(1, 9)}
+        gammas_dict = {i: np.array(gammas_dict[i]) for i in range(1, 2 * depth + 3)}
+        betas_dict = {i: np.array(betas_dict[i]) for i in range(1, 2 * depth + 3)}
 
         # Save the numpy arrays for gammas/betas inside files.npy in log_directory
-        for i in range(1, 9):
+        for i in range(1, 2 * depth + 3):
             np.save(context["log_directory"] + f"/gamma_layer_{i}.npy", gammas_dict[i])
             np.save(context["log_directory"] + f"/beta_layer_{i}.npy", betas_dict[i])
 
