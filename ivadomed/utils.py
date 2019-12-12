@@ -63,12 +63,10 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis):
 
     # create data
     arr = np.stack(tmp_lst, axis=0)
-    print(arr.shape)
     arr = np.swapaxes(arr, 1, 2)
-    print(arr.shape)
     # move axis according to slice_axis to RAS orientation
     arr_ras = np.swapaxes(arr, 0, slice_axis)
-    print(arr_ras.shape)
+
     # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
     ref_orientation = nib.orientations.io_orientation(nib_ref.affine)
     ras_orientation = nib.orientations.io_orientation(nib_ref_can.affine)
@@ -79,7 +77,7 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis):
 
     # create nii
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
-    print(nib_pred.dataobj.shape, nib_ref.dataobj.shape)
+
     # save
     nib.save(nib_pred, fname_out)
 
