@@ -57,9 +57,7 @@ class Resample(mt_transforms.Resample):
         hzoom, wzoom = sample['gt_metadata']['zooms']
         wshape_undo = int(round(wshape * self.wspace / wzoom))
         hshape_undo = int(round(hshape * self.hspace / hzoom))
-        print(np.array(sample['gt']).shape, np.unique(np.array(sample['gt'])))
         gt_data_undo = self.resample_bin(sample['gt'], wshape, hshape)
-        print(np.unique(np.array(sample['gt'])))
         rdict['gt'] = gt_data_undo
 
         sample.update(rdict)
@@ -118,12 +116,6 @@ class CenterCrop2D(mt_transforms.CenterCrop2D):
         pad_top = fh
         pad_bottom = h - pad_top - th
         padding = (pad_left, pad_top, pad_right, pad_bottom)
-        #if randint(0,20) == 4:
-        #    fig = plt.figure()
-        #    ax1 = fig.add_subplot(1,1,1)
-        #    im = ax1.imshow(np.array(F.pad(data, padding)), cmap='gray')
-        #    plt.savefig('tmpT/'+str(randint(0,1000))+'.png')
-        #    plt.close()
         return F.pad(data, padding)
 
 
@@ -152,16 +144,7 @@ class ROICrop2D(CenterCrop2D):
         pad_top = fh
         pad_bottom = h - pad_top - th
         padding = (pad_bottom, pad_right, pad_top, pad_left)
-        pad_im = F.pad(data, padding)
-        #transposed_np = np.swapaxes(np.array(pad_im), 0, 1)
-        #transposed_im = Image.fromarray(transposed_np)
-        #if np.sum(np.array(data)):
-        #    fig = plt.figure()
-        #    ax1 = fig.add_subplot(1,1,1)
-        #    im = ax1.imshow(np.array(F.pad(data, padding)), cmap='gray')
-        #    plt.savefig('tmpT/'+str(randint(0,1000))+'.png')
-        #    plt.close()
-        return pad_im
+        return F.pad(data, padding)
 
     def undo_transform(self, sample):
         rdict = {}
