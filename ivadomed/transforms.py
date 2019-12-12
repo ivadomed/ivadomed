@@ -50,8 +50,6 @@ class Resample(mt_transforms.Resample):
         # undo pred, aka GT
         hshape, wshape = sample['gt_metadata']['data_shape']
         hzoom, wzoom = sample['gt_metadata']['zooms']
-        wshape_undo = int(round(wshape * self.wspace / wzoom))
-        hshape_undo = int(round(hshape * self.hspace / hzoom))
         gt_data_undo = self.resample_bin(sample['gt'], wshape, hshape)
         rdict['gt'] = gt_data_undo
 

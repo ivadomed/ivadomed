@@ -591,7 +591,7 @@ def cmd_test(context):
 
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     ds_test = loader.BidsDataset(context["bids_path"],
-                                 subject_lst=test_lst[:2],
+                                 subject_lst=test_lst,
                                  target_suffix=context["target_suffix"],
                                  roi_suffix=context["roi_suffix"],
                                  contrast_lst=context["contrast_test"],
