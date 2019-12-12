@@ -40,11 +40,6 @@ class Resample(mt_transforms.Resample):
 
     def resample_bin(self, data, wshape, hshape, thr=0.5):
         data = data.resize((wshape, hshape), resample=Image.NEAREST)
-        np_data = np.array(data)
-        np_data[np_data > thr] = 255
-        np_data[np_data <= thr] = 0
-        np_data = np_data.astype(np.uint8)
-        data = Image.fromarray(np_data, mode='L')
         return data
 
     def undo_transform(self, sample):
