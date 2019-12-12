@@ -27,8 +27,37 @@ from ivadomed import models
 from ivadomed import losses
 from ivadomed.utils import *
 import ivadomed.transforms as ivadomed_transforms
+import os
+
 
 cudnn.benchmark = True
+
+def ignore(input):
+    hidden =  (input.startswith('.') or input.startswith('Icon'))
+#    print(input,hidden)
+    return hidden
+
+def get_list():
+    data_path = "duke/projects/ivado-medical-imaging/olivier/ms_inter_rater/data"
+    rater_path = "duke/projects/ivado-medical-imaging/olivier/ms_inter_rater/"
+    pair_list = []
+    subjects = os.listdir(data_path)
+    rater_count = 8
+    for subject in subjects:
+        if not ignore(subject):
+            images = os.listdir(os.path.join(data_path, subject))
+    #        print(images)
+            for image in images:
+                image_path = os.path.join(data_path, subject, image)
+                if not ignore(image):
+                    for gt in range(rater_count):
+                        gt_path = os.path.join(rater_path, "rater_00" + str(gt+1), subject, image)
+                        metadata = {}
+                        metadata['rater'] =gt+1
+                        pair  = (image_path, gt_path, None, metadata)
+                        print(pair)
+                        pair_list.append(pair)
+    return pair_list
 
 
 def cmd_train(context):
@@ -115,6 +144,19 @@ def cmd_train(context):
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
+
+    ds_list = get_list()
+    random.shuffle(ds_list)
+    train_boundary = int(train_frac*len(ds_list))
+    val_boundary = len(ds_list) - int(test_frac*len(ds_list))
+    train_list = ds_list[:train_boundary]
+    val_list = ds_list[train_boundary:val_boundary]
+    test_list = data[val_boundary:]
+
+    ds_train = mt_datasets.MRI2DSegmentationDataset(train_list)
+    ds_val = mt_datasets.MRI2DSegmentationDataset(val_list)
+    ds_test = mt_datasets.MRI2DSegmentationDataset(test_list)
+    """
     ds_train = loader.BidsDataset(context["bids_path"],
                                   subject_lst=train_lst,
                                   target_suffix=context["target_suffix"],
@@ -126,6 +168,7 @@ def cmd_train(context):
                                   transform=train_transform,
                                   multichannel=True if context['multichannel'] else False,
                                   slice_filter_fn=SliceFilter(**context["slice_filter"]))
+    """
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_training"].keys():
@@ -157,6 +200,7 @@ def cmd_train(context):
                               num_workers=0)
 
     # Validation dataset ------------------------------------------------------
+    """
     ds_val = loader.BidsDataset(context["bids_path"],
                                 subject_lst=valid_lst,
                                 target_suffix=context["target_suffix"],
@@ -168,7 +212,7 @@ def cmd_train(context):
                                 transform=val_transform,
                                 multichannel=True if context['multichannel'] else False,
                                 slice_filter_fn=SliceFilter(**context["slice_filter"]))
-
+    """
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
         ds_val.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
