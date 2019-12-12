@@ -674,7 +674,6 @@ def cmd_test(context):
                 # save the completely processed file as a nii
                 fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
-                # WARNING: nii as RAS, TODO: save as original orientation
                 save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, axis_dct[context['slice_axis']])
                 # re-init pred_stack_lst
                 pred_tmp_lst, z_tmp_lst = [], []
