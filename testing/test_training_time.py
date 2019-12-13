@@ -179,7 +179,7 @@ def test_unet():
                                   transform=train_transform,
                                   multichannel=False,
                                   slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=False))
-
+    print(ds_train.__len__())
     ds_train.filter_roi(nb_nonzero_thr=10)
 
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
@@ -263,4 +263,3 @@ def test_unet():
     print('Mean SD opt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
     print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
     print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
-

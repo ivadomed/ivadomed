@@ -121,8 +121,8 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                     multichannel_subjects[subj_id]["absolute_paths"][idx] = subject.record.absolute_path
                     multichannel_subjects[subj_id]["deriv_path"] = target_filename
                     multichannel_subjects[subj_id]["metadata"][idx] = subject.metadata()
-                if roi_filename:
-                    multichannel_subjects[subj_id]["roi_filename"] = roi_filename
+                    if roi_filename:
+                        multichannel_subjects[subj_id]["roi_filename"] = roi_filename
 
                 else:
                     self.filename_pairs.append(([subject.record.absolute_path],
