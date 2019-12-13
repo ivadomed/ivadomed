@@ -54,7 +54,7 @@ def get_list():
                         gt_path = os.path.join(rater_path, "rater_00" + str(gt+1), subject, image)
                         metadata = {}
                         metadata['rater'] =gt+1
-                        pair  = (image_path, gt_path, None, metadata)
+                        pair  = ([image_path], gt_path, None, metadata)
                         print(pair)
                         pair_list.append(pair)
     return pair_list
