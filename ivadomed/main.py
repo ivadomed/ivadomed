@@ -61,7 +61,7 @@ def get_list(suffix):
     #                        print(pair)
                             pair_list.append(pair)
                         else:
-                            print("File does not exist : " gt_path)
+                            print("File does not exist : ", gt_path)
     return pair_list
 
 
