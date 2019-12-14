@@ -52,7 +52,7 @@ def get_list(suffix):
                 if not ignore(image):
                     for gt in range(rater_count):
                         temp = image.split(".",1)
-                        gt_filename = ".".join(temp[0] + suffix, temp[1])
+                        gt_filename = ".".join([temp[0] + suffix, temp[1]])
                         gt_path = os.path.join(rater_path, "rater_00" + str(gt+1), subject, image)
                         metadata = {}
                         metadata['rater'] =gt+1
