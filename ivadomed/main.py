@@ -46,7 +46,7 @@ def get_list(suffix):
     for subject in subjects:
         if not ignore(subject):
             images = os.listdir(os.path.join(data_path, subject))
-    #        print(images)
+#            print(images)
             for image in images:
                 image_path = os.path.join(data_path, subject, image)
                 if not ignore(image):
@@ -56,8 +56,8 @@ def get_list(suffix):
                         gt_path = os.path.join(rater_path, "rater_00" + str(gt+1), subject, image)
                         metadata = {}
                         metadata['rater'] =gt+1
-                        pair  = ([image_path], gt_path, None, metadata)
-                        print(pair)
+                        pair  = ([image_path], gt_path, None, [metadata])
+#                        print(pair)
                         pair_list.append(pair)
     return pair_list
 
