@@ -37,7 +37,7 @@ def ignore(input):
 #    print(input,hidden)
     return hidden
 
-def get_list():
+def get_list(suffix):
     data_path = "../duke/projects/ivado-medical-imaging/olivier/ms_inter_rater/data"
     rater_path = "../duke/projects/ivado-medical-imaging/olivier/ms_inter_rater/"
     pair_list = []
@@ -51,6 +51,8 @@ def get_list():
                 image_path = os.path.join(data_path, subject, image)
                 if not ignore(image):
                     for gt in range(rater_count):
+                        temp = image.split(".",1)
+                        gt_filename = ".".join(temp[0] + suffix, temp[1])
                         gt_path = os.path.join(rater_path, "rater_00" + str(gt+1), subject, image)
                         metadata = {}
                         metadata['rater'] =gt+1
@@ -145,7 +147,7 @@ def cmd_train(context):
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
 
-    ds_list = get_list()
+    ds_list = get_list(context["target_suffix"])
     random.shuffle(ds_list)
     train_boundary = int(context["train_fraction"]*len(ds_list))
     val_boundary = len(ds_list) - int(context["test_fraction"]*len(ds_list))
