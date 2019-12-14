@@ -53,7 +53,7 @@ def get_list(suffix):
                     for gt in range(rater_count):
                         temp = image.split(".",1)
                         gt_filename = ".".join([temp[0] + suffix, temp[1]])
-                        gt_path = os.path.join(rater_path, "rater_00" + str(gt+1), subject, image)
+                        gt_path = os.path.join(rater_path, "rater_00" + str(gt+1), subject, gt_filename)
                         metadata = {}
                         metadata['rater'] =gt+1
                         pair  = ([image_path], gt_path, None, [metadata])
@@ -147,7 +147,7 @@ def cmd_train(context):
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
 
-    ds_list = get_list(context["target_suffix"])
+    ds_list = get_list("_lesion_manual")
     random.shuffle(ds_list)
     train_boundary = int(context["train_fraction"]*len(ds_list))
     val_boundary = len(ds_list) - int(context["test_fraction"]*len(ds_list))
