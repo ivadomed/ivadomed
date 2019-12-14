@@ -54,11 +54,14 @@ def get_list(suffix):
                         temp = image.split(".",1)
                         gt_filename = ".".join([temp[0] + suffix, temp[1]])
                         gt_path = os.path.join(rater_path, "rater_00" + str(gt+1), subject, gt_filename)
-                        metadata = {}
-                        metadata['rater'] =gt+1
-                        pair  = ([image_path], gt_path, None, [metadata])
-#                        print(pair)
-                        pair_list.append(pair)
+                        if os.path.isfile(gt_path) :
+                            metadata = {}
+                            metadata['rater'] =gt+1
+                            pair  = ([image_path], gt_path, None, [metadata])
+    #                        print(pair)
+                            pair_list.append(pair)
+                        else:
+                            print("File does not exist : " gt_path)
     return pair_list
 
 
