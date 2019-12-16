@@ -60,7 +60,9 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis):
             tmp_lst.append(np.zeros(data_lst[0].shape))
         else:
             tmp_lst.append(data_lst[z_lst.index(z)])
-
+    print("Len {}".format(len(tmp_lst)))
+    for arr in tmp_lst:
+        print("Shape element lst {}".format(arr.shape))
     # create data
     arr = np.stack(tmp_lst, axis=0)
     arr = np.swapaxes(arr, 1, 2)
