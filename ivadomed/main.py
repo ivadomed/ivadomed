@@ -56,7 +56,7 @@ def get_list(suffix):
                         gt_path = os.path.join(rater_path, "rater_00" + str(gt+1), subject, gt_filename)
                         if os.path.isfile(gt_path) :
                             metadata = {}
-                            metadata['rater'] =gt+1
+                            metadata['contrast'] =gt+1
                             pair  = ([image_path], gt_path, None, [metadata])
     #                        print(pair)
                             pair_list.append(pair)
