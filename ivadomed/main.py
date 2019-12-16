@@ -234,7 +234,9 @@ def cmd_train(context):
 
     # Using Adam
     step_scheduler_batch = False
-    optimizer = optim.Adam(model.parameters(), lr=initial_lr)
+    # filter out the parameters you are going to fine-tuing
+    params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
+    optimizer = optim.Adam(params_to_opt, lr=initial_lr)
     if context["lr_scheduler"]["name"] == "CosineAnnealingLR":
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
     elif context["lr_scheduler"]["name"] == "CosineAnnealingWarmRestarts":
