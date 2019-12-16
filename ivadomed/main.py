@@ -671,12 +671,17 @@ def cmd_test(context):
         rdict['gt'] = preds.cpu()
         batch.update(rdict)
 
+        if batch["input"].shape[0] > 1:
+            batch["input_metadata"] = batch["input_metadata"][1] # Take only second channel
+
         # reconstruct 3D image
         for smp_idx in range(len(batch['gt'])):
             # undo transformations
             rdict = {}
             for k in batch.keys():
                 rdict[k] = batch[k][smp_idx]
+            if rdict["input"].shape[0] > 1:
+                rdict["input"] = rdict["input"][1, :, :][None, :, :]
             rdict_undo = val_undo_transform(rdict)
 
             fname_ref = rdict_undo['input_metadata']['gt_filename']
