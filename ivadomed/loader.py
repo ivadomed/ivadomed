@@ -87,10 +87,10 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
 
                 if not subject.has_metadata():
                     print("Subject without metadata.")
-                    continue
-
-                metadata = subject.metadata()
-                # add contrast to metadata
+                    metadata = {}
+                else:
+                    metadata = subject.metadata()
+                    # add contrast to metadata
                 metadata['contrast'] = subject.record["modality"]
 
                 if metadata_choice == 'mri_params':
@@ -120,7 +120,7 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                     subj_id = subject.record["subject_id"]
                     multichannel_subjects[subj_id]["absolute_paths"][idx] = subject.record.absolute_path
                     multichannel_subjects[subj_id]["deriv_path"] = target_filename
-                    multichannel_subjects[subj_id]["metadata"][idx] = subject.metadata()
+                    multichannel_subjects[subj_id]["metadata"][idx] = metadata
                     if roi_filename:
                         multichannel_subjects[subj_id]["roi_filename"] = roi_filename
 
@@ -215,7 +215,6 @@ class Kde_model():
 def clustering_fit(dataset, key_lst):
     """This function creates clustering models for each metadata type,
     using Kernel Density Estimation algorithm.
-
     :param datasets (list): data
     :param key_lst (list of strings): names of metadata to cluster
     :return: clustering model for each metadata type

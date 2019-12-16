@@ -105,6 +105,9 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
             gt_metadata["__centercrop"] = (fh, fw, w, h)
             rdict['gt'] = gt_data
 
+        # free memory
+        rdict['roi'], rdict['roi_metadata'] = None, None
+
         sample.update(rdict)
         return sample
 
