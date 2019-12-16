@@ -215,9 +215,16 @@ def cmd_train(context):
                             film_bool=film_bool)
     else:
         model = torch.load(context['retrain_model'])
+
         # Freeze model weights
         for param in model.parameters():
             param.requires_grad = False
+
+        # Replace the last conv layer
+        # Note: Parameters of newly constructed layer have requires_grad=True by default
+        model.decoder.last_conv = nn.Conv2d(in_channel // 2, context['out_channel'], kernel_size=3, padding=1)
+        if film_bool and context["film_layers"][-1]:
+            model.decoder.last_film = models.FiLMlayer(n_metadata, 1)
 
     if cuda_available:
         model.cuda()
