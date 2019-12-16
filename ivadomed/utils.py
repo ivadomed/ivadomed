@@ -34,7 +34,7 @@ class IvadoMetricManager(mt_metrics.MetricManager):
         return res_dict
 
 
-def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis):
+def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False):
     """Save the prediction as nii.
         1. Reconstruct a 3D volume out of the slice-wise predictions.
         2. Re-orient the 3D array accordingly to the ground-truth orientation.
@@ -46,6 +46,7 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis):
         fname_ref: ground-truth fname
         fname_out: output fname
         slice_axis: orientation used to extract slices (i.e. axial, sagittal, coronal)
+        debug:
 
     Return:
 
@@ -60,9 +61,12 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis):
             tmp_lst.append(np.zeros(data_lst[0].shape))
         else:
             tmp_lst.append(data_lst[z_lst.index(z)])
-    print("Len {}".format(len(tmp_lst)))
-    for arr in tmp_lst:
-        print("Shape element lst {}".format(arr.shape))
+
+    if debug:
+        print("Len {}".format(len(tmp_lst)))
+        for arr in tmp_lst:
+            print("Shape element lst {}".format(arr.shape))
+
     # create data
     arr = np.stack(tmp_lst, axis=0)
     arr = np.swapaxes(arr, 1, 2)
