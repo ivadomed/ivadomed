@@ -215,6 +215,9 @@ def cmd_train(context):
                             film_bool=film_bool)
     else:
         model = torch.load(context['retrain_model'])
+        # Freeze model weights
+        for param in model.parameters():
+            param.requires_grad = False
 
     if cuda_available:
         model.cuda()
