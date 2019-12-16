@@ -13,6 +13,7 @@ cudnn.benchmark = True
 
 GPU_NUMBER = 1
 N_METADATA = 1
+OUT_CHANNEL = 1
 INITIAL_LR = 0.001
 FILM_LAYERS = [0, 0, 0, 0, 0, 0, 0, 0]
 PATH_PRETRAINED_MODEL = 'testing_data/model_unet_test.pt'
@@ -36,7 +37,7 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
     # Traditional U-Net model
     in_channel = 1
 
-    model = torch.load(path_model, map_location=device)
+    model = torch.load(path_model)
 
     # Freeze model weights
     for param in model.parameters():
@@ -44,7 +45,9 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
 
     # Replace the last conv layer
     # Note: Parameters of newly constructed layer have requires_grad=True by default
-    model.decoder.last_conv = nn.Conv2d(in_channel // 2, context['out_channel'], kernel_size=3, padding=1)
+    model.decoder.last_conv = nn.Conv2d(model.decoder.last_conv.in_channels,
+                                        OUT_CHANNEL, kernel_size=3, padding=1)
+
     if film_bool and film_layers[-1]:
         model.decoder.last_film = models.FiLMlayer(n_metadata, 1)
 

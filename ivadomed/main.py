@@ -222,7 +222,8 @@ def cmd_train(context):
 
         # Replace the last conv layer
         # Note: Parameters of newly constructed layer have requires_grad=True by default
-        model.decoder.last_conv = nn.Conv2d(in_channel // 2, context['out_channel'], kernel_size=3, padding=1)
+        model.decoder.last_conv = nn.Conv2d(model.decoder.last_conv.in_channels,
+                                               context['out_channel'], kernel_size=3, padding=1)
         if film_bool and context["film_layers"][-1]:
             model.decoder.last_film = models.FiLMlayer(n_metadata, 1)
 
