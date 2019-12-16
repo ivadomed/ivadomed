@@ -2,6 +2,7 @@ import sys
 import json
 import os
 
+import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch import optim
@@ -10,7 +11,7 @@ from ivadomed import models
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 5
+GPU_NUMBER = 1
 N_METADATA = 1
 INITIAL_LR = 0.001
 FILM_LAYERS = [0, 0, 0, 0, 0, 0, 0, 0]
@@ -26,7 +27,7 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
         # Set the GPU
         torch.cuda.set_device(GPU_NUMBER)
         print("Using GPU number {}".format(GPU_NUMBER))
-
+    print(device)
     film_bool = bool(sum(film_layers))
 
     if film_bool:
@@ -35,7 +36,7 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
     # Traditional U-Net model
     in_channel = 1
 
-    model = torch.load(path_model)
+    model = torch.load(path_model, map_location=device)
 
     # Freeze model weights
     for param in model.parameters():
@@ -60,6 +61,7 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
     total_trainable_params = sum(
         p.numel() for p in model.parameters() if p.requires_grad)
     print(f'{total_trainable_params:,} training parameters.')
+    assert(total_params > total_trainable_params)
 
     initial_lr = INITIAL_LR
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
