@@ -150,6 +150,7 @@ def cmd_train(context):
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
 
+    #Split  dataset
     ds_list = get_list("_lesion_manual")
     random.shuffle(ds_list)
     train_boundary = int(context["train_fraction"]*len(ds_list))
@@ -158,8 +159,8 @@ def cmd_train(context):
     val_list = ds_list[train_boundary:val_boundary]
     test_list = ds_list[val_boundary:]
 
-    ds_train = mt_datasets.MRI2DSegmentationDataset(train_list)
-    ds_val = mt_datasets.MRI2DSegmentationDataset(val_list)
+    ds_train = mt_datasets.MRI2DSegmentationDataset(train_list,transform=train_transform)
+    ds_val = mt_datasets.MRI2DSegmentationDataset(val_list,transform=val_transform)
     ds_test = mt_datasets.MRI2DSegmentationDataset(test_list)
     """
     ds_train = loader.BidsDataset(context["bids_path"],
