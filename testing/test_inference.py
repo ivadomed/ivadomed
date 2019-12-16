@@ -149,11 +149,9 @@ def test_inference(film_bool=False):
                 # save the completely processed file as a nii
                 fname_pred = os.path.join(PATH_OUT, fname_tmp.split('/')[-1])
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
-                save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS)
+                save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS, debug=True)
                 # re-init pred_stack_lst
                 pred_tmp_lst, z_tmp_lst = [], []
-                # compute image-based metrics
-                # TODO
 
             # add new sample to pred_tmp_lst
             pred_tmp_lst.append(np.array(rdict_undo['gt']))
