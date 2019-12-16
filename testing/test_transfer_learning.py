@@ -27,7 +27,7 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
         # Set the GPU
         torch.cuda.set_device(GPU_NUMBER)
         print("Using GPU number {}".format(GPU_NUMBER))
-    print(device)
+
     film_bool = bool(sum(film_layers))
 
     if film_bool:
