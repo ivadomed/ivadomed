@@ -687,10 +687,9 @@ def cmd_test(context):
                 save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, axis_dct[context['slice_axis']])
                 # re-init pred_stack_lst
                 pred_tmp_lst, z_tmp_lst = [], []
-                # TODO compute image-based metrics
 
             # add new sample to pred_tmp_lst
-            pred_tmp_lst.append(np.array(rdict_undo['input']))
+            pred_tmp_lst.append(np.array(rdict_undo['gt']))
             z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
             fname_tmp = fname_ref
 
