@@ -33,9 +33,11 @@ def test_inference(film_bool=False):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
+        pin_memory = False
         print("cuda is not available.")
         print("Working on {}.".format("cpu"))
     if cuda_available:
+        pin_memory = True
         # Set the GPU
         torch.cuda.set_device(GPU_NUMBER)
         print("using GPU number {}".format(GPU_NUMBER))
@@ -80,14 +82,14 @@ def test_inference(film_bool=False):
         # one_hot_encoder = joblib.load("./" + context["log_directory"] + "/one_hot_encoder.joblib")
 
     test_loader = DataLoader(ds_test, batch_size=BATCH_SIZE,
-                             shuffle=False, pin_memory=True,
+                             shuffle=False, pin_memory=pin_memory,
                              collate_fn=mt_datasets.mt_collate,
                              num_workers=1)
 
     if film_bool:
-        model = torch.load(os.path.join(PATH_BIDS, "model_film_test.pt"))  #, map_location=device)
+        model = torch.load(os.path.join(PATH_BIDS, "model_film_test.pt"), map_location=device)
     else:
-        model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt")) #, map_location=device)
+        model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt"), map_location=device)
 
     if cuda_available:
         model.cuda()
@@ -172,5 +174,3 @@ def test_inference(film_bool=False):
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
     print(metrics_dict)
-
-
