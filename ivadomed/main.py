@@ -204,14 +204,17 @@ def cmd_train(context):
     if context['multichannel']:
         in_channel = len(context['multichannel'])
 
-    model = models.Unet(in_channel=in_channel,
-                        out_channel=context['out_channel'],
-                        depth=context['depth'],
-                        film_layers=context["film_layers"],
-                        n_metadata=n_metadata,
-                        drop_rate=context["dropout_rate"],
-                        bn_momentum=context["batch_norm_momentum"],
-                        film_bool=film_bool)
+    if context['retrain_model'] is None:
+        model = models.Unet(in_channel=in_channel,
+                            out_channel=context['out_channel'],
+                            depth=context['depth'],
+                            film_layers=context["film_layers"],
+                            n_metadata=n_metadata,
+                            drop_rate=context["dropout_rate"],
+                            bn_momentum=context["batch_norm_momentum"],
+                            film_bool=film_bool)
+    else:
+        model = torch.load(context['retrain_model'])
 
     if cuda_available:
         model.cuda()
