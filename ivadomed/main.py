@@ -622,7 +622,7 @@ def cmd_test(context):
                              collate_fn=mt_datasets.mt_collate,
                              num_workers=0)
 
-    model = torch.load("./" + context["log_directory"] + "/best_model.pt")
+    model = torch.load("./" + context["log_directory"] + "/best_model.pt", map_location=device)
 
     if cuda_available:
         model.cuda()
@@ -671,7 +671,7 @@ def cmd_test(context):
         rdict['gt'] = preds.cpu()
         batch.update(rdict)
 
-        if batch["input"].shape[0] > 1:
+        if batch["input"].shape[1] > 1:
             batch["input_metadata"] = batch["input_metadata"][1] # Take only second channel
 
         # reconstruct 3D image
