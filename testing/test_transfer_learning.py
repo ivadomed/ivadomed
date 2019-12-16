@@ -37,7 +37,7 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
     # Traditional U-Net model
     in_channel = 1
 
-    model = torch.load(path_model)
+    model = torch.load(path_model, map_location=device)
 
     # Freeze model weights
     for param in model.parameters():
