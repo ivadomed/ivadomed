@@ -212,20 +212,34 @@ def cmd_train(context):
     if context['multichannel']:
         in_channel = len(context['multichannel'])
 
-    if HeMIS:
-          model = models.HeMISUnet(modalities=context['contrast_train_validation'],
-                                     depth=context['depth'],
-                                     drop_rate=context["dropout_rate"],
-                                     bn_momentum=context["batch_norm_momentum"])
+    if context['retrain_model'] is None:
+        if HeMIS:
+              model = models.HeMISUnet(modalities=context['contrast_train_validation'],
+                                         depth=context['depth'],
+                                         drop_rate=context["dropout_rate"],
+                                         bn_momentum=context["batch_norm_momentum"])
+        else:
+              model = models.Unet(in_channel=in_channel,
+                                    out_channel=context['out_channel'],
+                                    depth=context['depth'],
+                                    film_layers=context["film_layers"],
+                                    n_metadata=n_metadata,
+                                    drop_rate=context["dropout_rate"],
+                                    bn_momentum=context["batch_norm_momentum"],
+                                    film_bool=film_bool)
     else:
-          model = models.Unet(in_channel=in_channel,
-                                out_channel=context['out_channel'],
-                                depth=context['depth'],
-                                film_layers=context["film_layers"],
-                                n_metadata=n_metadata,
-                                drop_rate=context["dropout_rate"],
-                                bn_momentum=context["batch_norm_momentum"],
-                                film_bool=film_bool)
+        model = torch.load(context['retrain_model'])
+
+        # Freeze model weights
+        for param in model.parameters():
+            param.requires_grad = False
+
+        # Replace the last conv layer
+        # Note: Parameters of newly constructed layer have requires_grad=True by default
+        model.decoder.last_conv = nn.Conv2d(model.decoder.last_conv.in_channels,
+                                               context['out_channel'], kernel_size=3, padding=1)
+        if film_bool and context["film_layers"][-1]:
+            model.decoder.last_film = models.FiLMlayer(n_metadata, 1)
 
     if cuda_available:
         model.cuda()
@@ -235,7 +249,9 @@ def cmd_train(context):
 
     # Using Adam
     step_scheduler_batch = False
-    optimizer = optim.Adam(model.parameters(), lr=initial_lr)
+    # filter out the parameters you are going to fine-tuing
+    params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
+    optimizer = optim.Adam(params_to_opt, lr=initial_lr)
     if context["lr_scheduler"]["name"] == "CosineAnnealingLR":
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
     elif context["lr_scheduler"]["name"] == "CosineAnnealingWarmRestarts":
@@ -595,6 +611,9 @@ def cmd_test(context):
 
     val_transform = transforms.Compose(validation_transform_list)
 
+    # inverse transformations
+    val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
+
     if context.get("split_path") is None:
         test_lst = joblib.load("./" + context["log_directory"] + "/split_datasets.joblib")['test']
     else:
@@ -614,6 +633,7 @@ def cmd_test(context):
                                  multichannel=True if context["multichannel"] else False,
                                  missing_modality=HeMIS)
 
+
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
         ds_test.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
@@ -630,15 +650,20 @@ def cmd_test(context):
 
     print(f"Loaded {len(ds_test)} {context['slice_axis']} slices for the test set.")
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
-                             shuffle=True, pin_memory=True,
+                             shuffle=False, pin_memory=True,
                              collate_fn=mt_datasets.mt_collate,
                              num_workers=0)
 
-    model = torch.load("./" + context["log_directory"] + "/best_model.pt")
+    model = torch.load("./" + context["log_directory"] + "/best_model.pt", map_location=device)
 
     if cuda_available:
         model.cuda()
     model.eval()
+
+    # create output folder for 3D prediction masks
+    path_3Dpred = os.path.join(context['log_directory'], 'pred_masks')
+    if not os.path.isdir(path_3Dpred):
+        os.makedirs(path_3Dpred)
 
     metric_fns = [dice_score,  # from ivadomed/utils.py
                   mt_metrics.hausdorff_score,
@@ -650,6 +675,7 @@ def cmd_test(context):
 
     metric_mgr = IvadoMetricManager(metric_fns)
 
+    pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
 
@@ -670,6 +696,39 @@ def cmd_test(context):
                 preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
             else:
                 preds = model(test_input)
+
+        # WARNING: sample['gt'] is actually the pred in the return sample
+        # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
+        rdict = {}
+        rdict['gt'] = preds.cpu()
+        batch.update(rdict)
+
+        if batch["input"].shape[1] > 1:
+            batch["input_metadata"] = batch["input_metadata"][1] # Take only second channel
+
+        # reconstruct 3D image
+        for smp_idx in range(len(batch['gt'])):
+            # undo transformations
+            rdict = {}
+            for k in batch.keys():
+                rdict[k] = batch[k][smp_idx]
+            if rdict["input"].shape[0] > 1:
+                rdict["input"] = rdict["input"][1, :, :][None, :, :]
+            rdict_undo = val_undo_transform(rdict)
+
+            fname_ref = rdict_undo['input_metadata']['gt_filename']
+            if pred_tmp_lst and (fname_ref != fname_tmp or (i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
+                # save the completely processed file as a nii
+                fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
+                fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+                save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, axis_dct[context['slice_axis']])
+                # re-init pred_stack_lst
+                pred_tmp_lst, z_tmp_lst = [], []
+
+            # add new sample to pred_tmp_lst
+            pred_tmp_lst.append(np.array(rdict_undo['gt']))
+            z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
+            fname_tmp = fname_ref
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
