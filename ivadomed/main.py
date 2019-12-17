@@ -597,6 +597,9 @@ def cmd_test(context):
 
     val_transform = transforms.Compose(validation_transform_list)
 
+    # inverse transformations
+    val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
+
     if context.get("split_path") is None:
         test_lst = joblib.load("./" + context["log_directory"] + "/split_datasets.joblib")['test']
     else:
@@ -614,7 +617,6 @@ def cmd_test(context):
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter(**context["slice_filter"]),
                                  multichannel=True if context["multichannel"] else False)
-
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
         ds_test.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
@@ -631,15 +633,20 @@ def cmd_test(context):
 
     print(f"Loaded {len(ds_test)} {context['slice_axis']} slices for the test set.")
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
-                             shuffle=True, pin_memory=True,
+                             shuffle=False, pin_memory=True,
                              collate_fn=mt_datasets.mt_collate,
                              num_workers=0)
 
-    model = torch.load("./" + context["log_directory"] + "/best_model.pt")
+    model = torch.load("./" + context["log_directory"] + "/best_model.pt", map_location=device)
 
     if cuda_available:
         model.cuda()
     model.eval()
+
+    # create output folder for 3D prediction masks
+    path_3Dpred = os.path.join(context['log_directory'], 'pred_masks')
+    if not os.path.isdir(path_3Dpred):
+        os.makedirs(path_3Dpred)
 
     metric_fns = [dice_score,  # from ivadomed/utils.py
                   mt_metrics.hausdorff_score,
@@ -651,6 +658,7 @@ def cmd_test(context):
 
     metric_mgr = IvadoMetricManager(metric_fns)
 
+    pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
 
@@ -671,6 +679,39 @@ def cmd_test(context):
                 preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
             else:
                 preds = model(test_input)
+
+        # WARNING: sample['gt'] is actually the pred in the return sample
+        # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
+        rdict = {}
+        rdict['gt'] = preds.cpu()
+        batch.update(rdict)
+
+        if batch["input"].shape[1] > 1:
+            batch["input_metadata"] = batch["input_metadata"][1] # Take only second channel
+
+        # reconstruct 3D image
+        for smp_idx in range(len(batch['gt'])):
+            # undo transformations
+            rdict = {}
+            for k in batch.keys():
+                rdict[k] = batch[k][smp_idx]
+            if rdict["input"].shape[0] > 1:
+                rdict["input"] = rdict["input"][1, :, :][None, :, :]
+            rdict_undo = val_undo_transform(rdict)
+
+            fname_ref = rdict_undo['input_metadata']['gt_filename']
+            if pred_tmp_lst and (fname_ref != fname_tmp or (i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
+                # save the completely processed file as a nii
+                fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
+                fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+                save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, axis_dct[context['slice_axis']])
+                # re-init pred_stack_lst
+                pred_tmp_lst, z_tmp_lst = [], []
+
+            # add new sample to pred_tmp_lst
+            pred_tmp_lst.append(np.array(rdict_undo['gt']))
+            z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
+            fname_tmp = fname_ref
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
