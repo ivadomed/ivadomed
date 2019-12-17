@@ -693,7 +693,7 @@ def cmd_test(context):
                 pred_tmp_lst, z_tmp_lst = [], []
 
             # add new sample to pred_tmp_lst
-            pred_tmp_lst.append(np.array(rdict_undo['input']))
+            pred_tmp_lst.append(np.array(rdict_undo['gt']))
             z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
             fname_tmp = fname_ref
 
