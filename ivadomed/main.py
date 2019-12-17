@@ -601,7 +601,6 @@ def cmd_test(context):
                                  transform=val_transform,
                                  slice_filter_fn=SliceFilter(**context["slice_filter"]),
                                  multichannel=True if context["multichannel"] else False)
-
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
         ds_test.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
@@ -688,13 +687,13 @@ def cmd_test(context):
             if pred_tmp_lst and (fname_ref != fname_tmp or (i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
                 # save the completely processed file as a nii
                 fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
-                fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
-                save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, axis_dct[context['slice_axis']])
+                fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+                save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, axis_dct[context['slice_axis']], debug=True)
                 # re-init pred_stack_lst
                 pred_tmp_lst, z_tmp_lst = [], []
 
             # add new sample to pred_tmp_lst
-            pred_tmp_lst.append(np.array(rdict_undo['gt']))
+            pred_tmp_lst.append(np.array(rdict_undo['input']))
             z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
             fname_tmp = fname_ref
 
