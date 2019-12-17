@@ -34,6 +34,48 @@ class IvadoMetricManager(mt_metrics.MetricManager):
         return res_dict
 
 
+class Evaluation3DMetrics(object):
+
+    def __init__(self, fname_pred, fname_gt, params=None):
+        self.fname_pred = fname_pred
+        self.fname_gt = fname_gt
+
+        if not params is None:
+            pass
+
+        self.data_pred = self.get_data(self.fname_pred)
+        self.data_gt = self.get_data(self.fname_gt)
+
+        self.px, self.py, self.pz = self.get_pixdim()
+
+    def get_data(self, fname):
+        nib_im = nib.load(fname)
+        return nib_im.get_data()
+
+    def get_pixdim(self, fname=self.fname_pred)
+        nib_im = nib.load(fname)
+        px, py, pz = nib_im.header['pixdim'][1:4]
+        return px, py, pz
+
+    def get_vol(self, data):
+        vol = np.sum(data)
+        vol *= self.px * self.py * self.pz
+        return vol
+
+    def get_rvd(self):
+        """Relative volume difference."""
+        vol_gt = self.get_vol(self.data_gt)
+        vol_pred = self.get_vol(self.data_pred)
+
+        avd = vol_gt-vol_pred
+        avd /= vol_gt
+        return avd
+
+    def get_avd(self):
+        """Absolute volume difference."""
+        return abs(self.get_rvd())
+
+
 def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False):
     """Save the prediction as nii.
         1. Reconstruct a 3D volume out of the slice-wise predictions.
