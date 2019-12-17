@@ -69,7 +69,8 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False):
 
     # create data
     arr = np.stack(tmp_lst, axis=0)
-    arr = np.swapaxes(arr, 1, 2)
+    if slice_axis == 2:
+        arr = np.swapaxes(arr, 1, 2)
     # move axis according to slice_axis to RAS orientation
     arr_ras = np.swapaxes(arr, 0, slice_axis)
 
