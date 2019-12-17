@@ -18,7 +18,7 @@ cudnn.benchmark = True
 
 GPU_NUMBER = 0
 BATCH_SIZE = 8
-PATH_BIDS = 'testing_data/'
+PATH_BIDS = 'testing_data'
 
 def _cmpt_slice(ds_loader, gt_roi='gt'):
     cmpt_label, cmpt_sample = {0: 0, 1: 0}, 0
