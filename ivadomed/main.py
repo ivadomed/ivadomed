@@ -204,14 +204,28 @@ def cmd_train(context):
     if context['multichannel']:
         in_channel = len(context['multichannel'])
 
-    model = models.Unet(in_channel=in_channel,
-                        out_channel=context['out_channel'],
-                        depth=context['depth'],
-                        film_layers=context["film_layers"],
-                        n_metadata=n_metadata,
-                        drop_rate=context["dropout_rate"],
-                        bn_momentum=context["batch_norm_momentum"],
-                        film_bool=film_bool)
+    if context['retrain_model'] is None:
+        model = models.Unet(in_channel=in_channel,
+                            out_channel=context['out_channel'],
+                            depth=context['depth'],
+                            film_layers=context["film_layers"],
+                            n_metadata=n_metadata,
+                            drop_rate=context["dropout_rate"],
+                            bn_momentum=context["batch_norm_momentum"],
+                            film_bool=film_bool)
+    else:
+        model = torch.load(context['retrain_model'])
+
+        # Freeze model weights
+        for param in model.parameters():
+            param.requires_grad = False
+
+        # Replace the last conv layer
+        # Note: Parameters of newly constructed layer have requires_grad=True by default
+        model.decoder.last_conv = nn.Conv2d(model.decoder.last_conv.in_channels,
+                                               context['out_channel'], kernel_size=3, padding=1)
+        if film_bool and context["film_layers"][-1]:
+            model.decoder.last_film = models.FiLMlayer(n_metadata, 1)
 
     if cuda_available:
         model.cuda()
@@ -221,7 +235,9 @@ def cmd_train(context):
 
     # Using Adam
     step_scheduler_batch = False
-    optimizer = optim.Adam(model.parameters(), lr=initial_lr)
+    # filter out the parameters you are going to fine-tuing
+    params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
+    optimizer = optim.Adam(params_to_opt, lr=initial_lr)
     if context["lr_scheduler"]["name"] == "CosineAnnealingLR":
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
     elif context["lr_scheduler"]["name"] == "CosineAnnealingWarmRestarts":
