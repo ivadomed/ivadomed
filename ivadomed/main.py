@@ -728,6 +728,11 @@ def cmd_test(context):
     metric_mgr.reset()
     print(metrics_dict)
 
+def cmd_eval(context):
+    ##### DEFINE DEVICE #####
+    device = torch.device("cpu")
+    print("Working on {}.".format(device))
+
 
 def run_main():
     if len(sys.argv) <= 1:
@@ -744,7 +749,8 @@ def run_main():
         shutil.copyfile(sys.argv[1], "./" + context["log_directory"] + "/config_file.json")
     elif command == 'test':
         cmd_test(context)
-
+    elif command == 'eval':
+        cmd_eval(context)
 
 if __name__ == "__main__":
     run_main()
