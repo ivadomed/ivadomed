@@ -5,6 +5,7 @@ import time
 import shutil
 import random
 import joblib
+import pandas as pd
 from math import exp
 import numpy as np
 
@@ -744,10 +745,19 @@ def cmd_eval(context):
     if not os.path.isdir(path_results):
         os.makedirs(path_results)
 
+    df_results = pd.DataFrame()
     path_pred = os.path.join(context['log_directory'], 'pred_masks')
     for fname_pred in os.listdir(path_pred):
-        subj_acq = fname_pred.split('_')[0]
-        fname_gt = fname_pred.split('_pred.nii.gz')[0]+context['target_suffix']+'.nii.gz'
+        subj_acq = fname_pred.split('_pred.nii.gz')[0]
+        fname_gt = subj_acq+context['target_suffix']+'.nii.gz'
+        subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
+
+        fname_pred = os.path.join(path_pred, fname_pred)
+        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', fname_gt)
+
+        eval = Evaluation3DMetrics(fname_pred=fname_pred, fname_gt=fname_gt)
+        df_results = df_results.append(eval.get_all_metrics(), ignore_index=True)
+        print(df_results.head())
 
 def run_main():
     if len(sys.argv) <= 1:
