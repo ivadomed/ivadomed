@@ -769,6 +769,9 @@ def cmd_eval(context):
         results_pred['image_id'] = subj_acq
         df_results = df_results.append(results_pred, ignore_index=True)
 
+    df_results = df_results.set_index('image_id')
+    print(df_results.head())
+
     # save results as csv
     fname_out = os.path.join(path_results, 'evaluation_3Dmetrics.csv')
     df_results.to_csv(fname_out)
