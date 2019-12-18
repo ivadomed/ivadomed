@@ -760,7 +760,10 @@ def cmd_eval(context):
 
         results_pred['image_id'] = subj_acq
         df_results = df_results.append(results_pred, ignore_index=True)
-        print(df_results.head())
+
+    fname_out = os.path.join(path_results, 'evaluation_3Dmetrics.csv')
+    df_results.to_csv(fname_out)
+
 
 def run_main():
     if len(sys.argv) <= 1:
