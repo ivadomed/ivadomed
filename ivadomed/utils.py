@@ -46,13 +46,13 @@ class Evaluation3DMetrics(object):
         self.data_pred = self.get_data(self.fname_pred)
         self.data_gt = self.get_data(self.fname_gt)
 
-        self.px, self.py, self.pz = self.get_pixdim()
+        self.px, self.py, self.pz = self.get_pixdim(self.fname_pred)
 
     def get_data(self, fname):
         nib_im = nib.load(fname)
         return nib_im.get_data()
 
-    def get_pixdim(self, fname=self.fname_pred)
+    def get_pixdim(self, fname):
         nib_im = nib.load(fname)
         px, py, pz = nib_im.header['pixdim'][1:4]
         return px, py, pz
@@ -66,14 +66,43 @@ class Evaluation3DMetrics(object):
         """Relative volume difference."""
         vol_gt = self.get_vol(self.data_gt)
         vol_pred = self.get_vol(self.data_pred)
-
-        avd = vol_gt-vol_pred
-        avd /= vol_gt
-        return avd
+        print(vol_gt, vol_pred)
+        rvd = (vol_gt-vol_pred)*100.
+        rvd /= vol_gt
+        return rvd
 
     def get_avd(self):
         """Absolute volume difference."""
         return abs(self.get_rvd())
+
+    def get_dice(self):
+        return dice_score(self.data_gt, self.data_pred) * 100.
+
+    def get_precision(self):
+        """Positive predictive values, precision."""
+        FP, FN, TP, TN = mt_metrics.numeric_score(self.data_pred, self.data_gt)
+        if (TP + FP) <= 0.0:
+            return np.nan
+
+        precision = np.divide(TP, TP + FP)
+        return precision * 100.0
+
+    def get_recall(self):
+        """Recal, TPR, sensitivity."""
+        FP, FN, TP, TN = mt_metrics.numeric_score(self.data_pred, self.data_gt)
+        if (TP + FN) <= 0.0:
+            return np.nan
+
+        TPR = np.divide(TP, TP + FN)
+        return TPR * 100.0
+
+    def get_specificity(self):
+        """Specificity, TNR."""
+        FP, FN, TP, TN = mt_metrics.numeric_score(self.data_pred, self.data_gt)
+        if (TN + FP) <= 0.0:
+            return 0.0
+        TNR = np.divide(TN, TN + FP)
+        return TNR * 100.0
 
 
 def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False):
