@@ -756,7 +756,10 @@ def cmd_eval(context):
         fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', fname_gt)
 
         eval = Evaluation3DMetrics(fname_pred=fname_pred, fname_gt=fname_gt)
-        df_results = df_results.append(eval.get_all_metrics(), ignore_index=True)
+        results_pred = eval.get_all_metrics()
+
+        results_pred['image_id'] = subj_acq
+        df_results = df_results.append(results_pred, ignore_index=True)
         print(df_results.head())
 
 def run_main():
