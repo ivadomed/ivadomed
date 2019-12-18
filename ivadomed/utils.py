@@ -66,7 +66,10 @@ class Evaluation3DMetrics(object):
         """Relative volume difference."""
         vol_gt = self.get_vol(self.data_gt)
         vol_pred = self.get_vol(self.data_pred)
-        print(vol_gt, vol_pred)
+
+        if vol_gt == 0.0:
+            return np.nan
+
         rvd = (vol_gt-vol_pred)*100.
         rvd /= vol_gt
         return rvd
@@ -103,6 +106,17 @@ class Evaluation3DMetrics(object):
             return 0.0
         TNR = np.divide(TN, TN + FP)
         return TNR * 100.0
+
+    def get_all_metrics(self):
+        dct = {}
+        dct['vol_pred'] = self.get_vol(self.data_pred)
+        dct['vol_gt'] = self.get_vol(self.data_gt)
+        dct['rvd'], dct['avd'] = self.get_rvd(), self.get_avd()
+        dct['dice'] = self.get_dice()
+        dct['recall'], dct['precision'] = self.get_recall(), self.get_precision()
+        dct['specificity'] = self.get_specificity()
+
+        return dct
 
 
 def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False):
