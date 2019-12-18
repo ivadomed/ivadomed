@@ -734,6 +734,21 @@ def cmd_eval(context):
     print("Working on {}.".format(device))
 
 
+    if context.get("split_path") is None:
+        test_lst = joblib.load("./" + context["log_directory"] + "/split_datasets.joblib")['test']
+    else:
+        test_lst = joblib.load(context["split_path"])['test']
+
+    # create output folder for results
+    path_results = os.path.join(context['log_directory'], 'results_eval')
+    if not os.path.isdir(path_results):
+        os.makedirs(path_results)
+
+    path_pred = os.path.join(context['log_directory'], 'pred_masks')
+    for fname_pred in os.listdir(path_pred):
+        subj_acq = fname_pred.split('_')[0]
+        fname_gt = fname_pred.split('_pred.nii.gz')[0]+context['target_suffix']+'.nii.gz'
+
 def run_main():
     if len(sys.argv) <= 1:
         print("\nivadomed [config.json]\n")
