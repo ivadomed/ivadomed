@@ -71,6 +71,7 @@
         "size": [256, 256]
       },
       "ToTensor": {},
+      "StackTensors": {},
       "NormalizeInstance": {}
     },
     "debugging": true
