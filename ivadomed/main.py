@@ -745,9 +745,15 @@ def cmd_eval(context):
     if not os.path.isdir(path_results):
         os.makedirs(path_results)
 
+    # init data frame
     df_results = pd.DataFrame()
+
+    # list fname pred files
     path_pred = os.path.join(context['log_directory'], 'pred_masks')
-    for fname_pred in os.listdir(path_pred):
+    fname_pred_lst = os.listdir(path_pred)
+
+    # loop across fname pred files
+    for fname_pred in tqdm(fname_pred_lst, desc="Evaluation"):
         subj_acq = fname_pred.split('_pred.nii.gz')[0]
         fname_gt = subj_acq+context['target_suffix']+'.nii.gz'
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
@@ -755,12 +761,15 @@ def cmd_eval(context):
         fname_pred = os.path.join(path_pred, fname_pred)
         fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', fname_gt)
 
+        # 3D evaluation
         eval = Evaluation3DMetrics(fname_pred=fname_pred, fname_gt=fname_gt)
         results_pred = eval.get_all_metrics()
 
+        # save results of this fname_pred
         results_pred['image_id'] = subj_acq
         df_results = df_results.append(results_pred, ignore_index=True)
 
+    # save results as csv
     fname_out = os.path.join(path_results, 'evaluation_3Dmetrics.csv')
     df_results.to_csv(fname_out)
 
