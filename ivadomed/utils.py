@@ -87,6 +87,59 @@ class Evaluation3DMetrics(object):
         """Absolute volume difference."""
         return abs(self.get_rvd())
 
+    def _get_ltp_lfn(self, overlap_vox=3):
+        """Number of true positive and false negative lesion.
+
+            Note1: if two lesion_pred overlap with the current lesion_gt,
+                then only one detection is counted.
+            Note2: the tolerance of overlap that define a detection is
+                expressed in voxels. We could change it to "relative volume".
+        """
+        ltp, lfn = 0, 0
+        for idx in range(1, self.n_gt+1):
+            data_gt_idx = (self.data_gt_label == idx).astype(np.int)
+            overlap = (data_gt_idx * self.data_pred).astype(np.int)
+
+            if np.count_nonzero(overlap) >= overlap_vox:
+                ltp += 1
+
+            else:
+                lfn += 1
+
+        return ltp, lfn
+
+    def _get_lfp(self, overlap_vox=3):
+        """Number of false positive lesion."""
+        lfp = 0
+        for idx in range(1, self.n_pred+1):
+            data_pred_idx = (self.data_pred_label == idx).astype(np.int)
+            overlap = (data_pred_idx * self.data_gt).astype(np.int)
+            if np.count_nonzero(overlap) < overlap_vox:
+                lfp += 1
+
+        return lfp
+
+    def get_ltpr(self):
+        """Lesion True Positive Rate / Recall / Sensitivity."""
+        ltp, lfn = self._get_ltp_lfn()
+
+        denom = ltp + lfn
+        if denom == 0:
+            return np.nan
+
+        return ltp * 100. / denom
+
+    def get_lfdr(self):
+        """Lesion False Detection Rate / 1 - Precision."""
+        ltp, _ = self._get_ltp_lfn()
+        lfp = self._get_lfp()
+
+        denom = ltp + lfp
+        if denom == 0:
+            return np.nan
+
+        return lfp * 100. / denom
+
     def get_all_metrics(self):
         dct = {}
         dct['vol_pred'] = self.get_vol(self.data_pred)
