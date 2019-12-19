@@ -149,6 +149,9 @@ class Evaluation3DMetrics(object):
         dct['recall'] = mt_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
         dct['precision'] = mt_metrics.precision_score(self.data_pred, self.data_gt, err_value=np.nan)
         dct['specificity'] = mt_metrics.specificity_score(self.data_pred, self.data_gt, err_value=np.nan)
+        dct['n_pred'], dct['n_gt'] = self.n_pred, self.n_gt
+        dct['ltpr'] = self.get_ltpr()
+        dct['lfdr'] = self.get_lfdr()
 
         return dct
 
