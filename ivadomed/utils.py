@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import nibabel as nib
 from PIL import Image
+from skimage.measure import label
 import torchvision.transforms.functional as F
 import matplotlib.pyplot as plt
 from collections import defaultdict
@@ -47,6 +48,14 @@ class Evaluation3DMetrics(object):
         self.data_gt = self.get_data(self.fname_gt)
 
         self.px, self.py, self.pz = self.get_pixdim(self.fname_pred)
+
+        # 18-connected components
+        self.data_pred_label, self.n_pred = label(self.data_pred,
+                                                    connectivity=3,
+                                                    return_num=True)
+        self.data_gt_label, self.n_gt = label(self.data_gt,
+                                                connectivity=3,
+                                                return_num=True)
 
     def get_data(self, fname):
         nib_im = nib.load(fname)
