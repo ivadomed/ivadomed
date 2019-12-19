@@ -78,43 +78,15 @@ class Evaluation3DMetrics(object):
         """Absolute volume difference."""
         return abs(self.get_rvd())
 
-    def get_dice(self):
-        return dice_score(self.data_gt, self.data_pred) * 100.
-
-    def get_precision(self):
-        """Positive predictive values, precision."""
-        FP, FN, TP, TN = mt_metrics.numeric_score(self.data_pred, self.data_gt)
-        if (TP + FP) <= 0.0:
-            return np.nan
-
-        precision = np.divide(TP, TP + FP)
-        return precision * 100.0
-
-    def get_recall(self):
-        """Recal, TPR, sensitivity."""
-        FP, FN, TP, TN = mt_metrics.numeric_score(self.data_pred, self.data_gt)
-        if (TP + FN) <= 0.0:
-            return np.nan
-
-        TPR = np.divide(TP, TP + FN)
-        return TPR * 100.0
-
-    def get_specificity(self):
-        """Specificity, TNR."""
-        FP, FN, TP, TN = mt_metrics.numeric_score(self.data_pred, self.data_gt)
-        if (TN + FP) <= 0.0:
-            return 0.0
-        TNR = np.divide(TN, TN + FP)
-        return TNR * 100.0
-
     def get_all_metrics(self):
         dct = {}
         dct['vol_pred'] = self.get_vol(self.data_pred)
         dct['vol_gt'] = self.get_vol(self.data_gt)
         dct['rvd'], dct['avd'] = self.get_rvd(), self.get_avd()
-        dct['dice'] = self.get_dice()
-        dct['recall'], dct['precision'] = self.get_recall(), self.get_precision()
-        dct['specificity'] = self.get_specificity()
+        dct['dice'] = dice_score(self.data_gt, self.data_pred) * 100.
+        dct['recall'] = mt_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
+        dct['precision'] = mt_metrics.precision_score(self.data_pred, self.data_gt, err_value=np.nan)
+        dct['specificity'] = mt_metrics.specificity_score(self.data_pred, self.data_gt, err_value=np.nan)
 
         return dct
 
