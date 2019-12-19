@@ -114,28 +114,35 @@ class Evaluation3DMetrics(object):
         for idx in range(1, self.n_pred+1):
             data_pred_idx = (self.data_pred_label == idx).astype(np.int)
             overlap = (data_pred_idx * self.data_gt).astype(np.int)
+
             if np.count_nonzero(overlap) < overlap_vox:
                 lfp += 1
 
         return lfp
 
     def get_ltpr(self):
-        """Lesion True Positive Rate / Recall / Sensitivity."""
+        """Lesion True Positive Rate / Recall / Sensitivity.
+
+            Note: computed only if self.n_gt >= 1.
+        """
         ltp, lfn = self._get_ltp_lfn()
 
         denom = ltp + lfn
-        if denom == 0:
+        if denom == 0 or self.n_gt == 0:
             return np.nan
 
         return ltp * 100. / denom
 
     def get_lfdr(self):
-        """Lesion False Detection Rate / 1 - Precision."""
+        """Lesion False Detection Rate / 1 - Precision.
+
+            Note: computed only if self.n_gt >= 1.
+        """
         ltp, _ = self._get_ltp_lfn()
         lfp = self._get_lfp()
 
         denom = ltp + lfp
-        if denom == 0:
+        if denom == 0 or self.n_gt == 0:
             return np.nan
 
         return lfp * 100. / denom
