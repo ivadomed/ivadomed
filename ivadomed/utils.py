@@ -49,6 +49,8 @@ class Evaluation3DMetrics(object):
 
         self.px, self.py, self.pz = self.get_pixdim(self.fname_pred)
 
+        # Note: Some papers suggested to remove all lesion with less than 3 voxels: Todo?
+
         # 18-connected components
         self.data_pred_label, self.n_pred = label(self.data_pred,
                                                     connectivity=3,
