@@ -8,7 +8,9 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 
 import numpy as np
+import pandas as pd
 import json
+import copy
 from PIL import Image
 from glob import glob
 from copy import deepcopy
@@ -324,3 +326,106 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 
     def __len__(self):
         return self.num_samples
+
+
+class Dataframe():
+    """
+    This class aims to create a dataset using the bids, which can be used by an adapative loader to perform curriculum
+    learning, Active Learning or any other strategy that needs to load samples in a specific way.
+    It works on RAM or on the fly and can be saved for later.
+    """
+
+    def __init__(self, bids, contrasts, target_suffix, roi_suffix, path=False, ram=False):
+        """
+        Initialize the Dataframe
+        """
+        # Ram status
+        self.ram = ram
+        self.status = {c: self.ram for c in contrasts}
+        self.status['gt'] = self.ram
+        self.status['ROI'] = self.ram
+
+        self.contrasts = contrasts
+        self.df = None
+        # Dataframe
+        if path:
+            self.load(path)
+        else:
+            self.create_df(bids, target_suffix, roi_suffix, ram)
+
+    def load_column(self, column_name):
+        """
+        To load a column in memory
+        """
+        if not self.status[column_name]:
+            print("TODO")
+        else:
+            print("Column already in RAM")
+
+    def load_all(self):
+        print("TODO")
+
+    def shuffe(self):
+        "Shuffle the whole dataframe"
+        self.df = self.df.sample(frac=1)
+
+    def load(self, path):
+        """
+        Load the dataframe from a csv file.
+        """
+        try:
+            self.df = pd.read_csv(path + 'Bids_dataframe.csv')
+            print("Dataframe has been correctly loaded from {}/Bids_dataframe.csv.".format(path))
+        except FileNotFoundError:
+            print("No csv file found")
+
+    def save(self, path):
+        """
+        Save the dataframe into a csv file.
+        """
+        try:
+            self.df.to_csv(path + '/Bids_dataframe.csv', index=True)
+            print("Dataframe has been saved at {}/Bids_dataframe.csv.".format(path))
+        except FileNotFoundError:
+            print("Wrong path.")
+
+    def create_df(self, bids, target_suffix, roi_suffix, ram):
+        """
+        Generate the Dataframe using the Bids
+        """
+        # Template of a line
+        empty_line = {'T1w': None,
+                      'T2w': None,
+                      'T2star': None,
+                      'gt': None,
+                      'ROI': None,
+                      'Slices': None,
+                      'Difficulty': None}
+
+        # Initialize the  dataframe
+        col_names = ['Subjects', 'T1w', 'T2w', 'T2star', 'gt', 'ROI', 'Slices', 'Difficulty']
+        df = pd.DataFrame(columns=col_names).set_index('Subjects')
+
+        # Filling the dataframe
+        for subject in bids.get_subjects():
+            if subject.record["modality"] in self.contrasts:
+                subject_id = subject.get_participant_id()
+                line = df.loc[df.index == subject_id]
+
+                if not line.empty:
+                    df.loc[df.index == subject_id, subject.record["modality"]] = subject.record["absolute_path"]
+
+                else:
+                    if subject.has_derivative("labels"):
+                        line = copy.deepcopy(empty_line)
+                        line[subject.record["modality"]] = subject.record["absolute_path"]
+                        derivatives = subject.get_derivatives("labels")
+                        for deriv in derivatives:
+                            if deriv.endswith(subject.record["modality"] + target_suffix + ".nii.gz"):
+                                line['gt'] = deriv
+                            if not (roi_suffix is None) and deriv.endswith(
+                                    subject.record["modality"] + roi_suffix + ".nii.gz"):
+                                line['ROI'] = deriv
+                        df.loc[subject_id] = line
+
+        self.df = df
