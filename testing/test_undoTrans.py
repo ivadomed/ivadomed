@@ -1,0 +1,126 @@
+import os
+import numpy as np
+import time
+from random import randint
+
+import torch.backends.cudnn as cudnn
+from torch.utils.data import DataLoader, dataloader
+from torchvision import transforms
+
+from medicaltorch.filters import SliceFilter
+from medicaltorch import datasets as mt_datasets
+from medicaltorch import transforms as mt_transforms
+
+from tqdm import tqdm
+
+from ivadomed import loader as loader
+from ivadomed.utils import *
+import ivadomed.transforms as ivadomed_transforms
+
+cudnn.benchmark = True
+
+GPU_NUMBER = 5
+SLICE_AXIS = 2
+PATH_BIDS = 'testing_data'
+
+def test_undo(contrast='T2star', tol=3):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    cuda_available = torch.cuda.is_available()
+    if not cuda_available:
+        print("cuda is not available.")
+        print("Working on {}.".format(device))
+    if cuda_available:
+        # Set the GPU
+        torch.cuda.set_device(GPU_NUMBER)
+        print("using GPU number {}".format(GPU_NUMBER))
+
+    # reference
+    test_1 = [ivadomed_transforms.ToTensor(), ivadomed_transforms.NormalizeInstance()]
+    name_1 = 'ToTensor_NoramlizeInstance'
+
+    test_2 = [ivadomed_transforms.CenterCrop2D(size=[40, 48])] + test_1
+    name_2 = 'CenterCrop2D_' + name_1
+
+    test_3 = [ivadomed_transforms.ROICrop2D(size=[40, 48])] + test_1
+    name_3 = 'ROICrop2D_' + name_1
+
+    test_4 = [ivadomed_transforms.Resample(wspace=0.75, hspace=0.75)] + test_2
+    name_4 = 'Resample_' + name_2
+
+    test_5 = [ivadomed_transforms.Resample(wspace=0.75, hspace=0.75)] + test_3
+    name_5 = 'Resample_' + name_3
+
+    name_lst = [name_2, name_3, name_4, name_5]
+    test_lst = [test_2, test_3, test_4, test_5]
+
+    subject_test_lst = ['sub-test001']
+
+    ds_test_noTrans = loader.BidsDataset(PATH_BIDS,
+                                  subject_lst=subject_test_lst,
+                                  target_suffix="_lesion-manual",
+                                  roi_suffix="_seg-manual",
+                                  contrast_lst=[contrast],
+                                  metadata_choice="contrast",
+                                  contrast_balance={},
+                                  slice_axis=SLICE_AXIS,
+                                  transform=transforms.Compose(test_1),
+                                  multichannel=False,
+                                  slice_filter_fn=SliceFilter(filter_empty_input=True,
+                                                                filter_empty_mask=False))
+    test_loader_noTrans = DataLoader(ds_test_noTrans, batch_size=len(ds_test_noTrans),
+                             shuffle=False, pin_memory=True,
+                             collate_fn=mt_datasets.mt_collate,
+                             num_workers=1)
+    batch_noTrans = [t for i, t in enumerate(test_loader_noTrans)][0]
+    input_noTrans, gt_noTrans = batch_noTrans["input"], batch_noTrans["gt"]
+
+    for name, test in zip(name_lst, test_lst):
+        print('\n'+name)
+        val_transform = transforms.Compose(test)
+        val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
+
+        ds_test = loader.BidsDataset(PATH_BIDS,
+                                      subject_lst=subject_test_lst,
+                                      target_suffix="_lesion-manual",
+                                      roi_suffix="_seg-manual",
+                                      contrast_lst=[contrast],
+                                      metadata_choice="contrast",
+                                      contrast_balance={},
+                                      slice_axis=SLICE_AXIS,
+                                      transform=val_transform,
+                                      multichannel=False,
+                                      slice_filter_fn=SliceFilter(filter_empty_input=True,
+                                                                    filter_empty_mask=False))
+
+        test_loader = DataLoader(ds_test, batch_size=len(ds_test),
+                                 shuffle=False, pin_memory=True,
+                                 collate_fn=mt_datasets.mt_collate,
+                                 num_workers=1)
+        batch = [t for i, t in enumerate(test_loader)][0]
+
+        input_, gt_ = batch["input"], batch["gt"]
+
+        for smp_idx in range(len(batch['gt'])):
+            # re-load all dict
+            rdict = {}
+            for k in batch.keys():
+                rdict[k] = batch[k][smp_idx]
+
+            # undo transformations
+            rdict_undo = val_undo_transform(rdict)
+
+            # get data
+            np_noTrans = np.array(gt_noTrans[smp_idx])[0]
+            np_undoTrans = np.array(rdict_undo['gt'])
+
+            # binarise
+            np_undoTrans[np_undoTrans > 0] = 1.0
+
+            # check shapes
+            assert np_noTrans.shape == np_undoTrans.shape
+            print('\tData shape: checked.')
+
+            # check values
+            if np.any(np_noTrans):
+                assert np.sum(np_noTrans-np_undoTrans) < tol
+                print('\tData content (tol: {} vox.): checked.'.format(tol))

@@ -7,7 +7,6 @@
 # Example: python class_balance.py -c config/config.json
 #
 # Contributors: charley
-# Last modified: 17-10-2019
 #
 ##############################################################
 

@@ -1,15 +1,16 @@
 {
     "command": "train",
     "gpu": 0,
-    "target_suffix": "_seg-manual",
+    "target_suffix": "_seg-tumor",
     "roi_suffix": null,
-    "bids_path": "/home/andreanne/Documents/dataset/bids_amu_2017-virginie",
+    "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
     "random_seed": 1313,
     "contrast_train_validation": ["T2w"],
     "contrast_balance": {},
     "contrast_test": ["T2w"],
     "center_test": [],
-    "batch_size": 4,
+    "retrain_model": null,
+    "batch_size": 8,
     "dropout_rate": 0.3,
     "batch_norm_momentum": 0.1,
     "num_epochs": 100,
@@ -22,7 +23,10 @@
     "mixup_alpha": 2,
     "metadata": "without",
     "multichannel": false,
-    "n_classes": 1,
+    "missing_modality": false,
+    "out_channel": 1,
+    "depth": 3,
+    "balance_samples": false,
     "slice_axis": "sagittal",
     "split_method": "per_patient",
     "train_fraction": 0.6,
@@ -30,9 +34,9 @@
     "unet_3D": true,
     "slice_filter": {
       "filter_empty_mask": true,
-      "filter_empty_input": true,
-      "nb_nonzero_thr": 10
+      "filter_empty_input": true
     },
+    "slice_filter_roi": null,
     "early_stopping_patience": 10,
     "early_stopping_epsilon": 0.001,
     "transformation_training": {

@@ -5,7 +5,6 @@
 # Usage: python dev/training_scheduler.py -c path/to/config.json -g number_of_gpus
 #
 # Contributors: olivier
-# Last modified: 11-11-2019
 #
 ##############################################################
 
@@ -73,8 +72,8 @@ if __name__ == '__main__':
 
     ## Step 1 : batch size, initial LR and LR scheduler
 
-    #batch_sizes = [8, 16, 32, 64]
-    #initial_lrs = [1e-2, 1e-3, 1e-4, 1e-5]
+    batch_sizes = [8, 16, 32, 64]
+    initial_lrs = [1e-2, 1e-3, 1e-4, 1e-5]
 
     """
     lr_schedulers = [{"name": "CosineAnnealingLR"},

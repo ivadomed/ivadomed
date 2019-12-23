@@ -38,6 +38,123 @@ class UpConv(Module):
         return x
 
 
+class Encoder(Module):
+    """Encoding part of the U-Net model.
+            It returns the features map for the skip connections
+
+            see also::
+            Ronneberger, O., et al (2015). U-Net: Convolutional
+            Networks for Biomedical Image Segmentation
+            ArXiv link: https://arxiv.org/abs/1505.04597
+
+                """
+
+    def __init__(self, in_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4, bn_momentum=0.1):
+        super(Encoder, self).__init__()
+        self.depth = depth
+        self.down_path = nn.ModuleList()
+        # first block
+        self.down_path.append(DownConv(in_channel, 64, drop_rate, bn_momentum))
+        self.down_path.append(FiLMlayer(n_metadata, 64) if film_layers[0] else None)
+        self.down_path.append(nn.MaxPool2d(2))
+
+        # other blocks
+        in_channel = 64
+
+        for i in range(depth - 1):
+            self.down_path.append(DownConv(in_channel, in_channel * 2, drop_rate, bn_momentum))
+            self.down_path.append(FiLMlayer(n_metadata, in_channel * 2) if film_layers[i + 1] else None)
+            self.down_path.append(nn.MaxPool2d(2))
+            in_channel = in_channel * 2
+
+        # Bottom
+        self.conv_bottom = DownConv(in_channel, in_channel, drop_rate, bn_momentum)
+        self.film_bottom = FiLMlayer(n_metadata, in_channel) if film_layers[self.depth] else None
+
+    def forward(self, x, context=None):
+        features = []
+
+        # First block
+        x = self.down_path[0](x)
+        if self.down_path[1]:
+            x, w_film = self.down_path[1](x, context, None)
+        features.append(x)
+        x = self.down_path[2](x)
+
+        # Down-sampling path (other blocks)
+        for i in range(1, self.depth):
+            x = self.down_path[i * 3](x)
+            if self.down_path[i * 3 + 1]:
+                x, w_film = self.down_path[i * 3 + 1](x, context, None if 'w_film' not in locals() else w_film)
+            features.append(x)
+            x = self.down_path[i * 3 + 2](x)
+
+        # Bottom level
+        x = self.conv_bottom(x)
+        if self.film_bottom:
+            x, w_film = self.film_bottom(x, context, None if 'w_film' not in locals() else w_film)
+        features.append(x)
+
+        return features, None if 'w_film' not in locals() else w_film
+
+
+class Decoder(Module):
+    """Encoding part of the U-Net model.
+            It returns the features map for the skip connections
+
+            see also::
+            Ronneberger, O., et al (2015). U-Net: Convolutional
+            Networks for Biomedical Image Segmentation
+            ArXiv link: https://arxiv.org/abs/1505.04597
+
+                """
+
+    def __init__(self, out_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4, bn_momentum=0.1,
+                 hemis=False):
+        super(Decoder, self).__init__()
+        self.depth = depth
+        self.out_channel = out_channel
+        # Up-Sampling path
+        self.up_path = nn.ModuleList()
+        if hemis:
+            in_channel = 64 * 2 ** (self.depth + 1)
+            self.depth += 1
+        else:
+            in_channel = 64 * 2 ** self.depth
+
+        self.up_path.append(UpConv(in_channel, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
+        self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)) if film_layers[self.depth + 1] else None)
+
+        for i in range(1, depth):
+            in_channel //= 2
+            self.up_path.append(
+                UpConv(in_channel + 64 * 2 ** (self.depth - i - 1), 64 * 2 ** (self.depth - i - 1), drop_rate,
+                       bn_momentum))
+            self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - i - 1)) if film_layers[self.depth + i + 1]
+                                else None)
+
+        # Last Convolution
+        self.last_conv = nn.Conv2d(in_channel // 2, out_channel, kernel_size=3, padding=1)
+        self.last_film = FiLMlayer(n_metadata, 1) if film_layers[-1] else None
+
+    def forward(self, features, context=None, w_film=None):
+        x = features[-1]
+        for i in reversed(range(self.depth)):
+            x = self.up_path[-(i + 1) * 2](x, features[i])
+            if self.up_path[-(i + 1) * 2 + 1]:
+                x, w_film = self.up_path[-(i + 1) * 2 + 1](x, context, w_film)
+
+        # Last convolution
+        x = self.last_conv(x)
+        if self.last_film:
+            x, w_film = self.last_film(x, context, w_film)
+        if self.out_channel > 1:
+            preds = F.softmax(x, dim=1)
+        else:
+            preds = torch.sigmoid(x)
+        return preds
+
+
 class Unet(Module):
     """A reference U-Net model.
 
@@ -46,49 +163,30 @@ class Unet(Module):
         Networks for Biomedical Image Segmentation
         ArXiv link: https://arxiv.org/abs/1505.04597
     """
-    def __init__(self, in_channel=1, drop_rate=0.4, bn_momentum=0.1):
+
+    def __init__(self, in_channel=1, out_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4,
+                 bn_momentum=0.1, film_bool=False):
         super(Unet, self).__init__()
 
-        #Downsampling path
-        self.conv1 = DownConv(in_channel, 64, drop_rate, bn_momentum)
-        self.mp1 = nn.MaxPool2d(2)
+        # Verify if the length of boolean FiLM layers corresponds to the depth
+        if film_bool and len(film_layers) != 2 * depth + 2:
+            raise ValueError(f"The number of FiLM layers {len(film_layers)} entered does not correspond to the "
+                             f"UNet depth. There should 2 * depth + 2 layers.")
 
-        self.conv2 = DownConv(64, 128, drop_rate, bn_momentum)
-        self.mp2 = nn.MaxPool2d(2)
+        # If no metadata type is entered all layers should be to 0
+        if not film_bool:
+            film_layers = [0] * (2 * depth + 2)
 
-        self.conv3 = DownConv(128, 256, drop_rate, bn_momentum)
-        self.mp3 = nn.MaxPool2d(2)
+        # Encoder path
+        self.encoder = Encoder(in_channel, depth, n_metadata, film_layers, drop_rate, bn_momentum)
 
-        # Bottom
-        self.conv4 = DownConv(256, 256, drop_rate, bn_momentum)
+        # Decoder path
+        self.decoder = Decoder(out_channel, depth, n_metadata, film_layers, drop_rate, bn_momentum)
 
-        # Upsampling path
-        self.up1 = UpConv(512, 256, drop_rate, bn_momentum)
-        self.up2 = UpConv(384, 128, drop_rate, bn_momentum)
-        self.up3 = UpConv(192, 64, drop_rate, bn_momentum)
+    def forward(self, x, context=None):
+        features, w_film = self.encoder(x, context)
 
-        self.conv9 = nn.Conv2d(64, 1, kernel_size=3, padding=1)
-
-    def forward(self, x):
-        x1 = self.conv1(x)
-        x2 = self.mp1(x1)
-
-        x3 = self.conv2(x2)
-        x4 = self.mp2(x3)
-
-        x5 = self.conv3(x4)
-        x6 = self.mp3(x5)
-
-        # Bottom
-        x7 = self.conv4(x6)
-
-        # Up-sampling
-        x8 = self.up1(x7, x5)
-        x9 = self.up2(x8, x3)
-        x10 = self.up3(x9, x1)
-
-        x11 = self.conv9(x10)
-        preds = torch.sigmoid(x11)
+        preds = self.decoder(features, context, w_film)
 
         return preds
 
@@ -99,6 +197,7 @@ class FiLMgenerator(Module):
 
     Here, the FiLM generator is a multi-layer perceptron.
     """
+
     def __init__(self, n_features, n_channels, n_hid=64):
         super(FiLMgenerator, self).__init__()
         self.linear1 = nn.Linear(n_features, n_hid)
@@ -128,6 +227,7 @@ class FiLMlayer(Module):
     in the paper `FiLM: Visual Reasoning with a General Conditioning Layer`:
         https://arxiv.org/abs/1709.07871
     """
+
     def __init__(self, n_metadata, n_channels):
         super(FiLMlayer, self).__init__()
 
@@ -156,8 +256,8 @@ class FiLMlayer(Module):
         film_params = film_params.unsqueeze(-1).unsqueeze(-1)
         film_params = film_params.repeat(1, 1, self.height, self.width)
 
-        self.gammas = film_params[:, : self.feature_size, :, :]
-        self.betas = film_params[:, self.feature_size :, :, :]
+        self.gammas = film_params[:, :self.feature_size, :, :]
+        self.betas = film_params[:, self.feature_size:, :, :]
 
         # Apply the linear modulation
         output = self.gammas * feature_maps + self.betas
@@ -165,79 +265,57 @@ class FiLMlayer(Module):
         return output, new_w_shared
 
 
-class FiLMedUnet(Module):
-    """A U-Net model, modulated using FiLM.
+class HeMISUnet(Module):
+    """A U-Net model inspired by HeMIS to deal with missing modalities.
+        1) It has as many encoders as modalities but only one decoder.
+        2) Skip connections are the concatenations of the means and var of all encoders skip connections
 
-    A FiLM layer has been added after each convolution layer.
-    """
+        Param:
+        Modalities: list of all the possible modalities. ['T1', 'T2', 'T2S', 'F']
 
-    def __init__(self, n_metadata, film_bool=[1]*8, drop_rate=0.4, bn_momentum=0.1):
-        super(FiLMedUnet, self).__init__()
+        see also::
+        Havaei, M., Guizard, N., Chapados, N., Bengio, Y.:
+        Hemis: Hetero-modal image segmentation.
+        ArXiv link: https://arxiv.org/abs/1607.05194
+        ---
+        Reuben Dorent and Samuel Joutard and Marc Modat and Sébastien Ourselin and Tom Vercauteren
+        Hetero-Modal Variational Encoder-Decoder for Joint Modality Completion and Segmentation
+        ArXiv link: https://arxiv.org/abs/1907.11150
+        """
 
-        #Downsampling path
-        self.conv1 = DownConv(1, 64, drop_rate, bn_momentum)
-        self.film0 = FiLMlayer(n_metadata, 64) if film_bool[0] else None
-        self.mp1 = nn.MaxPool2d(2)
+    def __init__(self, modalities, depth=3, drop_rate=0.4, bn_momentum=0.1):
+        super(HeMISUnet, self).__init__()
 
-        self.conv2 = DownConv(64, 128, drop_rate, bn_momentum)
-        self.film1 = FiLMlayer(n_metadata, 128) if film_bool[1] else None
-        self.mp2 = nn.MaxPool2d(2)
+        self.depth = depth
+        self.modalities = modalities
 
-        self.conv3 = DownConv(128, 256, drop_rate, bn_momentum)
-        self.film2 = FiLMlayer(n_metadata, 256) if film_bool[2] else None
-        self.mp3 = nn.MaxPool2d(2)
+        # Encoder path
+        self.Down = nn.ModuleDict(
+            [['Down_{}'.format(Mod), Encoder(1, depth, drop_rate, bn_momentum)] for Mod in self.modalities])
 
-        # Bottom
-        self.conv4 = DownConv(256, 256, drop_rate, bn_momentum)
-        self.film3 = FiLMlayer(n_metadata, 256) if film_bool[3] else None
+        # Decoder path
+        self.decoder = Decoder(1, depth, drop_rate, bn_momentum, hemis=True)
 
-        # Upsampling path
-        self.up1 = UpConv(512, 256, drop_rate, bn_momentum)
-        self.film4 = FiLMlayer(n_metadata, 256) if film_bool[4] else None
-        self.up2 = UpConv(384, 128, drop_rate, bn_momentum)
-        self.film5 = FiLMlayer(n_metadata, 128) if film_bool[5] else None
-        self.up3 = UpConv(192, 64, drop_rate, bn_momentum)
-        self.film6 = FiLMlayer(n_metadata, 64) if film_bool[6] else None
+    def forward(self, x_mods):
+        """"
+            X is  list like X = [x_T1, x_T2, x_T2S, x_F]
+        """
 
-        self.conv9 = nn.Conv2d(64, 1, kernel_size=3, padding=1)
-        self.film7 = FiLMlayer(n_metadata, 1) if film_bool[7] else None
+        features_mod = [[] for _ in range(self.depth + 1)]
 
-    def forward(self, x, context):
-        x1 = self.conv1(x)
-        if self.film0:
-            x1, w_film = self.film0(x1, context, None)
-        x2 = self.mp1(x1)
+        # Down-sampling
+        for i, Mod in enumerate(self.modalities):
+            features = self.Down['Down_{}'.format(Mod)](x_mods[i])
+            for j in range(self.depth + 1):
+                features_mod[j].append(features[j].unsqueeze(0))
 
-        x3 = self.conv2(x2)
-        if self.film1:
-            x3, w_film = self.film1(x3, context, None if 'w_film' not in locals() else w_film)
-        x4 = self.mp2(x3)
-
-        x5 = self.conv3(x4)
-        if self.film2:
-            x5, w_film = self.film2(x5, context, None if 'w_film' not in locals() else w_film)
-        x6 = self.mp3(x5)
-
-        # Bottom
-        x7 = self.conv4(x6)
-        if self.film3:
-            x7, w_film = self.film3(x7, context, None if 'w_film' not in locals() else w_film)
+        # Abstraction
+        for j in range(self.depth + 1):
+            features_mod[j] = torch.cat([torch.cat(features_mod[j], 0).mean(0).unsqueeze(0), \
+                                         torch.cat(features_mod[j], 0).var(0).unsqueeze(0)], 0)
 
         # Up-sampling
-        x8 = self.up1(x7, x5)
-        if self.film4:
-            x8, w_film = self.film4(x8, context, None if 'w_film' not in locals() else w_film)
-        x9 = self.up2(x8, x3)
-        if self.film5:
-            x9, w_film = self.film5(x9, context, None if 'w_film' not in locals() else w_film)
-        x10 = self.up3(x9, x1)
-        if self.film6:
-            x10, w_film = self.film6(x10, context, None if 'w_film' not in locals() else w_film)
-
-        x11 = self.conv9(x10)
-        if self.film7:
-            x11, w_film = self.film7(x11, context, None if 'w_film' not in locals() else w_film)
-        preds = torch.sigmoid(x11)
+        preds = self.decoder(features_mod)
 
         return preds
 

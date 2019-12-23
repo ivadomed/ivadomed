@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import nibabel as nib
 from PIL import Image
 import torchvision.transforms.functional as F
 import matplotlib.pyplot as plt
@@ -31,6 +32,61 @@ class IvadoMetricManager(mt_metrics.MetricManager):
             else:
                 res_dict[key] = np.nanmean(val)
         return res_dict
+
+
+def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False):
+    """Save the prediction as nii.
+        1. Reconstruct a 3D volume out of the slice-wise predictions.
+        2. Re-orient the 3D array accordingly to the ground-truth orientation.
+
+    Inputs:
+        data_lst: list of the slice-wise predictions.
+        z_lst: list of the slice indexes where the inference has been performed.
+              The remaining slices will be filled with zeros.
+        fname_ref: ground-truth fname
+        fname_out: output fname
+        slice_axis: orientation used to extract slices (i.e. axial, sagittal, coronal)
+        debug:
+
+    Return:
+
+    """
+    nib_ref = nib.load(fname_ref)
+    nib_ref_can = nib.as_closest_canonical(nib_ref)
+
+    # complete missing z with zeros
+    tmp_lst = []
+    for z in range(nib_ref_can.header.get_data_shape()[slice_axis]):
+        if not z in z_lst:
+            tmp_lst.append(np.zeros(data_lst[0].shape))
+        else:
+            tmp_lst.append(data_lst[z_lst.index(z)])
+
+    if debug:
+        print("Len {}".format(len(tmp_lst)))
+        for arr in tmp_lst:
+            print("Shape element lst {}".format(arr.shape))
+
+    # create data
+    arr = np.stack(tmp_lst, axis=0)
+    if slice_axis == 2:
+        arr = np.swapaxes(arr, 1, 2)
+    # move axis according to slice_axis to RAS orientation
+    arr_ras = np.swapaxes(arr, 0, slice_axis)
+
+    # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
+    ref_orientation = nib.orientations.io_orientation(nib_ref.affine)
+    ras_orientation = nib.orientations.io_orientation(nib_ref_can.affine)
+    # Return the orientation that transforms from ras to ref_orientation
+    trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
+    # apply transformation
+    arr_pred_ref_space = nib.orientations.apply_orientation(arr_ras, trans_orient)
+
+    # create nii
+    nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
+
+    # save
+    nib.save(nib_pred, fname_out)
 
 
 def dice_score(im1, im2):
@@ -97,41 +153,4 @@ def threshold_predictions(predictions, thr=0.5):
     thresholded_preds[low_values_indices] = 1
     return thresholded_preds
 
-
-class SliceFilter(mt_filters.SliceFilter):
-    """This class extends the SliceFilter that already
-    filters for empty labels and inputs. It will filter
-    slices that:
-         -  has only zeros after center cropping. To
-         avoid feeding empty inputs into the network.
-         - has only few 1-voxels in the ground-truth,
-         which could vanish during resampling.
-    """
-    def __init__(self, filter_empty_mask=True,
-                 filter_empty_input=True, nb_nonzero_thr=10):
-        super().__init__(filter_empty_mask, filter_empty_input)
-        self.nb_nonzero_thr = nb_nonzero_thr
-
-    def __call__(self, sample):
-        super_ret = super().__call__(sample)
-
-        # Already filtered by base class
-        if not super_ret:
-            return super_ret
-
-        # Filter slices with less that nb_ones_thr voxels
-        if np.count_nonzero(sample['gt']) <= self.nb_nonzero_thr:
-            return False
-
-        # Filter slices where there are no values after cropping
-        for sample in sample['input']:
-            input_img = Image.fromarray(sample, mode='F')
-            input_cropped = F.center_crop(input_img, (128, 128))
-            input_cropped = np.array(input_cropped)
-            count = np.count_nonzero(input_cropped)
-
-            if count <= 0:
-                return False
-
-        return True
 
