@@ -26,8 +26,8 @@ CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,
 
 class Bids3DDataset(mt_datasets.MRI3DSubVolumeSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
-                 transform=None, metadata_choice=False, slice_filter_fn=None,
-                 canonical=True, labeled=True, roi_suffix=None, multichannel=False):
+                 transform=None, metadata_choice=False, canonical=True, labeled=True, roi_suffix=None,
+                 multichannel=False, length=(64, 64, 64), padding=0):
         dataset = BidsDataset(root_dir,
                                subject_lst=subject_lst,
                                target_suffix=target_suffix,
@@ -37,10 +37,10 @@ class Bids3DDataset(mt_datasets.MRI3DSubVolumeSegmentationDataset):
                                contrast_balance=contrast_balance,
                                slice_axis=slice_axis,
                                transform=transform,
-                               multichannel=multichannel,
-                               slice_filter_fn=slice_filter_fn)
+                               multichannel=multichannel)
 
-        super().__init__(dataset.filename_pairs, cache, transform, canonical)
+        super().__init__(dataset.filename_pairs, cache, length=length, padding=padding, transform=transform,
+                         canonical=canonical)
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
