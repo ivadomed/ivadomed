@@ -3,7 +3,6 @@ import torch.nn as nn
 from torch.nn import Module
 import torch.nn.functional as F
 
-
 class DownConv(Module):
     def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1):
         super(DownConv, self).__init__()
@@ -319,10 +318,13 @@ class HeMISUnet(Module):
 
         return preds
 
+
 class UNet3D(nn.Module):
     """A reference of 3D U-Net model.
+
     Implementation origin :
     https://github.com/shiba24/3d-unet/blob/master/pytorch/model.py
+
     .. seealso::
         Özgün Çiçek, Ahmed Abdulkadir, Soeren S. Lienkamp, Thomas Brox
         and Olaf Ronneberger (2016). 3D U-Net: Learning Dense Volumetric
@@ -359,16 +361,19 @@ class UNet3D(nn.Module):
 
 
     def down_conv(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1,
-                bias=True, batchnorm=False):
+                bias=True, batchnorm=True):
         if batchnorm:
             layer = nn.Sequential(
                 nn.Conv3d(in_channels, out_channels, kernel_size, stride=stride, padding=padding, bias=bias),
-                nn.BatchNorm2d(out_channels),
-                nn.LeakyReLU())
+                nn.InstanceNorm3d(out_channels),
+                nn.LeakyReLU(),
+                nn.Dropout3d(0.3)
+            )
         else:
             layer = nn.Sequential(
                 nn.Conv3d(in_channels, out_channels, kernel_size, stride=stride, padding=padding, bias=bias),
-                nn.LeakyReLU())
+                nn.LeakyReLU(),
+                nn.Dropout3d(0.3))
         return layer
 
 
@@ -420,4 +425,5 @@ class UNet3D(nn.Module):
         del d3, d2
 
         d0 = self.dc0(d1)
+        d0 = nn.Sigmoid(d0)
         return d0
