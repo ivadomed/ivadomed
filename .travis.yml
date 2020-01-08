@@ -27,13 +27,9 @@ before_install:
   - pip3 install codecov
 
 install:
-  - travis_wait mvn install
   - pip3 install -e .
 
 script:
   - |
     echo *** UNIT TESTS ***
-    pytest
-
-after_success:
-  - codecov # submit coverage
+    travis_wait pytest
