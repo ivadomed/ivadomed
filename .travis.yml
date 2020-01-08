@@ -1,5 +1,9 @@
 # testing file for Travis
 # https://github.com/neuropoly/ivado-medical-imaging
+language: python
+python:
+  - "3.6"
+  - "3.7"
 
 
 matrix:
