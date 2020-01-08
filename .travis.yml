@@ -32,4 +32,4 @@ install:
 script:
   - |
     echo *** UNIT TESTS ***
-    travis_wait pytest
+    travis_wait 25 pytest
