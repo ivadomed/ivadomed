@@ -1,6 +1,6 @@
+[![Build Status](https://api.travis-ci.org/neuropoly/ivado-medical-imaging.svg?branch=master)](https://travis-ci.org/neuropoly/ivado-medical-imaging)
 ![](https://github.com/neuropoly/ivado-medical-imaging/workflows/Python%20package/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
-
 
 <p float="left">
   <img src="images/neuropoly_logo.png" height="120" />

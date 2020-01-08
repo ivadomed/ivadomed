@@ -27,6 +27,7 @@ before_install:
   - pip3 install codecov
 
 install:
+  - travis_wait mvn install
   - pip3 install -e .
 
 script:
