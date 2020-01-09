@@ -15,21 +15,21 @@ matrix:
     - os: linux
       name: "Ubuntu 14.04 (Trusty)"
       dist: trusty
-    #- os: osx
-    #  name: "OSX 10.13 (High Sierra)"
-    #  osx_image: xcode9.4
-    #  language: shell
+    - os: osx
+      name: "OSX 10.13 (High Sierra)"
+      osx_image: xcode11.3
+      language: shell
 
 before_install:
-  - python3 --version
-  - pip3 install -U pip
-  - pip3 install -U pytest
-  - pip3 install codecov
+  - echo *** Python Version ***
+  - python --version
+  - pip install -U pip
+  - pip install -U pytest
 
 install:
-  - pip3 install -e .
+  - pip install -e .
 
 script:
   - |
     echo *** UNIT TESTS ***
-    travis_wait 25 pytest
+    travis_wait 30 pytest
