@@ -3,29 +3,31 @@
     "gpu": 0,
     "target_suffix": "_seg-tumor",
     "roi_suffix": null,
-    "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
+    "bids_path": "/home/andreanne/Documents/dataset/results_toy_dataset/data",
     "random_seed": 1313,
-    "contrast_train_validation": ["T2w"],
+    "contrast_train_validation": ["T1w","T2w"],
     "contrast_balance": {},
-    "contrast_test": ["T2w"],
+    "contrast_test": ["T1w","T2w"],
     "center_test": [],
     "retrain_model": null,
-    "batch_size": 8,
+    "batch_size": 1,
     "dropout_rate": 0.3,
     "batch_norm_momentum": 0.1,
-    "num_epochs": 100,
-    "initial_lr": 0.001,
+    "num_epochs": 10,
+    "initial_lr": 0.00005,
     "loss": {"name": "dice"},
-    "log_directory": "log",
+    "log_directory": "log_3D",
     "lr_scheduler": {"name": "CosineAnnealingLR", "base_lr": 1e-5, "max_lr": 1e-2},
-    "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
+    "film_layers": [],
     "mixup_bool": false,
     "mixup_alpha": 2,
     "metadata": "without",
-    "multichannel": false,
+    "multichannel": [],
     "missing_modality": false,
     "out_channel": 1,
     "depth": 3,
+    "length_3D": [16, 320, 320],
+    "padding_3D": 0,
     "balance_samples": false,
     "slice_axis": "sagittal",
     "split_method": "per_patient",
@@ -37,13 +39,32 @@
       "filter_empty_input": true
     },
     "slice_filter_roi": null,
-    "early_stopping_patience": 10,
+    "early_stopping_patience": 1000,
     "early_stopping_epsilon": 0.001,
     "transformation_training": {
-      "ToTensor": {}
+      "CenterCrop3D": {
+          "size": [16, 160, 160]
+      },
+      "ElasticTransform3D": {
+        "alpha_range": [28.0, 30.0],
+        "sigma_range":  [3.5, 4.5],
+        "p": 0.1
+      },
+      "RandomAffine3D": {
+        "degrees": 4.6,
+        "translate": [0.03, 0.03],
+        "scale": [0.98, 1.02]
+      },
+      "RandomReverse3D": {},
+      "ToTensor3D": {},
+      "NormalizeInstance3D": {}
     },
     "transformation_validation": {
-      "ToTensor": {}
+      "CenterCrop3D": {
+        "size": [16, 160, 160]
+      },
+      "ToTensor3D": {},
+      "NormalizeInstance3D": {}
     },
-    "debugging": true
+    "debugging": false
 }

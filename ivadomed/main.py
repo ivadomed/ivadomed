@@ -38,7 +38,7 @@ def cmd_train(context):
                     configuration file
     """
     ##### DEFINE DEVICE #####
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:" + str(context['gpu']) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
         print("Cuda is not available.")
@@ -127,7 +127,8 @@ def cmd_train(context):
                                       slice_axis=axis_dct[context["slice_axis"]],
                                       transform=train_transform,
                                       multichannel=context['multichannel'],
-                                      slice_filter_fn=SliceFilter(**context["slice_filter"]))
+                                      length=context["length_3D"],
+                                      padding=context["padding_3D"])
     else:
         ds_train = loader.BidsDataset(context["bids_path"],
                                       subject_lst=train_lst,
@@ -184,7 +185,8 @@ def cmd_train(context):
                                     slice_axis=axis_dct[context["slice_axis"]],
                                     transform=val_transform,
                                     multichannel=context['multichannel'],
-                                    slice_filter_fn=SliceFilter(**context["slice_filter"]))
+                                    length=context["length_3D"],
+                                    padding=context["padding_3D"])
     else:
         ds_val = loader.BidsDataset(context["bids_path"],
                                     subject_lst=valid_lst,
@@ -236,7 +238,9 @@ def cmd_train(context):
     if context['multichannel']:
         in_channel = len(context['multichannel'])
 
-    if context['retrain_model'] is None:
+    if context['unet_3D']:
+        model = models.Modified3DUNet(in_channels=in_channel, n_classes=1)
+    elif context['retrain_model'] is None:
         model = models.Unet(in_channel=in_channel,
                             out_channel=context['out_channel'],
                             depth=context['depth'],
@@ -404,24 +408,41 @@ def cmd_train(context):
 
             # Only write sample at the first step
             if i == 0:
-                # take only one modality for grid
-                if input_samples.shape[1] > 1:
-                    tensor = input_samples[:, 0, :, :][:, None, :, :]
-                    input_samples = torch.cat((tensor, tensor, tensor), 1)
-                grid_img = vutils.make_grid(input_samples,
-                                            normalize=True,
-                                            scale_each=True)
-                writer.add_image('Train/Input', grid_img, epoch)
+                if context["unet_3D"]:
+                    num_2d_img = input_samples.shape[3]
+                else:
+                    num_2d_img = 1
+                input_samples_copy = input_samples.clone()
+                preds_copy = preds.clone()
+                gt_samples_copy = gt_samples.clone()
+                for idx in range(num_2d_img):
+                    if context["unet_3D"]:
+                        input_samples = input_samples_copy[:, :, :, idx, :]
+                        preds = preds_copy[:, :, :, idx, :]
+                        gt_samples = gt_samples_copy[:, :, :, idx, :]
+                        # Only display images with labels
+                        if gt_samples.sum() == 0:
+                            continue
 
-                grid_img = vutils.make_grid(preds.data.cpu(),
-                                            normalize=True,
-                                            scale_each=True)
-                writer.add_image('Train/Predictions', grid_img, epoch)
+                    # take only one modality for grid
+                    if input_samples.shape[1] > 1:
+                        tensor = input_samples[:, 0, :, :][:, None, :, :]
+                        input_samples = torch.cat((tensor, tensor, tensor), 1)
 
-                grid_img = vutils.make_grid(gt_samples,
-                                            normalize=True,
-                                            scale_each=True)
-                writer.add_image('Train/Ground Truth', grid_img, epoch)
+                    grid_img = vutils.make_grid(input_samples,
+                                                normalize=True,
+                                                scale_each=True)
+                    writer.add_image('Validation/Input', grid_img, epoch)
+
+                    grid_img = vutils.make_grid(preds.data.cpu(),
+                                                normalize=True,
+                                                scale_each=True)
+                    writer.add_image('Validation/Predictions', grid_img, epoch)
+
+                    grid_img = vutils.make_grid(gt_samples,
+                                                normalize=True,
+                                                scale_each=True)
+                    writer.add_image('Validation/Ground Truth', grid_img, epoch)
 
         train_loss_total_avg = train_loss_total / num_steps
         if not step_scheduler_batch:
@@ -493,25 +514,41 @@ def cmd_train(context):
 
             # Only write sample at the first step
             if i == 0:
-                # take only one modality for grid
-                if input_samples.shape[1] > 1:
-                    tensor = input_samples[:, 0, :, :][:, None, :, :]
-                    input_samples = torch.cat((tensor, tensor, tensor), 1)
+                if context["unet_3D"]:
+                    num_2d_img = input_samples.shape[3]
+                else:
+                    num_2d_img = 1
+                input_samples_copy = input_samples.clone()
+                preds_copy = preds.clone()
+                gt_samples_copy = gt_samples.clone()
+                for idx in range(num_2d_img):
+                    if context["unet_3D"]:
+                        input_samples = input_samples_copy[:, :, :, idx, :]
+                        preds = preds_copy[:, :, :, idx, :]
+                        gt_samples = gt_samples_copy[:, :, :, idx, :]
+                        # Only display images with labels
+                        if gt_samples.sum() == 0:
+                            continue
 
-                grid_img = vutils.make_grid(input_samples,
-                                            normalize=True,
-                                            scale_each=True)
-                writer.add_image('Validation/Input', grid_img, epoch)
+                    # take only one modality for grid
+                    if input_samples.shape[1] > 1:
+                        tensor = input_samples[:, 0, :, :][:, None, :, :]
+                        input_samples = torch.cat((tensor, tensor, tensor), 1)
 
-                grid_img = vutils.make_grid(preds.data.cpu(),
-                                            normalize=True,
-                                            scale_each=True)
-                writer.add_image('Validation/Predictions', grid_img, epoch)
+                    grid_img = vutils.make_grid(input_samples,
+                                                normalize=True,
+                                                scale_each=True)
+                    writer.add_image('Validation/Input', grid_img, epoch)
 
-                grid_img = vutils.make_grid(gt_samples,
-                                            normalize=True,
-                                            scale_each=True)
-                writer.add_image('Validation/Ground Truth', grid_img, epoch)
+                    grid_img = vutils.make_grid(preds.data.cpu(),
+                                                normalize=True,
+                                                scale_each=True)
+                    writer.add_image('Validation/Predictions', grid_img, epoch)
+
+                    grid_img = vutils.make_grid(gt_samples,
+                                                normalize=True,
+                                                scale_each=True)
+                    writer.add_image('Validation/Ground Truth', grid_img, epoch)
 
             # Store the values of gammas and betas after the last epoch for each batch
             if film_bool and epoch == num_epochs and i < int(len(ds_val) / context["batch_size"]) + 1:
@@ -641,17 +678,34 @@ def cmd_test(context):
         test_lst = joblib.load(context["split_path"])['test']
 
     axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
-    ds_test = loader.BidsDataset(context["bids_path"],
-                                 subject_lst=test_lst,
-                                 target_suffix=context["target_suffix"],
-                                 roi_suffix=context["roi_suffix"],
-                                 contrast_lst=context["contrast_test"],
-                                 metadata_choice=context["metadata"],
-                                 contrast_balance=context["contrast_balance"],
-                                 slice_axis=axis_dct[context["slice_axis"]],
-                                 transform=val_transform,
-                                 slice_filter_fn=SliceFilter(**context["slice_filter"]),
-                                 multichannel=True if context["multichannel"] else False)
+
+    if context["unet_3D"]:
+        ds_test = loader.Bids3DDataset(context["bids_path"],
+                                    subject_lst=test_lst,
+                                    target_suffix=context["target_suffix"],
+                                    roi_suffix=context["roi_suffix"],
+                                    contrast_lst=context["contrast_test"],
+                                    metadata_choice=context["metadata"],
+                                    contrast_balance=context["contrast_balance"],
+                                    slice_axis=axis_dct[context["slice_axis"]],
+                                    transform=val_transform,
+                                    multichannel=context['multichannel'],
+                                    length=context["length_3D"],
+                                    padding=context["padding_3D"])
+    else:
+        ds_test = loader.BidsDataset(context["bids_path"],
+                                    subject_lst=test_lst,
+                                    target_suffix=context["target_suffix"],
+                                    roi_suffix=context["roi_suffix"],
+                                    contrast_lst=context["contrast_test"],
+                                    metadata_choice=context["metadata"],
+                                    contrast_balance=context["contrast_balance"],
+                                    slice_axis=axis_dct[context["slice_axis"]],
+                                    transform=val_transform,
+                                    multichannel=True if context['multichannel'] else False,
+                                    slice_filter_fn=SliceFilter(**context["slice_filter"]))
+
+
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
         ds_test.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
@@ -690,6 +744,8 @@ def cmd_test(context):
                   mt_metrics.specificity_score,
                   mt_metrics.intersection_over_union,
                   mt_metrics.accuracy_score]
+    if context["unet_3D"]:
+        metric_fns.remove(mt_metrics.hausdorff_score)
 
     metric_mgr = IvadoMetricManager(metric_fns)
 
