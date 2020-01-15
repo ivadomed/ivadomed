@@ -409,8 +409,20 @@ class CenterCrop3D(mt_transforms.MTTransform):
     def __init__(self, size):
         self.size = size
 
-    @staticmethod
-    def undo_transform(sample):
+    def _uncrop(self, sample):
+        td, tw, th = sample['input_metadata']["__centercrop"]
+        d, w, h = sample['input_metadata']["data_shape"]
+        fh = max(int(round((h - th) / 2.)), 0)
+        fw = max(int(round((w - tw) / 2.)), 0)
+        fd = max(int(round((d - td) / 2.)), 0)
+        npad = ((0, 0), (fw, fw), (fd, fd), (fh, fh))
+        sample['input'] = np.pad(sample['input'], pad_width=npad, mode='constant', constant_values=0)
+        sample['gt'] = np.pad(sample['gt'], pad_width=npad, mode='constant', constant_values=0)
+        return sample
+
+    def undo_transform(self, sample):
+        rdict = self._uncrop(sample)
+        sample.update(rdict)
         return sample
 
     def __call__(self, input_data):
@@ -439,6 +451,7 @@ class CenterCrop3D(mt_transforms.MTTransform):
             crop_gt = np.pad(crop_gt, pad_width=npad, mode='constant', constant_values=0)
         input_data['input'] = crop_input
         input_data['gt'] = crop_gt
+        input_data['input_metadata']["__centercrop"] = td, tw, th
 
         return input_data
 

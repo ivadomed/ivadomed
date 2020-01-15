@@ -34,7 +34,7 @@ class IvadoMetricManager(mt_metrics.MetricManager):
         return res_dict
 
 
-def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False):
+def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, unet_3D=False):
     """Save the prediction as nii.
         1. Reconstruct a 3D volume out of the slice-wise predictions.
         2. Re-orient the 3D array accordingly to the ground-truth orientation.
@@ -54,21 +54,26 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False):
     nib_ref = nib.load(fname_ref)
     nib_ref_can = nib.as_closest_canonical(nib_ref)
 
-    # complete missing z with zeros
-    tmp_lst = []
-    for z in range(nib_ref_can.header.get_data_shape()[slice_axis]):
-        if not z in z_lst:
-            tmp_lst.append(np.zeros(data_lst[0].shape))
-        else:
-            tmp_lst.append(data_lst[z_lst.index(z)])
+    if not unet_3D:
+        # complete missing z with zeros
+        tmp_lst = []
+        for z in range(nib_ref_can.header.get_data_shape()[slice_axis]):
+            if not z in z_lst:
+                tmp_lst.append(np.zeros(data_lst[0].shape))
+            else:
+                tmp_lst.append(data_lst[z_lst.index(z)])
 
-    if debug:
-        print("Len {}".format(len(tmp_lst)))
-        for arr in tmp_lst:
-            print("Shape element lst {}".format(arr.shape))
+        if debug:
+            print("Len {}".format(len(tmp_lst)))
+            for arr in tmp_lst:
+                print("Shape element lst {}".format(arr.shape))
 
-    # create data
-    arr = np.stack(tmp_lst, axis=0)
+        # create data
+        arr = np.stack(tmp_lst, axis=0)
+
+    else:
+        arr = data_lst
+
     if slice_axis == 2:
         arr = np.swapaxes(arr, 1, 2)
     # move axis according to slice_axis to RAS orientation
@@ -83,7 +88,8 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False):
     arr_pred_ref_space = nib.orientations.apply_orientation(arr_ras, trans_orient)
 
     # create nii
-    nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
+    nib_pred = nib.Nifti1Image(np.where(arr_pred_ref_space > 0.5, 1.0, 0.0), nib_ref.affine)
+
 
     # save
     nib.save(nib_pred, fname_out)

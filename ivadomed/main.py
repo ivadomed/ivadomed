@@ -791,18 +791,25 @@ def cmd_test(context):
             rdict_undo = val_undo_transform(rdict)
 
             fname_ref = rdict_undo['input_metadata']['gt_filename']
-            if pred_tmp_lst and (fname_ref != fname_tmp or (i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
-                # save the completely processed file as a nii
-                fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
-                fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
-                save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, axis_dct[context['slice_axis']])
-                # re-init pred_stack_lst
-                pred_tmp_lst, z_tmp_lst = [], []
+            if not context['unet_3D']:
+                if pred_tmp_lst and (fname_ref != fname_tmp or (i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
+                    # save the completely processed file as a nii
+                    fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
+                    fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+                    save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, axis_dct[context['slice_axis']])
+                    # re-init pred_stack_lst
+                    pred_tmp_lst, z_tmp_lst = [], []
 
-            # add new sample to pred_tmp_lst
-            pred_tmp_lst.append(np.array(rdict_undo['gt']))
-            z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
-            fname_tmp = fname_ref
+                # add new sample to pred_tmp_lst
+                pred_tmp_lst.append(np.array(rdict_undo['gt']))
+                z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
+                fname_tmp = fname_ref
+            else:
+                fname_pred = os.path.join(path_3Dpred, fname_ref.split('/')[-1])
+                fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+                # Choose only one modality
+                save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
+                         axis_dct[context['slice_axis']], unet_3D=True)
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
