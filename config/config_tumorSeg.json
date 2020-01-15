@@ -1,5 +1,5 @@
 {
-    "command": "train",
+    "command": "eval",
     "gpu": 0,
     "target_suffix": "_seg-tumor",
     "roi_suffix": null,
@@ -43,7 +43,7 @@
     "early_stopping_epsilon": 0.001,
     "transformation_training": {
       "CenterCrop3D": {
-          "size": [16, 160, 160]
+          "size": [16, 320, 320]
       },
       "ElasticTransform3D": {
         "alpha_range": [28.0, 30.0],
@@ -61,7 +61,7 @@
     },
     "transformation_validation": {
       "CenterCrop3D": {
-        "size": [16, 160, 160]
+        "size": [16, 320, 320]
       },
       "ToTensor3D": {},
       "NormalizeInstance3D": {}
