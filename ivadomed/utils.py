@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import nibabel as nib
 from PIL import Image
+from skimage.measure import label
 import torchvision.transforms.functional as F
 import matplotlib.pyplot as plt
 from collections import defaultdict
@@ -32,6 +33,136 @@ class IvadoMetricManager(mt_metrics.MetricManager):
             else:
                 res_dict[key] = np.nanmean(val)
         return res_dict
+
+
+class Evaluation3DMetrics(object):
+
+    def __init__(self, fname_pred, fname_gt, params=None):
+        self.fname_pred = fname_pred
+        self.fname_gt = fname_gt
+
+        if not params is None:
+            pass
+
+        self.data_pred = self.get_data(self.fname_pred)
+        self.data_gt = self.get_data(self.fname_gt)
+
+        self.px, self.py, self.pz = self.get_pixdim(self.fname_pred)
+
+        # Note: Some papers suggested to remove all lesion with less than 3 voxels: Todo?
+
+        # 18-connected components
+        self.data_pred_label, self.n_pred = label(self.data_pred,
+                                                    connectivity=3,
+                                                    return_num=True)
+        self.data_gt_label, self.n_gt = label(self.data_gt,
+                                                connectivity=3,
+                                                return_num=True)
+
+    def get_data(self, fname):
+        nib_im = nib.load(fname)
+        return nib_im.get_data()
+
+    def get_pixdim(self, fname):
+        nib_im = nib.load(fname)
+        px, py, pz = nib_im.header['pixdim'][1:4]
+        return px, py, pz
+
+    def get_vol(self, data):
+        vol = np.sum(data)
+        vol *= self.px * self.py * self.pz
+        return vol
+
+    def get_rvd(self):
+        """Relative volume difference."""
+        vol_gt = self.get_vol(self.data_gt)
+        vol_pred = self.get_vol(self.data_pred)
+
+        if vol_gt == 0.0:
+            return np.nan
+
+        rvd = (vol_gt-vol_pred)*100.
+        rvd /= vol_gt
+        return rvd
+
+    def get_avd(self):
+        """Absolute volume difference."""
+        return abs(self.get_rvd())
+
+    def _get_ltp_lfn(self, overlap_vox=3):
+        """Number of true positive and false negative lesion.
+
+            Note1: if two lesion_pred overlap with the current lesion_gt,
+                then only one detection is counted.
+            Note2: the tolerance of overlap that define a detection is
+                expressed in voxels. We could change it to "relative volume".
+        """
+        ltp, lfn = 0, 0
+        for idx in range(1, self.n_gt+1):
+            data_gt_idx = (self.data_gt_label == idx).astype(np.int)
+            overlap = (data_gt_idx * self.data_pred).astype(np.int)
+
+            if np.count_nonzero(overlap) >= overlap_vox:
+                ltp += 1
+
+            else:
+                lfn += 1
+
+        return ltp, lfn
+
+    def _get_lfp(self, overlap_vox=3):
+        """Number of false positive lesion."""
+        lfp = 0
+        for idx in range(1, self.n_pred+1):
+            data_pred_idx = (self.data_pred_label == idx).astype(np.int)
+            overlap = (data_pred_idx * self.data_gt).astype(np.int)
+
+            if np.count_nonzero(overlap) < overlap_vox:
+                lfp += 1
+
+        return lfp
+
+    def get_ltpr(self):
+        """Lesion True Positive Rate / Recall / Sensitivity.
+
+            Note: computed only if self.n_gt >= 1.
+        """
+        ltp, lfn = self._get_ltp_lfn()
+
+        denom = ltp + lfn
+        if denom == 0 or self.n_gt == 0:
+            return np.nan
+
+        return ltp * 100. / denom
+
+    def get_lfdr(self):
+        """Lesion False Detection Rate / 1 - Precision.
+
+            Note: computed only if self.n_gt >= 1.
+        """
+        ltp, _ = self._get_ltp_lfn()
+        lfp = self._get_lfp()
+
+        denom = ltp + lfp
+        if denom == 0 or self.n_gt == 0:
+            return np.nan
+
+        return lfp * 100. / denom
+
+    def get_all_metrics(self):
+        dct = {}
+        dct['vol_pred'] = self.get_vol(self.data_pred)
+        dct['vol_gt'] = self.get_vol(self.data_gt)
+        dct['rvd'], dct['avd'] = self.get_rvd(), self.get_avd()
+        dct['dice'] = dice_score(self.data_gt, self.data_pred) * 100.
+        dct['recall'] = mt_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
+        dct['precision'] = mt_metrics.precision_score(self.data_pred, self.data_gt, err_value=np.nan)
+        dct['specificity'] = mt_metrics.specificity_score(self.data_pred, self.data_gt, err_value=np.nan)
+        dct['n_pred'], dct['n_gt'] = self.n_pred, self.n_gt
+        dct['ltpr'] = self.get_ltpr()
+        dct['lfdr'] = self.get_lfdr()
+
+        return dct
 
 
 def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, unet_3D=False):
