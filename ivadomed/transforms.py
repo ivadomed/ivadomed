@@ -45,7 +45,7 @@ class Resample(mt_transforms.Resample):
         hshape, wshape = sample['input_metadata']['data_shape']
         hzoom, wzoom = sample['input_metadata']['zooms']
         input_data_undo = sample['input'].resize((wshape, hshape),
-                                                   resample=self.interpolation)
+                                                 resample=self.interpolation)
         rdict['input'] = input_data_undo
 
         # undo pred, aka GT
@@ -72,11 +72,10 @@ class Resample(mt_transforms.Resample):
 
         hshape_new = int(round(hshape * hfactor))
         wshape_new = int(round(wshape * wfactor))
-        
+
         for i, input_image in enumerate(input_data):
             input_data[i] = input_image.resize((wshape_new, hshape_new),
-                                                  resample=self.interpolation)
-
+                                               resample=self.interpolation)
 
         rdict['input'] = input_data
 
@@ -94,38 +93,19 @@ class Resample(mt_transforms.Resample):
 
 class NormalizeInstance(mt_transforms.NormalizeInstance):
     """This class extends mt_transforms.Normalize"""
+
     def undo_transform(self, sample):
         return sample
 
 
 class ToTensor(mt_transforms.ToTensor):
     """This class extends mt_transforms.ToTensor"""
+
     def undo_transform(self, sample):
         return mt_transforms.ToPIL()(sample)
 
 
-class CenterCrop2D(mt_transforms.CenterCrop2D):
-    """This class extends mt_transforms.CenterCrop2D"""
-    def _uncrop(self, data, params):
-        fh, fw, w, h = params
-        th, tw = self.size
-        pad_left = fw
-        pad_right = w - pad_left - tw
-        pad_top = fh
-        pad_bottom = h - pad_top - th
-        padding = (pad_left, pad_top, pad_right, pad_bottom)
-        return F.pad(data, padding)
-
-
-    def undo_transform(self, sample):
-        rdict = {}
-        rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
-        rdict['gt'] = self._uncrop(sample['gt'], sample['gt_metadata']["__centercrop"])
-        sample.update(rdict)
-        return sample
-
-
-class ROICrop2D(CenterCrop2D):
+class ROICrop2D(mt_transforms.CenterCrop2D):
     """Make a crop of a specified size around a ROI.
     :param labeled: if it is a segmentation task.
                          When this is True (default), the crop
@@ -174,7 +154,7 @@ class ROICrop2D(CenterCrop2D):
         params = (fh, fw, h, w)
         self.propagate_params(sample, params)
 
-        rdict['input'] = [F.crop(item, fw, fh, tw, th)for item in input_data]
+        rdict['input'] = [F.crop(item, fw, fh, tw, th) for item in input_data]
 
         if self.labeled:
             gt_data = sample['gt']
