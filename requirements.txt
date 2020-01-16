@@ -10,5 +10,6 @@ torch==1.2.0
 torchvision==0.2.1
 tqdm>=4.30
 future
+pillow==6.1.0
 
 medicaltorch@git+https://github.com/neuropoly/medicaltorch@master
