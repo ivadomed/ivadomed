@@ -186,4 +186,5 @@ def test_unet():
         print('Mean SDopt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
         print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
         print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
+print("Test training time")
 test_unet()
