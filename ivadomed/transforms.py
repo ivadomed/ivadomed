@@ -149,7 +149,7 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
 
         for i in range(len(input_data)):
             w, h = input_data[i].size
-            th, tw = self.size
+            tw, th = self.size
             th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
 
             # compute top left corner of the crop area
