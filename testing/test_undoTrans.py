@@ -38,7 +38,7 @@ def test_undo(contrast='T2star', tol=3):
     test_1 = [ivadomed_transforms.ToTensor(), ivadomed_transforms.NormalizeInstance()]
     name_1 = 'ToTensor_NoramlizeInstance'
 
-    test_2 = [ivadomed_transforms.CenterCrop2D(size=[40, 48])] + test_1
+    test_2 = [mt_transforms.CenterCrop2D(size=[40, 48])] + test_1
     name_2 = 'CenterCrop2D_' + name_1
 
     test_3 = [ivadomed_transforms.ROICrop2D(size=[40, 48])] + test_1
