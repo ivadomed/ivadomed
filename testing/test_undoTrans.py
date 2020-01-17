@@ -122,7 +122,25 @@ def test_undo(contrast='T2star', tol=3):
 
             # check values
             if np.any(np_noTrans):
-                print(np.sum(np_noTrans-np_undoTrans))
+                # if difference is superior to tolerance, then save images to QC
+                if np.sum(np_noTrans-np_undoTrans) >= tol:
+                    print(np.sum(np_noTrans-np_undoTrans))
+                    im_noTrans = np.array(input_noTrans[smp_idx])[0]
+                    im_undoTrans = np.array(rdict_undo['input'])
+
+                    plt.figure(figsize=(20,10))
+                    plt.subplot(1, 2, 1)
+                    plt.axis("off")
+                    plt.imshow(im_noTrans, interpolation='nearest', aspect='auto', cmap='gray')
+                    plt.subplot(1, 2, 2)
+                    plt.axis("off")
+                    plt.imshow(im_undoTrans, interpolation='nearest', aspect='auto', cmap='gray')
+
+                    fname_png_out = 'test_undo_err_'+str(randint(0,1000))+'.png'
+                    plt.savefig(fname_png_out, bbox_inches='tight', pad_inches=0)
+                    plt.close()
+                    print('Error: please check: '+fname_png_out)
+
                 assert np.sum(np_noTrans-np_undoTrans) < tol
                 print('\tData content (tol: {} vox.): checked.'.format(tol))
 
