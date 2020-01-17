@@ -117,11 +117,12 @@ def test_undo(contrast='T2star', tol=3):
             np_undoTrans[np_undoTrans > 0] = 1.0
 
             # check shapes
+            print(np_noTrans.shape, np_undoTrans.shape)
             assert np_noTrans.shape == np_undoTrans.shape
             print('\tData shape: checked.')
 
-            # check values
-            if np.any(np_noTrans):
+            # check values for ROICrop
+            if np.any(np_noTrans) and not 'CenterCrop2D' in name:
                 # if difference is superior to tolerance, then save images to QC
                 if np.sum(np_noTrans-np_undoTrans) >= tol:
                     print(np.sum(np_noTrans-np_undoTrans))
