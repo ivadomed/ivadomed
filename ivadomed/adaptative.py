@@ -128,7 +128,11 @@ class Dataframe():
 
 
 def bids_to_hdf5(dataroot, files, hdf5_name):
+    def __init__(dataroot, bids, files, hdf5_name):
+
+    def create_h5py()
     with h5py.File(hdf5_name, "w") as hf:
+
         files = sorted(files, key=lambda k: k["image"])
         for i, p in enumerate(files):
             print(p["image"], p["label"])
@@ -150,16 +154,20 @@ def bids_to_hdf5(dataroot, files, hdf5_name):
             grp.create_dataset("labels", data=labels)
 
 
+dset3 = f.create_dataset('subgroup2/dataset_three', (10,), dtype='i')
+
 class MRI2DSegmentationDataset(Dataset):
     """
     """
 
 
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2,
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, hdf5_name, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None,
                  canonical=True, roi_suffix=None, multichannel=False):
 
         self.bids_ds = bids.BIDS(root_dir)
+        # opening an hdf5 file with write access
+        self.hdf5_file = h5py.File(hdf5_name, "w")
         self.filename_pairs = []
         if metadata_choice == 'mri_params':
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
@@ -275,13 +283,24 @@ class MRI2DSegmentationDataset(Dataset):
         self._load_filenames()
 
     def _load_filenames(self):
-        for input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
+        for subject_id, input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
+            # Creating a new group for the subject
+            try:
+                grp = self.hdf5_file.create_group(str(subject_id))
+            except:
+                grp = self.hdf5_file[str(subject_id)]
+                raise Exception("Group already exist")
+
+
+
             roi_pair = SegmentationPair2D(input_filename, roi_filename, metadata=metadata, canonical=self.canonical)
 
             seg_pair = SegmentationPair2D(input_filename, gt_filename, metadata=metadata, canonical=self.canonical)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
+
+            # TODO: adapt filter to save slices number in metadata
             for idx_pair_slice in range(input_data_shape[self.slice_axis]):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice,
                                                          self.slice_axis)
@@ -296,46 +315,6 @@ class MRI2DSegmentationDataset(Dataset):
                 item = (slice_seg_pair, slice_roi_pair)
                 self.indexes.append(item)
 
-
-
-    def compute_mean_std(self, verbose=False):
-        """Compute the mean and standard deviation of the entire dataset per modality
-        and store it in the metadata of the hf
-
-        :param verbose: if True, it will show a progress bar.
-        :returns: tuple (mean, std dev)
-        """
-        sum_intensities = np.array([0.0] * self.n_contrasts)
-        numel = np.array([0] * self.n_contrasts)
-
-        with DatasetManager(self, override_transform=mt_transforms.ToTensor()) as dset:
-            pbar = tqdm(dset, desc="Mean calculation", disable=not verbose)
-            for sample in pbar:
-                for i in range(self.n_contrasts):
-                    input_data = sample['input'][i]
-                    sum_intensities[i] += input_data.sum()
-                    numel[i] += input_data.numel()
-                pbar.set_postfix(means=("-{:.2f} -" * self.n_contrasts).format(*(sum_intensities / numel)),
-                                 refresh=False)
-
-            training_mean = sum_intensities / numel
-            sum_var = np.array([0.0] * self.n_contrasts)
-            numel = np.array([0] * self.n_contrasts)
-
-            pbar = tqdm(dset, desc="Std Dev calculation", disable=not verbose)
-            for sample in pbar:
-                for i in range(self.n_contrasts):
-                    input_data = sample['input'][i]
-                    sum_var[i] += (input_data - training_mean[i]).pow(2).sum()
-                    numel[i] += input_data.numel()
-                pbar.set_postfix(stds=("-{:.2f} -" * self.n_contrasts).format(*np.sqrt(sum_var / numel)),
-                                 refresh=False)
-
-            training_std = np.sqrt(sum_var / numel)
-        # Converting tensors to numpy array
-        training_mean = [training_mean[i].item() for i in range(self.n_contrasts)]
-        training_std = [training_std[i].item() for i in range(self.n_contrasts)]
-        return training_mean, training_std
 
     def __getitem__(self, index):
         """Return the specific index (input, ground truth, roi and metadatas).
