@@ -75,7 +75,7 @@ def test_undo(contrast='T2star', tol=3):
     input_noTrans, gt_noTrans = batch_noTrans["input"], batch_noTrans["gt"]
 
     for name, test in zip(name_lst, test_lst):
-        print('\n'+name)
+        print('\n [INFO]: Test of {} ... '.format(name))
         val_transform = transforms.Compose(test)
         val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
 
@@ -144,6 +144,6 @@ def test_undo(contrast='T2star', tol=3):
 
                 assert np.sum(np_noTrans-np_undoTrans) < tol
                 print('\tData content (tol: {} vox.): checked.'.format(tol))
-
+        print('\n [INFO]: Test of {} passed successfully. '.format(name))
 print("Test undo transform")
 test_undo()
