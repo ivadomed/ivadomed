@@ -172,3 +172,8 @@ def test_inference(film_bool=False):
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
     print(metrics_dict)
+
+print("Test unet")
+test_inference()
+print("test unet-filmed")
+test_inference(film_bool=True)

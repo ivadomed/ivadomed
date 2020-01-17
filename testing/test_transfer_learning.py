@@ -69,3 +69,6 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
     initial_lr = INITIAL_LR
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
+
+print("test transfer learning")
+test_transfer_learning()

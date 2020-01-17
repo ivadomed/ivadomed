@@ -127,7 +127,11 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
 
     def undo_transform(self, sample):
         rdict = {}
-        rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
+        if isinstance(sample['input'], list):
+            for i in range(len(sample['input'])):
+                rdict['input'] = self._uncrop(sample['input'][i], sample['input_metadata'][i]["__centercrop"])
+        else:
+            rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
         rdict['gt'] = self._uncrop(sample['gt'], sample['gt_metadata']["__centercrop"])
 
         sample.update(rdict)
@@ -152,7 +156,7 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
         fw = x_roi - tw_half
 
         params = (fh, fw, h, w)
-        self.propagate_params(sample, params)
+        self.propagate_params(sample, params, 0)
 
         rdict['input'] = [F.crop(item, fw, fh, tw, th) for item in input_data]
 

@@ -122,5 +122,9 @@ def test_undo(contrast='T2star', tol=3):
 
             # check values
             if np.any(np_noTrans):
+                print(np.sum(np_noTrans-np_undoTrans))
                 assert np.sum(np_noTrans-np_undoTrans) < tol
                 print('\tData content (tol: {} vox.): checked.'.format(tol))
+
+print("Test undo transform")
+test_undo()
