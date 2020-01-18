@@ -24,6 +24,7 @@ MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,
                      "acq-MToff_MTS": 3, "acq-MTon_MTS": 4, "acq-T1w_MTS": 5}
 
+
 class Bids3DDataset(mt_datasets.MRI3DSubVolumeSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,
                  transform=None, metadata_choice=False, canonical=True, labeled=True, roi_suffix=None,
@@ -41,6 +42,7 @@ class Bids3DDataset(mt_datasets.MRI3DSubVolumeSegmentationDataset):
 
         super().__init__(dataset.filename_pairs, cache, length=length, padding=padding, transform=transform,
                          canonical=canonical)
+
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2, cache=True,

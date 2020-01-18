@@ -433,17 +433,17 @@ def cmd_train(context):
                     grid_img = vutils.make_grid(input_samples,
                                                 normalize=True,
                                                 scale_each=True)
-                    writer.add_image('Validation/Input', grid_img, epoch)
+                    writer.add_image('Train/Input', grid_img, epoch)
 
                     grid_img = vutils.make_grid(preds.data.cpu(),
                                                 normalize=True,
                                                 scale_each=True)
-                    writer.add_image('Validation/Predictions', grid_img, epoch)
+                    writer.add_image('Train/Predictions', grid_img, epoch)
 
                     grid_img = vutils.make_grid(gt_samples,
                                                 normalize=True,
                                                 scale_each=True)
-                    writer.add_image('Validation/Ground Truth', grid_img, epoch)
+                    writer.add_image('Train/Ground Truth', grid_img, epoch)
 
         train_loss_total_avg = train_loss_total / num_steps
         if not step_scheduler_batch:
