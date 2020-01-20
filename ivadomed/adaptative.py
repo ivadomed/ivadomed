@@ -5,6 +5,8 @@ import copy
 
 from glob import glob
 from copy import deepcopy
+
+from medicaltorch.datasets import SampleMetadata
 from tqdm import tqdm
 import nibabel as nib
 import torch
@@ -126,37 +128,7 @@ class Dataframe():
 
         self.df = df
 
-
-def bids_to_hdf5(dataroot, files, hdf5_name):
-    def __init__(dataroot, bids, files, hdf5_name):
-
-    def create_h5py()
-    with h5py.File(hdf5_name, "w") as hf:
-
-        files = sorted(files, key=lambda k: k["image"])
-        for i, p in enumerate(files):
-            print(p["image"], p["label"])
-            name = ntpath.basename(p["image"])
-            grp = hf.create_group(name)
-            grp.attrs['name'] = name
-            grp.attrs['author'] = "ab"
-            samples = []
-            labels = []
-
-            # To be replaced by medicaltorch
-            #extract_samples2(samples, labels, dataroot + p["image"], dataroot + p["label"])
-
-            grp_slices = grp.create_group("slices")
-            for idx, zlice in enumerate(samples):
-                print(".", end=" ")
-                grp_slices.create_dataset(str(idx), data=zlice, compression='gzip')
-            print(".")
-            grp.create_dataset("labels", data=labels)
-
-
-dset3 = f.create_dataset('subgroup2/dataset_three', (10,), dtype='i')
-
-class MRI2DSegmentationDataset(Dataset):
+class Bids_to_hdf5(Dataset):
     """
     """
 
@@ -165,15 +137,19 @@ class MRI2DSegmentationDataset(Dataset):
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None,
                  canonical=True, roi_suffix=None, multichannel=False):
 
+        self.canonical = canonical
         self.bids_ds = bids.BIDS(root_dir)
-        # opening an hdf5 file with write access
+        bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
+
+        # opening an hdf5 file with write access and writing metadata
         self.hdf5_file = h5py.File(hdf5_name, "w")
+        self.hdf5_file.attrs['canonical'] = canonical
+        self.hdf5_file.attrs['patients_id'] = bids_subjects
+
         self.filename_pairs = []
         if metadata_choice == 'mri_params':
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
-
-        bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
 
         # Create a list with the filenames for all contrasts and subjects
         subjects_tot = []
@@ -291,78 +267,68 @@ class MRI2DSegmentationDataset(Dataset):
                 grp = self.hdf5_file[str(subject_id)]
                 raise Exception("Group already exist")
 
+            roi_pair = SegmentationPair2D(input_filename, roi_filename, canonical=self.canonical)
 
-
-            roi_pair = SegmentationPair2D(input_filename, roi_filename, metadata=metadata, canonical=self.canonical)
-
-            seg_pair = SegmentationPair2D(input_filename, gt_filename, metadata=metadata, canonical=self.canonical)
+            seg_pair = SegmentationPair2D(input_filename, gt_filename, canonical=self.canonical)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
 
             # TODO: adapt filter to save slices number in metadata
+            useful_slices = []
             for idx_pair_slice in range(input_data_shape[self.slice_axis]):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice,
                                                          self.slice_axis)
                 if self.slice_filter_fn:
                     filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
                 if self.slice_filter_fn and not filter_fn_ret_seg:
+                    useful_slices += idx_pair_slice
                     continue
 
                 slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice,
                                                          self.slice_axis)
-
+                grp.attrs['slices'] = useful_slices
                 item = (slice_seg_pair, slice_roi_pair)
-                self.indexes.append(item)
 
+                seg_pair_slice, roi_pair_slice = self.indexes[index]
 
-    def __getitem__(self, index):
-        """Return the specific index (input, ground truth, roi and metadatas).
+                input_tensors = []
+                input_metadata = []
+                data_dict = {}
 
-        :param index: slice index.
-        """
-        seg_pair_slice, roi_pair_slice = self.indexes[index]
+                # Looping over all modalities (one or more)
+                for idx, input_slice in enumerate(seg_pair_slice["input"]):
 
-        input_tensors = []
-        input_metadata = []
-        data_dict = {}
+                    input_img = Image.fromarray(input_slice, mode='F')
+                    input_tensors.append(input_img)
+                    input_metadata.append(seg_pair_slice['input_metadata'][idx])
 
-        # Looping over all modalities (one or more)
-        for idx, input_slice in enumerate(seg_pair_slice["input"]):
+                # Handle unlabeled data
+                if seg_pair_slice["gt"] is None:
+                    gt_img = None
+                else:
+                    gt_img = (seg_pair_slice["gt"] * 255).astype(np.uint8)
+                    gt_img = Image.fromarray(gt_img, mode='L')
 
-            input_img = Image.fromarray(input_slice, mode='F')
-            input_tensors.append(input_img)
-            input_metadata.append(seg_pair_slice['input_metadata'][idx])
+                # Handle data with no ROI provided
+                if roi_pair_slice["gt"] is None:
+                    roi_img = None
+                else:
+                    roi_img = (roi_pair_slice["gt"] * 255).astype(np.uint8)
+                    roi_img = Image.fromarray(roi_img, mode='L')
 
-        # Handle unlabeled data
-        if seg_pair_slice["gt"] is None:
-            gt_img = None
-        else:
-            gt_img = (seg_pair_slice["gt"] * 255).astype(np.uint8)
-            gt_img = Image.fromarray(gt_img, mode='L')
+                data_dict = {
+                    'input': input_tensors,
+                    'gt': gt_img,
+                    'roi': roi_img,
+                    'input_metadata': input_metadata,
+                    'gt_metadata': seg_pair_slice['gt_metadata'],
+                    'roi_metadata': roi_pair_slice['gt_metadata']
+                }
 
-        # Handle data with no ROI provided
-        if roi_pair_slice["gt"] is None:
-            roi_img = None
-        else:
-            roi_img = (roi_pair_slice["gt"] * 255).astype(np.uint8)
-            roi_img = Image.fromarray(roi_img, mode='L')
+                # Warning: both input_tensors and input_metadata are list. Transforms needs to take that into account.
 
-        data_dict = {
-            'input': input_tensors,
-            'gt': gt_img,
-            'roi': roi_img,
-            'input_metadata': input_metadata,
-            'gt_metadata': seg_pair_slice['gt_metadata'],
-            'roi_metadata': roi_pair_slice['gt_metadata']
-        }
-
-        # Warning: both input_tensors and input_metadata are list. Transforms needs to take that into account.
-
-        if self.transform is not None:
-            data_dict = self.transform(data_dict)
-
-        return data_dict
+                return data_dict
 
 
 class SegmentationPair2D(object):
@@ -378,11 +344,10 @@ class SegmentationPair2D(object):
     :param canonical: canonical reordering of the volume axes.
     """
 
-    def __init__(self, input_filenames, gt_filename, metadata=None, cache=False, canonical=False):
+    def __init__(self, input_filenames, gt_filename, cache=False, canonical=False):
 
         self.input_filenames = input_filenames
         self.gt_filename = gt_filename
-        self.metadata = metadata
         self.canonical = canonical
         self.cache = cache
 
@@ -446,7 +411,7 @@ class SegmentationPair2D(object):
         return input_shape[0], gt_shape
 
     def get_pair_data(self):
-        """Return the tuble (input, ground truth) with the data content in
+        """Return the tuple (input, ground truth) with the data content in
         numpy array."""
         cache_mode = 'fill' if self.cache else 'unchanged'
 
@@ -555,14 +520,14 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
         self.indexes = filter_indexes
 
 
-def hdf5Dataset():
-    def __init__():
+class HDF5Dataset(mt_datasets):
+    def __init__(filename):
 
         if not os.path.isfile(filename):
             print("Computing hdf5 file of the data")
             dataset = json.load(open(self.dataroot + "dataset.json"))
             files = dataset['training']
-            compute_hdf5(self.dataroot, files, filename)
+            bids_to_hdf5(self.dataroot, files, filename)
         else:
             hf = h5py.File(filename, "r")
 
