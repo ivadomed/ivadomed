@@ -133,8 +133,8 @@ class Bids_to_hdf5(Dataset):
     """
 
 
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, hdf5_name, slice_axis=2,
-                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None,
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, hdf5_name, contrast_balance={}, slice_axis=2,
+                 cache=True, metadata_choice=False, slice_filter_fn=None,
                  canonical=True, roi_suffix=None, multichannel=False):
 
         self.canonical = canonical
@@ -265,7 +265,7 @@ class Bids_to_hdf5(Dataset):
                 grp = self.hdf5_file.create_group(str(subject_id))
             except:
                 grp = self.hdf5_file[str(subject_id)]
-                raise Exception("Group already exist")
+                print("Group already exist - Loading it.")
 
             roi_pair = SegmentationPair2D(input_filename, roi_filename, canonical=self.canonical)
 
@@ -276,6 +276,11 @@ class Bids_to_hdf5(Dataset):
 
             # TODO: adapt filter to save slices number in metadata
             useful_slices = []
+            input_volumes = [[] for _ in range(len(seg_pair["input"]))]
+            gt_volume = []
+            roi_volume = []
+            input_metadata = None
+
             for idx_pair_slice in range(input_data_shape[self.slice_axis]):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice,
                                                          self.slice_axis)
@@ -285,50 +290,59 @@ class Bids_to_hdf5(Dataset):
                     useful_slices += idx_pair_slice
                     continue
 
-                slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice,
-                                                         self.slice_axis)
-                grp.attrs['slices'] = useful_slices
-                item = (slice_seg_pair, slice_roi_pair)
+                roi_pair_slice = roi_pair.get_pair_slice(idx_pair_slice, self.slice_axis)
 
-                seg_pair_slice, roi_pair_slice = self.indexes[index]
 
-                input_tensors = []
-                input_metadata = []
-                data_dict = {}
+
 
                 # Looping over all modalities (one or more)
-                for idx, input_slice in enumerate(seg_pair_slice["input"]):
-
+                for idx, input_slice in enumerate(slice_seg_pair["input"]):
                     input_img = Image.fromarray(input_slice, mode='F')
-                    input_tensors.append(input_img)
-                    input_metadata.append(seg_pair_slice['input_metadata'][idx])
+                    input_volumes[idx].append(input_img)
+
 
                 # Handle unlabeled data
-                if seg_pair_slice["gt"] is None:
+                if slice_seg_pair["gt"] is None:
                     gt_img = None
+
                 else:
-                    gt_img = (seg_pair_slice["gt"] * 255).astype(np.uint8)
-                    gt_img = Image.fromarray(gt_img, mode='L')
+                    gt_volume.append((slice_seg_pair["gt"] * 255).astype(np.uint8))
+                    #gt_img = Image.fromarray(gt_img, mode='L')
 
                 # Handle data with no ROI provided
                 if roi_pair_slice["gt"] is None:
                     roi_img = None
                 else:
-                    roi_img = (roi_pair_slice["gt"] * 255).astype(np.uint8)
-                    roi_img = Image.fromarray(roi_img, mode='L')
+                    roi_volume.append((roi_pair_slice["gt"] * 255).astype(np.uint8))
+                    #roi_img = Image.fromarray(roi_img, mode='L')
 
-                data_dict = {
-                    'input': input_tensors,
-                    'gt': gt_img,
-                    'roi': roi_img,
-                    'input_metadata': input_metadata,
-                    'gt_metadata': seg_pair_slice['gt_metadata'],
-                    'roi_metadata': roi_pair_slice['gt_metadata']
-                }
+            grp.attrs['slices'] = useful_slices
+            # Creating datasets and metadata
+            # Inputs
+            for i in range(len(input_volumes)):
+                key = "inputs/mydataset"
+                grp.create_dataset(key, data=input_volumes)
+                grp[key].attrs['']
+            # GT
+            grp.create_dataset("gt/mydataset", data=gt_volume)
 
-                # Warning: both input_tensors and input_metadata are list. Transforms needs to take that into account.
+            # ROI
+            grp.create_dataset("roi/mydataset", data=roi_volume)
 
-                return data_dict
+
+            # TODO: Move that part into HDF5Dataset
+            """
+            data_dict = {
+                'input': input_tensors,
+                'gt': gt_img,
+                'roi': roi_img,
+                'input_metadata': input_metadata,
+                'gt_metadata': seg_pair_slice['gt_metadata'],
+                'roi_metadata': roi_pair_slice['gt_metadata']
+            }
+            return data_dict
+            """
+
 
 
 class SegmentationPair2D(object):
@@ -503,6 +517,8 @@ class SegmentationPair2D(object):
 
         return dreturn
 
+
+
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
 
 
@@ -521,15 +537,29 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
 
 
 class HDF5Dataset(mt_datasets):
-    def __init__(filename):
+    def __init__(dataroot, RAM=True):
 
-        if not os.path.isfile(filename):
+        if not os.path.isfile(dataroot):
             print("Computing hdf5 file of the data")
             dataset = json.load(open(self.dataroot + "dataset.json"))
             files = dataset['training']
-            bids_to_hdf5(self.dataroot, files, filename)
+            Bids_to_hdf5(dataroot, files, filename)
         else:
             hf = h5py.File(filename, "r")
+        self.dict = hf
+        if RAM:
+            self.load_into_ram()
+        #TODO list:
+        """ 
+        - implement load_into_ram() & partial mode
+        - include dataframe class
+            - Mod can refer to either the path of the image in the HDF5 file or 
+        - transform numpy into PIL image
+        """
+
+    def load_into_ram(self):
+        self.gt = []
+
 
     def set_transform(self, transform):
         """ This method will replace the current transformation for the
@@ -545,3 +575,4 @@ class HDF5Dataset(mt_datasets):
         return len(self.indexes)
 
     def __getitem__(self, index):
+
