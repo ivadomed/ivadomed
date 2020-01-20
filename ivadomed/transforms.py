@@ -146,21 +146,21 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
         # compute center of mass of the ROI
         x_roi, y_roi = center_of_mass(np.array(roi_data).astype(np.int))
         x_roi, y_roi = int(round(x_roi)), int(round(y_roi))
+        tw, th = self.size
+        th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
+
+        # compute top left corner of the crop area
+        fh = y_roi - th_half
+        fw = x_roi - tw_half
 
         for i in range(len(input_data)):
             w, h = input_data[i].size
-            tw, th = self.size
-            th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
-
-            # compute top left corner of the crop area
-            fh = y_roi - th_half
-            fw = x_roi - tw_half
             params = (fh, fw, h, w)
 
             self.propagate_params(sample, params, i)
-
             # crop data
             input_data[i] = F.crop(input_data[i], fw, fh, tw, th)
+
         rdict['input'] = input_data
 
         if self.labeled:
