@@ -71,7 +71,7 @@ def test_inference(film_bool=False):
 
     if film_bool:  # normalize metadata before sending to network
         print('FiLM inference not implemented yet.')
-        quit()
+        return 0
         # metadata_clustering_models = joblib.load("./" + context["log_directory"] + "/clustering_models.joblib")
         # ds_test = loader.normalize_metadata(ds_test,
         #                                     metadata_clustering_models,
@@ -176,4 +176,4 @@ def test_inference(film_bool=False):
 print("Test unet")
 test_inference()
 print("test unet-filmed")
-test_inference(film_bool=True)
+#test_inference(film_bool=True)
