@@ -418,20 +418,22 @@ class SegmentationPair2D(object):
             if self.gt_handle is not None:
                 self.gt_handle = nib.as_closest_canonical(self.gt_handle)
 
+
+        """
+        To remove
         if self.metadata:
             self.metadata = []
             for data,input_filename in zip(metadata,input_filenames):
                 data["input_filename"] = input_filename
                 data["gt_filename"] = gt_filename
                 self.metadata.append(data)
-
+        """
     def get_pair_shapes(self):
         """Return the tuple (input, ground truth) representing both the input
         and ground truth shapes."""
         input_shape = []
         for handle in self.input_handle:
             input_shape.append(handle.header.get_data_shape())
-
             if not len(set(input_shape)):
                 raise RuntimeError('Inputs have different dimensions.')
 
