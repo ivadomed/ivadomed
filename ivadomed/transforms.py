@@ -12,7 +12,7 @@ from medicaltorch import transforms as mt_transforms
 def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
        from the mt_transforms."""
-    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor', 'CenterCrop2D']
+    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor']
 
 
 class UndoCompose(object):
@@ -149,7 +149,7 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
 
         for i in range(len(input_data)):
             w, h = input_data[i].size
-            tw, th = self.size
+            th, tw = self.size
             th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
 
             # compute top left corner of the crop area
