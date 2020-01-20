@@ -149,13 +149,13 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
 
         for i in range(len(input_data)):
             w, h = input_data[i].size
-            th, tw = self.size
+            tw, th = self.size
             th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
 
             # compute top left corner of the crop area
             fh = y_roi - th_half
             fw = x_roi - tw_half
-            params = (fh, fw, w, h)
+            params = (fh, fw, h, w)
 
             self.propagate_params(sample, params, i)
 
@@ -169,6 +169,7 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
             gt_data = F.crop(gt_data, fw, fh, tw, th)
             gt_metadata["__centercrop"] = (fh, fw, h, w)
             rdict['gt'] = gt_data
+            #rdict['gt_metadata'] = gt_metadata
 
         # free memory
         rdict['roi'], rdict['roi_metadata'] = None, None
