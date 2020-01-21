@@ -38,7 +38,7 @@ def test_undo(contrast='T2star', tol=3):
     test_1 = [ivadomed_transforms.ToTensor(), ivadomed_transforms.NormalizeInstance()]
     name_1 = 'ToTensor_NoramlizeInstance'
 
-    test_2 = [ivadomed_transforms.CenterCrop2D(size=[40, 48])] + test_1
+    test_2 = [mt_transforms.CenterCrop2D(size=[40, 48])] + test_1
     name_2 = 'CenterCrop2D_' + name_1
 
     test_3 = [ivadomed_transforms.ROICrop2D(size=[40, 48])] + test_1
@@ -75,7 +75,7 @@ def test_undo(contrast='T2star', tol=3):
     input_noTrans, gt_noTrans = batch_noTrans["input"], batch_noTrans["gt"]
 
     for name, test in zip(name_lst, test_lst):
-        print('\n'+name)
+        print('\n [INFO]: Test of {} ... '.format(name))
         val_transform = transforms.Compose(test)
         val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
 
@@ -117,10 +117,33 @@ def test_undo(contrast='T2star', tol=3):
             np_undoTrans[np_undoTrans > 0] = 1.0
 
             # check shapes
+            print(np_noTrans.shape, np_undoTrans.shape)
             assert np_noTrans.shape == np_undoTrans.shape
             print('\tData shape: checked.')
 
-            # check values
-            if np.any(np_noTrans):
+            # check values for ROICrop
+            if np.any(np_noTrans) and not 'CenterCrop2D' in name:
+                # if difference is superior to tolerance, then save images to QC
+                if np.sum(np_noTrans-np_undoTrans) >= tol:
+                    print(np.sum(np_noTrans-np_undoTrans))
+                    im_noTrans = np.array(input_noTrans[smp_idx])[0]
+                    im_undoTrans = np.array(rdict_undo['input'])
+
+                    plt.figure(figsize=(20,10))
+                    plt.subplot(1, 2, 1)
+                    plt.axis("off")
+                    plt.imshow(im_noTrans, interpolation='nearest', aspect='auto', cmap='gray')
+                    plt.subplot(1, 2, 2)
+                    plt.axis("off")
+                    plt.imshow(im_undoTrans, interpolation='nearest', aspect='auto', cmap='gray')
+
+                    fname_png_out = 'test_undo_err_'+str(randint(0,1000))+'.png'
+                    plt.savefig(fname_png_out, bbox_inches='tight', pad_inches=0)
+                    plt.close()
+                    print('Error: please check: '+fname_png_out)
+
                 assert np.sum(np_noTrans-np_undoTrans) < tol
                 print('\tData content (tol: {} vox.): checked.'.format(tol))
+        print('\n [INFO]: Test of {} passed successfully. '.format(name))
+print("Test undo transform")
+test_undo()

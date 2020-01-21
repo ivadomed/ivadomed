@@ -235,7 +235,7 @@ def dice_score(im1, im2):
         return np.nan
 
     intersection = np.logical_and(im1, im2)
-    return (2. * intersection.sum())/ im_sum
+    return (2. * intersection.sum()) / im_sum
 
 
 def mixup(data, targets, alpha):
@@ -247,7 +247,7 @@ def mixup(data, targets, alpha):
     targets2 = targets[indices]
 
     lambda_ = np.random.beta(alpha, alpha)
-    lambda_ = max(lambda_, 1 - lambda_) # ensure lambda_ >= 0.5
+    lambda_ = max(lambda_, 1 - lambda_)  # ensure lambda_ >= 0.5
     lambda_tensor = torch.FloatTensor([lambda_])
 
     data = data * lambda_tensor + data2 * (1 - lambda_tensor)
@@ -257,7 +257,6 @@ def mixup(data, targets, alpha):
 
 
 def save_mixup_sample(x, y, fname):
-
     plt.figure(figsize=(20, 10))
     plt.subplot(1, 2, 1)
     plt.axis("off")
@@ -285,3 +284,14 @@ def threshold_predictions(predictions, thr=0.5):
     return thresholded_preds
 
 
+def cuda(input_var):
+    """
+    This function sends input_var to GPU.
+    :param input_var: either a tensor or a list of tensors
+    :return: same as input_var
+    """
+
+    if isinstance(input_var, list):
+        return [t.cuda() for t in input_var]
+    else:
+        return input_var.cuda()
