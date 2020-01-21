@@ -128,10 +128,10 @@ class Dataframe():
 
         self.df = df
 
+
 class Bids_to_hdf5(Dataset):
     """
     """
-
 
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, hdf5_name, contrast_balance={}, slice_axis=2,
                  cache=True, metadata_choice=False, slice_filter_fn=None,
@@ -247,8 +247,9 @@ class Bids_to_hdf5(Dataset):
         if multichannel:
             for subject in multichannel_subjects.values():
                 if not None in subject["absolute_paths"]:
-                    self.filename_pairs.append((subject.record["subject_id"], subject["absolute_paths"], subject["deriv_path"],
-                                                subject["roi_filename"], subject["metadata"]))
+                    self.filename_pairs.append(
+                        (subject.record["subject_id"], subject["absolute_paths"], subject["deriv_path"],
+                         subject["roi_filename"], subject["metadata"]))
 
         self.indexes = []
         self.cache = cache
@@ -267,23 +268,25 @@ class Bids_to_hdf5(Dataset):
                 grp = self.hdf5_file[str(subject_id)]
                 print("Group already exist - Loading it.")
 
-            roi_pair = SegmentationPair2D(input_filename, roi_filename, canonical=self.canonical)
+            roi_pair = mt_datasets.SegmentationPair2D(input_filename, roi_filename, metadata=metadata,
+                                                      canonical=self.canonical)
 
-            seg_pair = SegmentationPair2D(input_filename, gt_filename, canonical=self.canonical)
+            seg_pair = mt_datasets.SegmentationPair2D(input_filename, gt_filename, metadata=metadata,
+                                                      canonical=self.canonical)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
-
 
             # TODO: adapt filter to save slices number in metadata
             useful_slices = []
             input_volumes = [[] for _ in range(len(seg_pair["input"]))]
             gt_volume = []
             roi_volume = []
-            input_metadata = None
 
             for idx_pair_slice in range(input_data_shape[self.slice_axis]):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice,
                                                          self.slice_axis)
+
+                # keeping idx of slices with gt
                 if self.slice_filter_fn:
                     filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
                 if self.slice_filter_fn and not filter_fn_ret_seg:
@@ -292,14 +295,9 @@ class Bids_to_hdf5(Dataset):
 
                 roi_pair_slice = roi_pair.get_pair_slice(idx_pair_slice, self.slice_axis)
 
-
-
-
                 # Looping over all modalities (one or more)
                 for idx, input_slice in enumerate(slice_seg_pair["input"]):
-                    input_img = Image.fromarray(input_slice, mode='F')
-                    input_volumes[idx].append(input_img)
-
+                    input_volumes[idx].append(input_slice)
 
                 # Handle unlabeled data
                 if slice_seg_pair["gt"] is None:
@@ -307,28 +305,32 @@ class Bids_to_hdf5(Dataset):
 
                 else:
                     gt_volume.append((slice_seg_pair["gt"] * 255).astype(np.uint8))
-                    #gt_img = Image.fromarray(gt_img, mode='L')
 
                 # Handle data with no ROI provided
                 if roi_pair_slice["gt"] is None:
                     roi_img = None
                 else:
                     roi_volume.append((roi_pair_slice["gt"] * 255).astype(np.uint8))
-                    #roi_img = Image.fromarray(roi_img, mode='L')
+                    # roi_img = Image.fromarray(roi_img, mode='L')
+
+            # Getting metadata using the one from the last slice
+            input_metadata = slice_seg_pair['input_metadata']
+            gt_metadata = slice_seg_pair['gt_metadata']
+            roi_metadata = roi_pair_slice['gt_metadata']
 
             grp.attrs['slices'] = useful_slices
             # Creating datasets and metadata
             # Inputs
-            for i in range(len(input_volumes)):
-                key = "inputs/mydataset"
+            for meta in input_metadata:
+                key = "inputs/{}".format(meta['contrast'])
                 grp.create_dataset(key, data=input_volumes)
-                grp[key].attrs['']
+                grp[key].attrs['input_filename'] = meta['input_filename']
+
             # GT
             grp.create_dataset("gt/mydataset", data=gt_volume)
 
             # ROI
             grp.create_dataset("roi/mydataset", data=roi_volume)
-
 
             # TODO: Move that part into HDF5Dataset
             """
@@ -344,183 +346,7 @@ class Bids_to_hdf5(Dataset):
             """
 
 
-
-class SegmentationPair2D(object):
-    """This class is used to build 2D segmentation datasets. It represents
-    a pair of of two data volumes (the input data and the ground truth data).
-
-    :param input_filenames: the input filename list (supported by nibabel). For single channel, the list will contain 1
-                           input filename.
-    :param gt_filename: the ground-truth filename.
-    :param metadata: metadata list with each item corresponding to an image (modality) in input_filenames.  For single channel, the list will contain metadata related to
-                     to one image.
-    :param cache: if the data should be cached in memory or not.
-    :param canonical: canonical reordering of the volume axes.
-    """
-
-    def __init__(self, input_filenames, gt_filename, cache=False, canonical=False):
-
-        self.input_filenames = input_filenames
-        self.gt_filename = gt_filename
-        self.canonical = canonical
-        self.cache = cache
-
-        # list of the images
-        self.input_handle = []
-
-        # loop over the filenames (list)
-        for input_file in self.input_filenames:
-            input_img = nib.load(input_file)
-            self.input_handle.append(input_img)
-            if len(input_img.shape) > 3:
-                raise RuntimeError("4-dimensional volumes not supported.")
-
-        # we consider only one gt per patient
-        # Unlabeled data (inference time)
-        if self.gt_filename is None:
-            self.gt_handle = None
-        else:
-            self.gt_handle = nib.load(self.gt_filename)
-
-        # Sanity check for dimensions, should be the same
-        input_shape, gt_shape = self.get_pair_shapes()
-
-        if self.gt_handle is not None:
-            if not np.allclose(input_shape, gt_shape):
-                raise RuntimeError('Input and ground truth with different dimensions.')
-
-        if self.canonical:
-            for idx, handle in enumerate(self.input_handle):
-                self.input_handle[idx] = nib.as_closest_canonical(handle)
-
-            # Unlabeled data
-            if self.gt_handle is not None:
-                self.gt_handle = nib.as_closest_canonical(self.gt_handle)
-
-
-        """
-        To remove
-        if self.metadata:
-            self.metadata = []
-            for data,input_filename in zip(metadata,input_filenames):
-                data["input_filename"] = input_filename
-                data["gt_filename"] = gt_filename
-                self.metadata.append(data)
-        """
-    def get_pair_shapes(self):
-        """Return the tuple (input, ground truth) representing both the input
-        and ground truth shapes."""
-        input_shape = []
-        for handle in self.input_handle:
-            input_shape.append(handle.header.get_data_shape())
-            if not len(set(input_shape)):
-                raise RuntimeError('Inputs have different dimensions.')
-
-        # Handle unlabeled data
-        if self.gt_handle is None:
-            gt_shape = None
-        else:
-            gt_shape = self.gt_handle.header.get_data_shape()
-
-        return input_shape[0], gt_shape
-
-    def get_pair_data(self):
-        """Return the tuple (input, ground truth) with the data content in
-        numpy array."""
-        cache_mode = 'fill' if self.cache else 'unchanged'
-
-        input_data = []
-        for handle in self.input_handle:
-            input_data.append(handle.get_fdata(cache_mode, dtype=np.float32))
-
-        # Handle unlabeled data
-        if self.gt_handle is None:
-            gt_data = None
-        else:
-            gt_data = self.gt_handle.get_fdata(cache_mode, dtype=np.float32)
-
-        return input_data, gt_data
-
-    def get_pair_slice(self, slice_index, slice_axis=2):
-        """Return the specified slice from (input, ground truth).
-
-        :param slice_index: the slice number.
-        :param slice_axis: axis to make the slicing.
-        """
-        if self.cache:
-            input_dataobj, gt_dataobj = self.get_pair_data()
-        else:
-            # use dataobj to avoid caching
-            input_dataobj = [handle.dataobj for handle in self.input_handle]
-
-            if self.gt_handle is None:
-                gt_dataobj = None
-            else:
-                gt_dataobj = self.gt_handle.dataobj
-
-        if slice_axis not in [0, 1, 2]:
-            raise RuntimeError("Invalid axis, must be between 0 and 2.")
-
-        input_slice = []
-        # Loop over modalities
-        for data_object in input_dataobj:
-            if slice_axis == 2:
-                input_slice.append(np.asarray(data_object[..., slice_index],
-                                              dtype=np.float32))
-            elif slice_axis == 1:
-                input_slice.append(np.asarray(data_object[:, slice_index, ...],
-                                              dtype=np.float32))
-            elif slice_axis == 0:
-                input_slice.append(np.asarray(data_object[slice_index, ...],
-                                              dtype=np.float32))
-
-        # Handle the case for unlabeled data
-        gt_meta_dict = None
-        if self.gt_handle is None:
-            gt_slice = None
-        else:
-            if slice_axis == 2:
-                gt_slice = np.asarray(gt_dataobj[..., slice_index],
-                                      dtype=np.float32)
-            elif slice_axis == 1:
-                gt_slice = np.asarray(gt_dataobj[:, slice_index, ...],
-                                      dtype=np.float32)
-            elif slice_axis == 0:
-                gt_slice = np.asarray(gt_dataobj[slice_index, ...],
-                                      dtype=np.float32)
-
-            gt_meta_dict = SampleMetadata({
-                "zooms": self.gt_handle.header.get_zooms()[:2],
-                "data_shape": self.gt_handle.header.get_data_shape()[:2],
-            })
-
-        input_meta_dict = []
-        for handle in self.input_handle:
-            input_meta_dict.append(SampleMetadata({
-                "zooms": handle.header.get_zooms()[:2],
-                "data_shape": handle.header.get_data_shape()[:2],
-            }))
-
-        dreturn = {
-            "input": input_slice,
-            "gt": gt_slice,
-            "input_metadata": input_meta_dict,
-            "gt_metadata": gt_meta_dict,
-        }
-
-        if self.metadata:
-            for idx, metadata in enumerate(self.metadata):  # loop across channels
-                metadata["slice_index"] = slice_index
-                self.metadata[idx] = metadata
-                for metadata_key in metadata.keys():  # loop across input metadata
-                    dreturn["input_metadata"][idx][metadata_key] = metadata[metadata_key]
-
-        return dreturn
-
-
-
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
-
 
     def filter_roi(self, nb_nonzero_thr):
         filter_indexes = []
@@ -537,7 +363,7 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
 
 
 class HDF5Dataset(mt_datasets):
-    def __init__(dataroot, RAM=True):
+    def __init__(self, dataroot, filename, RAM=True):
 
         if not os.path.isfile(dataroot):
             print("Computing hdf5 file of the data")
@@ -549,9 +375,10 @@ class HDF5Dataset(mt_datasets):
         self.dict = hf
         if RAM:
             self.load_into_ram()
-        #TODO list:
+        # TODO list:
         """ 
         - implement load_into_ram() & partial mode
+        
         - include dataframe class
             - Mod can refer to either the path of the image in the HDF5 file or 
         - transform numpy into PIL image
@@ -559,7 +386,6 @@ class HDF5Dataset(mt_datasets):
 
     def load_into_ram(self):
         self.gt = []
-
 
     def set_transform(self, transform):
         """ This method will replace the current transformation for the
@@ -569,10 +395,9 @@ class HDF5Dataset(mt_datasets):
         """
         self.transform = transform
 
-
     def __len__(self):
         """Return the dataset size. The number of subvolumes."""
         return len(self.indexes)
 
     def __getitem__(self, index):
-
+        self.hf[index]
