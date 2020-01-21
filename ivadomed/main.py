@@ -59,8 +59,11 @@ def cmd_train(context):
 
     if bool(sum(context["film_layers"])) and not (metadata_bool):
         print('\tWarning FiLM disabled since metadata is disabled')
-    print('\nArchitecture: {} with a depth of {}.\n' \
-          .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else 'Unet', context['depth']))
+    if context['unet_3D']:
+        print('\nArchitecture: 3D Unet')
+    else:
+        print('\nArchitecture: {} with a depth of {}.\n' \
+              .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else 'Unet', context['depth']))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -70,6 +73,8 @@ def cmd_train(context):
         print('\tInclude subjects with acquisition metadata available only.\n')
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
+    if len(context['multichannel']) > 1:
+        print('\tUsing multichannel model with modalities {}.\n'.format(context['multichannel']))
 
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=context["log_directory"])

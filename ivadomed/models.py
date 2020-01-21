@@ -320,6 +320,10 @@ class HeMISUnet(Module):
 
 
 class Modified3DUNet(nn.Module):
+    """
+    Code from the following repository:
+    https://github.com/pykao/Modified-3D-UNet-Pytorch
+    """
     def __init__(self, in_channels, n_classes, base_n_filter=32):
         super(Modified3DUNet, self).__init__()
         self.in_channels = in_channels

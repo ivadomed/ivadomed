@@ -315,6 +315,7 @@ class DilateGT(mt_transforms.MTTransform):
 
 ### 3D Transforms ###
 
+
 class ElasticTransform3D(mt_transforms.ElasticTransform):
     @staticmethod
     def elastic_transform(image, alpha, sigma):
@@ -466,6 +467,31 @@ class NormalizeInstance3D(mt_transforms.NormalizeInstance3D):
 
 class ToTensor3D(mt_transforms.ToTensor):
     """This class extends mt_transforms.ToTensor"""
+    def __call__(self, sample):
+        rdict = {}
+        input_data = sample['input']
+
+        if isinstance(input_data, list):
+            ret_input = [F.to_tensor(item)
+                         for item in input_data]
+        else:
+            ret_input = F.to_tensor(input_data)
+
+        rdict['input'] = ret_input
+
+        if self.labeled:
+            gt_data = sample['gt']
+            if gt_data is not None:
+                if isinstance(gt_data, list):
+                    ret_gt = [F.to_tensor(item)
+                              for item in gt_data]
+                else:
+                    ret_gt = F.to_tensor(gt_data)
+
+                rdict['gt'] = ret_gt
+        sample.update(rdict)
+        return sample
+
     def undo_transform(self, sample):
         rdict = {}
         rdict['input'] = np.array(sample['input'])
