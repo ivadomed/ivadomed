@@ -12,7 +12,7 @@ from medicaltorch import transforms as mt_transforms
 def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
        from the mt_transforms."""
-    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor', 'CenterCrop2D']
+    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor']
 
 
 class UndoCompose(object):
@@ -45,7 +45,7 @@ class Resample(mt_transforms.Resample):
         hshape, wshape = sample['input_metadata']['data_shape']
         hzoom, wzoom = sample['input_metadata']['zooms']
         input_data_undo = sample['input'].resize((wshape, hshape),
-                                                   resample=self.interpolation)
+                                                 resample=self.interpolation)
         rdict['input'] = input_data_undo
 
         # undo pred, aka GT
@@ -78,6 +78,10 @@ class Resample(mt_transforms.Resample):
                                                   resample=self.interpolation)
 
 
+        for i, input_image in enumerate(input_data):
+            input_data[i] = input_image.resize((wshape_new, hshape_new),
+                                               resample=self.interpolation)
+
         rdict['input'] = input_data
 
         if self.labeled:
@@ -94,38 +98,19 @@ class Resample(mt_transforms.Resample):
 
 class NormalizeInstance(mt_transforms.NormalizeInstance):
     """This class extends mt_transforms.Normalize"""
+
     def undo_transform(self, sample):
         return sample
 
 
 class ToTensor(mt_transforms.ToTensor):
     """This class extends mt_transforms.ToTensor"""
+
     def undo_transform(self, sample):
         return mt_transforms.ToPIL()(sample)
 
 
-class CenterCrop2D(mt_transforms.CenterCrop2D):
-    """This class extends mt_transforms.CenterCrop2D"""
-    def _uncrop(self, data, params):
-        fh, fw, w, h = params
-        th, tw = self.size
-        pad_left = fw
-        pad_right = w - pad_left - tw
-        pad_top = fh
-        pad_bottom = h - pad_top - th
-        padding = (pad_left, pad_top, pad_right, pad_bottom)
-        return F.pad(data, padding)
-
-
-    def undo_transform(self, sample):
-        rdict = {}
-        rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
-        rdict['gt'] = self._uncrop(sample['gt'], sample['gt_metadata']["__centercrop"])
-        sample.update(rdict)
-        return sample
-
-
-class ROICrop2D(CenterCrop2D):
+class ROICrop2D(mt_transforms.CenterCrop2D):
     """Make a crop of a specified size around a ROI.
     :param labeled: if it is a segmentation task.
                          When this is True (default), the crop
@@ -147,7 +132,12 @@ class ROICrop2D(CenterCrop2D):
 
     def undo_transform(self, sample):
         rdict = {}
-        rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
+        if isinstance(sample['input'], list):
+            for i in range(len(sample['input'])):
+                rdict['input'] = self._uncrop(sample['input'][i], sample['input_metadata'][i]["__centercrop"])
+        else:
+            rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
+
         rdict['gt'] = self._uncrop(sample['gt'], sample['gt_metadata']["__centercrop"])
 
         sample.update(rdict)
@@ -158,30 +148,32 @@ class ROICrop2D(CenterCrop2D):
         input_data = sample['input']
         roi_data = sample['roi']
 
-        w, h = input_data[0].size
-        th, tw = self.size
-
-        th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
-
         # compute center of mass of the ROI
         x_roi, y_roi = center_of_mass(np.array(roi_data).astype(np.int))
         x_roi, y_roi = int(round(x_roi)), int(round(y_roi))
+        tw, th = self.size
+        th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
 
         # compute top left corner of the crop area
         fh = y_roi - th_half
         fw = x_roi - tw_half
 
-        params = (fh, fw, h, w)
-        self.propagate_params(sample, params)
+        for i in range(len(input_data)):
+            w, h = input_data[i].size
+            params = (fh, fw, h, w)
 
-        rdict['input'] = [F.crop(item, fw, fh, tw, th)for item in input_data]
+            self.propagate_params(sample, params, i)
+            # crop data
+            input_data[i] = F.crop(input_data[i], fw, fh, tw, th)
 
+        rdict['input'] = input_data
         if self.labeled:
             gt_data = sample['gt']
             gt_metadata = sample['gt_metadata']
             gt_data = F.crop(gt_data, fw, fh, tw, th)
             gt_metadata["__centercrop"] = (fh, fw, h, w)
             rdict['gt'] = gt_data
+            #rdict['gt_metadata'] = gt_metadata
 
         # free memory
         rdict['roi'], rdict['roi_metadata'] = None, None

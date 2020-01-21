@@ -352,7 +352,7 @@ def cmd_train(context):
             # The variable sample_metadata is where the MRI physics parameters are
 
             if cuda_available:
-                var_input = input_samples.cuda()
+                var_input = cuda(input_samples)
                 var_gt = gt_samples.cuda(non_blocking=True)
             else:
                 var_input = input_samples
@@ -435,7 +435,7 @@ def cmd_train(context):
 
             with torch.no_grad():
                 if cuda_available:
-                    var_input = input_samples.cuda()
+                    var_input = cuda(input_samples)
                     var_gt = gt_samples.cuda(non_blocking=True)
                 else:
                     var_input = input_samples
@@ -682,7 +682,7 @@ def cmd_test(context):
 
         with torch.no_grad():
             if cuda_available:
-                test_input = input_samples.cuda()
+                test_input = cuda(input_samples)
                 test_gt = gt_samples.cuda(non_blocking=True)
             else:
                 test_input = input_samples

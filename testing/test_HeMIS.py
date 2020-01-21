@@ -99,7 +99,10 @@ def test_unet():
             input_samples, gt_samples = batch["input"], batch["gt"]
             print("len input = {}".format(len(input_samples)))
             print("Batch = {}, {}".format(input_samples[0].shape, gt_samples.shape))
-            exit(0)
+
+            print("rest of the function is not implemented yet")
+            return 0
+
             ## WIP - no train for now
 
 
