@@ -228,6 +228,8 @@ class Bids_to_hdf5(Dataset):
 
         # Save images into HDF5 file
         self._load_filenames()
+        print("files loaded")
+        
 
     def _load_filenames(self):
         for subject_id, input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
@@ -280,7 +282,7 @@ class Bids_to_hdf5(Dataset):
             # Getting metadata using the one from the last slice
             input_metadata = slice_seg_pair['input_metadata']
             gt_metadata = slice_seg_pair['gt_metadata']
-            roi_metadata = roi_pair_slice['gt_metadata']
+            roi_metadata = roi_pair_slice['input_metadata'][0]
 
             if grp.attrs.__contains__('slices'):
                 grp.attrs['slices'] = list(set(grp.attrs['slices'] + useful_slices))
@@ -289,39 +291,43 @@ class Bids_to_hdf5(Dataset):
 
             # Creating datasets and metadata
             # Inputs
-            key = "inputs/{}".format(input_metadata['contrast'])
+            
+            print(input_metadata[0]['contrast'])
+            key = "inputs/{}".format(input_metadata[0]['contrast'])
             grp.create_dataset(key, data=input_volumes)
             # Sub-group metadata
             if grp['inputs'].attrs.__contains__('contrast'):
-                grp['inputs'].attrs['contrast'].append(input_metadata['contrast'])
+                grp['inputs'].attrs['contrast'].append(input_metadata[0]['contrast'])
             else:
-                grp['inputs'].attrs['contrast'] = [input_metadata['contrast']]
+                grp['inputs'].attrs['contrast'] = [input_metadata[0]['contrast']]
 
             # dataset metadata
-            grp[key].attrs['input_filename'] = input_metadata['input_filename']
+            grp[key].attrs['input_filename'] = input_metadata[0]['input_filename']
             ### TODO: Add other metadata
 
             # GT
-            key = "gt/{}".format(gt_metadata['contrast'])
+            print(gt_metadata.keys())
+            contrast = input_metadata[0]['contrast']
+            key = "gt/{}".format(contrast)
             grp.create_dataset(key, data=gt_volume)
             # Sub-group metadata
             if grp['gt'].attrs.__contains__('contrast'):
-                grp['gt'].attrs['contrast'].append(gt_metadata['contrast'])
+                grp['gt'].attrs['contrast'].append(contrast)
             else:
-                grp['gt'].attrs['contrast'] = [gt_metadata['contrast']]
+                grp['gt'].attrs['contrast'] = [contrast]
 
             # dataset metadata
-            grp[key].attrs['gt_filename'] = gt_metadata['gt_filename']
+            grp[key].attrs['gt_filename'] = input_metadata[0]['gt_filename']
             ### TODO: Add other metadata
 
             # ROI
-            key = "roi/{}".format(roi_metadata['contrast'])
+            key = "roi/{}".format(contrast)
             grp.create_dataset(key, data=roi_volume)
             # Sub-group metadata
             if grp['roi'].attrs.__contains__('contrast'):
-                grp['roi'].attrs['contrast'].append(roi_metadata['contrast'])
+                grp['roi'].attrs['contrast'].append(contrast)
             else:
-                grp['roi'].attrs['contrast'] = [roi_metadata['contrast']]
+                grp['roi'].attrs['contrast'] = [contrast]
 
             # dataset metadata
             grp[key].attrs['input_filename'] = roi_metadata['input_filename']

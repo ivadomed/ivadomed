@@ -11,7 +11,7 @@ N_EPOCHS = 10
 INIT_LR = 0.01
 FILM_LAYERS = [0, 0, 0, 0, 0, 1, 1, 1]
 PATH_BIDS = 'testing_data'
-os.remove('mytestfile.hdf5')
+#os.remove('mytestfile.hdf5')
 
 def test_hdf5():
     train_lst = ['sub-test001']
@@ -32,8 +32,11 @@ def test_hdf5():
         print(name)
         for key, val in obj.attrs.items():
             print("    %s: %s" % (key, val))
+    
+    def printname(name):
+        print(name)
 
-    hdf5_file.visititems(print_attrs)
-
+    #hdf5_file.hdf5_file.visititems(printname)
+    hdf5_file.hdf5_file.visititems(print_attrs)
 
 test_hdf5()
