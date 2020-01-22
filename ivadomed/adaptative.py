@@ -133,20 +133,23 @@ class Bids_to_hdf5(Dataset):
     """
     """
 
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, hdf5_name, contrast_balance={}, slice_axis=2,
-                 cache=True, metadata_choice=False, slice_filter_fn=None,
-                 canonical=True, roi_suffix=None, multichannel=False):
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, hdf5_name, contrast_balance={},
+                 slice_axis=2, cache=True, metadata_choice=False, slice_filter_fn=None, canonical=True,
+                 roi_suffix=None):
 
-        self.canonical = canonical
+        # Getting all patients id
         self.bids_ds = bids.BIDS(root_dir)
         bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
+
+        self.canonical = canonical
 
         # opening an hdf5 file with write access and writing metadata
         self.hdf5_file = h5py.File(hdf5_name, "w")
         self.hdf5_file.attrs['canonical'] = canonical
-        self.hdf5_file.attrs['patients_id'] = bids_subjects
+        list_patients = []
 
         self.filename_pairs = []
+
         if metadata_choice == 'mri_params':
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
@@ -157,23 +160,11 @@ class Bids_to_hdf5(Dataset):
             subjects_tot.append(str(subject.record["absolute_path"]))
 
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
-
         tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast])
                for contrast in contrast_balance.keys()}
 
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
-
-        multichannel_subjects = {}
-        if multichannel:
-            num_contrast = len(contrast_lst)
-            idx_dict = {}
-            for idx, contrast in enumerate(contrast_lst):
-                idx_dict[contrast] = idx
-            multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
-                                               "deriv_path": None,
-                                               "roi_filename": None,
-                                               "metadata": [None] * num_contrast} for subject in subject_lst}
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
@@ -181,8 +172,8 @@ class Bids_to_hdf5(Dataset):
                 # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
                 if subject.record["modality"] in contrast_balance.keys():
                     c[subject.record["modality"]] = c[subject.record["modality"]] + 1
-                    if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_balance[
-                        subject.record["modality"]]:
+                    if c[subject.record["modality"]] / tot[subject.record["modality"]] \
+                            > contrast_balance[subject.record["modality"]]:
                         continue
 
                 if not subject.has_derivative("labels"):
@@ -230,43 +221,31 @@ class Bids_to_hdf5(Dataset):
                     if not all([_check_isMRIparam(m, metadata) for m in self.metadata.keys()]):
                         continue
 
-                # Fill multichannel dictionary
-                if multichannel:
-                    idx = idx_dict[subject.record["modality"]]
-                    subj_id = subject.record["subject_id"]
-                    multichannel_subjects[subj_id]["absolute_paths"][idx] = subject.record.absolute_path
-                    multichannel_subjects[subj_id]["deriv_path"] = target_filename
-                    multichannel_subjects[subj_id]["metadata"][idx] = metadata
-                    if roi_filename:
-                        multichannel_subjects[subj_id]["roi_filename"] = roi_filename
+                self.filename_pairs.append((subject.record["subject_id"], [subject.record.absolute_path],
+                                            target_filename, roi_filename, [metadata]))
 
-                else:
-                    self.filename_pairs.append((subject.record["subject_id"], [subject.record.absolute_path],
-                                                target_filename, roi_filename, [metadata]))
+                list_patients.append(subject.record["subject_id"])
 
-        if multichannel:
-            for subject in multichannel_subjects.values():
-                if not None in subject["absolute_paths"]:
-                    self.filename_pairs.append(
-                        (subject.record["subject_id"], subject["absolute_paths"], subject["deriv_path"],
-                         subject["roi_filename"], subject["metadata"]))
-
-        self.indexes = []
-        self.cache = cache
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
 
+        # Update HDF5 metadata
+        self.hdf5_file.attrs['patients_id'] = list(set(list_patients))
+        self.hdf5_file.attrs['slice_axis'] = slice_axis
+        self.hdf5_file.attrs['slice_filter_fn'] = slice_filter_fn
+        self.hdf5_file.attrs['metadata_choice'] = metadata_choice
+
+        # Save images into HDF5 file
         self._load_filenames()
 
     def _load_filenames(self):
         for subject_id, input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
-            # Creating a new group for the subject
-            try:
-                grp = self.hdf5_file.create_group(str(subject_id))
-            except:
+            # Creating/ getting the subject group
+            if str(subject_id) in self.hdf5_file.keys():
                 grp = self.hdf5_file[str(subject_id)]
-                print("Group already exist - Loading it.")
+            else:
+                grp = self.hdf5_file.create_group(str(subject_id))
 
             roi_pair = mt_datasets.SegmentationPair2D(input_filename, roi_filename, metadata=metadata,
                                                       canonical=self.canonical)
@@ -278,7 +257,7 @@ class Bids_to_hdf5(Dataset):
 
             # TODO: adapt filter to save slices number in metadata
             useful_slices = []
-            input_volumes = [[] for _ in range(len(seg_pair["input"]))]
+            input_volumes = []
             gt_volume = []
             roi_volume = []
 
@@ -295,14 +274,11 @@ class Bids_to_hdf5(Dataset):
 
                 roi_pair_slice = roi_pair.get_pair_slice(idx_pair_slice, self.slice_axis)
 
-                # Looping over all modalities (one or more)
-                for idx, input_slice in enumerate(slice_seg_pair["input"]):
-                    input_volumes[idx].append(input_slice)
+                input_volumes.append(slice_seg_pair["input"][0])
 
                 # Handle unlabeled data
                 if slice_seg_pair["gt"] is None:
                     gt_img = None
-
                 else:
                     gt_volume.append((slice_seg_pair["gt"] * 255).astype(np.uint8))
 
@@ -311,39 +287,56 @@ class Bids_to_hdf5(Dataset):
                     roi_img = None
                 else:
                     roi_volume.append((roi_pair_slice["gt"] * 255).astype(np.uint8))
-                    # roi_img = Image.fromarray(roi_img, mode='L')
 
             # Getting metadata using the one from the last slice
             input_metadata = slice_seg_pair['input_metadata']
             gt_metadata = slice_seg_pair['gt_metadata']
             roi_metadata = roi_pair_slice['gt_metadata']
 
-            grp.attrs['slices'] = useful_slices
+            if grp.attrs.__contains__('slices'):
+                grp.attrs['slices'] = list(set(grp.attrs['slices'] + useful_slices))
+            else:
+                grp.attrs['slices'] = useful_slices
+
             # Creating datasets and metadata
             # Inputs
-            for meta in input_metadata:
-                key = "inputs/{}".format(meta['contrast'])
-                grp.create_dataset(key, data=input_volumes)
-                grp[key].attrs['input_filename'] = meta['input_filename']
+            key = "inputs/{}".format(input_metadata['contrast'])
+            grp.create_dataset(key, data=input_volumes)
+            # Sub-group metadata
+            if grp['inputs'].attrs.__contains__('contrast'):
+                grp['inputs'].attrs['contrast'].append(input_metadata['contrast'])
+            else:
+                grp['inputs'].attrs['contrast'] = [input_metadata['contrast']]
+
+            # dataset metadata
+            grp[key].attrs['input_filename'] = input_metadata['input_filename']
+            ### TODO: Add other metadata
 
             # GT
-            grp.create_dataset("gt/mydataset", data=gt_volume)
+            key = "gt/{}".format(gt_metadata['contrast'])
+            grp.create_dataset(key, data=gt_volume)
+            # Sub-group metadata
+            if grp['gt'].attrs.__contains__('contrast'):
+                grp['gt'].attrs['contrast'].append(gt_metadata['contrast'])
+            else:
+                grp['gt'].attrs['contrast'] = [gt_metadata['contrast']]
+
+            # dataset metadata
+            grp[key].attrs['gt_filename'] = gt_metadata['gt_filename']
+            ### TODO: Add other metadata
 
             # ROI
-            grp.create_dataset("roi/mydataset", data=roi_volume)
+            key = "roi/{}".format(roi_metadata['contrast'])
+            grp.create_dataset(key, data=roi_volume)
+            # Sub-group metadata
+            if grp['roi'].attrs.__contains__('contrast'):
+                grp['roi'].attrs['contrast'].append(roi_metadata['contrast'])
+            else:
+                grp['roi'].attrs['contrast'] = [roi_metadata['contrast']]
 
-            # TODO: Move that part into HDF5Dataset
-            """
-            data_dict = {
-                'input': input_tensors,
-                'gt': gt_img,
-                'roi': roi_img,
-                'input_metadata': input_metadata,
-                'gt_metadata': seg_pair_slice['gt_metadata'],
-                'roi_metadata': roi_pair_slice['gt_metadata']
-            }
-            return data_dict
-            """
+            # dataset metadata
+            grp[key].attrs['input_filename'] = roi_metadata['input_filename']
+            ### TODO: Add other metadata
 
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
@@ -382,6 +375,18 @@ class HDF5Dataset(mt_datasets):
         - include dataframe class
             - Mod can refer to either the path of the image in the HDF5 file or 
         - transform numpy into PIL image
+        
+        return dict like 
+            data_dict = {
+                'input': input_tensors,
+                'gt': gt_img,
+                'roi': roi_img,
+                'input_metadata': input_metadata,
+                'gt_metadata': seg_pair_slice['gt_metadata'],
+                'roi_metadata': roi_pair_slice['gt_metadata']
+            }
+            return data_dict
+            
         """
 
     def load_into_ram(self):
