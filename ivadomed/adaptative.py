@@ -1,28 +1,14 @@
-import numpy as np
-import pandas as pd
-import json
 import copy
 
-from glob import glob
-from copy import deepcopy
-
-from medicaltorch.datasets import SampleMetadata
-from tqdm import tqdm
-import nibabel as nib
-import torch
-
+import h5py
+import numpy as np
+import pandas as pd
+from bids_neuropoly import bids
 from torch.utils.data import Dataset
-import os, os.path
-import skimage, skimage.transform
-from skimage.io import imread, imsave
-from PIL import Image
-import skimage.filters
+from tqdm import tqdm
+import os
 import json
 
-import collections
-import h5py, ntpath
-
-from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
 
 
@@ -134,7 +120,7 @@ class Bids_to_hdf5(Dataset):
     """
 
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, hdf5_name, contrast_balance={},
-                 slice_axis=2, cache=True, metadata_choice=False, slice_filter_fn=None, canonical=True,
+                 slice_axis=2, metadata_choice=False, slice_filter_fn=None, canonical=True,
                  roi_suffix=None):
 
         # Getting all patients id
@@ -233,7 +219,11 @@ class Bids_to_hdf5(Dataset):
         # Update HDF5 metadata
         self.hdf5_file.attrs['patients_id'] = list(set(list_patients))
         self.hdf5_file.attrs['slice_axis'] = slice_axis
-        self.hdf5_file.attrs['slice_filter_fn'] = slice_filter_fn
+
+        print(slice_filter_fn)
+        print(type(slice_filter_fn))
+
+        self.hdf5_file.attrs['slice_filter_fn'] = [('filter_empty_input', True), ('filter_empty_mask', False)]
         self.hdf5_file.attrs['metadata_choice'] = metadata_choice
 
         # Save images into HDF5 file
@@ -246,11 +236,10 @@ class Bids_to_hdf5(Dataset):
                 grp = self.hdf5_file[str(subject_id)]
             else:
                 grp = self.hdf5_file.create_group(str(subject_id))
+            
+            roi_pair = mt_datasets.SegmentationPair2D(input_filename, roi_filename, metadata=metadata, cache=False, canonical=self.canonical)
 
-            roi_pair = mt_datasets.SegmentationPair2D(input_filename, roi_filename, metadata=metadata,
-                                                      canonical=self.canonical)
-
-            seg_pair = mt_datasets.SegmentationPair2D(input_filename, gt_filename, metadata=metadata,
+            seg_pair = mt_datasets.SegmentationPair2D(input_filename, gt_filename, metadata=metadata, cache=False,
                                                       canonical=self.canonical)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
@@ -355,7 +344,7 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
         self.indexes = filter_indexes
 
 
-class HDF5Dataset(mt_datasets):
+class HDF5Dataset():
     def __init__(self, dataroot, filename, RAM=True):
 
         if not os.path.isfile(dataroot):
@@ -365,17 +354,18 @@ class HDF5Dataset(mt_datasets):
             Bids_to_hdf5(dataroot, files, filename)
         else:
             hf = h5py.File(filename, "r")
+
         self.dict = hf
         if RAM:
             self.load_into_ram()
         # TODO list:
         """ 
         - implement load_into_ram() & partial mode
-        
+
         - include dataframe class
             - Mod can refer to either the path of the image in the HDF5 file or 
         - transform numpy into PIL image
-        
+
         return dict like 
             data_dict = {
                 'input': input_tensors,
@@ -386,7 +376,7 @@ class HDF5Dataset(mt_datasets):
                 'roi_metadata': roi_pair_slice['gt_metadata']
             }
             return data_dict
-            
+
         """
 
     def load_into_ram(self):
@@ -406,3 +396,4 @@ class HDF5Dataset(mt_datasets):
 
     def __getitem__(self, index):
         self.hf[index]
+
