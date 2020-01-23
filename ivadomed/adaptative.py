@@ -374,7 +374,7 @@ class Bids_to_hdf5(Dataset):
             grp[key].attrs['input_filename'] = input_metadata['input_filename']
 
             if "zoom" in input_metadata.keys():
-                grp[key].attrs["zoom"] = input_metadata['zoom']
+                grp[key].attrs["zooms"] = input_metadata['zooms']
             if "data_shape" in input_metadata.keys():
                 grp[key].attrs["data_shape"] = input_metadata['data_shape']
 
@@ -395,7 +395,7 @@ class Bids_to_hdf5(Dataset):
             grp[key].attrs['gt_filename'] = input_metadata['gt_filename']
 
             if "zoom" in gt_metadata.keys():
-                grp[key].attrs["zoom"] = gt_metadata['zoom']
+                grp[key].attrs["zooms"] = gt_metadata['zooms']
             if "data_shape" in gt_metadata.keys():
                 grp[key].attrs["data_shape"] = gt_metadata['data_shape']
 
@@ -413,10 +413,10 @@ class Bids_to_hdf5(Dataset):
                 grp['roi'].attrs.create('contrast', [contrast], dtype=self.dt)
 
             # dataset metadata
-            grp[key].attrs['input_filename'] = roi_metadata['gt_filename']
+            grp[key].attrs['roi_filename'] = roi_metadata['gt_filename']
 
             if "zoom" in roi_metadata.keys():
-                grp[key].attrs["zoom"] = roi_metadata['zoom']
+                grp[key].attrs["zooms"] = roi_metadata['zooms']
             if "data_shape" in roi_metadata.keys():
                 grp[key].attrs["data_shape"] = roi_metadata['data_shape']
 
