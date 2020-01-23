@@ -219,9 +219,6 @@ class Bids_to_hdf5(Dataset):
         self.hdf5_file.attrs.attrs.create('patients_id', list(set(list_patients)), dtype=self.dt)
         self.hdf5_file.attrs['slice_axis'] = slice_axis
 
-        print(slice_filter_fn)
-        print(type(slice_filter_fn))
-
         self.hdf5_file.attrs['slice_filter_fn'] = [('filter_empty_input', True), ('filter_empty_mask', False)]
         self.hdf5_file.attrs['metadata_choice'] = metadata_choice
 
@@ -278,7 +275,7 @@ class Bids_to_hdf5(Dataset):
                     roi_volume.append((roi_pair_slice["gt"] * 255).astype(np.uint8))
 
             # Getting metadata using the one from the last slice
-            input_metadata = slice_seg_pair['input_metadata']
+            input_metadata = slice_seg_pair['input_metadata'][0]
             gt_metadata = slice_seg_pair['gt_metadata']
             roi_metadata = roi_pair_slice['input_metadata'][0]
 
@@ -288,7 +285,7 @@ class Bids_to_hdf5(Dataset):
                 grp.attrs['slices'] = useful_slices
 
             # Creating datasets and metadata
-            contrast = input_metadata[0]['contrast']
+            contrast = input_metadata['contrast']
             # Inputs
             key = "inputs/{}".format(contrast)
             grp.create_dataset(key, data=input_volumes)
@@ -302,15 +299,15 @@ class Bids_to_hdf5(Dataset):
             else:
                 grp['inputs'].attrs.create('contrast', [contrast], dtype=self.dt)
 
-
             # dataset metadata
-            print("Metadata of input : \n {}".format(input_metadata[0].keys()))
-            grp[key].attrs['input_filename'] = input_metadata[0]['input_filename']
+            grp[key].attrs['input_filename'] = input_metadata['input_filename']
 
-            # TODO: Add other metadata
+            if "zoom" in input_metadata.keys():
+                grp[key].attrs["zoom"] = input_metadata['zoom']
+            if "data_shape" in input_metadata.keys():
+                grp[key].attrs["data_shape"] = input_metadata['data_shape']
 
             # GT
-            print("Metadata of gt : \n {}".format(gt_metadata.keys()))
             key = "gt/{}".format(contrast)
             grp.create_dataset(key, data=gt_volume)
             # Sub-group metadata
@@ -324,9 +321,12 @@ class Bids_to_hdf5(Dataset):
                 grp['gt'].attrs.create('contrast', [contrast], dtype=self.dt)
 
             # dataset metadata
-            grp[key].attrs['gt_filename'] = input_metadata[0]['gt_filename']
+            grp[key].attrs['gt_filename'] = input_metadata['gt_filename']
 
-            # TODO: Add other metadata
+            if "zoom" in gt_metadata.keys():
+                grp[key].attrs["zoom"] = gt_metadata['zoom']
+            if "data_shape" in gt_metadata.keys():
+                grp[key].attrs["data_shape"] = gt_metadata['data_shape']
 
             # ROI
             key = "roi/{}".format(contrast)
@@ -344,7 +344,10 @@ class Bids_to_hdf5(Dataset):
             # dataset metadata
             grp[key].attrs['input_filename'] = roi_metadata['gt_filename']
 
-            # TODO: Add other metadata
+            if "zoom" in roi_metadata.keys():
+                grp[key].attrs["zoom"] = roi_metadata['zoom']
+            if "data_shape" in roi_metadata.keys():
+                grp[key].attrs["data_shape"] = roi_metadata['data_shape']
 
             # Adding contrast to group metadata
             if grp.attrs.__contains__('contrast'):
