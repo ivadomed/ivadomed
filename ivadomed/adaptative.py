@@ -216,7 +216,7 @@ class Bids_to_hdf5(Dataset):
         self.slice_filter_fn = slice_filter_fn
 
         # Update HDF5 metadata
-        self.hdf5_file.attrs.attrs.create('patients_id', list(set(list_patients)), dtype=self.dt)
+        self.hdf5_file.attrs.create('patients_id', list(set(list_patients)), dtype=self.dt)
         self.hdf5_file.attrs['slice_axis'] = slice_axis
 
         self.hdf5_file.attrs['slice_filter_fn'] = [('filter_empty_input', True), ('filter_empty_mask', False)]

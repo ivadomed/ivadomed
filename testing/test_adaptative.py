@@ -21,7 +21,7 @@ def test_hdf5():
                                         hdf5_name='mytestfile.hdf5',
                                         target_suffix="_lesion-manual",
                                         roi_suffix="_seg-manual",
-                                        contrast_lst=['T1w', 'T2w', 'T2s'],
+                                        contrast_lst=['T1w', 'T2w', 'T2star'],
                                         metadata_choice="contrast",
                                         contrast_balance={},
                                         slice_axis=2,
