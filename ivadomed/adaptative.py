@@ -14,28 +14,39 @@ from medicaltorch import datasets as mt_datasets
 
 class Dataframe():
     """
-    This class aims to create a dataset using the bids, which can be used by an adapative loader to perform curriculum
-    learning, Active Learning or any other strategy that needs to load samples in a specific way.
+    This class aims to create a dataset using an HDF5 file, which can be used by an adapative loader
+    to perform curriculum learning, Active Learning or any other strategy that needs to load samples in a specific way.
     It works on RAM or on the fly and can be saved for later.
     """
 
-    def __init__(self, bids, contrasts, target_suffix, roi_suffix, path=False, ram=False):
+    def __init__(self, hdf5, contrasts, path, target_suffix=None, roi_suffix=None, ram=False):
         """
         Initialize the Dataframe
         """
         # Ram status
         self.ram = ram
         self.status = {c: self.ram for c in contrasts}
-        self.status['gt'] = self.ram
-        self.status['ROI'] = self.ram
-
         self.contrasts = contrasts
-        self.df = None
-        # Dataframe
-        if path:
-            self.load(path)
+        # Saving ram status.
+        if target_suffix:
+            for gt in target_suffix:
+                self.status['gt/' + gt] = self.ram
         else:
-            self.create_df(bids, target_suffix, roi_suffix, ram)
+            self.status['gt'] = self.ram
+
+        if target_suffix:
+            for roi in target_suffix:
+                self.status['roi/' + roi] = self.ram
+        else:
+            self.status['ROI'] = self.ram
+
+        self.df = None
+
+        # Dataframe
+        if os.path.exists(path):
+            self.load_dataframe(path)
+        else:
+            self.create_df(hdf5, target_suffix, roi_suffix, ram)
 
     def load_column(self, column_name):
         """
@@ -53,13 +64,13 @@ class Dataframe():
         "Shuffle the whole dataframe"
         self.df = self.df.sample(frac=1)
 
-    def load(self, path):
+    def load_dataframe(self, path):
         """
         Load the dataframe from a csv file.
         """
         try:
-            self.df = pd.read_csv(path + 'Bids_dataframe.csv')
-            print("Dataframe has been correctly loaded from {}/Bids_dataframe.csv.".format(path))
+            self.df = pd.read_csv(path)
+            print("Dataframe has been correctly loaded from {}.".format(path))
         except FileNotFoundError:
             print("No csv file found")
 
@@ -68,30 +79,73 @@ class Dataframe():
         Save the dataframe into a csv file.
         """
         try:
-            self.df.to_csv(path + '/Bids_dataframe.csv', index=True)
+            self.df.to_csv(path, index=True)
             print("Dataframe has been saved at {}/Bids_dataframe.csv.".format(path))
         except FileNotFoundError:
             print("Wrong path.")
 
-    def create_df(self, bids, target_suffix, roi_suffix, ram):
+    def create_df(self, hdf5, target_suffix, roi_suffix, ram):
         """
-        Generate the Dataframe using the Bids
+        Generate the Dataframe using the hdf5 file
         """
         # Template of a line
-        empty_line = {'T1w': None,
-                      'T2w': None,
-                      'T2star': None,
-                      'gt': None,
-                      'ROI': None,
-                      'Slices': None,
-                      'Difficulty': None}
+        empty_line = {col: None for col in self.status.keys()}
+        empty_line['Slices'] = None
 
-        # Initialize the  dataframe
-        col_names = ['Subjects', 'T1w', 'T2w', 'T2star', 'gt', 'ROI', 'Slices', 'Difficulty']
+        # Initialize the dataframe
+        col_names = [col for col in empty_line.keys()]
         df = pd.DataFrame(columns=col_names).set_index('Subjects')
 
         # Filling the dataframe
-        for subject in bids.get_subjects():
+        for subject in hdf5.attr['patients_id']:
+            # Getting the Group the corresponding patient
+            grp = hdf5[subject]
+            line = copy.deepcopy(empty_line)
+            # inputs
+            assert 'inputs' in grp.keys()
+            inputs = grp['inputs']
+            for c in inputs.attr['contrast']:
+                if c in col_names:
+                    if self.status[c]:
+                        # Putting data in RAM
+                        line[c] = inputs
+                    else:
+                        # Otherwise saving hdf5 path
+                        line[c] = '{}/inputs/{}'.format(subject, c)
+                else:
+                    continue
+            # GT
+            assert 'gt' in grp.keys()
+            inputs = grp['gt']
+            for c in inputs.attr['contrast']:
+                key= 'gt/'+c
+                if key in col_names:
+                    if self.status[key]:
+                        # Putting data in RAM
+                        line[key] = inputs
+                    else:
+                        # Otherwise saving hdf5 path
+                        line[key] = '{}/gt/{}'.format(subject, c)
+                else:
+                    continue
+            # ROI
+            assert 'roi' in grp.keys()
+            inputs = grp['roi']
+            for c in inputs.attr['contrast']:
+                key = 'roi/' + c
+                if key in col_names:
+                    if self.status[key]:
+                        # Putting data in RAM
+                        line[key] = inputs
+                    else:
+                        # Otherwise saving hdf5 path
+                        line[key] = '{}/roi/{}'.format(subject, c)
+                else:
+                    continue
+
+            df.loc[subject] = line
+
+            """
             if subject.record["modality"] in self.contrasts:
                 subject_id = subject.get_participant_id()
                 line = df.loc[df.index == subject_id]
@@ -111,7 +165,7 @@ class Dataframe():
                                     subject.record["modality"] + roi_suffix + ".nii.gz"):
                                 line['ROI'] = deriv
                         df.loc[subject_id] = line
-
+            """
         self.df = df
 
 
