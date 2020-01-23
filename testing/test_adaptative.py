@@ -37,6 +37,16 @@ def test_hdf5():
             print("    %s: %s" % (key, val))
 
     hdf5_file.hdf5_file.visititems(print_attrs)
+    print('\n[INFO]: HDF5 file successfully generated.')
+    print('[INFO]: Generating dataframe ...\n')
+    df = adaptative.Dataframe(hdf5=hdf5_file,
+                              contrasts=['T1w', 'T2w', 'T2star'],
+                              path='testing_data/hdf5.csv',
+                              target_suffix=['T1w', 'T2w', 'T2star'],
+                              roi_suffix=['T1w', 'T2w', 'T2star'],
+                              ram=False)
+    df.df.head()
+    print('\n[INFO]: Dataframe successfully generated. ')
     print('\n[INFO]: Test passed successfully. ')
 
 
