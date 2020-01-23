@@ -21,11 +21,11 @@ def test_hdf5():
                                         hdf5_name='mytestfile.hdf5',
                                         target_suffix="_lesion-manual",
                                         roi_suffix="_seg-manual",
-                                        contrast_lst=['T2w'],
+                                        contrast_lst=['T1w', 'T2w', 'T2s'],
                                         metadata_choice="contrast",
                                         contrast_balance={},
                                         slice_axis=2,
-                                        slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=False))
+                                        slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=True))
 
     # Checking architecture
     def print_attrs(name, obj):

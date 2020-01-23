@@ -214,7 +214,6 @@ class Bids_to_hdf5(Dataset):
 
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
-        self.n_contrasts = len(self.filename_pairs[0][0])
 
         # Update HDF5 metadata
         self.hdf5_file.attrs['patients_id'] = list(set(list_patients))
@@ -229,7 +228,6 @@ class Bids_to_hdf5(Dataset):
         # Save images into HDF5 file
         self._load_filenames()
         print("files loaded")
-        
 
     def _load_filenames(self):
         for subject_id, input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
@@ -238,8 +236,9 @@ class Bids_to_hdf5(Dataset):
                 grp = self.hdf5_file[str(subject_id)]
             else:
                 grp = self.hdf5_file.create_group(str(subject_id))
-            
-            roi_pair = mt_datasets.SegmentationPair2D(input_filename, roi_filename, metadata=metadata, cache=False, canonical=self.canonical)
+
+            roi_pair = mt_datasets.SegmentationPair2D(input_filename, roi_filename, metadata=metadata, cache=False,
+                                                      canonical=self.canonical)
 
             seg_pair = mt_datasets.SegmentationPair2D(input_filename, gt_filename, metadata=metadata, cache=False,
                                                       canonical=self.canonical)
@@ -259,9 +258,8 @@ class Bids_to_hdf5(Dataset):
                 # keeping idx of slices with gt
                 if self.slice_filter_fn:
                     filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
-                if self.slice_filter_fn and not filter_fn_ret_seg:
+                if self.slice_filter_fn and filter_fn_ret_seg:
                     useful_slices += idx_pair_slice
-                    continue
 
                 roi_pair_slice = roi_pair.get_pair_slice(idx_pair_slice, self.slice_axis)
 
@@ -290,24 +288,24 @@ class Bids_to_hdf5(Dataset):
                 grp.attrs['slices'] = useful_slices
 
             # Creating datasets and metadata
+            contrast = input_metadata[0]['contrast']
             # Inputs
-            
-            print(input_metadata[0]['contrast'])
-            key = "inputs/{}".format(input_metadata[0]['contrast'])
+            key = "inputs/{}".format(contrast)
             grp.create_dataset(key, data=input_volumes)
             # Sub-group metadata
             if grp['inputs'].attrs.__contains__('contrast'):
-                grp['inputs'].attrs['contrast'].append(input_metadata[0]['contrast'])
+                grp['inputs'].attrs['contrast'].append(contrast)
             else:
-                grp['inputs'].attrs['contrast'] = [input_metadata[0]['contrast']]
+                grp['inputs'].attrs['contrast'] = [contrast]
 
             # dataset metadata
+            print("Metadata of input : \n {}".format(input_metadata[0].keys()))
             grp[key].attrs['input_filename'] = input_metadata[0]['input_filename']
-            ### TODO: Add other metadata
+
+            # TODO: Add other metadata
 
             # GT
-            print(gt_metadata.keys())
-            contrast = input_metadata[0]['contrast']
+            print("Metadata of gt : \n {}".format(gt_metadata.keys()))
             key = "gt/{}".format(contrast)
             grp.create_dataset(key, data=gt_volume)
             # Sub-group metadata
@@ -318,7 +316,8 @@ class Bids_to_hdf5(Dataset):
 
             # dataset metadata
             grp[key].attrs['gt_filename'] = input_metadata[0]['gt_filename']
-            ### TODO: Add other metadata
+
+            # TODO: Add other metadata
 
             # ROI
             key = "roi/{}".format(contrast)
@@ -330,8 +329,15 @@ class Bids_to_hdf5(Dataset):
                 grp['roi'].attrs['contrast'] = [contrast]
 
             # dataset metadata
-            grp[key].attrs['input_filename'] = roi_metadata['input_filename']
-            ### TODO: Add other metadata
+            grp[key].attrs['input_filename'] = roi_metadata['gt_filename']
+
+            # TODO: Add other metadata
+
+            # Adding contrast to group metadata
+            if grp.attrs.__contains__('contrast'):
+                grp.attrs['contrast'].append(contrast)
+            else:
+                grp.attrs['contrast'] = [contrast]
 
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
@@ -402,4 +408,3 @@ class HDF5Dataset():
 
     def __getitem__(self, index):
         self.hf[index]
-
