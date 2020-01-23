@@ -128,7 +128,7 @@ class Bids_to_hdf5(Dataset):
         bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
 
         self.canonical = canonical
-
+        self.dt = h5py.special_dtype(vlen=str)
         # opening an hdf5 file with write access and writing metadata
         self.hdf5_file = h5py.File(hdf5_name, "w")
         self.hdf5_file.attrs['canonical'] = canonical
@@ -216,7 +216,7 @@ class Bids_to_hdf5(Dataset):
         self.slice_filter_fn = slice_filter_fn
 
         # Update HDF5 metadata
-        self.hdf5_file.attrs['patients_id'] = list(set(list_patients))
+        self.hdf5_file.attrs.attrs.create('patients_id', list(set(list_patients)), dtype=self.dt)
         self.hdf5_file.attrs['slice_axis'] = slice_axis
 
         print(slice_filter_fn)
@@ -259,7 +259,7 @@ class Bids_to_hdf5(Dataset):
                 if self.slice_filter_fn:
                     filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
                 if self.slice_filter_fn and filter_fn_ret_seg:
-                    useful_slices += idx_pair_slice
+                    useful_slices.append(idx_pair_slice)
 
                 roi_pair_slice = roi_pair.get_pair_slice(idx_pair_slice, self.slice_axis)
 
@@ -294,9 +294,14 @@ class Bids_to_hdf5(Dataset):
             grp.create_dataset(key, data=input_volumes)
             # Sub-group metadata
             if grp['inputs'].attrs.__contains__('contrast'):
-                grp['inputs'].attrs['contrast'].append(contrast)
+                attr = grp['inputs'].attrs['contrast']
+                new_attr = [c for c in attr]
+                new_attr.append(contrast)
+                grp['inputs'].attrs.create('contrast', new_attr, dtype=self.dt)
+
             else:
-                grp['inputs'].attrs['contrast'] = [contrast]
+                grp['inputs'].attrs.create('contrast', [contrast], dtype=self.dt)
+
 
             # dataset metadata
             print("Metadata of input : \n {}".format(input_metadata[0].keys()))
@@ -310,9 +315,13 @@ class Bids_to_hdf5(Dataset):
             grp.create_dataset(key, data=gt_volume)
             # Sub-group metadata
             if grp['gt'].attrs.__contains__('contrast'):
-                grp['gt'].attrs['contrast'].append(contrast)
+                attr = grp['gt'].attrs['contrast']
+                new_attr = [c for c in attr]
+                new_attr.append(contrast)
+                grp['gt'].attrs.create('contrast', new_attr, dtype=self.dt)
+
             else:
-                grp['gt'].attrs['contrast'] = [contrast]
+                grp['gt'].attrs.create('contrast', [contrast], dtype=self.dt)
 
             # dataset metadata
             grp[key].attrs['gt_filename'] = input_metadata[0]['gt_filename']
@@ -324,9 +333,13 @@ class Bids_to_hdf5(Dataset):
             grp.create_dataset(key, data=roi_volume)
             # Sub-group metadata
             if grp['roi'].attrs.__contains__('contrast'):
-                grp['roi'].attrs['contrast'].append(contrast)
+                attr = grp['roi'].attrs['contrast']
+                new_attr = [c for c in attr]
+                new_attr.append(contrast)
+                grp['roi'].attrs.create('contrast', new_attr, dtype=self.dt)
+
             else:
-                grp['roi'].attrs['contrast'] = [contrast]
+                grp['roi'].attrs.create('contrast', [contrast], dtype=self.dt)
 
             # dataset metadata
             grp[key].attrs['input_filename'] = roi_metadata['gt_filename']
@@ -335,9 +348,13 @@ class Bids_to_hdf5(Dataset):
 
             # Adding contrast to group metadata
             if grp.attrs.__contains__('contrast'):
-                grp.attrs['contrast'].append(contrast)
+                attr = grp.attrs['contrast']
+                new_attr = [c for c in attr]
+                new_attr.append(contrast)
+                grp.attrs.create('contrast', new_attr, dtype=self.dt)
+
             else:
-                grp.attrs['contrast'] = [contrast]
+                grp.attrs.create('contrast', [contrast], dtype=self.dt)
 
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
