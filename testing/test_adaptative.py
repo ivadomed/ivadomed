@@ -45,8 +45,9 @@ def test_hdf5():
                               target_suffix=['T1w', 'T2w', 'T2star'],
                               roi_suffix=['T1w', 'T2w', 'T2star'],
                               ram=False)
-    df.df.head()
+    print(df.df)
     print('\n[INFO]: Dataframe successfully generated. ')
+    df.save('testing_data/hdf5.csv')
     print('\n[INFO]: Test passed successfully. ')
 
 

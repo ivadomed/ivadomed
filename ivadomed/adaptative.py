@@ -81,7 +81,7 @@ class Dataframe():
         """
         try:
             self.df.to_csv(path, index=True)
-            print("Dataframe has been saved at {}/Bids_dataframe.csv.".format(path))
+            print("Dataframe has been saved at {}.".format(path))
         except FileNotFoundError:
             print("Wrong path.")
 
