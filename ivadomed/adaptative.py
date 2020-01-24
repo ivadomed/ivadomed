@@ -12,7 +12,7 @@ import json
 from medicaltorch import datasets as mt_datasets
 
 
-class Dataframe():
+class Dataframe:
     """
     This class aims to create a dataset using an HDF5 file, which can be used by an adapative loader
     to perform curriculum learning, Active Learning or any other strategy that needs to load samples in a specific way.
@@ -35,8 +35,8 @@ class Dataframe():
         else:
             self.status['gt'] = self.ram
 
-        if target_suffix:
-            for roi in target_suffix:
+        if roi_suffix:
+            for roi in roi_suffix:
                 self.status['roi/' + roi] = self.ram
         else:
             self.status['ROI'] = self.ram
@@ -152,7 +152,7 @@ class Dataframe():
         self.df = df
 
 
-class Bids_to_hdf5():
+class Bids_to_hdf5:
     """
 
     """
@@ -414,42 +414,60 @@ class Bids_to_hdf5():
                 grp.attrs.create('contrast', [contrast], dtype=self.dt)
 
 
-class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
+class HDF5Dataset:
+    def __init__(self, root_dir, subject_lst, hdf5_name, csv_name, target_suffix, contrast_lst, RAM=True,
+                 contrast_balance={}, slice_axis=2, transform=None, metadata_choice=False,
+                 slice_filter_fn=None, canonical=True, roi_suffix=None, target_lst=None, roi_lst=None):
+        """
 
-    def filter_roi(self, nb_nonzero_thr):
-        filter_indexes = []
-        for segpair, slice_roi_pair in self.indexes:
-            roi_data = slice_roi_pair['gt']
-            if not np.any(roi_data):
-                continue
-            if np.count_nonzero(roi_data) <= nb_nonzero_thr:
-                continue
+        :param root_dir: path of bids and data
+        :param subject_lst: list of patients
+        :param hdf5_name: path of the hdf5 file
+        :param csv_name: path of the dataframe
+        :param target_suffix: suffix of the gt
+        :param roi_suffix: suffix of the roi
+        :param contrast_lst: list of the contrast
+        :param RAM: if data is loaded on RAM
+        :param contrast_balance: contrast balance
+        :param slice_axis: slice axis. by default it's set to 2
+        :param transform: transformation
+        :param metadata_choice:
+        :param slice_filter_fn:
+        :param canonical:
+        :param roi_suffix:
+        :param target_lst:
+        :param roi_lst:
+        """
 
-            filter_indexes.append((segpair, slice_roi_pair))
-
-        self.indexes = filter_indexes
-
-
-class HDF5Dataset():
-    def __init__(self, dataroot, filename, RAM=True):
-
-        if not os.path.isfile(dataroot):
+        self.transform = transform
+        # Getting HDS5 dataset file
+        if not os.path.isfile(root_dir):
             print("Computing hdf5 file of the data")
-            dataset = json.load(open(self.dataroot + "dataset.json"))
-            files = dataset['training']
-            Bids_to_hdf5(dataroot, files, filename)
-        else:
-            hf = h5py.File(filename, "r")
+            self.hdf5_file = Bids_to_hdf5(root_dir,
+                                          subject_lst=subject_lst,
+                                          hdf5_name=hdf5_name,
+                                          target_suffix=target_suffix,
+                                          roi_suffix=roi_suffix,
+                                          contrast_lst=contrast_lst,
+                                          metadata_choice=metadata_choice,
+                                          contrast_balance=contrast_balance,
+                                          slice_axis=slice_axis,
+                                          canonical=canonical,
+                                          slice_filter_fn=slice_filter_fn
+                                          )
 
-        self.dict = hf
-        if RAM:
-            self.load_into_ram()
+        else:
+            self.hdf5_file = h5py.File(hdf5_name, "r")
+        # Loading dataframe object
+        self.df = Dataframe(self.hdf5_file, contrast_lst, csv_name, target_suffix=target_lst, roi_suffix=roi_lst)
+        self.dataframe = self.df.df
+        # RAM status
+        self.status = self.df.status
         # TODO list:
         """ 
         - implement load_into_ram() & partial mode
-
-        - include dataframe class
-            - Mod can refer to either the path of the image in the HDF5 file or 
+        - pair mode or multi to one 
+        - 
         - transform numpy into PIL image
 
         return dict like 
@@ -482,3 +500,22 @@ class HDF5Dataset():
 
     def __getitem__(self, index):
         self.hf[index]
+
+    def update(self):
+        self.df.update()
+
+
+class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
+
+    def filter_roi(self, nb_nonzero_thr):
+        filter_indexes = []
+        for segpair, slice_roi_pair in self.indexes:
+            roi_data = slice_roi_pair['gt']
+            if not np.any(roi_data):
+                continue
+            if np.count_nonzero(roi_data) <= nb_nonzero_thr:
+                continue
+
+            filter_indexes.append((segpair, slice_roi_pair))
+
+        self.indexes = filter_indexes
