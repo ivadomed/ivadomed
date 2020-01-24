@@ -145,8 +145,7 @@ class Dataframe:
                 else:
                     continue
             # Adding slices
-            line['slices'] = grp.attrs['slices']
-
+            line['Slices'] = grp.attrs['slices']
             df.loc[subject] = line
 
         self.df = df
