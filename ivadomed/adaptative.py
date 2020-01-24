@@ -97,9 +97,6 @@ class Dataframe():
         col_names = [col for col in empty_line.keys()]
         col_names.append('Subjects')
         df = pd.DataFrame(columns=col_names).set_index('Subjects')
-        
-        print(type(hdf5))
-
 
         # Filling the dataframe
         for subject in hdf5.attrs['patients_id']:
@@ -147,30 +144,11 @@ class Dataframe():
                         line[key] = '{}/roi/{}'.format(subject, c)
                 else:
                     continue
+            # Adding slices
+            line['slices'] = grp.attrs['slices']
 
             df.loc[subject] = line
 
-            """
-            if subject.record["modality"] in self.contrasts:
-                subject_id = subject.get_participant_id()
-                line = df.loc[df.index == subject_id]
-
-                if not line.empty:
-                    df.loc[df.index == subject_id, subject.record["modality"]] = subject.record["absolute_path"]
-
-                else:
-                    if subject.has_derivative("labels"):
-                        line = copy.deepcopy(empty_line)
-                        line[subject.record["modality"]] = subject.record["absolute_path"]
-                        derivatives = subject.get_derivatives("labels")
-                        for deriv in derivatives:
-                            if deriv.endswith(subject.record["modality"] + target_suffix + ".nii.gz"):
-                                line['gt'] = deriv
-                            if not (roi_suffix is None) and deriv.endswith(
-                                    subject.record["modality"] + roi_suffix + ".nii.gz"):
-                                line['ROI'] = deriv
-                        df.loc[subject_id] = line
-            """
         self.df = df
 
 
@@ -319,7 +297,6 @@ class Bids_to_hdf5():
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
-            # TODO: adapt filter to save slices number in metadata
             useful_slices = []
             input_volumes = []
             gt_volume = []
