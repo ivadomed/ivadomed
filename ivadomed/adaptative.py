@@ -20,7 +20,7 @@ class Dataframe():
     """
 
     def __init__(self, hdf5, contrasts, path, target_suffix=None, roi_suffix=None,
-                 ram=False, Dataset_name="Spine Generic"):
+                 ram=False, Dataset_name="Spine_Generic"):
         """
         Initialize the Dataframe
         """
@@ -43,6 +43,7 @@ class Dataframe():
 
         self.df = None
         self.hdf5 = hdf5[Dataset_name]
+
         # Dataframe
         if os.path.exists(path):
             self.load_dataframe(path)
@@ -95,10 +96,14 @@ class Dataframe():
 
         # Initialize the dataframe
         col_names = [col for col in empty_line.keys()]
+        col_names.append('Subjects')
         df = pd.DataFrame(columns=col_names).set_index('Subjects')
+        
+        print(type(hdf5))
+
 
         # Filling the dataframe
-        for subject in hdf5.attr['patients_id']:
+        for subject in hdf5.attrs['patients_id']:
             # Getting the Group the corresponding patient
             grp = hdf5[subject]
             line = copy.deepcopy(empty_line)
@@ -170,7 +175,7 @@ class Dataframe():
         self.df = df
 
 
-class Bids_to_hdf5(Dataset):
+class Bids_to_hdf5():
     """
 
     """
@@ -203,7 +208,7 @@ class Bids_to_hdf5(Dataset):
         self.dt = h5py.special_dtype(vlen=str)
         # opening an hdf5 file with write access and writing metadata
         self.hdf5_file = h5py.File(hdf5_name, "w")
-        self.hdf5_grp = self.hdf5_file.create_group("Spine Generic")
+        self.hdf5_grp = self.hdf5_file.create_group("Spine_Generic")
 
         self.hdf5_grp.attrs['canonical'] = canonical
         list_patients = []
