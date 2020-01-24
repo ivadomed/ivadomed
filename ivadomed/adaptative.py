@@ -19,7 +19,8 @@ class Dataframe():
     It works on RAM or on the fly and can be saved for later.
     """
 
-    def __init__(self, hdf5, contrasts, path, target_suffix=None, roi_suffix=None, ram=False):
+    def __init__(self, hdf5, contrasts, path, target_suffix=None, roi_suffix=None,
+                 ram=False, Dataset_name="Spine Generic"):
         """
         Initialize the Dataframe
         """
@@ -41,12 +42,12 @@ class Dataframe():
             self.status['ROI'] = self.ram
 
         self.df = None
-
+        self.hdf5 = hdf5[Dataset_name]
         # Dataframe
         if os.path.exists(path):
             self.load_dataframe(path)
         else:
-            self.create_df(hdf5, target_suffix, roi_suffix, ram)
+            self.create_df(self.hdf5, target_suffix, roi_suffix, ram)
 
     def load_column(self, column_name):
         """
@@ -118,7 +119,7 @@ class Dataframe():
             assert 'gt' in grp.keys()
             inputs = grp['gt']
             for c in inputs.attr['contrast']:
-                key= 'gt/'+c
+                key = 'gt/' + c
                 if key in col_names:
                     if self.status[key]:
                         # Putting data in RAM
@@ -202,7 +203,9 @@ class Bids_to_hdf5(Dataset):
         self.dt = h5py.special_dtype(vlen=str)
         # opening an hdf5 file with write access and writing metadata
         self.hdf5_file = h5py.File(hdf5_name, "w")
-        self.hdf5_file.attrs['canonical'] = canonical
+        self.hdf5_grp = self.hdf5_file.create_group("Spine Generic")
+
+        self.hdf5_grp.attrs['canonical'] = canonical
         list_patients = []
 
         self.filename_pairs = []
@@ -287,11 +290,11 @@ class Bids_to_hdf5(Dataset):
         self.slice_filter_fn = slice_filter_fn
 
         # Update HDF5 metadata
-        self.hdf5_file.attrs.create('patients_id', list(set(list_patients)), dtype=self.dt)
-        self.hdf5_file.attrs['slice_axis'] = slice_axis
+        self.hdf5_grp.attrs.create('patients_id', list(set(list_patients)), dtype=self.dt)
+        self.hdf5_grp.attrs['slice_axis'] = slice_axis
 
-        self.hdf5_file.attrs['slice_filter_fn'] = [('filter_empty_input', True), ('filter_empty_mask', False)]
-        self.hdf5_file.attrs['metadata_choice'] = metadata_choice
+        self.hdf5_grp.attrs['slice_filter_fn'] = [('filter_empty_input', True), ('filter_empty_mask', False)]
+        self.hdf5_grp.attrs['metadata_choice'] = metadata_choice
 
         # Save images into HDF5 file
         self._load_filenames()
@@ -300,10 +303,10 @@ class Bids_to_hdf5(Dataset):
     def _load_filenames(self):
         for subject_id, input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
             # Creating/ getting the subject group
-            if str(subject_id) in self.hdf5_file.keys():
-                grp = self.hdf5_file[str(subject_id)]
+            if str(subject_id) in self.hdf5_grp.keys():
+                grp = self.hdf5_grp[str(subject_id)]
             else:
-                grp = self.hdf5_file.create_group(str(subject_id))
+                grp = self.hdf5_grp.create_group(str(subject_id))
 
             roi_pair = mt_datasets.SegmentationPair2D(input_filename, roi_filename, metadata=metadata, cache=False,
                                                       canonical=self.canonical)
