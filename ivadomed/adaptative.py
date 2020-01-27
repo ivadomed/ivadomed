@@ -20,7 +20,7 @@ class Dataframe:
     """
 
     def __init__(self, hdf5, contrasts, path, target_suffix=None, roi_suffix=None,
-                 ram=False):
+                 ram=False, slices=False):
         """
         Initialize the Dataframe
         """
@@ -42,24 +42,13 @@ class Dataframe:
             self.status['ROI'] = self.ram
 
         self.df = None
+        self.filter = slices
 
         # Dataframe
         if os.path.exists(path):
             self.load_dataframe(path)
         else:
             self.create_df(hdf5)
-
-    def load_column(self, column_name):
-        """
-        To load a column in memory
-        """
-        if not self.status[column_name]:
-            print("TODO")
-        else:
-            print("Column already in RAM")
-
-    def load_all(self):
-        print("TODO")
 
     def shuffe(self):
         "Shuffle the whole dataframe"
@@ -144,8 +133,12 @@ class Dataframe:
                         line[key] = '{}/roi/{}'.format(subject, c)
                 else:
                     continue
-            # Adding slices
+
+            # Adding slices & removing useless slices if loading in ram
             line['Slices'] = grp.attrs['slices']
+            if self.filter & self.ram:
+                for ct in self.status.keys():
+                    line[ct] = line[ct][np.array(grp.attrs['slices'])]
             df.loc[subject] = line
 
         self.df = df
@@ -414,7 +407,7 @@ class Bids_to_hdf5:
 
 
 class HDF5Dataset:
-    def __init__(self, root_dir, subject_lst, hdf5_name, csv_name, target_suffix, contrast_lst, RAM=True,
+    def __init__(self, root_dir, subject_lst, hdf5_name, csv_name, target_suffix, contrast_lst, ram=True,
                  contrast_balance={}, slice_axis=2, transform=None, metadata_choice=False,
                  slice_filter_fn=None, canonical=True, roi_suffix=None, target_lst=None, roi_lst=None):
         """
@@ -437,7 +430,7 @@ class HDF5Dataset:
         :param target_lst:
         :param roi_lst:
         """
-
+        self.filter_slices = slice_filter_fn
         self.transform = transform
         # Getting HDS5 dataset file
         if not os.path.isfile(root_dir):
@@ -458,15 +451,16 @@ class HDF5Dataset:
         else:
             self.hdf5_file = h5py.File(hdf5_name, "r")
         # Loading dataframe object
-        self.df = Dataframe(self.hdf5_file, contrast_lst, csv_name, target_suffix=target_lst, roi_suffix=roi_lst)
+        self.df = Dataframe(self.hdf5_file, contrast_lst, csv_name, target_suffix=target_lst,
+                            roi_suffix=roi_lst, ram=ram, slices=slice_filter_fn)
         self.dataframe = self.df.df
         # RAM status
         self.status = self.df.status
         # TODO list:
+
         """ 
-        - implement load_into_ram() & partial mode
         - pair mode or multi to one 
-        - 
+        - get_item() needs to return slice not volume
         - transform numpy into PIL image
 
         return dict like 
@@ -482,8 +476,22 @@ class HDF5Dataset:
 
         """
 
-    def load_into_ram(self):
-        self.gt = []
+    def load_into_ram(self, contrast_lst=None):
+
+        keys = self.status.keys()
+        for ct in contrast_lst:
+            if ct not in keys:
+                print("Key error: status has no key {}".format(ct))
+                continue
+            if self.status[ct]:
+                print("Contrast {} already in RAM".format(ct))
+            else:
+                print("Loading contrasts in RAM...")
+                for sub in self.df.index:
+                    if self.filter_slices:
+                        slices = self.df.loc(sub)['slices']
+                        self.df.loc(sub)[ct] = self.hdf5_file[self.df.loc(sub)[ct]][np.array(slices)]
+            self.status[ct] = True
 
     def set_transform(self, transform):
         """ This method will replace the current transformation for the
@@ -498,10 +506,43 @@ class HDF5Dataset:
         return len(self.indexes)
 
     def __getitem__(self, index):
-        self.hf[index]
+        """
+        :param index:
+        :return: data_dict = {'input': input_tensors,
+                                'gt': gt_img,
+                                'roi': roi_img,
+                                'input_metadata': input_metadata,
+                                'gt_metadata': seg_pair_slice['gt_metadata'],
+                                'roi_metadata': roi_pair_slice['gt_metadata']
+                                }
+        """
+        line_index = self.dataframe.index[index]
+        line = self.df.loc[line_index]
+        input_tensors = []
+        gt_img = None
+        roi_img = None
+        input_metadata = []
+        gt_metadata = None
+        roi_metadata = None
 
-    def update(self):
-        self.df.update()
+        data_dict = {'input': input_tensors,
+                     'gt': gt_img,
+                     'roi': roi_img,
+                     'input_metadata': input_metadata,
+                     'gt_metadata': gt_metadata,
+                     'roi_metadata': roi_metadata
+                     }
+        return data_dict
+
+    def update(self, strategy="Missing"):
+        """
+        Update the Dataframe itself.
+        :param strategy: Update the dataframe using the corresponding strategy. For now the only the stratety
+        implemented is the one used by HeMIS (i.e. by removing modalities with a certain probability.) Other strategies
+        that could be implemented are Active Learning, Curriculum Learning, ...
+        :return:
+        """
+        self.df.update(strategy=strategy)
 
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
