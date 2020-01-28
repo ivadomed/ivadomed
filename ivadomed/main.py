@@ -688,6 +688,12 @@ def cmd_test(context):
                 test_input = input_samples
                 test_gt = gt_samples
 
+            # Epistemic uncertainty
+            if context['uncertainty']['epistemic']:
+                for m in model.modules():
+                    if m.__class__.__name__.startswith('Dropout'):
+                        m.train()
+
             if film_bool:
                 sample_metadata = batch["input_metadata"]
                 test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
