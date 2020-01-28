@@ -601,10 +601,15 @@ def cmd_test(context):
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
 
+    # Aleatoric uncertainty
+    if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
+        transformation_dict = context["transformation_training"]
+    else:
+        transformation_dict = context["transformation_validation"]
     # These are the validation/testing transformations
     validation_transform_list = []
-    for transform in context["transformation_validation"].keys():
-        parameters = context["transformation_validation"][transform]
+    for transform in transformation_dict.keys():
+        parameters = transformation_dict[transform]
         if transform in ivadomed_transforms.get_transform_names():
             validation_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
         else:
