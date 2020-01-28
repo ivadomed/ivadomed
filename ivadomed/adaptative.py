@@ -130,14 +130,11 @@ class Dataframe:
                 if self.filter:
                     for n in line['Slices']:
                         line_slice = copy.deepcopy(line)
-                        for ct in self.contrasts:
-                            line_slice[ct] = line[ct][n]
                         line_slice['Slices'] = n
-                        df.append(line_slice, ignore_index=True)
-
+                        df = df.append(line_slice, ignore_index=True)                      
+                        
             else:
-                df.append(line, ignore_index=True)
-
+                df = df.append(line, ignore_index=True)            
         self.df = df
 
 

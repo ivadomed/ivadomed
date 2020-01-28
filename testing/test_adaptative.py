@@ -44,7 +44,8 @@ def test_hdf5():
                               path='testing_data/hdf5.csv',
                               target_suffix=['T1w', 'T2w', 'T2star'],
                               roi_suffix=['T1w', 'T2w', 'T2star'],
-                              ram=False)
+                              dim=2,
+                              slices=True)
     print(df.df)
     print('\n[INFO]: Dataframe successfully generated. ')
     df.save('testing_data/hdf5.csv')
