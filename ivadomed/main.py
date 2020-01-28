@@ -689,7 +689,7 @@ def cmd_test(context):
                 test_gt = gt_samples
 
             # Epistemic uncertainty
-            if context['uncertainty']['epistemic']:
+            if context['uncertainty']['epistemic'] and context['uncertainty']['n_it'] > 0:
                 for m in model.modules():
                     if m.__class__.__name__.startswith('Dropout'):
                         m.train()
