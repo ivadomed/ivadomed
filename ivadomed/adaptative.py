@@ -8,6 +8,7 @@ from torch.utils.data import Dataset
 from tqdm import tqdm
 import os
 import json
+from PIL import Image
 
 from medicaltorch import datasets as mt_datasets
 
@@ -20,38 +21,38 @@ class Dataframe:
     """
 
     def __init__(self, hdf5, contrasts, path, target_suffix=None, roi_suffix=None,
-                 ram=False, slices=False):
+                 slices=False, dim=2):
         """
         Initialize the Dataframe
         """
-        # Ram status
-        self.ram = ram
-        self.status = {c: self.ram for c in contrasts}
+        # Number of dimension
+        self.dim = dim
+        # List of all contrasts
         self.contrasts = contrasts
-        # Saving ram status.
+
         if target_suffix:
             for gt in target_suffix:
-                self.status['gt/' + gt] = self.ram
+                self.contrasts.append('gt/' + gt)
         else:
-            self.status['gt'] = self.ram
+            self.contrasts.append('gt')
 
         if roi_suffix:
             for roi in roi_suffix:
-                self.status['roi/' + roi] = self.ram
+                self.contrasts.append('roi/' + roi)
         else:
-            self.status['ROI'] = self.ram
+            self.contrasts.append('ROI')
 
         self.df = None
         self.filter = slices
 
-        # Dataframe
+        # Data frame
         if os.path.exists(path):
             self.load_dataframe(path)
         else:
             self.create_df(hdf5)
 
     def shuffe(self):
-        "Shuffle the whole dataframe"
+        """Shuffle the whole data frame"""
         self.df = self.df.sample(frac=1)
 
     def load_dataframe(self, path):
@@ -76,33 +77,30 @@ class Dataframe:
 
     def create_df(self, hdf5):
         """
-        Generate the Dataframe using the hdf5 file
+        Generate the Data frame using the hdf5 file
         """
         # Template of a line
-        empty_line = {col: None for col in self.status.keys()}
+        empty_line = {col: None for col in self.contrasts}
         empty_line['Slices'] = None
 
-        # Initialize the dataframe
+        # Initialize the data frame
         col_names = [col for col in empty_line.keys()]
         col_names.append('Subjects')
-        df = pd.DataFrame(columns=col_names).set_index('Subjects')
+        df = pd.DataFrame(columns=col_names)
 
-        # Filling the dataframe
+        # Filling the data frame
         for subject in hdf5.attrs['patients_id']:
             # Getting the Group the corresponding patient
             grp = hdf5[subject]
             line = copy.deepcopy(empty_line)
+            line['Subjects'] = subject
+
             # inputs
             assert 'inputs' in grp.keys()
             inputs = grp['inputs']
             for c in inputs.attrs['contrast']:
                 if c in col_names:
-                    if self.status[c]:
-                        # Putting data in RAM
-                        line[c] = inputs
-                    else:
-                        # Otherwise saving hdf5 path
-                        line[c] = '{}/inputs/{}'.format(subject, c)
+                    line[c] = '{}/inputs/{}'.format(subject, c)
                 else:
                     continue
             # GT
@@ -111,12 +109,7 @@ class Dataframe:
             for c in inputs.attrs['contrast']:
                 key = 'gt/' + c
                 if key in col_names:
-                    if self.status[key]:
-                        # Putting data in RAM
-                        line[key] = inputs
-                    else:
-                        # Otherwise saving hdf5 path
-                        line[key] = '{}/gt/{}'.format(subject, c)
+                    line[key] = '{}/gt/{}'.format(subject, c)
                 else:
                     continue
             # ROI
@@ -125,21 +118,25 @@ class Dataframe:
             for c in inputs.attrs['contrast']:
                 key = 'roi/' + c
                 if key in col_names:
-                    if self.status[key]:
-                        # Putting data in RAM
-                        line[key] = inputs
-                    else:
-                        # Otherwise saving hdf5 path
-                        line[key] = '{}/roi/{}'.format(subject, c)
+                    line[key] = '{}/roi/{}'.format(subject, c)
                 else:
                     continue
 
             # Adding slices & removing useless slices if loading in ram
-            line['Slices'] = grp.attrs['slices']
-            if self.filter & self.ram:
-                for ct in self.status.keys():
-                    line[ct] = line[ct][np.array(grp.attrs['slices'])]
-            df.loc[subject] = line
+            line['Slices'] = np.array(grp.attrs['slices'])
+
+            # If the number of dimension is 2, we separate the slices
+            if self.dim == 2:
+                if self.filter:
+                    for n in line['Slices']:
+                        line_slice = copy.deepcopy(line)
+                        for ct in self.contrasts:
+                            line_slice[ct] = line[ct][n]
+                        line_slice['Slices'] = n
+                        df.append(line_slice, ignore_index=True)
+
+            else:
+                df.append(line, ignore_index=True)
 
         self.df = df
 
@@ -408,8 +405,9 @@ class Bids_to_hdf5:
 
 class HDF5Dataset:
     def __init__(self, root_dir, subject_lst, hdf5_name, csv_name, target_suffix, contrast_lst, ram=True,
-                 contrast_balance={}, slice_axis=2, transform=None, metadata_choice=False,
+                 contrast_balance={}, slice_axis=2, transform=None, metadata_choice=False, dim=2,
                  slice_filter_fn=None, canonical=True, roi_suffix=None, target_lst=None, roi_lst=None):
+
         """
 
         :param root_dir: path of bids and data
@@ -419,10 +417,10 @@ class HDF5Dataset:
         :param target_suffix: suffix of the gt
         :param roi_suffix: suffix of the roi
         :param contrast_lst: list of the contrast
-        :param RAM: if data is loaded on RAM
         :param contrast_balance: contrast balance
         :param slice_axis: slice axis. by default it's set to 2
         :param transform: transformation
+        :param dim: number of dimension of our data. Either 2 or 3
         :param metadata_choice:
         :param slice_filter_fn:
         :param canonical:
@@ -430,6 +428,7 @@ class HDF5Dataset:
         :param target_lst:
         :param roi_lst:
         """
+        self.dim = dim
         self.filter_slices = slice_filter_fn
         self.transform = transform
         # Getting HDS5 dataset file
@@ -451,33 +450,26 @@ class HDF5Dataset:
         else:
             self.hdf5_file = h5py.File(hdf5_name, "r")
         # Loading dataframe object
-        self.df = Dataframe(self.hdf5_file, contrast_lst, csv_name, target_suffix=target_lst,
-                            roi_suffix=roi_lst, ram=ram, slices=slice_filter_fn)
-        self.dataframe = self.df.df
+        self.df_object = Dataframe(self.hdf5_file, contrast_lst, csv_name, target_suffix=target_lst,
+                                   roi_suffix=roi_lst, dim=self.dim, slices=slice_filter_fn)
+        self.dataframe = self.df_object.df
         # RAM status
-        self.status = self.df.status
-        # TODO list:
+        self.status = {ct: False for ct in self.df_object.contrasts}
+        # Input contrasts
+        self.contrast_lst = contrast_lst
 
+        # TODO list:
+        #
         """ 
         - pair mode or multi to one 
-        - get_item() needs to return slice not volume
-        - transform numpy into PIL image
-
-        return dict like 
-            data_dict = {
-                'input': input_tensors,
-                'gt': gt_img,
-                'roi': roi_img,
-                'input_metadata': input_metadata,
-                'gt_metadata': seg_pair_slice['gt_metadata'],
-                'roi_metadata': roi_pair_slice['gt_metadata']
-            }
-            return data_dict
-
         """
 
     def load_into_ram(self, contrast_lst=None):
-
+        """
+        Aims to load into RAM the contrasts from the list
+        :param contrast_lst: list of contrast
+        :return:
+        """
         keys = self.status.keys()
         for ct in contrast_lst:
             if ct not in keys:
@@ -487,10 +479,11 @@ class HDF5Dataset:
                 print("Contrast {} already in RAM".format(ct))
             else:
                 print("Loading contrasts in RAM...")
-                for sub in self.df.index:
+                for sub in self.dataframe.index:
                     if self.filter_slices:
-                        slices = self.df.loc(sub)['slices']
-                        self.df.loc(sub)[ct] = self.hdf5_file[self.df.loc(sub)[ct]][np.array(slices)]
+                        slices = self.dataframe.loc(sub)['slices']
+                        self.dataframe.at[sub, ct] = self.hdf5_file[self.dataframe.loc(sub)[ct]][np.array(slices)]
+
             self.status[ct] = True
 
     def set_transform(self, transform):
@@ -503,10 +496,12 @@ class HDF5Dataset:
 
     def __len__(self):
         """Return the dataset size. The number of subvolumes."""
-        return len(self.indexes)
+        return len(self.dataframe)
 
     def __getitem__(self, index):
         """
+        Warning: For now, this method only supports one gt/ roi
+
         :param index:
         :return: data_dict = {'input': input_tensors,
                                 'gt': gt_img,
@@ -516,14 +511,47 @@ class HDF5Dataset:
                                 'roi_metadata': roi_pair_slice['gt_metadata']
                                 }
         """
-        line_index = self.dataframe.index[index]
-        line = self.df.loc[line_index]
-        input_tensors = []
-        gt_img = None
-        roi_img = None
+        line = self.dataframe.loc[index]
+
+        input_tensors = [line[ct] for ct in self.contrast_lst]
+
         input_metadata = []
-        gt_metadata = None
-        roi_metadata = None
+        input_tensors = []
+
+        # Inputs
+        for ct in self.contrast_lst:
+            if self.status[ct]:
+                input_tensor = line[ct]
+            else:
+                input_tensor = self.hdf5_file[line[ct]][line['Slices']]
+            # convert array to pil
+            input_tensors.append(Image.fromarray(input_tensor, mode='F'))
+            # input Metadata
+            input_metadata.append({key: value for key, value in self.hdf5_file['{}/inputs/{}'
+                                  .format(line['Subjects'], ct)].attrs.items()})
+
+        # GT
+        if self.status['gt']:
+            gt_img = line['gt']
+        else:
+            gt_img = self.hdf5_file[line['gt']][line['Slices']]
+
+        # convert array to pil
+        gt_img = (gt_img * 255).astype(np.uint8)
+        gt_img = Image.fromarray(gt_img, mode='L')
+        gt_metadata = {key: value for key, value in self.hdf5_file['{}/gt'.format(line['Subjects'])].attrs.items()}
+
+        # ROI
+        if self.status['roi']:
+            roi_img = line['roi']
+        else:
+            roi_img = self.hdf5_file[line['roi']][line['Slices']]
+
+        # convert array to pil
+        roi_img = (roi_img * 255).astype(np.uint8)
+        roi_img = Image.fromarray(roi_img, mode='L')
+
+        roi_metadata = {key: value for key, value in self.hdf5_file['{}/roi'.format(line['Subjects'])].attrs.items()}
 
         data_dict = {'input': input_tensors,
                      'gt': gt_img,
@@ -532,6 +560,7 @@ class HDF5Dataset:
                      'gt_metadata': gt_metadata,
                      'roi_metadata': roi_metadata
                      }
+        
         return data_dict
 
     def update(self, strategy="Missing"):
@@ -542,7 +571,7 @@ class HDF5Dataset:
         that could be implemented are Active Learning, Curriculum Learning, ...
         :return:
         """
-        self.df.update(strategy=strategy)
+        self.dataframe.update(strategy=strategy)
 
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
