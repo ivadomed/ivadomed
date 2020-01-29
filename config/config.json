@@ -1,7 +1,7 @@
 
 {
-    "command": "test",
-    "gpu": 5,
+    "command": "train",
+    "gpu": 1,
     "target_suffix": "_seg-manual",
     "roi_suffix": null,
     "bids_path": "../duke/projects/ivado-medical-imaging/spineGeneric_201907041011/result/",
@@ -15,7 +15,7 @@
     "batch_norm_momentum": 0.1,
     "num_epochs": 100,
     "initial_lr": 0.001,
-    "lr_scheduler": {"name": "CosineAnnealingWarmRestarts", "T_0": 10},
+    "lr_scheduler": {"name": "CosineAnnealingWarmRestarts", "T_0": 10, "T_mult": 1},
     "loss": {"name": "dice"},
     "log_directory": "log_sc",
     "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
@@ -32,6 +32,7 @@
     "early_stopping_epsilon": 0.001,
     "slice_axis": "axial",
     "balance_samples": false,
+    "retrain_model": null,
     "split_method": "per_center",
     "slice_filter": {"filter_empty_mask": false, "filter_empty_input": true},
     "slice_filter_roi": 10,
