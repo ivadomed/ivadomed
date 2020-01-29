@@ -1,8 +1,20 @@
 from ivadomed import adaptative as adaptative
 from medicaltorch.filters import SliceFilter
-import os
 
-GPU_NUMBER = 5
+from medicaltorch import datasets as mt_datasets
+from medicaltorch import transforms as mt_transforms
+import os
+from ivadomed import loader as loader
+from ivadomed import models
+from ivadomed import losses
+from ivadomed.utils import *
+import ivadomed.transforms as ivadomed_transforms
+
+import torch.backends.cudnn as cudnn
+from torch.utils.data import DataLoader
+from torchvision import transforms
+
+GPU_NUMBER = 0
 BATCH_SIZE = 8
 DROPOUT = 0.4
 DEPTH = 3
@@ -77,5 +89,58 @@ def test_hdf5():
     print(dataset.dataframe)
     print('\n[INFO]: Test passed successfully. ')
 
+    print("\n[INFO]: Starting loader test ...")
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    cuda_available = torch.cuda.is_available()
+    if cuda_available:
+        torch.cuda.set_device(GPU_NUMBER)
+        print("Using GPU number {}".format(GPU_NUMBER))
+
+    training_transform_list = [
+        ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
+        ivadomed_transforms.ROICrop2D(size=[48, 48]),
+        mt_transforms.ToTensor()
+    ]
+    train_transform = transforms.Compose(training_transform_list)
+
+    train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
+                              shuffle=True, pin_memory=True,
+                              collate_fn=mt_datasets.mt_collate,
+                              num_workers=1)
+    model = models.HeMISUnet(modalities=contrasts,
+                            depth=2,
+                            drop_rate=DROPOUT,
+                            bn_momentum=BN)
+
+    if cuda_available:
+        model.cuda()
+
+    step_scheduler_batch = False
+    optimizer = optim.Adam(model.parameters(), lr=INIT_LR)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, N_EPOCHS)
+
+    load_lst, pred_lst, opt_lst, schedul_lst, init_lst, gen_lst = [], [], [], [], [], []
+    for epoch in tqdm(range(1, N_EPOCHS + 1), desc="Training"):
+        start_time = time.time()
+
+        start_init = time.time()
+        lr = scheduler.get_lr()[0]
+        model.train()
+        tot_init = time.time() - start_init
+        init_lst.append(tot_init)
+
+        num_steps = 0
+        for i, batch in enumerate(train_loader):
+            if i > 0:
+                tot_gen = time.time() - start_gen
+                gen_lst.append(tot_gen)
+            start_load = time.time()
+            input_samples, gt_samples = batch["input"], batch["gt"]
+            print("len input = {}".format(len(input_samples)))
+            print("Batch = {}, {}".format(input_samples[0].shape, gt_samples.shape))
+
+            print("Congrats your dataloader works!")
+            return 0
 
 test_hdf5()
