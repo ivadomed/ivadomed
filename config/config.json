@@ -35,7 +35,7 @@
     "split_method": "per_center",
     "slice_filter": {"filter_empty_mask": false, "filter_empty_input": true},
     "slice_filter_roi": 10,
-    "uncertainty": {"epistemic": true, "aleatoric": true, "n_it": 10},
+    "uncertainty": {"epistemic": true, "aleatoric": false, "n_it": 10},
     "transformation_training": {
 		"Resample": {
 			"wspace": 0.75,
