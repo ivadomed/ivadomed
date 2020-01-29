@@ -429,7 +429,7 @@ class HDF5Dataset:
         self.filter_slices = slice_filter_fn
         self.transform = transform
         # Getting HDS5 dataset file
-        if not os.path.isfile(root_dir):
+        if not os.path.isfile(hdf5_name):
             print("Computing hdf5 file of the data")
             self.hdf5_file = Bids_to_hdf5(root_dir,
                                           subject_lst=subject_lst,

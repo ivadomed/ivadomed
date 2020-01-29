@@ -48,7 +48,30 @@ def test_hdf5():
                               slices=True)
     print(df.df)
     print('\n[INFO]: Dataframe successfully generated. ')
-    df.save('testing_data/hdf5.csv')
+    print('[INFO]: Creating dataset ...\n')
+
+    dataset = adaptative.HDF5Dataset(root_dir=PATH_BIDS,
+                                     subject_lst=train_lst,
+                                     hdf5_name='testing_data/mytestfile.hdf5',
+                                     csv_name='testing_data/hdf5.csv',
+                                     target_suffix="_lesion-manual",
+                                     contrast_lst=['T1w', 'T2w', 'T2star'],
+                                     ram=False,
+                                     contrast_balance={},
+                                     slice_axis=2,
+                                     transform=None,
+                                     metadata_choice=False,
+                                     dim=2,
+                                     slice_filter_fn=None,
+                                     canonical=True,
+                                     roi_suffix="_seg-manual",
+                                     target_lst=['T2w'],
+                                     roi_lst=['T2w'])
+    dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
+    print("Dataset RAM status:")
+    print(dataset.status)
+    print("In memory Dataframe:")
+    print(dataset.dataframe)
     print('\n[INFO]: Test passed successfully. ')
 
 
