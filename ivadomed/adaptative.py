@@ -70,7 +70,7 @@ class Dataframe:
         Save the dataframe into a csv file.
         """
         try:
-            self.df.to_csv(path, index=True)
+            self.df.to_csv(path, index=False)
             print("Dataframe has been saved at {}.".format(path))
         except FileNotFoundError:
             print("Wrong path.")
