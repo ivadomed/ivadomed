@@ -36,9 +36,10 @@ def test_hdf5():
         for key, val in obj.attrs.items():
             print("    %s: %s" % (key, val))
 
-    hdf5_file.hdf5_file.visititems(print_attrs)
+    #hdf5_file.hdf5_file.visititems(print_attrs)
     print('\n[INFO]: HDF5 file successfully generated.')
     print('[INFO]: Generating dataframe ...\n')
+    
     df = adaptative.Dataframe(hdf5=hdf5_file.hdf5_file,
                               contrasts=['T1w', 'T2w', 'T2star'],
                               path='testing_data/hdf5.csv',
@@ -47,6 +48,7 @@ def test_hdf5():
                               dim=2,
                               slices=True)
     print(df.df)
+
     print('\n[INFO]: Dataframe successfully generated. ')
     print('[INFO]: Creating dataset ...\n')
 
@@ -62,11 +64,12 @@ def test_hdf5():
                                      transform=None,
                                      metadata_choice=False,
                                      dim=2,
-                                     slice_filter_fn=None,
+                                     slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=True),
                                      canonical=True,
                                      roi_suffix="_seg-manual",
                                      target_lst=['T2w'],
                                      roi_lst=['T2w'])
+
     dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
     print("Dataset RAM status:")
     print(dataset.status)

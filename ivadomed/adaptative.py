@@ -87,7 +87,7 @@ class Dataframe:
         col_names = [col for col in empty_line.keys()]
         col_names.append('Subjects')
         df = pd.DataFrame(columns=col_names)
-
+        
         # Filling the data frame
         for subject in hdf5.attrs['patients_id']:
             # Getting the Group the corresponding patient
@@ -124,7 +124,7 @@ class Dataframe:
 
             # Adding slices & removing useless slices if loading in ram
             line['Slices'] = np.array(grp.attrs['slices'])
-
+            
             # If the number of dimension is 2, we separate the slices
             if self.dim == 2:
                 if self.filter:
@@ -132,9 +132,10 @@ class Dataframe:
                         line_slice = copy.deepcopy(line)
                         line_slice['Slices'] = n
                         df = df.append(line_slice, ignore_index=True)                      
-                        
+    
             else:
                 df = df.append(line, ignore_index=True)            
+        
         self.df = df
 
 
@@ -281,7 +282,7 @@ class Bids_to_hdf5:
             seg_pair = mt_datasets.SegmentationPair2D(input_filename, gt_filename, metadata=metadata, cache=False,
                                                       canonical=self.canonical)
 
-            input_data_shape, _ = seg_pair.get_pair_shapes()
+            input_data_shape, _ = seg_pair.get_pair_shapes()   
 
             useful_slices = []
             input_volumes = []
@@ -289,6 +290,7 @@ class Bids_to_hdf5:
             roi_volume = []
 
             for idx_pair_slice in range(input_data_shape[self.slice_axis]):
+                
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice,
                                                          self.slice_axis)
 
@@ -297,7 +299,8 @@ class Bids_to_hdf5:
                     filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
                 if self.slice_filter_fn and filter_fn_ret_seg:
                     useful_slices.append(idx_pair_slice)
-
+                    
+                    
                 roi_pair_slice = roi_pair.get_pair_slice(idx_pair_slice, self.slice_axis)
 
                 input_volumes.append(slice_seg_pair["input"][0])
@@ -319,8 +322,8 @@ class Bids_to_hdf5:
             gt_metadata = slice_seg_pair['gt_metadata']
             roi_metadata = roi_pair_slice['input_metadata'][0]
 
-            if grp.attrs.__contains__('slices'):
-                grp.attrs['slices'] = list(set(grp.attrs['slices'] + useful_slices))
+            if grp.attrs.__contains__('slices'): 
+                grp.attrs['slices'] = list(set(np.concatenate((grp.attrs['slices'], useful_slices))))
             else:
                 grp.attrs['slices'] = useful_slices
 
@@ -475,11 +478,11 @@ class HDF5Dataset:
             if self.status[ct]:
                 print("Contrast {} already in RAM".format(ct))
             else:
-                print("Loading contrasts in RAM...")
+                print("Loading contrasts {} in RAM...".format(ct))
                 for sub in self.dataframe.index:
                     if self.filter_slices:
-                        slices = self.dataframe.loc(sub)['slices']
-                        self.dataframe.at[sub, ct] = self.hdf5_file[self.dataframe.loc(sub)[ct]][np.array(slices)]
+                        slices = self.dataframe.at[sub, 'Slices']
+                        self.dataframe.at[sub, ct] = self.hdf5_file[self.dataframe.at[sub, ct]][np.array(slices)]
 
             self.status[ct] = True
 
