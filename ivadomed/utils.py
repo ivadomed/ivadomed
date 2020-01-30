@@ -241,11 +241,11 @@ def combine_predictions(fname_lst, fname_hard, fname_prob):
 
     # save prob segmentation
     nib_prob = nib.Nifti1Image(data_prob, nib_im.affine)
-    nib_prob.save(nib_prob, fname_prob)
+    nib.save(nib_prob, fname_prob)
 
     # save hard segmentation
     nib_hard = nib.Nifti1Image(data_hard, nib_im.affine)
-    nib_hard.save(nib_hard, fname_hard)
+    nib.save(nib_hard, fname_hard)
 
 
 def voxelWise_uncertainty(fname_lst, fname_uncertainty, eps=1e-5):
@@ -267,7 +267,7 @@ def voxelWise_uncertainty(fname_lst, fname_uncertainty, eps=1e-5):
 
     # save uncertainty map
     nib_unc = nib.Nifti1Image(unc, nib_im.affine)
-    nib_unc.save(nib_unc, fname_uncertainty)
+    nib.save(nib_unc, fname_uncertainty)
 
 
 def dice_score(im1, im2):
