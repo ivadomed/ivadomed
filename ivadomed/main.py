@@ -800,13 +800,14 @@ def cmd_eval(context):
         fname_gt = subj_acq + context['target_suffix'] + '.nii.gz'
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
-        fname_pred_lst = [os.path.join(path_pred, f) for f in os.listdir(path_pred) if subj_acq+'_pred' in f]
+        fname_pred = os.path.join(path_pred, subj_acq+'_pred.nii.gz')
 
-        # if Monte Carlo simulations then combine
-        if len(fname_pred_lst) > 1:
-            pass
-        else:
-           fname_pred = fname_pred_lst[0]
+        # if final segmentation from Monte Carlo simulations has not been generated yet
+        if not os.path.isfile(fname_pred):
+           # find Monte Carlo simulations
+           fname_pred_lst = [os.path.join(path_pred, f) for f in os.listdir(path_pred) if subj_acq+'_pred_' in f]
+           # average then argmax
+           combine_predictions(fname_pred_lst)
 
         fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', fname_gt)
 
