@@ -248,10 +248,10 @@ def combine_predictions(fname_lst, fname_hard, fname_prob):
     nib.save(nib_hard, fname_hard)
 
 
-def voxelWise_uncertainty(fname_lst, fname_uncertainty, eps=1e-5):
+def voxelWise_uncertainty(fname_lst, fname_out, eps=1e-5):
     """
     Voxel-wise uncertainty is estimated as entropy over all
-    N MC probability maps, and saved in fname_uncertainty.
+    N MC probability maps, and saved in fname_out.
     """
     # collect all MC simulations
     data_lst = []
@@ -267,7 +267,36 @@ def voxelWise_uncertainty(fname_lst, fname_uncertainty, eps=1e-5):
 
     # save uncertainty map
     nib_unc = nib.Nifti1Image(unc, nib_im.affine)
-    nib.save(nib_unc, fname_uncertainty)
+    nib.save(nib_unc, fname_out)
+
+
+def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
+    """
+    Structure-wise uncertainty from N MC probability maps (fname_lst)
+    and saved in fname_out with the following suffixes:
+       - '-cv.nii.gz': coefficient of variation
+       - '-iou.nii.gz': intersection over union
+       - '-unc.nii.gz': average voxel-wise uncertainty within the structure.
+    """
+    # load hard segmentation and label it
+    nib_hard = nib.load(fname_hard)
+    data_hard = nib_hard.get_fdata()
+    data_hard_l, n_l = label(data_hard_l, connectivity=3, return_num=True)
+
+    # load uncertainty map
+    nib_uncVox = nib.load(fname_unc_vox)
+    data_uncVox = nib_uncVox.get_fdata()
+    del nib_uncVox
+
+    # load all MC simulations and label them
+    data_lst = []
+    for fname in fname_lst:
+        nib_im = nib.load(fname)
+        data_im = nib_im.get_fdata()
+        data_im_l = label(data_im, connectivity=3, return_num=False)
+        data_lst.append(data_im_l)
+        del nib_im
+
 
 
 def dice_score(im1, im2):
