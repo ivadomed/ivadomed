@@ -220,11 +220,12 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False):
     nib.save(nib_pred, fname_out)
 
 
-def combine_predictions(fname_lst, fname_out):
+def combine_predictions(fname_lst, fname_hard, fname_prob):
     """
     Combine predictions from Monte Carlo simulations
-    by applying a mean then argmax operations.
-    Then save the final segmentation in fname_out.
+    by applying:
+        (1) a mean (saved as fname_prob)
+        (2) then argmax operation (saved as fname_hard).
     """
     # collect all MC simulations
     data_lst = []
@@ -233,14 +234,18 @@ def combine_predictions(fname_lst, fname_out):
         data_lst.append(nib_im.get_fdata())
 
     # average over all the MC simulations
-    data_out = np.mean(np.array(data_lst), axis=0)
+    data_prob = np.mean(np.array(data_lst), axis=0)
     # argmax operator
     # TODO: adapt for multi-label pred
-    data_out = np.round(data_out).astype(np.uint8)
+    data_hard = np.round(data_prob).astype(np.uint8)
 
-    # save final segmentation
-    nib_out = nib.nib.Nifti1Image(data_out, nib_im.affine)
-    nib_out.save(nib_out, fname_out)
+    # save prob segmentation
+    nib_prob = nib.nib.Nifti1Image(data_prob, nib_im.affine)
+    nib_prob.save(nib_prob, fname_prob)
+
+    # save hard segmentation
+    nib_hard = nib.nib.Nifti1Image(data_hard, nib_im.affine)
+    nib_hard.save(nib_hard, fname_hard)
 
 
 def dice_score(im1, im2):
