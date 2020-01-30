@@ -806,8 +806,10 @@ def cmd_eval(context):
         if not os.path.isfile(fname_pred):
            # find Monte Carlo simulations
            fname_pred_lst = [os.path.join(path_pred, f) for f in os.listdir(path_pred) if subj_acq+'_pred_' in f]
+           # fname for soft segmentation from MC simulations
+           fname_soft = os.path.join(path_pred, subj_acq+'_soft.nii.gz')
            # average then argmax
-           combine_predictions(fname_pred_lst)
+           combine_predictions(fname_pred_lst, fname_pred, fname_soft)
 
         fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', fname_gt)
 
@@ -824,7 +826,7 @@ def cmd_eval(context):
     # save results as csv
     fname_out = os.path.join(path_results, 'evaluation_3Dmetrics.csv')
     df_results.to_csv(fname_out)
-
+    print(df_results.head(5))
 
 def run_main():
     if len(sys.argv) <= 1:
