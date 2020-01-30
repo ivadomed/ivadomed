@@ -789,20 +789,25 @@ def cmd_eval(context):
     # init data frame
     df_results = pd.DataFrame()
 
-    # list fname pred files
+    # list subject_acquisition
     path_pred = os.path.join(context['log_directory'], 'pred_masks')
-    vol_pred_lst = [f.split('_pred')[0] for f in os.listdir(path_pred) if f.endswith('.nii.gz') and '_pred' in f]
-    # one per MRI scan or subject
-    vol_pred_lst = list(set(vol_pred_lst))
-    print(vol_pred_lst)
+    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_pred) if f.endswith('.nii.gz') and '_pred' in f]
+    # remove duplicates
+    subj_acq_lst = list(set(subj_acq_lst))
 
-    # loop across fname pred files
-    for fname_pred in tqdm(fname_pred_lst, desc="Evaluation"):
-        subj_acq = fname_pred.split('_pred.nii.gz')[0]
-        fname_gt = subj_acq+context['target_suffix']+'.nii.gz'
+    # loop across subj_acq
+    for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
+        fname_gt = subj_acq + context['target_suffix'] + '.nii.gz'
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
-        fname_pred = os.path.join(path_pred, fname_pred)
+        fname_pred_lst = [os.path.join(path_pred, f) for f in os.listdir(path_pred) if subj_acq+'_pred' in f]
+
+        # if Monte Carlo simulations then combine
+        if len(fname_pred_lst) > 1:
+            pass
+        else:
+           fname_pred = fname_pred_lst[0]
+
         fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', fname_gt)
 
         # 3D evaluation
