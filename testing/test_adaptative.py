@@ -1,5 +1,6 @@
 from ivadomed import adaptative as adaptative
 from medicaltorch.filters import SliceFilter
+from torch import optim
 
 from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
@@ -13,9 +14,11 @@ import ivadomed.transforms as ivadomed_transforms
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
+from tqdm import tqdm
+import time
 
 GPU_NUMBER = 0
-BATCH_SIZE = 8
+BATCH_SIZE = 1
 DROPOUT = 0.4
 DEPTH = 3
 BN = 0.1
@@ -63,6 +66,13 @@ def test_hdf5():
 
     print('\n[INFO]: Dataframe successfully generated. ')
     print('[INFO]: Creating dataset ...\n')
+    
+    training_transform_list = [
+        ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
+        mt_transforms.CenterCrop2D(size=[48, 48]),
+        mt_transforms.ToTensor()
+    ]
+    train_transform = transforms.Compose(training_transform_list)
 
     dataset = adaptative.HDF5Dataset(root_dir=PATH_BIDS,
                                      subject_lst=train_lst,
@@ -73,7 +83,7 @@ def test_hdf5():
                                      ram=False,
                                      contrast_balance={},
                                      slice_axis=2,
-                                     transform=None,
+                                     transform=train_transform,
                                      metadata_choice=False,
                                      dim=2,
                                      slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=True),
@@ -104,11 +114,11 @@ def test_hdf5():
     ]
     train_transform = transforms.Compose(training_transform_list)
 
-    train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
-                              shuffle=True, pin_memory=True,
+    train_loader = DataLoader(dataset, batch_size=BATCH_SIZE,
+                              shuffle=False, pin_memory=True,
                               collate_fn=mt_datasets.mt_collate,
                               num_workers=1)
-    model = models.HeMISUnet(modalities=contrasts,
+    model = models.HeMISUnet(modalities=['T1w', 'T2w', 'T2star'],
                             depth=2,
                             drop_rate=DROPOUT,
                             bn_momentum=BN)
@@ -138,9 +148,10 @@ def test_hdf5():
             start_load = time.time()
             input_samples, gt_samples = batch["input"], batch["gt"]
             print("len input = {}".format(len(input_samples)))
-            print("Batch = {}, {}".format(input_samples[0].shape, gt_samples.shape))
-
-            print("Congrats your dataloader works!")
-            return 0
+            print("Batch = {}, {}".format(input_samples[0][0].shape, gt_samples.shape))
+            break
+        break
+    print("Congrats your dataloader works! You can go Home now and get a beer.")
+    return 0
 
 test_hdf5()

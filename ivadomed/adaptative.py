@@ -345,7 +345,7 @@ class Bids_to_hdf5:
             # dataset metadata
             grp[key].attrs['input_filename'] = input_metadata['input_filename']
 
-            if "zoom" in input_metadata.keys():
+            if "zooms" in input_metadata.keys():
                 grp[key].attrs["zooms"] = input_metadata['zooms']
             if "data_shape" in input_metadata.keys():
                 grp[key].attrs["data_shape"] = input_metadata['data_shape']
@@ -366,7 +366,7 @@ class Bids_to_hdf5:
             # dataset metadata
             grp[key].attrs['gt_filename'] = input_metadata['gt_filename']
 
-            if "zoom" in gt_metadata.keys():
+            if "zooms" in gt_metadata.keys():
                 grp[key].attrs["zooms"] = gt_metadata['zooms']
             if "data_shape" in gt_metadata.keys():
                 grp[key].attrs["data_shape"] = gt_metadata['data_shape']
@@ -387,7 +387,7 @@ class Bids_to_hdf5:
             # dataset metadata
             grp[key].attrs['roi_filename'] = roi_metadata['gt_filename']
 
-            if "zoom" in roi_metadata.keys():
+            if "zooms" in roi_metadata.keys():
                 grp[key].attrs["zooms"] = roi_metadata['zooms']
             if "data_shape" in roi_metadata.keys():
                 grp[key].attrs["data_shape"] = roi_metadata['data_shape']
@@ -428,6 +428,11 @@ class HDF5Dataset:
         :param target_lst:
         :param roi_lst:
         """
+
+        self.cst_lst = copy.deepcopy(contrast_lst)
+        self.gt_lst = copy.deepcopy(target_lst)
+        self.roi_lst = copy.deepcopy(roi_lst)
+
         self.dim = dim
         self.filter_slices = slice_filter_fn
         self.transform = transform
@@ -513,13 +518,13 @@ class HDF5Dataset:
         """
         line = self.dataframe.loc[index]
 
-        input_tensors = [line[ct] for ct in self.contrast_lst]
+        input_tensors = [line[ct] for ct in self.cst_lst]
 
         input_metadata = []
         input_tensors = []
 
         # Inputs
-        for ct in self.contrast_lst:
+        for ct in self.cst_lst:
             if self.status[ct]:
                 input_tensor = line[ct]
             else:
@@ -531,27 +536,27 @@ class HDF5Dataset:
                                   .format(line['Subjects'], ct)].attrs.items()})
 
         # GT
-        if self.status['gt']:
-            gt_img = line['gt']
+        if self.status['gt/' + self.gt_lst[0]]:
+            gt_img = line['gt/' + self.gt_lst[0]]
         else:
-            gt_img = self.hdf5_file[line['gt']][line['Slices']]
+            gt_img = self.hdf5_file[line['gt/' + self.gt_lst[0]]][line['Slices']]
 
         # convert array to pil
         gt_img = (gt_img * 255).astype(np.uint8)
         gt_img = Image.fromarray(gt_img, mode='L')
-        gt_metadata = {key: value for key, value in self.hdf5_file['{}/gt'.format(line['Subjects'])].attrs.items()}
+        gt_metadata = {key: value for key, value in self.hdf5_file['{}/gt/{}'.format(line['Subjects'], self.gt_lst[0])].attrs.items()}
 
         # ROI
-        if self.status['roi']:
-            roi_img = line['roi']
+        if self.status['roi/'+ self.roi_lst[0]]:
+            roi_img = line['roi/'+ self.roi_lst[0]]
         else:
-            roi_img = self.hdf5_file[line['roi']][line['Slices']]
+            roi_img = self.hdf5_file[line['roi/'+ self.roi_lst[0]]][line['Slices']]
 
         # convert array to pil
         roi_img = (roi_img * 255).astype(np.uint8)
         roi_img = Image.fromarray(roi_img, mode='L')
 
-        roi_metadata = {key: value for key, value in self.hdf5_file['{}/roi'.format(line['Subjects'])].attrs.items()}
+        roi_metadata = {key: value for key, value in self.hdf5_file['{}/roi/{}'.format(line['Subjects'], self.roi_lst[0])].attrs.items()}
 
         data_dict = {'input': input_tensors,
                      'gt': gt_img,
@@ -560,6 +565,11 @@ class HDF5Dataset:
                      'gt_metadata': gt_metadata,
                      'roi_metadata': roi_metadata
                      }
+        
+        
+
+        if self.transform is not None:
+            data_dict = self.transform(data_dict)
         
         return data_dict
 
