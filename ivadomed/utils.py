@@ -248,6 +248,28 @@ def combine_predictions(fname_lst, fname_hard, fname_prob):
     nib_hard.save(nib_hard, fname_hard)
 
 
+def voxelWise_uncertainty(fname_lst, fname_uncertainty, eps=1e-5):
+    """
+    Voxel-wise uncertainty is estimated as entropy over all
+    N MC probability maps, and saved in fname_uncertainty.
+    """
+    # collect all MC simulations
+    data_lst = []
+    for fname in fname_lst:
+        nib_im = nib.load(fname)
+        data_lst.append(nib_im.get_fdata())
+
+    # entropy
+    unc = np.repeat(np.expand_dims(np.array(data_lst), -1), 2, -1) # n_it, x, y, z, 2
+    unc[..., 0] = 1 - unc[..., 1]
+    unc = -np.sum(np.mean(unc, 0) * np.log(np.mean(unc, 0) + eps), -1)
+    print(unc.shape, np.max(unc), np.min(unc))
+
+    # save uncertainty map
+    nib_unc = nib.nib.Nifti1Image(unc, nib_im.affine)
+    nib_unc.save(nib_unc, fname_uncertainty)
+
+
 def dice_score(im1, im2):
     """
     Computes the Dice coefficient between im1 and im2.
