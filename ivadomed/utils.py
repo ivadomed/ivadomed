@@ -283,20 +283,43 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     data_hard = nib_hard.get_fdata()
     data_hard_l, n_l = label(data_hard_l, connectivity=3, return_num=True)
 
+    # TODO: check case where n_l = 0
+
     # load uncertainty map
     nib_uncVox = nib.load(fname_unc_vox)
     data_uncVox = nib_uncVox.get_fdata()
     del nib_uncVox
 
     # load all MC simulations and label them
-    data_lst = []
+    data_lst, data_l_lst = [], []
     for fname in fname_lst:
         nib_im = nib.load(fname)
         data_im = nib_im.get_fdata()
+        data_lst.append(data_im)
+
         data_im_l = label(data_im, connectivity=3, return_num=False)
-        data_lst.append(data_im_l)
+        data_l_lst.append(data_im_l)
         del nib_im
 
+    # loop across all structures of data_hard_l
+    for i_l in range(1, n_l+1):
+        # select the current structure, remaining voxels are set to zero
+        data_i_l = (data_hard_l == i_l).astype(np.int)
+
+        # select the current structure in each MC sample
+        # and store it in data_mc_i_l_lst
+        data_mc_i_l_lst = []
+        # loop across MC samples
+        for i_mc in range(len(data_lst)):
+            # find the structure of interest in the current MC sample
+            data_i_inter = data_i_l * data_l_lst[i_mc]
+            print(list(np.unique(data_i_inter)))
+            i_mc_l = [ii for ii in list(np.unique(data_i_inter)) if ii][0]
+
+            # keep only the unc voxels of the structure of interest
+            data_mc_i_l = np.copy(data_lst[i_mc])
+            data_mc_i_l[data_l_lst[i_mc] != i_mc] = 0.
+            data_mc_i_l_lst.append(data_mc_i_l)
 
 
 def dice_score(im1, im2):
