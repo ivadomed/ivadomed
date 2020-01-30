@@ -281,7 +281,7 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     # load hard segmentation and label it
     nib_hard = nib.load(fname_hard)
     data_hard = nib_hard.get_fdata()
-    data_hard_l, n_l = label(data_hard_l, connectivity=3, return_num=True)
+    data_hard_l, n_l = label(data_hard, connectivity=3, return_num=True)
 
     # TODO: check case where n_l = 0
 
