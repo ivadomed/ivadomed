@@ -791,7 +791,10 @@ def cmd_eval(context):
 
     # list fname pred files
     path_pred = os.path.join(context['log_directory'], 'pred_masks')
-    fname_pred_lst = os.listdir(path_pred)
+    vol_pred_lst = [f.split('_pred')[0] for f in os.listdir(path_pred) if f.endswith('.nii.gz') and '_pred' in f]
+    # one per MRI scan or subject
+    vol_pred_lst = list(set(vol_pred_lst))
+    print(vol_pred_lst)
 
     # loop across fname pred files
     for fname_pred in tqdm(fname_pred_lst, desc="Evaluation"):
