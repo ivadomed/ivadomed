@@ -806,10 +806,15 @@ def cmd_eval(context):
         if not os.path.isfile(fname_pred):
            # find Monte Carlo simulations
            fname_pred_lst = [os.path.join(path_pred, f) for f in os.listdir(path_pred) if subj_acq+'_pred_' in f]
+
            # fname for soft segmentation from MC simulations
            fname_soft = os.path.join(path_pred, subj_acq+'_soft.nii.gz')
            # average then argmax
            combine_predictions(fname_pred_lst, fname_pred, fname_soft)
+
+           # compute voxel-wise uncertainty map
+           fname_unc = os.path.join(path_pred, subj_acq+'_unc-vox.nii.gz')
+           voxelWise_uncertainty(fname_pred_lst, fname_unc)
 
         fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', fname_gt)
 
