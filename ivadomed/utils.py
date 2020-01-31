@@ -322,6 +322,23 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
             data_mc_i_l_lst.append(data_mc_i_l)
 
 
+def intersection_over_union(im1, im2):
+    """
+    Compute the Intersection over Union between im1 and im2.
+    """
+    # TODO: Adapt to multi-label segmentation tasks.
+
+    im1 = np.asarray(im1).astype(np.bool)
+    im2 = np.asarray(im2).astype(np.bool)
+
+    if im1.shape != im2.shape:
+        raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
+
+    intersection = np.logical_and(im1, im2)
+    union = np.logical_or(im1, im2)
+    return np.sum(intersection) / np.sum(union)
+
+
 def dice_score(im1, im2):
     """
     Computes the Dice coefficient between im1 and im2.
