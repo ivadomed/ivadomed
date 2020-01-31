@@ -31,6 +31,7 @@ import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
 
+AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
 def cmd_train(context):
     """Main command to train the network.
@@ -63,7 +64,7 @@ def cmd_train(context):
     else:
         print('\nArchitecture: {} with a depth of {}.\n' \
               .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else '3D Unet' if unet_3D else
-              "Unet", context['depth']))
+        "Unet", context['depth']))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -118,35 +119,10 @@ def cmd_train(context):
         train_lst = joblib.load(context["split_path"])['train']
         valid_lst = joblib.load(context["split_path"])['valid']
 
-    axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
 
-    if context["unet_3D"]:
-        ds_train = loader.Bids3DDataset(context["bids_path"],
-                                        subject_lst=train_lst,
-                                        target_suffix=context["target_suffix"],
-                                        roi_suffix=context["roi_suffix"],
-                                        contrast_lst=context["contrast_train_validation"],
-                                        metadata_choice=context["metadata"],
-                                        contrast_balance=context["contrast_balance"],
-                                        slice_axis=axis_dct[context["slice_axis"]],
-                                        transform=train_transform,
-                                        multichannel=context['multichannel'],
-                                        length=context["length_3D"],
-                                        padding=context["padding_3D"])
-    else:
-        ds_train = loader.BidsDataset(context["bids_path"],
-                                      subject_lst=train_lst,
-                                      target_suffix=context["target_suffix"],
-                                      roi_suffix=context["roi_suffix"],
-                                      contrast_lst=context["contrast_train_validation"],
-                                      metadata_choice=context["metadata"],
-                                      contrast_balance=context["contrast_balance"],
-                                      slice_axis=axis_dct[context["slice_axis"]],
-                                      transform=train_transform,
-                                      multichannel=True if context['multichannel'] else False,
-                                      slice_filter_fn=SliceFilter(**context["slice_filter"]))
+    ds_train = loader.load_dataset(train_lst, train_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_training"].keys():
@@ -178,32 +154,7 @@ def cmd_train(context):
                               num_workers=0)
 
     # Validation dataset ------------------------------------------------------
-
-    if context["unet_3D"]:
-        ds_val = loader.Bids3DDataset(context["bids_path"],
-                                      subject_lst=valid_lst,
-                                      target_suffix=context["target_suffix"],
-                                      roi_suffix=context["roi_suffix"],
-                                      contrast_lst=context["contrast_train_validation"],
-                                      metadata_choice=context["metadata"],
-                                      contrast_balance=context["contrast_balance"],
-                                      slice_axis=axis_dct[context["slice_axis"]],
-                                      transform=val_transform,
-                                      multichannel=context['multichannel'],
-                                      length=context["length_3D"],
-                                      padding=context["padding_3D"])
-    else:
-        ds_val = loader.BidsDataset(context["bids_path"],
-                                    subject_lst=valid_lst,
-                                    target_suffix=context["target_suffix"],
-                                    roi_suffix=context["roi_suffix"],
-                                    contrast_lst=context["contrast_train_validation"],
-                                    metadata_choice=context["metadata"],
-                                    contrast_balance=context["contrast_balance"],
-                                    slice_axis=axis_dct[context["slice_axis"]],
-                                    transform=val_transform,
-                                    multichannel=True if context['multichannel'] else False,
-                                    slice_filter_fn=SliceFilter(**context["slice_filter"]))
+    ds_val = loader.load_dataset(valid_lst, val_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
@@ -357,6 +308,8 @@ def cmd_train(context):
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
 
+            if isinstance(input_samples, list) and len(input_samples) > 1:
+                input_samples = torch.cat(input_samples, dim=1)
             # mixup data
             if mixup_bool and not film_bool:
                 input_samples, gt_samples, lambda_tensor = mixup(input_samples, gt_samples, mixup_alpha)
@@ -476,6 +429,8 @@ def cmd_train(context):
 
         for i, batch in enumerate(val_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
+            if isinstance(input_samples, list) and len(input_samples) > 1:
+                input_samples = input_samples = torch.cat(input_samples, dim=1)
 
             with torch.no_grad():
                 if cuda_available:
@@ -681,33 +636,7 @@ def cmd_test(context):
     else:
         test_lst = joblib.load(context["split_path"])['test']
 
-    axis_dct = {'sagittal': 0, 'coronal': 1, 'axial': 2}
-
-    if context["unet_3D"]:
-        ds_test = loader.Bids3DDataset(context["bids_path"],
-                                       subject_lst=test_lst,
-                                       target_suffix=context["target_suffix"],
-                                       roi_suffix=context["roi_suffix"],
-                                       contrast_lst=context["contrast_test"],
-                                       metadata_choice=context["metadata"],
-                                       contrast_balance=context["contrast_balance"],
-                                       slice_axis=axis_dct[context["slice_axis"]],
-                                       transform=val_transform,
-                                       multichannel=context['multichannel'],
-                                       length=context["length_3D"],
-                                       padding=context["padding_3D"])
-    else:
-        ds_test = loader.BidsDataset(context["bids_path"],
-                                     subject_lst=test_lst,
-                                     target_suffix=context["target_suffix"],
-                                     roi_suffix=context["roi_suffix"],
-                                     contrast_lst=context["contrast_test"],
-                                     metadata_choice=context["metadata"],
-                                     contrast_balance=context["contrast_balance"],
-                                     slice_axis=axis_dct[context["slice_axis"]],
-                                     transform=val_transform,
-                                     multichannel=True if context['multichannel'] else False,
-                                     slice_filter_fn=SliceFilter(**context["slice_filter"]))
+    ds_test = loader.load_dataset(test_lst, val_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
@@ -755,6 +684,8 @@ def cmd_test(context):
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
+        if isinstance(input_samples, list) and len(input_samples) > 1:
+            input_samples = input_samples = torch.cat(input_samples, dim=1)
 
         with torch.no_grad():
             if cuda_available:
@@ -800,7 +731,7 @@ def cmd_test(context):
                     # save the completely processed file as a nii
                     fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
                     fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
-                    save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, axis_dct[context['slice_axis']])
+                    save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, AXIS_DCT[context['slice_axis']])
                     # re-init pred_stack_lst
                     pred_tmp_lst, z_tmp_lst = [], []
 
