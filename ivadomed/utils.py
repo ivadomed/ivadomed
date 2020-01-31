@@ -322,7 +322,7 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
             data_mc_i_l[data_l_lst[i_mc] != i_mc] = 0.
             data_mc_i_l_lst.append(data_mc_i_l)
 
-        # compute IoU over all theNMC samples for a specific structure
+        # compute IoU over all the N MC samples for a specific structure
         intersection = np.logical_and(data_mc_i_l_lst[0].astype(np.bool),
                                         data_mc_i_l_lst[1].astype(np.bool))
         union = np.logical_or(data_mc_i_l_lst[0].astype(np.bool),
@@ -333,6 +333,12 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
             union = np.logical_and(union,
                                     data_mc_i_l_lst[i_mc].astype(np.bool))
         iou = np.sum(intersection) / np.sum(union)
+
+        # compute coefficient of variation for all MC volume estimates for a given structure
+        vol_mc_lst = [np.sum(data_mc_i_l_lst[i_mc]) for i_mc in range(len(data_lst))]
+        mu_mc = np.mean(vol_mc_lst)
+        sigma_mc = np.std(vol_mc_lst)
+        cv = sigma_mc / mu_mc
 
 
 def dice_score(im1, im2):
