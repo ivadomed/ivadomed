@@ -53,17 +53,17 @@ def cmd_train(context):
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet or MixupUnet
     metadata_bool = False if context["metadata"] == "without" else True
     film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
+    unet_3D = context["unet_3D"]
     HeMIS = context['missing_modality']
     if film_bool:
         context["multichannel"] = False
 
     if bool(sum(context["film_layers"])) and not (metadata_bool):
         print('\tWarning FiLM disabled since metadata is disabled')
-    if context['unet_3D']:
-        print('\nArchitecture: 3D Unet')
     else:
         print('\nArchitecture: {} with a depth of {}.\n' \
-              .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else 'Unet', context['depth']))
+              .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else '3D Unet' if unet_3D else
+              "Unet", context['depth']))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -124,17 +124,17 @@ def cmd_train(context):
 
     if context["unet_3D"]:
         ds_train = loader.Bids3DDataset(context["bids_path"],
-                                      subject_lst=train_lst,
-                                      target_suffix=context["target_suffix"],
-                                      roi_suffix=context["roi_suffix"],
-                                      contrast_lst=context["contrast_train_validation"],
-                                      metadata_choice=context["metadata"],
-                                      contrast_balance=context["contrast_balance"],
-                                      slice_axis=axis_dct[context["slice_axis"]],
-                                      transform=train_transform,
-                                      multichannel=context['multichannel'],
-                                      length=context["length_3D"],
-                                      padding=context["padding_3D"])
+                                        subject_lst=train_lst,
+                                        target_suffix=context["target_suffix"],
+                                        roi_suffix=context["roi_suffix"],
+                                        contrast_lst=context["contrast_train_validation"],
+                                        metadata_choice=context["metadata"],
+                                        contrast_balance=context["contrast_balance"],
+                                        slice_axis=axis_dct[context["slice_axis"]],
+                                        transform=train_transform,
+                                        multichannel=context['multichannel'],
+                                        length=context["length_3D"],
+                                        padding=context["padding_3D"])
     else:
         ds_train = loader.BidsDataset(context["bids_path"],
                                       subject_lst=train_lst,
@@ -147,7 +147,6 @@ def cmd_train(context):
                                       transform=train_transform,
                                       multichannel=True if context['multichannel'] else False,
                                       slice_filter_fn=SliceFilter(**context["slice_filter"]))
-
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_training"].keys():
@@ -182,17 +181,17 @@ def cmd_train(context):
 
     if context["unet_3D"]:
         ds_val = loader.Bids3DDataset(context["bids_path"],
-                                    subject_lst=valid_lst,
-                                    target_suffix=context["target_suffix"],
-                                    roi_suffix=context["roi_suffix"],
-                                    contrast_lst=context["contrast_train_validation"],
-                                    metadata_choice=context["metadata"],
-                                    contrast_balance=context["contrast_balance"],
-                                    slice_axis=axis_dct[context["slice_axis"]],
-                                    transform=val_transform,
-                                    multichannel=context['multichannel'],
-                                    length=context["length_3D"],
-                                    padding=context["padding_3D"])
+                                      subject_lst=valid_lst,
+                                      target_suffix=context["target_suffix"],
+                                      roi_suffix=context["roi_suffix"],
+                                      contrast_lst=context["contrast_train_validation"],
+                                      metadata_choice=context["metadata"],
+                                      contrast_balance=context["contrast_balance"],
+                                      slice_axis=axis_dct[context["slice_axis"]],
+                                      transform=val_transform,
+                                      multichannel=context['multichannel'],
+                                      length=context["length_3D"],
+                                      padding=context["padding_3D"])
     else:
         ds_val = loader.BidsDataset(context["bids_path"],
                                     subject_lst=valid_lst,
@@ -205,7 +204,6 @@ def cmd_train(context):
                                     transform=val_transform,
                                     multichannel=True if context['multichannel'] else False,
                                     slice_filter_fn=SliceFilter(**context["slice_filter"]))
-
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
@@ -265,7 +263,7 @@ def cmd_train(context):
         # Replace the last conv layer
         # Note: Parameters of newly constructed layer have requires_grad=True by default
         model.decoder.last_conv = nn.Conv2d(model.decoder.last_conv.in_channels,
-                                               context['out_channel'], kernel_size=3, padding=1)
+                                            context['out_channel'], kernel_size=3, padding=1)
         if film_bool and context["film_layers"][-1]:
             model.decoder.last_film = models.FiLMlayer(n_metadata, 1)
 
@@ -687,30 +685,29 @@ def cmd_test(context):
 
     if context["unet_3D"]:
         ds_test = loader.Bids3DDataset(context["bids_path"],
-                                    subject_lst=test_lst,
-                                    target_suffix=context["target_suffix"],
-                                    roi_suffix=context["roi_suffix"],
-                                    contrast_lst=context["contrast_test"],
-                                    metadata_choice=context["metadata"],
-                                    contrast_balance=context["contrast_balance"],
-                                    slice_axis=axis_dct[context["slice_axis"]],
-                                    transform=val_transform,
-                                    multichannel=context['multichannel'],
-                                    length=context["length_3D"],
-                                    padding=context["padding_3D"])
+                                       subject_lst=test_lst,
+                                       target_suffix=context["target_suffix"],
+                                       roi_suffix=context["roi_suffix"],
+                                       contrast_lst=context["contrast_test"],
+                                       metadata_choice=context["metadata"],
+                                       contrast_balance=context["contrast_balance"],
+                                       slice_axis=axis_dct[context["slice_axis"]],
+                                       transform=val_transform,
+                                       multichannel=context['multichannel'],
+                                       length=context["length_3D"],
+                                       padding=context["padding_3D"])
     else:
         ds_test = loader.BidsDataset(context["bids_path"],
-                                    subject_lst=test_lst,
-                                    target_suffix=context["target_suffix"],
-                                    roi_suffix=context["roi_suffix"],
-                                    contrast_lst=context["contrast_test"],
-                                    metadata_choice=context["metadata"],
-                                    contrast_balance=context["contrast_balance"],
-                                    slice_axis=axis_dct[context["slice_axis"]],
-                                    transform=val_transform,
-                                    multichannel=True if context['multichannel'] else False,
-                                    slice_filter_fn=SliceFilter(**context["slice_filter"]))
-
+                                     subject_lst=test_lst,
+                                     target_suffix=context["target_suffix"],
+                                     roi_suffix=context["roi_suffix"],
+                                     contrast_lst=context["contrast_test"],
+                                     metadata_choice=context["metadata"],
+                                     contrast_balance=context["contrast_balance"],
+                                     slice_axis=axis_dct[context["slice_axis"]],
+                                     transform=val_transform,
+                                     multichannel=True if context['multichannel'] else False,
+                                     slice_filter_fn=SliceFilter(**context["slice_filter"]))
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
@@ -783,8 +780,8 @@ def cmd_test(context):
         rdict['gt'] = preds.cpu()
         batch.update(rdict)
 
-        if batch["input"].shape[1] > 1:
-            batch["input_metadata"] = batch["input_metadata"][1] # Take only second channel
+        if batch["input"].shape[1] > 1 or context['unet_3D']:
+            batch["input_metadata"] = batch["input_metadata"][0]  # Take only second channel
 
         # reconstruct 3D image
         for smp_idx in range(len(batch['gt'])):
@@ -798,7 +795,8 @@ def cmd_test(context):
 
             fname_ref = rdict_undo['input_metadata']['gt_filename']
             if not context['unet_3D']:
-                if pred_tmp_lst and (fname_ref != fname_tmp or (i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
+                if pred_tmp_lst and (fname_ref != fname_tmp or (
+                        i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
                     # save the completely processed file as a nii
                     fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
                     fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
@@ -825,6 +823,8 @@ def cmd_test(context):
         preds_npy = threshold_predictions(preds_npy)
         preds_npy = preds_npy.astype(np.uint8)
         preds_npy = preds_npy.squeeze(axis=1)
+        for batch in range(preds_npy.shape[0]):
+            preds_npy[batch, :, :, :] = remove_small_objects(np.squeeze(preds_npy[batch, :, :, :]))[None, :, :, :]
 
         metric_mgr(preds_npy, gt_npy)
 
@@ -832,11 +832,12 @@ def cmd_test(context):
     metric_mgr.reset()
     print(metrics_dict)
 
+
 def cmd_eval(context):
     ##### DEFINE DEVICE #####
+    cmd_test(context)
     device = torch.device("cpu")
     print("Working on {}.".format(device))
-
 
     if context.get("split_path") is None:
         test_lst = joblib.load("./" + context["log_directory"] + "/split_datasets.joblib")['test']
@@ -858,7 +859,7 @@ def cmd_eval(context):
     # loop across fname pred files
     for fname_pred in tqdm(fname_pred_lst, desc="Evaluation"):
         subj_acq = fname_pred.split('_pred.nii.gz')[0]
-        fname_gt = subj_acq+context['target_suffix']+'.nii.gz'
+        fname_gt = subj_acq + context['target_suffix'] + '.nii.gz'
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
         fname_pred = os.path.join(path_pred, fname_pred)
@@ -896,6 +897,7 @@ def run_main():
         cmd_test(context)
     elif command == 'eval':
         cmd_eval(context)
+
 
 if __name__ == "__main__":
     run_main()
