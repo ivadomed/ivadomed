@@ -291,6 +291,9 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     data_uncVox = nib_uncVox.get_fdata()
     del nib_uncVox
 
+    # init output arrays
+    data_iou, data_cv, data_avgUnc = np.zeros(data_hard.shape), np.zeros(data_hard.shape), np.zeros(data_hard.shape)
+
     # load all MC simulations and label them
     data_lst, data_l_lst = [], []
     for fname in fname_lst:
@@ -343,6 +346,10 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         # compute average voxel-wise uncertainty within the structure
         avgUnc = np.mean(data_uncVox[data_i_l != 0])
 
+        # assign uncertainty value to the structure
+        data_iou[data_i_l != 0] = iou
+        data_cv[data_i_l != 0] = cv
+        data_avgUnc[data_i_l != 0] = avgUnc
 
 def dice_score(im1, im2):
     """
