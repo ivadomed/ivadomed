@@ -35,6 +35,7 @@
         "slice_filter_roi": 10,
 	"early_stopping_patience": 10,
 	"early_stopping_epsilon": 0.001,
+	"unet_3D": false,
 	"transformation_training": {
 		"Resample": {
 			"wspace": 0.75,
