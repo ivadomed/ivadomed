@@ -277,7 +277,7 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     and saved in fname_out with the following suffixes:
        - '-cv.nii.gz': coefficient of variation
        - '-iou.nii.gz': intersection over union
-       - '-unc.nii.gz': average voxel-wise uncertainty within the structure.
+       - '-avgUnc.nii.gz': average voxel-wise uncertainty within the structure.
     """
     # load hard segmentation and label it
     nib_hard = nib.load(fname_hard)
@@ -339,6 +339,9 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         mu_mc = np.mean(vol_mc_lst)
         sigma_mc = np.std(vol_mc_lst)
         cv = sigma_mc / mu_mc
+
+        # compute average voxel-wise uncertainty within the structure
+        avgUnc = np.mean(data_uncVox[data_i_l != 0])
 
 
 def dice_score(im1, im2):
