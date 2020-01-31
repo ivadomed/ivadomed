@@ -6,6 +6,7 @@ from skimage.measure import label
 import torchvision.transforms.functional as F
 import matplotlib.pyplot as plt
 from collections import defaultdict
+from itertools import combinations
 
 from medicaltorch import filters as mt_filters
 from medicaltorch import metrics as mt_metrics
@@ -321,22 +322,17 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
             data_mc_i_l[data_l_lst[i_mc] != i_mc] = 0.
             data_mc_i_l_lst.append(data_mc_i_l)
 
-
-def intersection_over_union(im1, im2):
-    """
-    Compute the Intersection over Union between im1 and im2.
-    """
-    # TODO: Adapt to multi-label segmentation tasks.
-
-    im1 = np.asarray(im1).astype(np.bool)
-    im2 = np.asarray(im2).astype(np.bool)
-
-    if im1.shape != im2.shape:
-        raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
-
-    intersection = np.logical_and(im1, im2)
-    union = np.logical_or(im1, im2)
-    return np.sum(intersection) / np.sum(union)
+        # compute IoU over all theNMC samples for a specific structure
+        intersection = np.logical_and(data_mc_i_l_lst[0].astype(np.bool),
+                                        data_mc_i_l_lst[1].astype(np.bool))
+        union = np.logical_or(data_mc_i_l_lst[0].astype(np.bool),
+                                data_mc_i_l_lst[1].astype(np.bool))
+        for i_mc in range(2, len(data_lst)):
+            intersection = np.logical_and(intersection,
+                                            data_mc_i_l_lst[i_mc].astype(np.bool))
+            union = np.logical_and(union,
+                                    data_mc_i_l_lst[i_mc].astype(np.bool))
+        iou = np.sum(intersection) / np.sum(union)
 
 
 def dice_score(im1, im2):
