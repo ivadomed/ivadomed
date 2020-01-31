@@ -319,13 +319,15 @@ class HeMISUnet(Module):
         return preds
 
 
-class Modified3DUNet(nn.Module):
+class UNet3D(nn.Module):
     """
     Code from the following repository:
     https://github.com/pykao/Modified-3D-UNet-Pytorch
+    The main differences with the original UNet resides in the use of LeakyReLU instead of ReLU, InstanceNormalisation
+    instead of BatchNorm due to small batch size in 3D and the addition of segmentation layers in the decoder.
     """
     def __init__(self, in_channels, n_classes, base_n_filter=32):
-        super(Modified3DUNet, self).__init__()
+        super(UNet3D, self).__init__()
         self.in_channels = in_channels
         self.n_classes = n_classes
         self.base_n_filter = base_n_filter

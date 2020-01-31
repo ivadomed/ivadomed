@@ -194,7 +194,7 @@ def cmd_train(context):
         in_channel = len(context['multichannel'])
 
     if context['unet_3D']:
-        model = models.Modified3DUNet(in_channels=in_channel, n_classes=1)
+        model = models.UNet3D(in_channels=in_channel, n_classes=1)
     elif context['retrain_model'] is None:
         model = models.Unet(in_channel=in_channel,
                             out_channel=context['out_channel'],
