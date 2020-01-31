@@ -351,6 +351,18 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         data_cv[data_i_l != 0] = cv
         data_avgUnc[data_i_l != 0] = avgUnc
 
+    # save nifti files
+    fname_iou = fname_out.split('.nii.gz')[0]+'-iou.nii.gz'
+    fname_cv = fname_out.split('.nii.gz')[0]+'-cv.nii.gz'
+    fname_avgUnc = fname_out.split('.nii.gz')[0]+'-avgUnc.nii.gz'
+    nib_iou = nib.Nifti1Image(data_iou, nib_hard.affine)
+    nib_cv = nib.Nifti1Image(data_cv, nib_hard.affine)
+    nib_avgUnc = nib.Nifti1Image(data_avgUnc, nib_hard.affine)
+    nib.save(nib_iou, fname_iou)
+    nib.save(nib_cv, fname_cv)
+    nib.save(nib_avgUnc, fname_avgUnc)
+
+
 def dice_score(im1, im2):
     """
     Computes the Dice coefficient between im1 and im2.
