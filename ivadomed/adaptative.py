@@ -1,4 +1,5 @@
 import copy
+from os import path
 
 import h5py
 import numpy as np
@@ -87,7 +88,7 @@ class Dataframe:
         col_names = [col for col in empty_line.keys()]
         col_names.append('Subjects')
         df = pd.DataFrame(columns=col_names)
-        
+
         # Filling the data frame
         for subject in hdf5.attrs['patients_id']:
             # Getting the Group the corresponding patient
@@ -124,18 +125,18 @@ class Dataframe:
 
             # Adding slices & removing useless slices if loading in ram
             line['Slices'] = np.array(grp.attrs['slices'])
-            
+
             # If the number of dimension is 2, we separate the slices
             if self.dim == 2:
                 if self.filter:
                     for n in line['Slices']:
                         line_slice = copy.deepcopy(line)
                         line_slice['Slices'] = n
-                        df = df.append(line_slice, ignore_index=True)                      
-    
+                        df = df.append(line_slice, ignore_index=True)
+
             else:
-                df = df.append(line, ignore_index=True)            
-        
+                df = df.append(line, ignore_index=True)
+
         self.df = df
 
 
@@ -282,7 +283,7 @@ class Bids_to_hdf5:
             seg_pair = mt_datasets.SegmentationPair2D(input_filename, gt_filename, metadata=metadata, cache=False,
                                                       canonical=self.canonical)
 
-            input_data_shape, _ = seg_pair.get_pair_shapes()   
+            input_data_shape, _ = seg_pair.get_pair_shapes()
 
             useful_slices = []
             input_volumes = []
@@ -290,7 +291,7 @@ class Bids_to_hdf5:
             roi_volume = []
 
             for idx_pair_slice in range(input_data_shape[self.slice_axis]):
-                
+
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice,
                                                          self.slice_axis)
 
@@ -299,8 +300,7 @@ class Bids_to_hdf5:
                     filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
                 if self.slice_filter_fn and filter_fn_ret_seg:
                     useful_slices.append(idx_pair_slice)
-                    
-                    
+
                 roi_pair_slice = roi_pair.get_pair_slice(idx_pair_slice, self.slice_axis)
 
                 input_volumes.append(slice_seg_pair["input"][0])
@@ -322,7 +322,7 @@ class Bids_to_hdf5:
             gt_metadata = slice_seg_pair['gt_metadata']
             roi_metadata = roi_pair_slice['input_metadata'][0]
 
-            if grp.attrs.__contains__('slices'): 
+            if grp.attrs.__contains__('slices'):
                 grp.attrs['slices'] = list(set(np.concatenate((grp.attrs['slices'], useful_slices))))
             else:
                 grp.attrs['slices'] = useful_slices
@@ -544,19 +544,21 @@ class HDF5Dataset:
         # convert array to pil
         gt_img = (gt_img * 255).astype(np.uint8)
         gt_img = Image.fromarray(gt_img, mode='L')
-        gt_metadata = {key: value for key, value in self.hdf5_file['{}/gt/{}'.format(line['Subjects'], self.gt_lst[0])].attrs.items()}
+        gt_metadata = {key: value for key, value in
+                       self.hdf5_file['{}/gt/{}'.format(line['Subjects'], self.gt_lst[0])].attrs.items()}
 
         # ROI
-        if self.status['roi/'+ self.roi_lst[0]]:
-            roi_img = line['roi/'+ self.roi_lst[0]]
+        if self.status['roi/' + self.roi_lst[0]]:
+            roi_img = line['roi/' + self.roi_lst[0]]
         else:
-            roi_img = self.hdf5_file[line['roi/'+ self.roi_lst[0]]][line['Slices']]
+            roi_img = self.hdf5_file[line['roi/' + self.roi_lst[0]]][line['Slices']]
 
         # convert array to pil
         roi_img = (roi_img * 255).astype(np.uint8)
         roi_img = Image.fromarray(roi_img, mode='L')
 
-        roi_metadata = {key: value for key, value in self.hdf5_file['{}/roi/{}'.format(line['Subjects'], self.roi_lst[0])].attrs.items()}
+        roi_metadata = {key: value for key, value in
+                        self.hdf5_file['{}/roi/{}'.format(line['Subjects'], self.roi_lst[0])].attrs.items()}
 
         data_dict = {'input': input_tensors,
                      'gt': gt_img,
@@ -565,12 +567,10 @@ class HDF5Dataset:
                      'gt_metadata': gt_metadata,
                      'roi_metadata': roi_metadata
                      }
-        
-        
 
         if self.transform is not None:
             data_dict = self.transform(data_dict)
-        
+
         return data_dict
 
     def update(self, strategy="Missing"):
@@ -598,3 +598,47 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
             filter_indexes.append((segpair, slice_roi_pair))
 
         self.indexes = filter_indexes
+
+
+def HDF5_to_Bids(HDF5, subjects, path_dir):
+    # Open FDH5 file
+    hdf5 = h5py.File(HDF5, "r")
+    # check the dir exists:
+    if not path.exists(path_dir):
+        print("Directory doesn't exist. Stopping process.")
+        exit(0)
+    # loop over all subjects
+    for sub in subjects:
+        path_sub = path_dir + '/' + sub
+        path_label = path_dir + '/derivatives/labels/' + sub + '/anat/'
+
+        if not path.exists(path_sub):
+            os.mkdir(path_sub)
+
+        if not path.exists(path_label):
+            os.mkdir(path_label)
+
+        # Get Subject Group
+        grp = hdf5['sub']
+        # inputs
+        cts = grp['inputs'].attrs['contrast']
+
+        for ct in cts:
+            input = grp['inputs/{}'.format(ct)]
+
+            ## Save nii with save_nii
+
+        # GT
+        cts = grp['gt'].attrs['contrast']
+
+        for ct in cts:
+            gt = grp['gt/{}'.format(ct)]
+
+            ## Save nii with save_nii
+
+        cts = grp['roi'].attrs['contrast']
+
+        for ct in cts:
+            input = grp['roi/{}'.format(ct)]
+
+            ## Save nii with save_nii
