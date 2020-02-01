@@ -140,7 +140,10 @@ def cmd_train(context):
                                                                   context["metadata"],
                                                                   True)
 
-    print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
+    if not unet_3D:
+        print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
+    else:
+        print(f"Loaded {len(ds_train)} volumes of size {context['length_3D']} for the training set.")
 
     if context['balance_samples']:
         sampler_train = loader.BalancedSampler(ds_train)
@@ -167,7 +170,10 @@ def cmd_train(context):
                                            context["metadata"],
                                            False)
 
-    print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")
+    if not unet_3D:
+        print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")
+    else:
+        print(f"Loaded {len(ds_val)} volumes of size {context['length_3D']} for the validation set.")
 
     if context['balance_samples']:
         sampler_val = loader.BalancedSampler(ds_val)
@@ -657,7 +663,11 @@ def cmd_test(context):
 
         one_hot_encoder = joblib.load("./" + context["log_directory"] + "/one_hot_encoder.joblib")
 
-    print(f"Loaded {len(ds_test)} {context['slice_axis']} slices for the test set.")
+    if not context["unet_3D"]:
+        print(f"Loaded {len(ds_test)} {context['slice_axis']} slices for the test set.")
+    else:
+        print(f"Loaded {len(ds_test)} volumes of size {context['length_3D']} for the test set.")
+
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
                              shuffle=False, pin_memory=True,
                              collate_fn=mt_datasets.mt_collate,
