@@ -22,7 +22,7 @@
     "mixup_bool": true,
     "mixup_alpha": 2,
     "metadata": "without",
-    "multichannel": ["T1w","T2w"],
+    "multichannel": true,
     "missing_modality": false,
     "out_channel": 1,
     "depth": 3,
@@ -42,7 +42,7 @@
     "early_stopping_patience": 1000,
     "early_stopping_epsilon": 0.001,
     "transformation_training": {
-      "ElasticTransform3D": {
+      "ElasticTransform": {
         "alpha_range": [28.0, 30.0],
         "sigma_range":  [3.5, 4.5],
         "p": 0.1
@@ -54,11 +54,13 @@
       },
       "RandomReverse3D": {},
       "ToTensor3D": {},
-      "NormalizeInstance3D": {}
+      "NormalizeInstance3D": {},
+      "StackTensors": {}
     },
     "transformation_validation": {
       "ToTensor3D": {},
-      "NormalizeInstance3D": {}
+      "NormalizeInstance3D": {},
+      "StackTensors": {}
     },
     "debugging": false
 }

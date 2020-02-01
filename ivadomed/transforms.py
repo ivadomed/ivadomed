@@ -15,6 +15,7 @@ from scipy.ndimage.interpolation import map_coordinates
 def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
        from the mt_transforms."""
+
     return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor', 'CenterCrop2D', 'CenterCrop3D',
             'RandomAffine3D', 'NormalizeInstance3D', 'ToTensor3D']
 
@@ -32,6 +33,7 @@ class UndoCompose(object):
 class Resample(mt_transforms.Resample):
     """This class extends mt_transforms.Resample:
         resample the ROI image if provided."""
+
     def __init__(self, wspace, hspace,
                  interpolation=Image.BILINEAR,
                  labeled=True):
@@ -48,7 +50,7 @@ class Resample(mt_transforms.Resample):
         hshape, wshape = sample['input_metadata']['data_shape']
         hzoom, wzoom = sample['input_metadata']['zooms']
         input_data_undo = sample['input'].resize((wshape, hshape),
-                                                   resample=self.interpolation)
+                                                 resample=self.interpolation)
         rdict['input'] = input_data_undo
 
         # undo pred, aka GT
@@ -65,9 +67,10 @@ class Resample(mt_transforms.Resample):
         input_data = sample['input']
         input_metadata = sample['input_metadata']
 
+        # Based on the assumption that the metadata of every modality are equal.
         # Voxel dimension in mm
-        hzoom, wzoom = input_metadata["zooms"]
-        hshape, wshape = input_metadata["data_shape"]
+        hzoom, wzoom = input_metadata[0]["zooms"]
+        hshape, wshape = input_metadata[0]["data_shape"]
 
         hfactor = hzoom / self.hspace
         wfactor = wzoom / self.wspace
@@ -75,8 +78,10 @@ class Resample(mt_transforms.Resample):
         hshape_new = int(round(hshape * hfactor))
         wshape_new = int(round(wshape * wfactor))
 
-        input_data = input_data.resize((wshape_new, hshape_new),
-                                       resample=self.interpolation)
+        for i, input_image in enumerate(input_data):
+            input_data[i] = input_image.resize((wshape_new, hshape_new),
+                                               resample=self.interpolation)
+
         rdict['input'] = input_data
 
         if self.labeled:
@@ -93,43 +98,25 @@ class Resample(mt_transforms.Resample):
 
 class NormalizeInstance(mt_transforms.NormalizeInstance):
     """This class extends mt_transforms.Normalize"""
+
     def undo_transform(self, sample):
         return sample
 
 
 class ToTensor(mt_transforms.ToTensor):
     """This class extends mt_transforms.ToTensor"""
+
     def undo_transform(self, sample):
         return mt_transforms.ToPIL()(sample)
 
 
-class CenterCrop2D(mt_transforms.CenterCrop2D):
-    """This class extends mt_transforms.CenterCrop2D"""
-    def _uncrop(self, data, params):
-        fh, fw, w, h = params
-        th, tw = self.size
-        pad_left = fw
-        pad_right = w - pad_left - tw
-        pad_top = fh
-        pad_bottom = h - pad_top - th
-        padding = (pad_left, pad_top, pad_right, pad_bottom)
-        return F.pad(data, padding)
-
-
-    def undo_transform(self, sample):
-        rdict = {}
-        rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
-        rdict['gt'] = self._uncrop(sample['gt'], sample['gt_metadata']["__centercrop"])
-        sample.update(rdict)
-        return sample
-
-
-class ROICrop2D(CenterCrop2D):
+class ROICrop2D(mt_transforms.CenterCrop2D):
     """Make a crop of a specified size around a ROI.
     :param labeled: if it is a segmentation task.
                          When this is True (default), the crop
                          will also be applied to the ground truth.
     """
+
     def __init__(self, size, labeled=True):
         super().__init__(size, labeled)
 
@@ -145,7 +132,12 @@ class ROICrop2D(CenterCrop2D):
 
     def undo_transform(self, sample):
         rdict = {}
-        rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
+        if isinstance(sample['input'], list):
+            for i in range(len(sample['input'])):
+                rdict['input'] = self._uncrop(sample['input'][i], sample['input_metadata'][i]["__centercrop"])
+        else:
+            rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
+
         rdict['gt'] = self._uncrop(sample['gt'], sample['gt_metadata']["__centercrop"])
 
         sample.update(rdict)
@@ -156,23 +148,24 @@ class ROICrop2D(CenterCrop2D):
         input_data = sample['input']
         roi_data = sample['roi']
 
-        w, h = input_data.size
-        tw, th = self.size
-        th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
-
         # compute center of mass of the ROI
         x_roi, y_roi = center_of_mass(np.array(roi_data).astype(np.int))
         x_roi, y_roi = int(round(x_roi)), int(round(y_roi))
+        tw, th = self.size
+        th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
 
         # compute top left corner of the crop area
         fh = y_roi - th_half
         fw = x_roi - tw_half
 
-        params = (fh, fw, h, w)
-        self.propagate_params(sample, params)
+        for i in range(len(input_data)):
+            w, h = input_data[i].size
+            params = (fh, fw, h, w)
 
-        # crop data
-        input_data = F.crop(input_data, fw, fh, tw, th)
+            self.propagate_params(sample, params, i)
+            # crop data
+            input_data[i] = F.crop(input_data[i], fw, fh, tw, th)
+
         rdict['input'] = input_data
 
         if self.labeled:
@@ -181,6 +174,7 @@ class ROICrop2D(CenterCrop2D):
             gt_data = F.crop(gt_data, fw, fh, tw, th)
             gt_metadata["__centercrop"] = (fh, fw, h, w)
             rdict['gt'] = gt_data
+            #rdict['gt_metadata'] = gt_metadata
 
         # free memory
         rdict['roi'], rdict['roi_metadata'] = None, None
@@ -200,7 +194,6 @@ class DilateGT(mt_transforms.MTTransform):
     def __init__(self, dilation_factor):
         self.dil_factor = dilation_factor
 
-
     def dilate_lesion(self, arr_bin, arr_soft, label_values):
         for lb in label_values:
             # binary dilation with 1 iteration
@@ -218,20 +211,19 @@ class DilateGT(mt_transforms.MTTransform):
 
         return arr_bin, arr_soft
 
-
     def dilate_arr(self, arr, dil_factor):
         # identify each object
         arr_labeled, lb_nb = label(arr.astype(np.int))
 
         # loop across each object
         arr_bin_lst, arr_soft_lst = [], []
-        for obj_idx in range(1, lb_nb+1):
+        for obj_idx in range(1, lb_nb + 1):
             arr_bin_obj = (arr_labeled == obj_idx).astype(np.int)
             arr_soft_obj = np.copy(arr_bin_obj).astype(np.float)
             # compute the number of dilation iterations depending on the size of the lesion
             nb_it = int(round(dil_factor * math.sqrt(arr_bin_obj.sum())))
             # values of the voxels added to the input mask
-            soft_label_values = [x / (nb_it+1) for x in range(nb_it, 0, -1)]
+            soft_label_values = [x / (nb_it + 1) for x in range(nb_it, 0, -1)]
             # dilate lesion
             arr_bin_dil, arr_soft_dil = self.dilate_lesion(arr_bin_obj, arr_soft_obj, soft_label_values)
             arr_bin_lst.append(arr_bin_dil)
@@ -245,7 +237,6 @@ class DilateGT(mt_transforms.MTTransform):
 
         return arr_soft_clip.astype(np.float), arr_bin_clip.astype(np.int)
 
-
     def random_holes(self, arr_in, arr_soft, arr_bin):
         arr_soft_out = np.copy(arr_soft)
 
@@ -257,7 +248,7 @@ class DilateGT(mt_transforms.MTTransform):
         new_voxel_ratio = random.random()
         # randomly select new voxel indexes to remove
         idx_to_remove = random.sample(range(nb_new_voxels),
-                                            int(round(nb_new_voxels * (1 - new_voxel_ratio))))
+                                      int(round(nb_new_voxels * (1 - new_voxel_ratio))))
 
         # set to zero the here-above randomly selected new voxels
         arr_soft_out[new_voxels_xx[idx_to_remove], new_voxels_yy[idx_to_remove]] = 0.0
@@ -265,12 +256,11 @@ class DilateGT(mt_transforms.MTTransform):
 
         return arr_soft_out, arr_bin_out
 
-
     def post_processing(self, arr_in, arr_soft, arr_bin, arr_dil):
         # remove new object that are not connected to the input mask
         arr_labeled, lb_nb = label(arr_bin)
         connected_to_in = arr_labeled * arr_in
-        for lb in range(1, lb_nb+1):
+        for lb in range(1, lb_nb + 1):
             if np.sum(connected_to_in == lb) == 0:
                 arr_soft[arr_labeled == lb] = 0
 
@@ -283,7 +273,6 @@ class DilateGT(mt_transforms.MTTransform):
         arr_soft_out = arr_bin_filled * arr_dil
 
         return arr_soft_out
-
 
     def __call__(self, sample):
         gt_data = sample['gt']

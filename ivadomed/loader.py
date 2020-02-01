@@ -16,7 +16,6 @@ from glob import glob
 from copy import deepcopy
 from tqdm import tqdm
 import nibabel as nib
-from PIL import Image
 import torch
 
 with open("config/contrast_dct.json", "r") as fhandle:
@@ -49,9 +48,8 @@ class Bids3DDataset(mt_datasets.MRI3DSubVolumeSegmentationDataset):
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2,
-                 cache=True,
-                 transform=None, metadata_choice=False, slice_filter_fn=None,
-                 canonical=True, labeled=True, roi_suffix=None, multichannel=False):
+                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None,
+                 canonical=True, labeled=True, roi_suffix=None, multichannel=False, missing_modality=False):
 
         self.bids_ds = bids.BIDS(root_dir)
         self.filename_pairs = []
@@ -59,8 +57,7 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
 
-        bids_subjects = [s for s in self.bids_ds.get_subjects(
-        ) if s.record["subject_id"] in subject_lst]
+        bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
 
         # Create a list with the filenames for all contrasts and subjects
         subjects_tot = []
@@ -68,8 +65,10 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
             subjects_tot.append(str(subject.record["absolute_path"]))
 
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
+
         tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast])
                for contrast in contrast_balance.keys()}
+
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
 
@@ -194,10 +193,10 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
             X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
     elif split_method == 'per_patient':
         # Separate dataset in test, train and validation using sklearn function
-        X_train, X_remain = train_test_split(
-            df['participant_id'].tolist(), train_size=train_frac, random_state=random_seed)
-        X_test, X_val = train_test_split(
-            X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
+        X_train, X_remain = train_test_split(df['participant_id'].tolist(), train_size=train_frac,
+                                             random_state=random_seed)
+        X_test, X_val = train_test_split(X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
+
     else:
         print(f" {split_method} is not a supported split method")
 
@@ -374,6 +373,7 @@ def load_dataset(data_list, data_transform, context):
                               contrast_balance=context["contrast_balance"],
                               slice_axis=AXIS_DCT[context["slice_axis"]],
                               transform=data_transform,
-                              multichannel=True if context['multichannel'] else False,
-                              slice_filter_fn=SliceFilter(**context["slice_filter"]))
+                              multichannel=context['multichannel'],
+                              slice_filter_fn=SliceFilter(**context["slice_filter"]),
+                              missing_modality=context['missing_modality'])
     return dataset

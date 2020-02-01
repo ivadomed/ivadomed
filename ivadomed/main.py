@@ -54,10 +54,14 @@ def cmd_train(context):
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet or MixupUnet
     metadata_bool = False if context["metadata"] == "without" else True
     film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
+
     unet_3D = context["unet_3D"]
     HeMIS = context['missing_modality']
     if film_bool:
         context["multichannel"] = False
+        HeMIS = False
+    elif context["multichannel"]:
+        HeMIS = False
 
     if bool(sum(context["film_layers"])) and not (metadata_bool):
         print('\tWarning FiLM disabled since metadata is disabled')
@@ -66,15 +70,17 @@ def cmd_train(context):
               .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else '3D Unet' if unet_3D else
         "Unet", context['depth']))
 
+
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
+
     if not film_bool and mixup_bool:
         print('\twith Mixup (alpha={})\n'.format(mixup_alpha))
     if context["metadata"] == "mri_params":
         print('\tInclude subjects with acquisition metadata available only.\n')
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
-    if len(context['multichannel']) > 1:
+    if context['multichannel']:
         print('\tUsing multichannel model with modalities {}.\n'.format(context['multichannel']))
 
     # Write the metrics, images, etc to TensorBoard format
@@ -121,8 +127,8 @@ def cmd_train(context):
 
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
-
     ds_train = loader.load_dataset(train_lst, train_transform, context)
+
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_training"].keys():
@@ -197,19 +203,25 @@ def cmd_train(context):
     in_channel = 1
 
     if context['multichannel']:
-        in_channel = len(context['multichannel'])
+        in_channel = len(context['contrast_train_validation'])
 
-    if context['unet_3D']:
-        model = models.UNet3D(in_channels=in_channel, n_classes=1)
-    elif context['retrain_model'] is None:
-        model = models.Unet(in_channel=in_channel,
-                            out_channel=context['out_channel'],
-                            depth=context['depth'],
-                            film_layers=context["film_layers"],
-                            n_metadata=n_metadata,
-                            drop_rate=context["dropout_rate"],
-                            bn_momentum=context["batch_norm_momentum"],
-                            film_bool=film_bool)
+    if context['retrain_model'] is None:
+        if HeMIS:
+              model = models.HeMISUnet(modalities=context['contrast_train_validation'],
+                                         depth=context['depth'],
+                                         drop_rate=context["dropout_rate"],
+                                         bn_momentum=context["batch_norm_momentum"])
+        elif unet_3D:
+            model = models.UNet3D(in_channels=in_channel, n_classes=1)
+        else:
+              model = models.Unet(in_channel=in_channel,
+                                    out_channel=context['out_channel'],
+                                    depth=context['depth'],
+                                    film_layers=context["film_layers"],
+                                    n_metadata=n_metadata,
+                                    drop_rate=context["dropout_rate"],
+                                    bn_momentum=context["batch_norm_momentum"],
+                                    film_bool=film_bool)
     else:
         model = torch.load(context['retrain_model'])
 
@@ -324,9 +336,6 @@ def cmd_train(context):
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
 
-            if isinstance(input_samples, list):
-                input_samples = torch.cat(input_samples, dim=1)
-
             # mixup data
             if mixup_bool and not film_bool:
                 input_samples, gt_samples, lambda_tensor = mixup(input_samples, gt_samples, mixup_alpha)
@@ -347,7 +356,7 @@ def cmd_train(context):
             # The variable sample_metadata is where the MRI physics parameters are
 
             if cuda_available:
-                var_input = input_samples.cuda()
+                var_input = cuda(input_samples)
                 var_gt = gt_samples.cuda(non_blocking=True)
             else:
                 var_input = input_samples
@@ -437,12 +446,9 @@ def cmd_train(context):
         for i, batch in enumerate(val_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
 
-            if isinstance(input_samples, list):
-                input_samples = torch.cat(input_samples, dim=1)
-
             with torch.no_grad():
                 if cuda_available:
-                    var_input = input_samples.cuda()
+                    var_input = cuda(input_samples)
                     var_gt = gt_samples.cuda(non_blocking=True)
                 else:
                     var_input = input_samples
@@ -616,7 +622,7 @@ def cmd_test(context):
         gpu_number = int(context["gpu"])
         torch.cuda.set_device(gpu_number)
         print("using GPU number {}".format(gpu_number))
-
+    HeMIS = context['missing_modality']
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet
     film_bool = bool(sum(context["film_layers"]))
     print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
@@ -697,12 +703,9 @@ def cmd_test(context):
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
 
-        if isinstance(input_samples, list):
-            input_samples = torch.cat(input_samples, dim=1)
-
         with torch.no_grad():
             if cuda_available:
-                test_input = input_samples.cuda()
+                test_input = cuda(input_samples)
                 test_gt = gt_samples.cuda(non_blocking=True)
             else:
                 test_input = input_samples

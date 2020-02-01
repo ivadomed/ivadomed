@@ -284,16 +284,16 @@ class HeMISUnet(Module):
 
     def __init__(self, modalities, depth=3, drop_rate=0.4, bn_momentum=0.1):
         super(HeMISUnet, self).__init__()
-
+        self.film_layers = [0] * (2 * depth + 2)
         self.depth = depth
         self.modalities = modalities
-
+        
         # Encoder path
         self.Down = nn.ModuleDict(
-            [['Down_{}'.format(Mod), Encoder(1, depth, drop_rate, bn_momentum)] for Mod in self.modalities])
+            [['Down_{}'.format(Mod), Encoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate, bn_momentum=bn_momentum)] for Mod in self.modalities])
 
         # Decoder path
-        self.decoder = Decoder(1, depth, drop_rate, bn_momentum, hemis=True)
+        self.decoder = Decoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate, bn_momentum=bn_momentum, hemis=True)
 
     def forward(self, x_mods):
         """"

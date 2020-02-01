@@ -45,6 +45,12 @@ def test_unet():
         mt_transforms.ToTensor()
     ]
     train_transform = transforms.Compose(training_transform_list)
+    multi_transform = transforms.Compose(training_transform_list + [mt_transforms.StackTensors()])
+    training_transform_3d_list = [
+        ivadomed_transforms.CenterCrop3D(size=[96, 96, 16]),
+        mt_transforms.ToTensor(),
+        mt_transforms.NormalizeInstance3D()
+    ]
 
     train_lst = ['sub-test001']
 
@@ -59,6 +65,7 @@ def test_unet():
                                   transform=train_transform,
                                   multichannel=False,
                                   slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=False))
+    
     ds_mutichannel = loader.BidsDataset(PATH_BIDS,
                                         subject_lst=train_lst,
                                         target_suffix="_lesion-manual",
@@ -67,9 +74,22 @@ def test_unet():
                                         metadata_choice="without",
                                         contrast_balance={},
                                         slice_axis=2,
-                                        transform=train_transform,
+                                        transform=multi_transform,
                                         multichannel=True,
                                         slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=False))
+
+    train_transform = transforms.Compose(training_transform_3d_list)
+    ds_3d = loader.Bids3DDataset(PATH_BIDS,
+                                 subject_lst=train_lst,
+                                 target_suffix="_lesion-manual",
+                                 contrast_lst=['T1w', 'T2w'],
+                                 metadata_choice="without",
+                                 contrast_balance={},
+                                 slice_axis=2,
+                                 transform=train_transform,
+                                 multichannel=False,
+                                 length=[96, 96, 16],
+                                 padding=0)
 
 
     ds_train.filter_roi(nb_nonzero_thr=10)
@@ -85,25 +105,32 @@ def test_unet():
                               shuffle=True, pin_memory=True,
                               collate_fn=mt_datasets.mt_collate,
                               num_workers=1)
+    
     multichannel_loader = DataLoader(ds_mutichannel, batch_size=BATCH_SIZE,
                                      shuffle=True, pin_memory=True,
                                      collate_fn=mt_datasets.mt_collate,
                                      num_workers=1)
+    loader_3d = DataLoader(ds_3d, batch_size=1,
+                           shuffle=True, pin_memory=True,
+                           collate_fn=mt_datasets.mt_collate,
+                           num_workers=1)
 
     model_list = [(models.Unet(depth=DEPTH,
                               film_layers=FILM_LAYERS,
                               n_metadata=len([ll for l in train_onehotencoder.categories_ for ll in l]),
                               drop_rate=DROPOUT,
                               bn_momentum=BN,
-                              film_bool=True), train_loader, True),
+                              film_bool=True), train_loader, True, 'Filmed-Unet'),
                   (models.Unet(in_channel=1,
                               out_channel=1,
                               depth=2,
                               drop_rate=DROPOUT,
-                              bn_momentum=BN), train_loader, False),
-                  (models.Unet(in_channel=2), multichannel_loader, False)]
-
-    for model, train_loader, film_bool in model_list:
+                              bn_momentum=BN), train_loader, False, 'Unet'),
+                  (models.Unet(in_channel=2), multichannel_loader, False, 'Multi-Channels Unet'),
+                  (models.UNet3D(in_channels=1, n_classes=1), loader_3d, False, '3D Unet')]
+    
+    for model, train_loader, film_bool, model_name in model_list:
+        print("Training {}".format(model_name))
         if cuda_available:
             model.cuda()
 
@@ -183,3 +210,5 @@ def test_unet():
         print('Mean SDopt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
         print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
         print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
+print("Test training time")
+test_unet()
