@@ -318,8 +318,11 @@ def cmd_train(context):
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
 
-            if isinstance(input_samples, list) and len(input_samples) > 1:
+            if isinstance(input_samples, list) and unet_3D:
+                input_samples = torch.stack(input_samples, dim=1)
+            elif isinstance(input_samples, list) and len(input_samples) > 1:
                 input_samples = torch.cat(input_samples, dim=1)
+
             # mixup data
             if mixup_bool and not film_bool:
                 input_samples, gt_samples, lambda_tensor = mixup(input_samples, gt_samples, mixup_alpha)
@@ -429,8 +432,10 @@ def cmd_train(context):
 
         for i, batch in enumerate(val_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
-            if isinstance(input_samples, list) and len(input_samples) > 1:
-                input_samples = input_samples = torch.cat(input_samples, dim=1)
+            if isinstance(input_samples, list) and unet_3D:
+                input_samples = torch.stack(input_samples, dim=1)
+            elif isinstance(input_samples, list) and len(input_samples) > 1:
+                input_samples = torch.cat(input_samples, dim=1)
 
             with torch.no_grad():
                 if cuda_available:
