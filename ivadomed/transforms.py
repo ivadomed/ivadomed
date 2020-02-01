@@ -16,7 +16,7 @@ def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
        from the mt_transforms."""
 
-    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor', 'CenterCrop2D', 'CenterCrop3D',
+    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor', 'CenterCrop3D',
             'RandomAffine3D', 'NormalizeInstance3D', 'ToTensor3D']
 
 
