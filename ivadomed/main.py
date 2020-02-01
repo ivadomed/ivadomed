@@ -755,11 +755,12 @@ def cmd_test(context):
                 z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
                 fname_tmp = fname_ref
             else:
+                # TODO: Add reconstruction for subvolumes
                 fname_pred = os.path.join(path_3Dpred, fname_ref.split('/')[-1])
                 fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
                 # Choose only one modality
                 save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
-                         axis_dct[context['slice_axis']], unet_3D=True)
+                         AXIS_DCT[context['slice_axis']], unet_3D=True)
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
@@ -769,8 +770,6 @@ def cmd_test(context):
         preds_npy = threshold_predictions(preds_npy)
         preds_npy = preds_npy.astype(np.uint8)
         preds_npy = preds_npy.squeeze(axis=1)
-        for batch in range(preds_npy.shape[0]):
-            preds_npy[batch, :, :, :] = remove_small_objects(np.squeeze(preds_npy[batch, :, :, :]))[None, :, :, :]
 
         metric_mgr(preds_npy, gt_npy)
 

@@ -216,10 +216,10 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, une
     # Return the orientation that transforms from ras to ref_orientation
     trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
     # apply transformation
-    arr_pred_ref_space = nib.orientations.apply_orientation(arr_ras, trans_orient)
+    arr_pred_ref_space = threshold_predictions(nib.orientations.apply_orientation(arr_ras, trans_orient))
 
     # create nii
-    nib_pred = nib.Nifti1Image(np.where(arr_pred_ref_space > 0.5, 1.0, 0.0), nib_ref.affine)
+    nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
 
 
     # save
