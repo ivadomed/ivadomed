@@ -727,7 +727,7 @@ def cmd_test(context):
         rdict['gt'] = preds.cpu()
         batch.update(rdict)
 
-        if batch["input"].shape[1] > 1 or context['unet_3D']:
+        if batch["input"].shape[1] > 1:
             batch["input_metadata"] = batch["input_metadata"][0]  # Take only second channel
 
         # reconstruct 3D image

@@ -16,7 +16,7 @@ def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
        from the mt_transforms."""
 
-    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor', 'CenterCrop3D',
+    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor', 'StackTensors', 'CenterCrop3D',
             'RandomAffine3D', 'NormalizeInstance3D', 'ToTensor3D']
 
 
@@ -299,6 +299,14 @@ class DilateGT(mt_transforms.MTTransform):
                 'gt': gt_t,
             }
             sample.update(rdict)
+
+        return sample
+
+
+class StackTensors(mt_transforms.StackTensors):
+    """This class extends mt_transforms.NormalizeInstance"""
+    def undo_transform(self, sample):
+        rdict = {}
 
         return sample
 
