@@ -296,9 +296,12 @@ class HeMISUnet(Module):
         # Decoder path
         self.decoder = Decoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate, bn_momentum=bn_momentum, hemis=True)
 
-    def forward(self, x_mods):
+    def forward(self, x_mods, indexes_mod):
         """"
             X is  list like X = [x_T1, x_T2, x_T2S, x_F]
+            indexes_mod: list of arrays like [[1, 1, 1], [1, 1, 0], [1, 0, 1], [1, 1, 0]]
+            N.B. len(list) = number of modalities.
+            len(list[i]) = Batch size
         """
 
         features_mod = [[] for _ in range(self.depth + 1)]
@@ -311,8 +314,8 @@ class HeMISUnet(Module):
 
         # Abstraction
         for j in range(self.depth + 1):
-            features_mod[j] = torch.cat([torch.cat(features_mod[j], 0).mean(0).unsqueeze(0), \
-                                         torch.cat(features_mod[j], 0).var(0).unsqueeze(0)], 0)
+            features_mod[j] = torch.cat([torch.cat(features_mod[j][indexes_mod[j]], 0).mean(0).unsqueeze(0),
+                                         torch.cat(features_mod[j][indexes_mod[j]], 0).var(0).unsqueeze(0)], 0)
 
         # Up-sampling
         preds = self.decoder(features_mod)
