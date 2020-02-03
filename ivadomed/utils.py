@@ -165,7 +165,7 @@ class Evaluation3DMetrics(object):
         return dct
 
 
-def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, unet_3D=False):
+def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, unet_3D=False, binarize=True):
     """Save the prediction as nii.
         1. Reconstruct a 3D volume out of the slice-wise predictions.
         2. Re-orient the 3D array accordingly to the ground-truth orientation.
@@ -216,7 +216,9 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, une
     # Return the orientation that transforms from ras to ref_orientation
     trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
     # apply transformation
-    arr_pred_ref_space = threshold_predictions(nib.orientations.apply_orientation(arr_ras, trans_orient))
+    arr_pred_ref_space = nib.orientations.apply_orientation(arr_ras, trans_orient)
+    if binarize:
+        arr_pred_ref_space = threshold_predictions(arr_pred_ref_space)
 
     # create nii
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)

@@ -475,7 +475,8 @@ def cmd_train(context):
             gt_npy = gt_npy.squeeze(axis=1)
 
             preds_npy = preds.data.cpu().numpy()
-            preds_npy = threshold_predictions(preds_npy)
+            if context["binarize_prediction"]:
+                preds_npy = threshold_predictions(preds_npy)
             preds_npy = preds_npy.astype(np.uint8)
             preds_npy = preds_npy.squeeze(axis=1)
 
@@ -743,7 +744,8 @@ def cmd_test(context):
                     # save the completely processed file as a nii
                     fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
                     fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
-                    save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, AXIS_DCT[context['slice_axis']])
+                    save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, AXIS_DCT[context['slice_axis']],
+                             context["binarize_prediction"])
                     # re-init pred_stack_lst
                     pred_tmp_lst, z_tmp_lst = [], []
 
@@ -764,7 +766,8 @@ def cmd_test(context):
         gt_npy = gt_npy.squeeze(axis=1)
 
         preds_npy = preds.data.cpu().numpy()
-        preds_npy = threshold_predictions(preds_npy)
+        if context["binarize_prediction"]:
+            preds_npy = threshold_predictions(preds_npy)
         preds_npy = preds_npy.astype(np.uint8)
         preds_npy = preds_npy.squeeze(axis=1)
 

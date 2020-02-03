@@ -16,7 +16,7 @@
     "num_epochs": 10,
     "initial_lr": 0.00005,
     "loss": {"name": "dice"},
-    "log_directory": "newprepro_multi_1",
+    "log_directory": "log",
     "lr_scheduler": {"name": "CosineAnnealingLR", "base_lr": 1e-5, "max_lr": 1e-2},
     "film_layers": [],
     "mixup_bool": true,
@@ -34,6 +34,7 @@
     "train_fraction": 0.6,
     "test_fraction": 0.2,
     "unet_3D": true,
+    "binarize_prediction": true,
     "slice_filter": {
       "filter_empty_mask": true,
       "filter_empty_input": true
@@ -52,7 +53,6 @@
         "translate": [0.03, 0.03],
         "scale": [0.98, 1.02]
       },
-      "RandomReverse3D": {},
       "ToTensor3D": {},
       "NormalizeInstance3D": {},
       "StackTensors": {}
