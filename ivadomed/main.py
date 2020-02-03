@@ -832,7 +832,7 @@ def cmd_eval(context):
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
         fname_pred = os.path.join(path_pred, subj_acq+'_pred.nii.gz')
-        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', fname_gt)
+        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', subj_acq+context['target_suffix']+'.nii.gz')
 
         # 3D evaluation
         eval = Evaluation3DMetrics(fname_pred=fname_pred, fname_gt=fname_gt)
