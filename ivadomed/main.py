@@ -826,34 +826,13 @@ def cmd_eval(context):
 
     # list subject_acquisition
     path_pred = os.path.join(context['log_directory'], 'pred_masks')
-    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_pred) if f.endswith('.nii.gz') and '_pred' in f]
-    # remove duplicates
-    subj_acq_lst = list(set(subj_acq_lst))
+    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_pred) if f.endswith('_pred.nii.gz')]
 
     # loop across subj_acq
     for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
         fname_pred = os.path.join(path_pred, subj_acq+'_pred.nii.gz')
-
-        # if final segmentation from Monte Carlo simulations has not been generated yet
-        if not os.path.isfile(fname_pred):
-           # find Monte Carlo simulations
-           fname_pred_lst = [os.path.join(path_pred, f) for f in os.listdir(path_pred) if subj_acq+'_pred_' in f]
-
-           # fname for soft segmentation from MC simulations
-           fname_soft = os.path.join(path_pred, subj_acq+'_soft.nii.gz')
-           # average then argmax
-           combine_predictions(fname_pred_lst, fname_pred, fname_soft)
-
-           # compute voxel-wise uncertainty map
-           fname_unc = os.path.join(path_pred, subj_acq+'_unc-vox.nii.gz')
-           voxelWise_uncertainty(fname_pred_lst, fname_unc)
-
-           # compute structure-wise uncertainty map
-           fname_unc_struct = os.path.join(path_pred, subj_acq+'_unc.nii.gz')
-           structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc, fname_unc_struct)
-
         fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', fname_gt)
 
         # 3D evaluation
@@ -870,6 +849,7 @@ def cmd_eval(context):
     fname_out = os.path.join(path_results, 'evaluation_3Dmetrics.csv')
     df_results.to_csv(fname_out)
     print(df_results.head(5))
+
 
 def run_main():
     if len(sys.argv) <= 1:
