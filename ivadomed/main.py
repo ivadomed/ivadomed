@@ -816,6 +816,10 @@ def cmd_eval(context):
            fname_unc = os.path.join(path_pred, subj_acq+'_unc-vox.nii.gz')
            voxelWise_uncertainty(fname_pred_lst, fname_unc)
 
+           # compute structure-wise uncertainty map
+           fname_unc_struct = os.path.join(path_pred, subj_acq+'_unc.nii.gz')
+           structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc, fname_unc_struct)
+
         fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', fname_gt)
 
         # 3D evaluation
