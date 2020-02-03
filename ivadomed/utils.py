@@ -244,6 +244,19 @@ def dice_score(im1, im2):
     return (2. * intersection.sum()) / im_sum
 
 
+def hausdorff_score(prediction, groundtruth):
+    if len(prediction.shape) == 3:
+        mean_hansdorff = 0
+        for idx in range(prediction.shape[1]):
+            pred = prediction[:, idx, :]
+            gt = groundtruth[:, idx, :]
+            mean_hansdorff += mt_metrics.hausdorff_score(pred, gt)
+        mean_hansdorff = mean_hansdorff / prediction.shape[1]
+        return mean_hansdorff
+
+    return mt_metrics.hausdorff_score(prediction, groundtruth)
+
+
 def mixup(data, targets, alpha):
     """Compute the mixup data.
     Return mixed inputs and targets, lambda.

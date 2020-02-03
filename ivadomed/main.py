@@ -314,14 +314,12 @@ def cmd_train(context):
     val_losses = []
 
     metric_fns = [dice_score,  # from ivadomed/utils.py
-                  mt_metrics.hausdorff_score,
+                  hausdorff_score,  # from ivadomed/utils.py
                   mt_metrics.precision_score,
                   mt_metrics.recall_score,
                   mt_metrics.specificity_score,
                   mt_metrics.intersection_over_union,
                   mt_metrics.accuracy_score]
-    if unet_3D:
-        metric_fns.remove(mt_metrics.hausdorff_score)
 
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
@@ -688,14 +686,12 @@ def cmd_test(context):
         os.makedirs(path_3Dpred)
 
     metric_fns = [dice_score,  # from ivadomed/utils.py
-                  mt_metrics.hausdorff_score,
+                  hausdorff_score,  # from ivadomed/utils.py
                   mt_metrics.precision_score,
                   mt_metrics.recall_score,
                   mt_metrics.specificity_score,
                   mt_metrics.intersection_over_union,
                   mt_metrics.accuracy_score]
-    if context["unet_3D"]:
-        metric_fns.remove(mt_metrics.hausdorff_score)
 
     metric_mgr = IvadoMetricManager(metric_fns)
 
