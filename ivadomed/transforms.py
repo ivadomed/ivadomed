@@ -306,8 +306,6 @@ class DilateGT(mt_transforms.MTTransform):
 class StackTensors(mt_transforms.StackTensors):
     """This class extends mt_transforms.NormalizeInstance"""
     def undo_transform(self, sample):
-        rdict = {}
-
         return sample
 
 
