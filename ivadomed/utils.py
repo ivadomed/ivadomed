@@ -264,7 +264,6 @@ def voxelWise_uncertainty(fname_lst, fname_out, eps=1e-5):
     unc = np.repeat(np.expand_dims(np.array(data_lst), -1), 2, -1) # n_it, x, y, z, 2
     unc[..., 0] = 1 - unc[..., 1]
     unc = -np.sum(np.mean(unc, 0) * np.log(np.mean(unc, 0) + eps), -1)
-    print(unc.shape, np.max(unc), np.min(unc))
 
     # save uncertainty map
     nib_unc = nib.Nifti1Image(unc, nib_im.affine)
@@ -317,7 +316,6 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         for i_mc in range(len(data_lst)):
             # find the structure of interest in the current MC sample
             data_i_inter = data_i_l * data_l_lst[i_mc]
-            print(list(np.unique(data_i_inter)))
             i_mc_l = [ii for ii in list(np.unique(data_i_inter)) if ii][0]
 
             # keep only the unc voxels of the structure of interest
