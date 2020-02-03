@@ -33,6 +33,7 @@ cudnn.benchmark = True
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
+
 def cmd_train(context):
     """Main command to train the network.
 
@@ -69,7 +70,6 @@ def cmd_train(context):
         print('\nArchitecture: {} with a depth of {}.\n' \
               .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else '3D Unet' if unet_3D else
         "Unet", context['depth']))
-
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -128,7 +128,6 @@ def cmd_train(context):
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
     ds_train = loader.load_dataset(train_lst, train_transform, context)
-
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_training"].keys():
@@ -207,21 +206,21 @@ def cmd_train(context):
 
     if context['retrain_model'] is None:
         if HeMIS:
-              model = models.HeMISUnet(modalities=context['contrast_train_validation'],
-                                         depth=context['depth'],
-                                         drop_rate=context["dropout_rate"],
-                                         bn_momentum=context["batch_norm_momentum"])
+            model = models.HeMISUnet(modalities=context['contrast_train_validation'],
+                                     depth=context['depth'],
+                                     drop_rate=context["dropout_rate"],
+                                     bn_momentum=context["batch_norm_momentum"])
         elif unet_3D:
             model = models.UNet3D(in_channels=in_channel, n_classes=1)
         else:
-              model = models.Unet(in_channel=in_channel,
-                                    out_channel=context['out_channel'],
-                                    depth=context['depth'],
-                                    film_layers=context["film_layers"],
-                                    n_metadata=n_metadata,
-                                    drop_rate=context["dropout_rate"],
-                                    bn_momentum=context["batch_norm_momentum"],
-                                    film_bool=film_bool)
+            model = models.Unet(in_channel=in_channel,
+                                out_channel=context['out_channel'],
+                                depth=context['depth'],
+                                film_layers=context["film_layers"],
+                                n_metadata=n_metadata,
+                                drop_rate=context["dropout_rate"],
+                                bn_momentum=context["batch_norm_momentum"],
+                                film_bool=film_bool)
     else:
         model = torch.load(context['retrain_model'])
 
