@@ -457,17 +457,15 @@ class HDF5Dataset:
         # Loading dataframe object
         self.df_object = Dataframe(self.hdf5_file, contrast_lst, csv_name, target_suffix=target_lst,
                                    roi_suffix=roi_lst, dim=self.dim, slices=slice_filter_fn)
-        self.dataframe = self.df_object.df
+        self.initial_dataframe = self.df_object.df
+        self.dataframe = copy.deepcopy(self.df_object.df)
+
+        self.cst_matrix = np.ones([len(self.dataframe), len(self.cst_lst)], dtype=int)
+
         # RAM status
         self.status = {ct: False for ct in self.df_object.contrasts}
         # Input contrasts
         self.contrast_lst = contrast_lst
-
-        # TODO list:
-        #
-        """ 
-        - pair mode or multi to one 
-        """
 
     def load_into_ram(self, contrast_lst=None):
         """
@@ -483,12 +481,12 @@ class HDF5Dataset:
             if self.status[ct]:
                 print("Contrast {} already in RAM".format(ct))
             else:
-                print("Loading contrasts {} in RAM...".format(ct))
+                print("Loading contrast {} in RAM...".format(ct), end='')
                 for sub in self.dataframe.index:
                     if self.filter_slices:
                         slices = self.dataframe.at[sub, 'Slices']
                         self.dataframe.at[sub, ct] = self.hdf5_file[self.dataframe.at[sub, ct]][np.array(slices)]
-
+                print("Done.")
             self.status[ct] = True
 
     def set_transform(self, transform):
@@ -517,18 +515,19 @@ class HDF5Dataset:
                                 }
         """
         line = self.dataframe.loc[index]
-
-        input_tensors = [line[ct] for ct in self.cst_lst]
+        # For HeMIS strategy. Otherwise the values of the matrix dont change anything.
+        missing_modalities = self.cst_matrix[index]
 
         input_metadata = []
         input_tensors = []
 
         # Inputs
-        for ct in self.cst_lst:
+        for i, ct in enumerate(self.cst_lst):
             if self.status[ct]:
-                input_tensor = line[ct]
+                input_tensor = line[ct] * missing_modalities[i]
             else:
-                input_tensor = self.hdf5_file[line[ct]][line['Slices']]
+                input_tensor = self.hdf5_file[line[ct]][line['Slices']] * missing_modalities[i]
+
             # convert array to pil
             input_tensors.append(Image.fromarray(input_tensor, mode='F'))
             # input Metadata
@@ -564,6 +563,7 @@ class HDF5Dataset:
                      'gt': gt_img,
                      'roi': roi_img,
                      'input_metadata': input_metadata,
+                     'Missing_mod': missing_modalities,
                      'gt_metadata': gt_metadata,
                      'roi_metadata': roi_metadata
                      }
@@ -573,15 +573,17 @@ class HDF5Dataset:
 
         return data_dict
 
-    def update(self, strategy="Missing"):
+    def update(self, strategy="Missing", p=0.0001):
         """
         Update the Dataframe itself.
-        :param strategy: Update the dataframe using the corresponding strategy. For now the only the stratety
+        :param p: probability of the modality to be missing
+        :param strategy: Update the dataframe using the corresponding strategy. For now the only the strategy
         implemented is the one used by HeMIS (i.e. by removing modalities with a certain probability.) Other strategies
         that could be implemented are Active Learning, Curriculum Learning, ...
-        :return:
+
         """
-        self.dataframe.update(strategy=strategy)
+        if strategy == 'Missing':
+            self.cst_matrix = [np.random.choice(2, len(self.cst_lst), p=[p, 1 - p]) for _ in range(len(self.dataframe))]
 
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
