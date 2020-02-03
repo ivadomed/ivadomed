@@ -690,7 +690,7 @@ def cmd_test(context):
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
-        
+
         for i_monteCarlo in range(n_monteCarlo):
             with torch.no_grad():
                 if cuda_available:
@@ -746,7 +746,7 @@ def cmd_test(context):
                         fname_pred = fname_pred.split('.nii.gz')[0]+'_'+str(i_monteCarlo).zfill(2)+'.nii.gz'
 
                     save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, axis_dct[context['slice_axis']])
-                    
+
                     # re-init pred_stack_lst
                     pred_tmp_lst, z_tmp_lst = [], []
 
@@ -766,9 +766,44 @@ def cmd_test(context):
 
             metric_mgr(preds_npy, gt_npy)
 
+    # COMPUTE UNCERTAINTY MAPS
+    # list subj_acq prefixes
+    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_3Dpred) if f.endswith('.nii.gz') and '_pred' in f]
+    # remove duplicates
+    subj_acq_lst = list(set(subj_acq_lst))
+    # keep only the images where unc has not been computed yet
+    subj_acq_lst = [f for f in subj_acq_lst if not os.path.join(path_3Dpred, subj_acq+'_unc-vox.nii.gz')]
+    # loop across subj_acq
+    for subj_acq in tqdm(subj_acq_lst, desc="Uncertainty Computation"):
+        # hard segmentation from MC samples
+        fname_pred = os.path.join(path_3Dpred, subj_acq+'_pred.nii.gz')
+        # fname for soft segmentation from MC simulations
+        fname_soft = os.path.join(path_3Dpred, subj_acq+'_soft.nii.gz')
+        # find Monte Carlo simulations
+        fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
+
+        # if final segmentation from Monte Carlo simulations has not been generated yet
+        if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
+           # find Monte Carlo simulations
+           fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
+
+           # average then argmax
+           combine_predictions(fname_pred_lst, fname_pred, fname_soft)
+
+        fname_unc = os.path.join(path_3Dpred, subj_acq+'_unc-vox.nii.gz')
+        fname_unc_struct = os.path.join(path_3Dpred, subj_acq+'_unc.nii.gz')
+
+        if not os.path.isfile(fname_unc_vox) or not os.path.isfile(fname_unc_struct):
+           # compute voxel-wise uncertainty map
+           voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
+
+           # compute structure-wise uncertainty
+           structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
+
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
     print(metrics_dict)
+
 
 def cmd_eval(context):
     ##### DEFINE DEVICE #####
@@ -797,7 +832,6 @@ def cmd_eval(context):
 
     # loop across subj_acq
     for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
-        fname_gt = subj_acq + context['target_suffix'] + '.nii.gz'
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
         fname_pred = os.path.join(path_pred, subj_acq+'_pred.nii.gz')
