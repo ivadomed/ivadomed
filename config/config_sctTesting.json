@@ -1,6 +1,6 @@
 {
 	"command": "train",
-	"gpu": 6,
+	"gpu": 1,
         "target_suffix": "_lesion-manual",
         "roi_suffix": "_seg-manual",
 	"bids_path": "../duke/sct_testing/large/",
