@@ -13,7 +13,7 @@
     3. [Developing](#developing)
     4. [Committing](#committing)
     5. [Submitting a Pull Request](#submitting-a-pull-request)
-
+4. [Versioning](#versioning)
 
 ## Introduction 
 
