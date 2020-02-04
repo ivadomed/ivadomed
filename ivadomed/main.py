@@ -772,7 +772,7 @@ def cmd_test(context):
     # remove duplicates
     subj_acq_lst = list(set(subj_acq_lst))
     # keep only the images where unc has not been computed yet
-    #subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(os.path.join(path_3Dpred, f+'_unc-vox.nii.gz'))]
+    subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(os.path.join(path_3Dpred, f+'_unc-iou.nii.gz'))]
     # loop across subj_acq
     for subj_acq in tqdm(subj_acq_lst, desc="Uncertainty Computation"):
         # hard segmentation from MC samples
