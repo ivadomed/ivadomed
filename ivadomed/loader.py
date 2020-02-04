@@ -1,5 +1,7 @@
 from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
+from medicaltorch.filters import SliceFilter
+from ivadomed.utils import *
 
 from sklearn.preprocessing import OneHotEncoder
 from scipy.signal import argrelextrema
@@ -21,6 +23,27 @@ with open("config/contrast_dct.json", "r") as fhandle:
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,
                      "acq-MToff_MTS": 3, "acq-MTon_MTS": 4, "acq-T1w_MTS": 5}
+AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
+
+
+class Bids3DDataset(mt_datasets.MRI3DSubVolumeSegmentationDataset):
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2,
+                 cache=True,
+                 transform=None, metadata_choice=False, canonical=True, labeled=True, roi_suffix=None,
+                 multichannel=False, length=(64, 64, 64), padding=0):
+        dataset = BidsDataset(root_dir,
+                              subject_lst=subject_lst,
+                              target_suffix=target_suffix,
+                              roi_suffix=roi_suffix,
+                              contrast_lst=contrast_lst,
+                              metadata_choice=metadata_choice,
+                              contrast_balance=contrast_balance,
+                              slice_axis=slice_axis,
+                              transform=transform,
+                              multichannel=multichannel)
+
+        super().__init__(dataset.filename_pairs, cache, length=length, padding=padding, transform=transform,
+                         canonical=canonical)
 
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
@@ -324,3 +347,33 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 
     def __len__(self):
         return self.num_samples
+
+
+def load_dataset(data_list, data_transform, context):
+    if context["unet_3D"]:
+        dataset = Bids3DDataset(context["bids_path"],
+                                subject_lst=data_list,
+                                target_suffix=context["target_suffix"],
+                                roi_suffix=context["roi_suffix"],
+                                contrast_lst=context["contrast_train_validation"],
+                                metadata_choice=context["metadata"],
+                                contrast_balance=context["contrast_balance"],
+                                slice_axis=AXIS_DCT[context["slice_axis"]],
+                                transform=data_transform,
+                                multichannel=context['multichannel'],
+                                length=context["length_3D"],
+                                padding=context["padding_3D"])
+    else:
+        dataset = BidsDataset(context["bids_path"],
+                              subject_lst=data_list,
+                              target_suffix=context["target_suffix"],
+                              roi_suffix=context["roi_suffix"],
+                              contrast_lst=context["contrast_train_validation"],
+                              metadata_choice=context["metadata"],
+                              contrast_balance=context["contrast_balance"],
+                              slice_axis=AXIS_DCT[context["slice_axis"]],
+                              transform=data_transform,
+                              multichannel=context['multichannel'],
+                              slice_filter_fn=SliceFilter(**context["slice_filter"]),
+                              missing_modality=context['missing_modality'])
+    return dataset
