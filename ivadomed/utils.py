@@ -331,9 +331,10 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         for i_mc in range(2, len(data_lst)):
             intersection = np.logical_and(intersection,
                                             data_mc_i_l_lst[i_mc].astype(np.bool))
-            union = np.logical_and(union,
+            union = np.logical_or(union,
                                     data_mc_i_l_lst[i_mc].astype(np.bool))
-        iou = np.sum(intersection) / np.sum(union)
+        print(np.sum(intersection), np.sum(union))
+        iou = np.sum(intersection) * 1. / np.sum(union)
 
         # compute coefficient of variation for all MC volume estimates for a given structure
         vol_mc_lst = [np.sum(data_mc_i_l_lst[i_mc]) for i_mc in range(len(data_lst))]
@@ -343,7 +344,7 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
 
         # compute average voxel-wise uncertainty within the structure
         avgUnc = np.mean(data_uncVox[data_i_l != 0])
-
+        print(iou, cv, avgUnc)
         # assign uncertainty value to the structure
         data_iou[data_i_l != 0] = iou
         data_cv[data_i_l != 0] = cv
