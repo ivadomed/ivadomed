@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.nn import Module
 import torch.nn.functional as F
 
+
 class DownConv(Module):
     def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1):
         super(DownConv, self).__init__()
@@ -287,13 +288,16 @@ class HeMISUnet(Module):
         self.film_layers = [0] * (2 * depth + 2)
         self.depth = depth
         self.modalities = modalities
-        
+
         # Encoder path
         self.Down = nn.ModuleDict(
-            [['Down_{}'.format(Mod), Encoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate, bn_momentum=bn_momentum)] for Mod in self.modalities])
+            [['Down_{}'.format(Mod),
+              Encoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate, bn_momentum=bn_momentum)] for Mod in
+             self.modalities])
 
         # Decoder path
-        self.decoder = Decoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate, bn_momentum=bn_momentum, hemis=True)
+        self.decoder = Decoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate, bn_momentum=bn_momentum,
+                               hemis=True)
 
     def forward(self, x_mods):
         """"
@@ -326,6 +330,7 @@ class UNet3D(nn.Module):
     The main differences with the original UNet resides in the use of LeakyReLU instead of ReLU, InstanceNormalisation
     instead of BatchNorm due to small batch size in 3D and the addition of segmentation layers in the decoder.
     """
+
     def __init__(self, in_channels, n_classes, base_n_filter=32):
         super(UNet3D, self).__init__()
         self.in_channels = in_channels
