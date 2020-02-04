@@ -302,7 +302,6 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         data_l_lst.append(data_im_l)
         del nib_im
 
-    print(n_l)
     # loop across all structures of data_hard_l
     for i_l in range(1, n_l+1):
         # select the current structure, remaining voxels are set to zero
@@ -315,12 +314,12 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         for i_mc in range(len(data_lst)):
             # find the structure of interest in the current MC sample
             data_i_inter = data_i_l * data_l_lst[i_mc]
-            i_mc_l = [ii for ii in list(np.unique(data_i_inter)) if ii]
+            i_mc_l = np.max(data_i_inter)
 
-            if len(i_mc_l):
+            if i_mc_l > 0:
                 # keep only the unc voxels of the structure of interest
                 data_mc_i_l = np.copy(data_lst[i_mc])
-                data_mc_i_l[data_l_lst[i_mc] != i_mc_l[0]] = 0.
+                data_mc_i_l[data_l_lst[i_mc] != i_mc_l] = 0.
             else:  # no structure in this sample
                 data_mc_i_l = np.zeros(data_lst[i_mc].shape)
             data_mc_i_l_lst.append(data_mc_i_l)
@@ -335,7 +334,6 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
                                             data_mc_i_l_lst[i_mc].astype(np.bool))
             union = np.logical_or(union,
                                     data_mc_i_l_lst[i_mc].astype(np.bool))
-        print(np.sum(intersection), np.sum(union))
         iou = np.sum(intersection) * 1. / np.sum(union)
 
         # compute coefficient of variation for all MC volume estimates for a given structure
@@ -346,7 +344,6 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
 
         # compute average voxel-wise uncertainty within the structure
         avgUnc = np.mean(data_uncVox[data_i_l != 0])
-        print(iou, cv, avgUnc)
         # assign uncertainty value to the structure
         data_iou[data_i_l != 0] = iou
         data_cv[data_i_l != 0] = cv
