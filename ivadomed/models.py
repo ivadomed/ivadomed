@@ -290,8 +290,9 @@ class HeMISUnet(Module):
         self.modalities = modalities
         
         # Encoder path
-        self.Down = nn.ModuleDict(
-            [['Down_{}'.format(Mod), Encoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate, bn_momentum=bn_momentum)] for Mod in self.modalities])
+        self.Encoder_mod = nn.ModuleDict(
+            [['Encoder_{}'.format(Mod), Encoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate,
+                                                bn_momentum=bn_momentum)] for Mod in self.modalities])
 
         # Decoder path
         self.decoder = Decoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate, bn_momentum=bn_momentum, hemis=True)
@@ -308,7 +309,7 @@ class HeMISUnet(Module):
 
         # Down-sampling
         for i, Mod in enumerate(self.modalities):
-            features = self.Down['Down_{}'.format(Mod)](x_mods[i])
+            features = self.Encoder_mod['Encoder_{}'.format(Mod)](x_mods[i])
             for j in range(self.depth + 1):
                 features_mod[j].append(features[j].unsqueeze(0))
 
