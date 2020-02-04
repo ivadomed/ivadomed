@@ -283,8 +283,6 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     data_hard = nib_hard.get_fdata()
     data_hard_l, n_l = label(data_hard, connectivity=3, return_num=True)
 
-    # TODO: check case where n_l = 0
-
     # load uncertainty map
     nib_uncVox = nib.load(fname_unc_vox)
     data_uncVox = nib_uncVox.get_fdata()
@@ -304,6 +302,7 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         data_l_lst.append(data_im_l)
         del nib_im
 
+    print(n_l)
     # loop across all structures of data_hard_l
     for i_l in range(1, n_l+1):
         # select the current structure, remaining voxels are set to zero
@@ -316,11 +315,14 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         for i_mc in range(len(data_lst)):
             # find the structure of interest in the current MC sample
             data_i_inter = data_i_l * data_l_lst[i_mc]
-            i_mc_l = [ii for ii in list(np.unique(data_i_inter)) if ii][0]
+            i_mc_l = [ii for ii in list(np.unique(data_i_inter)) if ii]
 
-            # keep only the unc voxels of the structure of interest
-            data_mc_i_l = np.copy(data_lst[i_mc])
-            data_mc_i_l[data_l_lst[i_mc] != i_mc] = 0.
+            if len(i_mc_l):
+                # keep only the unc voxels of the structure of interest
+                data_mc_i_l = np.copy(data_lst[i_mc])
+                data_mc_i_l[data_l_lst[i_mc] != i_mc_l[0]] = 0.
+            else:  # no structure in this sample
+                data_mc_i_l = np.zeros(data_lst[i_mc].shape)
             data_mc_i_l_lst.append(data_mc_i_l)
 
         # compute IoU over all the N MC samples for a specific structure
@@ -328,7 +330,7 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
                                         data_mc_i_l_lst[1].astype(np.bool))
         union = np.logical_or(data_mc_i_l_lst[0].astype(np.bool),
                                 data_mc_i_l_lst[1].astype(np.bool))
-        for i_mc in range(2, len(data_lst)):
+        for i_mc in range(2, len(data_mc_i_l_lst)):
             intersection = np.logical_and(intersection,
                                             data_mc_i_l_lst[i_mc].astype(np.bool))
             union = np.logical_or(union,
@@ -337,7 +339,7 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         iou = np.sum(intersection) * 1. / np.sum(union)
 
         # compute coefficient of variation for all MC volume estimates for a given structure
-        vol_mc_lst = [np.sum(data_mc_i_l_lst[i_mc]) for i_mc in range(len(data_lst))]
+        vol_mc_lst = [np.sum(data_mc_i_l_lst[i_mc]) for i_mc in range(len(data_mc_i_l_lst))]
         mu_mc = np.mean(vol_mc_lst)
         sigma_mc = np.std(vol_mc_lst)
         cv = sigma_mc / mu_mc
