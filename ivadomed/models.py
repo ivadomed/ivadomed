@@ -288,14 +288,15 @@ class HeMISUnet(Module):
         self.film_layers = [0] * (2 * depth + 2)
         self.depth = depth
         self.modalities = modalities
-        
+
         # Encoder path
         self.Encoder_mod = nn.ModuleDict(
             [['Encoder_{}'.format(Mod), Encoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate,
                                                 bn_momentum=bn_momentum)] for Mod in self.modalities])
 
         # Decoder path
-        self.decoder = Decoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate, bn_momentum=bn_momentum, hemis=True)
+        self.decoder = Decoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate,
+                               bn_momentum=bn_momentum, hemis=True)
 
     def forward(self, x_mods, indexes_mod):
         """"
@@ -315,8 +316,9 @@ class HeMISUnet(Module):
 
         # Abstraction
         for j in range(self.depth + 1):
-            features_mod[j] = torch.cat([torch.cat(features_mod[j][indexes_mod[j]], 0).mean(0).unsqueeze(0),
-                                         torch.cat(features_mod[j][indexes_mod[j]], 0).var(0).unsqueeze(0)], 0)
+            features_mod[j] = torch.cat([torch.cat(features_mod[j], 0)[indexes_mod[j].nonzero()].mean(0).unsqueeze(0),
+                                         torch.cat(features_mod[j], 0)[indexes_mod[j].nonzero()].var(0).unsqueeze(0)], 0
+                                        )
 
         # Up-sampling
         preds = self.decoder(features_mod)

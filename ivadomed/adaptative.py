@@ -583,7 +583,10 @@ class HDF5Dataset:
 
         """
         if strategy == 'Missing':
-            self.cst_matrix = [np.random.choice(2, len(self.cst_lst), p=[p, 1 - p]) for _ in range(len(self.dataframe))]
+            print("Probalility of missing modality = {}".format(p))
+            self.cst_matrix = np.array([np.random.choice(2, len(self.cst_lst), p=[p, 1 - p])
+                                        for _ in range(len(self.dataframe))])
+            print("Missing modalities = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
 
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):

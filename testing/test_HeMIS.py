@@ -1,3 +1,5 @@
+from math import sqrt
+
 import numpy as np
 import time
 import sys
@@ -13,7 +15,7 @@ from torch import optim
 
 from tqdm import tqdm
 
-from ivadomed import loader as loader
+from ivadomed import loader as loader, adaptative
 from ivadomed import models
 from ivadomed import losses
 from ivadomed.utils import *
@@ -28,40 +30,43 @@ BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01
 PATH_BIDS = 'testing_data/'
+p = 0.0001
 
 
-def test_unet():
-    HeMIS = True
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    cuda_available = torch.cuda.is_available()
-    if cuda_available:
-        torch.cuda.set_device(GPU_NUMBER)
-        print("Using GPU number {}".format(GPU_NUMBER))
-
+def test_Hemis():
     training_transform_list = [
         ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
-        ivadomed_transforms.ROICrop2D(size=[48, 48]),
+        mt_transforms.CenterCrop2D(size=[48, 48]),
         mt_transforms.ToTensor()
     ]
     train_transform = transforms.Compose(training_transform_list)
 
     train_lst = ['sub-test001']
     contrasts = ['T2w', 'T2star']
-    ds_train = loader.BidsDataset(PATH_BIDS,
-                                  subject_lst=train_lst,
-                                  target_suffix="_lesion-manual",
-                                  roi_suffix="_seg-manual",
-                                  contrast_lst=contrasts,
-                                  metadata_choice="without",
-                                  contrast_balance={},
-                                  slice_axis=2,
-                                  transform=train_transform,
-                                  multichannel=contrasts,
-                                  slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=False))
+    dataset = adaptative.HDF5Dataset(root_dir=PATH_BIDS,
+                                     subject_lst=train_lst,
+                                     hdf5_name='testing_data/mytestfile.hdf5',
+                                     csv_name='testing_data/hdf5.csv',
+                                     target_suffix="_lesion-manual",
+                                     contrast_lst=['T1w', 'T2w', 'T2star'],
+                                     ram=False,
+                                     contrast_balance={},
+                                     slice_axis=2,
+                                     transform=train_transform,
+                                     metadata_choice=False,
+                                     dim=2,
+                                     slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=True),
+                                     canonical=True,
+                                     roi_suffix="_seg-manual",
+                                     target_lst=['T2w'],
+                                     roi_lst=['T2w'])
 
-    ds_train.filter_roi(nb_nonzero_thr=10)
+    dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
 
-    train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
+    # TODO
+    # ds_train.filter_roi(nb_nonzero_thr=10)
+
+    train_loader = DataLoader(dataset, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
                               collate_fn=mt_datasets.mt_collate,
                               num_workers=1)
@@ -71,22 +76,26 @@ def test_unet():
                              drop_rate=DROPOUT,
                              bn_momentum=BN)
 
-
-
+    cuda_available = torch.cuda.is_available()
     if cuda_available:
+        torch.cuda.set_device(GPU_NUMBER)
+        print("Using GPU number {}".format(GPU_NUMBER))
         model.cuda()
 
+    # Initialing Optimizer and scheduler
     step_scheduler_batch = False
     optimizer = optim.Adam(model.parameters(), lr=INIT_LR)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, N_EPOCHS)
 
-    load_lst, pred_lst, opt_lst, schedul_lst, init_lst, gen_lst = [], [], [], [], [], []
+    load_lst, reload_lst, pred_lst, opt_lst, schedul_lst, init_lst, gen_lst = [], [], [], [], [], [], []
+
     for epoch in tqdm(range(1, N_EPOCHS + 1), desc="Training"):
         start_time = time.time()
 
         start_init = time.time()
         lr = scheduler.get_lr()[0]
         model.train()
+
         tot_init = time.time() - start_init
         init_lst.append(tot_init)
 
@@ -95,16 +104,13 @@ def test_unet():
             if i > 0:
                 tot_gen = time.time() - start_gen
                 gen_lst.append(tot_gen)
+
             start_load = time.time()
             input_samples, gt_samples = batch["input"], batch["gt"]
-            print("len input = {}".format(len(input_samples)))
-            print("Batch = {}, {}".format(input_samples[0].shape, gt_samples.shape))
+            missing_mod = batch["Missing_mod"].swapaxes(1, 2)
 
-            print("rest of the function is not implemented yet")
-            return 0
-
-            ## WIP - no train for now
-
+            print("Number of missing modalities = {}."
+                  .format(len(input_samples) * len(input_samples[0]) - missing_mod.sum()))
 
             if cuda_available:
                 var_input = input_samples.cuda()
@@ -112,11 +118,12 @@ def test_unet():
             else:
                 var_input = input_samples
                 var_gt = gt_samples
+
             tot_load = time.time() - start_load
             load_lst.append(tot_load)
 
             start_pred = time.time()
-            preds = model(var_input)
+            preds = model(var_input, missing_mod)
             tot_pred = time.time() - start_pred
             pred_lst.append(tot_pred)
 
@@ -142,15 +149,29 @@ def test_unet():
         tot_schedul = time.time() - start_schedul
         schedul_lst.append(tot_schedul)
 
+        start_reload = time.time()
+        print("Updating Dataset")
+        p = sqrt(p)
+        dataset.update(p=p)
+        print("reloading dataset")
+        train_loader = DataLoader(dataset, batch_size=BATCH_SIZE,
+                                  shuffle=True, pin_memory=True,
+                                  collate_fn=mt_datasets.mt_collate,
+                                  num_workers=1)
+        tot_reload = time.time() - start_reload
+        reload_lst.append(tot_reload)
+
         end_time = time.time()
         total_time = end_time - start_time
         tqdm.write("Epoch {} took {:.2f} seconds.".format(epoch, total_time))
 
     print('Mean SD init {} -- {}'.format(np.mean(init_lst), np.std(init_lst)))
     print('Mean SD load {} -- {}'.format(np.mean(load_lst), np.std(load_lst)))
+    print('Mean SD reload {} -- {}'.format(np.mean(reload_lst), np.std(reload_lst)))
     print('Mean SD pred {} -- {}'.format(np.mean(pred_lst), np.std(pred_lst)))
     print('Mean SD opt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
     print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
     print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
 
-test_unet()
+
+test_Hemis()
