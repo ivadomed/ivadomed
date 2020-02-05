@@ -1,78 +1,66 @@
 {
     "command": "train",
     "gpu": 0,
-    "target_suffix": "_seg-manual",
+    "target_suffix": "_seg-tumor",
     "roi_suffix": null,
-    "bids_path": "/home/andreanne/Documents/dataset/bids_amu_2017-virginie",
+    "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
     "random_seed": 1313,
-    "contrast_train_validation": ["acq-inf_T2star", "acq-sup_T2star"],
+    "contrast_train_validation": ["T1w", "T2w"],
     "contrast_balance": {},
-    "contrast_test": ["acq-inf_T2star", "acq-sup_T2star"],
+    "contrast_test": ["T1w","T2w"],
     "center_test": [],
     "retrain_model": null,
-    "batch_size": 18,
+    "batch_size": 1,
     "dropout_rate": 0.3,
     "batch_norm_momentum": 0.1,
-    "num_epochs": 100,
-    "initial_lr": 0.001,
+    "num_epochs": 10,
+    "initial_lr": 0.00005,
     "loss": {"name": "dice"},
     "log_directory": "log",
     "lr_scheduler": {"name": "CosineAnnealingLR", "base_lr": 1e-5, "max_lr": 1e-2},
-    "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
-    "mixup_bool": false,
+    "film_layers": [],
+    "mixup_bool": true,
     "mixup_alpha": 2,
-    "metadata": "contrast",
-    "multichannel": ["acq-inf_T2star", "acq-sup_T2star"],
+    "metadata": "without",
+    "multichannel": true,
     "missing_modality": false,
     "out_channel": 1,
     "depth": 3,
+    "length_3D": [16, 96, 512],
+    "padding_3D": 0,
     "balance_samples": false,
     "slice_axis": "sagittal",
     "split_method": "per_patient",
     "train_fraction": 0.6,
     "test_fraction": 0.2,
-    "slice_filter": {"filter_empty_mask": true, "filter_empty_input": true},
+    "unet_3D": true,
+    "binarize_prediction": true,
+    "slice_filter": {
+      "filter_empty_mask": true,
+      "filter_empty_input": true
+    },
     "slice_filter_roi": null,
-    "early_stopping_patience": 10,
-	  "early_stopping_epsilon": 0.001,
+    "early_stopping_patience": 1000,
+    "early_stopping_epsilon": 0.001,
     "transformation_training": {
-      "Resample": {
-        "wspace": 0.75,
-        "hspace": 0.75
-      },
-      "DilateGT": {
-        "dilation_factor": 0
-      },
-      "CenterCrop2D": {
-        "size": [40, 40]
-      },
       "ElasticTransform": {
         "alpha_range": [28.0, 30.0],
         "sigma_range":  [3.5, 4.5],
         "p": 0.1
       },
-      "RandomAffine": {
+      "RandomAffine3D": {
         "degrees": 4.6,
         "translate": [0.03, 0.03],
         "scale": [0.98, 1.02]
       },
-      "RandomTensorChannelShift": {
-        "shift_range": [-0.1, 0.1]
-      },
-      "ToTensor": {},
-      "NormalizeInstance": {}
+      "ToTensor3D": {},
+      "NormalizeInstance3D": {},
+      "StackTensors": {}
     },
     "transformation_validation": {
-      "Resample": {
-        "wspace": 0.75,
-        "hspace": 0.75
-      },
-      "CenterCrop2D": {
-        "size": [256, 256]
-      },
-      "ToTensor": {},
-      "StackTensors": {},
-      "NormalizeInstance": {}
+      "ToTensor3D": {},
+      "NormalizeInstance3D": {},
+      "StackTensors": {}
     },
-    "debugging": true
+    "debugging": false
 }

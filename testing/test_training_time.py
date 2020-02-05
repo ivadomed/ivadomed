@@ -46,6 +46,12 @@ def test_unet():
     ]
     train_transform = transforms.Compose(training_transform_list)
     multi_transform = transforms.Compose(training_transform_list + [mt_transforms.StackTensors()])
+    training_transform_3d_list = [
+        ivadomed_transforms.CenterCrop3D(size=[96, 96, 16]),
+        mt_transforms.ToTensor(),
+        mt_transforms.NormalizeInstance3D()
+    ]
+
     train_lst = ['sub-test001']
 
     ds_train = loader.BidsDataset(PATH_BIDS,
@@ -72,6 +78,19 @@ def test_unet():
                                         multichannel=True,
                                         slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=False))
 
+    train_transform = transforms.Compose(training_transform_3d_list)
+    ds_3d = loader.Bids3DDataset(PATH_BIDS,
+                                 subject_lst=train_lst,
+                                 target_suffix="_lesion-manual",
+                                 contrast_lst=['T1w', 'T2w'],
+                                 metadata_choice="without",
+                                 contrast_balance={},
+                                 slice_axis=2,
+                                 transform=train_transform,
+                                 multichannel=False,
+                                 length=[96, 96, 16],
+                                 padding=0)
+
 
     ds_train.filter_roi(nb_nonzero_thr=10)
 
@@ -91,6 +110,10 @@ def test_unet():
                                      shuffle=True, pin_memory=True,
                                      collate_fn=mt_datasets.mt_collate,
                                      num_workers=1)
+    loader_3d = DataLoader(ds_3d, batch_size=1,
+                           shuffle=True, pin_memory=True,
+                           collate_fn=mt_datasets.mt_collate,
+                           num_workers=1)
 
     model_list = [(models.Unet(depth=DEPTH,
                               film_layers=FILM_LAYERS,
@@ -103,7 +126,8 @@ def test_unet():
                               depth=2,
                               drop_rate=DROPOUT,
                               bn_momentum=BN), train_loader, False, 'Unet'),
-                  (models.Unet(in_channel=2), multichannel_loader, False, 'Multi-Channels Unet')]
+                  (models.Unet(in_channel=2), multichannel_loader, False, 'Multi-Channels Unet'),
+                  (models.UNet3D(in_channels=1, n_classes=1), loader_3d, False, '3D Unet')]
     
     for model, train_loader, film_bool, model_name in model_list:
         print("Training {}".format(model_name))
