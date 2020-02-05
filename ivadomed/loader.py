@@ -1,5 +1,7 @@
 from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
+from medicaltorch.filters import SliceFilter
+from ivadomed.utils import *
 
 from sklearn.preprocessing import OneHotEncoder
 from scipy.signal import argrelextrema
@@ -23,6 +25,27 @@ with open("config/contrast_dct.json", "r") as fhandle:
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,
                      "acq-MToff_MTS": 3, "acq-MTon_MTS": 4, "acq-T1w_MTS": 5}
+AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
+
+
+class Bids3DDataset(mt_datasets.MRI3DSubVolumeSegmentationDataset):
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2,
+                 cache=True,
+                 transform=None, metadata_choice=False, canonical=True, labeled=True, roi_suffix=None,
+                 multichannel=False, length=(64, 64, 64), padding=0):
+        dataset = BidsDataset(root_dir,
+                              subject_lst=subject_lst,
+                              target_suffix=target_suffix,
+                              roi_suffix=roi_suffix,
+                              contrast_lst=contrast_lst,
+                              metadata_choice=metadata_choice,
+                              contrast_balance=contrast_balance,
+                              slice_axis=slice_axis,
+                              transform=transform,
+                              multichannel=multichannel)
+
+        super().__init__(dataset.filename_pairs, cache, length=length, padding=padding, transform=transform,
+                         canonical=canonical)
 
 
 class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
@@ -328,104 +351,33 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         return self.num_samples
 
 
-class Dataframe():
-    """
-    This class aims to create a dataset using the bids, which can be used by an adapative loader to perform curriculum
-    learning, Active Learning or any other strategy that needs to load samples in a specific way.
-    It works on RAM or on the fly and can be saved for later.
-    """
 
-    def __init__(self, bids, contrasts, target_suffix, roi_suffix, path=False, ram=False):
-        """
-        Initialize the Dataframe
-        """
-        # Ram status
-        self.ram = ram
-        self.status = {c: self.ram for c in contrasts}
-        self.status['gt'] = self.ram
-        self.status['ROI'] = self.ram
+def load_dataset(data_list, data_transform, context):
+    if context["unet_3D"]:
+        dataset = Bids3DDataset(context["bids_path"],
+                                subject_lst=data_list,
+                                target_suffix=context["target_suffix"],
+                                roi_suffix=context["roi_suffix"],
+                                contrast_lst=context["contrast_train_validation"],
+                                metadata_choice=context["metadata"],
+                                contrast_balance=context["contrast_balance"],
+                                slice_axis=AXIS_DCT[context["slice_axis"]],
+                                transform=data_transform,
+                                multichannel=context['multichannel'],
+                                length=context["length_3D"],
+                                padding=context["padding_3D"])
+    else:
+        dataset = BidsDataset(context["bids_path"],
+                              subject_lst=data_list,
+                              target_suffix=context["target_suffix"],
+                              roi_suffix=context["roi_suffix"],
+                              contrast_lst=context["contrast_train_validation"],
+                              metadata_choice=context["metadata"],
+                              contrast_balance=context["contrast_balance"],
+                              slice_axis=AXIS_DCT[context["slice_axis"]],
+                              transform=data_transform,
+                              multichannel=context['multichannel'],
+                              slice_filter_fn=SliceFilter(**context["slice_filter"]),
+                              missing_modality=context['missing_modality'])
+    return dataset
 
-        self.contrasts = contrasts
-        self.df = None
-        # Dataframe
-        if path:
-            self.load(path)
-        else:
-            self.create_df(bids, target_suffix, roi_suffix, ram)
-
-    def load_column(self, column_name):
-        """
-        To load a column in memory
-        """
-        if not self.status[column_name]:
-            print("TODO")
-        else:
-            print("Column already in RAM")
-
-    def load_all(self):
-        print("TODO")
-
-    def shuffe(self):
-        "Shuffle the whole dataframe"
-        self.df = self.df.sample(frac=1)
-
-    def load(self, path):
-        """
-        Load the dataframe from a csv file.
-        """
-        try:
-            self.df = pd.read_csv(path + 'Bids_dataframe.csv')
-            print("Dataframe has been correctly loaded from {}/Bids_dataframe.csv.".format(path))
-        except FileNotFoundError:
-            print("No csv file found")
-
-    def save(self, path):
-        """
-        Save the dataframe into a csv file.
-        """
-        try:
-            self.df.to_csv(path + '/Bids_dataframe.csv', index=True)
-            print("Dataframe has been saved at {}/Bids_dataframe.csv.".format(path))
-        except FileNotFoundError:
-            print("Wrong path.")
-
-    def create_df(self, bids, target_suffix, roi_suffix, ram):
-        """
-        Generate the Dataframe using the Bids
-        """
-        # Template of a line
-        empty_line = {'T1w': None,
-                      'T2w': None,
-                      'T2star': None,
-                      'gt': None,
-                      'ROI': None,
-                      'Slices': None,
-                      'Difficulty': None}
-
-        # Initialize the  dataframe
-        col_names = ['Subjects', 'T1w', 'T2w', 'T2star', 'gt', 'ROI', 'Slices', 'Difficulty']
-        df = pd.DataFrame(columns=col_names).set_index('Subjects')
-
-        # Filling the dataframe
-        for subject in bids.get_subjects():
-            if subject.record["modality"] in self.contrasts:
-                subject_id = subject.get_participant_id()
-                line = df.loc[df.index == subject_id]
-
-                if not line.empty:
-                    df.loc[df.index == subject_id, subject.record["modality"]] = subject.record["absolute_path"]
-
-                else:
-                    if subject.has_derivative("labels"):
-                        line = copy.deepcopy(empty_line)
-                        line[subject.record["modality"]] = subject.record["absolute_path"]
-                        derivatives = subject.get_derivatives("labels")
-                        for deriv in derivatives:
-                            if deriv.endswith(subject.record["modality"] + target_suffix + ".nii.gz"):
-                                line['gt'] = deriv
-                            if not (roi_suffix is None) and deriv.endswith(
-                                    subject.record["modality"] + roi_suffix + ".nii.gz"):
-                                line['ROI'] = deriv
-                        df.loc[subject_id] = line
-
-        self.df = df
