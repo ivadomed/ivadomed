@@ -5,14 +5,19 @@ from PIL import Image
 import torchvision.transforms.functional as F
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing, generate_binary_structure
+import nibabel as nib
 
 from medicaltorch import transforms as mt_transforms
+from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage.interpolation import map_coordinates
 
 
 def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
        from the mt_transforms."""
-    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor']
+
+    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor', 'StackTensors', 'CenterCrop3D',
+            'RandomAffine3D', 'NormalizeInstance3D', 'ToTensor3D']
 
 
 class UndoCompose(object):
@@ -296,3 +301,124 @@ class DilateGT(mt_transforms.MTTransform):
             sample.update(rdict)
 
         return sample
+
+
+class StackTensors(mt_transforms.StackTensors):
+    """This class extends mt_transforms.NormalizeInstance"""
+    def undo_transform(self, sample):
+        return sample
+
+
+# 3D Transforms
+class CenterCrop3D(mt_transforms.MTTransform):
+    """Make a centered crop of a specified size.
+    :param labeled: if it is a segmentation task.
+                         When this is True (default), the crop
+                         will also be applied to the ground truth.
+    """
+
+    def __init__(self, size):
+        self.size = size
+
+    def _uncrop(self, sample):
+        td, tw, th = sample['input_metadata']["__centercrop"]
+        d, w, h = sample['input_metadata']["data_shape"]
+        fh = max(int(round((h - th) / 2.)), 0)
+        fw = max(int(round((w - tw) / 2.)), 0)
+        fd = max(int(round((d - td) / 2.)), 0)
+        npad = ((0, 0), (fw, fw), (fd, fd), (fh, fh))
+        sample['input'] = np.pad(sample['input'], pad_width=npad, mode='constant', constant_values=0)
+        sample['gt'] = np.pad(sample['gt'], pad_width=npad, mode='constant', constant_values=0)
+        return sample
+
+    def undo_transform(self, sample):
+        rdict = self._uncrop(sample)
+        sample.update(rdict)
+        return sample
+
+    def __call__(self, input_data):
+        for idx, input_volume in enumerate(input_data['input']):
+            gt_img = input_data['gt']
+            input_img = input_volume
+            d, w, h = gt_img.shape
+            td, tw, th = self.size
+            fh = max(int(round((h - th) / 2.)), 0)
+            fw = max(int(round((w - tw) / 2.)), 0)
+            fd = max(int(round((d - td) / 2.)), 0)
+            crop_gt = gt_img[fd:fd + td, fw:fw + tw, fh:fh + th]
+            crop_input = input_img[fd:fd + td, fw:fw + tw, fh:fh + th]
+            # Pad image with mean if image smaller than crop size
+            cd, cw, ch = crop_input.shape
+            if (cw, ch, cd) != (tw, th, td):
+                w_diff = (tw - cw) / 2.
+                iw = 1 if w_diff % 1 != 0 else 0
+                h_diff = (th - ch) / 2.
+                ih = 1 if h_diff % 1 != 0 else 0
+                d_diff = (td - cd) / 2.
+                id = 1 if d_diff % 1 != 0 else 0
+                npad = ((int(d_diff) + id, int(d_diff)),
+                        (int(w_diff) + iw, int(w_diff)),
+                        (int(h_diff) + ih, int(h_diff)))
+                crop_input = np.pad(crop_input, pad_width=npad, mode='constant', constant_values=np.mean(crop_input))
+                crop_gt = np.pad(crop_gt, pad_width=npad, mode='constant', constant_values=0)
+            input_data['input'][idx] = crop_input
+            input_data['gt'] = crop_gt
+            input_data['input_metadata'][idx]["__centercrop"] = td, tw, th
+
+        return input_data
+
+
+class NormalizeInstance3D(mt_transforms.NormalizeInstance3D):
+    """This class extends mt_transforms.NormalizeInstance"""
+
+    @staticmethod
+    def undo_transform(sample):
+        return sample
+
+
+class RandomAffine3D(mt_transforms.RandomAffine):
+    def __call__(self, sample):
+        """This class extends mt_transforms.RandomAffine"""
+
+        rdict = {}
+        input_data = sample['input']
+        if not isinstance(input_data, list):
+            input_data = [sample['input']]
+
+        input_data_size = input_data[0][0, :, :].shape
+        params = self.get_params(self.degrees, self.translate, self.scale,
+                                 self.shear, input_data_size)
+        ret_input = []
+        for volume in input_data:
+            img_data = np.zeros(input_data[0].shape)
+            for idx, img in enumerate(volume):
+                pil_img = Image.fromarray(img, mode='F')
+                img_data[idx, :, :] = np.array(self.sample_augment(pil_img, params))
+            ret_input.append(img_data.astype('float32'))
+
+        rdict['input'] = ret_input
+
+        if self.labeled:
+            gt_data = sample['gt']
+            gt_vol = np.zeros(gt_data.shape)
+            for idx, gt in enumerate(gt_data):
+                pil_img = Image.fromarray(gt, mode='F')
+                gt_vol[idx, :, :] = np.array(self.sample_augment(pil_img, params))
+            ret_gt = gt_vol.astype('float32')
+            rdict['gt'] = ret_gt
+
+        sample.update(rdict)
+        return sample
+
+
+class ToTensor3D(mt_transforms.ToTensor):
+    """This class extends mt_transforms.ToTensor"""
+
+    def undo_transform(self, sample):
+        rdict = {}
+        rdict['input'] = np.array(sample['input'])
+        rdict['gt'] = np.array(sample['gt'])
+
+        sample.update(rdict)
+        return sample
+

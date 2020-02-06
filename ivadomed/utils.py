@@ -166,7 +166,7 @@ class Evaluation3DMetrics(object):
         return dct
 
 
-def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False):
+def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, unet_3D=False, binarize=True):
     """Save the prediction as nii.
         1. Reconstruct a 3D volume out of the slice-wise predictions.
         2. Re-orient the 3D array accordingly to the ground-truth orientation.
@@ -186,21 +186,26 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False):
     nib_ref = nib.load(fname_ref)
     nib_ref_can = nib.as_closest_canonical(nib_ref)
 
-    # complete missing z with zeros
-    tmp_lst = []
-    for z in range(nib_ref_can.header.get_data_shape()[slice_axis]):
-        if not z in z_lst:
-            tmp_lst.append(np.zeros(data_lst[0].shape))
-        else:
-            tmp_lst.append(data_lst[z_lst.index(z)])
+    if not unet_3D:
+        # complete missing z with zeros
+        tmp_lst = []
+        for z in range(nib_ref_can.header.get_data_shape()[slice_axis]):
+            if not z in z_lst:
+                tmp_lst.append(np.zeros(data_lst[0].shape))
+            else:
+                tmp_lst.append(data_lst[z_lst.index(z)])
 
-    if debug:
-        print("Len {}".format(len(tmp_lst)))
-        for arr in tmp_lst:
-            print("Shape element lst {}".format(arr.shape))
+        if debug:
+            print("Len {}".format(len(tmp_lst)))
+            for arr in tmp_lst:
+                print("Shape element lst {}".format(arr.shape))
 
-    # create data
-    arr = np.stack(tmp_lst, axis=0)
+        # create data
+        arr = np.stack(tmp_lst, axis=0)
+
+    else:
+        arr = data_lst
+
     if slice_axis == 2:
         arr = np.swapaxes(arr, 1, 2)
     # move axis according to slice_axis to RAS orientation
@@ -213,9 +218,12 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False):
     trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
     # apply transformation
     arr_pred_ref_space = nib.orientations.apply_orientation(arr_ras, trans_orient)
+    if binarize:
+        arr_pred_ref_space = threshold_predictions(arr_pred_ref_space)
 
     # create nii
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
+
 
     # save
     nib.save(nib_pred, fname_out)
@@ -377,6 +385,19 @@ def dice_score(im1, im2):
 
     intersection = np.logical_and(im1, im2)
     return (2. * intersection.sum()) / im_sum
+
+
+def hausdorff_score(prediction, groundtruth):
+    if len(prediction.shape) == 3:
+        mean_hansdorff = 0
+        for idx in range(prediction.shape[1]):
+            pred = prediction[:, idx, :]
+            gt = groundtruth[:, idx, :]
+            mean_hansdorff += mt_metrics.hausdorff_score(pred, gt)
+        mean_hansdorff = mean_hansdorff / prediction.shape[1]
+        return mean_hansdorff
+
+    return mt_metrics.hausdorff_score(prediction, groundtruth)
 
 
 def mixup(data, targets, alpha):

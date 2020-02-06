@@ -29,6 +29,8 @@
 	"test_fraction": 0.2,
 	"early_stopping_patience": 10,
 	"early_stopping_epsilon": 0.001,
+	"unet_3D": false,
+	"binarize_prediction": true,
     "slice_axis": "axial",
 	"slice_filter": {
       "filter_empty_mask": true,
