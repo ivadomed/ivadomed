@@ -35,6 +35,7 @@
         "slice_filter_roi": 10,
 	"uncertainty": {"epistemic": true, "aleatoric": false, "n_it": 10},
 	"unet_3D": false,
+	"binarize_prediction": true,
 	"early_stopping_patience": 20,
 	"early_stopping_epsilon": 0.1,
 	"transformation_training": {
