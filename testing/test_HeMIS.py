@@ -24,16 +24,16 @@ import ivadomed.transforms as ivadomed_transforms
 cudnn.benchmark = True
 
 GPU_NUMBER = 1
-BATCH_SIZE = 8
+BATCH_SIZE = 4
 DROPOUT = 0.4
 BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01
-PATH_BIDS = 'testing_data/'
+PATH_BIDS = 'testing_data'
 p = 0.0001
 
 
-def test_Hemis():
+def test_Hemis(p=0.0001):
     training_transform_list = [
         ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
         mt_transforms.CenterCrop2D(size=[48, 48]),
@@ -42,7 +42,7 @@ def test_Hemis():
     train_transform = transforms.Compose(training_transform_list)
 
     train_lst = ['sub-test001']
-    contrasts = ['T2w', 'T2star']
+    contrasts = ['T1w', 'T2w', 'T2star']
     dataset = adaptative.HDF5Dataset(root_dir=PATH_BIDS,
                                      subject_lst=train_lst,
                                      hdf5_name='testing_data/mytestfile.hdf5',
@@ -107,13 +107,14 @@ def test_Hemis():
 
             start_load = time.time()
             input_samples, gt_samples = batch["input"], batch["gt"]
-            missing_mod = batch["Missing_mod"].swapaxes(1, 2)
+            print(batch["Missing_mod"])
+            missing_mod = batch["Missing_mod"].permute(1, 0)
 
             print("Number of missing modalities = {}."
                   .format(len(input_samples) * len(input_samples[0]) - missing_mod.sum()))
 
             if cuda_available:
-                var_input = input_samples.cuda()
+                var_input = cuda(input_samples)
                 var_gt = gt_samples.cuda(non_blocking=True)
             else:
                 var_input = input_samples

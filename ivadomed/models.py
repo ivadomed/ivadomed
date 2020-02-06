@@ -185,7 +185,8 @@ class Unet(Module):
 
     def forward(self, x, context=None):
         features, w_film = self.encoder(x, context)
-
+        print(len(features))
+        print(features[0].shape)
         preds = self.decoder(features, context, w_film)
 
         return preds
@@ -312,16 +313,21 @@ class HeMISUnet(Module):
 
         # Down-sampling
         for i, Mod in enumerate(self.modalities):
-            features = self.Encoder_mod['Encoder_{}'.format(Mod)](x_mods[i])
+            features, _ = self.Encoder_mod['Encoder_{}'.format(Mod)](x_mods[i])
+            
             for j in range(self.depth + 1):
                 features_mod[j].append(features[j].unsqueeze(0))
-
+        
+        print("features extracted. let's start the abstraction.")
         # Abstraction
         for j in range(self.depth + 1):
-            features_mod[j] = torch.cat([torch.cat(features_mod[j], 0)[indexes_mod[j].nonzero()].mean(0).unsqueeze(0),
-                                         torch.cat(features_mod[j], 0)[indexes_mod[j].nonzero()].var(0).unsqueeze(0)], 0
-                                        )
-
+            features_cat = torch.cat(features_mod[j], 0)
+            print(features_cat.shape)
+            mean_tensor = torch.cat([features_cat[i][indexes_mod[i].nonzero()].mean(0).unsqueeze(0) for i in range(len(self.modalities))], 0)
+            var_tensor = torch.cat([features_cat[i][indexes_mod[i].nonzero()].var(0).unsqueeze(0) for i in range(len(self.modalities))], 0)
+            print(mean_tensor.shape)                
+            features_mod[j] = torch.cat([mean_tensor, var_tensor], 0)
+            print(features_mod[j].shape)
         # Up-sampling
         preds = self.decoder(features_mod)
 
