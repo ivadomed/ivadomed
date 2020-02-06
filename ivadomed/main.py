@@ -858,15 +858,8 @@ def cmd_eval(context):
     path_pred = os.path.join(context['log_directory'], 'pred_masks')
     subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_pred) if f.endswith('_pred.nii.gz')]
 
-<<<<<<< HEAD
     # loop across subj_acq
     for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
-=======
-    # loop across fname pred files
-    for fname_pred in tqdm(fname_pred_lst, desc="Evaluation"):
-        subj_acq = fname_pred.split('_pred.nii.gz')[0]
-        fname_gt = subj_acq + context['target_suffix'] + '.nii.gz'
->>>>>>> d14406a6143ff79369b8c4137ba560d2028b5f3c
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
         fname_pred = os.path.join(path_pred, subj_acq+'_pred.nii.gz')
