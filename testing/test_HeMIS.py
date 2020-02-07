@@ -72,10 +72,10 @@ def test_Hemis(p=0.0001):
                               num_workers=1)
 
     model = models.HeMISUnet(modalities=contrasts,
-                             depth=2,
+                             depth=3,
                              drop_rate=DROPOUT,
                              bn_momentum=BN)
-
+    print(model)
     cuda_available = torch.cuda.is_available()
     if cuda_available:
         torch.cuda.set_device(GPU_NUMBER)
@@ -108,10 +108,12 @@ def test_Hemis(p=0.0001):
             start_load = time.time()
             input_samples, gt_samples = batch["input"], batch["gt"]
             print(batch["Missing_mod"])
-            missing_mod = batch["Missing_mod"].permute(1, 0)
+            missing_mod = batch["Missing_mod"]#.permute(1, 0)
 
             print("Number of missing modalities = {}."
                   .format(len(input_samples) * len(input_samples[0]) - missing_mod.sum()))
+            
+            
 
             if cuda_available:
                 var_input = cuda(input_samples)
@@ -152,7 +154,7 @@ def test_Hemis(p=0.0001):
 
         start_reload = time.time()
         print("Updating Dataset")
-        p = sqrt(p)
+        p = p**(2/3)
         dataset.update(p=p)
         print("reloading dataset")
         train_loader = DataLoader(dataset, batch_size=BATCH_SIZE,

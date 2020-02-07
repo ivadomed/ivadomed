@@ -117,18 +117,22 @@ class Decoder(Module):
         # Up-Sampling path
         self.up_path = nn.ModuleList()
         if hemis:
-            in_channel = 64 * 2 ** (self.depth + 1)
-            self.depth += 1
+            in_channel = 64 * 2 ** (self.depth)
+            self.up_path.append(UpConv(in_channel*2, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
+            self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)) if film_layers[self.depth + 1] else None)
+            #self.depth += 1
         else:
             in_channel = 64 * 2 ** self.depth
-
-        self.up_path.append(UpConv(in_channel, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
-        self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)) if film_layers[self.depth + 1] else None)
-
+        
+            self.up_path.append(UpConv(in_channel, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
+            self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)) if film_layers[self.depth + 1] else None)
+        
         for i in range(1, depth):
             in_channel //= 2
+            
+            
             self.up_path.append(
-                UpConv(in_channel + 64 * 2 ** (self.depth - i - 1), 64 * 2 ** (self.depth - i - 1), drop_rate,
+                UpConv(in_channel + 64 * 2 ** (self.depth - i - 1 + int(hemis)), 64 * 2 ** (self.depth - i - 1), drop_rate,
                        bn_momentum))
             self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - i - 1)) if film_layers[self.depth + i + 1]
                                 else None)
@@ -139,7 +143,9 @@ class Decoder(Module):
 
     def forward(self, features, context=None, w_film=None):
         x = features[-1]
+        
         for i in reversed(range(self.depth)):
+            
             x = self.up_path[-(i + 1) * 2](x, features[i])
             if self.up_path[-(i + 1) * 2 + 1]:
                 x, w_film = self.up_path[-(i + 1) * 2 + 1](x, context, w_film)
@@ -167,7 +173,7 @@ class Unet(Module):
     def __init__(self, in_channel=1, out_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4,
                  bn_momentum=0.1, film_bool=False):
         super(Unet, self).__init__()
-
+        print("depth", depth)
         # Verify if the length of boolean FiLM layers corresponds to the depth
         if film_bool and len(film_layers) != 2 * depth + 2:
             raise ValueError(f"The number of FiLM layers {len(film_layers)} entered does not correspond to the "
@@ -185,10 +191,11 @@ class Unet(Module):
 
     def forward(self, x, context=None):
         features, w_film = self.encoder(x, context)
-        print(len(features))
-        print(features[0].shape)
+        #print(self.decoder)
+        #print(len(features))
+        #print(features[0].shape)
         preds = self.decoder(features, context, w_film)
-
+        
         return preds
 
 
@@ -289,7 +296,7 @@ class HeMISUnet(Module):
         self.film_layers = [0] * (2 * depth + 2)
         self.depth = depth
         self.modalities = modalities
-
+        
         # Encoder path
         self.Encoder_mod = nn.ModuleDict(
             [['Encoder_{}'.format(Mod), Encoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate,
@@ -308,29 +315,32 @@ class HeMISUnet(Module):
             N.B. len(list) = number of modalities.
             len(list[i]) = Batch size
         """
-
+        
+        #print("shape x", x_mods[0].shape)
         features_mod = [[] for _ in range(self.depth + 1)]
 
         # Down-sampling
         for i, Mod in enumerate(self.modalities):
+            #print("Mod:", Mod)
+            #print("shape x", x_mods[i].shape)
             features, _ = self.Encoder_mod['Encoder_{}'.format(Mod)](x_mods[i])
-            
+            #print("shape x", features[0].shape)
+
             for j in range(self.depth + 1):
                 features_mod[j].append(features[j].unsqueeze(0))
-        
-        print("features extracted. let's start the abstraction.")
+
         # Abstraction
         for j in range(self.depth + 1):
-            features_cat = torch.cat(features_mod[j], 0)
-            print(features_cat.shape)
-            mean_tensor = torch.cat([features_cat[i][indexes_mod[i].nonzero()].mean(0).unsqueeze(0) for i in range(len(self.modalities))], 0)
-            var_tensor = torch.cat([features_cat[i][indexes_mod[i].nonzero()].var(0).unsqueeze(0) for i in range(len(self.modalities))], 0)
-            print(mean_tensor.shape)                
-            features_mod[j] = torch.cat([mean_tensor, var_tensor], 0)
-            print(features_mod[j].shape)
+            features_cat = torch.cat(features_mod[j], 0).transpose(0, 1)
+            #print(features_cat.shape)
+            features_mod[j] = torch.cat([torch.cat([features_cat[i][indexes_mod[i].nonzero()].squeeze(1).mean(0), 
+                                                    features_cat[i][indexes_mod[i].nonzero()].squeeze(1).var(0)], 0).unsqueeze(0) for i in range(len(indexes_mod))],0)
+            
+            
+        
+        #print(self.decoder)
         # Up-sampling
         preds = self.decoder(features_mod)
-
         return preds
 
 
