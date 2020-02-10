@@ -1,3 +1,4 @@
+import os
 from math import sqrt
 
 import numpy as np
@@ -34,6 +35,7 @@ p = 0.0001
 
 
 def test_Hemis(p=0.0001):
+    print('[INFO]: Starting test ... \n')
     training_transform_list = [
         ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
         mt_transforms.CenterCrop2D(size=[48, 48]),
@@ -43,6 +45,8 @@ def test_Hemis(p=0.0001):
 
     train_lst = ['sub-test001']
     contrasts = ['T1w', 'T2w', 'T2star']
+
+    print('[INFO]: Creating dataset ...\n')
     dataset = adaptative.HDF5Dataset(root_dir=PATH_BIDS,
                                      subject_lst=train_lst,
                                      hdf5_name='testing_data/mytestfile.hdf5',
@@ -62,6 +66,10 @@ def test_Hemis(p=0.0001):
                                      roi_lst=['T2w'])
 
     dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
+    print("[INFO]: Dataset RAM status:")
+    print(dataset.status)
+    print("[INFO]: In memory Dataframe:")
+    print(dataset.dataframe)
 
     # TODO
     # ds_train.filter_roi(nb_nonzero_thr=10)
@@ -108,12 +116,10 @@ def test_Hemis(p=0.0001):
             start_load = time.time()
             input_samples, gt_samples = batch["input"], batch["gt"]
             print(batch["Missing_mod"])
-            missing_mod = batch["Missing_mod"]#.permute(1, 0)
+            missing_mod = batch["Missing_mod"]
 
             print("Number of missing modalities = {}."
                   .format(len(input_samples) * len(input_samples[0]) - missing_mod.sum()))
-            
-            
 
             if cuda_available:
                 var_input = cuda(input_samples)
@@ -153,10 +159,10 @@ def test_Hemis(p=0.0001):
         schedul_lst.append(tot_schedul)
 
         start_reload = time.time()
-        print("Updating Dataset")
-        p = p**(2/3)
+        print("[INFO]: Updating Dataset")
+        p = p ** (2 / 3)
         dataset.update(p=p)
-        print("reloading dataset")
+        print("[INFO]: Reloading dataset")
         train_loader = DataLoader(dataset, batch_size=BATCH_SIZE,
                                   shuffle=True, pin_memory=True,
                                   collate_fn=mt_datasets.mt_collate,
@@ -175,6 +181,8 @@ def test_Hemis(p=0.0001):
     print('Mean SD opt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
     print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
     print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
-
+    print("[INFO]: Deleting HDF5 file.")
+    os.remove('testing_data/mytestfile.hdf5')
+    print('\n [INFO]: Test of HeMIS passed successfully.')
 
 test_Hemis()

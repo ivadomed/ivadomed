@@ -17,7 +17,7 @@ from torchvision import transforms
 from tqdm import tqdm
 import time
 
-GPU_NUMBER = 0
+GPU_NUMBER = 1
 BATCH_SIZE = 1
 DROPOUT = 0.4
 DEPTH = 3
@@ -51,10 +51,11 @@ def test_hdf5():
         for key, val in obj.attrs.items():
             print("    %s: %s" % (key, val))
 
-    #hdf5_file.hdf5_file.visititems(print_attrs)
+    print('\n[INFO]: HDF5 architecture:')
+    hdf5_file.hdf5_file.visititems(print_attrs)
     print('\n[INFO]: HDF5 file successfully generated.')
     print('[INFO]: Generating dataframe ...\n')
-    
+
     df = adaptative.Dataframe(hdf5=hdf5_file.hdf5_file,
                               contrasts=['T1w', 'T2w', 'T2star'],
                               path='testing_data/hdf5.csv',
@@ -66,7 +67,7 @@ def test_hdf5():
 
     print('\n[INFO]: Dataframe successfully generated. ')
     print('[INFO]: Creating dataset ...\n')
-    
+
     training_transform_list = [
         ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
         mt_transforms.CenterCrop2D(size=[48, 48]),
@@ -118,40 +119,23 @@ def test_hdf5():
                               shuffle=False, pin_memory=True,
                               collate_fn=mt_datasets.mt_collate,
                               num_workers=1)
-    model = models.HeMISUnet(modalities=['T1w', 'T2w', 'T2star'],
-                            depth=2,
-                            drop_rate=DROPOUT,
-                            bn_momentum=BN)
 
-    if cuda_available:
-        model.cuda()
+    for i, batch in enumerate(train_loader):
+        input_samples, gt_samples = batch["input"], batch["gt"]
+        print("len input = {}".format(len(input_samples)))
+        print("Batch = {}, {}".format(input_samples[0][0].shape, gt_samples.shape))
 
-    step_scheduler_batch = False
-    optimizer = optim.Adam(model.parameters(), lr=INIT_LR)
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, N_EPOCHS)
+        if cuda_available:
+            var_input = cuda(input_samples)
+            var_gt = gt_samples.cuda(non_blocking=True)
+        else:
+            var_input = input_samples
+            var_gt = gt_samples
 
-    load_lst, pred_lst, opt_lst, schedul_lst, init_lst, gen_lst = [], [], [], [], [], []
-    for epoch in tqdm(range(1, N_EPOCHS + 1), desc="Training"):
-        start_time = time.time()
-
-        start_init = time.time()
-        lr = scheduler.get_lr()[0]
-        model.train()
-        tot_init = time.time() - start_init
-        init_lst.append(tot_init)
-
-        num_steps = 0
-        for i, batch in enumerate(train_loader):
-            if i > 0:
-                tot_gen = time.time() - start_gen
-                gen_lst.append(tot_gen)
-            start_load = time.time()
-            input_samples, gt_samples = batch["input"], batch["gt"]
-            print("len input = {}".format(len(input_samples)))
-            print("Batch = {}, {}".format(input_samples[0][0].shape, gt_samples.shape))
-            break
         break
+    os.remove('testing_data/mytestfile.hdf5')
     print("Congrats your dataloader works! You can go Home now and get a beer.")
     return 0
+
 
 test_hdf5()
