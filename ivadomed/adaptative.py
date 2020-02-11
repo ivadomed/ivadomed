@@ -440,17 +440,17 @@ class HDF5Dataset:
         if not os.path.isfile(hdf5_name):
             print("Computing hdf5 file of the data")
             hdf5_file = Bids_to_hdf5(root_dir,
-                                          subject_lst=subject_lst,
-                                          hdf5_name=hdf5_name,
-                                          target_suffix=target_suffix,
-                                          roi_suffix=roi_suffix,
-                                          contrast_lst=contrast_lst,
-                                          metadata_choice=metadata_choice,
-                                          contrast_balance=contrast_balance,
-                                          slice_axis=slice_axis,
-                                          canonical=canonical,
-                                          slice_filter_fn=slice_filter_fn
-                                          )
+                                     subject_lst=subject_lst,
+                                     hdf5_name=hdf5_name,
+                                     target_suffix=target_suffix,
+                                     roi_suffix=roi_suffix,
+                                     contrast_lst=contrast_lst,
+                                     metadata_choice=metadata_choice,
+                                     contrast_balance=contrast_balance,
+                                     slice_axis=slice_axis,
+                                     canonical=canonical,
+                                     slice_filter_fn=slice_filter_fn
+                                     )
             self.hdf5_file = hdf5_file.hdf5_file
         else:
             self.hdf5_file = h5py.File(hdf5_name, "r")

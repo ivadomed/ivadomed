@@ -34,6 +34,7 @@
     "train_fraction": 0.6,
     "test_fraction": 0.2,
     "unet_3D": true,
+    "HeMIS": false,
     "binarize_prediction": true,
     "slice_filter": {
       "filter_empty_mask": true,

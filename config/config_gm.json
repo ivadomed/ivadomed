@@ -32,6 +32,7 @@
     "slice_axis": "axial",
     "balance_samples": false,
 	"unet_3D": false,
+	"HeMIS": false,
 	"binarize_prediction": true,
     "split_method": "per_patient",
         "slice_filter": {"filter_empty_mask": false, "filter_empty_input": true},
