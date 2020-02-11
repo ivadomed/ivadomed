@@ -629,10 +629,15 @@ def cmd_test(context):
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
 
+    # Aleatoric uncertainty
+    if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
+        transformation_dict = context["transformation_training"]
+    else:
+        transformation_dict = context["transformation_validation"]
     # These are the validation/testing transformations
     validation_transform_list = []
-    for transform in context["transformation_validation"].keys():
-        parameters = context["transformation_validation"][transform]
+    for transform in transformation_dict.keys():
+        parameters = transformation_dict[transform]
         if transform in ivadomed_transforms.get_transform_names():
             validation_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
         else:
@@ -695,70 +700,90 @@ def cmd_test(context):
 
     metric_mgr = IvadoMetricManager(metric_fns)
 
+    # number of Monte Carlo simulation
+    if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and context['uncertainty']['n_it'] > 0:
+        n_monteCarlo = context['uncertainty']['n_it']
+    else:
+        n_monteCarlo = 1
+
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     for i, batch in enumerate(test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
 
-        with torch.no_grad():
-            if cuda_available:
-                test_input = cuda(input_samples)
-                test_gt = gt_samples.cuda(non_blocking=True)
-            else:
-                test_input = input_samples
-                test_gt = gt_samples
+        for i_monteCarlo in range(n_monteCarlo):
+            with torch.no_grad():
+                if cuda_available:
+                    test_input = cuda(input_samples)
+                    test_gt = gt_samples.cuda(non_blocking=True)
+                else:
+                    test_input = input_samples
+                    test_gt = gt_samples
 
-            if film_bool:
-                sample_metadata = batch["input_metadata"]
-                test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+                # Epistemic uncertainty
+                if context['uncertainty']['epistemic'] and context['uncertainty']['n_it'] > 0:
+                    for m in model.modules():
+                        if m.__class__.__name__.startswith('Dropout'):
+                            m.train()
 
-                test_metadata = [one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k in
-                                 range(len(sample_metadata))]
-                preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
-            else:
-                preds = model(test_input)
+                if film_bool:
+                    sample_metadata = batch["input_metadata"]
+                    test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
 
-        # WARNING: sample['gt'] is actually the pred in the return sample
-        # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
-        rdict = {}
-        rdict['gt'] = preds.cpu()
-        batch.update(rdict)
+                    test_metadata = [one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k in
+                                     range(len(sample_metadata))]
+                    preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
+                else:
+                    preds = model(test_input)
 
-        if batch["input"].shape[1] > 1:
-            batch["input_metadata"] = batch["input_metadata"][0]  # Take only second channel
-
-        # reconstruct 3D image
-        for smp_idx in range(len(batch['gt'])):
-            # undo transformations
+            # WARNING: sample['gt'] is actually the pred in the return sample
+            # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
             rdict = {}
-            for k in batch.keys():
-                rdict[k] = batch[k][smp_idx]
-            if rdict["input"].shape[0] > 1:
-                rdict["input"] = rdict["input"][1, :, :][None, :, :]
-            rdict_undo = val_undo_transform(rdict)
+            rdict['gt'] = preds.cpu()
+            batch.update(rdict)
 
-            fname_ref = rdict_undo['input_metadata']['gt_filename']
-            if not context['unet_3D']:
-                if pred_tmp_lst and (fname_ref != fname_tmp or (
-                        i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
-                    # save the completely processed file as a nii
-                    fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
+            if batch["input"].shape[1] > 1:
+                batch["input_metadata"] = batch["input_metadata"][0]  # Take only second channel
+
+            # reconstruct 3D image
+            for smp_idx in range(len(batch['gt'])):
+                # undo transformations
+                rdict = {}
+                for k in batch.keys():
+                    rdict[k] = batch[k][smp_idx]
+                if rdict["input"].shape[0] > 1:
+                    rdict["input"] = rdict["input"][1, :, :][None, :, :]
+                rdict_undo = val_undo_transform(rdict)
+
+                fname_ref = rdict_undo['input_metadata']['gt_filename']
+                if not context['unet_3D']:
+                    if pred_tmp_lst and (fname_ref != fname_tmp or (
+                            i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
+                        # save the completely processed file as a nii
+                        fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
+                        fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+
+                        # If MonteCarlo, then we save each simulation result
+                        if n_monteCarlo > 1:
+                            fname_pred = fname_pred.split('.nii.gz')[0]+'_'+str(i_monteCarlo).zfill(2)+'.nii.gz'
+
+                        save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, AXIS_DCT[context['slice_axis']],
+                                context["binarize_prediction"])
+
+                        # re-init pred_stack_lst
+                        pred_tmp_lst, z_tmp_lst = [], []
+
+                    # add new sample to pred_tmp_lst
+                    pred_tmp_lst.append(np.array(rdict_undo['gt']))
+                    z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
+                    fname_tmp = fname_ref
+
+                else:
+                    # TODO: Add reconstruction for subvolumes
+                    fname_pred = os.path.join(path_3Dpred, fname_ref.split('/')[-1])
                     fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
-                    save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, AXIS_DCT[context['slice_axis']],
-                             context["binarize_prediction"])
-                    # re-init pred_stack_lst
-                    pred_tmp_lst, z_tmp_lst = [], []
-
-                # add new sample to pred_tmp_lst
-                pred_tmp_lst.append(np.array(rdict_undo['gt']))
-                z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
-                fname_tmp = fname_ref
-            else:
-                # TODO: Add reconstruction for subvolumes
-                fname_pred = os.path.join(path_3Dpred, fname_ref.split('/')[-1])
-                fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
-                # Choose only one modality
-                save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
-                         AXIS_DCT[context['slice_axis']], unet_3D=True)
+                    # Choose only one modality
+                    save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
+                             AXIS_DCT[context['slice_axis']], unet_3D=True)
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
@@ -771,6 +796,39 @@ def cmd_test(context):
         preds_npy = preds_npy.squeeze(axis=1)
 
         metric_mgr(preds_npy, gt_npy)
+
+    # COMPUTE UNCERTAINTY MAPS
+    # list subj_acq prefixes
+    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_3Dpred) if f.endswith('.nii.gz') and '_pred' in f]
+    # remove duplicates
+    subj_acq_lst = list(set(subj_acq_lst))
+    # keep only the images where unc has not been computed yet
+    subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(os.path.join(path_3Dpred, f+'_unc-cv.nii.gz'))]
+    # loop across subj_acq
+    for subj_acq in tqdm(subj_acq_lst, desc="Uncertainty Computation"):
+        # hard segmentation from MC samples
+        fname_pred = os.path.join(path_3Dpred, subj_acq+'_pred.nii.gz')
+        # fname for soft segmentation from MC simulations
+        fname_soft = os.path.join(path_3Dpred, subj_acq+'_soft.nii.gz')
+        # find Monte Carlo simulations
+        fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
+
+        # if final segmentation from Monte Carlo simulations has not been generated yet
+        if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
+           # find Monte Carlo simulations
+           fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
+
+           # average then argmax
+           combine_predictions(fname_pred_lst, fname_pred, fname_soft)
+
+        fname_unc_vox = os.path.join(path_3Dpred, subj_acq+'_unc-vox.nii.gz')
+        fname_unc_struct = os.path.join(path_3Dpred, subj_acq+'_unc.nii.gz')
+        if not os.path.isfile(fname_unc_vox) or not os.path.isfile(fname_unc_struct):
+           # compute voxel-wise uncertainty map
+           voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
+
+           # compute structure-wise uncertainty
+           structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
@@ -796,18 +854,16 @@ def cmd_eval(context):
     # init data frame
     df_results = pd.DataFrame()
 
-    # list fname pred files
+    # list subject_acquisition
     path_pred = os.path.join(context['log_directory'], 'pred_masks')
-    fname_pred_lst = os.listdir(path_pred)
+    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_pred) if f.endswith('_pred.nii.gz')]
 
-    # loop across fname pred files
-    for fname_pred in tqdm(fname_pred_lst, desc="Evaluation"):
-        subj_acq = fname_pred.split('_pred.nii.gz')[0]
-        fname_gt = subj_acq + context['target_suffix'] + '.nii.gz'
+    # loop across subj_acq
+    for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
-        fname_pred = os.path.join(path_pred, fname_pred)
-        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', fname_gt)
+        fname_pred = os.path.join(path_pred, subj_acq+'_pred.nii.gz')
+        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', subj_acq+context['target_suffix']+'.nii.gz')
 
         # 3D evaluation
         eval = Evaluation3DMetrics(fname_pred=fname_pred, fname_gt=fname_gt)
@@ -822,6 +878,7 @@ def cmd_eval(context):
     # save results as csv
     fname_out = os.path.join(path_results, 'evaluation_3Dmetrics.csv')
     df_results.to_csv(fname_out)
+    print(df_results.head(5))
 
 
 def run_main():

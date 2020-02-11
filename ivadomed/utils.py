@@ -6,6 +6,7 @@ from skimage.measure import label
 import torchvision.transforms.functional as F
 import matplotlib.pyplot as plt
 from collections import defaultdict
+from itertools import combinations
 
 from medicaltorch import filters as mt_filters
 from medicaltorch import metrics as mt_metrics
@@ -226,6 +227,146 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, une
 
     # save
     nib.save(nib_pred, fname_out)
+
+
+def combine_predictions(fname_lst, fname_hard, fname_prob):
+    """
+    Combine predictions from Monte Carlo simulations
+    by applying:
+        (1) a mean (saved as fname_prob)
+        (2) then argmax operation (saved as fname_hard).
+    """
+    # collect all MC simulations
+    data_lst = []
+    for fname in fname_lst:
+        nib_im = nib.load(fname)
+        data_lst.append(nib_im.get_fdata())
+
+    # average over all the MC simulations
+    data_prob = np.mean(np.array(data_lst), axis=0)
+    # argmax operator
+    # TODO: adapt for multi-label pred
+    data_hard = np.round(data_prob).astype(np.uint8)
+
+    # save prob segmentation
+    nib_prob = nib.Nifti1Image(data_prob, nib_im.affine)
+    nib.save(nib_prob, fname_prob)
+
+    # save hard segmentation
+    nib_hard = nib.Nifti1Image(data_hard, nib_im.affine)
+    nib.save(nib_hard, fname_hard)
+
+
+def voxelWise_uncertainty(fname_lst, fname_out, eps=1e-5):
+    """
+    Voxel-wise uncertainty is estimated as entropy over all
+    N MC probability maps, and saved in fname_out.
+    """
+    # collect all MC simulations
+    data_lst = []
+    for fname in fname_lst:
+        nib_im = nib.load(fname)
+        data_lst.append(nib_im.get_fdata())
+
+    # entropy
+    unc = np.repeat(np.expand_dims(np.array(data_lst), -1), 2, -1) # n_it, x, y, z, 2
+    unc[..., 0] = 1 - unc[..., 1]
+    unc = -np.sum(np.mean(unc, 0) * np.log(np.mean(unc, 0) + eps), -1)
+
+    # save uncertainty map
+    nib_unc = nib.Nifti1Image(unc, nib_im.affine)
+    nib.save(nib_unc, fname_out)
+
+
+def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
+    """
+    Structure-wise uncertainty from N MC probability maps (fname_lst)
+    and saved in fname_out with the following suffixes:
+       - '-cv.nii.gz': coefficient of variation
+       - '-iou.nii.gz': intersection over union
+       - '-avgUnc.nii.gz': average voxel-wise uncertainty within the structure.
+    """
+    # load hard segmentation and label it
+    nib_hard = nib.load(fname_hard)
+    data_hard = nib_hard.get_fdata()
+    data_hard_l, n_l = label(data_hard, connectivity=3, return_num=True)
+
+    # load uncertainty map
+    nib_uncVox = nib.load(fname_unc_vox)
+    data_uncVox = nib_uncVox.get_fdata()
+    del nib_uncVox
+
+    # init output arrays
+    data_iou, data_cv, data_avgUnc = np.zeros(data_hard.shape), np.zeros(data_hard.shape), np.zeros(data_hard.shape)
+
+    # load all MC simulations and label them
+    data_lst, data_l_lst = [], []
+    for fname in fname_lst:
+        nib_im = nib.load(fname)
+        data_im = nib_im.get_fdata()
+        data_lst.append(data_im)
+
+        data_im_l = label(data_im, connectivity=3, return_num=False)
+        data_l_lst.append(data_im_l)
+        del nib_im
+
+    # loop across all structures of data_hard_l
+    for i_l in range(1, n_l+1):
+        # select the current structure, remaining voxels are set to zero
+        data_i_l = (data_hard_l == i_l).astype(np.int)
+
+        # select the current structure in each MC sample
+        # and store it in data_mc_i_l_lst
+        data_mc_i_l_lst = []
+        # loop across MC samples
+        for i_mc in range(len(data_lst)):
+            # find the structure of interest in the current MC sample
+            data_i_inter = data_i_l * data_l_lst[i_mc]
+            i_mc_l = np.max(data_i_inter)
+
+            if i_mc_l > 0:
+                # keep only the unc voxels of the structure of interest
+                data_mc_i_l = np.copy(data_lst[i_mc])
+                data_mc_i_l[data_l_lst[i_mc] != i_mc_l] = 0.
+            else:  # no structure in this sample
+                data_mc_i_l = np.zeros(data_lst[i_mc].shape)
+            data_mc_i_l_lst.append(data_mc_i_l)
+
+        # compute IoU over all the N MC samples for a specific structure
+        intersection = np.logical_and(data_mc_i_l_lst[0].astype(np.bool),
+                                        data_mc_i_l_lst[1].astype(np.bool))
+        union = np.logical_or(data_mc_i_l_lst[0].astype(np.bool),
+                                data_mc_i_l_lst[1].astype(np.bool))
+        for i_mc in range(2, len(data_mc_i_l_lst)):
+            intersection = np.logical_and(intersection,
+                                            data_mc_i_l_lst[i_mc].astype(np.bool))
+            union = np.logical_or(union,
+                                    data_mc_i_l_lst[i_mc].astype(np.bool))
+        iou = np.sum(intersection) * 1. / np.sum(union)
+
+        # compute coefficient of variation for all MC volume estimates for a given structure
+        vol_mc_lst = [np.sum(data_mc_i_l_lst[i_mc]) for i_mc in range(len(data_mc_i_l_lst))]
+        mu_mc = np.mean(vol_mc_lst)
+        sigma_mc = np.std(vol_mc_lst)
+        cv = sigma_mc / mu_mc
+
+        # compute average voxel-wise uncertainty within the structure
+        avgUnc = np.mean(data_uncVox[data_i_l != 0])
+        # assign uncertainty value to the structure
+        data_iou[data_i_l != 0] = iou
+        data_cv[data_i_l != 0] = cv
+        data_avgUnc[data_i_l != 0] = avgUnc
+
+    # save nifti files
+    fname_iou = fname_out.split('.nii.gz')[0]+'-iou.nii.gz'
+    fname_cv = fname_out.split('.nii.gz')[0]+'-cv.nii.gz'
+    fname_avgUnc = fname_out.split('.nii.gz')[0]+'-avgUnc.nii.gz'
+    nib_iou = nib.Nifti1Image(data_iou, nib_hard.affine)
+    nib_cv = nib.Nifti1Image(data_cv, nib_hard.affine)
+    nib_avgUnc = nib.Nifti1Image(data_avgUnc, nib_hard.affine)
+    nib.save(nib_iou, fname_iou)
+    nib.save(nib_cv, fname_cv)
+    nib.save(nib_avgUnc, fname_avgUnc)
 
 
 def dice_score(im1, im2):
