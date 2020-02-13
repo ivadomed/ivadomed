@@ -652,6 +652,7 @@ def cmd_test(context):
         test_lst = joblib.load("./" + context["log_directory"] + "/split_datasets.joblib")['test']
     else:
         test_lst = joblib.load(context["split_path"])['test']
+    test_lst = ['sub-Epen508']
 
     ds_test = loader.load_dataset(test_lst, val_transform, context)
 
@@ -734,6 +735,7 @@ def cmd_test(context):
                     preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
                 else:
                     preds = model(test_input)
+                    visualize_feature_map(model, test_input)
 
             # WARNING: sample['gt'] is actually the pred in the return sample
             # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
@@ -781,6 +783,9 @@ def cmd_test(context):
                     # TODO: Add reconstruction for subvolumes
                     fname_pred = os.path.join(path_3Dpred, fname_ref.split('/')[-1])
                     fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+                    # If MonteCarlo, then we save each simulation result
+                    if n_monteCarlo > 1:
+                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
                     # Choose only one modality
                     save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
                              AXIS_DCT[context['slice_axis']], unet_3D=True)
