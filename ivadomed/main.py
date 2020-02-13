@@ -52,24 +52,28 @@ def cmd_train(context):
         torch.cuda.set_device(gpu_number)
         print("Using GPU number {}".format(gpu_number))
 
-    # Boolean which determines if the selected architecture is FiLMedUnet or Unet or MixupUnet
+    # Boolean which determines if the selected architecture is FiLMed-Unet or Unet or Mixup-Unet
     metadata_bool = False if context["metadata"] == "without" else True
     film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
 
     unet_3D = context["unet_3D"]
-    HeMIS = context['missing_modality']
+    HeMIS = context['HeMIS']
     if film_bool:
         context["multichannel"] = False
         HeMIS = False
     elif context["multichannel"]:
         HeMIS = False
+    if HeMIS:
+        # Initializing the missing probability for HeMIS.
+        # The lower the probability the higher, the more modalities are missing.
+        p = context["missing_probability"]
 
     if bool(sum(context["film_layers"])) and not (metadata_bool):
         print('\tWarning FiLM disabled since metadata is disabled')
     else:
-        print('\nArchitecture: {} with a depth of {}.\n' \
+        print('\nArchitecture: {} with a depth of {}.\n'
               .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else '3D Unet' if unet_3D else
-        "Unet", context['depth']))
+                      "Unet", context['depth']))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -130,6 +134,7 @@ def cmd_train(context):
     ds_train = loader.load_dataset(train_lst, train_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
+    # todo: not supported by the adaptative loader
     if 'ROICrop2D' in context["transformation_training"].keys():
         ds_train.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
 
@@ -150,7 +155,8 @@ def cmd_train(context):
     else:
         print(f"Loaded {len(ds_train)} volumes of size {context['length_3D']} for the training set.")
 
-    if context['balance_samples']:
+    # Balance sampler not supported by Adaptative Loader
+    if context['balance_samples'] and not HeMIS:
         sampler_train = loader.BalancedSampler(ds_train)
         shuffle_train = False
     else:
@@ -180,6 +186,7 @@ def cmd_train(context):
     else:
         print(f"Loaded {len(ds_val)} volumes of size {context['length_3D']} for the validation set.")
 
+    # TODO: not supported by the adaptative loader
     if context['balance_samples']:
         sampler_val = loader.BalancedSampler(ds_val)
         shuffle_val = False
@@ -243,7 +250,7 @@ def cmd_train(context):
 
     # Using Adam
     step_scheduler_batch = False
-    # filter out the parameters you are going to fine-tuing
+    # filter out the parameters you are going to fine-tuning
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
     if context["lr_scheduler"]["name"] == "CosineAnnealingLR":
@@ -337,7 +344,7 @@ def cmd_train(context):
             if mixup_bool and not film_bool:
                 input_samples, gt_samples, lambda_tensor = mixup(input_samples, gt_samples, mixup_alpha)
 
-                # if debugging and first epoch, then save samples as png in ofolder
+                # if debugging and first epoch, then save samples as png in log folder
                 if context["debugging"] and epoch == 1 and random.random() < 0.1:
                     mixup_folder = os.path.join(context["log_directory"], 'mixup')
                     if not os.path.isdir(mixup_folder):
@@ -367,6 +374,9 @@ def cmd_train(context):
                 var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in
                                 range(len(sample_metadata))]
                 preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
+            elif HeMIS:
+                missing_mod = batch["Missing_mod"]
+                preds = model(var_input, missing_mod)
             else:
                 preds = model(var_input)
 
@@ -386,8 +396,8 @@ def cmd_train(context):
 
             num_steps += 1
 
-            # Only write sample at the first step
-            if i == 0:
+            # Todo test it with new loader
+            if i == 0 & (not HeMIS):
                 if context["unet_3D"]:
                     num_2d_img = input_samples.shape[3]
                 else:
@@ -433,6 +443,15 @@ def cmd_train(context):
             dice_train_loss_total_avg = dice_train_loss_total / num_steps
             tqdm.write(f"\tDice training loss: {dice_train_loss_total_avg:.4f}.")
 
+        # In case of curriculum Learning we need to update the loader
+        if HeMIS:
+            p = p ** (2 / 3)
+            ds_train.update(p=p)
+            train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
+                                      shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
+                                      collate_fn=mt_datasets.mt_collate,
+                                      num_workers=0)
+
         # Validation loop -----------------------------------------------------
         model.eval()
         val_loss_total, dice_val_loss_total = 0.0, 0.0
@@ -459,6 +478,11 @@ def cmd_train(context):
                     var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k
                                     in range(len(sample_metadata))]
                     preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
+
+                elif HeMIS:
+                    missing_mod = batch["Missing_mod"]
+                    preds = model(var_input, missing_mod)
+
                 else:
                     preds = model(var_input)
 
@@ -484,7 +508,7 @@ def cmd_train(context):
             num_steps += 1
 
             # Only write sample at the first step
-            if i == 0:
+            if i == 0 & (not HeMIS):
                 if context["unet_3D"]:
                     num_2d_img = input_samples.shape[3]
                 else:
@@ -620,7 +644,7 @@ def cmd_test(context):
         gpu_number = int(context["gpu"])
         torch.cuda.set_device(gpu_number)
         print("using GPU number {}".format(gpu_number))
-    HeMIS = context['missing_modality']
+    HeMIS = context['HeMIS']
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet
     film_bool = bool(sum(context["film_layers"]))
     print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
@@ -701,7 +725,8 @@ def cmd_test(context):
     metric_mgr = IvadoMetricManager(metric_fns)
 
     # number of Monte Carlo simulation
-    if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and context['uncertainty']['n_it'] > 0:
+    if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and context['uncertainty'][
+        'n_it'] > 0:
         n_monteCarlo = context['uncertainty']['n_it']
     else:
         n_monteCarlo = 1
@@ -732,11 +757,16 @@ def cmd_test(context):
                     test_metadata = [one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k in
                                      range(len(sample_metadata))]
                     preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
+
+                elif HeMIS:
+                    missing_mod = batch["Missing_mod"]
+                    preds = model(test_input, missing_mod)
+
                 else:
                     preds = model(test_input)
 
-            # WARNING: sample['gt'] is actually the pred in the return sample
-            # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
+            # WARNING: sample['gt'] is actually the pred in the return sample implementation justification: the other
+            # option: rdict['pred'] = preds would require to largely modify mt_transforms
             rdict = {}
             rdict['gt'] = preds.cpu()
             batch.update(rdict)
@@ -757,17 +787,17 @@ def cmd_test(context):
                 fname_ref = rdict_undo['input_metadata']['gt_filename']
                 if not context['unet_3D']:
                     if pred_tmp_lst and (fname_ref != fname_tmp or (
-                            i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
+                            i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
                         # save the completely processed file as a nii
                         fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
                         fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
 
                         # If MonteCarlo, then we save each simulation result
                         if n_monteCarlo > 1:
-                            fname_pred = fname_pred.split('.nii.gz')[0]+'_'+str(i_monteCarlo).zfill(2)+'.nii.gz'
+                            fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                         save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, AXIS_DCT[context['slice_axis']],
-                                context["binarize_prediction"])
+                                 context["binarize_prediction"])
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
@@ -803,32 +833,32 @@ def cmd_test(context):
     # remove duplicates
     subj_acq_lst = list(set(subj_acq_lst))
     # keep only the images where unc has not been computed yet
-    subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(os.path.join(path_3Dpred, f+'_unc-cv.nii.gz'))]
+    subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(os.path.join(path_3Dpred, f + '_unc-cv.nii.gz'))]
     # loop across subj_acq
     for subj_acq in tqdm(subj_acq_lst, desc="Uncertainty Computation"):
         # hard segmentation from MC samples
-        fname_pred = os.path.join(path_3Dpred, subj_acq+'_pred.nii.gz')
+        fname_pred = os.path.join(path_3Dpred, subj_acq + '_pred.nii.gz')
         # fname for soft segmentation from MC simulations
-        fname_soft = os.path.join(path_3Dpred, subj_acq+'_soft.nii.gz')
+        fname_soft = os.path.join(path_3Dpred, subj_acq + '_soft.nii.gz')
         # find Monte Carlo simulations
-        fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
+        fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq + '_pred_' in f]
 
         # if final segmentation from Monte Carlo simulations has not been generated yet
         if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
-           # find Monte Carlo simulations
-           fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
+            # find Monte Carlo simulations
+            fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq + '_pred_' in f]
 
-           # average then argmax
-           combine_predictions(fname_pred_lst, fname_pred, fname_soft)
+            # average then argmax
+            combine_predictions(fname_pred_lst, fname_pred, fname_soft)
 
-        fname_unc_vox = os.path.join(path_3Dpred, subj_acq+'_unc-vox.nii.gz')
-        fname_unc_struct = os.path.join(path_3Dpred, subj_acq+'_unc.nii.gz')
+        fname_unc_vox = os.path.join(path_3Dpred, subj_acq + '_unc-vox.nii.gz')
+        fname_unc_struct = os.path.join(path_3Dpred, subj_acq + '_unc.nii.gz')
         if not os.path.isfile(fname_unc_vox) or not os.path.isfile(fname_unc_struct):
-           # compute voxel-wise uncertainty map
-           voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
+            # compute voxel-wise uncertainty map
+            voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
 
-           # compute structure-wise uncertainty
-           structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
+            # compute structure-wise uncertainty
+            structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
@@ -862,8 +892,9 @@ def cmd_eval(context):
     for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
-        fname_pred = os.path.join(path_pred, subj_acq+'_pred.nii.gz')
-        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', subj_acq+context['target_suffix']+'.nii.gz')
+        fname_pred = os.path.join(path_pred, subj_acq + '_pred.nii.gz')
+        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat',
+                                subj_acq + context['target_suffix'] + '.nii.gz')
 
         # 3D evaluation
         eval = Evaluation3DMetrics(fname_pred=fname_pred, fname_gt=fname_gt)
