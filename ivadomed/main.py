@@ -838,11 +838,6 @@ def cmd_eval(context):
     device = torch.device("cpu")
     print("Working on {}.".format(device))
 
-    if context.get("split_path") is None:
-        test_lst = joblib.load("./" + context["log_directory"] + "/split_datasets.joblib")['test']
-    else:
-        test_lst = joblib.load(context["split_path"])['test']
-
     # create output folder for results
     path_results = os.path.join(context['log_directory'], 'results_eval')
     if not os.path.isdir(path_results):
