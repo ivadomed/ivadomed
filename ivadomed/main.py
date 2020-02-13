@@ -190,20 +190,17 @@ def cmd_train(context):
                             shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
                             collate_fn=mt_datasets.mt_collate,
                             num_workers=0)
-    in_channel = 1
-    if context['multichannel']:
-        in_channel = len(context['contrast_train_validation'])
     if film_bool:
         n_metadata = len([ll for l in train_onehotencoder.categories_ for ll in l])
     else:
         n_metadata = None
 
     # Traditional U-Net model
-    in_channel = 1
-
     if context['multichannel']:
         in_channel = len(context['contrast_train_validation'])
-
+    else:
+        in_channel = 1
+              
     if context['retrain_model'] is None:
         if HeMIS:
             model = models.HeMISUnet(modalities=context['contrast_train_validation'],
