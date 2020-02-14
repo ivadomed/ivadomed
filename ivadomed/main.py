@@ -652,7 +652,6 @@ def cmd_test(context):
         test_lst = joblib.load("./" + context["log_directory"] + "/split_datasets.joblib")['test']
     else:
         test_lst = joblib.load(context["split_path"])['test']
-    test_lst = ['sub-Epen508']
 
     ds_test = loader.load_dataset(test_lst, val_transform, context)
 
@@ -735,7 +734,6 @@ def cmd_test(context):
                     preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
                 else:
                     preds = model(test_input)
-                    visualize_feature_map(model, test_input)
 
             # WARNING: sample['gt'] is actually the pred in the return sample
             # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms

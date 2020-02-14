@@ -3,20 +3,21 @@
     "gpu": 0,
     "target_suffix": "_seg-tumor",
     "roi_suffix": null,
-    "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
+    "bids_path": "/home/andreanne/Documents/dataset/results_spline_crop/data",
     "random_seed": 1313,
     "contrast_train_validation": ["T1w", "T2w"],
     "contrast_balance": {},
     "contrast_test": ["T1w","T2w"],
     "center_test": [],
     "retrain_model": null,
-    "batch_size": 1,
+    "batch_size": 4,
     "dropout_rate": 0.3,
     "batch_norm_momentum": 0.1,
     "num_epochs": 10,
     "initial_lr": 0.00005,
     "loss": {"name": "dice"},
     "log_directory": "log",
+    "uncertainty": {"epistemic": false, "aleatoric": false, "n_it": 0},
     "lr_scheduler": {"name": "CosineAnnealingLR", "base_lr": 1e-5, "max_lr": 1e-2},
     "film_layers": [],
     "mixup_bool": true,
@@ -26,7 +27,7 @@
     "missing_modality": false,
     "out_channel": 1,
     "depth": 3,
-    "length_3D": [16, 96, 512],
+    "length_3D": [16, 16, 16],
     "padding_3D": 0,
     "balance_samples": false,
     "slice_axis": "sagittal",
@@ -43,6 +44,9 @@
     "early_stopping_patience": 1000,
     "early_stopping_epsilon": 0.001,
     "transformation_training": {
+      "CenterCrop3D": {
+        "size": [16, 16, 16]
+      },
       "ElasticTransform": {
         "alpha_range": [28.0, 30.0],
         "sigma_range":  [3.5, 4.5],
@@ -58,6 +62,9 @@
       "StackTensors": {}
     },
     "transformation_validation": {
+            "CenterCrop3D": {
+        "size": [16, 16, 16]
+      },
       "ToTensor3D": {},
       "NormalizeInstance3D": {},
       "StackTensors": {}
