@@ -13,6 +13,8 @@ In its current state, this pipeline uses [SCT development version](https://githu
 See [README](../README.md)
 ~~~
 source PATH_TO_YOUR_VENV/venv-ivadomed/bin/activate
+# install prepdata
+cd .. && python setup.py install && cd -
 ~~~
 
 #### Initial steps, check for folder integrity
@@ -100,5 +102,5 @@ Copy final files to anat/, copy json sidecars, move segmentations to derivatives
 Once QC and manual correction is done, remove tmp/ folder:
 
 ~~~
-./run_process.sh delete_tmp_files.sh
+./run_process.sh parameters.sh delete_tmp_files.sh
 ~~~
