@@ -69,7 +69,7 @@ cp ${PATH_IN}/${file_t2s}.nii.gz .
 cp ${PATH_IN}/${file_t1w}.nii.gz .
 
 # Crop to avoid imperfect slab profile at the edge (altered contrast)
-sct_crop_image -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_crop.nii.gz -start 3 -end -3 -dim 2
+sct_crop_image -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_crop.nii.gz -ymin 3 -ymax -3
 file_t1w_mts="${file_t1w_mts}_crop"
 
 # Resample to fixed resolution
@@ -124,7 +124,7 @@ sct_apply_transfo -i ${SUBJECT}_T2star_mean.nii.gz -d ${file_t1w_mts}.nii.gz -w 
 sct_apply_transfo -i ${SUBJECT}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t1w}2${file_seg}.nii.gz -o ${SUBJECT}_T1w_reg2.nii.gz
 
 # Average all segmentations together and then binarize. Note: we do not include the T2s because it only has 15 slices
-sct_image -i ${file_seg}.nii.gz,${file_seg_t1w}_reg.nii.gz,${file_seg_t2w}_reg.nii.gz -concat t -o tmp.concat.nii.gz
+sct_image -i ${file_seg}.nii.gz ${file_seg_t1w}_reg.nii.gz ${file_seg_t2w}_reg.nii.gz -concat t -o tmp.concat.nii.gz
 sct_maths -i tmp.concat.nii.gz -mean t -o tmp.concat_mean.nii.gz
 sct_maths -i tmp.concat_mean.nii.gz -bin 0.5 -o ${file_t1w_mts}_seg-manual.nii.gz
 
