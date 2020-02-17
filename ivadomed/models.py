@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import Module
 import torch.nn.functional as F
+from torch.nn import init
 
 
 class DownConv(Module):
@@ -331,13 +332,15 @@ class UNet3D(nn.Module):
     instead of BatchNorm due to small batch size in 3D and the addition of segmentation layers in the decoder.
     """
 
-    def __init__(self, in_channels, n_classes, base_n_filter=32):
+    def __init__(self, in_channels, n_classes, base_n_filter=32, attention=False):
         super(UNet3D, self).__init__()
         self.in_channels = in_channels
         self.n_classes = n_classes
         self.base_n_filter = base_n_filter
+        self.attention = attention
 
         self.lrelu = nn.LeakyReLU()
+        self.context2 = nn.LeakyReLU()
         self.dropout3d = nn.Dropout3d(p=0.6)
         self.upsacle = nn.Upsample(scale_factor=2, mode='nearest')
         self.softmax = nn.Softmax(dim=1)
@@ -401,22 +404,23 @@ class UNet3D(nn.Module):
         self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 8)
 
         # Attention UNet
-        self.gating = UnetGridGatingSignal3(self.base_n_filter * 16, self.base_n_filter * 8, kernel_size=(1, 1, 1),
-                                            is_batchnorm=True)
+        if self.attention:
+            self.gating = UnetGridGatingSignal3(self.base_n_filter * 16, self.base_n_filter * 8, kernel_size=(1, 1, 1),
+                                                is_batchnorm=True)
 
-        # attention blocks
-        self.attentionblock2 = GridAttentionBlockND(in_channels=self.base_n_filter * 2, gating_channels=self.base_n_filter * 8,
-                                                    inter_channels=self.base_n_filter * 2, sub_sample_factor=(2, 2, 2),
-                                                    )
-        self.attentionblock3 = GridAttentionBlockND(in_channels=self.base_n_filter * 4, gating_channels=self.base_n_filter * 8,
-                                                    inter_channels=self.base_n_filter * 4, sub_sample_factor=(2, 2, 2),
-                                                    )
-        self.attentionblock4 = GridAttentionBlockND(in_channels=self.base_n_filter * 8, gating_channels=self.base_n_filter * 8,
-                                                    inter_channels=self.base_n_filter * 8, sub_sample_factor=(2, 2, 2),
-                                                    )
+            # attention blocks
+            self.attentionblock2 = GridAttentionBlockND(in_channels=self.base_n_filter * 2, gating_channels=self.base_n_filter * 8,
+                                                        inter_channels=self.base_n_filter * 2, sub_sample_factor=(2, 2, 2),
+                                                        )
+            self.attentionblock3 = GridAttentionBlockND(in_channels=self.base_n_filter * 4, gating_channels=self.base_n_filter * 8,
+                                                        inter_channels=self.base_n_filter * 4, sub_sample_factor=(2, 2, 2),
+                                                        )
+            self.attentionblock4 = GridAttentionBlockND(in_channels=self.base_n_filter * 8, gating_channels=self.base_n_filter * 8,
+                                                        inter_channels=self.base_n_filter * 8, sub_sample_factor=(2, 2, 2),
+                                                        )
+            self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 16)
 
         # Level 1 localization pathway
-        self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 16) # Attention Unet
         self.conv_norm_lrelu_l1 = self.conv_norm_lrelu(
             self.base_n_filter * 16, self.base_n_filter * 16)
         self.conv3d_l1 = nn.Conv3d(
@@ -486,14 +490,6 @@ class UNet3D(nn.Module):
             nn.Conv3d(feat_in, feat_out,
                       kernel_size=3, stride=1, padding=1, bias=False))
 
-    # Created for Attention Unet
-    def lrelu_center(self, feat_in):
-        return nn.Sequential(
-            nn.InstanceNorm3d(feat_in),
-            nn.LeakyReLU())
-
-
-
     def norm_lrelu_upscale_conv_norm_lrelu(self, feat_in, feat_out):
         return nn.Sequential(
             nn.InstanceNorm3d(feat_in),
@@ -527,7 +523,7 @@ class UNet3D(nn.Module):
         out = self.norm_lrelu_conv_c2(out)
         out += residual_2
         out = self.inorm3d_c2(out)
-        out = self.lrelu(out)
+        out = self.context2(out)
         context_2 = out
 
         # Level 3 context pathway
@@ -560,14 +556,14 @@ class UNet3D(nn.Module):
         out = self.norm_lrelu_conv_c5(out)
         out += residual_5
 
-        out = self.inorm3d_l0(out)
-        out = self.lrelu(out)
+        if self.attention:
+            out = self.inorm3d_l0(out)
+            out = self.lrelu(out)
 
-        gating = self.gating(out)
-        g_conv4, att4 = self.attentionblock4(context_4, gating)
-        g_conv3, att3 = self.attentionblock3(context_3, gating)
-        g_conv2, att2 = self.attentionblock2(context_2, gating)
-
+            gating = self.gating(out)
+            context_4, att4 = self.attentionblock4(context_4, gating)
+            context_3, att3 = self.attentionblock3(context_3, gating)
+            context_2, att2 = self.attentionblock2(context_2, gating)
 
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l0(out)
 
@@ -576,27 +572,27 @@ class UNet3D(nn.Module):
         out = self.lrelu(out)
 
         # Level 1 localization pathway
-        out = torch.cat([out, g_conv4], dim=1)
+        out = torch.cat([context_4, out], dim=1)
         out = self.conv_norm_lrelu_l1(out)
         out = self.conv3d_l1(out)
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l1(out)
 
         # Level 2 localization pathway
-        out = torch.cat([out, g_conv3], dim=1)
+        out = torch.cat([context_3, out], dim=1)
         out = self.conv_norm_lrelu_l2(out)
         ds2 = out
         out = self.conv3d_l2(out)
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l2(out)
 
         # Level 3 localization pathway
-        out = torch.cat([out, g_conv2], dim=1)
+        out = torch.cat([context_2, out], dim=1)
         out = self.conv_norm_lrelu_l3(out)
         ds3 = out
         out = self.conv3d_l3(out)
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l3(out)
 
         # Level 4 localization pathway
-        out = torch.cat([out, context_1], dim=1)
+        out = torch.cat([context_1, out], dim=1)
         out = self.conv_norm_lrelu_l4(out)
         out_pred = self.conv3d_l4(out)
 
@@ -614,24 +610,7 @@ class UNet3D(nn.Module):
         return torch.sigmoid(seg_layer)
 
 
-import torch
-from torch import nn
-from torch.nn import functional as F
-from torch.nn import init
-
-
-def weights_init_kaiming(m):
-    classname = m.__class__.__name__
-    #print(classname)
-    if classname.find('Conv') != -1:
-        init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
-    elif classname.find('Linear') != -1:
-        init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
-    elif classname.find('BatchNorm') != -1:
-        init.normal_(m.weight.data, 1.0, 0.02)
-        init.constant_(m.bias.data, 0.0)
-
-
+# Specific toAttention UNet
 class GridAttentionBlockND(nn.Module):
     def __init__(self, in_channels, gating_channels, inter_channels=None, dimension=3, mode='concatenation',
                  sub_sample_factor=(2,2,2)):
@@ -732,6 +711,18 @@ class GridAttentionBlockND(nn.Module):
         W_y = self.W(y)
 
         return W_y, sigm_psi_f
+
+
+def weights_init_kaiming(m):
+    classname = m.__class__.__name__
+    #print(classname)
+    if classname.find('Conv') != -1:
+        init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
+    elif classname.find('Linear') != -1:
+        init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
+    elif classname.find('BatchNorm') != -1:
+        init.normal_(m.weight.data, 1.0, 0.02)
+        init.constant_(m.bias.data, 0.0)
 
 
 class UnetGridGatingSignal3(nn.Module):

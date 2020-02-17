@@ -1,12 +1,16 @@
+import os
+
 import torch
 import numpy as np
 import nibabel as nib
 from PIL import Image
 from skimage.measure import label
-import torchvision.transforms.functional as F
+from torch.nn import functional as F
 import matplotlib.pyplot as plt
 from collections import defaultdict
 from itertools import combinations
+import torch.nn as nn
+from torch.autograd import Variable
 
 from medicaltorch import filters as mt_filters
 from medicaltorch import metrics as mt_metrics
@@ -457,3 +461,87 @@ def cuda(input_var):
         return [t.cuda() for t in input_var]
     else:
         return input_var.cuda()
+
+
+class HookBasedFeatureExtractor(nn.Module):
+    """
+    This function extracts feature maps from given layer.
+    https://github.com/ozan-oktay/Attention-Gated-Networks/tree/a96edb72622274f6705097d70cfaa7f2bf818a5a
+    """
+    def __init__(self, submodule, layername, upscale=False):
+        super(HookBasedFeatureExtractor, self).__init__()
+
+        self.submodule = submodule
+        self.submodule.eval()
+        self.layername = layername
+        self.outputs_size = None
+        self.outputs = None
+        self.inputs = None
+        self.inputs_size = None
+        self.upscale = upscale
+
+    def get_input_array(self, m, i, o):
+        if isinstance(i, tuple):
+            self.inputs = [i[index].data.clone() for index in range(len(i))]
+            self.inputs_size = [input.size() for input in self.inputs]
+        else:
+            self.inputs = i.data.clone()
+            self.inputs_size = self.input.size()
+        print('Input Array Size: ', self.inputs_size)
+
+    def get_output_array(self, m, i, o):
+        if isinstance(o, tuple):
+            self.outputs = [o[index].data.clone() for index in range(len(o))]
+            self.outputs_size = [output.size() for output in self.outputs]
+        else:
+            self.outputs = o.data.clone()
+            self.outputs_size = self.outputs.size()
+        print('Output Array Size: ', self.outputs_size)
+
+    def rescale_output_array(self, newsize):
+        us = nn.Upsample(size=newsize[2:], mode='bilinear')
+        if isinstance(self.outputs, list):
+            for index in range(len(self.outputs)): self.outputs[index] = us(self.outputs[index]).data()
+        else:
+            self.outputs = us(self.outputs).data()
+
+    def forward(self, x):
+        target_layer = self.submodule._modules.get(self.layername)
+
+        # Collect the output tensor
+        h_inp = target_layer.register_forward_hook(self.get_input_array)
+        h_out = target_layer.register_forward_hook(self.get_output_array)
+        self.submodule(x)
+        h_inp.remove()
+        h_out.remove()
+
+        # Rescale the feature-map if it's required
+        if self.upscale: self.rescale_output_array(x.size())
+
+        return self.inputs, self.outputs
+
+
+def save_feature_map(batch, layer_name, context, model, test_input):
+    if not os.path.exists(os.path.join(context["log_directory"], layer_name)):
+        os.mkdir(os.path.join(context["log_directory"], layer_name))
+    inp_fmap, out_fmap = HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input))
+
+    # Display the input image and Down_sample the input image
+    orig_input_img = test_input.permute(2, 3, 4, 1, 0).cpu().numpy()
+    upsampled_attention = F.interpolate(out_fmap[1], size=test_input.size()[2:],
+                                        mode='trilinear', align_corners=True).data.permute(2, 3, 4, 0, 1).cpu().numpy()
+
+    # Define the directories
+    basename = batch["input_metadata"][0]["input_filename"].split('/')[-1]
+    save_directory = os.path.join(context['log_directory'], layer_name, basename)
+
+    # Write the attentions to a nifti image
+    nib_ref = nib.load(batch["input_metadata"][0]["input_filename"])
+    nib_pred = nib.Nifti1Image(orig_input_img, nib_ref.affine)
+    nib.save(nib_pred, save_directory)
+
+    basename = batch["input_metadata"][0]["input_filename"].split('/')[-1] + "_att.nii.gz"
+    save_directory = os.path.join(context['log_directory'], layer_name, basename)
+
+    nib_pred = nib.Nifti1Image(upsampled_attention[:, :, :, 0, ], nib_ref.affine)
+    nib.save(nib_pred, save_directory)

@@ -57,6 +57,7 @@ def cmd_train(context):
     film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
 
     unet_3D = context["unet_3D"]
+    attention = context["attention_unet"]
     HeMIS = context['missing_modality']
     if film_bool:
         context["multichannel"] = False
@@ -68,8 +69,8 @@ def cmd_train(context):
         print('\tWarning FiLM disabled since metadata is disabled')
     else:
         print('\nArchitecture: {} with a depth of {}.\n' \
-              .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else '3D Unet' if unet_3D else
-        "Unet", context['depth']))
+              .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else "Attention UNet" if attention else
+        '3D Unet' if unet_3D else "Unet", context['depth']))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -211,7 +212,7 @@ def cmd_train(context):
                                      drop_rate=context["dropout_rate"],
                                      bn_momentum=context["batch_norm_momentum"])
         elif unet_3D:
-            model = models.UNet3D(in_channels=in_channel, n_classes=1)
+            model = models.UNet3D(in_channels=in_channel, n_classes=1, attention=context["attention_unet"])
         else:
             model = models.Unet(in_channel=in_channel,
                                 out_channel=context['out_channel'],
@@ -319,7 +320,8 @@ def cmd_train(context):
                   mt_metrics.specificity_score,
                   mt_metrics.intersection_over_union,
                   mt_metrics.accuracy_score]
-
+    att_maps = list()
+    int_imgs = list()
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
 
@@ -458,7 +460,7 @@ def cmd_train(context):
 
                     var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k
                                     in range(len(sample_metadata))]
-                    preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
+                    preds = model(var_input, var_metadata) # Input the metadata related to the input samples
                 else:
                     preds = model(var_input)
 
@@ -608,6 +610,7 @@ def cmd_train(context):
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
 
+
 def cmd_test(context):
     ##### DEFINE DEVICE #####
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -734,6 +737,7 @@ def cmd_test(context):
                     preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
                 else:
                     preds = model(test_input)
+                    save_feature_map(batch, "attentionblock2", context, model, test_input)
 
             # WARNING: sample['gt'] is actually the pred in the return sample
             # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
@@ -741,7 +745,7 @@ def cmd_test(context):
             rdict['gt'] = preds.cpu()
             batch.update(rdict)
 
-            if batch["input"].shape[1] > 1:
+            if batch["input"].shape[1] > 1 and not i_monteCarlo:
                 batch["input_metadata"] = batch["input_metadata"][0]  # Take only second channel
 
             # reconstruct 3D image
@@ -751,7 +755,7 @@ def cmd_test(context):
                 for k in batch.keys():
                     rdict[k] = batch[k][smp_idx]
                 if rdict["input"].shape[0] > 1:
-                    rdict["input"] = rdict["input"][1, :, :][None, :, :]
+                    rdict["input"] = rdict["input"][1, ][None, ]
                 rdict_undo = val_undo_transform(rdict)
 
                 fname_ref = rdict_undo['input_metadata']['gt_filename']
@@ -784,6 +788,7 @@ def cmd_test(context):
                     # If MonteCarlo, then we save each simulation result
                     if n_monteCarlo > 1:
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
+
                     # Choose only one modality
                     save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
                              AXIS_DCT[context['slice_axis']], unet_3D=True)
@@ -802,36 +807,37 @@ def cmd_test(context):
 
     # COMPUTE UNCERTAINTY MAPS
     # list subj_acq prefixes
-    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_3Dpred) if f.endswith('.nii.gz') and '_pred' in f]
-    # remove duplicates
-    subj_acq_lst = list(set(subj_acq_lst))
-    # keep only the images where unc has not been computed yet
-    subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(os.path.join(path_3Dpred, f+'_unc-cv.nii.gz'))]
-    # loop across subj_acq
-    for subj_acq in tqdm(subj_acq_lst, desc="Uncertainty Computation"):
-        # hard segmentation from MC samples
-        fname_pred = os.path.join(path_3Dpred, subj_acq+'_pred.nii.gz')
-        # fname for soft segmentation from MC simulations
-        fname_soft = os.path.join(path_3Dpred, subj_acq+'_soft.nii.gz')
-        # find Monte Carlo simulations
-        fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
+    if context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']:
+        subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_3Dpred) if f.endswith('.nii.gz') and '_pred' in f]
+        # remove duplicates
+        subj_acq_lst = list(set(subj_acq_lst))
+        # keep only the images where unc has not been computed yet
+        subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(os.path.join(path_3Dpred, f+'_unc-cv.nii.gz'))]
+        # loop across subj_acq
+        for subj_acq in tqdm(subj_acq_lst, desc="Uncertainty Computation"):
+            # hard segmentation from MC samples
+            fname_pred = os.path.join(path_3Dpred, subj_acq+'_pred.nii.gz')
+            # fname for soft segmentation from MC simulations
+            fname_soft = os.path.join(path_3Dpred, subj_acq+'_soft.nii.gz')
+            # find Monte Carlo simulations
+            fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
 
-        # if final segmentation from Monte Carlo simulations has not been generated yet
-        if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
-           # find Monte Carlo simulations
-           fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
+            # if final segmentation from Monte Carlo simulations has not been generated yet
+            if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
+               # find Monte Carlo simulations
+               fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
 
-           # average then argmax
-           combine_predictions(fname_pred_lst, fname_pred, fname_soft)
+               # average then argmax
+               combine_predictions(fname_pred_lst, fname_pred, fname_soft)
 
-        fname_unc_vox = os.path.join(path_3Dpred, subj_acq+'_unc-vox.nii.gz')
-        fname_unc_struct = os.path.join(path_3Dpred, subj_acq+'_unc.nii.gz')
-        if not os.path.isfile(fname_unc_vox) or not os.path.isfile(fname_unc_struct):
-           # compute voxel-wise uncertainty map
-           voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
+            fname_unc_vox = os.path.join(path_3Dpred, subj_acq+'_unc-vox.nii.gz')
+            fname_unc_struct = os.path.join(path_3Dpred, subj_acq+'_unc.nii.gz')
+            if not os.path.isfile(fname_unc_vox) or not os.path.isfile(fname_unc_struct):
+               # compute voxel-wise uncertainty map
+               voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
 
-           # compute structure-wise uncertainty
-           structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
+               # compute structure-wise uncertainty
+               structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
