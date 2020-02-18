@@ -532,15 +532,20 @@ def save_feature_map(batch, layer_name, context, model, test_input):
                                         mode='trilinear', align_corners=True).data.permute(2, 3, 4, 0, 1).cpu().numpy()
 
     # Define the directories
-    basename = batch["input_metadata"][0]["input_filename"].split('/')[-1]
+    if isinstance(batch["input_metadata"][0], list):
+        # Multichanne;
+        path = batch["input_metadata"][0][0]["input_filename"]
+    else:
+        path = batch["input_metadata"][0]["input_filename"]
+    basename = path.split('/')[-1]
     save_directory = os.path.join(context['log_directory'], layer_name, basename)
 
     # Write the attentions to a nifti image
-    nib_ref = nib.load(batch["input_metadata"][0]["input_filename"])
+    nib_ref = nib.load(path)
     nib_pred = nib.Nifti1Image(orig_input_img, nib_ref.affine)
     nib.save(nib_pred, save_directory)
 
-    basename = batch["input_metadata"][0]["input_filename"].split('/')[-1] + "_att.nii.gz"
+    basename = basename.split(".")[0] + "_att.nii.gz"
     save_directory = os.path.join(context['log_directory'], layer_name, basename)
 
     nib_pred = nib.Nifti1Image(upsampled_attention[:, :, :, 0, ], nib_ref.affine)

@@ -572,20 +572,20 @@ class UNet3D(nn.Module):
         out = self.lrelu(out)
 
         # Level 1 localization pathway
-        out = torch.cat([context_4, out], dim=1)
+        out = torch.cat([out, context_4], dim=1)
         out = self.conv_norm_lrelu_l1(out)
         out = self.conv3d_l1(out)
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l1(out)
 
         # Level 2 localization pathway
-        out = torch.cat([context_3, out], dim=1)
+        out = torch.cat([out, context_3], dim=1)
         out = self.conv_norm_lrelu_l2(out)
         ds2 = out
         out = self.conv3d_l2(out)
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l2(out)
 
         # Level 3 localization pathway
-        out = torch.cat([context_2, out], dim=1)
+        out = torch.cat([out, context_2], dim=1)
         out = self.conv_norm_lrelu_l3(out)
         ds3 = out
         out = self.conv3d_l3(out)

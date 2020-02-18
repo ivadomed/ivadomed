@@ -737,7 +737,8 @@ def cmd_test(context):
                     preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
                 else:
                     preds = model(test_input)
-                    save_feature_map(batch, "attentionblock2", context, model, test_input)
+                    if context["attention_unet"]:
+                        save_feature_map(batch, "attentionblock2", context, model, test_input)
 
             # WARNING: sample['gt'] is actually the pred in the return sample
             # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
