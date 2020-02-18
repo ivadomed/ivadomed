@@ -70,6 +70,9 @@
 		"ROICrop2D": {
 			"size": [48, 48]
 			},
+                "RandomRotation": {
+                        "degrees": 4.6
+                        },
 		"ToTensor": {},
 		"NormalizeInstance": {}
 		},
