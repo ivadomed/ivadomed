@@ -635,19 +635,19 @@ def cmd_test(context):
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
 
-    # Aleatoric uncertainty
-    if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
-        transformation_dict = context["transformation_training"]
-    else:
-        transformation_dict = context["transformation_validation"]
     # These are the validation/testing transformations
     validation_transform_list = []
-    for transform in transformation_dict.keys():
+    for transform in context["transformation_testing"].keys():
         parameters = transformation_dict[transform]
         if transform in ivadomed_transforms.get_transform_names():
-            validation_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
+            transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
         else:
-            validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+            transform_obj = getattr(mt_transforms, transform)(**parameters)
+        # check if undo_transform method is implemented
+        if hasattr(connection, 'undo_transform'):
+            validation_transform_list.append(transform_obj)
+        else:
+            print('\n{} has no undo_transform implemented, not applicable during inference'.format(transform))
 
     val_transform = transforms.Compose(validation_transform_list)
 
