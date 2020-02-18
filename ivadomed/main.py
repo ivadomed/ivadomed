@@ -750,7 +750,7 @@ def cmd_test(context):
             rdict['gt'] = preds.cpu()
             batch.update(rdict)
 
-            if batch["input"].shape[1] > 1:
+            if batch["input"].shape[1] > 1 and not i_monteCarlo:
                 batch["input_metadata"] = batch["input_metadata"][0]  # Take only second channel
 
             # reconstruct 3D image
@@ -760,7 +760,7 @@ def cmd_test(context):
                 for k in batch.keys():
                     rdict[k] = batch[k][smp_idx]
                 if rdict["input"].shape[0] > 1:
-                    rdict["input"] = rdict["input"][1, :, :][None, :, :]
+                    rdict["input"] = rdict["input"][1, ][None, ]
                 rdict_undo = val_undo_transform(rdict)
 
                 fname_ref = rdict_undo['input_metadata']['gt_filename']
@@ -791,6 +791,10 @@ def cmd_test(context):
                     # TODO: Add reconstruction for subvolumes
                     fname_pred = os.path.join(path_3Dpred, fname_ref.split('/')[-1])
                     fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+                    # If MonteCarlo, then we save each simulation result
+                    if n_monteCarlo > 1:
+                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
+
                     # Choose only one modality
                     save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
                              AXIS_DCT[context['slice_axis']], unet_3D=True)
@@ -809,40 +813,37 @@ def cmd_test(context):
 
     # COMPUTE UNCERTAINTY MAPS
     # list subj_acq prefixes
-    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_3Dpred)
-                    if f.endswith('.nii.gz') and '_pred' in f]
-    # remove duplicates
-    subj_acq_lst = list(set(subj_acq_lst))
-    # keep only the images where unc has not been computed yet
-    subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(
-        os.path.join(path_3Dpred, f+'_unc-cv.nii.gz'))]
-    # loop across subj_acq
-    for subj_acq in tqdm(subj_acq_lst, desc="Uncertainty Computation"):
-        # hard segmentation from MC samples
-        fname_pred = os.path.join(path_3Dpred, subj_acq+'_pred.nii.gz')
-        # fname for soft segmentation from MC simulations
-        fname_soft = os.path.join(path_3Dpred, subj_acq+'_soft.nii.gz')
-        # find Monte Carlo simulations
-        fname_pred_lst = [os.path.join(path_3Dpred, f)
-                          for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
-
-        # if final segmentation from Monte Carlo simulations has not been generated yet
-        if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
+    if context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']:
+        subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_3Dpred) if f.endswith('.nii.gz') and '_pred' in f]
+        # remove duplicates
+        subj_acq_lst = list(set(subj_acq_lst))
+        # keep only the images where unc has not been computed yet
+        subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(os.path.join(path_3Dpred, f+'_unc-cv.nii.gz'))]
+        # loop across subj_acq
+        for subj_acq in tqdm(subj_acq_lst, desc="Uncertainty Computation"):
+            # hard segmentation from MC samples
+            fname_pred = os.path.join(path_3Dpred, subj_acq+'_pred.nii.gz')
+            # fname for soft segmentation from MC simulations
+            fname_soft = os.path.join(path_3Dpred, subj_acq+'_soft.nii.gz')
             # find Monte Carlo simulations
-            fname_pred_lst = [os.path.join(path_3Dpred, f)
-                              for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
+            fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
 
-            # average then argmax
-            combine_predictions(fname_pred_lst, fname_pred, fname_soft)
+            # if final segmentation from Monte Carlo simulations has not been generated yet
+            if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
+               # find Monte Carlo simulations
+               fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
 
-        fname_unc_vox = os.path.join(path_3Dpred, subj_acq+'_unc-vox.nii.gz')
-        fname_unc_struct = os.path.join(path_3Dpred, subj_acq+'_unc.nii.gz')
-        if not os.path.isfile(fname_unc_vox) or not os.path.isfile(fname_unc_struct):
-            # compute voxel-wise uncertainty map
-            voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
+               # average then argmax
+               combine_predictions(fname_pred_lst, fname_pred, fname_soft)
 
-            # compute structure-wise uncertainty
-            structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
+            fname_unc_vox = os.path.join(path_3Dpred, subj_acq+'_unc-vox.nii.gz')
+            fname_unc_struct = os.path.join(path_3Dpred, subj_acq+'_unc.nii.gz')
+            if not os.path.isfile(fname_unc_vox) or not os.path.isfile(fname_unc_struct):
+               # compute voxel-wise uncertainty map
+               voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
+
+               # compute structure-wise uncertainty
+               structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
