@@ -67,9 +67,9 @@ def cmd_train(context):
     if bool(sum(context["film_layers"])) and not (metadata_bool):
         print('\tWarning FiLM disabled since metadata is disabled')
     else:
-        print('\nArchitecture: {} with a depth of {}.\n' \
+        print('\nArchitecture: {} with a depth of {}.\n'
               .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else '3D Unet' if unet_3D else
-        "Unet", context['depth']))
+                      "Unet", context['depth']))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -148,7 +148,8 @@ def cmd_train(context):
     if not unet_3D:
         print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
     else:
-        print(f"Loaded {len(ds_train)} volumes of size {context['length_3D']} for the training set.")
+        print(
+            f"Loaded {len(ds_train)} volumes of size {context['length_3D']} for the training set.")
 
     if context['balance_samples']:
         sampler_train = loader.BalancedSampler(ds_train)
@@ -178,7 +179,8 @@ def cmd_train(context):
     if not unet_3D:
         print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")
     else:
-        print(f"Loaded {len(ds_val)} volumes of size {context['length_3D']} for the validation set.")
+        print(
+            f"Loaded {len(ds_val)} volumes of size {context['length_3D']} for the validation set.")
 
     if context['balance_samples']:
         sampler_val = loader.BalancedSampler(ds_val)
@@ -190,19 +192,16 @@ def cmd_train(context):
                             shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
                             collate_fn=mt_datasets.mt_collate,
                             num_workers=0)
-    in_channel = 1
-    if context['multichannel']:
-        in_channel = len(context['contrast_train_validation'])
     if film_bool:
         n_metadata = len([ll for l in train_onehotencoder.categories_ for ll in l])
     else:
         n_metadata = None
 
     # Traditional U-Net model
-    in_channel = 1
-
     if context['multichannel']:
         in_channel = len(context['contrast_train_validation'])
+    else:
+        in_channel = 1
 
     if context['retrain_model'] is None:
         if HeMIS:
@@ -254,7 +253,8 @@ def cmd_train(context):
         scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0, T_mult)
     elif context["lr_scheduler"]["name"] == "CyclicLR":
         base_lr, max_lr = context["lr_scheduler"]["base_lr"], context["lr_scheduler"]["max_lr"]
-        scheduler = optim.lr_scheduler.CyclicLR(optimizer, base_lr, max_lr, mode="triangular2", cycle_momentum=False)
+        scheduler = optim.lr_scheduler.CyclicLR(
+            optimizer, base_lr, max_lr, mode="triangular2", cycle_momentum=False)
         step_scheduler_batch = True
     else:
         print(
@@ -335,7 +335,8 @@ def cmd_train(context):
 
             # mixup data
             if mixup_bool and not film_bool:
-                input_samples, gt_samples, lambda_tensor = mixup(input_samples, gt_samples, mixup_alpha)
+                input_samples, gt_samples, lambda_tensor = mixup(
+                    input_samples, gt_samples, mixup_alpha)
 
                 # if debugging and first epoch, then save samples as png in ofolder
                 if context["debugging"] and epoch == 1 and random.random() < 0.1:
@@ -366,7 +367,8 @@ def cmd_train(context):
 
                 var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in
                                 range(len(sample_metadata))]
-                preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
+                # Input the metadata related to the input samples
+                preds = model(var_input, var_metadata)
             else:
                 preds = model(var_input)
 
@@ -454,11 +456,13 @@ def cmd_train(context):
                 if film_bool:
                     sample_metadata = batch["input_metadata"]
                     # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
-                    var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+                    var_contrast = [sample_metadata[k]['contrast']
+                                    for k in range(len(sample_metadata))]
 
                     var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k
                                     in range(len(sample_metadata))]
-                    preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
+                    # Input the metadata related to the input samples
+                    preds = model(var_input, var_metadata)
                 else:
                     preds = model(var_input)
 
@@ -588,8 +592,10 @@ def cmd_train(context):
     # Save final model
     torch.save(model, "./" + context["log_directory"] + "/final_model.pt")
     if film_bool:  # save clustering and OneHotEncoding models
-        joblib.dump(metadata_clustering_models, "./" + context["log_directory"] + "/clustering_models.joblib")
-        joblib.dump(train_onehotencoder, "./" + context["log_directory"] + "/one_hot_encoder.joblib")
+        joblib.dump(metadata_clustering_models, "./" +
+                    context["log_directory"] + "/clustering_models.joblib")
+        joblib.dump(train_onehotencoder, "./" +
+                    context["log_directory"] + "/one_hot_encoder.joblib")
 
         # Convert list of gammas/betas into numpy arrays
         gammas_dict = {i: np.array(gammas_dict[i]) for i in range(1, 2 * depth + 3)}
@@ -660,7 +666,8 @@ def cmd_test(context):
         ds_test.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to network
-        metadata_clustering_models = joblib.load("./" + context["log_directory"] + "/clustering_models.joblib")
+        metadata_clustering_models = joblib.load(
+            "./" + context["log_directory"] + "/clustering_models.joblib")
         ds_test = loader.normalize_metadata(ds_test,
                                             metadata_clustering_models,
                                             context["debugging"],
@@ -727,11 +734,13 @@ def cmd_test(context):
 
                 if film_bool:
                     sample_metadata = batch["input_metadata"]
-                    test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+                    test_contrast = [sample_metadata[k]['contrast']
+                                     for k in range(len(sample_metadata))]
 
                     test_metadata = [one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k in
                                      range(len(sample_metadata))]
-                    preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
+                    # Input the metadata related to the input samples
+                    preds = model(test_input, test_metadata)
                 else:
                     preds = model(test_input)
 
@@ -764,10 +773,11 @@ def cmd_test(context):
 
                         # If MonteCarlo, then we save each simulation result
                         if n_monteCarlo > 1:
-                            fname_pred = fname_pred.split('.nii.gz')[0]+'_'+str(i_monteCarlo).zfill(2)+'.nii.gz'
+                            fname_pred = fname_pred.split(
+                                '.nii.gz')[0]+'_'+str(i_monteCarlo).zfill(2)+'.nii.gz'
 
                         save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, AXIS_DCT[context['slice_axis']],
-                                context["binarize_prediction"])
+                                 context["binarize_prediction"])
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
@@ -846,11 +856,6 @@ def cmd_eval(context):
     device = torch.device("cpu")
     print("Working on {}.".format(device))
 
-    if context.get("split_path") is None:
-        test_lst = joblib.load("./" + context["log_directory"] + "/split_datasets.joblib")['test']
-    else:
-        test_lst = joblib.load(context["split_path"])['test']
-
     # create output folder for results
     path_results = os.path.join(context['log_directory'], 'results_eval')
     if not os.path.isdir(path_results):
@@ -861,14 +866,16 @@ def cmd_eval(context):
 
     # list subject_acquisition
     path_pred = os.path.join(context['log_directory'], 'pred_masks')
-    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_pred) if f.endswith('_pred.nii.gz')]
+    subj_acq_lst = [f.split('_pred')[0]
+                    for f in os.listdir(path_pred) if f.endswith('_pred.nii.gz')]
 
     # loop across subj_acq
     for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
         fname_pred = os.path.join(path_pred, subj_acq+'_pred.nii.gz')
-        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', subj_acq+context['target_suffix']+'.nii.gz')
+        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels',
+                                subj, 'anat', subj_acq+context['target_suffix']+'.nii.gz')
 
         # 3D evaluation
         eval = Evaluation3DMetrics(fname_pred=fname_pred, fname_gt=fname_gt)
