@@ -638,13 +638,13 @@ def cmd_test(context):
     # These are the validation/testing transformations
     validation_transform_list = []
     for transform in context["transformation_testing"].keys():
-        parameters = transformation_dict[transform]
+        parameters = context["transformation_testing"][transform]
         if transform in ivadomed_transforms.get_transform_names():
             transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
         else:
             transform_obj = getattr(mt_transforms, transform)(**parameters)
         # check if undo_transform method is implemented
-        if hasattr(connection, 'undo_transform'):
+        if hasattr(transform_obj, 'undo_transform'):
             validation_transform_list.append(transform_obj)
         else:
             print('\n{} has no undo_transform implemented, not applicable during inference'.format(transform))
@@ -776,8 +776,8 @@ def cmd_test(context):
                             fname_pred = fname_pred.split(
                                 '.nii.gz')[0]+'_'+str(i_monteCarlo).zfill(2)+'.nii.gz'
 
-                        save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, AXIS_DCT[context['slice_axis']],
-                                 context["binarize_prediction"])
+                        save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, slice_axis=AXIS_DCT[context['slice_axis']],
+                                 binarize=context["binarize_prediction"])
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
@@ -793,7 +793,7 @@ def cmd_test(context):
                     fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
                     # Choose only one modality
                     save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
-                             AXIS_DCT[context['slice_axis']], unet_3D=True)
+                             slice_axis=AXIS_DCT[context['slice_axis']], unet_3D=True)
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
