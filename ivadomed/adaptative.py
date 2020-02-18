@@ -88,10 +88,11 @@ class Dataframe:
         col_names = [col for col in empty_line.keys()]
         col_names.append('Subjects')
         df = pd.DataFrame(columns=col_names)
-
+        print(hdf5.attrs['patients_id'])
         # Filling the data frame
         for subject in hdf5.attrs['patients_id']:
             # Getting the Group the corresponding patient
+            print(subject)
             grp = hdf5[subject]
             line = copy.deepcopy(empty_line)
             line['Subjects'] = subject
@@ -194,8 +195,9 @@ class Bids_to_hdf5:
 
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
-
+        
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
+            
             if subject.record["modality"] in contrast_lst:
 
                 # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
@@ -270,6 +272,7 @@ class Bids_to_hdf5:
         print("Files loaded.")
 
     def _load_filenames(self):
+        
         for subject_id, input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
             # Creating/ getting the subject group
             if str(subject_id) in self.hdf5_file.keys():
@@ -326,11 +329,17 @@ class Bids_to_hdf5:
                 grp.attrs['slices'] = list(set(np.concatenate((grp.attrs['slices'], useful_slices))))
             else:
                 grp.attrs['slices'] = useful_slices
-
+            
             # Creating datasets and metadata
             contrast = input_metadata['contrast']
             # Inputs
+            print(len(input_volumes))
+            print("grp= ", str(subject_id))
             key = "inputs/{}".format(contrast)
+            print("key = ", key)
+            if len(input_volumes)<1:
+                print("list empty")
+                continue
             grp.create_dataset(key, data=input_volumes)
             # Sub-group metadata
             if grp['inputs'].attrs.__contains__('contrast'):

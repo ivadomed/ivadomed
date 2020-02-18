@@ -1,13 +1,15 @@
 {
 	"command": "train",
 	"gpu": 6,
+	"hdf5_path": "../duke/projects/csf_deepseg/spineGeneric/hdf5/SpineGe.hdf5",
+	"csv_path": "../duke/projects/csf_deepseg/spineGeneric/hdf5/SpineGe.csv",
 	"target_suffix": "_seg-manual",
 	"roi_suffix": null,
-	"bids_path": "../duke/projects/csf_deepseg/spineGeneric/results/",
+	"bids_path": "../duke/projects/csf_deepseg/spineGeneric/result/",
 	"random_seed": 42,
-	"contrast_train_validation": ["acq-sag00015_T2w", "acq-inf_T2w", "acq-sag_T2w", "acq-c1c3_T2star", "acq-sup_T2star", "acq-sagstircsp_T2w", "acq-sagtsp_T2w", "acq-axcsp_T2w", "acq-sup_T2w", "acq-ax00012_T2w", "acq-sagcerv_T2w", "acq-axtop00100_T2w", "acq-axmid00100_T2w", "acq-inf_T2star", "acq-axtop_T2w", "acq-axtsp_T2w", "acq-sagcsp_T2w", "acq-wat_T1w", "acq-axlow_T2w", "T2star", "T2w", "acq-ax_T2star", "acq-inn_T1w", "acq-fat_T1w", "acq-sagstirtsp_T2w", "acq-axbottom_T2w", "acq-sagstir_T2w", "acq-ax_T2w", "acq-ax00014_T2w", "acq-c4c7_T2star", "acq-axmid00005_T2w", "acq-sagthor_T2w", "acq-opp_T1w", "T1w"],
+	"contrast_train_validation": ["T2star", "T2w", "T1w"],
 	"contrast_balance": {},
-	"contrast_test": ["acq-sag00015_T2w", "acq-inf_T2w", "acq-sag_T2w", "acq-c1c3_T2star", "acq-sup_T2star", "acq-sagstircsp_T2w", "acq-sagtsp_T2w", "acq-axcsp_T2w", "acq-sup_T2w", "acq-ax00012_T2w", "acq-sagcerv_T2w", "acq-axtop00100_T2w", "acq-axmid00100_T2w", "acq-inf_T2star", "acq-axtop_T2w", "acq-axtsp_T2w", "acq-sagcsp_T2w", "acq-wat_T1w", "acq-axlow_T2w", "T2star", "T2w", "acq-ax_T2star", "acq-inn_T1w", "acq-fat_T1w", "acq-sagstirtsp_T2w", "acq-axbottom_T2w", "acq-sagstir_T2w", "acq-ax_T2w", "acq-ax00014_T2w", "acq-c4c7_T2star", "acq-axmid00005_T2w", "acq-sagthor_T2w", "acq-opp_T1w", "T1w"],
+	"contrast_test": ["T2star", "T2w", "T1w"],
 	"center_test": [],
 	"retrain_model": null,
 	"out_channel": 1,
@@ -27,6 +29,7 @@
 	"multichannel": false,
 	"HeMIS": true,
 	"ram": true,
+	"missing_probability": 0.0001,
 	"target_lst": ["T2w_seg-manual"],
 	"roi_lst": null,
 	"slice_axis": "axial",
@@ -48,7 +51,7 @@
 		"DilateGT": {
 			"dilation_factor": 0
 			},
-                "ROICrop2D": {
+                "CenterCrop2D": {
                         "size": [48, 48]
 			},
 		"ElasticTransform": {
@@ -69,7 +72,7 @@
 			"wspace": 0.75,
 			"hspace": 0.75
 			},
-		"ROICrop2D": {
+		"CenterCrop2D": {
 			"size": [48, 48]
 			},
 		"ToTensor": {},
