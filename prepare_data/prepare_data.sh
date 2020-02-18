@@ -69,7 +69,7 @@ cp ${PATH_IN}/${file_t2s}.nii.gz .
 cp ${PATH_IN}/${file_t1w}.nii.gz .
 
 # Crop to avoid imperfect slab profile at the edge (altered contrast)
-sct_crop_image -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_crop.nii.gz -ymin 3 -ymax -3
+sct_crop_image -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_crop.nii.gz -zmin 3 -zmax -3
 file_t1w_mts="${file_t1w_mts}_crop"
 
 # Resample to fixed resolution
