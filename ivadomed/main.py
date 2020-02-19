@@ -758,7 +758,7 @@ def cmd_test(context):
             rdict['gt'] = preds.cpu()
             batch.update(rdict)
 
-            if batch["input"].shape[1] > 1:
+            if batch["input"].shape[1] > 1 and not i_monteCarlo:
                 batch["input_metadata"] = batch["input_metadata"][0]  # Take only second channel
 
             # reconstruct 3D image
@@ -768,7 +768,7 @@ def cmd_test(context):
                 for k in batch.keys():
                     rdict[k] = batch[k][smp_idx]
                 if rdict["input"].shape[0] > 1:
-                    rdict["input"] = rdict["input"][1, :, :][None, :, :]
+                    rdict["input"] = rdict["input"][1, ][None, ]
                 rdict_undo = val_undo_transform(rdict)
 
                 fname_ref = rdict_undo['input_metadata']['gt_filename']
@@ -799,6 +799,10 @@ def cmd_test(context):
                     # TODO: Add reconstruction for subvolumes
                     fname_pred = os.path.join(path_3Dpred, fname_ref.split('/')[-1])
                     fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+                    # If MonteCarlo, then we save each simulation result
+                    if n_monteCarlo > 1:
+                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
+
                     # Choose only one modality
                     save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
                              slice_axis=AXIS_DCT[context['slice_axis']], unet_3D=True)
