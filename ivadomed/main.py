@@ -637,6 +637,7 @@ def cmd_test(context):
 
     # These are the validation/testing transformations
     validation_transform_list = []
+    print('\nApplied transformations:')
     for transform in context["transformation_testing"].keys():
         parameters = context["transformation_testing"][transform]
         if transform in ivadomed_transforms.get_transform_names():
@@ -645,9 +646,10 @@ def cmd_test(context):
             transform_obj = getattr(mt_transforms, transform)(**parameters)
         # check if undo_transform method is implemented
         if hasattr(transform_obj, 'undo_transform'):
+            print('\t- {}'.format(transform))
             validation_transform_list.append(transform_obj)
         else:
-            print('\n{} has no undo_transform implemented, not applicable during inference'.format(transform))
+            print('\t- {} NOT included (no undo_transform implemented)'.format(transform))
 
     val_transform = transforms.Compose(validation_transform_list)
 
@@ -851,7 +853,7 @@ def cmd_test(context):
 
 def cmd_eval(context):
     ##### DEFINE DEVICE #####
-    cmd_test(context)
+#    cmd_test(context)
     device = torch.device("cpu")
     print("Working on {}.".format(device))
 
