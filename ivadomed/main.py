@@ -685,9 +685,9 @@ def cmd_test(context):
         one_hot_encoder = joblib.load("./" + context["log_directory"] + "/one_hot_encoder.joblib")
 
     if not context["unet_3D"]:
-        print(f"Loaded {len(ds_test)} {context['slice_axis']} slices for the test set.")
+        print(f"\nLoaded {len(ds_test)} {context['slice_axis']} slices for the test set.")
     else:
-        print(f"Loaded {len(ds_test)} volumes of size {context['length_3D']} for the test set.")
+        print(f"\nLoaded {len(ds_test)} volumes of size {context['length_3D']} for the test set.")
 
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
                              shuffle=False, pin_memory=True,
