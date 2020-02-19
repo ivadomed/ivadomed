@@ -635,11 +635,17 @@ def cmd_test(context):
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
 
+    # Aleatoric uncertainty
+    if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
+        transformation_dict = context["transformation_testing"]
+    else:
+        transformation_dict = context["transformation_validation"]
+
     # These are the validation/testing transformations
     validation_transform_list = []
     print('\nApplied transformations:')
-    for transform in context["transformation_testing"].keys():
-        parameters = context["transformation_testing"][transform]
+    for transform in transformation_dict.keys():
+        parameters = transformation_dict[transform]
         if transform in ivadomed_transforms.get_transform_names():
             transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
         else:
@@ -852,8 +858,13 @@ def cmd_test(context):
 
 
 def cmd_eval(context):
+    path_pred = os.path.join(context['log_directory'], 'pred_masks')
+    if not os.path.isdir(path_pred):
+        print('\nRun Inference\n')
+        cmd_test(context)
+    print('\nRun Evaluation on {}\n'.format(path_pred))
+
     ##### DEFINE DEVICE #####
-#    cmd_test(context)
     device = torch.device("cpu")
     print("Working on {}.".format(device))
 
@@ -866,7 +877,6 @@ def cmd_eval(context):
     df_results = pd.DataFrame()
 
     # list subject_acquisition
-    path_pred = os.path.join(context['log_directory'], 'pred_masks')
     subj_acq_lst = [f.split('_pred')[0]
                     for f in os.listdir(path_pred) if f.endswith('_pred.nii.gz')]
 
