@@ -257,8 +257,10 @@ def run_uncertainty(ifolder):
             fname_pred_lst = [os.path.join(ifolder, f)
                               for f in os.listdir(ifolder) if subj_acq+'_pred_' in f]
 
+            # threshold used for the hard segmentation
+            thr = 1. / len(fname_pred_lst)  # 1 for all voxels where at least on MC sample predicted 1
             # average then argmax
-            combine_predictions(fname_pred_lst, fname_pred, fname_soft)
+            combine_predictions(fname_pred_lst, fname_pred, fname_soft, thr=thr)
 
         fname_unc_vox = os.path.join(ifolder, subj_acq+'_unc-vox.nii.gz')
         fname_unc_struct = os.path.join(ifolder, subj_acq+'_unc.nii.gz')
@@ -270,7 +272,7 @@ def run_uncertainty(ifolder):
             structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
 
 
-def combine_predictions(fname_lst, fname_hard, fname_prob, thr):
+def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
     """
     Combine predictions from Monte Carlo simulations
     by applying:
