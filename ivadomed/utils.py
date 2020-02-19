@@ -1,5 +1,6 @@
 import os
 import torch
+from tqdm import tqdm
 import numpy as np
 import nibabel as nib
 from PIL import Image
@@ -269,7 +270,7 @@ def run_uncertainty(ifolder):
             structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
 
 
-def combine_predictions(fname_lst, fname_hard, fname_prob):
+def combine_predictions(fname_lst, fname_hard, fname_prob, thr):
     """
     Combine predictions from Monte Carlo simulations
     by applying:
@@ -278,7 +279,6 @@ def combine_predictions(fname_lst, fname_hard, fname_prob):
     """
     # collect all MC simulations
     data_lst = []
-    print(fname_lst)
     for fname in fname_lst:
         nib_im = nib.load(fname)
         data_lst.append(nib_im.get_fdata())
@@ -287,7 +287,7 @@ def combine_predictions(fname_lst, fname_hard, fname_prob):
     data_prob = np.mean(np.array(data_lst), axis=0)
     # argmax operator
     # TODO: adapt for multi-label pred
-    data_hard = np.round(data_prob).astype(np.uint8)
+    data_hard = threshold_predictions(data_prob, thr=thr).astype(np.uint8)
 
     # save prob segmentation
     nib_prob = nib.Nifti1Image(data_prob, nib_im.affine)
