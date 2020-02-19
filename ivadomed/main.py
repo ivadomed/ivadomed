@@ -816,41 +816,8 @@ def cmd_test(context):
         metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
-    # list subj_acq prefixes
-    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_3Dpred)
-                    if f.endswith('.nii.gz') and '_pred' in f]
-    # remove duplicates
-    subj_acq_lst = list(set(subj_acq_lst))
-    # keep only the images where unc has not been computed yet
-    subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(
-        os.path.join(path_3Dpred, f+'_unc-cv.nii.gz'))]
-    # loop across subj_acq
-    for subj_acq in tqdm(subj_acq_lst, desc="Uncertainty Computation"):
-        # hard segmentation from MC samples
-        fname_pred = os.path.join(path_3Dpred, subj_acq+'_pred.nii.gz')
-        # fname for soft segmentation from MC simulations
-        fname_soft = os.path.join(path_3Dpred, subj_acq+'_soft.nii.gz')
-        # find Monte Carlo simulations
-        fname_pred_lst = [os.path.join(path_3Dpred, f)
-                          for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
-
-        # if final segmentation from Monte Carlo simulations has not been generated yet
-        if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
-            # find Monte Carlo simulations
-            fname_pred_lst = [os.path.join(path_3Dpred, f)
-                              for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
-
-            # average then argmax
-            combine_predictions(fname_pred_lst, fname_pred, fname_soft)
-
-        fname_unc_vox = os.path.join(path_3Dpred, subj_acq+'_unc-vox.nii.gz')
-        fname_unc_struct = os.path.join(path_3Dpred, subj_acq+'_unc.nii.gz')
-        if not os.path.isfile(fname_unc_vox) or not os.path.isfile(fname_unc_struct):
-            # compute voxel-wise uncertainty map
-            voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
-
-            # compute structure-wise uncertainty
-            structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
+    if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty']['n_it'] > 0:
+        run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
