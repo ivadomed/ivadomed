@@ -656,6 +656,7 @@ def cmd_test(context):
             validation_transform_list.append(transform_obj)
         else:
             print('\t- {} NOT included (no undo_transform implemented)'.format(transform))
+    print('\n')
 
     val_transform = transforms.Compose(validation_transform_list)
 
@@ -716,7 +717,7 @@ def cmd_test(context):
     metric_mgr = IvadoMetricManager(metric_fns)
 
     # number of Monte Carlo simulation
-    if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and context['uncertainty']['n_it'] > 0:
+    if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty']['n_it'] > 0:
         n_monteCarlo = context['uncertainty']['n_it']
     else:
         n_monteCarlo = 1
