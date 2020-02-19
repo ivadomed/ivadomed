@@ -140,6 +140,17 @@ class Dataframe:
 
         self.df = df
 
+    def clean(self, contrasts):
+        """
+        Aims to remove lines where one of the contrasts in not available.
+        :param contrasts: list of contrasts
+        :return:
+        """
+        # Replacing 'None' values by np.nan
+        self.df[contrasts] = self.df[contrasts].replace(to_replace='None', value=np.nan)
+        # Dropping np.nan
+        self.df = self.df.dropna()
+
 
 class Bids_to_hdf5:
     """
@@ -414,7 +425,7 @@ class Bids_to_hdf5:
 
 class HDF5Dataset:
     def __init__(self, root_dir, subject_lst, hdf5_name, csv_name, target_suffix, contrast_lst, ram=True,
-                 contrast_balance={}, slice_axis=2, transform=None, metadata_choice=False, dim=2,
+                 contrast_balance={}, slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
                  slice_filter_fn=None, canonical=True, roi_suffix=None, target_lst=None, roi_lst=None):
 
         """
@@ -466,7 +477,11 @@ class HDF5Dataset:
         # Loading dataframe object
         self.df_object = Dataframe(self.hdf5_file, contrast_lst, csv_name, target_suffix=target_lst,
                                    roi_suffix=roi_lst, dim=self.dim, slices=slice_filter_fn)
+        if complet:
+            self.df_object.clean(contrast_lst)
+
         self.initial_dataframe = self.df_object.df
+
         self.dataframe = copy.deepcopy(self.df_object.df)
 
         self.cst_matrix = np.ones([len(self.dataframe), len(self.cst_lst)], dtype=int)
