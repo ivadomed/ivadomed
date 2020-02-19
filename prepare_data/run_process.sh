@@ -56,7 +56,7 @@ task="`pwd`/$2"
 
 # Create folders
 create_folder $PATH_LOG
-create_folder $PATH_OUTPUT
+create_folder $PATH_RESULTS
 
 # Build list of folders to process
 # if variable ONLY_PROCESS_THESE_SUBJECTS does not exist, fetch all folders in directory

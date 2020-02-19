@@ -3,7 +3,7 @@
 # Generate segmentation and co-register all multimodal data.
 #
 # Usage:
-#   ./prepare_data.sh <SUBJECT_ID> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
+#   ./prepare_data.sh <FILE_PARAM>
 #
 # Where SUBJECT_ID refers to the SUBJECT ID according to the BIDS format.
 #
@@ -26,8 +26,8 @@ source $FILEPARAM
 
 # Create BIDS architecture
 PATH_IN="`pwd`/${SUBJECT}/anat"
-ofolder_seg="${PATH_OUTPUT}/derivatives/labels/${SUBJECT}/anat"
-ofolder_reg="${PATH_OUTPUT}/${SUBJECT}/anat"
+ofolder_seg="${PATH_RESULTS}/derivatives/labels/${SUBJECT}/anat"
+ofolder_reg="${PATH_RESULTS}/${SUBJECT}/anat"
 mkdir -p ${ofolder_reg}
 mkdir -p ${ofolder_seg}
 
