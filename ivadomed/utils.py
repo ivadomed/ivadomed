@@ -255,7 +255,6 @@ def run_uncertainty(ifolder):
         if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
             # threshold used for the hard segmentation
             thr = 1. / len(fname_pred_lst)  # 1 for all voxels where at least on MC sample predicted 1
-            print(thr)
             # average then argmax
             combine_predictions(fname_pred_lst, fname_pred, fname_soft, thr=thr)
 
@@ -285,14 +284,13 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
 
     # average over all the MC simulations
     data_prob = np.mean(np.array(data_lst), axis=0)
-    # argmax operator
-    # TODO: adapt for multi-label pred
-    data_hard = threshold_predictions(data_prob, thr=thr).astype(np.uint8)
-
     # save prob segmentation
     nib_prob = nib.Nifti1Image(data_prob, nib_im.affine)
     nib.save(nib_prob, fname_prob)
 
+    # argmax operator
+    # TODO: adapt for multi-label pred
+    data_hard = threshold_predictions(data_prob, thr=thr).astype(np.uint8)
     # save hard segmentation
     nib_hard = nib.Nifti1Image(data_hard, nib_im.affine)
     nib.save(nib_hard, fname_hard)
