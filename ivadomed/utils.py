@@ -253,21 +253,19 @@ def run_uncertainty(ifolder):
 
         # if final segmentation from Monte Carlo simulations has not been generated yet
         if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
-            # find Monte Carlo simulations
-            fname_pred_lst = [os.path.join(ifolder, f)
-                              for f in os.listdir(ifolder) if subj_acq+'_pred_' in f]
-
             # threshold used for the hard segmentation
             thr = 1. / len(fname_pred_lst)  # 1 for all voxels where at least on MC sample predicted 1
+            print(thr)
             # average then argmax
             combine_predictions(fname_pred_lst, fname_pred, fname_soft, thr=thr)
 
         fname_unc_vox = os.path.join(ifolder, subj_acq+'_unc-vox.nii.gz')
-        fname_unc_struct = os.path.join(ifolder, subj_acq+'_unc.nii.gz')
-        if not os.path.isfile(fname_unc_vox) or not os.path.isfile(fname_unc_struct):
+        if not os.path.isfile(fname_unc_vox):
             # compute voxel-wise uncertainty map
             voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
 
+        fname_unc_struct = os.path.join(ifolder, subj_acq+'_unc.nii.gz')
+        if not os.path.isfile(os.path.join(ifolder, subj_acq+'_unc-cv.nii.gz')):
             # compute structure-wise uncertainty
             structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
 
