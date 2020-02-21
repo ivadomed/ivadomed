@@ -521,19 +521,34 @@ class HookBasedFeatureExtractor(nn.Module):
         return self.inputs, self.outputs
 
 
-def save_feature_map(batch, layer_name, context, model, test_input):
+def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
+    if slice_axis == 2:
+        arr = np.swapaxes(arr, 1, 2)
+    # move axis according to slice_axis to RAS orientation
+    arr_ras = np.swapaxes(arr, 0, slice_axis)
+
+    # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
+    ref_orientation = nib.orientations.io_orientation(nib_ref.affine)
+    ras_orientation = nib.orientations.io_orientation(nib_ref_canonical.affine)
+    # Return the orientation that transforms from ras to ref_orientation
+    trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
+    # apply transformation
+    return nib.orientations.apply_orientation(arr_ras, trans_orient)
+
+
+def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
     if not os.path.exists(os.path.join(context["log_directory"], layer_name)):
         os.mkdir(os.path.join(context["log_directory"], layer_name))
     inp_fmap, out_fmap = HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input))
 
     # Display the input image and Down_sample the input image
-    orig_input_img = test_input.permute(2, 3, 4, 1, 0).cpu().numpy()
+    orig_input_img = test_input.permute(3, 4, 2, 0, 1).cpu().numpy()
     upsampled_attention = F.interpolate(out_fmap[1], size=test_input.size()[2:],
-                                        mode='trilinear', align_corners=True).data.permute(2, 3, 4, 0, 1).cpu().numpy()
+                                        mode='trilinear', align_corners=True).data.permute(3, 4, 2, 0, 1).cpu().numpy()
 
     # Define the directories
     if isinstance(batch["input_metadata"][0], list):
-        # Multichanne;
+        # Multichannel
         path = batch["input_metadata"][0][0]["input_filename"]
     else:
         path = batch["input_metadata"][0]["input_filename"]
@@ -542,11 +557,15 @@ def save_feature_map(batch, layer_name, context, model, test_input):
 
     # Write the attentions to a nifti image
     nib_ref = nib.load(path)
-    nib_pred = nib.Nifti1Image(orig_input_img, nib_ref.affine)
+    nib_ref_can = nib.as_closest_canonical(nib_ref)
+    oriented_image = reorient_image(orig_input_img[:, :, :, 0, 0], slice_axis, nib_ref, nib_ref_can)
+
+    nib_pred = nib.Nifti1Image(oriented_image, nib_ref.affine)
     nib.save(nib_pred, save_directory)
 
     basename = basename.split(".")[0] + "_att.nii.gz"
     save_directory = os.path.join(context['log_directory'], layer_name, basename)
+    attention_map = reorient_image(upsampled_attention[:, :, :, 0, ], slice_axis, nib_ref, nib_ref_can)
+    nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
 
-    nib_pred = nib.Nifti1Image(upsampled_attention[:, :, :, 0, ], nib_ref.affine)
     nib.save(nib_pred, save_directory)

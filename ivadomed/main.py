@@ -460,7 +460,7 @@ def cmd_train(context):
 
                     var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k
                                     in range(len(sample_metadata))]
-                    preds = model(var_input, var_metadata) # Input the metadata related to the input samples
+                    preds = model(var_input, var_metadata)  # Input the metadata related to the input samples
                 else:
                     preds = model(var_input)
 
@@ -610,7 +610,6 @@ def cmd_train(context):
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
 
-
 def cmd_test(context):
     ##### DEFINE DEVICE #####
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -704,7 +703,8 @@ def cmd_test(context):
     metric_mgr = IvadoMetricManager(metric_fns)
 
     # number of Monte Carlo simulation
-    if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and context['uncertainty']['n_it'] > 0:
+    if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and context['uncertainty'][
+        'n_it'] > 0:
         n_monteCarlo = context['uncertainty']['n_it']
     else:
         n_monteCarlo = 1
@@ -738,7 +738,8 @@ def cmd_test(context):
                 else:
                     preds = model(test_input)
                     if context["attention_unet"]:
-                        save_feature_map(batch, "attentionblock2", context, model, test_input)
+                        save_feature_map(batch, "attentionblock2", context, model, test_input,
+                                         AXIS_DCT[context["slice_axis"]])
 
             # WARNING: sample['gt'] is actually the pred in the return sample
             # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
@@ -756,23 +757,23 @@ def cmd_test(context):
                 for k in batch.keys():
                     rdict[k] = batch[k][smp_idx]
                 if rdict["input"].shape[0] > 1:
-                    rdict["input"] = rdict["input"][1, ][None, ]
+                    rdict["input"] = rdict["input"][1,][None,]
                 rdict_undo = val_undo_transform(rdict)
 
                 fname_ref = rdict_undo['input_metadata']['gt_filename']
                 if not context['unet_3D']:
                     if pred_tmp_lst and (fname_ref != fname_tmp or (
-                            i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
+                            i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
                         # save the completely processed file as a nii
                         fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
                         fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
 
                         # If MonteCarlo, then we save each simulation result
                         if n_monteCarlo > 1:
-                            fname_pred = fname_pred.split('.nii.gz')[0]+'_'+str(i_monteCarlo).zfill(2)+'.nii.gz'
+                            fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                         save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, AXIS_DCT[context['slice_axis']],
-                                context["binarize_prediction"])
+                                 context["binarize_prediction"])
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
@@ -813,32 +814,33 @@ def cmd_test(context):
         # remove duplicates
         subj_acq_lst = list(set(subj_acq_lst))
         # keep only the images where unc has not been computed yet
-        subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(os.path.join(path_3Dpred, f+'_unc-cv.nii.gz'))]
+        subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(os.path.join(path_3Dpred, f + '_unc-cv.nii.gz'))]
         # loop across subj_acq
         for subj_acq in tqdm(subj_acq_lst, desc="Uncertainty Computation"):
             # hard segmentation from MC samples
-            fname_pred = os.path.join(path_3Dpred, subj_acq+'_pred.nii.gz')
+            fname_pred = os.path.join(path_3Dpred, subj_acq + '_pred.nii.gz')
             # fname for soft segmentation from MC simulations
-            fname_soft = os.path.join(path_3Dpred, subj_acq+'_soft.nii.gz')
+            fname_soft = os.path.join(path_3Dpred, subj_acq + '_soft.nii.gz')
             # find Monte Carlo simulations
-            fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
+            fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq + '_pred_' in f]
 
             # if final segmentation from Monte Carlo simulations has not been generated yet
             if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
-               # find Monte Carlo simulations
-               fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
+                # find Monte Carlo simulations
+                fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if
+                                  subj_acq + '_pred_' in f]
 
-               # average then argmax
-               combine_predictions(fname_pred_lst, fname_pred, fname_soft)
+                # average then argmax
+                combine_predictions(fname_pred_lst, fname_pred, fname_soft)
 
-            fname_unc_vox = os.path.join(path_3Dpred, subj_acq+'_unc-vox.nii.gz')
-            fname_unc_struct = os.path.join(path_3Dpred, subj_acq+'_unc.nii.gz')
+            fname_unc_vox = os.path.join(path_3Dpred, subj_acq + '_unc-vox.nii.gz')
+            fname_unc_struct = os.path.join(path_3Dpred, subj_acq + '_unc.nii.gz')
             if not os.path.isfile(fname_unc_vox) or not os.path.isfile(fname_unc_struct):
-               # compute voxel-wise uncertainty map
-               voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
+                # compute voxel-wise uncertainty map
+                voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
 
-               # compute structure-wise uncertainty
-               structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
+                # compute structure-wise uncertainty
+                structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
@@ -872,8 +874,9 @@ def cmd_eval(context):
     for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
-        fname_pred = os.path.join(path_pred, subj_acq+'_pred.nii.gz')
-        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat', subj_acq+context['target_suffix']+'.nii.gz')
+        fname_pred = os.path.join(path_pred, subj_acq + '_pred.nii.gz')
+        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat',
+                                subj_acq + context['target_suffix'] + '.nii.gz')
 
         # 3D evaluation
         eval = Evaluation3DMetrics(fname_pred=fname_pred, fname_gt=fname_gt)
