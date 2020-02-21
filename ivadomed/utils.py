@@ -210,18 +210,8 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, une
     else:
         arr = data_lst
 
-    if slice_axis == 2:
-        arr = np.swapaxes(arr, 1, 2)
-    # move axis according to slice_axis to RAS orientation
-    arr_ras = np.swapaxes(arr, 0, slice_axis)
+    arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
 
-    # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
-    ref_orientation = nib.orientations.io_orientation(nib_ref.affine)
-    ras_orientation = nib.orientations.io_orientation(nib_ref_can.affine)
-    # Return the orientation that transforms from ras to ref_orientation
-    trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
-    # apply transformation
-    arr_pred_ref_space = nib.orientations.apply_orientation(arr_ras, trans_orient)
     if binarize:
         arr_pred_ref_space = threshold_predictions(arr_pred_ref_space)
 
