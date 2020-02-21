@@ -36,6 +36,7 @@
     "unet_3D": true,
     "HeMIS": false,
     "binarize_prediction": true,
+    "uncertainty": {"epistemic": false, "aleatoric": false, "n_it": 10},
     "slice_filter": {
       "filter_empty_mask": true,
       "filter_empty_input": true
