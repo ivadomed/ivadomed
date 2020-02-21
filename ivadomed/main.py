@@ -24,7 +24,7 @@ from medicaltorch import transforms as mt_transforms
 from tqdm import tqdm
 
 from ivadomed import loader as loader
-from ivadomed import models
+from ivadomed import models, models2D
 from ivadomed import losses
 from ivadomed.utils import *
 import ivadomed.transforms as ivadomed_transforms
@@ -214,14 +214,7 @@ def cmd_train(context):
         elif unet_3D:
             model = models.UNet3D(in_channels=in_channel, n_classes=1, attention=context["attention_unet"])
         else:
-            model = models.Unet(in_channel=in_channel,
-                                out_channel=context['out_channel'],
-                                depth=context['depth'],
-                                film_layers=context["film_layers"],
-                                n_metadata=n_metadata,
-                                drop_rate=context["dropout_rate"],
-                                bn_momentum=context["batch_norm_momentum"],
-                                film_bool=film_bool)
+            model = models2D.R2AttU_Net(in_ch=in_channel, out_ch=context['out_channel'])
     else:
         model = torch.load(context['retrain_model'])
 
