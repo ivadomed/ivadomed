@@ -81,8 +81,8 @@ class Dataframe:
         Generate the Data frame using the hdf5 file
         """
         # Template of a line
-        empty_line = {col: None for col in self.contrasts}
-        empty_line['Slices'] = None
+        empty_line = {col: 'None' for col in self.contrasts}
+        empty_line['Slices'] = 'None'
 
         # Initialize the data frame
         col_names = [col for col in empty_line.keys()]
