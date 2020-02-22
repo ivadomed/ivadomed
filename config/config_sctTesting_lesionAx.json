@@ -22,6 +22,7 @@
         "loss": {"name": "dice"},
         "log_directory": "log_lesionAx_retrain",
         "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
+	"attention_unet": false,
 	"mixup_bool": false,
 	"mixup_alpha": 2,
 	"metadata": null,

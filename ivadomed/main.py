@@ -212,7 +212,7 @@ def cmd_train(context):
                                      drop_rate=context["dropout_rate"],
                                      bn_momentum=context["batch_norm_momentum"])
         elif unet_3D:
-            model = models.UNet3D(in_channels=in_channel, n_classes=1, attention=context["attention_unet"])
+            model = models.UNet3D(in_channels=in_channel, n_classes=1, attention=attention)
         else:
             model = models.Unet(in_channel=in_channel,
                                 out_channel=context['out_channel'],
@@ -222,7 +222,7 @@ def cmd_train(context):
                                 drop_rate=context["dropout_rate"],
                                 bn_momentum=context["batch_norm_momentum"],
                                 film_bool=film_bool,
-                                attention=context["attention_unet"])
+                                attention=attention)
     else:
         model = torch.load(context['retrain_model'])
 

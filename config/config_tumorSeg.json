@@ -25,7 +25,7 @@
     "multichannel": false,
     "missing_modality": false,
     "out_channel": 1,
-    "depth": 3,
+    "depth": 4,
     "length_3D": [16, 96, 512],
     "padding_3D": 0,
     "balance_samples": false,
@@ -33,7 +33,7 @@
     "split_method": "per_patient",
     "train_fraction": 0.6,
     "test_fraction": 0.2,
-    "unet_3D": true,
+    "unet_3D": false,
     "binarize_prediction": true,
     "attention_unet": false,
     "uncertainty": {"epistemic": false, "aleatoric": false, "n_it": 10},
@@ -50,17 +50,12 @@
         "sigma_range":  [3.5, 4.5],
         "p": 0.1
       },
-      "RandomAffine3D": {
-        "degrees": 4.6,
-        "translate": [0.03, 0.03],
-        "scale": [0.98, 1.02]
-      },
-      "ToTensor3D": {},
-      "NormalizeInstance3D": {}
+      "ToTensor": {},
+      "NormalizeInstance": {}
     },
     "transformation_validation": {
-      "ToTensor3D": {},
-      "NormalizeInstance3D": {}
+      "ToTensor": {},
+      "NormalizeInstance": {}
     },
     "debugging": false
 }
