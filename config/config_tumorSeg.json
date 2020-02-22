@@ -1,6 +1,6 @@
 {
     "command": "train",
-    "gpu": 0,
+    "gpu": [0],
     "target_suffix": "_seg-tumor",
     "roi_suffix": null,
     "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
@@ -10,7 +10,7 @@
     "contrast_test": ["T1w","T2w"],
     "center_test": [],
     "retrain_model": null,
-    "batch_size": 2,
+    "batch_size": 1,
     "dropout_rate": 0.3,
     "batch_norm_momentum": 0.1,
     "num_epochs": 10,
@@ -33,9 +33,9 @@
     "split_method": "per_patient",
     "train_fraction": 0.6,
     "test_fraction": 0.2,
-    "unet_3D": false,
+    "unet_3D": true,
     "binarize_prediction": true,
-    "attention_unet": false,
+    "attention_unet": true,
     "uncertainty": {"epistemic": false, "aleatoric": false, "n_it": 10},
     "slice_filter": {
       "filter_empty_mask": true,

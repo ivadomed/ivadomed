@@ -109,7 +109,7 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                     continue
 
                 if not subject.has_metadata():
-                    print("Subject without metadata.")
+                    # print("Subject without metadata.")
                     metadata = {}
                 else:
                     metadata = subject.metadata()

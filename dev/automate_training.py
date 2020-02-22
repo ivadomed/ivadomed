@@ -72,8 +72,8 @@ if __name__ == '__main__':
 
     ## Step 1 : batch size, initial LR and LR scheduler
 
-    batch_sizes = [8, 16, 32, 64]
-    initial_lrs = [1e-2, 1e-3, 1e-4, 1e-5]
+    # batch_sizes = [8, 16, 32, 64]
+    # initial_lrs = [1e-2, 1e-3, 1e-4, 1e-5]
 
     """
     lr_schedulers = [{"name": "CosineAnnealingLR"},
@@ -147,7 +147,8 @@ if __name__ == '__main__':
 
 
     #Dict with key corresponding to name of the param in the config file
-    param_dict = {"batch_size":batch_sizes, "initial_lr":initial_lrs}
+    # param_dict = {"batch_size":batch_sizes, "initial_lr":initial_lrs}
+    param_dict = {"loss": losses}
 
     config_list = []
     #Test all combinations (change multiple parameters for each test)
