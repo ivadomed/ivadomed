@@ -42,12 +42,10 @@ class UpConv(Module):
 class Encoder(Module):
     """Encoding part of the U-Net model.
             It returns the features map for the skip connections
-
             see also::
             Ronneberger, O., et al (2015). U-Net: Convolutional
             Networks for Biomedical Image Segmentation
             ArXiv link: https://arxiv.org/abs/1505.04597
-
                 """
 
     def __init__(self, in_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4, bn_momentum=0.1):
@@ -102,12 +100,10 @@ class Encoder(Module):
 class Decoder(Module):
     """Encoding part of the U-Net model.
             It returns the features map for the skip connections
-
             see also::
             Ronneberger, O., et al (2015). U-Net: Convolutional
             Networks for Biomedical Image Segmentation
             ArXiv link: https://arxiv.org/abs/1505.04597
-
                 """
 
     def __init__(self, out_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4, bn_momentum=0.1,
@@ -158,7 +154,6 @@ class Decoder(Module):
 
 class Unet(Module):
     """A reference U-Net model.
-
     .. seealso::
         Ronneberger, O., et al (2015). U-Net: Convolutional
         Networks for Biomedical Image Segmentation
@@ -340,7 +335,6 @@ class UNet3D(nn.Module):
         self.attention = attention
 
         self.lrelu = nn.LeakyReLU()
-        self.context2 = nn.LeakyReLU()
         self.dropout3d = nn.Dropout3d(p=0.6)
         self.upsacle = nn.Upsample(scale_factor=2, mode='nearest')
         self.softmax = nn.Softmax(dim=1)
@@ -409,14 +403,20 @@ class UNet3D(nn.Module):
                                                 is_batchnorm=True)
 
             # attention blocks
-            self.attentionblock2 = GridAttentionBlockND(in_channels=self.base_n_filter * 2, gating_channels=self.base_n_filter * 8,
-                                                        inter_channels=self.base_n_filter * 2, sub_sample_factor=(2, 2, 2),
+            self.attentionblock2 = GridAttentionBlockND(in_channels=self.base_n_filter * 2,
+                                                        gating_channels=self.base_n_filter * 8,
+                                                        inter_channels=self.base_n_filter * 2,
+                                                        sub_sample_factor=(2, 2, 2),
                                                         )
-            self.attentionblock3 = GridAttentionBlockND(in_channels=self.base_n_filter * 4, gating_channels=self.base_n_filter * 8,
-                                                        inter_channels=self.base_n_filter * 4, sub_sample_factor=(2, 2, 2),
+            self.attentionblock3 = GridAttentionBlockND(in_channels=self.base_n_filter * 4,
+                                                        gating_channels=self.base_n_filter * 8,
+                                                        inter_channels=self.base_n_filter * 4,
+                                                        sub_sample_factor=(2, 2, 2),
                                                         )
-            self.attentionblock4 = GridAttentionBlockND(in_channels=self.base_n_filter * 8, gating_channels=self.base_n_filter * 8,
-                                                        inter_channels=self.base_n_filter * 8, sub_sample_factor=(2, 2, 2),
+            self.attentionblock4 = GridAttentionBlockND(in_channels=self.base_n_filter * 8,
+                                                        gating_channels=self.base_n_filter * 8,
+                                                        inter_channels=self.base_n_filter * 8,
+                                                        sub_sample_factor=(2, 2, 2),
                                                         )
             self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 16)
 
@@ -523,7 +523,7 @@ class UNet3D(nn.Module):
         out = self.norm_lrelu_conv_c2(out)
         out += residual_2
         out = self.inorm3d_c2(out)
-        out = self.context2(out)
+        out = self.lrelu(out)
         context_2 = out
 
         # Level 3 context pathway
@@ -613,16 +613,19 @@ class UNet3D(nn.Module):
 # Specific toAttention UNet
 class GridAttentionBlockND(nn.Module):
     def __init__(self, in_channels, gating_channels, inter_channels=None, dimension=3, mode='concatenation',
-                 sub_sample_factor=(2,2,2)):
+                 sub_sample_factor=(2, 2, 2)):
         super(GridAttentionBlockND, self).__init__()
 
         assert dimension in [2, 3]
         assert mode in ['concatenation', 'concatenation_debug', 'concatenation_residual']
 
         # Downsampling rate for the input featuremap
-        if isinstance(sub_sample_factor, tuple): self.sub_sample_factor = sub_sample_factor
-        elif isinstance(sub_sample_factor, list): self.sub_sample_factor = tuple(sub_sample_factor)
-        else: self.sub_sample_factor = tuple([sub_sample_factor]) * dimension
+        if isinstance(sub_sample_factor, tuple):
+            self.sub_sample_factor = sub_sample_factor
+        elif isinstance(sub_sample_factor, list):
+            self.sub_sample_factor = tuple(sub_sample_factor)
+        else:
+            self.sub_sample_factor = tuple([sub_sample_factor]) * dimension
 
         # Default parameter set
         self.mode = mode
@@ -658,10 +661,12 @@ class GridAttentionBlockND(nn.Module):
 
         # Theta^T * x_ij + Phi^T * gating_signal + bias
         self.theta = conv_nd(in_channels=self.in_channels, out_channels=self.inter_channels,
-                             kernel_size=self.sub_sample_kernel_size, stride=self.sub_sample_factor, padding=0, bias=False)
+                             kernel_size=self.sub_sample_kernel_size, stride=self.sub_sample_factor, padding=0,
+                             bias=False)
         self.phi = conv_nd(in_channels=self.gating_channels, out_channels=self.inter_channels,
                            kernel_size=1, stride=1, padding=0, bias=True)
-        self.psi = conv_nd(in_channels=self.inter_channels, out_channels=1, kernel_size=1, stride=1, padding=0, bias=True)
+        self.psi = conv_nd(in_channels=self.inter_channels, out_channels=1, kernel_size=1, stride=1, padding=0,
+                           bias=True)
 
         # Initialise weights
         for m in self.children():
@@ -715,7 +720,7 @@ class GridAttentionBlockND(nn.Module):
 
 def weights_init_kaiming(m):
     classname = m.__class__.__name__
-    #print(classname)
+    # print(classname)
     if classname.find('Conv') != -1:
         init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
     elif classname.find('Linear') != -1:
@@ -726,7 +731,7 @@ def weights_init_kaiming(m):
 
 
 class UnetGridGatingSignal3(nn.Module):
-    def __init__(self, in_size, out_size, kernel_size=(1,1,1), is_batchnorm=True):
+    def __init__(self, in_size, out_size, kernel_size=(1, 1, 1), is_batchnorm=True):
         super(UnetGridGatingSignal3, self).__init__()
 
         if is_batchnorm:

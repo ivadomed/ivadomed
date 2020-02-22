@@ -221,7 +221,8 @@ def cmd_train(context):
                                 n_metadata=n_metadata,
                                 drop_rate=context["dropout_rate"],
                                 bn_momentum=context["batch_norm_momentum"],
-                                film_bool=film_bool)
+                                film_bool=film_bool,
+                                attention=context["attention_unet"])
     else:
         model = torch.load(context['retrain_model'])
 
