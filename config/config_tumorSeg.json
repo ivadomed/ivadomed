@@ -15,7 +15,7 @@
     "batch_norm_momentum": 0.1,
     "num_epochs": 10,
     "initial_lr": 0.00005,
-    "loss": {"name": "dice"},
+    "loss": {"name": "focal_tversky", "params": {"alpha": 0.7, "gamma": 0.75}},
     "log_directory": "AU",
     "lr_scheduler": {"name": "CosineAnnealingLR", "base_lr": 1e-5, "max_lr": 1e-2},
     "film_layers": [],
@@ -50,12 +50,12 @@
         "sigma_range":  [3.5, 4.5],
         "p": 0.1
       },
-      "ToTensor": {},
-      "NormalizeInstance": {}
+      "ToTensor3D": {},
+      "NormalizeInstance3D": {}
     },
     "transformation_validation": {
-      "ToTensor": {},
-      "NormalizeInstance": {}
+      "ToTensor3D": {},
+      "NormalizeInstance3D": {}
     },
     "debugging": false
 }

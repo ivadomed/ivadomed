@@ -221,8 +221,7 @@ def cmd_train(context):
                                 n_metadata=n_metadata,
                                 drop_rate=context["dropout_rate"],
                                 bn_momentum=context["batch_norm_momentum"],
-                                film_bool=film_bool,
-                                attention=attention)
+                                film_bool=film_bool)
     else:
         model = torch.load(context['retrain_model'])
 
@@ -273,7 +272,7 @@ def cmd_train(context):
     var_contrast_list = []
 
     # Loss
-    if context["loss"]["name"] in ["dice", "cross_entropy", "focal", "gdl", "focal_dice"]:
+    if context["loss"]["name"] in ["dice", "cross_entropy", "focal", "gdl", "focal_dice", "focal_tversky"]:
         if context["loss"]["name"] == "cross_entropy":
             loss_fct = nn.BCELoss()
 
@@ -378,6 +377,9 @@ def cmd_train(context):
 
             if context["loss"]["name"] == "dice":
                 loss = - losses.dice_loss(preds, var_gt)
+            elif context["loss"]["name"] == "focal_tversky":
+                loss = losses.focal_tversky(preds, var_gt, context["loss"]["params"]["alpha"],
+                                            context["loss"]["params"]["gamma"])
             else:
                 loss = loss_fct(preds, var_gt)
                 dice_train_loss_total += losses.dice_loss(preds, var_gt).item()
@@ -713,7 +715,7 @@ def cmd_test(context):
 
     # number of Monte Carlo simulation
     if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and \
-        context['uncertainty']['n_it'] > 0:
+            context['uncertainty']['n_it'] > 0:
         n_monteCarlo = context['uncertainty']['n_it']
     else:
         n_monteCarlo = 1

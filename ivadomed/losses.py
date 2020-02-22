@@ -3,6 +3,25 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+def tversky(y_true, y_pred, alpha=0.7):
+    smooth = 1.0
+    y_true_pos = y_true.view(-1)
+    y_pred_pos = y_pred.view(-1)
+    true_pos = (y_true_pos * y_pred_pos).sum()
+    false_neg = (y_true_pos * (1 - y_pred_pos)).sum()
+    false_pos = ((1 - y_true_pos) * y_pred_pos).sum()
+    return (true_pos + smooth) / (true_pos + alpha * false_neg + (1 - alpha) * false_pos + smooth)
+
+
+def tversky_loss(y_true, y_pred):
+    return 1 - tversky(y_true, y_pred)
+
+
+def focal_tversky(y_true, y_pred, alpha=0.7, gamma=0.75):
+    pt_1 = tversky(y_true, y_pred, alpha)
+    return (1 - pt_1) ** gamma
+
+
 def dice_loss(input, target):
     smooth = 1.0
 
@@ -23,7 +42,7 @@ class FocalLoss(nn.Module):
     def forward(self, input, target):
         input = input.clamp(self.eps, 1. - self.eps)
 
-        cross_entropy = - (target * torch.log(input) + (1 - target) * torch.log(1-input))  # eq1
+        cross_entropy = - (target * torch.log(input) + (1 - target) * torch.log(1 - input))  # eq1
         logpt = - cross_entropy
         pt = torch.exp(logpt)  # eq2
 
@@ -33,7 +52,7 @@ class FocalLoss(nn.Module):
         focal_loss = balanced_cross_entropy * ((1 - pt) ** self.gamma)  # eq5
 
         return focal_loss.sum()
-        #return focal_loss.mean()
+        # return focal_loss.mean()
 
 
 class FocalDiceLoss(nn.Module):
@@ -43,6 +62,7 @@ class FocalDiceLoss(nn.Module):
     :param gamma: gamma value used in the focal loss.
     :param alpha: alpha value used in the focal loss.
     """
+
     def __init__(self, beta=1, gamma=2, alpha=0.25):
         super().__init__()
         self.beta = beta
@@ -69,6 +89,7 @@ class GeneralizedDiceLoss(nn.Module):
     """
     Generalized Dice Loss: https://arxiv.org/pdf/1707.03237
     """
+
     def __init__(self, epsilon=1e-5):
         super(GeneralizedDiceLoss, self).__init__()
         self.epsilon = epsilon
@@ -90,4 +111,3 @@ class GeneralizedDiceLoss(nn.Module):
         denominator = ((input + target).sum(-1) * class_weights).sum()
 
         return 1. - 2. * intersect / denominator.clamp(min=self.epsilon)
-
