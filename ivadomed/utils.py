@@ -3,16 +3,12 @@ import os
 import torch
 import numpy as np
 import nibabel as nib
-from PIL import Image
 from skimage.measure import label
 from torch.nn import functional as F
 import matplotlib.pyplot as plt
 from collections import defaultdict
-from itertools import combinations
 import torch.nn as nn
 from torch.autograd import Variable
-
-from medicaltorch import filters as mt_filters
 from medicaltorch import metrics as mt_metrics
 
 

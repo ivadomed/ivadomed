@@ -712,8 +712,8 @@ def cmd_test(context):
     metric_mgr = IvadoMetricManager(metric_fns)
 
     # number of Monte Carlo simulation
-    if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and context['uncertainty'][
-        'n_it'] > 0:
+    if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and \
+        context['uncertainty']['n_it'] > 0:
         n_monteCarlo = context['uncertainty']['n_it']
     else:
         n_monteCarlo = 1
