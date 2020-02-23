@@ -668,7 +668,7 @@ def cmd_test(context):
     else:
         test_lst = joblib.load(context["split_path"])['test']
 
-    ds_test = loader.load_dataset(test_lst[:20], val_transform, context)
+    ds_test = loader.load_dataset(test_lst, val_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
@@ -722,12 +722,17 @@ def cmd_test(context):
     else:
         n_monteCarlo = 1
 
+    # Epistemic uncertainty
+    if context['uncertainty']['epistemic'] and context['uncertainty']['n_it'] > 0:
+        for m in model.modules():
+            if m.__class__.__name__.startswith('Dropout'):
+                m.train()
+
     for i_monteCarlo in range(n_monteCarlo):
         pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
         for i, batch in enumerate(test_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
 
-    #    for i_monteCarlo in range(n_monteCarlo):
             with torch.no_grad():
                 if cuda_available:
                     test_input = cuda(input_samples)
@@ -787,13 +792,13 @@ def cmd_test(context):
                                 '.nii.gz')[0]+'_'+str(i_monteCarlo).zfill(2)+'.nii.gz'
 
                         save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, slice_axis=AXIS_DCT[context['slice_axis']],
-                                 binarize=False)  #context["binarize_prediction"])
+                                 binarize=context["binarize_prediction"])
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
 
                     # add new sample to pred_tmp_lst
-                    pred_tmp_lst.append(np.array(rdict_undo['input']))
+                    pred_tmp_lst.append(np.array(rdict_undo['gt']))
                     z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
                     fname_tmp = fname_ref
 
