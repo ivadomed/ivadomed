@@ -66,6 +66,10 @@ class Evaluation3DMetrics(object):
                                                 connectivity=3,
                                                 return_num=True)
 
+        # painted data
+        fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
+        self.data_painted = np.copy(self.data_pred)
+
     def get_data(self, fname):
         nib_im = nib.load(fname)
         return nib_im.get_data()
@@ -124,9 +128,11 @@ class Evaluation3DMetrics(object):
 
             if np.count_nonzero(overlap) >= overlap_vox:
                 ltp += 1
+                self.data_painted[self.data_gt_label == idx] = TP_COLOUR
 
             else:
                 lfn += 1
+                self.data_painted[self.data_gt_label == idx] = FN_COLOUR
 
         return ltp, lfn
 
@@ -139,6 +145,7 @@ class Evaluation3DMetrics(object):
 
             if np.count_nonzero(overlap) < overlap_vox:
                 lfp += 1
+                self.data_painted[self.data_pred_label == idx] = FP_COLOUR
 
         return lfp
 
