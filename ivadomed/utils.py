@@ -11,6 +11,10 @@ from itertools import combinations
 from medicaltorch import filters as mt_filters
 from medicaltorch import metrics as mt_metrics
 
+# labels of paint_objects method
+TP_COLOUR=1
+FP_COLOUR=2
+FN_COLOUR=3
 
 class IvadoMetricManager(mt_metrics.MetricManager):
     def __init__(self, metric_fns):
