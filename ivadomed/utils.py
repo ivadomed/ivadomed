@@ -50,7 +50,9 @@ class Evaluation3DMetrics(object):
 
         self.px, self.py, self.pz = self.get_pixdim(self.fname_pred)
 
-        # Note: Some papers suggested to remove all lesion with less than 3 voxels: Todo?
+        # Remove all objects with less than 3 voxels
+        self.data_pred = self.remove_small_blobs(data=self.data_pred, nb_voxel=3)
+        self.data_gt = self.remove_small_blobs(data=self.data_gt, nb_voxel=3)
 
         # 18-connected components
         self.data_pred_label, self.n_pred = label(self.data_pred,
@@ -68,6 +70,19 @@ class Evaluation3DMetrics(object):
         nib_im = nib.load(fname)
         px, py, pz = nib_im.header['pixdim'][1:4]
         return px, py, pz
+
+    def remove_small_blobs(self, data, nb_voxel):
+        data_label, n = label(data,
+                                connectivity=3,
+                                return_num=True)
+
+        for idx in range(1, n+1):
+            data_idx = (data_label == idx).astype(np.int)
+
+            if np.count_nonzero(data_idx) < nb_voxel:
+                data[data_label == idx] = 0
+
+        return data
 
     def get_vol(self, data):
         vol = np.sum(data)
