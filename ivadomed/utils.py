@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import nibabel as nib
 from PIL import Image
-from skimage.measure import label
+from scipy.ndimage import label, generate_binary_structure
 import torchvision.transforms.functional as F
 import matplotlib.pyplot as plt
 from collections import defaultdict
@@ -55,6 +55,7 @@ class Evaluation3DMetrics(object):
         self.px, self.py, self.pz = self.get_pixdim(self.fname_pred)
 
         # Remove all objects with less than 3 voxels
+        self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
         self.data_pred = self.remove_small_blobs(data=self.data_pred,
                                                     nb_voxel=3,
                                                     fname=self.fname_pred)
@@ -64,11 +65,9 @@ class Evaluation3DMetrics(object):
 
         # 18-connected components
         self.data_pred_label, self.n_pred = label(self.data_pred,
-                                                    connectivity=3,
-                                                    return_num=True)
+                                                    structure=self.bin_struct)
         self.data_gt_label, self.n_gt = label(self.data_gt,
-                                                connectivity=3,
-                                                return_num=True)
+                                                structure=self.bin_struct)
 
         # painted data
         self.fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
@@ -85,8 +84,7 @@ class Evaluation3DMetrics(object):
 
     def remove_small_blobs(self, data, nb_voxel, fname):
         data_label, n = label(data,
-                                connectivity=3,
-                                return_num=True)
+                                structure=self.bin_struct)
 
         for idx in range(1, n+1):
             data_idx = (data_label == idx).astype(np.int)
@@ -133,7 +131,6 @@ class Evaluation3DMetrics(object):
 
             if np.count_nonzero(overlap) >= overlap_vox:
                 ltp += 1
-                self.data_painted[self.data_gt_label == idx] = TP_COLOUR
 
             else:
                 lfn += 1
@@ -151,6 +148,8 @@ class Evaluation3DMetrics(object):
             if np.count_nonzero(overlap) < overlap_vox:
                 lfp += 1
                 self.data_painted[self.data_pred_label == idx] = FP_COLOUR
+            else:
+                self.data_painted[self.data_pred_label == idx] = TP_COLOUR
 
         return lfp
 
