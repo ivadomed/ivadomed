@@ -71,7 +71,7 @@ class Evaluation3DMetrics(object):
                                                 return_num=True)
 
         # painted data
-        fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
+        self.fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
         self.data_painted = np.copy(self.data_pred)
 
     def get_data(self, fname):
@@ -193,6 +193,10 @@ class Evaluation3DMetrics(object):
         dct['n_pred'], dct['n_gt'] = self.n_pred, self.n_gt
         dct['ltpr'] = self.get_ltpr()
         dct['lfdr'] = self.get_lfdr()
+
+        # save painted file
+        nib_painted = nib.Nifti1Image(self.data_painted, nib.load(self.fname_pred).affine)
+        nib.save(nib_painted, self.fname_paint)
 
         return dct
 
