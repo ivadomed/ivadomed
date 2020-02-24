@@ -131,6 +131,8 @@ def cmd_train(context):
 
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
+
+    train_lst = ['sub-amu01', 'sub-amu03']
     ds_train = loader.load_dataset(train_lst, train_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
@@ -162,13 +164,15 @@ def cmd_train(context):
         shuffle_train = False
     else:
         sampler_train, shuffle_train = None, True
-
+     
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
                               collate_fn=mt_datasets.mt_collate,
                               num_workers=0)
+    print("Validation")
 
     # Validation dataset ------------------------------------------------------
+    valid_lst = ['sub-amu05', 'sub-amu04']
     ds_val = loader.load_dataset(valid_lst, val_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
@@ -189,7 +193,7 @@ def cmd_train(context):
             f"Loaded {len(ds_val)} volumes of size {context['length_3D']} for the validation set.")
 
     # TODO: not supported by the adaptative loader
-    if context['balance_samples']:
+    if context['balance_samples'] and not HeMIS:
         sampler_val = loader.BalancedSampler(ds_val)
         shuffle_val = False
     else:

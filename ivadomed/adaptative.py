@@ -29,7 +29,7 @@ class Dataframe:
         # Number of dimension
         self.dim = dim
         # List of all contrasts
-        self.contrasts = contrasts
+        self.contrasts = copy.deepcopy(contrasts)
 
         if target_suffix:
             for gt in target_suffix:
@@ -108,21 +108,25 @@ class Dataframe:
             # GT
             assert 'gt' in grp.keys()
             inputs = grp['gt']
+            print("input = ", inputs.attrs['contrast'])
             for c in inputs.attrs['contrast']:
                 key = 'gt/' + c
-                if key in col_names:
-                    line[key] = '{}/gt/{}'.format(subject, c)
-                else:
-                    continue
+                for col in col_names:
+                    if key in col:
+                        line[col] = '{}/gt/{}'.format(subject, c)
+                        print(line)
+                    else:
+                        continue
             # ROI
             assert 'roi' in grp.keys()
             inputs = grp['roi']
             for c in inputs.attrs['contrast']:
                 key = 'roi/' + c
-                if key in col_names:
-                    line[key] = '{}/roi/{}'.format(subject, c)
-                else:
-                    continue
+                for col in col_names:
+                    if key in col:
+                        line[col] = '{}/roi/{}'.format(subject, c)
+                    else:
+                        continue
 
             # Adding slices & removing useless slices if loading in ram
             line['Slices'] = np.array(grp.attrs['slices'])
@@ -227,6 +231,7 @@ class Bids_to_hdf5:
                 for deriv in derivatives:
                     if deriv.endswith(subject.record["modality"] + target_suffix + ".nii.gz"):
                         target_filename = deriv
+                        print("filename", target_filename)
                     if not (roi_suffix is None) and deriv.endswith(
                             subject.record["modality"] + roi_suffix + ".nii.gz"):
                         roi_filename = deriv
@@ -296,7 +301,7 @@ class Bids_to_hdf5:
 
             seg_pair = mt_datasets.SegmentationPair2D(input_filename, gt_filename, metadata=metadata, cache=False,
                                                       canonical=self.canonical)
-
+            print("gt filename", gt_filename)
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
             useful_slices = []
@@ -452,7 +457,6 @@ class HDF5Dataset:
         self.cst_lst = copy.deepcopy(contrast_lst)
         self.gt_lst = copy.deepcopy(target_lst)
         self.roi_lst = copy.deepcopy(roi_lst)
-
         self.dim = dim
         self.filter_slices = slice_filter_fn
         self.transform = transform
@@ -464,7 +468,7 @@ class HDF5Dataset:
                                      hdf5_name=hdf5_name,
                                      target_suffix=target_suffix,
                                      roi_suffix=roi_suffix,
-                                     contrast_lst=contrast_lst,
+                                     contrast_lst=self.cst_lst,
                                      metadata_choice=metadata_choice,
                                      contrast_balance=contrast_balance,
                                      slice_axis=slice_axis,
@@ -478,8 +482,10 @@ class HDF5Dataset:
         self.df_object = Dataframe(self.hdf5_file, contrast_lst, csv_name, target_suffix=target_lst,
                                    roi_suffix=roi_lst, dim=self.dim, slices=slice_filter_fn)
         if complet:
-            self.df_object.clean(contrast_lst)
-
+            self.df_object.clean(self.cst_lst)
+        print("after cleaning")
+        print(self.df_object.df.head())
+ 
         self.initial_dataframe = self.df_object.df
 
         self.dataframe = copy.deepcopy(self.df_object.df)
@@ -489,8 +495,8 @@ class HDF5Dataset:
         # RAM status
         self.status = {ct: False for ct in self.df_object.contrasts}
         # Input contrasts
-        self.contrast_lst = contrast_lst
-
+        #self.contrast_lst = contrast_lst
+  
     def load_into_ram(self, contrast_lst=None):
         """
         Aims to load into RAM the contrasts from the list
@@ -562,27 +568,30 @@ class HDF5Dataset:
         if self.status['gt/' + self.gt_lst[0]]:
             gt_img = line['gt/' + self.gt_lst[0]]
         else:
-            gt_img = self.hdf5_file[line['gt/' + self.gt_lst[0]]][line['Slices']]
-
+            gt_img = self.hdf5_file[line['gt/' + self.gt_lst[0]]][line['Slices']] 
+        
         # convert array to pil
         gt_img = (gt_img * 255).astype(np.uint8)
         gt_img = Image.fromarray(gt_img, mode='L')
         gt_metadata = {key: value for key, value in
-                       self.hdf5_file['{}/gt/{}'.format(line['Subjects'], self.gt_lst[0])].attrs.items()}
-
+                       self.hdf5_file[line['gt/' + self.gt_lst[0]]].attrs.items()}
+        
+        
         # ROI
-        if self.status['roi/' + self.roi_lst[0]]:
-            roi_img = line['roi/' + self.roi_lst[0]]
+        if self.roi_lst:
+            if self.status['roi/' + self.roi_lst[0]]:
+                roi_img = line['roi/' + self.roi_lst[0]]
+            else:
+                roi_img = self.hdf5_file[line['roi/' + self.roi_lst[0]]][line['Slices']]
+
+            # convert array to pil
+            roi_img = (roi_img * 255).astype(np.uint8)
+            roi_img = Image.fromarray(roi_img, mode='L')
+
+            roi_metadata = {key: value for key, value in
+                            self.hdf5_file[line['roi/' + self.roi_lst[0]]].attrs.items()}
         else:
-            roi_img = self.hdf5_file[line['roi/' + self.roi_lst[0]]][line['Slices']]
-
-        # convert array to pil
-        roi_img = (roi_img * 255).astype(np.uint8)
-        roi_img = Image.fromarray(roi_img, mode='L')
-
-        roi_metadata = {key: value for key, value in
-                        self.hdf5_file['{}/roi/{}'.format(line['Subjects'], self.roi_lst[0])].attrs.items()}
-
+            roi_img, roi_metadata = None, None
         data_dict = {'input': input_tensors,
                      'gt': gt_img,
                      'roi': roi_img,
