@@ -3,14 +3,14 @@
 # Check the presence of input files.
 #
 # Usage:
-#   ./check_input_files.sh <SUBJECT> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
+#   ./check_input_files.sh <FILE_PARAM>
 
 # Exit if user presses CTRL+C (Linux) or CMD+C (OSX)
 trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 
 # Retrieve input params
 SUBJECT=$1
-PATH_OUTPUT=$2
+PATH_RESULTS=$2
 PATH_QC=$3
 PATH_LOG=$4
 
