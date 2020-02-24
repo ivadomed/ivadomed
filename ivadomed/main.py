@@ -879,7 +879,7 @@ def cmd_eval(context):
 
         # 3D evaluation
         eval = Evaluation3DMetrics(fname_pred=fname_pred, fname_gt=fname_gt)
-        results_pred = eval.get_all_metrics()
+        results_pred = eval.run_eval()
 
         # save results of this fname_pred
         results_pred['image_id'] = subj_acq
