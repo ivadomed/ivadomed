@@ -181,7 +181,7 @@ class Evaluation3DMetrics(object):
 
         return lfp * 100. / denom
 
-    def get_all_metrics(self):
+    def run_eval(self):
         dct = {}
         dct['vol_pred'] = self.get_vol(self.data_pred)
         dct['vol_gt'] = self.get_vol(self.data_gt)
