@@ -55,8 +55,12 @@ class Evaluation3DMetrics(object):
         self.px, self.py, self.pz = self.get_pixdim(self.fname_pred)
 
         # Remove all objects with less than 3 voxels
-        self.data_pred = self.remove_small_blobs(data=self.data_pred, nb_voxel=3)
-        self.data_gt = self.remove_small_blobs(data=self.data_gt, nb_voxel=3)
+        self.data_pred = self.remove_small_blobs(data=self.data_pred,
+                                                    nb_voxel=3,
+                                                    fname=self.fname_pred)
+        self.data_gt = self.remove_small_blobs(data=self.data_gt,
+                                                    nb_voxel=3,
+                                                    fname=self.fname_gt)
 
         # 18-connected components
         self.data_pred_label, self.n_pred = label(self.data_pred,
@@ -79,7 +83,7 @@ class Evaluation3DMetrics(object):
         px, py, pz = nib_im.header['pixdim'][1:4]
         return px, py, pz
 
-    def remove_small_blobs(self, data, nb_voxel):
+    def remove_small_blobs(self, data, nb_voxel, fname):
         data_label, n = label(data,
                                 connectivity=3,
                                 return_num=True)
@@ -89,6 +93,7 @@ class Evaluation3DMetrics(object):
 
             if np.count_nonzero(data_idx) < nb_voxel:
                 data[data_label == idx] = 0
+                print('INFO: Removing small object from {}'.format(fname))
 
         return data
 
