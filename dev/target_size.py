@@ -26,9 +26,9 @@ def get_parser():
 
 
 def print_stats(arr):
-    print('\tMean: {} %'.format(np.mean(arr)))
-    print('\tMedian: {} %'.format(np.median(arr)))
-    print('\tInter-quartile range: [{}, {}] %'.format(np.percentile(arr, 25), np.percentile(arr, 75)))
+    print('\tMean: {}'.format(np.mean(arr)))
+    print('\tMedian: {}'.format(np.median(arr)))
+    print('\tInter-quartile range: [{}, {}]'.format(np.percentile(arr, 25), np.percentile(arr, 75)))
 
 
 def run_main(args):
