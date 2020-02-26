@@ -2,7 +2,11 @@
 #
 # This scripts compute the distribution of lesion size,
 # in vox and in mm3.
+#
 # Could work with tumour or SC etc.
+#
+# It filters using "target_suffix" and "contrast_test"
+# from config file.
 #
 # Usage: python dev/target_size.py -c <config_file_path>
 #
@@ -56,7 +60,8 @@ def run_main(args):
         s_fold = os.path.join(path_folder, s, 'anat')
         if os.path.isdir(s_fold):
             for f in os.listdir(s_fold):
-                if f.endswith(context["target_suffix"]+'.nii.gz'):
+                c = f.split(s+'_')[-1].split(context["target_suffix"])[0]
+                if f.endswith(context["target_suffix"]+'.nii.gz') and c in context["contrast_test"]:
                     f_path = os.path.join(s_fold, f)
                     im = nib.load(f_path)
                     data = im.get_data()
