@@ -8,8 +8,6 @@
 #
 # Example: python dev/target_size.py -c config/config.json
 #
-# Contributors: charley
-#
 ##############################################################
 
 import os
@@ -17,6 +15,8 @@ import json
 import argparse
 import numpy as np
 import nibabel as nib
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -30,6 +30,19 @@ def print_stats(arr):
     print('\tMedian: {}'.format(np.median(arr)))
     print('\tInter-quartile range: [{}, {}]'.format(np.percentile(arr, 25), np.percentile(arr, 75)))
 
+
+def plot_distrib(arr, label, fname_out):
+    fig = plt.figure()
+
+    sns.distplot(arr, hist=False, kde=True, rug=True,
+                 color = 'darkblue',
+                 kde_kws={'linewidth': 3},
+                 rug_kws={'color': 'black'})
+
+    plt.xlabel(label)
+    plt.ylabel('Density')
+    fig.savefig(fname_out)
+    print('\tSave as: '+fname_out)
 
 def run_main(args):
 
@@ -57,10 +70,13 @@ def run_main(args):
 
     print('\nTarget distribution in vox:')
     print_stats(vox_lst)
+    plot_distrib(vox_lst, context["target_suffix"]+' size in vox',
+                     context["target_suffix"]+'_vox.png')
 
     print('\nTarget distribution in mm3:')
     print_stats(mm3_lst)
-
+    plot_distrib(mm3_lst, context["target_suffix"]+' size in mm3',
+                     context["target_suffix"]+'_mm3.png')
 
 if __name__ == '__main__':
     parser = get_parser()
