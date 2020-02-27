@@ -1,6 +1,6 @@
 ##############################################################
 #
-# This scripts compute the distribution of lesion size,
+# This scripts compute the distribution of each lesion size,
 # in vox and in mm3.
 #
 # Could work with tumour or SC etc.
@@ -21,6 +21,8 @@ import numpy as np
 import nibabel as nib
 import seaborn as sns
 import matplotlib.pyplot as plt
+from scipy.ndimage import label, generate_binary_structure
+
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -35,15 +37,16 @@ def print_stats(arr):
     print('\tInter-quartile range: [{}, {}]'.format(np.percentile(arr, 25), np.percentile(arr, 75)))
 
 
-def plot_distrib(arr, label, fname_out):
+def plot_distrib(arr, label, xlim, fname_out):
     fig = plt.figure()
 
     sns.distplot(arr, hist=False, kde=True, rug=True,
                  color = 'darkblue',
-                 kde_kws={'linewidth': 3},
+                 kde_kws={'linewidth': 2},
                  rug_kws={'color': 'black'})
 
     plt.xlabel(label)
+    plt.xlim(xlim)
     plt.ylabel('Density')
     fig.savefig(fname_out)
     print('\tSave as: '+fname_out)
@@ -54,6 +57,8 @@ def run_main(args):
         context = json.load(fhandle)
 
     path_folder = os.path.join(context['bids_path'], 'derivatives', 'labels')
+
+    bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
 
     vox_lst, mm3_lst = [], []
     for s in os.listdir(path_folder):
@@ -69,18 +74,25 @@ def run_main(args):
                     del im
 
                     if np.any(data):
-                        n_vox = np.count_nonzero(data)
-                        vox_lst.append(n_vox)
-                        mm3_lst.append(n_vox * px * py * pz)
+                        data_label, n = label(data,
+                                                structure=bin_struct)
+                        for idx in range(1, n+1):
+                            data_idx = (data_label == idx).astype(np.int)
+
+                            n_vox = np.count_nonzero(data_idx)
+                            vox_lst.append(n_vox)
+                            mm3_lst.append(n_vox * px * py * pz)
 
     print('\nTarget distribution in vox:')
     print_stats(vox_lst)
     plot_distrib(vox_lst, context["target_suffix"]+' size in vox',
+                     [0, np.percentile(vox_lst, 90)],
                      context["target_suffix"]+'_vox.png')
 
     print('\nTarget distribution in mm3:')
     print_stats(mm3_lst)
     plot_distrib(mm3_lst, context["target_suffix"]+' size in mm3',
+                     [0, np.percentile(mm3_lst, 90)],
                      context["target_suffix"]+'_mm3.png')
 
 if __name__ == '__main__':
