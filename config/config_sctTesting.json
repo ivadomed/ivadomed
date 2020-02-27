@@ -73,5 +73,16 @@
 		"ToTensor": {},
 		"NormalizeInstance": {}
 		},
+        "transformation_testing": {
+                "Resample": {
+                        "wspace": 0.75,
+                        "hspace": 0.75
+                        },
+                "ROICrop2D": {
+                        "size": [48, 48]
+                        },
+                "ToTensor": {},
+                "NormalizeInstance": {}
+                },
         "debugging": false
 }

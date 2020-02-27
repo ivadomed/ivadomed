@@ -2,7 +2,7 @@
 #
 # Delete temporary files. Run this script once all files have been verified.
 # Usage:
-#   ./delete_temp_files.sh <SUBJECT> <PATH_OUTPUT> <PATH_QC> <PATH_LOG> <TO_EXCLUDE>
+#   ./delete_temp_files.sh <FILE_PARAM>
 
 # Uncomment for full verbose
 # set -v
@@ -22,8 +22,8 @@ source $FILEPARAM
 
 # Create BIDS architecture
 PATH_IN="`pwd`/${SUBJECT}/anat"
-ofolder_seg="${PATH_OUTPUT}/derivatives/labels/${SUBJECT}/anat"
-ofolder_reg="${PATH_OUTPUT}/${SUBJECT}/anat"
+ofolder_seg="${PATH_RESULTS}/derivatives/labels/${SUBJECT}/anat"
+ofolder_reg="${PATH_RESULTS}/${SUBJECT}/anat"
 
 # Set filenames
 file_t1w_mts="${SUBJECT}_acq-T1w_MTS"

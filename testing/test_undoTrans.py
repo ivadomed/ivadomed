@@ -38,20 +38,23 @@ def test_undo(contrast='T2star', tol=3):
     test_1 = [ivadomed_transforms.ToTensor(), ivadomed_transforms.NormalizeInstance()]
     name_1 = 'ToTensor_NoramlizeInstance'
 
-    test_2 = [mt_transforms.CenterCrop2D(size=[40, 48])] + test_1
-    name_2 = 'CenterCrop2D_' + name_1
+    test_2 = [mt_transforms.RandomRotation(degrees=10)] + test_1
+    name_2 = 'RandomRotation_' + name_1
 
-    test_3 = [ivadomed_transforms.ROICrop2D(size=[40, 48])] + test_1
-    name_3 = 'ROICrop2D_' + name_1
+    test_3 = [mt_transforms.CenterCrop2D(size=[40, 48])] + test_2
+    name_3 = 'CenterCrop2D_' + name_2
 
-    test_4 = [ivadomed_transforms.Resample(wspace=0.75, hspace=0.75)] + test_2
-    name_4 = 'Resample_' + name_2
+    test_4 = [ivadomed_transforms.ROICrop2D(size=[40, 48])] + test_2
+    name_4 = 'ROICrop2D_' + name_2
 
     test_5 = [ivadomed_transforms.Resample(wspace=0.75, hspace=0.75)] + test_3
     name_5 = 'Resample_' + name_3
 
-    name_lst = [name_2, name_3, name_4, name_5]
-    test_lst = [test_2, test_3, test_4, test_5]
+    test_6 = [ivadomed_transforms.Resample(wspace=0.75, hspace=0.75)] + test_4
+    name_6 = 'Resample_' + name_4
+
+    name_lst = [name_2, name_3, name_4, name_5, name_6]
+    test_lst = [test_2, test_3, test_4, test_5, test_6]
 
     subject_test_lst = ['sub-test001']
 

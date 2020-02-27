@@ -21,7 +21,7 @@ source PATH_TO_YOUR_VENV/venv-ivadomed/bin/activate
 - Edit the file `parameters.sh` and modify the variables according to your needs.
 - Make sure input files are present:
 ~~~
-./run_process.sh parameters.sh check_input_files.sh
+sct_run_batch parameters.sh check_input_files.sh
 ~~~
 
 #### Run first processing
@@ -29,7 +29,7 @@ source PATH_TO_YOUR_VENV/venv-ivadomed/bin/activate
 Loop across subjects and run full processing:
 
 ~~~
-./run_process.sh parameters.sh prepare_data.sh
+sct_run_batch parameters.sh prepare_data.sh
 ~~~
 
 #### Perform QC
@@ -77,7 +77,7 @@ If some images are of unacceptable quality, they could be excluded from the fina
 Make sure to update the field `PATH_SEGMANUAL` in the file `parameters.sh`, then re-run:
 
 ~~~
-./run_process.sh parameters.sh prepare_data.sh
+sct_run_batch parameters.sh prepare_data.sh
 ~~~
 
 #### Copy files, final QC
@@ -85,7 +85,7 @@ Make sure to update the field `PATH_SEGMANUAL` in the file `parameters.sh`, then
 Copy final files to anat/, copy json sidecars, move segmentations to derivatives/ and generate another QC:
 
 ~~~
-./run_process.sh parameters.sh final_qc.sh
+sct_run_batch parameters.sh final_qc.sh
 ~~~
 
 - Open the new QC: qc2/index.html
@@ -100,5 +100,5 @@ Copy final files to anat/, copy json sidecars, move segmentations to derivatives
 Once QC and manual correction is done, remove tmp/ folder:
 
 ~~~
-./run_process.sh delete_tmp_files.sh
+sct_run_batch parameters.sh delete_tmp_files.sh
 ~~~
