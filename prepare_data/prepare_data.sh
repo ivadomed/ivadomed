@@ -47,6 +47,7 @@ segment_if_does_not_exist(){
   if [ -e "${PATH_SEGMANUAL}/${file}_seg-manual.nii.gz" ]; then
     echo "Found manual segmentation: ${PATH_SEGMANUAL}/${FILESEG}-manual.nii.gz"
     cp "${PATH_SEGMANUAL}/${FILESEG}-manual.nii.gz" ${FILESEG}.nii.gz
+    sct_register_multimodal -i ${FILESEG}.nii.gz -d ${file}.nii.gz -identity 1 -o ${FILESEG}.nii.gz 
     sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc -qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
     # Segment spinal cord
@@ -69,7 +70,7 @@ cp ${PATH_IN}/${file_t2s}.nii.gz .
 cp ${PATH_IN}/${file_t1w}.nii.gz .
 
 # Crop to avoid imperfect slab profile at the edge (altered contrast)
-sct_crop_image -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_crop.nii.gz -zmin 3 -zmax -3
+sct_crop_image -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_crop.nii.gz -zmin 3 -zmax -4
 file_t1w_mts="${file_t1w_mts}_crop"
 
 # Resample to fixed resolution
