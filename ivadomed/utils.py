@@ -86,6 +86,7 @@ class Evaluation3DMetrics(object):
 
         rvd = (vol_gt-vol_pred)*100.
         rvd /= vol_gt
+
         return rvd
 
     def get_avd(self):
