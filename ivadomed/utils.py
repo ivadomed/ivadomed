@@ -1,4 +1,6 @@
+import os
 import torch
+from tqdm import tqdm
 import numpy as np
 import nibabel as nib
 from PIL import Image
@@ -84,6 +86,7 @@ class Evaluation3DMetrics(object):
 
         rvd = (vol_gt-vol_pred)*100.
         rvd /= vol_gt
+
         return rvd
 
     def get_avd(self):
@@ -229,7 +232,45 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, une
     nib.save(nib_pred, fname_out)
 
 
-def combine_predictions(fname_lst, fname_hard, fname_prob):
+def run_uncertainty(ifolder):
+    # list subj_acq prefixes
+    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(ifolder)
+                    if f.endswith('.nii.gz') and '_pred' in f]
+    # remove duplicates
+    subj_acq_lst = list(set(subj_acq_lst))
+    # keep only the images where unc has not been computed yet
+    subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(
+        os.path.join(ifolder, f+'_unc-cv.nii.gz'))]
+
+    # loop across subj_acq
+    for subj_acq in tqdm(subj_acq_lst, desc="Uncertainty Computation"):
+        # hard segmentation from MC samples
+        fname_pred = os.path.join(ifolder, subj_acq+'_pred.nii.gz')
+        # fname for soft segmentation from MC simulations
+        fname_soft = os.path.join(ifolder, subj_acq+'_soft.nii.gz')
+        # find Monte Carlo simulations
+        fname_pred_lst = [os.path.join(ifolder, f)
+                          for f in os.listdir(ifolder) if subj_acq+'_pred_' in f]
+
+        # if final segmentation from Monte Carlo simulations has not been generated yet
+        if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
+            # threshold used for the hard segmentation
+            thr = 1. / len(fname_pred_lst)  # 1 for all voxels where at least on MC sample predicted 1
+            # average then argmax
+            combine_predictions(fname_pred_lst, fname_pred, fname_soft, thr=thr)
+
+        fname_unc_vox = os.path.join(ifolder, subj_acq+'_unc-vox.nii.gz')
+        if not os.path.isfile(fname_unc_vox):
+            # compute voxel-wise uncertainty map
+            voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
+
+        fname_unc_struct = os.path.join(ifolder, subj_acq+'_unc.nii.gz')
+        if not os.path.isfile(os.path.join(ifolder, subj_acq+'_unc-cv.nii.gz')):
+            # compute structure-wise uncertainty
+            structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
+
+
+def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
     """
     Combine predictions from Monte Carlo simulations
     by applying:
@@ -244,14 +285,13 @@ def combine_predictions(fname_lst, fname_hard, fname_prob):
 
     # average over all the MC simulations
     data_prob = np.mean(np.array(data_lst), axis=0)
-    # argmax operator
-    # TODO: adapt for multi-label pred
-    data_hard = np.round(data_prob).astype(np.uint8)
-
     # save prob segmentation
     nib_prob = nib.Nifti1Image(data_prob, nib_im.affine)
     nib.save(nib_prob, fname_prob)
 
+    # argmax operator
+    # TODO: adapt for multi-label pred
+    data_hard = threshold_predictions(data_prob, thr=thr).astype(np.uint8)
     # save hard segmentation
     nib_hard = nib.Nifti1Image(data_hard, nib_im.affine)
     nib.save(nib_hard, fname_hard)
