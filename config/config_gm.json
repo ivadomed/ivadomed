@@ -71,5 +71,16 @@
 		"ToTensor": {},
 		"NormalizeInstance": {}
 		},
+        "transformation_testing": {
+                "Resample": {
+                        "wspace": 0.75,
+                        "hspace": 0.75
+                        },
+                "CenterCrop2D": {
+                        "size": [128, 128]
+                        },
+                "ToTensor": {},
+                "NormalizeInstance": {}
+                },
 	"debugging": false
 }
