@@ -409,8 +409,7 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         nib_im = nib.load(fname)
         data_im = nib_im.get_fdata()
         data_lst.append(data_im)
-
-        data_im_l = label(data_im, structure=bin_struct)
+        data_im_l, _ = label(data_im, structure=bin_struct)
         data_l_lst.append(data_im_l)
         del nib_im
 
