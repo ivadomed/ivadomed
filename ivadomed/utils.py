@@ -55,6 +55,13 @@ class Evaluation3DMetrics(object):
 
         # Remove all objects with less than "removeSmall" params
         if "removeSmall" in params:
+            if params['removeSmall']['unit'] == 'vox':
+                self.removeSmallThr = params['removeSmall']['thr']
+            elif params['removeSmall']['unit'] == 'mm3':
+                self.removeSmallThr = np.round(params['removeSmall']['thr'] / (self.px * self.py * self.pz))
+            else:
+                raise NotImplmentedError
+
             self.data_pred = self.remove_small_blobs(data=self.data_pred,
                                                         fname=self.fname_pred)
             self.data_gt = self.remove_small_blobs(data=self.data_gt,
@@ -75,10 +82,17 @@ class Evaluation3DMetrics(object):
         else:
             self.targetSize = None
 
+        # overlap_vox is used to define the object-wise TP, FP, FN
         if "overlap" in params:
-            self.overlap = params["overlap"]
+            if params["overlap"]["unit"] == 'vox':
+                self.overlap_vox = params["overlap"]["thr"]
+            elif params["overlap"]["unit"] == 'mm3':
+                self.overlap_vox = np.round(params["overlap"]["thr"] / (self.px * self.py * self.pz))
+            elif params["overlap"]["unit"] == 'percent':  # percentage of the GT object
+                self.overlap_percent = params["overlap"]["thr"]
+                self.overlap_vox = None
         else:
-            self.overlap = {'unit': 'vox', 'thr': 3}
+            self.overlap_vox = 3
 
     def get_data(self, fname):
         nib_im = nib.load(fname)
@@ -103,7 +117,7 @@ class Evaluation3DMetrics(object):
         for idx in range(1, n+1):
             data_idx = (data_label == idx).astype(np.int)
 
-            if np.count_nonzero(data_idx) < thr:
+            if np.count_nonzero(data_idx) < self.removeSmallThr:
                 data[data_label == idx] = 0
                 print('INFO: Removing small object from {}'.format(fname))
 
