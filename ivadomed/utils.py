@@ -107,13 +107,6 @@ class Evaluation3DMetrics(object):
         data_label, n = label(data,
                                 structure=self.bin_struct)
 
-        if self.removeSmall['unit'] == 'vox':
-            thr = self.removeSmall['thr']
-        elif self.removeSmall['unit'] == 'mm3':
-            thr = np.round(self.removeSmall['thr'] / (self.px * self.py * self.pz))
-        else:
-            raise NotImplmentedError
-
         for idx in range(1, n+1):
             data_idx = (data_label == idx).astype(np.int)
 
@@ -144,18 +137,21 @@ class Evaluation3DMetrics(object):
         """Absolute volume difference."""
         return abs(self.get_rvd())
 
-    def _get_ltp_lfn(self, overlap_vox=3):
+    def _get_ltp_lfn(self):
         """Number of true positive and false negative lesion.
 
             Note1: if two lesion_pred overlap with the current lesion_gt,
                 then only one detection is counted.
-            Note2: the tolerance of overlap that define a detection is
-                expressed in voxels. We could change it to "relative volume".
         """
         ltp, lfn = 0, 0
         for idx in range(1, self.n_gt+1):
             data_gt_idx = (self.data_gt_label == idx).astype(np.int)
             overlap = (data_gt_idx * self.data_pred).astype(np.int)
+
+            if self.overlap_vox is None:
+                overlap_vox = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
+            else:
+                overlap_vox = self.overlap_vox
 
             if np.count_nonzero(overlap) >= overlap_vox:
                 ltp += 1
@@ -166,14 +162,21 @@ class Evaluation3DMetrics(object):
 
         return ltp, lfn
 
-    def _get_lfp(self, overlap_vox=3):
+    def _get_lfp(self):
         """Number of false positive lesion."""
         lfp = 0
         for idx in range(1, self.n_pred+1):
             data_pred_idx = (self.data_pred_label == idx).astype(np.int)
             overlap = (data_pred_idx * self.data_gt).astype(np.int)
 
-            if np.count_nonzero(overlap) < overlap_vox:
+            if self.overlap_vox is None:
+                label_gt = np.max(data_pred_idx * self.data_label_gt)
+                data_gt_idx = (self.data_gt_label == label_gt).astype(np.int)
+                overlap_thr = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
+            else:
+                overlap_thr = self.overlap_vox
+
+            if np.count_nonzero(overlap) < overlap_thr:
                 lfp += 1
                 self.data_painted[self.data_pred_label == idx] = FP_COLOUR
             else:
