@@ -42,26 +42,23 @@ class IvadoMetricManager(mt_metrics.MetricManager):
 
 class Evaluation3DMetrics(object):
 
-    def __init__(self, fname_pred, fname_gt, params=None):
+    def __init__(self, fname_pred, fname_gt, params{}):
         self.fname_pred = fname_pred
         self.fname_gt = fname_gt
-
-        if not params is None:
-            pass
 
         self.data_pred = self.get_data(self.fname_pred)
         self.data_gt = self.get_data(self.fname_gt)
 
         self.px, self.py, self.pz = self.get_pixdim(self.fname_pred)
 
-        # Remove all objects with less than 3 voxels
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
-        self.data_pred = self.remove_small_blobs(data=self.data_pred,
-                                                    nb_voxel=3,
-                                                    fname=self.fname_pred)
-        self.data_gt = self.remove_small_blobs(data=self.data_gt,
-                                                    nb_voxel=3,
-                                                    fname=self.fname_gt)
+
+        # Remove all objects with less than "removeSmall" params
+        if "removeSmall" in params:
+            self.data_pred = self.remove_small_blobs(data=self.data_pred,
+                                                        fname=self.fname_pred)
+            self.data_gt = self.remove_small_blobs(data=self.data_gt,
+                                                        fname=self.fname_gt)
 
         # 18-connected components
         self.data_pred_label, self.n_pred = label(self.data_pred,
@@ -69,9 +66,19 @@ class Evaluation3DMetrics(object):
         self.data_gt_label, self.n_gt = label(self.data_gt,
                                                 structure=self.bin_struct)
 
-        # painted data
+        # painted data, object wise
         self.fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
         self.data_painted = np.copy(self.data_pred)
+
+        if "targetSize" in params:
+            self.targetSize = params["targetSize"]
+        else:
+            self.targetSize = None
+
+        if "overlap" in params:
+            self.overlap = params["overlap"]
+        else:
+            self.overlap = {'unit': 'vox', 'thr': 3}
 
     def get_data(self, fname):
         nib_im = nib.load(fname)
