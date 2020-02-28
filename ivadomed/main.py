@@ -854,8 +854,8 @@ def cmd_eval(context):
     # init data frame
     df_results = pd.DataFrame()
 
+    subgroup_dct = {'df': [], 'thr_low': [], 'thr_high': [], 'unit': [], 'ofname': []}
     if context['eval_params']['targetSize'] is not None:
-        subgroup_dct = {'df': [], 'thr_low': [], 'thr_high': [], 'unit': [], 'ofname': []}
         for i, thr in enumerate(context['eval_params']['targetSize']['thr']):
             subgroup_dct['df'].append(pd.DataFrame())
 
@@ -905,17 +905,27 @@ def cmd_eval(context):
                                     fname_gt=fname_gt,
                                     params=context['eval_params'])
         results_pred = eval.run_eval()
-
         # save results of this fname_pred
         results_pred['image_id'] = subj_acq
         df_results = df_results.append(results_pred, ignore_index=True)
 
-    df_results = df_results.set_index('image_id')
+        # Then for each subgroup
+        for i_s, df_s in enumerate(subgroup_dct['df']):
+            eval = Evaluation3DMetrics(fname_pred=fname_pred,
+                                    fname_gt=fname_gt,
+                                    params=context['eval_params'],
+                                    target_size_unit=subgroup_dct['unit'][i_s],
+                                    target_size_rng=[subgroup_dct['thr_low'][i_s], subgroup_dct['thr_high'][i_s]])
+            results_pred_s = eval.run_eval()
+            results_pred_s['image_id'] = subj_acq
+            subgroup_dct['df'][i_s] = df_s.append(results_pred_s, ignore_index=True)
 
-    # save results as csv
-    fname_out = os.path.join(path_results, 'evaluation_3Dmetrics.csv')
-    df_results.to_csv(fname_out)
-    print(df_results.head(5))
+    df_lst = subgroup_dct['df'] + [df_results]
+    ofname_lst = subgroup_dct['ofname'] + [os.path.join(path_results, 'evaluation_3Dmetrics.csv')]
+    for df, ofname in zip(df_lst, ofname_lst):
+        df = df.set_index('image_id')
+        df.to_csv(ofname)
+    print(df.head(5))
 
 
 def run_main():
