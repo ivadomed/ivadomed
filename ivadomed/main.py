@@ -878,7 +878,9 @@ def cmd_eval(context):
                                 subj, 'anat', subj_acq+context['target_suffix']+'.nii.gz')
 
         # 3D evaluation
-        eval = Evaluation3DMetrics(fname_pred=fname_pred, fname_gt=fname_gt)
+        eval = Evaluation3DMetrics(fname_pred=fname_pred,
+                                    fname_gt=fname_gt,
+                                    params=context['eval_params'])
         results_pred = eval.run_eval()
 
         # save results of this fname_pred
