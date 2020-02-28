@@ -714,7 +714,7 @@ def cmd_test(context):
         n_monteCarlo = 1
 
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
-    for i, batch in enumerate(test_loader):
+    for i, batch in enumerate([]): #test_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
 
         for i_monteCarlo in range(n_monteCarlo):
@@ -852,7 +852,6 @@ def cmd_test(context):
 
 def cmd_eval(context):
     ##### DEFINE DEVICE #####
-    cmd_test(context)
     device = torch.device("cpu")
     print("Working on {}.".format(device))
 
@@ -887,6 +886,16 @@ def cmd_eval(context):
             ofname = os.path.join(path_results,
                                     'evaluation_3Dmetrics_'+str(thr_low)+'-'+str(thr_high)+unit+'.csv')
             subgroup_dct['ofname'].append(ofname)
+
+        # last subgroup
+        subgroup_dct['df'].append(pd.DataFrame())
+        thr_low = context['eval_params']['targetSize']['thr'][i] + 1
+        subgroup_dct['thr_low'].append(thr_low)
+        subgroup_dct['thr_high'].append(np.inf)
+        subgroup_dct['unit'].append(unit)
+        ofname = os.path.join(path_results,
+                                 'evaluation_3Dmetrics_'+str(thr_low)+'-INF'+unit+'.csv')
+        subgroup_dct['ofname'].append(ofname)
 
     # list subject_acquisition
     path_pred = os.path.join(context['log_directory'], 'pred_masks')
