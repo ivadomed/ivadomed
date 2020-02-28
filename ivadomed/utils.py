@@ -89,14 +89,21 @@ class Evaluation3DMetrics(object):
         px, py, pz = nib_im.header['pixdim'][1:4]
         return px, py, pz
 
-    def remove_small_blobs(self, data, nb_voxel, fname):
+    def remove_small_blobs(self, data, fname):
         data_label, n = label(data,
                                 structure=self.bin_struct)
+
+        if self.removeSmall['unit'] == 'vox':
+            thr = self.removeSmall['thr']
+        elif self.removeSmall['unit'] == 'mm3':
+            thr = np.round(self.removeSmall['thr'] / (self.px * self.py * self.pz))
+        else:
+            raise NotImplmentedError
 
         for idx in range(1, n+1):
             data_idx = (data_label == idx).astype(np.int)
 
-            if np.count_nonzero(data_idx) < nb_voxel:
+            if np.count_nonzero(data_idx) < thr:
                 data[data_label == idx] = 0
                 print('INFO: Removing small object from {}'.format(fname))
 
