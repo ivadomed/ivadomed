@@ -119,8 +119,6 @@ class Evaluation3DMetrics(object):
 
             if n_nonzero < self.size_min or n_nonzero > self.size_max:
                 data[data_label == idx] = 0
-            else:
-                print(n_nonzero)
 
         return data
 
