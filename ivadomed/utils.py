@@ -44,7 +44,7 @@ class IvadoMetricManager(mt_metrics.MetricManager):
 
 class Evaluation3DMetrics(object):
 
-    def __init__(self, fname_pred, fname_gt, params={}):
+    def __init__(self, fname_pred, fname_gt, params={}, target_size_unit=None, target_size_rng=[]):
         self.fname_pred = fname_pred
         self.fname_gt = fname_gt
 
@@ -55,17 +55,22 @@ class Evaluation3DMetrics(object):
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
 
-        # Remove all objects with less than "removeSmall" params
-        if "removeSmall" in params:
-            if params['removeSmall']['unit'] == 'vox':
-                self.removeSmallThr = params['removeSmall']['thr']
-            elif params['removeSmall']['unit'] == 'mm3':
-                self.removeSmallThr = np.round(params['removeSmall']['thr'] / (self.px * self.py * self.pz))
+        # Filter lesions by size
+        if "removeSmall" in params or target_size_unit is not None:
+            size_min = params['removeSmall']['thr'] if not len(target_size_rng) else target_size_rng[0]
+            size_max = np.inf if not len(target_size_rng) else target_size_rng[1]
+            unit = params['removeSmall']['unit'] if not len(target_size_rng) else target_size_unit
+            if unit == 'vox':
+                self.size_min = size_min
+                self.size_max = size_max
+            elif unit == 'mm3':
+                self.size_min = np.round(size_min / (self.px * self.py * self.pz))
+                self.size_max = np.round(size_max / (self.px * self.py * self.pz))
             else:
                 raise NotImplmentedError
 
-            self.data_pred = self.remove_small_blobs(data=self.data_pred)
-            self.data_gt = self.remove_small_blobs(data=self.data_gt)
+            self.data_pred = self.filter_by_size(data=self.data_pred)
+            self.data_gt = self.filter_by_size(data=self.data_gt)
 
         # 18-connected components
         self.data_pred_label, self.n_pred = label(self.data_pred,
