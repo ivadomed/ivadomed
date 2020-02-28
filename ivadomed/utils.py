@@ -109,15 +109,18 @@ class Evaluation3DMetrics(object):
         px, py, pz = nib_im.header['pixdim'][1:4]
         return px, py, pz
 
-    def remove_small_blobs(self, data):
+    def filter_by_size(self, data):
         data_label, n = label(data,
                                 structure=self.bin_struct)
 
         for idx in range(1, n+1):
             data_idx = (data_label == idx).astype(np.int)
+            n_nonzero = np.count_nonzero(data_idx)
 
-            if np.count_nonzero(data_idx) < self.removeSmallThr:
+            if n_nonzero < self.size_min or n_nonzero > self.size_max:
                 data[data_label == idx] = 0
+            else:
+                print(n_nonzero)
 
         return data
 
