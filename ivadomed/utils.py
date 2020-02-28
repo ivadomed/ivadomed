@@ -352,7 +352,8 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     # load hard segmentation and label it
     nib_hard = nib.load(fname_hard)
     data_hard = nib_hard.get_fdata()
-    data_hard_l, n_l = label(data_hard, connectivity=3, return_num=True)
+    bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
+    data_hard_l, n_l = label(data_hard, structure=bin_struct)
 
     # load uncertainty map
     nib_uncVox = nib.load(fname_unc_vox)
@@ -369,7 +370,7 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         data_im = nib_im.get_fdata()
         data_lst.append(data_im)
 
-        data_im_l = label(data_im, connectivity=3, return_num=False)
+        data_im_l = label(data_im, structure=bin_struct)
         data_l_lst.append(data_im_l)
         del nib_im
 
