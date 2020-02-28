@@ -62,10 +62,8 @@ class Evaluation3DMetrics(object):
             else:
                 raise NotImplmentedError
 
-            self.data_pred = self.remove_small_blobs(data=self.data_pred,
-                                                        fname=self.fname_pred)
-            self.data_gt = self.remove_small_blobs(data=self.data_gt,
-                                                        fname=self.fname_gt)
+            self.data_pred = self.remove_small_blobs(data=self.data_pred)
+            self.data_gt = self.remove_small_blobs(data=self.data_gt)
 
         # 18-connected components
         self.data_pred_label, self.n_pred = label(self.data_pred,
@@ -79,6 +77,7 @@ class Evaluation3DMetrics(object):
 
         if "targetSize" in params:
             self.targetSize = params["targetSize"]
+
         else:
             self.targetSize = None
 
@@ -103,7 +102,7 @@ class Evaluation3DMetrics(object):
         px, py, pz = nib_im.header['pixdim'][1:4]
         return px, py, pz
 
-    def remove_small_blobs(self, data, fname):
+    def remove_small_blobs(self, data):
         data_label, n = label(data,
                                 structure=self.bin_struct)
 
@@ -112,7 +111,6 @@ class Evaluation3DMetrics(object):
 
             if np.count_nonzero(data_idx) < self.removeSmallThr:
                 data[data_label == idx] = 0
-                print('INFO: Removing small object from {}'.format(fname))
 
         return data
 
