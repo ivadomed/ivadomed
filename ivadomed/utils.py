@@ -42,7 +42,7 @@ class IvadoMetricManager(mt_metrics.MetricManager):
 
 class Evaluation3DMetrics(object):
 
-    def __init__(self, fname_pred, fname_gt, params{}):
+    def __init__(self, fname_pred, fname_gt, params={}):
         self.fname_pred = fname_pred
         self.fname_gt = fname_gt
 
