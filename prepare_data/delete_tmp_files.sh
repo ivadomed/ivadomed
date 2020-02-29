@@ -2,7 +2,7 @@
 #
 # Delete temporary files. Run this script once all files have been verified.
 # Usage:
-#   ./delete_temp_files.sh <SUBJECT> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
+#   ./delete_temp_files.sh <FILE_PARAM>
 
 # Uncomment for full verbose
 #set -v
@@ -17,7 +17,7 @@ FILEPARAM=$2
 source $FILEPARAM
 
 # Create BIDS architecture
-ofolder_reg="${PATH_OUTPUT}/${SUBJECT}/anat"
+ofolder_reg="${PATH_RESULTS}/${SUBJECT}/anat"
 
 # Go to output anat folder, where most of the outputs will be located
 cd ${ofolder_reg}

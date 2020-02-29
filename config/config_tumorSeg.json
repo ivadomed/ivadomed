@@ -57,5 +57,10 @@
       "ToTensor": {},
       "NormalizeInstance": {}
     },
+    "transformation_testing": {
+      "ToTensor3D": {},
+      "NormalizeInstance3D": {},
+      "StackTensors": {}
+    },
     "debugging": false
 }
