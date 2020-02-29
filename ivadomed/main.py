@@ -296,6 +296,9 @@ def cmd_train(context):
                                                                                            "gamma"],
                                                                                        context["loss"]["params"][
                                                                                            "alpha"]))
+        elif context["loss"]["name"] == "focal_tversky":
+            loss_fct = losses.FocalTversky(alpha=context['loss']['params']['alpha'],
+                                       gamma=context['loss']['params']['gamma'])
 
         if not context["loss"]["name"].startswith("focal"):
             print("\nLoss function: {}.\n".format(context["loss"]["name"]))
@@ -377,9 +380,6 @@ def cmd_train(context):
 
             if context["loss"]["name"] == "dice":
                 loss = - losses.dice_loss(preds, var_gt)
-            elif context["loss"]["name"] == "focal_tversky":
-                loss = losses.focal_tversky(preds, var_gt, context["loss"]["params"]["alpha"],
-                                            context["loss"]["params"]["gamma"])
             else:
                 loss = loss_fct(preds, var_gt)
                 dice_train_loss_total += losses.dice_loss(preds, var_gt).item()

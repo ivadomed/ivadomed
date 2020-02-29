@@ -3,23 +3,32 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def tversky(y_true, y_pred, alpha=0.7):
-    smooth = 1.0
-    y_true_pos = y_true.view(-1)
-    y_pred_pos = y_pred.view(-1)
-    true_pos = (y_true_pos * y_pred_pos).sum()
-    false_neg = (y_true_pos * (1 - y_pred_pos)).sum()
-    false_pos = ((1 - y_true_pos) * y_pred_pos).sum()
-    return (true_pos + smooth) / (true_pos + alpha * false_neg + (1 - alpha) * false_pos + smooth)
+class FocalTversky(nn.Module):
+    def __init__(self, alpha=0.7, gamma=0.75):
+        super(FocalTversky, self).__init__()
+        self.gamma = gamma
+        self.alpha = alpha
+        self.eps = 1e-7
 
+    def tversky(self, y_true, y_pred, alpha=0.7):
+        smooth = 1.0
+        y_true_pos = y_true.view(-1)
+        y_pred_pos = y_pred.view(-1)
+        true_pos = (y_true_pos * y_pred_pos).sum()
+        false_neg = (y_true_pos * (1 - y_pred_pos)).sum()
+        false_pos = ((1 - y_true_pos) * y_pred_pos).sum()
+        return (true_pos + smooth) / (true_pos + alpha * false_neg + (1 - alpha) * false_pos + smooth)
 
-def tversky_loss(y_true, y_pred):
-    return 1 - tversky(y_true, y_pred)
+    def tversky_loss(self, y_true, y_pred):
+        return 1 - self.tversky(y_true, y_pred)
 
+    def focal_tversky(self, y_true, y_pred):
+        pt_1 = self.tversky(y_true, y_pred, self.alpha)
+        return (1 - pt_1) ** self.gamma
 
-def focal_tversky(y_true, y_pred, alpha=0.7, gamma=0.75):
-    pt_1 = tversky(y_true, y_pred, alpha)
-    return (1 - pt_1) ** gamma
+    def forward(self, pred, target):
+        pred = pred.clamp(self.eps, 1. - self.eps)
+        return self.focal_tversky(target, pred)
 
 
 def dice_loss(input, target):
