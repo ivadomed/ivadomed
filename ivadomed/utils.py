@@ -44,7 +44,7 @@ class IvadoMetricManager(mt_metrics.MetricManager):
 
 class Evaluation3DMetrics(object):
 
-    def __init__(self, fname_pred, fname_gt, params={}, target_size_unit=None, target_size_rng=[]):
+    def __init__(self, fname_pred, fname_gt, params={}):
         self.fname_pred = fname_pred
         self.fname_gt = fname_gt
 
@@ -55,29 +55,27 @@ class Evaluation3DMetrics(object):
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
 
-        # Filter lesions by size
-        if "removeSmall" in params or target_size_unit is not None:
-            size_min = params['removeSmall']['thr'] if not len(target_size_rng) else target_size_rng[0]
-            size_max = np.inf if not len(target_size_rng) else target_size_rng[1]
-            unit = params['removeSmall']['unit'] if not len(target_size_rng) else target_size_unit
-            if unit == 'vox':
+        # Remove small lesions
+        if "removeSmall" in params:
+            size_min = params['removeSmall']['thr']
+            if params['removeSmall']['unit'] == 'vox':
                 self.size_min = size_min
-                self.size_max = size_max
-            elif unit == 'mm3':
+            elif params['removeSmall']['unit'] == 'mm3':
                 self.size_min = np.round(size_min / (self.px * self.py * self.pz))
-                self.size_max = np.round(size_max / (self.px * self.py * self.pz))
             else:
                 raise NotImplmentedError
 
             self.data_pred = self.filter_by_size(data=self.data_pred)
             self.data_gt = self.filter_by_size(data=self.data_gt)
+        else:
+            self.size_min = 0
 
         # 18-connected components
         self.data_pred_label, self.n_pred = label(self.data_pred,
                                                     structure=self.bin_struct)
         self.data_gt_label, self.n_gt = label(self.data_gt,
                                                 structure=self.bin_struct)
-
+        print('After: GT {}, Pred {}'.format(self.n_gt, self.n_pred))
         # painted data, object wise
         self.fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
         self.data_painted = np.copy(self.data_pred)
@@ -112,7 +110,7 @@ class Evaluation3DMetrics(object):
     def filter_by_size(self, data):
         data_label, n = label(data,
                                 structure=self.bin_struct)
-
+        print(n)
         for idx in range(1, n+1):
             data_idx = (data_label == idx).astype(np.int)
             n_nonzero = np.count_nonzero(data_idx)
