@@ -83,7 +83,7 @@ def cmd_train(context):
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
     if context['multichannel']:
-        print('\tUsing multichannel model with modalities {}.\n'.format(context['multichannel']))
+        print('\tUsing multichannel model with modalities {}.\n'.format(context['contrast_train_validation']))
 
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=context["log_directory"])
