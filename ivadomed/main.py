@@ -214,7 +214,7 @@ def cmd_train(context):
         elif unet_3D:
             model = models.UNet3D(in_channels=in_channel, n_classes=1, attention=context["attention_unet"])
         else:
-            model = models2D.R2AttU_Net(in_ch=in_channel, out_ch=context['out_channel'])
+            model = models2D.R2AttU_Net(img_ch=in_channel, output_ch=context['out_channel'])
     else:
         model = torch.load(context['retrain_model'])
 
@@ -410,17 +410,17 @@ def cmd_train(context):
                     grid_img = vutils.make_grid(input_samples,
                                                 normalize=True,
                                                 scale_each=True)
-                    writer.add_image('Train/Input', grid_img, epoch)
+                    writer.add_image('Train/Input', grid_img, epoch + idx)
 
                     grid_img = vutils.make_grid(preds.data.cpu(),
                                                 normalize=True,
                                                 scale_each=True)
-                    writer.add_image('Train/Predictions', grid_img, epoch)
+                    writer.add_image('Train/Predictions', grid_img, epoch + idx)
 
                     grid_img = vutils.make_grid(gt_samples,
                                                 normalize=True,
                                                 scale_each=True)
-                    writer.add_image('Train/Ground Truth', grid_img, epoch)
+                    writer.add_image('Train/Ground Truth', grid_img, epoch + idx)
 
         train_loss_total_avg = train_loss_total / num_steps
         if not step_scheduler_batch:
@@ -509,17 +509,17 @@ def cmd_train(context):
                     grid_img = vutils.make_grid(input_samples,
                                                 normalize=True,
                                                 scale_each=True)
-                    writer.add_image('Validation/Input', grid_img, epoch)
+                    writer.add_image('Validation/Input', grid_img, epoch + idx)
 
                     grid_img = vutils.make_grid(preds.data.cpu(),
                                                 normalize=True,
                                                 scale_each=True)
-                    writer.add_image('Validation/Predictions', grid_img, epoch)
+                    writer.add_image('Validation/Predictions', grid_img, epoch + idx)
 
                     grid_img = vutils.make_grid(gt_samples,
                                                 normalize=True,
                                                 scale_each=True)
-                    writer.add_image('Validation/Ground Truth', grid_img, epoch)
+                    writer.add_image('Validation/Ground Truth', grid_img, epoch + idx)
 
             # Store the values of gammas and betas after the last epoch for each batch
             if film_bool and epoch == num_epochs and i < int(len(ds_val) / context["batch_size"]) + 1:
