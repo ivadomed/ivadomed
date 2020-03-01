@@ -321,8 +321,7 @@ def cmd_train(context):
                   mt_metrics.specificity_score,
                   mt_metrics.intersection_over_union,
                   mt_metrics.accuracy_score]
-    att_maps = list()
-    int_imgs = list()
+
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
 
