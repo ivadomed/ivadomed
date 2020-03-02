@@ -126,6 +126,36 @@ class Evaluation3DMetrics(object):
 
         return data
 
+    def _get_size_ranges(thr_lst, unit):
+        assert unit in ['vox', 'mm3']
+
+        rng_lst, suffix_lst = [], []
+        for i, thr in enumerate(thr_lst):
+            if i == 0:
+                thr_low = self.size_min
+            else:
+                thr_low = thr_lst[i-1] + 1
+
+            thr_high = thr
+
+            if unit == 'mm3':
+                thr_low = np.round(thr_low / (self.px * self.py * self.pz))
+                thr_high = np.round(thr_high / (self.px * self.py * self.pz))
+
+            rng_lst.append([thr_low, thr_high])
+
+            suffix_lst.append('_'+str(thr_low)+'-'+str(thr_high)+unit)
+
+        # last subgroup
+        thr_low = thr_lst[i] + 1
+        if unit == 'mm3':
+            thr_low = np.round(thr_low / (self.px * self.py * self.pz))
+        thr_high = np.inf
+        rng_lst.append([thr_low, thr_high])
+        suffix_lst.append('_'+str(thr_low)+'-INF'+unit)
+
+        return rng_lst, suffix_lst
+
     def get_vol(self, data):
         vol = np.sum(data)
         vol *= self.px * self.py * self.pz
