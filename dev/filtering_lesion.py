@@ -33,17 +33,19 @@ def run_main(args):
         cmd_test(context)
 
     subj_acq_lst = list(set([f.split('_pred')[0] for f in os.listdir(pred_folder)
-                    if f.endswith('.nii.gz') and '_pred' in f]))
+                    if f.endswith('.nii.gz') and '_pred' in f]))[:5]
 
     metric_suffix_lst = ['_unc-vox', '_unc-cv', '_unc-avgUnc']
-    for metric in metric_lst:
+    thr_lst = [0.01, 0.1, 0.5]
+    for metric in metric_suffix_lst:
         print(metric)
         for subj_acq in subj_acq_lst:
             fname = os.path.join(pred_folder, subj_acq+metric+'.nii.gz')
             im = nib.load(fname)
             data = im.get_data()
-            vals = list(data[np.non_zero(data)])
+            vals = list(data[np.nonzero(data)])
             print(np.min(vals), np.mean(vals), np.median(vals), np.max(vals))
+            del im
 
 if __name__ == '__main__':
     parser = get_parser()
