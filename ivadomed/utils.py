@@ -276,6 +276,10 @@ class Evaluation3DMetrics(object):
         dct['ltpr'] = self.get_ltpr()
         dct['lfdr'] = self.get_lfdr()
 
+        for idx_size, suffix in enumerate(self.size_suffix_lst):
+            dct['ltpr' + suffix] = self.get_ltpr(size_label=idx_size+1)
+            dct['lfdr' + suffix] = self.get_lfdr(size_label=idx_size+1)
+
         # save painted file
         nib_painted = nib.Nifti1Image(self.data_painted, nib.load(self.fname_pred).affine)
         nib.save(nib_painted, self.fname_paint)
