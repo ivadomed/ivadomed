@@ -74,23 +74,19 @@ class Evaluation3DMetrics(object):
             self.size_rng_lst, self.size_suffix_lst =
                                     self._get_size_ranges(thr_lst=params["targetSize"]["thr"],
                                                                 unit=params["targetSize"]["unit"])
-            self.data_per_size = self.label_per_size(self.data_gt, rng_lst)
+            print(np.sum(self.data_gt))
+            self.data_per_size = self.label_per_size(self.data_gt)
+            print(np.sum(self.data_gt))
 
         # 18-connected components
         self.data_pred_label, self.n_pred = label(self.data_pred,
                                                     structure=self.bin_struct)
         self.data_gt_label, self.n_gt = label(self.data_gt,
                                                 structure=self.bin_struct)
-        print('After: GT {}, Pred {}'.format(self.n_gt, self.n_pred))
+
         # painted data, object wise
         self.fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
         self.data_painted = np.copy(self.data_pred)
-
-        if "targetSize" in params:
-            self.targetSize = params["targetSize"]
-
-        else:
-            self.targetSize = None
 
         # overlap_vox is used to define the object-wise TP, FP, FN
         if "overlap" in params:
@@ -126,7 +122,7 @@ class Evaluation3DMetrics(object):
 
         return data
 
-    def _get_size_ranges(thr_lst, unit):
+    def _get_size_ranges(self, thr_lst, unit):
         assert unit in ['vox', 'mm3']
 
         rng_lst, suffix_lst = [], []
@@ -155,6 +151,21 @@ class Evaluation3DMetrics(object):
         suffix_lst.append('_'+str(thr_low)+'-INF'+unit)
 
         return rng_lst, suffix_lst
+
+    def label_per_size(self, data):
+        data_label, n = label(data,
+                                structure=self.bin_struct)
+        data_out = np.zeros(data.shape)
+
+        for idx in range(1, n+1):
+            data_idx = (data_label == idx).astype(np.int)
+            n_nonzero = np.count_nonzero(data_idx)
+
+            for idx_size, rng in enumerate(self.size_rng_lst):
+                if n_nonzero >= rng[0] and n_nonzero <= rng[1]:
+                    data_out[data_idx] = idx_size + 1
+        print(np.unique(data_out)
+        return data_out
 
     def get_vol(self, data):
         vol = np.sum(data)
