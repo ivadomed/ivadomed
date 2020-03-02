@@ -854,40 +854,6 @@ def cmd_eval(context):
     # init data frame
     df_results = pd.DataFrame()
 
-    subgroup_dct = {'df': [], 'thr_low': [], 'thr_high': [], 'unit': [], 'ofname': []}
-    if context['eval_params']['targetSize'] is not None:
-        for i, thr in enumerate(context['eval_params']['targetSize']['thr']):
-            subgroup_dct['df'].append(pd.DataFrame())
-
-            if i == 0:
-                if 'removeSmall' not in context['eval_params']:
-                    thr_low = 0
-                else:
-                    thr_low = context['eval_params']['removeSmall']['thr']
-            else:
-                thr_low = context['eval_params']['targetSize']['thr'][i-1] + 1
-            subgroup_dct['thr_low'].append(thr_low)
-
-            thr_high = thr
-            subgroup_dct['thr_high'].append(thr_high)
-
-            unit = context['eval_params']['targetSize']['unit']
-            subgroup_dct['unit'].append(unit)
-
-            ofname = os.path.join(path_results,
-                                    'evaluation_3Dmetrics_'+str(thr_low)+'-'+str(thr_high)+unit+'.csv')
-            subgroup_dct['ofname'].append(ofname)
-
-        # last subgroup
-        subgroup_dct['df'].append(pd.DataFrame())
-        thr_low = context['eval_params']['targetSize']['thr'][i] + 1
-        subgroup_dct['thr_low'].append(thr_low)
-        subgroup_dct['thr_high'].append(np.inf)
-        subgroup_dct['unit'].append(unit)
-        ofname = os.path.join(path_results,
-                                 'evaluation_3Dmetrics_'+str(thr_low)+'-INF'+unit+'.csv')
-        subgroup_dct['ofname'].append(ofname)
-
     # list subject_acquisition
     subj_acq_lst = [f.split('_pred')[0]
                     for f in os.listdir(path_pred) if f.endswith('_pred.nii.gz')]
@@ -900,7 +866,7 @@ def cmd_eval(context):
         fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels',
                                 subj, 'anat', subj_acq+context['target_suffix']+'.nii.gz')
 
-        # 3D evaluation on all target objects
+        # 3D evaluation
         eval = Evaluation3DMetrics(fname_pred=fname_pred,
                                     fname_gt=fname_gt,
                                     params=context['eval_params'])
@@ -909,23 +875,10 @@ def cmd_eval(context):
         results_pred['image_id'] = subj_acq
         df_results = df_results.append(results_pred, ignore_index=True)
 
-        # Then for each subgroup
-        for i_s, df_s in enumerate(subgroup_dct['df']):
-            eval = Evaluation3DMetrics(fname_pred=fname_pred,
-                                    fname_gt=fname_gt,
-                                    params=context['eval_params'],
-                                    target_size_unit=subgroup_dct['unit'][i_s],
-                                    target_size_rng=[subgroup_dct['thr_low'][i_s], subgroup_dct['thr_high'][i_s]])
-            results_pred_s = eval.run_eval()
-            results_pred_s['image_id'] = subj_acq
-            subgroup_dct['df'][i_s] = df_s.append(results_pred_s, ignore_index=True)
+    df_results = df_results.set_index('image_id')
+    df_results.to_csv(os.path.join(path_results, 'evaluation_3Dmetrics.csv'))
 
-    df_lst = subgroup_dct['df'] + [df_results]
-    ofname_lst = subgroup_dct['ofname'] + [os.path.join(path_results, 'evaluation_3Dmetrics.csv')]
-    for df, ofname in zip(df_lst, ofname_lst):
-        df = df.set_index('image_id')
-        df.to_csv(ofname)
-    print(df.head(5))
+    print(df_results.head(5))
 
 
 def run_main():
