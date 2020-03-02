@@ -76,11 +76,15 @@ class Evaluation3DMetrics(object):
                                     self._get_size_ranges(thr_lst=params["targetSize"]["thr"],
                                                                 unit=params["targetSize"]["unit"])
 
-            self.data_per_size = self.label_per_size(self.data_gt)
-            self.label_size_lst = list(set(self.data_per_size[np.nonzero(self.data_per_size)]))
+            self.data_gt_per_size = self.label_per_size(self.data_gt)
+            label_gt_size_lst = list(set(self.data_gt_per_size[np.nonzero(self.data_gt_per_size)]))
+            self.data_pred_per_size = self.label_per_size(self.data_pred)
+            label_pred_size_lst = list(set(self.data_pred_per_size[np.nonzero(self.data_pred_per_size)]))
+            self.label_size_lst = [label_gt_size_lst + label_pred_size_lst,
+                                    ['gt']*len(label_gt_size_lst) + ['pred']*len(label_pred_size_lst)]
 
         else:
-            self.label_size_lst = []
+            self.label_gt_size_lst, self.label_gt_size_lst = []
 
         # 18-connected components
         self.data_pred_label, self.n_pred = label(self.data_pred,
@@ -206,7 +210,7 @@ class Evaluation3DMetrics(object):
 
             # if label_size is None, then we look at all object sizes
             # we check if the currrent object belongs to the current size range
-            if label_size is None or np.max(self.data_per_size[np.nonzero(data_gt_idx)]) == label_size:
+            if label_size is None or np.max(self.data_gt_per_size[np.nonzero(data_gt_idx)]) == label_size:
 
                 if self.overlap_vox is None:
                     overlap_vox = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
@@ -238,7 +242,7 @@ class Evaluation3DMetrics(object):
             # if label_size is None, then we look at all object sizes
             # we check if the currrent object belongs to the current size range
 
-            if label_size is None or np.max(self.data_per_size[np.nonzero(data_gt_idx)]) == label_size:
+            if label_size is None or np.max(self.data_pred_per_size[np.nonzero(data_gt_idx)]) == label_size:
 
                 if self.overlap_vox is None:
                     overlap_thr = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
@@ -295,10 +299,13 @@ class Evaluation3DMetrics(object):
         dct['ltpr'], _ = self.get_ltpr()
         dct['lfdr'] = self.get_lfdr()
 
-        for lb_size in self.label_size_lst:
+        for lb_size, gt_pred in zip(self.label_size_lst[0], self.label_size_lst[1]):
             suffix = self.size_suffix_lst[int(lb_size)-1]
-            dct['ltpr'+suffix], dct['n'+suffix] = self.get_ltpr(label_size=lb_size)
-            dct['lfdr'+suffix] = self.get_lfdr(label_size=lb_size)
+
+            if gt_pred == 'gt':
+                dct['ltpr'+suffix], dct['n'+suffix] = self.get_ltpr(label_size=lb_size)
+            else:  # gt_pred == 'pred'
+                dct['lfdr'+suffix] = self.get_lfdr(label_size=lb_size)
 
         # save painted file
         nib_painted = nib.Nifti1Image(self.data_painted, nib.load(self.fname_pred).affine)
