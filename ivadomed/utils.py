@@ -166,7 +166,7 @@ class Evaluation3DMetrics(object):
             for idx_size, rng in enumerate(self.size_rng_lst):
                 if n_nonzero >= rng[0] and n_nonzero <= rng[1]:
                     data_out[data_idx] = idx_size + 1
-        print(np.unique(data_out)
+        print(np.unique(data_out))
         return data_out
 
     def get_vol(self, data):
