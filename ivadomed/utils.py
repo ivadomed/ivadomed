@@ -224,51 +224,57 @@ class Evaluation3DMetrics(object):
 
         return ltp, lfn, n_obj
 
-    def _get_lfp(self):
+    def _get_lfp(self, label_size):
         """Number of false positive lesion."""
         lfp = 0
         for idx in range(1, self.n_pred+1):
             data_pred_idx = (self.data_pred_label == idx).astype(np.int)
             overlap = (data_pred_idx * self.data_gt).astype(np.int)
 
-            if self.overlap_vox is None:
-                label_gt = np.max(data_pred_idx * self.data_label_gt)
-                data_gt_idx = (self.data_gt_label == label_gt).astype(np.int)
-                overlap_thr = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
-            else:
-                overlap_thr = self.overlap_vox
+            label_gt = np.max(data_pred_idx * self.data_label_gt)
+            data_gt_idx = (self.data_gt_label == label_gt).astype(np.int)
+            # if label_size is None, then we look at all object sizes
+            # we check if the currrent object belongs to the current size range
+            if label_size is None or self.data_label_size[data_gt_idx] == label_size:
 
-            if np.count_nonzero(overlap) < overlap_thr:
-                lfp += 1
-                self.data_painted[self.data_pred_label == idx] = FP_COLOUR
-            else:
-                self.data_painted[self.data_pred_label == idx] = TP_COLOUR
+                if self.overlap_vox is None:
+                    overlap_thr = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
+                else:
+                    overlap_thr = self.overlap_vox
+
+                if np.count_nonzero(overlap) < overlap_thr:
+                    lfp += 1
+                    if label_size is None:  # painting is done while considering all objects
+                        self.data_painted[self.data_pred_label == idx] = FP_COLOUR
+                else:
+                    if label_size is None:  # painting is done while considering all objects
+                        self.data_painted[self.data_pred_label == idx] = TP_COLOUR
 
         return lfp
 
     def get_ltpr(self, label_size=None):
         """Lesion True Positive Rate / Recall / Sensitivity.
 
-            Note: computed only if self.n_gt >= 1.
+            Note: computed only if n_obj >= 1.
         """
         ltp, lfn, n_obj = self._get_ltp_lfn(label_size)
 
         denom = ltp + lfn
         if denom == 0 or n_obj == 0:
-            return np.nan
+            return np.nan, n_obj
 
-        return ltp * 100. / denom
+        return ltp * 100. / denom, n_obj
 
-    def get_lfdr(self):
+    def get_lfdr(self, label_size=None):
         """Lesion False Detection Rate / 1 - Precision.
 
-            Note: computed only if self.n_gt >= 1.
+            Note: computed only if n_obj >= 1.
         """
-        ltp, _ = self._get_ltp_lfn()
-        lfp = self._get_lfp()
+        ltp, _, n_obj = self._get_ltp_lfn(label_size)
+        lfp = self._get_lfp(label_size)
 
         denom = ltp + lfp
-        if denom == 0 or self.n_gt == 0:
+        if denom == 0 or n_obj == 0:
             return np.nan
 
         return lfp * 100. / denom
@@ -287,8 +293,8 @@ class Evaluation3DMetrics(object):
         dct['lfdr'] = self.get_lfdr()
 
         for idx_size, suffix in enumerate(self.size_suffix_lst):
-            dct['ltpr' + suffix] = self.get_ltpr(size_label=idx_size+1)
-            dct['lfdr' + suffix] = self.get_lfdr(size_label=idx_size+1)
+            dct['ltpr'+suffix], dct['n'+suffix] = self.get_ltpr(size_label=idx_size+1)
+            dct['lfdr'+suffix] = self.get_lfdr(size_label=idx_size+1)
 
         # save painted file
         nib_painted = nib.Nifti1Image(self.data_painted, nib.load(self.fname_pred).affine)
