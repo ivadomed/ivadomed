@@ -63,7 +63,7 @@ class Evaluation3DMetrics(object):
             elif params['removeSmall']['unit'] == 'mm3':
                 self.size_min = np.round(size_min / (self.px * self.py * self.pz))
             else:
-                raise NotImplmentedError
+                raise NotImplmented
 
             self.data_pred = self.remove_small_objects(data=self.data_pred)
             self.data_gt = self.remove_small_objects(data=self.data_gt)
@@ -290,7 +290,7 @@ class Evaluation3DMetrics(object):
         dct['precision'] = mt_metrics.precision_score(self.data_pred, self.data_gt, err_value=np.nan)
         dct['specificity'] = mt_metrics.specificity_score(self.data_pred, self.data_gt, err_value=np.nan)
         dct['n_pred'], dct['n_gt'] = self.n_pred, self.n_gt
-        dct['ltpr'] = self.get_ltpr()
+        dct['ltpr'], _ = self.get_ltpr()
         dct['lfdr'] = self.get_lfdr()
 
         for lb_size in self.label_size_lst:
