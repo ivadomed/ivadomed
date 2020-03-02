@@ -3,14 +3,12 @@ import torch
 from tqdm import tqdm
 import numpy as np
 import nibabel as nib
-from PIL import Image
 from skimage.measure import label
-import torchvision.transforms.functional as F
+from torch.nn import functional as F
 import matplotlib.pyplot as plt
 from collections import defaultdict
-from itertools import combinations
-
-from medicaltorch import filters as mt_filters
+import torch.nn as nn
+from torch.autograd import Variable
 from medicaltorch import metrics as mt_metrics
 
 
@@ -209,18 +207,8 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, une
     else:
         arr = data_lst
 
-    if slice_axis == 2:
-        arr = np.swapaxes(arr, 1, 2)
-    # move axis according to slice_axis to RAS orientation
-    arr_ras = np.swapaxes(arr, 0, slice_axis)
+    arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
 
-    # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
-    ref_orientation = nib.orientations.io_orientation(nib_ref.affine)
-    ras_orientation = nib.orientations.io_orientation(nib_ref_can.affine)
-    # Return the orientation that transforms from ras to ref_orientation
-    trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
-    # apply transformation
-    arr_pred_ref_space = nib.orientations.apply_orientation(arr_ras, trans_orient)
     if binarize:
         arr_pred_ref_space = threshold_predictions(arr_pred_ref_space)
 
@@ -497,3 +485,111 @@ def cuda(input_var):
         return [t.cuda() for t in input_var]
     else:
         return input_var.cuda()
+
+
+class HookBasedFeatureExtractor(nn.Module):
+    """
+    This function extracts feature maps from given layer.
+    https://github.com/ozan-oktay/Attention-Gated-Networks/tree/a96edb72622274f6705097d70cfaa7f2bf818a5a
+    """
+    def __init__(self, submodule, layername, upscale=False):
+        super(HookBasedFeatureExtractor, self).__init__()
+
+        self.submodule = submodule
+        self.submodule.eval()
+        self.layername = layername
+        self.outputs_size = None
+        self.outputs = None
+        self.inputs = None
+        self.inputs_size = None
+        self.upscale = upscale
+
+    def get_input_array(self, m, i, o):
+        if isinstance(i, tuple):
+            self.inputs = [i[index].data.clone() for index in range(len(i))]
+            self.inputs_size = [input.size() for input in self.inputs]
+        else:
+            self.inputs = i.data.clone()
+            self.inputs_size = self.input.size()
+        print('Input Array Size: ', self.inputs_size)
+
+    def get_output_array(self, m, i, o):
+        if isinstance(o, tuple):
+            self.outputs = [o[index].data.clone() for index in range(len(o))]
+            self.outputs_size = [output.size() for output in self.outputs]
+        else:
+            self.outputs = o.data.clone()
+            self.outputs_size = self.outputs.size()
+        print('Output Array Size: ', self.outputs_size)
+
+    def rescale_output_array(self, newsize):
+        us = nn.Upsample(size=newsize[2:], mode='bilinear')
+        if isinstance(self.outputs, list):
+            for index in range(len(self.outputs)): self.outputs[index] = us(self.outputs[index]).data()
+        else:
+            self.outputs = us(self.outputs).data()
+
+    def forward(self, x):
+        target_layer = self.submodule._modules.get(self.layername)
+
+        # Collect the output tensor
+        h_inp = target_layer.register_forward_hook(self.get_input_array)
+        h_out = target_layer.register_forward_hook(self.get_output_array)
+        self.submodule(x)
+        h_inp.remove()
+        h_out.remove()
+
+        # Rescale the feature-map if it's required
+        if self.upscale: self.rescale_output_array(x.size())
+
+        return self.inputs, self.outputs
+
+
+def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
+    if slice_axis == 2:
+        arr = np.swapaxes(arr, 1, 2)
+    # move axis according to slice_axis to RAS orientation
+    arr_ras = np.swapaxes(arr, 0, slice_axis)
+
+    # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
+    ref_orientation = nib.orientations.io_orientation(nib_ref.affine)
+    ras_orientation = nib.orientations.io_orientation(nib_ref_canonical.affine)
+    # Return the orientation that transforms from ras to ref_orientation
+    trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
+    # apply transformation
+    return nib.orientations.apply_orientation(arr_ras, trans_orient)
+
+
+def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
+    if not os.path.exists(os.path.join(context["log_directory"], layer_name)):
+        os.mkdir(os.path.join(context["log_directory"], layer_name))
+    inp_fmap, out_fmap = HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input))
+
+    # Display the input image and Down_sample the input image
+    orig_input_img = test_input.permute(3, 4, 2, 0, 1).cpu().numpy()
+    upsampled_attention = F.interpolate(out_fmap[1], size=test_input.size()[2:],
+                                        mode='trilinear', align_corners=True).data.permute(3, 4, 2, 0, 1).cpu().numpy()
+
+    # Define the directories
+    if isinstance(batch["input_metadata"][0], list):
+        # Multichannel
+        path = batch["input_metadata"][0][0]["input_filename"]
+    else:
+        path = batch["input_metadata"][0]["input_filename"]
+    basename = path.split('/')[-1]
+    save_directory = os.path.join(context['log_directory'], layer_name, basename)
+
+    # Write the attentions to a nifti image
+    nib_ref = nib.load(path)
+    nib_ref_can = nib.as_closest_canonical(nib_ref)
+    oriented_image = reorient_image(orig_input_img[:, :, :, 0, 0], slice_axis, nib_ref, nib_ref_can)
+
+    nib_pred = nib.Nifti1Image(oriented_image, nib_ref.affine)
+    nib.save(nib_pred, save_directory)
+
+    basename = basename.split(".")[0] + "_att.nii.gz"
+    save_directory = os.path.join(context['log_directory'], layer_name, basename)
+    attention_map = reorient_image(upsampled_attention[:, :, :, 0, ], slice_axis, nib_ref, nib_ref_can)
+    nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
+
+    nib.save(nib_pred, save_directory)
