@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import Module
 import torch.nn.functional as F
+from torch.nn import init
 
 
 class DownConv(Module):
@@ -41,12 +42,10 @@ class UpConv(Module):
 class Encoder(Module):
     """Encoding part of the U-Net model.
             It returns the features map for the skip connections
-
             see also::
             Ronneberger, O., et al (2015). U-Net: Convolutional
             Networks for Biomedical Image Segmentation
             ArXiv link: https://arxiv.org/abs/1505.04597
-
                 """
 
     def __init__(self, in_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4, bn_momentum=0.1):
@@ -101,12 +100,10 @@ class Encoder(Module):
 class Decoder(Module):
     """Encoding part of the U-Net model.
             It returns the features map for the skip connections
-
             see also::
             Ronneberger, O., et al (2015). U-Net: Convolutional
             Networks for Biomedical Image Segmentation
             ArXiv link: https://arxiv.org/abs/1505.04597
-
                 """
 
     def __init__(self, out_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4, bn_momentum=0.1,
@@ -157,7 +154,6 @@ class Decoder(Module):
 
 class Unet(Module):
     """A reference U-Net model.
-
     .. seealso::
         Ronneberger, O., et al (2015). U-Net: Convolutional
         Networks for Biomedical Image Segmentation
@@ -329,13 +325,18 @@ class UNet3D(nn.Module):
     https://github.com/pykao/Modified-3D-UNet-Pytorch
     The main differences with the original UNet resides in the use of LeakyReLU instead of ReLU, InstanceNormalisation
     instead of BatchNorm due to small batch size in 3D and the addition of segmentation layers in the decoder.
+
+    If attention=True, attention gates are added in the decoder to help focus attention on important features for a
+    given task. Code related to the attentions gates is inspired from:
+    https://github.com/ozan-oktay/Attention-Gated-Networks
     """
 
-    def __init__(self, in_channels, n_classes, base_n_filter=32):
+    def __init__(self, in_channels, n_classes, base_n_filter=32, attention=False):
         super(UNet3D, self).__init__()
         self.in_channels = in_channels
         self.n_classes = n_classes
         self.base_n_filter = base_n_filter
+        self.attention = attention
 
         self.lrelu = nn.LeakyReLU()
         self.dropout3d = nn.Dropout3d(p=0.6)
@@ -389,6 +390,7 @@ class UNet3D(nn.Module):
         )
         self.norm_lrelu_conv_c5 = self.norm_lrelu_conv(
             self.base_n_filter * 16, self.base_n_filter * 16)
+
         self.norm_lrelu_upscale_conv_norm_lrelu_l0 = \
             self.norm_lrelu_upscale_conv_norm_lrelu(
                 self.base_n_filter * 16, self.base_n_filter * 8)
@@ -398,6 +400,29 @@ class UNet3D(nn.Module):
             kernel_size=1, stride=1, padding=0, bias=False
         )
         self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 8)
+
+        # Attention UNet
+        if self.attention:
+            self.gating = UnetGridGatingSignal3(self.base_n_filter * 16, self.base_n_filter * 8, kernel_size=(1, 1, 1),
+                                                is_batchnorm=True)
+
+            # attention blocks
+            self.attentionblock2 = GridAttentionBlockND(in_channels=self.base_n_filter * 2,
+                                                        gating_channels=self.base_n_filter * 8,
+                                                        inter_channels=self.base_n_filter * 2,
+                                                        sub_sample_factor=(2, 2, 2),
+                                                        )
+            self.attentionblock3 = GridAttentionBlockND(in_channels=self.base_n_filter * 4,
+                                                        gating_channels=self.base_n_filter * 8,
+                                                        inter_channels=self.base_n_filter * 4,
+                                                        sub_sample_factor=(2, 2, 2),
+                                                        )
+            self.attentionblock4 = GridAttentionBlockND(in_channels=self.base_n_filter * 8,
+                                                        gating_channels=self.base_n_filter * 8,
+                                                        inter_channels=self.base_n_filter * 8,
+                                                        sub_sample_factor=(2, 2, 2),
+                                                        )
+            self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 16)
 
         # Level 1 localization pathway
         self.conv_norm_lrelu_l1 = self.conv_norm_lrelu(
@@ -534,6 +559,16 @@ class UNet3D(nn.Module):
         out = self.dropout3d(out)
         out = self.norm_lrelu_conv_c5(out)
         out += residual_5
+
+        if self.attention:
+            out = self.inorm3d_l0(out)
+            out = self.lrelu(out)
+
+            gating = self.gating(out)
+            context_4, att4 = self.attentionblock4(context_4, gating)
+            context_3, att3 = self.attentionblock3(context_3, gating)
+            context_2, att2 = self.attentionblock2(context_2, gating)
+
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l0(out)
 
         out = self.conv3d_l0(out)
@@ -561,7 +596,7 @@ class UNet3D(nn.Module):
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l3(out)
 
         # Level 4 localization pathway
-        out = torch.cat([out, context_1], dim=1)
+        out = torch.cat([context_1, out], dim=1)
         out = self.conv_norm_lrelu_l4(out)
         out_pred = self.conv3d_l4(out)
 
@@ -577,3 +612,139 @@ class UNet3D(nn.Module):
         out = out.permute(0, 2, 3, 4, 1).contiguous().view(-1, self.n_classes)
         out = self.softmax(out)
         return torch.sigmoid(seg_layer)
+
+
+# Specific toAttention UNet
+class GridAttentionBlockND(nn.Module):
+    def __init__(self, in_channels, gating_channels, inter_channels=None, dimension=3,
+                 sub_sample_factor=(2, 2, 2)):
+        super(GridAttentionBlockND, self).__init__()
+
+        assert dimension in [2, 3]
+
+        # Downsampling rate for the input featuremap
+        if isinstance(sub_sample_factor, tuple):
+            self.sub_sample_factor = sub_sample_factor
+        elif isinstance(sub_sample_factor, list):
+            self.sub_sample_factor = tuple(sub_sample_factor)
+        else:
+            self.sub_sample_factor = tuple([sub_sample_factor]) * dimension
+
+        # Default parameter set
+        self.dimension = dimension
+        self.sub_sample_kernel_size = self.sub_sample_factor
+
+        # Number of channels (pixel dimensions)
+        self.in_channels = in_channels
+        self.gating_channels = gating_channels
+        self.inter_channels = inter_channels
+
+        if self.inter_channels is None:
+            self.inter_channels = in_channels // 2
+            if self.inter_channels == 0:
+                self.inter_channels = 1
+
+        if dimension == 3:
+            conv_nd = nn.Conv3d
+            bn = nn.BatchNorm3d
+            self.upsample_mode = 'trilinear'
+        elif dimension == 2:
+            conv_nd = nn.Conv2d
+            bn = nn.BatchNorm2d
+            self.upsample_mode = 'bilinear'
+        else:
+            raise NotImplemented
+
+        # Output transform
+        self.W = nn.Sequential(
+            conv_nd(in_channels=self.in_channels, out_channels=self.in_channels, kernel_size=1, stride=1, padding=0),
+            bn(self.in_channels),
+        )
+
+        # Theta^T * x_ij + Phi^T * gating_signal + bias
+        self.theta = conv_nd(in_channels=self.in_channels, out_channels=self.inter_channels,
+                             kernel_size=self.sub_sample_kernel_size, stride=self.sub_sample_factor, padding=0,
+                             bias=False)
+        self.phi = conv_nd(in_channels=self.gating_channels, out_channels=self.inter_channels,
+                           kernel_size=1, stride=1, padding=0, bias=True)
+        self.psi = conv_nd(in_channels=self.inter_channels, out_channels=1, kernel_size=1, stride=1, padding=0,
+                           bias=True)
+
+        # Initialise weights
+        for m in self.children():
+            m.apply(weights_init_kaiming)
+
+        # Define the operation
+        self.operation_function = self._concatenation
+
+    def forward(self, x, g):
+        '''
+        :param x: (b, c, t, h, w)
+        :param g: (b, g_d)
+        :return:
+        '''
+
+        output = self.operation_function(x, g)
+        return output
+
+    def _concatenation(self, x, g):
+        input_size = x.size()
+        batch_size = input_size[0]
+        assert batch_size == g.size(0)
+
+        # theta => (b, c, t, h, w) -> (b, i_c, t, h, w) -> (b, i_c, thw)
+        # phi   => (b, g_d) -> (b, i_c)
+        theta_x = self.theta(x)
+        theta_x_size = theta_x.size()
+
+        # g (b, c, t', h', w') -> phi_g (b, i_c, t', h', w')
+        #  Relu(theta_x + phi_g + bias) -> f = (b, i_c, thw) -> (b, i_c, t/s1, h/s2, w/s3)
+        phi_g = F.interpolate(self.phi(g), size=theta_x_size[2:], mode=self.upsample_mode, align_corners=True)
+        f = F.relu(theta_x + phi_g, inplace=True)
+
+        #  psi^T * f -> (b, psi_i_c, t/s1, h/s2, w/s3)
+        sigm_psi_f = torch.sigmoid(self.psi(f))
+
+        # upsample the attentions and multiply
+        sigm_psi_f = F.interpolate(sigm_psi_f, size=input_size[2:], mode=self.upsample_mode, align_corners=True)
+        y = sigm_psi_f.expand_as(x) * x
+        W_y = self.W(y)
+
+        return W_y, sigm_psi_f
+
+def weights_init_kaiming(m):
+    classname = m.__class__.__name__
+    if classname.find('Conv') != -1:
+        init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
+    elif classname.find('Linear') != -1:
+        init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
+    elif classname.find('BatchNorm') != -1:
+        init.normal_(m.weight.data, 1.0, 0.02)
+        init.constant_(m.bias.data, 0.0)
+
+
+class UnetGridGatingSignal3(nn.Module):
+    """
+    Operation to extract important features for a specific task using 1x1x1 convolution (Gating) which is used in the
+    attention blocks.
+    """
+    def __init__(self, in_size, out_size, kernel_size=(1, 1, 1), is_batchnorm=True):
+        super(UnetGridGatingSignal3, self).__init__()
+
+        if is_batchnorm:
+            self.conv1 = nn.Sequential(nn.Conv3d(in_size, out_size, kernel_size, (1, 1, 1), (0, 0, 0)),
+                                       nn.BatchNorm3d(out_size),
+                                       nn.ReLU(inplace=True),
+                                       )
+        else:
+            self.conv1 = nn.Sequential(nn.Conv3d(in_size, out_size, kernel_size, (1, 1, 1), (0, 0, 0)),
+                                       nn.ReLU(inplace=True),
+                                       )
+
+        # initialise the blocks
+        for m in self.children():
+            weights_init_kaiming(m)
+
+    def forward(self, inputs):
+        outputs = self.conv1(inputs)
+        return outputs

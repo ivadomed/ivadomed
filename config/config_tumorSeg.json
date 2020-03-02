@@ -10,22 +10,22 @@
     "contrast_test": ["T1w","T2w"],
     "center_test": [],
     "retrain_model": null,
-    "batch_size": 1,
+    "batch_size": 2,
     "dropout_rate": 0.3,
     "batch_norm_momentum": 0.1,
     "num_epochs": 10,
     "initial_lr": 0.00005,
     "loss": {"name": "dice"},
-    "log_directory": "log",
+    "log_directory": "AU",
     "lr_scheduler": {"name": "CosineAnnealingLR", "base_lr": 1e-5, "max_lr": 1e-2},
     "film_layers": [],
     "mixup_bool": true,
     "mixup_alpha": 2,
     "metadata": "without",
-    "multichannel": true,
+    "multichannel": false,
     "missing_modality": false,
     "out_channel": 1,
-    "depth": 3,
+    "depth": 4,
     "length_3D": [16, 96, 512],
     "padding_3D": 0,
     "balance_samples": false,
@@ -33,8 +33,9 @@
     "split_method": "per_patient",
     "train_fraction": 0.6,
     "test_fraction": 0.2,
-    "unet_3D": true,
+    "unet_3D": false,
     "binarize_prediction": true,
+    "attention_unet": false,
     "uncertainty": {"epistemic": false, "aleatoric": false, "n_it": 10},
     "slice_filter": {
       "filter_empty_mask": true,
@@ -49,19 +50,12 @@
         "sigma_range":  [3.5, 4.5],
         "p": 0.1
       },
-      "RandomAffine3D": {
-        "degrees": 4.6,
-        "translate": [0.03, 0.03],
-        "scale": [0.98, 1.02]
-      },
-      "ToTensor3D": {},
-      "NormalizeInstance3D": {},
-      "StackTensors": {}
+      "ToTensor": {},
+      "NormalizeInstance": {}
     },
     "transformation_validation": {
-      "ToTensor3D": {},
-      "NormalizeInstance3D": {},
-      "StackTensors": {}
+      "ToTensor": {},
+      "NormalizeInstance": {}
     },
     "transformation_testing": {
       "ToTensor3D": {},

@@ -57,6 +57,7 @@ def cmd_train(context):
     film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
 
     unet_3D = context["unet_3D"]
+    attention = context["attention_unet"]
     HeMIS = context['missing_modality']
     if film_bool:
         context["multichannel"] = False
@@ -67,9 +68,10 @@ def cmd_train(context):
     if bool(sum(context["film_layers"])) and not (metadata_bool):
         print('\tWarning FiLM disabled since metadata is disabled')
     else:
-        print('\nArchitecture: {} with a depth of {}.\n'
-              .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else '3D Unet' if unet_3D else
-                      "Unet", context['depth']))
+
+        print('\nArchitecture: {} with a depth of {}.\n' \
+              .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else "Attention UNet" if attention else
+        '3D Unet' if unet_3D else "Unet", context['depth']))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -81,7 +83,7 @@ def cmd_train(context):
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
     if context['multichannel']:
-        print('\tUsing multichannel model with modalities {}.\n'.format(context['multichannel']))
+        print('\tUsing multichannel model with modalities {}.\n'.format(context['contrast_train_validation']))
 
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=context["log_directory"])
@@ -210,7 +212,7 @@ def cmd_train(context):
                                      drop_rate=context["dropout_rate"],
                                      bn_momentum=context["batch_norm_momentum"])
         elif unet_3D:
-            model = models.UNet3D(in_channels=in_channel, n_classes=1)
+            model = models.UNet3D(in_channels=in_channel, n_classes=1, attention=attention)
         else:
             model = models.Unet(in_channel=in_channel,
                                 out_channel=context['out_channel'],
@@ -717,7 +719,8 @@ def cmd_test(context):
     metric_mgr = IvadoMetricManager(metric_fns)
 
     # number of Monte Carlo simulation
-    if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty']['n_it'] > 0:
+    if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and \
+        context['uncertainty']['n_it'] > 0:
         n_monteCarlo = context['uncertainty']['n_it']
     else:
         n_monteCarlo = 1
@@ -758,6 +761,9 @@ def cmd_test(context):
                     preds = model(test_input, test_metadata)
                 else:
                     preds = model(test_input)
+                    if context["attention_unet"]:
+                        save_feature_map(batch, "attentionblock2", context, model, test_input,
+                                         AXIS_DCT[context["slice_axis"]])
 
             # WARNING: sample['gt'] is actually the pred in the return sample
             # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
@@ -775,21 +781,20 @@ def cmd_test(context):
                 for k in batch.keys():
                     rdict[k] = batch[k][smp_idx]
                 if rdict["input"].shape[0] > 1:
-                    rdict["input"] = rdict["input"][1, ][None, ]
+                    rdict["input"] = rdict["input"][1,][None,]
                 rdict_undo = val_undo_transform(rdict)
 
                 fname_ref = rdict_undo['input_metadata']['gt_filename']
                 if not context['unet_3D']:
                     if pred_tmp_lst and (fname_ref != fname_tmp or (
-                            i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
+                            i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
                         # save the completely processed file as a nii
                         fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
                         fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
 
                         # If MonteCarlo, then we save each simulation result
                         if n_monteCarlo > 1:
-                            fname_pred = fname_pred.split(
-                                '.nii.gz')[0]+'_'+str(i_monteCarlo).zfill(2)+'.nii.gz'
+                            fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                         save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, slice_axis=AXIS_DCT[context['slice_axis']],
                                  binarize=context["binarize_prediction"])
@@ -862,9 +867,9 @@ def cmd_eval(context):
     for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
-        fname_pred = os.path.join(path_pred, subj_acq+'_pred.nii.gz')
-        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels',
-                                subj, 'anat', subj_acq+context['target_suffix']+'.nii.gz')
+        fname_pred = os.path.join(path_pred, subj_acq + '_pred.nii.gz')
+        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat',
+                                subj_acq + context['target_suffix'] + '.nii.gz')
 
         # 3D evaluation
         eval = Evaluation3DMetrics(fname_pred=fname_pred,
