@@ -77,6 +77,8 @@ class Evaluation3DMetrics(object):
             print(np.sum(self.data_gt))
             self.data_per_size = self.label_per_size(self.data_gt)
             print(np.sum(self.data_gt))
+        else:
+            self.size_rng_lst, self.size_suffix_lst = [], []
 
         # 18-connected components
         self.data_pred_label, self.n_pred = label(self.data_pred,
@@ -189,30 +191,38 @@ class Evaluation3DMetrics(object):
         """Absolute volume difference."""
         return abs(self.get_rvd())
 
-    def _get_ltp_lfn(self):
+    def _get_ltp_lfn(self, label_size):
         """Number of true positive and false negative lesion.
 
             Note1: if two lesion_pred overlap with the current lesion_gt,
                 then only one detection is counted.
         """
-        ltp, lfn = 0, 0
+        ltp, lfn, n_obj = 0, 0, 0
         for idx in range(1, self.n_gt+1):
             data_gt_idx = (self.data_gt_label == idx).astype(np.int)
             overlap = (data_gt_idx * self.data_pred).astype(np.int)
 
-            if self.overlap_vox is None:
-                overlap_vox = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
-            else:
-                overlap_vox = self.overlap_vox
+            # if label_size is None, then we look at all object sizes
+            # we check if the currrent object belongs to the current size range
+            if label_size is None or self.data_label_size[data_gt_idx] == label_size:
 
-            if np.count_nonzero(overlap) >= overlap_vox:
-                ltp += 1
+                if self.overlap_vox is None:
+                    overlap_vox = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
+                else:
+                    overlap_vox = self.overlap_vox
 
-            else:
-                lfn += 1
-                self.data_painted[self.data_gt_label == idx] = FN_COLOUR
+                if np.count_nonzero(overlap) >= overlap_vox:
+                    ltp += 1
 
-        return ltp, lfn
+                else:
+                    lfn += 1
+
+                    if label_size is None:  # painting is done while considering all objects
+                        self.data_painted[self.data_gt_label == idx] = FN_COLOUR
+
+                n_obj += 1
+
+        return ltp, lfn, n_obj
 
     def _get_lfp(self):
         """Number of false positive lesion."""
@@ -236,15 +246,15 @@ class Evaluation3DMetrics(object):
 
         return lfp
 
-    def get_ltpr(self):
+    def get_ltpr(self, label_size=None):
         """Lesion True Positive Rate / Recall / Sensitivity.
 
             Note: computed only if self.n_gt >= 1.
         """
-        ltp, lfn = self._get_ltp_lfn()
+        ltp, lfn, n_obj = self._get_ltp_lfn(label_size)
 
         denom = ltp + lfn
-        if denom == 0 or self.n_gt == 0:
+        if denom == 0 or n_obj == 0:
             return np.nan
 
         return ltp * 100. / denom
