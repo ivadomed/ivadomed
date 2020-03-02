@@ -63,7 +63,8 @@ class Evaluation3DMetrics(object):
             elif params['removeSmall']['unit'] == 'mm3':
                 self.size_min = np.round(size_min / (self.px * self.py * self.pz))
             else:
-                raise NotImplmented
+                print('Please choose a different unit for removeSmall. Chocies: vox or mm3')
+                exit()
 
             self.data_pred = self.remove_small_objects(data=self.data_pred)
             self.data_gt = self.remove_small_objects(data=self.data_gt)
@@ -236,6 +237,7 @@ class Evaluation3DMetrics(object):
             data_gt_idx = (self.data_gt_label == label_gt).astype(np.int)
             # if label_size is None, then we look at all object sizes
             # we check if the currrent object belongs to the current size range
+
             if label_size is None or np.max(self.data_per_size[np.nonzero(data_gt_idx)]) == label_size:
 
                 if self.overlap_vox is None:
