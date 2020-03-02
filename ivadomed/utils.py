@@ -70,6 +70,12 @@ class Evaluation3DMetrics(object):
         else:
             self.size_min = 0
 
+        if "targetSize" in params:
+            self.size_rng_lst, self.size_suffix_lst =
+                                    self._get_size_ranges(thr_lst=params["targetSize"]["thr"],
+                                                                unit=params["targetSize"]["unit"])
+            self.data_per_size = self.label_per_size(self.data_gt, rng_lst)
+
         # 18-connected components
         self.data_pred_label, self.n_pred = label(self.data_pred,
                                                     structure=self.bin_struct)
