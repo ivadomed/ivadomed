@@ -97,30 +97,31 @@ def run_main(args):
                                 for f in os.listdir(pred_folder) if subj_acq+'_pred_' in f]
 
             fname_gt = os.path.join(gt_folder, subj_acq.split('_')[0], 'anat', subj_acq+context["target_suffix"]+'.nii.gz')
-            data_gt = nib.load(fname_gt).get_data()
-            data_gt = remove_small_obj(data_gt, MIN_OBJ_SIZE, BIN_STRUCT)
+            if os.path.isfile(fname_gt):
+                data_gt = nib.load(fname_gt).get_data()
+                data_gt = remove_small_obj(data_gt, MIN_OBJ_SIZE, BIN_STRUCT)
 
-            for i_unc, thr_unc in enumerate(thr_unc_lst):
-                data_unc_thr = (deepcopy(data_unc) > thr_unc).astype(np.int)
+                for i_unc, thr_unc in enumerate(thr_unc_lst):
+                    data_unc_thr = (deepcopy(data_unc) > thr_unc).astype(np.int)
 
-                data_pred_thrUnc_lst = [d * deepcopy(data_unc_thr) for d in data_pred_lst]
+                    data_pred_thrUnc_lst = [d * deepcopy(data_unc_thr) for d in data_pred_lst]
 
-                data_prob = np.mean(np.array(data_pred_thrUnc_lst), axis=0)
+                    data_prob = np.mean(np.array(data_pred_thrUnc_lst), axis=0)
 
-                for i_vox, thr_vox in enumerate(thr_vox_lst):
-                    data_hard = threshold_predictions(deepcopy(data_prob), thr=thr_vox).astype(np.uint8)
+                    for i_vox, thr_vox in enumerate(thr_vox_lst):
+                        data_hard = threshold_predictions(deepcopy(data_prob), thr=thr_vox).astype(np.uint8)
 
-                    data_hard = remove_small_obj(data_hard, MIN_OBJ_SIZE, BIN_STRUCT)
+                        data_hard = remove_small_obj(data_hard, MIN_OBJ_SIZE, BIN_STRUCT)
 
-                    tpr_vox = mt_metrics.recall_score(data_hard, data_gt, err_value=np.nan)
-                    fdr_vox = 100. - mt_metrics.precision_score(data_hard, data_gt, err_value=np.nan)
-                    #tpr_obj =
-                    #fdr_obj =
+                        tpr_vox = mt_metrics.recall_score(data_hard, data_gt, err_value=np.nan)
+                        fdr_vox = 100. - mt_metrics.precision_score(data_hard, data_gt, err_value=np.nan)
+                        #tpr_obj =
+                        #fdr_obj =
 
-                    results_dct[metric]['tpr_vox'][i_unc][i_vox].append(tpr_vox / 100.)
-                    results_dct[metric]['fdr_vox'][i_unc][i_vox].append(fdr_vox / 100.)
-                    #results_dct[metric]['tpr_obj'][i_unc][i_vox].append(tpr_obj)
-                    #results_dct[metric]['fdr_obj'][i_unc][i_vox].append(fdr_obj)
+                        results_dct[metric]['tpr_vox'][i_unc][i_vox].append(tpr_vox / 100.)
+                        results_dct[metric]['fdr_vox'][i_unc][i_vox].append(fdr_vox / 100.)
+                        #results_dct[metric]['tpr_obj'][i_unc][i_vox].append(tpr_obj)
+                        #results_dct[metric]['fdr_obj'][i_unc][i_vox].append(fdr_obj)
 
 
     for metric in metric_suffix_lst:
