@@ -38,6 +38,11 @@
 	"early_stopping_epsilon": 0.001,
 	"unet_3D": false,
 	"binarize_prediction": true,
+        "eval_params": {
+            "targetSize": {"unit": "vox", "thr": [20, 100]},
+            "removeSmall": {"unit": "vox", "thr": 3},
+            "overlap": {"unit": "vox", "thr": 3}
+            },
 	"transformation_training": {
 		"Resample": {
 			"wspace": 0.75,
