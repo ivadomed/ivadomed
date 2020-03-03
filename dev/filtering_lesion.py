@@ -10,7 +10,7 @@ import argparse
 import numpy as np
 import nibabel as nib
 from copy import deepcopy
-from sklearn.metrics import auc
+#from sklearn.metrics import auc
 import matplotlib.pyplot as plt
 from scipy.ndimage import label, generate_binary_structure
 
@@ -42,17 +42,15 @@ def remove_small_obj(data, size_min, bin_struct):
 
     return data
 
-
-# def auc_homemade(fpr, tpr, trapezoid=False):
-#     # source: https://stackoverflow.com/a/39687168
-
-#     inds = [i for (i, (s, e)) in enumerate(zip(fpr[: -1], fpr[1: ])) if s != e] + [len(fpr) - 1]
-#     fpr, tpr = fpr[inds], tpr[inds]
-#     area = 0
-#     ft = zip(fpr, tpr)
-#     for p0, p1 in list(zip(ft[: -1], ft[1: ])):
-#         area += (p1[0] - p0[0]) * ((p1[1] + p0[1]) / 2 if trapezoid else p0[1])
-#     return area
+def auc_homemade(fpr, tpr, trapezoid=False):
+    # source: https://stackoverflow.com/a/39687168
+    inds = [i for (i, (s, e)) in enumerate(zip(fpr[: -1], fpr[1: ])) if s != e] + [len(fpr) - 1]
+    fpr, tpr = fpr[inds], tpr[inds]
+    area = 0
+    ft = list(zip(fpr, tpr))
+    for p0, p1 in zip(ft[: -1], ft[1: ]):
+        area += (p1[0] - p0[0]) * ((p1[1] + p0[1]) / 2 if trapezoid else p0[1])
+    return area
 
 def run_main(args):
 
@@ -73,7 +71,7 @@ def run_main(args):
     gt_folder = os.path.join(context['bids_path'], 'derivatives', 'labels')
 
     metric_suffix_lst = ['_unc-vox', '_unc-cv', '_unc-avgUnc']
-    thr_unc_lst = [0.01, 0.1, 0.5]
+    thr_unc_lst = [0.0001, 0.001, 0.01, 0.1, 0.5]
     thr_vox_lst = [t/10. for t in range(0,10,1)]
     results_dct = {}
     for metric in metric_suffix_lst:
@@ -134,10 +132,10 @@ def run_main(args):
             tpr_vals = np.array([np.nanmean(results_dct[metric]['tpr_vox'][i_unc][i_vox]) for i_vox in range(len(thr_vox_lst))])
             fdr_vals = np.array([np.nanmean(results_dct[metric]['fdr_vox'][i_unc][i_vox]) for i_vox in range(len(thr_vox_lst))])
 
-            auc_ = auc(fdr_vals, tpr_vals)          
+            # auc_ = auc(fdr_vals, tpr_vals)
             # auc_ = auc_homemade(fdr_vals, tpr_vals)
-            # auc__ = auc_homemade(fdr_vals, tpr_vals, True)
-            
+            auc_ = auc_homemade(fdr_vals, tpr_vals, True)
+
             optimal_idx = np.argmax(tpr_vals - fdr_vals)
             optimal_threshold = thr_vox_lst[optimal_idx]
             print('AUC: {}, Optimal Pred Thr: {}'.format(auc_, optimal_threshold))
@@ -149,10 +147,10 @@ def run_main(args):
         plt.ylim([0.0, 1.05])
         plt.xlabel('False Detection Rate')
         plt.ylabel('True Positive Rate')
-        plt.title('Receiver operating characteristic example')
+        plt.title('ROC - '+metric)
         plt.legend(loc="lower right")
         fname_out = os.path.join(ofolder, metric+'.png')
-        plt.save(fname_out, bbox_inches='tight', pad_inches=0
+        plt.savefig(fname_out, bbox_inches='tight', pad_inches=0)
         plt.close()
 
 
