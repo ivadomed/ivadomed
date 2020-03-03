@@ -81,7 +81,7 @@ class Evaluation3DMetrics(object):
                                     ['gt']*len(label_gt_size_lst) + ['pred']*len(label_pred_size_lst)]
 
         else:
-            self.label_gt_size_lst, self.label_gt_size_lst = []
+            self.label_size_lst = [[], []]
 
         # 18-connected components
         self.data_pred_label, self.n_pred = label(self.data_pred,
