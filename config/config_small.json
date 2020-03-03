@@ -39,6 +39,7 @@
       "nb_nonzero_thr": 10
     },
     "split_method": "per_center",
+        "eval_params": {},
     "transformation_training": {
 		"Resample": {
 			"wspace": 0.75,
