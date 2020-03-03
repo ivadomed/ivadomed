@@ -1,33 +1,25 @@
-import sys
 import json
-import os
-import time
-import shutil
 import random
+import shutil
+import sys
+import time
+
 import joblib
 import pandas as pd
-from math import exp
-import numpy as np
-
-import torch.nn as nn
 import torch.backends.cudnn as cudnn
-from torch.utils.data import DataLoader
-from torchvision import transforms
 import torchvision.utils as vutils
-from torch.utils.tensorboard import SummaryWriter
-from torch import optim
-
-from medicaltorch.filters import SliceFilter
 from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
+from torch import optim
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
+from torchvision import transforms
 
-from tqdm import tqdm
-
-from ivadomed import loader as loader
-from ivadomed import models
-from ivadomed import losses
-from ivadomed.utils import *
 import ivadomed.transforms as ivadomed_transforms
+from ivadomed import loader as loader
+from ivadomed import losses
+from ivadomed import models
+from ivadomed.utils import *
 
 cudnn.benchmark = True
 
@@ -720,7 +712,7 @@ def cmd_test(context):
 
     # number of Monte Carlo simulation
     if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and \
-        context['uncertainty']['n_it'] > 0:
+            context['uncertainty']['n_it'] > 0:
         n_monteCarlo = context['uncertainty']['n_it']
     else:
         n_monteCarlo = 1
@@ -796,7 +788,8 @@ def cmd_test(context):
                         if n_monteCarlo > 1:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
-                        save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, slice_axis=AXIS_DCT[context['slice_axis']],
+                        save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred,
+                                 slice_axis=AXIS_DCT[context['slice_axis']],
                                  binarize=context["binarize_prediction"])
 
                         # re-init pred_stack_lst
@@ -832,7 +825,8 @@ def cmd_test(context):
         metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
-    if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty']['n_it'] > 0:
+    if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty'][
+        'n_it'] > 0:
         run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()
@@ -872,18 +866,17 @@ def cmd_eval(context):
                                 subj_acq + context['target_suffix'] + '.nii.gz')
 
         # 3D evaluation
-        eval = Evaluation3DMetrics(fname_pred=fname_pred, fname_gt=fname_gt)
-        results_pred = eval.get_all_metrics()
-
+        eval = Evaluation3DMetrics(fname_pred=fname_pred,
+                                   fname_gt=fname_gt,
+                                   params=context['eval_params'])
+        results_pred = eval.run_eval()
         # save results of this fname_pred
         results_pred['image_id'] = subj_acq
         df_results = df_results.append(results_pred, ignore_index=True)
 
     df_results = df_results.set_index('image_id')
+    df_results.to_csv(os.path.join(path_results, 'evaluation_3Dmetrics.csv'))
 
-    # save results as csv
-    fname_out = os.path.join(path_results, 'evaluation_3Dmetrics.csv')
-    df_results.to_csv(fname_out)
     print(df_results.head(5))
 
 
