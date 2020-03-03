@@ -11,6 +11,7 @@ import numpy as np
 import nibabel as nib
 from copy import deepcopy
 from sklearn.metrics import auc
+import matplotlib.pyplot as plt
 from scipy.ndimage import label, generate_binary_structure
 
 from ivadomed.main import cmd_test
@@ -126,6 +127,8 @@ def run_main(args):
 
     for metric in metric_suffix_lst:
         print('Metric: {}'.format(metric))
+
+        plt.figure(figsize=(10,10))
         for i_unc, thr_unc in enumerate(thr_unc_lst):
             print('Unc Thr: {}'.format(thr_unc))
             tpr_vals = np.array([np.nanmean(results_dct[metric]['tpr_vox'][i_unc][i_vox]) for i_vox in range(len(thr_vox_lst))])
@@ -138,6 +141,20 @@ def run_main(args):
             optimal_idx = np.argmax(tpr_vals - fdr_vals)
             optimal_threshold = thr_vox_lst[optimal_idx]
             print('AUC: {}, Optimal Pred Thr: {}'.format(auc_, optimal_threshold))
+
+            plt.plot(fdr_vals, tpr_vals, label='Unc thr={0:0.2f} (area = {1:0.2f})'.format(thr_unc, auc_))
+
+        plt.plot([0, 1], [0, 1], 'k--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Detection Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver operating characteristic example')
+        plt.legend(loc="lower right")
+        fname_out = os.path.join(ofolder, metric+'.png')
+        plt.save(fname_out, bbox_inches='tight', pad_inches=0
+        plt.close()
+
 
 if __name__ == '__main__':
     parser = get_parser()
