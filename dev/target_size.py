@@ -14,13 +14,14 @@
 #
 ##############################################################
 
-import os
-import json
 import argparse
-import numpy as np
-import nibabel as nib
-import seaborn as sns
+import json
+import os
+
 import matplotlib.pyplot as plt
+import nibabel as nib
+import numpy as np
+import seaborn as sns
 from scipy.ndimage import label, generate_binary_structure
 
 
@@ -41,7 +42,7 @@ def plot_distrib(arr, label, xlim, fname_out):
     fig = plt.figure()
 
     sns.distplot(arr, hist=False, kde=True, rug=True,
-                 color = 'darkblue',
+                 color='darkblue',
                  kde_kws={'linewidth': 2},
                  rug_kws={'color': 'black'})
 
@@ -49,10 +50,10 @@ def plot_distrib(arr, label, xlim, fname_out):
     plt.xlim(xlim)
     plt.ylabel('Density')
     fig.savefig(fname_out)
-    print('\tSave as: '+fname_out)
+    print('\tSave as: ' + fname_out)
+
 
 def run_main(args):
-
     with open(args.c, "r") as fhandle:
         context = json.load(fhandle)
 
@@ -65,8 +66,8 @@ def run_main(args):
         s_fold = os.path.join(path_folder, s, 'anat')
         if os.path.isdir(s_fold):
             for f in os.listdir(s_fold):
-                c = f.split(s+'_')[-1].split(context["target_suffix"])[0]
-                if f.endswith(context["target_suffix"]+'.nii.gz') and c in context["contrast_test"]:
+                c = f.split(s + '_')[-1].split(context["target_suffix"])[0]
+                if f.endswith(context["target_suffix"] + '.nii.gz') and c in context["contrast_test"]:
                     f_path = os.path.join(s_fold, f)
                     im = nib.load(f_path)
                     data = im.get_data()
@@ -75,8 +76,8 @@ def run_main(args):
 
                     if np.any(data):
                         data_label, n = label(data,
-                                                structure=bin_struct)
-                        for idx in range(1, n+1):
+                                              structure=bin_struct)
+                        for idx in range(1, n + 1):
                             data_idx = (data_label == idx).astype(np.int)
 
                             n_vox = np.count_nonzero(data_idx)
@@ -85,15 +86,16 @@ def run_main(args):
 
     print('\nTarget distribution in vox:')
     print_stats(vox_lst)
-    plot_distrib(vox_lst, context["target_suffix"]+' size in vox',
-                     [0, np.percentile(vox_lst, 90)],
-                     context["target_suffix"]+'_vox.png')
+    plot_distrib(vox_lst, context["target_suffix"] + ' size in vox',
+                 [0, np.percentile(vox_lst, 90)],
+                 context["target_suffix"] + '_vox.png')
 
     print('\nTarget distribution in mm3:')
     print_stats(mm3_lst)
-    plot_distrib(mm3_lst, context["target_suffix"]+' size in mm3',
-                     [0, np.percentile(mm3_lst, 90)],
-                     context["target_suffix"]+'_mm3.png')
+    plot_distrib(mm3_lst, context["target_suffix"] + ' size in mm3',
+                 [0, np.percentile(mm3_lst, 90)],
+                 context["target_suffix"] + '_mm3.png')
+
 
 if __name__ == '__main__':
     parser = get_parser()
