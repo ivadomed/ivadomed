@@ -9,9 +9,13 @@ import json
 import argparse
 import numpy as np
 import nibabel as nib
+from scipy.ndimage import label, generate_binary_structure
 
 from ivadomed.main import cmd_test
 from ivadomed.utils import threshold_predictions
+
+BIN_STRUCT = generate_binary_structure(3,2)
+MIN_OBJ_SIZE = 3
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -19,6 +23,20 @@ def get_parser():
     parser.add_argument("-ofolder", help="Output folder.")
 
     return parser
+
+# TODO: remove once moved out of Evaluation3Dmetrics
+def remove_small_obj(data, size_min, bin_struct)
+    data_label, n = label(data,
+                          structure=bin_struct)
+
+    for idx in range(1, n + 1):
+        data_idx = (data_label == idx).astype(np.int)
+        n_nonzero = np.count_nonzero(data_idx)
+
+        if n_nonzero < size_min:
+            data[data_label == idx] = 0
+
+    return data
 
 def run_main(args):
 
@@ -36,18 +54,22 @@ def run_main(args):
     subj_acq_lst = list(set([f.split('_pred')[0] for f in os.listdir(pred_folder)
                     if f.endswith('.nii.gz') and '_pred' in f]))[:5]
 
+    gt_folder = os.path.join(context['bids_path'], 'derivatives', 'labels')
+
     metric_suffix_lst = ['_unc-vox', '_unc-cv', '_unc-avgUnc']
     thr_unc_lst = [0.01, 0.1, 0.5]
     thr_vox_lst = [t/10. for t in range(0,10,1)]
-    results_dct = {'metric': {}}
+    results_dct = {}
     for metric in metric_suffix_lst:
         print(metric)
 
         res_init_lst = [[[]] * len(thr_vox_lst)] * len(thr_unc_lst)
-        results_dct['metric'][metric] = {'tpr_vox': res_init_lst,
-                                            'fdr_vox': res_init_lst,
-                                            'tpr_obj': res_init_lst,
-                                            'fdr_obj': res_init_lst}
+        results_dct[metric] = {'tpr_vox': res_init_lst,
+                                'fdr_vox': res_init_lst,
+                                # TODO: modify ltpr and lfdr so that callable here
+                                # 'tpr_obj': res_init_lst,
+                                # 'fdr_obj': res_init_lst
+                                }
 
         for subj_acq in subj_acq_lst:
             fname_unc = os.path.join(pred_folder, subj_acq+metric+'.nii.gz')
@@ -58,7 +80,10 @@ def run_main(args):
             data_pred_lst = [nib.load(os.path.join(pred_folder, f)).get_data()
                                 for f in os.listdir(pred_folder) if subj_acq+'_pred_' in f]
 
-            # data_gt = 
+            fname_gt = os.path.join(gt_folder, subj_acq, 'anat', subj_acq+context["target_suffix"]+'.nii.gz')
+            data_gt = nib.load(fname_gt).get_data()
+
+            data_gt = remove_small_obj(data_gt, MIN_OBJ_SIZE, BIN_STRUCT)
 
             for i_unc, thr_unc in enumerate(thr_unc_lst):
                 data_unc_thr = (data_unc > thr_unc).astype(np.int)
@@ -70,17 +95,19 @@ def run_main(args):
                 for i_vox, thr_vox in enumerate(thr_vox_lst):
                     data_hard = threshold_predictions(data_prob, thr=thr_vox).astype(np.uint8)
 
-                    # tpr_vox =
-                    # fdr_vox =
-                    # tpr_obj =
-                    # fdr_obj =
+                    data_hard = remove_small_obj(data_hard, MIN_OBJ_SIZE, BIN_STRUCT)
 
-                    results_dct['metric'][metric]['tpr_vox'][i_unc][i_vox].append(tpr_vox)
-                    results_dct['metric'][metric]['fdr_vox'][i_unc][i_vox].append(fdr_vox)
-                    results_dct['metric'][metric]['tpr_obj'][i_unc][i_vox].append(tpr_obj)
-                    results_dct['metric'][metric]['fdr_obj'][i_unc][i_vox].append(fdr_obj)
+                    tpr_vox = mt_metrics.recall_score(data_hard, data_gt, err_value=np.nan)
+                    fdr_vox = 100. - mt_metrics.precision_score(data_hard, data_gt, err_value=np.nan)
+                    #tpr_obj =
+                    #fdr_obj =
 
+                    results_dct[metric]['tpr_vox'][i_unc][i_vox].append(tpr_vox)
+                    results_dct[metric]['fdr_vox'][i_unc][i_vox].append(fdr_vox)
+                    #results_dct[metric]['tpr_obj'][i_unc][i_vox].append(tpr_obj)
+                    #results_dct[metric]['fdr_obj'][i_unc][i_vox].append(fdr_obj)
 
+    print(results_dct['_unc-vox'])
 
 if __name__ == '__main__':
     parser = get_parser()
