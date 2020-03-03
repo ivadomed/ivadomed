@@ -1,19 +1,21 @@
 import os
-import torch
-from tqdm import tqdm
-import numpy as np
-import nibabel as nib
-from scipy.ndimage import label, generate_binary_structure
-import matplotlib.pyplot as plt
 from collections import defaultdict
+
+import matplotlib.pyplot as plt
+import nibabel as nib
+import numpy as np
+import torch
 import torch.nn as nn
-from torch.autograd import Variable
 from medicaltorch import metrics as mt_metrics
+from scipy.ndimage import label, generate_binary_structure
+from torch.autograd import Variable
+from tqdm import tqdm
 
 # labels of paint_objects method
-TP_COLOUR=1
-FP_COLOUR=2
-FN_COLOUR=3
+TP_COLOUR = 1
+FP_COLOUR = 2
+FN_COLOUR = 3
+
 
 class IvadoMetricManager(mt_metrics.MetricManager):
     def __init__(self, metric_fns):
@@ -70,24 +72,24 @@ class Evaluation3DMetrics(object):
 
         if "targetSize" in params:
             self.size_rng_lst, self.size_suffix_lst = \
-                                    self._get_size_ranges(thr_lst=params["targetSize"]["thr"],
-                                                                unit=params["targetSize"]["unit"])
+                self._get_size_ranges(thr_lst=params["targetSize"]["thr"],
+                                      unit=params["targetSize"]["unit"])
 
             self.data_gt_per_size = self.label_per_size(self.data_gt)
             label_gt_size_lst = list(set(self.data_gt_per_size[np.nonzero(self.data_gt_per_size)]))
             self.data_pred_per_size = self.label_per_size(self.data_pred)
             label_pred_size_lst = list(set(self.data_pred_per_size[np.nonzero(self.data_pred_per_size)]))
             self.label_size_lst = [label_gt_size_lst + label_pred_size_lst,
-                                    ['gt']*len(label_gt_size_lst) + ['pred']*len(label_pred_size_lst)]
+                                   ['gt'] * len(label_gt_size_lst) + ['pred'] * len(label_pred_size_lst)]
 
         else:
             self.label_gt_size_lst, self.label_gt_size_lst = []
 
         # 18-connected components
         self.data_pred_label, self.n_pred = label(self.data_pred,
-                                                    structure=self.bin_struct)
+                                                  structure=self.bin_struct)
         self.data_gt_label, self.n_gt = label(self.data_gt,
-                                                structure=self.bin_struct)
+                                              structure=self.bin_struct)
 
         # painted data, object wise
         self.fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
@@ -116,9 +118,9 @@ class Evaluation3DMetrics(object):
 
     def remove_small_objects(self, data):
         data_label, n = label(data,
-                                structure=self.bin_struct)
+                              structure=self.bin_struct)
 
-        for idx in range(1, n+1):
+        for idx in range(1, n + 1):
             data_idx = (data_label == idx).astype(np.int)
             n_nonzero = np.count_nonzero(data_idx)
 
@@ -135,7 +137,7 @@ class Evaluation3DMetrics(object):
             if i == 0:
                 thr_low = self.size_min
             else:
-                thr_low = thr_lst[i-1] + 1
+                thr_low = thr_lst[i - 1] + 1
 
             thr_high = thr
 
@@ -145,7 +147,7 @@ class Evaluation3DMetrics(object):
 
             rng_lst.append([thr_low, thr_high])
 
-            suffix_lst.append('_'+str(thr_low)+'-'+str(thr_high)+unit)
+            suffix_lst.append('_' + str(thr_low) + '-' + str(thr_high) + unit)
 
         # last subgroup
         thr_low = thr_lst[i] + 1
@@ -153,16 +155,16 @@ class Evaluation3DMetrics(object):
             thr_low = np.round(thr_low / (self.px * self.py * self.pz))
         thr_high = np.inf
         rng_lst.append([thr_low, thr_high])
-        suffix_lst.append('_'+str(thr_low)+'-INF'+unit)
+        suffix_lst.append('_' + str(thr_low) + '-INF' + unit)
 
         return rng_lst, suffix_lst
 
     def label_per_size(self, data):
         data_label, n = label(data,
-                                structure=self.bin_struct)
+                              structure=self.bin_struct)
         data_out = np.zeros(data.shape)
 
-        for idx in range(1, n+1):
+        for idx in range(1, n + 1):
             data_idx = (data_label == idx).astype(np.int)
             n_nonzero = np.count_nonzero(data_idx)
 
@@ -185,7 +187,7 @@ class Evaluation3DMetrics(object):
         if vol_gt == 0.0:
             return np.nan
 
-        rvd = (vol_gt-vol_pred)*100.
+        rvd = (vol_gt - vol_pred) * 100.
         rvd /= vol_gt
 
         return rvd
@@ -201,7 +203,7 @@ class Evaluation3DMetrics(object):
                 then only one detection is counted.
         """
         ltp, lfn, n_obj = 0, 0, 0
-        for idx in range(1, self.n_gt+1):
+        for idx in range(1, self.n_gt + 1):
             data_gt_idx = (self.data_gt_label == idx).astype(np.int)
             overlap = (data_gt_idx * self.data_pred).astype(np.int)
 
@@ -230,14 +232,14 @@ class Evaluation3DMetrics(object):
     def _get_lfp(self, label_size):
         """Number of false positive lesion."""
         lfp = 0
-        for idx in range(1, self.n_pred+1):
+        for idx in range(1, self.n_pred + 1):
             data_pred_idx = (self.data_pred_label == idx).astype(np.int)
             overlap = (data_pred_idx * self.data_gt).astype(np.int)
 
             label_gt = np.max(data_pred_idx * self.data_gt_label)
             data_gt_idx = (self.data_gt_label == label_gt).astype(np.int)
             # if label_size is None, then we look at all object sizes
-            # we check if the currrent object belongs to the current size range
+            # we check if the current object belongs to the current size range
 
             if label_size is None or np.max(self.data_pred_per_size[np.nonzero(data_gt_idx)]) == label_size:
 
@@ -297,12 +299,12 @@ class Evaluation3DMetrics(object):
         dct['lfdr'] = self.get_lfdr()
 
         for lb_size, gt_pred in zip(self.label_size_lst[0], self.label_size_lst[1]):
-            suffix = self.size_suffix_lst[int(lb_size)-1]
+            suffix = self.size_suffix_lst[int(lb_size) - 1]
 
             if gt_pred == 'gt':
-                dct['ltpr'+suffix], dct['n'+suffix] = self.get_ltpr(label_size=lb_size)
+                dct['ltpr' + suffix], dct['n' + suffix] = self.get_ltpr(label_size=lb_size)
             else:  # gt_pred == 'pred'
-                dct['lfdr'+suffix] = self.get_lfdr(label_size=lb_size)
+                dct['lfdr' + suffix] = self.get_lfdr(label_size=lb_size)
 
         # save painted file
         nib_painted = nib.Nifti1Image(self.data_painted, nib.load(self.fname_pred).affine)
@@ -359,7 +361,6 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, une
     # create nii
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
 
-
     # save
     nib.save(nib_pred, fname_out)
 
@@ -372,17 +373,17 @@ def run_uncertainty(ifolder):
     subj_acq_lst = list(set(subj_acq_lst))
     # keep only the images where unc has not been computed yet
     subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(
-        os.path.join(ifolder, f+'_unc-cv.nii.gz'))]
+        os.path.join(ifolder, f + '_unc-cv.nii.gz'))]
 
     # loop across subj_acq
     for subj_acq in tqdm(subj_acq_lst, desc="Uncertainty Computation"):
         # hard segmentation from MC samples
-        fname_pred = os.path.join(ifolder, subj_acq+'_pred.nii.gz')
+        fname_pred = os.path.join(ifolder, subj_acq + '_pred.nii.gz')
         # fname for soft segmentation from MC simulations
-        fname_soft = os.path.join(ifolder, subj_acq+'_soft.nii.gz')
+        fname_soft = os.path.join(ifolder, subj_acq + '_soft.nii.gz')
         # find Monte Carlo simulations
         fname_pred_lst = [os.path.join(ifolder, f)
-                          for f in os.listdir(ifolder) if subj_acq+'_pred_' in f]
+                          for f in os.listdir(ifolder) if subj_acq + '_pred_' in f]
 
         # if final segmentation from Monte Carlo simulations has not been generated yet
         if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
@@ -391,13 +392,13 @@ def run_uncertainty(ifolder):
             # average then argmax
             combine_predictions(fname_pred_lst, fname_pred, fname_soft, thr=thr)
 
-        fname_unc_vox = os.path.join(ifolder, subj_acq+'_unc-vox.nii.gz')
+        fname_unc_vox = os.path.join(ifolder, subj_acq + '_unc-vox.nii.gz')
         if not os.path.isfile(fname_unc_vox):
             # compute voxel-wise uncertainty map
             voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
 
-        fname_unc_struct = os.path.join(ifolder, subj_acq+'_unc.nii.gz')
-        if not os.path.isfile(os.path.join(ifolder, subj_acq+'_unc-cv.nii.gz')):
+        fname_unc_struct = os.path.join(ifolder, subj_acq + '_unc.nii.gz')
+        if not os.path.isfile(os.path.join(ifolder, subj_acq + '_unc-cv.nii.gz')):
             # compute structure-wise uncertainty
             structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
 
@@ -441,7 +442,7 @@ def voxelWise_uncertainty(fname_lst, fname_out, eps=1e-5):
         data_lst.append(nib_im.get_fdata())
 
     # entropy
-    unc = np.repeat(np.expand_dims(np.array(data_lst), -1), 2, -1) # n_it, x, y, z, 2
+    unc = np.repeat(np.expand_dims(np.array(data_lst), -1), 2, -1)  # n_it, x, y, z, 2
     unc[..., 0] = 1 - unc[..., 1]
     unc = -np.sum(np.mean(unc, 0) * np.log(np.mean(unc, 0) + eps), -1)
 
@@ -483,7 +484,7 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         del nib_im
 
     # loop across all structures of data_hard_l
-    for i_l in range(1, n_l+1):
+    for i_l in range(1, n_l + 1):
         # select the current structure, remaining voxels are set to zero
         data_i_l = (data_hard_l == i_l).astype(np.int)
 
@@ -506,14 +507,14 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
 
         # compute IoU over all the N MC samples for a specific structure
         intersection = np.logical_and(data_mc_i_l_lst[0].astype(np.bool),
-                                        data_mc_i_l_lst[1].astype(np.bool))
+                                      data_mc_i_l_lst[1].astype(np.bool))
         union = np.logical_or(data_mc_i_l_lst[0].astype(np.bool),
-                                data_mc_i_l_lst[1].astype(np.bool))
+                              data_mc_i_l_lst[1].astype(np.bool))
         for i_mc in range(2, len(data_mc_i_l_lst)):
             intersection = np.logical_and(intersection,
-                                            data_mc_i_l_lst[i_mc].astype(np.bool))
+                                          data_mc_i_l_lst[i_mc].astype(np.bool))
             union = np.logical_or(union,
-                                    data_mc_i_l_lst[i_mc].astype(np.bool))
+                                  data_mc_i_l_lst[i_mc].astype(np.bool))
         iou = np.sum(intersection) * 1. / np.sum(union)
 
         # compute coefficient of variation for all MC volume estimates for a given structure
@@ -530,9 +531,9 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         data_avgUnc[data_i_l != 0] = avgUnc
 
     # save nifti files
-    fname_iou = fname_out.split('.nii.gz')[0]+'-iou.nii.gz'
-    fname_cv = fname_out.split('.nii.gz')[0]+'-cv.nii.gz'
-    fname_avgUnc = fname_out.split('.nii.gz')[0]+'-avgUnc.nii.gz'
+    fname_iou = fname_out.split('.nii.gz')[0] + '-iou.nii.gz'
+    fname_cv = fname_out.split('.nii.gz')[0] + '-cv.nii.gz'
+    fname_avgUnc = fname_out.split('.nii.gz')[0] + '-avgUnc.nii.gz'
     nib_iou = nib.Nifti1Image(data_iou, nib_hard.affine)
     nib_cv = nib.Nifti1Image(data_cv, nib_hard.affine)
     nib_avgUnc = nib.Nifti1Image(data_avgUnc, nib_hard.affine)
@@ -636,6 +637,7 @@ class HookBasedFeatureExtractor(nn.Module):
     This function extracts feature maps from given layer.
     https://github.com/ozan-oktay/Attention-Gated-Networks/tree/a96edb72622274f6705097d70cfaa7f2bf818a5a
     """
+
     def __init__(self, submodule, layername, upscale=False):
         super(HookBasedFeatureExtractor, self).__init__()
 
