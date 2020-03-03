@@ -14,7 +14,7 @@ trap "echo Caught Keyboard Interrupt within script. Exiting now.; exit" INT
 # Retrieve input params
 SUBJECT=$1
 SITE=$2
-PATH_OUTPUT=$3
+PATH_RESULTS=$3
 PATH_QC=$4
 PATH_LOG=$5
 

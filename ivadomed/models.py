@@ -325,6 +325,10 @@ class UNet3D(nn.Module):
     https://github.com/pykao/Modified-3D-UNet-Pytorch
     The main differences with the original UNet resides in the use of LeakyReLU instead of ReLU, InstanceNormalisation
     instead of BatchNorm due to small batch size in 3D and the addition of segmentation layers in the decoder.
+
+    If attention=True, attention gates are added in the decoder to help focus attention on important features for a
+    given task. Code related to the attentions gates is inspired from:
+    https://github.com/ozan-oktay/Attention-Gated-Networks
     """
 
     def __init__(self, in_channels, n_classes, base_n_filter=32, attention=False):
@@ -612,12 +616,11 @@ class UNet3D(nn.Module):
 
 # Specific toAttention UNet
 class GridAttentionBlockND(nn.Module):
-    def __init__(self, in_channels, gating_channels, inter_channels=None, dimension=3, mode='concatenation',
+    def __init__(self, in_channels, gating_channels, inter_channels=None, dimension=3,
                  sub_sample_factor=(2, 2, 2)):
         super(GridAttentionBlockND, self).__init__()
 
         assert dimension in [2, 3]
-        assert mode in ['concatenation', 'concatenation_debug', 'concatenation_residual']
 
         # Downsampling rate for the input featuremap
         if isinstance(sub_sample_factor, tuple):
@@ -628,7 +631,6 @@ class GridAttentionBlockND(nn.Module):
             self.sub_sample_factor = tuple([sub_sample_factor]) * dimension
 
         # Default parameter set
-        self.mode = mode
         self.dimension = dimension
         self.sub_sample_kernel_size = self.sub_sample_factor
 
@@ -673,14 +675,7 @@ class GridAttentionBlockND(nn.Module):
             m.apply(weights_init_kaiming)
 
         # Define the operation
-        if mode == 'concatenation':
-            self.operation_function = self._concatenation
-        elif mode == 'concatenation_debug':
-            self.operation_function = self._concatenation_debug
-        elif mode == 'concatenation_residual':
-            self.operation_function = self._concatenation_residual
-        else:
-            raise NotImplementedError('Unknown operation function.')
+        self.operation_function = self._concatenation
 
     def forward(self, x, g):
         '''
@@ -717,10 +712,8 @@ class GridAttentionBlockND(nn.Module):
 
         return W_y, sigm_psi_f
 
-
 def weights_init_kaiming(m):
     classname = m.__class__.__name__
-    # print(classname)
     if classname.find('Conv') != -1:
         init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
     elif classname.find('Linear') != -1:
@@ -731,6 +724,10 @@ def weights_init_kaiming(m):
 
 
 class UnetGridGatingSignal3(nn.Module):
+    """
+    Operation to extract important features for a specific task using 1x1x1 convolution (Gating) which is used in the
+    attention blocks.
+    """
     def __init__(self, in_size, out_size, kernel_size=(1, 1, 1), is_batchnorm=True):
         super(UnetGridGatingSignal3, self).__init__()
 

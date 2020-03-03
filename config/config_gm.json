@@ -37,6 +37,7 @@
     "split_method": "per_patient",
         "slice_filter": {"filter_empty_mask": false, "filter_empty_input": true},
         "slice_filter_roi": 10,
+        "eval_params": {},
     "transformation_training": {
 		"Resample": {
 			"wspace": 0.75,
@@ -72,5 +73,16 @@
 		"ToTensor": {},
 		"NormalizeInstance": {}
 		},
+        "transformation_testing": {
+                "Resample": {
+                        "wspace": 0.75,
+                        "hspace": 0.75
+                        },
+                "CenterCrop2D": {
+                        "size": [128, 128]
+                        },
+                "ToTensor": {},
+                "NormalizeInstance": {}
+                },
 	"debugging": false
 }

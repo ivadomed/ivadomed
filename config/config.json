@@ -40,6 +40,7 @@
     "uncertainty": {"epistemic": true, "aleatoric": false, "n_it": 10},
     "unet_3D": false,
     "binarize_prediction": true,
+    "eval_params": {},
     "transformation_training": {
 		"Resample": {
 			"wspace": 0.75,
@@ -75,5 +76,17 @@
 		"ToTensor": {},
 		"NormalizeInstance": {}
 		},
+        "transformation_testing": {
+                "Resample": {
+                        "wspace": 0.75,
+                        "hspace": 0.75
+                        },
+                "CenterCrop2D": {
+                        "size": [128, 128]
+                        },
+                "ToTensor": {},
+                "NormalizeInstance": {}
+                },
+
         "debugging": true
 }
