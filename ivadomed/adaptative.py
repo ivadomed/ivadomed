@@ -461,7 +461,7 @@ class HDF5Dataset:
         self.filter_slices = slice_filter_fn
         self.transform = transform
         # Getting HDS5 dataset file
-        if not os.path.isfile(hdf5_name):
+        if not os.path.exists(hdf5_name):
             print("Computing hdf5 file of the data")
             hdf5_file = Bids_to_hdf5(root_dir,
                                      subject_lst=subject_lst,
@@ -544,7 +544,7 @@ class HDF5Dataset:
                                 'roi_metadata': roi_pair_slice['gt_metadata']
                                 }
         """
-        line = self.dataframe.loc[index]
+        line = self.dataframe.iloc[index]
         # For HeMIS strategy. Otherwise the values of the matrix dont change anything.
         missing_modalities = self.cst_matrix[index]
 

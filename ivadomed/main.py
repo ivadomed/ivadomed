@@ -126,7 +126,6 @@ def cmd_train(context):
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
 
-    train_lst = ['sub-amu01', 'sub-amu03']
     ds_train = loader.load_dataset(train_lst, train_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
@@ -166,7 +165,6 @@ def cmd_train(context):
     print("Validation")
 
     # Validation dataset ------------------------------------------------------
-    valid_lst = ['sub-amu05', 'sub-amu04']
     ds_val = loader.load_dataset(valid_lst, val_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
@@ -398,7 +396,7 @@ def cmd_train(context):
             num_steps += 1
 
             # Todo test it with new loader
-            if i == 0 & (not HeMIS):
+            if i == 0 and (not HeMIS):
                 if context["unet_3D"]:
                     num_2d_img = input_samples.shape[3]
                 else:
@@ -511,7 +509,7 @@ def cmd_train(context):
             num_steps += 1
 
             # Only write sample at the first step
-            if i == 0 & (not HeMIS):
+            if i == 0 and (not HeMIS):
                 if context["unet_3D"]:
                     num_2d_img = input_samples.shape[3]
                 else:
