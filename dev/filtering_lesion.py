@@ -66,12 +66,12 @@ def run_main(args):
         cmd_test(context)
 
     subj_acq_lst = list(set([f.split('_pred')[0] for f in os.listdir(pred_folder)
-                    if f.endswith('.nii.gz') and '_pred' in f]))
+                    if f.endswith('.nii.gz') and '_pred' in f]))[:10]
 
     gt_folder = os.path.join(context['bids_path'], 'derivatives', 'labels')
 
-    metric_suffix_lst = ['_unc-vox', '_unc-cv', '_unc-avgUnc']
-    thr_unc_lst = [0.0001, 0.001, 0.01, 0.1, 0.5]
+    metric_suffix_lst = ['_unc-vox']  #, '_unc-cv', '_unc-avgUnc']
+    thr_unc_lst = [0.0001, 0.01, 0.5]  #[0.0001, 0.001, 0.01, 0.1, 0.5]
     thr_vox_lst = [t/10. for t in range(0,10,1)]
     results_dct = {}
     for metric in metric_suffix_lst:
@@ -81,6 +81,7 @@ def run_main(args):
 
         results_dct[metric] = {'tpr_vox': deepcopy(res_init_lst),
                                 'fdr_vox': deepcopy(res_init_lst),
+                                'retained_vox': [[] for _ in range(len(thr_unc_lst))],
                                 # TODO: modify ltpr and lfdr so that callable here
                                 # 'tpr_obj': deepcopy(res_init_lst),
                                 # 'fdr_obj': deepcopy(res_init_lst)
@@ -101,14 +102,13 @@ def run_main(args):
                 data_gt = remove_small_obj(data_gt, MIN_OBJ_SIZE, BIN_STRUCT)
 
                 for i_unc, thr_unc in enumerate(thr_unc_lst):
-                    data_unc_thr = (deepcopy(data_unc) < thr_unc).astype(np.int)
+                    data_prob = np.mean(np.array(data_pred_lst), axis=0)
 
-                    data_pred_thrUnc_lst = [d * deepcopy(data_unc_thr) for d in data_pred_lst]
-
-                    data_prob = np.mean(np.array(data_pred_thrUnc_lst), axis=0)
+                    data_prob_thrUnc = deepcopy(data_prob)
+                    data_prob_thrUnc[data_prob > thr_unc] = 0
 
                     for i_vox, thr_vox in enumerate(thr_vox_lst):
-                        data_hard = threshold_predictions(deepcopy(data_prob), thr=thr_vox).astype(np.uint8)
+                        data_hard = threshold_predictions(deepcopy(data_prob_thrUnc), thr=thr_vox).astype(np.uint8)
 
                         data_hard = remove_small_obj(data_hard, MIN_OBJ_SIZE, BIN_STRUCT)
 
