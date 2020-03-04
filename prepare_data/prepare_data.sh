@@ -3,7 +3,7 @@
 # Generate segmentation and co-register all multimodal data.
 #
 # Usage:
-#   ./prepare_data.sh <SUBJECT_ID> <PATH_OUTPUT> <PATH_QC> <PATH_LOG>
+#   ./prepare_data.sh <FILE_PARAM>
 #
 # Where SUBJECT_ID refers to the SUBJECT ID according to the BIDS format.
 #
@@ -26,8 +26,8 @@ source $FILEPARAM
 
 # Create BIDS architecture
 PATH_IN="`pwd`/${SUBJECT}/anat"
-ofolder_seg="${PATH_OUTPUT}/derivatives/labels/${SUBJECT}/anat"
-ofolder_reg="${PATH_OUTPUT}/${SUBJECT}/anat"
+ofolder_seg="${PATH_RESULTS}/derivatives/labels/${SUBJECT}/anat"
+ofolder_reg="${PATH_RESULTS}/${SUBJECT}/anat"
 mkdir -p ${ofolder_reg}
 mkdir -p ${ofolder_seg}
 
@@ -47,6 +47,7 @@ segment_if_does_not_exist(){
   if [ -e "${PATH_SEGMANUAL}/${file}_seg-manual.nii.gz" ]; then
     echo "Found manual segmentation: ${PATH_SEGMANUAL}/${FILESEG}-manual.nii.gz"
     cp "${PATH_SEGMANUAL}/${FILESEG}-manual.nii.gz" ${FILESEG}.nii.gz
+    sct_register_multimodal -i ${FILESEG}.nii.gz -d ${file}.nii.gz -identity 1 -o ${FILESEG}.nii.gz 
     sct_qc -i ${file}.nii.gz -s ${FILESEG}.nii.gz -p sct_deepseg_sc -qc ${PATH_QC} -qc-subject ${SUBJECT}
   else
     # Segment spinal cord
@@ -69,7 +70,7 @@ cp ${PATH_IN}/${file_t2s}.nii.gz .
 cp ${PATH_IN}/${file_t1w}.nii.gz .
 
 # Crop to avoid imperfect slab profile at the edge (altered contrast)
-sct_crop_image -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_crop.nii.gz -start 3 -end -3 -dim 2
+sct_crop_image -i ${file_t1w_mts}.nii.gz -o ${file_t1w_mts}_crop.nii.gz -zmin 3 -zmax -4
 file_t1w_mts="${file_t1w_mts}_crop"
 
 # Resample to fixed resolution
@@ -124,7 +125,7 @@ sct_apply_transfo -i ${SUBJECT}_T2star_mean.nii.gz -d ${file_t1w_mts}.nii.gz -w 
 sct_apply_transfo -i ${SUBJECT}_T1w.nii.gz -d ${file_t1w_mts}.nii.gz -w warp_${file_seg_t1w}2${file_seg}.nii.gz -o ${SUBJECT}_T1w_reg2.nii.gz
 
 # Average all segmentations together and then binarize. Note: we do not include the T2s because it only has 15 slices
-sct_image -i ${file_seg}.nii.gz,${file_seg_t1w}_reg.nii.gz,${file_seg_t2w}_reg.nii.gz -concat t -o tmp.concat.nii.gz
+sct_image -i ${file_seg}.nii.gz ${file_seg_t1w}_reg.nii.gz ${file_seg_t2w}_reg.nii.gz -concat t -o tmp.concat.nii.gz
 sct_maths -i tmp.concat.nii.gz -mean t -o tmp.concat_mean.nii.gz
 sct_maths -i tmp.concat_mean.nii.gz -bin 0.5 -o ${file_t1w_mts}_seg-manual.nii.gz
 

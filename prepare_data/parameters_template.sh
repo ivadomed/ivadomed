@@ -11,7 +11,7 @@ export PATH_DATA="${PATH_PARENT}/data"
 
 # Paths to where to save the new dataset.
 # Do not add "/" at the end. Path should be absolute (i.e. do not use "~")
-export PATH_OUTPUT="${PATH_PARENT}/results"
+export PATH_RESULTS="${PATH_PARENT}/results"
 export PATH_QC="${PATH_PARENT}/qc"
 export PATH_LOG="${PATH_PARENT}/log"
 

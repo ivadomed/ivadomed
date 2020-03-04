@@ -1,33 +1,25 @@
-import sys
 import json
-import os
-import time
-import shutil
 import random
+import shutil
+import sys
+import time
+
 import joblib
 import pandas as pd
-from math import exp
-import numpy as np
-
-import torch.nn as nn
 import torch.backends.cudnn as cudnn
-from torch.utils.data import DataLoader
-from torchvision import transforms
 import torchvision.utils as vutils
-from torch.utils.tensorboard import SummaryWriter
-from torch import optim
-
-from medicaltorch.filters import SliceFilter
 from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
+from torch import optim
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
+from torchvision import transforms
 
-from tqdm import tqdm
-
-from ivadomed import loader as loader
-from ivadomed import models
-from ivadomed import losses
-from ivadomed.utils import *
 import ivadomed.transforms as ivadomed_transforms
+from ivadomed import loader as loader
+from ivadomed import losses
+from ivadomed import models
+from ivadomed.utils import *
 
 cudnn.benchmark = True
 
@@ -58,6 +50,7 @@ def cmd_train(context):
 
     unet_3D = context["unet_3D"]
     HeMIS = context['HeMIS']
+    attention = context["attention_unet"]
     if film_bool:
         context["multichannel"] = False
         HeMIS = False
@@ -71,9 +64,10 @@ def cmd_train(context):
     if bool(sum(context["film_layers"])) and not (metadata_bool):
         print('\tWarning FiLM disabled since metadata is disabled')
     else:
-        print('\nArchitecture: {} with a depth of {}.\n'
-              .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else '3D Unet' if unet_3D else
-                      "Unet", context['depth']))
+
+        print('\nArchitecture: {} with a depth of {}.\n' \
+              .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else "Attention UNet" if attention else
+        '3D Unet' if unet_3D else "Unet", context['depth']))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -85,7 +79,7 @@ def cmd_train(context):
     else:
         print('\tInclude all subjects, with or without acquisition metadata.\n')
     if context['multichannel']:
-        print('\tUsing multichannel model with modalities {}.\n'.format(context['multichannel']))
+        print('\tUsing multichannel model with modalities {}.\n'.format(context['contrast_train_validation']))
 
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=context["log_directory"])
@@ -221,7 +215,7 @@ def cmd_train(context):
                                      drop_rate=context["dropout_rate"],
                                      bn_momentum=context["batch_norm_momentum"])
         elif unet_3D:
-            model = models.UNet3D(in_channels=in_channel, n_classes=1)
+            model = models.UNet3D(in_channels=in_channel, n_classes=1, attention=attention)
         else:
             model = models.Unet(in_channel=in_channel,
                                 out_channel=context['out_channel'],
@@ -666,17 +660,26 @@ def cmd_test(context):
 
     # Aleatoric uncertainty
     if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
-        transformation_dict = context["transformation_training"]
+        transformation_dict = context["transformation_testing"]
     else:
         transformation_dict = context["transformation_validation"]
+
     # These are the validation/testing transformations
     validation_transform_list = []
+    print('\nApplied transformations:')
     for transform in transformation_dict.keys():
         parameters = transformation_dict[transform]
         if transform in ivadomed_transforms.get_transform_names():
-            validation_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
+            transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
         else:
-            validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+            transform_obj = getattr(mt_transforms, transform)(**parameters)
+        # check if undo_transform method is implemented
+        if hasattr(transform_obj, 'undo_transform'):
+            print('\t- {}'.format(transform))
+            validation_transform_list.append(transform_obj)
+        else:
+            print('\t- {} NOT included (no undo_transform implemented)'.format(transform))
+    print('\n')
 
     val_transform = transforms.Compose(validation_transform_list)
 
@@ -706,9 +709,9 @@ def cmd_test(context):
         one_hot_encoder = joblib.load("./" + context["log_directory"] + "/one_hot_encoder.joblib")
 
     if not context["unet_3D"]:
-        print(f"Loaded {len(ds_test)} {context['slice_axis']} slices for the test set.")
+        print(f"\nLoaded {len(ds_test)} {context['slice_axis']} slices for the test set.")
     else:
-        print(f"Loaded {len(ds_test)} volumes of size {context['length_3D']} for the test set.")
+        print(f"\nLoaded {len(ds_test)} volumes of size {context['length_3D']} for the test set.")
 
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
                              shuffle=False, pin_memory=True,
@@ -737,17 +740,23 @@ def cmd_test(context):
     metric_mgr = IvadoMetricManager(metric_fns)
 
     # number of Monte Carlo simulation
-    if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and context['uncertainty'][
-        'n_it'] > 0:
+    if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and \
+            context['uncertainty']['n_it'] > 0:
         n_monteCarlo = context['uncertainty']['n_it']
     else:
         n_monteCarlo = 1
 
-    pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
-    for i, batch in enumerate(test_loader):
-        input_samples, gt_samples = batch["input"], batch["gt"]
+    # Epistemic uncertainty
+    if context['uncertainty']['epistemic'] and context['uncertainty']['n_it'] > 0:
+        for m in model.modules():
+            if m.__class__.__name__.startswith('Dropout'):
+                m.train()
 
-        for i_monteCarlo in range(n_monteCarlo):
+    for i_monteCarlo in range(n_monteCarlo):
+        pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
+        for i, batch in enumerate(test_loader):
+            input_samples, gt_samples = batch["input"], batch["gt"]
+
             with torch.no_grad():
                 if cuda_available:
                     test_input = cuda(input_samples)
@@ -778,6 +787,9 @@ def cmd_test(context):
 
                 else:
                     preds = model(test_input)
+                    if context["attention_unet"]:
+                        save_feature_map(batch, "attentionblock2", context, model, test_input,
+                                         AXIS_DCT[context["slice_axis"]])
 
             # WARNING: sample['gt'] is actually the pred in the return sample implementation justification: the other
             # option: rdict['pred'] = preds would require to largely modify mt_transforms
@@ -795,7 +807,7 @@ def cmd_test(context):
                 for k in batch.keys():
                     rdict[k] = batch[k][smp_idx]
                 if rdict["input"].shape[0] > 1:
-                    rdict["input"] = rdict["input"][1, ][None, ]
+                    rdict["input"] = rdict["input"][1,][None,]
                 rdict_undo = val_undo_transform(rdict)
 
                 fname_ref = rdict_undo['input_metadata']['gt_filename']
@@ -808,12 +820,11 @@ def cmd_test(context):
 
                         # If MonteCarlo, then we save each simulation result
                         if n_monteCarlo > 1:
+                            fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
-                            fname_pred = fname_pred.split(
-                                '.nii.gz')[0]+'_'+str(i_monteCarlo).zfill(2)+'.nii.gz'
-
-                        save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, AXIS_DCT[context['slice_axis']],
-                                 context["binarize_prediction"])
+                        save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred,
+                                 slice_axis=AXIS_DCT[context['slice_axis']],
+                                 binarize=context["binarize_prediction"])
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
@@ -833,7 +844,7 @@ def cmd_test(context):
 
                     # Choose only one modality
                     save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
-                             AXIS_DCT[context['slice_axis']], unet_3D=True)
+                             slice_axis=AXIS_DCT[context['slice_axis']], unet_3D=True)
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
@@ -848,39 +859,9 @@ def cmd_test(context):
         metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
-    # list subj_acq prefixes
-
-    if context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']:
-        subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_3Dpred) if f.endswith('.nii.gz') and '_pred' in f]
-        # remove duplicates
-        subj_acq_lst = list(set(subj_acq_lst))
-        # keep only the images where unc has not been computed yet
-        subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(os.path.join(path_3Dpred, f+'_unc-cv.nii.gz'))]
-        # loop across subj_acq
-        for subj_acq in tqdm(subj_acq_lst, desc="Uncertainty Computation"):
-            # hard segmentation from MC samples
-            fname_pred = os.path.join(path_3Dpred, subj_acq+'_pred.nii.gz')
-            # fname for soft segmentation from MC simulations
-            fname_soft = os.path.join(path_3Dpred, subj_acq+'_soft.nii.gz')
-            # find Monte Carlo simulations
-            fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
-
-            # if final segmentation from Monte Carlo simulations has not been generated yet
-            if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
-               # find Monte Carlo simulations
-               fname_pred_lst = [os.path.join(path_3Dpred, f) for f in os.listdir(path_3Dpred) if subj_acq+'_pred_' in f]
-
-               # average then argmax
-               combine_predictions(fname_pred_lst, fname_pred, fname_soft)
-
-            fname_unc_vox = os.path.join(path_3Dpred, subj_acq+'_unc-vox.nii.gz')
-            fname_unc_struct = os.path.join(path_3Dpred, subj_acq+'_unc.nii.gz')
-            if not os.path.isfile(fname_unc_vox) or not os.path.isfile(fname_unc_struct):
-               # compute voxel-wise uncertainty map
-               voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
-
-               # compute structure-wise uncertainty
-               structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
+    if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty'][
+        'n_it'] > 0:
+        run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
@@ -888,8 +869,13 @@ def cmd_test(context):
 
 
 def cmd_eval(context):
+    path_pred = os.path.join(context['log_directory'], 'pred_masks')
+    if not os.path.isdir(path_pred):
+        print('\nRun Inference\n')
+        cmd_test(context)
+    print('\nRun Evaluation on {}\n'.format(path_pred))
+
     ##### DEFINE DEVICE #####
-    cmd_test(context)
     device = torch.device("cpu")
     print("Working on {}.".format(device))
 
@@ -902,7 +888,6 @@ def cmd_eval(context):
     df_results = pd.DataFrame()
 
     # list subject_acquisition
-    path_pred = os.path.join(context['log_directory'], 'pred_masks')
     subj_acq_lst = [f.split('_pred')[0]
                     for f in os.listdir(path_pred) if f.endswith('_pred.nii.gz')]
 
@@ -910,24 +895,22 @@ def cmd_eval(context):
     for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
-
-        fname_pred = os.path.join(path_pred, subj_acq+'_pred.nii.gz')
-        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels',
-                                subj, 'anat', subj_acq+context['target_suffix']+'.nii.gz')
+        fname_pred = os.path.join(path_pred, subj_acq + '_pred.nii.gz')
+        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat',
+                                subj_acq + context['target_suffix'] + '.nii.gz')
 
         # 3D evaluation
-        eval = Evaluation3DMetrics(fname_pred=fname_pred, fname_gt=fname_gt)
-        results_pred = eval.get_all_metrics()
-
+        eval = Evaluation3DMetrics(fname_pred=fname_pred,
+                                   fname_gt=fname_gt,
+                                   params=context['eval_params'])
+        results_pred = eval.run_eval()
         # save results of this fname_pred
         results_pred['image_id'] = subj_acq
         df_results = df_results.append(results_pred, ignore_index=True)
 
     df_results = df_results.set_index('image_id')
+    df_results.to_csv(os.path.join(path_results, 'evaluation_3Dmetrics.csv'))
 
-    # save results as csv
-    fname_out = os.path.join(path_results, 'evaluation_3Dmetrics.csv')
-    df_results.to_csv(fname_out)
     print(df_results.head(5))
 
 

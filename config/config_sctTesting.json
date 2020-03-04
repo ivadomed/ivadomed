@@ -12,7 +12,6 @@
         "retrain_model": "log_large/best_model.pt",
         "out_channel": 1,
         "depth": 2,
-        "missing_modality": false,
         "batch_size": 64,
         "dropout_rate": 0.3,
         "batch_norm_momentum": 0.1,
@@ -22,6 +21,7 @@
         "loss": {"name": "dice"},
         "log_directory": "log_large_retrain",
         "film_layers": [1, 1, 1, 1, 1, 1, 1, 1],
+	"attention_unet": false,
 	"mixup_bool": false,
 	"mixup_alpha": 2,
 	"metadata": "constrast",
@@ -38,6 +38,11 @@
 	"unet_3D": false,
 	"HeMIS": false,
 	"binarize_prediction": true,
+        "eval_params": {
+            "targetSize": {"unit": "vox", "thr": [20, 100]},
+            "removeSmall": {"unit": "vox", "thr": 3},
+            "overlap": {"unit": "vox", "thr": 3}
+            },
 	"transformation_training": {
 		"Resample": {
 			"wspace": 0.75,
@@ -73,5 +78,16 @@
 		"ToTensor": {},
 		"NormalizeInstance": {}
 		},
+        "transformation_testing": {
+                "Resample": {
+                        "wspace": 0.75,
+                        "hspace": 0.75
+                        },
+                "ROICrop2D": {
+                        "size": [48, 48]
+                        },
+                "ToTensor": {},
+                "NormalizeInstance": {}
+                },
         "debugging": false
 }

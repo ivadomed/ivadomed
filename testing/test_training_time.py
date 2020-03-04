@@ -21,7 +21,7 @@ import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 5
+GPU_NUMBER = 0
 BATCH_SIZE = 8
 DROPOUT = 0.4
 DEPTH = 3
@@ -127,7 +127,8 @@ def test_unet():
                               drop_rate=DROPOUT,
                               bn_momentum=BN), train_loader, False, 'Unet'),
                   (models.Unet(in_channel=2), multichannel_loader, False, 'Multi-Channels Unet'),
-                  (models.UNet3D(in_channels=1, n_classes=1), loader_3d, False, '3D Unet')]
+                  (models.UNet3D(in_channels=1, n_classes=1), loader_3d, False, '3D Unet'),
+                  (models.UNet3D(in_channels=1, n_classes=1, attention=True), loader_3d, False, 'Attention UNet')]
     
     for model, train_loader, film_bool, model_name in model_list:
         print("Training {}".format(model_name))

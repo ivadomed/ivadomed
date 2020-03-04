@@ -21,7 +21,6 @@
 	"mixup_bool": true,
 	"mixup_alpha": 2,
 	"metadata": "without",
-	"missing_modality": false,
 	"multichannel": false,
 	"out_channel": 1,
 	"depth": 3,
@@ -31,6 +30,7 @@
 	"early_stopping_epsilon": 0.001,
 	"unet_3D": false,
 	"HeMIS": false,
+	"attention_unet": false,
 	"binarize_prediction": true,
     "slice_axis": "axial",
 	"slice_filter": {
@@ -39,6 +39,7 @@
       "nb_nonzero_thr": 10
     },
     "split_method": "per_center",
+        "eval_params": {},
     "transformation_training": {
 		"Resample": {
 			"wspace": 0.75,
@@ -74,5 +75,16 @@
 		"ToTensor": {},
 		"NormalizeInstance": {}
 		},
+        "transformation_testing": {
+                "Resample": {
+                        "wspace": 0.75,
+                        "hspace": 0.75
+                        },
+                "CenterCrop2D": {
+                        "size": [128, 128]
+                        },
+                "ToTensor": {},
+                "NormalizeInstance": {}
+                },
 	"debugging": false
 }
