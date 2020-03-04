@@ -101,7 +101,7 @@ def run_main(args):
                 data_gt = remove_small_obj(data_gt, MIN_OBJ_SIZE, BIN_STRUCT)
 
                 for i_unc, thr_unc in enumerate(thr_unc_lst):
-                    data_unc_thr = (deepcopy(data_unc) > thr_unc).astype(np.int)
+                    data_unc_thr = (deepcopy(data_unc) < thr_unc).astype(np.int)
 
                     data_pred_thrUnc_lst = [d * deepcopy(data_unc_thr) for d in data_pred_lst]
 
