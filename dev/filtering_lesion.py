@@ -70,12 +70,12 @@ def run_main(args):
 
     gt_folder = os.path.join(context['bids_path'], 'derivatives', 'labels')
 
-    metric_suffix_lst = ['_unc-vox']  #, '_unc-cv', '_unc-avgUnc']
+    metric_suffix_lst = ['_unc-cv']  #['_unc-vox', '_unc-cv', '_unc-avgUnc']
     thr_unc_lst = [0.0001, 0.01, 0.5]  #[0.0001, 0.001, 0.01, 0.1, 0.5]
     thr_vox_lst = [t/10. for t in range(0,10,1)]
     results_dct = {}
     for metric in metric_suffix_lst:
-
+        print(metric)
         tmp_lst = [[] for _ in range(len(thr_vox_lst))]
         res_init_lst = [deepcopy(tmp_lst) for _ in range(len(thr_unc_lst))]
 
@@ -91,6 +91,7 @@ def run_main(args):
             fname_unc = os.path.join(pred_folder, subj_acq+metric+'.nii.gz')
             im = nib.load(fname_unc)
             data_unc = im.get_data()
+            print(np.percentile(data_unc, 25), np.median(data_unc), np.percentile(data_unc, 75), np.max(data_unc))
             del im
 
             data_pred_lst = [nib.load(os.path.join(pred_folder, f)).get_data()
@@ -105,8 +106,21 @@ def run_main(args):
                     data_prob = np.mean(np.array(data_pred_lst), axis=0)
 
                     data_prob_thrUnc = deepcopy(data_prob)
-                    data_prob_thrUnc[data_prob > thr_unc] = 0
+                    data_prob_thrUnc[data_unc > thr_unc] = 0
 
+                    cmpt_vox_beforeThr = np.count_nonzero(data_prob)
+                    cmpt_vox_afterThr = np.count_nonzero(data_prob_thrUnc)
+                    percent_rm_vox = (cmpt_vox_beforeThr - cmpt_vox_afterThr) * 100. / cmpt_vox_beforeThr
+                    percent_retained_vox = 100. - percent_rm_vox
+
+                    print(percent_retained_vox)
+                    results_dct[metric]['retained_vox'][i_unc].append(percent_retained_vox)
+
+        for i_unc, thr_unc in enumerate(thr_unc_lst):
+            mean_retained_vox = np.mean(results_dct[metric]['retained_vox'][i_unc])
+            print('\tUnc threshold: {} --> Mean percentage of retained voxels: {}%.'.format(thr_unc, mean_retained_vox))
+
+    """
                     for i_vox, thr_vox in enumerate(thr_vox_lst):
                         data_hard = threshold_predictions(deepcopy(data_prob_thrUnc), thr=thr_vox).astype(np.uint8)
 
@@ -121,7 +135,6 @@ def run_main(args):
                         results_dct[metric]['fdr_vox'][i_unc][i_vox].append(fdr_vox / 100.)
                         #results_dct[metric]['tpr_obj'][i_unc][i_vox].append(tpr_obj)
                         #results_dct[metric]['fdr_obj'][i_unc][i_vox].append(fdr_obj)
-
 
     for metric in metric_suffix_lst:
         print('Metric: {}'.format(metric))
@@ -152,7 +165,7 @@ def run_main(args):
         fname_out = os.path.join(ofolder, metric+'.png')
         plt.savefig(fname_out, bbox_inches='tight', pad_inches=0)
         plt.close()
-
+    """
 
 if __name__ == '__main__':
     parser = get_parser()
