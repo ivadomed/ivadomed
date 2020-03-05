@@ -866,10 +866,19 @@ def cmd_eval(context):
                                 subj_acq + context['target_suffix'] + '.nii.gz')
 
         # 3D evaluation
-        eval = Evaluation3DMetrics(fname_pred=fname_pred,
-                                   fname_gt=fname_gt,
+        nib_gt, nib_pred = nib.load(fname_gt), nib.load(fname_pred)
+        data_gt, data_pred = nib_gt.get_data(), nib_pred.get_data()
+        eval = Evaluation3DMetrics(data_pred=data_pred,
+                                   data_gt=data_gt,
+                                   dim_lst=nib_gt.header['pixdim'][1:4],
                                    params=context['eval_params'])
-        results_pred = eval.run_eval()
+        # run eval
+        results_pred, data_painted = eval.run_eval()
+        # save painted data, TP FP FN
+        fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
+        nib_painted = nib.Nifti1Image(data_painted, nib_pred.affine)
+        nib.save(nib_painted, fname_paint)
+
         # save results of this fname_pred
         results_pred['image_id'] = subj_acq
         df_results = df_results.append(results_pred, ignore_index=True)
