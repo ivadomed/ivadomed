@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import label, generate_binary_structure
 
 from ivadomed.main import cmd_test
-from ivadomed.utils import threshold_predictions
+from ivadomed.utils import threshold_predictions, Evaluation3DMetrics
 from medicaltorch import metrics as mt_metrics
 
 BIN_STRUCT = generate_binary_structure(3,2)
@@ -27,20 +27,6 @@ def get_parser():
     parser.add_argument("-ofolder", help="Output folder.")
 
     return parser
-
-# TODO: remove once moved out of Evaluation3Dmetrics
-def remove_small_obj(data, size_min, bin_struct):
-    data_label, n = label(data,
-                          structure=bin_struct)
-
-    for idx in range(1, n + 1):
-        data_idx = (data_label == idx).astype(np.int)
-        n_nonzero = np.count_nonzero(data_idx)
-
-        if n_nonzero < size_min:
-            data[data_label == idx] = 0
-
-    return data
 
 def auc_homemade(fpr, tpr, trapezoid=False):
     # source: https://stackoverflow.com/a/39687168
@@ -82,9 +68,9 @@ def run_main(args):
         results_dct[metric] = {'tpr_vox': deepcopy(res_init_lst),
                                 'fdr_vox': deepcopy(res_init_lst),
                                 'retained_vox': [[] for _ in range(len(thr_unc_lst))],
-                                # TODO: modify ltpr and lfdr so that callable here
-                                # 'tpr_obj': deepcopy(res_init_lst),
-                                # 'fdr_obj': deepcopy(res_init_lst)
+                                'tpr_obj': deepcopy(res_init_lst),
+                                'fdr_obj': deepcopy(res_init_lst),
+                                # TODO: reatined_l
                                 }
 
         for subj_acq in subj_acq_lst:
@@ -125,8 +111,8 @@ def run_main(args):
                                                     params=context['eval_params'])
 
                         tpr_vox = mt_metrics.recall_score(eval.data_pred, eval.data_gt, err_value=np.nan)
-                        fdr_vox = 100. - mt_metrics.precision_score(eval.data_hard, eval.data_gt, err_value=np.nan)
-                        tpr_obj = eval.get_ltpr()
+                        fdr_vox = 100. - mt_metrics.precision_score(eval.data_pred, eval.data_gt, err_value=np.nan)
+                        tpr_obj, _ = eval.get_ltpr()
                         fdr_obj = eval.get_lfdr()
 
                         print(thr_vox, tpr_vox, fdr_vox, tpr_obj, fdr_obj)
