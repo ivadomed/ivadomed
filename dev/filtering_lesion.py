@@ -70,7 +70,7 @@ def run_main(args):
                                 'retained_vox': [[] for _ in range(len(thr_unc_lst))],
                                 'tpr_obj': deepcopy(res_init_lst),
                                 'fdr_obj': deepcopy(res_init_lst),
-                                # TODO: reatined_l
+                                'retained_obj': [[] for _ in range(len(thr_unc_lst))]
                                 }
 
         for subj_acq in subj_acq_lst:
@@ -99,9 +99,14 @@ def run_main(args):
                     percent_rm_vox = (cmpt_vox_beforeThr - cmpt_vox_afterThr) * 100. / cmpt_vox_beforeThr
                     percent_retained_vox = 100. - percent_rm_vox
 
+                    _, n_beforeThr = label((data_prob > 0).astype(np.int), struct=BIN_STRUCT)
+                    _, n_afterThr = label((data_prob_thrUnc > 0).astype(np.int), struct=BIN_STRUCT)
+                    percent_reatined_obj = 100. - (n_beforeThr - n_afterThr) * 100. / n_beforeThr
+
                     results_dct[metric]['retained_vox'][i_unc].append(percent_retained_vox)
-                    print(' ')
-                    print(thr_unc)
+                    results_dct[metric]['retained_obj'][i_unc].append(percent_retained_obj)
+
+"""
                     for i_vox, thr_vox in enumerate(thr_vox_lst):
                         data_hard = threshold_predictions(deepcopy(data_prob_thrUnc), thr=thr_vox).astype(np.uint8)
 
@@ -121,17 +126,20 @@ def run_main(args):
                         results_dct[metric]['fdr_vox'][i_unc][i_vox].append(fdr_vox / 100.)
                         results_dct[metric]['tpr_obj'][i_unc][i_vox].append(tpr_obj / 100.)
                         results_dct[metric]['fdr_obj'][i_unc][i_vox].append(fdr_obj / 100.)
-
-        for i_unc, thr_unc in enumerate(thr_unc_lst):
-            mean_retained_vox = np.mean(results_dct[metric]['retained_vox'][i_unc])
-            print('\tUnc threshold: {} --> Mean percentage of retained voxels: {}%.'.format(thr_unc, mean_retained_vox))
 """
+
     for metric in metric_suffix_lst:
         print('Metric: {}'.format(metric))
 
         plt.figure(figsize=(10,10))
         for i_unc, thr_unc in enumerate(thr_unc_lst):
             print('Unc Thr: {}'.format(thr_unc))
+
+            mean_retained_vox = np.mean(results_dct[metric]['retained_vox'][i_unc])
+            mean_retained_obj = np.mean(results_dct[metric]['retained_obj'][i_unc])
+            print('Mean percentage of retained voxels: {}%, lesions: {}%.'.format(thr_unc, mean_retained_vox, mean_retained_obj))
+
+"""
             tpr_vals = np.array([np.nanmean(results_dct[metric]['tpr_vox'][i_unc][i_vox]) for i_vox in range(len(thr_vox_lst))])
             fdr_vals = np.array([np.nanmean(results_dct[metric]['fdr_vox'][i_unc][i_vox]) for i_vox in range(len(thr_vox_lst))])
 
