@@ -99,8 +99,8 @@ def run_main(args):
 
             fname_gt = os.path.join(gt_folder, subj_acq.split('_')[0], 'anat', subj_acq+context["target_suffix"]+'.nii.gz')
             if os.path.isfile(fname_gt):
-                data_gt = nib.load(fname_gt).get_data()
-                data_gt = remove_small_obj(data_gt, MIN_OBJ_SIZE, BIN_STRUCT)
+                nib_gt = nib.load(fname_gt)
+                data_gt = nib_gt.get_data()
 
                 for i_unc, thr_unc in enumerate(thr_unc_lst):
                     data_prob = np.mean(data_pred_lst, axis=0)
@@ -117,20 +117,24 @@ def run_main(args):
                     print(' ')
                     print(thr_unc)
                     for i_vox, thr_vox in enumerate(thr_vox_lst):
-                        print(np.count_nonzero(data_prob_thrUnc))
                         data_hard = threshold_predictions(deepcopy(data_prob_thrUnc), thr=thr_vox).astype(np.uint8)
-                        print(np.count_nonzero(data_hard))
-                        data_hard = remove_small_obj(data_hard, MIN_OBJ_SIZE, BIN_STRUCT)
-                        print(np.count_nonzero(data_hard))
-                        tpr_vox = mt_metrics.recall_score(data_hard, data_gt, err_value=np.nan)
-                        fdr_vox = 100. - mt_metrics.precision_score(data_hard, data_gt, err_value=np.nan)
-                        #tpr_obj =
-                        #fdr_obj =
-                        print(thr_vox, tpr_vox, fdr_vox)
+
+                        eval = Evaluation3DMetrics(data_pred=data_hard,
+                                                    data_gt=data_gt,
+                                                    dim_lst=nib_gt.header['pixdim'][1:4],
+                                                    params=context['eval_params'])
+
+                        tpr_vox = mt_metrics.recall_score(eval.data_pred, eval.data_gt, err_value=np.nan)
+                        fdr_vox = 100. - mt_metrics.precision_score(eval.data_hard, eval.data_gt, err_value=np.nan)
+                        tpr_obj = eval.get_ltpr()
+                        fdr_obj = eval.get_lfdr()
+
+                        print(thr_vox, tpr_vox, fdr_vox, tpr_obj, fdr_obj)
+
                         results_dct[metric]['tpr_vox'][i_unc][i_vox].append(tpr_vox / 100.)
                         results_dct[metric]['fdr_vox'][i_unc][i_vox].append(fdr_vox / 100.)
-                        #results_dct[metric]['tpr_obj'][i_unc][i_vox].append(tpr_obj)
-                        #results_dct[metric]['fdr_obj'][i_unc][i_vox].append(fdr_obj)
+                        results_dct[metric]['tpr_obj'][i_unc][i_vox].append(tpr_obj / 100.)
+                        results_dct[metric]['fdr_obj'][i_unc][i_vox].append(fdr_obj / 100.)
 
         for i_unc, thr_unc in enumerate(thr_unc_lst):
             mean_retained_vox = np.mean(results_dct[metric]['retained_vox'][i_unc])
