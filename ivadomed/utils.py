@@ -43,14 +43,12 @@ class IvadoMetricManager(mt_metrics.MetricManager):
 
 class Evaluation3DMetrics(object):
 
-    def __init__(self, fname_pred, fname_gt, params={}):
-        self.fname_pred = fname_pred
-        self.fname_gt = fname_gt
+    def __init__(self, data_pred, data_gt, dim_lst, params={}):
 
-        self.data_pred = self.get_data(self.fname_pred)
-        self.data_gt = self.get_data(self.fname_gt)
+        self.data_pred = data_pred
+        self.data_gt = data_gt
 
-        self.px, self.py, self.pz = self.get_pixdim(self.fname_pred)
+        self.px, self.py, self.pz = dim_lst
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
 
@@ -92,7 +90,6 @@ class Evaluation3DMetrics(object):
                                               structure=self.bin_struct)
 
         # painted data, object wise
-        self.fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
         self.data_painted = np.copy(self.data_pred)
 
         # overlap_vox is used to define the object-wise TP, FP, FN
@@ -106,15 +103,6 @@ class Evaluation3DMetrics(object):
                 self.overlap_vox = None
         else:
             self.overlap_vox = 3
-
-    def get_data(self, fname):
-        nib_im = nib.load(fname)
-        return nib_im.get_data()
-
-    def get_pixdim(self, fname):
-        nib_im = nib.load(fname)
-        px, py, pz = nib_im.header['pixdim'][1:4]
-        return px, py, pz
 
     def remove_small_objects(self, data):
         data_label, n = label(data,
@@ -306,11 +294,7 @@ class Evaluation3DMetrics(object):
             else:  # gt_pred == 'pred'
                 dct['lfdr' + suffix] = self.get_lfdr(label_size=lb_size)
 
-        # save painted file
-        nib_painted = nib.Nifti1Image(self.data_painted, nib.load(self.fname_pred).affine)
-        nib.save(nib_painted, self.fname_paint)
-
-        return dct
+        return dct, self.data_painted
 
 
 def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, unet_3D=False, binarize=True):
