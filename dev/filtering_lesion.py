@@ -38,6 +38,25 @@ def auc_homemade(fpr, tpr, trapezoid=False):
         area += (p1[0] - p0[0]) * ((p1[1] + p0[1]) / 2 if trapezoid else p0[1])
     return area
 
+def print_unc_stats(unc_name, pred_folder, im_lst):
+    mins, p25s, p50s, p75s, maxs = [], [], [], []
+    for fname_pref in im_lst:
+        fname_unc = os.path.join(pred_folder, fname_pref+unc_name+'.nii.gz')
+        im = nib.load(fname_unc)
+        data_unc = im.get_data()
+        del im
+        if np.any(data_unc):
+            vals = list(data_unc[data_unc > 0])
+            mins.append(np.min(vals))
+            maxs.append(np.max(vals))
+            p25s.append(np.percentile(vals, 25))
+            p50s.append(np.percentile(vals, 50))
+            p75s.append(np.percentile(vals, 75))
+
+    for n, l in zip(['min', 'max', 'p25', 'p50', 'p75'], [mins, maxs, p25s, p50s, p75s]):
+        print('\t{}: {}'.format(n, np.mean(l)))
+
+
 def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_folder, im_lst):
 
     # init results
@@ -48,13 +67,19 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
                   'retained_elt': [[] for _ in range(len(thr_unc_lst))]
     }
 
+    p25, p50, p75, max = [], [], [], []
     for fname_pref in im_lst:
         fname_unc = os.path.join(pred_folder, fname_pref+unc_name+'.nii.gz')
         im = nib.load(fname_unc)
         data_unc = im.get_data()
         print(np.percentile(data_unc, 25), np.median(data_unc), np.percentile(data_unc, 75), np.max(data_unc))
         del im
-
+        p25.append(np.percentile(data_unc, 25))
+        p50.append(np.percentile(data_unc, 50))
+        p75.append(np.percentile(data_unc, 75))
+        max.append(np.max(data_unc))
+    for l in [p25, p50, p75, max]:
+        print(np.mean(l))
 """
             data_pred_lst = np.array([nib.load(os.path.join(pred_folder, f)).get_data()
                                 for f in os.listdir(pred_folder) if subj_acq+'_pred_' in f])
@@ -98,7 +123,7 @@ def run_main(args):
         cmd_test(context)
 
     subj_acq_lst = list(set([f.split('_pred')[0] for f in os.listdir(pred_folder)
-                    if f.endswith('.nii.gz') and '_pred' in f]))[:10]
+                    if f.endswith('.nii.gz') and '_pred' in f]))
 
     gt_folder = os.path.join(context['bids_path'], 'derivatives', 'labels')
 
@@ -119,7 +144,12 @@ def run_main(args):
     }
 
     for exp in exp_dct.keys():
+        print(config_dct['measure'])
         config_dct = exp_dct[exp]
+
+        # print_unc_stats is used to determine 'uncertainty_thr'
+        print_unc_stats(config_dct['measure'], pred_folder, subj_acq_lst)
+"""
         res = run_experiement(level=config_dct['level'],
                                 unc_name=config_dct['measure'],
                                 thr_unc_lst=config_dct['uncertainty_thr'],
@@ -128,7 +158,7 @@ def run_main(args):
                                 pred_folder=pred_folder,
                                 im_lst=subj_acq_lst)
 
-"""
+
         for subj_acq in subj_acq_lst:
             fname_unc = os.path.join(pred_folder, subj_acq+metric+'.nii.gz')
             im = nib.load(fname_unc)
