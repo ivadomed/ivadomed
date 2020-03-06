@@ -56,9 +56,25 @@ def run_main(args):
 
     gt_folder = os.path.join(context['bids_path'], 'derivatives', 'labels')
 
-    metric_suffix_lst = ['_unc-vox']  #['_unc-vox', '_unc-cv', '_unc-avgUnc']
-    thr_unc_lst = [1e-5, 1e-3, 1e-1, 0.5]  #[0.0001, 0.001, 0.01, 0.1, 0.5]
-    thr_vox_lst = [1e-6]+[t/10. for t in range(1,10,1)]
+    # experiments
+    exp_dct = {
+                'exp1': {'level': 'vox',
+                            'uncertainty_measure': '_unc-vox',
+                            'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
+                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)],
+                            'results': {}},
+                'exp2': {'level': 'obj',
+                            'uncertainty_measure': '_unc-cv',
+                            'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
+                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)],
+                            'results': {}},
+                'exp3': {'level': 'obj',
+                            'uncertainty_measure': '_unc-avgUnc',
+                            'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
+                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)],
+                            'results': {}}
+    }
+
     results_dct = {}
     for metric in metric_suffix_lst:
         print(metric)
@@ -105,7 +121,8 @@ def run_main(args):
 
                     results_dct[metric]['retained_vox'][i_unc].append(percent_retained_vox)
                     results_dct[metric]['retained_obj'][i_unc].append(percent_retained_obj)
-
+        print(results_dct[metric]['retained_obj'], results_dct[metric]['retained_vox'])
+"""
                     for i_vox, thr_vox in enumerate(thr_vox_lst):
                         data_hard = threshold_predictions(deepcopy(data_prob_thrUnc), thr=thr_vox).astype(np.uint8)
 
@@ -160,7 +177,7 @@ def run_main(args):
         fname_out = os.path.join(ofolder, metric+'.png')
         plt.savefig(fname_out, bbox_inches='tight', pad_inches=0)
         plt.close()
-
+"""
 if __name__ == '__main__':
     parser = get_parser()
     arguments = parser.parse_args()
