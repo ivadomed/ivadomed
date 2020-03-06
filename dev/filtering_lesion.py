@@ -39,7 +39,7 @@ def auc_homemade(fpr, tpr, trapezoid=False):
     return area
 
 def print_unc_stats(unc_name, pred_folder, im_lst):
-    mins, p25s, p50s, p75s, maxs = [], [], [], []
+    mins, p25s, p50s, p75s, maxs = [], [], [], [], []
     for fname_pref in im_lst:
         fname_unc = os.path.join(pred_folder, fname_pref+unc_name+'.nii.gz')
         im = nib.load(fname_unc)
@@ -56,9 +56,18 @@ def print_unc_stats(unc_name, pred_folder, im_lst):
     for n, l in zip(['min', 'max', 'p25', 'p50', 'p75'], [mins, maxs, p25s, p50s, p75s]):
         print('\t{}: {}'.format(n, np.mean(l)))
 
+def count_retained(data_before, data_after, level):
+    if level == 'vox':
+        cmpt_before, cmpt_after = np.count_nonzero(data_before), np.count_nonzero(data_after)
+    else:  # level == 'obj'
+        print(np.sum(data_before), np.sum(data_after))
+        _, cmpt_before = label(data_before, structure=BIN_STRUCT)
+        _, cmpt_after = label(data_after, structure=BIN_STRUCT)
+        print(cmpt_before, cmpt_after)
+    percent_rm = (cmpt_before - cmpt_after) * 100. / cmpt_before
+    return 100. - percent_rm
 
-def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_folder, im_lst):
-
+def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_folder, im_lst, target_suf):
     # init results
     tmp_lst = [[] for _ in range(len(thr_pred_lst))]
     res_init_lst = [deepcopy(tmp_lst) for _ in range(len(thr_unc_lst))]
@@ -67,47 +76,37 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
                   'retained_elt': [[] for _ in range(len(thr_unc_lst))]
     }
 
-    p25, p50, p75, max = [], [], [], []
+    # loop across images
     for fname_pref in im_lst:
+        # uncertainty map
         fname_unc = os.path.join(pred_folder, fname_pref+unc_name+'.nii.gz')
         im = nib.load(fname_unc)
         data_unc = im.get_data()
-        print(np.percentile(data_unc, 25), np.median(data_unc), np.percentile(data_unc, 75), np.max(data_unc))
         del im
-        p25.append(np.percentile(data_unc, 25))
-        p50.append(np.percentile(data_unc, 50))
-        p75.append(np.percentile(data_unc, 75))
-        max.append(np.max(data_unc))
-    for l in [p25, p50, p75, max]:
-        print(np.mean(l))
-"""
-            data_pred_lst = np.array([nib.load(os.path.join(pred_folder, f)).get_data()
-                                for f in os.listdir(pred_folder) if subj_acq+'_pred_' in f])
 
-            fname_gt = os.path.join(gt_folder, subj_acq.split('_')[0], 'anat', subj_acq+context["target_suffix"]+'.nii.gz')
-            if os.path.isfile(fname_gt):
-                nib_gt = nib.load(fname_gt)
-                data_gt = nib_gt.get_data()
+        # list MC samples
+        data_pred_lst = np.array([nib.load(os.path.join(pred_folder, f)).get_data()
+                                for f in os.listdir(pred_folder) if fname_pref+'_pred_' in f])
 
+        # ground-truth fname
+        fname_gt = os.path.join(gt_folder, fname_pref.split('_')[0], 'anat', fname_pref+target_suf+'.nii.gz')
+        if os.path.isfile(fname_gt):
+            nib_gt = nib.load(fname_gt)
+            data_gt = nib_gt.get_data()
+
+            # soft prediction
+            data_soft = np.mean(data_pred_lst, axis=0)
+
+            if np.any(data_gt) and np.any(data_soft):
                 for i_unc, thr_unc in enumerate(thr_unc_lst):
-                    data_prob = np.mean(data_pred_lst, axis=0)
+                    # discard uncertain lesions from data_soft
+                    data_soft_thrUnc = deepcopy(data_soft)
+                    data_soft_thrUnc[data_unc > thr_unc] = 0
+                    print(np.sum(data_soft), np.sum(data_soft_thrUnc))
+                    cmpt = count_retained((data_soft > 0).astype(np.int), (data_soft_thrUnc > 0).astype(np.int), level)
+                    res_dct['retained_elt'][i_unc].append(cmpt)
 
-                    data_prob_thrUnc = deepcopy(data_prob)
-                    data_prob_thrUnc[data_unc > thr_unc] = 0
-
-                    cmpt_vox_beforeThr = np.count_nonzero(data_prob)
-                    cmpt_vox_afterThr = np.count_nonzero(data_prob_thrUnc)
-                    percent_rm_vox = (cmpt_vox_beforeThr - cmpt_vox_afterThr) * 100. / cmpt_vox_beforeThr
-                    percent_retained_vox = 100. - percent_rm_vox
-
-                    _, n_beforeThr = label((data_prob > 0).astype(np.int), structure=BIN_STRUCT)
-                    _, n_afterThr = label((data_prob_thrUnc > 0).astype(np.int), structure=BIN_STRUCT)
-                    percent_retained_obj = 100. - ((n_beforeThr - n_afterThr) * 100. / n_beforeThr)
-
-                    results_dct[metric]['retained_vox'][i_unc].append(percent_retained_vox)
-                    results_dct[metric]['retained_obj'][i_unc].append(percent_retained_obj)
-        print(results_dct[metric]['retained_obj'], results_dct[metric]['retained_vox'])
-"""
+    return res_dct
 
 def run_main(args):
 
@@ -129,36 +128,39 @@ def run_main(args):
 
     # experiments
     exp_dct = {
-                'exp1': {'level': 'vox',
-                            'uncertainty_measure': '_unc-vox',
-                            'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
-                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]},
+            #    'exp1': {'level': 'vox',
+            #                'uncertainty_measure': '_unc-vox',
+            #                'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
+            #                'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]},
                 'exp2': {'level': 'obj',
                             'uncertainty_measure': '_unc-cv',
-                            'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
+                            'uncertainty_thr': [0.1, 0.2, 0.3, 0.4, 0.5],
                             'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]},
                 'exp3': {'level': 'obj',
                             'uncertainty_measure': '_unc-avgUnc',
-                            'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
+                            'uncertainty_thr': [0.1, 0.2, 0.3, 0.4, 0.5],
                             'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]}
     }
 
     for exp in exp_dct.keys():
-        print(config_dct['measure'])
         config_dct = exp_dct[exp]
+        print(config_dct['uncertainty_measure'])
 
         # print_unc_stats is used to determine 'uncertainty_thr'
-        print_unc_stats(config_dct['measure'], pred_folder, subj_acq_lst)
-"""
-        res = run_experiement(level=config_dct['level'],
-                                unc_name=config_dct['measure'],
+        #print_unc_stats(config_dct['uncertainty_measure'], pred_folder, subj_acq_lst)
+
+        res = run_experiment(level=config_dct['level'],
+                                unc_name=config_dct['uncertainty_measure'],
                                 thr_unc_lst=config_dct['uncertainty_thr'],
                                 thr_pred_lst=config_dct['prediction_thr'],
                                 gt_folder=gt_folder,
                                 pred_folder=pred_folder,
-                                im_lst=subj_acq_lst)
+                                im_lst=subj_acq_lst[:30],
+                                target_suf=context["target_suffix"])
 
+        print([np.mean(res['retained_elt'][i]) for i, t in enumerate(config_dct['uncertainty_thr'])])
 
+"""
         for subj_acq in subj_acq_lst:
             fname_unc = os.path.join(pred_folder, subj_acq+metric+'.nii.gz')
             im = nib.load(fname_unc)
