@@ -38,6 +38,52 @@ def auc_homemade(fpr, tpr, trapezoid=False):
         area += (p1[0] - p0[0]) * ((p1[1] + p0[1]) / 2 if trapezoid else p0[1])
     return area
 
+def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_folder, im_lst):
+
+    # init results
+    tmp_lst = [[] for _ in range(len(thr_pred_lst))]
+    res_init_lst = [deepcopy(tmp_lst) for _ in range(len(thr_unc_lst))]
+    res_dct = {'tpr': deepcopy(res_init_lst),
+                  'fdr': deepcopy(res_init_lst),
+                  'retained_elt': [[] for _ in range(len(thr_unc_lst))]
+    }
+
+    for fname_pref in im_lst:
+        fname_unc = os.path.join(pred_folder, fname_pref+unc_name+'.nii.gz')
+        im = nib.load(fname_unc)
+        data_unc = im.get_data()
+        print(np.percentile(data_unc, 25), np.median(data_unc), np.percentile(data_unc, 75), np.max(data_unc))
+        del im
+
+"""
+            data_pred_lst = np.array([nib.load(os.path.join(pred_folder, f)).get_data()
+                                for f in os.listdir(pred_folder) if subj_acq+'_pred_' in f])
+
+            fname_gt = os.path.join(gt_folder, subj_acq.split('_')[0], 'anat', subj_acq+context["target_suffix"]+'.nii.gz')
+            if os.path.isfile(fname_gt):
+                nib_gt = nib.load(fname_gt)
+                data_gt = nib_gt.get_data()
+
+                for i_unc, thr_unc in enumerate(thr_unc_lst):
+                    data_prob = np.mean(data_pred_lst, axis=0)
+
+                    data_prob_thrUnc = deepcopy(data_prob)
+                    data_prob_thrUnc[data_unc > thr_unc] = 0
+
+                    cmpt_vox_beforeThr = np.count_nonzero(data_prob)
+                    cmpt_vox_afterThr = np.count_nonzero(data_prob_thrUnc)
+                    percent_rm_vox = (cmpt_vox_beforeThr - cmpt_vox_afterThr) * 100. / cmpt_vox_beforeThr
+                    percent_retained_vox = 100. - percent_rm_vox
+
+                    _, n_beforeThr = label((data_prob > 0).astype(np.int), structure=BIN_STRUCT)
+                    _, n_afterThr = label((data_prob_thrUnc > 0).astype(np.int), structure=BIN_STRUCT)
+                    percent_retained_obj = 100. - ((n_beforeThr - n_afterThr) * 100. / n_beforeThr)
+
+                    results_dct[metric]['retained_vox'][i_unc].append(percent_retained_vox)
+                    results_dct[metric]['retained_obj'][i_unc].append(percent_retained_obj)
+        print(results_dct[metric]['retained_obj'], results_dct[metric]['retained_vox'])
+"""
+
 def run_main(args):
 
     with open(args.c, "r") as fhandle:
@@ -61,34 +107,28 @@ def run_main(args):
                 'exp1': {'level': 'vox',
                             'uncertainty_measure': '_unc-vox',
                             'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
-                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)],
-                            'results': {}},
+                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]},
                 'exp2': {'level': 'obj',
                             'uncertainty_measure': '_unc-cv',
                             'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
-                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)],
-                            'results': {}},
+                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]},
                 'exp3': {'level': 'obj',
                             'uncertainty_measure': '_unc-avgUnc',
                             'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
-                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)],
-                            'results': {}}
+                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]}
     }
 
-    results_dct = {}
-    for metric in metric_suffix_lst:
-        print(metric)
-        tmp_lst = [[] for _ in range(len(thr_vox_lst))]
-        res_init_lst = [deepcopy(tmp_lst) for _ in range(len(thr_unc_lst))]
+    for exp in exp_dct.keys():
+        config_dct = exp_dct[exp]
+        res = run_experiement(level=config_dct['level'],
+                                unc_name=config_dct['measure'],
+                                thr_unc_lst=config_dct['uncertainty_thr'],
+                                thr_pred_lst=config_dct['prediction_thr'],
+                                gt_folder=gt_folder,
+                                pred_folder=pred_folder,
+                                im_lst=subj_acq_lst)
 
-        results_dct[metric] = {'tpr_vox': deepcopy(res_init_lst),
-                                'fdr_vox': deepcopy(res_init_lst),
-                                'retained_vox': [[] for _ in range(len(thr_unc_lst))],
-                                'tpr_obj': deepcopy(res_init_lst),
-                                'fdr_obj': deepcopy(res_init_lst),
-                                'retained_obj': [[] for _ in range(len(thr_unc_lst))]
-                                }
-
+"""
         for subj_acq in subj_acq_lst:
             fname_unc = os.path.join(pred_folder, subj_acq+metric+'.nii.gz')
             im = nib.load(fname_unc)
@@ -122,7 +162,6 @@ def run_main(args):
                     results_dct[metric]['retained_vox'][i_unc].append(percent_retained_vox)
                     results_dct[metric]['retained_obj'][i_unc].append(percent_retained_obj)
         print(results_dct[metric]['retained_obj'], results_dct[metric]['retained_vox'])
-"""
                     for i_vox, thr_vox in enumerate(thr_vox_lst):
                         data_hard = threshold_predictions(deepcopy(data_prob_thrUnc), thr=thr_vox).astype(np.uint8)
 
