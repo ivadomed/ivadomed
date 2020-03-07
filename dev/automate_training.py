@@ -29,6 +29,7 @@ logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, help="Base config file path.")
+    parser.add_argument("-n", "--n-iterations", dest="n_iterations", type=int, help="Number of times to run each config .")
     parser.add_argument("--all-combin", dest='all_combin', action='store_true', help="To run all combinations of config")
     parser.set_defaults(all_combin=False)
 
@@ -58,6 +59,8 @@ def worker(config):
 
     return config["log_directory"], best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
+def test_worker(config):
+    return "test",1,2,3,4
 
 if __name__ == '__main__':
 
@@ -189,7 +192,21 @@ if __name__ == '__main__':
 
     #Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
     pool = mp.Pool(processes = len(initial_config["gpu"]))
-    validation_scores = pool.map(worker,config_list)
+    if(args.n_iterations is not None):
+        n_iterations = args.n_iterations
+    else:
+        n_iterations = 1
+    print(n_iterations)
+    all_scores = []
+    results_df = pd.DataFrame()
+    for i in range(n_iterations):
+        validation_scores = pool.map(test_worker,config_list)
+        all_scores.append(validation_scores)
+        temp_df = pd.DataFrame(validation_scores, columns =['log_directory', 'best_training_dice','best_training_loss', 'best_validation_dice', 'best_validation_loss'])
+        results_df = pd.concat([results_df, temp_df])
+
+    # Do avg, std, p-values
+    #Assuming base case is first case
 
 
     #Merge config and results in a df
