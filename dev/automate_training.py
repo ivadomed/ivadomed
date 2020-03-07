@@ -13,6 +13,7 @@ import copy
 import joblib
 import json
 import logging
+import numpy as np
 import pandas as pd
 import sys
 import torch.multiprocessing as mp
@@ -21,6 +22,7 @@ import torch.multiprocessing as mp
 from ivadomed import main as ivado
 from ivadomed import loader
 from itertools import product
+from scipy.stats import ttest_ind_from_stats
 
 LOG_FILENAME = 'log.txt'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
@@ -64,7 +66,7 @@ def worker(config):
 
 
 def test_worker(config):
-    return config["log_directory"], 1, 2, 3, 4
+    return config["log_directory"], np.random.normal(0,1), np.random.normal(0,1),np.random.normal(0,1),np.random.normal(0,1)
 
 
 if __name__ == '__main__':
@@ -211,13 +213,24 @@ if __name__ == '__main__':
 # Do avg, std, p-values
 # Assuming base case is first case
     if(n_iterations > 1):
-        avg = results_df.groupby(['log_directory'],as_index=False).mean(numeric_only=True)
-        std = results_df.groupby(['log_directory'],as_index=False).std(numeric_only=True)
-        stats = avg.set_index('log_directory').join(std.set_index('log_directory'))
+        avg = results_df.groupby(['log_directory']).mean()
+        std = results_df.groupby(['log_directory']).std()
+        #stats = avg.set_index('log_directory').join(std.set_index('log_directory'))
         print(results_df)
         print(avg,std)
-        print(stats)
+        #print(stats)
 
+    p_values = np.zeros((len(config_list),len(config_list)))
+    i = 0
+    j = 0
+    for confA in config_list:
+        j = 0
+        for confB in config_list:
+            #print(ttest_ind_from_stats(mean1=avg.loc[confA["log_directory"]]["best_validation_dice"], std1=std.loc[confA["log_directory"]]["best_validation_dice"], nobs1=n_iterations,mean2=avg.loc[confB["log_directory"]]["best_validation_dice"], std2=std.loc[confB["log_directory"]]["best_validation_dice"], nobs2=n_iterations))
+            p_values[i,j] = ttest_ind_from_stats(mean1=avg.loc[confA["log_directory"]]["best_validation_dice"], std1=std.loc[confA["log_directory"]]["best_validation_dice"], nobs1=n_iterations,mean2=avg.loc[confB["log_directory"]]["best_validation_dice"], std2=std.loc[confB["log_directory"]]["best_validation_dice"], nobs2=n_iterations).pvalue
+            j += 1
+        i += 1
+    print(p_values)
     # Merge config and results in a df
     config_df = pd.DataFrame.from_dict(config_list)
     keep = list(param_dict.keys())
