@@ -199,19 +199,15 @@ if __name__ == '__main__':
         n_iterations = args.n_iterations
     else:
         n_iterations = 1
-    # print(n_iterations)
-    #all_scores = []
+
     results_df = pd.DataFrame()
     for i in range(n_iterations):
         validation_scores = pool.map(worker, config_list)
-        # all_scores.append(validation_scores)
         temp_df = pd.DataFrame(validation_scores, columns=[
                                'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice', 'best_validation_loss'])
         results_df = pd.concat([results_df, temp_df])
 
-
-# Do avg, std, p-values
-# Assuming base case is first case
+    # Compute avg, std, p-values
     if(n_iterations > 1):
         avg = results_df.groupby(['log_directory']).mean()
         std = results_df.groupby(['log_directory']).std()
