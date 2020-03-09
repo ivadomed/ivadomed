@@ -619,6 +619,27 @@ def threshold_predictions(predictions, thr=0.5):
     return thresholded_preds
 
 
+def segment_volume(tensor_data, model_name):
+    """Segment volume.
+    :param tensor_data: Torch Tensor, the input slices.
+            Note: Testing transformations have already been applied.
+    :param model_path: the path to the model to use.
+    :return: segmented slices.
+    """
+    # Define device
+    device = torch.device("cpu")
+
+    # Load model
+    model = torch.load(model_path, map_location=device)
+    model.eval()
+
+    with torch.no_grad():
+        # TODO: Check how to deal with batch_size in the SCT CLI / loader.
+        preds = model(tensor_data)
+
+    return preds
+
+
 def cuda(input_var):
     """
     This function sends input_var to GPU.
