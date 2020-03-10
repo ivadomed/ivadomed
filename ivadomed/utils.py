@@ -619,15 +619,28 @@ def threshold_predictions(predictions, thr=0.5):
     return thresholded_preds
 
 
-def segment_volume(tensor_data, model_name):
+def segment_volume(model_fname, image_fname, roi_fname=None, kernel='2d', slice_axis=2):
     """Segment volume.
-    :param tensor_data: Torch Tensor, the input slices.
-            Note: Testing transformations have already been applied.
-    :param model_path: the path to the model to use.
+    :param model_fname: the path to the model to use.
+    :param image_fname: filename of the image to segment.
+    :param roi_fname: filename of a Region Of Interest, used for cropping.
+			e.g. centerline, binary mask.
+    :param kernel: Choice of kernel shape for the CNN: '2d' or '3d'.
+    :param slice_axis: If 2D kernels, then controls the axis for slice extraction:
+			0: sagittal slices, 1: coronal slices, 2: axial slices.
     :return: segmented slices.
     """
     # Define device
     device = torch.device("cpu")
+
+    # Load data
+    filename_pairs = [([image_fname], None, [roi_fname], None)]
+    if kernel == '2d':
+        # TODO: continue the loader
+        dataset = MRI2DSegmentationDataset(filename_pairs)
+    else:
+        print('\nkernel={} is not implemented yet. Choice: "2d".'.format(kernel))
+        exit()
 
     # Load model
     model = torch.load(model_path, map_location=device)
