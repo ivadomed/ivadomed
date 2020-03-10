@@ -2,7 +2,7 @@
 #
 # This script automates the training  of a networks on multiple GPUs to deal with hyperparameter optimisation
 #
-# Usage: python dev/training_scheduler.py -c path/to/config.json -g number_of_gpus
+# Usage: python dev/training_scheduler.py -c path/to/config.json -n number_of_iterations --all-combin
 #
 # Contributors: olivier
 #
