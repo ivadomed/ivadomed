@@ -35,12 +35,14 @@ def get_parser():
                         type=int, help="Number of times to run each config .")
     parser.add_argument("--all-combin", dest='all_combin', action='store_true',
                         help="To run all combinations of config")
+    parser.add_argument("-t", "--run-test", dest='run_test', action='store_true',
+                        help="Run cmd_eval to get metrics on test dataset")
     parser.set_defaults(all_combin=False)
 
     return parser
 
 
-def worker(config):
+def train_worker(config):
     current = mp.current_process()
     # ID of process used to assign a GPU
     ID = int(current.name[-1]) - 1
@@ -53,6 +55,7 @@ def worker(config):
         # Save best validation score
         best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = ivado.cmd_train(
             config)
+
     except:
         logging.exception('Got exception on main handler')
         print("Unexpected error:", sys.exc_info()[0])
@@ -66,7 +69,26 @@ def worker(config):
 
 
 def test_worker(config):
-    return config["log_directory"], np.random.normal(0, 1), np.random.normal(0, 1), np.random.normal(0, 1), np.random.normal(0, 1)
+    current = mp.current_process()
+    # ID of process used to assign a GPU
+    ID = int(current.name[-1]) - 1
+
+    # Use GPU i from the array specified in the config file
+    config["gpu"] = config["gpu"][ID]
+
+    # Call ivado cmd_eval
+    try:
+        # Save best test score
+
+        config["command"] = "eval"
+        test_dict, eval_df = ivado.cmd_eval(config)
+        test_dice = test_dict['dice_score']
+    except:
+        logging.exception('Got exception on main handler')
+        print("Unexpected error:", sys.exc_info()[0])
+        raise
+
+    return config["log_directory"], test_dice
 
 
 if __name__ == '__main__':
@@ -202,29 +224,48 @@ if __name__ == '__main__':
 
     results_df = pd.DataFrame()
     for i in range(n_iterations):
-        validation_scores = pool.map(worker, config_list)
-        temp_df = pd.DataFrame(validation_scores, columns=[
-                               'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice', 'best_validation_loss'])
+        validation_scores = pool.map(trainworker, config_list)
+        val_df = pd.DataFrame(val_scores, columns=[
+            'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice', 'best_validation_loss'])
         results_df = pd.concat([results_df, temp_df])
+
+        if(args.run_test):
+            test_scores = pool.map(test_worker, config_list)
+            test_df = pd.DataFrame(test_scores, columns=[
+                                   'log_directory', 'test_dice'])
+            combined_df = val_df.set_index('log_directory').join(test_df.set_index('log_directory'))
+        else:
+            combined_df = val_df
+
+        results_df = pd.concat([results_df, combined_df])
 
     # Compute avg, std, p-values
     if(n_iterations > 1):
+        num_configs = len(config_list)
         avg = results_df.groupby(['log_directory']).mean()
         std = results_df.groupby(['log_directory']).std()
-        print(results_df)
-        print(avg, std)
 
-        p_values = np.zeros((len(config_list), len(config_list)))
-        i,j = 0,0
+        print("Average dataframe")
+        print(avg)
+        print("Standard deviation dataframe")
+        print(std)
+
+        p_values = np.zeros((num_configs, num_configs))
+        i, j = 0, 0
         for confA in config_list:
             print(confA["log_directory"])
             j = 0
             for confB in config_list:
-                p_values[i, j] = ttest_ind_from_stats(mean1=avg.loc[confA["log_directory"]]["best_validation_dice"], std1=std.loc[confA["log_directory"]]["best_validation_dice"],
-                                                      nobs1=n_iterations, mean2=avg.loc[confB["log_directory"]]["best_validation_dice"], std2=std.loc[confB["log_directory"]]["best_validation_dice"], nobs2=n_iterations).pvalue
+                if args.run_test:
+                    p_values[i, j] = ttest_ind_from_stats(mean1=avg.loc[confA["log_directory"]]["test_dice"], std1=std.loc[confA["log_directory"]]["test_dice"],
+                                                          nobs1=n_iterations, mean2=avg.loc[confB["log_directory"]]["test_dice"], std2=std.loc[confB["log_directory"]]["test_dice"], nobs2=n_iterations).pvalue
+                else:
+                    p_values[i, j] = ttest_ind_from_stats(mean1=avg.loc[confA["log_directory"]]["best_validation_dice"], std1=std.loc[confA["log_directory"]]["best_validation_dice"],
+                                                          nobs1=n_iterations, mean2=avg.loc[confB["log_directory"]]["best_validation_dice"], std2=std.loc[confB["log_directory"]]["best_validation_dice"], nobs2=n_iterations).pvalue
                 j += 1
             i += 1
 
+        print("P-values array")
         print(p_values)
 
     # Merge config and results in a df
@@ -237,4 +278,6 @@ if __name__ == '__main__':
     results_df = results_df.sort_values(by=['best_validation_loss'])
 
     results_df.to_pickle("output_df.pkl")
+
+    print("Detailled results")
     print(results_df)
