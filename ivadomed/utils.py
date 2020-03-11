@@ -620,10 +620,10 @@ def threshold_predictions(predictions, thr=0.5):
     return thresholded_preds
 
 
-def segment_volume(model_fname, model-metadata_fname, image_fname, roi_fname=None):
+def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=None):
     """Segment volume.
     :param model_fname: model filename (.pt) to use.
-    :param model-metadata_fname: model metadata filename (.json), contains model training
+    :param model_metadata_fname: model metadata filename (.json), contains model training
 			configuration.
     :param image_fname: filename of the image to segment.
     :param roi_fname: filename of a Region Of Interest, used for cropping.
@@ -634,7 +634,7 @@ def segment_volume(model_fname, model-metadata_fname, image_fname, roi_fname=Non
     device = torch.device("cpu")
 
     # Load model training config
-    with open(model-metadata_fname, "r") as fhandle:
+    with open(model_metadata_fname, "r") as fhandle:
         context = json.load(fhandle)
 
     # Transformations
