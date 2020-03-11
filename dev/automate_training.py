@@ -224,7 +224,7 @@ if __name__ == '__main__':
 
     results_df = pd.DataFrame()
     for i in range(n_iterations):
-        validation_scores = pool.map(trainworker, config_list)
+        validation_scores = pool.map(train_worker, config_list)
         val_df = pd.DataFrame(val_scores, columns=[
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice', 'best_validation_loss'])
         results_df = pd.concat([results_df, temp_df])
