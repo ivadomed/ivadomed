@@ -6,6 +6,7 @@ import nibabel as nib
 import numpy as np
 import torch
 import torch.nn as nn
+from medicaltorch.datasets import MRI2DSegmentationDataset
 from medicaltorch import metrics as mt_metrics
 from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
@@ -642,15 +643,15 @@ def segment_volume(model_fname, image_fname, roi_fname=None, kernel='2d', slice_
         print('\nkernel={} is not implemented yet. Choice: "2d".'.format(kernel))
         exit()
 
-    # Load model
-    model = torch.load(model_path, map_location=device)
-    model.eval()
+#    # Load model
+#    model = torch.load(model_path, map_location=device)
+#    model.eval()
 
-    with torch.no_grad():
-        # TODO: Check how to deal with batch_size in the SCT CLI / loader.
-        preds = model(tensor_data)
+#    with torch.no_grad():
+#        # TODO: Check how to deal with batch_size in the SCT CLI / loader.
+#        preds = model(tensor_data)
 
-    return preds
+#    return preds
 
 
 def cuda(input_var):
