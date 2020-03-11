@@ -38,8 +38,8 @@ def get_parser():
                         help="To run all combinations of config")
     parser.add_argument("--run-test", dest='run_test', action='store_true',
                         help="Run cmd_eval to get metrics on test dataset")
-    parser.add_argument("--fix-seed", dest='fix_seed', action='store_true',
-                        help="Run cmd_eval to get metrics on test dataset")
+    parser.add_argument("--fixed-split", dest='fixed_split', action='store_true',
+                        help="Keep a constant dataset split for all configs and iterations")
     parser.set_defaults(all_combin=False)
 
     return parser
@@ -228,7 +228,7 @@ if __name__ == '__main__':
 
     results_df = pd.DataFrame()
     for i in range(n_iterations):
-        for config in config_list
+        for config in config_list:
             if not args.fixed_split:
                 # Set seed for iteration
                 seed = random.randint(1,10001)
