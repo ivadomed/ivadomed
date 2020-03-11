@@ -620,28 +620,38 @@ def threshold_predictions(predictions, thr=0.5):
     return thresholded_preds
 
 
-def segment_volume(model_fname, image_fname, roi_fname=None, kernel='2d', slice_axis=2):
+def segment_volume(model_fname, model-metadata_fname, image_fname, roi_fname=None):
     """Segment volume.
-    :param model_fname: the path to the model to use.
+    :param model_fname: model filename (.pt) to use.
+    :param model-metadata_fname: model metadata filename (.json), contains model training
+			configuration.
     :param image_fname: filename of the image to segment.
     :param roi_fname: filename of a Region Of Interest, used for cropping.
 			e.g. centerline, binary mask.
-    :param kernel: Choice of kernel shape for the CNN: '2d' or '3d'.
-    :param slice_axis: If 2D kernels, then controls the axis for slice extraction:
-			0: sagittal slices, 1: coronal slices, 2: axial slices.
     :return: segmented slices.
     """
     # Define device
     device = torch.device("cpu")
 
+    # Load model training config
+    with open(model-metadata_fname, "r") as fhandle:
+        context = json.load(fhandle)
+
+    # Transformations
+    transform_list = []
+    for transform in context['transforms'].keys():
+        parameters = context['transforms'][transform]
+        transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
+        transform_list.append(transform_obj)
+
     # Load data
     filename_pairs = [([image_fname], None, [roi_fname], None)]
-    if kernel == '2d':
-        # TODO: continue the loader: transform and slice_filter_fn
-        dataset = MRI2DSegmentationDataset(filename_pairs, slice_axis=slice_axis, cache=True,
-                 transform=None, slice_filter_fn=None, canonical=True)
+    if context['kernel'] == '2d':
+        # TODO: continue the loader: slice_filter_fn
+        dataset = MRI2DSegmentationDataset(filename_pairs, slice_axis=context['slice_axis'], cache=True,
+                 transform=transform_list, slice_filter_fn=None, canonical=True)
     else:
-        print('\nkernel={} is not implemented yet. Choice: "2d".'.format(kernel))
+        print('\nkernel={} is not implemented yet. Choice: "2d".'.format(context['kernel']))
         exit()
 
 #    # Load model
