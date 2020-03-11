@@ -7,8 +7,11 @@ import nibabel as nib
 import numpy as np
 import torch
 import torch.nn as nn
+
+import ivadomed.transforms as ivadomed_transforms
 from medicaltorch.datasets import MRI2DSegmentationDataset
 from medicaltorch import metrics as mt_metrics
+
 from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
 from tqdm import tqdm
@@ -18,6 +21,7 @@ TP_COLOUR = 1
 FP_COLOUR = 2
 FN_COLOUR = 3
 
+AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
 class IvadoMetricManager(mt_metrics.MetricManager):
     def __init__(self, metric_fns):
@@ -640,19 +644,20 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
 
     # Transformations
     transform_list = []
-    for transform in context['transforms'].keys():
-        parameters = context['transforms'][transform]
+    for transform in context['transformation_validation'].keys():
+        parameters = context['transformation_validation'][transform]
         transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
         transform_list.append(transform_obj)
 
     # Load data
-    filename_pairs = [([image_fname], None, [roi_fname], None)]
-    if context['kernel'] == '2d':
+    filename_pairs = [([image_fname], None, roi_fname, None)]
+    if context['unet_3D'] == False:  # TODO: rename this param 'kernel' and create a new param 'model'
         # TODO: continue the loader: slice_filter_fn
-        dataset = MRI2DSegmentationDataset(filename_pairs, slice_axis=context['slice_axis'], cache=True,
+        ds = MRI2DSegmentationDataset(filename_pairs, slice_axis=AXIS_DCT[context['slice_axis']], cache=True,
                  transform=transform_list, slice_filter_fn=None, canonical=True)
+        print(f"Loaded {len(ds)} {context['slice_axis']} slices.")
     else:
-        print('\nkernel={} is not implemented yet. Choice: "2d".'.format(context['kernel']))
+        # print('\nkernel={} is not implemented yet. Choice: "2d".'.format(context['kernel']))
         exit()
 
 #    # Load model
