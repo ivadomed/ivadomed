@@ -15,6 +15,7 @@ import json
 import logging
 import numpy as np
 import pandas as pd
+import random
 import sys
 import torch.multiprocessing as mp
 #import time
@@ -35,7 +36,9 @@ def get_parser():
                         type=int, help="Number of times to run each config .")
     parser.add_argument("--all-combin", dest='all_combin', action='store_true',
                         help="To run all combinations of config")
-    parser.add_argument("-t", "--run-test", dest='run_test', action='store_true',
+    parser.add_argument("--run-test", dest='run_test', action='store_true',
+                        help="Run cmd_eval to get metrics on test dataset")
+    parser.add_argument("--fix-seed", dest='fix_seed', action='store_true',
                         help="Run cmd_eval to get metrics on test dataset")
     parser.set_defaults(all_combin=False)
 
@@ -161,7 +164,8 @@ if __name__ == '__main__':
     #gt_dilations = [0, 0.5, 1]
 
     # Split dataset if not already done
-    if initial_config.get("split_path") is None:
+
+    if args.fixed_split and (initial_config.get("split_path") is None):
         train_lst, valid_lst, test_lst = loader.split_dataset(path_folder=initial_config["bids_path"],
                                                               center_test_lst=initial_config["center_test"],
                                                               split_method=initial_config["split_method"],
@@ -224,6 +228,12 @@ if __name__ == '__main__':
 
     results_df = pd.DataFrame()
     for i in range(n_iterations):
+        for config in config_list
+            if not args.fixed_split:
+                # Set seed for iteration
+                seed = random.randint(1,10001)
+                config["random_seed"] = seed
+
         validation_scores = pool.map(train_worker, config_list)
         val_df = pd.DataFrame(validation_scores, columns=[
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice', 'best_validation_loss'])
