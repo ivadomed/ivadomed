@@ -637,8 +637,9 @@ def segment_volume(model_fname, image_fname, roi_fname=None, kernel='2d', slice_
     # Load data
     filename_pairs = [([image_fname], None, [roi_fname], None)]
     if kernel == '2d':
-        # TODO: continue the loader
-        dataset = MRI2DSegmentationDataset(filename_pairs)
+        # TODO: continue the loader: transform and slice_filter_fn
+        dataset = MRI2DSegmentationDataset(filename_pairs, slice_axis=slice_axis, cache=True,
+                 transform=None, slice_filter_fn=None, canonical=True)
     else:
         print('\nkernel={} is not implemented yet. Choice: "2d".'.format(kernel))
         exit()
