@@ -160,18 +160,20 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
         super().__init__(self.filename_pairs, slice_axis, cache,
                          transform, slice_filter_fn, canonical)
 
-    def filter_roi(self, nb_nonzero_thr):
-        filter_indexes = []
-        for segpair, slice_roi_pair in self.indexes:
-            roi_data = slice_roi_pair['gt']
-            if not np.any(roi_data):
-                continue
-            if np.count_nonzero(roi_data) <= nb_nonzero_thr:
-                continue
 
-            filter_indexes.append((segpair, slice_roi_pair))
+def filter_roi(ds, nb_nonzero_thr):
+    filter_indexes = []
+    for segpair, slice_roi_pair in ds.indexes:
+        roi_data = slice_roi_pair['gt']
+        if not np.any(roi_data):
+            continue
+        if np.count_nonzero(roi_data) <= nb_nonzero_thr:
+            continue
 
-        self.indexes = filter_indexes
+        filter_indexes.append((segpair, slice_roi_pair))
+
+    ds.indexes = filter_indexes
+    return ds
 
 
 def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
