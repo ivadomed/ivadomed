@@ -125,7 +125,7 @@ def cmd_train(context):
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_training"].keys():
-        ds_train.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
+        ds_train = loader.filter_roi(ds_train, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
@@ -161,7 +161,7 @@ def cmd_train(context):
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
-        ds_val.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
+        ds_val = loader.filter_roi(ds_val, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to network
         ds_val = loader.normalize_metadata(ds_val,
@@ -666,7 +666,7 @@ def cmd_test(context):
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
-        ds_test.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
+        ds_test = loader.filter_roi(ds_test, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load(
