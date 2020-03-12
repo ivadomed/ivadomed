@@ -8,6 +8,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+import ivadomed.loader as ivadomed_loader
 import ivadomed.transforms as ivadomed_transforms
 from medicaltorch.datasets import MRI2DSegmentationDataset
 from medicaltorch import metrics as mt_metrics
@@ -651,15 +652,18 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
 
     # Load data
     filename_pairs = [([image_fname], None, roi_fname, None)]
-    if context['unet_3D'] == False:  # TODO: rename this param 'kernel' and create a new param 'model'
+    if context['unet_3D'] == False:  # TODO: rename this param 'model_name'
         # TODO: continue the loader: slice_filter_fn
         ds = MRI2DSegmentationDataset(filename_pairs, slice_axis=AXIS_DCT[context['slice_axis']], cache=True,
-                 transform=transform_list, slice_filter_fn=None, canonical=True)
+                 transform=transform_list, slice_filter_fn=context['slice_filter'], canonical=True)
         print(f"Loaded {len(ds)} {context['slice_axis']} slices.")
     else:
         # print('\nkernel={} is not implemented yet. Choice: "2d".'.format(context['kernel']))
         exit()
 
+    # If roi_fname provided, then remove slices without ROI
+    if roi_fname is not None:
+        ds = ivadomed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
 #    # Load model
 #    model = torch.load(model_path, map_location=device)
 #    model.eval()
