@@ -7,12 +7,14 @@ import nibabel as nib
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader
 
 import ivadomed.loader as ivadomed_loader
 import ivadomed.transforms as ivadomed_transforms
 from medicaltorch.datasets import MRI2DSegmentationDataset
 from medicaltorch import metrics as mt_metrics
 from medicaltorch.filters import SliceFilter
+from medicaltorch import datasets as mt_datasets
 
 from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
@@ -665,6 +667,19 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
     # If roi_fname provided, then remove slices without ROI
     if roi_fname is not None:
         ds = ivadomed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
+
+    # Data Loader
+    data_loader = DataLoader(ds, batch_size=context["batch_size"],
+                             shuffle=False, pin_memory=True,
+                             collate_fn=mt_datasets.mt_collate,
+                             num_workers=0)
+
+    # Load model
+    model = torch.load(model_fname, map_location=device)
+
+    # Inference time
+    model.eval()
+
 #    # Load model
 #    model = torch.load(model_path, map_location=device)
 #    model.eval()
