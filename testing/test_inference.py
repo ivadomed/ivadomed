@@ -67,7 +67,7 @@ def test_inference(film_bool=False):
                                   slice_filter_fn=SliceFilter(filter_empty_input=True,
                                                                 filter_empty_mask=False))
 
-    ds_test.filter_roi(nb_nonzero_thr=10)
+    ds_test = loader.filter_roi(ds_test, nb_nonzero_thr=10)
 
     if film_bool:  # normalize metadata before sending to network
         print('FiLM inference not implemented yet.')

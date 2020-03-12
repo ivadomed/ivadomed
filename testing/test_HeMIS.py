@@ -59,7 +59,7 @@ def test_unet():
                                   multichannel=contrasts,
                                   slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=False))
 
-    ds_train.filter_roi(nb_nonzero_thr=10)
+    ds_train = loader.filter_roi(ds_train, nb_nonzero_thr=10)
 
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
