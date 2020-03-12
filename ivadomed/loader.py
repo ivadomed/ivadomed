@@ -162,9 +162,25 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
 
 
 def filter_roi(ds, nb_nonzero_thr):
+    """Filter slices from dataset using ROI data.
+
+    This function loops across the dataset (ds) and discards slices where the number of
+    non-zero voxels within the ROI slice (e.g. centerline, SC segmentation) is inferior or
+    equal to a given threshold (nb_nonzero_thr).
+
+    Args:
+        ds (mt_datasets.MRI2DSegmentationDataset): Dataset.
+        nb_nonzero_thr (int): Threshold.
+
+    Returns:
+        mt_datasets.MRI2DSegmentationDataset: Dataset without filtered slices.
+
+    """
     filter_indexes = []
     for segpair, slice_roi_pair in ds.indexes:
         roi_data = slice_roi_pair['gt']
+
+        # Discard slices with less nonzero voxels than nb_nonzero_thr
         if not np.any(roi_data):
             continue
         if np.count_nonzero(roi_data) <= nb_nonzero_thr:
@@ -172,6 +188,7 @@ def filter_roi(ds, nb_nonzero_thr):
 
         filter_indexes.append((segpair, slice_roi_pair))
 
+    # Update dataset
     ds.indexes = filter_indexes
     return ds
 
