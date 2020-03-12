@@ -659,7 +659,6 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
         # TODO: continue the loader: slice_filter_fn
         ds = MRI2DSegmentationDataset(filename_pairs, slice_axis=AXIS_DCT[context['slice_axis']], cache=True,
                  transform=transform_list, slice_filter_fn=SliceFilter(**context["slice_filter"]), canonical=True)
-        print(f"Loaded {len(ds)} {context['slice_axis']} slices.")
     else:
         # print('\nkernel={} is not implemented yet. Choice: "2d".'.format(context['kernel']))
         exit()
@@ -667,6 +666,9 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
     # If roi_fname provided, then remove slices without ROI
     if roi_fname is not None:
         ds = ivadomed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
+
+    if context['unet_3D'] == False:
+        print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
 
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["batch_size"],
@@ -679,10 +681,6 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
 
     # Inference time
     model.eval()
-
-#    # Load model
-#    model = torch.load(model_path, map_location=device)
-#    model.eval()
 
 #    with torch.no_grad():
 #        # TODO: Check how to deal with batch_size in the SCT CLI / loader.
