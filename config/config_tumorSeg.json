@@ -1,5 +1,5 @@
 {
-    "command": "train",
+    "command": "test",
     "gpu": 0,
     "target_suffix": "_seg-tumor",
     "roi_suffix": null,
@@ -12,9 +12,9 @@
     "retrain_model": null,
     "batch_size": 2,
     "dropout_rate": 0.3,
-    "batch_norm_momentum": 0.1,
+    "batch_norm_momentum": 0.9,
     "num_epochs": 100,
-    "initial_lr": 0.00001,
+    "initial_lr": 0.001,
     "ram": false,
     "loss": {"name": "dice"},
     "log_directory": "HeMIS",
@@ -26,7 +26,7 @@
     "multichannel": false,
     "hdf5_path": "/home/andreanne/Documents/dataset/HeMIS.hdf5",
     "csv_path": "/home/andreanne/Documents/dataset/HeMIS.csv",
-    "missing_probability": 0.0001,
+    "missing_probability": 0.001,
     "out_channel": 1,
     "depth": 4,
     "length_3D": [16, 96, 512],
@@ -61,6 +61,11 @@
         "sigma_range":  [3.5, 4.5],
         "p": 0.1
       },
+      "RandomAffine": {
+      "degrees": 4.6,
+      "translate": [0.03, 0.03],
+      "scale": [0.98, 1.02]
+      },
       "ToTensor": {},
       "NormalizeInstance": {}
     },
@@ -69,9 +74,8 @@
       "NormalizeInstance": {}
     },
     "transformation_testing": {
-      "ToTensor3D": {},
-      "NormalizeInstance3D": {},
-      "StackTensors": {}
+      "ToTensor": {},
+      "NormalizeInstance": {}
     },
     "debugging": false
 }

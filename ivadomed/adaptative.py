@@ -52,7 +52,7 @@ class Dataframe:
         else:
             self.create_df(hdf5)
 
-    def shuffe(self):
+    def shuffle(self):
         """Shuffle the whole data frame"""
         self.df = self.df.sample(frac=1)
 
@@ -494,8 +494,9 @@ class HDF5Dataset:
 
         # RAM status
         self.status = {ct: False for ct in self.df_object.contrasts}
-        # Input contrasts
-        #self.contrast_lst = contrast_lst
+
+        if ram:
+            self.load_into_ram(self.cst_lst)
   
     def load_into_ram(self, contrast_lst=None):
         """
@@ -571,7 +572,7 @@ class HDF5Dataset:
             gt_img = self.hdf5_file[line['gt/' + self.gt_lst[0]]][line['Slices']] 
         
         # convert array to pil
-        gt_img = (gt_img * 255).astype(np.uint8)
+        gt_img = (gt_img).astype(np.uint8)
         gt_img = Image.fromarray(gt_img, mode='L')
         gt_metadata = {key: value for key, value in
                        self.hdf5_file[line['gt/' + self.gt_lst[0]]].attrs.items()}

@@ -395,12 +395,14 @@ def cmd_train(context):
 
             num_steps += 1
 
-            # Todo test it with new loader
-            if i == 0 and (not HeMIS):
+            if i == 0:
                 if context["unet_3D"]:
                     num_2d_img = input_samples.shape[3]
                 else:
                     num_2d_img = 1
+                if HeMIS:
+                    # Keep only one channel to visualize
+                    input_samples = input_samples[0]
                 input_samples_copy = input_samples.clone()
                 preds_copy = preds.clone()
                 gt_samples_copy = gt_samples.clone()
@@ -509,11 +511,14 @@ def cmd_train(context):
             num_steps += 1
 
             # Only write sample at the first step
-            if i == 0 and (not HeMIS):
+            if i == 0:
                 if context["unet_3D"]:
                     num_2d_img = input_samples.shape[3]
                 else:
                     num_2d_img = 1
+                if HeMIS:
+                    # Keep only one channel to visualize
+                    input_samples = input_samples[0]
                 input_samples_copy = input_samples.clone()
                 preds_copy = preds.clone()
                 gt_samples_copy = gt_samples.clone()
@@ -782,6 +787,13 @@ def cmd_test(context):
                 elif HeMIS:
                     missing_mod = batch["Missing_mod"]
                     preds = model(test_input, missing_mod)
+                    # Reconstruct image with only one modality
+                    dict = {}
+                    dict['input'] = batch['input'][0]
+                    dict['gt'] = batch['gt'][0]
+                    dict['input_metadata'] = [{"gt_filename": gt_filename}
+                                              for gt_filename in batch['input_metadata'][0]['input_filename']]
+                    batch = dict
 
                 else:
                     preds = model(test_input)
@@ -796,53 +808,54 @@ def cmd_test(context):
             batch.update(rdict)
 
             if batch["input"].shape[1] > 1 and not i_monteCarlo:
-                batch["input_metadata"] = batch["input_metadata"][0]  # Take only second channel
+                batch["input_metadata"] = batch["input_metadata"][0]  # Take only one channel
 
             # reconstruct 3D image
-            for smp_idx in range(len(batch['gt'])):
-                # undo transformations
-                rdict = {}
-                for k in batch.keys():
-                    rdict[k] = batch[k][smp_idx]
-                if rdict["input"].shape[0] > 1:
-                    rdict["input"] = rdict["input"][1,][None,]
-                rdict_undo = val_undo_transform(rdict)
+            if not HeMIS:
+                for smp_idx in range(len(batch['gt'])):
+                    # undo transformations
+                    rdict = {}
+                    for k in batch.keys():
+                        rdict[k] = batch[k][smp_idx]
+                    if rdict["input"].shape[0] > 1:
+                        rdict["input"] = rdict["input"][1,][None,]
+                    rdict_undo = val_undo_transform(rdict)
 
-                fname_ref = rdict_undo['input_metadata']['gt_filename']
-                if not context['unet_3D']:
-                    if pred_tmp_lst and (fname_ref != fname_tmp or (
-                            i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
-                        # save the completely processed file as a nii
-                        fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
+                    fname_ref = rdict_undo['input_metadata']['gt_filename']
+                    if not context['unet_3D']:
+                        if pred_tmp_lst and (fname_ref != fname_tmp or (
+                                i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
+                            # save the completely processed file as a nii
+                            fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
+                            fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+
+                            # If MonteCarlo, then we save each simulation result
+                            if n_monteCarlo > 1:
+                                fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
+
+                            save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred,
+                                     slice_axis=AXIS_DCT[context['slice_axis']],
+                                     binarize=context["binarize_prediction"])
+
+                            # re-init pred_stack_lst
+                            pred_tmp_lst, z_tmp_lst = [], []
+
+                        # add new sample to pred_tmp_lst
+                        pred_tmp_lst.append(np.array(rdict_undo['gt']))
+                        z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
+                        fname_tmp = fname_ref
+
+                    else:
+                        # TODO: Add reconstruction for subvolumes
+                        fname_pred = os.path.join(path_3Dpred, fname_ref.split('/')[-1])
                         fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
-
                         # If MonteCarlo, then we save each simulation result
                         if n_monteCarlo > 1:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
-                        save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred,
-                                 slice_axis=AXIS_DCT[context['slice_axis']],
-                                 binarize=context["binarize_prediction"])
-
-                        # re-init pred_stack_lst
-                        pred_tmp_lst, z_tmp_lst = [], []
-
-                    # add new sample to pred_tmp_lst
-                    pred_tmp_lst.append(np.array(rdict_undo['gt']))
-                    z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
-                    fname_tmp = fname_ref
-
-                else:
-                    # TODO: Add reconstruction for subvolumes
-                    fname_pred = os.path.join(path_3Dpred, fname_ref.split('/')[-1])
-                    fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
-                    # If MonteCarlo, then we save each simulation result
-                    if n_monteCarlo > 1:
-                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
-
-                    # Choose only one modality
-                    save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
-                             slice_axis=AXIS_DCT[context['slice_axis']], unet_3D=True)
+                        # Choose only one modality
+                        save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
+                                 slice_axis=AXIS_DCT[context['slice_axis']], unet_3D=True)
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)

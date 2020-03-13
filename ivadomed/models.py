@@ -187,9 +187,6 @@ class Unet(Module):
 
     def forward(self, x, context=None):
         features, w_film = self.encoder(x, context)
-        #print(self.decoder)
-        #print(len(features))
-        #print(features[0].shape)
         preds = self.decoder(features, context, w_film)
         
         return preds
@@ -311,16 +308,12 @@ class HeMISUnet(Module):
             N.B. len(list) = number of modalities.
             len(list[i]) = Batch size
         """
-        
-        #print("shape x", x_mods[0].shape)
+
         features_mod = [[] for _ in range(self.depth + 1)]
 
         # Down-sampling
         for i, Mod in enumerate(self.modalities):
-            #print("Mod:", Mod)
-            #print("shape x", x_mods[i].shape)
             features, _ = self.Encoder_mod['Encoder_{}'.format(Mod)](x_mods[i])
-            #print("shape x", features[0].shape)
 
             for j in range(self.depth + 1):
                 features_mod[j].append(features[j].unsqueeze(0))
@@ -328,15 +321,13 @@ class HeMISUnet(Module):
         # Abstraction
         for j in range(self.depth + 1):
             features_cat = torch.cat(features_mod[j], 0).transpose(0, 1)
-            #print(features_cat.shape)
+
             features_mod[j] = torch.cat([torch.cat([features_cat[i][indexes_mod[i].nonzero()].squeeze(1).mean(0), 
                                                     features_cat[i][indexes_mod[i].nonzero()].squeeze(1).var(0)], 0).unsqueeze(0) for i in range(len(indexes_mod))],0)
-            
-            
-        
-        #print(self.decoder)
+
         # Up-sampling
         preds = self.decoder(features_mod)
+
         return preds
 
 
