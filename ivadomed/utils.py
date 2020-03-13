@@ -662,6 +662,10 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
     with open(model_metadata_fname, "r") as fhandle:
         context = json.load(fhandle)
 
+    # If ROI is not provided then force center cropping
+    if roi_fname is None and 'ROICrop2D' in context["transformation_validation"].keys():
+        context["transformation_validation"]['CenterCrop2D'] = context["transformation_validation"].pop('ROICrop2D')
+
     # Transforms
     transform_list = []
     for transform in context['transformation_validation'].keys():
