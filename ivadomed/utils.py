@@ -668,7 +668,7 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
         parameters = context['transformation_validation'][transform]
         transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
         transform_list.append(transform_obj)
-    do_transforms = transforms.Compose(validation_transform_list)
+    do_transforms = transforms.Compose(transform_list)
 
     # Undo Transforms
     undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
