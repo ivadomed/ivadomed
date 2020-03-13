@@ -8,6 +8,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from torchvision import transforms
 
 import ivadomed.loader as ivadomed_loader
 import ivadomed.transforms as ivadomed_transforms
@@ -646,19 +647,23 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
     with open(model_metadata_fname, "r") as fhandle:
         context = json.load(fhandle)
 
-    # Transformations
+    # Transforms
     transform_list = []
     for transform in context['transformation_validation'].keys():
         parameters = context['transformation_validation'][transform]
         transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
         transform_list.append(transform_obj)
+    do_transforms = transforms.Compose(validation_transform_list)
+
+    # Undo Transforms
+    undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
 
     # Load data
     filename_pairs = [([image_fname], None, roi_fname, None)]
     if context['unet_3D'] == False:  # TODO: rename this param 'model_name'
         # TODO: continue the loader: slice_filter_fn
         ds = MRI2DSegmentationDataset(filename_pairs, slice_axis=AXIS_DCT[context['slice_axis']], cache=True,
-                 transform=transform_list, slice_filter_fn=SliceFilter(**context["slice_filter"]), canonical=True)
+                 transform=do_transforms, slice_filter_fn=SliceFilter(**context["slice_filter"]), canonical=True)
     else:
         # print('\nkernel={} is not implemented yet. Choice: "2d".'.format(context['kernel']))
         exit()
@@ -691,7 +696,35 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
         rdict['gt'] = preds
         batch.update(rdict)
 
+        # Reconstruct 3D object
+        for idx_slice in range(len(batch['gt'])):
+            # Undo transformations
+            rdict = {}
+            # Import transformations parameters
+            for k in batch.keys():
+                rdict[k] = batch[k][idx_slice]
+            rdict_undo = undo_transform(rdict)
 
+                    if pred_tmp_lst and (fname_ref != fname_tmp or (
+                            i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
+                        # save the completely processed file as a nii
+                        fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
+                        fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+
+                        # If MonteCarlo, then we save each simulation result
+                        if n_monteCarlo > 1:
+                            fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
+
+                        save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred,
+                                 slice_axis=AXIS_DCT[context['slice_axis']],
+                                 binarize=context["binarize_prediction"])
+
+                        # re-init pred_stack_lst
+                        pred_tmp_lst, z_tmp_lst = [], []
+
+                    # add new sample to pred_tmp_lst
+                    pred_tmp_lst.append(np.array(rdict_undo['gt']))
+                    z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
 
 
 
