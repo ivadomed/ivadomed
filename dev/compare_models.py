@@ -2,7 +2,7 @@
 #
 # This script automates the training  of a networks on multiple GPUs to deal with hyperparameter optimisation
 #
-# Usage: python dev/training_scheduler.py -c path/to/config.json -n number_of_iterations --all-combin
+# Usage: python dev/compare_models.py -c path/to/config.json -n number_of_iterations --all-combin
 #
 # Contributors: olivier
 #
@@ -244,6 +244,14 @@ if __name__ == '__main__':
             test_df = pd.DataFrame(test_scores, columns=[
                                    'log_directory', 'test_dice'])
             combined_df = val_df.set_index('log_directory').join(test_df.set_index('log_directory'))
+
+            # Delete path_pred
+            path_pred = os.path.join(context['log_directory'], 'pred_masks')
+                if  os.path.isdir(path_pred) and n_iterations > 1:
+                    try:
+                        shutil.rmtree(path_pred)
+                    except OSError as e:
+                        print ("Error: %s - %s." % (e.filename, e.strerror))
         else:
             combined_df = val_df
 
