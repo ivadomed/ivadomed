@@ -641,7 +641,7 @@ def threshold_predictions(predictions, thr=0.5):
 def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=None):
     """Segment an image.
 
-    Segment an image (image_fname) using a already trained model (model_fname) given its 
+    Segment an image (image_fname) using a already trained model (model_fname) given its
     training parameters (model_metadata_fname). If provided, a RegionOfInterest (roi_fname)
     is used to crop the image prior to segment it.
 
