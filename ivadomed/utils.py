@@ -638,14 +638,22 @@ def threshold_predictions(predictions, thr=0.5):
 
 
 def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=None):
-    """Segment volume.
-    :param model_fname: model filename (.pt) to use.
-    :param model_metadata_fname: model metadata filename (.json), contains model training
-			configuration.
-    :param image_fname: filename of the image to segment.
-    :param roi_fname: filename of a Region Of Interest, used for cropping.
-			e.g. centerline, binary mask.
-    :return: segmented slices.
+    """Segment an image.
+
+    Segment an image (image_fname) using a already trained model (model_fname) given its 
+    training parameters (model_metadata_fname). If provided, a RegionOfInterest (roi_fname)
+    is used to crop the image prior to segment it.
+
+    Args:
+        model_fname (string): model filename (.pt) to use.
+        model_metadata_fname (string): Configuration file filename (.json) used for the training,
+            see https://github.com/neuropoly/ivado-medical-imaging/wiki/configuration-file
+        image_fname (string): image filename (e.g. .nii.gz) to segment.
+        roi_fname (string): Binary image filename (e.g. .nii.gz) defining a region of interest,
+            e.g. spinal cord centerline, used to crop the image prior to segment it if provided.
+    Returns:
+        nibabelObject: Object containing the soft segmentation.
+
     """
     # Define device
     device = torch.device("cpu")
