@@ -674,13 +674,16 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
     undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
 
     # Load data
-    filename_pairs = [([image_fname], None, roi_fname, None)]
+    filename_pairs = [([image_fname], image_fname, roi_fname, [{}])]
     if context['unet_3D'] == False:  # TODO: rename this param 'model_name' or 'kernel_dim'
-        # TODO: continue the loader: slice_filter_fn
-        ds = MRI2DSegmentationDataset(filename_pairs, slice_axis=AXIS_DCT[context['slice_axis']], cache=True,
-                 transform=do_transforms, slice_filter_fn=SliceFilter(**context["slice_filter"]), canonical=True)
+        ds = MRI2DSegmentationDataset(filename_pairs,
+                                        slice_axis=AXIS_DCT[context['slice_axis']],
+                                        cache=True,
+                                        transform=do_transforms,
+                                        slice_filter_fn=SliceFilter(**context["slice_filter"]),
+                                        canonical=True)
     else:
-        # print('\nkernel={} is not implemented yet. Choice: "2d".'.format(context['kernel']))
+        print('\n3D unet is not implemented yet.')
         exit()
 
     # If roi_fname provided, then remove slices without ROI
@@ -730,7 +733,7 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
 
             # If last batch and last sample of this batch, then reconstruct 3D object
             if i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1:
-                pred_nib = pred_to_nii(data_lst=pred_list,
+                pred_nib = pred_to_nii(data_lst=preds_list,
                                         z_lst=sliceIdx_list,
                                         fname_ref=image_fname,
                                         fname_out=None,
