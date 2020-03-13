@@ -688,7 +688,8 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
     model.eval()
 
     # Loop across batches
-    for i, batch in enumerate(data_loader):
+    preds_list, sliceIdx_list = [], []
+    for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
             preds = model(batch['input'])
 
@@ -697,34 +698,28 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
         batch.update(rdict)
 
         # Reconstruct 3D object
-        for idx_slice in range(len(batch['gt'])):
+        for i_slice in range(len(batch['gt'])):
             # Undo transformations
             rdict = {}
             # Import transformations parameters
             for k in batch.keys():
-                rdict[k] = batch[k][idx_slice]
-            rdict_undo = undo_transform(rdict)
+                rdict[k] = batch[k][i_slice]
+            rdict_undo = undo_transforms(rdict)
 
-                    if pred_tmp_lst and (fname_ref != fname_tmp or (
-                            i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
-                        # save the completely processed file as a nii
-                        fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
-                        fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+            # Add new segmented slice to preds_list
+            # Convert PIL to numpy
+            pred_cur = np.array(rdict_undo['gt'])
+            preds_list.append(pred_cur)
+            # Store the slice index of pred_cur in the original 3D image
+            sliceIdx_list.append(int(rdict_undo['input_metadata']['slice_index']))
 
-                        # If MonteCarlo, then we save each simulation result
-                        if n_monteCarlo > 1:
-                            fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
+            # If last batch and last sample of this batch, then reconstruct 3D object
+            if i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1:
+
 
                         save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred,
                                  slice_axis=AXIS_DCT[context['slice_axis']],
                                  binarize=context["binarize_prediction"])
-
-                        # re-init pred_stack_lst
-                        pred_tmp_lst, z_tmp_lst = [], []
-
-                    # add new sample to pred_tmp_lst
-                    pred_tmp_lst.append(np.array(rdict_undo['gt']))
-                    z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
 
 
 
