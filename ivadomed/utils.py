@@ -16,6 +16,7 @@ from medicaltorch.datasets import MRI2DSegmentationDataset
 from medicaltorch import metrics as mt_metrics
 from medicaltorch.filters import SliceFilter
 from medicaltorch import datasets as mt_datasets
+from medicaltorch import transforms as mt_transforms
 
 from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
@@ -670,7 +671,10 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
     transform_list = []
     for transform in context['transformation_validation'].keys():
         parameters = context['transformation_validation'][transform]
-        transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
+        if transform in ivadomed_transforms.get_transform_names():
+            transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
+        else:
+            transform_obj = getattr(mt_transforms, transform)(**parameters)
         transform_list.append(transform_obj)
     do_transforms = transforms.Compose(transform_list)
 
