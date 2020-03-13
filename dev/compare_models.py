@@ -231,7 +231,7 @@ if __name__ == '__main__':
         for config in config_list:
             if not args.fixed_split:
                 # Set seed for iteration
-                seed = random.randint(1,10001)
+                seed = random.randint(1, 10001)
                 config["random_seed"] = seed
 
         validation_scores = pool.map(train_worker, config_list)
@@ -247,11 +247,11 @@ if __name__ == '__main__':
 
             # Delete path_pred
             path_pred = os.path.join(context['log_directory'], 'pred_masks')
-                if  os.path.isdir(path_pred) and n_iterations > 1:
-                    try:
+              if os.path.isdir(path_pred) and n_iterations > 1:
+                   try:
                         shutil.rmtree(path_pred)
                     except OSError as e:
-                        print ("Error: %s - %s." % (e.filename, e.strerror))
+                        print("Error: %s - %s." % (e.filename, e.strerror))
         else:
             combined_df = val_df
 
