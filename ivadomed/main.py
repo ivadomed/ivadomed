@@ -788,9 +788,13 @@ def cmd_test(context):
                         if n_monteCarlo > 1:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
-                        save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred,
-                                 slice_axis=AXIS_DCT[context['slice_axis']],
-                                 binarize=context["binarize_prediction"])
+                        _ = pred_to_nii(data_lst=pred_tmp_lst,
+                                         z_lst=z_tmp_lst,
+                                         fname_ref=fname_tmp,
+                                         fname_out=fname_pred,
+                                         slice_axis=AXIS_DCT[context['slice_axis']],
+                                         kernel_dim='2d',
+                                         bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
@@ -809,8 +813,13 @@ def cmd_test(context):
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
-                    save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
-                             slice_axis=AXIS_DCT[context['slice_axis']], unet_3D=True)
+                    _ = pred_to_nii(data_lst=rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)),
+                                     z_lst=[],
+                                     fname_ref=fname_ref,
+                                     fname_out=fname_pred,
+                                     slice_axis=AXIS_DCT[context['slice_axis']],
+                                     kernel_dim='3d',
+                                     bin_thr=0.5 if context["binarize_prediction"] else -1)
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
