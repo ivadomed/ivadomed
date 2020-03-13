@@ -14,6 +14,7 @@ import joblib
 import json
 import logging
 import numpy as np
+import os
 import pandas as pd
 import random
 import sys
@@ -247,11 +248,11 @@ if __name__ == '__main__':
 
             # Delete path_pred
             path_pred = os.path.join(context['log_directory'], 'pred_masks')
-              if os.path.isdir(path_pred) and n_iterations > 1:
-                   try:
-                        shutil.rmtree(path_pred)
-                    except OSError as e:
-                        print("Error: %s - %s." % (e.filename, e.strerror))
+            if os.path.isdir(path_pred) and n_iterations > 1:
+                try:
+                    shutil.rmtree(path_pred)
+                except OSError as e:
+                    print("Error: %s - %s." % (e.filename, e.strerror))
         else:
             combined_df = val_df
 
