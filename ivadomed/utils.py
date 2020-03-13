@@ -682,8 +682,20 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
     # Inference time
     model.eval()
 
+    # Loop across batches
+    for i, batch in enumerate(data_loader):
+        with torch.no_grad():
+            preds = model(batch['input'])
+
+        rdict = {}
+        rdict['gt'] = preds
+        batch.update(rdict)
+
+
+
+
+
 #    with torch.no_grad():
-#        # TODO: Check how to deal with batch_size in the SCT CLI / loader.
 #        preds = model(tensor_data)
 
 #    return preds
