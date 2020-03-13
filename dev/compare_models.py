@@ -1,6 +1,6 @@
 ##############################################################
 #
-# This script automates the training  of a networks on multiple GPUs to deal with hyperparameter optimisation
+# This script enable training and comparison of models on multiple GPUs
 #
 # Usage: python dev/compare_models.py -c path/to/config.json -n number_of_iterations --all-combin
 #
@@ -18,8 +18,8 @@ import os
 import pandas as pd
 import random
 import sys
+import shutil
 import torch.multiprocessing as mp
-#import time
 
 from ivadomed import main as ivado
 from ivadomed import loader
