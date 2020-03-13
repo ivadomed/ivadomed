@@ -97,15 +97,16 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                     print("Subject without derivative, skipping.")
                     continue
                 derivatives = subject.get_derivatives("labels")
-                target_filename, roi_filename = None, None
+                target_filename, roi_filename = [], None
 
                 for deriv in derivatives:
-                    if deriv.endswith(subject.record["modality"] + target_suffix + ".nii.gz"):
-                        target_filename = deriv
+                    for suffix in target_suffix:
+                        if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
+                            target_filename.append(deriv)
                     if not (roi_suffix is None) and deriv.endswith(subject.record["modality"] + roi_suffix + ".nii.gz"):
                         roi_filename = deriv
 
-                if (target_filename is None) or (not (roi_suffix is None) and (roi_filename is None)):
+                if (target_filename is []) or (not (roi_suffix is None) and (roi_filename is None)):
                     continue
 
                 if not subject.has_metadata():
