@@ -710,33 +710,38 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
 def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
     if not os.path.exists(os.path.join(context["log_directory"], layer_name)):
         os.mkdir(os.path.join(context["log_directory"], layer_name))
-    inp_fmap, out_fmap = HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input))
 
-    # Display the input image and Down_sample the input image
-    orig_input_img = test_input.permute(3, 4, 2, 0, 1).cpu().numpy()
-    upsampled_attention = F.interpolate(out_fmap[1], size=test_input.size()[2:],
-                                        mode='trilinear', align_corners=True).data.permute(3, 4, 2, 0, 1).cpu().numpy()
+    # Save for subject in batch
+    for i in range(batch['input'].size(0)):
+        inp_fmap, out_fmap = HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input[i][None, ]))
 
-    # Define the directories
-    if isinstance(batch["input_metadata"][0], list):
-        # Multichannel
-        path = batch["input_metadata"][0][0]["input_filename"]
-    else:
-        path = batch["input_metadata"][0]["input_filename"]
-    basename = path.split('/')[-1]
-    save_directory = os.path.join(context['log_directory'], layer_name, basename)
+        # Display the input image and Down_sample the input image
+        orig_input_img = test_input[i][None, ].permute(3, 4, 2, 0, 1).cpu().numpy()
+        upsampled_attention = F.interpolate(out_fmap[1],
+                                            size=test_input[i][None, ].size()[2:],
+                                            mode='trilinear',
+                                            align_corners=True).data.permute(3, 4, 2, 0, 1).cpu().numpy()
 
-    # Write the attentions to a nifti image
-    nib_ref = nib.load(path)
-    nib_ref_can = nib.as_closest_canonical(nib_ref)
-    oriented_image = reorient_image(orig_input_img[:, :, :, 0, 0], slice_axis, nib_ref, nib_ref_can)
+        # Define the directories
+        if isinstance(batch["input_metadata"][i], list):
+            # Multichannel
+            path = batch["input_metadata"][i][0]["input_filename"]
+        else:
+            path = batch["input_metadata"][i]["input_filename"]
+        basename = path.split('/')[-1]
+        save_directory = os.path.join(context['log_directory'], layer_name, basename)
 
-    nib_pred = nib.Nifti1Image(oriented_image, nib_ref.affine)
-    nib.save(nib_pred, save_directory)
+        # Write the attentions to a nifti image
+        nib_ref = nib.load(path)
+        nib_ref_can = nib.as_closest_canonical(nib_ref)
+        oriented_image = reorient_image(orig_input_img[:, :, :, 0, 0], slice_axis, nib_ref, nib_ref_can)
 
-    basename = basename.split(".")[0] + "_att.nii.gz"
-    save_directory = os.path.join(context['log_directory'], layer_name, basename)
-    attention_map = reorient_image(upsampled_attention[:, :, :, 0, ], slice_axis, nib_ref, nib_ref_can)
-    nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
+        nib_pred = nib.Nifti1Image(oriented_image, nib_ref.affine)
+        nib.save(nib_pred, save_directory)
 
-    nib.save(nib_pred, save_directory)
+        basename = basename.split(".")[0] + "_att.nii.gz"
+        save_directory = os.path.join(context['log_directory'], layer_name, basename)
+        attention_map = reorient_image(upsampled_attention[:, :, :, 0, ], slice_axis, nib_ref, nib_ref_can)
+        nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
+
+        nib.save(nib_pred, save_directory)
