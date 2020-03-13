@@ -667,7 +667,7 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
 
     # Load data
     filename_pairs = [([image_fname], None, roi_fname, None)]
-    if context['unet_3D'] == False:  # TODO: rename this param 'model_name'
+    if context['unet_3D'] == False:  # TODO: rename this param 'model_name' or 'kernel_dim'
         # TODO: continue the loader: slice_filter_fn
         ds = MRI2DSegmentationDataset(filename_pairs, slice_axis=AXIS_DCT[context['slice_axis']], cache=True,
                  transform=do_transforms, slice_filter_fn=SliceFilter(**context["slice_filter"]), canonical=True)
@@ -722,18 +722,16 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
 
             # If last batch and last sample of this batch, then reconstruct 3D object
             if i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1:
+                pred_nib = pred_to_nii(data_lst=pred_list,
+                                        z_lst=sliceIdx_list,
+                                        fname_ref=image_fname,
+                                        fname_out=None,
+                                        slice_axis=AXIS_DCT[context['slice_axis']],
+                                        kernel_dim='3d' if context['unet_3D'] else '2d',
+                                        debug=False,
+                                        bin_thr=-1)
 
-
-                        save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred,
-                                 slice_axis=AXIS_DCT[context['slice_axis']],
-                                 binarize=context["binarize_prediction"])
-
-
-
-#    with torch.no_grad():
-#        preds = model(tensor_data)
-
-#    return preds
+    return pred_nib
 
 
 def cuda(input_var):
