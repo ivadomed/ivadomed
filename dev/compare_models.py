@@ -21,6 +21,7 @@ import sys
 import shutil
 import torch.multiprocessing as mp
 
+
 from ivadomed import main as ivado
 from ivadomed import loader
 from itertools import product
@@ -229,10 +230,10 @@ if __name__ == '__main__':
 
     results_df = pd.DataFrame()
     for i in range(n_iterations):
-        for config in config_list:
-            if not args.fixed_split:
-                # Set seed for iteration
-                seed = random.randint(1, 10001)
+        if not args.fixed_split:
+            # Set seed for iteration
+            seed = random.randint(1, 10001)
+            for config in config_list:
                 config["random_seed"] = seed
 
         validation_scores = pool.map(train_worker, config_list)
@@ -244,7 +245,8 @@ if __name__ == '__main__':
             test_scores = pool.map(test_worker, config_list)
             test_df = pd.DataFrame(test_scores, columns=[
                                    'log_directory', 'test_dice'])
-            combined_df = val_df.set_index('log_directory').join(test_df.set_index('log_directory'))
+            combined_df = val_df.set_index('log_directory').join(
+                test_df.set_index('log_directory'))
 
             # Delete path_pred
             path_pred = os.path.join(config['log_directory'], 'pred_masks')
