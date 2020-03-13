@@ -242,19 +242,21 @@ if __name__ == '__main__':
         #results_df = pd.concat([results_df, temp_df])
 
         if(args.run_test):
+            for config in config_list:
+                # Delete path_pred
+                path_pred = os.path.join(config['log_directory'], 'pred_masks')
+                if os.path.isdir(path_pred) and n_iterations > 1:
+                    try:
+                        shutil.rmtree(path_pred)
+                    except OSError as e:
+                        print("Error: %s - %s." % (e.filename, e.strerror))
+
             test_scores = pool.map(test_worker, config_list)
             test_df = pd.DataFrame(test_scores, columns=[
                                    'log_directory', 'test_dice'])
             combined_df = val_df.set_index('log_directory').join(
                 test_df.set_index('log_directory'))
 
-            # Delete path_pred
-            path_pred = os.path.join(config['log_directory'], 'pred_masks')
-            if os.path.isdir(path_pred) and n_iterations > 1:
-                try:
-                    shutil.rmtree(path_pred)
-                except OSError as e:
-                    print("Error: %s - %s." % (e.filename, e.strerror))
         else:
             combined_df = val_df
 
