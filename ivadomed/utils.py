@@ -324,7 +324,7 @@ class Evaluation3DMetrics(object):
         return dct
 
 
-def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, unet_3D=False, binarize=True):
+def save_nii(data_lst, z_lst, fname_ref, fname_out=None, slice_axis=2, debug=False, unet_3D=False, binarize=True):
     """Save the prediction as nii.
         1. Reconstruct a 3D volume out of the slice-wise predictions.
         2. Re-orient the 3D array accordingly to the ground-truth orientation.
