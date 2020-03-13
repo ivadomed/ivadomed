@@ -256,6 +256,7 @@ if __name__ == '__main__':
                                    'log_directory', 'test_dice'])
             combined_df = val_df.set_index('log_directory').join(
                 test_df.set_index('log_directory'))
+            combined_df = combined_df.reset_index()
 
         else:
             combined_df = val_df
