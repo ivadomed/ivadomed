@@ -247,7 +247,7 @@ if __name__ == '__main__':
             combined_df = val_df.set_index('log_directory').join(test_df.set_index('log_directory'))
 
             # Delete path_pred
-            path_pred = os.path.join(context['log_directory'], 'pred_masks')
+            path_pred = os.path.join(config['log_directory'], 'pred_masks')
             if os.path.isdir(path_pred) and n_iterations > 1:
                 try:
                     shutil.rmtree(path_pred)
