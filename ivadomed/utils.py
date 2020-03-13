@@ -324,27 +324,30 @@ class Evaluation3DMetrics(object):
         return dct
 
 
-def save_nii(data_lst, z_lst, fname_ref, fname_out=None, slice_axis=2, debug=False, unet_3D=False, binarize=True):
-    """Save the prediction as nii.
-        1. Reconstruct a 3D volume out of the slice-wise predictions.
-        2. Re-orient the 3D array accordingly to the ground-truth orientation.
+def pred_to_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5):
+    """Convert the NN predictions as nii.
 
-    Inputs:
-        data_lst: list of the slice-wise predictions.
-        z_lst: list of the slice indexes where the inference has been performed.
-              The remaining slices will be filled with zeros.
-        fname_ref: ground-truth fname
-        fname_out: output fname
-        slice_axis: orientation used to extract slices (i.e. axial, sagittal, coronal)
-        debug:
+    Based on the header of fname_ref image, it creates a nibabel object from the NN predictions (data_lst),
+    given the slice indexes (z_lst) along slice_axis.
 
-    Return:
+    Args:
+        data_lst (list of np arrays): predictions, either 2D slices either 3D patches.
+        z_lst (list of ints): slice indexes to reconstruct a 3D volume.
+        fname_ref (string): Filename of the input image: its header is copied to the output nibabel object.
+        fname_out (string): If not None, then the generated nibabel object is saved with this filename.
+        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
+        debug (bool): Display additional info used for debugging.
+        kernel_dim (string): Indicates the number of dimensions of the extracted patches. Choices: '2d', '3d'.
+        bin_thr (float): If positive, then the segmentation is binarised with this given threshold.
+    Returns:
+        NibabelObject: Object containing the NN prediction.
 
     """
+    # Load reference nibabel object
     nib_ref = nib.load(fname_ref)
     nib_ref_can = nib.as_closest_canonical(nib_ref)
 
-    if not unet_3D:
+    if kernel_dim == '2d':
         # complete missing z with zeros
         tmp_lst = []
         for z in range(nib_ref_can.header.get_data_shape()[slice_axis]):
@@ -364,16 +367,20 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out=None, slice_axis=2, debug=Fal
     else:
         arr = data_lst
 
+    # Reorient data
     arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
 
-    if binarize:
-        arr_pred_ref_space = threshold_predictions(arr_pred_ref_space)
+    if bin_thr >= 0:
+        arr_pred_ref_space = threshold_predictions(arr_pred_ref_space, thr=bin_thr)
 
-    # create nii
+    # create nibabel object
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
 
-    # save
-    nib.save(nib_pred, fname_out)
+    # save as nifti file
+    if fname_out is not None:
+        nib.save(nib_pred, fname_out)
+
+    return nib_pred
 
 
 def run_uncertainty(ifolder):
