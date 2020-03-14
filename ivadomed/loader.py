@@ -28,8 +28,7 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
 class Bids3DDataset(mt_datasets.MRI3DSubVolumeSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2,
-                 cache=True,
-                 transform=None, metadata_choice=False, canonical=True, labeled=True, roi_suffix=None,
+                 cache=True, transform=None, metadata_choice=False, canonical=True, labeled=True, roi_suffix=None,
                  multichannel=False, length=(64, 64, 64), padding=0):
         dataset = BidsDataset(root_dir,
                               subject_lst=subject_lst,
@@ -97,12 +96,12 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                     print("Subject without derivative, skipping.")
                     continue
                 derivatives = subject.get_derivatives("labels")
-                target_filename, roi_filename = [], None
+                target_filename, roi_filename = [None] * len(target_suffix), None
 
                 for deriv in derivatives:
-                    for suffix in target_suffix:
+                    for idx, suffix in enumerate(target_suffix):
                         if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
-                            target_filename.append(deriv)
+                            target_filename[idx] = deriv
                     if not (roi_suffix is None) and deriv.endswith(subject.record["modality"] + roi_suffix + ".nii.gz"):
                         roi_filename = deriv
 

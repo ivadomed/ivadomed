@@ -3,7 +3,7 @@
     "gpu": 0,
     "target_suffix": ["_seg-tumor", "_edema", "_cavity"],
     "roi_suffix": null,
-    "bids_path": "/home/andreanne/Documents/dataset/new_labels320/data",
+    "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
     "random_seed": 1313,
     "contrast_train_validation": ["T1w", "T2w"],
     "contrast_balance": {},
@@ -26,7 +26,7 @@
     "missing_modality": false,
     "out_channel": 1,
     "depth": 4,
-    "length_3D": [16, 96, 512],
+    "length_3D": [16, 320, 320],
     "padding_3D": 0,
     "balance_samples": false,
     "slice_axis": "sagittal",
@@ -55,17 +55,16 @@
         "sigma_range":  [3.5, 4.5],
         "p": 0.1
       },
-      "ToTensor": {},
-      "NormalizeInstance": {}
+      "ToTensor3D": {},
+      "NormalizeInstance3D": {}
     },
     "transformation_validation": {
-      "ToTensor": {},
-      "NormalizeInstance": {}
+      "ToTensor3D": {},
+      "NormalizeInstance3D": {}
     },
     "transformation_testing": {
       "ToTensor3D": {},
-      "NormalizeInstance3D": {},
-      "StackTensors": {}
+      "NormalizeInstance3D": {}
     },
     "debugging": false
 }
