@@ -400,11 +400,13 @@ class RandomAffine3D(mt_transforms.RandomAffine):
 
         if self.labeled:
             gt_data = sample['gt']
-            gt_vol = np.zeros(gt_data.shape)
-            for idx, gt in enumerate(gt_data):
-                pil_img = Image.fromarray(gt, mode='F')
-                gt_vol[idx, :, :] = np.array(self.sample_augment(pil_img, params))
-            ret_gt = gt_vol.astype('float32')
+            ret_gt = []
+            for labels in gt_data:
+                gt_vol = np.zeros(labels.shape)
+                for idx, gt in enumerate(labels):
+                    pil_img = Image.fromarray(gt, mode='F')
+                    gt_vol[idx, :, :] = np.array(self.sample_augment(pil_img, params))
+                ret_gt.append(gt_vol.astype('float32'))
             rdict['gt'] = ret_gt
 
         sample.update(rdict)
