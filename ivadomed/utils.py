@@ -10,8 +10,8 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-import ivadomed.loader as ivadomed_loader
-import ivadomed.transforms as ivadomed_transforms
+from ivadomed import loader as ivadomed_loader
+from ivadomed import transforms as ivadomed_transforms
 from medicaltorch.datasets import MRI2DSegmentationDataset
 from medicaltorch import metrics as mt_metrics
 from medicaltorch.filters import SliceFilter
