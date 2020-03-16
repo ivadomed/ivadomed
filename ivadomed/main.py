@@ -63,7 +63,7 @@ def cmd_train(context):
 
         print('\nArchitecture: {} with a depth of {}.\n' \
               .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else "Attention UNet" if attention else
-        '3D Unet' if unet_3D else "Unet", context['depth']))
+                      '3D Unet' if unet_3D else "Unet", context['depth']))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -789,12 +789,12 @@ def cmd_test(context):
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                         _ = pred_to_nii(data_lst=pred_tmp_lst,
-                                         z_lst=z_tmp_lst,
-                                         fname_ref=fname_tmp,
-                                         fname_out=fname_pred,
-                                         slice_axis=AXIS_DCT[context['slice_axis']],
-                                         kernel_dim='2d',
-                                         bin_thr=0.5 if context["binarize_prediction"] else -1)
+                                        z_lst=z_tmp_lst,
+                                        fname_ref=fname_tmp,
+                                        fname_out=fname_pred,
+                                        slice_axis=AXIS_DCT[context['slice_axis']],
+                                        kernel_dim='2d',
+                                        bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
@@ -814,12 +814,12 @@ def cmd_test(context):
 
                     # Choose only one modality
                     _ = pred_to_nii(data_lst=rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)),
-                                     z_lst=[],
-                                     fname_ref=fname_ref,
-                                     fname_out=fname_pred,
-                                     slice_axis=AXIS_DCT[context['slice_axis']],
-                                     kernel_dim='3d',
-                                     bin_thr=0.5 if context["binarize_prediction"] else -1)
+                                    z_lst=[],
+                                    fname_ref=fname_ref,
+                                    fname_out=fname_pred,
+                                    slice_axis=AXIS_DCT[context['slice_axis']],
+                                    kernel_dim='3d',
+                                    bin_thr=0.5 if context["binarize_prediction"] else -1)
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
@@ -835,7 +835,7 @@ def cmd_test(context):
 
     # COMPUTE UNCERTAINTY MAPS
     if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty'][
-        'n_it'] > 0:
+            'n_it'] > 0:
         run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()
