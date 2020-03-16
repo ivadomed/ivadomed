@@ -120,7 +120,7 @@ if __name__ == '__main__':
 
     # Step 2 : Losses (dice, cross_entropy, focal, mixed, gdl)
 
-    #losses = [{"name": "dice"}, {"name": "cross_entropy"}, {"name": "gdl"}]
+    # losses = [{"name": "dice"}, {"name": "cross_entropy"}, {"name": "gdl"}]
 
     # Focal loss
     """
@@ -132,7 +132,7 @@ if __name__ == '__main__':
         new_loss["params"]["alpha"] = combination[0]
         new_loss["params"]["gamma"] = combination[1]
         losses.append(new_loss)
-    #print(losses)
+    # print(losses)
     """
 
     # Focal dice
@@ -144,12 +144,12 @@ if __name__ == '__main__':
         new_loss = copy.deepcopy(base_loss)
         new_loss["params"]["beta"] = beta
         losses.append(new_loss)
-    #print(losses)
+    # print(losses)
     """
 
     # Step 3 : FiLM
 
-    #metadatas = ["contrast"]
+    # metadatas = ["contrast"]
 
     # film_layers = [ [1, 0, 0, 0, 0, 0, 0, 0],
     #                [0, 0, 0, 0, 1, 0, 0, 0],
@@ -158,12 +158,12 @@ if __name__ == '__main__':
 
     # Step 4 : Mixup
 
-    #mixup_bools = [True]
-    #mixup_alphas = [0.5, 1, 2]
+    # mixup_bools = [True]
+    # mixup_alphas = [0.5, 1, 2]
 
     # Step 5 : Dilation
 
-    #gt_dilations = [0, 0.5, 1]
+    # gt_dilations = [0, 0.5, 1]
 
     # Split dataset if not already done
 
@@ -239,7 +239,7 @@ if __name__ == '__main__':
         validation_scores = pool.map(train_worker, config_list)
         val_df = pd.DataFrame(validation_scores, columns=[
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice', 'best_validation_loss'])
-        #results_df = pd.concat([results_df, temp_df])
+        # results_df = pd.concat([results_df, temp_df])
 
         if(args.run_test):
             for config in config_list:
@@ -263,35 +263,6 @@ if __name__ == '__main__':
 
         results_df = pd.concat([results_df, combined_df])
 
-    # Compute avg, std, p-values
-    if(n_iterations > 1):
-        num_configs = len(config_list)
-        avg = results_df.groupby(['log_directory']).mean()
-        std = results_df.groupby(['log_directory']).std()
-
-        print("Average dataframe")
-        print(avg)
-        print("Standard deviation dataframe")
-        print(std)
-
-        p_values = np.zeros((num_configs, num_configs))
-        i, j = 0, 0
-        for confA in config_list:
-            print(confA["log_directory"])
-            j = 0
-            for confB in config_list:
-                if args.run_test:
-                    p_values[i, j] = ttest_ind_from_stats(mean1=avg.loc[confA["log_directory"]]["test_dice"], std1=std.loc[confA["log_directory"]]["test_dice"],
-                                                          nobs1=n_iterations, mean2=avg.loc[confB["log_directory"]]["test_dice"], std2=std.loc[confB["log_directory"]]["test_dice"], nobs2=n_iterations).pvalue
-                else:
-                    p_values[i, j] = ttest_ind_from_stats(mean1=avg.loc[confA["log_directory"]]["best_validation_dice"], std1=std.loc[confA["log_directory"]]["best_validation_dice"],
-                                                          nobs1=n_iterations, mean2=avg.loc[confB["log_directory"]]["best_validation_dice"], std2=std.loc[confB["log_directory"]]["best_validation_dice"], nobs2=n_iterations).pvalue
-                j += 1
-            i += 1
-
-        print("P-values array")
-        print(p_values)
-
     # Merge config and results in a df
     config_df = pd.DataFrame.from_dict(config_list)
     keep = list(param_dict.keys())
@@ -299,9 +270,47 @@ if __name__ == '__main__':
     config_df = config_df[keep]
 
     results_df = config_df.set_index('log_directory').join(results_df.set_index('log_directory'))
+    results_df = results_df.reset_index()
     results_df = results_df.sort_values(by=['best_validation_loss'])
 
     results_df.to_csv("output_df.csv")
 
     print("Detailed results")
     print(results_df)
+
+    # Compute avg, std, p-values
+    if(n_iterations > 1):
+        compute_statistics(results_df, n_iterations)
+
+
+def compute_statistics(results_df, n_iterations):
+
+    avg = results_df.groupby(['log_directory']).mean()
+    std = results_df.groupby(['log_directory']).std()
+
+    print("Average dataframe")
+    print(avg)
+    print("Standard deviation dataframe")
+    print(std)
+
+    config_logs = list(avg.index.values)
+    num_configs = len(config_logs)
+    print(config_logs)
+
+    p_values = np.zeros((num_configs, num_configs))
+    i, j = 0, 0
+    for confA in config_logs:
+        print(confA)
+        j = 0
+        for confB in config_logs:
+            if args.run_test:
+                p_values[i, j] = ttest_ind_from_stats(mean1=avg.loc[confA]["test_dice"], std1=std.loc[confA]["test_dice"],
+                                                      nobs1=n_iterations, mean2=avg.loc[confB["test_dice"], std2=std.loc[confB["test_dice"], nobs2=n_iterations).pvalue
+            else:
+                p_values[i, j] = ttest_ind_from_stats(mean1=avg.loc[confA["best_validation_dice"], std1=std.loc[confA["best_validation_dice"],
+                                                      nobs1=n_iterations, mean2=avg.loc[confB["best_validation_dice"], std2=std.loc[confB["best_validation_dice"], nobs2=n_iterations).pvalue
+            j += 1
+        i += 1
+
+    print("P-values array")
+    print(p_values)
