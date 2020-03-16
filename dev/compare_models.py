@@ -96,6 +96,39 @@ def test_worker(config):
     return config["log_directory"], test_dice
 
 
+def compute_statistics(results_df, n_iterations):
+
+    avg = results_df.groupby(['log_directory']).mean()
+    std = results_df.groupby(['log_directory']).std()
+
+    print("Average dataframe")
+    print(avg)
+    print("Standard deviation dataframe")
+    print(std)
+
+    config_logs = list(avg.index.values)
+    num_configs = len(config_logs)
+    print(config_logs)
+
+    p_values = np.zeros((num_configs, num_configs))
+    i, j = 0, 0
+    for confA in config_logs:
+        print(confA)
+        j = 0
+        for confB in config_logs:
+            if args.run_test:
+                p_values[i, j] = ttest_ind_from_stats(mean1=avg.loc[confA]["test_dice"], std1=std.loc[confA]["test_dice"],
+                                                      nobs1=n_iterations, mean2=avg.loc[confB]["test_dice"], std2=std.loc[confB]["test_dice"], nobs2=n_iterations).pvalue
+            else:
+                p_values[i, j] = ttest_ind_from_stats(mean1=avg.loc[confA]["best_validation_dice"], std1=std.loc[confA]["best_validation_dice"],
+                                                      nobs1=n_iterations, mean2=avg.loc[confB]["best_validation_dice"], std2=std.loc[confB]["best_validation_dice"], nobs2=n_iterations).pvalue
+            j += 1
+        i += 1
+
+    print("P-values array")
+    print(p_values)
+
+
 if __name__ == '__main__':
 
     parser = get_parser()
@@ -281,36 +314,3 @@ if __name__ == '__main__':
     # Compute avg, std, p-values
     if(n_iterations > 1):
         compute_statistics(results_df, n_iterations)
-
-
-def compute_statistics(results_df, n_iterations):
-
-    avg = results_df.groupby(['log_directory']).mean()
-    std = results_df.groupby(['log_directory']).std()
-
-    print("Average dataframe")
-    print(avg)
-    print("Standard deviation dataframe")
-    print(std)
-
-    config_logs = list(avg.index.values)
-    num_configs = len(config_logs)
-    print(config_logs)
-
-    p_values = np.zeros((num_configs, num_configs))
-    i, j = 0, 0
-    for confA in config_logs:
-        print(confA)
-        j = 0
-        for confB in config_logs:
-            if args.run_test:
-                p_values[i, j] = ttest_ind_from_stats(mean1=avg.loc[confA]["test_dice"], std1=std.loc[confA]["test_dice"],
-                                                      nobs1=n_iterations, mean2=avg.loc[confB]["test_dice"], std2=std.loc[confB]["test_dice"], nobs2=n_iterations).pvalue
-            else:
-                p_values[i, j] = ttest_ind_from_stats(mean1=avg.loc[confA]["best_validation_dice"], std1=std.loc[confA]["best_validation_dice"],
-                                                      nobs1=n_iterations, mean2=avg.loc[confB]["best_validation_dice"], std2=std.loc[confB]["best_validation_dice"], nobs2=n_iterations).pvalue
-            j += 1
-        i += 1
-
-    print("P-values array")
-    print(p_values)
