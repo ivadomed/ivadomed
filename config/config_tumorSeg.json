@@ -13,10 +13,10 @@
     "batch_size": 1,
     "dropout_rate": 0.3,
     "batch_norm_momentum": 0.1,
-    "num_epochs": 10,
-    "initial_lr": 0.00005,
+    "num_epochs": 1000,
+    "initial_lr": 0.001,
     "loss": {"name": "dice"},
-    "log_directory": "AU",
+    "log_directory": "MC",
     "lr_scheduler": {"name": "CosineAnnealingLR", "base_lr": 1e-5, "max_lr": 1e-2},
     "film_layers": [],
     "mixup_bool": false,
@@ -42,7 +42,7 @@
       "filter_empty_input": true
     },
     "slice_filter_roi": null,
-    "early_stopping_patience": 1000,
+    "early_stopping_patience": 60,
     "early_stopping_epsilon": 0.001,
     "eval_params": {
      "targetSize": {"unit": "vox", "thr": [20, 100]},
@@ -62,17 +62,20 @@
           },
       "ToTensor3D": {},
       "NormalizeInstance3D": {},
-        "StackTensors": {}
+      "StackTensors": {},
+      "BackgroundClass": {}
     },
     "transformation_validation": {
       "ToTensor3D": {},
       "NormalizeInstance3D": {},
-        "StackTensors": {}
+      "StackTensors": {},
+      "BackgroundClass": {}
     },
     "transformation_testing": {
       "ToTensor3D": {},
       "NormalizeInstance3D": {},
-        "StackTensors": {}
+      "StackTensors": {},
+      "BackgroundClass": {}
     },
     "debugging": false
 }

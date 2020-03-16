@@ -204,10 +204,10 @@ def cmd_train(context):
                                      drop_rate=context["dropout_rate"],
                                      bn_momentum=context["batch_norm_momentum"])
         elif unet_3D:
-            model = models.UNet3D(in_channels=in_channel, n_classes=len(context["target_suffix"]), attention=attention)
+            model = models.UNet3D(in_channels=in_channel, n_classes=len(context["target_suffix"]) + 1, attention=attention)
         else:
             model = models.Unet(in_channel=in_channel,
-                                out_channel=len(context["target_suffix"]),
+                                out_channel=len(context["target_suffix"]) + 1,
                                 depth=context['depth'],
                                 film_layers=context["film_layers"],
                                 n_metadata=n_metadata,
@@ -368,6 +368,7 @@ def cmd_train(context):
 
             if context["loss"]["name"] == "dice":
                 loss = - losses.dice_loss(preds, var_gt)
+
             else:
                 loss = loss_fct(preds, var_gt)
                 dice_train_loss_total += losses.dice_loss(preds, var_gt).item()
@@ -399,6 +400,11 @@ def cmd_train(context):
                         # Only display images with labels
                         if gt_samples.sum() == 0:
                             continue
+
+                    # verify if multitarget and remove background class
+                    if gt_samples.shape[1]:
+                        gt_samples = gt_samples[:, 1:, ]
+                        preds = preds[:, 1:, ]
 
                     # take only one modality for grid
                     if input_samples.shape[1] > 1:
@@ -462,6 +468,7 @@ def cmd_train(context):
 
                 if context["loss"]["name"] == "dice":
                     loss = - losses.dice_loss(preds, var_gt)
+
                 else:
                     loss = loss_fct(preds, var_gt)
                     dice_val_loss_total += losses.dice_loss(preds, var_gt).item()
@@ -469,13 +476,13 @@ def cmd_train(context):
 
             # Metrics computation
             gt_npy = gt_samples.numpy().astype(np.uint8)
-            gt_npy = gt_npy.squeeze(axis=1)
+            # gt_npy = gt_npy.squeeze(axis=1)
 
             preds_npy = preds.data.cpu().numpy()
             if context["binarize_prediction"]:
                 preds_npy = threshold_predictions(preds_npy)
             preds_npy = preds_npy.astype(np.uint8)
-            preds_npy = preds_npy.squeeze(axis=1)
+            # preds_npy = preds_npy.squeeze(axis=1)
 
             metric_mgr(preds_npy, gt_npy)
 
@@ -498,6 +505,11 @@ def cmd_train(context):
                         # Only display images with labels
                         if gt_samples.sum() == 0:
                             continue
+
+                    # verify if multitarget and remove background class
+                    if gt_samples.shape[1]:
+                        gt_samples = gt_samples[:, 1:, ]
+                        preds = preds[:, 1:, ]
 
                     # take only one modality for grid
                     if input_samples.shape[1] > 1:
@@ -766,6 +778,10 @@ def cmd_test(context):
             if batch["input"].shape[1] > 1 and not i_monteCarlo:
                 batch["input_metadata"] = batch["input_metadata"][0]  # Take only second channel
 
+            if batch['gt'].shape[1] > 1:
+                rdict['gt'] = merge_labels(batch['gt'])
+                batch.update(rdict)
+
             # reconstruct 3D image
             for smp_idx in range(len(batch['gt'])):
                 # undo transformations
@@ -773,10 +789,10 @@ def cmd_test(context):
                 for k in batch.keys():
                     rdict[k] = batch[k][smp_idx]
                 if rdict["input"].shape[0] > 1:
-                    rdict["input"] = rdict["input"][1,][None,]
+                    rdict["input"] = rdict["input"][1, ][None, ]
                 rdict_undo = val_undo_transform(rdict)
 
-                fname_ref = rdict_undo['input_metadata']['gt_filename']
+                fname_ref = rdict_undo['input_metadata']['gt_filenames'][0]
                 if not context['unet_3D']:
                     if pred_tmp_lst and (fname_ref != fname_tmp or (
                             i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
@@ -803,26 +819,26 @@ def cmd_test(context):
                 else:
                     # TODO: Add reconstruction for subvolumes
                     fname_pred = os.path.join(path_3Dpred, fname_ref.split('/')[-1])
-                    fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+                    fname_pred = fname_pred.split(context['target_suffix'][0])[0] + '_pred.nii.gz'
                     # If MonteCarlo, then we save each simulation result
                     if n_monteCarlo > 1:
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
-                    save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
+                    save_nii(rdict_undo['gt'].transpose((1, 2, 0)), [], fname_ref, fname_pred,
                              slice_axis=AXIS_DCT[context['slice_axis']], unet_3D=True)
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
-        gt_npy = gt_npy.squeeze(axis=1)
+        # gt_npy = gt_npy.squeeze(axis=1)
 
         preds_npy = preds.data.cpu().numpy()
         if context["binarize_prediction"]:
             preds_npy = threshold_predictions(preds_npy)
         preds_npy = preds_npy.astype(np.uint8)
-        preds_npy = preds_npy.squeeze(axis=1)
+        # preds_npy = preds_npy.squeeze(axis=1)
 
-        metric_mgr(preds_npy, gt_npy)
+        metric_mgr(preds_npy[:, 1:, ], gt_npy[:, 1:, ])
 
     # COMPUTE UNCERTAINTY MAPS
     if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty'][
@@ -863,7 +879,7 @@ def cmd_eval(context):
 
         fname_pred = os.path.join(path_pred, subj_acq + '_pred.nii.gz')
         fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat',
-                                subj_acq + context['target_suffix'] + '.nii.gz')
+                                subj_acq + context['target_suffix'][0] + '.nii.gz')
 
         # 3D evaluation
         eval = Evaluation3DMetrics(fname_pred=fname_pred,

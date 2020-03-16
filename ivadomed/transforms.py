@@ -6,6 +6,7 @@ import torchvision.transforms.functional as F
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing, generate_binary_structure
 import nibabel as nib
+import torch
 
 from medicaltorch import transforms as mt_transforms
 from scipy.ndimage.filters import gaussian_filter
@@ -17,7 +18,7 @@ def get_transform_names():
        from the mt_transforms."""
 
     return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor', 'StackTensors', 'CenterCrop3D',
-            'RandomAffine3D', 'NormalizeInstance3D', 'ToTensor3D']
+            'RandomAffine3D', 'NormalizeInstance3D', 'ToTensor3D', 'BackgroundClass']
 
 
 class UndoCompose(object):
@@ -373,6 +374,19 @@ class NormalizeInstance3D(mt_transforms.NormalizeInstance3D):
 
     @staticmethod
     def undo_transform(sample):
+        return sample
+
+
+class BackgroundClass(mt_transforms.MTTransform):
+    def undo_transform(self, sample):
+        return sample
+
+    def __call__(self, sample):
+        rdict = {}
+
+        background = (sample['gt'].sum(axis=0) == 0).type('torch.FloatTensor')[None, ]
+        rdict['gt'] = torch.cat((background, sample['gt']), dim=0)
+        sample.update(rdict)
         return sample
 
 

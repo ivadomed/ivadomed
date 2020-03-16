@@ -562,6 +562,10 @@ def dice_score(im1, im2):
 
 
 def hausdorff_score(prediction, groundtruth):
+    if len(prediction.shape) == 4:
+        l, h, d, w = prediction.shape
+        prediction = prediction.reshape((h, l * d, w))
+        groundtruth = groundtruth.reshape((h, l * d, w))
     if len(prediction.shape) == 3:
         mean_hansdorff = 0
         for idx in range(prediction.shape[1]):
@@ -745,3 +749,13 @@ def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
         nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
 
         nib.save(nib_pred, save_directory)
+
+
+def merge_labels(gt_data):
+    rdict = {}
+    labels = range(1, gt_data.shape[1] + 1)
+    multi_labeled_pred = torch.zeros(gt_data[:, 0, ].shape)
+    rdict['gt'] = threshold_predictions(rdict['gt'])
+    for idx, label in enumerate(labels):
+        multi_labeled_pred += label * gt_data[:, idx, ]
+    return multi_labeled_pred

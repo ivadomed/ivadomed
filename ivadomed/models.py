@@ -609,10 +609,11 @@ class UNet3D(nn.Module):
 
         out = out_pred + ds1_ds2_sum_upscale_ds3_sum_upscale
         seg_layer = out
-        out = out.permute(0, 2, 3, 4, 1).contiguous().view(-1, self.n_classes)
-        out = self.softmax(out)
-        return torch.sigmoid(seg_layer)
-
+        if self.n_classes > 1:
+            out = self.softmax(out)
+        else:
+            out = torch.sigmoid(seg_layer)
+        return out
 
 # Specific toAttention UNet
 class GridAttentionBlockND(nn.Module):

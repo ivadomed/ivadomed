@@ -1,16 +1,33 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch import einsum
+
+
+# Inspired from https://arxiv.org/pdf/1802.10508.pdf
+def multiclass_dice_loss(input, target):
+    smooth = 1.0
+    dice_per_class = 0
+    n_classes = input.shape[1]
+    for i in range(1, n_classes):
+        iflat = input[:, i, ].view(-1)
+        tflat = target[:, i, ].view(-1)
+        intersection = (iflat * tflat).sum()
+        dice_per_class += intersection / (iflat.sum() + tflat.sum() + smooth)
+    return (2.0 * dice_per_class) / n_classes
 
 
 def dice_loss(input, target):
-    smooth = 1.0
+    if (target.shape[1] > 1):
+        return multiclass_dice_loss(input, target)
+    else:
+        smooth = 1.0
 
-    iflat = input.view(-1)
-    tflat = target.view(-1)
-    intersection = (iflat * tflat).sum()
+        iflat = input.view(-1)
+        tflat = target.view(-1)
+        intersection = (iflat * tflat).sum()
 
-    return ((2.0 * intersection + smooth) / (iflat.sum() + tflat.sum() + smooth))
+        return ((2.0 * intersection + smooth) / (iflat.sum() + tflat.sum() + smooth))
 
 
 class FocalLoss(nn.Module):
