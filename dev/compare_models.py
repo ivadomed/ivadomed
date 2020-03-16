@@ -305,10 +305,10 @@ def compute_statistics(results_df, n_iterations):
         for confB in config_logs:
             if args.run_test:
                 p_values[i, j] = ttest_ind_from_stats(mean1=avg.loc[confA]["test_dice"], std1=std.loc[confA]["test_dice"],
-                                                      nobs1=n_iterations, mean2=avg.loc[confB["test_dice"], std2=std.loc[confB["test_dice"], nobs2=n_iterations).pvalue
+                                                      nobs1=n_iterations, mean2=avg.loc[confB]["test_dice"], std2=std.loc[confB]["test_dice"], nobs2=n_iterations).pvalue
             else:
-                p_values[i, j] = ttest_ind_from_stats(mean1=avg.loc[confA["best_validation_dice"], std1=std.loc[confA["best_validation_dice"],
-                                                      nobs1=n_iterations, mean2=avg.loc[confB["best_validation_dice"], std2=std.loc[confB["best_validation_dice"], nobs2=n_iterations).pvalue
+                p_values[i, j] = ttest_ind_from_stats(mean1=avg.loc[confA]["best_validation_dice"], std1=std.loc[confA]["best_validation_dice"],
+                                                      nobs1=n_iterations, mean2=avg.loc[confB]["best_validation_dice"], std2=std.loc[confB]["best_validation_dice"], nobs2=n_iterations).pvalue
             j += 1
         i += 1
 
