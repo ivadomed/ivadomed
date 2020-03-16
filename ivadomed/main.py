@@ -23,8 +23,6 @@ from ivadomed.utils import *
 
 cudnn.benchmark = True
 
-AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
-
 
 def cmd_train(context):
     """Main command to train the network.
