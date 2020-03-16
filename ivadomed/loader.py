@@ -90,7 +90,7 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                 if subject.record["modality"] in contrast_balance.keys():
                     c[subject.record["modality"]] = c[subject.record["modality"]] + 1
                     if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_balance[
-                        subject.record["modality"]]:
+                            subject.record["modality"]]:
                         continue
 
                 if not subject.has_derivative("labels"):
