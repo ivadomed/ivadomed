@@ -107,11 +107,9 @@ def compute_statistics(results_df, n_iterations):
     print(std)
 
     config_logs = list(avg.index.values)
-
     p_values = np.zeros((len(config_logs), len(config_logs)))
     i, j = 0, 0
     for confA in config_logs:
-        # print(confA)
         j = 0
         for confB in config_logs:
             if args.run_test:
@@ -124,7 +122,7 @@ def compute_statistics(results_df, n_iterations):
         i += 1
 
     p_df = pd.DataFrame(p_values, index=config_logs, columns=config_logs)
-    print("P-values array")
+    print("P-values dataframe")
     print(p_df)
 
 
@@ -271,7 +269,6 @@ if __name__ == '__main__':
         validation_scores = pool.map(train_worker, config_list)
         val_df = pd.DataFrame(validation_scores, columns=[
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice', 'best_validation_loss'])
-        # results_df = pd.concat([results_df, temp_df])
 
         if(args.run_test):
             for config in config_list:
@@ -305,7 +302,7 @@ if __name__ == '__main__':
     results_df = results_df.reset_index()
     results_df = results_df.sort_values(by=['best_validation_loss'])
 
-    results_df.to_csv("output_df.csv")
+    results_df.to_csv("detailled_results.csv")
 
     print("Detailed results")
     print(results_df)
