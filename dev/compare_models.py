@@ -1,6 +1,6 @@
 ##############################################################
 #
-# This script enable training and comparison of models on multiple GPUs
+# This script enables training and comparison of models on multiple GPUs
 #
 # Usage: python dev/compare_models.py -c path/to/config.json -n number_of_iterations --all-combin
 #
@@ -39,7 +39,7 @@ def get_parser():
     parser.add_argument("--all-combin", dest='all_combin', action='store_true',
                         help="To run all combinations of config")
     parser.add_argument("--run-test", dest='run_test', action='store_true',
-                        help="Run cmd_eval to get metrics on test dataset")
+                        help="Evaluate the trained model on the testing sub-set.")
     parser.add_argument("--fixed-split", dest='fixed_split', action='store_true',
                         help="Keep a constant dataset split for all configs and iterations")
     parser.set_defaults(all_combin=False)
@@ -301,7 +301,7 @@ if __name__ == '__main__':
     results_df = config_df.set_index('log_directory').join(results_df.set_index('log_directory'))
     results_df = results_df.sort_values(by=['best_validation_loss'])
 
-    results_df.to_pickle("output_df.pkl")
+    results_df.to_csv("output_df.csv")
 
-    print("Detailled results")
+    print("Detailed results")
     print(results_df)
