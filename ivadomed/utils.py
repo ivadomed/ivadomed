@@ -666,8 +666,8 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
     # If ROI is not provided then force center cropping
     if roi_fname is None and 'ROICrop2D' in context["transformation_validation"].keys():
         context["transformation_validation"] = dict((key, value) if key != 'ROICrop2D'
-                                                        else ('CenterCrop2D', value)
-                                                        for (key, value) in context["transformation_validation"].items())
+                                                    else ('CenterCrop2D', value)
+                                                    for (key, value) in context["transformation_validation"].items())
 
     # Transforms
     transform_list = []
@@ -687,11 +687,11 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
     filename_pairs = [([image_fname], image_fname, roi_fname, [{}])]
     if context['unet_3D'] == False:  # TODO: rename this param 'model_name' or 'kernel_dim'
         ds = MRI2DSegmentationDataset(filename_pairs,
-                                        slice_axis=AXIS_DCT[context['slice_axis']],
-                                        cache=True,
-                                        transform=do_transforms,
-                                        slice_filter_fn=SliceFilter(**context["slice_filter"]),
-                                        canonical=True)
+                                      slice_axis=AXIS_DCT[context['slice_axis']],
+                                      cache=True,
+                                      transform=do_transforms,
+                                      slice_filter_fn=SliceFilter(**context["slice_filter"]),
+                                      canonical=True)
     else:
         print('\n3D unet is not implemented yet.')
         exit()
@@ -744,13 +744,13 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
             # If last batch and last sample of this batch, then reconstruct 3D object
             if i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1:
                 pred_nib = pred_to_nii(data_lst=preds_list,
-                                        z_lst=sliceIdx_list,
-                                        fname_ref=image_fname,
-                                        fname_out=None,
-                                        slice_axis=AXIS_DCT[context['slice_axis']],
-                                        kernel_dim='3d' if context['unet_3D'] else '2d',
-                                        debug=False,
-                                        bin_thr=-1)
+                                       z_lst=sliceIdx_list,
+                                       fname_ref=image_fname,
+                                       fname_out=None,
+                                       slice_axis=AXIS_DCT[context['slice_axis']],
+                                       kernel_dim='3d' if context['unet_3D'] else '2d',
+                                       debug=False,
+                                       bin_thr=-1)
 
     return pred_nib
 
