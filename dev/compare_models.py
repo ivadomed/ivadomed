@@ -107,13 +107,11 @@ def compute_statistics(results_df, n_iterations):
     print(std)
 
     config_logs = list(avg.index.values)
-    num_configs = len(config_logs)
-    print(config_logs)
 
-    p_values = np.zeros((num_configs, num_configs))
+    p_values = np.zeros((len(config_logs), len(config_logs)))
     i, j = 0, 0
     for confA in config_logs:
-        print(confA)
+        # print(confA)
         j = 0
         for confB in config_logs:
             if args.run_test:
@@ -125,8 +123,9 @@ def compute_statistics(results_df, n_iterations):
             j += 1
         i += 1
 
+    p_df = pd.DataFrame(p_values, index=config_logs, columns=config_logs)
     print("P-values array")
-    print(p_values)
+    print(p_df)
 
 
 if __name__ == '__main__':
