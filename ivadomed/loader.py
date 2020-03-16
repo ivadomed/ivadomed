@@ -113,7 +113,8 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                     metadata = {}
                 else:
                     metadata = subject.metadata()
-                    # add contrast to metadata
+
+                # add contrast to metadata
                 metadata['contrast'] = subject.record["modality"]
 
                 if metadata_choice == 'mri_params':
