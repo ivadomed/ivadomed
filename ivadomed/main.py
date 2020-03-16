@@ -778,7 +778,7 @@ def cmd_test(context):
                 if not context['unet_3D']:
                     if pred_tmp_lst and (fname_ref != fname_tmp or (
                             i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
-                        # save the completely processed file as a nii
+                        # save the completely processed file as a nifti file
                         fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
                         fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
 
@@ -786,7 +786,7 @@ def cmd_test(context):
                         if n_monteCarlo > 1:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
-                        _ = pred_to_nii(data_lst=pred_tmp_lst,
+                        _ = pred_to_nib(data_lst=pred_tmp_lst,
                                         z_lst=z_tmp_lst,
                                         fname_ref=fname_tmp,
                                         fname_out=fname_pred,
@@ -811,7 +811,7 @@ def cmd_test(context):
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
-                    _ = pred_to_nii(data_lst=rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)),
+                    _ = pred_to_nib(data_lst=rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)),
                                     z_lst=[],
                                     fname_ref=fname_ref,
                                     fname_out=fname_pred,
