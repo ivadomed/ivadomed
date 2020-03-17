@@ -12,6 +12,7 @@ from torchvision import transforms
 
 from ivadomed import loader as ivadomed_loader
 from ivadomed import transforms as ivadomed_transforms
+from ivadomed.main import compose_transforms
 from medicaltorch.datasets import MRI2DSegmentationDataset
 from medicaltorch import metrics as mt_metrics
 from medicaltorch.filters import SliceFilter
