@@ -25,7 +25,17 @@ cudnn.benchmark = True
 
 
 def compose_transforms(dict_transforms, requires_undo=False):
+    """Composes several transforms together.
 
+    Args:
+        dict_transforms (dictionary): Dictionary where the keys are the transform names
+            and the value their parameters.
+        requires_undo (bool): If True, does not include transforms which do not have an undo_transform
+            implemented yet.
+    Returns:
+        torchvision.transforms.Compose object.
+
+    """
     list_transforms = []
     for transform in dict_transforms.keys():
         parameters = dict_transforms[transform]
@@ -46,6 +56,7 @@ def compose_transforms(dict_transforms, requires_undo=False):
             list_transform.append(transform_obj)
 
     return transforms.Compose(list_transform)
+
 
 def cmd_train(context):
     """Main command to train the network.
