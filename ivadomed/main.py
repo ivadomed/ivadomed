@@ -626,7 +626,7 @@ def cmd_train(context):
 
 def cmd_test(context):
     ##### DEFINE DEVICE #####
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:" + str(context['gpu']) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
         print("cuda is not available.")
