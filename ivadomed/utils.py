@@ -669,16 +669,8 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
                                                     else ('CenterCrop2D', value)
                                                     for (key, value) in context["transformation_validation"].items())
 
-    # Transforms
-    transform_list = []
-    for transform in context['transformation_validation'].keys():
-        parameters = context['transformation_validation'][transform]
-        if transform in ivadomed_transforms.get_transform_names():
-            transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
-        else:
-            transform_obj = getattr(mt_transforms, transform)(**parameters)
-        transform_list.append(transform_obj)
-    do_transforms = transforms.Compose(transform_list)
+    # Compose transforms
+    do_transforms = compose_transforms(context['transformation_validation'])
 
     # Undo Transforms
     undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
