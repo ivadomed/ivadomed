@@ -112,27 +112,11 @@ def cmd_train(context):
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=context["log_directory"])
 
-    # These are the training transformations
-    training_transform_list = []
-    for transform in context["transformation_training"].keys():
-        parameters = context["transformation_training"][transform]
-        if transform in ivadomed_transforms.get_transform_names():
-            training_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
-        else:
-            training_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+    # Compose training transforms
+    train_transform = compose_transforms(context["transformation_training"])
 
-    train_transform = transforms.Compose(training_transform_list)
-
-    # These are the validation/testing transformations
-    validation_transform_list = []
-    for transform in context["transformation_validation"].keys():
-        parameters = context["transformation_validation"][transform]
-        if transform in ivadomed_transforms.get_transform_names():
-            validation_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
-        else:
-            validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
-
-    val_transform = transforms.Compose(validation_transform_list)
+    # Compose validation transforms
+    val_transform = compose_transforms(context["transformation_validation"])
 
     # Randomly split dataset between training / validation / testing
     if context.get("split_path") is None:
@@ -667,24 +651,8 @@ def cmd_test(context):
     else:
         transformation_dict = context["transformation_validation"]
 
-    # These are the validation/testing transformations
-    validation_transform_list = []
-    print('\nApplied transformations:')
-    for transform in transformation_dict.keys():
-        parameters = transformation_dict[transform]
-        if transform in ivadomed_transforms.get_transform_names():
-            transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
-        else:
-            transform_obj = getattr(mt_transforms, transform)(**parameters)
-        # check if undo_transform method is implemented
-        if hasattr(transform_obj, 'undo_transform'):
-            print('\t- {}'.format(transform))
-            validation_transform_list.append(transform_obj)
-        else:
-            print('\t- {} NOT included (no undo_transform implemented)'.format(transform))
-    print('\n')
-
-    val_transform = transforms.Compose(validation_transform_list)
+    # Compose Testing transforms
+    val_transform = compose_transforms(transformation_dict, requires_undo=True)
 
     # inverse transformations
     val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
