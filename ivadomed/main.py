@@ -36,7 +36,7 @@ def compose_transforms(dict_transforms, requires_undo=False):
         torchvision.transforms.Compose object.
 
     """
-    list_transforms = []
+    list_transform = []
     for transform in dict_transforms.keys():
         parameters = dict_transforms[transform]
 
