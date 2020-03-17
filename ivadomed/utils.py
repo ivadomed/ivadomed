@@ -325,8 +325,8 @@ class Evaluation3DMetrics(object):
         return dct
 
 
-def pred_to_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5):
-    """Convert the NN predictions as nii.
+def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5):
+    """Convert the NN predictions as nibabel object.
 
     Based on the header of fname_ref image, it creates a nibabel object from the NN predictions (data_lst),
     given the slice indexes (z_lst) along slice_axis.
@@ -743,7 +743,7 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
 
             # If last batch and last sample of this batch, then reconstruct 3D object
             if i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1:
-                pred_nib = pred_to_nii(data_lst=preds_list,
+                pred_nib = pred_to_nib(data_lst=preds_list,
                                        z_lst=sliceIdx_list,
                                        fname_ref=image_fname,
                                        fname_out=None,
