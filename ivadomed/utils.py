@@ -639,18 +639,18 @@ def threshold_predictions(predictions, thr=0.5):
     return thresholded_preds
 
 
-def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=None):
+def segment_volume(fname_model, fname_model_metadata, fname_image, fname_roi=None):
     """Segment an image.
 
-    Segment an image (image_fname) using a already trained model (model_fname) given its
-    training parameters (model_metadata_fname). If provided, a RegionOfInterest (roi_fname)
+    Segment an image (fname_image) using a already trained model (fname_model) given its
+    training parameters (fname_model_metadata). If provided, a RegionOfInterest (fname_roi)
     is used to crop the image prior to segment it.
 
     Args:
-        model_fname (string): model filename (.pt) to use.
-        model_metadata_fname (string): Configuration file filename (.json) used for the training,
+        fname_model (string): model filename (.pt) to use.
+        fname_model_metadata (string): Configuration file filename (.json) used for the training,
             see https://github.com/neuropoly/ivado-medical-imaging/wiki/configuration-file
-        image_fname (string): image filename (e.g. .nii.gz) to segment.
+        fname_image (string): image filename (e.g. .nii.gz) to segment.
         roi_fname (string): Binary image filename (e.g. .nii.gz) defining a region of interest,
             e.g. spinal cord centerline, used to crop the image prior to segment it if provided.
     Returns:
@@ -661,11 +661,11 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
     device = torch.device("cpu")
 
     # Load model training config
-    with open(model_metadata_fname, "r") as fhandle:
+    with open(fname_model_metadata, "r") as fhandle:
         context = json.load(fhandle)
 
     # If ROI is not provided then force center cropping
-    if roi_fname is None and 'ROICrop2D' in context["transformation_validation"].keys():
+    if fname_roi is None and 'ROICrop2D' in context["transformation_validation"].keys():
         context["transformation_validation"] = dict((key, value) if key != 'ROICrop2D'
                                                     else ('CenterCrop2D', value)
                                                     for (key, value) in context["transformation_validation"].items())
@@ -677,7 +677,7 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
     undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
 
     # Load data
-    filename_pairs = [([image_fname], image_fname, roi_fname, [{}])]
+    filename_pairs = [([fname_image], fname_image, fname_roi, [{}])]
     if context['unet_3D'] == False:  # TODO: rename this param 'model_name' or 'kernel_dim'
         ds = MRI2DSegmentationDataset(filename_pairs,
                                       slice_axis=AXIS_DCT[context['slice_axis']],
@@ -689,8 +689,8 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
         print('\n3D unet is not implemented yet.')
         exit()
 
-    # If roi_fname provided, then remove slices without ROI
-    if roi_fname is not None:
+    # If fname_roi provided, then remove slices without ROI
+    if fname_roi is not None:
         ds = ivadomed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
 
     if context['unet_3D'] == False:
@@ -703,7 +703,7 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
                              num_workers=0)
 
     # Load model
-    model = torch.load(model_fname, map_location=device)
+    model = torch.load(fname_model, map_location=device)
 
     # Inference time
     model.eval()
@@ -738,7 +738,7 @@ def segment_volume(model_fname, model_metadata_fname, image_fname, roi_fname=Non
             if i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1:
                 pred_nib = pred_to_nib(data_lst=preds_list,
                                        z_lst=sliceIdx_list,
-                                       fname_ref=image_fname,
+                                       fname_ref=fname_image,
                                        fname_out=None,
                                        slice_axis=AXIS_DCT[context['slice_axis']],
                                        kernel_dim='3d' if context['unet_3D'] else '2d',
