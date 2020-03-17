@@ -24,6 +24,29 @@ from ivadomed.utils import *
 cudnn.benchmark = True
 
 
+def compose_transforms(dict_transforms, requires_undo=False):
+
+    list_transforms = []
+    for transform in dict_transforms.keys():
+        parameters = dict_transforms[transform]
+
+        # call transfrom either from ivadomed either from medicaltorch
+        if transform in ivadomed_transforms.get_transform_names():
+            transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
+        else:
+            transform_obj = getattr(mt_transforms, transform)(**parameters)
+
+        # check if undo_transform method is implemented
+        if requires_undo:
+            if hasattr(transform_obj, 'undo_transform'):
+                list_transform.append(transform_obj)
+            else:
+                print('{} transform not included since no undo_transform available for it.'.format(transform))
+        else:
+            list_transform.append(transform_obj)
+
+    return transforms.Compose(list_transform)
+
 def cmd_train(context):
     """Main command to train the network.
 
