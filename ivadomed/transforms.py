@@ -54,8 +54,10 @@ class Resample(mt_transforms.Resample):
         rdict['input'] = input_data_undo
 
         # undo pred, aka GT
-        hshape, wshape = sample['gt_metadata']['data_shape']
-        hzoom, wzoom = sample['gt_metadata']['zooms']
+        # CG: I comment these 2 following lines because these variables should be the
+        # same between image and GT
+        #hshape, wshape = sample['gt_metadata']['data_shape']
+        #hzoom, wzoom = sample['gt_metadata']['zooms']
         gt_data_undo = self.resample_bin(sample['gt'], wshape, hshape)
         rdict['gt'] = gt_data_undo
 
