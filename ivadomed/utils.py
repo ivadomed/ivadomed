@@ -547,18 +547,25 @@ def dice_score(im1, im2):
     """
     Computes the Dice coefficient between im1 and im2.
     """
-    im1 = np.asarray(im1).astype(np.bool)
-    im2 = np.asarray(im2).astype(np.bool)
 
-    if im1.shape != im2.shape:
-        raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
-
-    im_sum = im1.sum() + im2.sum()
-    if im_sum == 0:
-        return np.nan
-
-    intersection = np.logical_and(im1, im2)
-    return (2. * intersection.sum()) / im_sum
+    dice_per_class = 0
+    n_classes = im1.shape[1]
+    for i in range(1, n_classes):
+        intersection = np.logical_and(im1, im2)
+        dice_per_class += intersection / (im1.sum() + im2.sum())
+    return (2.0 * dice_per_class) / n_classes
+    # im1 = np.asarray(im1).astype(np.bool)
+    # im2 = np.asarray(im2).astype(np.bool)
+    #
+    # if im1.shape != im2.shape:
+    #     raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
+    #
+    # im_sum = im1.sum() + im2.sum()
+    # if im_sum == 0:
+    #     return np.nan
+    #
+    # intersection = np.logical_and(im1, im2)
+    # return (2. * intersection.sum()) / im_sum
 
 
 def hausdorff_score(prediction, groundtruth):
@@ -755,7 +762,7 @@ def merge_labels(gt_data):
     rdict = {}
     labels = range(1, gt_data.shape[1] + 1)
     multi_labeled_pred = torch.zeros(gt_data[:, 0, ].shape)
-    rdict['gt'] = threshold_predictions(rdict['gt'])
+    rdict['gt'] = threshold_predictions(gt_data)
     for idx, label in enumerate(labels):
         multi_labeled_pred += label * gt_data[:, idx, ]
     return multi_labeled_pred

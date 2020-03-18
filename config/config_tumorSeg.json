@@ -1,5 +1,5 @@
 {
-    "command": "train",
+    "command": "test",
     "gpu": 0,
     "target_suffix": ["_seg-tumor", "_edema", "_cavity"],
     "roi_suffix": null,
