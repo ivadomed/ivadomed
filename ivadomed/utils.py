@@ -676,7 +676,6 @@ def segment_volume(fname_model, fname_model_metadata, fname_image, fname_roi=Non
                                                     if not key.startswith('NormalizeInstance')
                                                     else (key, value)
                                                     for (key, value) in context["transformation_validation"].items())
-    print(context["transformation_validation"])
 
     # Compose transforms
     do_transforms = compose_transforms(context['transformation_validation'])
