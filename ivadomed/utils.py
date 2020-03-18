@@ -671,6 +671,13 @@ def segment_volume(fname_model, fname_model_metadata, fname_image, fname_roi=Non
                                                     else ('CenterCrop2D', value)
                                                     for (key, value) in context["transformation_validation"].items())
 
+    # Force labeled to False in transforms
+    context["transformation_validation"] = dict((key, {**value, **{"labeled": False}})
+                                                    if not key.startswith('NormalizeInstance')
+                                                    else (key, value)
+                                                    for (key, value) in context["transformation_validation"].items())
+    print(context["transformation_validation"])
+
     # Compose transforms
     do_transforms = compose_transforms(context['transformation_validation'])
 
@@ -678,7 +685,7 @@ def segment_volume(fname_model, fname_model_metadata, fname_image, fname_roi=Non
     undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
 
     # Load data
-    filename_pairs = [([fname_image], fname_image, fname_roi, [{}])]
+    filename_pairs = [([fname_image], None, fname_roi, [{}])]
     if not context['unet_3D']:  # TODO: rename this param 'model_name' or 'kernel_dim'
         ds = MRI2DSegmentationDataset(filename_pairs,
                                       slice_axis=AXIS_DCT[context['slice_axis']],
