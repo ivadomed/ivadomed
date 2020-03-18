@@ -564,6 +564,7 @@ class HDF5Dataset:
             # input Metadata
             input_metadata.append({key: value for key, value in self.hdf5_file['{}/inputs/{}'
                                   .format(line['Subjects'], ct)].attrs.items()})
+            input_metadata[i]['slice_index'] = line['Slices']
 
         # GT
         if self.status['gt/' + self.gt_lst[0]]:

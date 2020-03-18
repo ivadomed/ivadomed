@@ -26,7 +26,7 @@
     "multichannel": false,
     "hdf5_path": "/home/andreanne/Documents/dataset/HeMIS.hdf5",
     "csv_path": "/home/andreanne/Documents/dataset/HeMIS.csv",
-    "missing_probability": 0.001,
+    "missing_probability": 0.00001,
     "out_channel": 1,
     "depth": 4,
     "length_3D": [16, 96, 512],
