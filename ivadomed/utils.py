@@ -679,7 +679,7 @@ def segment_volume(fname_model, fname_model_metadata, fname_image, fname_roi=Non
 
     # Load data
     filename_pairs = [([fname_image], fname_image, fname_roi, [{}])]
-    if context['unet_3D'] == False:  # TODO: rename this param 'model_name' or 'kernel_dim'
+    if not context['unet_3D']:  # TODO: rename this param 'model_name' or 'kernel_dim'
         ds = MRI2DSegmentationDataset(filename_pairs,
                                       slice_axis=AXIS_DCT[context['slice_axis']],
                                       cache=True,
@@ -694,7 +694,7 @@ def segment_volume(fname_model, fname_model_metadata, fname_image, fname_roi=Non
     if fname_roi is not None:
         ds = ivadomed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
 
-    if context['unet_3D'] == False:
+    if not context['unet_3D']:
         print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
 
     # Data Loader
