@@ -9,6 +9,7 @@ from ivadomed.utils import SliceFilter
 from medicaltorch import datasets as mt_datasets
 
 from ivadomed import loader as loader
+from ivadomed import metrics
 
 import ivadomed.transforms as ivadomed_transforms
 
@@ -89,13 +90,13 @@ def test_inference(film_bool=False):
         model.cuda()
     model.eval()
 
-    metric_fns = [dice_score,  # from ivadomed/utils.py
-                  mt_metrics.hausdorff_score,
-                  mt_metrics.precision_score,
-                  mt_metrics.recall_score,
-                  mt_metrics.specificity_score,
-                  mt_metrics.intersection_over_union,
-                  mt_metrics.accuracy_score]
+    metric_fns = [metrics.dice_score,  # from ivadomed/utils.py
+                  metrics.hausdorff_score,
+                  metrics.precision_score,
+                  metrics.recall_score,
+                  metrics.specificity_score,
+                  metrics.intersection_over_union,
+                  metrics.accuracy_score]
 
     metric_mgr = IvadoMetricManager(metric_fns)
 

@@ -19,6 +19,7 @@ import ivadomed.transforms as ivadomed_transforms
 from ivadomed import loader as loader
 from ivadomed import losses
 from ivadomed import models
+from ivadomed import metrics
 from ivadomed.utils import *
 
 cudnn.benchmark = True
@@ -322,13 +323,13 @@ def cmd_train(context):
     epsilon = context["early_stopping_epsilon"]
     val_losses = []
 
-    metric_fns = [dice_score,  # from ivadomed/utils.py
-                  hausdorff_score,  # from ivadomed/utils.py
-                  mt_metrics.precision_score,
-                  mt_metrics.recall_score,
-                  mt_metrics.specificity_score,
-                  mt_metrics.intersection_over_union,
-                  mt_metrics.accuracy_score]
+    metric_fns = [metrics.dice_score,
+                  metrics.hausdorff_score,
+                  metrics.precision_score,
+                  metrics.recall_score,
+                  metrics.specificity_score,
+                  metrics.intersection_over_union,
+                  metrics.accuracy_score]
 
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
@@ -700,13 +701,13 @@ def cmd_test(context):
     if not os.path.isdir(path_3Dpred):
         os.makedirs(path_3Dpred)
 
-    metric_fns = [dice_score,  # from ivadomed/utils.py
-                  hausdorff_score,  # from ivadomed/utils.py
-                  mt_metrics.precision_score,
-                  mt_metrics.recall_score,
-                  mt_metrics.specificity_score,
-                  mt_metrics.intersection_over_union,
-                  mt_metrics.accuracy_score]
+    metric_fns = [metrics.dice_score,
+                  metrics.hausdorff_score,
+                  metrics.precision_score,
+                  metrics.recall_score,
+                  metrics.specificity_score,
+                  metrics.intersection_over_union,
+                  metrics.accuracy_score]
 
     metric_mgr = IvadoMetricManager(metric_fns)
 

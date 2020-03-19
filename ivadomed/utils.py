@@ -14,7 +14,7 @@ from ivadomed import loader as ivadomed_loader
 from ivadomed import transforms as ivadomed_transforms
 from ivadomed.main import compose_transforms
 from medicaltorch.datasets import MRI2DSegmentationDataset
-from medicaltorch import metrics as mt_metrics
+from ivadomed import metrics
 from medicaltorch import datasets as mt_datasets
 
 from scipy.ndimage import label, generate_binary_structure
@@ -28,7 +28,8 @@ FN_COLOUR = 3
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
-class IvadoMetricManager(mt_metrics.MetricManager):
+
+class IvadoMetricManager(metrics.MetricManager):
     def __init__(self, metric_fns):
         super().__init__(metric_fns)
 
@@ -301,10 +302,10 @@ class Evaluation3DMetrics(object):
         dct['vol_pred'] = self.get_vol(self.data_pred)
         dct['vol_gt'] = self.get_vol(self.data_gt)
         dct['rvd'], dct['avd'] = self.get_rvd(), self.get_avd()
-        dct['dice'] = dice_score(self.data_gt, self.data_pred) * 100.
-        dct['recall'] = mt_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
-        dct['precision'] = mt_metrics.precision_score(self.data_pred, self.data_gt, err_value=np.nan)
-        dct['specificity'] = mt_metrics.specificity_score(self.data_pred, self.data_gt, err_value=np.nan)
+        dct['dice'] = metrics.dice_score(self.data_gt, self.data_pred) * 100.
+        dct['recall'] = metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
+        dct['precision'] = metrics.precision_score(self.data_pred, self.data_gt, err_value=np.nan)
+        dct['specificity'] = metrics.specificity_score(self.data_pred, self.data_gt, err_value=np.nan)
         dct['n_pred'], dct['n_gt'] = self.n_pred, self.n_gt
         dct['ltpr'], _ = self.get_ltpr()
         dct['lfdr'] = self.get_lfdr()
@@ -558,37 +559,6 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     nib.save(nib_iou, fname_iou)
     nib.save(nib_cv, fname_cv)
     nib.save(nib_avgUnc, fname_avgUnc)
-
-
-def dice_score(im1, im2):
-    """
-    Computes the Dice coefficient between im1 and im2.
-    """
-    im1 = np.asarray(im1).astype(np.bool)
-    im2 = np.asarray(im2).astype(np.bool)
-
-    if im1.shape != im2.shape:
-        raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
-
-    im_sum = im1.sum() + im2.sum()
-    if im_sum == 0:
-        return np.nan
-
-    intersection = np.logical_and(im1, im2)
-    return (2. * intersection.sum()) / im_sum
-
-
-def hausdorff_score(prediction, groundtruth):
-    if len(prediction.shape) == 3:
-        mean_hansdorff = 0
-        for idx in range(prediction.shape[1]):
-            pred = prediction[:, idx, :]
-            gt = groundtruth[:, idx, :]
-            mean_hansdorff += mt_metrics.hausdorff_score(pred, gt)
-        mean_hansdorff = mean_hansdorff / prediction.shape[1]
-        return mean_hansdorff
-
-    return mt_metrics.hausdorff_score(prediction, groundtruth)
 
 
 def mixup(data, targets, alpha):
