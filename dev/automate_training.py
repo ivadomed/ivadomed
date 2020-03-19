@@ -272,7 +272,7 @@ if __name__ == '__main__':
     results_df = results_df.reset_index()
     results_df = results_df.sort_values(by=['best_validation_loss'])
 
-    results_df.to_csv("detailled_results.csv")
+    results_df.to_csv("detailed_results.csv")
 
     print("Detailed results")
     print(results_df)
