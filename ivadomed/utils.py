@@ -16,7 +16,7 @@ from ivadomed import transforms as ivadomed_transforms
 from ivadomed.main import compose_transforms
 from medicaltorch.datasets import MRI2DSegmentationDataset
 from medicaltorch import metrics as mt_metrics
-from medicaltorch.filters import SliceFilter
+from ivadomed.utils import SliceFilter
 from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
 
@@ -880,6 +880,7 @@ def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
         nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
 
         nib.save(nib_pred, save_directory)
+
 
 class SliceFilter(object):
     def __init__(self, filter_empty_mask=True,

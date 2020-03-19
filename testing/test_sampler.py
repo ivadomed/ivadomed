@@ -4,7 +4,7 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from medicaltorch.filters import SliceFilter
+from ivadomed.utils import SliceFilter
 from medicaltorch import datasets as mt_datasets
 
 from ivadomed import loader as loader
