@@ -6,7 +6,6 @@ from torchvision import transforms
 
 from medicaltorch.filters import SliceFilter
 from medicaltorch import datasets as mt_datasets
-from medicaltorch import transforms as mt_transforms
 
 from ivadomed import loader as loader
 from ivadomed.utils import *
@@ -17,6 +16,7 @@ cudnn.benchmark = True
 GPU_NUMBER = 0
 BATCH_SIZE = 8
 PATH_BIDS = 'testing_data'
+
 
 def _cmpt_label(ds_loader):
     cmpt_label, cmpt_sample = {0: 0, 1: 0}, 0
@@ -32,7 +32,7 @@ def _cmpt_label(ds_loader):
     neg_sample_ratio = cmpt_label[0] * 100. / cmpt_sample
     pos_sample_ratio = cmpt_label[1] * 100. / cmpt_sample
     print({'neg_sample_ratio': neg_sample_ratio,
-            'pos_sample_ratio': pos_sample_ratio})
+           'pos_sample_ratio': pos_sample_ratio})
 
 
 def test_sampler():
@@ -73,10 +73,12 @@ def test_sampler():
 
     print('\nLoading with sampling')
     train_loader_balanced = DataLoader(ds_train, batch_size=BATCH_SIZE,
-                                          sampler=loader.BalancedSampler(ds_train),
-                                          shuffle=False, pin_memory=True,
-                                          collate_fn=mt_datasets.mt_collate,
-                                          num_workers=0)
+                                       sampler=loader.BalancedSampler(ds_train),
+                                       shuffle=False, pin_memory=True,
+                                       collate_fn=mt_datasets.mt_collate,
+                                       num_workers=0)
     _cmpt_label(train_loader_balanced)
+
+
 print("Test sampler")
 test_sampler()

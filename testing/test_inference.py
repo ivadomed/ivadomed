@@ -1,22 +1,15 @@
 import os
 import numpy as np
-import time
 
 import torch.backends.cudnn as cudnn
-from torch.utils.data import DataLoader, dataloader
+from torch.utils.data import DataLoader
 from torchvision import transforms
 
 from medicaltorch.filters import SliceFilter
 from medicaltorch import datasets as mt_datasets
-from medicaltorch import transforms as mt_transforms
-from torch import optim
-
-from tqdm import tqdm
 
 from ivadomed import loader as loader
-from ivadomed import models
-from ivadomed import losses
-from ivadomed.utils import *
+
 import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
@@ -28,6 +21,7 @@ BN = 0.1
 SLICE_AXIS = 2
 PATH_BIDS = 'testing_data'
 PATH_OUT = 'tmp'
+
 
 def test_inference(film_bool=False):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -55,17 +49,17 @@ def test_inference(film_bool=False):
     test_lst = ['sub-test001']
 
     ds_test = loader.BidsDataset(PATH_BIDS,
-                                  subject_lst=test_lst,
-                                  target_suffix="_lesion-manual",
-                                  roi_suffix="_seg-manual",
-                                  contrast_lst=['T2w', 'T2star'],
-                                  metadata_choice="contrast",
-                                  contrast_balance={},
-                                  slice_axis=SLICE_AXIS,
-                                  transform=val_transform,
-                                  multichannel=False,
-                                  slice_filter_fn=SliceFilter(filter_empty_input=True,
-                                                                filter_empty_mask=False))
+                                 subject_lst=test_lst,
+                                 target_suffix="_lesion-manual",
+                                 roi_suffix="_seg-manual",
+                                 contrast_lst=['T2w', 'T2star'],
+                                 metadata_choice="contrast",
+                                 contrast_balance={},
+                                 slice_axis=SLICE_AXIS,
+                                 transform=val_transform,
+                                 multichannel=False,
+                                 slice_filter_fn=SliceFilter(filter_empty_input=True,
+                                                             filter_empty_mask=False))
 
     ds_test = loader.filter_roi(ds_test, nb_nonzero_thr=10)
 
@@ -122,11 +116,13 @@ def test_inference(film_bool=False):
 
             if film_bool:
                 sample_metadata = batch["input_metadata"]
-                test_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+                test_contrast = [sample_metadata[k]['contrast']
+                                 for k in range(len(sample_metadata))]
 
                 test_metadata = [one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k in
                                  range(len(sample_metadata))]
-                preds = model(test_input, test_metadata)  # Input the metadata related to the input samples
+                # Input the metadata related to the input samples
+                preds = model(test_input, test_metadata)
             else:
                 preds = model(test_input)
 
@@ -145,7 +141,8 @@ def test_inference(film_bool=False):
             rdict_undo = val_undo_transform(rdict)
 
             fname_ref = rdict_undo['input_metadata']['gt_filename']
-            if pred_tmp_lst and (fname_ref != fname_tmp or (i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):  # new processed file
+            # new processed file
+            if pred_tmp_lst and (fname_ref != fname_tmp or (i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):
                 # save the completely processed file as a nii
                 fname_pred = os.path.join(PATH_OUT, fname_tmp.split('/')[-1])
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
@@ -173,7 +170,8 @@ def test_inference(film_bool=False):
     metric_mgr.reset()
     print(metrics_dict)
 
+
 print("Test unet")
 test_inference()
 print("test unet-filmed")
-#test_inference(film_bool=True)
+# test_inference(film_bool=True)

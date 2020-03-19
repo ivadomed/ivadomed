@@ -11,7 +11,6 @@ from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
 
 from ivadomed import loader as loader
-from ivadomed.utils import *
 import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
@@ -19,6 +18,7 @@ cudnn.benchmark = True
 GPU_NUMBER = 0
 BATCH_SIZE = 8
 PATH_BIDS = 'testing_data'
+
 
 def _cmpt_slice(ds_loader, gt_roi='gt'):
     cmpt_label, cmpt_sample = {0: 0, 1: 0}, 0
@@ -31,6 +31,7 @@ def _cmpt_slice(ds_loader, gt_roi='gt'):
                 cmpt_label[0] += 1
             cmpt_sample += 1
     print(cmpt_label)
+
 
 def test_slice_filter_center():
     """Test SliceFilter when using mt_transforms.CenterCrop2D."""
@@ -68,9 +69,9 @@ def test_slice_filter_center():
 
         print('\tNumber of loaded slices: {}'.format(len(ds_train)))
         train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
-                                      shuffle=True, pin_memory=True,
-                                      collate_fn=mt_datasets.mt_collate,
-                                      num_workers=0)
+                                  shuffle=True, pin_memory=True,
+                                  collate_fn=mt_datasets.mt_collate,
+                                  num_workers=0)
         print('\tNumber of Neg/Pos slices in GT.')
         _cmpt_slice(train_loader, 'gt')
 
@@ -114,13 +115,14 @@ def test_slice_filter_roi():
 
         print('\tNumber of loaded slices: {}'.format(len(ds_train)))
         train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
-                                      shuffle=True, pin_memory=True,
-                                      collate_fn=mt_datasets.mt_collate,
-                                      num_workers=0)
+                                  shuffle=True, pin_memory=True,
+                                  collate_fn=mt_datasets.mt_collate,
+                                  num_workers=0)
         print('\tNumber of Neg/Pos slices in GT.')
         _cmpt_slice(train_loader, 'gt')
         print('\tNumber of Neg/Pos slices in ROI.')
         _cmpt_slice(train_loader, 'roi')
+
 
 print("Test test_slice_filter_center")
 test_slice_filter_center()
