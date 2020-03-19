@@ -8,7 +8,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from torchvision import transforms
 import torch.nn.functional as F
 
 from ivadomed import loader as ivadomed_loader
@@ -16,9 +15,7 @@ from ivadomed import transforms as ivadomed_transforms
 from ivadomed.main import compose_transforms
 from medicaltorch.datasets import MRI2DSegmentationDataset
 from medicaltorch import metrics as mt_metrics
-from ivadomed.utils import SliceFilter
 from medicaltorch import datasets as mt_datasets
-from medicaltorch import transforms as mt_transforms
 
 from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable

@@ -7,8 +7,6 @@ import sys
 import os
 import json
 import numpy as np
-from tqdm import tqdm
-from itertools import groupby
 from torchvision import transforms
 import matplotlib.pyplot as plt
 from sklearn.externals import joblib

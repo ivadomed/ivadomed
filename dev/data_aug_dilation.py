@@ -4,7 +4,6 @@
 # Example: python data_aug_dilation.py t2_seg.nii.gz
 #
 
-import os
 import sys
 import numpy as np
 import random
