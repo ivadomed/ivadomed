@@ -611,6 +611,8 @@ class UNet3D(nn.Module):
         seg_layer = out
         if self.n_classes > 1:
             out = self.softmax(out)
+            # Remove background class
+            out = out[:, 1:, ]
         else:
             out = torch.sigmoid(seg_layer)
         return out

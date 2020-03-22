@@ -7,16 +7,23 @@
     "random_seed": 1313,
     "contrast_train_validation": ["T1w", "T2w"],
     "contrast_balance": {},
-    "contrast_test": ["T1w","T2w"],
+    "contrast_test": ["T1w", "T2w"],
     "center_test": [],
     "retrain_model": null,
     "batch_size": 1,
     "dropout_rate": 0.3,
     "batch_norm_momentum": 0.1,
-    "num_epochs": 1000,
+    "num_epochs": 1,
     "initial_lr": 0.001,
-    "loss": {"name": "dice"},
-    "log_directory": "MC",
+    "loss": {
+      "name": "combined_dice",
+      "params": {
+        "class_of_interest": [0],
+        "multi_class_dice": true,
+        "dice": true
+      }
+    },
+    "log_directory": "testeval",
     "lr_scheduler": {"name": "CosineAnnealingLR", "base_lr": 1e-5, "max_lr": 1e-2},
     "film_layers": [],
     "mixup_bool": false,
@@ -45,9 +52,6 @@
     "early_stopping_patience": 60,
     "early_stopping_epsilon": 0.001,
     "eval_params": {
-     "targetSize": {"unit": "vox", "thr": [20, 100]},
-     "removeSmall": {"unit": "vox", "thr": 3},
-     "overlap": {"unit": "vox", "thr": 3}
     },
     "transformation_training": {
           "ElasticTransform": {
@@ -62,20 +66,17 @@
           },
       "ToTensor3D": {},
       "NormalizeInstance3D": {},
-      "StackTensors": {},
-      "BackgroundClass": {}
+      "StackTensors": {}
     },
     "transformation_validation": {
       "ToTensor3D": {},
       "NormalizeInstance3D": {},
-      "StackTensors": {},
-      "BackgroundClass": {}
+      "StackTensors": {}
     },
     "transformation_testing": {
       "ToTensor3D": {},
       "NormalizeInstance3D": {},
-      "StackTensors": {},
-      "BackgroundClass": {}
+      "StackTensors": {}
     },
     "debugging": false
 }

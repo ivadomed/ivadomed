@@ -22,6 +22,7 @@ from ivadomed import models
 from ivadomed.utils import *
 
 cudnn.benchmark = True
+import imageio
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -264,7 +265,7 @@ def cmd_train(context):
     var_contrast_list = []
 
     # Loss
-    if context["loss"]["name"] in ["dice", "cross_entropy", "focal", "gdl", "focal_dice"]:
+    if context["loss"]["name"] in ["dice", "cross_entropy", "focal", "gdl", "focal_dice", "multi_class_dice", "combined_dice"]:
         if context["loss"]["name"] == "cross_entropy":
             loss_fct = nn.BCELoss()
 
@@ -288,12 +289,20 @@ def cmd_train(context):
                                                                                            "gamma"],
                                                                                        context["loss"]["params"][
                                                                                            "alpha"]))
+        elif context["loss"]["name"] == "multi_class_dice":
+            loss_fct = losses.MultiClassDiceLoss()
+
+        elif context["loss"]["name"] == "combined_dice":
+            loss_fct = losses.CombinedDiceLoss(class_of_interest=context["loss"]["params"]["class_of_interest"],
+                                               multi_class_dice=context["loss"]["params"]["multi_class_dice"],
+                                               dice=context["loss"]["params"]["dice"])
 
         if not context["loss"]["name"].startswith("focal"):
             print("\nLoss function: {}.\n".format(context["loss"]["name"]))
 
     else:
-        print("Unknown Loss function, please choose between 'dice', 'focal', 'focal_dice', 'gdl' or 'cross_entropy'")
+        print("Unknown Loss function, please choose between 'dice', 'focal', 'focal_dice', 'gdl', 'cross_entropy',"
+              "'multi_class_dice' or 'combined_dice'")
         exit()
 
     # Training loop -----------------------------------------------------------
@@ -306,7 +315,8 @@ def cmd_train(context):
     epsilon = context["early_stopping_epsilon"]
     val_losses = []
 
-    metric_fns = [dice_score(),  # from ivadomed/utils.py
+    metric_fns = [multiclass_dice_score,
+                  dice_score,  # from ivadomed/utils.py
                   hausdorff_score,  # from ivadomed/utils.py
                   mt_metrics.precision_score,
                   mt_metrics.recall_score,
@@ -314,6 +324,9 @@ def cmd_train(context):
                   mt_metrics.intersection_over_union,
                   mt_metrics.accuracy_score]
 
+    images_pred = []
+    images_gt = []
+    images = []
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
 
@@ -401,11 +414,6 @@ def cmd_train(context):
                         if gt_samples.sum() == 0:
                             continue
 
-                    # verify if multitarget and remove background class
-                    if gt_samples.shape[1]:
-                        gt_samples = gt_samples[:, 1:, ]
-                        preds = preds[:, 1:, ]
-
                     # take only one modality for grid
                     if input_samples.shape[1] > 1:
                         tensor = input_samples[:, 0, :, :][:, None, :, :]
@@ -416,14 +424,19 @@ def cmd_train(context):
                                                 scale_each=True)
                     writer.add_image('Train/Input', grid_img, epoch)
 
+                    images.append((grid_img.cpu().numpy().transpose(2, 1, 0) * 255).astype('u1'))
+
+
                     grid_img = vutils.make_grid(preds.data.cpu(),
                                                 normalize=True,
                                                 scale_each=True)
+                    images_pred.append((grid_img.cpu().numpy().transpose(2, 1, 0) * 255).astype('u1'))
                     writer.add_image('Train/Predictions', grid_img, epoch)
 
                     grid_img = vutils.make_grid(gt_samples,
                                                 normalize=True,
                                                 scale_each=True)
+                    images_gt.append((grid_img.cpu().numpy().transpose(2, 1, 0) * 255).astype('u1'))
                     writer.add_image('Train/Ground Truth', grid_img, epoch)
 
         train_loss_total_avg = train_loss_total / num_steps
@@ -505,11 +518,6 @@ def cmd_train(context):
                         # Only display images with labels
                         if gt_samples.sum() == 0:
                             continue
-
-                    # verify if multitarget and remove background class
-                    if gt_samples.shape[1]:
-                        gt_samples = gt_samples[:, 1:, ]
-                        preds = preds[:, 1:, ]
 
                     # take only one modality for grid
                     if input_samples.shape[1] > 1:
@@ -596,6 +604,9 @@ def cmd_train(context):
             break
 
     # Save final model
+    imageio.mimsave("./" + context["log_directory"] + '/gt.gif', images_gt)
+    imageio.mimsave("./" + context["log_directory"] + '/pred.gif', images_pred)
+    imageio.mimsave("./" + context["log_directory"] + '/images.gif', images)
     torch.save(model, "./" + context["log_directory"] + "/final_model.pt")
     if film_bool:  # save clustering and OneHotEncoding models
         joblib.dump(metadata_clustering_models, "./" +
@@ -712,7 +723,8 @@ def cmd_test(context):
     if not os.path.isdir(path_3Dpred):
         os.makedirs(path_3Dpred)
 
-    metric_fns = [dice_score,  # from ivadomed/utils.py
+    metric_fns = [multiclass_dice_score,
+                  dice_score,  # from ivadomed/utils.py
                   hausdorff_score,  # from ivadomed/utils.py
                   mt_metrics.precision_score,
                   mt_metrics.recall_score,
@@ -778,55 +790,62 @@ def cmd_test(context):
             if batch["input"].shape[1] > 1 and not i_monteCarlo:
                 batch["input_metadata"] = batch["input_metadata"][0]  # Take only second channel
 
-            # if batch['gt'].shape[1] > 1:
-            #     rdict['gt'] = merge_labels(batch['gt'])
-            #     batch.update(rdict)
-
             # reconstruct 3D image
-            # for smp_idx in range(len(batch['gt'])):
-            #     # undo transformations
-            #     rdict = {}
-            #     for k in batch.keys():
-            #         rdict[k] = batch[k][smp_idx]
-            #     if rdict["input"].shape[0] > 1:
-            #         rdict["input"] = rdict["input"][1, ][None, ]
-            #     rdict_undo = val_undo_transform(rdict)
-            #
-            #     fname_ref = rdict_undo['input_metadata']['gt_filenames'][0]
-            #     if not context['unet_3D']:
-            #         if pred_tmp_lst and (fname_ref != fname_tmp or (
-            #                 i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
-            #             # save the completely processed file as a nii
-            #             fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
-            #             fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
-            #
-            #             # If MonteCarlo, then we save each simulation result
-            #             if n_monteCarlo > 1:
-            #                 fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
-            #
-            #             save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred,
-            #                      slice_axis=AXIS_DCT[context['slice_axis']],
-            #                      binarize=context["binarize_prediction"])
-            #
-            #             # re-init pred_stack_lst
-            #             pred_tmp_lst, z_tmp_lst = [], []
-            #
-            #         # add new sample to pred_tmp_lst
-            #         pred_tmp_lst.append(np.array(rdict_undo['gt']))
-            #         z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
-            #         fname_tmp = fname_ref
-            #
-            #     else:
-            #         # TODO: Add reconstruction for subvolumes
-            #         fname_pred = os.path.join(path_3Dpred, fname_ref.split('/')[-1])
-            #         fname_pred = fname_pred.split(context['target_suffix'][0])[0] + '_pred.nii.gz'
-            #         # If MonteCarlo, then we save each simulation result
-            #         if n_monteCarlo > 1:
-            #             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
-            #
-            #         # Choose only one modality
-            #         save_nii(rdict_undo['gt'].transpose((1, 2, 0)), [], fname_ref, fname_pred,
-            #                  slice_axis=AXIS_DCT[context['slice_axis']], unet_3D=True)
+            for smp_idx in range(len(batch['gt'])):
+                # undo transformations
+                rdict = {}
+                for k in batch.keys():
+                    rdict[k] = batch[k][smp_idx]
+                if rdict["input"].shape[0] > 1:
+                    rdict["input"] = rdict["input"][1, ][None, ]
+
+                # If multiclass merge labels
+                rdict_undo = val_undo_transform(rdict)
+
+                fname_ref = rdict_undo['input_metadata']['gt_filenames'][0]
+                if not context['unet_3D']:
+                    if pred_tmp_lst and (fname_ref != fname_tmp or (
+                            i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
+                        # save the completely processed file as a nii
+                        fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
+                        fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+
+                        # If MonteCarlo, then we save each simulation result
+                        if n_monteCarlo > 1:
+                            fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
+
+                        save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred,
+                                 slice_axis=AXIS_DCT[context['slice_axis']],
+                                 binarize=context["binarize_prediction"])
+
+                        # re-init pred_stack_lst
+                        pred_tmp_lst, z_tmp_lst = [], []
+
+                    # add new sample to pred_tmp_lst
+                    pred_tmp_lst.append(np.array(rdict_undo['gt']))
+                    z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
+                    fname_tmp = fname_ref
+
+                else:
+                    # TODO: Add reconstruction for subvolumes
+                    fname_pred = os.path.join(path_3Dpred, fname_ref.split('/')[-1])
+                    fname_pred = fname_pred.split(context['target_suffix'][0])[0] + '_pred.nii.gz'
+                    # If MonteCarlo, then we save each simulation result
+                    if n_monteCarlo > 1:
+                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
+
+                    # Choose only one modality
+                    save_nii(rdict_undo['gt'].transpose((2, 3, 1, 0)), [], fname_ref, fname_pred,
+                             slice_axis=AXIS_DCT[context['slice_axis']], unet_3D=True,
+                             binarize=context['binarize_prediction'])
+                    # Save merged labels with color
+                    if rdict_undo['gt'].shape[1] > 1:
+                        color_pred = merge_labels(rdict_undo['gt'], context['binarize_prediction'])
+                        context['binarize_prediction'] = False
+                        save_nii(color_pred.transpose((1, 2, 0)), [], rdict_undo['input_metadata']['gt_filenames'][0],
+                                 fname_pred.split("_pred.nii.gz")[0] + '_pred_color.nii.gz',
+                                 slice_axis=AXIS_DCT[context['slice_axis']], unet_3D=True,
+                                 binarize=context['binarize_prediction'])
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
@@ -838,7 +857,7 @@ def cmd_test(context):
         preds_npy = preds_npy.astype(np.uint8)
         # preds_npy = preds_npy.squeeze(axis=1)
 
-        metric_mgr(preds_npy[:, 1:, ], gt_npy[:, 1:, ])
+        metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
     if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty'][
@@ -878,8 +897,10 @@ def cmd_eval(context):
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
         fname_pred = os.path.join(path_pred, subj_acq + '_pred.nii.gz')
-        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat',
-                                subj_acq + context['target_suffix'][0] + '.nii.gz')
+        fname_gt = []
+        for suffix in context['target_suffix']:
+            fname_gt.append(os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat',
+                                    subj_acq + suffix + '.nii.gz'))
 
         # 3D evaluation
         eval = Evaluation3DMetrics(fname_pred=fname_pred,

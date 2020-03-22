@@ -49,7 +49,16 @@ class Evaluation3DMetrics(object):
         self.fname_gt = fname_gt
 
         self.data_pred = self.get_data(self.fname_pred)
-        self.data_gt = self.get_data(self.fname_gt)
+
+        h, w, d = self.data_pred.shape[:3]
+        self.n_classes = len(self.fname_gt)
+        self.data_gt = np.zeros((h, w, d, self.n_classes))
+
+        for idx, file in enumerate(fname_gt):
+            if os.path.exists(file):
+                self.data_gt[..., idx] = self.get_data(file)
+            else:
+                self.data_gt[..., idx] = np.zeros((h, w, d))
 
         self.px, self.py, self.pz = self.get_pixdim(self.fname_pred)
 
@@ -87,10 +96,18 @@ class Evaluation3DMetrics(object):
             self.label_size_lst = [[], []]
 
         # 18-connected components
-        self.data_pred_label, self.n_pred = label(self.data_pred,
-                                                  structure=self.bin_struct)
-        self.data_gt_label, self.n_gt = label(self.data_gt,
-                                              structure=self.bin_struct)
+        self.data_pred_label = np.zeros((h, w, d, self.n_classes))
+        self.data_gt_label = np.zeros((h, w, d, self.n_classes))
+        self.n_pred = [None] * self.n_classes
+        self.n_gt = [None] * self.n_classes
+        for idx in range(self.n_classes):
+            self.data_pred_label[..., idx], self.n_pred[idx] = label(self.data_pred[..., idx],
+                                                                     structure=self.bin_struct)
+            self.data_gt_label[..., idx], self.n_gt[idx] = label(self.data_gt[..., idx],
+                                                                 structure=self.bin_struct)
+
+        self.n_pred = self.n_pred[0]
+        self.n_gt = self.n_gt[0]
 
         # painted data, object wise
         self.fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
@@ -291,7 +308,9 @@ class Evaluation3DMetrics(object):
         dct['vol_pred'] = self.get_vol(self.data_pred)
         dct['vol_gt'] = self.get_vol(self.data_gt)
         dct['rvd'], dct['avd'] = self.get_rvd(), self.get_avd()
-        dct['dice'] = dice_score(self.data_gt, self.data_pred) * 100.
+        for n in range(self.n_classes):
+            key_name = 'dice_class' + str(n)
+            dct[key_name] = dice_score(self.data_gt[..., n], self.data_pred[..., n]) * 100.
         dct['recall'] = mt_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
         dct['precision'] = mt_metrics.precision_score(self.data_pred, self.data_gt, err_value=np.nan)
         dct['specificity'] = mt_metrics.specificity_score(self.data_pred, self.data_gt, err_value=np.nan)
@@ -543,29 +562,31 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     nib.save(nib_avgUnc, fname_avgUnc)
 
 
+def multiclass_dice_score(im1, im2):
+    dice_per_class = 0
+    n_classes = im1.shape[0]
+    for i in range(n_classes):
+        intersection = np.logical_and(im1[i, ], im2[i, ])
+        dice_per_class += intersection.sum() / (im1.sum() + im2.sum())
+    return (2.0 * dice_per_class) / n_classes
+
+
 def dice_score(im1, im2):
     """
     Computes the Dice coefficient between im1 and im2.
     """
+    im1 = np.asarray(im1).astype(np.bool)
+    im2 = np.asarray(im2).astype(np.bool)
 
-    dice_per_class = 0
-    n_classes = im1.shape[1]
-    for i in range(1, n_classes):
-        intersection = np.logical_and(im1, im2)
-        dice_per_class += intersection / (im1.sum() + im2.sum())
-    return (2.0 * dice_per_class) / n_classes
-    # im1 = np.asarray(im1).astype(np.bool)
-    # im2 = np.asarray(im2).astype(np.bool)
-    #
-    # if im1.shape != im2.shape:
-    #     raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
-    #
-    # im_sum = im1.sum() + im2.sum()
-    # if im_sum == 0:
-    #     return np.nan
-    #
-    # intersection = np.logical_and(im1, im2)
-    # return (2. * intersection.sum()) / im_sum
+    if im1.shape != im2.shape:
+        raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
+
+    im_sum = im1.sum() + im2.sum()
+    if im_sum == 0:
+        return np.nan
+
+    intersection = np.logical_and(im1, im2)
+    return (2. * intersection.sum()) / im_sum
 
 
 def hausdorff_score(prediction, groundtruth):
@@ -724,7 +745,8 @@ def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
 
     # Save for subject in batch
     for i in range(batch['input'].size(0)):
-        inp_fmap, out_fmap = HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input[i][None, ]))
+        inp_fmap, out_fmap = \
+            HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input[i][None, ]))
 
         # Display the input image and Down_sample the input image
         orig_input_img = test_input[i][None, ].permute(3, 4, 2, 0, 1).cpu().numpy()
@@ -758,11 +780,24 @@ def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
         nib.save(nib_pred, save_directory)
 
 
-def merge_labels(gt_data):
+def merge_labels(gt_data, binarize):
     rdict = {}
-    labels = range(1, gt_data.shape[1] + 1)
-    multi_labeled_pred = torch.zeros(gt_data[:, 0, ].shape)
-    rdict['gt'] = threshold_predictions(gt_data)
-    for idx, label in enumerate(labels):
-        multi_labeled_pred += label * gt_data[:, idx, ]
+    n_class, h, d, w = gt_data.shape
+    labels = range(n_class)
+    # Generate color labels
+    multi_labeled_pred = np.zeros((h, d, w, 3))
+    if binarize:
+        rdict['gt'] = threshold_predictions(gt_data)
+
+    # Keep always the same color labels
+    np.random.seed(2)
+
+    for label in labels:
+        r, g, b = np.random.randint(0, 256, size=3)
+        multi_labeled_pred[..., 0] += r * gt_data[label,]
+        multi_labeled_pred[..., 1] += g * gt_data[label,]
+        multi_labeled_pred[..., 2] += b * gt_data[label,]
+
+    rgb_dtype = np.dtype([('R', 'u1'), ('G', 'u1'), ('B', 'u1')])
+    multi_labeled_pred = multi_labeled_pred.copy().astype('u1').view(dtype=rgb_dtype).reshape((h, d, w))
     return multi_labeled_pred
