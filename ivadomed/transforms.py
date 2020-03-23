@@ -38,7 +38,7 @@ def compose_transforms(dict_transforms, requires_undo=False):
 
         # call transfrom either from ivadomed either from medicaltorch
         if transform in get_transform_names():
-            transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
+            transform_obj = globals()[transform](**parameters)
         else:
             transform_obj = getattr(mt_transforms, transform)(**parameters)
 
