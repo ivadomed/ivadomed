@@ -11,6 +11,8 @@ from medicaltorch import transforms as mt_transforms
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.interpolation import map_coordinates
 
+from torchvision import transforms as torchvision_transforms
+
 
 def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
@@ -35,7 +37,7 @@ def compose_transforms(dict_transforms, requires_undo=False):
         parameters = dict_transforms[transform]
 
         # call transfrom either from ivadomed either from medicaltorch
-        if transform in ivadomed_transforms.get_transform_names():
+        if transform in get_transform_names():
             transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
         else:
             transform_obj = getattr(mt_transforms, transform)(**parameters)
@@ -49,7 +51,7 @@ def compose_transforms(dict_transforms, requires_undo=False):
         else:
             list_transform.append(transform_obj)
 
-    return transforms.Compose(list_transform)
+    return torchvision_transforms.Compose(list_transform)
 
 
 class UndoCompose(object):
