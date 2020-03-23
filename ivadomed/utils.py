@@ -13,7 +13,6 @@ import torch.nn.functional as F
 
 from ivadomed import loader as ivadomed_loader
 from ivadomed import transforms as ivadomed_transforms
-from ivadomed.main import compose_transforms
 from medicaltorch.datasets import MRI2DSegmentationDataset
 from medicaltorch import metrics as mt_metrics
 from medicaltorch.filters import SliceFilter
@@ -678,7 +677,7 @@ def segment_volume(fname_model, fname_model_metadata, fname_image, fname_roi=Non
                                                     for (key, value) in context["transformation_validation"].items())
 
     # Compose transforms
-    do_transforms = compose_transforms(context['transformation_validation'])
+    do_transforms = ivadomed_transforms.compose_transforms(context['transformation_validation'])
 
     # Undo Transforms
     undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
