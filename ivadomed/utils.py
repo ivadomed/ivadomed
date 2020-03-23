@@ -571,6 +571,21 @@ def multiclass_dice_score(im1, im2):
     return (2.0 * dice_per_class) / n_classes
 
 
+def tumor_dice_score(im1, im2):
+    im1 = np.asarray(im1[0, ]).astype(np.bool)
+    im2 = np.asarray(im2[0, ]).astype(np.bool)
+
+    if im1.shape != im2.shape:
+        raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
+
+    im_sum = im1.sum() + im2.sum()
+    if im_sum == 0:
+        return np.nan
+
+    intersection = np.logical_and(im1, im2)
+    return (2. * intersection.sum()) / im_sum
+
+
 def dice_score(im1, im2):
     """
     Computes the Dice coefficient between im1 and im2.

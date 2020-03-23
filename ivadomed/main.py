@@ -316,6 +316,7 @@ def cmd_train(context):
     val_losses = []
 
     metric_fns = [multiclass_dice_score,
+                  tumor_dice_score,
                   dice_score,  # from ivadomed/utils.py
                   hausdorff_score,  # from ivadomed/utils.py
                   mt_metrics.precision_score,
@@ -724,6 +725,7 @@ def cmd_test(context):
         os.makedirs(path_3Dpred)
 
     metric_fns = [multiclass_dice_score,
+                  tumor_dice_score,
                   dice_score,  # from ivadomed/utils.py
                   hausdorff_score,  # from ivadomed/utils.py
                   mt_metrics.precision_score,
