@@ -9,11 +9,9 @@ import pandas as pd
 import torch.backends.cudnn as cudnn
 import torchvision.utils as vutils
 from medicaltorch import datasets as mt_datasets
-from medicaltorch import transforms as mt_transforms
 from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from torchvision import transforms
 
 import ivadomed.transforms as ivadomed_transforms
 from ivadomed import loader as loader
@@ -79,10 +77,10 @@ def cmd_train(context):
     writer = SummaryWriter(log_dir=context["log_directory"])
 
     # Compose training transforms
-    train_transform = compose_transforms(context["transformation_training"])
+    train_transform = ivadomed_transforms.compose_transforms(context["transformation_training"])
 
     # Compose validation transforms
-    val_transform = compose_transforms(context["transformation_validation"])
+    val_transform = ivadomed_transforms.compose_transforms(context["transformation_validation"])
 
     # Randomly split dataset between training / validation / testing
     if context.get("split_path") is None:
@@ -618,7 +616,7 @@ def cmd_test(context):
         transformation_dict = context["transformation_validation"]
 
     # Compose Testing transforms
-    val_transform = compose_transforms(transformation_dict, requires_undo=True)
+    val_transform = ivadomed_transforms.compose_transforms(transformation_dict, requires_undo=True)
 
     # inverse transformations
     val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
