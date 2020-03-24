@@ -11,6 +11,8 @@ from medicaltorch import transforms as mt_transforms
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.interpolation import map_coordinates
 
+from torchvision import transforms as torchvision_transforms
+
 
 def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
@@ -18,6 +20,38 @@ def get_transform_names():
 
     return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor', 'StackTensors', 'CenterCrop3D',
             'RandomAffine3D', 'NormalizeInstance3D', 'ToTensor3D']
+
+
+def compose_transforms(dict_transforms, requires_undo=False):
+    """Composes several transforms together.
+    Args:
+        dict_transforms (dictionary): Dictionary where the keys are the transform names
+            and the value their parameters.
+        requires_undo (bool): If True, does not include transforms which do not have an undo_transform
+            implemented yet.
+    Returns:
+        torchvision.transforms.Compose object.
+    """
+    list_transform = []
+    for transform in dict_transforms.keys():
+        parameters = dict_transforms[transform]
+
+        # call transfrom either from ivadomed either from medicaltorch
+        if transform in get_transform_names():
+            transform_obj = globals()[transform](**parameters)
+        else:
+            transform_obj = getattr(mt_transforms, transform)(**parameters)
+
+        # check if undo_transform method is implemented
+        if requires_undo:
+            if hasattr(transform_obj, 'undo_transform'):
+                list_transform.append(transform_obj)
+            else:
+                print('{} transform not included since no undo_transform available for it.'.format(transform))
+        else:
+            list_transform.append(transform_obj)
+
+    return torchvision_transforms.Compose(list_transform)
 
 
 class UndoCompose(object):
