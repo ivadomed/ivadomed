@@ -805,13 +805,14 @@ def cmd_test(context):
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
     print(metrics_dict)
+    return metrics_dict
 
 
 def cmd_eval(context):
     path_pred = os.path.join(context['log_directory'], 'pred_masks')
     if not os.path.isdir(path_pred):
         print('\nRun Inference\n')
-        cmd_test(context)
+        metrics_dict = cmd_test(context)
     print('\nRun Evaluation on {}\n'.format(path_pred))
 
     ##### DEFINE DEVICE #####
@@ -851,7 +852,7 @@ def cmd_eval(context):
     df_results.to_csv(os.path.join(path_results, 'evaluation_3Dmetrics.csv'))
 
     print(df_results.head(5))
-
+    return metrics_dict, df_results
 
 def run_main():
     if len(sys.argv) <= 1:
