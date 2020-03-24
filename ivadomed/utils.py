@@ -58,7 +58,7 @@ class Evaluation3DMetrics(object):
             if os.path.exists(file):
                 self.data_gt[..., idx] = self.get_data(file)
             else:
-                self.data_gt[..., idx] = np.zeros((h, w, d))
+                self.data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
 
         self.px, self.py, self.pz = self.get_pixdim(self.fname_pred)
 
@@ -96,8 +96,8 @@ class Evaluation3DMetrics(object):
             self.label_size_lst = [[], []]
 
         # 18-connected components
-        self.data_pred_label = np.zeros((h, w, d, self.n_classes))
-        self.data_gt_label = np.zeros((h, w, d, self.n_classes))
+        self.data_pred_label = np.zeros((h, w, d, self.n_classes), dtype='u1')
+        self.data_gt_label = np.zeros((h, w, d, self.n_classes), dtype='u1')
         self.n_pred = [None] * self.n_classes
         self.n_gt = [None] * self.n_classes
         for idx in range(self.n_classes):
@@ -127,7 +127,7 @@ class Evaluation3DMetrics(object):
 
     def get_data(self, fname):
         nib_im = nib.load(fname)
-        return nib_im.get_data()
+        return nib_im.get_data().astype('u1')
 
     def get_pixdim(self, fname):
         nib_im = nib.load(fname)
