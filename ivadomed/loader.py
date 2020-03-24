@@ -4,6 +4,7 @@ from ivadomed import adaptative
 from medicaltorch import datasets as mt_datasets
 from medicaltorch.filters import SliceFilter
 from ivadomed.utils import *
+from ivadomed import __path__
 
 from sklearn.preprocessing import OneHotEncoder
 from scipy.signal import argrelextrema
@@ -22,7 +23,7 @@ from tqdm import tqdm
 import nibabel as nib
 import torch
 
-with open("config/contrast_dct.json", "r") as fhandle:
+with open(os.path.join(__path__[0], "../config/contrast_dct.json"), "r") as fhandle:
     GENERIC_CONTRAST = json.load(fhandle)
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,
@@ -94,7 +95,7 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                 if subject.record["modality"] in contrast_balance.keys():
                     c[subject.record["modality"]] = c[subject.record["modality"]] + 1
                     if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_balance[
-                        subject.record["modality"]]:
+                            subject.record["modality"]]:
                         continue
 
                 if not subject.has_derivative("labels"):
@@ -117,7 +118,8 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                     metadata = {}
                 else:
                     metadata = subject.metadata()
-                    # add contrast to metadata
+
+                # add contrast to metadata
                 metadata['contrast'] = subject.record["modality"]
 
                 if metadata_choice == 'mri_params':
@@ -164,18 +166,37 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
         super().__init__(self.filename_pairs, slice_axis, cache,
                          transform, slice_filter_fn, canonical)
 
-    def filter_roi(self, nb_nonzero_thr):
-        filter_indexes = []
-        for segpair, slice_roi_pair in self.indexes:
-            roi_data = slice_roi_pair['gt']
-            if not np.any(roi_data):
-                continue
-            if np.count_nonzero(roi_data) <= nb_nonzero_thr:
-                continue
 
-            filter_indexes.append((segpair, slice_roi_pair))
+def filter_roi(ds, nb_nonzero_thr):
+    """Filter slices from dataset using ROI data.
 
-        self.indexes = filter_indexes
+    This function loops across the dataset (ds) and discards slices where the number of
+    non-zero voxels within the ROI slice (e.g. centerline, SC segmentation) is inferior or
+    equal to a given threshold (nb_nonzero_thr).
+
+    Args:
+        ds (mt_datasets.MRI2DSegmentationDataset): Dataset.
+        nb_nonzero_thr (int): Threshold.
+
+    Returns:
+        mt_datasets.MRI2DSegmentationDataset: Dataset without filtered slices.
+
+    """
+    filter_indexes = []
+    for segpair, slice_roi_pair in ds.indexes:
+        roi_data = slice_roi_pair['gt']
+
+        # Discard slices with less nonzero voxels than nb_nonzero_thr
+        if not np.any(roi_data):
+            continue
+        if np.count_nonzero(roi_data) <= nb_nonzero_thr:
+            continue
+
+        filter_indexes.append((segpair, slice_roi_pair))
+
+    # Update dataset
+    ds.indexes = filter_indexes
+    return ds
 
 
 def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):

@@ -92,7 +92,7 @@ def test_unet():
                                  padding=0)
 
 
-    ds_train.filter_roi(nb_nonzero_thr=10)
+    ds_train = loader.filter_roi(ds_train, nb_nonzero_thr=10)
 
     metadata_clustering_models = None
     ds_train, train_onehotencoder = loader.normalize_metadata(ds_train,

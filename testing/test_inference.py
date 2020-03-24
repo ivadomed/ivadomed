@@ -67,7 +67,7 @@ def test_inference(film_bool=False):
                                   slice_filter_fn=SliceFilter(filter_empty_input=True,
                                                                 filter_empty_mask=False))
 
-    ds_test.filter_roi(nb_nonzero_thr=10)
+    ds_test = loader.filter_roi(ds_test, nb_nonzero_thr=10)
 
     if film_bool:  # normalize metadata before sending to network
         print('FiLM inference not implemented yet.')
@@ -149,7 +149,7 @@ def test_inference(film_bool=False):
                 # save the completely processed file as a nii
                 fname_pred = os.path.join(PATH_OUT, fname_tmp.split('/')[-1])
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
-                save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS, debug=True)
+                _ = pred_to_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS, debug=True, kernel_dim='2d', bin_thr=0.5)
                 # re-init pred_stack_lst
                 pred_tmp_lst, z_tmp_lst = [], []
 

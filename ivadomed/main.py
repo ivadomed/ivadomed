@@ -23,7 +23,39 @@ from ivadomed.utils import *
 
 cudnn.benchmark = True
 
-AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
+
+def compose_transforms(dict_transforms, requires_undo=False):
+    """Composes several transforms together.
+
+    Args:
+        dict_transforms (dictionary): Dictionary where the keys are the transform names
+            and the value their parameters.
+        requires_undo (bool): If True, does not include transforms which do not have an undo_transform
+            implemented yet.
+    Returns:
+        torchvision.transforms.Compose object.
+
+    """
+    list_transform = []
+    for transform in dict_transforms.keys():
+        parameters = dict_transforms[transform]
+
+        # call transfrom either from ivadomed either from medicaltorch
+        if transform in ivadomed_transforms.get_transform_names():
+            transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
+        else:
+            transform_obj = getattr(mt_transforms, transform)(**parameters)
+
+        # check if undo_transform method is implemented
+        if requires_undo:
+            if hasattr(transform_obj, 'undo_transform'):
+                list_transform.append(transform_obj)
+            else:
+                print('{} transform not included since no undo_transform available for it.'.format(transform))
+        else:
+            list_transform.append(transform_obj)
+
+    return transforms.Compose(list_transform)
 
 
 def cmd_train(context):
@@ -67,7 +99,7 @@ def cmd_train(context):
 
         print('\nArchitecture: {} with a depth of {}.\n' \
               .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else "Attention UNet" if attention else
-        '3D Unet' if unet_3D else "Unet", context['depth']))
+                      '3D Unet' if unet_3D else "Unet", context['depth']))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -84,27 +116,11 @@ def cmd_train(context):
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=context["log_directory"])
 
-    # These are the training transformations
-    training_transform_list = []
-    for transform in context["transformation_training"].keys():
-        parameters = context["transformation_training"][transform]
-        if transform in ivadomed_transforms.get_transform_names():
-            training_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
-        else:
-            training_transform_list.append(getattr(mt_transforms, transform)(**parameters))
+    # Compose training transforms
+    train_transform = compose_transforms(context["transformation_training"])
 
-    train_transform = transforms.Compose(training_transform_list)
-
-    # These are the validation/testing transformations
-    validation_transform_list = []
-    for transform in context["transformation_validation"].keys():
-        parameters = context["transformation_validation"][transform]
-        if transform in ivadomed_transforms.get_transform_names():
-            validation_transform_list.append(getattr(ivadomed_transforms, transform)(**parameters))
-        else:
-            validation_transform_list.append(getattr(mt_transforms, transform)(**parameters))
-
-    val_transform = transforms.Compose(validation_transform_list)
+    # Compose validation transforms
+    val_transform = compose_transforms(context["transformation_validation"])
 
     # Randomly split dataset between training / validation / testing
     if context.get("split_path") is None:
@@ -131,7 +147,7 @@ def cmd_train(context):
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     # todo: not supported by the adaptative loader
     if 'ROICrop2D' in context["transformation_training"].keys():
-        ds_train.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
+        ds_train = loader.filter_roi(ds_train, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
@@ -169,7 +185,7 @@ def cmd_train(context):
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
-        ds_val.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
+        ds_val = loader.filter_roi(ds_val, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to network
         ds_val = loader.normalize_metadata(ds_val,
@@ -642,7 +658,7 @@ def cmd_train(context):
 
 def cmd_test(context):
     ##### DEFINE DEVICE #####
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:" + str(context['gpu']) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
         print("cuda is not available.")
@@ -667,24 +683,8 @@ def cmd_test(context):
     else:
         transformation_dict = context["transformation_validation"]
 
-    # These are the validation/testing transformations
-    validation_transform_list = []
-    print('\nApplied transformations:')
-    for transform in transformation_dict.keys():
-        parameters = transformation_dict[transform]
-        if transform in ivadomed_transforms.get_transform_names():
-            transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
-        else:
-            transform_obj = getattr(mt_transforms, transform)(**parameters)
-        # check if undo_transform method is implemented
-        if hasattr(transform_obj, 'undo_transform'):
-            print('\t- {}'.format(transform))
-            validation_transform_list.append(transform_obj)
-        else:
-            print('\t- {} NOT included (no undo_transform implemented)'.format(transform))
-    print('\n')
-
-    val_transform = transforms.Compose(validation_transform_list)
+    # Compose Testing transforms
+    val_transform = compose_transforms(transformation_dict, requires_undo=True)
 
     # inverse transformations
     val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
@@ -698,7 +698,7 @@ def cmd_test(context):
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
-        ds_test.filter_roi(nb_nonzero_thr=context["slice_filter_roi"])
+        ds_test = loader.filter_roi(ds_test, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load(
@@ -824,7 +824,7 @@ def cmd_test(context):
                 if not context['unet_3D']:
                     if pred_tmp_lst and (fname_ref != fname_tmp or (
                             i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
-                        # save the completely processed file as a nii
+                        # save the completely processed file as a nifti file
                         fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
                         fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
 
@@ -832,9 +832,13 @@ def cmd_test(context):
                         if n_monteCarlo > 1:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
-                        save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred,
-                                 slice_axis=AXIS_DCT[context['slice_axis']],
-                                 binarize=context["binarize_prediction"])
+                        _ = pred_to_nib(data_lst=pred_tmp_lst,
+                                        z_lst=z_tmp_lst,
+                                        fname_ref=fname_tmp,
+                                        fname_out=fname_pred,
+                                        slice_axis=AXIS_DCT[context['slice_axis']],
+                                        kernel_dim='2d',
+                                        bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
@@ -853,8 +857,13 @@ def cmd_test(context):
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
-                    save_nii(rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)), [], fname_ref, fname_pred,
-                             slice_axis=AXIS_DCT[context['slice_axis']], unet_3D=True)
+                    _ = pred_to_nib(data_lst=rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)),
+                                    z_lst=[],
+                                    fname_ref=fname_ref,
+                                    fname_out=fname_pred,
+                                    slice_axis=AXIS_DCT[context['slice_axis']],
+                                    kernel_dim='3d',
+                                    bin_thr=0.5 if context["binarize_prediction"] else -1)
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
@@ -870,7 +879,7 @@ def cmd_test(context):
 
     # COMPUTE UNCERTAINTY MAPS
     if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty'][
-        'n_it'] > 0:
+            'n_it'] > 0:
         run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()
