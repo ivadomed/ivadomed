@@ -619,8 +619,14 @@ class HDF5Dataset:
         """
         if strategy == 'Missing':
             print("Probalility of missing modality = {}".format(p))
-            self.cst_matrix = np.array([np.random.choice(2, len(self.cst_lst), p=[p, 1 - p])
-                                        for _ in range(len(self.dataframe))])
+            for idx in range(len(self.dataframe)):
+                missing_mod = np.random.choice(2, len(self.cst_lst), p=[p, 1 - p])
+                # if all modalities are removed from a subject randomly choose 1
+                if not np.any(missing_mod):
+                    missing_mod = np.zeros((len(self.cst_lst)))
+                    missing_mod[np.random.randint(2, size=1)] = 1
+                self.cst_matrix[idx, ] = missing_mod
+
             print("Missing modalities = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
 
 
