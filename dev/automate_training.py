@@ -13,12 +13,11 @@ import copy
 import joblib
 import json
 import logging
-import numpy as np
 import os
 import pandas as pd
 import random
-import sys
 import shutil
+import sys
 import torch.multiprocessing as mp
 
 
@@ -88,6 +87,10 @@ def test_worker(config):
         config["command"] = "eval"
         test_dict, eval_df = ivado.cmd_eval(config)
         test_dice = test_dict['dice_score']
+
+        # Uncomment to use 3D dice
+        # test_dice = eval_df["dice"].mean()
+        
     except:
         logging.exception('Got exception on main handler')
         print("Unexpected error:", sys.exc_info()[0])
