@@ -663,7 +663,6 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     # Check if model folder exists
     if os.path.isdir(folder_model):
         prefix_model = os.path.basename(folder_model)
-        print(prefix_model)
         # Check if model and model metadata exist
         fname_model = os.path.join(folder_model, prefix_model+'.pt')
         if not os.path.isfile(fname_model):

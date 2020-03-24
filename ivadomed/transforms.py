@@ -174,8 +174,8 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
         else:
             rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
 
-        if self.labeled:
-            rdict['gt'] = self._uncrop(sample['gt'], sample['gt_metadata']["__centercrop"])
+        #if self.labeled:
+        rdict['gt'] = self._uncrop(sample['gt'], sample['input_metadata']["__centercrop"])
 
         sample.update(rdict)
         return sample
@@ -367,8 +367,8 @@ class CenterCrop3D(mt_transforms.MTTransform):
         npad = ((0, 0), (fw, fw), (fd, fd), (fh, fh))
         sample['input'] = np.pad(sample['input'], pad_width=npad, mode='constant', constant_values=0)
 
-        if self.labeled:
-            sample['gt'] = np.pad(sample['gt'], pad_width=npad, mode='constant', constant_values=0)
+        #if self.labeled:
+        sample['gt'] = np.pad(sample['gt'], pad_width=npad, mode='constant', constant_values=0)
 
         return sample
 
@@ -464,8 +464,8 @@ class ToTensor3D(mt_transforms.ToTensor):
     def undo_transform(self, sample):
         rdict = {}
         rdict['input'] = np.array(sample['input'])
-        if self.labeled:
-            rdict['gt'] = np.array(sample['gt'])
+        #if self.labeled:
+        rdict['gt'] = np.array(sample['gt'])
 
         sample.update(rdict)
         return sample
