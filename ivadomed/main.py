@@ -787,13 +787,10 @@ def cmd_test(context):
                 elif HeMIS:
                     missing_mod = batch["Missing_mod"]
                     preds = model(test_input, missing_mod)
+
                     # Reconstruct image with only one modality
-                    dict = {}
-                    dict['input'] = batch['input'][0]
-                    dict['gt'] = batch['gt'][0]
-                    dict['input_metadata'] = [{"gt_filename": gt_filename}
-                                              for gt_filename in batch['input_metadata'][0]['input_filename']]
-                    batch = dict
+                    batch['input'] = batch['input'][0]
+                    batch['input_metadata'] = batch['input_metadata'][0]
 
                 else:
                     preds = model(test_input)
@@ -820,7 +817,7 @@ def cmd_test(context):
                     rdict["input"] = rdict["input"][1,][None,]
                 rdict_undo = val_undo_transform(rdict)
 
-                fname_ref = rdict_undo['input_metadata']['gt_filename']
+                fname_ref = rdict_undo['gt_metadata']['gt_filename']
                 if not context['unet_3D']:
                     if pred_tmp_lst and (fname_ref != fname_tmp or (
                             i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file

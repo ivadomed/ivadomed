@@ -562,9 +562,10 @@ class HDF5Dataset:
             # convert array to pil
             input_tensors.append(Image.fromarray(input_tensor, mode='F'))
             # input Metadata
-            input_metadata.append({key: value for key, value in self.hdf5_file['{}/inputs/{}'
-                                  .format(line['Subjects'], ct)].attrs.items()})
-            input_metadata[i]['slice_index'] = line['Slices']
+            metadata = mt_datasets.SampleMetadata({key: value for key, value in self.hdf5_file['{}/inputs/{}'
+                                                                .format(line['Subjects'], ct)].attrs.items()})
+            metadata['slice_index'] = line["Slices"]
+            input_metadata.append(metadata)
 
         # GT
         if self.status['gt/' + self.gt_lst[0]]:
@@ -575,10 +576,9 @@ class HDF5Dataset:
         # convert array to pil
         gt_img = (gt_img).astype(np.uint8)
         gt_img = Image.fromarray(gt_img, mode='L')
-        gt_metadata = {key: value for key, value in
-                       self.hdf5_file[line['gt/' + self.gt_lst[0]]].attrs.items()}
-        
-        
+        gt_metadata = mt_datasets.SampleMetadata({key: value for key, value in
+                                                  self.hdf5_file[line['gt/' + self.gt_lst[0]]].attrs.items()})
+
         # ROI
         if self.roi_lst:
             if self.status['roi/' + self.roi_lst[0]]:
