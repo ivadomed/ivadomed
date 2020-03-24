@@ -785,17 +785,17 @@ def cmd_test(context):
                                     kernel_dim='3d',
                                     bin_thr=0.5 if context["binarize_prediction"] else -1)
 
-        # Metrics computation
-        gt_npy = gt_samples.numpy().astype(np.uint8)
-        gt_npy = gt_npy.squeeze(axis=1)
+            # Metrics computation
+            gt_npy = gt_samples.numpy().astype(np.uint8)
+            gt_npy = gt_npy.squeeze(axis=1)
 
-        preds_npy = preds.data.cpu().numpy()
-        if context["binarize_prediction"]:
-            preds_npy = threshold_predictions(preds_npy)
-        preds_npy = preds_npy.astype(np.uint8)
-        preds_npy = preds_npy.squeeze(axis=1)
+            preds_npy = preds.data.cpu().numpy()
+            if context["binarize_prediction"]:
+                preds_npy = threshold_predictions(preds_npy)
+            preds_npy = preds_npy.astype(np.uint8)
+            preds_npy = preds_npy.squeeze(axis=1)
 
-        metric_mgr(preds_npy, gt_npy)
+            metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
     if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty'][
