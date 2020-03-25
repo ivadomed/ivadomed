@@ -322,8 +322,9 @@ class HeMISUnet(Module):
         for j in range(self.depth + 1):
             features_cat = torch.cat(features_mod[j], 0).transpose(0, 1)
 
-            features_mod[j] = torch.cat([torch.cat([features_cat[i][indexes_mod[i].nonzero()].squeeze(1).mean(0), 
-                                                    features_cat[i][indexes_mod[i].nonzero()].squeeze(1).var(0)], 0).unsqueeze(0) for i in range(len(indexes_mod))],0)
+            features_mod[j] = torch.cat([torch.cat([features_cat[i][indexes_mod[i]].squeeze(1).mean(0),
+                                                    features_cat[i][indexes_mod[i]].squeeze(1).var(0)], 0).unsqueeze(0)
+                                         for i in range(len(indexes_mod))], 0)
 
         # Up-sampling
         preds = self.decoder(features_mod)
