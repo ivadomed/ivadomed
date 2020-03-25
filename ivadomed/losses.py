@@ -38,7 +38,7 @@ class CombinedDiceLoss(nn.Module):
             loss += MultiClassDiceLoss()(prediction, target)
         if self.dice:
             loss += - dice_loss(prediction, target)
-        return loss
+        return loss / (len(self.class_of_interest) + self.dice + self.multi_class_dice)
 
 
 def dice_loss(input, target):
