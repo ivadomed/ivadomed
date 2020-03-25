@@ -201,6 +201,7 @@ def cmd_train(context):
     if context['retrain_model'] is None:
         if HeMIS:
             model = models.HeMISUnet(modalities=context['contrast_train_validation'],
+                                     out_channel=len(context["target_suffix"]) + 1,
                                      depth=context['depth'],
                                      drop_rate=context["dropout_rate"],
                                      bn_momentum=context["batch_norm_momentum"])
@@ -530,7 +531,7 @@ def cmd_train(context):
                                                 scale_each=True)
                     writer.add_image('Validation/Input', grid_img, epoch)
 
-                    grid_img = vutils.make_grid(preds.data.cpu(),
+                    grid_img = vutils.make_grid(preds,
                                                 normalize=True,
                                                 scale_each=True)
                     writer.add_image('Validation/Predictions', grid_img, epoch)
@@ -790,7 +791,9 @@ def cmd_test(context):
             batch.update(rdict)
 
             if batch["input"].shape[1] > 1 and not i_monteCarlo:
-                batch["input_metadata"] = batch["input_metadata"][0]  # Take only second channel
+                batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
+            if batch['gt'].shape[1] > 1 and not i_monteCarlo:
+                batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
 
             # reconstruct 3D image
             for smp_idx in range(len(batch['gt'])):
