@@ -102,9 +102,10 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                     for idx, suffix in enumerate(target_suffix):
                         if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
                             target_filename[idx] = deriv
-                        if not (roi_suffix[idx] is None) and\
-                                deriv.endswith(subject.record["modality"] + roi_suffix[idx] + ".nii.gz"):
-                            roi_filename[idx] = deriv
+                        for r_suffix in roi_suffix:
+                            if not (r_suffix is None) and\
+                                    deriv.endswith(subject.record["modality"] + roi_suffix[idx] + ".nii.gz"):
+                                roi_filename[idx] = deriv
 
                 if (target_filename[0] is None) or (not (roi_suffix[0] is None) and (roi_filename[0] is None)):
                     continue
