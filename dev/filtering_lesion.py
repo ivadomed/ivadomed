@@ -103,12 +103,12 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
                     print(thr_unc)
                     data_soft_thrUnc = deepcopy(data_soft)
                     data_soft_thrUnc[data_unc > thr_unc] = 0
-                    print(np.sum(data_soft), np.sum(data_soft_thrUnc))
+                    #print(np.sum(data_soft), np.sum(data_soft_thrUnc))
                     cmpt = count_retained((data_soft > 0).astype(np.int), (data_soft_thrUnc > 0).astype(np.int), level)
                     res_dct['retained_elt'][i_unc].append(cmpt)
 
-                    for i_vox, thr_vox in enumerate(thr_pred_lst):
-                        data_hard = threshold_predictions(deepcopy(data_prob_thrUnc), thr=thr_vox).astype(np.uint8)
+                    for i_pred, thr_pred in enumerate(thr_pred_lst):
+                        data_hard = threshold_predictions(deepcopy(data_soft_thrUnc), thr=thr_pred).astype(np.uint8)
 
                         eval = Evaluation3DMetrics(data_pred=data_hard,
                                                     data_gt=data_gt,
@@ -116,16 +116,16 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
                                                     params=param_eval)
 
                         if level == 'vox':
-                            tpr_vox = mt_metrics.recall_score(eval.data_pred, eval.data_gt, err_value=np.nan)
-                            fdr_vox = 100. - mt_metrics.precision_score(eval.data_pred, eval.data_gt, err_value=np.nan)
+                            tpr = mt_metrics.recall_score(eval.data_pred, eval.data_gt, err_value=np.nan)
+                            fdr = 100. - mt_metrics.precision_score(eval.data_pred, eval.data_gt, err_value=np.nan)
                         else:
                             tpr, _ = eval.get_ltpr()
                             fdr = eval.get_lfdr()
 
-                        print(thr_vox, tpr, fdr)
+                        print(thr_pred, tpr, fdr)
 
-                        results_dct[metric]['tpr'][i_unc][i_vox].append(tpr / 100.)
-                        results_dct[metric]['fdr'][i_unc][i_vox].append(fdr / 100.)
+                        res_dct['tpr'][i_unc][i_pred].append(tpr / 100.)
+                        res_dct['fdr'][i_unc][i_pred].append(fdr / 100.)
 
     return res_dct
 
