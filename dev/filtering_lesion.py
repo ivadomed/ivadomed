@@ -183,6 +183,42 @@ def plot_roc(thr_unc_lst, thr_pred_lst, res_dct, metric, fname_out):
     plt.close()
 
 
+def run_inference(im_lst, fname_pref, thr_pred, gt_folder, target_suf, param_eval, unc_name=None, thr_unc=None):
+    # loop across images
+    for fname_pref in im_lst:
+        if None in [unc_name, thr_unc]:
+            # uncertainty map
+            fname_unc = os.path.join(pred_folder, fname_pref+unc_name+'.nii.gz')
+            im = nib.load(fname_unc)
+            data_unc = im.get_data()
+            del im
+
+            # list MC samples
+            data_pred_lst = np.array([nib.load(os.path.join(pred_folder, f)).get_data()
+                                    for f in os.listdir(pred_folder) if fname_pref+'_pred_' in f])
+        else:
+            data_pred_lst = np.array([nib.load(os.path.join(pred_folder, f)).get_data()
+                                    for f in os.listdir(pred_folder) if fname_pref+'_pred.' in f])
+
+        # ground-truth fname
+        fname_gt = os.path.join(gt_folder, fname_pref.split('_')[0], 'anat', fname_pref+target_suf+'.nii.gz')
+        nib_gt = nib.load(fname_gt)
+        data_gt = nib_gt.get_data()
+
+        # soft prediction
+        data_soft = np.mean(data_pred_lst, axis=0)
+
+        if None in [unc_name, thr_unc]:
+            # discard uncertain lesions from data_soft
+            data_soft[data_unc > thr_unc] = 0
+
+        data_hard = threshold_predictions(data_soft, thr=thr_pred).astype(np.uint8)
+
+        eval = Evaluation3DMetrics(data_pred=data_hard,
+                                    data_gt=data_gt,
+                                    dim_lst=nib_gt.header['pixdim'][1:4],
+                                    params=param_eval)
+
 def run_main(args):
 
     with open(args.c, "r") as fhandle:
