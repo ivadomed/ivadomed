@@ -24,6 +24,9 @@ MIN_OBJ_SIZE = 3
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", help="Config file path.")
+    parser.add_argument("-thrUnc", help="Threshold to apply on uncertainty map.")
+    parser.add_argument("-thrPred", help="Threshold to apply on prediction.")
+    parser.add_argument("-suffixUnc", help="Suffix of the uncertainty map to use (e.g. _unc-vox).")
     parser.add_argument("-ofolder", help="Output folder.")
 
     return parser
