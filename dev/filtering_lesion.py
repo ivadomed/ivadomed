@@ -136,6 +136,33 @@ def print_retained_elt(thr_unc_lst, retained_elt_lst):
        print('\tUnc threshold: {} --> {}'.format(t, np.mean(retained_elt_lst[i])))
 
 
+def plot_roc(thr_unc_lst, thr_pred_lst, res_dct, metric, fname_out):
+    plt.figure(figsize=(10,10))
+    for i_unc, thr_unc in enumerate(thr_unc_lst):
+        print('Unc Thr: {}'.format(thr_unc))
+
+        tpr_vals = np.array([np.nanmean(res_dct['tpr'][i_unc][i_pred]) for i_pred in range(len(thr_pred_lst))])
+        fdr_vals = np.array([np.nanmean(res_dct['fdr'][i_unc][i_pred]) for i_pred in range(len(thr_pred_lst))])
+
+        auc_ = auc_homemade(fdr_vals, tpr_vals, True)
+
+        optimal_idx = np.argmax(tpr_vals - fdr_vals)
+        optimal_threshold = thr_pred_lst[optimal_idx]
+        print('AUC: {}, Optimal Pred Thr: {}'.format(auc_, optimal_threshold))
+
+        plt.plot(fdr_vals, tpr_vals, label='Unc thr={0:0.2f} (area = {1:0.2f})'.format(thr_unc, auc_))
+
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Detection Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC - '+metric)
+    plt.legend(loc="lower right")
+    plt.savefig(fname_out, bbox_inches='tight', pad_inches=0)
+    plt.close()
+
+
 def run_main(args):
 
     with open(args.c, "r") as fhandle:
@@ -189,37 +216,11 @@ def run_main(args):
 
         print_retained_elt(thr_unc_lst=config_dct['uncertainty_thr'], retained_elt_lst=res['retained_elt'])
 
-        plt.figure(figsize=(10,10))
-        for i_unc, thr_unc in enumerate(thr_unc_lst):
-            print('Unc Thr: {}'.format(thr_unc))
-
-            mean_retained_vox = np.mean(results_dct[metric]['retained_vox'][i_unc])
-            mean_retained_obj = np.mean(results_dct[metric]['retained_obj'][i_unc])
-            print('Mean percentage of retained voxels: {}%, lesions: {}%.'.format(thr_unc, mean_retained_vox, mean_retained_obj))
-
-            tpr_vals = np.array([np.nanmean(results_dct[metric]['tpr_vox'][i_unc][i_vox]) for i_vox in range(len(thr_vox_lst))])
-            fdr_vals = np.array([np.nanmean(results_dct[metric]['fdr_vox'][i_unc][i_vox]) for i_vox in range(len(thr_vox_lst))])
-
-            # auc_ = auc(fdr_vals, tpr_vals)
-            # auc_ = auc_homemade(fdr_vals, tpr_vals)
-            auc_ = auc_homemade(fdr_vals, tpr_vals, True)
-
-            optimal_idx = np.argmax(tpr_vals - fdr_vals)
-            optimal_threshold = thr_vox_lst[optimal_idx]
-            print('AUC: {}, Optimal Pred Thr: {}'.format(auc_, optimal_threshold))
-
-            plt.plot(fdr_vals, tpr_vals, label='Unc thr={0:0.2f} (area = {1:0.2f})'.format(thr_unc, auc_))
-
-        plt.plot([0, 1], [0, 1], 'k--')
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel('False Detection Rate')
-        plt.ylabel('True Positive Rate')
-        plt.title('ROC - '+metric)
-        plt.legend(loc="lower right")
-        fname_out = os.path.join(ofolder, metric+'.png')
-        plt.savefig(fname_out, bbox_inches='tight', pad_inches=0)
-        plt.close()
+        plot_roc(thr_unc_lst=config_dct['uncertainty_thr'],
+                    thr_pred_lst=config_dct['prediction_thr'],
+                    res_dct=res,
+                    metric=config_dct['uncertainty_measure'],
+                    fname_out=os.path.join(ofolder, config_dct['uncertainty_measure']+'.png'))
 
 if __name__ == '__main__':
     parser = get_parser()
