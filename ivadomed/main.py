@@ -206,7 +206,8 @@ def cmd_train(context):
                                      drop_rate=context["dropout_rate"],
                                      bn_momentum=context["batch_norm_momentum"])
         elif unet_3D:
-            model = models.UNet3D(in_channels=in_channel, n_classes=len(context["target_suffix"]) + 1, attention=attention)
+            model = models.UNet3D(in_channels=in_channel, n_classes=len(context["target_suffix"]) + 1,
+                                  attention=attention)
         else:
             model = models.Unet(in_channel=in_channel,
                                 out_channel=len(context["target_suffix"]) + 1,
@@ -266,7 +267,8 @@ def cmd_train(context):
     var_contrast_list = []
 
     # Loss
-    if context["loss"]["name"] in ["dice", "cross_entropy", "focal", "gdl", "focal_dice", "multi_class_dice", "combined_dice"]:
+    if context["loss"]["name"] in ["dice", "cross_entropy", "focal", "gdl", "focal_dice", "multi_class_dice",
+                                   "combined_dice"]:
         if context["loss"]["name"] == "cross_entropy":
             loss_fct = nn.BCELoss()
 
@@ -427,7 +429,6 @@ def cmd_train(context):
                     writer.add_image('Train/Input', grid_img, epoch)
 
                     images.append((grid_img.cpu().numpy().transpose(2, 1, 0) * 255).astype('u1'))
-
 
                     grid_img = vutils.make_grid(preds.data.cpu(),
                                                 normalize=True,
@@ -790,9 +791,8 @@ def cmd_test(context):
             rdict['gt'] = preds.cpu()
             batch.update(rdict)
 
-            if batch["input"].shape[1] > 1 and not i_monteCarlo:
+            if not i_monteCarlo:
                 batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
-            if batch['gt'].shape[1] > 1 and not i_monteCarlo:
                 batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
 
             # reconstruct 3D image
@@ -802,7 +802,7 @@ def cmd_test(context):
                 for k in batch.keys():
                     rdict[k] = batch[k][smp_idx]
                 if rdict["input"].shape[0] > 1:
-                    rdict["input"] = rdict["input"][1, ][None, ]
+                    rdict["input"] = rdict["input"][1,][None,]
 
                 # If multiclass merge labels
                 rdict_undo = val_undo_transform(rdict)
@@ -813,21 +813,28 @@ def cmd_test(context):
                             i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
                         # save the completely processed file as a nii
                         fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
-                        fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+                        fname_pred = fname_pred.split(context['target_suffix'][0])[0] + '_pred.nii.gz'
 
                         # If MonteCarlo, then we save each simulation result
                         if n_monteCarlo > 1:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
-                        save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred,
-                                 slice_axis=AXIS_DCT[context['slice_axis']],
-                                 binarize=context["binarize_prediction"])
+                        output_array = save_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred,
+                                                slice_axis=AXIS_DCT[context['slice_axis']],
+                                                binarize=context["binarize_prediction"])
+
+                        if output_array.shape[-1] > 1:
+                            save_color_labels(output_array.transpose((3, 2, 0, 1)),
+                                              context["binarize_prediction"],
+                                              fname_tmp,
+                                              fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                                              AXIS_DCT[context['slice_axis']])
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
 
                     # add new sample to pred_tmp_lst
-                    pred_tmp_lst.append(np.array(rdict_undo['gt']))
+                    pred_tmp_lst.append(pil_list_to_numpy(rdict_undo['gt']))
                     z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
                     fname_tmp = fname_ref
 
@@ -845,22 +852,19 @@ def cmd_test(context):
                              binarize=context['binarize_prediction'])
                     # Save merged labels with color
                     if rdict_undo['gt'].shape[1] > 1:
-                        color_pred = merge_labels(rdict_undo['gt'], context['binarize_prediction'])
-                        context['binarize_prediction'] = False
-                        save_nii(color_pred.transpose((1, 2, 0)), [], rdict_undo['input_metadata']['gt_filenames'][0],
-                                 fname_pred.split("_pred.nii.gz")[0] + '_pred_color.nii.gz',
-                                 slice_axis=AXIS_DCT[context['slice_axis']], unet_3D=True,
-                                 binarize=context['binarize_prediction'])
+                        save_color_labels(rdict_undo['gt'],
+                                          context['binarize_prediction'],
+                                          rdict_undo['input_metadata']['gt_filenames'][0],
+                                          fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                                          AXIS_DCT[context['slice_axis']])
 
             # Metrics computation
             gt_npy = gt_samples.numpy().astype(np.uint8)
-            # gt_npy = gt_npy.squeeze(axis=1)
 
             preds_npy = preds.data.cpu().numpy()
             if context["binarize_prediction"]:
                 preds_npy = threshold_predictions(preds_npy)
             preds_npy = preds_npy.astype(np.uint8)
-            # preds_npy = preds_npy.squeeze(axis=1)
 
             metric_mgr(preds_npy, gt_npy)
 
@@ -905,7 +909,7 @@ def cmd_eval(context):
         fname_gt = []
         for suffix in context['target_suffix']:
             fname_gt.append(os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat',
-                                    subj_acq + suffix + '.nii.gz'))
+                                         subj_acq + suffix + '.nii.gz'))
 
         # 3D evaluation
         eval = Evaluation3DMetrics(fname_pred=fname_pred,
