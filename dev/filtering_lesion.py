@@ -129,6 +129,13 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
 
     return res_dct
 
+
+def print_retained_elt(thr_unc_lst, retained_elt_lst):
+    print('Mean percentage of retained elt:')
+    for i, t in thr_unc_lst:
+       print('\tUnc threshold: {} --> {}'.format(t, np.mean(retained_elt_lst[i])))
+
+
 def run_main(args):
 
     with open(args.c, "r") as fhandle:
@@ -180,64 +187,7 @@ def run_main(args):
                                 target_suf=context["target_suffix"],
                                 param_eval=context["eval_params"])
 
-        print([np.mean(res['retained_elt'][i]) for i, t in enumerate(config_dct['uncertainty_thr'])])
-
-"""
-        for subj_acq in subj_acq_lst:
-            fname_unc = os.path.join(pred_folder, subj_acq+metric+'.nii.gz')
-            im = nib.load(fname_unc)
-            data_unc = im.get_data()
-#            print(np.percentile(data_unc, 25), np.median(data_unc), np.percentile(data_unc, 75), np.max(data_unc))
-            del im
-
-            data_pred_lst = np.array([nib.load(os.path.join(pred_folder, f)).get_data()
-                                for f in os.listdir(pred_folder) if subj_acq+'_pred_' in f])
-
-            fname_gt = os.path.join(gt_folder, subj_acq.split('_')[0], 'anat', subj_acq+context["target_suffix"]+'.nii.gz')
-            if os.path.isfile(fname_gt):
-                nib_gt = nib.load(fname_gt)
-                data_gt = nib_gt.get_data()
-
-                for i_unc, thr_unc in enumerate(thr_unc_lst):
-                    data_prob = np.mean(data_pred_lst, axis=0)
-
-                    data_prob_thrUnc = deepcopy(data_prob)
-                    data_prob_thrUnc[data_unc > thr_unc] = 0
-
-                    cmpt_vox_beforeThr = np.count_nonzero(data_prob)
-                    cmpt_vox_afterThr = np.count_nonzero(data_prob_thrUnc)
-                    percent_rm_vox = (cmpt_vox_beforeThr - cmpt_vox_afterThr) * 100. / cmpt_vox_beforeThr
-                    percent_retained_vox = 100. - percent_rm_vox
-
-                    _, n_beforeThr = label((data_prob > 0).astype(np.int), structure=BIN_STRUCT)
-                    _, n_afterThr = label((data_prob_thrUnc > 0).astype(np.int), structure=BIN_STRUCT)
-                    percent_retained_obj = 100. - ((n_beforeThr - n_afterThr) * 100. / n_beforeThr)
-
-                    results_dct[metric]['retained_vox'][i_unc].append(percent_retained_vox)
-                    results_dct[metric]['retained_obj'][i_unc].append(percent_retained_obj)
-        print(results_dct[metric]['retained_obj'], results_dct[metric]['retained_vox'])
-                    for i_vox, thr_vox in enumerate(thr_vox_lst):
-                        data_hard = threshold_predictions(deepcopy(data_prob_thrUnc), thr=thr_vox).astype(np.uint8)
-
-                        eval = Evaluation3DMetrics(data_pred=data_hard,
-                                                    data_gt=data_gt,
-                                                    dim_lst=nib_gt.header['pixdim'][1:4],
-                                                    params=context['eval_params'])
-
-                        tpr_vox = mt_metrics.recall_score(eval.data_pred, eval.data_gt, err_value=np.nan)
-                        fdr_vox = 100. - mt_metrics.precision_score(eval.data_pred, eval.data_gt, err_value=np.nan)
-                        tpr_obj, _ = eval.get_ltpr()
-                        fdr_obj = eval.get_lfdr()
-
-#                        print(thr_vox, tpr_vox, fdr_vox, tpr_obj, fdr_obj)
-
-                        results_dct[metric]['tpr_vox'][i_unc][i_vox].append(tpr_vox / 100.)
-                        results_dct[metric]['fdr_vox'][i_unc][i_vox].append(fdr_vox / 100.)
-                        results_dct[metric]['tpr_obj'][i_unc][i_vox].append(tpr_obj / 100.)
-                        results_dct[metric]['fdr_obj'][i_unc][i_vox].append(fdr_obj / 100.)
-
-    for metric in metric_suffix_lst:
-        print('Metric: {}'.format(metric))
+        print_retained_elt(thr_unc_lst=config_dct['uncertainty_thr'], retained_elt_lst=res['retained_elt'])
 
         plt.figure(figsize=(10,10))
         for i_unc, thr_unc in enumerate(thr_unc_lst):
@@ -270,7 +220,7 @@ def run_main(args):
         fname_out = os.path.join(ofolder, metric+'.png')
         plt.savefig(fname_out, bbox_inches='tight', pad_inches=0)
         plt.close()
-"""
+
 if __name__ == '__main__':
     parser = get_parser()
     arguments = parser.parse_args()
