@@ -36,7 +36,7 @@ def auc_homemade(fpr, tpr, trapezoid=False):
     ft = list(zip(fpr, tpr))
     for p0, p1 in zip(ft[: -1], ft[1: ]):
         area += (p1[0] - p0[0]) * ((p1[1] + p0[1]) / 2 if trapezoid else p0[1])
-    return area
+    return -area
 
 def print_unc_stats(unc_name, pred_folder, im_lst):
     mins, p25s, p50s, p75s, maxs = [], [], [], [], []
@@ -100,7 +100,7 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
             if np.any(data_gt) and np.any(data_soft):
                 for i_unc, thr_unc in enumerate(thr_unc_lst):
                     # discard uncertain lesions from data_soft
-                    print(thr_unc)
+                    #print(thr_unc)
                     data_soft_thrUnc = deepcopy(data_soft)
                     data_soft_thrUnc[data_unc > thr_unc] = 0
                     #print(np.sum(data_soft), np.sum(data_soft_thrUnc))
@@ -122,7 +122,7 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
                             tpr, _ = eval.get_ltpr()
                             fdr = eval.get_lfdr()
 
-                        print(thr_pred, tpr, fdr)
+                        #print(thr_pred, tpr, fdr)
 
                         res_dct['tpr'][i_unc][i_pred].append(tpr / 100.)
                         res_dct['fdr'][i_unc][i_pred].append(fdr / 100.)
@@ -132,7 +132,7 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
 
 def print_retained_elt(thr_unc_lst, retained_elt_lst):
     print('Mean percentage of retained elt:')
-    for i, t in thr_unc_lst:
+    for i, t in enumerate(thr_unc_lst):
        print('\tUnc threshold: {} --> {}'.format(t, np.mean(retained_elt_lst[i])))
 
 
@@ -150,7 +150,7 @@ def plot_roc(thr_unc_lst, thr_pred_lst, res_dct, metric, fname_out):
         optimal_threshold = thr_pred_lst[optimal_idx]
         print('AUC: {}, Optimal Pred Thr: {}'.format(auc_, optimal_threshold))
 
-        plt.plot(fdr_vals, tpr_vals, label='Unc thr={0:0.2f} (area = {1:0.2f})'.format(thr_unc, auc_))
+        plt.scatter(fdr_vals, tpr_vals, label='Unc thr={0:0.2f} (area = {1:0.2f})'.format(thr_unc, auc_), s=22)
 
     plt.plot([0, 1], [0, 1], 'k--')
     plt.xlim([0.0, 1.0])
