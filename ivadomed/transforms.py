@@ -123,11 +123,15 @@ class Resample(mt_transforms.Resample):
 
         if self.labeled:
             gt_data = sample['gt']
-            rdict['gt'] = self.resample_bin(gt_data, wshape_new, hshape_new)
+            rdict['gt'] = []
+            for gt in gt_data:
+                rdict['gt'].append(self.resample_bin(gt, wshape_new, hshape_new))
 
         if sample['roi'] is not None:
             roi_data = sample['roi']
-            rdict['roi'] = self.resample_bin(roi_data, wshape_new, hshape_new, 0.0)
+            rdict['roi'] = []
+            for roi in roi_data:
+                rdict['roi'] = self.resample_bin(roi, wshape_new, hshape_new, 0.0)
 
         sample.update(rdict)
         return sample
@@ -209,9 +213,11 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
         if self.labeled:
             gt_data = sample['gt']
             gt_metadata = sample['gt_metadata']
-            gt_data = F.crop(gt_data, fw, fh, tw, th)
-            gt_metadata["__centercrop"] = (fh, fw, h, w)
-            rdict['gt'] = gt_data
+            rdict['gt'] = []
+            for idx, gt in enumerate(gt_data):
+                gt = F.crop(gt, fw, fh, tw, th)
+                gt_metadata[idx]["__centercrop"] = (fh, fw, h, w)
+                rdict['gt'].append(gt)
             #rdict['gt_metadata'] = gt_metadata
 
         # free memory
@@ -382,14 +388,16 @@ class CenterCrop3D(mt_transforms.MTTransform):
         for idx, input_volume in enumerate(input_data['input']):
             gt_img = input_data['gt']
             input_img = input_volume
-            d, w, h = gt_img.shape
+            d, w, h = gt_img[0].shape
             td, tw, th = self.size
             fh = max(int(round((h - th) / 2.)), 0)
             fw = max(int(round((w - tw) / 2.)), 0)
             fd = max(int(round((d - td) / 2.)), 0)
             if self.labeled:
                 gt_img = input_data['gt']
-                crop_gt = gt_img[fd:fd + td, fw:fw + tw, fh:fh + th]
+                crop_gt = []
+                for gt in gt_img:
+                    crop_gt.append(gt[fd:fd + td, fw:fw + tw, fh:fh + th])
             crop_input = input_img[fd:fd + td, fw:fw + tw, fh:fh + th]
             # Pad image with mean if image smaller than crop size
             cd, cw, ch = crop_input.shape
@@ -405,7 +413,8 @@ class CenterCrop3D(mt_transforms.MTTransform):
                         (int(h_diff) + ih, int(h_diff)))
                 crop_input = np.pad(crop_input, pad_width=npad, mode='constant', constant_values=np.mean(crop_input))
                 if self.labeled:
-                    crop_gt = np.pad(crop_gt, pad_width=npad, mode='constant', constant_values=0)
+                    for i, gt in enumerate(crop_gt):
+                        crop_gt[i] = np.pad(gt, pad_width=npad, mode='constant', constant_values=0)
             input_data['input'][idx] = crop_input
 
             if self.labeled:
