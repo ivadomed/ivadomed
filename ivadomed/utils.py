@@ -1,4 +1,5 @@
 import os
+import json
 from collections import defaultdict
 
 import matplotlib.pyplot as plt
@@ -6,7 +7,18 @@ import nibabel as nib
 import numpy as np
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader
+from torchvision import transforms
+import torch.nn.functional as F
+
+from ivadomed import loader as ivadomed_loader
+from ivadomed import transforms as ivadomed_transforms
+from medicaltorch.datasets import MRI2DSegmentationDataset
 from medicaltorch import metrics as mt_metrics
+from medicaltorch.filters import SliceFilter
+from medicaltorch import datasets as mt_datasets
+from medicaltorch import transforms as mt_transforms
+
 from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
 from tqdm import tqdm
@@ -16,6 +28,7 @@ TP_COLOUR = 1
 FP_COLOUR = 2
 FN_COLOUR = 3
 
+AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
 class IvadoMetricManager(mt_metrics.MetricManager):
     def __init__(self, metric_fns):
@@ -297,27 +310,30 @@ class Evaluation3DMetrics(object):
         return dct, self.data_painted
 
 
-def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, unet_3D=False, binarize=True):
-    """Save the prediction as nii.
-        1. Reconstruct a 3D volume out of the slice-wise predictions.
-        2. Re-orient the 3D array accordingly to the ground-truth orientation.
+def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5):
+    """Convert the NN predictions as nibabel object.
 
-    Inputs:
-        data_lst: list of the slice-wise predictions.
-        z_lst: list of the slice indexes where the inference has been performed.
-              The remaining slices will be filled with zeros.
-        fname_ref: ground-truth fname
-        fname_out: output fname
-        slice_axis: orientation used to extract slices (i.e. axial, sagittal, coronal)
-        debug:
+    Based on the header of fname_ref image, it creates a nibabel object from the NN predictions (data_lst),
+    given the slice indexes (z_lst) along slice_axis.
 
-    Return:
+    Args:
+        data_lst (list of np arrays): predictions, either 2D slices either 3D patches.
+        z_lst (list of ints): slice indexes to reconstruct a 3D volume.
+        fname_ref (string): Filename of the input image: its header is copied to the output nibabel object.
+        fname_out (string): If not None, then the generated nibabel object is saved with this filename.
+        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
+        debug (bool): Display additional info used for debugging.
+        kernel_dim (string): Indicates the number of dimensions of the extracted patches. Choices: '2d', '3d'.
+        bin_thr (float): If positive, then the segmentation is binarised with this given threshold.
+    Returns:
+        NibabelObject: Object containing the NN prediction.
 
     """
+    # Load reference nibabel object
     nib_ref = nib.load(fname_ref)
     nib_ref_can = nib.as_closest_canonical(nib_ref)
 
-    if not unet_3D:
+    if kernel_dim == '2d':
         # complete missing z with zeros
         tmp_lst = []
         for z in range(nib_ref_can.header.get_data_shape()[slice_axis]):
@@ -337,16 +353,20 @@ def save_nii(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, une
     else:
         arr = data_lst
 
+    # Reorient data
     arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
 
-    if binarize:
-        arr_pred_ref_space = threshold_predictions(arr_pred_ref_space)
+    if bin_thr >= 0:
+        arr_pred_ref_space = threshold_predictions(arr_pred_ref_space, thr=bin_thr)
 
-    # create nii
+    # create nibabel object
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
 
-    # save
-    nib.save(nib_pred, fname_out)
+    # save as nifti file
+    if fname_out is not None:
+        nib.save(nib_pred, fname_out)
+
+    return nib_pred
 
 
 def run_uncertainty(ifolder):
@@ -603,6 +623,137 @@ def threshold_predictions(predictions, thr=0.5):
     return thresholded_preds
 
 
+def segment_volume(folder_model, fname_image, fname_roi=None):
+    """Segment an image.
+
+    Segment an image (fname_image) using a pre-trained model (folder_model). If provided, a region of interest (fname_roi)
+    is used to crop the image prior to segment it.
+
+    Args:
+        folder_model (string): foldername which contains
+            (1) the model ('folder_model/folder_model.pt') to use
+            (2) its configuration file ('folder_model/folder_model.json') used for the training,
+                see https://github.com/neuropoly/ivado-medical-imaging/wiki/configuration-file
+        fname_image (string): image filename (e.g. .nii.gz) to segment.
+        roi_fname (string): Binary image filename (e.g. .nii.gz) defining a region of interest,
+            e.g. spinal cord centerline, used to crop the image prior to segment it if provided.
+    Returns:
+        nibabelObject: Object containing the soft segmentation.
+
+    """
+    # Define device
+    device = torch.device("cpu")
+
+    # Check if model folder exists
+    if os.path.isdir(folder_model):
+        prefix_model = os.path.basename(folder_model)
+        # Check if model and model metadata exist
+        fname_model = os.path.join(folder_model, prefix_model+'.pt')
+        if not os.path.isfile(fname_model):
+            print('Model file not found: {}'.format(fname_model))
+            exit()
+        fname_model_metadata = os.path.join(folder_model, prefix_model+'.json')
+        if not os.path.isfile(fname_model_metadata):
+            print('Model metadata file not found: {}'.format(fname_model_metadata))
+            exit()
+    else:
+        print('Model folder not found: {}'.format(folder_model))
+        exit()
+
+    # Load model training config
+    with open(fname_model_metadata, "r") as fhandle:
+        context = json.load(fhandle)
+
+    # If ROI is not provided then force center cropping
+    if fname_roi is None and 'ROICrop2D' in context["transformation_validation"].keys():
+        context["transformation_validation"] = dict((key, value) if key != 'ROICrop2D'
+                                                    else ('CenterCrop2D', value)
+                                                    for (key, value) in context["transformation_validation"].items())
+
+    # Force labeled to False in transforms
+    context["transformation_validation"] = dict((key, {**value, **{"labeled": False}})
+                                                    if not key.startswith('NormalizeInstance')
+                                                    else (key, value)
+                                                    for (key, value) in context["transformation_validation"].items())
+
+    # Compose transforms
+    do_transforms = ivadomed_transforms.compose_transforms(context['transformation_validation'])
+
+    # Undo Transforms
+    undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
+
+    # Load data
+    filename_pairs = [([fname_image], None, fname_roi, [{}])]
+    if not context['unet_3D']:  # TODO: rename this param 'model_name' or 'kernel_dim'
+        ds = MRI2DSegmentationDataset(filename_pairs,
+                                      slice_axis=AXIS_DCT[context['slice_axis']],
+                                      cache=True,
+                                      transform=do_transforms,
+                                      slice_filter_fn=SliceFilter(**context["slice_filter"]),
+                                      canonical=True)
+    else:
+        print('\n3D unet is not implemented yet.')
+        exit()
+
+    # If fname_roi provided, then remove slices without ROI
+    if fname_roi is not None:
+        ds = ivadomed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
+
+    if not context['unet_3D']:
+        print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
+
+    # Data Loader
+    data_loader = DataLoader(ds, batch_size=context["batch_size"],
+                             shuffle=False, pin_memory=True,
+                             collate_fn=mt_datasets.mt_collate,
+                             num_workers=0)
+
+    # Load model
+    model = torch.load(fname_model, map_location=device)
+
+    # Inference time
+    model.eval()
+
+    # Loop across batches
+    preds_list, sliceIdx_list = [], []
+    for i_batch, batch in enumerate(data_loader):
+        with torch.no_grad():
+            preds = model(batch['input'])
+
+        rdict = {}
+        rdict['gt'] = preds
+        batch.update(rdict)
+
+        # Reconstruct 3D object
+        for i_slice in range(len(batch['gt'])):
+            # Undo transformations
+            rdict = {}
+            # Import transformations parameters
+            for k in batch.keys():
+                rdict[k] = batch[k][i_slice]
+            rdict_undo = undo_transforms(rdict)
+
+            # Add new segmented slice to preds_list
+            # Convert PIL to numpy
+            pred_cur = np.array(rdict_undo['gt'])
+            preds_list.append(pred_cur)
+            # Store the slice index of pred_cur in the original 3D image
+            sliceIdx_list.append(int(rdict_undo['input_metadata']['slice_index']))
+
+            # If last batch and last sample of this batch, then reconstruct 3D object
+            if i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1:
+                pred_nib = pred_to_nib(data_lst=preds_list,
+                                       z_lst=sliceIdx_list,
+                                       fname_ref=fname_image,
+                                       fname_out=None,
+                                       slice_axis=AXIS_DCT[context['slice_axis']],
+                                       kernel_dim='3d' if context['unet_3D'] else '2d',
+                                       debug=False,
+                                       bin_thr=-1)
+
+    return pred_nib
+
+
 def cuda(input_var):
     """
     This function sends input_var to GPU.
@@ -693,33 +844,38 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
 def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
     if not os.path.exists(os.path.join(context["log_directory"], layer_name)):
         os.mkdir(os.path.join(context["log_directory"], layer_name))
-    inp_fmap, out_fmap = HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input))
 
-    # Display the input image and Down_sample the input image
-    orig_input_img = test_input.permute(3, 4, 2, 0, 1).cpu().numpy()
-    upsampled_attention = F.interpolate(out_fmap[1], size=test_input.size()[2:],
-                                        mode='trilinear', align_corners=True).data.permute(3, 4, 2, 0, 1).cpu().numpy()
+    # Save for subject in batch
+    for i in range(batch['input'].size(0)):
+        inp_fmap, out_fmap = HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input[i][None, ]))
 
-    # Define the directories
-    if isinstance(batch["input_metadata"][0], list):
-        # Multichannel
-        path = batch["input_metadata"][0][0]["input_filename"]
-    else:
-        path = batch["input_metadata"][0]["input_filename"]
-    basename = path.split('/')[-1]
-    save_directory = os.path.join(context['log_directory'], layer_name, basename)
+        # Display the input image and Down_sample the input image
+        orig_input_img = test_input[i][None, ].permute(3, 4, 2, 0, 1).cpu().numpy()
+        upsampled_attention = F.interpolate(out_fmap[1],
+                                            size=test_input[i][None, ].size()[2:],
+                                            mode='trilinear',
+                                            align_corners=True).data.permute(3, 4, 2, 0, 1).cpu().numpy()
 
-    # Write the attentions to a nifti image
-    nib_ref = nib.load(path)
-    nib_ref_can = nib.as_closest_canonical(nib_ref)
-    oriented_image = reorient_image(orig_input_img[:, :, :, 0, 0], slice_axis, nib_ref, nib_ref_can)
+        # Define the directories
+        if isinstance(batch["input_metadata"][i], list):
+            # Multichannel
+            path = batch["input_metadata"][i][0]["input_filename"]
+        else:
+            path = batch["input_metadata"][i]["input_filename"]
+        basename = path.split('/')[-1]
+        save_directory = os.path.join(context['log_directory'], layer_name, basename)
 
-    nib_pred = nib.Nifti1Image(oriented_image, nib_ref.affine)
-    nib.save(nib_pred, save_directory)
+        # Write the attentions to a nifti image
+        nib_ref = nib.load(path)
+        nib_ref_can = nib.as_closest_canonical(nib_ref)
+        oriented_image = reorient_image(orig_input_img[:, :, :, 0, 0], slice_axis, nib_ref, nib_ref_can)
 
-    basename = basename.split(".")[0] + "_att.nii.gz"
-    save_directory = os.path.join(context['log_directory'], layer_name, basename)
-    attention_map = reorient_image(upsampled_attention[:, :, :, 0, ], slice_axis, nib_ref, nib_ref_can)
-    nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
+        nib_pred = nib.Nifti1Image(oriented_image, nib_ref.affine)
+        nib.save(nib_pred, save_directory)
 
-    nib.save(nib_pred, save_directory)
+        basename = basename.split(".")[0] + "_att.nii.gz"
+        save_directory = os.path.join(context['log_directory'], layer_name, basename)
+        attention_map = reorient_image(upsampled_attention[:, :, :, 0, ], slice_axis, nib_ref, nib_ref_can)
+        nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
+
+        nib.save(nib_pred, save_directory)

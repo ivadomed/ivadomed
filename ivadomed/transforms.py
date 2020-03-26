@@ -11,6 +11,8 @@ from medicaltorch import transforms as mt_transforms
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.interpolation import map_coordinates
 
+from torchvision import transforms as torchvision_transforms
+
 
 def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
@@ -18,6 +20,38 @@ def get_transform_names():
 
     return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor', 'StackTensors', 'CenterCrop3D',
             'RandomAffine3D', 'NormalizeInstance3D', 'ToTensor3D']
+
+
+def compose_transforms(dict_transforms, requires_undo=False):
+    """Composes several transforms together.
+    Args:
+        dict_transforms (dictionary): Dictionary where the keys are the transform names
+            and the value their parameters.
+        requires_undo (bool): If True, does not include transforms which do not have an undo_transform
+            implemented yet.
+    Returns:
+        torchvision.transforms.Compose object.
+    """
+    list_transform = []
+    for transform in dict_transforms.keys():
+        parameters = dict_transforms[transform]
+
+        # call transfrom either from ivadomed either from medicaltorch
+        if transform in get_transform_names():
+            transform_obj = globals()[transform](**parameters)
+        else:
+            transform_obj = getattr(mt_transforms, transform)(**parameters)
+
+        # check if undo_transform method is implemented
+        if requires_undo:
+            if hasattr(transform_obj, 'undo_transform'):
+                list_transform.append(transform_obj)
+            else:
+                print('{} transform not included since no undo_transform available for it.'.format(transform))
+        else:
+            list_transform.append(transform_obj)
+
+    return torchvision_transforms.Compose(list_transform)
 
 
 class UndoCompose(object):
@@ -54,8 +88,10 @@ class Resample(mt_transforms.Resample):
         rdict['input'] = input_data_undo
 
         # undo pred, aka GT
-        hshape, wshape = sample['gt_metadata']['data_shape']
-        hzoom, wzoom = sample['gt_metadata']['zooms']
+        # CG: I comment these 2 following lines because these variables should be the
+        # same between image and GT
+        #hshape, wshape = sample['gt_metadata']['data_shape']
+        #hzoom, wzoom = sample['gt_metadata']['zooms']
         gt_data_undo = self.resample_bin(sample['gt'], wshape, hshape)
         rdict['gt'] = gt_data_undo
 
@@ -138,7 +174,8 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
         else:
             rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
 
-        rdict['gt'] = self._uncrop(sample['gt'], sample['gt_metadata']["__centercrop"])
+        #if self.labeled:
+        rdict['gt'] = self._uncrop(sample['gt'], sample['input_metadata']["__centercrop"])
 
         sample.update(rdict)
         return sample
@@ -317,8 +354,9 @@ class CenterCrop3D(mt_transforms.MTTransform):
                          will also be applied to the ground truth.
     """
 
-    def __init__(self, size):
+    def __init__(self, size, labeled=True):
         self.size = size
+        self.labeled = labeled
 
     def _uncrop(self, sample):
         td, tw, th = sample['input_metadata']["__centercrop"]
@@ -328,7 +366,10 @@ class CenterCrop3D(mt_transforms.MTTransform):
         fd = max(int(round((d - td) / 2.)), 0)
         npad = ((0, 0), (fw, fw), (fd, fd), (fh, fh))
         sample['input'] = np.pad(sample['input'], pad_width=npad, mode='constant', constant_values=0)
+
+        #if self.labeled:
         sample['gt'] = np.pad(sample['gt'], pad_width=npad, mode='constant', constant_values=0)
+
         return sample
 
     def undo_transform(self, sample):
@@ -345,7 +386,9 @@ class CenterCrop3D(mt_transforms.MTTransform):
             fh = max(int(round((h - th) / 2.)), 0)
             fw = max(int(round((w - tw) / 2.)), 0)
             fd = max(int(round((d - td) / 2.)), 0)
-            crop_gt = gt_img[fd:fd + td, fw:fw + tw, fh:fh + th]
+            if self.labeled:
+                gt_img = input_data['gt']
+                crop_gt = gt_img[fd:fd + td, fw:fw + tw, fh:fh + th]
             crop_input = input_img[fd:fd + td, fw:fw + tw, fh:fh + th]
             # Pad image with mean if image smaller than crop size
             cd, cw, ch = crop_input.shape
@@ -360,9 +403,13 @@ class CenterCrop3D(mt_transforms.MTTransform):
                         (int(w_diff) + iw, int(w_diff)),
                         (int(h_diff) + ih, int(h_diff)))
                 crop_input = np.pad(crop_input, pad_width=npad, mode='constant', constant_values=np.mean(crop_input))
-                crop_gt = np.pad(crop_gt, pad_width=npad, mode='constant', constant_values=0)
+                if self.labeled:
+                    crop_gt = np.pad(crop_gt, pad_width=npad, mode='constant', constant_values=0)
             input_data['input'][idx] = crop_input
-            input_data['gt'] = crop_gt
+
+            if self.labeled:
+                input_data['gt'] = crop_gt
+
             input_data['input_metadata'][idx]["__centercrop"] = td, tw, th
 
         return input_data
@@ -417,6 +464,7 @@ class ToTensor3D(mt_transforms.ToTensor):
     def undo_transform(self, sample):
         rdict = {}
         rdict['input'] = np.array(sample['input'])
+        #if self.labeled:
         rdict['gt'] = np.array(sample['gt'])
 
         sample.update(rdict)
