@@ -183,7 +183,10 @@ def plot_roc(thr_unc_lst, thr_pred_lst, res_dct, metric, fname_out):
     plt.close()
 
 
-def run_inference(im_lst, fname_pref, thr_pred, gt_folder, target_suf, param_eval, unc_name=None, thr_unc=None):
+def run_inference(pred_folder, im_lst, fname_pref, thr_pred, gt_folder, target_suf, param_eval, unc_name=None, thr_unc=None):
+    # init df
+    df_results = pd.DataFrame()
+
     # loop across images
     for fname_pref in im_lst:
         if None in [unc_name, thr_unc]:
@@ -222,13 +225,16 @@ def run_inference(im_lst, fname_pref, thr_pred, gt_folder, target_suf, param_eva
         results_pred, _ = eval.run_eval()
 
         # save results of this fname_pred
-        results_pred['image_id'] = subj_acq
+        results_pred['image_id'] = fname_pref.split('_')[0]
         df_results = df_results.append(results_pred, ignore_index=True)
 
     return df_results
 
 
 def run_main(args):
+    thrPred = args.
+    thrUnc = args.
+    sufUnc = args.
 
     with open(args.c, "r") as fhandle:
         context = json.load(fhandle)
@@ -260,7 +266,7 @@ def run_main(args):
                                     thr_pred_lst=config_dct['prediction_thr'],
                                     gt_folder=gt_folder,
                                     pred_folder=pred_folder,
-                                    im_lst=subj_acq_lst[:30],
+                                    im_lst=subj_acq_lst,
                                     target_suf=context["target_suffix"],
                                     param_eval=context["eval_params"])
 
@@ -273,7 +279,17 @@ def run_main(args):
                         fname_out=os.path.join(ofolder, config_dct['uncertainty_measure']+'.png'))
 
     else:
-        pass
+        df = run_inference(pred_folder=pred_folder,
+                            im_lst=subj_acq_lst,
+                            fname_pref,
+                            thr_pred=thrPred,
+                            gt_folder=gt_folder,
+                            target_suf=context["target_suffix"],
+                            param_eval=context["eval_params"],
+                            unc_name=sufUnc,
+                            thr_unc=thrUnc)
+        print(df.head())
+        df.to_csv(os.path.join(ofolder, '_'.join([sufUnc, str(thrUnc), str(thrPred)])+'.csv'))
 
 if __name__ == '__main__':
     parser = get_parser()
