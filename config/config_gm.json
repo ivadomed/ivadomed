@@ -72,7 +72,8 @@
 			"size": [128, 128]
 			},
 		"ToTensor": {},
-		"NormalizeInstance": {}
+		"NormalizeInstance": {},
+      "StackTensors": {}
 		},
         "transformation_testing": {
                 "Resample": {
