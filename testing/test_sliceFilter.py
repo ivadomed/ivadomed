@@ -110,7 +110,7 @@ def test_slice_filter_roi():
                                                                   filter_empty_mask=empty_mask))
 
         print('\tNumber of loaded slices before filtering ROI: {}'.format(len(ds_train)))
-        ds_train.filter_roi(nb_nonzero_thr=10)
+        ds_train = loader.filter_roi(ds_train, nb_nonzero_thr=10)
 
         print('\tNumber of loaded slices: {}'.format(len(ds_train)))
         train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
