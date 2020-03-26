@@ -807,7 +807,7 @@ def cmd_test(context):
                 # If multiclass merge labels
                 rdict_undo = val_undo_transform(rdict)
 
-                fname_ref = rdict_undo['input_metadata']['gt_filenames'][0]
+                fname_ref = rdict_undo['gt_metadata']['gt_filenames'][0]
                 if not context['unet_3D']:
                     if pred_tmp_lst and (fname_ref != fname_tmp or (
                             i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
