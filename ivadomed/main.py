@@ -179,16 +179,17 @@ def cmd_train(context):
     if context['retrain_model'] is None:
         if HeMIS:
             model = models.HeMISUnet(modalities=context['contrast_train_validation'],
-                                     out_channel=len(context["target_suffix"]) + 1,
+                                     out_channel=len(context["target_suffix"]) + 1, # + 1 for background class
                                      depth=context['depth'],
                                      drop_rate=context["dropout_rate"],
                                      bn_momentum=context["batch_norm_momentum"])
         elif unet_3D:
-            model = models.UNet3D(in_channels=in_channel, n_classes=len(context["target_suffix"]) + 1,
+            model = models.UNet3D(in_channels=in_channel,
+                                  n_classes=len(context["target_suffix"]) + 1, # + 1 for background class
                                   attention=attention)
         else:
             model = models.Unet(in_channel=in_channel,
-                                out_channel=len(context["target_suffix"]) + 1,
+                                out_channel=len(context["target_suffix"]) + 1, # + 1 for background class
                                 depth=context['depth'],
                                 film_layers=context["film_layers"],
                                 n_metadata=n_metadata,
