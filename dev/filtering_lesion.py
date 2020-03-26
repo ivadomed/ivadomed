@@ -219,6 +219,15 @@ def run_inference(im_lst, fname_pref, thr_pred, gt_folder, target_suf, param_eva
                                     dim_lst=nib_gt.header['pixdim'][1:4],
                                     params=param_eval)
 
+        results_pred, _ = eval.run_eval()
+
+        # save results of this fname_pred
+        results_pred['image_id'] = subj_acq
+        df_results = df_results.append(results_pred, ignore_index=True)
+
+    return df_results
+
+
 def run_main(args):
 
     with open(args.c, "r") as fhandle:
