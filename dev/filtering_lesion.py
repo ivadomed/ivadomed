@@ -67,7 +67,7 @@ def count_retained(data_before, data_after, level):
     percent_rm = (cmpt_before - cmpt_after) * 100. / cmpt_before
     return 100. - percent_rm
 
-def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_folder, im_lst, target_suf):
+def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_folder, im_lst, target_suf, param_eval):
     # init results
     tmp_lst = [[] for _ in range(len(thr_pred_lst))]
     res_init_lst = [deepcopy(tmp_lst) for _ in range(len(thr_unc_lst))]
@@ -100,11 +100,32 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
             if np.any(data_gt) and np.any(data_soft):
                 for i_unc, thr_unc in enumerate(thr_unc_lst):
                     # discard uncertain lesions from data_soft
+                    print(thr_unc)
                     data_soft_thrUnc = deepcopy(data_soft)
                     data_soft_thrUnc[data_unc > thr_unc] = 0
                     print(np.sum(data_soft), np.sum(data_soft_thrUnc))
                     cmpt = count_retained((data_soft > 0).astype(np.int), (data_soft_thrUnc > 0).astype(np.int), level)
                     res_dct['retained_elt'][i_unc].append(cmpt)
+
+                    for i_vox, thr_vox in enumerate(thr_pred_lst):
+                        data_hard = threshold_predictions(deepcopy(data_prob_thrUnc), thr=thr_vox).astype(np.uint8)
+
+                        eval = Evaluation3DMetrics(data_pred=data_hard,
+                                                    data_gt=data_gt,
+                                                    dim_lst=nib_gt.header['pixdim'][1:4],
+                                                    params=param_eval)
+
+                        if level == 'vox':
+                            tpr_vox = mt_metrics.recall_score(eval.data_pred, eval.data_gt, err_value=np.nan)
+                            fdr_vox = 100. - mt_metrics.precision_score(eval.data_pred, eval.data_gt, err_value=np.nan)
+                        else:
+                            tpr, _ = eval.get_ltpr()
+                            fdr = eval.get_lfdr()
+
+                        print(thr_vox, tpr, fdr)
+
+                        results_dct[metric]['tpr'][i_unc][i_vox].append(tpr / 100.)
+                        results_dct[metric]['fdr'][i_unc][i_vox].append(fdr / 100.)
 
     return res_dct
 
@@ -128,18 +149,18 @@ def run_main(args):
 
     # experiments
     exp_dct = {
-            #    'exp1': {'level': 'vox',
-            #                'uncertainty_measure': '_unc-vox',
-            #                'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
-            #                'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]},
-                'exp2': {'level': 'obj',
-                            'uncertainty_measure': '_unc-cv',
-                            'uncertainty_thr': [0.1, 0.2, 0.3, 0.4, 0.5],
-                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]},
-                'exp3': {'level': 'obj',
-                            'uncertainty_measure': '_unc-avgUnc',
-                            'uncertainty_thr': [0.1, 0.2, 0.3, 0.4, 0.5],
+                'exp1': {'level': 'vox',
+                            'uncertainty_measure': '_unc-vox',
+                            'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
                             'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]}
+#                'exp2': {'level': 'obj',
+#                            'uncertainty_measure': '_unc-cv',
+#                            'uncertainty_thr': [0.1, 0.2, 0.3, 0.4, 0.5],
+#                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]},
+#                'exp3': {'level': 'obj',
+#                            'uncertainty_measure': '_unc-avgUnc',
+#                            'uncertainty_thr': [0.1, 0.2, 0.3, 0.4, 0.5],
+#                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]}
     }
 
     for exp in exp_dct.keys():
@@ -147,7 +168,7 @@ def run_main(args):
         print(config_dct['uncertainty_measure'])
 
         # print_unc_stats is used to determine 'uncertainty_thr'
-        #print_unc_stats(config_dct['uncertainty_measure'], pred_folder, subj_acq_lst)
+        print_unc_stats(config_dct['uncertainty_measure'], pred_folder, subj_acq_lst)
 
         res = run_experiment(level=config_dct['level'],
                                 unc_name=config_dct['uncertainty_measure'],
@@ -156,7 +177,8 @@ def run_main(args):
                                 gt_folder=gt_folder,
                                 pred_folder=pred_folder,
                                 im_lst=subj_acq_lst[:30],
-                                target_suf=context["target_suffix"])
+                                target_suf=context["target_suffix"],
+                                param_eval=context["eval_params"])
 
         print([np.mean(res['retained_elt'][i]) for i, t in enumerate(config_dct['uncertainty_thr'])])
 
