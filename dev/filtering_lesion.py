@@ -21,6 +21,23 @@ from medicaltorch import metrics as mt_metrics
 BIN_STRUCT = generate_binary_structure(3,2)
 MIN_OBJ_SIZE = 3
 
+# experiments
+exp_dct = {
+                'exp1': {'level': 'vox',
+                            'uncertainty_measure': '_unc-vox',
+                            'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
+                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]}
+#                'exp2': {'level': 'obj',
+#                            'uncertainty_measure': '_unc-cv',
+#                            'uncertainty_thr': [0.1, 0.2, 0.3, 0.4, 0.5],
+#                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]},
+#                'exp3': {'level': 'obj',
+#                            'uncertainty_measure': '_unc-avgUnc',
+#                            'uncertainty_thr': [0.1, 0.2, 0.3, 0.4, 0.5],
+#                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]}
+}
+
+
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", help="Config file path.")
@@ -184,46 +201,34 @@ def run_main(args):
 
     gt_folder = os.path.join(context['bids_path'], 'derivatives', 'labels')
 
-    # experiments
-    exp_dct = {
-                'exp1': {'level': 'vox',
-                            'uncertainty_measure': '_unc-vox',
-                            'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
-                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]}
-#                'exp2': {'level': 'obj',
-#                            'uncertainty_measure': '_unc-cv',
-#                            'uncertainty_thr': [0.1, 0.2, 0.3, 0.4, 0.5],
-#                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]},
-#                'exp3': {'level': 'obj',
-#                            'uncertainty_measure': '_unc-avgUnc',
-#                            'uncertainty_thr': [0.1, 0.2, 0.3, 0.4, 0.5],
-#                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]}
-    }
+    if thrPred is None:
+        for exp in exp_dct.keys():
+            config_dct = exp_dct[exp]
+            print(config_dct['uncertainty_measure'])
 
-    for exp in exp_dct.keys():
-        config_dct = exp_dct[exp]
-        print(config_dct['uncertainty_measure'])
+            # print_unc_stats is used to determine 'uncertainty_thr'
+            print_unc_stats(config_dct['uncertainty_measure'], pred_folder, subj_acq_lst)
 
-        # print_unc_stats is used to determine 'uncertainty_thr'
-        print_unc_stats(config_dct['uncertainty_measure'], pred_folder, subj_acq_lst)
+            res = run_experiment(level=config_dct['level'],
+                                    unc_name=config_dct['uncertainty_measure'],
+                                    thr_unc_lst=config_dct['uncertainty_thr'],
+                                    thr_pred_lst=config_dct['prediction_thr'],
+                                    gt_folder=gt_folder,
+                                    pred_folder=pred_folder,
+                                    im_lst=subj_acq_lst[:30],
+                                    target_suf=context["target_suffix"],
+                                    param_eval=context["eval_params"])
 
-        res = run_experiment(level=config_dct['level'],
-                                unc_name=config_dct['uncertainty_measure'],
-                                thr_unc_lst=config_dct['uncertainty_thr'],
-                                thr_pred_lst=config_dct['prediction_thr'],
-                                gt_folder=gt_folder,
-                                pred_folder=pred_folder,
-                                im_lst=subj_acq_lst[:30],
-                                target_suf=context["target_suffix"],
-                                param_eval=context["eval_params"])
+            print_retained_elt(thr_unc_lst=config_dct['uncertainty_thr'], retained_elt_lst=res['retained_elt'])
 
-        print_retained_elt(thr_unc_lst=config_dct['uncertainty_thr'], retained_elt_lst=res['retained_elt'])
+            plot_roc(thr_unc_lst=config_dct['uncertainty_thr'],
+                        thr_pred_lst=config_dct['prediction_thr'],
+                        res_dct=res,
+                        metric=config_dct['uncertainty_measure'],
+                        fname_out=os.path.join(ofolder, config_dct['uncertainty_measure']+'.png'))
 
-        plot_roc(thr_unc_lst=config_dct['uncertainty_thr'],
-                    thr_pred_lst=config_dct['prediction_thr'],
-                    res_dct=res,
-                    metric=config_dct['uncertainty_measure'],
-                    fname_out=os.path.join(ofolder, config_dct['uncertainty_measure']+'.png'))
+    else:
+        pass
 
 if __name__ == '__main__':
     parser = get_parser()
