@@ -1,8 +1,8 @@
 {
 	"command": "train",
 	"gpu": 4,
-	"target_suffix": "_seg-manual",
-	"roi_suffix": null,
+	"target_suffix": ["_seg-manual"],
+	"roi_suffix": [null],
 	"bids_path": "../duke/projects/ivado-medical-imaging/gm_challenge_16",
 	"random_seed": 1313,
     "contrast_train_validation": ["T2star"],
@@ -60,7 +60,8 @@
 			"scale": [0.98, 1.02]
 			},
 		"ToTensor": {},
-		"NormalizeInstance": {}
+		"NormalizeInstance": {},
+		"StackTensors": {}
 		},
 	"transformation_validation": {
 		"Resample": {
@@ -82,7 +83,8 @@
                         "size": [128, 128]
                         },
                 "ToTensor": {},
-                "NormalizeInstance": {}
+                "NormalizeInstance": {},
+			"StackTensors": {}
                 },
 	"debugging": false
 }
