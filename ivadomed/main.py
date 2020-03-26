@@ -176,20 +176,26 @@ def cmd_train(context):
     else:
         in_channel = 1
 
+    if len(context['target_suffix']) > 1:
+        # + 1 for background class
+        out_channel = len(context["target_suffix"]) + 1
+    else:
+        out_channel = 1
+
     if context['retrain_model'] is None:
         if HeMIS:
             model = models.HeMISUnet(modalities=context['contrast_train_validation'],
-                                     out_channel=len(context["target_suffix"]) + 1, # + 1 for background class
+                                     out_channel=out_channel,
                                      depth=context['depth'],
                                      drop_rate=context["dropout_rate"],
                                      bn_momentum=context["batch_norm_momentum"])
         elif unet_3D:
             model = models.UNet3D(in_channels=in_channel,
-                                  n_classes=len(context["target_suffix"]) + 1, # + 1 for background class
+                                  n_classes=out_channel,
                                   attention=attention)
         else:
             model = models.Unet(in_channel=in_channel,
-                                out_channel=len(context["target_suffix"]) + 1, # + 1 for background class
+                                out_channel=out_channel,
                                 depth=context['depth'],
                                 film_layers=context["film_layers"],
                                 n_metadata=n_metadata,
@@ -350,10 +356,10 @@ def cmd_train(context):
             if film_bool:
                 # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
                 sample_metadata = batch["input_metadata"]
-                var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+                var_contrast = [sample_metadata[0][k]['contrast'] for k in range(len(sample_metadata[0]))]
 
-                var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in
-                                range(len(sample_metadata))]
+                var_metadata = [train_onehotencoder.transform([sample_metadata[0][k]['film_input']]).tolist()[0]
+                                for k in range(len(sample_metadata))]
                 # Input the metadata related to the input samples
                 preds = model(var_input, var_metadata)
             else:
@@ -410,11 +416,11 @@ def cmd_train(context):
                 if film_bool:
                     sample_metadata = batch["input_metadata"]
                     # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
-                    var_contrast = [sample_metadata[k]['contrast']
-                                    for k in range(len(sample_metadata))]
+                    var_contrast = [sample_metadata[0][k]['contrast']
+                                    for k in range(len(sample_metadata[0]))]
 
-                    var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k
-                                    in range(len(sample_metadata))]
+                    var_metadata = [train_onehotencoder.transform([sample_metadata[0][k]['film_input']]).tolist()[0]
+                                    for k in range(len(sample_metadata[0]))]
                     # Input the metadata related to the input samples
                     preds = model(var_input, var_metadata)
                 else:
@@ -657,11 +663,11 @@ def cmd_test(context):
 
                 if film_bool:
                     sample_metadata = batch["input_metadata"]
-                    test_contrast = [sample_metadata[k]['contrast']
-                                     for k in range(len(sample_metadata))]
+                    test_contrast = [sample_metadata[0][k]['contrast']
+                                     for k in range(len(sample_metadata[0]))]
 
-                    test_metadata = [one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k in
-                                     range(len(sample_metadata))]
+                    test_metadata = [one_hot_encoder.transform([sample_metadata[0][k]["film_input"]]).tolist()[0]
+                                     for k in range(len(sample_metadata[0]))]
                     # Input the metadata related to the input samples
                     preds = model(test_input, test_metadata)
                 else:
