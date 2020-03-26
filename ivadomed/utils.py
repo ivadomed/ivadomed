@@ -11,6 +11,7 @@ from medicaltorch import metrics as mt_metrics
 from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
 from tqdm import tqdm
+import torchvision.utils as vutils
 
 # labels of paint_objects method
 TP_COLOUR = 1
@@ -581,6 +582,8 @@ def multiclass_dice_score(im1, im2):
         if im1[i, ].sum() + im2[i, ].sum():
             dice_per_class += intersection.sum() / (im1[i, ].sum() + im2[i, ].sum())
             n += 1
+    if not n:
+        n = 1
     return (2.0 * dice_per_class) / n
 
 
@@ -842,3 +845,59 @@ def pil_list_to_numpy(pil_list):
     for idx, pil_img in enumerate(pil_list):
         numpy_array[..., idx] = np.array(pil_img)
     return numpy_array
+
+
+def convert_labels_to_RGB(grid_img):
+    # Keep always the same color labels
+    batch_size, n_class, h, w = grid_img.shape
+    rgb_img = torch.zeros((batch_size, 3, h, w))
+
+    # Keep always the same color labels
+    np.random.seed(6)
+    for i in range(n_class):
+        r, g, b = np.random.randint(0, 256, size=3)
+        rgb_img[:, i, ] = r * grid_img[:, i, ]
+        rgb_img[:, i, ] = g * grid_img[:, i, ]
+        rgb_img[:, i, ] = b * grid_img[:, i, ]
+
+    return rgb_img
+
+
+def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, unet_3D):
+    if unet_3D:
+        num_2d_img = input_samples.shape[3]
+    else:
+        num_2d_img = 1
+    input_samples_copy = input_samples.clone()
+    preds_copy = preds.clone()
+    gt_samples_copy = gt_samples.clone()
+    for idx in range(num_2d_img):
+        if unet_3D:
+            input_samples = input_samples_copy[:, :, :, idx, :]
+            preds = preds_copy[:, :, :, idx, :]
+            gt_samples = gt_samples_copy[:, :, :, idx, :]
+            # Only display images with labels
+            if gt_samples.sum() == 0:
+                continue
+
+        # take only one modality for grid
+        if input_samples.shape[1] > 1:
+            tensor = input_samples[:, 0, :, :][:, None, :, :]
+            input_samples = torch.cat((tensor, tensor, tensor), 1)
+
+        grid_img = vutils.make_grid(input_samples,
+                                    normalize=True,
+                                    scale_each=True)
+        writer.add_image(dataset_type + '/Input', grid_img, epoch)
+
+        grid_img = vutils.make_grid(convert_labels_to_RGB(preds),
+                                    normalize=True,
+                                    scale_each=True)
+
+        writer.add_image(dataset_type + '/Predictions', grid_img, epoch)
+
+        grid_img = vutils.make_grid(convert_labels_to_RGB(gt_samples),
+                                    normalize=True,
+                                    scale_each=True)
+
+        writer.add_image(dataset_type + '/Ground Truth', grid_img, epoch)

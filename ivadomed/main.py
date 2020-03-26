@@ -7,7 +7,6 @@ import time
 import joblib
 import pandas as pd
 import torch.backends.cudnn as cudnn
-import torchvision.utils as vutils
 from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
 from torch import optim
@@ -22,7 +21,6 @@ from ivadomed import models
 from ivadomed.utils import *
 
 cudnn.benchmark = True
-import imageio
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -328,9 +326,6 @@ def cmd_train(context):
                   mt_metrics.intersection_over_union,
                   mt_metrics.accuracy_score]
 
-    images_pred = []
-    images_gt = []
-    images = []
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
 
@@ -402,45 +397,7 @@ def cmd_train(context):
 
             # Only write sample at the first step
             if i == 0:
-                if context["unet_3D"]:
-                    num_2d_img = input_samples.shape[3]
-                else:
-                    num_2d_img = 1
-                input_samples_copy = input_samples.clone()
-                preds_copy = preds.clone()
-                gt_samples_copy = gt_samples.clone()
-                for idx in range(num_2d_img):
-                    if unet_3D:
-                        input_samples = input_samples_copy[:, :, :, idx, :]
-                        preds = preds_copy[:, :, :, idx, :]
-                        gt_samples = gt_samples_copy[:, :, :, idx, :]
-                        # Only display images with labels
-                        if gt_samples.sum() == 0:
-                            continue
-
-                    # take only one modality for grid
-                    if input_samples.shape[1] > 1:
-                        tensor = input_samples[:, 0, :, :][:, None, :, :]
-                        input_samples = torch.cat((tensor, tensor, tensor), 1)
-
-                    grid_img = vutils.make_grid(input_samples,
-                                                normalize=True,
-                                                scale_each=True)
-                    writer.add_image('Train/Input', grid_img, epoch)
-
-                    images.append((grid_img.cpu().numpy().transpose(2, 1, 0) * 255).astype('u1'))
-
-                    grid_img = vutils.make_grid(preds.data.cpu(),
-                                                normalize=True,
-                                                scale_each=True)
-                    images_pred.append((grid_img.cpu().numpy().transpose(2, 1, 0) * 255).astype('u1'))
-                    writer.add_image('Train/Predictions', grid_img, epoch)
-
-                    grid_img = vutils.make_grid(gt_samples,
-                                                normalize=True,
-                                                scale_each=True)
-                    images_gt.append((grid_img.cpu().numpy().transpose(2, 1, 0) * 255).astype('u1'))
-                    writer.add_image('Train/Ground Truth', grid_img, epoch)
+                save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds, unet_3D)
 
         train_loss_total_avg = train_loss_total / num_steps
         if not step_scheduler_batch:
@@ -506,41 +463,7 @@ def cmd_train(context):
 
             # Only write sample at the first step
             if i == 0:
-                if context["unet_3D"]:
-                    num_2d_img = input_samples.shape[3]
-                else:
-                    num_2d_img = 1
-                input_samples_copy = input_samples.clone()
-                preds_copy = preds.clone()
-                gt_samples_copy = gt_samples.clone()
-                for idx in range(num_2d_img):
-                    if context["unet_3D"]:
-                        input_samples = input_samples_copy[:, :, :, idx, :]
-                        preds = preds_copy[:, :, :, idx, :]
-                        gt_samples = gt_samples_copy[:, :, :, idx, :]
-                        # Only display images with labels
-                        if gt_samples.sum() == 0:
-                            continue
-
-                    # take only one modality for grid
-                    if input_samples.shape[1] > 1:
-                        tensor = input_samples[:, 0, :, :][:, None, :, :]
-                        input_samples = torch.cat((tensor, tensor, tensor), 1)
-
-                    grid_img = vutils.make_grid(input_samples,
-                                                normalize=True,
-                                                scale_each=True)
-                    writer.add_image('Validation/Input', grid_img, epoch)
-
-                    grid_img = vutils.make_grid(preds,
-                                                normalize=True,
-                                                scale_each=True)
-                    writer.add_image('Validation/Predictions', grid_img, epoch)
-
-                    grid_img = vutils.make_grid(gt_samples,
-                                                normalize=True,
-                                                scale_each=True)
-                    writer.add_image('Validation/Ground Truth', grid_img, epoch)
+                save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds, unet_3D)
 
             # Store the values of gammas and betas after the last epoch for each batch
             if film_bool and epoch == num_epochs and i < int(len(ds_val) / context["batch_size"]) + 1:
@@ -607,9 +530,6 @@ def cmd_train(context):
             break
 
     # Save final model
-    imageio.mimsave("./" + context["log_directory"] + '/gt.gif', images_gt)
-    imageio.mimsave("./" + context["log_directory"] + '/pred.gif', images_pred)
-    imageio.mimsave("./" + context["log_directory"] + '/images.gif', images)
     torch.save(model, "./" + context["log_directory"] + "/final_model.pt")
     if film_bool:  # save clustering and OneHotEncoding models
         joblib.dump(metadata_clustering_models, "./" +
