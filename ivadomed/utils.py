@@ -588,7 +588,7 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
 
 def multiclass_dice_score(im1, im2):
     dice_per_class = 0
-    n_classes = im1.shape[0]
+    n_classes = im1.shape[1]
 
     for i in range(n_classes):
         dice_per_class += dice_score(im1[i, ], im2[i, ]) if not dice_score(im1[i, ], im2[i, ]) == np.nan else 0

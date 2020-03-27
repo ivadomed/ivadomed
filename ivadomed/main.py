@@ -433,13 +433,11 @@ def cmd_train(context):
 
             # Metrics computation
             gt_npy = gt_samples.numpy().astype(np.uint8)
-            # gt_npy = gt_npy.squeeze(axis=1)
 
             preds_npy = preds.data.cpu().numpy()
             if context["binarize_prediction"]:
                 preds_npy = threshold_predictions(preds_npy)
             preds_npy = preds_npy.astype(np.uint8)
-            # preds_npy = preds_npy.squeeze(axis=1)
 
             metric_mgr(preds_npy, gt_npy)
 
