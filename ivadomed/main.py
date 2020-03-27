@@ -288,7 +288,7 @@ def cmd_train(context):
     val_losses = []
 
     metric_fns = [metrics.dice_score,
-                  metrics.hausdorff_score,
+                  metrics.hausdorff_3D_score,
                   metrics.precision_score,
                   metrics.recall_score,
                   metrics.specificity_score,
@@ -666,7 +666,7 @@ def cmd_test(context):
         os.makedirs(path_3Dpred)
 
     metric_fns = [metrics.dice_score,
-                  metrics.hausdorff_score,
+                  metrics.hausdorff_3D_score,
                   metrics.precision_score,
                   metrics.recall_score,
                   metrics.specificity_score,

@@ -91,7 +91,7 @@ def test_inference(film_bool=False):
     model.eval()
 
     metric_fns = [metrics.dice_score,  # from ivadomed/utils.py
-                  metrics.hausdorff_score,
+                  metrics.hausdorff_2D_score,
                   metrics.precision_score,
                   metrics.recall_score,
                   metrics.specificity_score,
