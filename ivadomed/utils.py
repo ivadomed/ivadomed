@@ -587,37 +587,13 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
 
 
 def multiclass_dice_score(im1, im2):
-    im1 = np.asarray(im1[0, ]).astype(np.bool)
-    im2 = np.asarray(im2[0, ]).astype(np.bool)
-
     dice_per_class = 0
     n_classes = im1.shape[0]
-    n = 0
+
     for i in range(n_classes):
-        intersection = np.logical_and(im1[i, ], im2[i, ])
+        dice_per_class += dice_score(im1[i, ], im2[i, ]) if not dice_score(im1[i, ], im2[i, ]) == np.nan else 0
 
-        # Verify that sum is not null
-        if im1[i, ].sum() + im2[i, ].sum():
-            dice_per_class += intersection.sum() / (im1[i, ].sum() + im2[i, ].sum())
-            n += 1
-    if not n:
-        n = 1
-    return (2.0 * dice_per_class) / n
-
-
-def tumor_dice_score(im1, im2):
-    im1 = np.asarray(im1[0, ]).astype(np.bool)
-    im2 = np.asarray(im2[0, ]).astype(np.bool)
-
-    if im1.shape != im2.shape:
-        raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
-
-    im_sum = im1.sum() + im2.sum()
-    if im_sum == 0:
-        return np.nan
-
-    intersection = np.logical_and(im1, im2)
-    return (2. * intersection.sum()) / im_sum
+    return (2.0 * dice_per_class) / n_classes
 
 
 def dice_score(im1, im2):
