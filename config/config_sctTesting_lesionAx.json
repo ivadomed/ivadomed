@@ -20,6 +20,7 @@
         "initial_lr": 0.001,
         "lr_scheduler": {"name": "CyclicLR", "base_lr": 0.0001, "max_lr": 0.001},
         "loss": {"name": "dice"},
+		"dice_params": null,
         "log_directory": "log_lesionAx_retrain",
         "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
 	"attention_unet": false,

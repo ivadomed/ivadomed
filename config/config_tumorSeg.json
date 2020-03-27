@@ -1,7 +1,7 @@
 {
-    "command": "test",
+    "command": "train",
     "gpu": 0,
-    "target_suffix": ["_seg-tumor", "_edema", "_cavity"],
+    "target_suffix": ["_seg-tumor", "_edema"],
     "roi_suffix": null,
     "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
     "random_seed": 1313,
@@ -16,6 +16,7 @@
     "num_epochs": 10,
     "initial_lr": 0.00005,
     "loss": {"name": "dice"},
+    "dice_params": null,
     "log_directory": "AU",
     "lr_scheduler": {"name": "CosineAnnealingLR", "base_lr": 1e-5, "max_lr": 1e-2},
     "film_layers": [],
@@ -55,6 +56,11 @@
             "sigma_range":  [3.5, 4.5],
             "p": 0.1
         },
+        "RandomAffine3D": {
+			"degrees": 4.6,
+			"translate": [0.03, 0.03],
+			"scale": [0.98, 1.02]
+			},
         "ToTensor3D": {},
         "NormalizeInstance3D": {},
         "StackTensors": {}
