@@ -616,9 +616,11 @@ def dice_score(im1, im2):
 
 def hausdorff_score(prediction, groundtruth):
     if len(prediction.shape) == 4:
-        l, h, d, w = prediction.shape
-        prediction = prediction.reshape((h, l * d, w))
-        groundtruth = groundtruth.reshape((h, l * d, w))
+        n_classes, height, depth, width = prediction.shape
+        # Reshape to have only 3 dimensions where prediction[:, idx, :] represents each 2D slice
+        prediction = prediction.reshape((height, n_classes * depth, width))
+        groundtruth = groundtruth.reshape((height, n_classes * depth, width))
+
     if len(prediction.shape) == 3:
         mean_hansdorff = 0
         for idx in range(prediction.shape[1]):
