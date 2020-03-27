@@ -281,9 +281,7 @@ def cmd_train(context):
             loss_fct = losses.MultiClassDiceLoss()
 
         elif context["loss"]["name"] == "combined_dice":
-            loss_fct = losses.CombinedDiceLoss(class_of_interest=context["loss"]["params"]["class_of_interest"],
-                                               multi_class_dice=context["loss"]["params"]["multi_class_dice"],
-                                               dice=context["loss"]["params"]["dice"])
+            loss_fct = losses.CombinedDiceLoss(params=context["loss"]["params"])
 
         if not context["loss"]["name"].startswith("focal"):
             print("\nLoss function: {}.\n".format(context["loss"]["name"]))

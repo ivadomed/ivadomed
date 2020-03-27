@@ -18,16 +18,19 @@ class MultiClassDiceLoss(nn.Module):
 
 class CombinedDiceLoss(nn.Module):
     """
-    :param classes_of_interest: list containing the index of a class which dice will be added to the loss.
-    :param multiclass_dice: boolean representing whether or not multiclass dice is included in the current loss.
-    :param dice: boolean representing whether or not dice is included in the current loss.
+    :param params: list of the losses considered for this loss
+    first item in list: represents classes of interest, list containing the index of a class which dice will be added to
+                        the loss.
+    second item in list: represents multiclass_dice, boolean representing whether or not multiclass dice is included in
+                         the current loss.
+    third item in list: represents dice, boolean representing whether or not dice is included in the current loss.
+
+    e.i: [[0, 1], True, False]
     """
 
-    def __init__(self, class_of_interest, multi_class_dice, dice):
+    def __init__(self, params):
         super().__init__()
-        self.class_of_interest = class_of_interest
-        self.multi_class_dice = multi_class_dice
-        self.dice = dice
+        self.class_of_interest, self.multi_class_dice, self.dice = params
 
     def forward(self, prediction, target):
         loss = torch.zeros(1).cuda()
