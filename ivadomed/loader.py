@@ -1,6 +1,7 @@
 from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
 from ivadomed.utils import SliceFilter
+from ivadomed import __path__
 
 from sklearn.preprocessing import OneHotEncoder
 from scipy.signal import argrelextrema
@@ -10,11 +11,12 @@ from sklearn.model_selection import train_test_split
 
 import numpy as np
 import json
+import os
 from copy import deepcopy
 from tqdm import tqdm
 import torch
 
-with open("config/contrast_dct.json", "r") as fhandle:
+with open(os.path.join(__path__[0], "../config/contrast_dct.json"), "r") as fhandle:
     GENERIC_CONTRAST = json.load(fhandle)
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,

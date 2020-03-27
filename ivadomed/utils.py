@@ -12,7 +12,6 @@ import torch.nn.functional as F
 
 from ivadomed import loader as ivadomed_loader
 from ivadomed import transforms as ivadomed_transforms
-from ivadomed.main import compose_transforms
 from medicaltorch.datasets import MRI2DSegmentationDataset
 from ivadomed import metrics
 from medicaltorch import datasets as mt_datasets
@@ -607,17 +606,17 @@ def threshold_predictions(predictions, thr=0.5):
     return thresholded_preds
 
 
-def segment_volume(fname_model, fname_model_metadata, fname_image, fname_roi=None):
+def segment_volume(folder_model, fname_image, fname_roi=None):
     """Segment an image.
 
-    Segment an image (fname_image) using a already trained model (fname_model) given its
-    training parameters (fname_model_metadata). If provided, a RegionOfInterest (fname_roi)
+    Segment an image (fname_image) using a pre-trained model (folder_model). If provided, a region of interest (fname_roi)
     is used to crop the image prior to segment it.
 
     Args:
-        fname_model (string): model filename (.pt) to use.
-        fname_model_metadata (string): Configuration file filename (.json) used for the training,
-            see https://github.com/neuropoly/ivado-medical-imaging/wiki/configuration-file
+        folder_model (string): foldername which contains
+            (1) the model ('folder_model/folder_model.pt') to use
+            (2) its configuration file ('folder_model/folder_model.json') used for the training,
+                see https://github.com/neuropoly/ivado-medical-imaging/wiki/configuration-file
         fname_image (string): image filename (e.g. .nii.gz) to segment.
         roi_fname (string): Binary image filename (e.g. .nii.gz) defining a region of interest,
             e.g. spinal cord centerline, used to crop the image prior to segment it if provided.
@@ -627,6 +626,22 @@ def segment_volume(fname_model, fname_model_metadata, fname_image, fname_roi=Non
     """
     # Define device
     device = torch.device("cpu")
+
+    # Check if model folder exists
+    if os.path.isdir(folder_model):
+        prefix_model = os.path.basename(folder_model)
+        # Check if model and model metadata exist
+        fname_model = os.path.join(folder_model, prefix_model+'.pt')
+        if not os.path.isfile(fname_model):
+            print('Model file not found: {}'.format(fname_model))
+            exit()
+        fname_model_metadata = os.path.join(folder_model, prefix_model+'.json')
+        if not os.path.isfile(fname_model_metadata):
+            print('Model metadata file not found: {}'.format(fname_model_metadata))
+            exit()
+    else:
+        print('Model folder not found: {}'.format(folder_model))
+        exit()
 
     # Load model training config
     with open(fname_model_metadata, "r") as fhandle:
@@ -645,7 +660,7 @@ def segment_volume(fname_model, fname_model_metadata, fname_image, fname_roi=Non
                                                     for (key, value) in context["transformation_validation"].items())
 
     # Compose transforms
-    do_transforms = compose_transforms(context['transformation_validation'])
+    do_transforms = ivadomed_transforms.compose_transforms(context['transformation_validation'])
 
     # Undo Transforms
     undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
