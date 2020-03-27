@@ -252,8 +252,7 @@ def cmd_train(context):
     var_contrast_list = []
 
     # Loss
-    if context["loss"]["name"] in ["dice", "cross_entropy", "focal", "gdl", "focal_dice", "multi_class_dice",
-                                   "combined_dice"]:
+    if context["loss"]["name"] in ["dice", "cross_entropy", "focal", "gdl", "focal_dice"]:
         if context["loss"]["name"] == "cross_entropy":
             loss_fct = nn.BCELoss()
 
@@ -277,11 +276,6 @@ def cmd_train(context):
                                                                                            "gamma"],
                                                                                        context["loss"]["params"][
                                                                                            "alpha"]))
-        elif context["loss"]["name"] == "multi_class_dice":
-            loss_fct = losses.MultiClassDiceLoss()
-
-        elif context["loss"]["name"] == "combined_dice":
-            loss_fct = losses.CombinedDiceLoss(params=context["loss"]["params"])
 
         if not context["loss"]["name"].startswith("focal"):
             print("\nLoss function: {}.\n".format(context["loss"]["name"]))
@@ -363,11 +357,11 @@ def cmd_train(context):
                 preds = model(var_input)
 
             if context["loss"]["name"] == "dice":
-                loss = - losses.dice_loss(preds, var_gt)
+                loss = - losses.dice_loss(preds, var_gt, context["dice_params"])
 
             else:
                 loss = loss_fct(preds, var_gt)
-                dice_train_loss_total += losses.dice_loss(preds, var_gt).item()
+                dice_train_loss_total += losses.dice_loss(preds, var_gt, context["dice_params"]).item()
             train_loss_total += loss.item()
 
             optimizer.zero_grad()
@@ -424,11 +418,11 @@ def cmd_train(context):
                     preds = model(var_input)
 
                 if context["loss"]["name"] == "dice":
-                    loss = - losses.dice_loss(preds, var_gt)
+                    loss = - losses.dice_loss(preds, var_gt,  context["dice_params"])
 
                 else:
                     loss = loss_fct(preds, var_gt)
-                    dice_val_loss_total += losses.dice_loss(preds, var_gt).item()
+                    dice_val_loss_total += losses.dice_loss(preds, var_gt,  context["dice_params"]).item()
                 val_loss_total += loss.item()
 
             # Metrics computation

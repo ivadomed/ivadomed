@@ -2,49 +2,51 @@ import torch
 import torch.nn as nn
 
 
-class MultiClassDiceLoss(nn.Module):
-    # Inspired from https://arxiv.org/pdf/1802.10508.pdf
-    def forward(self, prediction, target, classes_of_interest=None):
+# Inspired from https://arxiv.org/pdf/1802.10508.pdf
+def multi_class_loss(prediction, target, classes_of_interest=None):
+    n_classes = prediction.shape[1]
+    if classes_of_interest is None:
+        classes_of_interest = range(n_classes)
+    elif not len(classes_of_interest):
+        return 0.0
 
-        n_classes = prediction.shape[1]
-        if classes_of_interest is None:
-            classes_of_interest = range(n_classes)
+    dice_per_class = 0
+    n = 0
 
-        dice_per_class = 0
-        n = 0
+    for i in classes_of_interest:
+        dice_per_class += dice_function(prediction[:, i, ], target[:, i, ])
+        n += 1
 
-        for i in classes_of_interest:
-            dice_per_class += dice_loss(prediction[:, i, ], target[:, i, ])
-            n += 1
-
-        return -(2.0 * dice_per_class) / n
+    return -(2.0 * dice_per_class) / n
 
 
-class CombinedDiceLoss(nn.Module):
+def dice_loss(prediction, target, params=None):
     """
+    :param prediction: torch tensor generated as the model's prediction
+    :param target: torch tensor representing the ground truth
     :param params: list of the losses considered for this loss
     first item in list: represents classes of interest, list containing the index of a class which dice will be added to
                         the loss.
-    second item in list: represents multiclass_dice, boolean representing whether or not multiclass dice is included in
+    second item in list: represents multi_class_dice, boolean representing whether or not multiclass dice is included in
                          the current loss.
     third item in list: represents dice, boolean representing whether or not dice is included in the current loss.
 
     e.i: [[0, 1], True, False]
+    :return: loss
     """
+    if params is None:
+        classes_of_interest, multi_class_dice, dice = [], False, True
+    else:
+        classes_of_interest, multi_class_dice, dice = params
 
-    def __init__(self, params):
-        super().__init__()
-        self.classes_of_interest, self.multi_class_dice, self.dice = params
+    loss = multi_class_loss(prediction, target, classes_of_interest) + \
+           multi_class_dice * multi_class_loss(prediction, target) + \
+           dice * dice_function(prediction, target)
 
-    def forward(self, prediction, target):
-        loss = MultiClassDiceLoss()(prediction, target, self.classes_of_interest) + \
-               self.multi_class_dice * MultiClassDiceLoss()(prediction, target) + \
-               self.dice * dice_loss(prediction, target)
-
-        return loss / (len(self.classes_of_interest) + self.dice + self.multi_class_dice)
+    return loss / (len(classes_of_interest) + dice + multi_class_dice)
 
 
-def dice_loss(input, target):
+def dice_function(input, target):
     smooth = 1.0
 
     iflat = input.reshape(-1)
@@ -91,7 +93,7 @@ class FocalDiceLoss(nn.Module):
         self.focal = FocalLoss(gamma, alpha)
 
     def forward(self, input, target):
-        dc_loss = dice_loss(input, target)
+        dc_loss = dice_function(input, target)
         fc_loss = self.focal(input, target)
 
         # used to fine tune beta
