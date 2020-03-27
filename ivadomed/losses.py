@@ -4,16 +4,20 @@ import torch.nn as nn
 
 class MultiClassDiceLoss(nn.Module):
     # Inspired from https://arxiv.org/pdf/1802.10508.pdf
-    def forward(self, prediction, target):
-        smooth = 1.0
-        dice_per_class = 0
+    def forward(self, prediction, target, classes_of_interest=None):
+
         n_classes = prediction.shape[1]
-        for i in range(n_classes):
-            iflat = prediction[:, i, ].reshape(-1)
-            tflat = target[:, i, ].reshape(-1)
-            intersection = (iflat * tflat).sum()
-            dice_per_class += intersection / (iflat.sum() + tflat.sum() + smooth)
-        return -(2.0 * dice_per_class) / n_classes
+        if classes_of_interest is None:
+            classes_of_interest = range(n_classes)
+
+        dice_per_class = 0
+        n = 0
+
+        for i in classes_of_interest:
+            dice_per_class += dice_loss(prediction[:, i, ], target[:, i, ])
+            n += 1
+
+        return -(2.0 * dice_per_class) / n
 
 
 class CombinedDiceLoss(nn.Module):
@@ -30,18 +34,14 @@ class CombinedDiceLoss(nn.Module):
 
     def __init__(self, params):
         super().__init__()
-        self.class_of_interest, self.multi_class_dice, self.dice = params
+        self.classes_of_interest, self.multi_class_dice, self.dice = params
 
     def forward(self, prediction, target):
-        loss = torch.zeros(1).cuda()
-        if len(self.class_of_interest):
-            for idx in self.class_of_interest:
-                loss += - dice_loss(prediction[:, idx, ], target[:, idx, ])
-        if self.multi_class_dice:
-            loss += MultiClassDiceLoss()(prediction, target)
-        if self.dice:
-            loss += - dice_loss(prediction, target)
-        return loss / (len(self.class_of_interest) + self.dice + self.multi_class_dice)
+        loss = MultiClassDiceLoss()(prediction, target, self.classes_of_interest) + \
+               self.multi_class_dice * MultiClassDiceLoss()(prediction, target) + \
+               self.dice * dice_loss(prediction, target)
+
+        return loss / (len(self.classes_of_interest) + self.dice + self.multi_class_dice)
 
 
 def dice_loss(input, target):
