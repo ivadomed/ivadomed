@@ -295,7 +295,7 @@ def cmd_train(context):
     epsilon = context["early_stopping_epsilon"]
     val_losses = []
 
-    metric_fns = [multiclass_dice_score,
+    metric_fns = [multi_class_dice_score,
                   dice_score,  # from ivadomed/utils.py
                   hausdorff_score,  # from ivadomed/utils.py
                   mt_metrics.precision_score,
@@ -606,7 +606,7 @@ def cmd_test(context):
     if not os.path.isdir(path_3Dpred):
         os.makedirs(path_3Dpred)
 
-    metric_fns = [multiclass_dice_score,
+    metric_fns = [multi_class_dice_score,
                   dice_score,  # from ivadomed/utils.py
                   hausdorff_score,  # from ivadomed/utils.py
                   mt_metrics.precision_score,

@@ -586,13 +586,13 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     nib.save(nib_avgUnc, fname_avgUnc)
 
 
-def multiclass_dice_score(im1, im2):
+def multi_class_dice_score(im1, im2):
     dice_per_class = 0
-    n_classes = im1.shape[1]
+    n_classes = im1.shape[0]
 
     for i in range(n_classes):
-        dice_per_class += dice_score(im1[:, i, ], im2[:, i, ]) \
-            if not dice_score(im1[:, i, ], im2[:, i, ]) == np.nan else 1.0
+        dice_per_class += dice_score(im1[i, ], im2[i, ]) \
+            if not dice_score(im1[i, ], im2[i, ]) == np.nan else 1.0
 
     return dice_per_class / n_classes
 
