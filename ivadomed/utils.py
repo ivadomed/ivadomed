@@ -592,9 +592,9 @@ def multiclass_dice_score(im1, im2):
 
     for i in range(n_classes):
         dice_per_class += dice_score(im1[:, i, ], im2[:, i, ]) \
-            if not dice_score(im1[:, i, ], im2[:, i, ]) == np.nan else 1
+            if not dice_score(im1[:, i, ], im2[:, i, ]) == np.nan else 1.0
 
-    return  dice_per_class / n_classes
+    return dice_per_class / n_classes
 
 
 def dice_score(im1, im2):
