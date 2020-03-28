@@ -1,8 +1,11 @@
 import json
+import numpy as np
+import os
 import random
 import shutil
 import sys
 import time
+import torch
 
 import joblib
 import pandas as pd
@@ -12,6 +15,7 @@ from medicaltorch import datasets as mt_datasets
 from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 
 import ivadomed.transforms as ivadomed_transforms
 from ivadomed import loader as loader
