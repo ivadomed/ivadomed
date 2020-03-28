@@ -17,7 +17,7 @@ def multi_class_loss(prediction, target, classes_of_interest=None):
         dice_per_class += dice_function(prediction[:, i, ], target[:, i, ])
         n += 1
 
-    return -(2.0 * dice_per_class) / n
+    return (2.0 * dice_per_class) / n
 
 
 def dice_loss(prediction, target, params=None):
