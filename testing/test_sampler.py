@@ -8,7 +8,6 @@ from ivadomed.utils import SliceFilter
 from medicaltorch import datasets as mt_datasets
 
 from ivadomed import loader as loader
-from ivadomed.utils import *
 import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True

@@ -15,7 +15,6 @@ from tqdm import tqdm
 from ivadomed import loader as loader
 from ivadomed import models
 from ivadomed import losses
-from ivadomed.utils import *
 import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True

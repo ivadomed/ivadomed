@@ -10,7 +10,6 @@ from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
 
 from ivadomed import loader as loader
-from ivadomed.utils import *
 import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
