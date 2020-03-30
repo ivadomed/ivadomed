@@ -914,12 +914,8 @@ def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
                                             mode='trilinear',
                                             align_corners=True).data.permute(3, 4, 2, 0, 1).cpu().numpy()
 
-        # Define the directories
-        if isinstance(batch["input_metadata"][i], list):
-            # Multichannel
-            path = batch["input_metadata"][0][i]["input_filenames"]
-        else:
-            path = batch["input_metadata"][i]["input_filenames"]
+        path = batch["input_metadata"][0][i]["input_filenames"]
+
         basename = path.split('/')[-1]
         save_directory = os.path.join(context['log_directory'], layer_name, basename)
 
