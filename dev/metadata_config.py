@@ -4,7 +4,7 @@ from tqdm import tqdm
 from torchvision import transforms
 
 from ivadomed import loader as loader
-from ivadomed.main import SliceFilter
+from ivadomed.utils import SliceFilter
 from medicaltorch import transforms as mt_transforms
 
 
