@@ -4,12 +4,9 @@ import numpy as np
 from PIL import Image
 import torchvision.transforms.functional as F
 from scipy.ndimage.measurements import label, center_of_mass
-from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing, generate_binary_structure
-import nibabel as nib
+from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 
 from medicaltorch import transforms as mt_transforms
-from scipy.ndimage.filters import gaussian_filter
-from scipy.ndimage.interpolation import map_coordinates
 
 from torchvision import transforms as torchvision_transforms
 
@@ -473,4 +470,3 @@ class ToTensor3D(mt_transforms.ToTensor):
 
         sample.update(rdict)
         return sample
-

@@ -2,8 +2,7 @@ from bids_neuropoly import bids
 
 from ivadomed import adaptative
 from medicaltorch import datasets as mt_datasets
-from medicaltorch.filters import SliceFilter
-from ivadomed.utils import *
+from ivadomed import utils
 from ivadomed import __path__
 
 from sklearn.preprocessing import OneHotEncoder
@@ -15,12 +14,9 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 import pandas as pd
 import json
-import copy
-from PIL import Image
-from glob import glob
+import os
 from copy import deepcopy
 from tqdm import tqdm
-import nibabel as nib
 import torch
 
 with open(os.path.join(__path__[0], "../config/contrast_dct.json"), "r") as fhandle:
@@ -400,7 +396,7 @@ def load_dataset(data_list, data_transform, context):
                                          slice_axis=AXIS_DCT[context["slice_axis"]],
                                          transform=data_transform,
                                          metadata_choice=context["metadata"],
-                                         slice_filter_fn=SliceFilter(**context["slice_filter"]),
+                                         slice_filter_fn=utils.SliceFilter(**context["slice_filter"]),
                                          roi_suffix=context["roi_suffix"],
                                          target_lst=context['target_lst'],
                                          roi_lst=context['roi_lst'])
@@ -415,5 +411,5 @@ def load_dataset(data_list, data_transform, context):
                               slice_axis=AXIS_DCT[context["slice_axis"]],
                               transform=data_transform,
                               multichannel=context['multichannel'],
-                              slice_filter_fn=SliceFilter(**context["slice_filter"]))
+                              slice_filter_fn=utils.SliceFilter(**context["slice_filter"]))
     return dataset

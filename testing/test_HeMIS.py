@@ -3,13 +3,13 @@ from math import sqrt
 
 import numpy as np
 import time
-import sys
+import torch
 
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from medicaltorch.filters import SliceFilter
+from ivadomed import utils
 from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
 from torch import optim
@@ -19,7 +19,6 @@ from tqdm import tqdm
 from ivadomed import loader as loader, adaptative
 from ivadomed import models
 from ivadomed import losses
-from ivadomed.utils import *
 import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
@@ -34,7 +33,7 @@ PATH_BIDS = 'testing_data'
 p = 0.0001
 
 
-def test_Hemis(p=0.0001):
+def test_HeMIS(p=0.0001):
     print('[INFO]: Starting test ... \n')
     training_transform_list = [
         ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
@@ -59,7 +58,7 @@ def test_Hemis(p=0.0001):
                                      transform=train_transform,
                                      metadata_choice=False,
                                      dim=2,
-                                     slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=True),
+                                     slice_filter_fn=utils.SliceFilter(filter_empty_input=True, filter_empty_mask=True),
                                      canonical=True,
                                      roi_suffix="_seg-manual",
                                      target_lst=['T2w'],
@@ -83,8 +82,10 @@ def test_Hemis(p=0.0001):
                              depth=3,
                              drop_rate=DROPOUT,
                              bn_momentum=BN)
+
     print(model)
     cuda_available = torch.cuda.is_available()
+
     if cuda_available:
         torch.cuda.set_device(GPU_NUMBER)
         print("Using GPU number {}".format(GPU_NUMBER))
@@ -107,7 +108,7 @@ def test_Hemis(p=0.0001):
         tot_init = time.time() - start_init
         init_lst.append(tot_init)
 
-        numHe_steps = 0
+        num_steps = 0
         for i, batch in enumerate(train_loader):
             if i > 0:
                 tot_gen = time.time() - start_gen
@@ -115,14 +116,17 @@ def test_Hemis(p=0.0001):
 
             start_load = time.time()
             input_samples, gt_samples = batch["input"], batch["gt"]
+
             print(batch["Missing_mod"])
             missing_mod = batch["Missing_mod"]
 
             print("Number of missing modalities = {}."
                   .format(len(input_samples) * len(input_samples[0]) - missing_mod.sum()))
+            print("len input = {}".format(len(input_samples)))
+            print("Batch = {}, {}".format(input_samples[0].shape, gt_samples.shape))
 
             if cuda_available:
-                var_input = cuda(input_samples)
+                var_input = utils.cuda(input_samples)
                 var_gt = gt_samples.cuda(non_blocking=True)
             else:
                 var_input = input_samples
@@ -185,4 +189,5 @@ def test_Hemis(p=0.0001):
     os.remove('testing_data/mytestfile.hdf5')
     print('\n [INFO]: Test of HeMIS passed successfully.')
 
-test_Hemis()
+
+test_HeMIS()

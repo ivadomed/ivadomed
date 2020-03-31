@@ -7,14 +7,12 @@ import sys
 import os
 import json
 import numpy as np
-from tqdm import tqdm
-from itertools import groupby
 from torchvision import transforms
 import matplotlib.pyplot as plt
 from sklearn.externals import joblib
 
 from ivadomed import loader as loader
-from ivadomed.main import SliceFilter
+from ivadomed.utils import SliceFilter
 from medicaltorch import transforms as mt_transforms
 
 metadata_type = ['FlipAngle', 'EchoTime', 'RepetitionTime']
