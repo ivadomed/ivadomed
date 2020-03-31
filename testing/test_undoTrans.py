@@ -1,6 +1,7 @@
 import numpy as np
 from random import randint
 
+import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
