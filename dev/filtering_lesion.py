@@ -7,6 +7,7 @@
 import os
 import json
 import argparse
+import pandas as pd
 import numpy as np
 import nibabel as nib
 from copy import deepcopy
@@ -41,9 +42,9 @@ exp_dct = {
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", help="Config file path.")
-    parser.add_argument("-thrUnc", help="Threshold to apply on uncertainty map.")
-    parser.add_argument("-thrPred", help="Threshold to apply on prediction.")
-    parser.add_argument("-suffixUnc", help="Suffix of the uncertainty map to use (e.g. _unc-vox).")
+    parser.add_argument("-thrUnc", help="Threshold to apply on uncertainty map.", default=None)
+    parser.add_argument("-thrPred", help="Threshold to apply on prediction.", default=None)
+    parser.add_argument("-suffixUnc", help="Suffix of the uncertainty map to use (e.g. _unc-vox).", default=None)
     parser.add_argument("-ofolder", help="Output folder.")
 
     return parser
@@ -183,13 +184,14 @@ def plot_roc(thr_unc_lst, thr_pred_lst, res_dct, metric, fname_out):
     plt.close()
 
 
-def run_inference(pred_folder, im_lst, fname_pref, thr_pred, gt_folder, target_suf, param_eval, unc_name=None, thr_unc=None):
+def run_inference(pred_folder, im_lst, thr_pred, gt_folder, target_suf, param_eval, unc_name=None, thr_unc=None):
     # init df
     df_results = pd.DataFrame()
 
     # loop across images
     for fname_pref in im_lst:
-        if None in [unc_name, thr_unc]:
+        if not any(elem is None for elem in [unc_name, thr_unc]):
+            print(thr_unc)
             # uncertainty map
             fname_unc = os.path.join(pred_folder, fname_pref+unc_name+'.nii.gz')
             im = nib.load(fname_unc)
@@ -211,7 +213,8 @@ def run_inference(pred_folder, im_lst, fname_pref, thr_pred, gt_folder, target_s
         # soft prediction
         data_soft = np.mean(data_pred_lst, axis=0)
 
-        if None in [unc_name, thr_unc]:
+        if not any(elem is None for elem in [unc_name, thr_unc]):
+            print('thr')
             # discard uncertain lesions from data_soft
             data_soft[data_unc > thr_unc] = 0
 
@@ -232,9 +235,9 @@ def run_inference(pred_folder, im_lst, fname_pref, thr_pred, gt_folder, target_s
 
 
 def run_main(args):
-    thrPred = args.
-    thrUnc = args.
-    sufUnc = args.
+    thrPred = None if args.thrPred is None else float(args.thrPred)
+    thrUnc = None if args.thrUnc is None else float(args.thrUnc)
+    sufUnc = args.suffixUnc
 
     with open(args.c, "r") as fhandle:
         context = json.load(fhandle)
@@ -281,7 +284,6 @@ def run_main(args):
     else:
         df = run_inference(pred_folder=pred_folder,
                             im_lst=subj_acq_lst,
-                            fname_pref,
                             thr_pred=thrPred,
                             gt_folder=gt_folder,
                             target_suf=context["target_suffix"],
@@ -289,6 +291,7 @@ def run_main(args):
                             unc_name=sufUnc,
                             thr_unc=thrUnc)
         print(df.head())
+        print('Median (IQR): {} ({} - {}).'.format(np.mean(df.dice), np.percentile(df.dice, 25), np.percentile(df.dice, 75)))
         df.to_csv(os.path.join(ofolder, '_'.join([sufUnc, str(thrUnc), str(thrPred)])+'.csv'))
 
 if __name__ == '__main__':
