@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 def dice_loss(input, target):
@@ -90,4 +89,3 @@ class GeneralizedDiceLoss(nn.Module):
         denominator = ((input + target).sum(-1) * class_weights).sum()
 
         return 1. - 2. * intersect / denominator.clamp(min=self.epsilon)
-

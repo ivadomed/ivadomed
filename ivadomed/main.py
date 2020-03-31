@@ -1,8 +1,11 @@
 import json
+import numpy as np
+import os
 import random
 import shutil
 import sys
 import time
+import torch
 
 import joblib
 import pandas as pd
@@ -12,12 +15,14 @@ from medicaltorch import datasets as mt_datasets
 from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 
 import ivadomed.transforms as ivadomed_transforms
 from ivadomed import loader as loader
 from ivadomed import losses
 from ivadomed import models
-from ivadomed.utils import *
+from ivadomed import metrics
+from ivadomed import utils
 
 cudnn.benchmark = True
 
@@ -286,13 +291,13 @@ def cmd_train(context):
     epsilon = context["early_stopping_epsilon"]
     val_losses = []
 
-    metric_fns = [dice_score,  # from ivadomed/utils.py
-                  hausdorff_score,  # from ivadomed/utils.py
-                  mt_metrics.precision_score,
-                  mt_metrics.recall_score,
-                  mt_metrics.specificity_score,
-                  mt_metrics.intersection_over_union,
-                  mt_metrics.accuracy_score]
+    metric_fns = [metrics.dice_score,
+                  metrics.hausdorff_3D_score,
+                  metrics.precision_score,
+                  metrics.recall_score,
+                  metrics.specificity_score,
+                  metrics.intersection_over_union,
+                  metrics.accuracy_score]
 
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
@@ -321,14 +326,14 @@ def cmd_train(context):
                     val_gt = np.unique(gt_samples.data.numpy()[random_idx, 0, :, :])
                     mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3) + '_' + str(
                         lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png')
-                    save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :],
+                    utils.save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :],
                                       gt_samples.data.numpy()[random_idx, 0, :, :],
                                       mixup_fname_pref)
 
             # The variable sample_metadata is where the MRI physics parameters are
 
             if cuda_available:
-                var_input = cuda(input_samples)
+                var_input = utils.cuda(input_samples)
                 var_gt = gt_samples.cuda(non_blocking=True)
             else:
                 var_input = input_samples
@@ -414,14 +419,14 @@ def cmd_train(context):
         val_loss_total, dice_val_loss_total = 0.0, 0.0
         num_steps = 0
 
-        metric_mgr = IvadoMetricManager(metric_fns)
+        metric_mgr = utils.IvadoMetricManager(metric_fns)
 
         for i, batch in enumerate(val_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
 
             with torch.no_grad():
                 if cuda_available:
-                    var_input = cuda(input_samples)
+                    var_input = utils.cuda(input_samples)
                     var_gt = gt_samples.cuda(non_blocking=True)
                 else:
                     var_input = input_samples
@@ -453,7 +458,7 @@ def cmd_train(context):
 
             preds_npy = preds.data.cpu().numpy()
             if context["binarize_prediction"]:
-                preds_npy = threshold_predictions(preds_npy)
+                preds_npy = utils.threshold_predictions(preds_npy)
             preds_npy = preds_npy.astype(np.uint8)
             preds_npy = preds_npy.squeeze(axis=1)
 
@@ -664,15 +669,15 @@ def cmd_test(context):
     if not os.path.isdir(path_3Dpred):
         os.makedirs(path_3Dpred)
 
-    metric_fns = [dice_score,  # from ivadomed/utils.py
-                  hausdorff_score,  # from ivadomed/utils.py
-                  mt_metrics.precision_score,
-                  mt_metrics.recall_score,
-                  mt_metrics.specificity_score,
-                  mt_metrics.intersection_over_union,
-                  mt_metrics.accuracy_score]
+    metric_fns = [metrics.dice_score,
+                  metrics.hausdorff_3D_score,
+                  metrics.precision_score,
+                  metrics.recall_score,
+                  metrics.specificity_score,
+                  metrics.intersection_over_union,
+                  metrics.accuracy_score]
 
-    metric_mgr = IvadoMetricManager(metric_fns)
+    metric_mgr = utils.IvadoMetricManager(metric_fns)
 
     # number of Monte Carlo simulation
     if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and \
@@ -694,7 +699,7 @@ def cmd_test(context):
 
             with torch.no_grad():
                 if cuda_available:
-                    test_input = cuda(input_samples)
+                    test_input = utils.cuda(input_samples)
                     test_gt = gt_samples.cuda(non_blocking=True)
                 else:
                     test_input = input_samples
@@ -718,7 +723,7 @@ def cmd_test(context):
                 else:
                     preds = model(test_input)
                     if context["attention_unet"]:
-                        save_feature_map(batch, "attentionblock2", context, model, test_input,
+                        utils.save_feature_map(batch, "attentionblock2", context, model, test_input,
                                          AXIS_DCT[context["slice_axis"]])
 
             # WARNING: sample['gt'] is actually the pred in the return sample
@@ -791,7 +796,7 @@ def cmd_test(context):
 
             preds_npy = preds.data.cpu().numpy()
             if context["binarize_prediction"]:
-                preds_npy = threshold_predictions(preds_npy)
+                preds_npy = utils.threshold_predictions(preds_npy)
             preds_npy = preds_npy.astype(np.uint8)
             preds_npy = preds_npy.squeeze(axis=1)
 
@@ -800,7 +805,7 @@ def cmd_test(context):
     # COMPUTE UNCERTAINTY MAPS
     if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty'][
             'n_it'] > 0:
-        run_uncertainty(ifolder=path_3Dpred)
+        utils.run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
@@ -840,7 +845,7 @@ def cmd_eval(context):
                                 subj_acq + context['target_suffix'] + '.nii.gz')
 
         # 3D evaluation
-        eval = Evaluation3DMetrics(fname_pred=fname_pred,
+        eval = utils.Evaluation3DMetrics(fname_pred=fname_pred,
                                    fname_gt=fname_gt,
                                    params=context['eval_params'])
         results_pred = eval.run_eval()

@@ -1,12 +1,11 @@
 import numpy as np
 import time
-import sys
 
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from medicaltorch.filters import SliceFilter
+from ivadomed.utils import SliceFilter
 from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
 from torch import optim
@@ -16,7 +15,6 @@ from tqdm import tqdm
 from ivadomed import loader as loader
 from ivadomed import models
 from ivadomed import losses
-from ivadomed.utils import *
 import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
@@ -71,8 +69,6 @@ def test_unet():
                              drop_rate=DROPOUT,
                              bn_momentum=BN)
 
-
-
     if cuda_available:
         model.cuda()
 
@@ -101,8 +97,7 @@ def test_unet():
             print("Batch = {}, {}".format(input_samples[0].shape, gt_samples.shape))
             print("rest of the function is not implemented yet")
             return 0
-            ## WIP - no train for now
-
+            # WIP - no train for now
 
             if cuda_available:
                 var_input = input_samples.cuda()
@@ -133,7 +128,7 @@ def test_unet():
             opt_lst.append(tot_opt)
 
             start_gen = time.time()
-    
+
         start_schedul = time.time()
         if not step_scheduler_batch:
             scheduler.step()
@@ -150,5 +145,6 @@ def test_unet():
     print('Mean SD opt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
     print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
     print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
+
 
 test_unet()
