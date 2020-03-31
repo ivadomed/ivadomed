@@ -9,11 +9,9 @@ import pandas as pd
 import torch.backends.cudnn as cudnn
 import torchvision.utils as vutils
 from medicaltorch import datasets as mt_datasets
-from medicaltorch import transforms as mt_transforms
 from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from torchvision import transforms
 
 import ivadomed.transforms as ivadomed_transforms
 from ivadomed import loader as loader
@@ -22,40 +20,6 @@ from ivadomed import models
 from ivadomed.utils import *
 
 cudnn.benchmark = True
-
-
-def compose_transforms(dict_transforms, requires_undo=False):
-    """Composes several transforms together.
-
-    Args:
-        dict_transforms (dictionary): Dictionary where the keys are the transform names
-            and the value their parameters.
-        requires_undo (bool): If True, does not include transforms which do not have an undo_transform
-            implemented yet.
-    Returns:
-        torchvision.transforms.Compose object.
-
-    """
-    list_transform = []
-    for transform in dict_transforms.keys():
-        parameters = dict_transforms[transform]
-
-        # call transfrom either from ivadomed either from medicaltorch
-        if transform in ivadomed_transforms.get_transform_names():
-            transform_obj = getattr(ivadomed_transforms, transform)(**parameters)
-        else:
-            transform_obj = getattr(mt_transforms, transform)(**parameters)
-
-        # check if undo_transform method is implemented
-        if requires_undo:
-            if hasattr(transform_obj, 'undo_transform'):
-                list_transform.append(transform_obj)
-            else:
-                print('{} transform not included since no undo_transform available for it.'.format(transform))
-        else:
-            list_transform.append(transform_obj)
-
-    return transforms.Compose(list_transform)
 
 
 def cmd_train(context):
@@ -117,10 +81,10 @@ def cmd_train(context):
     writer = SummaryWriter(log_dir=context["log_directory"])
 
     # Compose training transforms
-    train_transform = compose_transforms(context["transformation_training"])
+    train_transform = ivadomed_transforms.compose_transforms(context["transformation_training"])
 
     # Compose validation transforms
-    val_transform = compose_transforms(context["transformation_validation"])
+    val_transform = ivadomed_transforms.compose_transforms(context["transformation_validation"])
 
     # Randomly split dataset between training / validation / testing
     if context.get("split_path") is None:
@@ -684,7 +648,7 @@ def cmd_test(context):
         transformation_dict = context["transformation_validation"]
 
     # Compose Testing transforms
-    val_transform = compose_transforms(transformation_dict, requires_undo=True)
+    val_transform = ivadomed_transforms.compose_transforms(transformation_dict, requires_undo=True)
 
     # inverse transformations
     val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
@@ -882,13 +846,14 @@ def cmd_test(context):
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
     print(metrics_dict)
+    return metrics_dict
 
 
 def cmd_eval(context):
     path_pred = os.path.join(context['log_directory'], 'pred_masks')
     if not os.path.isdir(path_pred):
         print('\nRun Inference\n')
-        cmd_test(context)
+        metrics_dict = cmd_test(context)
     print('\nRun Evaluation on {}\n'.format(path_pred))
 
     ##### DEFINE DEVICE #####
@@ -928,7 +893,7 @@ def cmd_eval(context):
     df_results.to_csv(os.path.join(path_results, 'evaluation_3Dmetrics.csv'))
 
     print(df_results.head(5))
-
+    return metrics_dict, df_results
 
 def run_main():
     if len(sys.argv) <= 1:
