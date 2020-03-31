@@ -6,6 +6,7 @@ import shutil
 import sys
 import time
 import torch
+import torch.nn as nn
 
 import joblib
 import pandas as pd
@@ -314,7 +315,7 @@ def cmd_train(context):
 
             # mixup data
             if mixup_bool and not film_bool:
-                input_samples, gt_samples, lambda_tensor = mixup(
+                input_samples, gt_samples, lambda_tensor = utils.mixup(
                     input_samples, gt_samples, mixup_alpha)
 
                 # if debugging and first epoch, then save samples as png in ofolder
@@ -724,7 +725,7 @@ def cmd_test(context):
                     preds = model(test_input)
                     if context["attention_unet"]:
                         utils.save_feature_map(batch, "attentionblock2", context, model, test_input,
-                                         AXIS_DCT[context["slice_axis"]])
+                                         utils.AXIS_DCT[context["slice_axis"]])
 
             # WARNING: sample['gt'] is actually the pred in the return sample
             # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
@@ -757,11 +758,11 @@ def cmd_test(context):
                         if n_monteCarlo > 1:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
-                        _ = pred_to_nib(data_lst=pred_tmp_lst,
+                        _ = utils.pred_to_nib(data_lst=pred_tmp_lst,
                                         z_lst=z_tmp_lst,
                                         fname_ref=fname_tmp,
                                         fname_out=fname_pred,
-                                        slice_axis=AXIS_DCT[context['slice_axis']],
+                                        slice_axis=utils.AXIS_DCT[context['slice_axis']],
                                         kernel_dim='2d',
                                         bin_thr=0.5 if context["binarize_prediction"] else -1)
 
@@ -782,11 +783,11 @@ def cmd_test(context):
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
-                    _ = pred_to_nib(data_lst=rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)),
+                    _ = utils.pred_to_nib(data_lst=rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)),
                                     z_lst=[],
                                     fname_ref=fname_ref,
                                     fname_out=fname_pred,
-                                    slice_axis=AXIS_DCT[context['slice_axis']],
+                                    slice_axis=utils.AXIS_DCT[context['slice_axis']],
                                     kernel_dim='3d',
                                     bin_thr=0.5 if context["binarize_prediction"] else -1)
 

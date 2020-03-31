@@ -1,10 +1,12 @@
 import os
 import numpy as np
 
+import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
+from ivadomed import utils
 from ivadomed.utils import SliceFilter
 from medicaltorch import datasets as mt_datasets
 
@@ -98,7 +100,7 @@ def test_inference(film_bool=False):
                   metrics.intersection_over_union,
                   metrics.accuracy_score]
 
-    metric_mgr = IvadoMetricManager(metric_fns)
+    metric_mgr = utils.IvadoMetricManager(metric_fns)
 
     if not os.path.isdir(PATH_OUT):
         os.makedirs(PATH_OUT)
@@ -147,7 +149,7 @@ def test_inference(film_bool=False):
                 # save the completely processed file as a nii
                 fname_pred = os.path.join(PATH_OUT, fname_tmp.split('/')[-1])
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
-                _ = pred_to_nii(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS, debug=True, kernel_dim='2d', bin_thr=0.5)
+                _ = utils.pred_to_nib(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS, debug=True, kernel_dim='2d', bin_thr=0.5)
                 # re-init pred_stack_lst
                 pred_tmp_lst, z_tmp_lst = [], []
 
@@ -161,7 +163,7 @@ def test_inference(film_bool=False):
         gt_npy = gt_npy.squeeze(axis=1)
 
         preds_npy = preds.data.cpu().numpy()
-        preds_npy = threshold_predictions(preds_npy)
+        preds_npy = utils.threshold_predictions(preds_npy)
         preds_npy = preds_npy.astype(np.uint8)
         preds_npy = preds_npy.squeeze(axis=1)
 

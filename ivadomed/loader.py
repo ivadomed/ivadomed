@@ -1,6 +1,6 @@
 from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
-from ivadomed.utils import SliceFilter
+from ivadomed import utils
 from ivadomed import __path__
 
 from sklearn.preprocessing import OneHotEncoder
@@ -392,6 +392,6 @@ def load_dataset(data_list, data_transform, context):
                               slice_axis=AXIS_DCT[context["slice_axis"]],
                               transform=data_transform,
                               multichannel=context['multichannel'],
-                              slice_filter_fn=SliceFilter(**context["slice_filter"]),
+                              slice_filter_fn=utils.SliceFilter(**context["slice_filter"]),
                               missing_modality=context['missing_modality'])
     return dataset

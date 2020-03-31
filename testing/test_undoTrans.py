@@ -1,6 +1,7 @@
 import numpy as np
 from random import randint
 
+import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -12,6 +13,7 @@ from medicaltorch import transforms as mt_transforms
 from ivadomed import loader as loader
 import ivadomed.transforms as ivadomed_transforms
 
+import matplotlib.pyplot as plt
 cudnn.benchmark = True
 
 GPU_NUMBER = 5
