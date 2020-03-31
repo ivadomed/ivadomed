@@ -13,6 +13,7 @@ from medicaltorch import transforms as mt_transforms
 from ivadomed import loader as loader
 import ivadomed.transforms as ivadomed_transforms
 
+import matplotlib.pyplot as plt
 cudnn.benchmark = True
 
 GPU_NUMBER = 5
