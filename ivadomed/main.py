@@ -420,7 +420,7 @@ def cmd_train(context):
         val_loss_total, dice_val_loss_total = 0.0, 0.0
         num_steps = 0
 
-        metric_mgr = utils.IvadoMetricManager(metric_fns)
+        metric_mgr = metrics.MetricManager(metric_fns)
 
         for i, batch in enumerate(val_loader):
             input_samples, gt_samples = batch["input"], batch["gt"]
@@ -678,7 +678,7 @@ def cmd_test(context):
                   metrics.intersection_over_union,
                   metrics.accuracy_score]
 
-    metric_mgr = utils.IvadoMetricManager(metric_fns)
+    metric_mgr = metrics.MetricManager(metric_fns)
 
     # number of Monte Carlo simulation
     if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and \
