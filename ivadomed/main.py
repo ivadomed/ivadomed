@@ -315,7 +315,7 @@ def cmd_train(context):
 
             # mixup data
             if mixup_bool and not film_bool:
-                input_samples, gt_samples, lambda_tensor = mixup(
+                input_samples, gt_samples, lambda_tensor = utils.mixup(
                     input_samples, gt_samples, mixup_alpha)
 
                 # if debugging and first epoch, then save samples as png in ofolder
