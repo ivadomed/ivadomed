@@ -1,7 +1,6 @@
 from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
 from ivadomed import utils
-#from ivadomed.utils import SliceFilter
 from ivadomed import __path__
 
 from sklearn.preprocessing import OneHotEncoder
