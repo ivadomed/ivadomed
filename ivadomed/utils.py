@@ -618,8 +618,9 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
             (2) its configuration file ('folder_model/folder_model.json') used for the training,
                 see https://github.com/neuropoly/ivado-medical-imaging/wiki/configuration-file
         fname_image (string): image filename (e.g. .nii.gz) to segment.
-        roi_fname (string): Binary image filename (e.g. .nii.gz) defining a region of interest,
+        fname_roi (string): Binary image filename (e.g. .nii.gz) defining a region of interest,
             e.g. spinal cord centerline, used to crop the image prior to segment it if provided.
+            The segmentation is not performed on the slices that are empty in this image.
     Returns:
         nibabelObject: Object containing the soft segmentation.
 
@@ -664,6 +665,10 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     # Undo Transforms
     undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
+
+    # Force filter_empty_mask to False if fname_roi = None
+    if fname_roi is None and 'filter_empty_mask' in context["slice_filter"]:
+        context["slice_filter"]["filter_empty_mask"] = False
 
     # Load data
     filename_pairs = [([fname_image], None, fname_roi, [{}])]
