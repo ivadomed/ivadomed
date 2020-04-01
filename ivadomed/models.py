@@ -33,7 +33,7 @@ class UpConv(Module):
         self.downconv = DownConv(in_feat, out_feat, drop_rate, bn_momentum)
 
     def forward(self, x, y):
-        x = F.interpolate(x, scale_factor=2, mode='bilinear', align_corners=True)
+        x = F.interpolate(x, size=y.size()[-2:], mode='bilinear', align_corners=True)
         x = torch.cat([x, y], dim=1)
         x = self.downconv(x)
         return x
