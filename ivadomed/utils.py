@@ -665,6 +665,10 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     # Undo Transforms
     undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
 
+    # Force filter_empty_mask to False if fname_roi = None
+    if fname_roi is None and 'filter_empty_mask' in context["slice_filter"]:
+        context["slice_filter"]["filter_empty_mask"] = False
+
     # Load data
     filename_pairs = [([fname_image], None, fname_roi, [{}])]
     if not context['unet_3D']:  # TODO: rename this param 'model_name' or 'kernel_dim'
