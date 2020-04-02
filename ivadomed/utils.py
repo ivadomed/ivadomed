@@ -27,31 +27,6 @@ FN_COLOUR = 3
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
-
-class IvadoMetricManager(metrics.MetricManager):
-    def __init__(self, metric_fns):
-        super().__init__(metric_fns)
-
-        self.result_dict = defaultdict(list)
-
-    def __call__(self, prediction, ground_truth):
-        self.num_samples += len(prediction)
-        for metric_fn in self.metric_fns:
-            for p, gt in zip(prediction, ground_truth):
-                res = metric_fn(p, gt)
-                dict_key = metric_fn.__name__
-                self.result_dict[dict_key].append(res)
-
-    def get_results(self):
-        res_dict = {}
-        for key, val in self.result_dict.items():
-            if np.all(np.isnan(val)):  # if all values are np.nan
-                res_dict[key] = None
-            else:
-                res_dict[key] = np.nanmean(val)
-        return res_dict
-
-
 class Evaluation3DMetrics(object):
 
     def __init__(self, fname_pred, fname_gt, params={}):

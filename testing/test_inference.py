@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 from ivadomed import utils
+from ivadomed import metrics
 from ivadomed.utils import SliceFilter
 from medicaltorch import datasets as mt_datasets
 
@@ -100,7 +101,7 @@ def test_inference(film_bool=False):
                   metrics.intersection_over_union,
                   metrics.accuracy_score]
 
-    metric_mgr = utils.IvadoMetricManager(metric_fns)
+    metric_mgr = metrics.MetricManager(metric_fns)
 
     if not os.path.isdir(PATH_OUT):
         os.makedirs(PATH_OUT)
