@@ -26,8 +26,8 @@ MIN_OBJ_SIZE = 3
 exp_dct = {
                 'exp1': {'level': 'vox',
                             'uncertainty_measure': '_unc-vox',
-                            'uncertainty_thr': [1e-5, 1e-3, 1e-1, 0.5],
-                            'prediction_thr': [1e-6]+[t/10. for t in range(1,10,1)]}
+                            'uncertainty_thr': [1e-3, 1e-2, 0.1, 0.2, 0.4, 0.6],
+                            'prediction_thr': [t/10. for t in range(1,10,1)]}
 #                'exp2': {'level': 'obj',
 #                            'uncertainty_measure': '_unc-cv',
 #                            'uncertainty_thr': [0.1, 0.2, 0.3, 0.4, 0.5],
@@ -66,8 +66,8 @@ def print_unc_stats(unc_name, pred_folder, im_lst):
         im = nib.load(fname_unc)
         data_unc = im.get_data()
         del im
-        if np.any(data_unc):
-            vals = list(data_unc[data_unc > 0])
+        vals = list(data_unc[data_unc > 0])
+        if len(vals):
             mins.append(np.min(vals))
             maxs.append(np.max(vals))
             p25s.append(np.percentile(vals, 25))
@@ -118,13 +118,13 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
             # soft prediction
             data_soft = np.mean(data_pred_lst, axis=0)
 
-            if np.any(data_gt) and np.any(data_soft):
+            if np.any(data_soft):
                 for i_unc, thr_unc in enumerate(thr_unc_lst):
                     # discard uncertain lesions from data_soft
-                    #print(thr_unc)
+                    print(thr_unc)
                     data_soft_thrUnc = deepcopy(data_soft)
                     data_soft_thrUnc[data_unc > thr_unc] = 0
-                    #print(np.sum(data_soft), np.sum(data_soft_thrUnc))
+                    print(np.sum(data_soft), np.sum(data_soft_thrUnc))
                     cmpt = count_retained((data_soft > 0).astype(np.int), (data_soft_thrUnc > 0).astype(np.int), level)
                     res_dct['retained_elt'][i_unc].append(cmpt)
 
@@ -143,7 +143,7 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
                             tpr, _ = eval.get_ltpr()
                             fdr = eval.get_lfdr()
 
-                        #print(thr_pred, tpr, fdr)
+                        print(thr_pred, tpr, fdr)
 
                         res_dct['tpr'][i_unc][i_pred].append(tpr / 100.)
                         res_dct['fdr'][i_unc][i_pred].append(fdr / 100.)
@@ -272,7 +272,7 @@ def run_main(args):
                                     im_lst=subj_acq_lst,
                                     target_suf=context["target_suffix"],
                                     param_eval=context["eval_params"])
-
+            """
             print_retained_elt(thr_unc_lst=config_dct['uncertainty_thr'], retained_elt_lst=res['retained_elt'])
 
             plot_roc(thr_unc_lst=config_dct['uncertainty_thr'],
@@ -280,7 +280,7 @@ def run_main(args):
                         res_dct=res,
                         metric=config_dct['uncertainty_measure'],
                         fname_out=os.path.join(ofolder, config_dct['uncertainty_measure']+'.png'))
-
+           """
     else:
         df = run_inference(pred_folder=pred_folder,
                             im_lst=subj_acq_lst,
