@@ -21,7 +21,7 @@ class MultiClassDiceLoss(nn.Module):
         for i in self.classes_of_interest:
             dice_per_class += dice_loss(prediction[:, i, ], target[:, i, ])
 
-        return dice_per_class / len(self.classes_of_interest)
+        return - dice_per_class / len(self.classes_of_interest)
 
 
 def dice_loss(input, target):
