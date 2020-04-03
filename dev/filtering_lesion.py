@@ -121,10 +121,8 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
             if np.any(data_soft):
                 for i_unc, thr_unc in enumerate(thr_unc_lst):
                     # discard uncertain lesions from data_soft
-                    print(thr_unc)
                     data_soft_thrUnc = deepcopy(data_soft)
                     data_soft_thrUnc[data_unc > thr_unc] = 0
-                    print(np.sum(data_soft), np.sum(data_soft_thrUnc))
                     cmpt = count_retained((data_soft > 0).astype(np.int), (data_soft_thrUnc > 0).astype(np.int), level)
                     res_dct['retained_elt'][i_unc].append(cmpt)
 
@@ -142,8 +140,6 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
                         else:
                             tpr, _ = eval.get_ltpr()
                             fdr = eval.get_lfdr()
-
-                        print(thr_pred, tpr, fdr)
 
                         res_dct['tpr'][i_unc][i_pred].append(tpr / 100.)
                         res_dct['fdr'][i_unc][i_pred].append(fdr / 100.)

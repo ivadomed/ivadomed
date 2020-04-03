@@ -1,5 +1,5 @@
 {
-    "command": "eval",
+    "command": "train",
     "gpu": 1,
     "target_suffix": "_lesion-manual",
     "roi_suffix": "_seg-manual",
