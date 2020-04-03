@@ -9,19 +9,22 @@ class MetricManager(object):
         self.metric_fns = metric_fns
         self.result_dict = defaultdict(float)
         self.num_samples = 0
-
+        self.result_dict = defaultdict(list)
     def __call__(self, prediction, ground_truth):
         self.num_samples += len(prediction)
         for metric_fn in self.metric_fns:
             for p, gt in zip(prediction, ground_truth):
                 res = metric_fn(p, gt)
                 dict_key = metric_fn.__name__
-                self.result_dict[dict_key] += res
+                self.result_dict[dict_key].append(res)
 
     def get_results(self):
         res_dict = {}
         for key, val in self.result_dict.items():
-            res_dict[key] = val / self.num_samples
+            if np.all(np.isnan(val)):  # if all values are np.nan
+                res_dict[key] = None
+            else:
+                res_dict[key] = np.nanmean(val)
         return res_dict
 
     def reset(self):
