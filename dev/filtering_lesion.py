@@ -6,6 +6,7 @@
 
 import os
 import json
+import joblib
 import argparse
 import pandas as pd
 import numpy as np
@@ -259,15 +260,21 @@ def run_main(args):
             # print_unc_stats is used to determine 'uncertainty_thr'
             print_unc_stats(config_dct['uncertainty_measure'], pred_folder, subj_acq_lst)
 
-            res = run_experiment(level=config_dct['level'],
-                                    unc_name=config_dct['uncertainty_measure'],
-                                    thr_unc_lst=config_dct['uncertainty_thr'],
-                                    thr_pred_lst=config_dct['prediction_thr'],
-                                    gt_folder=gt_folder,
-                                    pred_folder=pred_folder,
-                                    im_lst=subj_acq_lst,
-                                    target_suf=context["target_suffix"],
-                                    param_eval=context["eval_params"])
+            res_ofname = os.path.join(ofolder, config_dct['uncertainty_measure']+'.joblib')
+            if not os.path.isfile(res_ofname):
+                res = run_experiment(level=config_dct['level'],
+                                        unc_name=config_dct['uncertainty_measure'],
+                                        thr_unc_lst=config_dct['uncertainty_thr'],
+                                        thr_pred_lst=config_dct['prediction_thr'],
+                                        gt_folder=gt_folder,
+                                        pred_folder=pred_folder,
+                                        im_lst=subj_acq_lst,
+                                        target_suf=context["target_suffix"],
+                                        param_eval=context["eval_params"])
+                joblib.dump(res, res_ofname)
+            else:
+                joblib.load(res_ofname)
+
             """
             print_retained_elt(thr_unc_lst=config_dct['uncertainty_thr'], retained_elt_lst=res['retained_elt'])
 
