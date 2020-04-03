@@ -3,50 +3,28 @@ import torch.nn as nn
 
 
 # Inspired from https://arxiv.org/pdf/1802.10508.pdf
-def multi_class_loss(prediction, target, classes_of_interest=None):
-    n_classes = prediction.shape[1]
-    if classes_of_interest is None:
-        classes_of_interest = range(n_classes)
-    elif not len(classes_of_interest):
-        return 0.0
-
-    dice_per_class = 0
-    n = 0
-
-    for i in classes_of_interest:
-        dice_per_class += dice_function(prediction[:, i, ], target[:, i, ])
-        n += 1
-
-    return dice_per_class / n
-
-
-def dice_loss(prediction, target, params=None):
+class MultiClassDiceLoss(nn.Module):
     """
-    :param prediction: torch tensor generated as the model's prediction
-    :param target: torch tensor representing the ground truth
-    :param params: list of the losses considered for this loss
-    first item in list: represents classes of interest, list containing the index of a class which dice will be added to
-                        the loss.
-    second item in list: represents multi_class_dice, boolean representing whether or not multiclass dice is included in
-                         the current loss.
-    third item in list: represents dice, boolean representing whether or not dice is included in the current loss.
-
-    e.i: [[0, 1], True, False]
-    :return: loss
+    :param classes_of_interest:  list containing the index of a class which dice will be added to the loss.
     """
-    if params is None:
-        classes_of_interest, multi_class_dice, dice = [], False, True
-    else:
-        classes_of_interest, multi_class_dice, dice = params
+    def __init__(self, classes_of_interest):
+        super(MultiClassDiceLoss, self).__init__()
+        self.classes_of_interest = classes_of_interest
 
-    loss = multi_class_loss(prediction, target, classes_of_interest) + \
-           multi_class_dice * multi_class_loss(prediction, target) + \
-           dice * dice_function(prediction, target)
+    def forward(self, prediction, target):
+        dice_per_class = 0
+        n_classes = prediction.shape[1]
 
-    return loss / (len(classes_of_interest) + dice + multi_class_dice)
+        if self.classes_of_interest is None:
+            self.classes_of_interest = range(n_classes)
+
+        for i in self.classes_of_interest:
+            dice_per_class += dice_loss(prediction[:, i, ], target[:, i, ])
+
+        return dice_per_class / len(self.classes_of_interest)
 
 
-def dice_function(input, target):
+def dice_loss(input, target):
     smooth = 1.0
 
     iflat = input.reshape(-1)
