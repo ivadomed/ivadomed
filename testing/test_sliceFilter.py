@@ -6,12 +6,11 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from medicaltorch.filters import SliceFilter
+from ivadomed.utils import SliceFilter
 from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
 
 from ivadomed import loader as loader
-from ivadomed.utils import *
 import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
@@ -20,10 +19,12 @@ GPU_NUMBER = 0
 BATCH_SIZE = 8
 PATH_BIDS = 'testing_data'
 
+
 def _cmpt_slice(ds_loader, gt_roi='gt'):
     cmpt_label, cmpt_sample = {0: 0, 1: 0}, 0
     for i, batch in enumerate(ds_loader):
-        gt_samples = batch[gt_roi]
+        # For now only supports 1 label
+        gt_samples = batch[gt_roi][0]
         for idx in range(len(gt_samples)):
             if np.any(gt_samples[idx]):
                 cmpt_label[1] += 1
@@ -31,6 +32,7 @@ def _cmpt_slice(ds_loader, gt_roi='gt'):
                 cmpt_label[0] += 1
             cmpt_sample += 1
     print(cmpt_label)
+
 
 def test_slice_filter_center():
     """Test SliceFilter when using mt_transforms.CenterCrop2D."""
@@ -55,7 +57,7 @@ def test_slice_filter_center():
         print('\nROI: {}, Empty Input: {}, Empty Mask: {}'.format(roi, empty_input, empty_mask))
         ds_train = loader.BidsDataset(PATH_BIDS,
                                       subject_lst=train_lst,
-                                      target_suffix="_lesion-manual",
+                                      target_suffix=["_lesion-manual"],
                                       roi_suffix=roi,
                                       contrast_lst=['T2w'],
                                       metadata_choice="without",
@@ -68,9 +70,9 @@ def test_slice_filter_center():
 
         print('\tNumber of loaded slices: {}'.format(len(ds_train)))
         train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
-                                      shuffle=True, pin_memory=True,
-                                      collate_fn=mt_datasets.mt_collate,
-                                      num_workers=0)
+                                  shuffle=True, pin_memory=True,
+                                  collate_fn=mt_datasets.mt_collate,
+                                  num_workers=0)
         print('\tNumber of Neg/Pos slices in GT.')
         _cmpt_slice(train_loader, 'gt')
 
@@ -114,13 +116,14 @@ def test_slice_filter_roi():
 
         print('\tNumber of loaded slices: {}'.format(len(ds_train)))
         train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
-                                      shuffle=True, pin_memory=True,
-                                      collate_fn=mt_datasets.mt_collate,
-                                      num_workers=0)
+                                  shuffle=True, pin_memory=True,
+                                  collate_fn=mt_datasets.mt_collate,
+                                  num_workers=0)
         print('\tNumber of Neg/Pos slices in GT.')
         _cmpt_slice(train_loader, 'gt')
         print('\tNumber of Neg/Pos slices in ROI.')
         _cmpt_slice(train_loader, 'roi')
+
 
 print("Test test_slice_filter_center")
 test_slice_filter_center()

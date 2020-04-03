@@ -8,16 +8,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from torchvision import transforms
 import torch.nn.functional as F
 
 from ivadomed import loader as ivadomed_loader
 from ivadomed import transforms as ivadomed_transforms
 from medicaltorch.datasets import MRI2DSegmentationDataset
-from medicaltorch import metrics as mt_metrics
-from medicaltorch.filters import SliceFilter
+from ivadomed import metrics
 from medicaltorch import datasets as mt_datasets
-from medicaltorch import transforms as mt_transforms
 
 from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
@@ -30,30 +27,6 @@ FP_COLOUR = 2
 FN_COLOUR = 3
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
-
-class IvadoMetricManager(mt_metrics.MetricManager):
-    def __init__(self, metric_fns):
-        super().__init__(metric_fns)
-
-        self.result_dict = defaultdict(list)
-
-    def __call__(self, prediction, ground_truth):
-        self.num_samples += len(prediction)
-        for metric_fn in self.metric_fns:
-            for p, gt in zip(prediction, ground_truth):
-                res = metric_fn(p, gt)
-                dict_key = metric_fn.__name__
-                self.result_dict[dict_key].append(res)
-
-    def get_results(self):
-        res_dict = {}
-        for key, val in self.result_dict.items():
-            if np.all(np.isnan(val)):  # if all values are np.nan
-                res_dict[key] = None
-            else:
-                res_dict[key] = np.nanmean(val)
-        return res_dict
-
 
 class Evaluation3DMetrics(object):
 
@@ -586,54 +559,6 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     nib.save(nib_avgUnc, fname_avgUnc)
 
 
-def multi_class_dice_score(im1, im2):
-    dice_per_class = 0
-    n_classes = im1.shape[0]
-
-    for i in range(n_classes):
-        dice_per_class += dice_score(im1[i, ], im2[i, ]) \
-            if not dice_score(im1[i, ], im2[i, ]) == np.nan else 1.0
-
-    return dice_per_class / n_classes
-
-
-def dice_score(im1, im2):
-    """
-    Computes the Dice coefficient between im1 and im2.
-    """
-    im1 = np.asarray(im1).astype(np.bool)
-    im2 = np.asarray(im2).astype(np.bool)
-
-    if im1.shape != im2.shape:
-        raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
-
-    im_sum = im1.sum() + im2.sum()
-    if im_sum == 0:
-        return np.nan
-
-    intersection = np.logical_and(im1, im2)
-    return (2. * intersection.sum()) / im_sum
-
-
-def hausdorff_score(prediction, groundtruth):
-    if len(prediction.shape) == 4:
-        n_classes, height, depth, width = prediction.shape
-        # Reshape to have only 3 dimensions where prediction[:, idx, :] represents each 2D slice
-        prediction = prediction.reshape((height, n_classes * depth, width))
-        groundtruth = groundtruth.reshape((height, n_classes * depth, width))
-
-    if len(prediction.shape) == 3:
-        mean_hansdorff = 0
-        for idx in range(prediction.shape[1]):
-            pred = prediction[:, idx, :]
-            gt = groundtruth[:, idx, :]
-            mean_hansdorff += mt_metrics.hausdorff_score(pred, gt)
-        mean_hansdorff = mean_hansdorff / prediction.shape[1]
-        return mean_hansdorff
-
-    return mt_metrics.hausdorff_score(prediction, groundtruth)
-
-
 def mixup(data, targets, alpha):
     """Compute the mixup data.
     Return mixed inputs and targets, lambda.
@@ -692,8 +617,9 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
             (2) its configuration file ('folder_model/folder_model.json') used for the training,
                 see https://github.com/neuropoly/ivado-medical-imaging/wiki/configuration-file
         fname_image (string): image filename (e.g. .nii.gz) to segment.
-        roi_fname (string): Binary image filename (e.g. .nii.gz) defining a region of interest,
+        fname_roi (string): Binary image filename (e.g. .nii.gz) defining a region of interest,
             e.g. spinal cord centerline, used to crop the image prior to segment it if provided.
+            The segmentation is not performed on the slices that are empty in this image.
     Returns:
         nibabelObject: Object containing the soft segmentation.
 
@@ -738,6 +664,10 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     # Undo Transforms
     undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
+
+    # Force filter_empty_mask to False if fname_roi = None
+    if fname_roi is None and 'filter_empty_mask' in context["slice_filter"]:
+        context["slice_filter"]["filter_empty_mask"] = False
 
     # Load data
     filename_pairs = [([fname_image], None, fname_roi, [{}])]
@@ -966,7 +896,7 @@ def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axi
 def pil_list_to_numpy(pil_list):
     n_classes = len(pil_list)
     w, h = pil_list[0].size
-    numpy_array = np.zeros((w, h, n_classes))
+    numpy_array = np.zeros((h, w, n_classes))
     for idx, pil_img in enumerate(pil_list):
         numpy_array[..., idx] = np.array(pil_img)
     return numpy_array
@@ -1026,3 +956,23 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
                                     scale_each=True)
 
         writer.add_image(dataset_type + '/Ground Truth', grid_img, epoch)
+
+
+class SliceFilter(object):
+    def __init__(self, filter_empty_mask=True,
+                 filter_empty_input=True):
+        self.filter_empty_mask = filter_empty_mask
+        self.filter_empty_input = filter_empty_input
+
+    def __call__(self, sample):
+        input_data, gt_data = sample['input'], sample['gt']
+
+        if self.filter_empty_mask:
+            if not np.any(gt_data):
+                return False
+
+        if self.filter_empty_input:
+            if not np.all([np.any(img) for img in input_data]):
+                return False
+
+        return True

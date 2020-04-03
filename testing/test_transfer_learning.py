@@ -1,6 +1,3 @@
-import sys
-import json
-import os
 
 import torch
 import torch.nn as nn
@@ -11,12 +8,13 @@ from ivadomed import models
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 1
+GPU_NUMBER = 0
 N_METADATA = 1
 OUT_CHANNEL = 1
 INITIAL_LR = 0.001
 FILM_LAYERS = [0, 0, 0, 0, 0, 0, 0, 0]
 PATH_PRETRAINED_MODEL = 'testing_data/model_unet_test.pt'
+
 
 def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_MODEL):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -55,9 +53,9 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
         model.cuda()
 
     print('Layers included in the optimisation:')
-    for name,param in model.named_parameters():
+    for name, param in model.named_parameters():
         if param.requires_grad == True:
-            print("\t",name)
+            print("\t", name)
 
     total_params = sum(p.numel() for p in model.parameters())
     print(f'{total_params:,} total parameters.')
@@ -69,6 +67,7 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
     initial_lr = INITIAL_LR
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
+
 
 print("test transfer learning")
 test_transfer_learning()
