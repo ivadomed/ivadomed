@@ -486,7 +486,7 @@ class RandomAffine3D(mt_transforms.RandomAffine):
                 for idx, gt in enumerate(labels):
                     pil_img = Image.fromarray(gt, mode='F')
                     gt_vol[idx, :, :] = np.array(self.sample_augment(pil_img, params))
-                ret_gt.append(gt_vol.astype('uint8'))
+                ret_gt.append(gt_vol.astype('float32'))
             rdict['gt'] = ret_gt
 
         sample.update(rdict)
