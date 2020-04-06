@@ -70,7 +70,7 @@ def keep_largest_object_per_slice(predictions, axis=2):
     # Loop across the slices along the given axis
     for idx in range(len(list_preds_in)):
         slice_processed = keep_largest_object(list_preds_in[idx])
-        preds_out.append(slice_processed)
+        list_preds_out.append(slice_processed)
         print(slice_processed.shape, list_preds_in[idx].shape)
     print(predictions.shape, np.stack(list_preds_out, axis=axis).shape)
     return np.stack(list_preds_out, axis=axis)
