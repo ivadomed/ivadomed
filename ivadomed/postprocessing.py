@@ -73,3 +73,19 @@ def keep_largest_object_per_slice(predictions, axis=2):
         print(slice_processed.shape, list_preds_in[idx].shape)
     print(predictions.shape, np.stack(list_preds_out, axis=axis).shape)
     return np.stack(list_preds_out, axis=axis)
+
+
+def fill_holes_2d(predictions, structure=(3,3)):
+    """Fill holes in the predictions.
+
+    Fill holes in the predictions using a given structuring element.
+
+    Args:
+        predictions (array): Input 2D binary segmentation.
+        structure (tuple of two integers): Structuring element.
+    Returns:
+        array: processed segmentation.
+
+    """
+    assert predictions.dtype == np.dtype('int')
+    return binary_fill_holes(predictions, structure=np.ones(structure)).astype(np.int)
