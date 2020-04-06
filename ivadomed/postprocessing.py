@@ -49,6 +49,18 @@ def keep_largest_object(predictions):
 
 
 def keep_largest_object_2d(predictions, axis=2):
+    """Keep the largest connect object per 2d slice.
+
+    Keep the largest connected object for each 2D slice of an input array along a given axis.
+    Note: This function only works for binary segmentation.
+
+    Args:
+        predictions (array): Input binary segmentation.
+        axis (int): 2D slices are extracted along this axis.
+    Returns:
+        array: processed segmentation.
+
+    """
     assert predictions.dtype == np.dtype('int')
     # Split the 3D input array as a list of slice along axis
     list_preds_in = np.split(predictions, predictions.shape[axis], axis=axis)
