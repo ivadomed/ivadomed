@@ -24,7 +24,7 @@ def threshold_predictions(predictions, thr=0.5):
     thresholded_preds[low_values_indices] = 0
     low_values_indices = thresholded_preds >= thr
     thresholded_preds[low_values_indices] = 1
-    return thresholded_preds
+    return thresholded_preds.astype(np.int)
 
 
 def keep_largest_object(predictions):
@@ -90,7 +90,7 @@ def fill_holes(predictions, structure=(3,3,3)):
 
     """
     assert predictions.dtype == np.dtype('int')
-    assert len(structure) == predictions.shape)
+    assert len(structure) == predictions.shape
     return binary_fill_holes(predictions, structure=np.ones(structure)).astype(np.int)
 
 
