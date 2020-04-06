@@ -331,6 +331,8 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
     if bin_thr >= 0:
         arr_pred_ref_space = threshold_predictions(arr_pred_ref_space, thr=bin_thr)
+    else: # discard noise
+        arr_pred_ref_space[arr_pred_ref_space <= 1e-3] = 0
 
     # create nibabel object
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
