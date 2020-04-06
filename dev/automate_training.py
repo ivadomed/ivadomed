@@ -264,7 +264,7 @@ if __name__ == '__main__':
             combined_df = val_df
 
         results_df = pd.concat([results_df, combined_df])
-
+        results_df.to_csv("temporary_results.csv")
     # Merge config and results in a df
     config_df = pd.DataFrame.from_dict(config_list)
     keep = list(param_dict.keys())
