@@ -29,10 +29,14 @@ def threshold_predictions(predictions, thr=0.5):
 def keep_largest_object(predictions):
     """Keep the largest connect object.
 
-    Keep the largest connected object per z_slice and fill little holes.
+    Keep the largest connected object from the input array (2 or 3D).
     Note: This function only works for binary segmentation.
-    :param z_slice: int 2d-array: Input 2d segmentation
-    :return: z_slice: int 2d-array: Processed 2d segmentation
+
+    Args:
+        predictions (array): Input 2 or 3D binary segmentation.
+    Returns:
+        array: processed segmentation.
+
     """
     assert predictions.dtype == np.dtype('int')
     # Find number of closed objects using skimage "label"
