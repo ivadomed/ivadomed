@@ -10,10 +10,12 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
 
-from ivadomed import loader as ivadomed_loader
-from ivadomed import transforms as ivadomed_transforms
-from medicaltorch.datasets import MRI2DSegmentationDataset
+from ivadomed import loader as imed_loader
+from ivadomed import transforms as imed_transforms
+from ivadomed import postprocessing as imed_postPro
 from ivadomed import metrics
+
+from medicaltorch.datasets import MRI2DSegmentationDataset
 from medicaltorch import datasets as mt_datasets
 
 from scipy.ndimage import label, generate_binary_structure
@@ -346,7 +348,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
 
     if bin_thr >= 0:
-        arr_pred_ref_space = threshold_predictions(arr_pred_ref_space, thr=bin_thr)
+        arr_pred_ref_space = imed_postPro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
 
     # create nibabel object
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
@@ -417,7 +419,7 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
 
     # argmax operator
     # TODO: adapt for multi-label pred
-    data_hard = threshold_predictions(data_prob, thr=thr).astype(np.uint8)
+    data_hard = imed_postPro.threshold_predictions(data_prob, thr=thr).astype(np.uint8)
     # save hard segmentation
     nib_hard = nib.Nifti1Image(data_hard, nib_im.affine)
     nib.save(nib_hard, fname_hard)
@@ -622,10 +624,10 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
                                                     for (key, value) in context["transformation_validation"].items())
 
     # Compose transforms
-    do_transforms = ivadomed_transforms.compose_transforms(context['transformation_validation'])
+    do_transforms = imed_transforms.compose_transforms(context['transformation_validation'])
 
     # Undo Transforms
-    undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
+    undo_transforms = imed_transforms.UndoCompose(do_transforms)
 
     # Force filter_empty_mask to False if fname_roi = None
     if fname_roi is None and 'filter_empty_mask' in context["slice_filter"]:
@@ -646,7 +648,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     # If fname_roi provided, then remove slices without ROI
     if fname_roi is not None:
-        ds = ivadomed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
+        ds = imed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
 
     if not context['unet_3D']:
         print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")

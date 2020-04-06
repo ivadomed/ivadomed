@@ -24,6 +24,7 @@ from ivadomed import losses
 from ivadomed import models
 from ivadomed import metrics
 from ivadomed import utils
+from ivadomed import postprocessing as imed_postPro
 
 cudnn.benchmark = True
 
@@ -459,7 +460,7 @@ def cmd_train(context):
 
             preds_npy = preds.data.cpu().numpy()
             if context["binarize_prediction"]:
-                preds_npy = utils.threshold_predictions(preds_npy)
+                preds_npy = imed_postPro.threshold_predictions(preds_npy)
             preds_npy = preds_npy.astype(np.uint8)
             preds_npy = preds_npy.squeeze(axis=1)
 
@@ -797,7 +798,7 @@ def cmd_test(context):
 
             preds_npy = preds.data.cpu().numpy()
             if context["binarize_prediction"]:
-                preds_npy = utils.threshold_predictions(preds_npy)
+                preds_npy = imed_postPro.threshold_predictions(preds_npy)
             preds_npy = preds_npy.astype(np.uint8)
             preds_npy = preds_npy.squeeze(axis=1)
 

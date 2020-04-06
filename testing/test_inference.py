@@ -6,15 +6,14 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from ivadomed import utils
 from ivadomed import metrics
-from ivadomed.utils import SliceFilter
+
 from medicaltorch import datasets as mt_datasets
 
 from ivadomed import loader as loader
-from ivadomed import metrics
-
-import ivadomed.transforms as ivadomed_transforms
+import ivadomed.postprocessing as imed_postPro
+import ivademed.utils as imed_utils
+import ivadomed.transforms as imed_transforms
 
 cudnn.benchmark = True
 
@@ -41,14 +40,14 @@ def test_inference(film_bool=False):
         print("using GPU number {}".format(GPU_NUMBER))
 
     validation_transform_list = [
-        ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
-        ivadomed_transforms.ROICrop2D(size=[48, 48]),
-        ivadomed_transforms.ToTensor(),
-        ivadomed_transforms.NormalizeInstance()
+        imed_transforms.Resample(wspace=0.75, hspace=0.75),
+        imed_transforms.ROICrop2D(size=[48, 48]),
+        imed_transforms.ToTensor(),
+        imed_transforms.NormalizeInstance()
     ]
 
     val_transform = transforms.Compose(validation_transform_list)
-    val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
+    val_undo_transform = imed_transforms.UndoCompose(val_transform)
 
     test_lst = ['sub-test001']
 
@@ -62,8 +61,8 @@ def test_inference(film_bool=False):
                                  slice_axis=SLICE_AXIS,
                                  transform=val_transform,
                                  multichannel=False,
-                                 slice_filter_fn=SliceFilter(filter_empty_input=True,
-                                                             filter_empty_mask=False))
+                                 slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                                                         filter_empty_mask=False))
 
     ds_test = loader.filter_roi(ds_test, nb_nonzero_thr=10)
 
@@ -150,7 +149,7 @@ def test_inference(film_bool=False):
                 # save the completely processed file as a nii
                 fname_pred = os.path.join(PATH_OUT, fname_tmp.split('/')[-1])
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
-                _ = utils.pred_to_nib(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS, debug=True, kernel_dim='2d', bin_thr=0.5)
+                _ = imed_utils.pred_to_nib(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS, debug=True, kernel_dim='2d', bin_thr=0.5)
                 # re-init pred_stack_lst
                 pred_tmp_lst, z_tmp_lst = [], []
 
@@ -164,7 +163,7 @@ def test_inference(film_bool=False):
         gt_npy = gt_npy.squeeze(axis=1)
 
         preds_npy = preds.data.cpu().numpy()
-        preds_npy = utils.threshold_predictions(preds_npy)
+        preds_npy = imed_postPro.threshold_predictions(preds_npy)
         preds_npy = preds_npy.astype(np.uint8)
         preds_npy = preds_npy.squeeze(axis=1)
 
