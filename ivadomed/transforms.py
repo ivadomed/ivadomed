@@ -134,7 +134,7 @@ class Resample(mt_transforms.Resample):
             roi_data = sample['roi']
             rdict['roi'] = []
             for roi in roi_data:
-                rdict['roi'].append(self.resample_bin(roi, wshape_new, hshape_new, 0.0))
+                rdict['roi'].append(self.resample_bin(roi, wshape_new, hshape_new))
 
         sample.update(rdict)
         return sample
