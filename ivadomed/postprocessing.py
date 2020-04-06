@@ -19,7 +19,7 @@ def threshold_predictions(predictions, thr=0.5):
         array: Array containing only zeros or ones.
 
     """
-    thresholded_preds = predictions[:]
+    thresholded_preds = np.copy(predictions)[:]
     low_values_indices = thresholded_preds < thr
     thresholded_preds[low_values_indices] = 0
     low_values_indices = thresholded_preds >= thr
