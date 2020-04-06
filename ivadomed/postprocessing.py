@@ -64,12 +64,12 @@ def keep_largest_object_per_slice(predictions, axis=2):
     """
     assert predictions.dtype == np.dtype('int')
     # Split the 3D input array as a list of slice along axis
-    list_preds_in = np.split(np.swapaxes(predictions, 0, axis), predictions.shape[axis], axis=0)
+    list_preds_in = np.split(predictions, predictions.shape[axis], axis=axis)
     # Init list of processed slices
     list_preds_out = []
     # Loop across the slices along the given axis
     for idx in range(len(list_preds_in)):
-        slice_processed = keep_largest_object(list_preds_in[idx][0])
+        slice_processed = keep_largest_object(np.squeeze(list_preds_in[idx], axis=axis))
         list_preds_out.append(slice_processed)
     return np.stack(list_preds_out, axis=axis)
 
