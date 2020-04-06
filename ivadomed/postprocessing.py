@@ -46,3 +46,18 @@ def keep_largest_object(predictions):
         # Keep the largest object
             predictions[np.where(labeled_obj != (np.bincount(labeled_obj.flat)[1:].argmax() + 1))] = 0
     return predictions
+
+
+def keep_largest_object_2d(predictions, axis=2):
+    assert predictions.dtype == np.dtype('int')
+    # Split the 3D input array as a list of slice along axis
+    list_preds_in = np.split(predictions, predictions.shape[axis], axis=axis)
+    # Init list of processed slices
+    list_preds_out = []
+    # Loop across the slices along the given axis
+    for idx in range(len(list_preds_in)):
+        slice_processed = keep_largest_object(list_preds_in[idx])
+        preds_out.append(slice_processed)
+        print(slice_processed.shape, list_preds_in[idx].shape)
+    print(predictions.shape, np.stack(list_preds_out, axis=axis).shape)
+    return np.stack(list_preds_out, axis=axis)
