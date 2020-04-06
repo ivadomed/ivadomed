@@ -93,7 +93,19 @@ def fill_holes(predictions, structure=(3,3,3)):
     assert len(structure) == predictions.shape)
     return binary_fill_holes(predictions, structure=np.ones(structure)).astype(np.int)
 
-def mask_soft_predictions(predictions_soft, predictions_bin):
+
+def mask_predictions(predictions, mask_binary):
+    """Mask soft predictions with binary mask.
+
+    Mask predictions (e.g. soft predictions) using a binary mask (e.g. ROI, hard predictions).
+
+    Args:
+        predictions (array): array to mask.
+        mask_binary (array): array with the same shape as predictions, containing only zeros or ones.
+    Returns:
+        array: processed segmentation.
+
+    """
     assert predictions_soft.shape == predictions_bin.shape
     # Check if predictions_bin only contains 0s or 1s
     assert predictions_bin.dtype == np.dtype('int')
