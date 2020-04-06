@@ -115,7 +115,7 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
         if os.path.isfile(fname_gt):
             nib_gt = nib.load(fname_gt)
             data_gt = nib_gt.get_data()
-
+            print(np.sum(data_gt))
             # soft prediction
             data_soft = np.mean(data_pred_lst, axis=0)
 
@@ -126,7 +126,7 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
                     data_soft_thrUnc[data_unc > thr_unc] = 0
                     cmpt = count_retained((data_soft > 0).astype(np.int), (data_soft_thrUnc > 0).astype(np.int), level)
                     res_dct['retained_elt'][i_unc].append(cmpt)
-
+                    print(thr_unc, cmpt)
                     for i_pred, thr_pred in enumerate(thr_pred_lst):
                         data_hard = threshold_predictions(deepcopy(data_soft_thrUnc), thr=thr_pred).astype(np.uint8)
 
@@ -141,7 +141,7 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
                         else:
                             tpr, _ = eval.get_ltpr()
                             fdr = eval.get_lfdr()
-
+                        print(thr_pred, np.count_nonzero(deepcopy(data_soft_thrUnc)), np.count_nonzero(data_hard), tpr, fdr)
                         res_dct['tpr'][i_unc][i_pred].append(tpr / 100.)
                         res_dct['fdr'][i_unc][i_pred].append(fdr / 100.)
 
@@ -249,7 +249,8 @@ def run_main(args):
 
     subj_acq_lst = list(set([f.split('_pred')[0] for f in os.listdir(pred_folder)
                     if f.endswith('.nii.gz') and '_pred' in f]))
-
+    subj_acq_lst = [subj_acq_lst[0]]
+    print(subj_acq_lst)
     gt_folder = os.path.join(context['bids_path'], 'derivatives', 'labels')
 
     if thrPred is None:
@@ -273,9 +274,8 @@ def run_main(args):
                                         param_eval=context["eval_params"])
                 joblib.dump(res, res_ofname)
             else:
-                joblib.load(res_ofname)
+                res = joblib.load(res_ofname)
 
-            """
             print_retained_elt(thr_unc_lst=config_dct['uncertainty_thr'], retained_elt_lst=res['retained_elt'])
 
             plot_roc(thr_unc_lst=config_dct['uncertainty_thr'],
@@ -283,7 +283,6 @@ def run_main(args):
                         res_dct=res,
                         metric=config_dct['uncertainty_measure'],
                         fname_out=os.path.join(ofolder, config_dct['uncertainty_measure']+'.png'))
-           """
     else:
         df = run_inference(pred_folder=pred_folder,
                             im_lst=subj_acq_lst,
