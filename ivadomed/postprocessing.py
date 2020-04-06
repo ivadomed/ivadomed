@@ -2,6 +2,7 @@
 
 import numpy as np
 from scipy.ndimage.measurements import label
+from scipy.ndimage.morphology import binary_fill_holes
 
 
 def threshold_predictions(predictions, thr=0.5):
@@ -75,7 +76,7 @@ def keep_largest_object_per_slice(predictions, axis=2):
     return np.stack(list_preds_out, axis=axis)
 
 
-def fill_holes(predictions, structure=(3,3)):
+def fill_holes(predictions, structure=(3,3,3)):
     """Fill holes in the predictions.
 
     Fill holes in the predictions using a given structuring element.
