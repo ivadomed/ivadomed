@@ -48,7 +48,7 @@ def keep_largest_object(predictions):
     return predictions
 
 
-def keep_largest_object_2d(predictions, axis=2):
+def keep_largest_object_per_slice(predictions, axis=2):
     """Keep the largest connect object per 2d slice.
 
     Keep the largest connected object for each 2D slice of an input array along a given axis.
