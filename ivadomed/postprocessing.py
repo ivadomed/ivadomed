@@ -5,10 +5,18 @@ from scipy.ndimage.measurements import label
 
 
 def threshold_predictions(predictions, thr=0.5):
-    """This function will threshold predictions.
-    :param predictions: input data (predictions)
-    :param thr: threshold to use, default to 0.5
-    :return: thresholded input
+    """Threshold predictions.
+
+    Threshold a soft (ie not binary) array of predictions given a threshold value, and returns
+    a binary array.
+
+    Args:
+        predictions (array): array to binarise.
+        thr (float): Threshold value: voxels with a value < to thr are assigned 0 as value, 1
+            otherwise.
+    Returns:
+        array: Array containing only zeros or ones.
+
     """
     thresholded_preds = predictions[:]
     low_values_indices = thresholded_preds < thr
