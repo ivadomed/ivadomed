@@ -185,3 +185,21 @@ def mask_predictions(predictions, mask_binary):
     assert mask_binary.dtype == np.dtype('int')
     assert np.array_equal(mask_binary, mask_binary.astype(bool))
     return predictions * mask_binary
+
+
+def mask_predictions_nib(nib_predictions, nib_mask_binary):
+    """Mask soft predictions with binary mask.
+
+    Mask nibabel predictions (e.g. soft predictions) using a nibabel binary mask (e.g. ROI, hard predictions).
+
+    Args:
+        nib_predictions (nibabelObject): nibabel image to mask.
+        nib_mask_binary (nibabelObject): nibabel image with the same shape as nib_predictions, containing only zeros or ones.
+    Returns:
+        nibabelObject: processed segmentation.
+
+    """
+    data = nib_predictions.get_data()
+    data_mask = nib_mask_binary.get_data()
+    data_out = mask_predictions(predictions=data, mask_binary=data_mask)
+    return nib.Nifti1Image(data_out, nib_predictions.affine)
