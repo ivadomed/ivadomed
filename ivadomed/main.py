@@ -288,8 +288,8 @@ def cmd_train(context):
             print("\nLoss function: {}.\n".format(context["loss"]["name"]))
 
     else:
-        print("Unknown Loss function, please choose between 'dice', 'focal', 'focal_dice', 'gdl', 'cross_entropy',"
-              "'multi_class_dice' or 'combined_dice'")
+        print("Unknown Loss function, please choose between 'dice', 'focal', 'focal_dice', 'gdl', 'cross_entropy' "
+              "or 'multi_class_dice'")
         exit()
 
     # Training loop -----------------------------------------------------------
