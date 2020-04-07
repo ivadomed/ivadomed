@@ -64,4 +64,5 @@ install: pip install -e .
 script:
   -
     echo *** UNIT TESTS ***
+    
     pytest
