@@ -61,9 +61,7 @@ before_install: |
 
 install: pip install -e .
 
-script: travis_wait mvn install
-
-  -
+script: |
+    travis_wait mvn install
     echo *** UNIT TESTS ***
-
     pytest
