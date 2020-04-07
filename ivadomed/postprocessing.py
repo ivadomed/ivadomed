@@ -113,6 +113,25 @@ def keep_largest_object_per_slice(predictions, axis=2):
     return np.stack(list_preds_out, axis=axis)
 
 
+def keep_largest_object_per_slice_nib(nib_predictions, axis=2):
+    """Keep the largest connect object from nibabel image per 2d slice.
+
+    Keep the largest connected object for each 2D slice of an input image along a given axis.
+    Note: This function only works for binary segmentation.
+    Note: This function calls keep_largest_object_per_slice().
+
+    Args:
+        nib_predictions (nibabelObject): Input image, 2 or 3D, binary segmentation.
+        axis (int): 2D slices are extracted along this axis.
+    Returns:
+        nibabelObject: processed segmentation.
+
+    """
+    data = nib_predictions.get_data()
+    data_out = keep_largest_object_per_slice(predictions=data, axis=axis)
+    return nib.Nifti1Image(data_out, nib_predictions.affine)
+
+
 def fill_holes(predictions, structure=(3,3,3)):
     """Fill holes in the predictions.
 
@@ -129,6 +148,24 @@ def fill_holes(predictions, structure=(3,3,3)):
     assert predictions.dtype == np.dtype('int')
     assert len(structure) == len(predictions.shape)
     return binary_fill_holes(predictions, structure=np.ones(structure)).astype(np.int)
+
+
+def fill_holes_nib(nib_predictions, structure=(3,3,3)):
+    """Fill holes in the predictions.
+
+    Fill holes in the nibabel predictions using a given structuring element.
+
+    Args:
+        nib_predictions (nibabelObject): Input image, binary segmentation, 2 or 3D.
+        structure (tuple of integers): Structuring element, number of ints equals
+            number of dimensions in the input image.
+    Returns:
+        nibabelObject: processed segmentation.
+
+    """
+    data = nib_predictions.get_data()
+    data_out = fill_holes(predictions=data, structure=structure)
+    return nib.Nifti1Image(data_out, nib_predictions.affine)
 
 
 def mask_predictions(predictions, mask_binary):
