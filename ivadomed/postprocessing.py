@@ -45,7 +45,7 @@ def threshold_predictions_nib(nib_predictions, thr=0.5):
     """
     data = nib_predictions.get_data()
     data_thr = threshold_predictions(predictions=data, thr=thr)
-    return nib.Nifti1Image(data, nib_predictions.affine)
+    return nib.Nifti1Image(data_thr, nib_predictions.affine)
 
 
 def keep_largest_object(predictions):
@@ -68,6 +68,24 @@ def keep_largest_object(predictions):
         # Keep the largest object
             predictions[np.where(labeled_obj != (np.bincount(labeled_obj.flat)[1:].argmax() + 1))] = 0
     return predictions
+
+
+def keep_largest_object_nib(nib_predictions):
+    """Keep the largest connect object from nibabel image.
+
+    Keep the largest connected object from the input image (2 or 3D).
+    Note: This function only works for binary segmentation.
+    Note: This function calls keep_largest_object().
+
+    Args:
+        nib_predictions (nibabelObject): Input image, 2 or 3D, binary segmentation.
+    Returns:
+        nibabelObject: processed segmentation.
+
+    """
+    data = nib_predictions.get_data()
+    data_out = keep_largest_object(predictions=data)
+    return nib.Nifti1Image(data_out, nib_predictions.affine)
 
 
 def keep_largest_object_per_slice(predictions, axis=2):
