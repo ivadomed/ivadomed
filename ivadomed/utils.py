@@ -698,6 +698,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         rdict = {}
         rdict['gt'] = preds
         batch.update(rdict)
+        # Take only metadata from one input
+        batch["input_metadata"] = batch["input_metadata"][0]
 
         # Reconstruct 3D object
         for i_slice in range(len(batch['gt'])):
@@ -711,7 +713,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
             # Add new segmented slice to preds_list
             # Convert PIL to numpy
-            pred_cur = np.array(rdict_undo['gt'])
+            pred_cur = np.array(pil_list_to_numpy(rdict_undo['gt']))
             preds_list.append(pred_cur)
             # Store the slice index of pred_cur in the original 3D image
             sliceIdx_list.append(int(rdict_undo['input_metadata']['slice_index']))
