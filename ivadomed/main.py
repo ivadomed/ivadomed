@@ -1,29 +1,27 @@
 import json
-import numpy as np
 import os
 import random
 import shutil
 import sys
 import time
-import torch
-import torch.nn as nn
 
+import ivadomed.transforms as ivadomed_transforms
 import joblib
+import numpy as np
 import pandas as pd
+import torch
 import torch.backends.cudnn as cudnn
-import torchvision.utils as vutils
+import torch.nn as nn
+from ivadomed import loader as loader
+from ivadomed import losses
+from ivadomed import metrics
+from ivadomed import models
+from ivadomed import utils
 from medicaltorch import datasets as mt_datasets
 from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
-
-import ivadomed.transforms as ivadomed_transforms
-from ivadomed import loader as loader
-from ivadomed import losses
-from ivadomed import models
-from ivadomed import metrics
-from ivadomed import utils
 
 cudnn.benchmark = True
 
@@ -65,7 +63,7 @@ def cmd_train(context):
 
         print('\nArchitecture: {} with a depth of {}.\n' \
               .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else "Attention UNet" if attention else
-                      '3D Unet' if unet_3D else "Unet", context['depth']))
+        '3D Unet' if unet_3D else "Unet", context['depth']))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -183,17 +181,26 @@ def cmd_train(context):
     else:
         in_channel = 1
 
+    if len(context['target_suffix']) > 1:
+        # + 1 for background class
+        out_channel = len(context["target_suffix"]) + 1
+    else:
+        out_channel = 1
+
     if context['retrain_model'] is None:
         if HeMIS:
             model = models.HeMISUnet(modalities=context['contrast_train_validation'],
+                                     out_channel=out_channel,
                                      depth=context['depth'],
                                      drop_rate=context["dropout_rate"],
                                      bn_momentum=context["batch_norm_momentum"])
         elif unet_3D:
-            model = models.UNet3D(in_channels=in_channel, n_classes=1, attention=attention)
+            model = models.UNet3D(in_channels=in_channel,
+                                  n_classes=out_channel,
+                                  attention=attention)
         else:
             model = models.Unet(in_channel=in_channel,
-                                out_channel=context['out_channel'],
+                                out_channel=out_channel,
                                 depth=context['depth'],
                                 film_layers=context["film_layers"],
                                 n_metadata=n_metadata,
@@ -250,7 +257,7 @@ def cmd_train(context):
     var_contrast_list = []
 
     # Loss
-    if context["loss"]["name"] in ["dice", "cross_entropy", "focal", "gdl", "focal_dice"]:
+    if context["loss"]["name"] in ["dice", "cross_entropy", "focal", "gdl", "focal_dice", "multi_class_dice"]:
         if context["loss"]["name"] == "cross_entropy":
             loss_fct = nn.BCELoss()
 
@@ -274,12 +281,15 @@ def cmd_train(context):
                                                                                            "gamma"],
                                                                                        context["loss"]["params"][
                                                                                            "alpha"]))
+        elif context["loss"]["name"] == "multi_class_dice":
+            loss_fct = losses.MultiClassDiceLoss(classes_of_interest=context["loss"]["params"]["classes_of_interest"])
 
         if not context["loss"]["name"].startswith("focal"):
             print("\nLoss function: {}.\n".format(context["loss"]["name"]))
 
     else:
-        print("Unknown Loss function, please choose between 'dice', 'focal', 'focal_dice', 'gdl' or 'cross_entropy'")
+        print("Unknown Loss function, please choose between 'dice', 'focal', 'focal_dice', 'gdl', 'cross_entropy' "
+              "or 'multi_class_dice'")
         exit()
 
     # Training loop -----------------------------------------------------------
@@ -293,6 +303,7 @@ def cmd_train(context):
     val_losses = []
 
     metric_fns = [metrics.dice_score,
+                  metrics.multi_class_dice_score,
                   metrics.hausdorff_3D_score,
                   metrics.precision_score,
                   metrics.recall_score,
@@ -328,8 +339,8 @@ def cmd_train(context):
                     mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3) + '_' + str(
                         lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png')
                     utils.save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :],
-                                      gt_samples.data.numpy()[random_idx, 0, :, :],
-                                      mixup_fname_pref)
+                                            gt_samples.data.numpy()[random_idx, 0, :, :],
+                                            mixup_fname_pref)
 
             # The variable sample_metadata is where the MRI physics parameters are
 
@@ -343,10 +354,10 @@ def cmd_train(context):
             if film_bool:
                 # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
                 sample_metadata = batch["input_metadata"]
-                var_contrast = [sample_metadata[k]['contrast'] for k in range(len(sample_metadata))]
+                var_contrast = [sample_metadata[0][k]['contrast'] for k in range(len(sample_metadata[0]))]
 
-                var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k in
-                                range(len(sample_metadata))]
+                var_metadata = [train_onehotencoder.transform([sample_metadata[0][k]['film_input']]).tolist()[0]
+                                for k in range(len(sample_metadata))]
                 # Input the metadata related to the input samples
                 preds = model(var_input, var_metadata)
             else:
@@ -354,6 +365,7 @@ def cmd_train(context):
 
             if context["loss"]["name"] == "dice":
                 loss = - losses.dice_loss(preds, var_gt)
+
             else:
                 loss = loss_fct(preds, var_gt)
                 dice_train_loss_total += losses.dice_loss(preds, var_gt).item()
@@ -370,41 +382,7 @@ def cmd_train(context):
 
             # Only write sample at the first step
             if i == 0:
-                if context["unet_3D"]:
-                    num_2d_img = input_samples.shape[3]
-                else:
-                    num_2d_img = 1
-                input_samples_copy = input_samples.clone()
-                preds_copy = preds.clone()
-                gt_samples_copy = gt_samples.clone()
-                for idx in range(num_2d_img):
-                    if unet_3D:
-                        input_samples = input_samples_copy[:, :, :, idx, :]
-                        preds = preds_copy[:, :, :, idx, :]
-                        gt_samples = gt_samples_copy[:, :, :, idx, :]
-                        # Only display images with labels
-                        if gt_samples.sum() == 0:
-                            continue
-
-                    # take only one modality for grid
-                    if input_samples.shape[1] > 1:
-                        tensor = input_samples[:, 0, :, :][:, None, :, :]
-                        input_samples = torch.cat((tensor, tensor, tensor), 1)
-
-                    grid_img = vutils.make_grid(input_samples,
-                                                normalize=True,
-                                                scale_each=True)
-                    writer.add_image('Train/Input', grid_img, epoch)
-
-                    grid_img = vutils.make_grid(preds.data.cpu(),
-                                                normalize=True,
-                                                scale_each=True)
-                    writer.add_image('Train/Predictions', grid_img, epoch)
-
-                    grid_img = vutils.make_grid(gt_samples,
-                                                normalize=True,
-                                                scale_each=True)
-                    writer.add_image('Train/Ground Truth', grid_img, epoch)
+                utils.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds, unet_3D)
 
         train_loss_total_avg = train_loss_total / num_steps
         if not step_scheduler_batch:
@@ -436,11 +414,11 @@ def cmd_train(context):
                 if film_bool:
                     sample_metadata = batch["input_metadata"]
                     # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
-                    var_contrast = [sample_metadata[k]['contrast']
-                                    for k in range(len(sample_metadata))]
+                    var_contrast = [sample_metadata[0][k]['contrast']
+                                    for k in range(len(sample_metadata[0]))]
 
-                    var_metadata = [train_onehotencoder.transform([sample_metadata[k]['film_input']]).tolist()[0] for k
-                                    in range(len(sample_metadata))]
+                    var_metadata = [train_onehotencoder.transform([sample_metadata[0][k]['film_input']]).tolist()[0]
+                                    for k in range(len(sample_metadata[0]))]
                     # Input the metadata related to the input samples
                     preds = model(var_input, var_metadata)
                 else:
@@ -448,6 +426,7 @@ def cmd_train(context):
 
                 if context["loss"]["name"] == "dice":
                     loss = - losses.dice_loss(preds, var_gt)
+
                 else:
                     loss = loss_fct(preds, var_gt)
                     dice_val_loss_total += losses.dice_loss(preds, var_gt).item()
@@ -455,13 +434,11 @@ def cmd_train(context):
 
             # Metrics computation
             gt_npy = gt_samples.numpy().astype(np.uint8)
-            gt_npy = gt_npy.squeeze(axis=1)
 
             preds_npy = preds.data.cpu().numpy()
             if context["binarize_prediction"]:
                 preds_npy = utils.threshold_predictions(preds_npy)
             preds_npy = preds_npy.astype(np.uint8)
-            preds_npy = preds_npy.squeeze(axis=1)
 
             metric_mgr(preds_npy, gt_npy)
 
@@ -469,41 +446,7 @@ def cmd_train(context):
 
             # Only write sample at the first step
             if i == 0:
-                if context["unet_3D"]:
-                    num_2d_img = input_samples.shape[3]
-                else:
-                    num_2d_img = 1
-                input_samples_copy = input_samples.clone()
-                preds_copy = preds.clone()
-                gt_samples_copy = gt_samples.clone()
-                for idx in range(num_2d_img):
-                    if context["unet_3D"]:
-                        input_samples = input_samples_copy[:, :, :, idx, :]
-                        preds = preds_copy[:, :, :, idx, :]
-                        gt_samples = gt_samples_copy[:, :, :, idx, :]
-                        # Only display images with labels
-                        if gt_samples.sum() == 0:
-                            continue
-
-                    # take only one modality for grid
-                    if input_samples.shape[1] > 1:
-                        tensor = input_samples[:, 0, :, :][:, None, :, :]
-                        input_samples = torch.cat((tensor, tensor, tensor), 1)
-
-                    grid_img = vutils.make_grid(input_samples,
-                                                normalize=True,
-                                                scale_each=True)
-                    writer.add_image('Validation/Input', grid_img, epoch)
-
-                    grid_img = vutils.make_grid(preds.data.cpu(),
-                                                normalize=True,
-                                                scale_each=True)
-                    writer.add_image('Validation/Predictions', grid_img, epoch)
-
-                    grid_img = vutils.make_grid(gt_samples,
-                                                normalize=True,
-                                                scale_each=True)
-                    writer.add_image('Validation/Ground Truth', grid_img, epoch)
+                utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds, unet_3D)
 
             # Store the values of gammas and betas after the last epoch for each batch
             if film_bool and epoch == num_epochs and i < int(len(ds_val) / context["batch_size"]) + 1:
@@ -671,6 +614,7 @@ def cmd_test(context):
         os.makedirs(path_3Dpred)
 
     metric_fns = [metrics.dice_score,
+                  metrics.multi_class_dice_score,
                   metrics.hausdorff_3D_score,
                   metrics.precision_score,
                   metrics.recall_score,
@@ -714,18 +658,18 @@ def cmd_test(context):
 
                 if film_bool:
                     sample_metadata = batch["input_metadata"]
-                    test_contrast = [sample_metadata[k]['contrast']
-                                     for k in range(len(sample_metadata))]
+                    test_contrast = [sample_metadata[0][k]['contrast']
+                                     for k in range(len(sample_metadata[0]))]
 
-                    test_metadata = [one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k in
-                                     range(len(sample_metadata))]
+                    test_metadata = [one_hot_encoder.transform([sample_metadata[0][k]["film_input"]]).tolist()[0]
+                                     for k in range(len(sample_metadata[0]))]
                     # Input the metadata related to the input samples
                     preds = model(test_input, test_metadata)
                 else:
                     preds = model(test_input)
                     if context["attention_unet"]:
                         utils.save_feature_map(batch, "attentionblock2", context, model, test_input,
-                                         utils.AXIS_DCT[context["slice_axis"]])
+                                               utils.AXIS_DCT[context["slice_axis"]])
 
             # WARNING: sample['gt'] is actually the pred in the return sample
             # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
@@ -733,8 +677,12 @@ def cmd_test(context):
             rdict['gt'] = preds.cpu()
             batch.update(rdict)
 
-            if batch["input"].shape[1] > 1 and not i_monteCarlo:
-                batch["input_metadata"] = batch["input_metadata"][0]  # Take only second channel
+            if not i_monteCarlo:
+                batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
+                batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
+                if batch["roi"][0] is not None:
+                    batch["roi"] = batch["roi"][0]
+                    batch["roi_metadata"] = batch["roi_metadata"][0]
 
             # reconstruct 3D image
             for smp_idx in range(len(batch['gt'])):
@@ -744,68 +692,83 @@ def cmd_test(context):
                     rdict[k] = batch[k][smp_idx]
                 if rdict["input"].shape[0] > 1:
                     rdict["input"] = rdict["input"][1,][None,]
+
+                # If multiclass merge labels
                 rdict_undo = val_undo_transform(rdict)
 
-                fname_ref = rdict_undo['input_metadata']['gt_filename']
+                fname_ref = rdict_undo['gt_metadata']['gt_filenames'][0]
                 if not context['unet_3D']:
                     if pred_tmp_lst and (fname_ref != fname_tmp or (
                             i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
                         # save the completely processed file as a nifti file
                         fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
-                        fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+                        fname_pred = fname_pred.split(context['target_suffix'][0])[0] + '_pred.nii.gz'
 
                         # If MonteCarlo, then we save each simulation result
                         if n_monteCarlo > 1:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
-                        _ = utils.pred_to_nib(data_lst=pred_tmp_lst,
-                                        z_lst=z_tmp_lst,
-                                        fname_ref=fname_tmp,
-                                        fname_out=fname_pred,
-                                        slice_axis=utils.AXIS_DCT[context['slice_axis']],
-                                        kernel_dim='2d',
-                                        bin_thr=0.5 if context["binarize_prediction"] else -1)
+                        output_nii = utils.pred_to_nib(data_lst=pred_tmp_lst,
+                                                       z_lst=z_tmp_lst,
+                                                       fname_ref=fname_tmp,
+                                                       fname_out=fname_pred,
+                                                       slice_axis=utils.AXIS_DCT[context['slice_axis']],
+                                                       kernel_dim='2d',
+                                                       bin_thr=0.5 if context["binarize_prediction"] else -1)
+
+                        if output_nii.get_data().shape[-1] > 1:
+                            utils.save_color_labels(output_nii.get_data(),
+                                                    context["binarize_prediction"],
+                                                    fname_tmp,
+                                                    fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                                                    utils.AXIS_DCT[context['slice_axis']])
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
 
                     # add new sample to pred_tmp_lst
-                    pred_tmp_lst.append(np.array(rdict_undo['gt']))
+                    pred_tmp_lst.append(utils.pil_list_to_numpy(rdict_undo['gt']))
                     z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
                     fname_tmp = fname_ref
 
                 else:
                     # TODO: Add reconstruction for subvolumes
                     fname_pred = os.path.join(path_3Dpred, fname_ref.split('/')[-1])
-                    fname_pred = fname_pred.split(context['target_suffix'])[0] + '_pred.nii.gz'
+                    fname_pred = fname_pred.split(context['target_suffix'][0])[0] + '_pred.nii.gz'
                     # If MonteCarlo, then we save each simulation result
                     if n_monteCarlo > 1:
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
-                    _ = utils.pred_to_nib(data_lst=rdict_undo['gt'][0, :, :, :].transpose((1, 2, 0)),
-                                    z_lst=[],
-                                    fname_ref=fname_ref,
-                                    fname_out=fname_pred,
-                                    slice_axis=utils.AXIS_DCT[context['slice_axis']],
-                                    kernel_dim='3d',
-                                    bin_thr=0.5 if context["binarize_prediction"] else -1)
+                    output_nii = utils.pred_to_nib(data_lst=rdict_undo['gt'].transpose((2, 3, 1, 0)),
+                                                   z_lst=[],
+                                                   fname_ref=fname_ref,
+                                                   fname_out=fname_pred,
+                                                   slice_axis=utils.AXIS_DCT[context['slice_axis']],
+                                                   kernel_dim='3d',
+                                                   bin_thr=0.5 if context["binarize_prediction"] else -1)
+
+                    # Save merged labels with color
+                    if output_nii.shape[-1] > 1:
+                        utils.save_color_labels(output_nii.get_data(),
+                                                context['binarize_prediction'],
+                                                rdict_undo['input_metadata']['gt_filenames'][0],
+                                                fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                                                utils.AXIS_DCT[context['slice_axis']])
 
             # Metrics computation
             gt_npy = gt_samples.numpy().astype(np.uint8)
-            gt_npy = gt_npy.squeeze(axis=1)
 
             preds_npy = preds.data.cpu().numpy()
             if context["binarize_prediction"]:
                 preds_npy = utils.threshold_predictions(preds_npy)
             preds_npy = preds_npy.astype(np.uint8)
-            preds_npy = preds_npy.squeeze(axis=1)
 
             metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
     if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty'][
-            'n_it'] > 0:
+        'n_it'] > 0:
         utils.run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()
@@ -842,13 +805,15 @@ def cmd_eval(context):
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
 
         fname_pred = os.path.join(path_pred, subj_acq + '_pred.nii.gz')
-        fname_gt = os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat',
-                                subj_acq + context['target_suffix'] + '.nii.gz')
+        fname_gt = []
+        for suffix in context['target_suffix']:
+            fname_gt.append(os.path.join(context['bids_path'], 'derivatives', 'labels', subj, 'anat',
+                                         subj_acq + suffix + '.nii.gz'))
 
         # 3D evaluation
         eval = utils.Evaluation3DMetrics(fname_pred=fname_pred,
-                                   fname_gt=fname_gt,
-                                   params=context['eval_params'])
+                                         fname_gt=fname_gt,
+                                         params=context['eval_params'])
         results_pred = eval.run_eval()
         # save results of this fname_pred
         results_pred['image_id'] = subj_acq
@@ -859,6 +824,7 @@ def cmd_eval(context):
 
     print(df_results.head(5))
     return metrics_dict, df_results
+
 
 def run_main():
     if len(sys.argv) <= 1:

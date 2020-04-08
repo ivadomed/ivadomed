@@ -20,7 +20,7 @@ import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 1
+GPU_NUMBER = 0
 BATCH_SIZE = 8
 DROPOUT = 0.4
 BN = 0.1
@@ -48,7 +48,7 @@ def test_unet():
     contrasts = ['T2w', 'T2star']
     ds_train = loader.BidsDataset(PATH_BIDS,
                                   subject_lst=train_lst,
-                                  target_suffix="_lesion-manual",
+                                  target_suffix=["_lesion-manual"],
                                   roi_suffix="_seg-manual",
                                   contrast_lst=contrasts,
                                   metadata_choice="without",
@@ -95,7 +95,7 @@ def test_unet():
             start_load = time.time()
             input_samples, gt_samples = batch["input"], batch["gt"]
             print("len input = {}".format(len(input_samples)))
-            print("Batch = {}, {}".format(input_samples[0].shape, gt_samples.shape))
+            print("Batch = {}, {}".format(input_samples[0].shape, gt_samples[0].shape))
             print("rest of the function is not implemented yet")
             return 0
             # WIP - no train for now

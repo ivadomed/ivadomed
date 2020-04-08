@@ -26,8 +26,7 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
 class Bids3DDataset(mt_datasets.MRI3DSubVolumeSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2,
-                 cache=True,
-                 transform=None, metadata_choice=False, canonical=True, labeled=True, roi_suffix=None,
+                 cache=True, transform=None, metadata_choice=False, canonical=True, labeled=True, roi_suffix=None,
                  multichannel=False, length=(64, 64, 64), padding=0):
         dataset = BidsDataset(root_dir,
                               subject_lst=subject_lst,
@@ -95,15 +94,18 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                     print("Subject without derivative, skipping.")
                     continue
                 derivatives = subject.get_derivatives("labels")
-                target_filename, roi_filename = None, None
+                target_filename, roi_filename = [None] * len(target_suffix), None
 
                 for deriv in derivatives:
-                    if deriv.endswith(subject.record["modality"] + target_suffix + ".nii.gz"):
-                        target_filename = deriv
-                    if not (roi_suffix is None) and deriv.endswith(subject.record["modality"] + roi_suffix + ".nii.gz"):
-                        roi_filename = deriv
+                    for idx, suffix in enumerate(target_suffix):
+                        if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
+                            target_filename[idx] = deriv
 
-                if (target_filename is None) or (not (roi_suffix is None) and (roi_filename is None)):
+                    if not (roi_suffix is None) and\
+                            deriv.endswith(subject.record["modality"] + roi_suffix + ".nii.gz"):
+                        roi_filename = [deriv]
+
+                if (not any(target_filename)) or (not (roi_suffix is None) and (roi_filename is None)):
                     continue
 
                 if not subject.has_metadata():
@@ -309,15 +311,17 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
             s_out["input_metadata"]["film_input"] = [s_out["input_metadata"][k] for k in
                                                      ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
         else:
-            generic_contrast = GENERIC_CONTRAST[subject["input_metadata"]["contrast"]]
-            label_contrast = CONTRAST_CATEGORY[generic_contrast]
-            s_out["input_metadata"]["film_input"] = [label_contrast]
+            for i, input_metadata in enumerate(subject["input_metadata"]):
+                generic_contrast = GENERIC_CONTRAST[input_metadata["contrast"]]
+                label_contrast = CONTRAST_CATEGORY[generic_contrast]
+                s_out["input_metadata"][i]["film_input"] = [label_contrast]
 
-        s_out["input_metadata"]["contrast"] = subject["input_metadata"]["contrast"]
+        for i, input_metadata in enumerate(subject["input_metadata"]):
+            s_out["input_metadata"][i]["contrast"] = input_metadata["contrast"]
 
-        if train_set:
-            X_train_ohe.append(s_out["input_metadata"]["film_input"])
-        ds_out.append(s_out)
+            if train_set:
+                X_train_ohe.append(s_out["input_metadata"][i]["film_input"])
+            ds_out.append(s_out)
 
         del s_out, subject
 
@@ -353,7 +357,8 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         self.weights = torch.DoubleTensor(weights)
 
     def _get_label(self, dataset, idx):
-        sample_gt = np.array(dataset[idx]['gt'])
+        # For now, only supported with single label
+        sample_gt = np.array(dataset[idx]['gt'][0])
         if np.any(sample_gt):
             return 1
         else:

@@ -8,7 +8,7 @@ from ivadomed import models
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 1
+GPU_NUMBER = 0
 N_METADATA = 1
 OUT_CHANNEL = 1
 INITIAL_LR = 0.001

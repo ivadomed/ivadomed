@@ -78,6 +78,12 @@ def hausdorff_2D_score(prediction, groundtruth):
 
 
 def hausdorff_3D_score(prediction, groundtruth):
+    if len(prediction.shape) == 4:
+        n_classes, height, depth, width = prediction.shape
+        # Reshape to have only 3 dimensions where prediction[:, idx, :] represents each 2D slice
+        prediction = prediction.reshape((height, n_classes * depth, width))
+        groundtruth = groundtruth.reshape((height, n_classes * depth, width))
+
     if len(prediction.shape) == 3:
         mean_hansdorff = 0
         for idx in range(prediction.shape[1]):
@@ -129,3 +135,14 @@ def accuracy_score(prediction, groundtruth):
     N = FP + FN + TP + TN
     accuracy = np.divide(TP + TN, N)
     return accuracy * 100.0
+
+
+def multi_class_dice_score(im1, im2):
+    dice_per_class = 0
+    n_classes = im1.shape[0]
+
+    for i in range(n_classes):
+        dice_per_class += dice_score(im1[i, ], im2[i, ]) \
+            if not dice_score(im1[i, ], im2[i, ]) == np.nan else 1.0
+
+    return dice_per_class / n_classes
