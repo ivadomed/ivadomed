@@ -49,16 +49,16 @@ def numeric_score(prediction, groundtruth):
     return FP, FN, TP, TN
 
 
-def dice_score(im1, im2, err_value=np.nan):
+def dice_score(im1, im2, empty_score=np.nan):
     """Computes the Dice coefficient between im1 and im2.
 
     Compute a soft Dice coefficient between im1 and im2.
-    If both images are empty, then it returns err_value.
+    If both images are empty, then it returns empty_score.
 
     Args:
         im1 (array): First array.
         im2 (array): Second array.
-        err_value (float): Returned value if both input array are empty.
+        empty_score (float): Returned value if both input array are empty.
     Returns:
         float: Dice coefficient.
 
