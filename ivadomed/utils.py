@@ -681,7 +681,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
             rdict = {}
             # Import transformations parameters
             for k in batch.keys():
-                rdict[k] = batch[k][i_slice]
+                if len(batch[k]):
+                    rdict[k] = batch[k][i_slice]
             rdict_undo = undo_transforms(rdict)
 
             # Add new segmented slice to preds_list
