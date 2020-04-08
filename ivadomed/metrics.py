@@ -69,12 +69,12 @@ def dice_score(im1, im2, empty_score=np.nan):
     if im1.shape != im2.shape:
         raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
 
-    im_sum = (im1 * im2).sum()
+    im_sum = im1.sum() + im2.sum()
     if im_sum == 0:
         return empty_score
 
-    intersection = np.logical_and(im1, im2)
-    return (2. * intersection.sum()) / im_sum
+    intersection = (im1 * im2).sum()
+    return (2. * intersection) / im_sum
 
 
 def jaccard_score(prediction, groundtruth):
