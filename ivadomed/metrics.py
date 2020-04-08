@@ -49,19 +49,29 @@ def numeric_score(prediction, groundtruth):
     return FP, FN, TP, TN
 
 
-def dice_score(im1, im2):
+def dice_score(im1, im2, err_value=np.nan):
+    """Computes the Dice coefficient between im1 and im2.
+
+    Compute a soft Dice coefficient between im1 and im2.
+    If both images are empty, then it returns err_value.
+
+    Args:
+        im1 (array): First array.
+        im2 (array): Second array.
+        err_value (float): Returned value if both input array are empty.
+    Returns:
+        float: Dice coefficient.
+
     """
-    Computes the Dice coefficient between im1 and im2.
-    """
-    im1 = np.asarray(im1).astype(np.bool)
-    im2 = np.asarray(im2).astype(np.bool)
+    im1 = np.asarray(im1)
+    im2 = np.asarray(im2)
 
     if im1.shape != im2.shape:
         raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
 
-    im_sum = im1.sum() + im2.sum()
+    im_sum = (im1 * im2).sum()
     if im_sum == 0:
-        return np.nan
+        return empty_score
 
     intersection = np.logical_and(im1, im2)
     return (2. * intersection.sum()) / im_sum
