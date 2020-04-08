@@ -899,6 +899,8 @@ def pil_list_to_numpy(pil_list):
     numpy_array = np.zeros((h, w, n_classes))
     for idx, pil_img in enumerate(pil_list):
         numpy_array[..., idx] = np.array(pil_img)
+    if n_classes == 1:
+        numpy_array = np.squeeze(numpy_array, axis=-1)
     return numpy_array
 
 
