@@ -116,7 +116,7 @@ class Evaluation3DMetrics(object):
 
             if n_nonzero < self.size_min:
                 data[data_label == idx] = 0
-        print(data.shape)
+
         return data
 
     def _get_size_ranges(self, thr_lst, unit):
