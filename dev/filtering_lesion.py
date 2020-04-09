@@ -250,7 +250,6 @@ def run_main(args):
     subj_acq_lst = list(set([f.split('_pred')[0] for f in os.listdir(pred_folder)
                     if f.endswith('.nii.gz') and '_pred' in f]))
     #subj_acq_lst = [subj_acq_lst[0]]
-    print(subj_acq_lst)
     gt_folder = os.path.join(context['bids_path'], 'derivatives', 'labels')
 
     if thrPred is None:
