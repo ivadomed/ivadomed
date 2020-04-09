@@ -2,10 +2,11 @@ import math
 import random
 import numpy as np
 from PIL import Image
+import torch
 import torchvision.transforms.functional as F
 from scipy.ndimage.measurements import label, center_of_mass
-from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 
+from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 from medicaltorch import transforms as mt_transforms
 
 from torchvision import transforms as torchvision_transforms
@@ -16,7 +17,7 @@ def get_transform_names():
        from the mt_transforms."""
 
     return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor', 'StackTensors', 'CenterCrop3D',
-            'RandomAffine3D', 'NormalizeInstance3D', 'ToTensor3D']
+            'RandomAffine3D', 'NormalizeInstance3D', 'ToTensor3D', 'BackgroundClass']
 
 
 def compose_transforms(dict_transforms, requires_undo=False):
@@ -75,22 +76,28 @@ class Resample(mt_transforms.Resample):
         return data
 
     def undo_transform(self, sample):
-        rdict = {}
+        rdict = {
+            "input": [],
+            "gt": []
+        }
 
-        # undo image
-        hshape, wshape = sample['input_metadata']['data_shape']
-        hzoom, wzoom = sample['input_metadata']['zooms']
-        input_data_undo = sample['input'].resize((wshape, hshape),
-                                                 resample=self.interpolation)
-        rdict['input'] = input_data_undo
+        for input_data in sample["input"]:
+            # undo image
+            hshape, wshape = sample['input_metadata']['data_shape']
+            hzoom, wzoom = sample['input_metadata']['zooms']
+            input_data_undo = input_data.resize((wshape, hshape),
+                                                     resample=self.interpolation)
+            rdict['input'].append(input_data_undo)
 
         # undo pred, aka GT
         # CG: I comment these 2 following lines because these variables should be the
         # same between image and GT
         #hshape, wshape = sample['gt_metadata']['data_shape']
         #hzoom, wzoom = sample['gt_metadata']['zooms']
-        gt_data_undo = self.resample_bin(sample['gt'], wshape, hshape)
-        rdict['gt'] = gt_data_undo
+
+        for gt in sample["gt"]:
+            gt_data_undo = self.resample_bin(gt, wshape, hshape)
+            rdict['gt'].append(gt_data_undo)
 
         sample.update(rdict)
         return sample
@@ -119,11 +126,15 @@ class Resample(mt_transforms.Resample):
 
         if self.labeled:
             gt_data = sample['gt']
-            rdict['gt'] = self.resample_bin(gt_data, wshape_new, hshape_new)
+            rdict['gt'] = []
+            for gt in gt_data:
+                rdict['gt'].append(self.resample_bin(gt, wshape_new, hshape_new))
 
         if sample['roi'] is not None:
             roi_data = sample['roi']
-            rdict['roi'] = self.resample_bin(roi_data, wshape_new, hshape_new, 0.0)
+            rdict['roi'] = []
+            for roi in roi_data:
+                rdict['roi'].append(self.resample_bin(roi, wshape_new, hshape_new))
 
         sample.update(rdict)
         return sample
@@ -164,23 +175,27 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
         return F.pad(data, padding)
 
     def undo_transform(self, sample):
-        rdict = {}
+        rdict = {
+            'input': [],
+            'gt': []
+        }
+
         if isinstance(sample['input'], list):
-            for i in range(len(sample['input'])):
-                rdict['input'] = self._uncrop(sample['input'][i], sample['input_metadata'][i]["__centercrop"])
-        else:
-            rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
+            for input_data in sample['input']:
+                rdict['input'].append(self._uncrop(input_data, sample['input_metadata']["__centercrop"]))
 
         #if self.labeled:
-        rdict['gt'] = self._uncrop(sample['gt'], sample['input_metadata']["__centercrop"])
+        for gt in sample['gt']:
+            rdict['gt'].append(self._uncrop(gt, sample['input_metadata']["__centercrop"]))
 
         sample.update(rdict)
         return sample
 
     def __call__(self, sample):
         rdict = {}
+
         input_data = sample['input']
-        roi_data = sample['roi']
+        roi_data = sample['roi'][0]
 
         # compute center of mass of the ROI
         x_roi, y_roi = center_of_mass(np.array(roi_data).astype(np.int))
@@ -205,10 +220,11 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
         if self.labeled:
             gt_data = sample['gt']
             gt_metadata = sample['gt_metadata']
-            gt_data = F.crop(gt_data, fw, fh, tw, th)
-            gt_metadata["__centercrop"] = (fh, fw, h, w)
+            for i in range(len(gt_data)):
+                gt_data[i] = F.crop(gt_data[i], fw, fh, tw, th)
+                gt_metadata[i]["__centercrop"] = (fh, fw, h, w)
             rdict['gt'] = gt_data
-            #rdict['gt_metadata'] = gt_metadata
+            rdict['gt_metadata'] = gt_metadata
 
         # free memory
         rdict['roi'], rdict['roi_metadata'] = None, None
@@ -310,25 +326,29 @@ class DilateGT(mt_transforms.MTTransform):
 
     def __call__(self, sample):
         gt_data = sample['gt']
-        gt_data_np = np.array(gt_data)
-        # binarize for processing
-        gt_data_np = (gt_data_np > 0.5).astype(np.int_)
+        gt_t = []
+        for gt in gt_data:
+            gt_data_np = np.array(gt)
+            # binarize for processing
+            gt_data_np = (gt_data_np > 0.5).astype(np.int_)
 
-        if self.dil_factor > 0 and np.sum(gt_data):
-            # dilation
-            gt_dil, gt_dil_bin = self.dilate_arr(gt_data_np, self.dil_factor)
+            if self.dil_factor > 0 and np.sum(gt):
+                # dilation
+                gt_dil, gt_dil_bin = self.dilate_arr(gt_data_np, self.dil_factor)
 
-            # random holes in dilated area
-            gt_holes, gt_holes_bin = self.random_holes(gt_data_np, gt_dil, gt_dil_bin)
+                # random holes in dilated area
+                gt_holes, gt_holes_bin = self.random_holes(gt_data_np, gt_dil, gt_dil_bin)
 
-            # post-processing
-            gt_pp = self.post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
+                # post-processing
+                gt_pp = self.post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
 
-            # mask with ROI
-            if sample['roi'] is not None:
-                gt_pp[np.array(sample['roi']) == 0] = 0.0
+                # mask with ROI
+                if sample['roi'][0] is not None:
+                    gt_pp[np.array(sample['roi'][0]) == 0] = 0.0
 
-            gt_t = Image.fromarray(gt_pp)
+                gt_t.append(Image.fromarray(gt_pp))
+
+        if len(gt_t):
             rdict = {
                 'gt': gt_t,
             }
@@ -378,14 +398,16 @@ class CenterCrop3D(mt_transforms.MTTransform):
         for idx, input_volume in enumerate(input_data['input']):
             gt_img = input_data['gt']
             input_img = input_volume
-            d, w, h = gt_img.shape
+            d, w, h = gt_img[0].shape
             td, tw, th = self.size
             fh = max(int(round((h - th) / 2.)), 0)
             fw = max(int(round((w - tw) / 2.)), 0)
             fd = max(int(round((d - td) / 2.)), 0)
             if self.labeled:
                 gt_img = input_data['gt']
-                crop_gt = gt_img[fd:fd + td, fw:fw + tw, fh:fh + th]
+                crop_gt = []
+                for gt in gt_img:
+                    crop_gt.append(gt[fd:fd + td, fw:fw + tw, fh:fh + th])
             crop_input = input_img[fd:fd + td, fw:fw + tw, fh:fh + th]
             # Pad image with mean if image smaller than crop size
             cd, cw, ch = crop_input.shape
@@ -401,7 +423,8 @@ class CenterCrop3D(mt_transforms.MTTransform):
                         (int(h_diff) + ih, int(h_diff)))
                 crop_input = np.pad(crop_input, pad_width=npad, mode='constant', constant_values=np.mean(crop_input))
                 if self.labeled:
-                    crop_gt = np.pad(crop_gt, pad_width=npad, mode='constant', constant_values=0)
+                    for i, gt in enumerate(crop_gt):
+                        crop_gt[i] = np.pad(gt, pad_width=npad, mode='constant', constant_values=0)
             input_data['input'][idx] = crop_input
 
             if self.labeled:
@@ -417,6 +440,19 @@ class NormalizeInstance3D(mt_transforms.NormalizeInstance3D):
 
     @staticmethod
     def undo_transform(sample):
+        return sample
+
+
+class BackgroundClass(mt_transforms.MTTransform):
+    def undo_transform(self, sample):
+        return sample
+
+    def __call__(self, sample):
+        rdict = {}
+
+        background = (sample['gt'].sum(axis=0) == 0).type('torch.FloatTensor')[None, ]
+        rdict['gt'] = torch.cat((background, sample['gt']), dim=0)
+        sample.update(rdict)
         return sample
 
 
@@ -444,11 +480,13 @@ class RandomAffine3D(mt_transforms.RandomAffine):
 
         if self.labeled:
             gt_data = sample['gt']
-            gt_vol = np.zeros(gt_data.shape)
-            for idx, gt in enumerate(gt_data):
-                pil_img = Image.fromarray(gt, mode='F')
-                gt_vol[idx, :, :] = np.array(self.sample_augment(pil_img, params))
-            ret_gt = gt_vol.astype('float32')
+            ret_gt = []
+            for labels in gt_data:
+                gt_vol = np.zeros(labels.shape)
+                for idx, gt in enumerate(labels):
+                    pil_img = Image.fromarray(gt, mode='F')
+                    gt_vol[idx, :, :] = np.array(self.sample_augment(pil_img, params))
+                ret_gt.append(gt_vol.astype('float32'))
             rdict['gt'] = ret_gt
 
         sample.update(rdict)

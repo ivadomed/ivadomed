@@ -33,8 +33,9 @@ def test_undo(contrast='T2star', tol=3):
         print("using GPU number {}".format(GPU_NUMBER))
 
     # reference
-    test_1 = [ivadomed_transforms.ToTensor(), ivadomed_transforms.NormalizeInstance()]
-    name_1 = 'ToTensor_NoramlizeInstance'
+    test_1 = [ivadomed_transforms.ToTensor(), ivadomed_transforms.NormalizeInstance(),
+              ivadomed_transforms.StackTensors()]
+    name_1 = 'ToTensor_NormalizeInstance'
 
     test_2 = [mt_transforms.RandomRotation(degrees=10)] + test_1
     name_2 = 'RandomRotation_' + name_1
@@ -58,7 +59,7 @@ def test_undo(contrast='T2star', tol=3):
 
     ds_test_noTrans = loader.BidsDataset(PATH_BIDS,
                                          subject_lst=subject_test_lst,
-                                         target_suffix="_lesion-manual",
+                                         target_suffix=["_lesion-manual"],
                                          roi_suffix="_seg-manual",
                                          contrast_lst=[contrast],
                                          metadata_choice="contrast",
@@ -72,7 +73,7 @@ def test_undo(contrast='T2star', tol=3):
                                      shuffle=False, pin_memory=True,
                                      collate_fn=mt_datasets.mt_collate,
                                      num_workers=1)
-    batch_noTrans = [t for i, t in enumerate(test_loader_noTrans)][0]
+    batch_noTrans = [t for t in test_loader_noTrans][0]
     input_noTrans, gt_noTrans = batch_noTrans["input"], batch_noTrans["gt"]
 
     for name, test in zip(name_lst, test_lst):
@@ -82,7 +83,7 @@ def test_undo(contrast='T2star', tol=3):
 
         ds_test = loader.BidsDataset(PATH_BIDS,
                                      subject_lst=subject_test_lst,
-                                     target_suffix="_lesion-manual",
+                                     target_suffix=["_lesion-manual"],
                                      roi_suffix="_seg-manual",
                                      contrast_lst=[contrast],
                                      metadata_choice="contrast",
@@ -97,9 +98,17 @@ def test_undo(contrast='T2star', tol=3):
                                  shuffle=False, pin_memory=True,
                                  collate_fn=mt_datasets.mt_collate,
                                  num_workers=1)
-        batch = [t for i, t in enumerate(test_loader)][0]
+
+        for t in test_loader:
+            print(t)
+            batch = [t for t in test_loader][0]
 
         input_, gt_ = batch["input"], batch["gt"]
+        batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
+        batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
+        if batch["roi"][0] is not None:
+            batch["roi"] = batch["roi"][0]
+            batch["roi_metadata"] = batch["roi_metadata"][0]
 
         for smp_idx in range(len(batch['gt'])):
             # re-load all dict
@@ -112,39 +121,41 @@ def test_undo(contrast='T2star', tol=3):
 
             # get data
             np_noTrans = np.array(gt_noTrans[smp_idx])[0]
-            np_undoTrans = np.array(rdict_undo['gt'])
 
-            # binarise
-            np_undoTrans[np_undoTrans > 0] = 1.0
+            for gt in rdict_undo['gt']:
+                np_undoTrans = np.array(gt)
 
-            # check shapes
-            print(np_noTrans.shape, np_undoTrans.shape)
-            assert np_noTrans.shape == np_undoTrans.shape
-            print('\tData shape: checked.')
+                # binarise
+                np_undoTrans[np_undoTrans > 0] = 1.0
 
-            # check values for ROICrop
-            if np.any(np_noTrans) and not 'CenterCrop2D' in name:
-                # if difference is superior to tolerance, then save images to QC
-                if np.sum(np_noTrans-np_undoTrans) >= tol:
-                    print(np.sum(np_noTrans-np_undoTrans))
-                    im_noTrans = np.array(input_noTrans[smp_idx])[0]
-                    im_undoTrans = np.array(rdict_undo['input'])
+                # check shapes
+                print(np_noTrans.shape, np_undoTrans.shape)
+                assert np_noTrans.shape == np_undoTrans.shape
+                print('\tData shape: checked.')
 
-                    plt.figure(figsize=(20, 10))
-                    plt.subplot(1, 2, 1)
-                    plt.axis("off")
-                    plt.imshow(im_noTrans, interpolation='nearest', aspect='auto', cmap='gray')
-                    plt.subplot(1, 2, 2)
-                    plt.axis("off")
-                    plt.imshow(im_undoTrans, interpolation='nearest', aspect='auto', cmap='gray')
+                # check values for ROICrop
+                if np.any(np_noTrans) and not 'CenterCrop2D' in name:
+                    # if difference is superior to tolerance, then save images to QC
+                    if np.sum(np_noTrans-np_undoTrans) >= tol:
+                        print(np.sum(np_noTrans-np_undoTrans))
+                        im_noTrans = np.array(input_noTrans[smp_idx])[0]
+                        im_undoTrans = np.array(rdict_undo['input'])
 
-                    fname_png_out = 'test_undo_err_'+str(randint(0, 1000))+'.png'
-                    plt.savefig(fname_png_out, bbox_inches='tight', pad_inches=0)
-                    plt.close()
-                    print('Error: please check: '+fname_png_out)
+                        plt.figure(figsize=(20, 10))
+                        plt.subplot(1, 2, 1)
+                        plt.axis("off")
+                        plt.imshow(im_noTrans, interpolation='nearest', aspect='auto', cmap='gray')
+                        plt.subplot(1, 2, 2)
+                        plt.axis("off")
+                        plt.imshow(im_undoTrans, interpolation='nearest', aspect='auto', cmap='gray')
 
-                assert np.sum(np_noTrans-np_undoTrans) < tol
-                print('\tData content (tol: {} vox.): checked.'.format(tol))
+                        fname_png_out = 'test_undo_err_'+str(randint(0, 1000))+'.png'
+                        plt.savefig(fname_png_out, bbox_inches='tight', pad_inches=0)
+                        plt.close()
+                        print('Error: please check: '+fname_png_out)
+
+                    assert np.sum(np_noTrans-np_undoTrans) < tol
+                    print('\tData content (tol: {} vox.): checked.'.format(tol))
         print('\n [INFO]: Test of {} passed successfully. '.format(name))
 
 

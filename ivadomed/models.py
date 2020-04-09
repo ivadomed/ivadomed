@@ -147,6 +147,8 @@ class Decoder(Module):
             x, w_film = self.last_film(x, context, w_film)
         if self.out_channel > 1:
             preds = F.softmax(x, dim=1)
+            # Remove background class
+            preds = preds[:, 1:, ]
         else:
             preds = torch.sigmoid(x)
         return preds
@@ -279,7 +281,7 @@ class HeMISUnet(Module):
         ArXiv link: https://arxiv.org/abs/1907.11150
         """
 
-    def __init__(self, modalities, depth=3, drop_rate=0.4, bn_momentum=0.1):
+    def __init__(self, modalities, out_channel= 1, depth=3, drop_rate=0.4, bn_momentum=0.1):
         super(HeMISUnet, self).__init__()
         self.film_layers = [0] * (2 * depth + 2)
         self.depth = depth
@@ -292,8 +294,8 @@ class HeMISUnet(Module):
              self.modalities])
 
         # Decoder path
-        self.decoder = Decoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate, bn_momentum=bn_momentum,
-                               hemis=True)
+        self.decoder = Decoder(out_channel, depth, film_layers=self.film_layers, drop_rate=drop_rate,
+                               bn_momentum=bn_momentum, hemis=True)
 
     def forward(self, x_mods):
         """"
@@ -609,10 +611,13 @@ class UNet3D(nn.Module):
 
         out = out_pred + ds1_ds2_sum_upscale_ds3_sum_upscale
         seg_layer = out
-        out = out.permute(0, 2, 3, 4, 1).contiguous().view(-1, self.n_classes)
-        out = self.softmax(out)
-        return torch.sigmoid(seg_layer)
-
+        if self.n_classes > 1:
+            out = self.softmax(out)
+            # Remove background class
+            out = out[:, 1:, ]
+        else:
+            out = torch.sigmoid(seg_layer)
+        return out
 
 # Specific toAttention UNet
 class GridAttentionBlockND(nn.Module):
