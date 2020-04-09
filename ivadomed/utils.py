@@ -1,25 +1,25 @@
 import os
 import json
 from collections import defaultdict
-
+from scipy.ndimage import label, generate_binary_structure
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
+from tqdm import tqdm
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
+from torch.autograd import Variable
+import torchvision.utils as vutils
 
 from ivadomed import loader as ivadomed_loader
 from ivadomed import transforms as ivadomed_transforms
-from medicaltorch.datasets import MRI2DSegmentationDataset
 from ivadomed import metrics
-from medicaltorch import datasets as mt_datasets
 
-from scipy.ndimage import label, generate_binary_structure
-from torch.autograd import Variable
-from tqdm import tqdm
-import torchvision.utils as vutils
+from medicaltorch.datasets import MRI2DSegmentationDataset
+from medicaltorch import datasets as mt_datasets
 
 # labels of paint_objects method
 TP_COLOUR = 1
