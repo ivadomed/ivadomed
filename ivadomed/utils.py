@@ -33,7 +33,13 @@ class Evaluation3DMetrics(object):
     def __init__(self, data_pred, data_gt, dim_lst, params={}):
 
         self.data_pred = data_pred
+        if len(self.data_pred) == 3:
+            self.data_pred = np.expand_dims(self.data_pred, -1)
+
         self.data_gt = data_gt
+        if len(self.data_gt) == 3:
+            self.data_gt = np.expand_dims(self.data_gt, -1)
+
         self.n_classes = data_gt.shape[-1]
 
         self.px, self.py, self.pz = dim_lst
@@ -102,6 +108,7 @@ class Evaluation3DMetrics(object):
             self.overlap_vox = 3
 
     def remove_small_objects(self, data):
+        print(data.shape, self.bin_struct)
         data_label, n = label(data,
                               structure=self.bin_struct)
 
@@ -295,6 +302,9 @@ class Evaluation3DMetrics(object):
                                                                                                   class_idx=n)
                 else:  # gt_pred == 'pred'
                     dct['lfdr' + suffix + "_class" + str(n)] = self.get_lfdr(label_size=lb_size, class_idx=n)
+
+        if self.n_classes == 1:
+            self.data_painted = np.squeeze(self.data_painted, axis=-1)
 
         return dct, self.data_painted
 
