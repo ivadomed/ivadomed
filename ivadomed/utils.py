@@ -926,7 +926,10 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
         num_2d_img = input_samples.shape[3]
     else:
         num_2d_img = 1
-    input_samples_copy = input_samples.clone()
+    if isinstance(input_samples, list):
+        input_samples_copy = input_samples.copy()
+    else:
+        input_samples_copy = input_samples.clone()
     preds_copy = preds.clone()
     gt_samples_copy = gt_samples.clone()
     for idx in range(num_2d_img):
@@ -939,9 +942,11 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
                 continue
 
         # take only one modality for grid
-        if input_samples.shape[1] > 1:
+        if not isinstance(input_samples, list) and input_samples.shape[1] > 1:
             tensor = input_samples[:, 0, :, :][:, None, :, :]
             input_samples = torch.cat((tensor, tensor, tensor), 1)
+        elif isinstance(input_samples, list):
+            input_samples = input_samples[0]
 
         grid_img = vutils.make_grid(input_samples,
                                     normalize=True,

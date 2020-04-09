@@ -355,7 +355,7 @@ def cmd_train(context):
 
             if cuda_available:
                 var_input = utils.cuda(input_samples)
-                var_gt = gt_samples.cuda(non_blocking=True)
+                var_gt = utils.cuda(gt_samples, non_blocking=True)
             else:
                 var_input = input_samples
                 var_gt = gt_samples
@@ -426,7 +426,7 @@ def cmd_train(context):
             with torch.no_grad():
                 if cuda_available:
                     var_input = utils.cuda(input_samples)
-                    var_gt = gt_samples.cuda(non_blocking=True)
+                    var_gt = utils.cuda(gt_samples, non_blocking=True)
                 else:
                     var_input = input_samples
                     var_gt = gt_samples
@@ -670,7 +670,7 @@ def cmd_test(context):
             with torch.no_grad():
                 if cuda_available:
                     test_input = utils.cuda(input_samples)
-                    test_gt = gt_samples.cuda(non_blocking=True)
+                    test_gt = utils.cuda(gt_samples, non_blocking=True)
                 else:
                     test_input = input_samples
                     test_gt = gt_samples
