@@ -14,9 +14,9 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import torchvision.utils as vutils
 
-from ivadomed import loader as ivadomed_loader
-from ivadomed import transforms as ivadomed_transforms
-from ivadomed import metrics
+from ivadomed import loader as imed_loader
+from ivadomed import transforms as imed_transforms
+from ivadomed import metrics as imed_metrics
 
 from medicaltorch.datasets import MRI2DSegmentationDataset
 from medicaltorch import datasets as mt_datasets
@@ -284,10 +284,10 @@ class Evaluation3DMetrics(object):
             dct['vol_pred_class' + str(n)] = self.get_vol(self.data_pred)
             dct['vol_gt_class' + str(n)] = self.get_vol(self.data_gt)
             dct['rvd_class' + str(n)], dct['avd_class' + str(n)] = self.get_rvd(), self.get_avd()
-            dct['dice_class' + str(n)] = dice_score(self.data_gt[..., n], self.data_pred[..., n]) * 100.
-            dct['recall_class' + str(n)] = mt_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
-            dct['precision_class' + str(n)] = mt_metrics.precision_score(self.data_pred, self.data_gt, err_value=np.nan)
-            dct['specificity_class' + str(n)] = mt_metrics.specificity_score(self.data_pred, self.data_gt, err_value=np.nan)
+            dct['dice_class' + str(n)] = imed_metrics.dice_score(self.data_gt[..., n], self.data_pred[..., n]) * 100.
+            dct['recall_class' + str(n)] = imed_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
+            dct['precision_class' + str(n)] = imed_metrics.precision_score(self.data_pred, self.data_gt, err_value=np.nan)
+            dct['specificity_class' + str(n)] = imed_metrics.specificity_score(self.data_pred, self.data_gt, err_value=np.nan)
             dct['n_pred_class' + str(n)], dct['n_gt_class' + str(n)] = self.n_pred[n], self.n_gt[n]
             dct['ltpr_class' + str(n)], _ = self.get_ltpr()
             dct['lfdr_class' + str(n)] = self.get_lfdr()
@@ -646,10 +646,10 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
                                                     for (key, value) in context["transformation_validation"].items())
 
     # Compose transforms
-    do_transforms = ivadomed_transforms.compose_transforms(context['transformation_validation'])
+    do_transforms = imed_transforms.compose_transforms(context['transformation_validation'])
 
     # Undo Transforms
-    undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
+    undo_transforms = imed_transforms.UndoCompose(do_transforms)
 
     # Force filter_empty_mask to False if fname_roi = None
     if fname_roi is None and 'filter_empty_mask' in context["slice_filter"]:
@@ -670,7 +670,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     # If fname_roi provided, then remove slices without ROI
     if fname_roi is not None:
-        ds = ivadomed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
+        ds = imed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
 
     if not context['unet_3D']:
         print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
