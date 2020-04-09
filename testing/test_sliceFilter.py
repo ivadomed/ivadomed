@@ -127,3 +127,6 @@ def test_slice_filter_roi():
 
 print("Test test_slice_filter_center")
 test_slice_filter_center()
+
+print("Test test_slice_filter_roi")
+test_slice_filter_roi()

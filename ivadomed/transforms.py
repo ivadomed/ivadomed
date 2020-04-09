@@ -230,9 +230,6 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
             rdict['gt'] = gt_data
             rdict['gt_metadata'] = gt_metadata
 
-        # free memory
-        rdict['roi'], rdict['roi_metadata'] = None, None
-
         sample.update(rdict)
         return sample
 
