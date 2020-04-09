@@ -1,7 +1,7 @@
 {
 	"command": "train",
 	"gpu": 1,
-        "target_suffix": "_lesion-manual",
+        "target_suffix": ["_lesion-manual"],
         "roi_suffix": "_seg-manual",
 	"bids_path": "../duke/sct_testing/large/",
         "random_seed": 1313,
@@ -65,7 +65,8 @@
 			"scale": [0.98, 1.02]
 			},
 		"ToTensor": {},
-		"NormalizeInstance": {}
+		"NormalizeInstance": {},
+		"StackTensors": {}
 		},
 	"transformation_validation": {
 		"Resample": {
@@ -76,7 +77,8 @@
 			"size": [48, 48]
 			},
 		"ToTensor": {},
-		"NormalizeInstance": {}
+		"NormalizeInstance": {},
+		"StackTensors": {}
 		},
         "transformation_testing": {
                 "Resample": {
@@ -87,7 +89,8 @@
                         "size": [48, 48]
                         },
                 "ToTensor": {},
-                "NormalizeInstance": {}
+                "NormalizeInstance": {},
+			"StackTensors": {}
                 },
         "debugging": false
 }

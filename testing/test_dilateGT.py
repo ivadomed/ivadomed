@@ -64,7 +64,7 @@ def test_dilateGT(dil_fac=0.25):
 
     ds_train = loader.BidsDataset(PATH_BIDS,
                                   subject_lst=train_lst,
-                                  target_suffix="_lesion-manual",
+                                  target_suffix=["_lesion-manual"],
                                   roi_suffix="_seg-manual",
                                   contrast_lst=['T2w', 'acq-inf_T2star', 'acq-sup_T2star',
                                                 'acq-sup_T2w', 'acq-inf_T2w', 'acq-ax_T2w'],

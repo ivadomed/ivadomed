@@ -1,16 +1,16 @@
 {
     "command": "test",
     "gpu": 0,
-    "target_suffix": "_seg-tumor",
+    "target_suffix": ["_seg-tumor"],
     "roi_suffix": null,
     "bids_path": "/home/andreanne/Documents/dataset/results_spline_crop/data",
     "random_seed": 6,
     "contrast_train_validation": ["T1w", "T2w"],
     "contrast_balance": {},
-    "contrast_test": ["T1w","T2w"],
+    "contrast_test": ["T2w"],
     "center_test": [],
     "retrain_model": null,
-    "batch_size": 2,
+    "batch_size": 1,
     "dropout_rate": 0.3,
     "batch_norm_momentum": 0.9,
     "num_epochs": 100,
@@ -29,7 +29,7 @@
     "missing_probability": 0.00001,
     "out_channel": 1,
     "depth": 4,
-    "length_3D": [16, 96, 512],
+    "length_3D": [16, 320, 320],
     "padding_3D": 0,
     "balance_samples": false,
     "slice_axis": "sagittal",
@@ -70,8 +70,9 @@
       "NormalizeInstance": {}
     },
     "transformation_validation": {
-        "ToTensor": {},
-        "NormalizeInstance": {}
+        "ToTensor3D": {},
+        "NormalizeInstance3D": {},
+        "StackTensors": {}
     },
     "transformation_testing": {
       "ToTensor": {},

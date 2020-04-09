@@ -20,13 +20,13 @@ PATH_BIDS = 'testing_data'
 def _cmpt_label(ds_loader):
     cmpt_label, cmpt_sample = {0: 0, 1: 0}, 0
     for i, batch in enumerate(ds_loader):
-        gt_samples = batch["gt"]
-        for idx in range(len(gt_samples)):
-            if np.any(gt_samples[idx]):
-                cmpt_label[1] += 1
-            else:
-                cmpt_label[0] += 1
-            cmpt_sample += 1
+        for gt in batch['gt']:
+            for idx in range(len(gt)):
+                if np.any(gt[idx]):
+                    cmpt_label[1] += 1
+                else:
+                    cmpt_label[0] += 1
+                cmpt_sample += 1
 
     neg_sample_ratio = cmpt_label[0] * 100. / cmpt_sample
     pos_sample_ratio = cmpt_label[1] * 100. / cmpt_sample
@@ -51,7 +51,7 @@ def test_sampler():
 
     ds_train = loader.BidsDataset(PATH_BIDS,
                                   subject_lst=train_lst,
-                                  target_suffix="_lesion-manual",
+                                  target_suffix=["_lesion-manual"],
                                   roi_suffix="_seg-manual",
                                   contrast_lst=['T2w'],
                                   metadata_choice="without",

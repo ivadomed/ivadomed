@@ -5,6 +5,7 @@ import numpy as np
 import time
 import torch
 
+import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms

@@ -42,7 +42,8 @@ def test_inference(film_bool=False):
         ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
         ivadomed_transforms.ROICrop2D(size=[48, 48]),
         ivadomed_transforms.ToTensor(),
-        ivadomed_transforms.NormalizeInstance()
+        ivadomed_transforms.NormalizeInstance(),
+        ivadomed_transforms.StackTensors()
     ]
 
     val_transform = transforms.Compose(validation_transform_list)
@@ -52,7 +53,7 @@ def test_inference(film_bool=False):
 
     ds_test = loader.BidsDataset(PATH_BIDS,
                                  subject_lst=test_lst,
-                                 target_suffix="_lesion-manual",
+                                 target_suffix=["_lesion-manual"],
                                  roi_suffix="_seg-manual",
                                  contrast_lst=['T2w', 'T2star'],
                                  metadata_choice="contrast",
@@ -134,6 +135,10 @@ def test_inference(film_bool=False):
         rdict['gt'] = preds.cpu()
         batch.update(rdict)
 
+
+        batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
+        batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
+
         # reconstruct 3D image
         for smp_idx in range(len(batch['gt'])):
             # undo transformations
@@ -142,7 +147,7 @@ def test_inference(film_bool=False):
                 rdict[k] = batch[k][smp_idx]
             rdict_undo = val_undo_transform(rdict)
 
-            fname_ref = rdict_undo['input_metadata']['gt_filename']
+            fname_ref = rdict_undo['input_metadata']['gt_filenames'][0]
             # new processed file
             if pred_tmp_lst and (fname_ref != fname_tmp or (i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):
                 # save the completely processed file as a nii
@@ -150,11 +155,12 @@ def test_inference(film_bool=False):
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
                 _ = utils.pred_to_nib(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS,
                                       debug=True, kernel_dim='2d', bin_thr=0.5)
+
                 # re-init pred_stack_lst
                 pred_tmp_lst, z_tmp_lst = [], []
 
             # add new sample to pred_tmp_lst
-            pred_tmp_lst.append(np.array(rdict_undo['gt']))
+            pred_tmp_lst.append(utils.pil_list_to_numpy(rdict_undo['gt']))
             z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
             fname_tmp = fname_ref
 
