@@ -324,14 +324,14 @@ class Bids_to_hdf5:
                 input_volumes.append(slice_seg_pair["input"][0])
 
                 # Handle unlabeled data
-                if slice_seg_pair["gt"] is None:
-                    gt_img = None
+                if not len(slice_seg_pair["gt"]):
+                    gt_volume = []
                 else:
                     gt_volume.append((slice_seg_pair["gt"][0] * 255).astype(np.uint8))
 
                 # Handle data with no ROI provided
-                if roi_pair_slice["gt"] is None:
-                    roi_img = None
+                if not len(roi_pair_slice["gt"]):
+                    roi_volume = []
                 else:
                     roi_volume.append((roi_pair_slice["gt"][0] * 255).astype(np.uint8))
 

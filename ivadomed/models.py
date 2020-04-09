@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from torch.nn import Module
 import torch.nn.functional as F
+from torch.nn import Module
 from torch.nn import init
 
 
@@ -115,21 +115,23 @@ class Decoder(Module):
         self.up_path = nn.ModuleList()
         if hemis:
             in_channel = 64 * 2 ** (self.depth)
-            self.up_path.append(UpConv(in_channel*2, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
-            self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)) if film_layers[self.depth + 1] else None)
-            #self.depth += 1
+            self.up_path.append(UpConv(in_channel * 2, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
+            self.up_path.append(
+                FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)) if film_layers[self.depth + 1] else None)
+            # self.depth += 1
         else:
             in_channel = 64 * 2 ** self.depth
-        
+
             self.up_path.append(UpConv(in_channel, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
-            self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)) if film_layers[self.depth + 1] else None)
-        
+            self.up_path.append(
+                FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)) if film_layers[self.depth + 1] else None)
+
         for i in range(1, depth):
             in_channel //= 2
-            
-            
+
             self.up_path.append(
-                UpConv(in_channel + 64 * 2 ** (self.depth - i - 1 + int(hemis)), 64 * 2 ** (self.depth - i - 1), drop_rate,
+                UpConv(in_channel + 64 * 2 ** (self.depth - i - 1 + int(hemis)), 64 * 2 ** (self.depth - i - 1),
+                       drop_rate,
                        bn_momentum))
             self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - i - 1)) if film_layers[self.depth + i + 1]
                                 else None)
@@ -140,9 +142,9 @@ class Decoder(Module):
 
     def forward(self, features, context=None, w_film=None):
         x = features[-1]
-        
+
         for i in reversed(range(self.depth)):
-            
+
             x = self.up_path[-(i + 1) * 2](x, features[i])
             if self.up_path[-(i + 1) * 2 + 1]:
                 x, w_film = self.up_path[-(i + 1) * 2 + 1](x, context, w_film)
@@ -190,7 +192,7 @@ class Unet(Module):
     def forward(self, x, context=None):
         features, w_film = self.encoder(x, context)
         preds = self.decoder(features, context, w_film)
-        
+
         return preds
 
 
@@ -286,12 +288,12 @@ class HeMISUnet(Module):
         ArXiv link: https://arxiv.org/abs/1907.11150
         """
 
-    def __init__(self, modalities, out_channel= 1, depth=3, drop_rate=0.4, bn_momentum=0.1):
+    def __init__(self, modalities, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1):
         super(HeMISUnet, self).__init__()
         self.film_layers = [0] * (2 * depth + 2)
         self.depth = depth
         self.modalities = modalities
-        
+
         # Encoder path
         self.Encoder_mod = nn.ModuleDict(
             [['Encoder_{}'.format(Mod), Encoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate,
@@ -300,7 +302,6 @@ class HeMISUnet(Module):
         # Decoder path
         self.decoder = Decoder(out_channel, depth, film_layers=self.film_layers, drop_rate=drop_rate,
                                bn_momentum=bn_momentum, hemis=True)
-
 
     def forward(self, x_mods, indexes_mod):
         """"
@@ -631,6 +632,7 @@ class UNet3D(nn.Module):
             out = torch.sigmoid(seg_layer)
         return out
 
+
 # Specific toAttention UNet
 class GridAttentionBlockND(nn.Module):
     def __init__(self, in_channels, gating_channels, inter_channels=None, dimension=3,
@@ -729,6 +731,7 @@ class GridAttentionBlockND(nn.Module):
 
         return W_y, sigm_psi_f
 
+
 def weights_init_kaiming(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
@@ -745,6 +748,7 @@ class UnetGridGatingSignal3(nn.Module):
     Operation to extract important features for a specific task using 1x1x1 convolution (Gating) which is used in the
     attention blocks.
     """
+
     def __init__(self, in_size, out_size, kernel_size=(1, 1, 1), is_batchnorm=True):
         super(UnetGridGatingSignal3, self).__init__()
 
