@@ -249,7 +249,7 @@ def run_main(args):
 
     subj_acq_lst = list(set([f.split('_pred')[0] for f in os.listdir(pred_folder)
                     if f.endswith('.nii.gz') and '_pred' in f]))
-    subj_acq_lst = [subj_acq_lst[0]]
+    #subj_acq_lst = [subj_acq_lst[0]]
     print(subj_acq_lst)
     gt_folder = os.path.join(context['bids_path'], 'derivatives', 'labels')
 
@@ -270,7 +270,7 @@ def run_main(args):
                                         gt_folder=gt_folder,
                                         pred_folder=pred_folder,
                                         im_lst=subj_acq_lst,
-                                        target_suf=context["target_suffix"],
+                                        target_suf=context["target_suffix"][0],
                                         param_eval=context["eval_params"])
                 joblib.dump(res, res_ofname)
             else:
@@ -288,7 +288,7 @@ def run_main(args):
                             im_lst=subj_acq_lst,
                             thr_pred=thrPred,
                             gt_folder=gt_folder,
-                            target_suf=context["target_suffix"],
+                            target_suf=context["target_suffix"][0],
                             param_eval=context["eval_params"],
                             unc_name=sufUnc,
                             thr_unc=thrUnc)
