@@ -292,8 +292,9 @@ def run_main(args):
                             unc_name=sufUnc,
                             thr_unc=thrUnc)
         print(df.head())
-        print('Median (IQR): {} ({} - {}).'.format(np.mean(df.dice), np.percentile(df.dice, 25), np.percentile(df.dice, 75)))
-        df.to_csv(os.path.join(ofolder, '_'.join([sufUnc, str(thrUnc), str(thrPred)])+'.csv'))
+        vals = [v for v in df.dice_class0 if str(v) != 'nan']
+        print('Median (IQR): {} ({} - {}).'.format(np.median(vals), np.percentile(vals, 25), np.percentile(vals, 75)))
+        df.to_csv(os.path.join(ofolder, '_'.join([str(sufUnc), str(thrUnc), str(thrPred)])+'.csv'))
 
 if __name__ == '__main__':
     parser = get_parser()
