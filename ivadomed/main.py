@@ -724,7 +724,8 @@ def cmd_test(context):
                                                        kernel_dim='2d',
                                                        bin_thr=0.5 if context["binarize_prediction"] else -1)
 
-                        if output_nii.get_data().shape[-1] > 1:
+                        output_nii_shape = output_nii.get_data().shape
+                        if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
                             utils.save_color_labels(output_nii.get_data(),
                                                     context["binarize_prediction"],
                                                     fname_tmp,
@@ -757,7 +758,8 @@ def cmd_test(context):
                                                    bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                     # Save merged labels with color
-                    if output_nii.shape[-1] > 1:
+                    output_nii_shape = output_nii.get_data().shape
+                    if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
                         utils.save_color_labels(output_nii.get_data(),
                                                 context['binarize_prediction'],
                                                 rdict_undo['input_metadata']['gt_filenames'][0],
