@@ -100,7 +100,7 @@ def test_slice_filter_roi():
         print('\nROI: {}, Empty Input: {}, Empty Mask: {}'.format(roi, empty_input, empty_mask))
         ds_train = loader.BidsDataset(PATH_BIDS,
                                       subject_lst=train_lst,
-                                      target_suffix="_lesion-manual",
+                                      target_suffix=["_lesion-manual"],
                                       roi_suffix=roi,
                                       contrast_lst=['T2w'],
                                       metadata_choice="without",

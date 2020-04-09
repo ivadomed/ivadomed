@@ -24,7 +24,7 @@ import ivadomed.transforms as ivadomed_transforms
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 1
+GPU_NUMBER = 0
 BATCH_SIZE = 4
 DROPOUT = 0.4
 BN = 0.1
@@ -51,7 +51,7 @@ def test_HeMIS(p=0.0001):
                                      subject_lst=train_lst,
                                      hdf5_name='testing_data/mytestfile.hdf5',
                                      csv_name='testing_data/hdf5.csv',
-                                     target_suffix="_lesion-manual",
+                                     target_suffix=["_lesion-manual"],
                                      contrast_lst=['T1w', 'T2w', 'T2star'],
                                      ram=False,
                                      contrast_balance={},
@@ -124,11 +124,11 @@ def test_HeMIS(p=0.0001):
             print("Number of missing modalities = {}."
                   .format(len(input_samples) * len(input_samples[0]) - missing_mod.sum()))
             print("len input = {}".format(len(input_samples)))
-            print("Batch = {}, {}".format(input_samples[0].shape, gt_samples.shape))
+            print("Batch = {}, {}".format(input_samples[0].shape, gt_samples[0].shape))
 
             if cuda_available:
                 var_input = utils.cuda(input_samples)
-                var_gt = gt_samples.cuda(non_blocking=True)
+                var_gt = utils.cuda(gt_samples, non_blocking=True)
             else:
                 var_input = input_samples
                 var_gt = gt_samples

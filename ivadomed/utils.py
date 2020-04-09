@@ -741,17 +741,18 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     return pred_nib
 
 
-def cuda(input_var):
+def cuda(input_var, non_blocking=False):
     """
     This function sends input_var to GPU.
     :param input_var: either a tensor or a list of tensors
+    :param non_blocking
     :return: same as input_var
     """
 
     if isinstance(input_var, list):
-        return [t.cuda() for t in input_var]
+        return [t.cuda(non_blocking=non_blocking) for t in input_var]
     else:
-        return input_var.cuda()
+        return input_var.cuda(non_blocking=non_blocking)
 
 
 class HookBasedFeatureExtractor(nn.Module):

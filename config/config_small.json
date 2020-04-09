@@ -63,8 +63,7 @@
 			"scale": [0.98, 1.02]
 			},
 		"ToTensor": {},
-		"NormalizeInstance": {},
-		"StackTensors": {}
+		"NormalizeInstance": {}
 		},
 	"transformation_validation": {
 		"Resample": {
@@ -75,8 +74,7 @@
 			"size": [128, 128]
 			},
 		"ToTensor": {},
-		"NormalizeInstance": {},
-		"StackTensors": {}
+		"NormalizeInstance": {}
 		},
         "transformation_testing": {
                 "Resample": {
@@ -87,8 +85,7 @@
                         "size": [128, 128]
                         },
                 "ToTensor": {},
-                "NormalizeInstance": {},
-			"StackTensors": {}
+                "NormalizeInstance": {}
                 },
 	"debugging": false
 }

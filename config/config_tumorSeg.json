@@ -70,9 +70,8 @@
       "NormalizeInstance": {}
     },
     "transformation_validation": {
-        "ToTensor3D": {},
-        "NormalizeInstance3D": {},
-        "StackTensors": {}
+        "ToTensor": {},
+        "NormalizeInstance": {}
     },
     "transformation_testing": {
       "ToTensor": {},

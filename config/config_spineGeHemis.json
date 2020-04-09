@@ -3,7 +3,7 @@
 	"gpu": 6,
 	"hdf5_path": "../duke/projects/csf_deepseg/spineGeneric/hdf5/SpineGe.hdf5",
 	"csv_path": "../duke/projects/csf_deepseg/spineGeneric/hdf5/SpineGe.csv",
-	"target_suffix": "_seg-manual",
+	"target_suffix": ["_seg-manual"],
 	"roi_suffix": null,
 	"bids_path": "../duke/projects/csf_deepseg/spineGeneric/result/",
 	"random_seed": 42,

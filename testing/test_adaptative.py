@@ -1,24 +1,18 @@
-from ivadomed import adaptative as adaptative
-from medicaltorch.filters import SliceFilter
-from torch import optim
-
-from medicaltorch import datasets as mt_datasets
-from medicaltorch import transforms as mt_transforms
 import os
-from ivadomed import loader as loader
-from ivadomed import models
-from ivadomed import losses
-from ivadomed.utils import *
-import ivadomed.transforms as ivadomed_transforms
-
-import torch.backends.cudnn as cudnn
+import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from tqdm import tqdm
-import time
 
-GPU_NUMBER = 1
-BATCH_SIZE = 1
+from medicaltorch.filters import SliceFilter
+from medicaltorch import transforms as mt_transforms
+from medicaltorch import datasets as mt_datasets
+from ivadomed import adaptative as adaptative
+from ivadomed import utils
+import ivadomed.transforms as ivadomed_transforms
+
+
+GPU_NUMBER = 0
+BATCH_SIZE = 4
 DROPOUT = 0.4
 DEPTH = 3
 BN = 0.1
@@ -35,7 +29,7 @@ def test_hdf5():
     hdf5_file = adaptative.Bids_to_hdf5(PATH_BIDS,
                                         subject_lst=train_lst,
                                         hdf5_name='testing_data/mytestfile.hdf5',
-                                        target_suffix="_lesion-manual",
+                                        target_suffix=["_lesion-manual"],
                                         roi_suffix="_seg-manual",
                                         contrast_lst=['T1w', 'T2w', 'T2star'],
                                         metadata_choice="contrast",
@@ -108,13 +102,6 @@ def test_hdf5():
         torch.cuda.set_device(GPU_NUMBER)
         print("Using GPU number {}".format(GPU_NUMBER))
 
-    training_transform_list = [
-        ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
-        ivadomed_transforms.ROICrop2D(size=[48, 48]),
-        mt_transforms.ToTensor()
-    ]
-    train_transform = transforms.Compose(training_transform_list)
-
     train_loader = DataLoader(dataset, batch_size=BATCH_SIZE,
                               shuffle=False, pin_memory=True,
                               collate_fn=mt_datasets.mt_collate,
@@ -123,11 +110,11 @@ def test_hdf5():
     for i, batch in enumerate(train_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
         print("len input = {}".format(len(input_samples)))
-        print("Batch = {}, {}".format(input_samples[0][0].shape, gt_samples.shape))
+        print("Batch = {}, {}".format(input_samples[0].shape, gt_samples[0].shape))
 
         if cuda_available:
-            var_input = cuda(input_samples)
-            var_gt = gt_samples.cuda(non_blocking=True)
+            var_input = utils.cuda(input_samples)
+            var_gt = utils.cuda(gt_samples, non_blocking=True)
         else:
             var_input = input_samples
             var_gt = gt_samples

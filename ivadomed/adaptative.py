@@ -1,17 +1,14 @@
 import copy
+import os
 from os import path
 
 import h5py
 import numpy as np
 import pandas as pd
-from bids_neuropoly import bids
-from torch.utils.data import Dataset
-from tqdm import tqdm
-import os
-import json
 from PIL import Image
-
+from bids_neuropoly import bids
 from medicaltorch import datasets as mt_datasets
+from tqdm import tqdm
 
 
 class Dataframe:
@@ -210,9 +207,9 @@ class Bids_to_hdf5:
 
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
-        
+
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
-            
+
             if subject.record["modality"] in contrast_lst:
 
                 # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
@@ -226,17 +223,19 @@ class Bids_to_hdf5:
                     print("Subject without derivative, skipping.")
                     continue
                 derivatives = subject.get_derivatives("labels")
-                target_filename, roi_filename = None, None
+
+                target_filename, roi_filename = [None] * len(target_suffix), None
 
                 for deriv in derivatives:
-                    if deriv.endswith(subject.record["modality"] + target_suffix + ".nii.gz"):
-                        target_filename = deriv
-                        print("filename", target_filename)
-                    if not (roi_suffix is None) and deriv.endswith(
-                            subject.record["modality"] + roi_suffix + ".nii.gz"):
-                        roi_filename = deriv
+                    for idx, suffix in enumerate(target_suffix):
+                        if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
+                            target_filename[idx] = deriv
 
-                if (target_filename is None) or (not (roi_suffix is None) and (roi_filename is None)):
+                    if not (roi_suffix is None) and \
+                            deriv.endswith(subject.record["modality"] + roi_suffix + ".nii.gz"):
+                        roi_filename = [deriv]
+
+                if (not any(target_filename)) or (not (roi_suffix is None) and (roi_filename is None)):
                     continue
 
                 if not subject.has_metadata():
@@ -288,7 +287,7 @@ class Bids_to_hdf5:
         print("Files loaded.")
 
     def _load_filenames(self):
-        
+
         for subject_id, input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
             # Creating/ getting the subject group
             if str(subject_id) in self.hdf5_file.keys():
@@ -328,24 +327,24 @@ class Bids_to_hdf5:
                 if slice_seg_pair["gt"] is None:
                     gt_img = None
                 else:
-                    gt_volume.append((slice_seg_pair["gt"] * 255).astype(np.uint8))
+                    gt_volume.append((slice_seg_pair["gt"][0] * 255).astype(np.uint8))
 
                 # Handle data with no ROI provided
                 if roi_pair_slice["gt"] is None:
                     roi_img = None
                 else:
-                    roi_volume.append((roi_pair_slice["gt"] * 255).astype(np.uint8))
+                    roi_volume.append((roi_pair_slice["gt"][0] * 255).astype(np.uint8))
 
             # Getting metadata using the one from the last slice
             input_metadata = slice_seg_pair['input_metadata'][0]
-            gt_metadata = slice_seg_pair['gt_metadata']
+            gt_metadata = slice_seg_pair['gt_metadata'][0]
             roi_metadata = roi_pair_slice['input_metadata'][0]
 
             if grp.attrs.__contains__('slices'):
                 grp.attrs['slices'] = list(set(np.concatenate((grp.attrs['slices'], useful_slices))))
             else:
                 grp.attrs['slices'] = useful_slices
-            
+
             # Creating datasets and metadata
             contrast = input_metadata['contrast']
             # Inputs
@@ -353,7 +352,7 @@ class Bids_to_hdf5:
             print("grp= ", str(subject_id))
             key = "inputs/{}".format(contrast)
             print("key = ", key)
-            if len(input_volumes)<1:
+            if len(input_volumes) < 1:
                 print("list empty")
                 continue
             grp.create_dataset(key, data=input_volumes)
@@ -368,7 +367,7 @@ class Bids_to_hdf5:
                 grp['inputs'].attrs.create('contrast', [contrast], dtype=self.dt)
 
             # dataset metadata
-            grp[key].attrs['input_filename'] = input_metadata['input_filename']
+            grp[key].attrs['input_filename'] = input_metadata['input_filenames']
 
             if "zooms" in input_metadata.keys():
                 grp[key].attrs["zooms"] = input_metadata['zooms']
@@ -389,7 +388,7 @@ class Bids_to_hdf5:
                 grp['gt'].attrs.create('contrast', [contrast], dtype=self.dt)
 
             # dataset metadata
-            grp[key].attrs['gt_filename'] = input_metadata['gt_filename']
+            grp[key].attrs['gt_filename'] = input_metadata['gt_filenames']
 
             if "zooms" in gt_metadata.keys():
                 grp[key].attrs["zooms"] = gt_metadata['zooms']
@@ -410,7 +409,7 @@ class Bids_to_hdf5:
                 grp['roi'].attrs.create('contrast', [contrast], dtype=self.dt)
 
             # dataset metadata
-            grp[key].attrs['roi_filename'] = roi_metadata['gt_filename']
+            grp[key].attrs['roi_filename'] = roi_metadata['gt_filenames']
 
             if "zooms" in roi_metadata.keys():
                 grp[key].attrs["zooms"] = roi_metadata['zooms']
@@ -485,7 +484,7 @@ class HDF5Dataset:
             self.df_object.clean(self.cst_lst)
         print("after cleaning")
         print(self.df_object.df.head())
- 
+
         self.initial_dataframe = self.df_object.df
 
         self.dataframe = copy.deepcopy(self.df_object.df)
@@ -497,7 +496,7 @@ class HDF5Dataset:
 
         if ram:
             self.load_into_ram(self.cst_lst)
-  
+
     def load_into_ram(self, contrast_lst=None):
         """
         Aims to load into RAM the contrasts from the list
@@ -563,35 +562,41 @@ class HDF5Dataset:
             input_tensors.append(Image.fromarray(input_tensor, mode='F'))
             # input Metadata
             metadata = mt_datasets.SampleMetadata({key: value for key, value in self.hdf5_file['{}/inputs/{}'
-                                                                .format(line['Subjects'], ct)].attrs.items()})
+                                                  .format(line['Subjects'], ct)].attrs.items()})
             metadata['slice_index'] = line["Slices"]
             input_metadata.append(metadata)
 
         # GT
-        if self.status['gt/' + self.gt_lst[0]]:
-            gt_img = line['gt/' + self.gt_lst[0]]
-        else:
-            gt_img = self.hdf5_file[line['gt/' + self.gt_lst[0]]][line['Slices']] 
-        
-        # convert array to pil
-        gt_img = (gt_img).astype(np.uint8)
-        gt_img = Image.fromarray(gt_img, mode='L')
-        gt_metadata = mt_datasets.SampleMetadata({key: value for key, value in
-                                                  self.hdf5_file[line['gt/' + self.gt_lst[0]]].attrs.items()})
-
-        # ROI
-        if self.roi_lst:
-            if self.status['roi/' + self.roi_lst[0]]:
-                roi_img = line['roi/' + self.roi_lst[0]]
+        gt_img = []
+        gt_metadata = []
+        for gt in self.gt_lst:
+            if self.status['gt/' + gt]:
+                gt_data = line['gt/' + gt]
             else:
-                roi_img = self.hdf5_file[line['roi/' + self.roi_lst[0]]][line['Slices']]
+                gt_data = self.hdf5_file[line['gt/' + gt]][line['Slices']]
 
             # convert array to pil
-            roi_img = (roi_img * 255).astype(np.uint8)
-            roi_img = Image.fromarray(roi_img, mode='L')
+            gt_data = gt_data.astype(np.uint8)
+            gt_img.append(Image.fromarray(gt_data, mode='L'))
+            gt_metadata.append(mt_datasets.SampleMetadata({key: value for key, value in
+                                                           self.hdf5_file[line['gt/' + gt]].attrs.items()}))
 
-            roi_metadata = {key: value for key, value in
-                            self.hdf5_file[line['roi/' + self.roi_lst[0]]].attrs.items()}
+        # ROI
+        roi_img = []
+        roi_metadata = []
+        if self.roi_lst:
+            if self.status['roi/' + self.roi_lst[0]]:
+                roi_data = line['roi/' + self.roi_lst[0]]
+            else:
+                roi_data = self.hdf5_file[line['roi/' + self.roi_lst[0]]][line['Slices']]
+
+            # convert array to pil
+            roi_data = (roi_data * 255).astype(np.uint8)
+            roi_img.append(Image.fromarray(roi_data, mode='L'))
+
+            roi_metadata.append(mt_datasets.SampleMetadata({key: value for key, value in
+                                                            self.hdf5_file[
+                                                                line['roi/' + self.roi_lst[0]]].attrs.items()}))
         else:
             roi_img, roi_metadata = None, None
         data_dict = {'input': input_tensors,
@@ -625,7 +630,7 @@ class HDF5Dataset:
                 if not np.any(missing_mod):
                     missing_mod = np.zeros((len(self.cst_lst)))
                     missing_mod[np.random.randint(2, size=1)] = 1
-                self.cst_matrix[idx, ] = missing_mod
+                self.cst_matrix[idx,] = missing_mod
 
             print("Missing modalities = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
 

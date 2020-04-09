@@ -44,7 +44,10 @@ def test_unet():
         mt_transforms.ToTensor(),
         mt_transforms.StackTensors()
     ]
+    training_transform_list_multichannel = training_transform_list.copy()
+    training_transform_list_multichannel.append(mt_transforms.StackTensors())
     train_transform = transforms.Compose(training_transform_list)
+    training_transform_multichannel = transforms.Compose(training_transform_list_multichannel)
     training_transform_3d_list = [
         ivadomed_transforms.CenterCrop3D(size=[96, 96, 16]),
         ivadomed_transforms.ToTensor3D(),
@@ -74,7 +77,7 @@ def test_unet():
                                         metadata_choice="without",
                                         contrast_balance={},
                                         slice_axis=2,
-                                        transform=train_transform,
+                                        transform=training_transform_multichannel,
                                         multichannel=True,
                                         slice_filter_fn=utils.SliceFilter(filter_empty_input=True,
                                                                           filter_empty_mask=False))
