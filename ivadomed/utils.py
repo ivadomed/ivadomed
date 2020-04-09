@@ -33,15 +33,14 @@ class Evaluation3DMetrics(object):
     def __init__(self, data_pred, data_gt, dim_lst, params={}):
 
         self.data_pred = data_pred
-        if len(self.data_pred) == 3:
+        if len(self.data_pred.shape) == 3:
             self.data_pred = np.expand_dims(self.data_pred, -1)
 
         self.data_gt = data_gt
-        if len(self.data_gt) == 3:
+        if len(self.data_gt.shape) == 3:
             self.data_gt = np.expand_dims(self.data_gt, -1)
 
-        self.n_classes = data_gt.shape[-1]
-
+        h, w, d, self.n_classes = self.data_gt.shape
         self.px, self.py, self.pz = dim_lst
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
@@ -108,7 +107,6 @@ class Evaluation3DMetrics(object):
             self.overlap_vox = 3
 
     def remove_small_objects(self, data):
-        print(data.shape, self.bin_struct)
         data_label, n = label(data,
                               structure=self.bin_struct)
 
@@ -118,7 +116,7 @@ class Evaluation3DMetrics(object):
 
             if n_nonzero < self.size_min:
                 data[data_label == idx] = 0
-
+        print(data.shape)
         return data
 
     def _get_size_ranges(self, thr_lst, unit):
