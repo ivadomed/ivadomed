@@ -21,7 +21,7 @@ from ivadomed import models
 from ivadomed import metrics
 from ivadomed import utils
 from ivadomed import loader as imed_loader
-from ivadomed import postprocessing as imed_postPro
+from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 
 from medicaltorch import datasets as mt_datasets
@@ -440,7 +440,7 @@ def cmd_train(context):
 
             preds_npy = preds.data.cpu().numpy()
             if context["binarize_prediction"]:
-                preds_npy = imed_postPro.threshold_predictions(preds_npy)
+                preds_npy = imed_postpro.threshold_predictions(preds_npy)
             preds_npy = preds_npy.astype(np.uint8)
 
             metric_mgr(preds_npy, gt_npy)
@@ -764,7 +764,7 @@ def cmd_test(context):
 
             preds_npy = preds.data.cpu().numpy()
             if context["binarize_prediction"]:
-                preds_npy = imed_postPro.threshold_predictions(preds_npy)
+                preds_npy = imed_postpro.threshold_predictions(preds_npy)
             preds_npy = preds_npy.astype(np.uint8)
 
             metric_mgr(preds_npy, gt_npy)
