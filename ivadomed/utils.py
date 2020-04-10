@@ -116,7 +116,7 @@ class Evaluation3DMetrics(object):
 
     def get_data(self, fname):
         nib_im = nib.load(fname)
-        return nib_im.get_data().astype('u1')
+        return nib_im.fget_data().astype('u1')
 
     def get_pixdim(self, fname):
         nib_im = nib.load(fname)

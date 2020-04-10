@@ -719,8 +719,8 @@ def cmd_test(context):
                                                        kernel_dim='2d',
                                                        bin_thr=0.5 if context["binarize_prediction"] else -1)
 
-                        if output_nii.get_data().shape[-1] > 1:
-                            utils.save_color_labels(output_nii.get_data(),
+                        if output_nii.fget_data().shape[-1] > 1:
+                            utils.save_color_labels(output_nii.fget_data(),
                                                     context["binarize_prediction"],
                                                     fname_tmp,
                                                     fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
@@ -753,7 +753,7 @@ def cmd_test(context):
 
                     # Save merged labels with color
                     if output_nii.shape[-1] > 1:
-                        utils.save_color_labels(output_nii.get_data(),
+                        utils.save_color_labels(output_nii.fget_data(),
                                                 context['binarize_prediction'],
                                                 rdict_undo['input_metadata']['gt_filenames'][0],
                                                 fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
