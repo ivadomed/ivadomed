@@ -66,7 +66,7 @@ def cmd_train(context):
 
         print('\nArchitecture: {} with a depth of {}.\n' \
               .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else "Attention UNet" if attention else
-        '3D Unet' if unet_3D else "Unet", context['depth']))
+                      '3D Unet' if unet_3D else "Unet", context['depth']))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -92,11 +92,11 @@ def cmd_train(context):
     # Randomly split dataset between training / validation / testing
     if context.get("split_path") is None:
         train_lst, valid_lst, test_lst = imed_loader.split_dataset(path_folder=context["bids_path"],
-                                                                      center_test_lst=context["center_test"],
-                                                                      split_method=context["split_method"],
-                                                                      random_seed=context["random_seed"],
-                                                                      train_frac=context["train_fraction"],
-                                                                      test_frac=context["test_fraction"])
+                                                                   center_test_lst=context["center_test"],
+                                                                   split_method=context["split_method"],
+                                                                   random_seed=context["random_seed"],
+                                                                   train_frac=context["train_fraction"],
+                                                                   test_frac=context["test_fraction"])
 
         # save the subject distribution
         split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
@@ -121,10 +121,10 @@ def cmd_train(context):
         else:
             metadata_clustering_models = None
         ds_train, train_onehotencoder = imed_loader.normalize_metadata(ds_train,
-                                                                          metadata_clustering_models,
-                                                                          context["debugging"],
-                                                                          context["metadata"],
-                                                                          True)
+                                                                       metadata_clustering_models,
+                                                                       context["debugging"],
+                                                                       context["metadata"],
+                                                                       True)
 
     if not unet_3D:
         print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
@@ -152,10 +152,10 @@ def cmd_train(context):
 
     if film_bool:  # normalize metadata before sending to network
         ds_val = imed_loader.normalize_metadata(ds_val,
-                                           metadata_clustering_models,
-                                           context["debugging"],
-                                           context["metadata"],
-                                           False)
+                                                metadata_clustering_models,
+                                                context["debugging"],
+                                                context["metadata"],
+                                                False)
 
     if not unet_3D:
         print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")
@@ -588,10 +588,10 @@ def cmd_test(context):
         metadata_clustering_models = joblib.load(
             "./" + context["log_directory"] + "/clustering_models.joblib")
         ds_test = imed_loader.normalize_metadata(ds_test,
-                                                metadata_clustering_models,
-                                                context["debugging"],
-                                                context["metadata"],
-                                                False)
+                                                 metadata_clustering_models,
+                                                 context["debugging"],
+                                                 context["metadata"],
+                                                 False)
 
         one_hot_encoder = joblib.load("./" + context["log_directory"] + "/one_hot_encoder.joblib")
 
@@ -771,7 +771,7 @@ def cmd_test(context):
 
     # COMPUTE UNCERTAINTY MAPS
     if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty'][
-        'n_it'] > 0:
+            'n_it'] > 0:
         utils.run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()
