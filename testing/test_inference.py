@@ -11,7 +11,7 @@ from ivadomed import metrics
 from medicaltorch import datasets as mt_datasets
 
 from ivadomed import loader as loader
-import ivadomed.postprocessing as imed_postPro
+import ivadomed.postprocessing as imed_postpro
 import ivademed.utils as imed_utils
 import ivadomed.transforms as imed_transforms
 
@@ -167,7 +167,7 @@ def test_inference(film_bool=False):
         gt_npy = gt_npy.squeeze(axis=1)
 
         preds_npy = preds.data.cpu().numpy()
-        preds_npy = imed_postPro.threshold_predictions(preds_npy)
+        preds_npy = imed_postpro.threshold_predictions(preds_npy)
         preds_npy = preds_npy.astype(np.uint8)
         preds_npy = preds_npy.squeeze(axis=1)
 
