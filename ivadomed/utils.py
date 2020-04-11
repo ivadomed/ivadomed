@@ -76,7 +76,7 @@ class Evaluation3DMetrics(object):
                 self.data_pred_per_size[..., idx] = self.label_per_size(self.data_pred[..., idx])
                 label_pred_size_lst = list(set(self.data_pred_per_size[np.nonzero(self.data_pred_per_size)]))
                 self.label_size_lst.append([label_gt_size_lst + label_pred_size_lst,
-                                           ['gt'] * len(label_gt_size_lst) + ['pred'] * len(label_pred_size_lst)])
+                                            ['gt'] * len(label_gt_size_lst) + ['pred'] * len(label_pred_size_lst)])
 
         else:
             self.label_size_lst = [[[], []] * self.n_classes]
@@ -298,7 +298,7 @@ class Evaluation3DMetrics(object):
 
                 if gt_pred == 'gt':
                     dct['ltpr' + suffix + "_class" + str(n)], dct['n' + suffix] = self.get_ltpr(label_size=lb_size,
-                                                                                                  class_idx=n)
+                                                                                                class_idx=n)
                 else:  # gt_pred == 'pred'
                     dct['lfdr' + suffix + "_class" + str(n)] = self.get_lfdr(label_size=lb_size, class_idx=n)
 
@@ -628,9 +628,9 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     # Force labeled to False in transforms
     context["transformation_validation"] = dict((key, {**value, **{"labeled": False}})
-                                                    if not key.startswith('NormalizeInstance')
-                                                    else (key, value)
-                                                    for (key, value) in context["transformation_validation"].items())
+                                                if not key.startswith('NormalizeInstance')
+                                                else (key, value)
+                                                for (key, value) in context["transformation_validation"].items())
 
     # Compose transforms
     do_transforms = imed_transforms.compose_transforms(context['transformation_validation'])

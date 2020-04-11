@@ -193,23 +193,23 @@ def cmd_train(context):
     if context['retrain_model'] is None:
         if HeMIS:
             model = imed_models.HeMISUnet(modalities=context['contrast_train_validation'],
-                                     out_channel=out_channel,
-                                     depth=context['depth'],
-                                     drop_rate=context["dropout_rate"],
-                                     bn_momentum=context["batch_norm_momentum"])
+                                          out_channel=out_channel,
+                                          depth=context['depth'],
+                                          drop_rate=context["dropout_rate"],
+                                          bn_momentum=context["batch_norm_momentum"])
         elif unet_3D:
             model = imed_models.UNet3D(in_channels=in_channel,
-                                  n_classes=out_channel,
-                                  attention=attention)
+                                       n_classes=out_channel,
+                                       attention=attention)
         else:
             model = imed_models.Unet(in_channel=in_channel,
-                                out_channel=out_channel,
-                                depth=context['depth'],
-                                film_layers=context["film_layers"],
-                                n_metadata=n_metadata,
-                                drop_rate=context["dropout_rate"],
-                                bn_momentum=context["batch_norm_momentum"],
-                                film_bool=film_bool)
+                                     out_channel=out_channel,
+                                     depth=context['depth'],
+                                     film_layers=context["film_layers"],
+                                     n_metadata=n_metadata,
+                                     drop_rate=context["dropout_rate"],
+                                     bn_momentum=context["batch_norm_momentum"],
+                                     film_bool=film_bool)
     else:
         model = torch.load(context['retrain_model'])
 
@@ -219,11 +219,11 @@ def cmd_train(context):
 
         # TMP
         model.decoder = imed_models.Decoder(out_channel=context['out_channel'],
-                                        depth=context['depth'],
-                                        n_metadata=n_metadata,
-                                        film_layers=[0] * (2 * context['depth'] + 2),
-                                        drop_rate=context["dropout_rate"],
-                                        bn_momentum=context["batch_norm_momentum"])
+                                            depth=context['depth'],
+                                            n_metadata=n_metadata,
+                                            film_layers=[0] * (2 * context['depth'] + 2),
+                                            drop_rate=context["dropout_rate"],
+                                            bn_momentum=context["batch_norm_momentum"])
 
         # Replace the last conv layer
         # Note: Parameters of newly constructed layer have requires_grad=True by default
@@ -274,7 +274,7 @@ def cmd_train(context):
 
         elif context["loss"]["name"] == "focal":
             loss_fct = imed_losses.FocalLoss(gamma=context["loss"]["params"]["gamma"],
-                                        alpha=context["loss"]["params"]["alpha"])
+                                             alpha=context["loss"]["params"]["alpha"])
             print("\nLoss function: {}, with gamma={}, alpha={}.\n".format(context["loss"]["name"],
                                                                            context["loss"]["params"]["gamma"],
                                                                            context["loss"]["params"]["alpha"]))
@@ -283,8 +283,8 @@ def cmd_train(context):
 
         elif context["loss"]["name"] == "focal_dice":
             loss_fct = imed_losses.FocalDiceLoss(beta=context["loss"]["params"]["beta"],
-                                            gamma=context["loss"]["params"]["gamma"],
-                                            alpha=context["loss"]["params"]["alpha"])
+                                                 gamma=context["loss"]["params"]["gamma"],
+                                                 alpha=context["loss"]["params"]["alpha"])
             print("\nLoss function: {}, with beta={}, gamma={} and alpha={}.\n".format(context["loss"]["name"],
                                                                                        context["loss"]["params"][
                                                                                            "beta"],
@@ -350,8 +350,8 @@ def cmd_train(context):
                     mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3) + '_' + str(
                         lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png')
                     imed_utils.save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :],
-                                            gt_samples.data.numpy()[random_idx, 0, :, :],
-                                            mixup_fname_pref)
+                                                 gt_samples.data.numpy()[random_idx, 0, :, :],
+                                                 mixup_fname_pref)
 
             # The variable sample_metadata is where the MRI physics parameters are
 
@@ -680,7 +680,7 @@ def cmd_test(context):
                     preds = model(test_input)
                     if context["attention_unet"]:
                         imed_utils.save_feature_map(batch, "attentionblock2", context, model, test_input,
-                                               imed_utils.AXIS_DCT[context["slice_axis"]])
+                                                    imed_utils.AXIS_DCT[context["slice_axis"]])
 
             # WARNING: sample['gt'] is actually the pred in the return sample
             # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
@@ -720,20 +720,20 @@ def cmd_test(context):
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                         output_nii = imed_utils.pred_to_nib(data_lst=pred_tmp_lst,
-                                                               z_lst=z_tmp_lst,
-                                                               fname_ref=fname_tmp,
-                                                               fname_out=fname_pred,
-                                                               slice_axis=imed_utils.AXIS_DCT[context['slice_axis']],
-                                                               kernel_dim='2d',
-                                                               bin_thr=0.5 if context["binarize_prediction"] else -1)
+                                                            z_lst=z_tmp_lst,
+                                                            fname_ref=fname_tmp,
+                                                            fname_out=fname_pred,
+                                                            slice_axis=imed_utils.AXIS_DCT[context['slice_axis']],
+                                                            kernel_dim='2d',
+                                                            bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                         output_nii_shape = output_nii.get_data().shape
                         if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
                             imed_utils.save_color_labels(output_nii.get_data(),
-                                                            context["binarize_prediction"],
-                                                            fname_tmp,
-                                                            fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                            imed_utils.AXIS_DCT[context['slice_axis']])
+                                                         context["binarize_prediction"],
+                                                         fname_tmp,
+                                                         fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                                                         imed_utils.AXIS_DCT[context['slice_axis']])
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
@@ -753,21 +753,21 @@ def cmd_test(context):
 
                     # Choose only one modality
                     output_nii = imed_utils.pred_to_nib(data_lst=rdict_undo['gt'].transpose((2, 3, 1, 0)),
-                                                           z_lst=[],
-                                                           fname_ref=fname_ref,
-                                                           fname_out=fname_pred,
-                                                           slice_axis=imed_utils.AXIS_DCT[context['slice_axis']],
-                                                           kernel_dim='3d',
-                                                           bin_thr=0.5 if context["binarize_prediction"] else -1)
+                                                        z_lst=[],
+                                                        fname_ref=fname_ref,
+                                                        fname_out=fname_pred,
+                                                        slice_axis=imed_utils.AXIS_DCT[context['slice_axis']],
+                                                        kernel_dim='3d',
+                                                        bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                     # Save merged labels with color
                     output_nii_shape = output_nii.get_data().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
                         imed_utils.save_color_labels(output_nii.get_data(),
-                                                        context['binarize_prediction'],
-                                                        rdict_undo['input_metadata']['gt_filenames'][0],
-                                                        fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                        imed_utils.AXIS_DCT[context['slice_axis']])
+                                                     context['binarize_prediction'],
+                                                     rdict_undo['input_metadata']['gt_filenames'][0],
+                                                     fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                                                     imed_utils.AXIS_DCT[context['slice_axis']])
 
             # Metrics computation
             gt_npy = gt_samples.numpy().astype(np.uint8)
@@ -837,9 +837,9 @@ def cmd_eval(context):
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
 
         eval = imed_utils.Evaluation3DMetrics(data_pred=data_pred,
-                                               data_gt=data_gt,
-                                               dim_lst=nib_pred.header['pixdim'][1:4],
-                                               params=context['eval_params'])
+                                              data_gt=data_gt,
+                                              dim_lst=nib_pred.header['pixdim'][1:4],
+                                              params=context['eval_params'])
 
         # run eval
         results_pred, data_painted = eval.run_eval()
