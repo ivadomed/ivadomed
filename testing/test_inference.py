@@ -17,7 +17,7 @@ import ivadomed.transforms as imed_transforms
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 7
+GPU_NUMBER = 0
 BATCH_SIZE = 8
 DROPOUT = 0.4
 BN = 0.1
@@ -138,6 +138,9 @@ def test_inference(film_bool=False):
 
         batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
         batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
+        if batch["roi"][0] is not None:
+            batch["roi"] = batch["roi"][0]
+            batch["roi_metadata"] = batch["roi_metadata"][0]
 
         # reconstruct 3D image
         for smp_idx in range(len(batch['gt'])):
