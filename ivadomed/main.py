@@ -12,11 +12,11 @@ import pandas as pd
 import torch
 import torch.backends.cudnn as cudnn
 import torch.nn as nn
-from ivadomed import loader as loader
+from ivadomed import loader as imed_loader
 from ivadomed import losses
 from ivadomed import metrics
 from ivadomed import models
-from ivadomed import utils
+from ivadomed import utils as imed_utils
 from medicaltorch import datasets as mt_datasets
 from torch import optim
 from torch.utils.data import DataLoader
@@ -88,7 +88,7 @@ def cmd_train(context):
 
     # Randomly split dataset between training / validation / testing
     if context.get("split_path") is None:
-        train_lst, valid_lst, test_lst = loader.split_dataset(path_folder=context["bids_path"],
+        train_lst, valid_lst, test_lst = imed_loader.split_dataset(path_folder=context["bids_path"],
                                                               center_test_lst=context["center_test"],
                                                               split_method=context["split_method"],
                                                               random_seed=context["random_seed"],
@@ -105,19 +105,19 @@ def cmd_train(context):
 
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
-    ds_train = loader.load_dataset(train_lst, train_transform, context)
+    ds_train = imed_loader.load_dataset(train_lst, train_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_training"].keys():
-        ds_train = loader.filter_roi(ds_train, nb_nonzero_thr=context["slice_filter_roi"])
+        ds_train = imed_loader.filter_roi(ds_train, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
             metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
-            metadata_clustering_models = loader.clustering_fit(ds_train.metadata, metadata_vector)
+            metadata_clustering_models = imed_loader.clustering_fit(ds_train.metadata, metadata_vector)
         else:
             metadata_clustering_models = None
-        ds_train, train_onehotencoder = loader.normalize_metadata(ds_train,
+        ds_train, train_onehotencoder = imed_loader.normalize_metadata(ds_train,
                                                                   metadata_clustering_models,
                                                                   context["debugging"],
                                                                   context["metadata"],
@@ -130,7 +130,7 @@ def cmd_train(context):
             f"Loaded {len(ds_train)} volumes of size {context['length_3D']} for the training set.")
 
     if context['balance_samples']:
-        sampler_train = loader.BalancedSampler(ds_train)
+        sampler_train = imed_loader.BalancedSampler(ds_train)
         shuffle_train = False
     else:
         sampler_train, shuffle_train = None, True
@@ -141,14 +141,14 @@ def cmd_train(context):
                               num_workers=0)
 
     # Validation dataset ------------------------------------------------------
-    ds_val = loader.load_dataset(valid_lst, val_transform, context)
+    ds_val = imed_loader.load_dataset(valid_lst, val_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
-        ds_val = loader.filter_roi(ds_val, nb_nonzero_thr=context["slice_filter_roi"])
+        ds_val = imed_loader.filter_roi(ds_val, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to network
-        ds_val = loader.normalize_metadata(ds_val,
+        ds_val = imed_loader.normalize_metadata(ds_val,
                                            metadata_clustering_models,
                                            context["debugging"],
                                            context["metadata"],
@@ -161,7 +161,7 @@ def cmd_train(context):
             f"Loaded {len(ds_val)} volumes of size {context['length_3D']} for the validation set.")
 
     if context['balance_samples']:
-        sampler_val = loader.BalancedSampler(ds_val)
+        sampler_val = imed_loader.BalancedSampler(ds_val)
         shuffle_val = False
     else:
         sampler_val, shuffle_val = None, True
@@ -214,12 +214,20 @@ def cmd_train(context):
         for param in model.parameters():
             param.requires_grad = False
 
+        # TMP
+        model.decoder = models.Decoder(out_channel=context['out_channel'],
+                                        depth=context['depth'],
+                                        n_metadata=n_metadata,
+                                        film_layers=[0] * (2 * context['depth'] + 2),
+                                        drop_rate=context["dropout_rate"],
+                                        bn_momentum=context["batch_norm_momentum"])
+
         # Replace the last conv layer
         # Note: Parameters of newly constructed layer have requires_grad=True by default
-        model.decoder.last_conv = nn.Conv2d(model.decoder.last_conv.in_channels,
-                                            context['out_channel'], kernel_size=3, padding=1)
-        if film_bool and context["film_layers"][-1]:
-            model.decoder.last_film = models.FiLMlayer(n_metadata, 1)
+        #model.decoder.last_conv = nn.Conv2d(model.decoder.last_conv.in_channels,
+        #                                    context['out_channel'], kernel_size=3, padding=1)
+        #if film_bool and context["film_layers"][-1]:
+        #    model.decoder.last_film = models.FiLMlayer(n_metadata, 1)
 
     if cuda_available:
         model.cuda()
@@ -437,7 +445,7 @@ def cmd_train(context):
 
             preds_npy = preds.data.cpu().numpy()
             if context["binarize_prediction"]:
-                preds_npy = utils.threshold_predictions(preds_npy)
+                preds_npy = imed_utils.threshold_predictions(preds_npy)
             preds_npy = preds_npy.astype(np.uint8)
 
             metric_mgr(preds_npy, gt_npy)
@@ -446,7 +454,7 @@ def cmd_train(context):
 
             # Only write sample at the first step
             if i == 0:
-                utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds, unet_3D)
+                imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds, unet_3D)
 
             # Store the values of gammas and betas after the last epoch for each batch
             if film_bool and epoch == num_epochs and i < int(len(ds_val) / context["batch_size"]) + 1:
@@ -575,16 +583,16 @@ def cmd_test(context):
     else:
         test_lst = joblib.load(context["split_path"])['test']
 
-    ds_test = loader.load_dataset(test_lst, val_transform, context)
+    ds_test = imed_loader.load_dataset(test_lst, val_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
-        ds_test = loader.filter_roi(ds_test, nb_nonzero_thr=context["slice_filter_roi"])
+        ds_test = imed_loader.filter_roi(ds_test, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load(
             "./" + context["log_directory"] + "/clustering_models.joblib")
-        ds_test = loader.normalize_metadata(ds_test,
+        ds_test = imed_loader.normalize_metadata(ds_test,
                                             metadata_clustering_models,
                                             context["debugging"],
                                             context["metadata"],
@@ -625,7 +633,7 @@ def cmd_test(context):
     metric_mgr = metrics.MetricManager(metric_fns)
 
     # number of Monte Carlo simulation
-    if (context['uncertainty']['epistemic'] or context['uncertainty']['epistemic']) and \
+    if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and \
             context['uncertainty']['n_it'] > 0:
         n_monteCarlo = context['uncertainty']['n_it']
     else:
@@ -644,7 +652,7 @@ def cmd_test(context):
 
             with torch.no_grad():
                 if cuda_available:
-                    test_input = utils.cuda(input_samples)
+                    test_input = imed_utils.cuda(input_samples)
                     test_gt = gt_samples.cuda(non_blocking=True)
                 else:
                     test_input = input_samples
@@ -668,8 +676,8 @@ def cmd_test(context):
                 else:
                     preds = model(test_input)
                     if context["attention_unet"]:
-                        utils.save_feature_map(batch, "attentionblock2", context, model, test_input,
-                                               utils.AXIS_DCT[context["slice_axis"]])
+                        imed_utils.save_feature_map(batch, "attentionblock2", context, model, test_input,
+                                               imed_utils.AXIS_DCT[context["slice_axis"]])
 
             # WARNING: sample['gt'] is actually the pred in the return sample
             # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
@@ -708,26 +716,27 @@ def cmd_test(context):
                         if n_monteCarlo > 1:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
-                        output_nii = utils.pred_to_nib(data_lst=pred_tmp_lst,
-                                                       z_lst=z_tmp_lst,
-                                                       fname_ref=fname_tmp,
-                                                       fname_out=fname_pred,
-                                                       slice_axis=utils.AXIS_DCT[context['slice_axis']],
-                                                       kernel_dim='2d',
-                                                       bin_thr=0.5 if context["binarize_prediction"] else -1)
+                        output_nii = imed_utils.pred_to_nib(data_lst=pred_tmp_lst,
+                                                               z_lst=z_tmp_lst,
+                                                               fname_ref=fname_tmp,
+                                                               fname_out=fname_pred,
+                                                               slice_axis=utils.AXIS_DCT[context['slice_axis']],
+                                                               kernel_dim='2d',
+                                                               bin_thr=0.5 if context["binarize_prediction"] else -1)
 
-                        if output_nii.get_data().shape[-1] > 1:
-                            utils.save_color_labels(output_nii.get_data(),
-                                                    context["binarize_prediction"],
-                                                    fname_tmp,
-                                                    fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                    utils.AXIS_DCT[context['slice_axis']])
+                        output_nii_shape = output_nii.get_data().shape
+                        if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
+                            imed_utils.save_color_labels(output_nii.get_data(),
+                                                            context["binarize_prediction"],
+                                                            fname_tmp,
+                                                            fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                                                            imed_utils.AXIS_DCT[context['slice_axis']])
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
 
                     # add new sample to pred_tmp_lst
-                    pred_tmp_lst.append(utils.pil_list_to_numpy(rdict_undo['gt']))
+                    pred_tmp_lst.append(imed_utils.pil_list_to_numpy(rdict_undo['gt']))
                     z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
                     fname_tmp = fname_ref
 
@@ -740,28 +749,29 @@ def cmd_test(context):
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
-                    output_nii = utils.pred_to_nib(data_lst=rdict_undo['gt'].transpose((2, 3, 1, 0)),
-                                                   z_lst=[],
-                                                   fname_ref=fname_ref,
-                                                   fname_out=fname_pred,
-                                                   slice_axis=utils.AXIS_DCT[context['slice_axis']],
-                                                   kernel_dim='3d',
-                                                   bin_thr=0.5 if context["binarize_prediction"] else -1)
+                    output_nii = imed_utils.pred_to_nib(data_lst=rdict_undo['gt'].transpose((2, 3, 1, 0)),
+                                                           z_lst=[],
+                                                           fname_ref=fname_ref,
+                                                           fname_out=fname_pred,
+                                                           slice_axis=imed_utils.AXIS_DCT[context['slice_axis']],
+                                                           kernel_dim='3d',
+                                                           bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                     # Save merged labels with color
-                    if output_nii.shape[-1] > 1:
-                        utils.save_color_labels(output_nii.get_data(),
-                                                context['binarize_prediction'],
-                                                rdict_undo['input_metadata']['gt_filenames'][0],
-                                                fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                utils.AXIS_DCT[context['slice_axis']])
+                    output_nii_shape = output_nii.get_data().shape
+                    if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
+                        imed_utils.save_color_labels(output_nii.get_data(),
+                                                        context['binarize_prediction'],
+                                                        rdict_undo['input_metadata']['gt_filenames'][0],
+                                                        fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                                                        imed_utils.AXIS_DCT[context['slice_axis']])
 
             # Metrics computation
             gt_npy = gt_samples.numpy().astype(np.uint8)
 
             preds_npy = preds.data.cpu().numpy()
             if context["binarize_prediction"]:
-                preds_npy = utils.threshold_predictions(preds_npy)
+                preds_npy = imed_utils.threshold_predictions(preds_npy)
             preds_npy = preds_npy.astype(np.uint8)
 
             metric_mgr(preds_npy, gt_npy)
@@ -769,7 +779,7 @@ def cmd_test(context):
     # COMPUTE UNCERTAINTY MAPS
     if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty'][
         'n_it'] > 0:
-        utils.run_uncertainty(ifolder=path_3Dpred)
+        imed_utils.run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
@@ -811,10 +821,30 @@ def cmd_eval(context):
                                          subj_acq + suffix + '.nii.gz'))
 
         # 3D evaluation
-        eval = utils.Evaluation3DMetrics(fname_pred=fname_pred,
-                                         fname_gt=fname_gt,
-                                         params=context['eval_params'])
-        results_pred = eval.run_eval()
+        nib_pred = nib.load(fname_pred)
+        data_pred = nib_pred.get_data()
+
+        h, w, d = data_pred.shape[:3]
+        n_classes = len(fname_gt)
+        data_gt = np.zeros((h, w, d, n_classes))
+        for idx, file in enumerate(fname_gt):
+            if os.path.exists(file):
+                data_gt[..., idx] = self.get_data(file)
+            else:
+                data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
+
+        eval = imed_utils.Evaluation3DMetrics(data_pred=data_pred,
+                                               data_gt=data_gt,
+                                               dim_lst=nib_pred.header['pixdim'][1:4],
+                                               params=context['eval_params'])
+
+        # run eval
+        results_pred, data_painted = eval.run_eval()
+        # save painted data, TP FP FN
+        fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
+        nib_painted = nib.Nifti1Image(data_painted, nib_pred.affine)
+        nib.save(nib_painted, fname_paint)
+
         # save results of this fname_pred
         results_pred['image_id'] = subj_acq
         df_results = df_results.append(results_pred, ignore_index=True)

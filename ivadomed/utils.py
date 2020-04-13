@@ -1,25 +1,25 @@
 import os
 import json
 from collections import defaultdict
-
+from scipy.ndimage import label, generate_binary_structure
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
+from tqdm import tqdm
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
-
-from ivadomed import loader as ivadomed_loader
-from ivadomed import transforms as ivadomed_transforms
-from medicaltorch.datasets import MRI2DSegmentationDataset
-from ivadomed import metrics
-from medicaltorch import datasets as mt_datasets
-
-from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
-from tqdm import tqdm
 import torchvision.utils as vutils
+
+from ivadomed import loader as imed_loader
+from ivadomed import transforms as imed_transforms
+from ivadomed import metrics as imed_metrics
+
+from medicaltorch.datasets import MRI2DSegmentationDataset
+from medicaltorch import datasets as mt_datasets
 
 # labels of paint_objects method
 TP_COLOUR = 1
@@ -30,23 +30,18 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
 class Evaluation3DMetrics(object):
 
-    def __init__(self, fname_pred, fname_gt, params={}):
-        self.fname_pred = fname_pred
-        self.fname_gt = fname_gt
+    def __init__(self, data_pred, data_gt, dim_lst, params={}):
 
-        self.data_pred = self.get_data(self.fname_pred)
+        self.data_pred = data_pred
+        if len(self.data_pred.shape) == 3:
+            self.data_pred = np.expand_dims(self.data_pred, -1)
 
-        h, w, d = self.data_pred.shape[:3]
-        self.n_classes = len(self.fname_gt)
-        self.data_gt = np.zeros((h, w, d, self.n_classes))
+        self.data_gt = data_gt
+        if len(self.data_gt.shape) == 3:
+            self.data_gt = np.expand_dims(self.data_gt, -1)
 
-        for idx, file in enumerate(fname_gt):
-            if os.path.exists(file):
-                self.data_gt[..., idx] = self.get_data(file)
-            else:
-                self.data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
-
-        self.px, self.py, self.pz = self.get_pixdim(self.fname_pred)
+        h, w, d, self.n_classes = self.data_gt.shape
+        self.px, self.py, self.pz = dim_lst
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
 
@@ -97,7 +92,6 @@ class Evaluation3DMetrics(object):
                                                                  structure=self.bin_struct)
 
         # painted data, object wise
-        self.fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
         self.data_painted = np.copy(self.data_pred)
 
         # overlap_vox is used to define the object-wise TP, FP, FN
@@ -111,15 +105,6 @@ class Evaluation3DMetrics(object):
                 self.overlap_vox = None
         else:
             self.overlap_vox = 3
-
-    def get_data(self, fname):
-        nib_im = nib.load(fname)
-        return nib_im.get_data().astype('u1')
-
-    def get_pixdim(self, fname):
-        nib_im = nib.load(fname)
-        px, py, pz = nib_im.header['pixdim'][1:4]
-        return px, py, pz
 
     def remove_small_objects(self, data):
         data_label, n = label(data,
@@ -299,10 +284,10 @@ class Evaluation3DMetrics(object):
             dct['vol_pred_class' + str(n)] = self.get_vol(self.data_pred)
             dct['vol_gt_class' + str(n)] = self.get_vol(self.data_gt)
             dct['rvd_class' + str(n)], dct['avd_class' + str(n)] = self.get_rvd(), self.get_avd()
-            dct['dice_class' + str(n)] = dice_score(self.data_gt[..., n], self.data_pred[..., n]) * 100.
-            dct['recall_class' + str(n)] = mt_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
-            dct['precision_class' + str(n)] = mt_metrics.precision_score(self.data_pred, self.data_gt, err_value=np.nan)
-            dct['specificity_class' + str(n)] = mt_metrics.specificity_score(self.data_pred, self.data_gt, err_value=np.nan)
+            dct['dice_class' + str(n)] = imed_metrics.dice_score(self.data_gt[..., n], self.data_pred[..., n]) * 100.
+            dct['recall_class' + str(n)] = imed_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
+            dct['precision_class' + str(n)] = imed_metrics.precision_score(self.data_pred, self.data_gt, err_value=np.nan)
+            dct['specificity_class' + str(n)] = imed_metrics.specificity_score(self.data_pred, self.data_gt, err_value=np.nan)
             dct['n_pred_class' + str(n)], dct['n_gt_class' + str(n)] = self.n_pred[n], self.n_gt[n]
             dct['ltpr_class' + str(n)], _ = self.get_ltpr()
             dct['lfdr_class' + str(n)] = self.get_lfdr()
@@ -316,11 +301,10 @@ class Evaluation3DMetrics(object):
                 else:  # gt_pred == 'pred'
                     dct['lfdr' + suffix + "_class" + str(n)] = self.get_lfdr(label_size=lb_size, class_idx=n)
 
-        # save painted file
-        nib_painted = nib.Nifti1Image(self.data_painted, nib.load(self.fname_pred).affine)
-        nib.save(nib_painted, self.fname_paint)
+        if self.n_classes == 1:
+            self.data_painted = np.squeeze(self.data_painted, axis=-1)
 
-        return dct
+        return dct, self.data_painted
 
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5):
@@ -371,6 +355,8 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
     if bin_thr >= 0:
         arr_pred_ref_space = threshold_predictions(arr_pred_ref_space, thr=bin_thr)
+    else: # discard noise
+        arr_pred_ref_space[arr_pred_ref_space <= 1e-3] = 0
 
     # create nibabel object
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
@@ -660,10 +646,10 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
                                                     for (key, value) in context["transformation_validation"].items())
 
     # Compose transforms
-    do_transforms = ivadomed_transforms.compose_transforms(context['transformation_validation'])
+    do_transforms = imed_transforms.compose_transforms(context['transformation_validation'])
 
     # Undo Transforms
-    undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
+    undo_transforms = imed_transforms.UndoCompose(do_transforms)
 
     # Force filter_empty_mask to False if fname_roi = None
     if fname_roi is None and 'filter_empty_mask' in context["slice_filter"]:
@@ -684,7 +670,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     # If fname_roi provided, then remove slices without ROI
     if fname_roi is not None:
-        ds = ivadomed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
+        ds = imed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
 
     if not context['unet_3D']:
         print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
