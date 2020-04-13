@@ -727,9 +727,9 @@ def cmd_test(context):
                                                             kernel_dim='2d',
                                                             bin_thr=0.5 if context["binarize_prediction"] else -1)
 
-                        output_nii_shape = output_nii.get_data().shape
+                        output_nii_shape = output_nii.get_fdata().shape
                         if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
-                            imed_utils.save_color_labels(output_nii.get_data(),
+                            imed_utils.save_color_labels(output_nii.get_fdata(),
                                                          context["binarize_prediction"],
                                                          fname_tmp,
                                                          fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
@@ -761,9 +761,9 @@ def cmd_test(context):
                                                         bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                     # Save merged labels with color
-                    output_nii_shape = output_nii.get_data().shape
+                    output_nii_shape = output_nii.get_fdata().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
-                        imed_utils.save_color_labels(output_nii.get_data(),
+                        imed_utils.save_color_labels(output_nii.get_fdata(),
                                                      context['binarize_prediction'],
                                                      rdict_undo['input_metadata']['gt_filenames'][0],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
@@ -825,14 +825,14 @@ def cmd_eval(context):
 
         # 3D evaluation
         nib_pred = nib.load(fname_pred)
-        data_pred = nib_pred.get_data()
+        data_pred = nib_pred.get_fdata()
 
         h, w, d = data_pred.shape[:3]
         n_classes = len(fname_gt)
         data_gt = np.zeros((h, w, d, n_classes))
         for idx, file in enumerate(fname_gt):
             if os.path.exists(file):
-                data_gt[..., idx] = self.get_data(file)
+                data_gt[..., idx] = self.get_fdata(file)
             else:
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
 

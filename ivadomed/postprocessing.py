@@ -43,7 +43,7 @@ def threshold_predictions_nib(nib_predictions, thr=0.5):
         nibabelObject: Nibabel object containing only zeros or ones.
 
     """
-    data = nib_predictions.fget_data()
+    data = nib_predictions.get_fdata()
     data_thr = threshold_predictions(predictions=data, thr=thr)
     return nib.Nifti1Image(data_thr, nib_predictions.affine)
 
@@ -83,7 +83,7 @@ def keep_largest_object_nib(nib_predictions):
         nibabelObject: processed segmentation.
 
     """
-    data = nib_predictions.fget_data()
+    data = nib_predictions.get_fdata()
     data_out = keep_largest_object(predictions=data)
     return nib.Nifti1Image(data_out, nib_predictions.affine)
 
@@ -127,7 +127,7 @@ def keep_largest_object_per_slice_nib(nib_predictions, axis=2):
         nibabelObject: processed segmentation.
 
     """
-    data = nib_predictions.fget_data()
+    data = nib_predictions.get_fdata()
     data_out = keep_largest_object_per_slice(predictions=data, axis=axis)
     return nib.Nifti1Image(data_out, nib_predictions.affine)
 
@@ -163,7 +163,7 @@ def fill_holes_nib(nib_predictions, structure=(3,3,3)):
         nibabelObject: processed segmentation.
 
     """
-    data = nib_predictions.fget_data()
+    data = nib_predictions.get_fdata()
     data_out = fill_holes(predictions=data, structure=structure)
     return nib.Nifti1Image(data_out, nib_predictions.affine)
 
@@ -199,7 +199,7 @@ def mask_predictions_nib(nib_predictions, nib_mask_binary):
         nibabelObject: processed segmentation.
 
     """
-    data = nib_predictions.fget_data()
-    data_mask = nib_mask_binary.fget_data()
+    data = nib_predictions.get_fdata()
+    data_mask = nib_mask_binary.get_fdata()
     data_out = mask_predictions(predictions=data, mask_binary=data_mask)
     return nib.Nifti1Image(data_out, nib_predictions.affine)

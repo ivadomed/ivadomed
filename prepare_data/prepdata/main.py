@@ -14,10 +14,10 @@ def remove_slice(fname_im, fname_seg):
     """
     # Load data
     nii_im = nib.load(fname_im)
-    data_im = nii_im.fget_data()
+    data_im = nii_im.get_fdata()
     affine_im = nii_im.affine
     nii_seg = nib.load(fname_seg)
-    data_seg = nii_seg.fget_data()
+    data_seg = nii_seg.get_fdata()
     _, _, nz = nii_im.shape
     # Loop across slices in ascending mode and stop when no more empty
     z_bottom = 0
