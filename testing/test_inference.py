@@ -108,7 +108,7 @@ def test_inference(film_bool=False):
         with torch.no_grad():
             if cuda_available:
                 test_input = input_samples.cuda()
-                test_gt = gt_samples.cuda(non_blocking=True)
+                test_gt = utils.cuda(gt_samples, non_blocking=True)
             else:
                 test_input = input_samples
                 test_gt = gt_samples

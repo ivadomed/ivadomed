@@ -52,6 +52,7 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
                  canonical=True, labeled=True, roi_suffix=None, multichannel=False, missing_modality=False):
 
         self.bids_ds = bids.BIDS(root_dir)
+
         self.filename_pairs = []
         if metadata_choice == 'mri_params':
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
@@ -85,7 +86,6 @@ class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
-
                 # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
                 if subject.record["modality"] in contrast_balance.keys():
                     c[subject.record["modality"]] = c[subject.record["modality"]] + 1
