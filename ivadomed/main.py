@@ -825,6 +825,7 @@ def cmd_eval(context):
                                          subj_acq + suffix + '.nii.gz'))
 
         # 3D evaluation
+        # TODO: the call to nib will fail! (Julien)
         nib_pred = nib.load(fname_pred)
         data_pred = nib_pred.get_fdata()
 
@@ -833,7 +834,7 @@ def cmd_eval(context):
         data_gt = np.zeros((h, w, d, n_classes))
         for idx, file in enumerate(fname_gt):
             if os.path.exists(file):
-                data_gt[..., idx] = nib.load(file).get_fdata()
+                data_gt[..., idx] = nib.load(file).get_fdata(file)
             else:
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
 
