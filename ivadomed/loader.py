@@ -361,14 +361,14 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         self.transform = transform
 
         self._load_filenames()
-        self._prepare_indexes()
+        self._prepare_indices()
 
     def _load_filenames(self):
         for input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
             segpair = SegmentationPair(input_filename, gt_filename, metadata=metadata)
             self.handlers.append(segpair)
 
-    def _prepare_indexes(self):
+    def _prepare_indices(self):
         length = self.length
         padding = self.padding
 
