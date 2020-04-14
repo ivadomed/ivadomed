@@ -5,24 +5,23 @@ import shutil
 import sys
 import time
 
-import ivadomed.transforms as ivadomed_transforms
 import joblib
+import nibabel as nib
 import numpy as np
 import pandas as pd
 import torch
 import torch.backends.cudnn as cudnn
-import nibabel as nib
-import torch.nn as nn
-from ivadomed import loader as imed_loader
-from ivadomed import losses
-from ivadomed import metrics
-from ivadomed import models
-from ivadomed import utils as imed_utils
-from medicaltorch import datasets as mt_datasets
 from torch import optim, nn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
+
+import ivadomed.transforms as ivadomed_transforms
+from ivadomed import loader_utils as imed_loader_utils
+from ivadomed import losses
+from ivadomed import metrics
+from ivadomed import models
+from ivadomed import utils as imed_utils
 
 cudnn.benchmark = True
 
@@ -93,12 +92,12 @@ def cmd_train(context):
 
     # Randomly split dataset between training / validation / testing
     if context.get("split_path") is None:
-        train_lst, valid_lst, test_lst = imed_loader.split_dataset(path_folder=context["bids_path"],
-                                                              center_test_lst=context["center_test"],
-                                                              split_method=context["split_method"],
-                                                              random_seed=context["random_seed"],
-                                                              train_frac=context["train_fraction"],
-                                                              test_frac=context["test_fraction"])
+        train_lst, valid_lst, test_lst = imed_loader_utils.split_dataset(path_folder=context["bids_path"],
+                                                                         center_test_lst=context["center_test"],
+                                                                         split_method=context["split_method"],
+                                                                         random_seed=context["random_seed"],
+                                                                         train_frac=context["train_fraction"],
+                                                                         test_frac=context["test_fraction"])
 
         # save the subject distribution
         split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
@@ -110,24 +109,24 @@ def cmd_train(context):
 
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
-    ds_train = imed_loader.load_dataset(train_lst, train_transform, context)
+    ds_train = imed_loader_utils.load_dataset(train_lst, train_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     # todo: not supported by the adaptative loader
     if 'ROICrop2D' in context["transformation_training"].keys():
-        ds_train = imed_loader.filter_roi(ds_train, nb_nonzero_thr=context["slice_filter_roi"])
+        ds_train = imed_loader_utils.filter_roi(ds_train, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
             metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
-            metadata_clustering_models = imed_loader.clustering_fit(ds_train.metadata, metadata_vector)
+            metadata_clustering_models = imed_loader_utils.clustering_fit(ds_train.metadata, metadata_vector)
         else:
             metadata_clustering_models = None
-        ds_train, train_onehotencoder = imed_loader.normalize_metadata(ds_train,
-                                                                  metadata_clustering_models,
-                                                                  context["debugging"],
-                                                                  context["metadata"],
-                                                                  True)
+        ds_train, train_onehotencoder = imed_loader_utils.normalize_metadata(ds_train,
+                                                                             metadata_clustering_models,
+                                                                             context["debugging"],
+                                                                             context["metadata"],
+                                                                             True)
 
     if not unet_3D:
         print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
@@ -136,30 +135,30 @@ def cmd_train(context):
             f"Loaded {len(ds_train)} volumes of size {context['length_3D']} for the training set.")
 
     if context['balance_samples'] and not HeMIS:
-        sampler_train = imed_loader.BalancedSampler(ds_train)
+        sampler_train = imed_loader_utils.BalancedSampler(ds_train)
         shuffle_train = False
     else:
         sampler_train, shuffle_train = None, True
-     
+
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
-                              collate_fn=mt_datasets.mt_collate,
+                              collate_fn=imed_loader_utils.mt_collate,
                               num_workers=0)
     print("Validation")
 
     # Validation dataset ------------------------------------------------------
-    ds_val = imed_loader.load_dataset(valid_lst, val_transform, context)
+    ds_val = imed_loader_utils.load_dataset(valid_lst, val_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
-        ds_val = imed_loader.filter_roi(ds_val, nb_nonzero_thr=context["slice_filter_roi"])
+        ds_val = imed_loader_utils.filter_roi(ds_val, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to network
-        ds_val = imed_loader.normalize_metadata(ds_val,
-                                           metadata_clustering_models,
-                                           context["debugging"],
-                                           context["metadata"],
-                                           False)
+        ds_val = imed_loader_utils.normalize_metadata(ds_val,
+                                                      metadata_clustering_models,
+                                                      context["debugging"],
+                                                      context["metadata"],
+                                                      False)
 
     if not unet_3D:
         print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")
@@ -168,14 +167,14 @@ def cmd_train(context):
             f"Loaded {len(ds_val)} volumes of size {context['length_3D']} for the validation set.")
 
     if context['balance_samples'] and not HeMIS:
-        sampler_val = imed_loader.BalancedSampler(ds_val)
+        sampler_val = imed_loader_utils.BalancedSampler(ds_val)
         shuffle_val = False
     else:
         sampler_val, shuffle_val = None, True
 
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
                             shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
-                            collate_fn=mt_datasets.mt_collate,
+                            collate_fn=imed_loader_utils.mt_collate,
                             num_workers=0)
     if film_bool:
         n_metadata = len([ll for l in train_onehotencoder.categories_ for ll in l])
@@ -223,17 +222,17 @@ def cmd_train(context):
 
         # TMP
         model.decoder = models.Decoder(out_channel=context['out_channel'],
-                                        depth=context['depth'],
-                                        n_metadata=n_metadata,
-                                        film_layers=[0] * (2 * context['depth'] + 2),
-                                        drop_rate=context["dropout_rate"],
-                                        bn_momentum=context["batch_norm_momentum"])
+                                       depth=context['depth'],
+                                       n_metadata=n_metadata,
+                                       film_layers=[0] * (2 * context['depth'] + 2),
+                                       drop_rate=context["dropout_rate"],
+                                       bn_momentum=context["batch_norm_momentum"])
 
         # Replace the last conv layer
         # Note: Parameters of newly constructed layer have requires_grad=True by default
-        #model.decoder.last_conv = nn.Conv2d(model.decoder.last_conv.in_channels,
+        # model.decoder.last_conv = nn.Conv2d(model.decoder.last_conv.in_channels,
         #                                    context['out_channel'], kernel_size=3, padding=1)
-        #if film_bool and context["film_layers"][-1]:
+        # if film_bool and context["film_layers"][-1]:
         #    model.decoder.last_film = models.FiLMlayer(n_metadata, 1)
 
     if cuda_available:
@@ -354,8 +353,8 @@ def cmd_train(context):
                     mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3) + '_' + str(
                         lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png')
                     imed_utils.save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :],
-                                            gt_samples.data.numpy()[random_idx, 0, :, :],
-                                            mixup_fname_pref)
+                                                 gt_samples.data.numpy()[random_idx, 0, :, :],
+                                                 mixup_fname_pref)
 
             # The variable sample_metadata is where the MRI physics parameters are
 
@@ -416,7 +415,7 @@ def cmd_train(context):
             ds_train.update(p=p)
             train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                                       shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
-                                      collate_fn=mt_datasets.mt_collate,
+                                      collate_fn=imed_loader_utils.mt_collate,
                                       num_workers=0)
 
         # Validation loop -----------------------------------------------------
@@ -606,20 +605,20 @@ def cmd_test(context):
     else:
         test_lst = joblib.load(context["split_path"])['test']
 
-    ds_test = imed_loader.load_dataset(test_lst, val_transform, context)
+    ds_test = imed_loader_utils.load_dataset(test_lst, val_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
-        ds_test = imed_loader.filter_roi(ds_test, nb_nonzero_thr=context["slice_filter_roi"])
+        ds_test = imed_loader_utils.filter_roi(ds_test, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load(
             "./" + context["log_directory"] + "/clustering_models.joblib")
-        ds_test = imed_loader.normalize_metadata(ds_test,
-                                            metadata_clustering_models,
-                                            context["debugging"],
-                                            context["metadata"],
-                                            False)
+        ds_test = imed_loader_utils.normalize_metadata(ds_test,
+                                                       metadata_clustering_models,
+                                                       context["debugging"],
+                                                       context["metadata"],
+                                                       False)
 
         one_hot_encoder = joblib.load("./" + context["log_directory"] + "/one_hot_encoder.joblib")
 
@@ -630,7 +629,7 @@ def cmd_test(context):
 
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
                              shuffle=False, pin_memory=True,
-                             collate_fn=mt_datasets.mt_collate,
+                             collate_fn=imed_loader_utils.mt_collate,
                              num_workers=0)
 
     model = torch.load("./" + context["log_directory"] + "/best_model.pt", map_location=device)
@@ -710,7 +709,7 @@ def cmd_test(context):
                     preds = model(test_input)
                     if context["attention_unet"]:
                         imed_utils.save_feature_map(batch, "attentionblock2", context, model, test_input,
-                                               imed_utils.AXIS_DCT[context["slice_axis"]])
+                                                    imed_utils.AXIS_DCT[context["slice_axis"]])
 
             # WARNING: sample['gt'] is actually the pred in the return sample implementation justification: the other
             # option: rdict['pred'] = preds would require to largely modify mt_transforms
@@ -751,20 +750,20 @@ def cmd_test(context):
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                         output_nii = imed_utils.pred_to_nib(data_lst=pred_tmp_lst,
-                                                               z_lst=z_tmp_lst,
-                                                               fname_ref=fname_tmp,
-                                                               fname_out=fname_pred,
-                                                               slice_axis=utils.AXIS_DCT[context['slice_axis']],
-                                                               kernel_dim='2d',
-                                                               bin_thr=0.5 if context["binarize_prediction"] else -1)
+                                                            z_lst=z_tmp_lst,
+                                                            fname_ref=fname_tmp,
+                                                            fname_out=fname_pred,
+                                                            slice_axis=utils.AXIS_DCT[context['slice_axis']],
+                                                            kernel_dim='2d',
+                                                            bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                         output_nii_shape = output_nii.get_data().shape
                         if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
                             imed_utils.save_color_labels(output_nii.get_data(),
-                                                            context["binarize_prediction"],
-                                                            fname_tmp,
-                                                            fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                            imed_utils.AXIS_DCT[context['slice_axis']])
+                                                         context["binarize_prediction"],
+                                                         fname_tmp,
+                                                         fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                                                         imed_utils.AXIS_DCT[context['slice_axis']])
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
@@ -784,21 +783,21 @@ def cmd_test(context):
 
                     # Choose only one modality
                     output_nii = imed_utils.pred_to_nib(data_lst=rdict_undo['gt'].transpose((2, 3, 1, 0)),
-                                                           z_lst=[],
-                                                           fname_ref=fname_ref,
-                                                           fname_out=fname_pred,
-                                                           slice_axis=imed_utils.AXIS_DCT[context['slice_axis']],
-                                                           kernel_dim='3d',
-                                                           bin_thr=0.5 if context["binarize_prediction"] else -1)
+                                                        z_lst=[],
+                                                        fname_ref=fname_ref,
+                                                        fname_out=fname_pred,
+                                                        slice_axis=imed_utils.AXIS_DCT[context['slice_axis']],
+                                                        kernel_dim='3d',
+                                                        bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                     # Save merged labels with color
                     output_nii_shape = output_nii.get_data().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
                         imed_utils.save_color_labels(output_nii.get_data(),
-                                                        context['binarize_prediction'],
-                                                        rdict_undo['input_metadata']['gt_filenames'][0],
-                                                        fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                        imed_utils.AXIS_DCT[context['slice_axis']])
+                                                     context['binarize_prediction'],
+                                                     rdict_undo['input_metadata']['gt_filenames'][0],
+                                                     fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                                                     imed_utils.AXIS_DCT[context['slice_axis']])
 
             # Metrics computation
             gt_npy = gt_samples.numpy().astype(np.uint8)
@@ -863,14 +862,14 @@ def cmd_eval(context):
         data_gt = np.zeros((h, w, d, n_classes))
         for idx, file in enumerate(fname_gt):
             if os.path.exists(file):
-                data_gt[..., idx] = nib_pred.get_data(file)
+                data_gt[..., idx] = nib.load(file).get_fdata()
             else:
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
 
         eval = imed_utils.Evaluation3DMetrics(data_pred=data_pred,
-                                               data_gt=data_gt,
-                                               dim_lst=nib_pred.header['pixdim'][1:4],
-                                               params=context['eval_params'])
+                                              data_gt=data_gt,
+                                              dim_lst=nib_pred.header['pixdim'][1:4],
+                                              params=context['eval_params'])
 
         # run eval
         results_pred, data_painted = eval.run_eval()

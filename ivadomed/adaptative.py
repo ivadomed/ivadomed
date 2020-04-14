@@ -7,8 +7,10 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 from bids_neuropoly import bids
-from medicaltorch import datasets as mt_datasets
 from tqdm import tqdm
+
+from ivadomed import loader as imed_loader
+from ivadomed import loader_utils as imed_loader_utils
 
 
 class Dataframe:
@@ -295,11 +297,11 @@ class Bids_to_hdf5:
             else:
                 grp = self.hdf5_file.create_group(str(subject_id))
 
-            roi_pair = mt_datasets.SegmentationPair2D(input_filename, roi_filename, metadata=metadata, cache=False,
-                                                      canonical=self.canonical)
+            roi_pair = imed_loader.SegmentationPair(input_filename, roi_filename, metadata=metadata, cache=False,
+                                                    canonical=self.canonical)
 
-            seg_pair = mt_datasets.SegmentationPair2D(input_filename, gt_filename, metadata=metadata, cache=False,
-                                                      canonical=self.canonical)
+            seg_pair = imed_loader.SegmentationPair(input_filename, gt_filename, metadata=metadata, cache=False,
+                                                    canonical=self.canonical)
             print("gt filename", gt_filename)
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
@@ -561,8 +563,8 @@ class HDF5Dataset:
             # convert array to pil
             input_tensors.append(Image.fromarray(input_tensor, mode='F'))
             # input Metadata
-            metadata = mt_datasets.SampleMetadata({key: value for key, value in self.hdf5_file['{}/inputs/{}'
-                                                  .format(line['Subjects'], ct)].attrs.items()})
+            metadata = imed_loader_utils.SampleMetadata({key: value for key, value in self.hdf5_file['{}/inputs/{}'
+                                                        .format(line['Subjects'], ct)].attrs.items()})
             metadata['slice_index'] = line["Slices"]
             input_metadata.append(metadata)
 
@@ -578,8 +580,8 @@ class HDF5Dataset:
             # convert array to pil
             gt_data = gt_data.astype(np.uint8)
             gt_img.append(Image.fromarray(gt_data, mode='L'))
-            gt_metadata.append(mt_datasets.SampleMetadata({key: value for key, value in
-                                                           self.hdf5_file[line['gt/' + gt]].attrs.items()}))
+            gt_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
+                                                                 self.hdf5_file[line['gt/' + gt]].attrs.items()}))
 
         # ROI
         roi_img = []
@@ -594,9 +596,9 @@ class HDF5Dataset:
             roi_data = (roi_data * 255).astype(np.uint8)
             roi_img.append(Image.fromarray(roi_data, mode='L'))
 
-            roi_metadata.append(mt_datasets.SampleMetadata({key: value for key, value in
-                                                            self.hdf5_file[
-                                                                line['roi/' + self.roi_lst[0]]].attrs.items()}))
+            roi_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
+                                                                  self.hdf5_file[
+                                                                      line['roi/' + self.roi_lst[0]]].attrs.items()}))
         else:
             roi_img, roi_metadata = None, None
         data_dict = {'input': input_tensors,
@@ -633,22 +635,6 @@ class HDF5Dataset:
                 self.cst_matrix[idx,] = missing_mod
 
             print("Missing modalities = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
-
-
-class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
-
-    def filter_roi(self, nb_nonzero_thr):
-        filter_indexes = []
-        for segpair, slice_roi_pair in self.indexes:
-            roi_data = slice_roi_pair['gt']
-            if not np.any(roi_data):
-                continue
-            if np.count_nonzero(roi_data) <= nb_nonzero_thr:
-                continue
-
-            filter_indexes.append((segpair, slice_roi_pair))
-
-        self.indexes = filter_indexes
 
 
 def HDF5_to_Bids(HDF5, subjects, path_dir):
