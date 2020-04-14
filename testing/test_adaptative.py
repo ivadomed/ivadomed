@@ -1,15 +1,14 @@
 import os
+
 import torch
+from medicaltorch import datasets as mt_datasets
+from medicaltorch import transforms as mt_transforms
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from medicaltorch.filters import SliceFilter
-from medicaltorch import transforms as mt_transforms
-from medicaltorch import datasets as mt_datasets
-from ivadomed import adaptative as adaptative
-from ivadomed import utils
 import ivadomed.transforms as ivadomed_transforms
-
+from ivadomed import adaptative as adaptative
+from ivadomed import utils as imed_utils
 
 GPU_NUMBER = 0
 BATCH_SIZE = 4
@@ -35,7 +34,8 @@ def test_hdf5():
                                         metadata_choice="contrast",
                                         contrast_balance={},
                                         slice_axis=2,
-                                        slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=True))
+                                        slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                                                               filter_empty_mask=True))
 
     # Checking architecture
     def print_attrs(name, obj):
@@ -81,7 +81,8 @@ def test_hdf5():
                                      transform=train_transform,
                                      metadata_choice=False,
                                      dim=2,
-                                     slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=True),
+                                     slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                                                            filter_empty_mask=True),
                                      canonical=True,
                                      roi_suffix="_seg-manual",
                                      target_lst=['T2w'],
