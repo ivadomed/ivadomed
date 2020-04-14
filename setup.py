@@ -23,6 +23,7 @@ setup(
         'Programming Language :: Python :: 3',
     ],
     packages=find_packages(exclude=['docs', 'tests']),
+    include_package_data=True,
     install_requires=requirements,
     entry_points={
         'console_scripts': [
