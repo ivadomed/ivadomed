@@ -340,7 +340,7 @@ def cmd_train(context):
 
             # mixup data
             if mixup_bool and not film_bool:
-                input_samples, gt_samples, lambda_tensor = utils.mixup(
+                input_samples, gt_samples, lambda_tensor = imed_utils.mixup(
                     input_samples, gt_samples, mixup_alpha)
 
                 # if debugging and first epoch, then save samples as png in log folder
@@ -753,7 +753,7 @@ def cmd_test(context):
                                                             z_lst=z_tmp_lst,
                                                             fname_ref=fname_tmp,
                                                             fname_out=fname_pred,
-                                                            slice_axis=utils.AXIS_DCT[context['slice_axis']],
+                                                            slice_axis=imed_utils.AXIS_DCT[context['slice_axis']],
                                                             kernel_dim='2d',
                                                             bin_thr=0.5 if context["binarize_prediction"] else -1)
 
