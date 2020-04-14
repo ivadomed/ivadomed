@@ -1,15 +1,16 @@
 import os
 
-import ivadomed.transforms as ivadomed_transforms
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
-from ivadomed import loader as loader
-from ivadomed import metrics
-from ivadomed import utils
-from medicaltorch import datasets as mt_datasets
 from torch.utils.data import DataLoader
 from torchvision import transforms
+
+import ivadomed.transforms as ivadomed_transforms
+from ivadomed import loader as imed_loader
+from ivadomed import loader_utils as imed_loader_utils
+from ivadomed import metrics
+from ivadomed import utils as imed_utils
 
 cudnn.benchmark = True
 
@@ -47,20 +48,20 @@ def test_inference(film_bool=False):
 
     test_lst = ['sub-test001']
 
-    ds_test = loader.BidsDataset(PATH_BIDS,
-                                 subject_lst=test_lst,
-                                 target_suffix=["_lesion-manual"],
-                                 roi_suffix="_seg-manual",
-                                 contrast_lst=['T2w', 'T2star'],
-                                 metadata_choice="contrast",
-                                 contrast_balance={},
-                                 slice_axis=SLICE_AXIS,
-                                 transform=val_transform,
-                                 multichannel=False,
-                                 slice_filter_fn=utils.SliceFilter(filter_empty_input=True,
-                                                                   filter_empty_mask=False))
+    ds_test = imed_loader.BidsDataset(PATH_BIDS,
+                                      subject_lst=test_lst,
+                                      target_suffix=["_lesion-manual"],
+                                      roi_suffix="_seg-manual",
+                                      contrast_lst=['T2w', 'T2star'],
+                                      metadata_choice="contrast",
+                                      contrast_balance={},
+                                      slice_axis=SLICE_AXIS,
+                                      transform=val_transform,
+                                      multichannel=False,
+                                      slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                                                             filter_empty_mask=False))
 
-    ds_test = loader.filter_roi(ds_test, nb_nonzero_thr=10)
+    ds_test = imed_loader_utils.filter_roi(ds_test, nb_nonzero_thr=10)
 
     if film_bool:  # normalize metadata before sending to network
         print('FiLM inference not implemented yet.')
@@ -76,7 +77,7 @@ def test_inference(film_bool=False):
 
     test_loader = DataLoader(ds_test, batch_size=BATCH_SIZE,
                              shuffle=False, pin_memory=pin_memory,
-                             collate_fn=mt_datasets.mt_collate,
+                             collate_fn=imed_loader_utils.mt_collate,
                              num_workers=1)
 
     if film_bool:
@@ -108,7 +109,7 @@ def test_inference(film_bool=False):
         with torch.no_grad():
             if cuda_available:
                 test_input = input_samples.cuda()
-                test_gt = utils.cuda(gt_samples, non_blocking=True)
+                test_gt = imed_utils.cuda(gt_samples, non_blocking=True)
             else:
                 test_input = input_samples
                 test_gt = gt_samples
@@ -118,9 +119,8 @@ def test_inference(film_bool=False):
                 test_contrast = [sample_metadata[k]['contrast']
                                  for k in range(len(sample_metadata))]
 
-                test_metadata = [utils.one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k
-                                 in
-                                 range(len(sample_metadata))]
+                test_metadata = [imed_utils.one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0]
+                                 for k in range(len(sample_metadata))]
                 # Input the metadata related to the input samples
                 preds = model(test_input, test_metadata)
             else:
@@ -153,14 +153,14 @@ def test_inference(film_bool=False):
                 # save the completely processed file as a nii
                 fname_pred = os.path.join(PATH_OUT, fname_tmp.split('/')[-1])
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
-                _ = utils.pred_to_nib(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS,
-                                      debug=True, kernel_dim='2d', bin_thr=0.5)
+                _ = imed_utils.pred_to_nib(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS,
+                                           debug=True, kernel_dim='2d', bin_thr=0.5)
 
                 # re-init pred_stack_lst
                 pred_tmp_lst, z_tmp_lst = [], []
 
             # add new sample to pred_tmp_lst
-            pred_tmp_lst.append(utils.pil_list_to_numpy(rdict_undo['gt']))
+            pred_tmp_lst.append(imed_utils.pil_list_to_numpy(rdict_undo['gt']))
             z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
             fname_tmp = fname_ref
 
@@ -169,7 +169,7 @@ def test_inference(film_bool=False):
         gt_npy = gt_npy.squeeze(axis=1)
 
         preds_npy = preds.data.cpu().numpy()
-        preds_npy = utils.threshold_predictions(preds_npy)
+        preds_npy = imed_utils.threshold_predictions(preds_npy)
         preds_npy = preds_npy.astype(np.uint8)
         preds_npy = preds_npy.squeeze(axis=1)
 

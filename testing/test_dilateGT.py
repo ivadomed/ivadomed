@@ -1,17 +1,15 @@
 import os
-import numpy as np
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
+import numpy as np
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from ivadomed.utils import SliceFilter
-from medicaltorch import datasets as mt_datasets
-
-from ivadomed import loader as loader
-
 import ivadomed.transforms as ivadomed_transforms
+from ivadomed import loader as imed_loader
+from ivadomed import loader_utils as imed_loader_utils
+from ivadomed.utils import SliceFilter
 
 cudnn.benchmark = True
 
@@ -58,26 +56,26 @@ def test_dilateGT(dil_fac=0.25):
     train_transform = transforms.Compose(training_transform_list)
 
     train_lst = ['sub-test001']
-#    train_lst = ['sub-rennesMS056', 'sub-rennesMS057', 'sub-rennesMS058', 'sub-rennesMS059', 'sub-rennesMS060']
-#    train_lst = ['sub-nyuShepherd158', 'sub-nyuShepherd157', 'sub-nyuShepherd156', 'sub-nyuShepherd155']
-#    train_lst = ['sub-bwh070', 'sub-bwh071', 'sub-bwh072', 'sub-bwh073', 'sub-bwh074']
+    #    train_lst = ['sub-rennesMS056', 'sub-rennesMS057', 'sub-rennesMS058', 'sub-rennesMS059', 'sub-rennesMS060']
+    #    train_lst = ['sub-nyuShepherd158', 'sub-nyuShepherd157', 'sub-nyuShepherd156', 'sub-nyuShepherd155']
+    #    train_lst = ['sub-bwh070', 'sub-bwh071', 'sub-bwh072', 'sub-bwh073', 'sub-bwh074']
 
-    ds_train = loader.BidsDataset(PATH_BIDS,
-                                  subject_lst=train_lst,
-                                  target_suffix=["_lesion-manual"],
-                                  roi_suffix="_seg-manual",
-                                  contrast_lst=['T2w', 'acq-inf_T2star', 'acq-sup_T2star',
-                                                'acq-sup_T2w', 'acq-inf_T2w', 'acq-ax_T2w'],
-                                  metadata_choice="without",
-                                  contrast_balance={},
-                                  slice_axis=2,
-                                  transform=train_transform,
-                                  multichannel=False,
-                                  slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=True))
+    ds_train = imed_loader.BidsDataset(PATH_BIDS,
+                                       subject_lst=train_lst,
+                                       target_suffix=["_lesion-manual"],
+                                       roi_suffix="_seg-manual",
+                                       contrast_lst=['T2w', 'acq-inf_T2star', 'acq-sup_T2star',
+                                                     'acq-sup_T2w', 'acq-inf_T2w', 'acq-ax_T2w'],
+                                       metadata_choice="without",
+                                       contrast_balance={},
+                                       slice_axis=2,
+                                       transform=train_transform,
+                                       multichannel=False,
+                                       slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=True))
     print(len(ds_train))
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
-                              collate_fn=mt_datasets.mt_collate,
+                              collate_fn=imed_loader_utils.mt_collate,
                               num_workers=1)
 
     # if not os.path.isdir(PATH_OUT):
@@ -86,11 +84,11 @@ def test_dilateGT(dil_fac=0.25):
     for i, batch in enumerate(train_loader):
         input_samples, gt_samples = batch["input"], batch["gt"]
         for b_idx in range(len(batch['input'])):
-            fname_out = os.path.join(PATH_OUT, 'im_'+str(i).zfill(2) +
-                                     '_'+str(b_idx).zfill(2)+'.png')
-     #       save_im_gt(np.array(input_samples[b_idx, 0]),
-     #                   np.array(gt_samples[b_idx, 0]),
-     #                   fname_out)
+            fname_out = os.path.join(PATH_OUT, 'im_' + str(i).zfill(2) +
+                                     '_' + str(b_idx).zfill(2) + '.png')
+    #       save_im_gt(np.array(input_samples[b_idx, 0]),
+    #                   np.array(gt_samples[b_idx, 0]),
+    #                   fname_out)
 
 
 test_dilateGT()

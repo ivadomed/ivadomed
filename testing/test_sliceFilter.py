@@ -1,17 +1,15 @@
-import numpy as np
 import itertools
 
+import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from ivadomed.utils import SliceFilter
-from medicaltorch import datasets as mt_datasets
-from medicaltorch import transforms as mt_transforms
-
-from ivadomed import loader as loader
 import ivadomed.transforms as ivadomed_transforms
+from ivadomed import loader as imed_loader
+from ivadomed import loader_utils as imed_loader_utils
+from ivadomed import utils as imed_utils
 
 cudnn.benchmark = True
 
@@ -55,23 +53,23 @@ def test_slice_filter_center():
     param_lst_lst = [roi_lst, empty_input_lst, empty_mask_lst]
     for roi, empty_input, empty_mask in list(itertools.product(*param_lst_lst)):
         print('\nROI: {}, Empty Input: {}, Empty Mask: {}'.format(roi, empty_input, empty_mask))
-        ds_train = loader.BidsDataset(PATH_BIDS,
-                                      subject_lst=train_lst,
-                                      target_suffix=["_lesion-manual"],
-                                      roi_suffix=roi,
-                                      contrast_lst=['T2w'],
-                                      metadata_choice="without",
-                                      contrast_balance={},
-                                      slice_axis=2,
-                                      transform=train_transform,
-                                      multichannel=False,
-                                      slice_filter_fn=SliceFilter(filter_empty_input=empty_input,
-                                                                  filter_empty_mask=empty_mask))
+        ds_train = imed_loader.BidsDataset(PATH_BIDS,
+                                           subject_lst=train_lst,
+                                           target_suffix=["_lesion-manual"],
+                                           roi_suffix=roi,
+                                           contrast_lst=['T2w'],
+                                           metadata_choice="without",
+                                           contrast_balance={},
+                                           slice_axis=2,
+                                           transform=train_transform,
+                                           multichannel=False,
+                                           slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=empty_input,
+                                                                                  filter_empty_mask=empty_mask))
 
         print('\tNumber of loaded slices: {}'.format(len(ds_train)))
         train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                                   shuffle=True, pin_memory=True,
-                                  collate_fn=mt_datasets.mt_collate,
+                                  collate_fn=imed_loader_utils.mt_collate,
                                   num_workers=0)
         print('\tNumber of Neg/Pos slices in GT.')
         _cmpt_slice(train_loader, 'gt')
@@ -98,26 +96,26 @@ def test_slice_filter_roi():
     param_lst_lst = [roi_lst, empty_input_lst, empty_mask_lst]
     for roi, empty_input, empty_mask in list(itertools.product(*param_lst_lst)):
         print('\nROI: {}, Empty Input: {}, Empty Mask: {}'.format(roi, empty_input, empty_mask))
-        ds_train = loader.BidsDataset(PATH_BIDS,
-                                      subject_lst=train_lst,
-                                      target_suffix=["_lesion-manual"],
-                                      roi_suffix=roi,
-                                      contrast_lst=['T2w'],
-                                      metadata_choice="without",
-                                      contrast_balance={},
-                                      slice_axis=2,
-                                      transform=train_transform,
-                                      multichannel=False,
-                                      slice_filter_fn=SliceFilter(filter_empty_input=empty_input,
-                                                                  filter_empty_mask=empty_mask))
+        ds_train = imed_loader.BidsDataset(PATH_BIDS,
+                                           subject_lst=train_lst,
+                                           target_suffix=["_lesion-manual"],
+                                           roi_suffix=roi,
+                                           contrast_lst=['T2w'],
+                                           metadata_choice="without",
+                                           contrast_balance={},
+                                           slice_axis=2,
+                                           transform=train_transform,
+                                           multichannel=False,
+                                           slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=empty_input,
+                                                                                  filter_empty_mask=empty_mask))
 
         print('\tNumber of loaded slices before filtering ROI: {}'.format(len(ds_train)))
-        ds_train = loader.filter_roi(ds_train, nb_nonzero_thr=10)
+        ds_train = imed_loader_utils.filter_roi(ds_train, nb_nonzero_thr=10)
 
         print('\tNumber of loaded slices: {}'.format(len(ds_train)))
         train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                                   shuffle=True, pin_memory=True,
-                                  collate_fn=mt_datasets.mt_collate,
+                                  collate_fn=imed_loader_utils.mt_collate,
                                   num_workers=0)
         print('\tNumber of Neg/Pos slices in GT.')
         _cmpt_slice(train_loader, 'gt')
