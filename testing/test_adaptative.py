@@ -114,8 +114,8 @@ def test_hdf5():
         print("Batch = {}, {}".format(input_samples[0].shape, gt_samples[0].shape))
 
         if cuda_available:
-            var_input = utils.cuda(input_samples)
-            var_gt = utils.cuda(gt_samples, non_blocking=True)
+            var_input = imed_utils.cuda(input_samples)
+            var_gt = imed_utils.cuda(gt_samples, non_blocking=True)
         else:
             var_input = input_samples
             var_gt = gt_samples
