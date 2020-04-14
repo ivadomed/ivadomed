@@ -412,7 +412,8 @@ def cmd_train(context):
 
         # In case of curriculum Learning we need to update the loader
         if HeMIS:
-            p = p ** (5 / 6)
+            # Increase the probability of a missing modality
+            p = p ** (context["missing_probability_growth"])
             ds_train.update(p=p)
             train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                                       shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
@@ -754,7 +755,7 @@ def cmd_test(context):
                                                                z_lst=z_tmp_lst,
                                                                fname_ref=fname_tmp,
                                                                fname_out=fname_pred,
-                                                               slice_axis=utils.AXIS_DCT[context['slice_axis']],
+                                                               slice_axis=imed_utils.AXIS_DCT[context['slice_axis']],
                                                                kernel_dim='2d',
                                                                bin_thr=0.5 if context["binarize_prediction"] else -1)
 
