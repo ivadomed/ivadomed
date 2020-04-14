@@ -4,6 +4,7 @@ import random
 import shutil
 import sys
 import time
+import nibabel as nib
 
 import ivadomed.transforms as ivadomed_transforms
 import joblib
