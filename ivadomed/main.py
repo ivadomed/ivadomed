@@ -863,7 +863,7 @@ def cmd_eval(context):
         data_gt = np.zeros((h, w, d, n_classes))
         for idx, file in enumerate(fname_gt):
             if os.path.exists(file):
-                data_gt[..., idx] = nib.load(file).get_fdata(file)
+                data_gt[..., idx] = nib.load(file).get_fdata()
             else:
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
 
