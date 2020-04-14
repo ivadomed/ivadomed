@@ -19,7 +19,7 @@ from copy import deepcopy
 from tqdm import tqdm
 import torch
 
-with open(os.path.join(__path__[0], "../config/contrast_dct.json"), "r") as fhandle:
+with open(os.path.join(__path__[0], "config/contrast_dct.json"), "r") as fhandle:
     GENERIC_CONTRAST = json.load(fhandle)
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,
