@@ -635,22 +635,6 @@ class HDF5Dataset:
             print("Missing modalities = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
 
 
-class BidsDataset(mt_datasets.MRI2DSegmentationDataset):
-
-    def filter_roi(self, nb_nonzero_thr):
-        filter_indexes = []
-        for segpair, slice_roi_pair in self.indexes:
-            roi_data = slice_roi_pair['gt']
-            if not np.any(roi_data):
-                continue
-            if np.count_nonzero(roi_data) <= nb_nonzero_thr:
-                continue
-
-            filter_indexes.append((segpair, slice_roi_pair))
-
-        self.indexes = filter_indexes
-
-
 def HDF5_to_Bids(HDF5, subjects, path_dir):
     # Open FDH5 file
     hdf5 = h5py.File(HDF5, "r")
