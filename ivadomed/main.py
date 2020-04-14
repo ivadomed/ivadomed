@@ -8,6 +8,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+import nibabel as nib
 
 import torch
 import torch.backends.cudnn as cudnn
