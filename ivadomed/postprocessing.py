@@ -1,24 +1,33 @@
 # Deals with postprocessing on generated segmentation.
 
+import functools
 import numpy as np
 import nibabel as nib
 from scipy.ndimage.measurements import label
 from scipy.ndimage.morphology import binary_fill_holes
 
 
-def threshold_predictions(predictions, thr=0.5):
-    """Threshold predictions.
+def nifti_capable(wrapped):
+    @functools.wraps(wrapped)
+    def wrapper(data, *args, **kwargs):
+        if isinstance(data, nib.Nifti1Image):
+            return nib.Nifti1Image(wrapper(np.asanyarray(data.dataobj), *args, **kwargs), data.affine)
+        return wrapped(data, *args, **kwargs)
+    return wrapper
 
+
+@nifti_capable
+def threshold_predictions(predictions, thr=0.5):
+    """
     Threshold a soft (ie not binary) array of predictions given a threshold value, and returns
     a binary array.
 
     Args:
-        predictions (array): array to binarise.
+        predictions (array or nibabel object): Image to binarise.
         thr (float): Threshold value: voxels with a value < to thr are assigned 0 as value, 1
             otherwise.
     Returns:
-        array: Array containing only zeros or ones.
-
+        array: Array or nibabel (same object as the input) containing only zeros or ones. Output type is int.
     """
     thresholded_preds = np.copy(predictions)[:]
     low_values_indices = thresholded_preds < thr
@@ -26,26 +35,6 @@ def threshold_predictions(predictions, thr=0.5):
     low_values_indices = thresholded_preds >= thr
     thresholded_preds[low_values_indices] = 1
     return thresholded_preds.astype(np.int)
-
-
-def threshold_predictions_nib(nib_predictions, thr=0.5):
-    """Threshold predictions from a nibabel object.
-
-    Threshold a soft (ie not binary) array of predictions from a nibabel object given a threshold value,
-    and returns a nibabel object with binary data.
-    Note: this function calls threshold_predictions().
-
-    Args:
-        nib_predictions (nibabelObject): nibabel image to binarise.
-        thr (float): Threshold value: voxels with a value < to thr are assigned 0 as value, 1
-            otherwise.
-    Returns:
-        nibabelObject: Nibabel object containing only zeros or ones.
-
-    """
-    data = nib_predictions.get_fdata()
-    data_thr = threshold_predictions(predictions=data, thr=thr)
-    return nib.Nifti1Image(data_thr, nib_predictions.affine)
 
 
 def keep_largest_object(predictions):
