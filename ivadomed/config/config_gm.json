@@ -32,6 +32,8 @@
     "slice_axis": "axial",
     "balance_samples": false,
     "unet_3D": false,
+    "retrain_model": null,
+    "retrain_fraction": 0.0,
     "attention_unet": false,
     "binarize_prediction": true,
     "split_method": "per_patient",
