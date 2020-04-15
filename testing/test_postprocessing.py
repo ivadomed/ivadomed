@@ -14,7 +14,7 @@ import ivadomed.postprocessing as postproc
 def nii_seg(size_arr=(9, 9, 9), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI', shape='rectangle',
             radius_RL=2.0, radius_AP=1.0, zeroslice=[]):
     """Create a dummy nibabel object with a ellipse or rectangle of ones running from top to bottom in the 3rd
-    dimension.
+    dimension. Add a voxel with value '1' outside the main object to test the keep largest object algorithms.
     :param size_arr: tuple: (nx, ny, nz)
     :param pixdim: tuple: (px, py, pz)
     :param dtype: Numpy dtype.
@@ -41,14 +41,18 @@ def nii_seg(size_arr=(9, 9, 9), pixdim=(1, 1, 1), dtype=np.float64, orientation=
     if zeroslice is not []:
         data[:, :, zeroslice] = 0
 
+    # Add voxel outside of the main object
+    data[1, 1, 1] = 1
+
+    # Apply Gaussian filter (to get soft seg)
+    # TODO
+
     # Create nibabel object
     affine = np.eye(4)
     # for i in range(3):
     #     affine[i][i] = 1  # in [mm]
     nii = nib.nifti1.Nifti1Image(data, affine)
 
-    # Apply Gaussian filter (to get soft seg)
-    # TODO
 
     # Change orientation
     # TODO
@@ -58,8 +62,14 @@ def nii_seg(size_arr=(9, 9, 9), pixdim=(1, 1, 1), dtype=np.float64, orientation=
 
 def test_threshold(nii_seg):
     # input array
-    arr_seg_thr = postproc.threshold_predictions(nii_seg.dataobj)
-    assert isinstance(arr_seg_thr, np.ndarray)
+    arr_seg_proc = postproc.threshold_predictions(np.asanyarray(nii_seg.dataobj))
+    assert isinstance(arr_seg_proc, np.ndarray)
     # input nibabel
-    nii_seg_thr = postproc.threshold_predictions(nii_seg)
-    assert isinstance(nii_seg_thr, nib.Nifti1Image)
+    nii_seg_proc = postproc.threshold_predictions(nii_seg)
+    assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
+
+
+def test_keep_largest_object(nii_seg):
+    arr_seg_proc = postproc.keep_largest_object(np.asanyarray(nii_seg.dataobj))
+    assert isinstance(arr_seg_proc, np.ndarray)
+    assert arr_seg_proc[1, 1, 1] == 0
