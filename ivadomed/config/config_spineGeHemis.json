@@ -43,6 +43,7 @@
 	"early_stopping_patience": 10,
 	"early_stopping_epsilon": 0.001,
 	"unet_3D": false,
+	"attention_unet": false,
 	"binarize_prediction": true,
 	"transformation_training": {
 		"Resample": {
