@@ -1,6 +1,7 @@
 import copy
 import os
 from os import path
+import nibabel as nib
 
 import h5py
 import numpy as np
@@ -21,7 +22,7 @@ class Dataframe:
     """
 
     def __init__(self, hdf5, contrasts, path, target_suffix=None, roi_suffix=None,
-                 slices=False, dim=2):
+                 filter_slices=False, dim=2):
         """
         Initialize the Dataframe
         """
@@ -43,7 +44,7 @@ class Dataframe:
             self.contrasts.append('ROI')
 
         self.df = None
-        self.filter = slices
+        self.filter = filter_slices
 
         # Data frame
         if os.path.exists(path):
@@ -91,7 +92,6 @@ class Dataframe:
         # Filling the data frame
         for subject in hdf5.attrs['patients_id']:
             # Getting the Group the corresponding patient
-            print(subject)
             grp = hdf5[subject]
             line = copy.deepcopy(empty_line)
             line['Subjects'] = subject
@@ -107,13 +107,11 @@ class Dataframe:
             # GT
             assert 'gt' in grp.keys()
             inputs = grp['gt']
-            print("input = ", inputs.attrs['contrast'])
             for c in inputs.attrs['contrast']:
                 key = 'gt/' + c
                 for col in col_names:
                     if key in col:
                         line[col] = '{}/gt/{}'.format(subject, c)
-                        print(line)
                     else:
                         continue
             # ROI
@@ -369,7 +367,7 @@ class Bids_to_hdf5:
                 grp['inputs'].attrs.create('contrast', [contrast], dtype=self.dt)
 
             # dataset metadata
-            grp[key].attrs['input_filename'] = input_metadata['input_filenames']
+            grp[key].attrs['input_filenames'] = input_metadata['input_filenames']
 
             if "zooms" in input_metadata.keys():
                 grp[key].attrs["zooms"] = input_metadata['zooms']
@@ -390,7 +388,7 @@ class Bids_to_hdf5:
                 grp['gt'].attrs.create('contrast', [contrast], dtype=self.dt)
 
             # dataset metadata
-            grp[key].attrs['gt_filename'] = input_metadata['gt_filenames']
+            grp[key].attrs['gt_filenames'] = input_metadata['gt_filenames']
 
             if "zooms" in gt_metadata.keys():
                 grp[key].attrs["zooms"] = gt_metadata['zooms']
@@ -481,7 +479,7 @@ class HDF5Dataset:
             self.hdf5_file = h5py.File(hdf5_name, "r")
         # Loading dataframe object
         self.df_object = Dataframe(self.hdf5_file, contrast_lst, csv_name, target_suffix=target_lst,
-                                   roi_suffix=roi_lst, dim=self.dim, slices=slice_filter_fn)
+                                   roi_suffix=roi_lst, dim=self.dim, filter_slices=slice_filter_fn)
         if complet:
             self.df_object.clean(self.cst_lst)
         print("after cleaning")
@@ -632,7 +630,7 @@ class HDF5Dataset:
                 if not np.any(missing_mod):
                     missing_mod = np.zeros((len(self.cst_lst)))
                     missing_mod[np.random.randint(2, size=1)] = 1
-                self.cst_matrix[idx,] = missing_mod
+                self.cst_matrix[idx, ] = missing_mod
 
             print("Missing modalities = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
 
@@ -650,32 +648,41 @@ def HDF5_to_Bids(HDF5, subjects, path_dir):
         path_label = path_dir + '/derivatives/labels/' + sub + '/anat/'
 
         if not path.exists(path_sub):
-            os.mkdir(path_sub)
+            os.makedirs(path_sub)
 
         if not path.exists(path_label):
-            os.mkdir(path_label)
+            os.makedirs(path_label)
 
         # Get Subject Group
-        grp = hdf5['sub']
+        try:
+            grp = hdf5[sub]
+        except:
+            continue
         # inputs
         cts = grp['inputs'].attrs['contrast']
 
+        # Relation between voxel and world coordinates is not available
         for ct in cts:
-            input = grp['inputs/{}'.format(ct)]
-
-            ## Save nii with save_nii
+            input_data = np.array(grp['inputs/{}'.format(ct)])
+            nib_image = nib.Nifti1Image(input_data, np.eye(4))
+            filename = os.path.join(path_sub, sub + "_" + ct + ".nii.gz")
+            nib.save(nib_image, filename)
 
         # GT
         cts = grp['gt'].attrs['contrast']
 
         for ct in cts:
-            gt = grp['gt/{}'.format(ct)]
-
-            ## Save nii with save_nii
+            for filename in grp['gt/{}'.format(ct)].attrs['gt_filename']:
+                gt_data = grp['gt/{}'.format(ct)]
+                nib_image = nib.Nifti1Image(gt_data, np.eye(4))
+                filename = os.path.join(path_label, filename.split("/")[-1])
+                nib.save(nib_image, filename)
 
         cts = grp['roi'].attrs['contrast']
 
         for ct in cts:
-            input = grp['roi/{}'.format(ct)]
-
-            ## Save nii with save_nii
+            roi_data = grp['roi/{}'.format(ct)]
+            if np.any(roi_data.shape):
+                nib_image = nib.Nifti1Image(roi_data, np.eye(4))
+                filename = os.path.join(path_label, grp['roi/{}'.format(ct)].attrs['gt_filename'][0].split("/")[-1])
+                nib.save(nib_image, filename)

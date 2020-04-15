@@ -7,8 +7,8 @@ from torchvision import transforms
 
 import ivadomed.transforms as ivadomed_transforms
 from ivadomed import adaptative as imed_adaptative
-from ivadomed import utils as imed_utils
 from ivadomed import loader_utils as imed_loader_utils
+from ivadomed import utils as imed_utils
 
 GPU_NUMBER = 0
 BATCH_SIZE = 4
@@ -56,7 +56,8 @@ def test_hdf5():
                                    target_suffix=['T1w', 'T2w', 'T2star'],
                                    roi_suffix=['T1w', 'T2w', 'T2star'],
                                    dim=2,
-                                   slices=True)
+                                   filter_slices=True)
+
     print(df.df)
 
     print('\n[INFO]: Dataframe successfully generated. ')

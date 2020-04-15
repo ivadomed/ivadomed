@@ -57,8 +57,8 @@ def cmd_train(context):
     elif context["multichannel"]:
         HeMIS = False
     if HeMIS:
-        # Initializing the missing probability for HeMIS.
-        # The lower the probability the higher, the more modalities are missing.
+        # Initializing the probability of missing modalities for HeMIS.
+        # Higher probability means a more missing modalities
         p = context["missing_probability"]
 
     if bool(sum(context["film_layers"])) and not (metadata_bool):
@@ -411,7 +411,8 @@ def cmd_train(context):
 
         # In case of curriculum Learning we need to update the loader
         if HeMIS:
-            p = p ** (5 / 6)
+            # Increase the probability of a missing modality
+            p = p ** (context["missing_probability_growth"])
             ds_train.update(p=p)
             train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                                       shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
