@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
@@ -17,7 +16,7 @@ PATH_PRETRAINED_MODEL = 'testing_data/model_unet_test.pt'
 RETRAIN_FRACTION = 0.3
 
 def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_MODEL, fraction=RETRAIN_FRACTION):
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
         print("Cuda is not available.")
@@ -37,7 +36,7 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
 
     model = torch.load(path_model, map_location=device)
 
-    model = imed_models.set_for_retrain(model, fraction)
+    model = imed_models.set_model_for_retrain(model, fraction)
 
     if cuda_available:
         model.cuda()
