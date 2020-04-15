@@ -58,8 +58,8 @@ def cmd_train(context):
     elif context["multichannel"]:
         HeMIS = False
     if HeMIS:
-        # Initializing the missing probability for HeMIS.
-        # The lower the probability the higher, the more modalities are missing.
+        # Initializing the probability of missing modalities for HeMIS.
+        # Higher probability means a more missing modalities
         p = context["missing_probability"]
 
     if bool(sum(context["film_layers"])) and not (metadata_bool):
