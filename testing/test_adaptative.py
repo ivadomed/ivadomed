@@ -56,7 +56,7 @@ def test_hdf5():
                               target_suffix=['T1w', 'T2w', 'T2star'],
                               roi_suffix=['T1w', 'T2w', 'T2star'],
                               dim=2,
-                              slices=True)
+                              filter_slices=True)
     print(df.df)
 
     print('\n[INFO]: Dataframe successfully generated. ')

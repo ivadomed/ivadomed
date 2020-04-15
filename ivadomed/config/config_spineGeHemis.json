@@ -31,7 +31,7 @@
 	"ram": true,
 	"missing_probability": 0.0001,
 	"missing_probability_growth": 0.9,
-	"target_lst": ["T2w_seg-manual"],
+	"target_lst": ["T2w"],
 	"roi_lst": null,
 	"slice_axis": "axial",
 	"split_method": "per_patient",
