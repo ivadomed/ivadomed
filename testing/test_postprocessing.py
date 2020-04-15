@@ -10,7 +10,7 @@ import nibabel as nib
 import ivadomed.postprocessing as postproc
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def nii_seg(size_arr=(15, 15, 9), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI', shape='rectangle',
             radius_RL=3.0, radius_AP=2.0, zeroslice=[]):
     """Create a dummy nibabel object with a ellipse or rectangle of ones running from top to bottom in the 3rd
@@ -59,7 +59,7 @@ def nii_seg(size_arr=(15, 15, 9), pixdim=(1, 1, 1), dtype=np.float64, orientatio
 
 def test_threshold(nii_seg):
     # input array
-    arr_seg_proc = postproc.threshold_predictions(np.asanyarray(nii_seg.dataobj))
+    arr_seg_proc = postproc.threshold_predictions(np.copy(np.asanyarray(nii_seg.dataobj)))
     assert isinstance(arr_seg_proc, np.ndarray)
     # input nibabel
     nii_seg_proc = postproc.threshold_predictions(nii_seg)
@@ -71,7 +71,7 @@ def test_keep_largest_object(nii_seg):
     coord = (1, 1, 1)
     nii_seg.dataobj[coord] = 1
     # Test function with array input
-    arr_seg_proc = postproc.keep_largest_object(np.asanyarray(nii_seg.dataobj))
+    arr_seg_proc = postproc.keep_largest_object(np.copy(np.asanyarray(nii_seg.dataobj)))
     assert isinstance(arr_seg_proc, np.ndarray)
     assert arr_seg_proc[coord] == 0
     # Make sure it works with nibabel input
@@ -85,7 +85,7 @@ def test_keep_largest_object_per_slice(nii_seg):
     coord = (1, 1, 1)
     nii_seg.dataobj[coord] = 1
     # Test function with array input
-    arr_seg_proc = postproc.keep_largest_object_per_slice(np.asanyarray(nii_seg.dataobj), axis=2)
+    arr_seg_proc = postproc.keep_largest_object_per_slice(np.copy(np.asanyarray(nii_seg.dataobj)), axis=2)
     assert isinstance(arr_seg_proc, np.ndarray)
     assert arr_seg_proc[coord] == 0
     # Make sure it works with nibabel input
@@ -99,10 +99,26 @@ def test_fill_holes(nii_seg):
     coord = (7, 7, 4)
     nii_seg.dataobj[coord] = 0
     # Test function with array input
-    arr_seg_proc = postproc.fill_holes(np.asanyarray(nii_seg.dataobj))
+    arr_seg_proc = postproc.fill_holes(np.copy(np.asanyarray(nii_seg.dataobj)))
     assert isinstance(arr_seg_proc, np.ndarray)
     assert arr_seg_proc[coord] == 1
-    # make sure it works with nibabel input
+    # Make sure it works with nibabel input
     nii_seg_proc = postproc.fill_holes(nii_seg)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
     assert nii_seg_proc.dataobj[coord] == 1
+
+
+def test_mask_predictions(nii_seg):
+    # create nii object with a voxel of 0 somewhere in the middle
+    nii_seg_mask = nib.nifti1.Nifti1Image(np.copy(np.asanyarray(nii_seg.dataobj)), nii_seg.affine)
+    coord = (7, 7, 4)
+    nii_seg_mask.dataobj[coord] = 0
+    # Test function with array input
+    arr_seg_proc = postproc.mask_predictions(
+        np.copy(np.asanyarray(nii_seg.dataobj)), np.asanyarray(nii_seg_mask.dataobj))
+    assert isinstance(arr_seg_proc, np.ndarray)
+    assert arr_seg_proc[coord] == 0
+    # Make sure it works with nibabel input
+    nii_seg_proc = postproc.mask_predictions(nii_seg, nii_seg_mask.dataobj)
+    assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
+    assert nii_seg_proc.dataobj[coord] == 0
