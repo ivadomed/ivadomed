@@ -21,7 +21,6 @@
     "mixup_bool": false,
     "mixup_alpha": 2,
     "metadata": "without",
-    "missing_modality": false,
     "multichannel": false,
     "out_channel": 1,
     "depth": 3,
@@ -31,9 +30,10 @@
     "early_stopping_epsilon": 0.001,
     "slice_axis": "axial",
     "balance_samples": false,
-    "unet_3D": false,
-    "attention_unet": false,
-    "binarize_prediction": true,
+	"unet_3D": false,
+	"HeMIS": false,
+	"attention_unet": false,
+	"binarize_prediction": true,
     "split_method": "per_patient",
     "slice_filter": {"filter_empty_mask": false, "filter_empty_input": true},
     "slice_filter_roi": 10,
@@ -60,8 +60,7 @@
 			"scale": [0.98, 1.02]
 			},
 		"ToTensor": {},
-		"NormalizeInstance": {},
-		"StackTensors": {}
+		"NormalizeInstance": {}
 		},
 	"transformation_validation": {
 		"Resample": {
@@ -72,8 +71,7 @@
 			"size": [128, 128]
 			},
 		"ToTensor": {},
-		"NormalizeInstance": {},
-      "StackTensors": {}
+		"NormalizeInstance": {}
 		},
         "transformation_testing": {
                 "Resample": {
@@ -84,8 +82,7 @@
                         "size": [128, 128]
                         },
                 "ToTensor": {},
-                "NormalizeInstance": {},
-			"StackTensors": {}
+                "NormalizeInstance": {}
                 },
 	"debugging": false
 }

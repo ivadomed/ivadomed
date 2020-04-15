@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.backends.cudnn as cudnn
+import nibabel as nib
 import torch.nn as nn
 from ivadomed import loader as imed_loader
 from ivadomed import losses
@@ -18,7 +19,7 @@ from ivadomed import metrics
 from ivadomed import models
 from ivadomed import utils as imed_utils
 from medicaltorch import datasets as mt_datasets
-from torch import optim
+from torch import optim, nn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -44,18 +45,22 @@ def cmd_train(context):
         torch.cuda.set_device(gpu_number)
         print("Using GPU number {}".format(gpu_number))
 
-    # Boolean which determines if the selected architecture is FiLMedUnet or Unet or MixupUnet
+    # Boolean which determines if the selected architecture is FiLMed-Unet or Unet or Mixup-Unet
     metadata_bool = False if context["metadata"] == "without" else True
     film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
 
     unet_3D = context["unet_3D"]
+    HeMIS = context['HeMIS']
     attention = context["attention_unet"]
-    HeMIS = context['missing_modality']
     if film_bool:
         context["multichannel"] = False
         HeMIS = False
     elif context["multichannel"]:
         HeMIS = False
+    if HeMIS:
+        # Initializing the probability of missing modalities for HeMIS.
+        # Higher probability means a more missing modalities
+        p = context["missing_probability"]
 
     if bool(sum(context["film_layers"])) and not (metadata_bool):
         print('\tWarning FiLM disabled since metadata is disabled')
@@ -108,6 +113,7 @@ def cmd_train(context):
     ds_train = imed_loader.load_dataset(train_lst, train_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
+    # todo: not supported by the adaptative loader
     if 'ROICrop2D' in context["transformation_training"].keys():
         ds_train = imed_loader.filter_roi(ds_train, nb_nonzero_thr=context["slice_filter_roi"])
 
@@ -129,16 +135,17 @@ def cmd_train(context):
         print(
             f"Loaded {len(ds_train)} volumes of size {context['length_3D']} for the training set.")
 
-    if context['balance_samples']:
+    if context['balance_samples'] and not HeMIS:
         sampler_train = imed_loader.BalancedSampler(ds_train)
         shuffle_train = False
     else:
         sampler_train, shuffle_train = None, True
-
+     
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
                               collate_fn=mt_datasets.mt_collate,
                               num_workers=0)
+    print("Validation")
 
     # Validation dataset ------------------------------------------------------
     ds_val = imed_loader.load_dataset(valid_lst, val_transform, context)
@@ -160,7 +167,7 @@ def cmd_train(context):
         print(
             f"Loaded {len(ds_val)} volumes of size {context['length_3D']} for the validation set.")
 
-    if context['balance_samples']:
+    if context['balance_samples'] and not HeMIS:
         sampler_val = imed_loader.BalancedSampler(ds_val)
         shuffle_val = False
     else:
@@ -237,7 +244,7 @@ def cmd_train(context):
 
     # Using Adam
     step_scheduler_batch = False
-    # filter out the parameters you are going to fine-tuing
+    # filter out the parameters you are going to fine-tuning
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
     if context["lr_scheduler"]["name"] == "CosineAnnealingLR":
@@ -334,10 +341,10 @@ def cmd_train(context):
 
             # mixup data
             if mixup_bool and not film_bool:
-                input_samples, gt_samples, lambda_tensor = utils.mixup(
+                input_samples, gt_samples, lambda_tensor = imed_utils.mixup(
                     input_samples, gt_samples, mixup_alpha)
 
-                # if debugging and first epoch, then save samples as png in ofolder
+                # if debugging and first epoch, then save samples as png in log folder
                 if context["debugging"] and epoch == 1 and random.random() < 0.1:
                     mixup_folder = os.path.join(context["log_directory"], 'mixup')
                     if not os.path.isdir(mixup_folder):
@@ -346,15 +353,15 @@ def cmd_train(context):
                     val_gt = np.unique(gt_samples.data.numpy()[random_idx, 0, :, :])
                     mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3) + '_' + str(
                         lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png')
-                    utils.save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :],
+                    imed_utils.save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :],
                                             gt_samples.data.numpy()[random_idx, 0, :, :],
                                             mixup_fname_pref)
 
             # The variable sample_metadata is where the MRI physics parameters are
 
             if cuda_available:
-                var_input = utils.cuda(input_samples)
-                var_gt = gt_samples.cuda(non_blocking=True)
+                var_input = imed_utils.cuda(input_samples)
+                var_gt = imed_utils.cuda(gt_samples, non_blocking=True)
             else:
                 var_input = input_samples
                 var_gt = gt_samples
@@ -363,11 +370,14 @@ def cmd_train(context):
                 # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
                 sample_metadata = batch["input_metadata"]
                 var_contrast = [sample_metadata[0][k]['contrast'] for k in range(len(sample_metadata[0]))]
-
                 var_metadata = [train_onehotencoder.transform([sample_metadata[0][k]['film_input']]).tolist()[0]
-                                for k in range(len(sample_metadata))]
+                                for k in range(len(sample_metadata[0]))]
+
                 # Input the metadata related to the input samples
                 preds = model(var_input, var_metadata)
+            elif HeMIS:
+                missing_mod = batch["Missing_mod"]
+                preds = model(var_input, missing_mod)
             else:
                 preds = model(var_input)
 
@@ -388,9 +398,8 @@ def cmd_train(context):
 
             num_steps += 1
 
-            # Only write sample at the first step
             if i == 0:
-                utils.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds, unet_3D)
+                imed_utils.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds, unet_3D)
 
         train_loss_total_avg = train_loss_total / num_steps
         if not step_scheduler_batch:
@@ -400,6 +409,16 @@ def cmd_train(context):
         if context["loss"]["name"] != 'dice':
             dice_train_loss_total_avg = dice_train_loss_total / num_steps
             tqdm.write(f"\tDice training loss: {dice_train_loss_total_avg:.4f}.")
+
+        # In case of curriculum Learning we need to update the loader
+        if HeMIS:
+            # Increase the probability of a missing modality
+            p = p ** (context["missing_probability_growth"])
+            ds_train.update(p=p)
+            train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
+                                      shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
+                                      collate_fn=mt_datasets.mt_collate,
+                                      num_workers=0)
 
         # Validation loop -----------------------------------------------------
         model.eval()
@@ -413,8 +432,8 @@ def cmd_train(context):
 
             with torch.no_grad():
                 if cuda_available:
-                    var_input = utils.cuda(input_samples)
-                    var_gt = gt_samples.cuda(non_blocking=True)
+                    var_input = imed_utils.cuda(input_samples)
+                    var_gt = imed_utils.cuda(gt_samples, non_blocking=True)
                 else:
                     var_input = input_samples
                     var_gt = gt_samples
@@ -427,8 +446,13 @@ def cmd_train(context):
 
                     var_metadata = [train_onehotencoder.transform([sample_metadata[0][k]['film_input']]).tolist()[0]
                                     for k in range(len(sample_metadata[0]))]
+
                     # Input the metadata related to the input samples
                     preds = model(var_input, var_metadata)
+                elif HeMIS:
+                    missing_mod = batch["Missing_mod"]
+                    preds = model(var_input, missing_mod)
+
                 else:
                     preds = model(var_input)
 
@@ -557,7 +581,7 @@ def cmd_test(context):
         gpu_number = int(context["gpu"])
         torch.cuda.set_device(gpu_number)
         print("using GPU number {}".format(gpu_number))
-    HeMIS = context['missing_modality']
+    HeMIS = context['HeMIS']
     # Boolean which determines if the selected architecture is FiLMedUnet or Unet
     film_bool = bool(sum(context["film_layers"]))
     print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
@@ -653,7 +677,8 @@ def cmd_test(context):
             with torch.no_grad():
                 if cuda_available:
                     test_input = imed_utils.cuda(input_samples)
-                    test_gt = gt_samples.cuda(non_blocking=True)
+                    test_gt = imed_utils.cuda(gt_samples, non_blocking=True)
+
                 else:
                     test_input = input_samples
                     test_gt = gt_samples
@@ -671,16 +696,25 @@ def cmd_test(context):
 
                     test_metadata = [one_hot_encoder.transform([sample_metadata[0][k]["film_input"]]).tolist()[0]
                                      for k in range(len(sample_metadata[0]))]
+
                     # Input the metadata related to the input samples
                     preds = model(test_input, test_metadata)
+                elif HeMIS:
+                    missing_mod = batch["Missing_mod"]
+                    preds = model(test_input, missing_mod)
+
+                    # Reconstruct image with only one modality
+                    batch['input'] = batch['input'][0]
+                    batch['input_metadata'] = batch['input_metadata'][0]
+
                 else:
                     preds = model(test_input)
                     if context["attention_unet"]:
                         imed_utils.save_feature_map(batch, "attentionblock2", context, model, test_input,
                                                imed_utils.AXIS_DCT[context["slice_axis"]])
 
-            # WARNING: sample['gt'] is actually the pred in the return sample
-            # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
+            # WARNING: sample['gt'] is actually the pred in the return sample implementation justification: the other
+            # option: rdict['pred'] = preds would require to largely modify mt_transforms
             rdict = {}
             rdict['gt'] = preds.cpu()
             batch.update(rdict)
@@ -705,6 +739,7 @@ def cmd_test(context):
                 rdict_undo = val_undo_transform(rdict)
 
                 fname_ref = rdict_undo['gt_metadata']['gt_filenames'][0]
+
                 if not context['unet_3D']:
                     if pred_tmp_lst and (fname_ref != fname_tmp or (
                             i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
@@ -720,7 +755,7 @@ def cmd_test(context):
                                                                z_lst=z_tmp_lst,
                                                                fname_ref=fname_tmp,
                                                                fname_out=fname_pred,
-                                                               slice_axis=utils.AXIS_DCT[context['slice_axis']],
+                                                               slice_axis=imed_utils.AXIS_DCT[context['slice_axis']],
                                                                kernel_dim='2d',
                                                                bin_thr=0.5 if context["binarize_prediction"] else -1)
 

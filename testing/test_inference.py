@@ -1,20 +1,15 @@
 import os
-import numpy as np
-
-import torch
-import torch.backends.cudnn as cudnn
-from torch.utils.data import DataLoader
-from torchvision import transforms
-
-from ivadomed import utils
-from ivadomed import metrics
-from ivadomed.utils import SliceFilter
-from medicaltorch import datasets as mt_datasets
-
-from ivadomed import loader as loader
-from ivadomed import metrics
 
 import ivadomed.transforms as ivadomed_transforms
+import numpy as np
+import torch
+import torch.backends.cudnn as cudnn
+from ivadomed import loader as loader
+from ivadomed import metrics
+from ivadomed import utils
+from medicaltorch import datasets as mt_datasets
+from torch.utils.data import DataLoader
+from torchvision import transforms
 
 cudnn.benchmark = True
 
@@ -44,8 +39,7 @@ def test_inference(film_bool=False):
         ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
         ivadomed_transforms.ROICrop2D(size=[48, 48]),
         ivadomed_transforms.ToTensor(),
-        ivadomed_transforms.NormalizeInstance(),
-        ivadomed_transforms.StackTensors()
+        ivadomed_transforms.NormalizeInstance()
     ]
 
     val_transform = transforms.Compose(validation_transform_list)
@@ -63,8 +57,8 @@ def test_inference(film_bool=False):
                                  slice_axis=SLICE_AXIS,
                                  transform=val_transform,
                                  multichannel=False,
-                                 slice_filter_fn=SliceFilter(filter_empty_input=True,
-                                                             filter_empty_mask=False))
+                                 slice_filter_fn=utils.SliceFilter(filter_empty_input=True,
+                                                                   filter_empty_mask=False))
 
     ds_test = loader.filter_roi(ds_test, nb_nonzero_thr=10)
 
@@ -114,7 +108,7 @@ def test_inference(film_bool=False):
         with torch.no_grad():
             if cuda_available:
                 test_input = input_samples.cuda()
-                test_gt = gt_samples.cuda(non_blocking=True)
+                test_gt = utils.cuda(gt_samples, non_blocking=True)
             else:
                 test_input = input_samples
                 test_gt = gt_samples
@@ -124,7 +118,8 @@ def test_inference(film_bool=False):
                 test_contrast = [sample_metadata[k]['contrast']
                                  for k in range(len(sample_metadata))]
 
-                test_metadata = [one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k in
+                test_metadata = [utils.one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k
+                                 in
                                  range(len(sample_metadata))]
                 # Input the metadata related to the input samples
                 preds = model(test_input, test_metadata)
@@ -136,7 +131,6 @@ def test_inference(film_bool=False):
         rdict = {}
         rdict['gt'] = preds.cpu()
         batch.update(rdict)
-
 
         batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
         batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
@@ -154,11 +148,14 @@ def test_inference(film_bool=False):
 
             fname_ref = rdict_undo['input_metadata']['gt_filenames'][0]
             # new processed file
-            if pred_tmp_lst and (fname_ref != fname_tmp or (i == len(test_loader)-1 and smp_idx == len(batch['gt'])-1)):
+            if pred_tmp_lst and (
+                    fname_ref != fname_tmp or (i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):
                 # save the completely processed file as a nii
                 fname_pred = os.path.join(PATH_OUT, fname_tmp.split('/')[-1])
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
-                _ = utils.pred_to_nib(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS, debug=True, kernel_dim='2d', bin_thr=0.5)
+                _ = utils.pred_to_nib(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS,
+                                      debug=True, kernel_dim='2d', bin_thr=0.5)
+
                 # re-init pred_stack_lst
                 pred_tmp_lst, z_tmp_lst = [], []
 
