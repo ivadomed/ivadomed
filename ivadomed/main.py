@@ -825,7 +825,6 @@ def cmd_eval(context):
                                          subj_acq + suffix + '.nii.gz'))
 
         # 3D evaluation
-        # TODO: the call to nib will fail! (Julien)
         nib_pred = nib.load(fname_pred)
         data_pred = nib_pred.get_fdata()
 
