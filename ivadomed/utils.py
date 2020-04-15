@@ -13,8 +13,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from ivadomed import loader as imed_loader
-from ivadomed import loader_utils as imed_loaded_utils
+from ivadomed.loader import utils as imed_loaded_utils, loader as imed_loader
 from ivadomed import metrics as imed_metrics
 from ivadomed import transforms as imed_transforms
 
@@ -671,7 +670,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     # If fname_roi provided, then remove slices without ROI
     if fname_roi is not None:
-        ds = imed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
+        ds = imed_loaded_utils.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
 
     if not context['unet_3D']:
         print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
@@ -823,7 +822,7 @@ def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
     # Save for subject in batch
     for i in range(batch['input'].size(0)):
         inp_fmap, out_fmap = \
-            HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input[i][None,]))
+            HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input[i][None, ]))
 
         # Display the input image and Down_sample the input image
         orig_input_img = test_input[i][None,].permute(3, 4, 2, 0, 1).cpu().numpy()

@@ -5,9 +5,8 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 import ivadomed.transforms as ivadomed_transforms
-from ivadomed import loader as loader
-from ivadomed import loader_utils as imed_loader_utils
 from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
 
@@ -48,18 +47,18 @@ def test_sampler():
 
     train_lst = ['sub-test001']
 
-    ds_train = loader.BidsDataset(PATH_BIDS,
-                                  subject_lst=train_lst,
-                                  target_suffix=["_lesion-manual"],
-                                  roi_suffix="_seg-manual",
-                                  contrast_lst=['T2w'],
-                                  metadata_choice="without",
-                                  contrast_balance={},
-                                  slice_axis=2,
-                                  transform=train_transform,
-                                  multichannel=False,
-                                  slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
-                                                                         filter_empty_mask=False))
+    ds_train = imed_loader.BidsDataset(PATH_BIDS,
+                                       subject_lst=train_lst,
+                                       target_suffix=["_lesion-manual"],
+                                       roi_suffix="_seg-manual",
+                                       contrast_lst=['T2w'],
+                                       metadata_choice="without",
+                                       contrast_balance={},
+                                       slice_axis=2,
+                                       transform=train_transform,
+                                       multichannel=False,
+                                       slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                                                              filter_empty_mask=False))
 
     ds_train = imed_loader_utils.filter_roi(ds_train, nb_nonzero_thr=10)
 

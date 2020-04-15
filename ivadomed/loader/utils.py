@@ -15,7 +15,7 @@ from sklearn.preprocessing import OneHotEncoder
 from torch._six import string_classes, int_classes
 
 from ivadomed import __path__
-from ivadomed import adaptative as imed_adaptative
+from ivadomed.loader import adaptative as imed_adaptative
 from ivadomed import loader as imed_loader
 from ivadomed import utils as imed_utils
 

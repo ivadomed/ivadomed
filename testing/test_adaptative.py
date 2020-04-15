@@ -6,8 +6,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 import ivadomed.transforms as ivadomed_transforms
-from ivadomed import adaptative as imed_adaptative
-from ivadomed import loader_utils as imed_loader_utils
+from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed import utils as imed_utils
 
 GPU_NUMBER = 0

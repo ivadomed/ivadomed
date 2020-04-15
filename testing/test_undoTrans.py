@@ -9,9 +9,8 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 import ivadomed.transforms as ivadomed_transforms
-from ivadomed import loader as loader
-from ivadomed import loader_utils as imed_loader_utils
 from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
 
@@ -56,18 +55,18 @@ def test_undo(contrast='T2star', tol=3):
 
     subject_test_lst = ['sub-test001']
 
-    ds_test_noTrans = loader.BidsDataset(PATH_BIDS,
-                                         subject_lst=subject_test_lst,
-                                         target_suffix=["_lesion-manual"],
-                                         roi_suffix="_seg-manual",
-                                         contrast_lst=[contrast],
-                                         metadata_choice="contrast",
-                                         contrast_balance={},
-                                         slice_axis=SLICE_AXIS,
-                                         transform=transforms.Compose(test_1),
-                                         multichannel=False,
-                                         slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
-                                                                                filter_empty_mask=False))
+    ds_test_noTrans = imed_loader.BidsDataset(PATH_BIDS,
+                                              subject_lst=subject_test_lst,
+                                              target_suffix=["_lesion-manual"],
+                                              roi_suffix="_seg-manual",
+                                              contrast_lst=[contrast],
+                                              metadata_choice="contrast",
+                                              contrast_balance={},
+                                              slice_axis=SLICE_AXIS,
+                                              transform=transforms.Compose(test_1),
+                                              multichannel=False,
+                                              slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                                                                     filter_empty_mask=False))
     test_loader_noTrans = DataLoader(ds_test_noTrans, batch_size=len(ds_test_noTrans),
                                      shuffle=False, pin_memory=True,
                                      collate_fn=imed_loader_utils.mt_collate,
@@ -80,18 +79,18 @@ def test_undo(contrast='T2star', tol=3):
         val_transform = transforms.Compose(test)
         val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
 
-        ds_test = loader.BidsDataset(PATH_BIDS,
-                                     subject_lst=subject_test_lst,
-                                     target_suffix=["_lesion-manual"],
-                                     roi_suffix="_seg-manual",
-                                     contrast_lst=[contrast],
-                                     metadata_choice="contrast",
-                                     contrast_balance={},
-                                     slice_axis=SLICE_AXIS,
-                                     transform=val_transform,
-                                     multichannel=False,
-                                     slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
-                                                                            filter_empty_mask=False))
+        ds_test = imed_loader.BidsDataset(PATH_BIDS,
+                                          subject_lst=subject_test_lst,
+                                          target_suffix=["_lesion-manual"],
+                                          roi_suffix="_seg-manual",
+                                          contrast_lst=[contrast],
+                                          metadata_choice="contrast",
+                                          contrast_balance={},
+                                          slice_axis=SLICE_AXIS,
+                                          transform=val_transform,
+                                          multichannel=False,
+                                          slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                                                                 filter_empty_mask=False))
 
         test_loader = DataLoader(ds_test, batch_size=len(ds_test),
                                  shuffle=False, pin_memory=True,

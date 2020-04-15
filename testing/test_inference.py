@@ -7,8 +7,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 import ivadomed.transforms as ivadomed_transforms
-from ivadomed import loader as imed_loader
-from ivadomed import loader_utils as imed_loader_utils
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed import metrics
 from ivadomed import utils as imed_utils
 

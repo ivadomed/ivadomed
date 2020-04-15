@@ -17,7 +17,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 import ivadomed.transforms as ivadomed_transforms
-from ivadomed import loader_utils as imed_loader_utils
+from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import losses
 from ivadomed import metrics
 from ivadomed import models

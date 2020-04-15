@@ -10,8 +10,7 @@ from PIL import Image
 from bids_neuropoly import bids
 from tqdm import tqdm
 
-from ivadomed import loader as imed_loader
-from ivadomed import loader_utils as imed_loader_utils
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 
 class Dataframe:

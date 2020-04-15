@@ -1,7 +1,6 @@
-
 import torch
-import torch.nn as nn
 import torch.backends.cudnn as cudnn
+import torch.nn as nn
 from torch import optim
 
 from ivadomed import models
@@ -62,7 +61,7 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
     total_trainable_params = sum(
         p.numel() for p in model.parameters() if p.requires_grad)
     print(f'{total_trainable_params:,} training parameters.')
-    assert(total_params > total_trainable_params)
+    assert (total_params > total_trainable_params)
 
     initial_lr = INITIAL_LR
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())

@@ -5,7 +5,7 @@ from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
-from ivadomed import loader_utils as imed_loader_utils
+from ivadomed.loader import utils as imed_loader_utils
 
 
 class SegmentationPair(object):
