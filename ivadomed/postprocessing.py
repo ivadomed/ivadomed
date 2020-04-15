@@ -11,7 +11,7 @@ def nifti_capable(wrapped):
     @functools.wraps(wrapped)
     def wrapper(data, *args, **kwargs):
         if isinstance(data, nib.Nifti1Image):
-            return nib.Nifti1Image(wrapper(np.asanyarray(data.dataobj), *args, **kwargs), data.affine)
+            return nib.Nifti1Image(wrapper(np.copy(np.asanyarray(data.dataobj)), *args, **kwargs), data.affine)
         return wrapped(data, *args, **kwargs)
     return wrapper
 
@@ -100,38 +100,17 @@ def fill_holes(predictions, structure=(3, 3, 3)):
     return binary_fill_holes(predictions, structure=np.ones(structure)).astype(np.int)
 
 
+@nifti_capable
 def mask_predictions(predictions, mask_binary):
-    """Mask soft predictions with binary mask.
-
-    Mask predictions (e.g. soft predictions) using a binary mask (e.g. ROI, hard predictions).
+    """
+    Mask predictions using a binary mask: sets everything outside the mask to zero.
 
     Args:
-        predictions (array): array to mask.
+        predictions (array or nibabel object): Input binary segmentation. Image could be 2D or 3D.
         mask_binary (array): array with the same shape as predictions, containing only zeros or ones.
     Returns:
-        array: processed segmentation.
-
+        Array or nibabel (same object as the input).
     """
     assert predictions.shape == mask_binary.shape
-    # Check if predictions_bin only contains 0s or 1s
-    assert mask_binary.dtype == np.dtype('int')
     assert np.array_equal(mask_binary, mask_binary.astype(bool))
     return predictions * mask_binary
-
-
-def mask_predictions_nib(nib_predictions, nib_mask_binary):
-    """Mask soft predictions with binary mask.
-
-    Mask nibabel predictions (e.g. soft predictions) using a nibabel binary mask (e.g. ROI, hard predictions).
-
-    Args:
-        nib_predictions (nibabelObject): nibabel image to mask.
-        nib_mask_binary (nibabelObject): nibabel image with the same shape as nib_predictions, containing only zeros or ones.
-    Returns:
-        nibabelObject: processed segmentation.
-
-    """
-    data = nib_predictions.get_fdata()
-    data_mask = nib_mask_binary.get_fdata()
-    data_out = mask_predictions(predictions=data, mask_binary=data_mask)
-    return nib.Nifti1Image(data_out, nib_predictions.affine)
