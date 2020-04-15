@@ -214,6 +214,11 @@ def cmd_train(context):
         for param in model.parameters():
             param.requires_grad = False
 
+        # Get number of layers with learnt parameters
+        n_layers = len([l for l in model.parameters() if hasattr(l, 'reset_parameters')])
+        # Compute the number of these layers we want to freeze
+        n_freeze = int(round(n_layers * context['retrain_fraction']))
+
         # TMP
         model.decoder = models.Decoder(out_channel=context['out_channel'],
                                         depth=context['depth'],
