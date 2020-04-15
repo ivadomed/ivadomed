@@ -48,15 +48,15 @@ def keep_largest_object(predictions):
     Returns:
         Array or nibabel (same object as the input).
     """
-    # TODO: relax the assert below: just make sure the image only has 0 and 1.
-    assert predictions.dtype == np.dtype('int')
+    assert np.array_equal(predictions, predictions.astype(bool))
+    predictions_proc = np.copy(predictions)
     # Find number of closed objects using skimage "label"
     labeled_obj, num_obj = label(predictions)
     # If more than one object is found, keep the largest one
     if num_obj > 1:
         # Keep the largest object
-        predictions[np.where(labeled_obj != (np.bincount(labeled_obj.flat)[1:].argmax() + 1))] = 0
-    return predictions
+        predictions_proc[np.where(labeled_obj != (np.bincount(labeled_obj.flat)[1:].argmax() + 1))] = 0
+    return predictions_proc
 
 
 def keep_largest_object_per_slice(predictions, axis=2):
