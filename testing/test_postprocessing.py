@@ -73,3 +73,9 @@ def test_keep_largest_object(nii_seg):
     arr_seg_proc = postproc.keep_largest_object(np.asanyarray(nii_seg.dataobj))
     assert isinstance(arr_seg_proc, np.ndarray)
     assert arr_seg_proc[1, 1, 1] == 0
+
+
+def test_keep_largest_object_per_slice(nii_seg):
+    arr_seg_proc = postproc.keep_largest_object_per_slice(np.asanyarray(nii_seg.dataobj), axis=2)
+    assert isinstance(arr_seg_proc, np.ndarray)
+    assert arr_seg_proc[1, 1, 1] == 0
