@@ -14,7 +14,7 @@ def remove_slice(fname_im, fname_seg):
     """
     # Load data
     nii_im = nib.load(fname_im)
-    data_im = nii_im.get_fdata()
+    data_im = np.asanyarray(nii_im.dataobj)
     affine_im = nii_im.affine
     nii_seg = nib.load(fname_seg)
     data_seg = nii_seg.get_fdata()
@@ -75,4 +75,3 @@ def run_main():
 
 if __name__ == "__main__":
     run_main()
-
