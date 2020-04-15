@@ -23,7 +23,7 @@ def threshold_predictions(predictions, thr=0.5):
     a binary array.
 
     Args:
-        predictions (array or nibabel object): Image to binarise.
+        predictions (array or nibabel object): Image to binarize.
         thr (float): Threshold value: voxels with a value < to thr are assigned 0 as value, 1
             otherwise.
     Returns:
@@ -37,44 +37,26 @@ def threshold_predictions(predictions, thr=0.5):
     return thresholded_preds.astype(np.int)
 
 
+@nifti_capable
 def keep_largest_object(predictions):
-    """Keep the largest connect object.
-
-    Keep the largest connected object from the input array (2 or 3D).
+    """
+    Keep the largest connected object from the input array (2D or 3D).
     Note: This function only works for binary segmentation.
 
     Args:
-        predictions (array): Input 2 or 3D binary segmentation.
+        predictions (array or nibabel object): Input binary segmentation. Image could be 2D or 3D.
     Returns:
-        array: processed segmentation.
-
+        Array or nibabel (same object as the input).
     """
+    # TODO: relax the assert below: just make sure the image only has 0 and 1.
     assert predictions.dtype == np.dtype('int')
     # Find number of closed objects using skimage "label"
     labeled_obj, num_obj = label(predictions)
     # If more than one object is found, keep the largest one
     if num_obj > 1:
         # Keep the largest object
-            predictions[np.where(labeled_obj != (np.bincount(labeled_obj.flat)[1:].argmax() + 1))] = 0
+        predictions[np.where(labeled_obj != (np.bincount(labeled_obj.flat)[1:].argmax() + 1))] = 0
     return predictions
-
-
-def keep_largest_object_nib(nib_predictions):
-    """Keep the largest connect object from nibabel image.
-
-    Keep the largest connected object from the input image (2 or 3D).
-    Note: This function only works for binary segmentation.
-    Note: This function calls keep_largest_object().
-
-    Args:
-        nib_predictions (nibabelObject): Input image, 2 or 3D, binary segmentation.
-    Returns:
-        nibabelObject: processed segmentation.
-
-    """
-    data = nib_predictions.get_fdata()
-    data_out = keep_largest_object(predictions=data)
-    return nib.Nifti1Image(data_out, nib_predictions.affine)
 
 
 def keep_largest_object_per_slice(predictions, axis=2):
