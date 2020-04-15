@@ -210,10 +210,6 @@ def cmd_train(context):
     else:
         model = torch.load(context['retrain_model'])
 
-        # Freeze model weights
-        for param in model.parameters():
-            param.requires_grad = False
-
         # Get number of layers with learnt parameters
         n_layers = len([l for l in model.parameters() if hasattr(l, 'reset_parameters')])
         # Compute the number of these layers we want to freeze
@@ -235,21 +231,6 @@ def cmd_train(context):
 
         for l in model.parameters():
             print(l.requires_grad)
-
-        # TMP
-        model.decoder = models.Decoder(out_channel=context['out_channel'],
-                                        depth=context['depth'],
-                                        n_metadata=n_metadata,
-                                        film_layers=[0] * (2 * context['depth'] + 2),
-                                        drop_rate=context["dropout_rate"],
-                                        bn_momentum=context["batch_norm_momentum"])
-
-        # Replace the last conv layer
-        # Note: Parameters of newly constructed layer have requires_grad=True by default
-        #model.decoder.last_conv = nn.Conv2d(model.decoder.last_conv.in_channels,
-        #                                    context['out_channel'], kernel_size=3, padding=1)
-        #if film_bool and context["film_layers"][-1]:
-        #    model.decoder.last_film = models.FiLMlayer(n_metadata, 1)
 
     if cuda_available:
         model.cuda()
