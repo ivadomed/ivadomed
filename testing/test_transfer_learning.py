@@ -4,19 +4,19 @@ import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch import optim
 
-from ivadomed import models
+from ivadomed import models as imed_models
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 0
+GPU_NUMBER = 7
 N_METADATA = 1
 OUT_CHANNEL = 1
 INITIAL_LR = 0.001
 FILM_LAYERS = [0, 0, 0, 0, 0, 0, 0, 0]
 PATH_PRETRAINED_MODEL = 'testing_data/model_unet_test.pt'
+RETRAIN_FRACTION = 0.3
 
-
-def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_MODEL):
+def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_MODEL, fraction=RETRAIN_FRACTION):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
@@ -37,17 +37,7 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
 
     model = torch.load(path_model, map_location=device)
 
-    # Freeze model weights
-    for param in model.parameters():
-        param.requires_grad = False
-
-    # Replace the last conv layer
-    # Note: Parameters of newly constructed layer have requires_grad=True by default
-    model.decoder.last_conv = nn.Conv2d(model.decoder.last_conv.in_channels,
-                                        OUT_CHANNEL, kernel_size=3, padding=1)
-
-    if film_bool and film_layers[-1]:
-        model.decoder.last_film = models.FiLMlayer(n_metadata, 1)
+    model = imed_models.set_for_retrain(model, fraction)
 
     if cuda_available:
         model.cuda()
