@@ -17,11 +17,12 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 import ivadomed.transforms as ivadomed_transforms
-from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import losses
 from ivadomed import metrics
 from ivadomed import models
 from ivadomed import utils as imed_utils
+from ivadomed.FiLM import utils as film_utils
+from ivadomed.loader import utils as imed_loader_utils
 
 cudnn.benchmark = True
 
@@ -119,14 +120,14 @@ def cmd_train(context):
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
             metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
-            metadata_clustering_models = imed_loader_utils.clustering_fit(ds_train.metadata, metadata_vector)
+            metadata_clustering_models = film_utils.clustering_fit(ds_train.metadata, metadata_vector)
         else:
             metadata_clustering_models = None
-        ds_train, train_onehotencoder = imed_loader_utils.normalize_metadata(ds_train,
-                                                                             metadata_clustering_models,
-                                                                             context["debugging"],
-                                                                             context["metadata"],
-                                                                             True)
+        ds_train, train_onehotencoder = film_utils.normalize_metadata(ds_train,
+                                                                      metadata_clustering_models,
+                                                                      context["debugging"],
+                                                                      context["metadata"],
+                                                                      True)
 
     if not unet_3D:
         print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
@@ -154,11 +155,11 @@ def cmd_train(context):
         ds_val = imed_loader_utils.filter_roi(ds_val, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to network
-        ds_val = imed_loader_utils.normalize_metadata(ds_val,
-                                                      metadata_clustering_models,
-                                                      context["debugging"],
-                                                      context["metadata"],
-                                                      False)
+        ds_val = film_utils.normalize_metadata(ds_val,
+                                               metadata_clustering_models,
+                                               context["debugging"],
+                                               context["metadata"],
+                                               False)
 
     if not unet_3D:
         print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")
@@ -615,11 +616,11 @@ def cmd_test(context):
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load(
             "./" + context["log_directory"] + "/clustering_models.joblib")
-        ds_test = imed_loader_utils.normalize_metadata(ds_test,
-                                                       metadata_clustering_models,
-                                                       context["debugging"],
-                                                       context["metadata"],
-                                                       False)
+        ds_test = film_utils.normalize_metadata(ds_test,
+                                                metadata_clustering_models,
+                                                context["debugging"],
+                                                context["metadata"],
+                                                False)
 
         one_hot_encoder = joblib.load("./" + context["log_directory"] + "/one_hot_encoder.joblib")
 

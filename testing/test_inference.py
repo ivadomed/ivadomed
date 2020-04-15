@@ -7,9 +7,9 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 import ivadomed.transforms as ivadomed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed import metrics
 from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
 
@@ -66,7 +66,7 @@ def test_inference(film_bool=False):
         print('FiLM inference not implemented yet.')
         return 0
         # metadata_clustering_models = joblib.load("./" + context["log_directory"] + "/clustering_models.joblib")
-        # ds_test = loader.normalize_metadata(ds_test,
+        # ds_test = film_utils.normalize_metadata(ds_test,
         #                                     metadata_clustering_models,
         #                                     context["debugging"],
         #                                     context["metadata"],

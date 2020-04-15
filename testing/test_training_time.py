@@ -10,10 +10,11 @@ from torchvision import transforms
 from tqdm import tqdm
 
 import ivadomed.transforms as ivadomed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed import losses
 from ivadomed import models
 from ivadomed import utils as imed_utils
+from ivadomed.FiLM import utils as film_utils
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
 
@@ -96,11 +97,11 @@ def test_unet():
     ds_train = imed_loader_utils.filter_roi(ds_train, nb_nonzero_thr=10)
 
     metadata_clustering_models = None
-    ds_train, train_onehotencoder = imed_loader_utils.normalize_metadata(ds_train,
-                                                                         metadata_clustering_models,
-                                                                         False,
-                                                                         "contrast",
-                                                                         True)
+    ds_train, train_onehotencoder = film_utils.normalize_metadata(ds_train,
+                                                                  metadata_clustering_models,
+                                                                  False,
+                                                                  "contrast",
+                                                                  True)
 
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
