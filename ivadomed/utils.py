@@ -601,6 +601,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     device = torch.device("cpu")
 
     # Check if model folder exists
+    # TODO: this check already exists in sct.deepseg.core.segment_nifti(). We should probably keep only one check in
+    #  ivadomed, and do it in a separate, more specific file (e.g. models.py)
     if os.path.isdir(folder_model):
         prefix_model = os.path.basename(folder_model)
         # Check if model and model metadata exist
