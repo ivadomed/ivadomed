@@ -17,7 +17,7 @@ def remove_slice(fname_im, fname_seg):
     data_im = np.asanyarray(nii_im.dataobj)
     affine_im = nii_im.affine
     nii_seg = nib.load(fname_seg)
-    data_seg = nii_seg.get_fdata()
+    data_seg = np.asanyarray(nii_seg.dataobj)
     _, _, nz = nii_im.shape
     # Loop across slices in ascending mode and stop when no more empty
     z_bottom = 0
