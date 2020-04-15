@@ -20,7 +20,7 @@ class Dataframe:
     """
 
     def __init__(self, hdf5, contrasts, path, target_suffix=None, roi_suffix=None,
-                 slices=False, dim=2):
+                 filter_slices=False, dim=2):
         """
         Initialize the Dataframe
         """
@@ -42,7 +42,7 @@ class Dataframe:
             self.contrasts.append('ROI')
 
         self.df = None
-        self.filter = slices
+        self.filter = filter_slices
 
         # Data frame
         if os.path.exists(path):
@@ -90,7 +90,6 @@ class Dataframe:
         # Filling the data frame
         for subject in hdf5.attrs['patients_id']:
             # Getting the Group the corresponding patient
-            print(subject)
             grp = hdf5[subject]
             line = copy.deepcopy(empty_line)
             line['Subjects'] = subject
@@ -106,13 +105,11 @@ class Dataframe:
             # GT
             assert 'gt' in grp.keys()
             inputs = grp['gt']
-            print("input = ", inputs.attrs['contrast'])
             for c in inputs.attrs['contrast']:
                 key = 'gt/' + c
                 for col in col_names:
                     if key in col:
                         line[col] = '{}/gt/{}'.format(subject, c)
-                        print(line)
                     else:
                         continue
             # ROI
@@ -480,7 +477,7 @@ class HDF5Dataset:
             self.hdf5_file = h5py.File(hdf5_name, "r")
         # Loading dataframe object
         self.df_object = Dataframe(self.hdf5_file, contrast_lst, csv_name, target_suffix=target_lst,
-                                   roi_suffix=roi_lst, dim=self.dim, slices=slice_filter_fn)
+                                   roi_suffix=roi_lst, dim=self.dim, filter_slices=slice_filter_fn)
         if complet:
             self.df_object.clean(self.cst_lst)
         print("after cleaning")
@@ -631,7 +628,7 @@ class HDF5Dataset:
                 if not np.any(missing_mod):
                     missing_mod = np.zeros((len(self.cst_lst)))
                     missing_mod[np.random.randint(2, size=1)] = 1
-                self.cst_matrix[idx,] = missing_mod
+                self.cst_matrix[idx, ] = missing_mod
 
             print("Missing modalities = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
 
