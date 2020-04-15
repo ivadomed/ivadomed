@@ -60,19 +60,17 @@ def keep_largest_object(predictions):
 
 
 def keep_largest_object_per_slice(predictions, axis=2):
-    """Keep the largest connect object per 2d slice.
-
-    Keep the largest connected object for each 2D slice of an input array along a given axis.
+    """
+    Keep the largest connected object for each 2D slice, along a specified axis.
     Note: This function only works for binary segmentation.
 
     Args:
-        predictions (array): Input binary segmentation.
+        predictions (array or nibabel object): Input binary segmentation. Image could be 2D or 3D.
         axis (int): 2D slices are extracted along this axis.
     Returns:
-        array: processed segmentation.
-
+        Array or nibabel (same object as the input).
     """
-    assert predictions.dtype == np.dtype('int')
+    assert np.array_equal(predictions, predictions.astype(bool))
     # Split the 3D input array as a list of slice along axis
     list_preds_in = np.split(predictions, predictions.shape[axis], axis=axis)
     # Init list of processed slices
@@ -82,25 +80,6 @@ def keep_largest_object_per_slice(predictions, axis=2):
         slice_processed = keep_largest_object(np.squeeze(list_preds_in[idx], axis=axis))
         list_preds_out.append(slice_processed)
     return np.stack(list_preds_out, axis=axis)
-
-
-def keep_largest_object_per_slice_nib(nib_predictions, axis=2):
-    """Keep the largest connect object from nibabel image per 2d slice.
-
-    Keep the largest connected object for each 2D slice of an input image along a given axis.
-    Note: This function only works for binary segmentation.
-    Note: This function calls keep_largest_object_per_slice().
-
-    Args:
-        nib_predictions (nibabelObject): Input image, 2 or 3D, binary segmentation.
-        axis (int): 2D slices are extracted along this axis.
-    Returns:
-        nibabelObject: processed segmentation.
-
-    """
-    data = nib_predictions.get_fdata()
-    data_out = keep_largest_object_per_slice(predictions=data, axis=axis)
-    return nib.Nifti1Image(data_out, nib_predictions.affine)
 
 
 def fill_holes(predictions, structure=(3,3,3)):
