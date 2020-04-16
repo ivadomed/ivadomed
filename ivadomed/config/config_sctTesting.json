@@ -1,5 +1,4 @@
 {
-    <<<<<<< HEAD
     "command": "train",
     "gpu": 1,
     "target_suffix": ["_lesion-manual"],
