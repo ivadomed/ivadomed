@@ -776,6 +776,9 @@ def set_model_for_retrain(m, retrain_fraction):
     # Compute the number of these layers we want to freeze
     n_freeze = int(round(n_layers * (1-retrain_fraction)))
 
+    total_params = sum(
+        p.numel() for p in m.parameters())
+
     # Set for retrain
     cmpt_freeze = 0
     print(n_layers, n_freeze)
@@ -788,3 +791,7 @@ def set_model_for_retrain(m, retrain_fraction):
             print('reset')
             l.reset_parameters()
 
+    total_trainable_params = sum(
+        p.numel() for p in m.parameters() if p.requires_grad)
+    print(total_params, total_trainable_params)
+    return m
