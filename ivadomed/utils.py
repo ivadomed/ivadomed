@@ -16,6 +16,7 @@ import torchvision.utils as vutils
 
 from ivadomed import loader as imed_loader
 from ivadomed import transforms as imed_transforms
+from ivadomed import postprocessing as imed_postpro
 from ivadomed import metrics as imed_metrics
 
 from medicaltorch.datasets import MRI2DSegmentationDataset
@@ -75,7 +76,7 @@ class Evaluation3DMetrics(object):
                 self.data_pred_per_size[..., idx] = self.label_per_size(self.data_pred[..., idx])
                 label_pred_size_lst = list(set(self.data_pred_per_size[np.nonzero(self.data_pred_per_size)]))
                 self.label_size_lst.append([label_gt_size_lst + label_pred_size_lst,
-                                           ['gt'] * len(label_gt_size_lst) + ['pred'] * len(label_pred_size_lst)])
+                                            ['gt'] * len(label_gt_size_lst) + ['pred'] * len(label_pred_size_lst)])
 
         else:
             self.label_size_lst = [[[], []] * self.n_classes]
@@ -297,7 +298,7 @@ class Evaluation3DMetrics(object):
 
                 if gt_pred == 'gt':
                     dct['ltpr' + suffix + "_class" + str(n)], dct['n' + suffix] = self.get_ltpr(label_size=lb_size,
-                                                                                                  class_idx=n)
+                                                                                                class_idx=n)
                 else:  # gt_pred == 'pred'
                     dct['lfdr' + suffix + "_class" + str(n)] = self.get_lfdr(label_size=lb_size, class_idx=n)
 
@@ -354,7 +355,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
 
     if bin_thr >= 0:
-        arr_pred_ref_space = threshold_predictions(arr_pred_ref_space, thr=bin_thr)
+        arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
     else: # discard noise
         arr_pred_ref_space[arr_pred_ref_space <= 1e-3] = 0
 
@@ -427,7 +428,7 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
 
     # argmax operator
     # TODO: adapt for multi-label pred
-    data_hard = threshold_predictions(data_prob, thr=thr).astype(np.uint8)
+    data_hard = imed_postpro.threshold_predictions(data_prob, thr=thr).astype(np.uint8)
     # save hard segmentation
     nib_hard = nib.Nifti1Image(data_hard, nib_im.affine)
     nib.save(nib_hard, fname_hard)
@@ -577,20 +578,6 @@ def save_mixup_sample(x, y, fname):
     plt.close()
 
 
-def threshold_predictions(predictions, thr=0.5):
-    """This function will threshold predictions.
-    :param predictions: input data (predictions)
-    :param thr: threshold to use, default to 0.5
-    :return: thresholded input
-    """
-    thresholded_preds = predictions[:]
-    low_values_indices = thresholded_preds < thr
-    thresholded_preds[low_values_indices] = 0
-    low_values_indices = thresholded_preds >= thr
-    thresholded_preds[low_values_indices] = 1
-    return thresholded_preds
-
-
 def segment_volume(folder_model, fname_image, fname_roi=None):
     """Segment an image.
 
@@ -614,6 +601,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     device = torch.device("cpu")
 
     # Check if model folder exists
+    # TODO: this check already exists in sct.deepseg.core.segment_nifti(). We should probably keep only one check in
+    #  ivadomed, and do it in a separate, more specific file (e.g. models.py)
     if os.path.isdir(folder_model):
         prefix_model = os.path.basename(folder_model)
         # Check if model and model metadata exist
@@ -641,9 +630,9 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     # Force labeled to False in transforms
     context["transformation_validation"] = dict((key, {**value, **{"labeled": False}})
-                                                    if not key.startswith('NormalizeInstance')
-                                                    else (key, value)
-                                                    for (key, value) in context["transformation_validation"].items())
+                                                if not key.startswith('NormalizeInstance')
+                                                else (key, value)
+                                                for (key, value) in context["transformation_validation"].items())
 
     # Compose transforms
     do_transforms = imed_transforms.compose_transforms(context['transformation_validation'])
@@ -696,6 +685,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         rdict = {}
         rdict['gt'] = preds
         batch.update(rdict)
+        # Take only metadata from one input
+        batch["input_metadata"] = batch["input_metadata"][0]
 
         # Reconstruct 3D object
         for i_slice in range(len(batch['gt'])):
@@ -703,12 +694,13 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
             rdict = {}
             # Import transformations parameters
             for k in batch.keys():
-                rdict[k] = batch[k][i_slice]
+                if len(batch[k]):
+                    rdict[k] = batch[k][i_slice]
             rdict_undo = undo_transforms(rdict)
 
             # Add new segmented slice to preds_list
             # Convert PIL to numpy
-            pred_cur = np.array(rdict_undo['gt'])
+            pred_cur = np.array(pil_list_to_numpy(rdict_undo['gt']))
             preds_list.append(pred_cur)
             # Store the slice index of pred_cur in the original 3D image
             sliceIdx_list.append(int(rdict_undo['input_metadata']['slice_index']))
@@ -886,6 +878,7 @@ def pil_list_to_numpy(pil_list):
     numpy_array = np.zeros((h, w, n_classes))
     for idx, pil_img in enumerate(pil_list):
         numpy_array[..., idx] = np.array(pil_img)
+    # If only one class, then remove the last dimension
     if n_classes == 1:
         numpy_array = np.squeeze(numpy_array, axis=-1)
     return numpy_array
