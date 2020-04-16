@@ -12,7 +12,6 @@
         "retrain_model": "log_lesionAx/best_model.pt",
         "out_channel": 1,
         "depth": 2,
-        "missing_modality": false,
         "batch_size": 32,
         "dropout_rate": 0.3,
         "batch_norm_momentum": 0.1,
@@ -35,6 +34,7 @@
 	"slice_filter": {"filter_empty_mask": false, "filter_empty_input": true},
         "slice_filter_roi": 10,
 	"uncertainty": {"epistemic": true, "aleatoric": false, "n_it": 10},
+  "HeMIS": false,
 	"unet_3D": false,
 	"binarize_prediction": false,
 	"early_stopping_patience": 20,
@@ -66,8 +66,7 @@
 			"scale": [0.98, 1.02]
 			},
 		"ToTensor": {},
-		"NormalizeInstance": {},
-		"StackTensors": {}
+		"NormalizeInstance": {}
 		},
 	"transformation_validation": {
 		"Resample": {
@@ -78,8 +77,7 @@
 			"size": [48, 48]
 			},
 		"ToTensor": {},
-		"NormalizeInstance": {},
-		"StackTensors": {}
+		"NormalizeInstance": {}
 		},
         "transformation_testing": {
                 "Resample": {
@@ -93,8 +91,7 @@
                         "degrees": 30
                         },
                 "ToTensor": {},
-                "NormalizeInstance": {},
-			"StackTensors": {}
+                "NormalizeInstance": {}
                 },
         "debugging": false
 }

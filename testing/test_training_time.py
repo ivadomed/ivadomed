@@ -6,7 +6,7 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from ivadomed.utils import SliceFilter
+from ivadomed import utils
 from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
 from torch import optim
@@ -44,7 +44,10 @@ def test_unet():
         mt_transforms.ToTensor(),
         mt_transforms.StackTensors()
     ]
+    training_transform_list_multichannel = training_transform_list.copy()
+    training_transform_list_multichannel.append(mt_transforms.StackTensors())
     train_transform = transforms.Compose(training_transform_list)
+    training_transform_multichannel = transforms.Compose(training_transform_list_multichannel)
     training_transform_3d_list = [
         ivadomed_transforms.CenterCrop3D(size=[96, 96, 16]),
         ivadomed_transforms.ToTensor3D(),
@@ -64,7 +67,7 @@ def test_unet():
                                   slice_axis=2,
                                   transform=train_transform,
                                   multichannel=False,
-                                  slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=False))
+                                  slice_filter_fn=utils.SliceFilter(filter_empty_input=True, filter_empty_mask=False))
 
     ds_mutichannel = loader.BidsDataset(PATH_BIDS,
                                         subject_lst=train_lst,
@@ -74,9 +77,10 @@ def test_unet():
                                         metadata_choice="without",
                                         contrast_balance={},
                                         slice_axis=2,
-                                        transform=train_transform,
+                                        transform=training_transform_multichannel,
                                         multichannel=True,
-                                        slice_filter_fn=SliceFilter(filter_empty_input=True, filter_empty_mask=False))
+                                        slice_filter_fn=utils.SliceFilter(filter_empty_input=True,
+                                                                          filter_empty_mask=False))
 
     train_transform = transforms.Compose(training_transform_3d_list)
     ds_3d = loader.Bids3DDataset(PATH_BIDS,
