@@ -1,4 +1,6 @@
 from bids_neuropoly import bids
+
+from ivadomed import adaptative
 from medicaltorch import datasets as mt_datasets
 from ivadomed import utils
 from ivadomed import __path__
@@ -10,6 +12,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 
 import numpy as np
+import pandas as pd
 import json
 import os
 from copy import deepcopy
@@ -386,6 +389,22 @@ def load_dataset(data_list, data_transform, context):
                                 multichannel=context['multichannel'],
                                 length=context["length_3D"],
                                 padding=context["padding_3D"])
+    elif context["HeMIS"]:
+        dataset = adaptative.HDF5Dataset(root_dir=context["bids_path"],
+                                         subject_lst=data_list,
+                                         hdf5_name=context["hdf5_path"],
+                                         csv_name=context["csv_path"],
+                                         target_suffix=context["target_suffix"],
+                                         contrast_lst=context["contrast_train_validation"],
+                                         ram=context['ram'],
+                                         contrast_balance=context["contrast_balance"],
+                                         slice_axis=AXIS_DCT[context["slice_axis"]],
+                                         transform=data_transform,
+                                         metadata_choice=context["metadata"],
+                                         slice_filter_fn=utils.SliceFilter(**context["slice_filter"]),
+                                         roi_suffix=context["roi_suffix"],
+                                         target_lst=context['target_lst'],
+                                         roi_lst=context['roi_lst'])
     else:
         dataset = BidsDataset(context["bids_path"],
                               subject_lst=data_list,
@@ -397,6 +416,6 @@ def load_dataset(data_list, data_transform, context):
                               slice_axis=AXIS_DCT[context["slice_axis"]],
                               transform=data_transform,
                               multichannel=context['multichannel'],
-                              slice_filter_fn=utils.SliceFilter(**context["slice_filter"]),
-                              missing_modality=context['missing_modality'])
+                              slice_filter_fn=utils.SliceFilter(**context["slice_filter"]))
+
     return dataset

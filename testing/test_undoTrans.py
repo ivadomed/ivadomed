@@ -1,5 +1,6 @@
 import numpy as np
 from random import randint
+import torch
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -12,11 +13,12 @@ from medicaltorch import transforms as mt_transforms
 
 from ivadomed import loader as loader
 import ivadomed.transforms as ivadomed_transforms
+import matplotlib.pyplot as plt
 
 import matplotlib.pyplot as plt
 cudnn.benchmark = True
 
-GPU_NUMBER = 5
+GPU_NUMBER = 0
 SLICE_AXIS = 2
 PATH_BIDS = 'testing_data'
 

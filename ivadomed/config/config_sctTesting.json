@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
     "command": "train",
     "gpu": 1,
     "target_suffix": ["_lesion-manual"],
@@ -24,6 +25,7 @@
     "log_directory": "log_large_retrain",
     "film_layers": [1, 1, 1, 1, 1, 1, 1, 1],
     "attention_unet": false,
+        "HeMIS": false,
     "mixup_bool": false,
     "mixup_alpha": 2,
     "metadata": "constrast",

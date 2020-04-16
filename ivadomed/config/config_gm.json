@@ -1,6 +1,6 @@
 {
-	"command": "train",
-	"gpu": 4,
+    "command": "train",
+    "gpu": 4,
 	"target_suffix": ["_seg-manual"],
 	"roi_suffix": null,
 	"bids_path": "../duke/projects/ivado-medical-imaging/gm_challenge_16",
@@ -21,7 +21,6 @@
     "mixup_bool": false,
     "mixup_alpha": 2,
     "metadata": "without",
-    "missing_modality": false,
     "multichannel": false,
     "out_channel": 1,
     "depth": 3,
@@ -36,6 +35,7 @@
     "retrain_fraction": 0.0,
     "attention_unet": false,
     "binarize_prediction": true,
+	"HeMIS": false,
     "split_method": "per_patient",
     "slice_filter": {"filter_empty_mask": false, "filter_empty_input": true},
     "slice_filter_roi": 10,
@@ -62,8 +62,7 @@
 			"scale": [0.98, 1.02]
 			},
 		"ToTensor": {},
-		"NormalizeInstance": {},
-		"StackTensors": {}
+		"NormalizeInstance": {}
 		},
 	"transformation_validation": {
 		"Resample": {
@@ -74,8 +73,7 @@
 			"size": [128, 128]
 			},
 		"ToTensor": {},
-		"NormalizeInstance": {},
-      "StackTensors": {}
+		"NormalizeInstance": {}
 		},
         "transformation_testing": {
                 "Resample": {
@@ -86,8 +84,7 @@
                         "size": [128, 128]
                         },
                 "ToTensor": {},
-                "NormalizeInstance": {},
-			"StackTensors": {}
+                "NormalizeInstance": {}
                 },
 	"debugging": false
 }

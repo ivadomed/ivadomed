@@ -117,6 +117,11 @@ class Resample(mt_transforms.Resample):
 
         hshape_new = int(round(hshape * hfactor))
         wshape_new = int(round(wshape * wfactor))
+        
+        for i, input_image in enumerate(input_data):
+            input_data[i] = input_image.resize((wshape_new, hshape_new),
+                                                  resample=self.interpolation)
+
 
         for i, input_image in enumerate(input_data):
             input_data[i] = input_image.resize((wshape_new, hshape_new),
@@ -216,7 +221,6 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
             input_data[i] = F.crop(input_data[i], fw, fh, tw, th)
 
         rdict['input'] = input_data
-
         if self.labeled:
             gt_data = sample['gt']
             gt_metadata = sample['gt_metadata']
