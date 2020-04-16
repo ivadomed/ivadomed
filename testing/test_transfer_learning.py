@@ -48,12 +48,12 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
     if cuda_available:
         model.cuda()
 
-   print('\nSet fraction to retrain:'+str(fraction))
+    print('\nSet fraction to retrain: '+str(fraction))
 
     # Check Frozen part
     grad_list = [param.requires_grad for name, param in model.named_parameters()]
     fraction_retrain_measured = sum(grad_list) * 1.0 / len(grad_list)
-    print('\n Measure: retrained fraction of the model: '+str(round(fraction_retrain_measured, 1)))
+    print('\nMeasure: retrained fraction of the model: '+str(round(fraction_retrain_measured, 1)))
     #for name, param in model.named_parameters():
     #    print("\t", name, param.requires_grad)
     assert(abs(fraction_retrain_measured - fraction) <= tol)
@@ -65,10 +65,9 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
     assert(total_params > total_trainable_params)
 
     # Check reset weights
-    reset_list = [p1.data.ne(p2.data).sum() > 0 for p1, p2 in zip(model_copy.parameters(), model.parameters())]
-    print(reset_list)
+    reset_list = [(p1.data.ne(p2.data).sum() > 0).cpu().numpy() for p1, p2 in zip(model_copy.parameters(), model.parameters())]
     reset_measured = sum(reset_list) * 1.0 / len(reset_list)
-    print('\nMeasure: reset fraction of the model: '+str(reset_measured))
+    print('\nMeasure: reset fraction of the model: '+str(round(reset_measured, 1)))
     assert(abs(reset_measured - fraction) <= tol)
     #weights_reset = False
     #for name_p1, p2 in zip(model_copy.named_parameters(), model.parameters()):
