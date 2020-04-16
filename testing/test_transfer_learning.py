@@ -50,8 +50,12 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
 
     # Check Frozen part
     print('\n\nLayers included in the optimisation:')
-    for name, param in model.named_parameters():
-        print("\t", name, param.requires_grad)
+    grad_list = [["\t", name, param.requires_grad] for name, param in model.named_parameters()]
+    fraction_retrain_measured = sum([l[2] for l in grad_list]) * 1.0 / len(grad_list)
+    print('Fraction Retrain: '+str(fraction_retrain_measured))
+    #for name, param in model.named_parameters():
+    #    print("\t", name, param.requires_grad)
+    assert(abs(fraction_retrain_measured - fraction) <= 0.1)
     total_params = sum(p.numel() for p in model.parameters())
     print(f'{total_params:,} total parameters.')
     total_trainable_params = sum(
