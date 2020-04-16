@@ -17,7 +17,7 @@ FILM_LAYERS = [0, 0, 0, 0, 0, 0, 0, 0]
 PATH_PRETRAINED_MODEL = 'testing_data/model_unet_test.pt'
 RETRAIN_FRACTION = 0.3
 
-def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_MODEL, fraction=RETRAIN_FRACTION):
+def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_MODEL, fraction=RETRAIN_FRACTION, tol=0.1):
     device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
@@ -48,31 +48,36 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
     if cuda_available:
         model.cuda()
 
+   print('\nSet fraction to retrain:'+str(fraction))
+
     # Check Frozen part
-    print('\n\nLayers included in the optimisation:')
-    grad_list = [["\t", name, param.requires_grad] for name, param in model.named_parameters()]
-    fraction_retrain_measured = sum([l[2] for l in grad_list]) * 1.0 / len(grad_list)
-    print('Fraction Retrain: '+str(fraction_retrain_measured))
+    grad_list = [param.requires_grad for name, param in model.named_parameters()]
+    fraction_retrain_measured = sum(grad_list) * 1.0 / len(grad_list)
+    print('\n Measure: retrained fraction of the model: '+str(round(fraction_retrain_measured, 1)))
     #for name, param in model.named_parameters():
     #    print("\t", name, param.requires_grad)
-    assert(abs(fraction_retrain_measured - fraction) <= 0.1)
+    assert(abs(fraction_retrain_measured - fraction) <= tol)
     total_params = sum(p.numel() for p in model.parameters())
     print(f'{total_params:,} total parameters.')
     total_trainable_params = sum(
         p.numel() for p in model.parameters() if p.requires_grad)
-    print(f'{total_trainable_params:,} training parameters.\n\n')
+    print(f'{total_trainable_params:,} parameters to retrain.\n\n')
     assert(total_params > total_trainable_params)
 
     # Check reset weights
-    print('\n\nLayers with weights reset:')
-    weights_reset = False
-    for name_p1, p2 in zip(model_copy.named_parameters(), model.parameters()):
-        if name_p1[1].data.ne(p2.data).sum() > 0:
-            print('\t', name_p1[0], True)
-            weights_reset = True
-        else:
-            print('\t', name_p1[0], False)
-    assert(weights_reset)
+    reset_list = [p1.data.ne(p2.data).sum() > 0 for p1, p2 in zip(model_copy.parameters(), model.parameters())]
+    print(reset_list)
+    reset_measured = sum(reset_list) * 1.0 / len(reset_list)
+    print('\nMeasure: reset fraction of the model: '+str(reset_measured))
+    assert(abs(reset_measured - fraction) <= tol)
+    #weights_reset = False
+    #for name_p1, p2 in zip(model_copy.named_parameters(), model.parameters()):
+    #    if name_p1[1].data.ne(p2.data).sum() > 0:
+    #        print('\t', name_p1[0], True)
+    #        weights_reset = True
+    #    else:
+    #        print('\t', name_p1[0], False)
+    #assert(weights_reset)
 
 print("test transfer learning")
 test_transfer_learning()
