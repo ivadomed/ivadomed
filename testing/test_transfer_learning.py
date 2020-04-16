@@ -61,7 +61,7 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
     print(f'{total_params:,} total parameters.')
     total_trainable_params = sum(
         p.numel() for p in model.parameters() if p.requires_grad)
-    print(f'{total_trainable_params:,} parameters to retrain.\n\n')
+    print(f'{total_trainable_params:,} parameters to retrain.')
     assert(total_params > total_trainable_params)
 
     # Check reset weights
