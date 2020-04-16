@@ -217,27 +217,6 @@ def cmd_train(context):
     else:
         model = torch.load(context['retrain_model'])
 
-        # Get number of layers with learnt parameters
-        n_layers = len([l for l in model.parameters() if hasattr(l, 'reset_parameters')])
-        # Compute the number of these layers we want to freeze
-        n_freeze = int(round(n_layers * context['retrain_fraction']))
-
-        cmpt_freeze = 0
-        print(cmpt_freeze, n_layers, n_freeze)
-        for l in model.parameters():
-            print(l.requires_grad)
-
-        for l in model.parameters():
-            if cmpt_freeze <= n_freeze:  # Freeze layer
-                l.requires_grad = False
-                cmpt_freeze += 1
-                print('freeze')
-            elif hasattr(l, 'reset_parameters'):  # Reset weights
-                print('reset')
-                l.reset_parameters()
-
-        for l in model.parameters():
-            print(l.requires_grad)
 
     if cuda_available:
         model.cuda()
