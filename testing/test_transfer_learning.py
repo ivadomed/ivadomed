@@ -17,7 +17,11 @@ FILM_LAYERS = [0, 0, 0, 0, 0, 0, 0, 0]
 PATH_PRETRAINED_MODEL = 'testing_data/model_unet_test.pt'
 RETRAIN_FRACTION = 0.3
 
-def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_MODEL, fraction=RETRAIN_FRACTION, tol=0.1):
+
+def test_transfer_learning(film_layers=FILM_LAYERS,
+                           path_model=PATH_PRETRAINED_MODEL,
+                           fraction=RETRAIN_FRACTION,
+                           tol=0.1):
     device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
@@ -77,6 +81,7 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
     #    else:
     #        print('\t', name_p1[0], False)
     #assert(weights_reset)
+
 
 print("test transfer learning")
 test_transfer_learning()
