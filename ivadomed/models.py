@@ -770,7 +770,18 @@ class UnetGridGatingSignal3(nn.Module):
         outputs = self.conv1(inputs)
         return outputs
 
-def set_model_for_retrain(m, retrain_fraction, debug=0):
+def set_model_for_retrain(m, retrain_fraction):
+    """Set model for transfer learning.
+
+    The first layers (defined by 1-retrain_fraction) are frozen (i.e. requires_grad=False).
+    The weights of the last layers (defined by retrain_fraction) are reset.
+    Args:
+        m (torch module): pretrained model.
+        retrain_fraction (float): Fraction of the model that will be retrained, between 0 and 1. If set to 0.3,
+            then the 30% last fraction of the model will be re-initalised and retrained.
+    Returns:
+        torch module: model ready for retrain.
+    """
     # Get number of layers with learnt parameters
     n_layers = len([l for l in m.modules() if hasattr(l, 'reset_parameters')])
     # Compute the number of these layers we want to freeze
