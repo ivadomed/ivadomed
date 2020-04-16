@@ -10,7 +10,7 @@
     "contrast_test": ["acq-ax00012_T2w", "acq-axtop00100_T2w", "acq-axtsp_T2w", "acq-c4c7_T2star", "acq-axmid00100_T2w", "acq-axlow_T2w", "acq-sup_T2w", "acq-ax_T2star", "acq-inf_T2star", "acq-ax_T2w", "acq-axcsp_T2w", "acq-c1c3_T2star", "T2star", "acq-axtop_T2w", "acq-axbottom_T2w", "acq-ax00014_T2w", "T2w", "acq-sup_T2star", "acq-axmid00005_T2w", "acq-inf_T2w"],
     "center_test": [],
     "retrain_model": "log_lesionAx/best_model.pt",
-    "retrain_fraction": 0.0,
+    "retrain_fraction": 1.0,
     "out_channel": 1,
     "depth": 2,
     "missing_modality": false,

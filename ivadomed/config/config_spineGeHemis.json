@@ -12,6 +12,7 @@
 	"contrast_test": ["T2star", "T2w", "T1w"],
 	"center_test": [],
 	"retrain_model": null,
+	"retrain_fraction": 1.0,
 	"out_channel": 1,
 	"depth": 2,
 	"batch_size": 64,

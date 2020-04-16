@@ -32,7 +32,7 @@
     "balance_samples": false,
     "unet_3D": false,
     "retrain_model": null,
-    "retrain_fraction": 0.0,
+    "retrain_fraction": 1.0,
     "attention_unet": false,
     "binarize_prediction": true,
     "HeMIS": false,

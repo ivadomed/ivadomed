@@ -35,7 +35,7 @@
     "missing_modality": false,
     "slice_axis": "axial",
     "retrain_model": null,
-    "retrain_fraction": 0.0,
+    "retrain_fraction": 1.0,
     "slice_filter": {
         "filter_empty_mask": true,
         "filter_empty_input": true,

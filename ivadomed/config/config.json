@@ -32,7 +32,7 @@
     "slice_axis": "axial",
     "balance_samples": false,
     "retrain_model": null,
-    "retrain_fraction": 0.0,
+    "retrain_fraction": 1.0,
     "split_method": "per_center",
     "slice_filter": {"filter_empty_mask": false, "filter_empty_input": true},
     "slice_filter_roi": 10,
