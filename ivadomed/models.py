@@ -770,6 +770,7 @@ class UnetGridGatingSignal3(nn.Module):
         outputs = self.conv1(inputs)
         return outputs
 
+
 def set_model_for_retrain(m, retrain_fraction):
     """Set model for transfer learning.
 
