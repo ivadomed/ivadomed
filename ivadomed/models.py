@@ -770,28 +770,24 @@ class UnetGridGatingSignal3(nn.Module):
         outputs = self.conv1(inputs)
         return outputs
 
-def set_model_for_retrain(m, retrain_fraction):
+def set_model_for_retrain(m, retrain_fraction, debug=0):
     # Get number of layers with learnt parameters
     n_layers = len([l for l in m.modules() if hasattr(l, 'reset_parameters')])
     # Compute the number of these layers we want to freeze
     n_freeze = int(round(n_layers * (1-retrain_fraction)))
 
-    total_params = sum(
-        p.numel() for p in m.parameters())
-
     # Set for retrain
     cmpt_freeze = 0
-    print(n_layers, n_freeze)
-    for l in m.modules():
+    for p in m.parameters():
         if cmpt_freeze <= n_freeze:  # Freeze layer
-            l.requires_grad = False
+            p.requires_grad = False
             cmpt_freeze += 1
-            print('freeze')
-        elif hasattr(l, 'reset_parameters'):  # Reset weights
-            print('reset')
-            l.reset_parameters()
 
-    total_trainable_params = sum(
-        p.numel() for p in m.parameters() if p.requires_grad)
-    print(total_params, total_trainable_params)
+    cmpt_freeze = 0
+    for l in m.modules():
+        if hasattr(l, 'reset_parameters'):
+            if cmpt_freeze > n_freeze:  # Reset weights
+                l.reset_parameters()
+            cmpt_freeze += 1
+
     return m
