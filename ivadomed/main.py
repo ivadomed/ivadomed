@@ -215,8 +215,11 @@ def cmd_train(context):
                                 bn_momentum=context["batch_norm_momentum"],
                                 film_bool=film_bool)
     else:
+        # Load pretrained model
         model = torch.load(context['retrain_model'])
-
+        # Freeze first layers and reset last layers
+        model = imed_models.set_model_for_retrain(model,
+                                     retrain_fraction=context['retrain_fraction'])
 
     if cuda_available:
         model.cuda()
