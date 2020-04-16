@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.backends.cudnn as cudnn
 from torch import optim
 
+import copy
+
 from ivadomed import models as imed_models
 
 cudnn.benchmark = True
@@ -34,8 +36,13 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
     # Traditional U-Net model
     in_channel = 1
 
+    # Load pretrained model
     model = torch.load(path_model, map_location=device)
 
+    # Deep copy of the model
+    model_copy = copy.deepcopy(model)
+
+    # Set model for retrain
     model = imed_models.set_model_for_retrain(model, fraction)
 
     if cuda_available:
