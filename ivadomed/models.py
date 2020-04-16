@@ -776,17 +776,18 @@ def set_model_for_retrain(m, retrain_fraction, debug=0):
     # Compute the number of these layers we want to freeze
     n_freeze = int(round(n_layers * (1-retrain_fraction)))
 
-    # Set for retrain
+    # Set freeze first layers
     cmpt_freeze = 0
     for p in m.parameters():
-        if cmpt_freeze <= n_freeze:  # Freeze layer
+        if cmpt_freeze <= n_freeze:
             p.requires_grad = False
-            cmpt_freeze += 1
+        cmpt_freeze += 1
 
+    # Reset weights of the last layers
     cmpt_freeze = 0
     for l in m.modules():
         if hasattr(l, 'reset_parameters'):
-            if cmpt_freeze > n_freeze:  # Reset weights
+            if cmpt_freeze > n_freeze:
                 l.reset_parameters()
             cmpt_freeze += 1
 
