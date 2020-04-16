@@ -144,7 +144,7 @@ def cmd_train(context):
         shuffle_train = False
     else:
         sampler_train, shuffle_train = None, True
-     
+
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
                               collate_fn=mt_datasets.mt_collate,
@@ -223,7 +223,7 @@ def cmd_train(context):
         model = torch.load(context['retrain_model'])
         # Freeze first layers and reset last layers
         model = imed_models.set_model_for_retrain(model,
-                                     retrain_fraction=context['retrain_fraction'])
+                                                  retrain_fraction=context['retrain_fraction'])
 
     if cuda_available:
         model.cuda()
