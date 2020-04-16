@@ -783,23 +783,23 @@ def set_model_for_retrain(m, retrain_fraction):
         torch module: model ready for retrain.
     """
     # Get number of layers with learnt parameters
-    n_layers = len([l for l in m.modules() if hasattr(l, 'reset_parameters')])
+    layer_names = [n for n, l in m.named_modules() if hasattr(l, 'reset_parameters')]
+    n_layers = len(layer_names)
     # Compute the number of these layers we want to freeze
     n_freeze = int(round(n_layers * (1-retrain_fraction)))
+    # Last frozen layer
+    last_frozen_layer = layer_names[n_freeze]
 
     # Set freeze first layers
-    cmpt_freeze = 0
-    for p in m.parameters():
-        if cmpt_freeze <= n_freeze:
+    for n, p in m.named_parameters():
+        if not n.startswith(last_frozen_layer):
             p.requires_grad = False
-        cmpt_freeze += 1
+        else:
+            break
 
     # Reset weights of the last layers
-    cmpt_freeze = 0
-    for l in m.modules():
-        if hasattr(l, 'reset_parameters'):
-            if cmpt_freeze > n_freeze:
-                l.reset_parameters()
-            cmpt_freeze += 1
+    for n, l in m.named_modules():
+        if n in layer_names[n_freeze:]:
+            l.reset_parameters()
 
     return m
