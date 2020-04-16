@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##############################################################
 #
 # This script computes statistics to compare models
