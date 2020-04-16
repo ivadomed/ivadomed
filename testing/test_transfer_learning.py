@@ -48,22 +48,27 @@ def test_transfer_learning(film_layers=FILM_LAYERS, path_model=PATH_PRETRAINED_M
     if cuda_available:
         model.cuda()
 
-    print('Layers included in the optimisation:')
+    # Check Frozen part
+    print('\n\nLayers included in the optimisation:')
     for name, param in model.named_parameters():
-        if param.requires_grad == True:
-            print("\t", name)
-
+        print("\t", name, param.requires_grad)
     total_params = sum(p.numel() for p in model.parameters())
     print(f'{total_params:,} total parameters.')
     total_trainable_params = sum(
         p.numel() for p in model.parameters() if p.requires_grad)
-    print(f'{total_trainable_params:,} training parameters.')
+    print(f'{total_trainable_params:,} training parameters.\n\n')
     assert(total_params > total_trainable_params)
 
-    initial_lr = INITIAL_LR
-    params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = optim.Adam(params_to_opt, lr=initial_lr)
-
+    # Check reset weights
+    print('\n\nLayers with weights reset:')
+    weights_reset = False
+    for name_p1, p2 in zip(model_copy.named_parameters(), model.parameters()):
+        if name_p1[1].data.ne(p2.data).sum() > 0:
+            print('\t', name_p1[0], True)
+            weights_reset = True
+        else:
+            print('\t', name_p1[0], False)
+    assert(weights_reset)
 
 print("test transfer learning")
 test_transfer_learning()
