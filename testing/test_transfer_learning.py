@@ -9,7 +9,6 @@ from ivadomed import models as imed_models
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 0
 N_METADATA = 1
 OUT_CHANNEL = 1
 INITIAL_LR = 0.001
@@ -22,15 +21,8 @@ def test_transfer_learning(film_layers=FILM_LAYERS,
                            path_model=PATH_PRETRAINED_MODEL,
                            fraction=RETRAIN_FRACTION,
                            tolerance=0.1):
-    device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
-    cuda_available = torch.cuda.is_available()
-    if not cuda_available:
-        print("Cuda is not available.")
-        print("Working on {}.".format('cpu'))
-    if cuda_available:
-        # Set the GPU
-        torch.cuda.set_device(GPU_NUMBER)
-        print("Using GPU number {}".format(GPU_NUMBER))
+    device = torch.device("cpu")
+    print("Working on {}.".format('cpu'))
 
     film_bool = bool(sum(film_layers))
 
@@ -48,9 +40,6 @@ def test_transfer_learning(film_layers=FILM_LAYERS,
 
     # Set model for retrain
     model = imed_models.set_model_for_retrain(model, fraction)
-
-    if cuda_available:
-        model.cuda()
 
     print('\nSet fraction to retrain: '+str(fraction))
 
