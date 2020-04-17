@@ -51,17 +51,17 @@ def test_inference(film_bool=False):
     test_lst = ['sub-test001']
 
     ds_test = imed_loader.BidsDataset(PATH_BIDS,
-                                 subject_lst=test_lst,
-                                 target_suffix=["_lesion-manual"],
-                                 roi_suffix="_seg-manual",
-                                 contrast_lst=['T2w', 'T2star'],
-                                 metadata_choice="contrast",
-                                 contrast_balance={},
-                                 slice_axis=SLICE_AXIS,
-                                 transform=val_transform,
-                                 multichannel=False,
-                                 slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
-                                                                         filter_empty_mask=False))
+                                      subject_lst=test_lst,
+                                      target_suffix=["_lesion-manual"],
+                                      roi_suffix="_seg-manual",
+                                      contrast_lst=['T2w', 'T2star'],
+                                      metadata_choice="contrast",
+                                      contrast_balance={},
+                                      slice_axis=SLICE_AXIS,
+                                      transform=val_transform,
+                                      multichannel=False,
+                                      slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                                                             filter_empty_mask=False))
 
     ds_test = imed_loader.filter_roi(ds_test, nb_nonzero_thr=10)
 
@@ -83,9 +83,11 @@ def test_inference(film_bool=False):
                              num_workers=1)
 
     if film_bool:
-        model = torch.load(os.path.join(PATH_BIDS, "model_film_test.pt"), map_location=device)
+        model = torch.load(os.path.join(PATH_BIDS, "model_film_test.pt"),
+                           map_location=device)
     else:
-        model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt"), map_location=device)
+        model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt"),
+                           map_location=device)
 
     if cuda_available:
         model.cuda()
@@ -158,7 +160,7 @@ def test_inference(film_bool=False):
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
                 _ = imed_utils.pred_to_nib(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS,
                                            debug=True, kernel_dim='2d', bin_thr=0.5)
-  
+
                 # re-init pred_stack_lst
                 pred_tmp_lst, z_tmp_lst = [], []
 
