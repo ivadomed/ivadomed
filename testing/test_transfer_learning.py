@@ -21,7 +21,7 @@ RETRAIN_FRACTION = 0.3
 def test_transfer_learning(film_layers=FILM_LAYERS,
                            path_model=PATH_PRETRAINED_MODEL,
                            fraction=RETRAIN_FRACTION,
-                           tol=0.1):
+                           tolerance=0.1):
     device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
@@ -60,7 +60,7 @@ def test_transfer_learning(film_layers=FILM_LAYERS,
     print('\nMeasure: retrained fraction of the model: '+str(round(fraction_retrain_measured, 1)))
     #for name, param in model.named_parameters():
     #    print("\t", name, param.requires_grad)
-    assert(abs(fraction_retrain_measured - fraction) <= tol)
+    assert(abs(fraction_retrain_measured - fraction) <= tolerance)
     total_params = sum(p.numel() for p in model.parameters())
     print(f'{total_params:,} total parameters.')
     total_trainable_params = sum(
@@ -73,7 +73,7 @@ def test_transfer_learning(film_layers=FILM_LAYERS,
                   for p1, p2 in zip(model_copy.parameters(), model.parameters())]
     reset_measured = sum(reset_list) * 1.0 / len(reset_list)
     print('\nMeasure: reset fraction of the model: '+str(round(reset_measured, 1)))
-    assert(abs(reset_measured - fraction) <= tol)
+    assert(abs(reset_measured - fraction) <= tolerance)
     #weights_reset = False
     #for name_p1, p2 in zip(model_copy.named_parameters(), model.parameters()):
     #    if name_p1[1].data.ne(p2.data).sum() > 0:
