@@ -10,9 +10,9 @@ from medicaltorch import datasets as mt_datasets
 
 from ivadomed import metrics as imed_metrics
 from ivadomed import loader as imed_loader
-import ivadomed import postprocessing as imed_postpro
-import ivadomed import utils as imed_utils
-import ivadomed import transforms as imed_transforms
+from ivadomed import postprocessing as imed_postpro
+from ivadomed import utils as imed_utils
+from ivadomed import transforms as imed_transforms
 
 cudnn.benchmark = True
 
