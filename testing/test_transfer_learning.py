@@ -69,7 +69,8 @@ def test_transfer_learning(film_layers=FILM_LAYERS,
     assert(total_params > total_trainable_params)
 
     # Check reset weights
-    reset_list = [(p1.data.ne(p2.data).sum() > 0).cpu().numpy() for p1, p2 in zip(model_copy.parameters(), model.parameters())]
+    reset_list = [(p1.data.ne(p2.data).sum() > 0).cpu().numpy() \
+                  for p1, p2 in zip(model_copy.parameters(), model.parameters())]
     reset_measured = sum(reset_list) * 1.0 / len(reset_list)
     print('\nMeasure: reset fraction of the model: '+str(round(reset_measured, 1)))
     assert(abs(reset_measured - fraction) <= tol)
