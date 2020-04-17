@@ -771,36 +771,36 @@ class UnetGridGatingSignal3(nn.Module):
         return outputs
 
 
-def set_model_for_retrain(m, retrain_fraction):
+def set_model_for_retrain(model, retrain_fraction):
     """Set model for transfer learning.
 
     The first layers (defined by 1-retrain_fraction) are frozen (i.e. requires_grad=False).
     The weights of the last layers (defined by retrain_fraction) are reset.
     Args:
-        m (torch module): pretrained model.
+        model (torch module): pretrained model.
         retrain_fraction (float): Fraction of the model that will be retrained, between 0 and 1. If set to 0.3,
             then the 30% last fraction of the model will be re-initalised and retrained.
     Returns:
         torch module: model ready for retrain.
     """
     # Get number of layers with learnt parameters
-    layer_names = [n for n, l in m.named_modules() if hasattr(l, 'reset_parameters')]
+    layer_names = [name for name, layer in model.named_modules() if hasattr(layer, 'reset_parameters')]
     n_layers = len(layer_names)
     # Compute the number of these layers we want to freeze
-    n_freeze = int(round(n_layers * (1-retrain_fraction)))
+    n_freeze = int(round(n_layers * (1 - retrain_fraction)))
     # Last frozen layer
     last_frozen_layer = layer_names[n_freeze]
 
     # Set freeze first layers
-    for n, p in m.named_parameters():
-        if not n.startswith(last_frozen_layer):
-            p.requires_grad = False
+    for name, layer in model.named_parameters():
+        if not name.startswith(last_frozen_layer):
+            layer.requires_grad = False
         else:
             break
 
     # Reset weights of the last layers
-    for n, l in m.named_modules():
-        if n in layer_names[n_freeze:]:
-            l.reset_parameters()
+    for name, layer in model.named_modules():
+        if name in layer_names[n_freeze:]:
+            layer.reset_parameters()
 
-    return m
+    return model
