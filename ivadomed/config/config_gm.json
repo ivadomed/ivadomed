@@ -1,10 +1,10 @@
 {
-	"command": "train",
-	"gpu": 4,
-	"target_suffix": ["_seg-manual"],
-	"roi_suffix": null,
-	"bids_path": "../duke/projects/ivado-medical-imaging/gm_challenge_16",
-	"random_seed": 1313,
+    "command": "train",
+    "gpu": 4,
+    "target_suffix": ["_seg-manual"],
+    "roi_suffix": null,
+    "bids_path": "../duke/projects/ivado-medical-imaging/gm_challenge_16",
+    "random_seed": 1313,
     "contrast_train_validation": ["T2star"],
     "contrast_balance": {},
     "contrast_test": ["T2star"],
@@ -30,10 +30,12 @@
     "early_stopping_epsilon": 0.001,
     "slice_axis": "axial",
     "balance_samples": false,
-	"unet_3D": false,
-	"HeMIS": false,
-	"attention_unet": false,
-	"binarize_prediction": true,
+    "unet_3D": false,
+    "retrain_model": null,
+    "retrain_fraction": 1.0,
+    "attention_unet": false,
+    "binarize_prediction": true,
+    "HeMIS": false,
     "split_method": "per_patient",
     "slice_filter": {"filter_empty_mask": false, "filter_empty_input": true},
     "slice_filter_roi": 10,
@@ -42,47 +44,47 @@
         "Resample": {
             "wspace": 0.75,
             "hspace": 0.75
-			},
-		"DilateGT": {
-			"dilation_factor": 0
-			},
-		"CenterCrop2D": {
-			"size": [128, 128]
-			},
-		"ElasticTransform": {
-			"alpha_range": [28.0, 30.0],
-			"sigma_range":  [3.5, 4.5],
-			"p": 0.1
-			},
-		"RandomAffine": {
-			"degrees": 4.6,
-			"translate": [0.03, 0.03],
-			"scale": [0.98, 1.02]
-			},
-		"ToTensor": {},
-		"NormalizeInstance": {}
-		},
-	"transformation_validation": {
-		"Resample": {
-			"wspace": 0.75,
-			"hspace": 0.75
-			},
-		"CenterCrop2D": {
-			"size": [128, 128]
-			},
-		"ToTensor": {},
-		"NormalizeInstance": {}
-		},
-        "transformation_testing": {
-                "Resample": {
-                        "wspace": 0.75,
-                        "hspace": 0.75
-                        },
-                "CenterCrop2D": {
-                        "size": [128, 128]
-                        },
-                "ToTensor": {},
-                "NormalizeInstance": {}
-                },
-	"debugging": false
+        },
+        "DilateGT": {
+            "dilation_factor": 0
+        },
+        "CenterCrop2D": {
+            "size": [128, 128]
+        },
+        "ElasticTransform": {
+            "alpha_range": [28.0, 30.0],
+            "sigma_range":  [3.5, 4.5],
+            "p": 0.1
+        },
+        "RandomAffine": {
+            "degrees": 4.6,
+            "translate": [0.03, 0.03],
+            "scale": [0.98, 1.02]
+        },
+        "ToTensor": {},
+        "NormalizeInstance": {}
+    },
+    "transformation_validation": {
+        "Resample": {
+            "wspace": 0.75,
+            "hspace": 0.75
+        },
+        "CenterCrop2D": {
+            "size": [128, 128]
+        },
+        "ToTensor": {},
+        "NormalizeInstance": {}
+    },
+    "transformation_testing": {
+        "Resample": {
+            "wspace": 0.75,
+            "hspace": 0.75
+        },
+        "CenterCrop2D": {
+            "size": [128, 128]
+        },
+        "ToTensor": {},
+        "NormalizeInstance": {}
+    },
+    "debugging": false
 }

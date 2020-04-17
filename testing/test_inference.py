@@ -8,11 +8,11 @@ from torchvision import transforms
 
 from medicaltorch import datasets as mt_datasets
 
-from ivadomed import metrics
-from ivadomed import loader as loader
-import ivadomed.postprocessing as imed_postpro
-import ivademed.utils as imed_utils
-import ivadomed.transforms as imed_transforms
+from ivadomed import metrics as imed_metrics
+from ivadomed import loader as imed_loader
+from ivadomed import postprocessing as imed_postpro
+from ivadomed import utils as imed_utils
+from ivadomed import transforms as imed_transforms
 
 cudnn.benchmark = True
 
@@ -50,26 +50,26 @@ def test_inference(film_bool=False):
 
     test_lst = ['sub-test001']
 
-    ds_test = loader.BidsDataset(PATH_BIDS,
-                                 subject_lst=test_lst,
-                                 target_suffix=["_lesion-manual"],
-                                 roi_suffix="_seg-manual",
-                                 contrast_lst=['T2w', 'T2star'],
-                                 metadata_choice="contrast",
-                                 contrast_balance={},
-                                 slice_axis=SLICE_AXIS,
-                                 transform=val_transform,
-                                 multichannel=False,
-                                 slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
-                                                                         filter_empty_mask=False))
+    ds_test = imed_loader.BidsDataset(PATH_BIDS,
+                                      subject_lst=test_lst,
+                                      target_suffix=["_lesion-manual"],
+                                      roi_suffix="_seg-manual",
+                                      contrast_lst=['T2w', 'T2star'],
+                                      metadata_choice="contrast",
+                                      contrast_balance={},
+                                      slice_axis=SLICE_AXIS,
+                                      transform=val_transform,
+                                      multichannel=False,
+                                      slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                                                             filter_empty_mask=False))
 
-    ds_test = loader.filter_roi(ds_test, nb_nonzero_thr=10)
+    ds_test = imed_loader.filter_roi(ds_test, nb_nonzero_thr=10)
 
     if film_bool:  # normalize metadata before sending to network
         print('FiLM inference not implemented yet.')
         return 0
         # metadata_clustering_models = joblib.load("./" + context["log_directory"] + "/clustering_models.joblib")
-        # ds_test = loader.normalize_metadata(ds_test,
+        # ds_test = imed_loader.normalize_metadata(ds_test,
         #                                     metadata_clustering_models,
         #                                     context["debugging"],
         #                                     context["metadata"],
@@ -83,23 +83,25 @@ def test_inference(film_bool=False):
                              num_workers=1)
 
     if film_bool:
-        model = torch.load(os.path.join(PATH_BIDS, "model_film_test.pt"), map_location=device)
+        model = torch.load(os.path.join(PATH_BIDS, "model_film_test.pt"),
+                           map_location=device)
     else:
-        model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt"), map_location=device)
+        model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt"),
+                           map_location=device)
 
     if cuda_available:
         model.cuda()
     model.eval()
 
-    metric_fns = [metrics.dice_score,  # from ivadomed/utils.py
-                  metrics.hausdorff_2D_score,
-                  metrics.precision_score,
-                  metrics.recall_score,
-                  metrics.specificity_score,
-                  metrics.intersection_over_union,
-                  metrics.accuracy_score]
+    metric_fns = [imed_metrics.dice_score,
+                  imed_metrics.hausdorff_2D_score,
+                  imed_metrics.precision_score,
+                  imed_metrics.recall_score,
+                  imed_metrics.specificity_score,
+                  imed_metrics.intersection_over_union,
+                  imed_metrics.accuracy_score]
 
-    metric_mgr = metrics.MetricManager(metric_fns)
+    metric_mgr = imed_metrics.MetricManager(metric_fns)
 
     if not os.path.isdir(PATH_OUT):
         os.makedirs(PATH_OUT)
@@ -111,7 +113,7 @@ def test_inference(film_bool=False):
         with torch.no_grad():
             if cuda_available:
                 test_input = input_samples.cuda()
-                test_gt = utils.cuda(gt_samples, non_blocking=True)
+                test_gt = imed_utils.cuda(gt_samples, non_blocking=True)
             else:
                 test_input = input_samples
                 test_gt = gt_samples
@@ -121,7 +123,7 @@ def test_inference(film_bool=False):
                 test_contrast = [sample_metadata[k]['contrast']
                                  for k in range(len(sample_metadata))]
 
-                test_metadata = [utils.one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k
+                test_metadata = [imed_utils.one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k
                                  in
                                  range(len(sample_metadata))]
                 # Input the metadata related to the input samples
@@ -158,12 +160,12 @@ def test_inference(film_bool=False):
                 fname_pred = fname_pred.split('manual.nii.gz')[0] + 'pred.nii.gz'
                 _ = imed_utils.pred_to_nib(pred_tmp_lst, z_tmp_lst, fname_tmp, fname_pred, SLICE_AXIS,
                                            debug=True, kernel_dim='2d', bin_thr=0.5)
-  
+
                 # re-init pred_stack_lst
                 pred_tmp_lst, z_tmp_lst = [], []
 
             # add new sample to pred_tmp_lst
-            pred_tmp_lst.append(utils.pil_list_to_numpy(rdict_undo['gt']))
+            pred_tmp_lst.append(imed_utils.pil_list_to_numpy(rdict_undo['gt']))
             z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
             fname_tmp = fname_ref
 

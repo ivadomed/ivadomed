@@ -144,7 +144,7 @@ def cmd_train(context):
         shuffle_train = False
     else:
         sampler_train, shuffle_train = None, True
-     
+
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
                               collate_fn=mt_datasets.mt_collate,
@@ -219,26 +219,11 @@ def cmd_train(context):
                                      bn_momentum=context["batch_norm_momentum"],
                                      film_bool=film_bool)
     else:
+        # Load pretrained model
         model = torch.load(context['retrain_model'])
-
-        # Freeze model weights
-        for param in model.parameters():
-            param.requires_grad = False
-
-        # TMP
-        model.decoder = imed_models.Decoder(out_channel=context['out_channel'],
-                                            depth=context['depth'],
-                                            n_metadata=n_metadata,
-                                            film_layers=[0] * (2 * context['depth'] + 2),
-                                            drop_rate=context["dropout_rate"],
-                                            bn_momentum=context["batch_norm_momentum"])
-
-        # Replace the last conv layer
-        # Note: Parameters of newly constructed layer have requires_grad=True by default
-        #model.decoder.last_conv = nn.Conv2d(model.decoder.last_conv.in_channels,
-        #                                    context['out_channel'], kernel_size=3, padding=1)
-        #if film_bool and context["film_layers"][-1]:
-        #    model.decoder.last_film = imed_models.FiLMlayer(n_metadata, 1)
+        # Freeze first layers and reset last layers
+        model = imed_models.set_model_for_retrain(model,
+                                                  retrain_fraction=context['retrain_fraction'])
 
     if cuda_available:
         model.cuda()
