@@ -115,7 +115,7 @@ def fill_holes(predictions, structure=(3, 3, 3)):
         predictions_proc = threshold_predictions(predictions_proc, thr=1e-3)
     assert len(structure) == len(predictions.shape)
     predictions_proc = binary_fill_holes(np.copy(predictions_proc),
-                                     structure=np.ones(structure)).astype(np.int)
+                                         structure=np.ones(structure)).astype(np.int)
     # If input is not binary, then call mask_prediction to apply the operation to the soft input
     if not np.array_equal(predictions, predictions.astype(bool)):
         predictions_proc = mask_predictions(predictions, predictions_proc)
