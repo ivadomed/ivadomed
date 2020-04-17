@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##############################################################
 #
 # This script enables training and comparison of models on multiple GPUs

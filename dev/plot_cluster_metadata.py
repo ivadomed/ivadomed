@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Usage:
 #	python dev/plot_cluster_metadata.py <config_file>
 # Example:

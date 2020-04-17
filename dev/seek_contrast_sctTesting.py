@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Usage:
 #	python dev/seek_contrast_sctTesting.py
 # Example:

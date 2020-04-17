@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##############################################################
 #
 # This scripts compute the class balance in a given dataset.
