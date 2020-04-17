@@ -41,21 +41,29 @@ def threshold_predictions(predictions, thr=0.5):
 def keep_largest_object(predictions):
     """
     Keep the largest connected object from the input array (2D or 3D).
-    Note: This function only works for binary segmentation.
+    Note: If the input is not binary, call the thresholding with low value (here 10e-3),
+        apply morphomath operation, and then use the mask_prediction function to apply the operation
+        on the soft pred based on the binary output of the morphomath process.
 
     Args:
-        predictions (array or nibabel object): Input binary segmentation. Image could be 2D or 3D.
+        predictions (array or nibabel object): Input segmentation.
+            Image could be 2D or 3D, soft or binary.
     Returns:
         Array or nibabel (same object as the input).
     """
-    assert np.array_equal(predictions, predictions.astype(bool))
     predictions_proc = np.copy(predictions)
+    # If input is not binary, then make it binary by thresholding it
+    if not np.array_equal(predictions, predictions.astype(bool)):
+        predictions_proc = threshold_predictions(predictions_proc, thr=1e-3)
     # Find number of closed objects using skimage "label"
     labeled_obj, num_obj = label(predictions)
     # If more than one object is found, keep the largest one
     if num_obj > 1:
         # Keep the largest object
         predictions_proc[np.where(labeled_obj != (np.bincount(labeled_obj.flat)[1:].argmax() + 1))] = 0
+    # If input is not binary, then call mask_prediction to apply the operation to the soft input
+    if not np.array_equal(predictions, predictions.astype(bool)):
+        predictions_proc = mask_predictions(predictions, predictions_proc)
     return predictions_proc
 
 
