@@ -41,8 +41,8 @@ def threshold_predictions(predictions, thr=0.5):
 def keep_largest_object(predictions):
     """
     Keep the largest connected object from the input array (2D or 3D).
-    Note: If the input is not binary, call the thresholding with low value (here 10e-3),
-        apply morphomath operation, and then use the mask_prediction function to apply the operation
+    Note: If the input is not binary, the function calls the thresholding with low value (here 10e-3),
+        applies morphomath operation, and then uses the mask_prediction function to apply the operation
         on the soft pred based on the binary output of the morphomath process.
 
     Args:
@@ -71,15 +71,17 @@ def keep_largest_object(predictions):
 def keep_largest_object_per_slice(predictions, axis=2):
     """
     Keep the largest connected object for each 2D slice, along a specified axis.
-    Note: This function only works for binary segmentation.
+    Note: If the input is not binary, the function calls the thresholding with low value (here 10e-3),
+        applies morphomath operation, and then uses the mask_prediction function to apply the operation
+        on the soft pred based on the binary output of the morphomath process.
 
     Args:
-        predictions (array or nibabel object): Input binary segmentation. Image could be 2D or 3D.
+        predictions (array or nibabel object): Input segmentation. Image could be 2D or 3D,
+            soft or binary.
         axis (int): 2D slices are extracted along this axis.
     Returns:
         Array or nibabel (same object as the input).
     """
-    assert np.array_equal(predictions, predictions.astype(bool))
     # Split the 3D input array as a list of slice along axis
     list_preds_in = np.split(predictions, predictions.shape[axis], axis=axis)
     # Init list of processed slices
