@@ -56,7 +56,7 @@ def keep_largest_object(predictions):
     if not np.array_equal(predictions, predictions.astype(bool)):
         predictions_proc = threshold_predictions(predictions_proc, thr=1e-3)
     # Find number of closed objects using skimage "label"
-    labeled_obj, num_obj = label(predictions)
+    labeled_obj, num_obj = label(np.copy(predictions_proc))
     # If more than one object is found, keep the largest one
     if num_obj > 1:
         # Keep the largest object
@@ -97,17 +97,29 @@ def keep_largest_object_per_slice(predictions, axis=2):
 def fill_holes(predictions, structure=(3, 3, 3)):
     """
     Fill holes in the predictions using a given structuring element.
+    Note: If the input is not binary, the function calls the thresholding with low value (here 10e-3),
+        applies morphomath operation, and then uses the mask_prediction function to apply the operation
+        on the soft pred based on the binary output of the morphomath process.
 
     Args:
-        predictions (array or nibabel object): Input binary segmentation. Image could be 2D or 3D.
+        predictions (array or nibabel object): Input segmentation. Image could be 2D or 3D,
+            soft or binary.
         structure (tuple of integers): Structuring element, number of ints equals
             number of dimensions in the input array.
     Returns:
         Array or nibabel (same object as the input). Output type is int.
     """
-    assert np.array_equal(predictions, predictions.astype(bool))
+    predictions_proc = np.copy(predictions)
+    # If input is not binary, then make it binary by thresholding it
+    if not np.array_equal(predictions, predictions.astype(bool)):
+        predictions_proc = threshold_predictions(predictions_proc, thr=1e-3)
     assert len(structure) == len(predictions.shape)
-    return binary_fill_holes(predictions, structure=np.ones(structure)).astype(np.int)
+    predictions_proc = binary_fill_holes(np.copy(predictions_proc),
+                                     structure=np.ones(structure)).astype(np.int)
+    # If input is not binary, then call mask_prediction to apply the operation to the soft input
+    if not np.array_equal(predictions, predictions.astype(bool)):
+        predictions_proc = mask_predictions(predictions, predictions_proc)
+    return predictions_proc
 
 
 @nifti_capable
