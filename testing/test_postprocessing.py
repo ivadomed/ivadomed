@@ -64,8 +64,9 @@ def test_threshold(nii_seg):
     assert np.array_equal(nii_seg_proc.get_fdata()[4:7, 8, 4], np.array([0, 1, 1]))
 
 
-@pytest.mark.parametrize('nii_seg', [nii_dummy_seg()])
+@pytest.mark.parametrize('nii_seg', [nii_dummy_seg(), nii_dummy_seg(softseg=True)])
 def test_keep_largest_object(nii_seg):
+    nii_seg_copy = np.copy(nii_seg)
     # Set a voxel to 1 at the corner to make sure it is set to 0 by the function
     coord = (1, 1, 1)
     nii_seg.dataobj[coord] = 1
@@ -73,6 +74,8 @@ def test_keep_largest_object(nii_seg):
     arr_seg_proc = postproc.keep_largest_object(np.copy(np.asanyarray(nii_seg.dataobj)))
     assert isinstance(arr_seg_proc, np.ndarray)
     assert arr_seg_proc[coord] == 0
+    # Make sure it equals the input data, in particular: still binary / soft if the input was binary / soft
+    assert np.array_equal(nii_seg.dataobj, arr_seg_proc)
     # Make sure it works with nibabel input
     nii_seg_proc = postproc.keep_largest_object(nii_seg)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
