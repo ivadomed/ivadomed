@@ -16,6 +16,15 @@ def nifti_capable(wrapped):
     return wrapper
 
 
+def binarize_with_low_threshold(wrapped):
+    @functools.wraps(wrapped)
+    def wrapper(data, *args, **kwargs):
+        if not np.array_equal(data, data.astype(bool)):
+            return mask_predictions(data, wrapper(threshold_predictions(data, thr=0.001), *args, **kwargs))
+        return wrapped(data, *args, **kwargs)
+    return wrapper
+
+
 @nifti_capable
 def threshold_predictions(predictions, thr=0.5):
     """
@@ -38,6 +47,7 @@ def threshold_predictions(predictions, thr=0.5):
 
 
 @nifti_capable
+@binarize_with_low_threshold
 def keep_largest_object(predictions):
     """
     Keep the largest connected object from the input array (2D or 3D).
