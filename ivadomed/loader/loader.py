@@ -18,15 +18,13 @@ class SegmentationPair(object):
     :param metadata: metadata list with each item corresponding to an image (modality) in input_filenames.  For single
                      channel, the list will contain metadata related to one image.
     :param cache: if the data should be cached in memory or not.
-    :param canonical: canonical reordering of the volume axes.
     """
 
-    def __init__(self, input_filenames, gt_filenames, metadata=None, cache=True, canonical=False):
+    def __init__(self, input_filenames, gt_filenames, metadata=None, cache=True):
 
         self.input_filenames = input_filenames
         self.gt_filenames = gt_filenames
         self.metadata = metadata
-        self.canonical = canonical
         self.cache = cache
 
         # list of the images
@@ -57,15 +55,14 @@ class SegmentationPair(object):
             if not np.allclose(input_shape, gt_shape):
                 raise RuntimeError('Input and ground truth with different dimensions.')
 
-        if self.canonical:
-            for idx, handle in enumerate(self.input_handle):
-                self.input_handle[idx] = nib.as_closest_canonical(handle)
+        for idx, handle in enumerate(self.input_handle):
+            self.input_handle[idx] = nib.as_closest_canonical(handle)
 
-            # Unlabeled data
-            if self.gt_filenames is not None:
-                for idx, gt in enumerate(self.gt_handle):
-                    if gt is not None:
-                        self.gt_handle[idx] = nib.as_closest_canonical(gt)
+        # Unlabeled data
+        if self.gt_filenames is not None:
+            for idx, gt in enumerate(self.gt_handle):
+                if gt is not None:
+                    self.gt_handle[idx] = nib.as_closest_canonical(gt)
 
         if self.metadata:
             self.metadata = []
@@ -211,8 +208,7 @@ class MRI2DSegmentationDataset(Dataset):
     :param transform: transformations to apply.
     """
 
-    def __init__(self, filename_pairs, slice_axis=2, cache=True,
-                 transform=None, slice_filter_fn=None, canonical=False):
+    def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None):
 
         self.indexes = []
         self.filename_pairs = filename_pairs
@@ -220,18 +216,15 @@ class MRI2DSegmentationDataset(Dataset):
         self.cache = cache
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
-        self.canonical = canonical
         self.n_contrasts = len(self.filename_pairs[0][0])
 
         self._load_filenames()
 
     def _load_filenames(self):
         for input_filenames, gt_filenames, roi_filename, metadata in self.filename_pairs:
-            roi_pair = SegmentationPair(input_filenames, roi_filename, metadata=metadata,
-                                        cache=self.cache, canonical=self.canonical)
+            roi_pair = SegmentationPair(input_filenames, roi_filename, metadata=metadata, cache=self.cache)
 
-            seg_pair = SegmentationPair(input_filenames, gt_filenames, metadata=metadata,
-                                        cache=self.cache, canonical=self.canonical)
+            seg_pair = SegmentationPair(input_filenames, gt_filenames, metadata=metadata, cache=self.cache)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
@@ -352,7 +345,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
     :param padding: size of the overlapping per subvolume and dimensions
     """
 
-    def __init__(self, filename_pairs, cache=True, transform=None, canonical=False, length=(64, 64, 64), padding=0):
+    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), padding=0):
         self.filename_pairs = filename_pairs
         self.handlers = []
         self.indexes = []
@@ -441,8 +434,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2,
-                 cache=True, transform=None, metadata_choice=False, canonical=True, labeled=True, roi_suffix=None,
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance=None, slice_axis=2,
+                 cache=True, transform=None, metadata_choice=False, roi_suffix=None,
                  multichannel=False, length=(64, 64, 64), padding=0):
         dataset = BidsDataset(root_dir,
                               subject_lst=subject_lst,
@@ -455,14 +448,13 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               transform=transform,
                               multichannel=multichannel)
 
-        super().__init__(dataset.filename_pairs, cache, length=length, padding=padding, transform=transform,
-                         canonical=canonical)
+        super().__init__(dataset.filename_pairs, length=length, padding=padding, transform=transform)
 
 
 class BidsDataset(MRI2DSegmentationDataset):
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance={}, slice_axis=2,
-                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None,
-                 canonical=True, labeled=True, roi_suffix=None, multichannel=False, missing_modality=False):
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance=None, slice_axis=2,
+                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
+                 multichannel=False):
 
         self.bids_ds = bids.BIDS(root_dir)
 
@@ -574,5 +566,4 @@ class BidsDataset(MRI2DSegmentationDataset):
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
 
-        super().__init__(self.filename_pairs, slice_axis, cache,
-                         transform, slice_filter_fn, canonical)
+        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn)

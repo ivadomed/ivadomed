@@ -158,8 +158,7 @@ class Bids_to_hdf5:
     """
 
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, hdf5_name, contrast_balance={},
-                 slice_axis=2, metadata_choice=False, slice_filter_fn=None, canonical=True,
-                 roi_suffix=None):
+                 slice_axis=2, metadata_choice=False, slice_filter_fn=None, roi_suffix=None):
         """
 
         :param root_dir: path of the bids
@@ -172,7 +171,6 @@ class Bids_to_hdf5:
         :param slice_axis:
         :param metadata_choice:
         :param slice_filter_fn:
-        :param canonical:
 
         """
 
@@ -181,12 +179,10 @@ class Bids_to_hdf5:
         self.bids_ds = bids.BIDS(root_dir)
         bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
 
-        self.canonical = canonical
         self.dt = h5py.special_dtype(vlen=str)
         # opening an hdf5 file with write access and writing metadata
         self.hdf5_file = h5py.File(hdf5_name, "w")
 
-        self.hdf5_file.attrs['canonical'] = canonical
         list_patients = []
 
         self.filename_pairs = []
@@ -294,11 +290,9 @@ class Bids_to_hdf5:
             else:
                 grp = self.hdf5_file.create_group(str(subject_id))
 
-            roi_pair = imed_loader.SegmentationPair(input_filename, roi_filename, metadata=metadata, cache=False,
-                                                    canonical=self.canonical)
+            roi_pair = imed_loader.SegmentationPair(input_filename, roi_filename, metadata=metadata, cache=False)
 
-            seg_pair = imed_loader.SegmentationPair(input_filename, gt_filename, metadata=metadata, cache=False,
-                                                    canonical=self.canonical)
+            seg_pair = imed_loader.SegmentationPair(input_filename, gt_filename, metadata=metadata, cache=False)
             print("gt filename", gt_filename)
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
@@ -428,8 +422,8 @@ class Bids_to_hdf5:
 
 class HDF5Dataset:
     def __init__(self, root_dir, subject_lst, hdf5_name, csv_name, target_suffix, contrast_lst, ram=True,
-                 contrast_balance={}, slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
-                 slice_filter_fn=None, canonical=True, roi_suffix=None, target_lst=None, roi_lst=None):
+                 contrast_balance=None, slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
+                 slice_filter_fn=None, roi_suffix=None, target_lst=None, roi_lst=None):
 
         """
 
@@ -446,7 +440,6 @@ class HDF5Dataset:
         :param dim: number of dimension of our data. Either 2 or 3
         :param metadata_choice:
         :param slice_filter_fn:
-        :param canonical:
         :param roi_suffix:
         :param target_lst:
         :param roi_lst:
@@ -470,7 +463,6 @@ class HDF5Dataset:
                                      metadata_choice=metadata_choice,
                                      contrast_balance=contrast_balance,
                                      slice_axis=slice_axis,
-                                     canonical=canonical,
                                      slice_filter_fn=slice_filter_fn
                                      )
             self.hdf5_file = hdf5_file.hdf5_file
