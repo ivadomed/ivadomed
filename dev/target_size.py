@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ##############################################################
 #
 # This scripts compute the distribution of each lesion size,
@@ -70,7 +71,7 @@ def run_main(args):
                 if f.endswith(context["target_suffix"] + '.nii.gz') and c in context["contrast_test"]:
                     f_path = os.path.join(s_fold, f)
                     im = nib.load(f_path)
-                    data = im.get_data()
+                    data = np.asanyarray(im.dataobj)
                     px, py, pz = im.header['pixdim'][1:4]
                     del im
 

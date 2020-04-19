@@ -1,15 +1,16 @@
 import os
-
 import numpy as np
+
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-import ivadomed.transforms as ivadomed_transforms
-from ivadomed import metrics
-from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed import metrics as imed_metrics
+from ivadomed import postprocessing as imed_postpro
+from ivadomed import utils as imed_utils
+from ivadomed import transforms as imed_transforms
 
 cudnn.benchmark = True
 
@@ -36,14 +37,14 @@ def test_inference(film_bool=False):
         print("using GPU number {}".format(GPU_NUMBER))
 
     validation_transform_list = [
-        ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
-        ivadomed_transforms.ROICrop2D(size=[48, 48]),
-        ivadomed_transforms.ToTensor(),
-        ivadomed_transforms.NormalizeInstance()
+        imed_transforms.Resample(wspace=0.75, hspace=0.75),
+        imed_transforms.ROICrop2D(size=[48, 48]),
+        imed_transforms.ToTensor(),
+        imed_transforms.NormalizeInstance()
     ]
 
     val_transform = transforms.Compose(validation_transform_list)
-    val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
+    val_undo_transform = imed_transforms.UndoCompose(val_transform)
 
     test_lst = ['sub-test001']
 
@@ -80,23 +81,25 @@ def test_inference(film_bool=False):
                              num_workers=1)
 
     if film_bool:
-        model = torch.load(os.path.join(PATH_BIDS, "model_film_test.pt"), map_location=device)
+        model = torch.load(os.path.join(PATH_BIDS, "model_film_test.pt"),
+                           map_location=device)
     else:
-        model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt"), map_location=device)
+        model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt"),
+                           map_location=device)
 
     if cuda_available:
         model.cuda()
     model.eval()
 
-    metric_fns = [metrics.dice_score,  # from ivadomed/utils.py
-                  metrics.hausdorff_2D_score,
-                  metrics.precision_score,
-                  metrics.recall_score,
-                  metrics.specificity_score,
-                  metrics.intersection_over_union,
-                  metrics.accuracy_score]
+    metric_fns = [imed_metrics.dice_score,
+                  imed_metrics.hausdorff_2D_score,
+                  imed_metrics.precision_score,
+                  imed_metrics.recall_score,
+                  imed_metrics.specificity_score,
+                  imed_metrics.intersection_over_union,
+                  imed_metrics.accuracy_score]
 
-    metric_mgr = metrics.MetricManager(metric_fns)
+    metric_mgr = imed_metrics.MetricManager(metric_fns)
 
     if not os.path.isdir(PATH_OUT):
         os.makedirs(PATH_OUT)
@@ -120,15 +123,16 @@ def test_inference(film_bool=False):
 
                 test_metadata = [imed_utils.one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0]
                                  for k in range(len(sample_metadata))]
+
                 # Input the metadata related to the input samples
                 preds = model(test_input, test_metadata)
             else:
                 preds = model(test_input)
 
         # WARNING: sample['gt'] is actually the pred in the return sample
-        # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
-        rdict = {}
-        rdict['gt'] = preds.cpu()
+        # implementation justification: the other option: rdict['pred'] = preds would require to largely modify
+        # mt_transforms
+        rdict = {'gt': preds.cpu()}
         batch.update(rdict)
 
         batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
@@ -168,7 +172,7 @@ def test_inference(film_bool=False):
         gt_npy = gt_npy.squeeze(axis=1)
 
         preds_npy = preds.data.cpu().numpy()
-        preds_npy = imed_utils.threshold_predictions(preds_npy)
+        preds_npy = imed_postpro.threshold_predictions(preds_npy)
         preds_npy = preds_npy.astype(np.uint8)
         preds_npy = preds_npy.squeeze(axis=1)
 

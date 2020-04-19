@@ -10,6 +10,7 @@
     "contrast_test": ["T2w"],
     "center_test": [],
     "retrain_model": null,
+    "retrain_fraction": 1.0,
     "batch_size": 1,
     "dropout_rate": 0.3,
     "batch_norm_momentum": 0.9,

@@ -1,17 +1,17 @@
+#!/usr/bin/env python
 import sys
 import json
 from tqdm import tqdm
 from torchvision import transforms
 
-from ivadomed import loader as loader
-from ivadomed.utils import SliceFilter
+from ivadomed.loader import loader as imed_loader
+from ivadomed import utils as imed_utils
 from medicaltorch import transforms as mt_transforms
-
 
 metadata_type = ['FlipAngle', 'EchoTime', 'RepetitionTime']
 
-def run_main(context):
 
+def run_main(context):
     no_transform = transforms.Compose([
         mt_transforms.CenterCrop2D((128, 128)),
         mt_transforms.ToTensor(),
@@ -23,11 +23,12 @@ def run_main(context):
     for subset in ['train', 'validation', 'test']:
         metadata_dct[subset] = {}
         for bids_ds in tqdm(context["bids_path_" + subset], desc="Loading " + subset + " set"):
-            ds = loader.BidsDataset(bids_ds,
-                                    contrast_lst=context["contrast_train_validation"] if subset != "test" else context[
-                                        "contrast_test"],
-                                    transform=no_transform,
-                                    slice_filter_fn=SliceFilter())
+            ds = imed_loader.BidsDataset(bids_ds,
+                                         contrast_lst=context["contrast_train_validation"] if subset != "test" else
+                                         context[
+                                             "contrast_test"],
+                                         transform=no_transform,
+                                         slice_filter_fn=imed_utils.SliceFilter())
 
             for m in metadata_type:
                 if m in metadata_dct:

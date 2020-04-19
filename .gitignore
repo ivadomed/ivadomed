@@ -2,5 +2,7 @@ prepare_data/parameters.sh
 ivadomed.egg-info/
 ivadomed/__init__.pyc
 ivadomed/__pycache__/
-ivadomed/loader/__pychache__/
+ivadomed/loader/__pycache__/
 ivadomed/FiLM/__pycache__/
+dev/.bin/
+dev/__pycache__/
