@@ -93,6 +93,7 @@ def keep_largest_object_per_slice(predictions, axis=2):
 
 
 @nifti_capable
+@binarize_with_low_threshold
 def fill_holes(predictions, structure=(3, 3, 3)):
     """
     Fill holes in the predictions using a given structuring element.
@@ -108,17 +109,8 @@ def fill_holes(predictions, structure=(3, 3, 3)):
     Returns:
         Array or nibabel (same object as the input). Output type is int.
     """
-    predictions_proc = np.copy(predictions)
-    # If input is not binary, then make it binary by thresholding it
-    if not np.array_equal(predictions, predictions.astype(bool)):
-        predictions_proc = threshold_predictions(predictions_proc, thr=1e-3)
     assert len(structure) == len(predictions.shape)
-    predictions_proc = binary_fill_holes(np.copy(predictions_proc),
-                                         structure=np.ones(structure)).astype(np.int)
-    # If input is not binary, then call mask_prediction to apply the operation to the soft input
-    if not np.array_equal(predictions, predictions.astype(bool)):
-        predictions_proc = mask_predictions(predictions, predictions_proc)
-    return predictions_proc
+    return binary_fill_holes(predictions, structure=np.ones(structure)).astype(np.int)
 
 
 @nifti_capable
