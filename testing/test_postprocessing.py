@@ -110,6 +110,7 @@ def test_keep_largest_object_per_slice(nii_seg):
     # Test function with array input
     arr_seg_proc = postproc.keep_largest_object_per_slice(np.copy(np.asanyarray(nii_seg.dataobj)), axis=2)
     assert isinstance(arr_seg_proc, np.ndarray)
+    assert check_bin_vs_soft(nii_seg.dataobj, arr_seg_proc)
     assert arr_seg_proc[coord] == 0
     # Make sure it works with nibabel input
     nii_seg_proc = postproc.keep_largest_object_per_slice(nii_seg)
@@ -126,6 +127,7 @@ def test_fill_holes(nii_seg):
     # Test function with array input
     arr_seg_proc = postproc.fill_holes(np.copy(np.asanyarray(nii_seg.dataobj)))
     assert isinstance(arr_seg_proc, np.ndarray)
+    assert check_bin_vs_soft(nii_seg.dataobj, arr_seg_proc)
     assert arr_seg_proc[coord] == value_coord_copy
     # Make sure it works with nibabel input
     nii_seg_proc = postproc.fill_holes(nii_seg)
