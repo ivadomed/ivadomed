@@ -115,6 +115,7 @@ def test_keep_largest_object_per_slice(nii_seg):
     # Make sure it works with nibabel input
     nii_seg_proc = postproc.keep_largest_object_per_slice(nii_seg)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
+    assert check_bin_vs_soft(nii_seg.dataobj, nii_seg_proc.dataobj)
     assert nii_seg_proc.dataobj[coord] == 0
 
 
@@ -132,6 +133,7 @@ def test_fill_holes(nii_seg):
     # Make sure it works with nibabel input
     nii_seg_proc = postproc.fill_holes(nii_seg)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
+    assert check_bin_vs_soft(nii_seg.dataobj, nii_seg_proc.dataobj)
     assert nii_seg_proc.dataobj[coord] == value_coord_copy
 
 
