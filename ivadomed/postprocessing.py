@@ -50,10 +50,10 @@ def threshold_predictions(predictions, thr=0.5):
 @binarize_with_low_threshold
 def keep_largest_object(predictions):
     """
-    Keep the largest connected object from the input array (2D or 3D). This function only works with binary input.
+    Keep the largest connected object from the input array (2D or 3D).
 
     Args:
-        predictions (array or nibabel object): Input binary segmentation. Image could be 2D or 3D.
+        predictions (array or nibabel object): Input segmentation. Image could be 2D or 3D.
     Returns:
         Array or nibabel (same object as the input).
     """
@@ -70,13 +70,9 @@ def keep_largest_object(predictions):
 def keep_largest_object_per_slice(predictions, axis=2):
     """
     Keep the largest connected object for each 2D slice, along a specified axis.
-    Note: If the input is not binary, the function calls the thresholding with low value (here 10e-3),
-        applies morphomath operation, and then uses the mask_prediction function to apply the operation
-        on the soft pred based on the binary output of the morphomath process.
 
     Args:
-        predictions (array or nibabel object): Input segmentation. Image could be 2D or 3D,
-            soft or binary.
+        predictions (array or nibabel object): Input segmentation. Image could be 2D or 3D.
         axis (int): 2D slices are extracted along this axis.
     Returns:
         Array or nibabel (same object as the input).
@@ -97,13 +93,9 @@ def keep_largest_object_per_slice(predictions, axis=2):
 def fill_holes(predictions, structure=(3, 3, 3)):
     """
     Fill holes in the predictions using a given structuring element.
-    Note: If the input is not binary, the function calls the thresholding with low value (here 10e-3),
-        applies morphomath operation, and then uses the mask_prediction function to apply the operation
-        on the soft pred based on the binary output of the morphomath process.
 
     Args:
-        predictions (array or nibabel object): Input segmentation. Image could be 2D or 3D,
-            soft or binary.
+        predictions (array or nibabel object): Input segmentation. Image could be 2D or 3D.
         structure (tuple of integers): Structuring element, number of ints equals
             number of dimensions in the input array.
     Returns:
