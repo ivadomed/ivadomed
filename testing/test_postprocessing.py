@@ -51,6 +51,27 @@ def nii_dummy_seg(size_arr=(15, 15, 9), pixdim=(1, 1, 1), dtype=np.float64, orie
     return nii
 
 
+def check_bin_vs_soft(arr_in, arr_out):
+    """
+    Make sure that if input was bin, output is also bin. Or, if input was soft, output is soft.
+    :param arr_in:
+    :param arr_out:
+    :return:
+    """
+    if np.array_equal(arr_in, arr_in.astype(bool)):
+        if np.array_equal(arr_out, arr_out.astype(bool)):
+            # Both arr_in and arr_out are bin
+            return True
+        else:
+            return False
+    else:
+        if np.array_equal(arr_out, arr_out.astype(bool)):
+            return False
+        else:
+            # Both arr_in and arr_out are soft
+            return True
+
+
 @pytest.mark.parametrize('nii_seg', [nii_dummy_seg(softseg=True)])
 def test_threshold(nii_seg):
     # input array
@@ -66,26 +87,23 @@ def test_threshold(nii_seg):
 
 @pytest.mark.parametrize('nii_seg', [nii_dummy_seg(), nii_dummy_seg(softseg=True)])
 def test_keep_largest_object(nii_seg):
-    arr_init_copy = np.copy(np.asanyarray(nii_seg.dataobj))
     # Set a voxel to 1 at the corner to make sure it is set to 0 by the function
     coord = (1, 1, 1)
     nii_seg.dataobj[coord] = 1
     # Test function with array input
     arr_seg_proc = postproc.keep_largest_object(np.copy(np.asanyarray(nii_seg.dataobj)))
     assert isinstance(arr_seg_proc, np.ndarray)
+    assert check_bin_vs_soft(nii_seg.dataobj, arr_seg_proc)
     assert arr_seg_proc[coord] == 0
-    # Make sure it equals the input data (i.e. before alteration)
-    # in particular: still binary (or soft) if the input was binary (or soft)
-    assert np.array_equal(arr_init_copy, arr_seg_proc)
     # Make sure it works with nibabel input
     nii_seg_proc = postproc.keep_largest_object(nii_seg)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
+    assert check_bin_vs_soft(nii_seg.dataobj, nii_seg_proc.dataobj)
     assert nii_seg_proc.dataobj[coord] == 0
 
 
 @pytest.mark.parametrize('nii_seg', [nii_dummy_seg(), nii_dummy_seg(softseg=True)])
 def test_keep_largest_object_per_slice(nii_seg):
-    arr_init_copy = np.copy(np.asanyarray(nii_seg.dataobj))
     # Set a voxel to 1 at the corner to make sure it is set to 0 by the function
     coord = (1, 1, 1)
     nii_seg.dataobj[coord] = 1
@@ -93,9 +111,6 @@ def test_keep_largest_object_per_slice(nii_seg):
     arr_seg_proc = postproc.keep_largest_object_per_slice(np.copy(np.asanyarray(nii_seg.dataobj)), axis=2)
     assert isinstance(arr_seg_proc, np.ndarray)
     assert arr_seg_proc[coord] == 0
-    # Make sure it equals the input data (i.e. before alteration)
-    # in particular: still binary (or soft) if the input was binary (or soft)
-    assert np.array_equal(arr_init_copy, arr_seg_proc)
     # Make sure it works with nibabel input
     nii_seg_proc = postproc.keep_largest_object_per_slice(nii_seg)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
@@ -104,7 +119,6 @@ def test_keep_largest_object_per_slice(nii_seg):
 
 @pytest.mark.parametrize('nii_seg', [nii_dummy_seg(), nii_dummy_seg(softseg=True)])
 def test_fill_holes(nii_seg):
-    arr_init_copy = np.copy(np.asanyarray(nii_seg.dataobj))
     # Set a voxel to 0 in the middle of the segmentation to make sure it is set to 1 by the function
     coord = (7, 7, 4)
     value_coord_copy = nii_seg.dataobj[coord]
@@ -113,9 +127,6 @@ def test_fill_holes(nii_seg):
     arr_seg_proc = postproc.fill_holes(np.copy(np.asanyarray(nii_seg.dataobj)))
     assert isinstance(arr_seg_proc, np.ndarray)
     assert arr_seg_proc[coord] == value_coord_copy
-    # Make sure it equals the input data (i.e. before alteration)
-    # in particular: still binary (or soft) if the input was binary (or soft)
-    assert np.array_equal(arr_init_copy, arr_seg_proc)
     # Make sure it works with nibabel input
     nii_seg_proc = postproc.fill_holes(nii_seg)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
