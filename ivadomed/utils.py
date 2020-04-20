@@ -200,8 +200,8 @@ class Evaluation3DMetrics(object):
 
             # if label_size is None, then we look at all object sizes
             # we check if the currrent object belongs to the current size range
-            if label_size is None or np.max(
-                    self.data_gt_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
+            if label_size is None or \
+               np.max(self.data_gt_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
 
                 if self.overlap_vox is None:
                     overlap_vox = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)

@@ -24,7 +24,7 @@ import torch.multiprocessing as mp
 from ivadomed import main as ivado
 from ivadomed.loader import utils as imed_loader_utils
 from itertools import product
-from compare_models import compute_statistics
+from dev.compare_models import compute_statistics
 
 LOG_FILENAME = 'log.txt'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
@@ -202,8 +202,7 @@ if __name__ == '__main__':
             for param in combination:
                 value = combination[param]
                 new_config[param] = value
-                new_config["log_directory"] = new_config["log_directory"] + \
-                                              "-" + param + "=" + str(value)
+                new_config["log_directory"] = new_config["log_directory"] + "-" + param + "=" + str(value)
 
             config_list.append(copy.deepcopy(new_config))
     # Change a single parameter for each test
@@ -214,8 +213,7 @@ if __name__ == '__main__':
 
             for value in param_dict[param]:
                 new_config[param] = value
-                new_config["log_directory"] = initial_config["log_directory"] + \
-                                              "-" + param + "=" + str(value)
+                new_config["log_directory"] = initial_config["log_directory"] + "-" + param + "=" + str(value)
                 config_list.append(copy.deepcopy(new_config))
 
     # CUDA problem when forking process
@@ -242,7 +240,7 @@ if __name__ == '__main__':
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
             'best_validation_loss'])
 
-        if (args.run_test):
+        if args.run_test:
             for config in config_list:
                 # Delete path_pred
                 path_pred = os.path.join(config['log_directory'], 'pred_masks')
@@ -253,8 +251,7 @@ if __name__ == '__main__':
                         print("Error: %s - %s." % (e.filename, e.strerror))
 
             test_scores = pool.map(test_worker, config_list)
-            test_df = pd.DataFrame(test_scores, columns=[
-                'log_directory', 'test_dice'])
+            test_df = pd.DataFrame(test_scores, columns=['log_directory', 'test_dice'])
             combined_df = val_df.set_index('log_directory').join(
                 test_df.set_index('log_directory'))
             combined_df = combined_df.reset_index()
@@ -280,5 +277,5 @@ if __name__ == '__main__':
     print(results_df)
 
     # Compute avg, std, p-values
-    if (n_iterations > 1):
+    if n_iterations > 1:
         compute_statistics(results_df, n_iterations, args.run_test)

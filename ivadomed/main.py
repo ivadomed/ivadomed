@@ -285,8 +285,8 @@ def cmd_train(context):
                                                                                        context["loss"]["params"][
                                                                                            "alpha"]))
         elif context["loss"]["name"] == "multi_class_dice":
-            loss_fct = imed_losses.MultiClassDiceLoss(
-                classes_of_interest=context["loss"]["params"]["classes_of_interest"])
+            loss_fct = imed_losses.MultiClassDiceLoss(classes_of_interest=
+                                                      context["loss"]["params"]["classes_of_interest"])
 
         if not context["loss"]["name"].startswith("focal"):
             print("\nLoss function: {}.\n".format(context["loss"]["name"]))
@@ -785,7 +785,7 @@ def cmd_test(context):
                     # Save merged labels with color
                     output_nii_shape = output_nii.get_fdata().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
-                        imed_utils.save_color_labels(output_nii.get_data(),
+                        imed_utils.save_color_labels(output_nii.get_fdata(),
                                                      context['binarize_prediction'],
                                                      rdict_undo['input_metadata']['gt_filenames'][0],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
@@ -802,8 +802,8 @@ def cmd_test(context):
             metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
-    if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty'][
-        'n_it'] > 0:
+    if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and \
+        context['uncertainty']['n_it'] > 0:
         imed_utils.run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()

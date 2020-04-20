@@ -20,6 +20,7 @@ from scipy.ndimage import label, generate_binary_structure
 from ivadomed import main as imed
 from ivadomed import utils as imed_utils
 from ivadomed import metrics as imed_metrics
+from ivadomed import postprocessing as imed_postpro
 
 BIN_STRUCT = generate_binary_structure(3, 2)
 MIN_OBJ_SIZE = 3
@@ -133,8 +134,8 @@ def run_experiment(level, unc_name, thr_unc_lst, thr_pred_lst, gt_folder, pred_f
                     res_dct['retained_elt'][i_unc].append(cmpt)
                     print(thr_unc, cmpt)
                     for i_pred, thr_pred in enumerate(thr_pred_lst):
-                        data_hard = imed_utils.threshold_predictions(deepcopy(data_soft_thrUnc), thr=thr_pred).astype(
-                            np.uint8)
+                        data_hard = imed_postpro.threshold_predictions(deepcopy(data_soft_thrUnc), thr=thr_pred)\
+                                                .astype(np.uint8)
 
                         eval = imed_utils.Evaluation3DMetrics(data_pred=data_hard,
                                                               data_gt=data_gt,
@@ -222,7 +223,7 @@ def run_inference(pred_folder, im_lst, thr_pred, gt_folder, target_suf, param_ev
             # discard uncertain lesions from data_soft
             data_soft[data_unc > thr_unc] = 0
 
-        data_hard = imed_utils.threshold_predictions(data_soft, thr=thr_pred).astype(np.uint8)
+        data_hard = imed_postpro.threshold_predictions(data_soft, thr=thr_pred).astype(np.uint8)
 
         eval = imed_utils.Evaluation3DMetrics(data_pred=data_hard,
                                               data_gt=data_gt,

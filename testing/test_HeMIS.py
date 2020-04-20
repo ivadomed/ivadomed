@@ -54,7 +54,7 @@ def test_HeMIS(p=0.0001):
                                           metadata_choice=False,
                                           dim=2,
                                           slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
-                                                                            filter_empty_mask=True),
+                                                                                 filter_empty_mask=True),
                                           roi_suffix="_seg-manual",
                                           target_lst=['T2w'],
                                           roi_lst=['T2w'])

@@ -47,7 +47,9 @@ def run_main(args):
         mt_transforms.NormalizeInstance(),
     ])
 
-    train_lst, valid_lst, test_lst = imed_loader_utils.split_dataset(context["bids_path"], context["center_test"],
+    train_lst, valid_lst, test_lst = imed_loader_utils.split_dataset(context["bids_path"],
+                                                                     context["center_test"],
+                                                                     context["split_method"],
                                                                      context["random_seed"])
 
     balance_dct = {}
@@ -56,8 +58,8 @@ def run_main(args):
         ds = imed_loader.BidsDataset(context["bids_path"],
                                      subject_lst=ds_lst,
                                      target_suffix=context["target_suffix"],
-                                     contrast_lst=context["contrast_test"] if ds_name == 'test' else context[
-                                         "contrast_train_validation"],
+                                     contrast_lst=context["contrast_test"] if ds_name == 'test'
+                                     else context["contrast_train_validation"],
                                      metadata_choice=context["metadata"],
                                      contrast_balance=context["contrast_balance"],
                                      transform=transform_lst,
