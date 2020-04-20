@@ -107,18 +107,19 @@ def test_fill_holes(nii_seg):
     arr_init_copy = np.copy(np.asanyarray(nii_seg.dataobj))
     # Set a voxel to 0 in the middle of the segmentation to make sure it is set to 1 by the function
     coord = (7, 7, 4)
+    value_coord_copy = nii_seg.dataobj[coord]
     nii_seg.dataobj[coord] = 0
     # Test function with array input
     arr_seg_proc = postproc.fill_holes(np.copy(np.asanyarray(nii_seg.dataobj)))
     assert isinstance(arr_seg_proc, np.ndarray)
-    assert arr_seg_proc[coord] == 1
+    assert arr_seg_proc[coord] == value_coord_copy
     # Make sure it equals the input data (i.e. before alteration)
     # in particular: still binary (or soft) if the input was binary (or soft)
     assert np.array_equal(arr_init_copy, arr_seg_proc)
     # Make sure it works with nibabel input
     nii_seg_proc = postproc.fill_holes(nii_seg)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
-    assert nii_seg_proc.dataobj[coord] == 1
+    assert nii_seg_proc.dataobj[coord] == value_coord_copy
 
 
 @pytest.mark.parametrize('nii_seg', [nii_dummy_seg()])
