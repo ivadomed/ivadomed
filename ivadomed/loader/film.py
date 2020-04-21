@@ -125,3 +125,21 @@ def clustering_fit(dataset, key_lst):
         model_dct[k] = kde
 
     return model_dct
+
+
+def check_isMRIparam(mri_param_type, mri_param, subject, metadata):
+    if mri_param_type not in mri_param:
+        print("{} without {}, skipping.".format(subject, mri_param_type))
+        return False
+    else:
+        if mri_param_type == "Manufacturer":
+            value = mri_param[mri_param_type]
+        else:
+            if isinstance(mri_param[mri_param_type], (int, float)):
+                value = float(mri_param[mri_param_type])
+            else:  # eg multi-echo data have 3 echo times
+                value = np.mean([float(v)
+                                 for v in mri_param[mri_param_type].split(',')])
+
+        metadata[mri_param_type].append(value)
+        return True
