@@ -24,7 +24,7 @@ PATH_OUT = 'tmp'
 
 
 def test_inference(film_bool=False):
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
         pin_memory = False
@@ -110,7 +110,7 @@ def test_inference(film_bool=False):
 
         with torch.no_grad():
             if cuda_available:
-                test_input = input_samples.cuda()
+                test_input = imed_utils.cuda(input_samples)
                 test_gt = imed_utils.cuda(gt_samples, non_blocking=True)
             else:
                 test_input = input_samples
