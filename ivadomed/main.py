@@ -23,7 +23,7 @@ from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.FiLM import utils as film_utils
-from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
 
@@ -111,7 +111,7 @@ def cmd_train(context):
 
     # This code will iterate over the folders and load the data, filtering
     # the slices without labels and then concatenating all the datasets together
-    ds_train = imed_loader_utils.load_dataset(train_lst, train_transform, context)
+    ds_train = imed_loader.load_dataset(train_lst, train_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     # todo: not supported by the adaptative loader
@@ -150,7 +150,7 @@ def cmd_train(context):
     print("Validation")
 
     # Validation dataset ------------------------------------------------------
-    ds_val = imed_loader_utils.load_dataset(valid_lst, val_transform, context)
+    ds_val = imed_loader.load_dataset(valid_lst, val_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
@@ -596,7 +596,7 @@ def cmd_test(context):
     else:
         test_lst = joblib.load(context["split_path"])['test']
 
-    ds_test = imed_loader_utils.load_dataset(test_lst, val_transform, context)
+    ds_test = imed_loader.load_dataset(test_lst, val_transform, context)
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():

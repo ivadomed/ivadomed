@@ -22,52 +22,6 @@ __numpy_type_map = {
 }
 
 
-def load_dataset(data_list, data_transform, context):
-    if context["unet_3D"]:
-        dataset = imed_loader.Bids3DDataset(context["bids_path"],
-                                            subject_lst=data_list,
-                                            target_suffix=context["target_suffix"],
-                                            roi_suffix=context["roi_suffix"],
-                                            contrast_lst=context["contrast_train_validation"],
-                                            metadata_choice=context["metadata"],
-                                            contrast_balance=context["contrast_balance"],
-                                            slice_axis=imed_utils.AXIS_DCT[context["slice_axis"]],
-                                            transform=data_transform,
-                                            multichannel=context['multichannel'],
-                                            length=context["length_3D"],
-                                            padding=context["padding_3D"])
-    elif context["HeMIS"]:
-        dataset = imed_adaptative.HDF5Dataset(root_dir=context["bids_path"],
-                                              subject_lst=data_list,
-                                              hdf5_name=context["hdf5_path"],
-                                              csv_name=context["csv_path"],
-                                              target_suffix=context["target_suffix"],
-                                              contrast_lst=context["contrast_train_validation"],
-                                              ram=context['ram'],
-                                              contrast_balance=context["contrast_balance"],
-                                              slice_axis=imed_utils.AXIS_DCT[context["slice_axis"]],
-                                              transform=data_transform,
-                                              metadata_choice=context["metadata"],
-                                              slice_filter_fn=imed_utils.SliceFilter(**context["slice_filter"]),
-                                              roi_suffix=context["roi_suffix"],
-                                              target_lst=context['target_lst'],
-                                              roi_lst=context['roi_lst'])
-    else:
-        dataset = imed_loader.BidsDataset(context["bids_path"],
-                                          subject_lst=data_list,
-                                          target_suffix=context["target_suffix"],
-                                          roi_suffix=context["roi_suffix"],
-                                          contrast_lst=context["contrast_train_validation"],
-                                          metadata_choice=context["metadata"],
-                                          contrast_balance=context["contrast_balance"],
-                                          slice_axis=imed_utils.AXIS_DCT[context["slice_axis"]],
-                                          transform=data_transform,
-                                          multichannel=context['multichannel'],
-                                          slice_filter_fn=imed_utils.SliceFilter(**context["slice_filter"]))
-
-    return dataset
-
-
 def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
     # read participants.tsv as pandas dataframe
     df = bids.BIDS(path_folder).participants.content
