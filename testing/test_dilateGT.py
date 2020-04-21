@@ -74,7 +74,7 @@ def test_dilateGT(dil_fac=0.25):
     print(len(ds_train))
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
-                              collate_fn=imed_loader_utils.mt_collate,
+                              collate_fn=imed_loader_utils.imed_collate,
                               num_workers=1)
 
     # if not os.path.isdir(PATH_OUT):

@@ -69,7 +69,7 @@ def test_undo(contrast='T2star', tol=3):
                                                                                      filter_empty_mask=False))
     test_loader_noTrans = DataLoader(ds_test_noTrans, batch_size=len(ds_test_noTrans),
                                      shuffle=False, pin_memory=True,
-                                     collate_fn=imed_loader_utils.mt_collate,
+                                     collate_fn=imed_loader_utils.imed_collate,
                                      num_workers=1)
     batch_noTrans = [t for t in test_loader_noTrans][0]
     input_noTrans, gt_noTrans = batch_noTrans["input"], batch_noTrans["gt"]
@@ -94,7 +94,7 @@ def test_undo(contrast='T2star', tol=3):
 
         test_loader = DataLoader(ds_test, batch_size=len(ds_test),
                                  shuffle=False, pin_memory=True,
-                                 collate_fn=imed_loader_utils.mt_collate,
+                                 collate_fn=imed_loader_utils.imed_collate,
                                  num_workers=1)
 
         for t in test_loader:

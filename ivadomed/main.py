@@ -145,7 +145,7 @@ def cmd_train(context):
 
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
-                              collate_fn=imed_loader_utils.mt_collate,
+                              collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
     print("Validation")
 
@@ -177,7 +177,7 @@ def cmd_train(context):
 
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
                             shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
-                            collate_fn=imed_loader_utils.mt_collate,
+                            collate_fn=imed_loader_utils.imed_collate,
                             num_workers=0)
     if film_bool:
         n_metadata = len([ll for l in train_onehotencoder.categories_ for ll in l])
@@ -406,7 +406,7 @@ def cmd_train(context):
             ds_train.update(p=p)
             train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                                       shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
-                                      collate_fn=imed_loader_utils.mt_collate,
+                                      collate_fn=imed_loader_utils.imed_collate,
                                       num_workers=0)
 
         # Validation loop -----------------------------------------------------
@@ -621,7 +621,7 @@ def cmd_test(context):
 
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
                              shuffle=False, pin_memory=True,
-                             collate_fn=imed_loader_utils.mt_collate,
+                             collate_fn=imed_loader_utils.imed_collate,
                              num_workers=0)
 
     model = torch.load("./" + context["log_directory"] + "/best_model.pt", map_location=device)

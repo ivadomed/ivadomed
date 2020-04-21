@@ -68,7 +68,7 @@ def run_main(args):
         print("Loaded {} axial slices for the {} set.".format(len(ds), ds_name))
         ds_loader = DataLoader(ds, batch_size=1,
                                shuffle=False, pin_memory=False,
-                               collate_fn=imed_loader_utils.mt_collate,
+                               collate_fn=imed_loader_utils.imed_collate,
                                num_workers=1)
 
         balance_lst = []

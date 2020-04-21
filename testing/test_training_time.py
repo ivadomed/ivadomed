@@ -105,16 +105,16 @@ def test_unet():
 
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
-                              collate_fn=imed_loader_utils.mt_collate,
+                              collate_fn=imed_loader_utils.imed_collate,
                               num_workers=1)
 
     multichannel_loader = DataLoader(ds_mutichannel, batch_size=BATCH_SIZE,
                                      shuffle=True, pin_memory=True,
-                                     collate_fn=imed_loader_utils.mt_collate,
+                                     collate_fn=imed_loader_utils.imed_collate,
                                      num_workers=1)
     loader_3d = DataLoader(ds_3d, batch_size=1,
                            shuffle=True, pin_memory=True,
-                           collate_fn=imed_loader_utils.mt_collate,
+                           collate_fn=imed_loader_utils.imed_collate,
                            num_workers=1)
 
     model_list = [(models.Unet(depth=DEPTH,

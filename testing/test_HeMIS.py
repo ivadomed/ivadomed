@@ -70,7 +70,7 @@ def test_HeMIS(p=0.0001):
 
     train_loader = DataLoader(dataset, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
-                              collate_fn=imed_loader_utils.mt_collate,
+                              collate_fn=imed_loader_utils.imed_collate,
                               num_workers=1)
 
     model = models.HeMISUnet(modalities=contrasts,
@@ -164,7 +164,7 @@ def test_HeMIS(p=0.0001):
         print("[INFO]: Reloading dataset")
         train_loader = DataLoader(dataset, batch_size=BATCH_SIZE,
                                   shuffle=True, pin_memory=True,
-                                  collate_fn=imed_loader_utils.mt_collate,
+                                  collate_fn=imed_loader_utils.imed_collate,
                                   num_workers=1)
         tot_reload = time.time() - start_reload
         reload_lst.append(tot_reload)

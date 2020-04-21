@@ -77,7 +77,7 @@ def test_inference(film_bool=False):
 
     test_loader = DataLoader(ds_test, batch_size=BATCH_SIZE,
                              shuffle=False, pin_memory=pin_memory,
-                             collate_fn=imed_loader_utils.mt_collate,
+                             collate_fn=imed_loader_utils.imed_collate,
                              num_workers=1)
 
     if film_bool:

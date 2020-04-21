@@ -104,7 +104,7 @@ def test_hdf5():
 
     train_loader = DataLoader(dataset, batch_size=BATCH_SIZE,
                               shuffle=False, pin_memory=True,
-                              collate_fn=imed_loader_utils.mt_collate,
+                              collate_fn=imed_loader_utils.imed_collate,
                               num_workers=1)
 
     for i, batch in enumerate(train_loader):

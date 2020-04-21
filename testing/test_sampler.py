@@ -65,7 +65,7 @@ def test_sampler():
     print('\nLoading without sampling')
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
-                              collate_fn=imed_loader_utils.mt_collate,
+                              collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
     _cmpt_label(train_loader)
 
@@ -73,7 +73,7 @@ def test_sampler():
     train_loader_balanced = DataLoader(ds_train, batch_size=BATCH_SIZE,
                                        sampler=imed_loader_utils.BalancedSampler(ds_train),
                                        shuffle=False, pin_memory=True,
-                                       collate_fn=imed_loader_utils.mt_collate,
+                                       collate_fn=imed_loader_utils.imed_collate,
                                        num_workers=0)
     _cmpt_label(train_loader_balanced)
 

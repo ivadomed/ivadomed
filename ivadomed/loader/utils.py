@@ -97,7 +97,7 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
     return X_train, X_val, X_test
 
 
-def mt_collate(batch):
+def imed_collate(batch):
     error_msg = "batch must contain tensors, numbers, dicts or lists; found {}"
     elem_type = type(batch[0])
     if torch.is_tensor(batch[0]):
@@ -121,10 +121,10 @@ def mt_collate(batch):
     elif isinstance(batch[0], string_classes):
         return batch
     elif isinstance(batch[0], collections.Mapping):
-        return {key: mt_collate([d[key] for d in batch]) for key in batch[0]}
+        return {key: imed_collate([d[key] for d in batch]) for key in batch[0]}
     elif isinstance(batch[0], collections.Sequence):
         transposed = zip(*batch)
-        return [mt_collate(samples) for samples in transposed]
+        return [imed_collate(samples) for samples in transposed]
 
     return batch
 

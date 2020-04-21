@@ -669,7 +669,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["batch_size"],
                              shuffle=False, pin_memory=True,
-                             collate_fn=imed_loaded_utils.mt_collate,
+                             collate_fn=imed_loaded_utils.imed_collate,
                              num_workers=0)
 
     # Load model
