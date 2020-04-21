@@ -1,21 +1,17 @@
-import numpy as np
 from random import randint
-import torch
 
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
+from medicaltorch import transforms as mt_transforms
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from ivadomed.utils import SliceFilter
-from medicaltorch import datasets as mt_datasets
-from medicaltorch import transforms as mt_transforms
-
-from ivadomed import loader as loader
 import ivadomed.transforms as ivadomed_transforms
-import matplotlib.pyplot as plt
+from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
-import matplotlib.pyplot as plt
 cudnn.benchmark = True
 
 GPU_NUMBER = 0
@@ -59,21 +55,21 @@ def test_undo(contrast='T2star', tol=3):
 
     subject_test_lst = ['sub-test001']
 
-    ds_test_noTrans = loader.BidsDataset(PATH_BIDS,
-                                         subject_lst=subject_test_lst,
-                                         target_suffix=["_lesion-manual"],
-                                         roi_suffix="_seg-manual",
-                                         contrast_lst=[contrast],
-                                         metadata_choice="contrast",
-                                         contrast_balance={},
-                                         slice_axis=SLICE_AXIS,
-                                         transform=transforms.Compose(test_1),
-                                         multichannel=False,
-                                         slice_filter_fn=SliceFilter(filter_empty_input=True,
-                                                                     filter_empty_mask=False))
+    ds_test_noTrans = imed_loader.BidsDataset(PATH_BIDS,
+                                              subject_lst=subject_test_lst,
+                                              target_suffix=["_lesion-manual"],
+                                              roi_suffix="_seg-manual",
+                                              contrast_lst=[contrast],
+                                              metadata_choice="contrast",
+                                              contrast_balance={},
+                                              slice_axis=SLICE_AXIS,
+                                              transform=transforms.Compose(test_1),
+                                              multichannel=False,
+                                              slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                                                                     filter_empty_mask=False))
     test_loader_noTrans = DataLoader(ds_test_noTrans, batch_size=len(ds_test_noTrans),
                                      shuffle=False, pin_memory=True,
-                                     collate_fn=mt_datasets.mt_collate,
+                                     collate_fn=imed_loader_utils.imed_collate,
                                      num_workers=1)
     batch_noTrans = [t for t in test_loader_noTrans][0]
     input_noTrans, gt_noTrans = batch_noTrans["input"], batch_noTrans["gt"]
@@ -83,22 +79,22 @@ def test_undo(contrast='T2star', tol=3):
         val_transform = transforms.Compose(test)
         val_undo_transform = ivadomed_transforms.UndoCompose(val_transform)
 
-        ds_test = loader.BidsDataset(PATH_BIDS,
-                                     subject_lst=subject_test_lst,
-                                     target_suffix=["_lesion-manual"],
-                                     roi_suffix="_seg-manual",
-                                     contrast_lst=[contrast],
-                                     metadata_choice="contrast",
-                                     contrast_balance={},
-                                     slice_axis=SLICE_AXIS,
-                                     transform=val_transform,
-                                     multichannel=False,
-                                     slice_filter_fn=SliceFilter(filter_empty_input=True,
-                                                                 filter_empty_mask=False))
+        ds_test = imed_loader.BidsDataset(PATH_BIDS,
+                                          subject_lst=subject_test_lst,
+                                          target_suffix=["_lesion-manual"],
+                                          roi_suffix="_seg-manual",
+                                          contrast_lst=[contrast],
+                                          metadata_choice="contrast",
+                                          contrast_balance={},
+                                          slice_axis=SLICE_AXIS,
+                                          transform=val_transform,
+                                          multichannel=False,
+                                          slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                                                                 filter_empty_mask=False))
 
         test_loader = DataLoader(ds_test, batch_size=len(ds_test),
                                  shuffle=False, pin_memory=True,
-                                 collate_fn=mt_datasets.mt_collate,
+                                 collate_fn=imed_loader_utils.imed_collate,
                                  num_workers=1)
 
         for t in test_loader:
@@ -138,8 +134,8 @@ def test_undo(contrast='T2star', tol=3):
                 # check values for ROICrop
                 if np.any(np_noTrans) and not 'CenterCrop2D' in name:
                     # if difference is superior to tolerance, then save images to QC
-                    if np.sum(np_noTrans-np_undoTrans) >= tol:
-                        print(np.sum(np_noTrans-np_undoTrans))
+                    if np.sum(np_noTrans - np_undoTrans) >= tol:
+                        print(np.sum(np_noTrans - np_undoTrans))
                         im_noTrans = np.array(input_noTrans[smp_idx])[0]
                         im_undoTrans = np.array(rdict_undo['input'])
 
@@ -151,12 +147,12 @@ def test_undo(contrast='T2star', tol=3):
                         plt.axis("off")
                         plt.imshow(im_undoTrans, interpolation='nearest', aspect='auto', cmap='gray')
 
-                        fname_png_out = 'test_undo_err_'+str(randint(0, 1000))+'.png'
+                        fname_png_out = 'test_undo_err_' + str(randint(0, 1000)) + '.png'
                         plt.savefig(fname_png_out, bbox_inches='tight', pad_inches=0)
                         plt.close()
-                        print('Error: please check: '+fname_png_out)
+                        print('Error: please check: ' + fname_png_out)
 
-                    assert np.sum(np_noTrans-np_undoTrans) < tol
+                    assert np.sum(np_noTrans - np_undoTrans) < tol
                     print('\tData content (tol: {} vox.): checked.'.format(tol))
         print('\n [INFO]: Test of {} passed successfully. '.format(name))
 

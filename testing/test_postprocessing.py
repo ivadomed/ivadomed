@@ -8,7 +8,7 @@ import scipy
 import numpy as np
 import nibabel as nib
 
-import ivadomed.postprocessing as postproc
+from ivadomed import postprocessing as imed_postpro
 
 
 def nii_dummy_seg(size_arr=(15, 15, 9), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI', shape='rectangle',
@@ -54,12 +54,12 @@ def nii_dummy_seg(size_arr=(15, 15, 9), pixdim=(1, 1, 1), dtype=np.float64, orie
 @pytest.mark.parametrize('nii_seg', [nii_dummy_seg(softseg=True)])
 def test_threshold(nii_seg):
     # input array
-    arr_seg_proc = postproc.threshold_predictions(np.copy(np.asanyarray(nii_seg.dataobj)))
+    arr_seg_proc = imed_postpro.threshold_predictions(np.copy(np.asanyarray(nii_seg.dataobj)))
     assert isinstance(arr_seg_proc, np.ndarray)
     # Before thresholding: [0.33333333, 0.66666667, 1.        ] --> after thresholding: [0, 1, 1]
     assert np.array_equal(arr_seg_proc[4:7, 8, 4], np.array([0, 1, 1]))
     # input nibabel
-    nii_seg_proc = postproc.threshold_predictions(nii_seg)
+    nii_seg_proc = imed_postpro.threshold_predictions(nii_seg)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
     assert np.array_equal(nii_seg_proc.get_fdata()[4:7, 8, 4], np.array([0, 1, 1]))
 
@@ -70,11 +70,11 @@ def test_keep_largest_object(nii_seg):
     coord = (1, 1, 1)
     nii_seg.dataobj[coord] = 1
     # Test function with array input
-    arr_seg_proc = postproc.keep_largest_object(np.copy(np.asanyarray(nii_seg.dataobj)))
+    arr_seg_proc = imed_postpro.keep_largest_object(np.copy(np.asanyarray(nii_seg.dataobj)))
     assert isinstance(arr_seg_proc, np.ndarray)
     assert arr_seg_proc[coord] == 0
     # Make sure it works with nibabel input
-    nii_seg_proc = postproc.keep_largest_object(nii_seg)
+    nii_seg_proc = imed_postpro.keep_largest_object(nii_seg)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
     assert nii_seg_proc.dataobj[coord] == 0
 
@@ -85,11 +85,11 @@ def test_keep_largest_object_per_slice(nii_seg):
     coord = (1, 1, 1)
     nii_seg.dataobj[coord] = 1
     # Test function with array input
-    arr_seg_proc = postproc.keep_largest_object_per_slice(np.copy(np.asanyarray(nii_seg.dataobj)), axis=2)
+    arr_seg_proc = imed_postpro.keep_largest_object_per_slice(np.copy(np.asanyarray(nii_seg.dataobj)), axis=2)
     assert isinstance(arr_seg_proc, np.ndarray)
     assert arr_seg_proc[coord] == 0
     # Make sure it works with nibabel input
-    nii_seg_proc = postproc.keep_largest_object_per_slice(nii_seg)
+    nii_seg_proc = imed_postpro.keep_largest_object_per_slice(nii_seg)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
     assert nii_seg_proc.dataobj[coord] == 0
 
@@ -100,11 +100,11 @@ def test_fill_holes(nii_seg):
     coord = (7, 7, 4)
     nii_seg.dataobj[coord] = 0
     # Test function with array input
-    arr_seg_proc = postproc.fill_holes(np.copy(np.asanyarray(nii_seg.dataobj)))
+    arr_seg_proc = imed_postpro.fill_holes(np.copy(np.asanyarray(nii_seg.dataobj)))
     assert isinstance(arr_seg_proc, np.ndarray)
     assert arr_seg_proc[coord] == 1
     # Make sure it works with nibabel input
-    nii_seg_proc = postproc.fill_holes(nii_seg)
+    nii_seg_proc = imed_postpro.fill_holes(nii_seg)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
     assert nii_seg_proc.dataobj[coord] == 1
 
@@ -116,11 +116,11 @@ def test_mask_predictions(nii_seg):
     coord = (7, 7, 4)
     nii_seg_mask.dataobj[coord] = 0
     # Test function with array input
-    arr_seg_proc = postproc.mask_predictions(
+    arr_seg_proc = imed_postpro.mask_predictions(
         np.copy(np.asanyarray(nii_seg.dataobj)), np.asanyarray(nii_seg_mask.dataobj))
     assert isinstance(arr_seg_proc, np.ndarray)
     assert arr_seg_proc[coord] == 0
     # Make sure it works with nibabel input
-    nii_seg_proc = postproc.mask_predictions(nii_seg, nii_seg_mask.dataobj)
+    nii_seg_proc = imed_postpro.mask_predictions(nii_seg, nii_seg_mask.dataobj)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
     assert nii_seg_proc.dataobj[coord] == 0

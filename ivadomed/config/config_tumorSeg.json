@@ -41,7 +41,7 @@
     "unet_3D": false,
     "target_lst": ["T2w"],
     "roi_lst": null,
-    "HeMIS": true,
+    "HeMIS": false,
     "binarize_prediction": true,
     "attention_unet": false,
     "uncertainty": {"epistemic": false, "aleatoric": false, "n_it": 10},

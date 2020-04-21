@@ -6,10 +6,8 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from medicaltorch import datasets as mt_datasets
-
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed import metrics as imed_metrics
-from ivadomed import loader as imed_loader
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import utils as imed_utils
 from ivadomed import transforms as imed_transforms
@@ -26,7 +24,7 @@ PATH_OUT = 'tmp'
 
 
 def test_inference(film_bool=False):
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
         pin_memory = False
@@ -63,13 +61,13 @@ def test_inference(film_bool=False):
                                       slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
                                                                              filter_empty_mask=False))
 
-    ds_test = imed_loader.filter_roi(ds_test, nb_nonzero_thr=10)
+    ds_test = imed_loader_utils.filter_roi(ds_test, nb_nonzero_thr=10)
 
     if film_bool:  # normalize metadata before sending to network
         print('FiLM inference not implemented yet.')
         return 0
         # metadata_clustering_models = joblib.load("./" + context["log_directory"] + "/clustering_models.joblib")
-        # ds_test = imed_loader.normalize_metadata(ds_test,
+        # ds_test = imed_film.normalize_metadata(ds_test,
         #                                     metadata_clustering_models,
         #                                     context["debugging"],
         #                                     context["metadata"],
@@ -79,7 +77,7 @@ def test_inference(film_bool=False):
 
     test_loader = DataLoader(ds_test, batch_size=BATCH_SIZE,
                              shuffle=False, pin_memory=pin_memory,
-                             collate_fn=mt_datasets.mt_collate,
+                             collate_fn=imed_loader_utils.imed_collate,
                              num_workers=1)
 
     if film_bool:
@@ -112,7 +110,7 @@ def test_inference(film_bool=False):
 
         with torch.no_grad():
             if cuda_available:
-                test_input = input_samples.cuda()
+                test_input = imed_utils.cuda(input_samples)
                 test_gt = imed_utils.cuda(gt_samples, non_blocking=True)
             else:
                 test_input = input_samples
@@ -123,18 +121,18 @@ def test_inference(film_bool=False):
                 test_contrast = [sample_metadata[k]['contrast']
                                  for k in range(len(sample_metadata))]
 
-                test_metadata = [imed_utils.one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0] for k
-                                 in
-                                 range(len(sample_metadata))]
+                test_metadata = [imed_utils.one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0]
+                                 for k in range(len(sample_metadata))]
+
                 # Input the metadata related to the input samples
                 preds = model(test_input, test_metadata)
             else:
                 preds = model(test_input)
 
         # WARNING: sample['gt'] is actually the pred in the return sample
-        # implementation justification: the other option: rdict['pred'] = preds would require to largely modify mt_transforms
-        rdict = {}
-        rdict['gt'] = preds.cpu()
+        # implementation justification: the other option: rdict['pred'] = preds would require to largely modify
+        # mt_transforms
+        rdict = {'gt': preds.cpu()}
         batch.update(rdict)
 
         batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input

@@ -21,11 +21,10 @@ import shutil
 import sys
 import torch.multiprocessing as mp
 
-
 from ivadomed import main as ivado
-from ivadomed import loader
+from ivadomed.loader import utils as imed_loader_utils
 from itertools import product
-from compare_models import compute_statistics
+from dev.compare_models import compute_statistics
 
 LOG_FILENAME = 'log.txt'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
@@ -91,7 +90,7 @@ def test_worker(config):
 
         # Uncomment to use 3D dice
         # test_dice = eval_df["dice"].mean()
-        
+
     except:
         logging.exception('Got exception on main handler')
         print("Unexpected error:", sys.exc_info()[0])
@@ -172,16 +171,16 @@ if __name__ == '__main__':
     # Split dataset if not already done
 
     if args.fixed_split and (initial_config.get("split_path") is None):
-        train_lst, valid_lst, test_lst = loader.split_dataset(path_folder=initial_config["bids_path"],
-                                                              center_test_lst=initial_config["center_test"],
-                                                              split_method=initial_config["split_method"],
-                                                              random_seed=initial_config["random_seed"],
-                                                              train_frac=initial_config["train_fraction"],
-                                                              test_frac=initial_config["test_fraction"])
+        train_lst, valid_lst, test_lst = imed_loader_utils.split_dataset(path_folder=initial_config["bids_path"],
+                                                                         center_test_lst=initial_config["center_test"],
+                                                                         split_method=initial_config["split_method"],
+                                                                         random_seed=initial_config["random_seed"],
+                                                                         train_frac=initial_config["train_fraction"],
+                                                                         test_frac=initial_config["test_fraction"])
 
         # save the subject distribution
         split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-        split_path = "./"+"common_split_datasets.joblib"
+        split_path = "./" + "common_split_datasets.joblib"
         joblib.dump(split_dct, split_path)
         initial_config["split_path"] = split_path
 
@@ -201,11 +200,9 @@ if __name__ == '__main__':
             new_config = copy.deepcopy(initial_config)
 
             for param in combination:
-
                 value = combination[param]
                 new_config[param] = value
-                new_config["log_directory"] = new_config["log_directory"] + \
-                    "-" + param + "=" + str(value)
+                new_config["log_directory"] = new_config["log_directory"] + "-" + param + "=" + str(value)
 
             config_list.append(copy.deepcopy(new_config))
     # Change a single parameter for each test
@@ -215,10 +212,8 @@ if __name__ == '__main__':
             new_config = copy.deepcopy(initial_config)
 
             for value in param_dict[param]:
-
                 new_config[param] = value
-                new_config["log_directory"] = initial_config["log_directory"] + \
-                    "-" + param + "=" + str(value)
+                new_config["log_directory"] = initial_config["log_directory"] + "-" + param + "=" + str(value)
                 config_list.append(copy.deepcopy(new_config))
 
     # CUDA problem when forking process
@@ -227,7 +222,7 @@ if __name__ == '__main__':
 
     # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
     pool = mp.Pool(processes=len(initial_config["gpu"]))
-    if(args.n_iterations is not None):
+    if args.n_iterations is not None:
         n_iterations = args.n_iterations
     else:
         n_iterations = 1
@@ -242,9 +237,10 @@ if __name__ == '__main__':
 
         validation_scores = pool.map(train_worker, config_list)
         val_df = pd.DataFrame(validation_scores, columns=[
-            'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice', 'best_validation_loss'])
+            'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
+            'best_validation_loss'])
 
-        if(args.run_test):
+        if args.run_test:
             for config in config_list:
                 # Delete path_pred
                 path_pred = os.path.join(config['log_directory'], 'pred_masks')
@@ -255,8 +251,7 @@ if __name__ == '__main__':
                         print("Error: %s - %s." % (e.filename, e.strerror))
 
             test_scores = pool.map(test_worker, config_list)
-            test_df = pd.DataFrame(test_scores, columns=[
-                                   'log_directory', 'test_dice'])
+            test_df = pd.DataFrame(test_scores, columns=['log_directory', 'test_dice'])
             combined_df = val_df.set_index('log_directory').join(
                 test_df.set_index('log_directory'))
             combined_df = combined_df.reset_index()
@@ -282,5 +277,5 @@ if __name__ == '__main__':
     print(results_df)
 
     # Compute avg, std, p-values
-    if(n_iterations > 1):
+    if n_iterations > 1:
         compute_statistics(results_df, n_iterations, args.run_test)

@@ -1,22 +1,19 @@
-import numpy as np
 import time
 
+import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
-from torch.utils.data import DataLoader
-from torchvision import transforms
-
-from ivadomed import utils
-from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
 from torch import optim
-
+from torch.utils.data import DataLoader
+from torchvision import transforms
 from tqdm import tqdm
 
-from ivadomed import loader as loader
-from ivadomed import models
-from ivadomed import losses
 import ivadomed.transforms as ivadomed_transforms
+from ivadomed import losses
+from ivadomed import models
+from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 
 cudnn.benchmark = True
 
@@ -57,65 +54,66 @@ def test_unet():
 
     train_lst = ['sub-test001']
 
-    ds_train = loader.BidsDataset(PATH_BIDS,
-                                  subject_lst=train_lst,
-                                  target_suffix=["_lesion-manual"],
-                                  roi_suffix="_seg-manual",
-                                  contrast_lst=['T2w'],
-                                  metadata_choice="contrast",
-                                  contrast_balance={},
-                                  slice_axis=2,
-                                  transform=train_transform,
-                                  multichannel=False,
-                                  slice_filter_fn=utils.SliceFilter(filter_empty_input=True, filter_empty_mask=False))
+    ds_train = imed_loader.BidsDataset(PATH_BIDS,
+                                       subject_lst=train_lst,
+                                       target_suffix=["_lesion-manual"],
+                                       roi_suffix="_seg-manual",
+                                       contrast_lst=['T2w'],
+                                       metadata_choice="contrast",
+                                       contrast_balance={},
+                                       slice_axis=2,
+                                       transform=train_transform,
+                                       multichannel=False,
+                                       slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                                                              filter_empty_mask=False))
 
-    ds_mutichannel = loader.BidsDataset(PATH_BIDS,
-                                        subject_lst=train_lst,
-                                        target_suffix=["_lesion-manual"],
-                                        roi_suffix="_seg-manual",
-                                        contrast_lst=['T1w', 'T2w'],
-                                        metadata_choice="without",
-                                        contrast_balance={},
-                                        slice_axis=2,
-                                        transform=training_transform_multichannel,
-                                        multichannel=True,
-                                        slice_filter_fn=utils.SliceFilter(filter_empty_input=True,
-                                                                          filter_empty_mask=False))
+    ds_mutichannel = imed_loader.BidsDataset(PATH_BIDS,
+                                             subject_lst=train_lst,
+                                             target_suffix=["_lesion-manual"],
+                                             roi_suffix="_seg-manual",
+                                             contrast_lst=['T1w', 'T2w'],
+                                             metadata_choice="without",
+                                             contrast_balance={},
+                                             slice_axis=2,
+                                             transform=training_transform_multichannel,
+                                             multichannel=True,
+                                             slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                                                                    filter_empty_mask=False))
 
     train_transform = transforms.Compose(training_transform_3d_list)
-    ds_3d = loader.Bids3DDataset(PATH_BIDS,
-                                 subject_lst=train_lst,
-                                 target_suffix=["_lesion-manual", "_seg-manual"],
-                                 contrast_lst=['T1w', 'T2w'],
-                                 metadata_choice="without",
-                                 contrast_balance={},
-                                 slice_axis=2,
-                                 transform=train_transform,
-                                 multichannel=False,
-                                 length=[96, 96, 16],
-                                 padding=0)
+    ds_3d = imed_loader.Bids3DDataset(PATH_BIDS,
+                                      subject_lst=train_lst,
+                                      target_suffix=["_lesion-manual", "_seg-manual"],
+                                      contrast_lst=['T1w', 'T2w'],
+                                      metadata_choice="without",
+                                      contrast_balance={},
+                                      slice_axis=2,
+                                      transform=train_transform,
+                                      multichannel=False,
+                                      length=[96, 96, 16],
+                                      padding=0)
 
-    ds_train = loader.filter_roi(ds_train, nb_nonzero_thr=10)
+    ds_train = imed_loader_utils.filter_roi(ds_train, nb_nonzero_thr=10)
 
     metadata_clustering_models = None
-    ds_train, train_onehotencoder = loader.normalize_metadata(ds_train,
-                                                              metadata_clustering_models,
-                                                              False,
-                                                              "contrast",
-                                                              True)
+    ds_train, train_onehotencoder = imed_film.normalize_metadata(ds_train,
+                                                                  metadata_clustering_models,
+                                                                  False,
+                                                                  "contrast",
+                                                                  True)
 
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
-                              collate_fn=mt_datasets.mt_collate,
+                              collate_fn=imed_loader_utils.imed_collate,
                               num_workers=1)
 
     multichannel_loader = DataLoader(ds_mutichannel, batch_size=BATCH_SIZE,
                                      shuffle=True, pin_memory=True,
-                                     collate_fn=mt_datasets.mt_collate,
+                                     collate_fn=imed_loader_utils.imed_collate,
                                      num_workers=1)
     loader_3d = DataLoader(ds_3d, batch_size=1,
                            shuffle=True, pin_memory=True,
-                           collate_fn=mt_datasets.mt_collate,
+                           collate_fn=imed_loader_utils.imed_collate,
                            num_workers=1)
 
     model_list = [(models.Unet(depth=DEPTH,
