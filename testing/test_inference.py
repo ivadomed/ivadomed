@@ -67,7 +67,7 @@ def test_inference(film_bool=False):
         print('FiLM inference not implemented yet.')
         return 0
         # metadata_clustering_models = joblib.load("./" + context["log_directory"] + "/clustering_models.joblib")
-        # ds_test = film_utils.normalize_metadata(ds_test,
+        # ds_test = imed_film.normalize_metadata(ds_test,
         #                                     metadata_clustering_models,
         #                                     context["debugging"],
         #                                     context["metadata"],

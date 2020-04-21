@@ -22,8 +22,7 @@ from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
-from ivadomed.FiLM import utils as film_utils
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 
 cudnn.benchmark = True
 
@@ -121,11 +120,11 @@ def cmd_train(context):
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
             metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
-            metadata_clustering_models = film_utils.clustering_fit(ds_train.metadata, metadata_vector)
+            metadata_clustering_models = imed_film.clustering_fit(ds_train.metadata, metadata_vector)
         else:
             metadata_clustering_models = None
 
-        ds_train, train_onehotencoder = film_utils.normalize_metadata(ds_train,
+        ds_train, train_onehotencoder = imed_film.normalize_metadata(ds_train,
                                                                       metadata_clustering_models,
                                                                       context["debugging"],
                                                                       context["metadata"],
@@ -157,7 +156,7 @@ def cmd_train(context):
         ds_val = imed_loader_utils.filter_roi(ds_val, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to network
-        ds_val = film_utils.normalize_metadata(ds_val,
+        ds_val = imed_film.normalize_metadata(ds_val,
                                                metadata_clustering_models,
                                                context["debugging"],
                                                context["metadata"],
@@ -606,7 +605,7 @@ def cmd_test(context):
         metadata_clustering_models = joblib.load(
             "./" + context["log_directory"] + "/clustering_models.joblib")
 
-        ds_test = film_utils.normalize_metadata(ds_test,
+        ds_test = imed_film.normalize_metadata(ds_test,
                                                 metadata_clustering_models,
                                                 context["debugging"],
                                                 context["metadata"],
