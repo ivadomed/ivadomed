@@ -353,17 +353,6 @@ class MRI2DSegmentationDataset(Dataset):
             'roi_metadata': roi_pair_slice['gt_metadata']
         }
 
-        """"
-        Moving that part in ToTensor() transformation
-        input_tensors.append(data_dict['input'])
-        input_metadata.append(data_dict['input_metadata'])
-
-        if len(input_tensors) > 1:
-            data_dict['input'] = torch.squeeze(torch.stack(input_tensors, dim=0))
-            data_dict['input_metadata'] = input_metadata
-        """
-        # Warning: both input_tensors and input_metadata are list. Transforms needs to take that into account.
-
         if self.transform is not None:
             data_dict = self.transform(data_dict)
 
