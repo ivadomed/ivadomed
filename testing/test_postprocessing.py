@@ -119,22 +119,19 @@ def test_keep_largest_object_per_slice(nii_seg):
     assert nii_seg_proc.dataobj[coord] == 0
 
 
-@pytest.mark.parametrize('nii_seg', [nii_dummy_seg(), nii_dummy_seg(softseg=True)])
+@pytest.mark.parametrize('nii_seg', [nii_dummy_seg()])
 def test_fill_holes(nii_seg):
     # Set a voxel to 0 in the middle of the segmentation to make sure it is set to 1 by the function
     coord = (7, 7, 4)
-    value_coord_copy = nii_seg.dataobj[coord]
     nii_seg.dataobj[coord] = 0
     # Test function with array input
     arr_seg_proc = postproc.fill_holes(np.copy(np.asanyarray(nii_seg.dataobj)))
     assert isinstance(arr_seg_proc, np.ndarray)
-    assert check_bin_vs_soft(nii_seg.dataobj, arr_seg_proc)
-    assert arr_seg_proc[coord] == value_coord_copy
+    assert arr_seg_proc[coord] == 1
     # Make sure it works with nibabel input
     nii_seg_proc = postproc.fill_holes(nii_seg)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
-    assert check_bin_vs_soft(nii_seg.dataobj, nii_seg_proc.dataobj)
-    assert nii_seg_proc.dataobj[coord] == value_coord_copy
+    assert nii_seg_proc.dataobj[coord] == 1
 
 
 @pytest.mark.parametrize('nii_seg', [nii_dummy_seg()])
