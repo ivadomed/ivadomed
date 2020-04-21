@@ -89,18 +89,19 @@ def keep_largest_object_per_slice(predictions, axis=2):
 
 
 @nifti_capable
-@binarize_with_low_threshold
 def fill_holes(predictions, structure=(3, 3, 3)):
     """
     Fill holes in the predictions using a given structuring element.
+    Note: This function only works for binary segmentation.
 
     Args:
-        predictions (array or nibabel object): Input segmentation. Image could be 2D or 3D.
+        predictions (array or nibabel object): Input binary segmentation. Image could be 2D or 3D.
         structure (tuple of integers): Structuring element, number of ints equals
             number of dimensions in the input array.
     Returns:
         Array or nibabel (same object as the input). Output type is int.
     """
+    assert np.array_equal(predictions, predictions.astype(bool))
     assert len(structure) == len(predictions.shape)
     return binary_fill_holes(predictions, structure=np.ones(structure)).astype(np.int)
 
