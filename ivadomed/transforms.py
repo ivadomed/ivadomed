@@ -170,10 +170,49 @@ class NormalizeInstance(mt_transforms.NormalizeInstance):
         return sample
 
 
-class ToTensor(mt_transforms.ToTensor):
-    """This class extends mt_transforms.ToTensor"""
+class ToTensor(IMEDTransform):
+    """Convert a PIL image(s) or numpy array(s) to a PyTorch tensor(s)."""
+
+    def __init__(self, labeled=True):
+        self.labeled = labeled
+
+    def __call__(self, sample):
+        rdict = {}
+        input_data = sample['input']
+
+        # Input data
+        if len(input_data) > 1:
+            # Multiple inputs
+            ret_input = [F.to_tensor(item) for item in input_data]
+        else:
+            # single input
+            ret_input = F.to_tensor(input_data[0])
+        rdict['input'] = ret_input
+
+        # Labeled data
+        if self.labeled:
+            gt_data = sample['gt']
+            if gt_data is not None:
+                if isinstance(gt_data, list):
+                    # Add dim 0 for 3D images
+                    if gt_data[0].size == 3:
+                        ret_gt = [gt.unsqueeze(0) for gt in sample['gt']]
+
+                    # multiple GT
+                    ret_gt = torch.cat([F.to_tensor(item) for item in gt_data], dim=0)
+
+                else:
+                    # single GT
+                    ret_gt = F.to_tensor(gt_data)
+
+                rdict['gt'] = ret_gt
+
+        # Update sample
+        sample.update(rdict)
+        return sample
 
     def undo_transform(self, sample):
+        # Returns a PIL object
         return mt_transforms.ToPIL()(sample)
 
 
