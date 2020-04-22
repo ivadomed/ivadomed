@@ -40,7 +40,7 @@ class UndoTransform(object):
         return self.transform.undo_transform(sample)
 
 
-class ToPIL(MTTransform):
+class ToPIL(IMEDTransform):
     """Converts array or tensor to PIL object."""
 
     def __init__(self, labeled=True):
@@ -452,8 +452,26 @@ class DilateGT(IMEDTTransform):
         return sample
 
 
-class StackTensors(mt_transforms.StackTensors):
-    """This class extends mt_transforms.NormalizeInstance"""
+class StackTensors(IMEDTransform):
+    """Stack all modalities, as a list, in a single tensor."""
+
+    def __call__(self, sample):
+        rdict = {}
+
+        # Input data
+        if isinstance(sample['input'], list):
+            input_data = sample['input']
+            rdict['input'] = torch.cat(input_data, dim=0)
+            sample.update(rdict)
+
+        # Labeled data
+        if isinstance(sample['gt'], list):
+            gt_data = sample['gt']
+            rdict['gt'] = torch.cat(gt_data, dim=0)
+            sample.update(rdict)
+
+        return sample
+
     def undo_transform(self, sample):
         return sample
 
