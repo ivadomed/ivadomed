@@ -1,26 +1,20 @@
 import os
-from math import sqrt
+import time
 
 import numpy as np
-import time
-import torch
-
 import torch
 import torch.backends.cudnn as cudnn
-from torch.utils.data import DataLoader
-from torchvision import transforms
-
-from ivadomed import utils
-from medicaltorch import datasets as mt_datasets
 from medicaltorch import transforms as mt_transforms
 from torch import optim
-
+from torch.utils.data import DataLoader
+from torchvision import transforms
 from tqdm import tqdm
 
-from ivadomed import loader as loader, adaptative
-from ivadomed import models
-from ivadomed import losses
 import ivadomed.transforms as ivadomed_transforms
+from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
+from ivadomed import losses
+from ivadomed import models
+from ivadomed import utils as imed_utils
 
 cudnn.benchmark = True
 
@@ -47,23 +41,23 @@ def test_HeMIS(p=0.0001):
     contrasts = ['T1w', 'T2w', 'T2star']
 
     print('[INFO]: Creating dataset ...\n')
-    dataset = adaptative.HDF5Dataset(root_dir=PATH_BIDS,
-                                     subject_lst=train_lst,
-                                     hdf5_name='testing_data/mytestfile.hdf5',
-                                     csv_name='testing_data/hdf5.csv',
-                                     target_suffix=["_lesion-manual"],
-                                     contrast_lst=['T1w', 'T2w', 'T2star'],
-                                     ram=False,
-                                     contrast_balance={},
-                                     slice_axis=2,
-                                     transform=train_transform,
-                                     metadata_choice=False,
-                                     dim=2,
-                                     slice_filter_fn=utils.SliceFilter(filter_empty_input=True, filter_empty_mask=True),
-                                     canonical=True,
-                                     roi_suffix="_seg-manual",
-                                     target_lst=['T2w'],
-                                     roi_lst=['T2w'])
+    dataset = imed_adaptative.HDF5Dataset(root_dir=PATH_BIDS,
+                                          subject_lst=train_lst,
+                                          hdf5_name='testing_data/mytestfile.hdf5',
+                                          csv_name='testing_data/hdf5.csv',
+                                          target_suffix=["_lesion-manual"],
+                                          contrast_lst=['T1w', 'T2w', 'T2star'],
+                                          ram=False,
+                                          contrast_balance={},
+                                          slice_axis=2,
+                                          transform=train_transform,
+                                          metadata_choice=False,
+                                          dim=2,
+                                          slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                                                                 filter_empty_mask=True),
+                                          roi_suffix="_seg-manual",
+                                          target_lst=['T2w'],
+                                          roi_lst=['T2w'])
 
     dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
     print("[INFO]: Dataset RAM status:")
@@ -76,7 +70,7 @@ def test_HeMIS(p=0.0001):
 
     train_loader = DataLoader(dataset, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,
-                              collate_fn=mt_datasets.mt_collate,
+                              collate_fn=imed_loader_utils.imed_collate,
                               num_workers=1)
 
     model = models.HeMISUnet(modalities=contrasts,
@@ -127,8 +121,8 @@ def test_HeMIS(p=0.0001):
             print("Batch = {}, {}".format(input_samples[0].shape, gt_samples[0].shape))
 
             if cuda_available:
-                var_input = utils.cuda(input_samples)
-                var_gt = utils.cuda(gt_samples, non_blocking=True)
+                var_input = imed_utils.cuda(input_samples)
+                var_gt = imed_utils.cuda(gt_samples, non_blocking=True)
             else:
                 var_input = input_samples
                 var_gt = gt_samples
@@ -170,7 +164,7 @@ def test_HeMIS(p=0.0001):
         print("[INFO]: Reloading dataset")
         train_loader = DataLoader(dataset, batch_size=BATCH_SIZE,
                                   shuffle=True, pin_memory=True,
-                                  collate_fn=mt_datasets.mt_collate,
+                                  collate_fn=imed_loader_utils.imed_collate,
                                   num_workers=1)
         tot_reload = time.time() - start_reload
         reload_lst.append(tot_reload)

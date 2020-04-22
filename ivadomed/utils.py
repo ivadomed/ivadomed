@@ -1,26 +1,24 @@
-import os
 import json
-from collections import defaultdict
-from scipy.ndimage import label, generate_binary_structure
+import os
+
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
-from tqdm import tqdm
-
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
 import torch.nn.functional as F
-from torch.autograd import Variable
 import torchvision.utils as vutils
+from scipy.ndimage import label, generate_binary_structure
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 
-from ivadomed import loader as imed_loader
+from ivadomed.loader import utils as imed_loaded_utils, loader as imed_loader
 from ivadomed import transforms as imed_transforms
 from ivadomed import postprocessing as imed_postpro
-from ivadomed import metrics as imed_metrics
 
-from medicaltorch.datasets import MRI2DSegmentationDataset
-from medicaltorch import datasets as mt_datasets
+from ivadomed import metrics as imed_metrics
+from ivadomed import transforms as imed_transforms
 
 # labels of paint_objects method
 TP_COLOUR = 1
@@ -28,6 +26,7 @@ FP_COLOUR = 2
 FN_COLOUR = 3
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
+
 
 class Evaluation3DMetrics(object):
 
@@ -201,7 +200,8 @@ class Evaluation3DMetrics(object):
 
             # if label_size is None, then we look at all object sizes
             # we check if the currrent object belongs to the current size range
-            if label_size is None or np.max(self.data_gt_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
+            if label_size is None or \
+               np.max(self.data_gt_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
 
                 if self.overlap_vox is None:
                     overlap_vox = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
@@ -287,8 +287,10 @@ class Evaluation3DMetrics(object):
             dct['rvd_class' + str(n)], dct['avd_class' + str(n)] = self.get_rvd(), self.get_avd()
             dct['dice_class' + str(n)] = imed_metrics.dice_score(self.data_gt[..., n], self.data_pred[..., n]) * 100.
             dct['recall_class' + str(n)] = imed_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
-            dct['precision_class' + str(n)] = imed_metrics.precision_score(self.data_pred, self.data_gt, err_value=np.nan)
-            dct['specificity_class' + str(n)] = imed_metrics.specificity_score(self.data_pred, self.data_gt, err_value=np.nan)
+            dct['precision_class' + str(n)] = imed_metrics.precision_score(self.data_pred, self.data_gt,
+                                                                           err_value=np.nan)
+            dct['specificity_class' + str(n)] = imed_metrics.specificity_score(self.data_pred, self.data_gt,
+                                                                               err_value=np.nan)
             dct['n_pred_class' + str(n)], dct['n_gt_class' + str(n)] = self.n_pred[n], self.n_gt[n]
             dct['ltpr_class' + str(n)], _ = self.get_ltpr()
             dct['lfdr_class' + str(n)] = self.get_lfdr()
@@ -356,7 +358,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
     if bin_thr >= 0:
         arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
-    else: # discard noise
+    else:  # discard noise
         arr_pred_ref_space[arr_pred_ref_space <= 1e-3] = 0
 
     # create nibabel object
@@ -606,11 +608,11 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     if os.path.isdir(folder_model):
         prefix_model = os.path.basename(folder_model)
         # Check if model and model metadata exist
-        fname_model = os.path.join(folder_model, prefix_model+'.pt')
+        fname_model = os.path.join(folder_model, prefix_model + '.pt')
         if not os.path.isfile(fname_model):
             print('Model file not found: {}'.format(fname_model))
             exit()
-        fname_model_metadata = os.path.join(folder_model, prefix_model+'.json')
+        fname_model_metadata = os.path.join(folder_model, prefix_model + '.json')
         if not os.path.isfile(fname_model_metadata):
             print('Model metadata file not found: {}'.format(fname_model_metadata))
             exit()
@@ -647,19 +649,19 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     # Load data
     filename_pairs = [([fname_image], None, fname_roi, [{}])]
     if not context['unet_3D']:  # TODO: rename this param 'model_name' or 'kernel_dim'
-        ds = MRI2DSegmentationDataset(filename_pairs,
-                                      slice_axis=AXIS_DCT[context['slice_axis']],
-                                      cache=True,
-                                      transform=do_transforms,
-                                      slice_filter_fn=SliceFilter(**context["slice_filter"]),
-                                      canonical=True)
+        ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
+                                                  slice_axis=AXIS_DCT[context['slice_axis']],
+                                                  cache=True,
+                                                  transform=do_transforms,
+                                                  slice_filter_fn=SliceFilter(**context["slice_filter"]),
+                                                  canonical=True)
     else:
         print('\n3D unet is not implemented yet.')
         exit()
 
     # If fname_roi provided, then remove slices without ROI
     if fname_roi is not None:
-        ds = imed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
+        ds = imed_loaded_utils.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
 
     if not context['unet_3D']:
         print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
@@ -667,7 +669,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["batch_size"],
                              shuffle=False, pin_memory=True,
-                             collate_fn=mt_datasets.mt_collate,
+                             collate_fn=imed_loaded_utils.imed_collate,
                              num_workers=0)
 
     # Load model
@@ -814,12 +816,12 @@ def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
     # Save for subject in batch
     for i in range(batch['input'].size(0)):
         inp_fmap, out_fmap = \
-            HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input[i][None, ]))
+            HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input[i][None,]))
 
         # Display the input image and Down_sample the input image
-        orig_input_img = test_input[i][None, ].permute(3, 4, 2, 0, 1).cpu().numpy()
+        orig_input_img = test_input[i][None,].permute(3, 4, 2, 0, 1).cpu().numpy()
         upsampled_attention = F.interpolate(out_fmap[1],
-                                            size=test_input[i][None, ].size()[2:],
+                                            size=test_input[i][None,].size()[2:],
                                             mode='trilinear',
                                             align_corners=True).data.permute(3, 4, 2, 0, 1).cpu().numpy()
 

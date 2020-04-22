@@ -15,13 +15,12 @@ import json
 import argparse
 import numpy as np
 
-from ivadomed import loader as loader
-from ivadomed.utils import SliceFilter
+from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
+from ivadomed import utils as imed_utils
 
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from medicaltorch import transforms as mt_transforms
-from medicaltorch import datasets as mt_datasets
 
 
 def get_parser():
@@ -38,7 +37,6 @@ def print_stats(arr):
 
 
 def run_main(args):
-
     with open(args.c, "r") as fhandle:
         context = json.load(fhandle)
 
@@ -49,25 +47,29 @@ def run_main(args):
         mt_transforms.NormalizeInstance(),
     ])
 
-    train_lst, valid_lst, test_lst = loader.split_dataset(context["bids_path"], context["center_test"], context["random_seed"])
+    train_lst, valid_lst, test_lst = imed_loader_utils.split_dataset(context["bids_path"],
+                                                                     context["center_test"],
+                                                                     context["split_method"],
+                                                                     context["random_seed"])
 
     balance_dct = {}
     for ds_lst, ds_name in zip([train_lst, valid_lst, test_lst], ['train', 'valid', 'test']):
         print("\nLoading {} set.\n".format(ds_name))
-        ds = loader.BidsDataset(context["bids_path"],
-                                 subject_lst=ds_lst,
-                                 gt_suffix=context["gt_suffix"],
-                                 contrast_lst=context["contrast_test"] if ds_name == 'test' else context["contrast_train_validation"],
-                                 metadata_choice=context["metadata"],
-                                 contrast_balance=context["contrast_balance"],
-                                 transform=transform_lst,
-                                 slice_filter_fn=SliceFilter())
+        ds = imed_loader.BidsDataset(context["bids_path"],
+                                     subject_lst=ds_lst,
+                                     target_suffix=context["target_suffix"],
+                                     contrast_lst=context["contrast_test"] if ds_name == 'test'
+                                     else context["contrast_train_validation"],
+                                     metadata_choice=context["metadata"],
+                                     contrast_balance=context["contrast_balance"],
+                                     transform=transform_lst,
+                                     slice_filter_fn=imed_utils.SliceFilter())
 
         print("Loaded {} axial slices for the {} set.".format(len(ds), ds_name))
         ds_loader = DataLoader(ds, batch_size=1,
-                             shuffle=False, pin_memory=False,
-                             collate_fn=mt_datasets.mt_collate,
-                             num_workers=1)
+                               shuffle=False, pin_memory=False,
+                               collate_fn=imed_loader_utils.imed_collate,
+                               num_workers=1)
 
         balance_lst = []
         for i, batch in enumerate(ds_loader):

@@ -4,29 +4,25 @@ import random
 import shutil
 import sys
 import time
+
 import joblib
+import nibabel as nib
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
-import nibabel as nib
-
 import torch
 import torch.backends.cudnn as cudnn
-import nibabel as nib
-import torch.nn as nn
 from torch import optim, nn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 
-from ivadomed import loader as imed_loader
 from ivadomed import losses as imed_losses
-from ivadomed import models as imed_models
 from ivadomed import metrics as imed_metrics
+from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
-
-from medicaltorch import datasets as mt_datasets
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 
 cudnn.benchmark = True
 
@@ -72,7 +68,7 @@ def cmd_train(context):
 
         print('\nArchitecture: {} with a depth of {}.\n' \
               .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else "Attention UNet" if attention else
-                      '3D Unet' if unet_3D else "Unet", context['depth']))
+        '3D Unet' if unet_3D else "Unet", context['depth']))
 
     mixup_bool = False if film_bool else bool(context["mixup_bool"])
     mixup_alpha = float(context["mixup_alpha"])
@@ -97,12 +93,12 @@ def cmd_train(context):
 
     # Randomly split dataset between training / validation / testing
     if context.get("split_path") is None:
-        train_lst, valid_lst, test_lst = imed_loader.split_dataset(path_folder=context["bids_path"],
-                                                                   center_test_lst=context["center_test"],
-                                                                   split_method=context["split_method"],
-                                                                   random_seed=context["random_seed"],
-                                                                   train_frac=context["train_fraction"],
-                                                                   test_frac=context["test_fraction"])
+        train_lst, valid_lst, test_lst = imed_loader_utils.split_dataset(path_folder=context["bids_path"],
+                                                                         center_test_lst=context["center_test"],
+                                                                         split_method=context["split_method"],
+                                                                         random_seed=context["random_seed"],
+                                                                         train_frac=context["train_fraction"],
+                                                                         test_frac=context["test_fraction"])
 
         # save the subject distribution
         split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
@@ -119,19 +115,20 @@ def cmd_train(context):
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     # todo: not supported by the adaptative loader
     if 'ROICrop2D' in context["transformation_training"].keys():
-        ds_train = imed_loader.filter_roi(ds_train, nb_nonzero_thr=context["slice_filter_roi"])
+        ds_train = imed_loader_utils.filter_roi(ds_train, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to the network
         if context["metadata"] == "mri_params":
             metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
-            metadata_clustering_models = imed_loader.clustering_fit(ds_train.metadata, metadata_vector)
+            metadata_clustering_models = imed_film.clustering_fit(ds_train.metadata, metadata_vector)
         else:
             metadata_clustering_models = None
-        ds_train, train_onehotencoder = imed_loader.normalize_metadata(ds_train,
-                                                                       metadata_clustering_models,
-                                                                       context["debugging"],
-                                                                       context["metadata"],
-                                                                       True)
+
+        ds_train, train_onehotencoder = imed_film.normalize_metadata(ds_train,
+                                                                      metadata_clustering_models,
+                                                                      context["debugging"],
+                                                                      context["metadata"],
+                                                                      True)
 
     if not unet_3D:
         print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
@@ -140,14 +137,14 @@ def cmd_train(context):
             f"Loaded {len(ds_train)} volumes of size {context['length_3D']} for the training set.")
 
     if context['balance_samples'] and not HeMIS:
-        sampler_train = imed_loader.BalancedSampler(ds_train)
+        sampler_train = imed_loader_utils.BalancedSampler(ds_train)
         shuffle_train = False
     else:
         sampler_train, shuffle_train = None, True
 
     train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
-                              collate_fn=mt_datasets.mt_collate,
+                              collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
     print("Validation")
 
@@ -156,14 +153,14 @@ def cmd_train(context):
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
-        ds_val = imed_loader.filter_roi(ds_val, nb_nonzero_thr=context["slice_filter_roi"])
+        ds_val = imed_loader_utils.filter_roi(ds_val, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to network
-        ds_val = imed_loader.normalize_metadata(ds_val,
-                                                metadata_clustering_models,
-                                                context["debugging"],
-                                                context["metadata"],
-                                                False)
+        ds_val = imed_film.normalize_metadata(ds_val,
+                                               metadata_clustering_models,
+                                               context["debugging"],
+                                               context["metadata"],
+                                               False)
 
     if not unet_3D:
         print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")
@@ -172,14 +169,14 @@ def cmd_train(context):
             f"Loaded {len(ds_val)} volumes of size {context['length_3D']} for the validation set.")
 
     if context['balance_samples'] and not HeMIS:
-        sampler_val = imed_loader.BalancedSampler(ds_val)
+        sampler_val = imed_loader_utils.BalancedSampler(ds_val)
         shuffle_val = False
     else:
         sampler_val, shuffle_val = None, True
 
     val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
                             shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
-                            collate_fn=mt_datasets.mt_collate,
+                            collate_fn=imed_loader_utils.imed_collate,
                             num_workers=0)
     if film_bool:
         n_metadata = len([ll for l in train_onehotencoder.categories_ for ll in l])
@@ -221,6 +218,7 @@ def cmd_train(context):
     else:
         # Load pretrained model
         model = torch.load(context['retrain_model'])
+
         # Freeze first layers and reset last layers
         model = imed_models.set_model_for_retrain(model,
                                                   retrain_fraction=context['retrain_fraction'])
@@ -286,7 +284,8 @@ def cmd_train(context):
                                                                                        context["loss"]["params"][
                                                                                            "alpha"]))
         elif context["loss"]["name"] == "multi_class_dice":
-            loss_fct = imed_losses.MultiClassDiceLoss(classes_of_interest=context["loss"]["params"]["classes_of_interest"])
+            loss_fct = imed_losses.MultiClassDiceLoss(classes_of_interest=
+                                                      context["loss"]["params"]["classes_of_interest"])
 
         if not context["loss"]["name"].startswith("focal"):
             print("\nLoss function: {}.\n".format(context["loss"]["name"]))
@@ -406,7 +405,7 @@ def cmd_train(context):
             ds_train.update(p=p)
             train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
                                       shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
-                                      collate_fn=mt_datasets.mt_collate,
+                                      collate_fn=imed_loader_utils.imed_collate,
                                       num_workers=0)
 
         # Validation loop -----------------------------------------------------
@@ -600,16 +599,17 @@ def cmd_test(context):
 
     # if ROICrop2D in transform, then apply SliceFilter to ROI slices
     if 'ROICrop2D' in context["transformation_validation"].keys():
-        ds_test = imed_loader.filter_roi(ds_test, nb_nonzero_thr=context["slice_filter_roi"])
+        ds_test = imed_loader_utils.filter_roi(ds_test, nb_nonzero_thr=context["slice_filter_roi"])
 
     if film_bool:  # normalize metadata before sending to network
         metadata_clustering_models = joblib.load(
             "./" + context["log_directory"] + "/clustering_models.joblib")
-        ds_test = imed_loader.normalize_metadata(ds_test,
-                                                 metadata_clustering_models,
-                                                 context["debugging"],
-                                                 context["metadata"],
-                                                 False)
+
+        ds_test = imed_film.normalize_metadata(ds_test,
+                                                metadata_clustering_models,
+                                                context["debugging"],
+                                                context["metadata"],
+                                                False)
 
         one_hot_encoder = joblib.load("./" + context["log_directory"] + "/one_hot_encoder.joblib")
 
@@ -620,7 +620,7 @@ def cmd_test(context):
 
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
                              shuffle=False, pin_memory=True,
-                             collate_fn=mt_datasets.mt_collate,
+                             collate_fn=imed_loader_utils.imed_collate,
                              num_workers=0)
 
     model = torch.load("./" + context["log_directory"] + "/best_model.pt", map_location=device)
@@ -801,8 +801,8 @@ def cmd_test(context):
             metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
-    if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and context['uncertainty'][
-            'n_it'] > 0:
+    if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and \
+        context['uncertainty']['n_it'] > 0:
         imed_utils.run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()

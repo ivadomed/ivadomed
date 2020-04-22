@@ -9,12 +9,14 @@ from tqdm import tqdm
 
 PATH_SCTTESTING = os.path.join(os.path.expanduser('~'), 'duke', 'sct_testing', 'large')
 
+
 def run_main():
     if not os.path.isdir(PATH_SCTTESTING):
         print('\nThis folder does not exist: {}'.format(PATH_SCTTESTING))
         print('Please change the path at the top of this file')
 
-    subj_lst = [os.path.join(PATH_SCTTESTING, s, 'anat') for s in os.listdir(PATH_SCTTESTING) if os.path.isdir(os.path.join(PATH_SCTTESTING, s, 'anat'))]
+    subj_lst = [os.path.join(PATH_SCTTESTING, s, 'anat') for s in os.listdir(PATH_SCTTESTING) if
+                os.path.isdir(os.path.join(PATH_SCTTESTING, s, 'anat'))]
     print('\n{} subjects found.\n'.format(str(len(subj_lst))))
 
     contrast_lst_lst = []
@@ -28,6 +30,7 @@ def run_main():
     print('\n{} contrasts found.\n'.format(str(len(contrast_lst_noDuplicate))))
 
     print('["{}"]'.format('", "'.join(contrast_lst_noDuplicate)))
+
 
 if __name__ == "__main__":
     run_main()
