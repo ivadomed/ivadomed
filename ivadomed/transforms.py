@@ -180,6 +180,7 @@ class ToTensor(IMEDTransform):
         rdict = {}
         input_data = sample['input']
 
+        # TODO: function?
         # Input data
         if len(input_data) > 1:
             # Multiple inputs
@@ -194,11 +195,13 @@ class ToTensor(IMEDTransform):
             gt_data = sample['gt']
             if gt_data is not None:
                 if isinstance(gt_data, list):
+                    # TODO: Why a 3D image?
                     # Add dim 0 for 3D images
                     if gt_data[0].size == 3:
                         ret_gt = [gt.unsqueeze(0) for gt in sample['gt']]
 
                     # multiple GT
+                    # TODO: Why a cat?
                     ret_gt = torch.cat([F.to_tensor(item) for item in gt_data], dim=0)
 
                 else:
