@@ -40,6 +40,40 @@ class UndoTransform(object):
         return self.transform.undo_transform(sample)
 
 
+class ToPIL(MTTransform):
+    """Converts array or tensor to PIL object."""
+
+    def __init__(self, labeled=True):
+        self.labeled = labeled
+
+    def sample_transform(self, sample_data):
+        # Numpy array
+        if not isinstance(sample_data, np.ndarray):
+            input_data_npy = sample_data.numpy()
+        else:
+            input_data_npy = sample_data
+
+        input_data = Image.fromarray(input_data_npy, mode='F')
+        return input_data
+
+    def __call__(self, sample):
+        rdict = {}
+
+        # Input data
+        input_data = sample['input']
+        ret_input = [self.sample_transform(item) for item in input_data]
+        rdict['input'] = ret_input
+
+        # Labeled data
+        if self.labeled:
+            gt_data = sample['gt']
+            ret_gt = [self.sample_transform(item) for item in gt_data]
+            rdict['gt'] = ret_gt
+
+        sample.update(rdict)
+        return sample
+
+
 def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
        from the mt_transforms."""
