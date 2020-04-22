@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 #
 # This script is used to develop a data augmentation method of mask dilation
 #

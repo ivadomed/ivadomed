@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from torch.nn import Module
 import torch.nn.functional as F
+from torch.nn import Module
 from torch.nn import init
 
 
@@ -114,18 +114,24 @@ class Decoder(Module):
         # Up-Sampling path
         self.up_path = nn.ModuleList()
         if hemis:
-            in_channel = 64 * 2 ** (self.depth + 1)
-            self.depth += 1
+            in_channel = 64 * 2 ** (self.depth)
+            self.up_path.append(UpConv(in_channel * 2, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
+            self.up_path.append(
+                FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)) if film_layers[self.depth + 1] else None)
+            # self.depth += 1
         else:
             in_channel = 64 * 2 ** self.depth
 
-        self.up_path.append(UpConv(in_channel, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
-        self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)) if film_layers[self.depth + 1] else None)
+            self.up_path.append(UpConv(in_channel, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
+            self.up_path.append(
+                FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)) if film_layers[self.depth + 1] else None)
 
         for i in range(1, depth):
             in_channel //= 2
+
             self.up_path.append(
-                UpConv(in_channel + 64 * 2 ** (self.depth - i - 1), 64 * 2 ** (self.depth - i - 1), drop_rate,
+                UpConv(in_channel + 64 * 2 ** (self.depth - i - 1 + int(hemis)), 64 * 2 ** (self.depth - i - 1),
+                       drop_rate,
                        bn_momentum))
             self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - i - 1)) if film_layers[self.depth + i + 1]
                                 else None)
@@ -136,7 +142,9 @@ class Decoder(Module):
 
     def forward(self, features, context=None, w_film=None):
         x = features[-1]
+
         for i in reversed(range(self.depth)):
+
             x = self.up_path[-(i + 1) * 2](x, features[i])
             if self.up_path[-(i + 1) * 2 + 1]:
                 x, w_film = self.up_path[-(i + 1) * 2 + 1](x, context, w_film)
@@ -147,6 +155,8 @@ class Decoder(Module):
             x, w_film = self.last_film(x, context, w_film)
         if self.out_channel > 1:
             preds = F.softmax(x, dim=1)
+            # Remove background class
+            preds = preds[:, 1:, ]
         else:
             preds = torch.sigmoid(x)
         return preds
@@ -163,7 +173,7 @@ class Unet(Module):
     def __init__(self, in_channel=1, out_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4,
                  bn_momentum=0.1, film_bool=False):
         super(Unet, self).__init__()
-
+        print("depth", depth)
         # Verify if the length of boolean FiLM layers corresponds to the depth
         if film_bool and len(film_layers) != 2 * depth + 2:
             raise ValueError(f"The number of FiLM layers {len(film_layers)} entered does not correspond to the "
@@ -181,7 +191,6 @@ class Unet(Module):
 
     def forward(self, x, context=None):
         features, w_film = self.encoder(x, context)
-
         preds = self.decoder(features, context, w_film)
 
         return preds
@@ -279,39 +288,45 @@ class HeMISUnet(Module):
         ArXiv link: https://arxiv.org/abs/1907.11150
         """
 
-    def __init__(self, modalities, depth=3, drop_rate=0.4, bn_momentum=0.1):
+    def __init__(self, modalities, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1):
         super(HeMISUnet, self).__init__()
         self.film_layers = [0] * (2 * depth + 2)
         self.depth = depth
         self.modalities = modalities
 
         # Encoder path
-        self.Down = nn.ModuleDict(
-            [['Down_{}'.format(Mod),
-              Encoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate, bn_momentum=bn_momentum)] for Mod in
-             self.modalities])
+        self.Encoder_mod = nn.ModuleDict(
+            [['Encoder_{}'.format(Mod), Encoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate,
+                                                bn_momentum=bn_momentum)] for Mod in self.modalities])
 
         # Decoder path
-        self.decoder = Decoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate, bn_momentum=bn_momentum,
-                               hemis=True)
+        self.decoder = Decoder(out_channel, depth, film_layers=self.film_layers, drop_rate=drop_rate,
+                               bn_momentum=bn_momentum, hemis=True)
 
-    def forward(self, x_mods):
+    def forward(self, x_mods, indexes_mod):
         """"
             X is  list like X = [x_T1, x_T2, x_T2S, x_F]
+            indexes_mod: list of arrays like [[1, 1, 1], [1, 1, 0], [1, 0, 1], [1, 1, 0]]
+            N.B. len(list) = number of modalities.
+            len(list[i]) = Batch size
         """
 
         features_mod = [[] for _ in range(self.depth + 1)]
 
         # Down-sampling
         for i, Mod in enumerate(self.modalities):
-            features = self.Down['Down_{}'.format(Mod)](x_mods[i])
+            features, _ = self.Encoder_mod['Encoder_{}'.format(Mod)](x_mods[i])
+
             for j in range(self.depth + 1):
                 features_mod[j].append(features[j].unsqueeze(0))
 
         # Abstraction
         for j in range(self.depth + 1):
-            features_mod[j] = torch.cat([torch.cat(features_mod[j], 0).mean(0).unsqueeze(0), \
-                                         torch.cat(features_mod[j], 0).var(0).unsqueeze(0)], 0)
+            features_cat = torch.cat(features_mod[j], 0).transpose(0, 1)
+
+            features_mod[j] = torch.cat([torch.cat([features_cat[i][indexes_mod[i]].squeeze(1).mean(0),
+                                                    features_cat[i][indexes_mod[i]].squeeze(1).var(0)], 0).unsqueeze(0)
+                                         for i in range(len(indexes_mod))], 0)
 
         # Up-sampling
         preds = self.decoder(features_mod)
@@ -609,9 +624,13 @@ class UNet3D(nn.Module):
 
         out = out_pred + ds1_ds2_sum_upscale_ds3_sum_upscale
         seg_layer = out
-        out = out.permute(0, 2, 3, 4, 1).contiguous().view(-1, self.n_classes)
-        out = self.softmax(out)
-        return torch.sigmoid(seg_layer)
+        if self.n_classes > 1:
+            out = self.softmax(out)
+            # Remove background class
+            out = out[:, 1:, ]
+        else:
+            out = torch.sigmoid(seg_layer)
+        return out
 
 
 # Specific toAttention UNet
@@ -712,6 +731,7 @@ class GridAttentionBlockND(nn.Module):
 
         return W_y, sigm_psi_f
 
+
 def weights_init_kaiming(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
@@ -728,6 +748,7 @@ class UnetGridGatingSignal3(nn.Module):
     Operation to extract important features for a specific task using 1x1x1 convolution (Gating) which is used in the
     attention blocks.
     """
+
     def __init__(self, in_size, out_size, kernel_size=(1, 1, 1), is_batchnorm=True):
         super(UnetGridGatingSignal3, self).__init__()
 
@@ -748,3 +769,38 @@ class UnetGridGatingSignal3(nn.Module):
     def forward(self, inputs):
         outputs = self.conv1(inputs)
         return outputs
+
+
+def set_model_for_retrain(model, retrain_fraction):
+    """Set model for transfer learning.
+
+    The first layers (defined by 1-retrain_fraction) are frozen (i.e. requires_grad=False).
+    The weights of the last layers (defined by retrain_fraction) are reset.
+    Args:
+        model (torch module): pretrained model.
+        retrain_fraction (float): Fraction of the model that will be retrained, between 0 and 1. If set to 0.3,
+            then the 30% last fraction of the model will be re-initalised and retrained.
+    Returns:
+        torch module: model ready for retrain.
+    """
+    # Get number of layers with learnt parameters
+    layer_names = [name for name, layer in model.named_modules() if hasattr(layer, 'reset_parameters')]
+    n_layers = len(layer_names)
+    # Compute the number of these layers we want to freeze
+    n_freeze = int(round(n_layers * (1 - retrain_fraction)))
+    # Last frozen layer
+    last_frozen_layer = layer_names[n_freeze]
+
+    # Set freeze first layers
+    for name, layer in model.named_parameters():
+        if not name.startswith(last_frozen_layer):
+            layer.requires_grad = False
+        else:
+            break
+
+    # Reset weights of the last layers
+    for name, layer in model.named_modules():
+        if name in layer_names[n_freeze:]:
+            layer.reset_parameters()
+
+    return model

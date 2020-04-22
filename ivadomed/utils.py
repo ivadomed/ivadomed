@@ -1,24 +1,24 @@
-import os
 import json
-from collections import defaultdict
+import os
 
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
 import torch.nn.functional as F
-
-from ivadomed import loader as ivadomed_loader
-from ivadomed import transforms as ivadomed_transforms
-from medicaltorch.datasets import MRI2DSegmentationDataset
-from ivadomed import metrics
-from medicaltorch import datasets as mt_datasets
-
+import torchvision.utils as vutils
 from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
+from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+from ivadomed.loader import utils as imed_loaded_utils, loader as imed_loader
+from ivadomed import transforms as imed_transforms
+from ivadomed import postprocessing as imed_postpro
+
+from ivadomed import metrics as imed_metrics
+from ivadomed import transforms as imed_transforms
 
 # labels of paint_objects method
 TP_COLOUR = 1
@@ -27,16 +27,21 @@ FN_COLOUR = 3
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
+
 class Evaluation3DMetrics(object):
 
-    def __init__(self, fname_pred, fname_gt, params={}):
-        self.fname_pred = fname_pred
-        self.fname_gt = fname_gt
+    def __init__(self, data_pred, data_gt, dim_lst, params={}):
 
-        self.data_pred = self.get_data(self.fname_pred)
-        self.data_gt = self.get_data(self.fname_gt)
+        self.data_pred = data_pred
+        if len(self.data_pred.shape) == 3:
+            self.data_pred = np.expand_dims(self.data_pred, -1)
 
-        self.px, self.py, self.pz = self.get_pixdim(self.fname_pred)
+        self.data_gt = data_gt
+        if len(self.data_gt.shape) == 3:
+            self.data_gt = np.expand_dims(self.data_gt, -1)
+
+        h, w, d, self.n_classes = self.data_gt.shape
+        self.px, self.py, self.pz = dim_lst
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
 
@@ -51,8 +56,9 @@ class Evaluation3DMetrics(object):
                 print('Please choose a different unit for removeSmall. Chocies: vox or mm3')
                 exit()
 
-            self.data_pred = self.remove_small_objects(data=self.data_pred)
-            self.data_gt = self.remove_small_objects(data=self.data_gt)
+            for idx in range(self.n_classes):
+                self.data_pred[..., idx] = self.remove_small_objects(data=self.data_pred[..., idx])
+                self.data_gt[..., idx] = self.remove_small_objects(data=self.data_gt[..., idx])
         else:
             self.size_min = 0
 
@@ -60,25 +66,32 @@ class Evaluation3DMetrics(object):
             self.size_rng_lst, self.size_suffix_lst = \
                 self._get_size_ranges(thr_lst=params["targetSize"]["thr"],
                                       unit=params["targetSize"]["unit"])
-
-            self.data_gt_per_size = self.label_per_size(self.data_gt)
-            label_gt_size_lst = list(set(self.data_gt_per_size[np.nonzero(self.data_gt_per_size)]))
-            self.data_pred_per_size = self.label_per_size(self.data_pred)
-            label_pred_size_lst = list(set(self.data_pred_per_size[np.nonzero(self.data_pred_per_size)]))
-            self.label_size_lst = [label_gt_size_lst + label_pred_size_lst,
-                                   ['gt'] * len(label_gt_size_lst) + ['pred'] * len(label_pred_size_lst)]
+            self.label_size_lst = []
+            self.data_gt_per_size = np.zeros(self.data_gt.shape)
+            self.data_pred_per_size = np.zeros(self.data_gt.shape)
+            for idx in range(self.n_classes):
+                self.data_gt_per_size[..., idx] = self.label_per_size(self.data_gt[..., idx])
+                label_gt_size_lst = list(set(self.data_gt_per_size[np.nonzero(self.data_gt_per_size)]))
+                self.data_pred_per_size[..., idx] = self.label_per_size(self.data_pred[..., idx])
+                label_pred_size_lst = list(set(self.data_pred_per_size[np.nonzero(self.data_pred_per_size)]))
+                self.label_size_lst.append([label_gt_size_lst + label_pred_size_lst,
+                                            ['gt'] * len(label_gt_size_lst) + ['pred'] * len(label_pred_size_lst)])
 
         else:
-            self.label_size_lst = [[], []]
+            self.label_size_lst = [[[], []] * self.n_classes]
 
         # 18-connected components
-        self.data_pred_label, self.n_pred = label(self.data_pred,
-                                                  structure=self.bin_struct)
-        self.data_gt_label, self.n_gt = label(self.data_gt,
-                                              structure=self.bin_struct)
+        self.data_pred_label = np.zeros((h, w, d, self.n_classes), dtype='u1')
+        self.data_gt_label = np.zeros((h, w, d, self.n_classes), dtype='u1')
+        self.n_pred = [None] * self.n_classes
+        self.n_gt = [None] * self.n_classes
+        for idx in range(self.n_classes):
+            self.data_pred_label[..., idx], self.n_pred[idx] = label(self.data_pred[..., idx],
+                                                                     structure=self.bin_struct)
+            self.data_gt_label[..., idx], self.n_gt[idx] = label(self.data_gt[..., idx],
+                                                                 structure=self.bin_struct)
 
         # painted data, object wise
-        self.fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
         self.data_painted = np.copy(self.data_pred)
 
         # overlap_vox is used to define the object-wise TP, FP, FN
@@ -92,15 +105,6 @@ class Evaluation3DMetrics(object):
                 self.overlap_vox = None
         else:
             self.overlap_vox = 3
-
-    def get_data(self, fname):
-        nib_im = nib.load(fname)
-        return nib_im.get_data()
-
-    def get_pixdim(self, fname):
-        nib_im = nib.load(fname)
-        px, py, pz = nib_im.header['pixdim'][1:4]
-        return px, py, pz
 
     def remove_small_objects(self, data):
         data_label, n = label(data,
@@ -182,20 +186,22 @@ class Evaluation3DMetrics(object):
         """Absolute volume difference."""
         return abs(self.get_rvd())
 
-    def _get_ltp_lfn(self, label_size):
+    def _get_ltp_lfn(self, label_size, class_idx=0):
         """Number of true positive and false negative lesion.
 
             Note1: if two lesion_pred overlap with the current lesion_gt,
                 then only one detection is counted.
         """
         ltp, lfn, n_obj = 0, 0, 0
-        for idx in range(1, self.n_gt + 1):
-            data_gt_idx = (self.data_gt_label == idx).astype(np.int)
-            overlap = (data_gt_idx * self.data_pred).astype(np.int)
+
+        for idx in range(1, self.n_gt[class_idx] + 1):
+            data_gt_idx = (self.data_gt_label[..., class_idx] == idx).astype(np.int)
+            overlap = (data_gt_idx * self.data_pred[..., class_idx]).astype(np.int)
 
             # if label_size is None, then we look at all object sizes
             # we check if the currrent object belongs to the current size range
-            if label_size is None or np.max(self.data_gt_per_size[np.nonzero(data_gt_idx)]) == label_size:
+            if label_size is None or \
+               np.max(self.data_gt_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
 
                 if self.overlap_vox is None:
                     overlap_vox = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
@@ -209,25 +215,26 @@ class Evaluation3DMetrics(object):
                     lfn += 1
 
                     if label_size is None:  # painting is done while considering all objects
-                        self.data_painted[self.data_gt_label == idx] = FN_COLOUR
+                        self.data_painted[..., class_idx][self.data_gt_label[..., class_idx] == idx] = FN_COLOUR
 
                 n_obj += 1
 
         return ltp, lfn, n_obj
 
-    def _get_lfp(self, label_size):
+    def _get_lfp(self, label_size, class_idx=0):
         """Number of false positive lesion."""
         lfp = 0
-        for idx in range(1, self.n_pred + 1):
-            data_pred_idx = (self.data_pred_label == idx).astype(np.int)
-            overlap = (data_pred_idx * self.data_gt).astype(np.int)
+        for idx in range(1, self.n_pred[class_idx] + 1):
+            data_pred_idx = (self.data_pred_label[..., class_idx] == idx).astype(np.int)
+            overlap = (data_pred_idx * self.data_gt[..., class_idx]).astype(np.int)
 
-            label_gt = np.max(data_pred_idx * self.data_gt_label)
-            data_gt_idx = (self.data_gt_label == label_gt).astype(np.int)
+            label_gt = np.max(data_pred_idx * self.data_gt_label[..., class_idx])
+            data_gt_idx = (self.data_gt_label[..., class_idx] == label_gt).astype(np.int)
             # if label_size is None, then we look at all object sizes
             # we check if the current object belongs to the current size range
 
-            if label_size is None or np.max(self.data_pred_per_size[np.nonzero(data_gt_idx)]) == label_size:
+            if label_size is None or \
+                    np.max(self.data_pred_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
 
                 if self.overlap_vox is None:
                     overlap_thr = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
@@ -237,19 +244,19 @@ class Evaluation3DMetrics(object):
                 if np.count_nonzero(overlap) < overlap_thr:
                     lfp += 1
                     if label_size is None:  # painting is done while considering all objects
-                        self.data_painted[self.data_pred_label == idx] = FP_COLOUR
+                        self.data_painted[..., class_idx][self.data_pred_label[..., class_idx] == idx] = FP_COLOUR
                 else:
                     if label_size is None:  # painting is done while considering all objects
-                        self.data_painted[self.data_pred_label == idx] = TP_COLOUR
+                        self.data_painted[..., class_idx][self.data_pred_label[..., class_idx] == idx] = TP_COLOUR
 
         return lfp
 
-    def get_ltpr(self, label_size=None):
+    def get_ltpr(self, label_size=None, class_idx=0):
         """Lesion True Positive Rate / Recall / Sensitivity.
 
             Note: computed only if n_obj >= 1.
         """
-        ltp, lfn, n_obj = self._get_ltp_lfn(label_size)
+        ltp, lfn, n_obj = self._get_ltp_lfn(label_size, class_idx)
 
         denom = ltp + lfn
         if denom == 0 or n_obj == 0:
@@ -257,13 +264,13 @@ class Evaluation3DMetrics(object):
 
         return ltp * 100. / denom, n_obj
 
-    def get_lfdr(self, label_size=None):
+    def get_lfdr(self, label_size=None, class_idx=0):
         """Lesion False Detection Rate / 1 - Precision.
 
             Note: computed only if n_obj >= 1.
         """
-        ltp, _, n_obj = self._get_ltp_lfn(label_size)
-        lfp = self._get_lfp(label_size)
+        ltp, _, n_obj = self._get_ltp_lfn(label_size, class_idx)
+        lfp = self._get_lfp(label_size, class_idx)
 
         denom = ltp + lfp
         if denom == 0 or n_obj == 0:
@@ -273,30 +280,34 @@ class Evaluation3DMetrics(object):
 
     def run_eval(self):
         dct = {}
-        dct['vol_pred'] = self.get_vol(self.data_pred)
-        dct['vol_gt'] = self.get_vol(self.data_gt)
-        dct['rvd'], dct['avd'] = self.get_rvd(), self.get_avd()
-        dct['dice'] = metrics.dice_score(self.data_gt, self.data_pred) * 100.
-        dct['recall'] = metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
-        dct['precision'] = metrics.precision_score(self.data_pred, self.data_gt, err_value=np.nan)
-        dct['specificity'] = metrics.specificity_score(self.data_pred, self.data_gt, err_value=np.nan)
-        dct['n_pred'], dct['n_gt'] = self.n_pred, self.n_gt
-        dct['ltpr'], _ = self.get_ltpr()
-        dct['lfdr'] = self.get_lfdr()
 
-        for lb_size, gt_pred in zip(self.label_size_lst[0], self.label_size_lst[1]):
-            suffix = self.size_suffix_lst[int(lb_size) - 1]
+        for n in range(self.n_classes):
+            dct['vol_pred_class' + str(n)] = self.get_vol(self.data_pred)
+            dct['vol_gt_class' + str(n)] = self.get_vol(self.data_gt)
+            dct['rvd_class' + str(n)], dct['avd_class' + str(n)] = self.get_rvd(), self.get_avd()
+            dct['dice_class' + str(n)] = imed_metrics.dice_score(self.data_gt[..., n], self.data_pred[..., n]) * 100.
+            dct['recall_class' + str(n)] = imed_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
+            dct['precision_class' + str(n)] = imed_metrics.precision_score(self.data_pred, self.data_gt,
+                                                                           err_value=np.nan)
+            dct['specificity_class' + str(n)] = imed_metrics.specificity_score(self.data_pred, self.data_gt,
+                                                                               err_value=np.nan)
+            dct['n_pred_class' + str(n)], dct['n_gt_class' + str(n)] = self.n_pred[n], self.n_gt[n]
+            dct['ltpr_class' + str(n)], _ = self.get_ltpr()
+            dct['lfdr_class' + str(n)] = self.get_lfdr()
 
-            if gt_pred == 'gt':
-                dct['ltpr' + suffix], dct['n' + suffix] = self.get_ltpr(label_size=lb_size)
-            else:  # gt_pred == 'pred'
-                dct['lfdr' + suffix] = self.get_lfdr(label_size=lb_size)
+            for lb_size, gt_pred in zip(self.label_size_lst[n][0], self.label_size_lst[n][1]):
+                suffix = self.size_suffix_lst[int(lb_size) - 1]
 
-        # save painted file
-        nib_painted = nib.Nifti1Image(self.data_painted, nib.load(self.fname_pred).affine)
-        nib.save(nib_painted, self.fname_paint)
+                if gt_pred == 'gt':
+                    dct['ltpr' + suffix + "_class" + str(n)], dct['n' + suffix] = self.get_ltpr(label_size=lb_size,
+                                                                                                class_idx=n)
+                else:  # gt_pred == 'pred'
+                    dct['lfdr' + suffix + "_class" + str(n)] = self.get_lfdr(label_size=lb_size, class_idx=n)
 
-        return dct
+        if self.n_classes == 1:
+            self.data_painted = np.squeeze(self.data_painted, axis=-1)
+
+        return dct, self.data_painted
 
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5):
@@ -346,7 +357,9 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
 
     if bin_thr >= 0:
-        arr_pred_ref_space = threshold_predictions(arr_pred_ref_space, thr=bin_thr)
+        arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
+    else:  # discard noise
+        arr_pred_ref_space[arr_pred_ref_space <= 1e-3] = 0
 
     # create nibabel object
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
@@ -417,7 +430,7 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
 
     # argmax operator
     # TODO: adapt for multi-label pred
-    data_hard = threshold_predictions(data_prob, thr=thr).astype(np.uint8)
+    data_hard = imed_postpro.threshold_predictions(data_prob, thr=thr).astype(np.uint8)
     # save hard segmentation
     nib_hard = nib.Nifti1Image(data_hard, nib_im.affine)
     nib.save(nib_hard, fname_hard)
@@ -567,20 +580,6 @@ def save_mixup_sample(x, y, fname):
     plt.close()
 
 
-def threshold_predictions(predictions, thr=0.5):
-    """This function will threshold predictions.
-    :param predictions: input data (predictions)
-    :param thr: threshold to use, default to 0.5
-    :return: thresholded input
-    """
-    thresholded_preds = predictions[:]
-    low_values_indices = thresholded_preds < thr
-    thresholded_preds[low_values_indices] = 0
-    low_values_indices = thresholded_preds >= thr
-    thresholded_preds[low_values_indices] = 1
-    return thresholded_preds
-
-
 def segment_volume(folder_model, fname_image, fname_roi=None):
     """Segment an image.
 
@@ -604,14 +603,16 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     device = torch.device("cpu")
 
     # Check if model folder exists
+    # TODO: this check already exists in sct.deepseg.core.segment_nifti(). We should probably keep only one check in
+    #  ivadomed, and do it in a separate, more specific file (e.g. models.py)
     if os.path.isdir(folder_model):
         prefix_model = os.path.basename(folder_model)
         # Check if model and model metadata exist
-        fname_model = os.path.join(folder_model, prefix_model+'.pt')
+        fname_model = os.path.join(folder_model, prefix_model + '.pt')
         if not os.path.isfile(fname_model):
             print('Model file not found: {}'.format(fname_model))
             exit()
-        fname_model_metadata = os.path.join(folder_model, prefix_model+'.json')
+        fname_model_metadata = os.path.join(folder_model, prefix_model + '.json')
         if not os.path.isfile(fname_model_metadata):
             print('Model metadata file not found: {}'.format(fname_model_metadata))
             exit()
@@ -631,15 +632,15 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     # Force labeled to False in transforms
     context["transformation_validation"] = dict((key, {**value, **{"labeled": False}})
-                                                    if not key.startswith('NormalizeInstance')
-                                                    else (key, value)
-                                                    for (key, value) in context["transformation_validation"].items())
+                                                if not key.startswith('NormalizeInstance')
+                                                else (key, value)
+                                                for (key, value) in context["transformation_validation"].items())
 
     # Compose transforms
-    do_transforms = ivadomed_transforms.compose_transforms(context['transformation_validation'])
+    do_transforms = imed_transforms.compose_transforms(context['transformation_validation'])
 
     # Undo Transforms
-    undo_transforms = ivadomed_transforms.UndoCompose(do_transforms)
+    undo_transforms = imed_transforms.UndoCompose(do_transforms)
 
     # Force filter_empty_mask to False if fname_roi = None
     if fname_roi is None and 'filter_empty_mask' in context["slice_filter"]:
@@ -648,19 +649,19 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     # Load data
     filename_pairs = [([fname_image], None, fname_roi, [{}])]
     if not context['unet_3D']:  # TODO: rename this param 'model_name' or 'kernel_dim'
-        ds = MRI2DSegmentationDataset(filename_pairs,
-                                      slice_axis=AXIS_DCT[context['slice_axis']],
-                                      cache=True,
-                                      transform=do_transforms,
-                                      slice_filter_fn=SliceFilter(**context["slice_filter"]),
-                                      canonical=True)
+        ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
+                                                  slice_axis=AXIS_DCT[context['slice_axis']],
+                                                  cache=True,
+                                                  transform=do_transforms,
+                                                  slice_filter_fn=SliceFilter(**context["slice_filter"]),
+                                                  canonical=True)
     else:
         print('\n3D unet is not implemented yet.')
         exit()
 
     # If fname_roi provided, then remove slices without ROI
     if fname_roi is not None:
-        ds = ivadomed_loader.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
+        ds = imed_loaded_utils.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
 
     if not context['unet_3D']:
         print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
@@ -668,7 +669,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["batch_size"],
                              shuffle=False, pin_memory=True,
-                             collate_fn=mt_datasets.mt_collate,
+                             collate_fn=imed_loaded_utils.imed_collate,
                              num_workers=0)
 
     # Load model
@@ -686,6 +687,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         rdict = {}
         rdict['gt'] = preds
         batch.update(rdict)
+        # Take only metadata from one input
+        batch["input_metadata"] = batch["input_metadata"][0]
 
         # Reconstruct 3D object
         for i_slice in range(len(batch['gt'])):
@@ -693,12 +696,13 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
             rdict = {}
             # Import transformations parameters
             for k in batch.keys():
-                rdict[k] = batch[k][i_slice]
+                if len(batch[k]):
+                    rdict[k] = batch[k][i_slice]
             rdict_undo = undo_transforms(rdict)
 
             # Add new segmented slice to preds_list
             # Convert PIL to numpy
-            pred_cur = np.array(rdict_undo['gt'])
+            pred_cur = np.array(pil_list_to_numpy(rdict_undo['gt']))
             preds_list.append(pred_cur)
             # Store the slice index of pred_cur in the original 3D image
             sliceIdx_list.append(int(rdict_undo['input_metadata']['slice_index']))
@@ -717,17 +721,18 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     return pred_nib
 
 
-def cuda(input_var):
+def cuda(input_var, non_blocking=False):
     """
     This function sends input_var to GPU.
     :param input_var: either a tensor or a list of tensors
+    :param non_blocking
     :return: same as input_var
     """
 
     if isinstance(input_var, list):
-        return [t.cuda() for t in input_var]
+        return [t.cuda(non_blocking=non_blocking) for t in input_var]
     else:
-        return input_var.cuda()
+        return input_var.cuda(non_blocking=non_blocking)
 
 
 class HookBasedFeatureExtractor(nn.Module):
@@ -810,21 +815,18 @@ def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
 
     # Save for subject in batch
     for i in range(batch['input'].size(0)):
-        inp_fmap, out_fmap = HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input[i][None, ]))
+        inp_fmap, out_fmap = \
+            HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input[i][None,]))
 
         # Display the input image and Down_sample the input image
-        orig_input_img = test_input[i][None, ].permute(3, 4, 2, 0, 1).cpu().numpy()
+        orig_input_img = test_input[i][None,].permute(3, 4, 2, 0, 1).cpu().numpy()
         upsampled_attention = F.interpolate(out_fmap[1],
-                                            size=test_input[i][None, ].size()[2:],
+                                            size=test_input[i][None,].size()[2:],
                                             mode='trilinear',
                                             align_corners=True).data.permute(3, 4, 2, 0, 1).cpu().numpy()
 
-        # Define the directories
-        if isinstance(batch["input_metadata"][i], list):
-            # Multichannel
-            path = batch["input_metadata"][i][0]["input_filename"]
-        else:
-            path = batch["input_metadata"][i]["input_filename"]
+        path = batch["input_metadata"][0][i]["input_filenames"]
+
         basename = path.split('/')[-1]
         save_directory = os.path.join(context['log_directory'], layer_name, basename)
 
@@ -842,6 +844,107 @@ def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
         nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
 
         nib.save(nib_pred, save_directory)
+
+
+def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axis):
+    rdict = {}
+    h, w, d, n_class = gt_data.shape
+    labels = range(n_class)
+    # Generate color labels
+    multi_labeled_pred = np.zeros((h, w, d, 3))
+    if binarize:
+        rdict['gt'] = threshold_predictions(gt_data)
+
+    # Keep always the same color labels
+    np.random.seed(6)
+
+    for label in labels:
+        r, g, b = np.random.randint(0, 256, size=3)
+        multi_labeled_pred[..., 0] += r * gt_data[..., label]
+        multi_labeled_pred[..., 1] += g * gt_data[..., label]
+        multi_labeled_pred[..., 2] += b * gt_data[..., label]
+
+    rgb_dtype = np.dtype([('R', 'u1'), ('G', 'u1'), ('B', 'u1')])
+    multi_labeled_pred = multi_labeled_pred.copy().astype('u1').view(dtype=rgb_dtype).reshape((h, w, d))
+    multi_labeled_pred = np.flip(multi_labeled_pred, axis=0)
+
+    pred_to_nib(multi_labeled_pred.transpose((2, 0, 1)), [], gt_filename,
+                output_filename, slice_axis=slice_axis, kernel_dim='3d', bin_thr=-1)
+
+    return multi_labeled_pred
+
+
+def pil_list_to_numpy(pil_list):
+    n_classes = len(pil_list)
+    w, h = pil_list[0].size
+    numpy_array = np.zeros((h, w, n_classes))
+    for idx, pil_img in enumerate(pil_list):
+        numpy_array[..., idx] = np.array(pil_img)
+    # If only one class, then remove the last dimension
+    if n_classes == 1:
+        numpy_array = np.squeeze(numpy_array, axis=-1)
+    return numpy_array
+
+
+def convert_labels_to_RGB(grid_img):
+    # Keep always the same color labels
+    batch_size, n_class, h, w = grid_img.shape
+    rgb_img = torch.zeros((batch_size, 3, h, w))
+
+    # Keep always the same color labels
+    np.random.seed(6)
+    for i in range(n_class):
+        r, g, b = np.random.randint(0, 256, size=3)
+        rgb_img[:, i, ] = r * grid_img[:, i, ]
+        rgb_img[:, i, ] = g * grid_img[:, i, ]
+        rgb_img[:, i, ] = b * grid_img[:, i, ]
+
+    return rgb_img
+
+
+def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, unet_3D):
+    if unet_3D:
+        num_2d_img = input_samples.shape[3]
+    else:
+        num_2d_img = 1
+    if isinstance(input_samples, list):
+        input_samples_copy = input_samples.copy()
+    else:
+        input_samples_copy = input_samples.clone()
+    preds_copy = preds.clone()
+    gt_samples_copy = gt_samples.clone()
+    for idx in range(num_2d_img):
+        if unet_3D:
+            input_samples = input_samples_copy[:, :, :, idx, :]
+            preds = preds_copy[:, :, :, idx, :]
+            gt_samples = gt_samples_copy[:, :, :, idx, :]
+            # Only display images with labels
+            if gt_samples.sum() == 0:
+                continue
+
+        # take only one modality for grid
+        if not isinstance(input_samples, list) and input_samples.shape[1] > 1:
+            tensor = input_samples[:, 0, :, :][:, None, :, :]
+            input_samples = torch.cat((tensor, tensor, tensor), 1)
+        elif isinstance(input_samples, list):
+            input_samples = input_samples[0]
+
+        grid_img = vutils.make_grid(input_samples,
+                                    normalize=True,
+                                    scale_each=True)
+        writer.add_image(dataset_type + '/Input', grid_img, epoch)
+
+        grid_img = vutils.make_grid(convert_labels_to_RGB(preds),
+                                    normalize=True,
+                                    scale_each=True)
+
+        writer.add_image(dataset_type + '/Predictions', grid_img, epoch)
+
+        grid_img = vutils.make_grid(convert_labels_to_RGB(gt_samples),
+                                    normalize=True,
+                                    scale_each=True)
+
+        writer.add_image(dataset_type + '/Ground Truth', grid_img, epoch)
 
 
 class SliceFilter(object):

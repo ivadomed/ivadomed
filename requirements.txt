@@ -10,6 +10,8 @@ torch==1.2.0
 torchvision==0.2.1
 tqdm>=4.30
 future
+pandas
 pillow==6.2.0
+h5py
 
 medicaltorch@git+https://github.com/neuropoly/medicaltorch@master

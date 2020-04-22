@@ -1,0 +1,10 @@
+#!/bin/sh
+# dev environment activation script
+#
+# usage:
+# . dev/bin/activate
+
+HERE="$(cd $(dirname "$BASH_SOURCE"); pwd)"
+export PATH=${HERE}/.bin:$PATH
+
+# TODO: add a deactivate-dev() function

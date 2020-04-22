@@ -1,7 +1,7 @@
 {
     "command": "train",
     "gpu": 4,
-    "target_suffix": "_seg-manual",
+    "target_suffix": ["_seg-manual"],
     "roi_suffix": null,
     "bids_path": "../duke/projects/ivado-medical-imaging/spineGeneric_201907041011/result/",
     "random_seed": 1313,
@@ -21,7 +21,6 @@
     "mixup_bool": true,
     "mixup_alpha": 2,
     "metadata": "without",
-    "missing_modality": false,
     "multichannel": false,
     "out_channel": 1,
     "depth": 3,
@@ -30,9 +29,13 @@
     "early_stopping_patience": 10,
     "early_stopping_epsilon": 0.001,
     "unet_3D": false,
+    "HeMIS": false,
     "attention_unet": false,
     "binarize_prediction": true,
+    "missing_modality": false,
     "slice_axis": "axial",
+    "retrain_model": null,
+    "retrain_fraction": 1.0,
     "slice_filter": {
         "filter_empty_mask": true,
         "filter_empty_input": true,
@@ -62,7 +65,8 @@
             "scale": [0.98, 1.02]
         },
         "ToTensor": {},
-        "NormalizeInstance": {}
+        "NormalizeInstance": {},
+        "StackTensors": {}
     },
     "transformation_validation": {
         "Resample": {
@@ -73,7 +77,8 @@
             "size": [128, 128]
         },
         "ToTensor": {},
-        "NormalizeInstance": {}
+        "NormalizeInstance": {},
+        "StackTensors": {}
     },
     "transformation_testing": {
         "Resample": {
@@ -84,7 +89,8 @@
             "size": [128, 128]
         },
         "ToTensor": {},
-        "NormalizeInstance": {}
+        "NormalizeInstance": {},
+        "StackTensors": {}
     },
     "debugging": false
 }
