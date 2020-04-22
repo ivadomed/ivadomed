@@ -12,6 +12,34 @@ from medicaltorch import transforms as mt_transforms
 from torchvision import transforms as torchvision_transforms
 
 
+
+class IMEDTransform(object):
+
+    def __call__(self, sample):
+        raise NotImplementedError("You need to implement the transform() method.")
+
+    def undo_transform(self, sample):
+        raise NotImplementedError("You need to implement the undo_transform() method.")
+
+
+class UndoCompose(object):
+    def __init__(self, compose):
+        self.transforms = compose.transforms
+
+    def __call__(self, img):
+        for t in self.transforms[::-1]:
+            img = t.undo_transform(img)
+        return img
+
+
+class UndoTransform(object):
+    def __init__(self, transform):
+        self.transform = transform
+
+    def __call__(self, sample):
+        return self.transform.undo_transform(sample)
+
+
 def get_transform_names():
     """Function used in the main to differentiate the IVADO transfroms
        from the mt_transforms."""
@@ -50,16 +78,6 @@ def compose_transforms(dict_transforms, requires_undo=False):
             list_transform.append(transform_obj)
 
     return torchvision_transforms.Compose(list_transform)
-
-
-class UndoCompose(object):
-    def __init__(self, compose):
-        self.transforms = compose.transforms
-
-    def __call__(self, img):
-        for t in self.transforms[::-1]:
-            img = t.undo_transform(img)
-        return img
 
 
 class Resample(mt_transforms.Resample):
@@ -234,7 +252,7 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
         return sample
 
 
-class DilateGT(mt_transforms.MTTransform):
+class DilateGT(IMEDTTransform):
     """Randomly dilate a tensor ground-truth.
     :param dilation_factor: float, controls the number of dilation iterations.
                             For each individual lesion, the number of dilation iterations is computed as follows:
@@ -365,7 +383,7 @@ class StackTensors(mt_transforms.StackTensors):
 
 
 # 3D Transforms
-class CenterCrop3D(mt_transforms.MTTransform):
+class CenterCrop3D(IMEDTransform):
     """Make a centered crop of a specified size.
     :param labeled: if it is a segmentation task.
                          When this is True (default), the crop
@@ -444,7 +462,7 @@ class NormalizeInstance3D(mt_transforms.NormalizeInstance3D):
         return sample
 
 
-class BackgroundClass(mt_transforms.MTTransform):
+class BackgroundClass(IMEDTransform):
     def undo_transform(self, sample):
         return sample
 
