@@ -348,8 +348,7 @@ class CenterCrop2D(Crop2D):
         return sample
 
 
-# TODO: Herit from Crop2D
-class ROICrop2D(mt_transforms.CenterCrop2D):
+class ROICrop2D(Crop2D):
     """Make a crop of a specified size around a ROI."""
 
     def __init__(self, size, labeled=True):
@@ -375,6 +374,7 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
         if isinstance(sample['input'], list):
             for input_data in sample['input']:
                 rdict['input'].append(self._uncrop(input_data, sample['input_metadata']["__centercrop"]))
+        # TODO: else
 
         #if self.labeled:
         for gt in sample['gt']:
