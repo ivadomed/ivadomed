@@ -258,6 +258,7 @@ class Crop2D(IMEDTransform):
         self.size = size
         self.labeled = labeled
 
+    # TODO: return
     @staticmethod
     def propagate_params(sample, params, i):
         input_metadata = sample['input_metadata'][i]
@@ -267,6 +268,85 @@ class Crop2D(IMEDTransform):
     @staticmethod
     def get_params(sample):
         return [sample['input_metadata'][i]["__centercrop"] for i in range(len(sample))]
+
+
+class CenterCrop2D(Crop2D):
+    """Make a centered crop of a specified size."""
+
+    def __init__(self, size, labeled=True):
+        super().__init__(size, labeled)
+
+    def __call__(self, sample):
+        rdict = {}
+        th, tw = self.size
+
+        # Input data
+        input_data = sample['input']
+        # Loop across input modalities
+        for i in range(len(input_data)):
+            w, h = input_data[i].size
+            fh = int(round((h - th) / 2.))
+            fw = int(round((w - tw) / 2.))
+            params = (fh, fw, w, h)
+
+            # Updating the parameters in the input metadata
+            self.propagate_params(sample, params, i)
+            # Cropping
+            input_data[i] = F.center_crop(input_data[i], self.size)
+        # Update
+        rdict['input'] = input_data
+
+        # Labeled data
+        gt_data = sample['gt']
+        gt_metadata = sample['gt_metadata']
+        # Loop across GT
+        for i in range(len(gt_data)):
+            w, h = gt_data[i].size
+            fh = int(round((h - th) / 2.))
+            fw = int(round((w - tw) / 2.))
+
+            # Cropping
+            gt_data[i] = F.center_crop(gt_data[i], self.size)
+            # TODO
+            #gt_metadata[i]["__centercrop"] = (fh, fw, w, h)
+        # Update
+        rdict['gt'] = gt_data
+        #rdict['gt_metadata'] = gt_metadata
+
+        sample.update(rdict)
+        return sample
+
+    def _uncrop(self, data, params):
+        fh, fw, w, h = params
+        th, tw = self.size
+        pad_left = fw
+        pad_right = w - pad_left - tw
+        pad_top = fh
+        pad_bottom = h - pad_top - th
+        padding = (pad_left, pad_top, pad_right, pad_bottom)
+        return F.pad(data, padding)
+
+    def undo_transform(self, sample):
+        rdict = {}
+        #TODO: Decorator?
+        # Input data
+        if isinstance(sample['input'], list):
+            rdict['input'] = sample['input']
+            for i in range(len(sample['input'])):
+                # TODO: Same params for all modalities?
+                rdict['input'][i] = self._uncrop(sample['input'][i], sample['input_metadata']["__centercrop"])
+        else:
+            rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
+
+        # Labeled data
+        rdict['gt'] = sample['gt']
+        for i in range(len(sample['gt'])):
+            rdict['gt'][i] = self._uncrop(sample['gt'][i], sample['input_metadata']["__centercrop"])
+
+        # Update
+        sample.update(rdict)
+        return sample
+
 
 # TODO: Herit from Crop2D
 class ROICrop2D(mt_transforms.CenterCrop2D):
