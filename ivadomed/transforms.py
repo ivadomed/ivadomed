@@ -252,12 +252,25 @@ class ToTensor(IMEDTransform):
         return mt_transforms.ToPIL()(sample)
 
 
+class Crop2D(IMEDTransform):
+
+    def __init__(self, size, labeled=True):
+        self.size = size
+        self.labeled = labeled
+
+    @staticmethod
+    def propagate_params(sample, params, i):
+        input_metadata = sample['input_metadata'][i]
+        input_metadata["__centercrop"] = params
+        return input_metadata
+
+    @staticmethod
+    def get_params(sample):
+        return [sample['input_metadata'][i]["__centercrop"] for i in range(len(sample))]
+
+# TODO: Herit from Crop2D
 class ROICrop2D(mt_transforms.CenterCrop2D):
-    """Make a crop of a specified size around a ROI.
-    :param labeled: if it is a segmentation task.
-                         When this is True (default), the crop
-                         will also be applied to the ground truth.
-    """
+    """Make a crop of a specified size around a ROI."""
 
     def __init__(self, size, labeled=True):
         super().__init__(size, labeled)
@@ -278,6 +291,7 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
             'gt': []
         }
 
+        # TODO: call get_params
         if isinstance(sample['input'], list):
             for input_data in sample['input']:
                 rdict['input'].append(self._uncrop(input_data, sample['input_metadata']["__centercrop"]))
@@ -313,15 +327,16 @@ class ROICrop2D(mt_transforms.CenterCrop2D):
             # crop data
             input_data[i] = F.crop(input_data[i], fw, fh, tw, th)
 
+        # TODO: rm gt_metadata as params are already propagated via input_metadata
         rdict['input'] = input_data
         if self.labeled:
             gt_data = sample['gt']
-            gt_metadata = sample['gt_metadata']
+            #gt_metadata = sample['gt_metadata']
             for i in range(len(gt_data)):
                 gt_data[i] = F.crop(gt_data[i], fw, fh, tw, th)
-                gt_metadata[i]["__centercrop"] = (fh, fw, h, w)
+            #    gt_metadata[i]["__centercrop"] = (fh, fw, h, w)
             rdict['gt'] = gt_data
-            rdict['gt_metadata'] = gt_metadata
+            #rdict['gt_metadata'] = gt_metadata
 
         sample.update(rdict)
         return sample
