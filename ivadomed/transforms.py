@@ -213,8 +213,10 @@ class Normalize(IMEDTransform):
         # TODO: Decorator?
         # Normalize
         if isinstance(input_data, list):
+            # TODO: .instance_norm?
             input_data = [F.normalize(input_data[i], self.mean[i], self.std[i]) for i in range(len(input_data))]
         else:
+            # TODO: .instance_norm?
             input_data = F.normalize(input_data, self.mean, self.std)
 
         # Update
@@ -225,8 +227,38 @@ class Normalize(IMEDTransform):
         return sample
 
 
-class NormalizeInstance(mt_transforms.NormalizeInstance):
-    """This class extends mt_transforms.Normalize"""
+class NormalizeInstance(IMEDTransform):
+    """Normalize a tensor image with mean and standard deviation estimated
+    from the sample itself.
+    """
+
+    def __call__(self, sample):
+        input_data = sample['input']
+
+        # TODO: Decorator?
+        # Normalize
+        if isinstance(input_data, list):
+            for i in range(len(input_data)):
+                # Check if image is not empty
+                # TODO: rm?
+                if input_data[i].type(torch.bool).any():
+                    mean, std = input_data[i].mean(), input_data[i].std()
+                    # TODO: instance_norm?
+                    input_data[i] = F.normalize(input_data[i], [mean], [std])
+        else:
+            # Check if image is not empty
+            # TODO: rm?
+            if input_data.type(torch.bool).any():
+                mean, std = input_data.mean(), input_data.std()
+                # TODO: instance_norm?
+                input_data = F.normalize(input_data, [mean], [std])
+
+        # Update
+        rdict = {
+            'input': input_data,
+        }
+        sample.update(rdict)
+        return sample
 
     def undo_transform(self, sample):
         return sample
