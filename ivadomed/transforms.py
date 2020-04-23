@@ -229,8 +229,7 @@ class ToTensor(IMEDTransform):
             gt_data = sample['gt']
             if gt_data is not None:
                 if isinstance(gt_data, list):
-                    # TODO: comment
-                    # Add dim 0 for 3D images
+                    # Add dim 0 for 3D images (i.e. 2D slices with multiple GT)
                     if gt_data[0].size == 3:
                         ret_gt = [gt.unsqueeze(0) for gt in sample['gt']]
 
