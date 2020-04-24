@@ -1,4 +1,5 @@
 import math
+import numbers
 import random
 import numpy as np
 from PIL import Image
@@ -742,6 +743,88 @@ class BackgroundClass(IMEDTransform):
 
         background = (sample['gt'].sum(axis=0) == 0).type('torch.FloatTensor')[None, ]
         rdict['gt'] = torch.cat((background, sample['gt']), dim=0)
+        sample.update(rdict)
+        return sample
+
+
+class RandomRotation(IMEDTransform):
+    def __init__(self, degrees, resample=False,
+                 expand=False, center=None,
+                 labeled=True):
+        if isinstance(degrees, numbers.Number):
+            if degrees < 0:
+                raise ValueError("If degrees is a single number, it must be positive.")
+            self.degrees = (-degrees, degrees)
+        else:
+            if len(degrees) != 2:
+                raise ValueError("If degrees is a sequence, it must be of len 2.")
+            self.degrees = degrees
+
+        self.resample = resample
+        self.expand = expand
+        self.center = center
+        self.labeled = labeled
+
+    @staticmethod
+    def get_params(degrees):
+        angle = np.random.uniform(degrees[0], degrees[1])
+        return angle
+
+    def _rotate(data, angle):
+        return F.rotate(data, angle,
+                                      self.resample, self.expand,
+                                      self.center)
+
+    def __call__(self, sample):
+        rdict = {}
+
+        input_data = sample['input']
+
+        angle = self.get_params(self.degrees)
+
+        # save angle in metadata
+        rdict['input_metadata'] = sample['input_metadata']
+
+        # Input data
+        input_transform = []
+        # TODO: Always a list?
+        # TODO: Decorator or function?
+        for idx, input_data in enumerate(sample['input']):
+            rdict['input_metadata'][idx]['randomRotation'] = angle
+            input_transform.append(_rotate(input_data, angle))
+        rdict['input'] = input_transform
+
+        # Labeled data
+        if self.labeled:
+            gt_transform = []
+            for gt_data in sample['gt']:
+                gt_transform.append(_rotate(gt_data, angle))
+            rdict['gt'] = gt_transform
+
+        # Update
+        sample.update(rdict)
+        return sample
+
+    def undo_transform(self, sample):
+        rdict = {}
+        # Opposite rotation
+        angle = - sample['input_metadata']['randomRotation']
+
+        # TODO: Decorator or function?
+        if isinstance(sample['input'], list):
+            rdict['input'] = sample['input']
+            for i in range(len(sample['input'])):
+                rdict['input'][i] = _rotate(sample['input'][i], angle)
+        else:
+            rdict['input'] = _rotate(sample['input'], angle)
+
+        if isinstance(sample['gt'], list):
+            rdict['gt'] = sample['gt']
+            for i in range(len(sample['gt'])):
+                rdict['gt'][i] = _rotate(sample['gt'][i], angle)
+        else:
+            rdict['gt'] = _rotate(sample['gt'], angle)
+
         sample.update(rdict)
         return sample
 
