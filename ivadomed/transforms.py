@@ -342,36 +342,33 @@ class CenterCrop2D(Crop2D):
 
         # Input data
         input_data = sample['input']
+
+        # As the modalities are registered, the cropping params are the same
+        w, h = input_data[0].size
+        fh = int(round((h - th) / 2.))
+        fw = int(round((w - tw) / 2.))
+        params = (fh, fw, w, h)
+
         # Loop across input modalities
         for i in range(len(input_data)):
-            w, h = input_data[i].size
-            fh = int(round((h - th) / 2.))
-            fw = int(round((w - tw) / 2.))
-            params = (fh, fw, w, h)
-
             # Updating the parameters in the input metadata
             self.propagate_params(sample, params, i)
             # Cropping
             input_data[i] = F.center_crop(input_data[i], self.size)
+
         # Update
         rdict['input'] = input_data
 
         # Labeled data
-        gt_data = sample['gt']
-        gt_metadata = sample['gt_metadata']
-        # Loop across GT
-        for i in range(len(gt_data)):
-            w, h = gt_data[i].size
-            fh = int(round((h - th) / 2.))
-            fw = int(round((w - tw) / 2.))
+        if self.labeled:
+            gt_data = sample['gt']
+            # Loop across GT
+            for i in range(len(gt_data)):
+                # Cropping
+                gt_data[i] = F.center_crop(gt_data[i], self.size)
 
-            # Cropping
-            gt_data[i] = F.center_crop(gt_data[i], self.size)
-            # TODO
-            #gt_metadata[i]["__centercrop"] = (fh, fw, w, h)
-        # Update
-        rdict['gt'] = gt_data
-        #rdict['gt_metadata'] = gt_metadata
+            # Update
+            rdict['gt'] = gt_data
 
         sample.update(rdict)
         return sample
@@ -393,12 +390,13 @@ class CenterCrop2D(Crop2D):
         if isinstance(sample['input'], list):
             rdict['input'] = sample['input']
             for i in range(len(sample['input'])):
-                # TODO: Same params for all modalities?
+                # TODO: sample['input_metadata'][i]["__centercrop"]
                 rdict['input'][i] = self._uncrop(sample['input'][i], sample['input_metadata']["__centercrop"])
         else:
             rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
 
         # Labeled data
+        # Note: undo_transform: we force labeled=True because used with predictions
         rdict['gt'] = sample['gt']
         for i in range(len(sample['gt'])):
             rdict['gt'][i] = self._uncrop(sample['gt'][i], sample['input_metadata']["__centercrop"])
@@ -436,7 +434,7 @@ class ROICrop2D(Crop2D):
                 rdict['input'].append(self._uncrop(input_data, sample['input_metadata']["__centercrop"]))
         # TODO: else
 
-        #if self.labeled:
+        # Note: undo_transform: we force labeled=True because used with predictions
         for gt in sample['gt']:
             rdict['gt'].append(self._uncrop(gt, sample['input_metadata']["__centercrop"]))
 
@@ -458,25 +456,24 @@ class ROICrop2D(Crop2D):
         # compute top left corner of the crop area
         fh = y_roi - th_half
         fw = x_roi - tw_half
+        # params are shared across modalities because are all registered
+        w, h = input_data[0].size
+        params = (fh, fw, h, w)
+        self.propagate_params(sample, params, 0)
 
+        # Loop across modalities
         for i in range(len(input_data)):
-            w, h = input_data[i].size
-            params = (fh, fw, h, w)
-
-            self.propagate_params(sample, params, i)
             # crop data
             input_data[i] = F.crop(input_data[i], fw, fh, tw, th)
-
-        # TODO: rm gt_metadata as params are already propagated via input_metadata
+        # Update
         rdict['input'] = input_data
+
+        # Labeled data
         if self.labeled:
             gt_data = sample['gt']
-            #gt_metadata = sample['gt_metadata']
             for i in range(len(gt_data)):
                 gt_data[i] = F.crop(gt_data[i], fw, fh, tw, th)
-            #    gt_metadata[i]["__centercrop"] = (fh, fw, h, w)
             rdict['gt'] = gt_data
-            #rdict['gt_metadata'] = gt_metadata
 
         sample.update(rdict)
         return sample
