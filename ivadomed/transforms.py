@@ -432,7 +432,8 @@ class ROICrop2D(Crop2D):
         if isinstance(sample['input'], list):
             for input_data in sample['input']:
                 rdict['input'].append(self._uncrop(input_data, sample['input_metadata']["__centercrop"]))
-        # TODO: else
+        else:
+             rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
 
         # Note: undo_transform: we force labeled=True because used with predictions
         for gt in sample['gt']:
