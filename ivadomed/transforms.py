@@ -702,7 +702,7 @@ class CenterCrop3D(IMEDTransform):
 class NormalizeInstance3D(IMEDTransform):
 
     def _normalize_sample(data):
-        mean, std = data.mean(), data.std()
+        # TODO: instance_norm?
         # Check if not empty
         if data.type(torch.bool).any():
             mean, std = data.mean(), data.std()
