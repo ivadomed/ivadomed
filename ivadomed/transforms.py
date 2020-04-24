@@ -232,30 +232,29 @@ class NormalizeInstance(IMEDTransform):
     from the sample itself.
     """
 
+    def _normalize_sample(data):
+        # TODO: instance_norm?
+        if data.type(torch.bool).any():
+            mean, std = data.mean(), data.std()
+            return F.normalize(data, [mean], [std])
+        else:
+            return data
+
     def __call__(self, sample):
         input_data = sample['input']
 
         # TODO: Decorator?
         # Normalize
         if isinstance(input_data, list):
+            input_data_normalized = []
             for i in range(len(input_data)):
-                # Check if image is not empty
-                # TODO: rm?
-                if input_data[i].type(torch.bool).any():
-                    mean, std = input_data[i].mean(), input_data[i].std()
-                    # TODO: instance_norm?
-                    input_data[i] = F.normalize(input_data[i], [mean], [std])
+                input_data_normalized.append(_normalize_sample(input_data[i]))
         else:
-            # Check if image is not empty
-            # TODO: rm?
-            if input_data.type(torch.bool).any():
-                mean, std = input_data.mean(), input_data.std()
-                # TODO: instance_norm?
-                input_data = F.normalize(input_data, [mean], [std])
+            input_data_normalized = _normalize_sample(input_data)
 
         # Update
         rdict = {
-            'input': input_data,
+            'input': input_data_normalized,
         }
         sample.update(rdict)
         return sample
@@ -700,8 +699,34 @@ class CenterCrop3D(IMEDTransform):
         return input_data
 
 
-class NormalizeInstance3D(mt_transforms.NormalizeInstance3D):
-    """This class extends mt_transforms.NormalizeInstance"""
+class NormalizeInstance3D(IMEDTransform):
+
+    def _normalize_sample(data):
+        mean, std = data.mean(), data.std()
+        # Check if not empty
+        if data.type(torch.bool).any():
+            mean, std = data.mean(), data.std()
+            return F.normalize(data,
+                                                    [mean for _ in range(0, data.shape[0])],
+                                                    [std for _ in range(0, data.shape[0])]).unsqueeze(0)
+        else:
+            return data
+
+    def __call__(self, sample):
+        input_data = sample['input']
+
+        if isinstance(input_data, list):
+            input_data_normalized = []
+            for i in range(len(input_data)):
+                input_data_normalized.append(_normalize_sample(input_data[i]))
+        else:
+            input_data_normalized = _normalize_sample(input_data)
+
+        rdict = {
+            'input': input_data_normalized
+        }
+        sample.update(rdict)
+        return sample
 
     @staticmethod
     def undo_transform(sample):
