@@ -882,6 +882,48 @@ class RandomRotation3D(RandomRotation):
         return sample
 
 
+class RandomReverse3D(IMEDTransform):
+    """Make a randomized symmetric inversion of the different values of each dimensions."""
+
+    def __init__(self, labeled=True):
+        self.labeled = labeled
+
+    def __call__(self, sample):
+        rdict = {}
+
+        input_list = sample['input']
+
+        # TODO: Generalize this in constructor?
+        if not isinstance(input_list, list):
+            input_list = [sample['input']]
+
+        # Flip axis booleans
+        flip_axes = [np.random.randint(2) == 1 for axis in [0, 1, 2]]
+
+        # Run flip
+        reverse_input = []
+        for input_data in input_list:
+            for idx_axis, flip_bool in enumerate(flip_axes):
+                if flip_axes:
+                    input_data = np.flip(input_data, axis=idx_axis).copy()
+            reverse_input.append(input_data)
+
+        # Update
+        rdict['input'] = reverse_input
+
+        # Labeled data
+        if self.labeled:
+            gt_data = sample['gt']
+            for idx_axis, flip_bool in enumerate(flip_axes):
+                if flip_axes:
+                    gt_data = np.flip(gt_data, axis=idx_axis).copy()
+            rdict['gt'] = gt_data
+
+        # Update
+        sample.update(rdict)
+        return sample
+
+
 class RandomAffine3D(mt_transforms.RandomAffine):
     def __call__(self, sample):
         """This class extends mt_transforms.RandomAffine"""
