@@ -3,15 +3,15 @@ import numbers
 import random
 import numpy as np
 from PIL import Image
+
+from scipy.ndimage.measurements import label, center_of_mass
+from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
+from scipy.ndimage.interpolation import map_coordinates
+
 import torch
 import torchvision.transforms.functional as F
-from scipy.ndimage.measurements import label, center_of_mass
-
-from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
-from medicaltorch import transforms as mt_transforms
-
 from torchvision import transforms as torchvision_transforms
-
 
 
 class IMEDTransform(object):
@@ -1107,6 +1107,98 @@ class RandomTensorChannelShift(IMEDTransform):
         rdict = {
             'input': ret_input,
         }
+
+        sample.update(rdict)
+        return sample
+
+
+class ElasticTransform(IMEDTransform):
+    "Elastic transform for 2D and 3D inputs"
+
+    def __init__(self, alpha_range, sigma_range,
+                 p=0.5, labeled=True):
+        self.alpha_range = alpha_range
+        self.sigma_range = sigma_range
+        self.labeled = labeled
+        self.p = p
+        self.is3D = False
+
+    @staticmethod
+    def get_params(alpha, sigma):
+        alpha = np.random.uniform(alpha[0], alpha[1])
+        sigma = np.random.uniform(sigma[0], sigma[1])
+        return alpha, sigma
+
+    def elastic_transform(self, image, alpha, sigma):
+        shape = image.shape
+        dx = gaussian_filter((np.random.rand(*shape) * 2 - 1),
+                             sigma, mode="constant", cval=0) * alpha
+        dy = gaussian_filter((np.random.rand(*shape) * 2 - 1),
+                             sigma, mode="constant", cval=0) * alpha
+        if self.is3D:
+            dz = gaussian_filter((np.random.rand(*shape) * 2 - 1),
+                                 sigma, mode="constant", cval=0) * alpha
+            x, y, z = np.meshgrid(np.arange(shape[0]),
+                                  np.arange(shape[1]),
+                                  np.arange(shape[2]), indexing='ij')
+            indices = np.reshape(x + dx, (-1, 1)), np.reshape(y + dy, (-1, 1)), np.reshape(z + dz, (-1, 1))
+        else:
+            x, y = np.meshgrid(np.arange(shape[0]),
+                               np.arange(shape[1]), indexing='ij')
+            indices = np.reshape(x + dx, (-1, 1)), np.reshape(y + dy, (-1, 1))
+        return map_coordinates(image, indices, order=1).reshape(shape)
+
+    def sample_augment(self, input_data, params):
+        param_alpha, param_sigma = params
+        np_input_data = np.array(input_data)
+        if len(np_input_data.shape) == 3:
+            self.is3D = True
+
+        np_input_data = self.elastic_transform(np_input_data,
+                                               param_alpha, param_sigma)
+        if not self.is3D:
+            input_data = Image.fromarray(np_input_data, mode='F')
+        return input_data
+
+    def label_augment(self, gt_data, params):
+        param_alpha, param_sigma = params
+
+        np_gt_data = np.array(gt_data)
+        np_gt_data = self.elastic_transform(np_gt_data,
+                                            param_alpha, param_sigma)
+        if not self.is3D:
+            np_gt_data[np_gt_data >= 0.5] = 255.0
+            np_gt_data[np_gt_data < 0.5] = 0.0
+            np_gt_data = np_gt_data.astype(np.uint8)
+            gt_data = Image.fromarray(np_gt_data, mode='L')
+
+        return gt_data
+
+    def __call__(self, sample):
+        rdict = {}
+
+        if np.random.random() < self.p:
+            input_data = sample['input']
+            params = self.get_params(self.alpha_range,
+                                     self.sigma_range)
+
+            if isinstance(input_data, list):
+                ret_input = [self.sample_augment(item, params)
+                             for item in input_data]
+            else:
+                ret_input = self.sample_augment(input_data, params)
+
+            rdict['input'] = ret_input
+
+            if self.labeled:
+                gt_data = sample['gt']
+                if isinstance(gt_data, list):
+                    ret_gt = [self.label_augment(item, params)
+                              for item in gt_data]
+                else:
+                    ret_gt = self.label_augment(gt_data, params)
+
+                rdict['gt'] = ret_gt
 
         sample.update(rdict)
         return sample
