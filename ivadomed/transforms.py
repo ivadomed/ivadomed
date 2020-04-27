@@ -756,8 +756,8 @@ class RandomRotation(IMEDTransform):
                 raise ValueError("If degrees is a single number, it must be positive.")
             self.degrees = (-degrees, degrees)
         else:
-            if len(degrees) != 2:
-                raise ValueError("If degrees is a sequence, it must be of len 2.")
+            assert isinstance(degrees, (tuple, list)) and len(degrees) == 2, \
+                "degrees should be a list or tuple and it must be of length 2."
             self.degrees = degrees
 
         self.resample = resample
@@ -765,9 +765,8 @@ class RandomRotation(IMEDTransform):
         self.center = center
         self.labeled = labeled
 
-    @staticmethod
-    def get_params(degrees):
-        angle = np.random.uniform(degrees[0], degrees[1])
+    def get_params(self):
+        angle = np.random.uniform(self.degrees[0], self.degrees[1])
         return angle
 
     def _rotate(self, data, angle):
@@ -780,7 +779,7 @@ class RandomRotation(IMEDTransform):
 
         input_data = sample['input']
 
-        angle = self.get_params(self.degrees)
+        angle = self.get_params()
 
         # save angle in metadata
         rdict['input_metadata'] = sample['input_metadata']
@@ -789,7 +788,7 @@ class RandomRotation(IMEDTransform):
         input_transform = []
         # TODO: Always a list?
         # TODO: Decorator or function?
-        for idx, input_data in enumerate(sample['input']):
+        for idx, input_data in enumerate(input_data):
             rdict['input_metadata'][idx]['randomRotation'] = angle
             input_transform.append(self._rotate(input_data, angle))
         rdict['input'] = input_transform
@@ -856,7 +855,7 @@ class RandomRotation3D(RandomRotation):
             raise ValueError("Input of RandomRotation3D should be a 3 dimensionnal tensor.")
 
         # Get angles
-        angle = self.get_params(self.degrees)
+        angle = self.get_params()
 
         # Move axis of interest to the first dimension
         input_data_movedaxis = np.moveaxis(input_data, self.axis, 0)
@@ -882,6 +881,7 @@ class RandomRotation3D(RandomRotation):
         return sample
 
 
+# TODO: Extend to 2D?
 class RandomReverse3D(IMEDTransform):
     """Make a randomized symmetric inversion of the different values of each dimensions."""
 
@@ -920,6 +920,122 @@ class RandomReverse3D(IMEDTransform):
             rdict['gt'] = gt_data
 
         # Update
+        sample.update(rdict)
+        return sample
+
+
+class RandomAffine(RandomRotation):
+
+    def __init__(self, degrees, translate=None,
+                 scale=None, shear=None,
+                 resample=False, fillcolor=0,
+                 labeled=True):
+        super().__init__(degrees, labeled=labeled)
+
+        # Check Translate
+        if translate is not None:
+            assert isinstance(translate, (tuple, list)) and len(translate) == 2, \
+                "translate should be a list or tuple and it must be of length 2."
+            for t in translate:
+                if not (0.0 <= t <= 1.0):
+                    raise ValueError("translation values should be between 0 and 1")
+        self.translate = translate
+
+        # Check scale
+        if scale is not None:
+            assert isinstance(scale, (tuple, list)) and len(scale) == 2, \
+                "scale should be a list or tuple and it must be of length 2."
+            for s in scale:
+                if s <= 0:
+                    raise ValueError("scale values should be positive")
+        self.scale = scale
+
+        # Check shear
+        if shear is not None:
+            if isinstance(shear, numbers.Number):
+                if shear < 0:
+                    raise ValueError("If shear is a single number, it must be positive.")
+                self.shear = (-shear, shear)
+            else:
+                assert isinstance(shear, (tuple, list)) and len(shear) == 2, \
+                    "shear should be a list or tuple and it must be of length 2."
+                self.shear = shear
+        else:
+            self.shear = shear
+
+        self.resample = resample
+        self.fillcolor = fillcolor
+
+    def get_params(self):
+        """Get parameters for affine transformation
+        Returns:
+            sequence: params to be passed to the affine transformation
+        """
+        angle = np.random.uniform(self.degrees[0], self.degrees[1])
+
+        if self.translate is not None:
+            max_dx = self.translate[0] * self.input_data_size[0]
+            max_dy = self.translate[1] * self.input_data_size[1]
+            translations = (np.round(np.random.uniform(-max_dx, max_dx)),
+                            np.round(np.random.uniform(-max_dy, max_dy)))
+        else:
+            translations = (0, 0)
+
+        if self.scale is not None:
+            scale = np.random.uniform(self.scale[0], self.scale[1])
+        else:
+            scale = 1.0
+
+        if self.shear is not None:
+            shear = np.random.uniform(self.shear[0], self.shear[1])
+        else:
+            shear = 0.0
+
+        return angle, translations, scale, shear
+
+    def sample_augment(self, input_data, params):
+        input_data = F.affine(input_data, *params, resample=self.resample,
+                              fillcolor=self.fillcolor)
+        return input_data
+
+    def label_augment(self, gt_data, params):
+        gt_data = self.sample_augment(gt_data, params)
+        np_gt_data = np.array(gt_data)
+        np_gt_data[np_gt_data >= 0.5] = 255.0
+        np_gt_data[np_gt_data < 0.5] = 0.0
+        np_gt_data = np_gt_data.astype(np.uint8)
+        gt_data = Image.fromarray(np_gt_data, mode='L')
+        return gt_data
+
+    def __call__(self, sample):
+        """
+            img (PIL Image): Image to be transformed.
+        Returns:
+            PIL Image: Affine transformed image.
+        """
+        rdict = {}
+        input_data = sample['input']
+
+        self.input_data_size = input_data[0].size
+
+        params = self.get_params()
+
+        if isinstance(input_data, list):
+            ret_input = [self.sample_augment(item, params)
+                         for item in input_data]
+        else:
+            ret_input = self.sample_augment(input_data, params)
+        rdict['input'] = ret_input
+
+        if self.labeled:
+            gt_data = sample['gt']
+            if isinstance(gt_data, list):
+                ret_gt = [self.label_augment(item, params)
+                          for item in gt_data]
+            else:
+                ret_gt = self.label_augment(gt_data, params)
+            rdict['gt'] = ret_gt
+
         sample.update(rdict)
         return sample
 
