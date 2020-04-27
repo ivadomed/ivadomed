@@ -1121,7 +1121,7 @@ class ElasticTransform(IMEDTransform):
         self.sigma_range = sigma_range
         self.labeled = labeled
         self.p = p
-        self.is3D = False
+        self.is3D = False  # Set as default, it will be re-assesed when called
 
     @staticmethod
     def get_params(alpha, sigma):
@@ -1131,10 +1131,13 @@ class ElasticTransform(IMEDTransform):
 
     def elastic_transform(self, image, alpha, sigma):
         shape = image.shape
+
+        # Compute random deformation
         dx = gaussian_filter((np.random.rand(*shape) * 2 - 1),
                              sigma, mode="constant", cval=0) * alpha
         dy = gaussian_filter((np.random.rand(*shape) * 2 - 1),
                              sigma, mode="constant", cval=0) * alpha
+
         if self.is3D:
             dz = gaussian_filter((np.random.rand(*shape) * 2 - 1),
                                  sigma, mode="constant", cval=0) * alpha
@@ -1146,50 +1149,70 @@ class ElasticTransform(IMEDTransform):
             x, y = np.meshgrid(np.arange(shape[0]),
                                np.arange(shape[1]), indexing='ij')
             indices = np.reshape(x + dx, (-1, 1)), np.reshape(y + dy, (-1, 1))
+
+        # Apply deformation
         return map_coordinates(image, indices, order=1).reshape(shape)
 
     def sample_augment(self, input_data, params):
         param_alpha, param_sigma = params
+
         np_input_data = np.array(input_data)
+
+        # Check if input is 3D data
         if len(np_input_data.shape) == 3:
             self.is3D = True
 
-        np_input_data = self.elastic_transform(np_input_data,
+        # Run transform
+        np_output_data = self.elastic_transform(np_input_data,
                                                param_alpha, param_sigma)
-        if not self.is3D:
-            input_data = Image.fromarray(np_input_data, mode='F')
-        return input_data
+
+        # TODO: CHeck with Andreanne
+        if self.is3D:
+            output_data = np_output_data
+        else:
+            output_data = Image.fromarray(np_output_data, mode='F')
+
+        return output_data
 
     def label_augment(self, gt_data, params):
         param_alpha, param_sigma = params
 
         np_gt_data = np.array(gt_data)
+
+        # Run transform
         np_gt_data = self.elastic_transform(np_gt_data,
                                             param_alpha, param_sigma)
-        if not self.is3D:
+
+        # TODO: CHeck with Andreanne
+        if self.is3D:
+            output_data = np_gt_data
+        else:
             np_gt_data[np_gt_data >= 0.5] = 255.0
             np_gt_data[np_gt_data < 0.5] = 0.0
             np_gt_data = np_gt_data.astype(np.uint8)
-            gt_data = Image.fromarray(np_gt_data, mode='L')
+            output_data = Image.fromarray(np_gt_data, mode='L')
 
-        return gt_data
+        return output_data
 
     def __call__(self, sample):
         rdict = {}
 
+        # Check probability of occurence
         if np.random.random() < self.p:
             input_data = sample['input']
             params = self.get_params(self.alpha_range,
                                      self.sigma_range)
-
+            # TODO: decorator
             if isinstance(input_data, list):
                 ret_input = [self.sample_augment(item, params)
                              for item in input_data]
             else:
                 ret_input = self.sample_augment(input_data, params)
 
+            # Update
             rdict['input'] = ret_input
 
+            # Labeled data
             if self.labeled:
                 gt_data = sample['gt']
                 if isinstance(gt_data, list):
@@ -1197,15 +1220,14 @@ class ElasticTransform(IMEDTransform):
                               for item in gt_data]
                 else:
                     ret_gt = self.label_augment(gt_data, params)
-
                 rdict['gt'] = ret_gt
 
         sample.update(rdict)
         return sample
 
 
-class ToTensor3D(mt_transforms.ToTensor):
-    """This class extends mt_transforms.ToTensor"""
+class ToTensor3D(ToTensor):
+    """This class extends ToTensor"""
 
     def undo_transform(self, sample):
         rdict = {}
