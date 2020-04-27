@@ -730,7 +730,7 @@ class NormalizeInstance3D(IMEDTransform):
         return sample
 
     @staticmethod
-    def undo_transform(sample):
+    def undo_transform(self, sample):
         return sample
 
 
@@ -770,7 +770,7 @@ class RandomRotation(IMEDTransform):
         angle = np.random.uniform(degrees[0], degrees[1])
         return angle
 
-    def _rotate(data, angle):
+    def _rotate(self, data, angle):
         return F.rotate(data, angle,
                                       self.resample, self.expand,
                                       self.center)
@@ -791,14 +791,14 @@ class RandomRotation(IMEDTransform):
         # TODO: Decorator or function?
         for idx, input_data in enumerate(sample['input']):
             rdict['input_metadata'][idx]['randomRotation'] = angle
-            input_transform.append(_rotate(input_data, angle))
+            input_transform.append(self._rotate(input_data, angle))
         rdict['input'] = input_transform
 
         # Labeled data
         if self.labeled:
             gt_transform = []
             for gt_data in sample['gt']:
-                gt_transform.append(_rotate(gt_data, angle))
+                gt_transform.append(self._rotate(gt_data, angle))
             rdict['gt'] = gt_transform
 
         # Update
@@ -814,16 +814,16 @@ class RandomRotation(IMEDTransform):
         if isinstance(sample['input'], list):
             rdict['input'] = sample['input']
             for i in range(len(sample['input'])):
-                rdict['input'][i] = _rotate(sample['input'][i], angle)
+                rdict['input'][i] = self._rotate(sample['input'][i], angle)
         else:
-            rdict['input'] = _rotate(sample['input'], angle)
+            rdict['input'] = self._rotate(sample['input'], angle)
 
         if isinstance(sample['gt'], list):
             rdict['gt'] = sample['gt']
             for i in range(len(sample['gt'])):
-                rdict['gt'][i] = _rotate(sample['gt'][i], angle)
+                rdict['gt'][i] = self._rotate(sample['gt'][i], angle)
         else:
-            rdict['gt'] = _rotate(sample['gt'], angle)
+            rdict['gt'] = self._rotate(sample['gt'], angle)
 
         sample.update(rdict)
         return sample
