@@ -1040,18 +1040,19 @@ class RandomAffine(RandomRotation):
         return sample
 
 
-class RandomAffine3D(mt_transforms.RandomAffine):
-    def __call__(self, sample):
-        """This class extends mt_transforms.RandomAffine"""
+class RandomAffine3D(RandomAffine):
 
+    def __call__(self, sample):
         rdict = {}
+
         input_data = sample['input']
+        # TODO: To generalize?
         if not isinstance(input_data, list):
             input_data = [sample['input']]
 
-        input_data_size = input_data[0][0, :, :].shape
-        params = self.get_params(self.degrees, self.translate, self.scale,
-                                 self.shear, input_data_size)
+        self.input_data_size = input_data[0][0, :, :].shape
+        params = self.get_params()
+
         ret_input = []
         for volume in input_data:
             img_data = np.zeros(input_data[0].shape)
