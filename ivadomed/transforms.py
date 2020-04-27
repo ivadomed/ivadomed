@@ -829,6 +829,65 @@ class RandomRotation(IMEDTransform):
         return sample
 
 
+class RandomRotation3D(RandomRotation):
+    """Make a rotation of the volume's values.
+
+    :param degrees: Maximum rotation's degrees.
+    :param axis: Axis of the rotation.
+    :param labeled: Boolean if label data is provided.
+    """
+
+    def __init__(self, degrees, axis=0, labeled=True):
+        super().__init__(degrees, labeled=labeled)
+        self.axis = axis
+
+    def __call__(self, sample):
+        rdict = {}
+
+        input_data = sample['input']
+        gt_data = sample['gt'] if self.labeled else None
+
+        # Check if input data is 3D
+        if len(sample['input'][0].shape) != 3:
+            raise ValueError("Input of RandomRotation3D should be a 3 dimensionnal tensor.")
+
+        # Init transformed data
+        input_rotated = [np.zeros(input_data[0].shape, dtype=input_data.dtype) for i in range(len(input_data))]
+
+        # If labeled data
+        if self.labeled:
+            gt_data = sample['gt']
+            gt_rotated = np.zeros(gt_data.shape, dtype=gt_data.dtype)
+        else:
+            gt_data, gt_rotated = None, None
+
+        # Get angles
+        angle = self.get_params(self.degrees)
+
+        # TODO: Would be faster with only one vectorial operation
+        # TODO: Use the axis index for factoring this loopgit a
+        for x in range(input_data.shape[self.axis]):
+            if self.axis == 0:
+                input_rotated[x, :, :] = F.rotate(Image.fromarray(input_data[x, :, :], mode='F'), angle)
+                if self.labeled:
+                    gt_rotated[x, :, :] = F.rotate(Image.fromarray(gt_data[x, :, :], mode='F'), angle)
+            if self.axis == 1:
+                input_rotated[:, x, :] = F.rotate(Image.fromarray(input_data[:, x, :], mode='F'), angle)
+                if self.labeled:
+                    gt_rotated[:, x, :] = F.rotate(Image.fromarray(gt_data[:, x, :], mode='F'), angle)
+            if self.axis == 2:
+                input_rotated[:, :, x] = F.rotate(Image.fromarray(input_data[:, :, x], mode='F'), angle)
+                if self.labeled:
+                    gt_rotated[:, :, x] = F.rotate(Image.fromarray(gt_data[:, :, x], mode='F'), angle)
+
+        # Update
+        rdict['input'] = input_rotated
+        if self.labeled:
+            rdict['gt'] = gt_rotated
+        sample.update(rdict)
+        return sample
+
+
 class RandomAffine3D(mt_transforms.RandomAffine):
     def __call__(self, sample):
         """This class extends mt_transforms.RandomAffine"""
