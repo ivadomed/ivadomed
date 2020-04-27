@@ -480,7 +480,7 @@ class ROICrop2D(Crop2D):
         return sample
 
 
-class DilateGT(IMEDTTransform):
+class DilateGT(IMEDTransform):
     """Randomly dilate a tensor ground-truth.
     :param dilation_factor: float, controls the number of dilation iterations.
                             For each individual lesion, the number of dilation iterations is computed as follows:
