@@ -841,49 +841,43 @@ class RandomRotation3D(RandomRotation):
         super().__init__(degrees, labeled=labeled)
         self.axis = axis
 
+    def _rotate(self, data, angle):
+        for x in range(data.shape[0]):
+            data[x, :, :] = F.rotate(Image.fromarray(data[x, :, :], mode='F'), angle)
+        return data
+
     def __call__(self, sample):
         rdict = {}
 
         input_data = sample['input']
-        gt_data = sample['gt'] if self.labeled else None
 
         # Check if input data is 3D
         if len(sample['input'][0].shape) != 3:
             raise ValueError("Input of RandomRotation3D should be a 3 dimensionnal tensor.")
 
-        # Init transformed data
-        input_rotated = [np.zeros(input_data[0].shape, dtype=input_data.dtype) for i in range(len(input_data))]
+        # Get angles
+        angle = self.get_params(self.degrees)
+
+        # Move axis of interest to the first dimension
+        input_data_movedaxis = np.moveaxis(input_data, self.axis, 0)
+
+        # Transform data
+        input_rotated = self._rotate(input_data_movedaxis, angle)
+
+        # Reorient data
+        input_out = np.moveaxis(input_rotated, 0, self.axis)
+
+        # Update
+        rdict['input'] = input_out
 
         # If labeled data
         if self.labeled:
             gt_data = sample['gt']
-            gt_rotated = np.zeros(gt_data.shape, dtype=gt_data.dtype)
-        else:
-            gt_data, gt_rotated = None, None
+            gt_data_movedaxis = np.moveaxis(gt_data, self.axis, 0)
+            gt_rotated = self._rotate(gt_data_movedaxis, angle)
+            gt_out = np.moveaxis(gt_rotated, 0, self.axis)
+            rdict['gt'] = gt_out
 
-        # Get angles
-        angle = self.get_params(self.degrees)
-
-        # TODO: Would be faster with only one vectorial operation
-        # TODO: Use the axis index for factoring this loopgit a
-        for x in range(input_data.shape[self.axis]):
-            if self.axis == 0:
-                input_rotated[x, :, :] = F.rotate(Image.fromarray(input_data[x, :, :], mode='F'), angle)
-                if self.labeled:
-                    gt_rotated[x, :, :] = F.rotate(Image.fromarray(gt_data[x, :, :], mode='F'), angle)
-            if self.axis == 1:
-                input_rotated[:, x, :] = F.rotate(Image.fromarray(input_data[:, x, :], mode='F'), angle)
-                if self.labeled:
-                    gt_rotated[:, x, :] = F.rotate(Image.fromarray(gt_data[:, x, :], mode='F'), angle)
-            if self.axis == 2:
-                input_rotated[:, :, x] = F.rotate(Image.fromarray(input_data[:, :, x], mode='F'), angle)
-                if self.labeled:
-                    gt_rotated[:, :, x] = F.rotate(Image.fromarray(gt_data[:, :, x], mode='F'), angle)
-
-        # Update
-        rdict['input'] = input_rotated
-        if self.labeled:
-            rdict['gt'] = gt_rotated
         sample.update(rdict)
         return sample
 
