@@ -8,7 +8,8 @@ from torch import optim
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from tqdm import tqdm
-
+import gc
+import time
 import ivadomed.transforms as ivadomed_transforms
 from ivadomed import losses
 from ivadomed import models
@@ -199,6 +200,7 @@ def test_unet():
                 start_gen = time.time()
 
                 gc.collect
+                time.sleep(20)
             start_schedul = time.time()
             if not step_scheduler_batch:
                 scheduler.step()
