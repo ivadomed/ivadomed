@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-from torchvision import transforms
+from torchvision import torch_transforms
 
-import ivadomed.transforms as ivadomed_transforms
+import ivadomed.transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed.utils import SliceFilter
 
@@ -47,12 +47,12 @@ def save_im_gt(im, gt, fname_out):
 
 def test_dilateGT(dil_fac=0.25):
     training_transform_list = [
-        ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
-        ivadomed_transforms.DilateGT(dilation_factor=dil_fac),
-        ivadomed_transforms.ROICrop2D(size=[48, 48]),
-        ivadomed_transforms.ToTensor()
+        imed_transforms.Resample(wspace=0.75, hspace=0.75),
+        imed_transforms.DilateGT(dilation_factor=dil_fac),
+        imed_transforms.ROICrop2D(size=[48, 48]),
+        imed_transforms.ToTensor()
     ]
-    train_transform = transforms.Compose(training_transform_list)
+    train_transform = torch_transforms.Compose(training_transform_list)
 
     train_lst = ['sub-test001']
     #    train_lst = ['sub-rennesMS056', 'sub-rennesMS057', 'sub-rennesMS058', 'sub-rennesMS059', 'sub-rennesMS060']
