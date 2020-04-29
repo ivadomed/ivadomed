@@ -644,22 +644,28 @@ class CenterCrop3D(IMEDTransform):
         self.size = size
         self.labeled = labeled
 
-    def _uncrop(self, sample):
+    def undo_transform(self, sample):
+        # TODO: Make it compatible with lists
+        # Compute parameters
         td, tw, th = sample['input_metadata']["__centercrop"]
         d, w, h = sample['input_metadata']["data_shape"]
         fh = max(int(round((h - th) / 2.)), 0)
         fw = max(int(round((w - tw) / 2.)), 0)
         fd = max(int(round((d - td) / 2.)), 0)
         npad = ((0, 0), (fw, fw), (fd, fd), (fh, fh))
-        sample['input'] = np.pad(sample['input'], pad_width=npad, mode='constant', constant_values=0)
 
-        #if self.labeled:
-        sample['gt'] = np.pad(sample['gt'], pad_width=npad, mode='constant', constant_values=0)
+        # Apply undo
+        input_undo = np.pad(sample['input'],
+                                 pad_width=npad,
+                                 mode='constant',
+                                 constant_values=0)
+        gt_undo = np.pad(sample['input'],
+                         pad_width=npad,
+                         mode='constant',
+                         constant_values=0)
 
-        return sample
-
-    def undo_transform(self, sample):
-        rdict = self._uncrop(sample)
+        # Update
+        rdict = {'input': input_undo, 'gt': gt_undo}
         sample.update(rdict)
         return sample
 
