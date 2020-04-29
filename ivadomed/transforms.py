@@ -125,68 +125,68 @@ class Resample(IMEDTransform):
         self.interpolation = interpolation
         self.labeled = labeled
 
-    def undo_transform(self, sample):
-        rdict = {
-            "input": [],
-            "gt": []
-        }
+    def do_resample(self, list_data, new_shape, interpolation_mode):
+        list_data_out = []
+        for i, data in enumerate(list_data):
+            resampled_data = data.resize(new_shape,
+                                             resample=interpolation_mode)
+            list_data_out.append(resampled_data)
+        return list_data_out
 
+    def undo_transform(self, sample):
+        rdict = {}
+
+        # Get original data shape
         hshape, wshape = sample['input_metadata']['data_shape']
 
         # Input data
-        for input_data in sample["input"]:
-            input_data_undo = input_data.resize((wshape, hshape),
-                                                     resample=self.interpolation)
-            rdict['input'].append(input_data_undo)
+        rdict['input'] = self.do_resample(list_data=sample["input"],
+                                          new_shape=(wshape, hshape),
+                                          interpolation_mode=self.interpolation)
 
         # Prediction data
-        for gt in sample["gt"]:
-            # Note: We use here self.interpolation instead of forcing Image.NEAREST
-            # in order to ensure soft output
-            gt_data_undo = gt.resize((wshape, hshape),
-                                     resample=self.interpolation)
-            rdict['gt'].append(gt_data_undo)
+        # Note: We use here self.interpolation instead of forcing Image.NEAREST
+        #       in order to ensure soft output
+        rdict['gt'] = self.do_resample(list_data=sample["gt"],
+                                          new_shape=(wshape, hshape),
+                                          interpolation_mode=self.interpolation)
 
+        # Update
         sample.update(rdict)
         return sample
 
     def __call__(self, sample):
         rdict = {}
-        input_data = sample['input']
-        input_metadata = sample['input_metadata']
 
+        # Get new data shape
         # Based on the assumption that the metadata of every modality are equal.
         # Voxel dimension in mm
+        input_metadata = sample['input_metadata']
         hzoom, wzoom = input_metadata[0]["zooms"]
         hshape, wshape = input_metadata[0]["data_shape"]
-
         hfactor = hzoom / self.hspace
         wfactor = wzoom / self.wspace
-
         hshape_new = int(round(hshape * hfactor))
         wshape_new = int(round(wshape * wfactor))
-        
-        for i, input_image in enumerate(input_data):
-            input_data[i] = input_image.resize((wshape_new, hshape_new),
-                                                  resample=self.interpolation)
-        rdict['input'] = input_data
 
+        # Input data
+        rdict['input'] = self.do_resample(list_data=sample["input"],
+                                          new_shape=(wshape_new, hshape_new),
+                                          interpolation_mode=self.interpolation)
+
+        # Labeled data
         if self.labeled:
-            gt_data = sample['gt']
-            rdict['gt'] = []
-            for gt in gt_data:
-                gt_do = gt.resize((wshape_new, hshape_new),
-                                  resample=Image.NEAREST)
-                rdict['gt'].append(gt_do)
+            rdict['gt'] = self.do_resample(list_data=sample["gt"],
+                                              new_shape=(wshape_new, hshape_new),
+                                              interpolation_mode=Image.NEAREST)
 
+        # ROI data
         if sample['roi'] is not None:
-            roi_data = sample['roi']
-            rdict['roi'] = []
-            for roi in roi_data:
-                roi_do = roi.resize((wshape_new, hshape_new),
-                                    resample=Image.NEAREST)
-                rdict['roi'].append(roi_do)
+            rdict['roi'] = self.do_resample(list_data=sample["roi"],
+                                           new_shape=(wshape_new, hshape_new),
+                                           interpolation_mode=Image.NEAREST)
 
+        # Update
         sample.update(rdict)
         return sample
 
