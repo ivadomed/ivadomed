@@ -3,9 +3,9 @@ import os
 import torch
 from medicaltorch import transforms as mt_transforms
 from torch.utils.data import DataLoader
-from torchvision import transforms
+from torchvision import torch_transforms
 
-import ivadomed.transforms as ivadomed_transforms
+import ivadomed.transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed import utils as imed_utils
 
@@ -63,11 +63,11 @@ def test_hdf5():
     print('[INFO]: Creating dataset ...\n')
 
     training_transform_list = [
-        ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
+        imed_transforms.Resample(wspace=0.75, hspace=0.75),
         mt_transforms.CenterCrop2D(size=[48, 48]),
         mt_transforms.ToTensor()
     ]
-    train_transform = transforms.Compose(training_transform_list)
+    train_transform = torch_transforms.Compose(training_transform_list)
 
     dataset = imed_adaptative.HDF5Dataset(root_dir=PATH_BIDS,
                                           subject_lst=train_lst,
@@ -96,11 +96,11 @@ def test_hdf5():
 
     print("\n[INFO]: Starting loader test ...")
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if cuda_available:
-        torch.cuda.set_device(GPU_NUMBER)
-        print("Using GPU number {}".format(GPU_NUMBER))
+        torch.cuda.set_device(device)
+        print("Using GPU number {}".format(device))
 
     train_loader = DataLoader(dataset, batch_size=BATCH_SIZE,
                               shuffle=False, pin_memory=True,
