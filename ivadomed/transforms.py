@@ -871,7 +871,8 @@ class RandomRotation3D(RandomRotation):
         super().__init__(degrees, labeled=labeled)
         self.axis = axis
 
-    def _rotate(self, data, angle):
+    # TODO: use code of RandomRotation that could output a list then reconstruct 3D arr
+    def do_rotate(self, data, angle):
         for x in range(data.shape[0]):
             data[x, :, :] = F.rotate(Image.fromarray(data[x, :, :], mode='F'), angle)
         return data
@@ -892,7 +893,7 @@ class RandomRotation3D(RandomRotation):
         input_data_movedaxis = np.moveaxis(input_data, self.axis, 0)
 
         # Transform data
-        input_rotated = self._rotate(input_data_movedaxis, angle)
+        input_rotated = self.do_rotate(input_data_movedaxis, angle)
 
         # Reorient data
         input_out = np.moveaxis(input_rotated, 0, self.axis)
@@ -904,7 +905,7 @@ class RandomRotation3D(RandomRotation):
         if self.labeled:
             gt_data = sample['gt']
             gt_data_movedaxis = np.moveaxis(gt_data, self.axis, 0)
-            gt_rotated = self._rotate(gt_data_movedaxis, angle)
+            gt_rotated = self.do_rotate(gt_data_movedaxis, angle)
             gt_out = np.moveaxis(gt_rotated, 0, self.axis)
             rdict['gt'] = gt_out
 
