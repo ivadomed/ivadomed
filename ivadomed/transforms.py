@@ -669,45 +669,65 @@ class CenterCrop3D(IMEDTransform):
         sample.update(rdict)
         return sample
 
-    def __call__(self, input_data):
-        for idx, input_volume in enumerate(input_data['input']):
-            gt_img = input_data['gt']
-            input_img = input_volume
-            d, w, h = gt_img[0].shape
-            td, tw, th = self.size
-            fh = max(int(round((h - th) / 2.)), 0)
-            fw = max(int(round((w - tw) / 2.)), 0)
-            fd = max(int(round((d - td) / 2.)), 0)
-            if self.labeled:
-                gt_img = input_data['gt']
-                crop_gt = []
-                for gt in gt_img:
-                    crop_gt.append(gt[fd:fd + td, fw:fw + tw, fh:fh + th])
-            crop_input = input_img[fd:fd + td, fw:fw + tw, fh:fh + th]
+    def do_crop(self, list_data, crop_params, cval=None):
+        td, tw, th = self.size
+        fd, fw, fh = crop_params
+
+        list_crop_data = []
+        for data in list_data:
+            # Do crop
+            crop_data = data[fd:fd + td, fw:fw + tw, fh:fh + th]
+
             # Pad image with mean if image smaller than crop size
-            cd, cw, ch = crop_input.shape
+            cd, cw, ch = crop_data.shape
             if (cw, ch, cd) != (tw, th, td):
                 w_diff = (tw - cw) / 2.
                 iw = 1 if w_diff % 1 != 0 else 0
                 h_diff = (th - ch) / 2.
                 ih = 1 if h_diff % 1 != 0 else 0
                 d_diff = (td - cd) / 2.
-                id = 1 if d_diff % 1 != 0 else 0
-                npad = ((int(d_diff) + id, int(d_diff)),
+                id_ = 1 if d_diff % 1 != 0 else 0
+                npad = ((int(d_diff) + id_, int(d_diff)),
                         (int(w_diff) + iw, int(w_diff)),
                         (int(h_diff) + ih, int(h_diff)))
-                crop_input = np.pad(crop_input, pad_width=npad, mode='constant', constant_values=np.mean(crop_input))
-                if self.labeled:
-                    for i, gt in enumerate(crop_gt):
-                        crop_gt[i] = np.pad(gt, pad_width=npad, mode='constant', constant_values=0)
-            input_data['input'][idx] = crop_input
+                constant_values = cval if not cval is None else np.mean(crop_data)
+                crop_data = np.pad(crop_data,
+                                    pad_width=npad,
+                                    mode='constant',
+                                    constant_values=constant_values)
 
-            if self.labeled:
-                input_data['gt'] = crop_gt
+            list_crop_data.append(crop_data)
 
-            input_data['input_metadata'][idx]["__centercrop"] = td, tw, th
+        return list_crop_data
 
-        return input_data
+    def __call__(self, sample):
+        # TODO: compatible with non list
+        # TODO: ROI
+
+        # Get params
+        d, w, h = sample['input'][0].shape
+        td, tw, th = self.size
+        fh = max(int(round((h - th) / 2.)), 0)
+        fw = max(int(round((w - tw) / 2.)), 0)
+        fd = max(int(round((d - td) / 2.)), 0)
+        crop_params = (fd, fw, fh)
+
+        # Propagate params
+        for idx, img in enumerate(sample['input']):
+            sample['input_metadata'][idx]["__centercrop"] = td, tw, th
+
+        # Do crop
+        do_input = self.do_crop(list_data=sample['input'], crop_params=crop_params)
+        rdict = {'input': do_input,
+                 'input_metadata': sample['input_metadata']}
+
+        if self.labeled:
+            do_gt = self.do_crop(list_data=sample['gt'], crop_params=crop_params, cval=0)
+            rdict['gt'] = do_gt
+
+        # Update
+        sample.update(rdict)
+        return sample
 
 
 class NormalizeInstance3D(IMEDTransform):
