@@ -169,12 +169,6 @@ class Resample(IMEDTransform):
         for i, input_image in enumerate(input_data):
             input_data[i] = input_image.resize((wshape_new, hshape_new),
                                                   resample=self.interpolation)
-
-
-        for i, input_image in enumerate(input_data):
-            input_data[i] = input_image.resize((wshape_new, hshape_new),
-                                               resample=self.interpolation)
-
         rdict['input'] = input_data
 
         if self.labeled:
