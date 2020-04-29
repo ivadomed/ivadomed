@@ -2,20 +2,20 @@
 import sys
 import json
 from tqdm import tqdm
-from torchvision import transforms
+from torchvision import torch_transforms
 
 from ivadomed.loader import loader as imed_loader
+from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
-from medicaltorch import transforms as mt_transforms
 
 metadata_type = ['FlipAngle', 'EchoTime', 'RepetitionTime']
 
 
 def run_main(context):
-    no_transform = transforms.Compose([
-        mt_transforms.CenterCrop2D((128, 128)),
-        mt_transforms.ToTensor(),
-        mt_transforms.NormalizeInstance(),
+    no_transform = torch_transforms.Compose([
+        imed_transforms.CenterCrop2D((128, 128)),
+        imed_transforms.ToTensor(),
+        imed_transforms.NormalizeInstance(),
     ])
 
     out_dir = context["log_directory"]
