@@ -1,0 +1,83 @@
+{
+    "command": "train",
+    "gpu": 0,
+    "target_suffix": ["_seg-tumor"],
+    "roi_suffix": null,
+    "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
+    "random_seed": 6,
+    "contrast_train_validation": ["T1w", "T2w"],
+    "contrast_balance": {},
+    "contrast_test": ["T2w"],
+    "center_test": [],
+    "retrain_model": null,
+    "retrain_fraction": 1.0,
+    "batch_size": 1,
+    "dropout_rate": 0.3,
+    "batch_norm_momentum": 0.9,
+    "num_epochs": 100,
+    "initial_lr": 0.001,
+    "ram": true,
+    "loss": {"name": "dice"},
+    "log_directory": "HeMIS",
+    "lr_scheduler": {"name": "CosineAnnealingLR", "base_lr": 1e-5, "max_lr": 1e-2},
+    "film_layers": [],
+    "mixup_bool": false,
+    "mixup_alpha": 2,
+    "metadata": "without",
+    "multichannel": false,
+    "hdf5_path": "/home/andreanne/Documents/dataset/HeMIS.hdf5",
+    "csv_path": "/home/andreanne/Documents/dataset/HeMIS.csv",
+    "missing_probability": 0.00001,
+    "missing_probability_growth": 0.9,
+    "out_channel": 1,
+    "depth": 4,
+    "length_3D": [16, 320, 320],
+    "padding_3D": 0,
+    "balance_samples": false,
+    "slice_axis": "sagittal",
+    "split_method": "per_patient",
+    "train_fraction": 0.6,
+    "test_fraction": 0.2,
+    "unet_3D": false,
+    "target_lst": ["T2w"],
+    "roi_lst": null,
+    "HeMIS": false,
+    "binarize_prediction": true,
+    "attention_unet": false,
+    "uncertainty": {"epistemic": false, "aleatoric": false, "n_it": 10},
+    "slice_filter": {
+        "filter_empty_mask": true,
+        "filter_empty_input": true
+    },
+    "slice_filter_roi": null,
+    "early_stopping_patience": 50,
+    "early_stopping_epsilon": 0.001,
+    "eval_params": {
+        "targetSize": {"unit": "vox", "thr": [20, 100]},
+        "removeSmall": {"unit": "vox", "thr": 3},
+        "overlap": {"unit": "vox", "thr": 3}
+    },
+    "transformation_training": {
+      "ElasticTransform": {
+        "alpha_range": [28.0, 30.0],
+        "sigma_range":  [3.5, 4.5],
+        "p": 0.1
+      },
+      "RandomAffine": {
+      "degrees": 4.6,
+      "translate": [0.03, 0.03],
+      "scale": [0.98, 1.02]
+      },
+      "ToTensor": {},
+      "NormalizeInstance": {}
+    },
+    "transformation_validation": {
+        "ToTensor": {},
+        "NormalizeInstance": {}
+    },
+    "transformation_testing": {
+      "ToTensor": {},
+      "NormalizeInstance": {}
+    },
+    "debugging": false
+}

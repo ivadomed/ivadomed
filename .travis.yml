@@ -1,0 +1,67 @@
+# testing file for Travis
+# https://github.com/neuropoly/ivado-medical-imaging
+language: python
+# ===== Linux ======
+
+python:
+  - 3.5
+  - 3.6
+  - 3.7
+
+addons:
+  apt:
+    packages:
+      - mlocate
+      - coreutils
+      - python-virtualenv
+
+matrix:
+  include:
+    - name: "Python 3.6.5 on macOS 10.14"
+      os: osx
+      osx_image: xcode11.2  # Python 3.6.5 running on macOS 10.14
+      language: generic       # 'language: python' is an error on Travis CI macOS
+      env: PYTHON=3.6.5
+
+    - name: "Python 3.6.5 on macOS 10.13"
+      os: osx
+      osx_image: xcode9.4  # Python 3.6.5 running on macOS 10.13
+      language: generic       # 'language: python' is an error on Travis CI macOS
+      env: PYTHON=3.6.5
+
+    - name: "Python 3.6.5 on macOS 10.12"
+      os: osx
+      osx_image: xcode9.2  # Python 3.6.5 running on macOS 10.12
+      language: generic       # 'language: python' is an error on Travis CI macOS
+      env: PYTHON=3.6.5
+
+    - os: linux  # list of Linux env: https://docs.travis-ci.com/user/reference/overview/
+      name: "Ubuntu 18.04 (Bionic Beaver)"
+      dist: bionic
+    - os: linux
+      name: "Ubuntu 16.04 (Xenial)"
+      dist: xenial
+    - os: linux
+      name: "Ubuntu 14.04 (Trusty)"
+      dist: trusty
+
+before_install: |
+  if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+    brew update
+    brew outdated pyenv || brew upgrade pyenv
+    pyenv install $PYTHON
+
+    export PYENV_VERSION=$PYTHON
+    export PATH="/Users/travis/.pyenv/shims:${PATH}"
+  fi
+
+  python --version
+  pip install -U pip
+  pip install -U pytest
+
+install: pip install -e .
+
+script:
+  -
+    echo *** UNIT TESTS ***
+    pytest

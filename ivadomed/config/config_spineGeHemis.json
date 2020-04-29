@@ -1,0 +1,85 @@
+{
+    "command": "train",
+    "gpu": 6,
+    "hdf5_path": "../duke/projects/csf_deepseg/spineGeneric/hdf5/SpineGe.hdf5",
+    "csv_path": "../duke/projects/csf_deepseg/spineGeneric/hdf5/SpineGe.csv",
+    "target_suffix": ["_seg-manual"],
+    "roi_suffix": null,
+    "bids_path": "../duke/projects/csf_deepseg/spineGeneric/result/",
+    "random_seed": 42,
+    "contrast_train_validation": ["T2star", "T2w", "T1w"],
+    "contrast_balance": {},
+    "contrast_test": ["T2star", "T2w", "T1w"],
+    "center_test": [],
+    "retrain_model": null,
+    "retrain_fraction": 1.0,
+    "out_channel": 1,
+    "depth": 2,
+    "batch_size": 64,
+    "dropout_rate": 0.3,
+    "batch_norm_momentum": 0.1,
+    "num_epochs": 100,
+    "initial_lr": 0.001,
+    "lr_scheduler": {"name": "CosineAnnealingWarmRestarts", "T_0": 10, "T_mult": 1},
+    "loss": {"name": "dice"},
+    "log_directory": "log_large_retrain",
+    "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
+    "mixup_bool": false,
+    "mixup_alpha": 2,
+    "metadata": "constrast",
+    "multichannel": false,
+    "HeMIS": true,
+    "ram": true,
+    "missing_probability": 0.0001,
+    "missing_probability_growth": 0.9,
+    "target_lst": ["T2w"],
+    "roi_lst": null,
+    "slice_axis": "axial",
+    "split_method": "per_patient",
+    "train_fraction": 0.6,
+    "test_fraction": 0.2,
+    "balance_samples": true,
+    "slice_filter": {"filter_empty_mask": false, "filter_empty_input": true},
+    "slice_filter_roi": 10,
+    "early_stopping_patience": 10,
+    "early_stopping_epsilon": 0.001,
+    "unet_3D": false,
+    "attention_unet": false,
+    "binarize_prediction": true,
+    "transformation_training": {
+        "Resample": {
+                "wspace": 0.75,
+                "hspace": 0.75
+        },
+        "DilateGT": {
+            "dilation_factor": 0
+        },
+        "CenterCrop2D": {
+            "size": [48, 48]
+        },
+        "ElasticTransform": {
+            "alpha_range": [28.0, 30.0],
+            "sigma_range":  [3.5, 4.5],
+            "p": 0.1
+        },
+        "RandomAffine": {
+            "degrees": 4.6,
+            "translate": [0.03, 0.03],
+            "scale": [0.98, 1.02]
+        },
+        "ToTensor": {},
+        "NormalizeInstance": {}
+    },
+    "transformation_validation": {
+        "Resample": {
+            "wspace": 0.75,
+            "hspace": 0.75
+        },
+        "CenterCrop2D": {
+            "size": [48, 48]
+        },
+        "ToTensor": {},
+        "NormalizeInstance": {}
+    },
+    "debugging": false
+}

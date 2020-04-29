@@ -1,0 +1,98 @@
+{
+    "command": "train",
+    "gpu": 1,
+    "target_suffix": ["_lesion-manual"],
+    "roi_suffix": "_seg-manual",
+    "bids_path": "../duke/sct_testing/large/",
+    "random_seed": 1313,
+    "contrast_train_validation": ["acq-sag00015_T2w", "acq-inf_T2w", "acq-sag_T2w", "acq-c1c3_T2star", "acq-sup_T2star", "acq-sagstircsp_T2w", "acq-sagtsp_T2w", "acq-axcsp_T2w", "acq-sup_T2w", "acq-ax00012_T2w", "acq-sagcerv_T2w", "acq-axtop00100_T2w", "acq-axmid00100_T2w", "acq-inf_T2star", "acq-axtop_T2w", "acq-axtsp_T2w", "acq-sagcsp_T2w", "acq-wat_T1w", "acq-axlow_T2w", "T2star", "T2w", "acq-ax_T2star", "acq-inn_T1w", "acq-fat_T1w", "acq-sagstirtsp_T2w", "acq-axbottom_T2w", "acq-sagstir_T2w", "acq-ax_T2w", "acq-ax00014_T2w", "acq-c4c7_T2star", "acq-axmid00005_T2w", "acq-sagthor_T2w", "acq-opp_T1w", "T1w"],
+    "contrast_balance": {},
+    "contrast_test": ["acq-sag00015_T2w", "acq-inf_T2w", "acq-sag_T2w", "acq-c1c3_T2star", "acq-sup_T2star", "acq-sagstircsp_T2w", "acq-sagtsp_T2w", "acq-axcsp_T2w", "acq-sup_T2w", "acq-ax00012_T2w", "acq-sagcerv_T2w", "acq-axtop00100_T2w", "acq-axmid00100_T2w", "acq-inf_T2star", "acq-axtop_T2w", "acq-axtsp_T2w", "acq-sagcsp_T2w", "acq-wat_T1w", "acq-axlow_T2w", "T2star", "T2w", "acq-ax_T2star", "acq-inn_T1w", "acq-fat_T1w", "acq-sagstirtsp_T2w", "acq-axbottom_T2w", "acq-sagstir_T2w", "acq-ax_T2w", "acq-ax00014_T2w", "acq-c4c7_T2star", "acq-axmid00005_T2w", "acq-sagthor_T2w", "acq-opp_T1w", "T1w"],
+    "center_test": [],
+    "retrain_model": "log_large/best_model.pt",
+    "retrain_fraction": 1.0,
+    "out_channel": 1,
+    "depth": 2,
+    "missing_modality": false,
+    "batch_size": 64,
+    "dropout_rate": 0.3,
+    "batch_norm_momentum": 0.1,
+    "num_epochs": 100,
+    "initial_lr": 0.001,
+    "lr_scheduler": {"name": "CosineAnnealingWarmRestarts", "T_0": 10, "T_mult": 1},
+    "loss": {"name": "dice"},
+    "log_directory": "log_large_retrain",
+    "film_layers": [1, 1, 1, 1, 1, 1, 1, 1],
+    "attention_unet": false,
+    "HeMIS": false,
+    "mixup_bool": false,
+    "mixup_alpha": 2,
+    "metadata": "constrast",
+    "multichannel": false,
+    "slice_axis": "axial",
+    "split_method": "per_patient",
+    "train_fraction": 0.6,
+    "test_fraction": 0.2,
+    "balance_samples": true,
+    "slice_filter": {"filter_empty_mask": false, "filter_empty_input": true},
+    "slice_filter_roi": 10,
+    "early_stopping_patience": 10,
+    "early_stopping_epsilon": 0.001,
+    "unet_3D": false,
+    "binarize_prediction": true,
+    "eval_params": {
+        "targetSize": {"unit": "vox", "thr": [20, 100]},
+        "removeSmall": {"unit": "vox", "thr": 3},
+        "overlap": {"unit": "vox", "thr": 3}
+    },
+    "transformation_training": {
+        "Resample": {
+            "wspace": 0.75,
+            "hspace": 0.75
+        },
+        "DilateGT": {
+            "dilation_factor": 0
+        },
+        "ROICrop2D": {
+            "size": [48, 48]
+        },
+        "ElasticTransform": {
+            "alpha_range": [28.0, 30.0],
+            "sigma_range":  [3.5, 4.5],
+            "p": 0.1
+        },
+        "RandomAffine": {
+            "degrees": 4.6,
+            "translate": [0.03, 0.03],
+            "scale": [0.98, 1.02]
+        },
+        "ToTensor": {},
+        "NormalizeInstance": {},
+        "StackTensors": {}
+    },
+    "transformation_validation": {
+        "Resample": {
+            "wspace": 0.75,
+            "hspace": 0.75
+        },
+        "ROICrop2D": {
+            "size": [48, 48]
+        },
+        "ToTensor": {},
+        "NormalizeInstance": {},
+        "StackTensors": {}
+    },
+    "transformation_testing": {
+        "Resample": {
+            "wspace": 0.75,
+            "hspace": 0.75
+        },
+        "ROICrop2D": {
+            "size": [48, 48]
+        },
+        "ToTensor": {},
+        "NormalizeInstance": {},
+        "StackTensors": {}
+    },
+    "debugging": false
+}

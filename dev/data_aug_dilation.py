@@ -1,10 +1,10 @@
+#!/usr/bin/env python
 #
 # This script is used to develop a data augmentation method of mask dilation
 #
 # Example: python data_aug_dilation.py t2_seg.nii.gz
 #
 
-import os
 import sys
 import numpy as np
 import random
