@@ -1291,3 +1291,35 @@ class Clahe(IMEDTransform):
         rdict = {'input': output_data}
         sample.update(rdict)
         return sample
+
+
+class HistogramClipping(IMEDTransform):
+
+    def __init__(self, min_percentile=5.0, max_percentile=95.0):
+        self.min_percentile = min_percentile
+        self.max_percentile = max_percentile
+
+    def do_clipping(self, data):
+        data = np.copy(data)
+        # Ensure that data is a numpy array
+        data = np.array(data)
+        # Run clipping
+        percentile1 = np.percentile(data, self.min_percentile)
+        percentile2 = np.percentile(data, self.max_percentile)
+        data[data <= percentile1] = percentile1
+        data[data >= percentile2] = percentile2
+        return data
+
+    def __call__(self, sample):
+        input_data = sample['input']
+
+        # TODO: Decorator?
+        if isinstance(input_data, list):
+            output_data = [self.do_clipping(data) for data in input_data]
+        else:
+            output_data = self.do_clipping(input_data)
+
+        # Update
+        rdict = {'input': output_data}
+        sample.update(rdict)
+        return sample
