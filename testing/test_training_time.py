@@ -200,7 +200,6 @@ def test_unet():
                 start_gen = time.time()
 
                 gc.collect
-                time.sleep(20)
             start_schedul = time.time()
             if not step_scheduler_batch:
                 scheduler.step()
