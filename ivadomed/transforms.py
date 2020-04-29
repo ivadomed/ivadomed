@@ -48,6 +48,7 @@ class ToPIL(IMEDTransform):
     def __init__(self, labeled=True):
         self.labeled = labeled
 
+    @staticmethod
     def sample_transform(self, sample_data):
         # Numpy array
         if not isinstance(sample_data, np.ndarray):
@@ -126,7 +127,8 @@ class Resample(IMEDTransform):
         self.interpolation = interpolation
         self.labeled = labeled
 
-    def do_resample(self, list_data, new_shape, interpolation_mode):
+    @staticmethod
+    def do_resample(list_data, new_shape, interpolation_mode):
         list_data_out = []
         for i, data in enumerate(list_data):
             resampled_data = data.resize(new_shape,
@@ -215,9 +217,7 @@ class Normalize(IMEDTransform):
             input_data = F.normalize(input_data, self.mean, self.std)
 
         # Update
-        rdict = {
-            'input': input_data,
-        }
+        rdict = {'input': input_data}
         sample.update(rdict)
         return sample
 
@@ -226,8 +226,8 @@ class NormalizeInstance(IMEDTransform):
     """Normalize a tensor image with mean and standard deviation estimated
     from the sample itself.
     """
-
-    def _normalize_sample(data):
+    @staticmethod
+    def do_normalize(data):
         # TODO: instance_norm?
         if data.type(torch.bool).any():
             mean, std = data.mean(), data.std()
@@ -243,14 +243,12 @@ class NormalizeInstance(IMEDTransform):
         if isinstance(input_data, list):
             input_data_normalized = []
             for i in range(len(input_data)):
-                input_data_normalized.append(_normalize_sample(input_data[i]))
+                input_data_normalized.append(self.do_normalize(input_data[i]))
         else:
-            input_data_normalized = _normalize_sample(input_data)
+            input_data_normalized = self.do_normalize(input_data)
 
         # Update
-        rdict = {
-            'input': input_data_normalized,
-        }
+        rdict = {'input': input_data_normalized}
         sample.update(rdict)
         return sample
 
@@ -303,7 +301,7 @@ class ToTensor(IMEDTransform):
 
     def undo_transform(self, sample):
         # Returns a PIL object
-        return mt_transforms.ToPIL()(sample)
+        return ToPIL()(sample)
 
 
 class Crop2D(IMEDTransform):
@@ -367,7 +365,7 @@ class CenterCrop2D(Crop2D):
         sample.update(rdict)
         return sample
 
-    def _uncrop(self, data, params):
+    def do_uncrop(self, data, params):
         fh, fw, w, h = params
         th, tw = self.size
         pad_left = fw
@@ -379,21 +377,27 @@ class CenterCrop2D(Crop2D):
 
     def undo_transform(self, sample):
         rdict = {}
-        #TODO: Decorator?
+
+        crop_params = sample['input_metadata']["__centercrop"]
+
+        # TODO: Decorator?
         # Input data
         if isinstance(sample['input'], list):
             rdict['input'] = sample['input']
             for i in range(len(sample['input'])):
                 # TODO: sample['input_metadata'][i]["__centercrop"]
-                rdict['input'][i] = self._uncrop(sample['input'][i], sample['input_metadata']["__centercrop"])
+                rdict['input'][i] = self.do_uncrop(data=sample['input'][i],
+                                                   params=crop_params)
         else:
-            rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
+            rdict['input'] = self.do_uncrop(data=sample['input'],
+                                            params=crop_params)
 
         # Labeled data
         # Note: undo_transform: we force labeled=True because used with predictions
         rdict['gt'] = sample['gt']
         for i in range(len(sample['gt'])):
-            rdict['gt'][i] = self._uncrop(sample['gt'][i], sample['input_metadata']["__centercrop"])
+            rdict['gt'][i] = self.do_uncrop(data=sample['gt'][i],
+                                            params=crop_params)
 
         # Update
         sample.update(rdict)
@@ -406,7 +410,7 @@ class ROICrop2D(Crop2D):
     def __init__(self, size, labeled=True):
         super().__init__(size, labeled)
 
-    def _uncrop(self, data, params):
+    def do_uncrop(self, data, params):
         fh, fw, w, h = params
         tw, th = self.size
         pad_left = fw
@@ -422,16 +426,22 @@ class ROICrop2D(Crop2D):
             'gt': []
         }
 
+        crop_params = sample['input_metadata']["__centercrop"]
+
         # TODO: call get_params
+        # TODO: Decorator?
         if isinstance(sample['input'], list):
             for input_data in sample['input']:
-                rdict['input'].append(self._uncrop(input_data, sample['input_metadata']["__centercrop"]))
+                rdict['input'].append(self.do_uncrop(data=input_data,
+                                                     params=crop_params))
         else:
-             rdict['input'] = self._uncrop(sample['input'], sample['input_metadata']["__centercrop"])
+            rdict['input'] = self.do_uncrop(data=sample['input'],
+                                            params=crop_params)
 
         # Note: undo_transform: we force labeled=True because used with predictions
         for gt in sample['gt']:
-            rdict['gt'].append(self._uncrop(gt, sample['input_metadata']["__centercrop"]))
+            rdict['gt'].append(self.do_uncrop(data=gt,
+                                              params=crop_params))
 
         sample.update(rdict)
         return sample
@@ -485,7 +495,8 @@ class DilateGT(IMEDTransform):
     def __init__(self, dilation_factor):
         self.dil_factor = dilation_factor
 
-    def dilate_lesion(self, arr_bin, arr_soft, label_values):
+    @staticmethod
+    def dilate_lesion(arr_bin, arr_soft, label_values):
         for lb in label_values:
             # binary dilation with 1 iteration
             arr_dilated = binary_dilation(arr_bin, iterations=1)
@@ -528,7 +539,8 @@ class DilateGT(IMEDTransform):
 
         return arr_soft_clip.astype(np.float), arr_bin_clip.astype(np.int)
 
-    def random_holes(self, arr_in, arr_soft, arr_bin):
+    @staticmethod
+    def random_holes(arr_in, arr_soft, arr_bin):
         arr_soft_out = np.copy(arr_soft)
 
         # coordinates of the new voxels, i.e. the ones from the dilation
@@ -547,7 +559,8 @@ class DilateGT(IMEDTransform):
 
         return arr_soft_out, arr_bin_out
 
-    def post_processing(self, arr_in, arr_soft, arr_bin, arr_dil):
+    @staticmethod
+    def post_processing(arr_in, arr_soft, arr_bin, arr_dil):
         # remove new object that are not connected to the input mask
         arr_labeled, lb_nb = label(arr_bin)
         connected_to_in = arr_labeled * arr_in
@@ -590,9 +603,7 @@ class DilateGT(IMEDTransform):
                 gt_t.append(Image.fromarray(gt_pp))
 
         if len(gt_t):
-            rdict = {
-                'gt': gt_t,
-            }
+            rdict = {'gt': gt_t}
             sample.update(rdict)
 
         return sample
@@ -622,7 +633,6 @@ class StackTensors(IMEDTransform):
         return sample
 
 
-# 3D Transforms
 class CenterCrop3D(IMEDTransform):
     """Make a centered crop of a specified size.
     :param labeled: if it is a segmentation task.
