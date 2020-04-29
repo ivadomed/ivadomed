@@ -4,10 +4,9 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-from torchvision import transforms
-from medicaltorch import transforms as mt_transforms
+from torchvision import torch_transforms
 
-import ivadomed.transforms as ivadomed_transforms
+import ivadomed.transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed import utils as imed_utils
 
@@ -34,17 +33,17 @@ def _cmpt_slice(ds_loader, gt_roi='gt'):
 
 def test_slice_filter_center():
     """Test SliceFilter when using mt_transforms.CenterCrop2D."""
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if cuda_available:
-        torch.cuda.set_device(GPU_NUMBER)
-        print("Using GPU number {}".format(GPU_NUMBER))
+        torch.cuda.set_device(device)
+        print("Using GPU number {}".format(device))
 
     training_transform_list = [
-        ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
-        mt_transforms.CenterCrop2D(size=[100, 100])
+        imed_transforms.Resample(wspace=0.75, hspace=0.75),
+        imed_transforms.CenterCrop2D(size=[100, 100])
     ]
-    train_transform = transforms.Compose(training_transform_list)
+    train_transform = torch_transforms.Compose(training_transform_list)
 
     train_lst = ['sub-test001']
     roi_lst = [None]
@@ -77,17 +76,17 @@ def test_slice_filter_center():
 
 def test_slice_filter_roi():
     """Test SliceFilter when using ivadomed_transforms.ROICrop2D."""
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if cuda_available:
-        torch.cuda.set_device(GPU_NUMBER)
-        print("Using GPU number {}".format(GPU_NUMBER))
+        torch.cuda.set_device(device)
+        print("Using GPU number {}".format(device))
 
     training_transform_list = [
-        ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
-        ivadomed_transforms.ROICrop2D(size=[100, 100])
+        imed_transforms.Resample(wspace=0.75, hspace=0.75),
+        imed_transforms.ROICrop2D(size=[100, 100])
     ]
-    train_transform = transforms.Compose(training_transform_list)
+    train_transform = torch_transforms.Compose(training_transform_list)
 
     train_lst = ['sub-test001']
     roi_lst = ['_seg-manual']
