@@ -77,14 +77,6 @@ class ToPIL(IMEDTransform):
         return sample
 
 
-def get_transform_names():
-    """Function used in the main to differentiate the IVADO transfroms
-       from the mt_transforms."""
-
-    return ['DilateGT', 'ROICrop2D', 'Resample', 'NormalizeInstance', 'ToTensor', 'StackTensors', 'CenterCrop3D',
-            'RandomAffine3D', 'NormalizeInstance3D', 'ToTensor3D', 'BackgroundClass']
-
-
 def compose_transforms(dict_transforms, requires_undo=False):
     """Composes several transforms together.
     Args:
@@ -99,11 +91,8 @@ def compose_transforms(dict_transforms, requires_undo=False):
     for transform in dict_transforms.keys():
         parameters = dict_transforms[transform]
 
-        # call transfrom either from ivadomed either from medicaltorch
-        if transform in get_transform_names():
-            transform_obj = globals()[transform](**parameters)
-        else:
-            transform_obj = getattr(mt_transforms, transform)(**parameters)
+        # call transfrom
+        transform_obj = globals()[transform](**parameters)
 
         # check if undo_transform method is implemented
         if requires_undo:
