@@ -4,6 +4,7 @@ import random
 import numpy as np
 from PIL import Image
 
+from skimage.exposure import equalize_adapthist
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
@@ -1255,5 +1256,38 @@ class AdditiveGaussianNoise(IMEDTransform):
 
         # Update
         rdict['input'] = noisy_input
+        sample.update(rdict)
+        return sample
+
+
+class Clahe(IMEDTransform):
+
+    def __init__(self, clip_limit=3.0, kernel_size=(8, 8)):
+        # Default values are based upon the following paper:
+        # https://arxiv.org/abs/1804.09400 (3D Consistent Cardiac Segmentation)
+        self.clip_limit = clip_limit
+        self.kernel_size = kernel_size
+
+    def do_clahe(self, data):
+        data = np.copy(data)
+        # Ensure that data is a numpy array
+        data = np.array(data)
+        # Run equalization
+        clahe_data = equalize_adapthist(data,
+                                        kernel_size=self.kernel_size,
+                                        clip_limit=self.clip_limit)
+        return clahe_data
+
+    def __call__(self, sample):
+        input_data = sample['input']
+
+        # TODO: Decorator?
+        if isinstance(input_data, list):
+            output_data = [self.do_clahe(data) for data in input_data]
+        else:
+            output_data = self.do_clahe(input_data)
+
+        # Update
+        rdict = {'input': output_data}
         sample.update(rdict)
         return sample
