@@ -125,10 +125,6 @@ class Resample(IMEDTransform):
         self.interpolation = interpolation
         self.labeled = labeled
 
-    def resample_bin(self, data, wshape, hshape, interpolation):
-        data = data.resize((wshape, hshape), resample=interpolation)
-        return data
-
     def undo_transform(self, sample):
         rdict = {
             "input": [],
@@ -147,10 +143,8 @@ class Resample(IMEDTransform):
         for gt in sample["gt"]:
             # Note: We use here self.interpolation instead of forcing Image.NEAREST
             # in order to ensure soft output
-            gt_data_undo = self.resample_bin(gt,
-                                             wshape=wshape,
-                                             hshape=hshape,
-                                             interpolation=self.interpolation)
+            gt_data_undo = gt.resize((wshape, hshape),
+                                     resample=self.interpolation)
             rdict['gt'].append(gt_data_undo)
 
         sample.update(rdict)
@@ -187,19 +181,17 @@ class Resample(IMEDTransform):
             gt_data = sample['gt']
             rdict['gt'] = []
             for gt in gt_data:
-                rdict['gt'].append(self.resample_bin(gt,
-                                                     wshape_new,
-                                                     hshape_new,
-                                                     interpolation=Image.NEAREST))
+                gt_do = gt.resize((wshape_new, hshape_new),
+                                  resample=Image.NEAREST)
+                rdict['gt'].append(gt_do)
 
         if sample['roi'] is not None:
             roi_data = sample['roi']
             rdict['roi'] = []
             for roi in roi_data:
-                rdict['roi'].append(self.resample_bin(roi,
-                                                      wshape_new,
-                                                      hshape_new,
-                                                      interpolation=Image.NEAREST))
+                roi_do = roi.resize((wshape_new, hshape_new),
+                                    resample=Image.NEAREST)
+                rdict['roi'].append(roi_do)
 
         sample.update(rdict)
         return sample
