@@ -732,34 +732,34 @@ class CenterCrop3D(IMEDTransform):
 
 class NormalizeInstance3D(IMEDTransform):
 
-    def _normalize_sample(data):
+    @staticmethod
+    def do_normalize(data):
         # TODO: instance_norm?
         # Check if not empty
         if data.type(torch.bool).any():
             mean, std = data.mean(), data.std()
             return F.normalize(data,
-                                                    [mean for _ in range(0, data.shape[0])],
-                                                    [std for _ in range(0, data.shape[0])]).unsqueeze(0)
+                               [mean for _ in range(0, data.shape[0])],
+                               [std for _ in range(0, data.shape[0])]).unsqueeze(0)
         else:
             return data
 
     def __call__(self, sample):
         input_data = sample['input']
 
+        # TODO: Decorator
         if isinstance(input_data, list):
             input_data_normalized = []
             for i in range(len(input_data)):
-                input_data_normalized.append(_normalize_sample(input_data[i]))
+                input_data_normalized.append(self.do_normalize(input_data[i]))
         else:
-            input_data_normalized = _normalize_sample(input_data)
+            input_data_normalized = self.do_normalize(input_data)
 
-        rdict = {
-            'input': input_data_normalized
-        }
+        # Update
+        rdict = {'input': input_data_normalized}
         sample.update(rdict)
         return sample
 
-    @staticmethod
     def undo_transform(self, sample):
         return sample
 
