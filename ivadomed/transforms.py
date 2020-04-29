@@ -115,17 +115,18 @@ def compose_transforms(dict_transforms, requires_undo=False):
     return torchvision_transforms.Compose(list_transform)
 
 
-class Resample(mt_transforms.Resample):
-    """This class extends mt_transforms.Resample:
-        resample the ROI image if provided."""
+class Resample(IMEDTransform):
 
     def __init__(self, wspace, hspace,
                  interpolation=Image.BILINEAR,
                  labeled=True):
-        super().__init__(wspace, hspace, interpolation, labeled)
+        self.hspace = hspace
+        self.wspace = wspace
+        self.interpolation = interpolation
+        self.labeled = labeled
 
-    def resample_bin(self, data, wshape, hshape, thr=0.5):
-        data = data.resize((wshape, hshape), resample=Image.NEAREST)
+    def resample_bin(self, data, wshape, hshape, interpolation):
+        data = data.resize((wshape, hshape), resample=interpolation)
         return data
 
     def undo_transform(self, sample):
@@ -134,22 +135,22 @@ class Resample(mt_transforms.Resample):
             "gt": []
         }
 
+        hshape, wshape = sample['input_metadata']['data_shape']
+
+        # Input data
         for input_data in sample["input"]:
-            # undo image
-            hshape, wshape = sample['input_metadata']['data_shape']
-            hzoom, wzoom = sample['input_metadata']['zooms']
             input_data_undo = input_data.resize((wshape, hshape),
                                                      resample=self.interpolation)
             rdict['input'].append(input_data_undo)
 
-        # undo pred, aka GT
-        # CG: I comment these 2 following lines because these variables should be the
-        # same between image and GT
-        #hshape, wshape = sample['gt_metadata']['data_shape']
-        #hzoom, wzoom = sample['gt_metadata']['zooms']
-
+        # Prediction data
         for gt in sample["gt"]:
-            gt_data_undo = self.resample_bin(gt, wshape, hshape)
+            # Note: We use here self.interpolation instead of forcing Image.NEAREST
+            # in order to ensure soft output
+            gt_data_undo = self.resample_bin(gt,
+                                             wshape=wshape,
+                                             hshape=hshape,
+                                             interpolation=self.interpolation)
             rdict['gt'].append(gt_data_undo)
 
         sample.update(rdict)
@@ -186,13 +187,19 @@ class Resample(mt_transforms.Resample):
             gt_data = sample['gt']
             rdict['gt'] = []
             for gt in gt_data:
-                rdict['gt'].append(self.resample_bin(gt, wshape_new, hshape_new))
+                rdict['gt'].append(self.resample_bin(gt,
+                                                     wshape_new,
+                                                     hshape_new,
+                                                     interpolation=Image.NEAREST))
 
         if sample['roi'] is not None:
             roi_data = sample['roi']
             rdict['roi'] = []
             for roi in roi_data:
-                rdict['roi'].append(self.resample_bin(roi, wshape_new, hshape_new))
+                rdict['roi'].append(self.resample_bin(roi,
+                                                      wshape_new,
+                                                      hshape_new,
+                                                      interpolation=Image.NEAREST))
 
         sample.update(rdict)
         return sample
