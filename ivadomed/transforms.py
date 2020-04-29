@@ -859,6 +859,7 @@ class RandomRotation(IMEDTransform):
         return sample
 
 
+# TODO: Merge RandomRotation and RandomRotation3D
 class RandomRotation3D(RandomRotation):
     """Make a rotation of the volume's values.
 
@@ -1121,7 +1122,8 @@ class RandomTensorChannelShift(IMEDTransform):
                                           shift_range[1])
         return sampled_value
 
-    def sample_augment(self, input_data, params):
+    @staticmethod
+    def sample_augment(input_data, params):
         np_input_data = np.array(input_data)
         np_input_data += params
         input_data = Image.fromarray(np_input_data, mode='F')
@@ -1136,9 +1138,7 @@ class RandomTensorChannelShift(IMEDTransform):
         else:
             ret_input = self.sample_augment(input_data, params)
 
-        rdict = {
-            'input': ret_input,
-        }
+        rdict = {'input': ret_input}
 
         sample.update(rdict)
         return sample
@@ -1264,7 +1264,6 @@ class ToTensor3D(ToTensor):
     def undo_transform(self, sample):
         rdict = {}
         rdict['input'] = np.array(sample['input'])
-        #if self.labeled:
         rdict['gt'] = np.array(sample['gt'])
 
         sample.update(rdict)
