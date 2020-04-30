@@ -8,13 +8,14 @@ import sys
 import os
 import json
 import numpy as np
-from torchvision import transforms
 import matplotlib.pyplot as plt
 from sklearn.externals import joblib
 
+from torchvision import torch_transforms
+
 from ivadomed.loader import loader as imed_loader
 from ivadomed import utils as imed_utils
-from medicaltorch import transforms as mt_transforms
+from ivadomed import transforms as imed_transforms
 
 metadata_type = ['FlipAngle', 'EchoTime', 'RepetitionTime']
 metadata_range = {'FlipAngle': [0, 180, 0.5], 'EchoTime': [10 ** (-3), 10 ** (0), 10 ** (-3)],
@@ -49,10 +50,10 @@ def plot_decision_boundaries(data, model, x_range, metadata_name, fname_out):
 
 
 def run_main(context):
-    no_transform = transforms.Compose([
-        mt_transforms.CenterCrop2D((128, 128)),
-        mt_transforms.ToTensor(),
-        mt_transforms.NormalizeInstance(),
+    no_transform = torch_transforms.Compose([
+        imed_transforms.CenterCrop2D((128, 128)),
+        imed_transforms.ToTensor(),
+        imed_transforms.NormalizeInstance(),
     ])
 
     out_dir = context["log_directory"]
