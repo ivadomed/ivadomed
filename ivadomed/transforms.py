@@ -49,7 +49,7 @@ class ToPIL(IMEDTransform):
         self.labeled = labeled
 
     @staticmethod
-    def sample_transform(self, sample_data):
+    def sample_transform(sample_data):
         # Numpy array
         if not isinstance(sample_data, np.ndarray):
             input_data_npy = sample_data.numpy()
