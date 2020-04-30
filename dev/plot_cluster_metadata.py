@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.externals import joblib
 
-from torchvision import torch_transforms
+from torchvision import transforms as torch_transforms
 
 from ivadomed.loader import loader as imed_loader
 from ivadomed import utils as imed_utils
