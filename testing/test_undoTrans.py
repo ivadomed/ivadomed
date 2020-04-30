@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-from torchvision import torch_transforms
+from torchvision import transforms as torch_transforms
 
 import ivadomed.transforms as imed_transforms
 from ivadomed import utils as imed_utils
@@ -97,7 +97,7 @@ def test_undo(contrast='T2star', tol=3):
                                  num_workers=1)
 
         for t in test_loader:
-            print(t)
+            #print(t)
             batch = [t for t in test_loader][0]
 
             input_, gt_ = batch["input"], batch["gt"]
@@ -126,7 +126,7 @@ def test_undo(contrast='T2star', tol=3):
                     np_undoTrans[np_undoTrans > 0] = 1.0
 
                     # check shapes
-                    print(np_noTrans.shape, np_undoTrans.shape)
+                    #print(np_noTrans.shape, np_undoTrans.shape)
                     assert np_noTrans.shape == np_undoTrans.shape
                     print('\tData shape: checked.')
 
@@ -134,7 +134,7 @@ def test_undo(contrast='T2star', tol=3):
                     if np.any(np_noTrans) and not 'CenterCrop2D' in name:
                         # if difference is superior to tolerance, then save images to QC
                         if np.sum(np_noTrans - np_undoTrans) >= tol:
-                            print(np.sum(np_noTrans - np_undoTrans))
+                            #print(np.sum(np_noTrans - np_undoTrans))
                             im_noTrans = np.array(input_noTrans[smp_idx])[0]
                             im_undoTrans = np.array(rdict_undo['input'])
 

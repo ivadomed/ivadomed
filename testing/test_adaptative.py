@@ -3,7 +3,7 @@ import os
 import torch
 from medicaltorch import transforms as mt_transforms
 from torch.utils.data import DataLoader
-from torchvision import torch_transforms
+from torchvision import transforms as torch_transforms
 
 import ivadomed.transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
