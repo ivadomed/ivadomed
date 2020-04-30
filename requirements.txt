@@ -13,5 +13,3 @@ future
 pandas
 pillow==6.2.0
 h5py
-
-medicaltorch@git+https://github.com/neuropoly/medicaltorch@master
