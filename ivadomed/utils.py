@@ -1,22 +1,20 @@
 import json
 import os
-
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
+from scipy.ndimage import label, generate_binary_structure
+from tqdm import tqdm
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.utils as vutils
-from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from ivadomed.loader import utils as imed_loaded_utils, loader as imed_loader
-from ivadomed import transforms as imed_transforms
 from ivadomed import postprocessing as imed_postpro
-
 from ivadomed import metrics as imed_metrics
 from ivadomed import transforms as imed_transforms
 
