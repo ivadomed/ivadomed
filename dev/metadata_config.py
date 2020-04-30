@@ -2,7 +2,7 @@
 import sys
 import json
 from tqdm import tqdm
-from torchvision import torch_transforms
+from torchvision import transforms as torch_transforms
 
 from ivadomed.loader import loader as imed_loader
 from ivadomed import transforms as imed_transforms
