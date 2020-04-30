@@ -1,7 +1,6 @@
 import os
 
 import torch
-from medicaltorch import transforms as mt_transforms
 from torch.utils.data import DataLoader
 from torchvision import transforms as torch_transforms
 
@@ -64,8 +63,8 @@ def test_hdf5():
 
     training_transform_list = [
         imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        mt_transforms.CenterCrop2D(size=[48, 48]),
-        mt_transforms.ToTensor()
+        imed_transforms.CenterCrop2D(size=[48, 48]),
+        imed_transforms.ToTensor()
     ]
     train_transform = torch_transforms.Compose(training_transform_list)
 
