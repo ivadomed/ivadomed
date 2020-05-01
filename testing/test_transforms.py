@@ -79,7 +79,7 @@ def test_HistogramClipping(im_seg):
     # Transform
     transform = HistogramClipping()
     # Apply Transform
-    result = transform(sample=im, metadata=None)
+    result = transform(sample=im, metadata={})
     # Check result has the same number of modalities
     assert len(result) == len(im)
     # Check clipping

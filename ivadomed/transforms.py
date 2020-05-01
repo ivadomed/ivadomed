@@ -27,11 +27,11 @@ def list_capable(wrapped):
 class IMEDTransform(object):
 
     @list_capable
-    def __call__(self, sample, metadata=None):
+    def __call__(self, sample, metadata={}):
         raise NotImplementedError("You need to implement the transform() method.")
 
     @list_capable
-    def undo_transform(self, sample, metadata=None):
+    def undo_transform(self, sample, metadata={}):
         raise NotImplementedError("You need to implement the undo_transform() method.")
 
 
@@ -1326,7 +1326,7 @@ class HistogramClipping(IMEDTransform):
         self.min_percentile = min_percentile
         self.max_percentile = max_percentile
 
-    def __call__(self, sample, metadata=None):
+    def __call__(self, sample, metadata={}):
         data = np.copy(sample)
         # Run clipping
         percentile1 = np.percentile(sample, self.min_percentile)
