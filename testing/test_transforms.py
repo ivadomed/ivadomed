@@ -6,19 +6,38 @@
 import pytest
 import numpy as np
 
-def create_test_image_2d(width, height, num_objs=1, rad_max=30, num_seg_classes=1):
+
+# TODO: To move
+def rescale_array(arr, minv=0.0, maxv=1.0, dtype=np.float32):
+    """Rescale the values of numpy array `arr` to be from `minv` to `maxv`."""
+    if dtype is not None:
+        arr = arr.astype(dtype)
+
+    mina = np.min(arr)
+    maxa = np.max(arr)
+
+    if mina == maxa:
+        return arr * minv
+
+    norm = (arr - mina) / (maxa - mina)  # normalize the array first
+    return (norm * (maxv - minv)) + minv  # rescale by minv and maxv, which is the normalized array by default
+
+
+def create_test_image_2d(width, height, num_modalities, noise_max=0.0, num_objs=1, rad_max=30, num_seg_classes=1):
     """Create test image.
 
-    Create test image and its label with a given number of objects, classes, and maximum radius.
+    Create test image and its segmentation with a given number of objects, classes, and maximum radius.
 
     Args:
         width (int): width image
         height (int): height image
+        num_modalities (int): number of modalities
+        noise_max (float): noise from the uniform distribution [0,noise_max)
         num_objs (int): number of objects
         rad_max (int): maximum radius of objects
         num_seg_classes (int): number of classes
     Return:
-        np.array, np.array: image and label
+        np.array, np.array: image and segmentation, with shape (num_modalities, width, height)
 
     Adapted from: https://github.com/Project-MONAI/MONAI/blob/master/monai/data/synthetic.py#L17
     """
@@ -38,4 +57,20 @@ def create_test_image_2d(width, height, num_objs=1, rad_max=30, num_seg_classes=
 
     seg = np.ceil(image).astype(np.int32)
 
-    return image, seg
+    list_im, list_seg = [], []
+    for _ in range(num_modalities):
+        norm = np.random.uniform(0, num_seg_classes * noise_max, size=image.shape)
+        noisy_image = rescale_array(np.maximum(image, norm))
+
+        list_im.append(noisy_image)
+        list_seg.append(seg)
+
+    return np.array(list_im), np.array(list_seg)
+
+
+@pytest.mark.parametrize('im_seg', (create_test_image_2d(100, 100, 1),
+                                    create_test_image_2d(100, 100, 3)))
+def test_clipping(im_seg):
+    im, seg = im_seg
+
+
