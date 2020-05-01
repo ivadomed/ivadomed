@@ -1116,32 +1116,9 @@ class RandomTensorChannelShift(IMEDTransform):
     def __init__(self, shift_range):
         self.shift_range = shift_range
 
-    @staticmethod
-    def get_params(shift_range):
-        sampled_value = np.random.uniform(shift_range[0],
-                                          shift_range[1])
-        return sampled_value
-
-    @staticmethod
-    def sample_augment(input_data, params):
-        np_input_data = np.array(input_data)
-        np_input_data += params
-        input_data = Image.fromarray(np_input_data, mode='F')
-        return input_data
-
-    def __call__(self, sample):
-        input_data = sample['input']
-        params = self.get_params(self.shift_range)
-
-        if isinstance(input_data, list):
-            ret_input = [self.sample_augment(item, params) for item in input_data]
-        else:
-            ret_input = self.sample_augment(input_data, params)
-
-        rdict = {'input': ret_input}
-
-        sample.update(rdict)
-        return sample
+    def __call__(self, sample, metadata=None):
+        offset = np.random.uniform(self.shift_range[0], self.shift_range[1])
+        return sample + offset
 
 
 class ElasticTransform(IMEDTransform):
