@@ -7,7 +7,7 @@ import pytest
 import numpy as np
 from math import isclose
 
-from ivadomed.transforms import HistogramClipping
+from ivadomed.transforms import HistogramClipping, RandomShiftIntensity
 
 # TODO: To move
 def rescale_array(arr, minv=0.0, maxv=1.0, dtype=np.float32):
@@ -79,12 +79,40 @@ def test_HistogramClipping(im_seg):
     # Transform
     transform = HistogramClipping()
     # Apply Transform
-    result = transform(sample=im, metadata={})
+    metadata = [{} for _ in im] if isinstance(im, list) else {}
+    do_im, _ = transform(sample=im, metadata=metadata)
     # Check result has the same number of modalities
-    assert len(result) == len(im)
+    assert len(do_im) == len(im)
     # Check clipping
     min_percentile = transform.min_percentile
     max_percentile = transform.max_percentile
-    for i, r in zip(im, result):
-        assert isclose(np.min(r), np.percentile(i, min_percentile), rel_tol=1e-01)
-        assert isclose(np.max(r), np.percentile(i, max_percentile), rel_tol=1e-01)
+    for i, r in zip(im, do_im):
+        assert isclose(np.min(r), np.percentile(i, min_percentile), rel_tol=1e-02)
+        assert isclose(np.max(r), np.percentile(i, max_percentile), rel_tol=1e-02)
+
+
+@pytest.mark.parametrize('im_seg', (create_test_image_2d(100, 100, 1),
+                                    create_test_image_2d(100, 100, 3)))
+def test_RandomShiftIntensity(im_seg):
+    im, _ = im_seg
+    # Transform
+    transform = RandomShiftIntensity(shift_range=[0., 10.])
+
+    # Apply Do Transform
+    metadata_in = [{} for _ in im] if isinstance(im, list) else {}
+    do_im, do_metadata = transform(sample=im, metadata=metadata_in)
+    # Check result has the same number of modalities
+    assert len(do_im) == len(im)
+    # Check metadata update
+    assert all('offset' in m for m in do_metadata)
+    # Check shifting
+    for idx, i in enumerate(im):
+        assert isclose(np.max(do_im[idx]-i), do_metadata[idx]['offset'], rel_tol=1e-02)
+
+    # Apply Undo Transform
+    undo_im, undo_metadata = transform.undo_transform(sample=do_im, metadata=do_metadata)
+    # Check result has the same number of modalities
+    assert len(undo_im) == len(im)
+    # Check undo
+    for idx, i in enumerate(im):
+        assert np.allclose(undo_im[idx], i, rtol=1e-02)
