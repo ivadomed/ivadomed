@@ -20,8 +20,7 @@ def list_capable(wrapped):
     @functools.wraps(wrapped)
     def wrapper(sample, *args, **kwargs):
         if isinstance(sample, list):
-            for s in sample:
-                return wrapper(s, *args, **kwargs)
+            return [wrapper(s, *args, **kwargs) for s in sample]
         return wrapped(sample, *args, **kwargs)
     return wrapper
 
