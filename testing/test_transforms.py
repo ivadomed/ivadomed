@@ -6,6 +6,7 @@
 import pytest
 import numpy as np
 
+from ivadomed.transforms import HistogramClipping
 
 # TODO: To move
 def rescale_array(arr, minv=0.0, maxv=1.0, dtype=np.float32):
@@ -37,10 +38,12 @@ def create_test_image_2d(width, height, num_modalities, noise_max=0.0, num_objs=
         rad_max (int): maximum radius of objects
         num_seg_classes (int): number of classes
     Return:
-        np.array, np.array: image and segmentation, with shape (num_modalities, width, height)
+        list, list: image and segmentation, list of num_modalities elements of shape (width, height).
 
     Adapted from: https://github.com/Project-MONAI/MONAI/blob/master/monai/data/synthetic.py#L17
     """
+    assert num_modalities >= 1
+
     image = np.zeros((width, height))
 
     for i in range(num_objs):
@@ -65,12 +68,15 @@ def create_test_image_2d(width, height, num_modalities, noise_max=0.0, num_objs=
         list_im.append(noisy_image)
         list_seg.append(seg)
 
-    return np.array(list_im), np.array(list_seg)
+    return list_im, list_seg
 
 
 @pytest.mark.parametrize('im_seg', (create_test_image_2d(100, 100, 1),
                                     create_test_image_2d(100, 100, 3)))
 def test_clipping(im_seg):
-    im, seg = im_seg
-
+    im, _ = im_seg
+    # Transform
+    transform = HistogramClipping()
+    # Apply Transform
+    result = transform(im, None)
 
