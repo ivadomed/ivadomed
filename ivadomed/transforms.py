@@ -1336,16 +1336,11 @@ class HistogramClipping(IMEDTransform):
         self.min_percentile = min_percentile
         self.max_percentile = max_percentile
 
-    def do_clipping(self, data):
-        data = np.copy(data)
-        # Ensure that data is a numpy array
-        data = np.array(data)
-        # Run clipping
-        percentile1 = np.percentile(data, self.min_percentile)
-        percentile2 = np.percentile(data, self.max_percentile)
-        data[data <= percentile1] = percentile1
-        data[data >= percentile2] = percentile2
-        return data
-
     def __call__(self, sample, metadata=None):
-        return self.do_clipping(sample)
+        data = np.copy(sample)
+        # Run clipping
+        percentile1 = np.percentile(sample, self.min_percentile)
+        percentile2 = np.percentile(sample, self.max_percentile)
+        data[sample <= percentile1] = percentile1
+        data[sample >= percentile2] = percentile2
+        return data
