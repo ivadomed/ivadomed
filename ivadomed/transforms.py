@@ -11,18 +11,25 @@ from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 from scipy.ndimage.interpolation import map_coordinates
 
-import torch
+#import torch
 #import torchvision.transforms.functional as F
 #from torchvision import transforms as torchvision_transforms
 
 
 def list_capable(wrapped):
     @functools.wraps(wrapped)
-    def wrapper(sample, *args, **kwargs):
+    def wrapper(self, sample, metadata):
         if isinstance(sample, list):
-            return [wrapper(s, *args, **kwargs) for s in sample]
-        return wrapped(sample, *args, **kwargs)
+            list_data, list_metadata = [], []
+            for s_cur, m_cur in zip(sample, metadata):
+                # Run function for each sample of the list
+                data_cur, metadata_cur = wrapped(self, s_cur, m_cur)
+                list_data.append(data_cur)
+                list_metadata.append(metadata_cur)
+            return list_data, list_metadata
+        return wrapped(self, sample, metadata)
     return wrapper
+
 
 class IMEDTransform(object):
 
@@ -1116,22 +1123,24 @@ class RandomShiftIntensity(IMEDTransform):
     def __init__(self, shift_range):
         self.shift_range = shift_range
 
+    @list_capable
     def __call__(self, sample, metadata={}):
         # Get random offset
         offset = np.random.uniform(self.shift_range[0], self.shift_range[1])
         # Update metadata
         metadata['offset'] = offset
         # Shift intensity
-        sample += offset
-        return sample, metadata
+        data = sample + offset
+        return data, metadata
 
+    @list_capable
     def undo_transform(self, sample, metadata={}):
         assert 'offset' in metadata
         # Get offset
         offset = metadata['offset']
         # Substract offset
-        sample -= offset
-        return sample, metadata
+        data = sample - offset
+        return data, metadata
 
 
 class ElasticTransform(IMEDTransform):
@@ -1326,6 +1335,7 @@ class HistogramClipping(IMEDTransform):
         self.min_percentile = min_percentile
         self.max_percentile = max_percentile
 
+    @list_capable
     def __call__(self, sample, metadata={}):
         data = np.copy(sample)
         # Run clipping
