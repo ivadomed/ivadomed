@@ -1116,13 +1116,21 @@ class RandomShiftIntensity(IMEDTransform):
     def __init__(self, shift_range):
         self.shift_range = shift_range
 
-    def __call__(self, sample, metadata=None):
+    def __call__(self, sample, metadata={}):
         # Get random offset
         offset = np.random.uniform(self.shift_range[0], self.shift_range[1])
         # Update metadata
         metadata['offset'] = offset
         # Shift intensity
         sample += offset
+        return sample, metadata
+
+    def undo_transform(self, sample, metadata={}):
+        assert 'offset' in metadata
+        # Get offset
+        offset = metadata['offset']
+        # Substract offset
+        sample -= offset
         return sample, metadata
 
 
