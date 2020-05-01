@@ -308,51 +308,49 @@ class MRI2DSegmentationDataset(Dataset):
         """
         seg_pair_slice, roi_pair_slice = self.indexes[index]
 
-        input_tensors = []
-        input_metadata = []
-        data_dict = {}
-
-        # Looping over all modalities (one or more)
+        # Input data
+        list_input = []
         for idx, input_slice in enumerate(seg_pair_slice["input"]):
             # Consistency with torchvision, returning PIL Image
             # Using the "Float mode" of PIL, the only mode
             # supporting unbounded float32 values
-
             input_img = Image.fromarray(input_slice, mode='F')
-            input_tensors.append(input_img)
+            list_input.append(input_img)
 
-        gt_img = []
+        # Labeled data
+        list_gt = []
         for gt_slice in seg_pair_slice["gt"]:
             # Handle unlabeled data
             if gt_slice is None:
-                gt_img.append(None)
+                list_gt.append(None)
             else:
                 gt_scaled = (gt_slice * 255).astype(np.uint8)
-                gt_img.append(Image.fromarray(gt_scaled, mode='L'))
+                list_gt.append(Image.fromarray(gt_scaled, mode='L'))
 
-        if not len(roi_pair_slice['gt']):
-            roi_img = None
-            roi_pair_slice['gt_metadata'] = None
-        else:
-            roi_img = []
-
+        # ROI data
+        list_roi = []
         for roi_slice in roi_pair_slice["gt"]:
             # Handle data with no ROI provided
             if roi_pair_slice["gt"] is None:
-                roi_img.append(None)
+                list_roi.append(None)
             else:
                 roi_scaled = (roi_slice * 255).astype(np.uint8)
-                roi_img.append(Image.fromarray(roi_scaled, mode='L'))
+                list_roi.append(Image.fromarray(roi_scaled, mode='L'))
+
+        # If ROI data all empty
+        if all(v is None for v in list_roi):
+            list_roi, roi_pair_slice['gt_metadata'] = None, None
 
         data_dict = {
-            'input': input_tensors,
-            'gt': gt_img,
-            'roi': roi_img,
+            'input': list_input,
+            'gt': list_gt,
+            'roi': list_roi,
             'input_metadata': seg_pair_slice['input_metadata'],
             'gt_metadata': seg_pair_slice['gt_metadata'],
             'roi_metadata': roi_pair_slice['gt_metadata']
         }
 
+        # Run transforms
         if self.transform is not None:
             data_dict = self.transform(data_dict)
 
