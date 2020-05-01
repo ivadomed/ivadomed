@@ -17,10 +17,10 @@ from torchvision import transforms as torchvision_transforms
 
 class IMEDTransform(object):
 
-    def __call__(self, sample):
+    def __call__(self, sample, metadata=None):
         raise NotImplementedError("You need to implement the transform() method.")
 
-    def undo_transform(self, sample):
+    def undo_transform(self, sample, metadata=None):
         raise NotImplementedError("You need to implement the undo_transform() method.")
 
 
