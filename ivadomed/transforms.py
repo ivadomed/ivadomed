@@ -12,8 +12,8 @@ from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_
 from scipy.ndimage.interpolation import map_coordinates
 
 import torch
-import torchvision.transforms.functional as F
-from torchvision import transforms as torchvision_transforms
+#import torchvision.transforms.functional as F
+#from torchvision import transforms as torchvision_transforms
 
 
 def list_capable(wrapped):

@@ -5,6 +5,7 @@
 
 import pytest
 import numpy as np
+from math import isclose
 
 from ivadomed.transforms import HistogramClipping
 
@@ -24,7 +25,7 @@ def rescale_array(arr, minv=0.0, maxv=1.0, dtype=np.float32):
     return (norm * (maxv - minv)) + minv  # rescale by minv and maxv, which is the normalized array by default
 
 
-def create_test_image_2d(width, height, num_modalities, noise_max=0.0, num_objs=1, rad_max=30, num_seg_classes=1):
+def create_test_image_2d(width, height, num_modalities, noise_max=10.0, num_objs=1, rad_max=30, num_seg_classes=1):
     """Create test image.
 
     Create test image and its segmentation with a given number of objects, classes, and maximum radius.
@@ -73,10 +74,17 @@ def create_test_image_2d(width, height, num_modalities, noise_max=0.0, num_objs=
 
 @pytest.mark.parametrize('im_seg', (create_test_image_2d(100, 100, 1),
                                     create_test_image_2d(100, 100, 3)))
-def test_clipping(im_seg):
+def test_HistogramClipping(im_seg):
     im, _ = im_seg
     # Transform
     transform = HistogramClipping()
     # Apply Transform
-    result = transform(im, None)
-
+    result = transform(sample=im, metadata=None)
+    # Check result as the same number of modalities
+    assert len(result) == len(im)
+    # Check clipping
+    min_percentile = transform.min_percentile
+    max_percentile = transform.max_percentile
+    for i, r in zip(im, result):
+        assert isclose(np.min(r), np.percentile(i, min_percentile), rel_tol=1e-01)
+        assert isclose(np.max(r), np.percentile(i, max_percentile), rel_tol=1e-01)
