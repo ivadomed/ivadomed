@@ -1,6 +1,7 @@
 import math
 import numbers
 import random
+import functools
 import numpy as np
 from PIL import Image
 
@@ -14,6 +15,15 @@ import torch
 import torchvision.transforms.functional as F
 from torchvision import transforms as torchvision_transforms
 
+
+def list_capable(wrapped):
+    @functools.wraps(wrapped)
+    def wrapper(sample, *args, **kwargs):
+        if isinstance(sample, list):
+            for s in sample:
+                return wrapper(s, *args, **kwargs)
+        return wrapped(sample, *args, **kwargs)
+    return wrapper
 
 class IMEDTransform(object):
 
