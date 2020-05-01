@@ -12,5 +12,3 @@ tqdm>=4.30
 pandas
 pillow>=7.0.0
 h5py
-
-medicaltorch@git+https://github.com/neuropoly/medicaltorch@master

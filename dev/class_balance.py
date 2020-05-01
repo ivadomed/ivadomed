@@ -17,10 +17,10 @@ import numpy as np
 
 from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
 from ivadomed import utils as imed_utils
+from ivadomed import transforms as imed_transforms
 
-from torchvision import transforms
+from torchvision import transforms as torch_transforms
 from torch.utils.data import DataLoader
-from medicaltorch import transforms as mt_transforms
 
 
 def get_parser():
@@ -40,11 +40,11 @@ def run_main(args):
     with open(args.c, "r") as fhandle:
         context = json.load(fhandle)
 
-    transform_lst = transforms.Compose([
-        mt_transforms.Resample(wspace=0.75, hspace=0.75),
-        mt_transforms.CenterCrop2D((128, 128)),
-        mt_transforms.ToTensor(),
-        mt_transforms.NormalizeInstance(),
+    transform_lst = torch_transforms.Compose([
+        imed_transforms.Resample(wspace=0.75, hspace=0.75),
+        imed_transforms.CenterCrop2D((128, 128)),
+        imed_transforms.ToTensor(),
+        imed_transforms.NormalizeInstance(),
     ])
 
     train_lst, valid_lst, test_lst = imed_loader_utils.split_dataset(context["bids_path"],

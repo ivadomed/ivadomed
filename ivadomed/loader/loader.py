@@ -462,8 +462,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         data_dict['gt_metadata'] = seg_pair_slice['gt_metadata']
         for idx in range(len(data_dict["input"])):
             data_dict['input_metadata'][idx]['data_shape'] = data_shape
+
+        # Run transforms
         if self.transform is not None:
             data_dict = self.transform(data_dict)
+
         return data_dict
 
 

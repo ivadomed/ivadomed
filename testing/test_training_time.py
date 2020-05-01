@@ -3,13 +3,12 @@ import time
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
-from medicaltorch import transforms as mt_transforms
 from torch import optim
 from torch.utils.data import DataLoader
-from torchvision import transforms
+from torchvision import transforms as torch_transforms
 from tqdm import tqdm
 
-import ivadomed.transforms as ivadomed_transforms
+import ivadomed.transforms as imed_transforms
 from ivadomed import losses
 from ivadomed import models
 from ivadomed import utils as imed_utils
@@ -29,31 +28,38 @@ PATH_BIDS = 'testing_data'
 
 
 def test_unet():
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if cuda_available:
-        torch.cuda.set_device(GPU_NUMBER)
-        print("Using GPU number {}".format(GPU_NUMBER))
-
-    training_transform_list = [
-        ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
-        ivadomed_transforms.ROICrop2D(size=[48, 48]),
-        mt_transforms.ToTensor(),
-        mt_transforms.StackTensors()
-    ]
-    training_transform_list_multichannel = training_transform_list.copy()
-    training_transform_list_multichannel.append(mt_transforms.StackTensors())
-    train_transform = transforms.Compose(training_transform_list)
-    training_transform_multichannel = transforms.Compose(training_transform_list_multichannel)
-    training_transform_3d_list = [
-        ivadomed_transforms.CenterCrop3D(size=[96, 96, 16]),
-        ivadomed_transforms.ToTensor3D(),
-        mt_transforms.NormalizeInstance3D(),
-        mt_transforms.StackTensors()
-    ]
+        torch.cuda.set_device(device)
+        print("Using GPU number {}".format(device))
 
     train_lst = ['sub-test001']
 
+    # STEP 1: SET TRANSFORMS
+    # 2D monochannel
+    training_transform_list = [
+        imed_transforms.Resample(wspace=0.75, hspace=0.75),
+        imed_transforms.ROICrop2D(size=[48, 48]),
+        imed_transforms.ToTensor(),
+        imed_transforms.StackTensors()
+    ]
+    train_transform = torch_transforms.Compose(training_transform_list)
+
+    # 2D multichannel
+    training_transform_list_multichannel = training_transform_list.copy()
+    training_transform_multichannel = torch_transforms.Compose(training_transform_list_multichannel)
+
+    # 3D multichannel
+    training_transform_3d_list = [
+        imed_transforms.CenterCrop3D(size=[96, 96, 16]),
+        imed_transforms.ToTensor3D(),
+        imed_transforms.NormalizeInstance3D(),
+        imed_transforms.StackTensors()
+    ]
+    training_transform_3d = torch_transforms.Compose(training_transform_3d_list)
+
+    # STEP 2: LOAD DATASETS
     ds_train = imed_loader.BidsDataset(PATH_BIDS,
                                        subject_lst=train_lst,
                                        target_suffix=["_lesion-manual"],
@@ -66,6 +72,7 @@ def test_unet():
                                        multichannel=False,
                                        slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
                                                                               filter_empty_mask=False))
+    ds_train = imed_loader_utils.filter_roi(ds_train, nb_nonzero_thr=10)
 
     ds_mutichannel = imed_loader.BidsDataset(PATH_BIDS,
                                              subject_lst=train_lst,
@@ -80,7 +87,6 @@ def test_unet():
                                              slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
                                                                                     filter_empty_mask=False))
 
-    train_transform = transforms.Compose(training_transform_3d_list)
     ds_3d = imed_loader.Bids3DDataset(PATH_BIDS,
                                       subject_lst=train_lst,
                                       target_suffix=["_lesion-manual", "_seg-manual"],
@@ -88,12 +94,11 @@ def test_unet():
                                       metadata_choice="without",
                                       contrast_balance={},
                                       slice_axis=2,
-                                      transform=train_transform,
+                                      transform=training_transform_3d,
                                       multichannel=False,
                                       length=[96, 96, 16],
                                       padding=0)
 
-    ds_train = imed_loader_utils.filter_roi(ds_train, nb_nonzero_thr=10)
 
     metadata_clustering_models = None
     ds_train, train_onehotencoder = imed_film.normalize_metadata(ds_train,

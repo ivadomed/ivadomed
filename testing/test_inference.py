@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-from torchvision import transforms
+from torchvision import transforms as torch_transforms
 
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed import metrics as imed_metrics
@@ -33,8 +33,8 @@ def test_inference(film_bool=False):
     if cuda_available:
         pin_memory = True
         # Set the GPU
-        torch.cuda.set_device(GPU_NUMBER)
-        print("using GPU number {}".format(GPU_NUMBER))
+        torch.cuda.set_device(device)
+        print("using GPU number {}".format(device))
 
     validation_transform_list = [
         imed_transforms.Resample(wspace=0.75, hspace=0.75),
@@ -43,7 +43,7 @@ def test_inference(film_bool=False):
         imed_transforms.NormalizeInstance()
     ]
 
-    val_transform = transforms.Compose(validation_transform_list)
+    val_transform = torch_transforms.Compose(validation_transform_list)
     val_undo_transform = imed_transforms.UndoCompose(val_transform)
 
     test_lst = ['sub-test001']
@@ -80,12 +80,8 @@ def test_inference(film_bool=False):
                              collate_fn=imed_loader_utils.imed_collate,
                              num_workers=1)
 
-    if film_bool:
-        model = torch.load(os.path.join(PATH_BIDS, "model_film_test.pt"),
-                           map_location=device)
-    else:
-        model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt"),
-                           map_location=device)
+    model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt"),
+                       map_location=device)
 
     if cuda_available:
         model.cuda()
@@ -116,18 +112,7 @@ def test_inference(film_bool=False):
                 test_input = input_samples
                 test_gt = gt_samples
 
-            if film_bool:
-                sample_metadata = batch["input_metadata"]
-                test_contrast = [sample_metadata[k]['contrast']
-                                 for k in range(len(sample_metadata))]
-
-                test_metadata = [imed_utils.one_hot_encoder.transform([sample_metadata[k]["film_input"]]).tolist()[0]
-                                 for k in range(len(sample_metadata))]
-
-                # Input the metadata related to the input samples
-                preds = model(test_input, test_metadata)
-            else:
-                preds = model(test_input)
+            preds = model(test_input)
 
         # WARNING: sample['gt'] is actually the pred in the return sample
         # implementation justification: the other option: rdict['pred'] = preds would require to largely modify
