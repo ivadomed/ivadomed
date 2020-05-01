@@ -7,22 +7,7 @@ import pytest
 import numpy as np
 from math import isclose
 
-from ivadomed.transforms import HistogramClipping, RandomShiftIntensity
-
-# TODO: To move
-def rescale_array(arr, minv=0.0, maxv=1.0, dtype=np.float32):
-    """Rescale the values of numpy array `arr` to be from `minv` to `maxv`."""
-    if dtype is not None:
-        arr = arr.astype(dtype)
-
-    mina = np.min(arr)
-    maxa = np.max(arr)
-
-    if mina == maxa:
-        return arr * minv
-
-    norm = (arr - mina) / (maxa - mina)  # normalize the array first
-    return (norm * (maxv - minv)) + minv  # rescale by minv and maxv, which is the normalized array by default
+from ivadomed.transforms import HistogramClipping, RandomShiftIntensity, rescale_array
 
 
 def create_test_image_2d(width, height, num_modalities, noise_max=10.0, num_objs=1, rad_max=30, num_seg_classes=1):
