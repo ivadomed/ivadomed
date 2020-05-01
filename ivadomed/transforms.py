@@ -1111,14 +1111,19 @@ class RandomAffine3D(RandomAffine):
         return sample
 
 
-class RandomTensorChannelShift(IMEDTransform):
+class RandomShiftIntensity(IMEDTransform):
 
     def __init__(self, shift_range):
         self.shift_range = shift_range
 
     def __call__(self, sample, metadata=None):
+        # Get random offset
         offset = np.random.uniform(self.shift_range[0], self.shift_range[1])
-        return sample + offset
+        # Update metadata
+        metadata['offset'] = offset
+        # Shift intensity
+        sample += offset
+        return sample, metadata
 
 
 class ElasticTransform(IMEDTransform):
@@ -1320,4 +1325,4 @@ class HistogramClipping(IMEDTransform):
         percentile2 = np.percentile(sample, self.max_percentile)
         data[sample <= percentile1] = percentile1
         data[sample >= percentile2] = percentile2
-        return data
+        return data, metadata
