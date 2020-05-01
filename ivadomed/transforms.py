@@ -27,9 +27,11 @@ def list_capable(wrapped):
 
 class IMEDTransform(object):
 
+    @list_capable
     def __call__(self, sample, metadata=None):
         raise NotImplementedError("You need to implement the transform() method.")
 
+    @list_capable
     def undo_transform(self, sample, metadata=None):
         raise NotImplementedError("You need to implement the undo_transform() method.")
 
