@@ -1347,16 +1347,5 @@ class HistogramClipping(IMEDTransform):
         data[data >= percentile2] = percentile2
         return data
 
-    def __call__(self, sample):
-        input_data = sample['input']
-
-        # TODO: Decorator?
-        if isinstance(input_data, list):
-            output_data = [self.do_clipping(data) for data in input_data]
-        else:
-            output_data = self.do_clipping(input_data)
-
-        # Update
-        rdict = {'input': output_data}
-        sample.update(rdict)
-        return sample
+    def __call__(self, sample, metadata=None):
+        return self.do_clipping(sample)
