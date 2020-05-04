@@ -271,13 +271,13 @@ class ToTensor(IMEDTransform):
             gt_data = sample['gt']
             if gt_data is not None:
                 if isinstance(gt_data, list):
-                    # Add dim 0 for 3D images (i.e. 2D slices with multiple GT)
-                    if gt_data[0].size == 3:
-                        ret_gt = [gt.unsqueeze(0) for gt in sample['gt']]
-
                     # multiple GT
                     # torch.cat is used to be compatible with StackTensors
                     ret_gt = torch.cat([F.to_tensor(item) for item in gt_data], dim=0)
+
+                    # Add dim 0 for 3D images (i.e. 2D slices with multiple GT)
+                    if isinstance(gt_data[0], np.ndarray) and len(gt_data[0].shape) == 3:
+                        ret_gt = ret_gt.unsqueeze(0)
 
                 else:
                     # single GT
