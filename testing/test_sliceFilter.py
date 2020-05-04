@@ -33,7 +33,7 @@ def _cmpt_slice(ds_loader, gt_roi='gt'):
 
 def test_slice_filter_center():
     """Test SliceFilter when using mt_transforms.CenterCrop2D."""
-    device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:" + str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if cuda_available:
         torch.cuda.set_device(device)
@@ -76,7 +76,7 @@ def test_slice_filter_center():
 
 def test_slice_filter_roi():
     """Test SliceFilter when using ivadomed_transforms.ROICrop2D."""
-    device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:" + str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if cuda_available:
         torch.cuda.set_device(device)

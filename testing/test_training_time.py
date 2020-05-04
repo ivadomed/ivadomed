@@ -28,7 +28,7 @@ PATH_BIDS = 'testing_data'
 
 
 def test_unet():
-    device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:" + str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if cuda_available:
         torch.cuda.set_device(device)
@@ -99,13 +99,12 @@ def test_unet():
                                       length=[96, 96, 16],
                                       padding=0)
 
-
     metadata_clustering_models = None
     ds_train, train_onehotencoder = imed_film.normalize_metadata(ds_train,
-                                                                  metadata_clustering_models,
-                                                                  False,
-                                                                  "contrast",
-                                                                  True)
+                                                                 metadata_clustering_models,
+                                                                 False,
+                                                                 "contrast",
+                                                                 True)
 
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
                               shuffle=True, pin_memory=True,

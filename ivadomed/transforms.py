@@ -121,7 +121,7 @@ class Resample(IMEDTransform):
         list_data_out = []
         for i, data in enumerate(list_data):
             resampled_data = data.resize(new_shape,
-                                             resample=interpolation_mode)
+                                         resample=interpolation_mode)
             list_data_out.append(resampled_data)
         return list_data_out
 
@@ -140,8 +140,8 @@ class Resample(IMEDTransform):
         # Note: We use here self.interpolation instead of forcing Image.NEAREST
         #       in order to ensure soft output
         rdict['gt'] = self.do_resample(list_data=sample["gt"],
-                                          new_shape=(wshape, hshape),
-                                          interpolation_mode=self.interpolation)
+                                       new_shape=(wshape, hshape),
+                                       interpolation_mode=self.interpolation)
 
         # Update
         sample.update(rdict)
@@ -169,14 +169,14 @@ class Resample(IMEDTransform):
         # Labeled data
         if self.labeled:
             rdict['gt'] = self.do_resample(list_data=sample["gt"],
-                                              new_shape=(wshape_new, hshape_new),
-                                              interpolation_mode=Image.NEAREST)
+                                           new_shape=(wshape_new, hshape_new),
+                                           interpolation_mode=Image.NEAREST)
 
         # ROI data
         if sample['roi'] is not None:
             rdict['roi'] = self.do_resample(list_data=sample["roi"],
-                                           new_shape=(wshape_new, hshape_new),
-                                           interpolation_mode=Image.NEAREST)
+                                            new_shape=(wshape_new, hshape_new),
+                                            interpolation_mode=Image.NEAREST)
 
         # Update
         sample.update(rdict)
@@ -215,6 +215,7 @@ class NormalizeInstance(IMEDTransform):
     """Normalize a tensor image with mean and standard deviation estimated
     from the sample itself.
     """
+
     @staticmethod
     def do_normalize(data):
         # TODO: instance_norm?
@@ -645,9 +646,9 @@ class CenterCrop3D(IMEDTransform):
 
         # Apply undo
         input_undo = np.pad(sample['input'],
-                                 pad_width=npad,
-                                 mode='constant',
-                                 constant_values=0)
+                            pad_width=npad,
+                            mode='constant',
+                            constant_values=0)
         gt_undo = np.pad(sample['input'],
                          pad_width=npad,
                          mode='constant',
@@ -681,9 +682,9 @@ class CenterCrop3D(IMEDTransform):
                         (int(h_diff) + ih, int(h_diff)))
                 constant_values = cval if not cval is None else np.mean(crop_data)
                 crop_data = np.pad(crop_data,
-                                    pad_width=npad,
-                                    mode='constant',
-                                    constant_values=constant_values)
+                                   pad_width=npad,
+                                   mode='constant',
+                                   constant_values=constant_values)
 
             list_crop_data.append(crop_data)
 
@@ -761,7 +762,7 @@ class BackgroundClass(IMEDTransform):
     def __call__(self, sample):
         rdict = {}
 
-        background = (sample['gt'].sum(axis=0) == 0).type('torch.FloatTensor')[None, ]
+        background = (sample['gt'].sum(axis=0) == 0).type('torch.FloatTensor')[None,]
         rdict['gt'] = torch.cat((background, sample['gt']), dim=0)
 
         sample.update(rdict)
@@ -1185,7 +1186,7 @@ class ElasticTransform(IMEDTransform):
 
         # Run transform
         np_output_data = self.elastic_transform(np_input_data,
-                                               param_alpha, param_sigma)
+                                                param_alpha, param_sigma)
 
         # TODO: CHeck with Andreanne
         if self.is3D:

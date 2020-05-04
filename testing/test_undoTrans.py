@@ -19,7 +19,7 @@ PATH_BIDS = 'testing_data'
 
 
 def test_undo(contrast='T2star', tol=3):
-    device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:" + str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
         print("cuda is not available.")
@@ -97,7 +97,7 @@ def test_undo(contrast='T2star', tol=3):
                                  num_workers=1)
 
         for t in test_loader:
-            #print(t)
+            # print(t)
             batch = [t for t in test_loader][0]
 
             input_, gt_ = batch["input"], batch["gt"]
@@ -126,7 +126,7 @@ def test_undo(contrast='T2star', tol=3):
                     np_undoTrans[np_undoTrans > 0] = 1.0
 
                     # check shapes
-                    #print(np_noTrans.shape, np_undoTrans.shape)
+                    # print(np_noTrans.shape, np_undoTrans.shape)
                     assert np_noTrans.shape == np_undoTrans.shape
                     print('\tData shape: checked.')
 
@@ -134,7 +134,7 @@ def test_undo(contrast='T2star', tol=3):
                     if np.any(np_noTrans) and not 'CenterCrop2D' in name:
                         # if difference is superior to tolerance, then save images to QC
                         if np.sum(np_noTrans - np_undoTrans) >= tol:
-                            #print(np.sum(np_noTrans - np_undoTrans))
+                            # print(np.sum(np_noTrans - np_undoTrans))
                             im_noTrans = np.array(input_noTrans[smp_idx])[0]
                             im_undoTrans = np.array(rdict_undo['input'])
 

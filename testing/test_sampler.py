@@ -33,7 +33,7 @@ def _cmpt_label(ds_loader):
 
 
 def test_sampler():
-    device = torch.device("cuda:"+str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:" + str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if cuda_available:
         torch.cuda.set_device(device)
