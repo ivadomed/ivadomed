@@ -1,16 +1,15 @@
 import os
 import time
-
 import numpy as np
+
 import torch
 import torch.backends.cudnn as cudnn
-from medicaltorch import transforms as mt_transforms
 from torch import optim
 from torch.utils.data import DataLoader
-from torchvision import transforms
+from torchvision import transforms as torch_transforms
 from tqdm import tqdm
 
-import ivadomed.transforms as ivadomed_transforms
+import ivadomed.transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed import losses
 from ivadomed import models
@@ -31,11 +30,11 @@ p = 0.0001
 def test_HeMIS(p=0.0001):
     print('[INFO]: Starting test ... \n')
     training_transform_list = [
-        ivadomed_transforms.Resample(wspace=0.75, hspace=0.75),
-        mt_transforms.CenterCrop2D(size=[48, 48]),
-        mt_transforms.ToTensor()
+        imed_transforms.Resample(wspace=0.75, hspace=0.75),
+        imed_transforms.CenterCrop2D(size=[48, 48]),
+        imed_transforms.ToTensor()
     ]
-    train_transform = transforms.Compose(training_transform_list)
+    train_transform = torch_transforms.Compose(training_transform_list)
 
     train_lst = ['sub-test001']
     contrasts = ['T1w', 'T2w', 'T2star']
