@@ -59,20 +59,16 @@ class UndoTransform(object):
         return self.transform.undo_transform(sample)
 
 
-class TensorToNumpy(IMEDTransform):
-    """Converts tensor to numpy object."""
-
-    @list_capable
-    def __call__(self, sample, metadata={}):
-        return sample.numpy(), metadata
+class NumpyToTensor(IMEDTransform):
+    """Converts numpy array to tensor object."""
 
     @list_capable
     def undo_transform(self, sample, metadata={}):
-        tensor = torch.from_numpy(sample)
-        if isinstance(sample.dtype, np.int):
-            return tensor.int(), metadata
-        else:
-            return tensor.float(), metadata
+        return sample.numpy(), metadata
+
+    @list_capable
+    def __call__(self, sample, metadata={}):
+        return torch.from_numpy(sample), metadata
 
 
 def compose_transforms(dict_transforms, requires_undo=False):
