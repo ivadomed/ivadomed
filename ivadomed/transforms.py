@@ -68,6 +68,8 @@ class NumpyToTensor(IMEDTransform):
 
     @list_capable
     def __call__(self, sample, metadata={}):
+        # TODO: https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/transforms.py#L275
+        # TODO: check F.to_tensor VERSUS torch.from_numpy
         return torch.from_numpy(sample), metadata
 
 
@@ -238,54 +240,6 @@ class NormalizeInstance(IMEDTransform):
 
     def undo_transform(self, sample):
         return sample
-
-
-class ToTensor(IMEDTransform):
-    """Convert a PIL image(s) or numpy array(s) to a PyTorch tensor(s)."""
-
-    def __init__(self, labeled=True):
-        self.labeled = labeled
-
-    def __call__(self, sample):
-        rdict = {}
-        input_data = sample['input']
-
-        # TODO: function?
-        # Input data
-        if len(input_data) > 1:
-            # Multiple inputs
-            ret_input = [F.to_tensor(item) for item in input_data]
-        else:
-            # single input
-            ret_input = F.to_tensor(input_data[0])
-        rdict['input'] = ret_input
-
-        # Labeled data
-        if self.labeled:
-            gt_data = sample['gt']
-            if gt_data is not None:
-                if isinstance(gt_data, list):
-                    # multiple GT
-                    # torch.cat is used to be compatible with StackTensors
-                    ret_gt = torch.cat([F.to_tensor(item) for item in gt_data], dim=0)
-
-                    # Add dim 0 for 3D images (i.e. 2D slices with multiple GT)
-                    if isinstance(gt_data[0], np.ndarray) and len(gt_data[0].shape) == 3:
-                        ret_gt = ret_gt.unsqueeze(0)
-
-                else:
-                    # single GT
-                    ret_gt = F.to_tensor(gt_data)
-
-                rdict['gt'] = ret_gt
-
-        # Update sample
-        sample.update(rdict)
-        return sample
-
-    def undo_transform(self, sample):
-        # Returns a PIL object
-        return ToPIL()(sample)
 
 
 class Crop2D(IMEDTransform):
