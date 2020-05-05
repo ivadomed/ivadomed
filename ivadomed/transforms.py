@@ -34,11 +34,9 @@ def list_capable(wrapped):
 
 class IMEDTransform(object):
 
-    @list_capable
     def __call__(self, sample, metadata={}):
         raise NotImplementedError("You need to implement the transform() method.")
 
-    @list_capable
     def undo_transform(self, sample, metadata={}):
         raise NotImplementedError("You need to implement the undo_transform() method.")
 
@@ -61,39 +59,20 @@ class UndoTransform(object):
         return self.transform.undo_transform(sample)
 
 
-class ToPIL(IMEDTransform):
-    """Converts array or tensor to PIL object."""
+class TensorToNumpy(IMEDTransform):
+    """Converts tensor to numpy object."""
 
-    def __init__(self, labeled=True):
-        self.labeled = labeled
+    @list_capable
+    def __call__(self, sample, metadata={}):
+        return sample.numpy(), metadata
 
-    @staticmethod
-    def sample_transform(sample_data):
-        # Numpy array
-        if not isinstance(sample_data, np.ndarray):
-            input_data_npy = sample_data.numpy()
+    @list_capable
+    def undo_transform(self, sample, metadata={}):
+        tensor = torch.from_numpy(sample)
+        if isinstance(sample.dtype, np.int):
+            return tensor.int(), metadata
         else:
-            input_data_npy = sample_data
-
-        input_data = Image.fromarray(input_data_npy, mode='F')
-        return input_data
-
-    def __call__(self, sample):
-        rdict = {}
-
-        # Input data
-        input_data = sample['input']
-        ret_input = [self.sample_transform(item) for item in input_data]
-        rdict['input'] = ret_input
-
-        # Labeled data
-        if self.labeled:
-            gt_data = sample['gt']
-            ret_gt = [self.sample_transform(item) for item in gt_data]
-            rdict['gt'] = ret_gt
-
-        sample.update(rdict)
-        return sample
+            return tensor.float(), metadata
 
 
 def compose_transforms(dict_transforms, requires_undo=False):
