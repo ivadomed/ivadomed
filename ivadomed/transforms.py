@@ -1188,18 +1188,6 @@ class ElasticTransform(IMEDTransform):
         return sample
 
 
-class ToTensor3D(ToTensor):
-    """This class extends ToTensor"""
-
-    def undo_transform(self, sample):
-        rdict = {}
-        rdict['input'] = np.array(sample['input'])
-        rdict['gt'] = np.array(sample['gt'])
-
-        sample.update(rdict)
-        return sample
-
-
 class AdditiveGaussianNoise(IMEDTransform):
 
     def __init__(self, mean=0.0, std=0.01):

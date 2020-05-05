@@ -114,14 +114,15 @@ def test_NumpyToTensor(im_seg):
     # Transform
     transform = NumpyToTensor()
 
-    # Numpy to Tensor
-    do_im, do_metadata = transform(sample=im, metadata=metadata_in)
-    for idx, i in enumerate(do_im):
-        assert torch.is_tensor(i)
+    for im_cur in [im, seg]:
+        # Numpy to Tensor
+        do_im, do_metadata = transform(sample=im_cur, metadata=metadata_in)
+        for idx, i in enumerate(do_im):
+            assert torch.is_tensor(i)
 
-    # Tensor to Numpy
-    undo_im, undo_metadata = transform.undo_transform(sample=do_im, metadata=do_metadata)
-    for idx, i in enumerate(undo_im):
-        assert isinstance(i, np.ndarray)
-        assert np.array_equal(i, im[idx])
-        assert i.dtype == im[idx].dtype
+        # Tensor to Numpy
+        undo_im, undo_metadata = transform.undo_transform(sample=do_im, metadata=do_metadata)
+        for idx, i in enumerate(undo_im):
+            assert isinstance(i, np.ndarray)
+            assert np.array_equal(i, im_cur[idx])
+            assert i.dtype == im_cur[idx].dtype
