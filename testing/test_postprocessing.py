@@ -12,7 +12,7 @@ from ivadomed import postprocessing as imed_postpro
 
 
 def nii_dummy_seg(size_arr=(15, 15, 9), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI', shape='rectangle',
-            radius_RL=3.0, radius_AP=2.0, zeroslice=[], softseg=False):
+                  radius_RL=3.0, radius_AP=2.0, zeroslice=[], softseg=False):
     """Create a dummy nibabel object with a ellipse or rectangle of ones running from top to bottom in the 3rd
     dimension.
     :param size_arr: tuple: (nx, ny, nz)
