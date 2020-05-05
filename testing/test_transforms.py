@@ -7,7 +7,9 @@ import pytest
 import numpy as np
 from math import isclose
 
-from ivadomed.transforms import HistogramClipping, RandomShiftIntensity, TensorToNumpy, rescale_array
+import torch
+
+from ivadomed.transforms import HistogramClipping, RandomShiftIntensity, NumpyToTensor, rescale_array
 
 
 def create_test_image_2d(width, height, num_modalities, noise_max=10.0, num_objs=1, rad_max=30, num_seg_classes=1):
@@ -102,6 +104,7 @@ def test_RandomShiftIntensity(im_seg):
     for idx, i in enumerate(im):
         assert np.allclose(undo_im[idx], i, rtol=1e-02)
 
+
 @pytest.mark.parametrize('im_seg', (create_test_image_2d(100, 100, 1),
                                     create_test_image_2d(100, 100, 3)))
 def test_NumpyToTensor(im_seg):
@@ -109,15 +112,15 @@ def test_NumpyToTensor(im_seg):
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
 
     # Transform
-    transform = TensorToNumpy()
+    transform = NumpyToTensor()
 
     # Numpy to Tensor
-    do_im = transform(sample=im, metadata=metadata_in)
+    do_im, do_metadata = transform(sample=im, metadata=metadata_in)
     for idx, i in enumerate(do_im):
         assert torch.is_tensor(i)
 
     # Tensor to Numpy
-    undo_im = transform.undo_transform(sample=do_im, metadata=metadata_in)
+    undo_im, undo_metadata = transform.undo_transform(sample=do_im, metadata=do_metadata)
     for idx, i in enumerate(undo_im):
         assert isinstance(i, np.ndarray)
         assert np.array_equal(i, im[idx])

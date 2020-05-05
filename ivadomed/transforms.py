@@ -12,7 +12,7 @@ from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 from scipy.ndimage.interpolation import map_coordinates
 
-#import torch
+import torch
 #import torchvision.transforms.functional as F
 #from torchvision import transforms as torchvision_transforms
 
