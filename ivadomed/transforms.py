@@ -103,14 +103,19 @@ def compose_transforms(dict_transforms, requires_undo=False):
 
 
 class Resample(IMEDTransform):
+    """
+    Resample image to a given resolution.
 
-    def __init__(self, wspace, hspace,
-                 interpolation=Image.BILINEAR,
-                 labeled=True):
+    Args:
+        wspace (int): Resolution along the first axis.
+        hspace (int): Resolution along the second axis.
+        interpolation_order (int): Order of spline interpolation. Set to 0 for label data. Default=2.
+    """
+
+    def __init__(self, wspace, hspace, interpolation_order=2):
         self.hspace = hspace
         self.wspace = wspace
-        self.interpolation = interpolation
-        self.labeled = labeled
+        self.interpolation_order = interpolation_order
 
     @staticmethod
     def do_resample(list_data, new_shape, interpolation_mode):
