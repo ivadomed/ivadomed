@@ -118,27 +118,21 @@ class Resample(IMEDTransform):
         self.wspace = wspace
         self.interpolation_order = interpolation_order
 
-    def undo_transform(self, sample):
-        rdict = {}
-
+    def undo_transform(self, sample, metadata):
         # Get original data shape
-        hshape, wshape = sample['input_metadata']['data_shape']
+        hshape, wshape = metadata['data_shape']
 
-        # Input data
-        rdict['input'] = self.do_resample(list_data=sample["input"],
-                                          new_shape=(wshape, hshape),
-                                          interpolation_mode=self.interpolation)
+        # Undo resampling
+        data_out = resize(sample,
+                          output_shape=(wshape, hshape),
+                          order=self.interpolation_order,
+                          preserve_range=True,
+                          anti_aliasing=True)
 
-        # Prediction data
-        # Note: We use here self.interpolation instead of forcing Image.NEAREST
-        #       in order to ensure soft output
-        rdict['gt'] = self.do_resample(list_data=sample["gt"],
-                                       new_shape=(wshape, hshape),
-                                       interpolation_mode=self.interpolation)
+        # TODO: if order = 0 then bool to int?
+        # TODO: check order of wshape and hshape
 
-        # Update
-        sample.update(rdict)
-        return sample
+        return data_out, metadata
 
     def __call__(self, sample, metadata):
         # Get new data shape
@@ -158,6 +152,7 @@ class Resample(IMEDTransform):
                           anti_aliasing=True)
 
         # TODO: if order = 0 then bool to int?
+        # TODO: check order of wshape and hshape
 
         return data_out, metadata
 
