@@ -7,6 +7,7 @@ import numpy as np
 from PIL import Image
 
 from skimage.exposure import equalize_adapthist
+from skimage.transform import resize
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
@@ -148,40 +149,27 @@ class Resample(IMEDTransform):
         sample.update(rdict)
         return sample
 
-    def __call__(self, sample):
-        rdict = {}
-
+    def __call__(self, sample, metadata):
         # Get new data shape
         # Based on the assumption that the metadata of every modality are equal.
         # Voxel dimension in mm
-        input_metadata = sample['input_metadata']
-        hzoom, wzoom = input_metadata[0]["zooms"]
-        hshape, wshape = input_metadata[0]["data_shape"]
+        hzoom, wzoom = metadata["zooms"]
+        hshape, wshape = metadata["data_shape"]
         hfactor = hzoom / self.hspace
         wfactor = wzoom / self.wspace
         hshape_new = int(round(hshape * hfactor))
         wshape_new = int(round(wshape * wfactor))
 
-        # Input data
-        rdict['input'] = self.do_resample(list_data=sample["input"],
-                                          new_shape=(wshape_new, hshape_new),
-                                          interpolation_mode=self.interpolation)
+        # Run resize from https://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.resize
+        data_out = resize(sample,
+                          output_shape=(wshape_new, hshape_new),
+                          order=self.interpolation_order,
+                          preserve_range=True,
+                          anti_aliasing=True)
 
-        # Labeled data
-        if self.labeled:
-            rdict['gt'] = self.do_resample(list_data=sample["gt"],
-                                           new_shape=(wshape_new, hshape_new),
-                                           interpolation_mode=Image.NEAREST)
+        # TODO: if order = 0 then bool to int?
 
-        # ROI data
-        if sample['roi'] is not None:
-            rdict['roi'] = self.do_resample(list_data=sample["roi"],
-                                            new_shape=(wshape_new, hshape_new),
-                                            interpolation_mode=Image.NEAREST)
-
-        # Update
-        sample.update(rdict)
-        return sample
+        return data_out, metadata
 
 
 class Normalize(IMEDTransform):
