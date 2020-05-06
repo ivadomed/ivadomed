@@ -50,7 +50,7 @@ def test_dilateGT(dil_fac=0.25):
         imed_transforms.Resample(wspace=0.75, hspace=0.75),
         imed_transforms.DilateGT(dilation_factor=dil_fac),
         imed_transforms.ROICrop2D(size=[48, 48]),
-        imed_transforms.ToTensor()
+        imed_transforms.NumpyToTensor()
     ]
     train_transform = torch_transforms.Compose(training_transform_list)
 

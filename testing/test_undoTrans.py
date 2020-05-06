@@ -30,7 +30,7 @@ def test_undo(contrast='T2star', tol=3):
         print("using GPU number {}".format(device))
 
     # reference
-    test_1 = [imed_transforms.ToTensor(), imed_transforms.NormalizeInstance(),
+    test_1 = [imed_transforms.NumpyToTensor(), imed_transforms.NormalizeInstance(),
               imed_transforms.StackTensors()]
     name_1 = 'ToTensor_NormalizeInstance'
 
