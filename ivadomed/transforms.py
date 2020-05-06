@@ -108,8 +108,8 @@ class Resample(IMEDTransform):
     Resample image to a given resolution.
 
     Args:
-        wspace (int): Resolution along the first axis.
-        hspace (int): Resolution along the second axis.
+        wspace (float): Resolution along the first axis, in mm.
+        hspace (float): Resolution along the second axis, in mm.
         interpolation_order (int): Order of spline interpolation. Set to 0 for label data. Default=2.
     """
 

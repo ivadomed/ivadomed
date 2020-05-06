@@ -9,7 +9,7 @@ from math import isclose
 
 import torch
 
-from ivadomed.transforms import HistogramClipping, RandomShiftIntensity, NumpyToTensor, rescale_array
+from ivadomed.transforms import HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
 
 
 def create_test_image_2d(width, height, num_modalities, noise_max=10.0, num_objs=1, rad_max=30, num_seg_classes=1):
@@ -126,3 +126,18 @@ def test_NumpyToTensor(im_seg):
             assert isinstance(i, np.ndarray)
             assert np.array_equal(i, im_cur[idx])
             assert i.dtype == im_cur[idx].dtype
+
+
+@pytest.mark.parametrize('im_seg', (create_test_image_2d(80, 100, 1),
+                                    create_test_image_2d(100, 80, 3)))
+@pytest.mark.parametrize('resample_transform', (Resample(0.5, 1.0, interpolation_order=2),
+                                                Resample(1.0, 0.5, interpolation_order=2)))
+@pytest.mark.parametrize('native_resolution', ((0.9, 1.0),
+                                               (1.0, 0.9)))
+def test_Resample(im_seg, resample_transform, native_resolution):
+    im, seg = im_seg
+    metadata_ = {'zooms': (1.0, 1.0), 'data_shape': native_resolution}
+    metadata_in = [metadata_ for _ in im] if isinstance(im, list) else {}
+
+    # Transform
+    transform = resample_transform()
