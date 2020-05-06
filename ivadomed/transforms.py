@@ -118,6 +118,7 @@ class Resample(IMEDTransform):
         self.wspace = wspace
         self.interpolation_order = interpolation_order
 
+    @list_capable
     def undo_transform(self, sample, metadata):
         # Get original data shape
         hshape, wshape = metadata['data_shape']
@@ -134,6 +135,7 @@ class Resample(IMEDTransform):
 
         return data_out, metadata
 
+    @list_capable
     def __call__(self, sample, metadata):
         # Get new data shape
         # Voxel dimension in mm
