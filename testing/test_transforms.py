@@ -59,8 +59,8 @@ def create_test_image_2d(width, height, num_modalities, noise_max=10.0, num_objs
     return list_im, list_seg
 
 
-@pytest.mark.parametrize('im_seg', (create_test_image_2d(100, 100, 1),
-                                    create_test_image_2d(100, 100, 3)))
+@pytest.mark.parametrize('im_seg', [create_test_image_2d(100, 100, 1),
+                                    create_test_image_2d(100, 100, 3)])
 def test_HistogramClipping(im_seg):
     im, _ = im_seg
     # Transform
@@ -78,8 +78,8 @@ def test_HistogramClipping(im_seg):
         assert isclose(np.max(r), np.percentile(i, max_percentile), rel_tol=1e-02)
 
 
-@pytest.mark.parametrize('im_seg', (create_test_image_2d(100, 100, 1),
-                                    create_test_image_2d(100, 100, 3)))
+@pytest.mark.parametrize('im_seg', [create_test_image_2d(100, 100, 1),
+                                    create_test_image_2d(100, 100, 3)])
 def test_RandomShiftIntensity(im_seg):
     im, _ = im_seg
     # Transform
@@ -105,8 +105,8 @@ def test_RandomShiftIntensity(im_seg):
         assert np.allclose(undo_im[idx], i, rtol=1e-02)
 
 
-@pytest.mark.parametrize('im_seg', (create_test_image_2d(100, 100, 1),
-                                    create_test_image_2d(100, 100, 3)))
+@pytest.mark.parametrize('im_seg', [create_test_image_2d(100, 100, 1),
+                                    create_test_image_2d(100, 100, 3)])
 def test_NumpyToTensor(im_seg):
     im, seg = im_seg
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
@@ -128,16 +128,38 @@ def test_NumpyToTensor(im_seg):
             assert i.dtype == im_cur[idx].dtype
 
 
-@pytest.mark.parametrize('im_seg', (create_test_image_2d(80, 100, 1),
-                                    create_test_image_2d(100, 80, 3)))
-@pytest.mark.parametrize('resample_transform', (Resample(0.5, 1.0, interpolation_order=2),
-                                                Resample(1.0, 0.5, interpolation_order=2)))
-@pytest.mark.parametrize('native_resolution', ((0.9, 1.0),
-                                               (1.0, 0.9)))
+#@pytest.mark.parametrize('im_seg', (create_test_image_2d(80, 100, 1),
+#                                    create_test_image_2d(100, 80, 3)))
+#@pytest.mark.parametrize('resample_transform', (Resample(0.5, 1.0, interpolation_order=2),
+#                                                Resample(1.0, 0.5, interpolation_order=2)))
+#@pytest.mark.parametrize('native_shape', ((90, 110),
+#                                               (110, 90)))
+@pytest.mark.parametrize('im_seg', [create_test_image_2d(80, 100, 1),
+                                    create_test_image_2d(100, 80, 1)])
+@pytest.mark.parametrize('resample_transform', [Resample(0.5, 1.0, interpolation_order=2),
+                                                Resample(1.0, 0.5, interpolation_order=2)])
+@pytest.mark.parametrize('native_resolution', [(0.9, 1.0),
+                                               (1.0, 0.9)])
 def test_Resample(im_seg, resample_transform, native_resolution):
     im, seg = im_seg
-    metadata_ = {'zooms': (1.0, 1.0), 'data_shape': native_resolution}
+    metadata_ = {'zooms': native_resolution, 'data_shape': im[0].shape}
     metadata_in = [metadata_ for _ in im] if isinstance(im, list) else {}
 
-    # Transform
-    transform = resample_transform()
+    # Resample input data
+    do_im, do_metadata = resample_transform(sample=im, metadata=metadata_in)
+
+    # TODO: Check expected resolution
+
+    # Undo Resample on input data
+    undo_im, _ = resample_transform.undo_transform(sample=do_im, metadata=do_metadata)
+
+    # Check data content and data shape between input data and undo
+    for idx, i in enumerate(im):
+        assert i.shape == undo_im[idx].shape
+        # TODO: Matplotlib
+        print(np.max(undo_im[idx] - i), np.min(undo_im[idx] - i))
+        #assert np.allclose(undo_im[idx], i, rtol=1e-02)
+
+    # TODO: Check dtype
+    # TODO: Check dtype for seg
+    # TODO: Check data consistency / interpolation mode for seg
