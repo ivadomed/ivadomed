@@ -118,15 +118,6 @@ class Resample(IMEDTransform):
         self.wspace = wspace
         self.interpolation_order = interpolation_order
 
-    @staticmethod
-    def do_resample(list_data, new_shape, interpolation_mode):
-        list_data_out = []
-        for i, data in enumerate(list_data):
-            resampled_data = data.resize(new_shape,
-                                         resample=interpolation_mode)
-            list_data_out.append(resampled_data)
-        return list_data_out
-
     def undo_transform(self, sample):
         rdict = {}
 
@@ -151,7 +142,6 @@ class Resample(IMEDTransform):
 
     def __call__(self, sample, metadata):
         # Get new data shape
-        # Based on the assumption that the metadata of every modality are equal.
         # Voxel dimension in mm
         hzoom, wzoom = metadata["zooms"]
         hshape, wshape = metadata["data_shape"]
