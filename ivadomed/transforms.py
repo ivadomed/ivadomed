@@ -125,7 +125,7 @@ class Resample(IMEDTransform):
 
         # Undo resampling
         data_out = resize(sample,
-                          output_shape=(wshape, hshape),
+                          output_shape=(hshape, wshape),
                           order=self.interpolation_order,
                           preserve_range=True,
                           anti_aliasing=True)
@@ -148,7 +148,7 @@ class Resample(IMEDTransform):
 
         # Run resize from https://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.resize
         data_out = resize(sample,
-                          output_shape=(wshape_new, hshape_new),
+                          output_shape=(hshape_new, wshape_new),
                           order=self.interpolation_order,
                           preserve_range=True,
                           anti_aliasing=True)
