@@ -161,5 +161,12 @@ def test_Resample(im_seg, resample_transform, native_resolution):
         #assert np.allclose(undo_im[idx], i, rtol=1e-02)
 
     # TODO: Check dtype
+
+    # Resampler for label data
+    resample_transform.interpolation_order = 0
+    # Resample label data
+    do_seg, do_metadata = resample_transform(sample=seg, metadata=metadata_in)
+    # Undo Resample on label data
+    undo_seg, _ = resample_transform.undo_transform(sample=do_seg, metadata=do_metadata)
     # TODO: Check dtype for seg
     # TODO: Check data consistency / interpolation mode for seg
