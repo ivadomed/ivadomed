@@ -61,7 +61,7 @@
             "translate": [0.03, 0.03],
             "scale": [0.98, 1.02]
         },
-        "ToTensor": {},
+        "NumpyToTensor": {},
         "NormalizeInstance": {}
     },
     "transformation_validation": {
@@ -72,7 +72,7 @@
         "CenterCrop2D": {
             "size": [128, 128]
         },
-        "ToTensor": {},
+        "NumpyToTensor": {},
         "NormalizeInstance": {}
     },
     "transformation_testing": {
@@ -83,7 +83,7 @@
         "CenterCrop2D": {
             "size": [128, 128]
         },
-        "ToTensor": {},
+        "NumpyToTensor": {},
         "NormalizeInstance": {}
     },
     "debugging": false

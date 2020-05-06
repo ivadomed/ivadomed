@@ -65,7 +65,7 @@
 			"translate": [0.03, 0.03],
 			"scale": [0.98, 1.02]
 			},
-		"ToTensor": {},
+		"NumpyToTensor": {},
 		"NormalizeInstance": {}
 		},
 	"transformation_validation": {
@@ -76,7 +76,7 @@
 		"ROICrop2D": {
 			"size": [48, 48]
 			},
-		"ToTensor": {},
+		"NumpyToTensor": {},
 		"NormalizeInstance": {}
 		},
         "transformation_testing": {
@@ -90,7 +90,7 @@
                 "RandomRotation": {
                         "degrees": 30
                         },
-                "ToTensor": {},
+                "NumpyToTensor": {},
                 "NormalizeInstance": {}
                 },
         "debugging": false

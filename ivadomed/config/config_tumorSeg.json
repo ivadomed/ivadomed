@@ -68,15 +68,15 @@
       "translate": [0.03, 0.03],
       "scale": [0.98, 1.02]
       },
-      "ToTensor": {},
+      "NumpyToTensor": {},
       "NormalizeInstance": {}
     },
     "transformation_validation": {
-        "ToTensor": {},
+        "NumpyToTensor": {},
         "NormalizeInstance": {}
     },
     "transformation_testing": {
-      "ToTensor": {},
+      "NumpyToTensor": {},
       "NormalizeInstance": {}
     },
     "debugging": false

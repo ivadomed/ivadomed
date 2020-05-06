@@ -64,7 +64,7 @@
             "translate": [0.03, 0.03],
             "scale": [0.98, 1.02]
         },
-        "ToTensor": {},
+        "NumpyToTensor": {},
         "NormalizeInstance": {},
         "StackTensors": {}
     },
@@ -76,7 +76,7 @@
         "CenterCrop2D": {
             "size": [128, 128]
         },
-        "ToTensor": {},
+        "NumpyToTensor": {},
         "NormalizeInstance": {},
         "StackTensors": {}
     },
@@ -88,7 +88,7 @@
         "CenterCrop2D": {
             "size": [128, 128]
         },
-        "ToTensor": {},
+        "NumpyToTensor": {},
         "NormalizeInstance": {},
         "StackTensors": {}
     },

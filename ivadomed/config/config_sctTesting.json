@@ -66,7 +66,7 @@
             "translate": [0.03, 0.03],
             "scale": [0.98, 1.02]
         },
-        "ToTensor": {},
+        "NumpyToTensor": {},
         "NormalizeInstance": {},
         "StackTensors": {}
     },
@@ -78,7 +78,7 @@
         "ROICrop2D": {
             "size": [48, 48]
         },
-        "ToTensor": {},
+        "NumpyToTensor": {},
         "NormalizeInstance": {},
         "StackTensors": {}
     },
@@ -90,7 +90,7 @@
         "ROICrop2D": {
             "size": [48, 48]
         },
-        "ToTensor": {},
+        "NumpyToTensor": {},
         "NormalizeInstance": {},
         "StackTensors": {}
     },
