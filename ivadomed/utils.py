@@ -651,8 +651,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
                                                   slice_axis=AXIS_DCT[context['slice_axis']],
                                                   cache=True,
                                                   transform=do_transforms,
-                                                  slice_filter_fn=SliceFilter(**context["slice_filter"]),
-                                                  canonical=True)
+                                                  slice_filter_fn=SliceFilter(**context["slice_filter"]))
     else:
         print('\n3D unet is not implemented yet.')
         exit()
