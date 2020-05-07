@@ -49,7 +49,7 @@ This data augmentation is motivated by the large inter-rater variability that we
 ## Installing
 
 
-This project requires Python 3.6 and PyTorch >= 1.2.0. We recommend you work under a virtual environment:
+This project requires Python 3.6 and PyTorch >= 1.5.0. We recommend you work under a virtual environment:
 
 ~~~
 virtualenv venv-ivadomed --python=python3.6
