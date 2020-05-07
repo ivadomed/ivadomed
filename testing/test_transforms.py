@@ -182,7 +182,7 @@ def plot_sample(before, after):
     plt.subplot(1, 2, 1)
     plt.axis("off")
     plt.imshow(before, interpolation='nearest', aspect='auto')
-    plt.title('Sample after transform')
+    plt.title('Sample before transform')
 
     plt.subplot(1, 2, 2)
     plt.axis("off")
