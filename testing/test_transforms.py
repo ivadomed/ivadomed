@@ -10,7 +10,7 @@ from math import isclose
 import torch
 
 from ivadomed.transforms import HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
-
+from ivadomed.metrics import dice_score
 
 def create_test_image_2d(width, height, num_modalities, noise_max=10.0, num_objs=1, rad_max=30, num_seg_classes=1):
     """Create test image.
@@ -128,16 +128,26 @@ def test_NumpyToTensor(im_seg):
             assert i.dtype == im_cur[idx].dtype
 
 
-#@pytest.mark.parametrize('im_seg', (create_test_image_2d(80, 100, 1),
-#                                    create_test_image_2d(100, 80, 3)))
-#@pytest.mark.parametrize('resample_transform', (Resample(0.5, 1.0, interpolation_order=2),
-#                                                Resample(1.0, 0.5, interpolation_order=2)))
-#@pytest.mark.parametrize('native_shape', ((90, 110),
-#                                               (110, 90)))
+def plot_sample(before, after):
+    import matplotlib.pyplot as plt
+    import matplotlib
+    matplotlib.use('TkAgg')
+    plt.interactive(False)
+    plt.figure(figsize=(20, 10))
+
+    plt.subplot(1, 2, 1)
+    plt.axis("off")
+    plt.imshow(before, interpolation='nearest', aspect='auto')
+
+    plt.subplot(1, 2, 2)
+    plt.axis("off")
+    plt.imshow(after, interpolation='nearest', aspect='auto')
+    plt.show()
+
 @pytest.mark.parametrize('im_seg', [create_test_image_2d(80, 100, 1),
                                     create_test_image_2d(100, 80, 1)])
-@pytest.mark.parametrize('resample_transform', [Resample(0.5, 1.0, interpolation_order=2),
-                                                Resample(1.0, 0.5, interpolation_order=2)])
+@pytest.mark.parametrize('resample_transform', [Resample(0.8, 1.0, interpolation_order=2),
+                                                Resample(1.0, 0.8, interpolation_order=2)])
 @pytest.mark.parametrize('native_resolution', [(0.9, 1.0),
                                                (1.0, 0.9)])
 def test_Resample(im_seg, resample_transform, native_resolution):
@@ -147,20 +157,8 @@ def test_Resample(im_seg, resample_transform, native_resolution):
 
     # Resample input data
     do_im, do_metadata = resample_transform(sample=im, metadata=metadata_in)
-
-    # TODO: Check expected resolution
-
     # Undo Resample on input data
     undo_im, _ = resample_transform.undo_transform(sample=do_im, metadata=do_metadata)
-
-    # Check data content and data shape between input data and undo
-    for idx, i in enumerate(im):
-        assert i.shape == undo_im[idx].shape
-        # TODO: Matplotlib
-        print(np.max(undo_im[idx] - i), np.min(undo_im[idx] - i))
-        #assert np.allclose(undo_im[idx], i, rtol=1e-02)
-
-    # TODO: Check dtype
 
     # Resampler for label data
     resample_transform.interpolation_order = 0
@@ -168,5 +166,16 @@ def test_Resample(im_seg, resample_transform, native_resolution):
     do_seg, do_metadata = resample_transform(sample=seg, metadata=metadata_in)
     # Undo Resample on label data
     undo_seg, _ = resample_transform.undo_transform(sample=do_seg, metadata=do_metadata)
-    # TODO: Check dtype for seg
-    # TODO: Check data consistency / interpolation mode for seg
+
+    # Check data content and data shape between input data and undo
+    for idx, i in enumerate(im):
+        # Check shapes
+        assert i.shape == undo_im[idx].shape == seg[idx].shape == undo_seg[idx].shape
+        assert do_seg[idx].shape == do_im[idx].shape
+        # Check data type
+        assert i.dtype == do_im[idx].dtype == undo_im[idx].dtype
+        assert seg[idx].dtype == do_seg[idx].dtype == undo_seg[idx].dtype
+        # Plot for debugging
+        #plot_sample(seg[idx], undo_seg[idx])
+        # Data consistency
+        assert dice_score(undo_seg[idx], seg[idx]) > 0.9
