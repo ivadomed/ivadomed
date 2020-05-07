@@ -12,10 +12,7 @@ on: push
 jobs:
   deploy:
 
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
