@@ -199,7 +199,7 @@ class Evaluation3DMetrics(object):
             # if label_size is None, then we look at all object sizes
             # we check if the currrent object belongs to the current size range
             if label_size is None or \
-               np.max(self.data_gt_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
+                    np.max(self.data_gt_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
 
                 if self.overlap_vox is None:
                     overlap_vox = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
@@ -651,11 +651,12 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
                                                   slice_axis=AXIS_DCT[context['slice_axis']],
                                                   cache=True,
                                                   transform=do_transforms,
-                                                  slice_filter_fn=SliceFilter(**context["slice_filter"]),
-                                                  canonical=True)
+                                                  slice_filter_fn=SliceFilter(**context["slice_filter"]))
     else:
-        print('\n3D unet is not implemented yet.')
-        exit()
+        ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
+                                                           transform=do_transforms,
+                                                           length=context["length_3D"],
+                                                           padding=context["padding_3D"])
 
     # If fname_roi provided, then remove slices without ROI
     if fname_roi is not None:
@@ -663,6 +664,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     if not context['unet_3D']:
         print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
+    else:
+        print(f"\nLoaded {len(ds)} {context['slice_axis']} volumes..")
 
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["batch_size"],
