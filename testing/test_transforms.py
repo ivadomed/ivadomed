@@ -128,22 +128,6 @@ def test_NumpyToTensor(im_seg):
             assert i.dtype == im_cur[idx].dtype
 
 
-def plot_sample(before, after):
-    import matplotlib.pyplot as plt
-    import matplotlib
-    matplotlib.use('TkAgg')
-    plt.interactive(False)
-    plt.figure(figsize=(20, 10))
-
-    plt.subplot(1, 2, 1)
-    plt.axis("off")
-    plt.imshow(before, interpolation='nearest', aspect='auto')
-
-    plt.subplot(1, 2, 2)
-    plt.axis("off")
-    plt.imshow(after, interpolation='nearest', aspect='auto')
-    plt.show()
-
 @pytest.mark.parametrize('im_seg', [create_test_image_2d(80, 100, 1),
                                     create_test_image_2d(100, 80, 1)])
 @pytest.mark.parametrize('resample_transform', [Resample(0.8, 1.0, interpolation_order=2),
@@ -179,3 +163,25 @@ def test_Resample(im_seg, resample_transform, native_resolution):
         #plot_sample(seg[idx], undo_seg[idx])
         # Data consistency
         assert dice_score(undo_seg[idx], seg[idx]) > 0.9
+
+def plot_sample(before, after):
+    """Utils tool to plot sample before and after transform, for debugging.
+
+    Args:
+        before: sample before transform.
+        after: sample after transform.
+    """
+    import matplotlib.pyplot as plt
+    import matplotlib
+    matplotlib.use('TkAgg')
+    plt.interactive(False)
+    plt.figure(figsize=(20, 10))
+
+    plt.subplot(1, 2, 1)
+    plt.axis("off")
+    plt.imshow(before, interpolation='nearest', aspect='auto')
+
+    plt.subplot(1, 2, 2)
+    plt.axis("off")
+    plt.imshow(after, interpolation='nearest', aspect='auto')
+    plt.show()
