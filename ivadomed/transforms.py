@@ -129,9 +129,8 @@ class Resample(IMEDTransform):
                           order=self.interpolation_order,
                           preserve_range=True,
                           anti_aliasing=True)
-
-        # TODO: if order = 0 then bool to int?
-        # TODO: check order of wshape and hshape
+        # Data type
+        data_out = data_out.astype(sample.dtype)
 
         return data_out, metadata
 
@@ -152,9 +151,8 @@ class Resample(IMEDTransform):
                           order=self.interpolation_order,
                           preserve_range=True,
                           anti_aliasing=True)
-
-        # TODO: if order = 0 then bool to int?
-        # TODO: check order of wshape and hshape
+        # Data type
+        data_out = data_out.astype(sample.dtype)
 
         return data_out, metadata
 
