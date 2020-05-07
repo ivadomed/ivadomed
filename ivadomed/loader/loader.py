@@ -443,7 +443,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         """
         coord = self.indexes[index]
         input_img, gt_img = self.handlers[coord['handler_index']].get_pair_data()
-        data_shape = gt_img[0].shape
+        data_shape = input_img[0].shape
         seg_pair_slice = self.handlers[coord['handler_index']].get_pair_slice(coord['handler_index'])
         data_dict = {
             'input': input_img,
