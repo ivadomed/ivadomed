@@ -9,7 +9,7 @@ here = path.abspath(path.dirname(__file__))
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
-#Get README 
+#Get README
 from os import path
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
@@ -20,7 +20,7 @@ setup(
     version=ivadomed.__version__,
     description='Feature conditioning for IVADO medical imaging project.',
     long_description=long_description,
-    long_description_content_type='text/markdown'
+    long_description_content_type='text/markdown',
     url='https://github.com/neuropoly/ivado-medical-imaging',
     author='NeuroPoly and Mila',
     author_email='none@none.com',
