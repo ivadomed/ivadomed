@@ -1,4 +1,3 @@
-[![Build Status](https://api.travis-ci.org/neuropoly/ivado-medical-imaging.svg?branch=master)](https://travis-ci.org/neuropoly/ivado-medical-imaging)
 [![Coverage Status](https://coveralls.io/repos/github/neuropoly/ivado-medical-imaging/badge.svg?branch=master)](https://coveralls.io/github/neuropoly/ivado-medical-imaging?branch=master)
 ![](https://github.com/neuropoly/ivado-medical-imaging/workflows/Python%20package/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
@@ -49,6 +48,7 @@ This data augmentation is motivated by the large inter-rater variability that we
 
 ## Installing
 
+
 This project requires Python 3.6 and PyTorch >= 1.2.0. We recommend you work under a virtual environment:
 
 ~~~
@@ -56,13 +56,20 @@ virtualenv venv-ivadomed --python=python3.6
 source venv-ivadomed/bin/activate
 ~~~
 
-Then, install all requirements using `pip`:
+### Option 1 : development version from Github
+ivadomed is installed from Github and the requirements are installed using `pip`:
 
 ```
 git clone https://github.com/neuropoly/ivado-medical-imaging.git
 cd ivado-medical-imaging
 pip install -e .
 ```
+
+### Option 2 : release from PyPI
+
+ivadomed and its requirements are installed directly using `pip` :
+
+```pip install ivadomed```
 
 ## Training
 
