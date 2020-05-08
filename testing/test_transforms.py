@@ -177,11 +177,18 @@ def test_NormalizeInstance(im_seg):
     im, seg = im_seg
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
 
-    # Transform
+    # Transform on Numpy
     transform = NormalizeInstance()
     do_im, _ = transform(im, metadata_in)
-
     # Check normalization
     for i in do_im:
         assert abs(np.mean(i) - 0.0) <= 1e-2
         assert abs(np.std(i) - 1.0) <= 1e-2
+
+    # Transform on Tensor
+    tensor, metadata_tensor = NumpyToTensor()(im, metadata_in)
+    do_tensor, _ = transform(tensor, metadata_tensor)
+    # Check normalization
+    for t in do_tensor:
+        assert abs(t.mean() - 0.0) <= 1e-2
+        assert abs(t.std() - 1.0) <= 1e-2
