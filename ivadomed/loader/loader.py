@@ -1,5 +1,6 @@
 import nibabel as nib
 import numpy as np
+import torch
 from PIL import Image
 from bids_neuropoly import bids
 from torch.utils.data import Dataset
@@ -447,26 +448,40 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         seg_pair_slice = self.handlers[coord['handler_index']].get_pair_slice(coord['handler_index'])
         data_dict = {
             'input': input_img,
-            'gt': gt_img
+            'gt': gt_img,
+            'input_metadata': seg_pair_slice['input_metadata'],
+            'gt_metadata': seg_pair_slice['gt_metadata']
+        }
+        for idx in range(len(data_dict["input"])):
+            data_dict['input_metadata'][idx]['data_shape'] = data_shape
+
+        if self.transform is not None:
+            data_dict = self.transform(data_dict)
+
+        shape_x = coord["x_max"] - coord["x_min"]
+        shape_y = coord["y_max"] - coord["y_min"]
+        shape_z = coord["z_max"] - coord["z_min"]
+
+        subvolumes = {
+            'input': torch.zeros(data_dict['input'].shape[0], shape_z, shape_x, shape_y),
+            'gt': torch.zeros(data_dict['input'].shape[0], shape_z, shape_x, shape_y),
+            'input_metadata': seg_pair_slice['input_metadata'],
+            'gt_metadata': seg_pair_slice['gt_metadata']
         }
 
         for idx in range(len(data_dict['input'])):
-            data_dict['input'][idx] = data_dict['input'][idx][coord['x_min']:coord['x_max'],
-                                      coord['y_min']:coord['y_max'],
-                                      coord['z_min']:coord['z_max']]
+            subvolumes['input'] = data_dict['input'][:,
+                                  coord['z_min']:coord['z_max'],
+                                  coord['x_min']:coord['x_max'],
+                                  coord['y_min']:coord['y_max']]
 
         for idx in range(len(data_dict['gt'])):
-            data_dict['gt'][idx] = data_dict['gt'][idx][coord['x_min']:coord['x_max'],
-                                   coord['y_min']:coord['y_max'],
-                                   coord['z_min']:coord['z_max']]
-
-        data_dict['input_metadata'] = seg_pair_slice['input_metadata']
-        data_dict['gt_metadata'] = seg_pair_slice['gt_metadata']
-        for idx in range(len(data_dict["input"])):
-            data_dict['input_metadata'][idx]['data_shape'] = data_shape
-        if self.transform is not None:
-            data_dict = self.transform(data_dict)
-        return data_dict
+            subvolumes['gt'] = data_dict['gt'][:,
+                               coord['z_min']:coord['z_max'],
+                               coord['x_min']:coord['x_max'],
+                               coord['y_min']:coord['y_max']]
+        subvolumes['gt'] = subvolumes['gt'].type(torch.BoolTensor)
+        return subvolumes
 
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
@@ -562,7 +577,8 @@ class BidsDataset(MRI2DSegmentationDataset):
                 metadata['contrast'] = subject.record["modality"]
 
                 if metadata_choice == 'mri_params':
-                    if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in self.metadata.keys()]):
+                    if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
+                                self.metadata.keys()]):
                         continue
 
                 # Fill multichannel dictionary
