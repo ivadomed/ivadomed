@@ -1042,7 +1042,7 @@ class RandomShiftIntensity(ImedTransform):
         # Update metadata
         metadata['offset'] = offset
         # Shift intensity
-        data = sample + offset
+        data = (sample + offset).astype(sample.dtype)
         return data, metadata
 
     @list_capable
@@ -1051,7 +1051,7 @@ class RandomShiftIntensity(ImedTransform):
         # Get offset
         offset = metadata['offset']
         # Substract offset
-        data = sample - offset
+        data = (sample - offset).astype(sample.dtype)
         return data, metadata
 
 
