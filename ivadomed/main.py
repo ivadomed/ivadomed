@@ -87,10 +87,10 @@ def cmd_train(context):
     writer = SummaryWriter(log_dir=context["log_directory"])
 
     # Compose training transforms
-    train_transform = imed_transforms.compose_transforms(context["transformation_training"])
+    train_transform = imed_transforms.Compose(context["transformation_training"])
 
     # Compose validation transforms
-    val_transform = imed_transforms.compose_transforms(context["transformation_validation"])
+    val_transform = imed_transforms.Compose(context["transformation_validation"])
 
     # Randomly split dataset between training / validation / testing
     if context.get("split_path") is None:
