@@ -14,8 +14,8 @@ from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_
 from scipy.ndimage.interpolation import map_coordinates
 
 import torch
-#import torchvision.transforms.functional as F
-#from torchvision import transforms as torchvision_transforms
+import torchvision.transforms.functional as F
+from torchvision import transforms as torchvision_transforms
 
 
 def list_capable(wrapped):
@@ -40,6 +40,42 @@ class IMEDTransform(object):
 
     def undo_transform(self, sample, metadata={}):
         raise NotImplementedError("You need to implement the undo_transform() method.")
+
+
+class Compose(object):
+    """Composes several transforms together.
+    Args:
+        dict_transforms (dictionary): Dictionary where the keys are the transform names
+            and the value their parameters.
+        requires_undo (bool): If True, does not include transforms which do not have an undo_transform
+            implemented yet.
+    Returns:
+        torchvision.transforms.Compose object.
+    """
+    def __init__(self, dict_transforms, requires_undo=False):
+        list_tr_im, list_tr_gt, list_tr_roi = [], [], []
+        for transform in dict_transforms.keys():
+            parameters = dict_transforms[transform]
+            # call transform
+            transform_obj = globals()[transform](**parameters)
+
+            # check if undo_transform method is implemented
+            if requires_undo:
+                if not hasattr(transform_obj, 'undo_transform'):
+                    print('{} transform not included since no undo_transform available for it.'.format(transform))
+                    continue
+
+            if "im" in parameters["applied_to"]:
+                list_tr_im.append(transform_obj)
+            if "roi" in parameters["applied_to"]:
+                list_tr_roi.append(transform_obj)
+            if "gt" in parameters["applied_to"]:
+                list_tr_gt.append(transform_obj)
+
+        self.transform = {
+            "im": torchvision_transforms.Compose(list_tr_im),
+            "gt": torchvision_transforms.Compose(list_tr_gt),
+            "roi": torchvision_transforms.Compose(list_tr_roi)}
 
 
 class UndoCompose(object):
@@ -72,40 +108,6 @@ class NumpyToTensor(IMEDTransform):
         # TODO: https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/transforms.py#L275
         # TODO: check F.to_tensor VERSUS torch.from_numpy
         return torch.from_numpy(sample), metadata
-
-
-def compose_transforms(dict_transforms, requires_undo=False):
-    """Composes several transforms together.
-    Args:
-        dict_transforms (dictionary): Dictionary where the keys are the transform names
-            and the value their parameters.
-        requires_undo (bool): If True, does not include transforms which do not have an undo_transform
-            implemented yet.
-    Returns:
-        torchvision.transforms.Compose object.
-    """
-    list_tr_im, list_tr_gt, list_tr_roi = [], [], []
-    for transform in dict_transforms.keys():
-        parameters = dict_transforms[transform]
-        # call transfrom
-        transform_obj = globals()[transform](**parameters)
-
-        # check if undo_transform method is implemented
-        if requires_undo:
-            if not hasattr(transform_obj, 'undo_transform'):
-                print('{} transform not included since no undo_transform available for it.'.format(transform))
-                continue
-
-        if "im" in parameters["applied_to"]:
-            list_tr_im.append(transform_obj)
-        if "roi" in parameters["applied_to"]:
-            list_tr_roi.append(transform_obj)
-        if "gt" in parameters["applied_to"]:
-            list_tr_gt.append(transform_obj)
-
-    # Output dictionary
-    dict_transforms = {"im": list_tr_im, "gt": list_tr_gt, "roi": list_tr_roi}
-    return dict_transforms
 
 
 class Resample(IMEDTransform):
