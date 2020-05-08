@@ -14,8 +14,8 @@ from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_
 from scipy.ndimage.interpolation import map_coordinates
 
 import torch
-#import torchvision.transforms.functional as F
-#from torchvision import transforms as torchvision_transforms
+import torch.nn.functional as F
+from torchvision import transforms as torchvision_transforms
 
 
 def list_capable(wrapped):
@@ -219,13 +219,7 @@ class NormalizeInstance(ImedTransform):
 
     @list_capable
     def __call__(self, sample, metadata={}):
-        if isinstance(sample, np.ndarray):
-            data_out = (sample - np.mean(sample)) / np.std(sample)
-        elif torch.is_tensor(sample):
-            data_out = F.instance_norm(sample)
-        else:
-            raise NotImplementedError("Invalid data type.")
-
+        data_out = (sample - sample.mean()) / sample.std()
         return data_out, metadata
 
 
