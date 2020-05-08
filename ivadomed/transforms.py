@@ -1032,13 +1032,18 @@ class RandomAffine3D(RandomAffine):
 
 class RandomShiftIntensity(ImedTransform):
 
-    def __init__(self, shift_range):
+    def __init__(self, shift_range, prob=0.1):
         self.shift_range = shift_range
+        self.prob = prob
 
     @list_capable
     def __call__(self, sample, metadata={}):
-        # Get random offset
-        offset = np.random.uniform(self.shift_range[0], self.shift_range[1])
+        if np.random.random() < self.prob:
+            # Get random offset
+            offset = np.random.uniform(self.shift_range[0], self.shift_range[1])
+        else:
+            offset = 0.0
+
         # Update metadata
         metadata['offset'] = offset
         # Shift intensity
