@@ -43,14 +43,19 @@ class IMEDTransform(object):
 
 
 class Compose(object):
-    """Composes several transforms together.
-    Args:
+    """Composes transforms together.
+
+    Composes transforms together and split between images, GT and ROI.
+
+    self.transform is a dict:
+        - keys: "im", "gt" and "roi"
+        - values torchvision_transform.Compose objects.
+
+    Attributes:
         dict_transforms (dictionary): Dictionary where the keys are the transform names
             and the value their parameters.
         requires_undo (bool): If True, does not include transforms which do not have an undo_transform
             implemented yet.
-    Returns:
-        torchvision.transforms.Compose object.
     """
     def __init__(self, dict_transforms, requires_undo=False):
         list_tr_im, list_tr_gt, list_tr_roi = [], [], []
@@ -76,6 +81,15 @@ class Compose(object):
             "im": torchvision_transforms.Compose(list_tr_im),
             "gt": torchvision_transforms.Compose(list_tr_gt),
             "roi": torchvision_transforms.Compose(list_tr_roi)}
+
+    def __call__(self, sample, metadata, data_type='im'):
+        if self.transform[data_type] is None:
+            # In case self.transform[data_type] is None
+            return None, None
+        else:
+            for tr in list(self.transform[data_type]):
+                sample, metadata = tr(sample, metadata)
+            return sample, metadata
 
 
 class UndoCompose(object):
