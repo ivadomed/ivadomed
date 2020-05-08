@@ -9,7 +9,7 @@ from math import isclose
 
 import torch
 
-from ivadomed.transforms import HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
+from ivadomed.transforms import NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
 from ivadomed.metrics import dice_score, mse
 
 DEBUGGING = False
@@ -170,3 +170,18 @@ def test_Resample(im_seg, resample_transform, native_resolution):
         # Data consistency
         assert dice_score(undo_seg[idx], seg[idx]) > 0.8
         assert mse(undo_im[idx], im[idx]) < 1e-1
+
+@pytest.mark.parametrize('im_seg', [create_test_image_2d(100, 100, 1),
+                                    create_test_image_2d(100, 100, 3)])
+def test_NormalizeInstance(im_seg):
+    im, seg = im_seg
+    metadata_in = [{} for _ in im] if isinstance(im, list) else {}
+
+    # Transform
+    transform = NormalizeInstance()
+    do_im, _ = transform(im, metadata_in)
+
+    # Check normalization
+    for i in do_im:
+        assert abs(np.mean(i) - 0.0) <= 1e-2
+        assert abs(np.std(i) - 1.0) <= 1e-2

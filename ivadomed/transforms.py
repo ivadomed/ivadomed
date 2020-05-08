@@ -219,7 +219,6 @@ class NormalizeInstance(ImedTransform):
 
     @list_capable
     def __call__(self, sample, metadata={}):
-        print(type(sample))
         if isinstance(sample, np.ndarray):
             data_out = (sample - np.mean(sample)) / np.std(sample)
         elif torch.is_tensor(sample):
