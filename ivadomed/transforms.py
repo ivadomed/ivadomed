@@ -84,23 +84,28 @@ def compose_transforms(dict_transforms, requires_undo=False):
     Returns:
         torchvision.transforms.Compose object.
     """
-    list_transform = []
+    list_tr_im, list_tr_gt, list_tr_roi = [], [], []
     for transform in dict_transforms.keys():
         parameters = dict_transforms[transform]
-
         # call transfrom
         transform_obj = globals()[transform](**parameters)
 
         # check if undo_transform method is implemented
         if requires_undo:
-            if hasattr(transform_obj, 'undo_transform'):
-                list_transform.append(transform_obj)
-            else:
+            if not hasattr(transform_obj, 'undo_transform'):
                 print('{} transform not included since no undo_transform available for it.'.format(transform))
-        else:
-            list_transform.append(transform_obj)
+                continue
 
-    return torchvision_transforms.Compose(list_transform)
+        if "im" in parameters["applied_to"]:
+            list_tr_im.append(transform_obj)
+        if "roi" in parameters["applied_to"]:
+            list_tr_roi.append(transform_obj)
+        if "gt" in parameters["applied_to"]:
+            list_tr_gt.append(transform_obj)
+
+    # Output dictionary
+    dict_transforms = {"im": list_tr_im, "gt": list_tr_gt, "roi": list_tr_roi}
+    return dict_transforms
 
 
 class Resample(IMEDTransform):
