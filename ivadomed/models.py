@@ -346,7 +346,7 @@ class UNet3D(nn.Module):
     https://github.com/ozan-oktay/Attention-Gated-Networks
     """
 
-    def __init__(self, in_channels, n_classes, base_n_filter=32, attention=False):
+    def __init__(self, in_channels, n_classes, base_n_filter=16, attention=False):
         super(UNet3D, self).__init__()
         self.in_channels = in_channels
         self.n_classes = n_classes
