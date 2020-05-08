@@ -33,7 +33,7 @@ def list_capable(wrapped):
     return wrapper
 
 
-class IMEDTransform(object):
+class ImedTransform(object):
 
     def __call__(self, sample, metadata={}):
         raise NotImplementedError("You need to implement the transform() method.")
@@ -115,7 +115,7 @@ class UndoTransform(object):
         return self.transform.undo_transform(sample)
 
 
-class NumpyToTensor(IMEDTransform):
+class NumpyToTensor(ImedTransform):
     """Converts numpy array to tensor object."""
 
     @list_capable
@@ -129,7 +129,7 @@ class NumpyToTensor(IMEDTransform):
         return torch.from_numpy(sample), metadata
 
 
-class Resample(IMEDTransform):
+class Resample(ImedTransform):
     """
     Resample image to a given resolution.
 
@@ -183,7 +183,7 @@ class Resample(IMEDTransform):
         return data_out, metadata
 
 
-class Normalize(IMEDTransform):
+class Normalize(ImedTransform):
     """Normalize a tensor image with mean and standard deviation.
     :param mean: mean value.
     :param std: standard deviation value.
@@ -211,7 +211,7 @@ class Normalize(IMEDTransform):
         return sample
 
 
-class NormalizeInstance(IMEDTransform):
+class NormalizeInstance(ImedTransform):
     """Normalize a tensor image with mean and standard deviation estimated
     from the sample itself.
     """
@@ -246,7 +246,7 @@ class NormalizeInstance(IMEDTransform):
         return sample
 
 
-class Crop2D(IMEDTransform):
+class Crop2D(ImedTransform):
 
     def __init__(self, size, labeled=True):
         self.size = size
@@ -426,7 +426,7 @@ class ROICrop2D(Crop2D):
         return sample
 
 
-class DilateGT(IMEDTransform):
+class DilateGT(ImedTransform):
     """Randomly dilate a tensor ground-truth.
     :param dilation_factor: float, controls the number of dilation iterations.
                             For each individual lesion, the number of dilation iterations is computed as follows:
@@ -551,7 +551,7 @@ class DilateGT(IMEDTransform):
         return sample
 
 
-class StackTensors(IMEDTransform):
+class StackTensors(ImedTransform):
     """Stack all modalities, as a list, in a single tensor."""
 
     def __call__(self, sample):
@@ -575,7 +575,7 @@ class StackTensors(IMEDTransform):
         return sample
 
 
-class CenterCrop3D(IMEDTransform):
+class CenterCrop3D(ImedTransform):
     """Make a centered crop of a specified size.
     :param labeled: if it is a segmentation task.
                          When this is True (default), the crop
@@ -672,7 +672,7 @@ class CenterCrop3D(IMEDTransform):
         return sample
 
 
-class NormalizeInstance3D(IMEDTransform):
+class NormalizeInstance3D(ImedTransform):
 
     @staticmethod
     def do_normalize(data):
@@ -706,7 +706,7 @@ class NormalizeInstance3D(IMEDTransform):
         return sample
 
 
-class BackgroundClass(IMEDTransform):
+class BackgroundClass(ImedTransform):
 
     def undo_transform(self, sample):
         return sample
@@ -721,7 +721,7 @@ class BackgroundClass(IMEDTransform):
         return sample
 
 
-class RandomRotation(IMEDTransform):
+class RandomRotation(ImedTransform):
     def __init__(self, degrees, resample=False,
                  expand=False, center=None,
                  labeled=True):
@@ -857,7 +857,7 @@ class RandomRotation3D(RandomRotation):
 
 
 # TODO: Extend to 2D?
-class RandomReverse3D(IMEDTransform):
+class RandomReverse3D(ImedTransform):
     """Make a randomized symmetric inversion of the different values of each dimensions."""
 
     def __init__(self, labeled=True):
@@ -1053,7 +1053,7 @@ class RandomAffine3D(RandomAffine):
         return sample
 
 
-class RandomShiftIntensity(IMEDTransform):
+class RandomShiftIntensity(ImedTransform):
 
     def __init__(self, shift_range):
         self.shift_range = shift_range
@@ -1078,7 +1078,7 @@ class RandomShiftIntensity(IMEDTransform):
         return data, metadata
 
 
-class ElasticTransform(IMEDTransform):
+class ElasticTransform(ImedTransform):
     "Elastic transform for 2D and 3D inputs"
 
     def __init__(self, alpha_range, sigma_range,
@@ -1192,7 +1192,7 @@ class ElasticTransform(IMEDTransform):
         return sample
 
 
-class AdditiveGaussianNoise(IMEDTransform):
+class AdditiveGaussianNoise(ImedTransform):
 
     def __init__(self, mean=0.0, std=0.01):
         self.mean = mean
@@ -1219,7 +1219,7 @@ class AdditiveGaussianNoise(IMEDTransform):
         return sample
 
 
-class Clahe(IMEDTransform):
+class Clahe(ImedTransform):
 
     def __init__(self, clip_limit=3.0, kernel_size=(8, 8)):
         # Default values are based upon the following paper:
@@ -1252,7 +1252,7 @@ class Clahe(IMEDTransform):
         return sample
 
 
-class HistogramClipping(IMEDTransform):
+class HistogramClipping(ImedTransform):
 
     def __init__(self, min_percentile=5.0, max_percentile=95.0):
         self.min_percentile = min_percentile
