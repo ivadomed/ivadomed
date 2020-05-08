@@ -61,6 +61,11 @@ class Compose(object):
         list_tr_im, list_tr_gt, list_tr_roi = [], [], []
         for transform in dict_transforms.keys():
             parameters = dict_transforms[transform]
+
+            # Get list of data type
+            list_applied_to = parameters["applied_to"]
+            del parameters['applied_to']
+
             # call transform
             transform_obj = globals()[transform](**parameters)
 
@@ -70,11 +75,11 @@ class Compose(object):
                     print('{} transform not included since no undo_transform available for it.'.format(transform))
                     continue
 
-            if "im" in parameters["applied_to"]:
+            if "im" in list_applied_to:
                 list_tr_im.append(transform_obj)
-            if "roi" in parameters["applied_to"]:
+            if "roi" in list_applied_to:
                 list_tr_roi.append(transform_obj)
-            if "gt" in parameters["applied_to"]:
+            if "gt" in list_applied_to:
                 list_tr_gt.append(transform_obj)
 
         self.transform = {
