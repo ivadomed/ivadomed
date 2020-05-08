@@ -184,7 +184,6 @@ class Resample(ImedTransform):
 
 
 # TODO
-"""
 class Normalize(ImedTransform):
     """Normalize a tensor image with mean and standard deviation.
     :param mean: mean value.
@@ -211,7 +210,6 @@ class Normalize(ImedTransform):
         rdict = {'input': input_data}
         sample.update(rdict)
         return sample
-"""
 
 
 class NormalizeInstance(ImedTransform):
@@ -220,7 +218,13 @@ class NormalizeInstance(ImedTransform):
     """
 
     def __call__(self, sample, metadata={}):
-        data_out = (sample - np.mean(sample)) / np.std(sample)
+        if isinstance(sample, np.ndarray):
+            data_out = (sample - np.mean(sample)) / np.std(sample)
+        elif torch.is_tensor(sample):
+            data_out = F.instance_norm(sample)
+        else:
+            raise NotImplementedError("Invalid data type.")
+
         return data_out, metadata
 
 
