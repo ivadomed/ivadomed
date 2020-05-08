@@ -12,6 +12,11 @@ import torch
 from ivadomed.transforms import HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
 from ivadomed.metrics import dice_score, mse
 
+DEBUGGING = False
+if DEBUGGING:
+    from testing.utils import plot_transformed_sample
+
+
 def create_test_image_2d(width, height, num_modalities, noise_max=10.0, num_objs=1, rad_max=30, num_seg_classes=1):
     """Create test image.
 
@@ -160,33 +165,8 @@ def test_Resample(im_seg, resample_transform, native_resolution):
         assert i.dtype == do_im[idx].dtype == undo_im[idx].dtype
         assert seg[idx].dtype == do_seg[idx].dtype == undo_seg[idx].dtype
         # Plot for debugging
-        # plot_sample(seg[idx], undo_seg[idx])
+        if DEBUGGING:
+            plot_transformed_sample(seg[idx], undo_seg[idx])
         # Data consistency
         assert dice_score(undo_seg[idx], seg[idx]) > 0.8
         assert mse(undo_im[idx], im[idx]) < 1e-1
-
-
-def plot_sample(before, after):
-    """Utils tool to plot sample before and after transform, for debugging.
-
-    Args:
-        before: sample before transform.
-        after: sample after transform.
-    """
-    import matplotlib.pyplot as plt
-    import matplotlib
-    matplotlib.use('TkAgg')
-    plt.interactive(False)
-    plt.figure(figsize=(20, 10))
-
-    plt.subplot(1, 2, 1)
-    plt.axis("off")
-    plt.imshow(before, interpolation='nearest', aspect='auto')
-    plt.title('Sample before transform')
-
-    plt.subplot(1, 2, 2)
-    plt.axis("off")
-    plt.imshow(after, interpolation='nearest', aspect='auto')
-    plt.title('Sample after transform')
-
-    plt.show()
