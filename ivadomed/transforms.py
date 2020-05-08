@@ -183,6 +183,8 @@ class Resample(ImedTransform):
         return data_out, metadata
 
 
+# TODO
+"""
 class Normalize(ImedTransform):
     """Normalize a tensor image with mean and standard deviation.
     :param mean: mean value.
@@ -209,41 +211,17 @@ class Normalize(ImedTransform):
         rdict = {'input': input_data}
         sample.update(rdict)
         return sample
+"""
 
 
 class NormalizeInstance(ImedTransform):
-    """Normalize a tensor image with mean and standard deviation estimated
+    """Normalize a tensor or an array image with mean and standard deviation estimated
     from the sample itself.
     """
 
-    @staticmethod
-    def do_normalize(data):
-        # TODO: instance_norm?
-        if data.type(torch.bool).any():
-            mean, std = data.mean(), data.std()
-            return F.normalize(data, [mean], [std])
-        else:
-            return data
-
-    def __call__(self, sample):
-        input_data = sample['input']
-
-        # TODO: Decorator?
-        # Normalize
-        if isinstance(input_data, list):
-            input_data_normalized = []
-            for i in range(len(input_data)):
-                input_data_normalized.append(self.do_normalize(input_data[i]))
-        else:
-            input_data_normalized = self.do_normalize(input_data)
-
-        # Update
-        rdict = {'input': input_data_normalized}
-        sample.update(rdict)
-        return sample
-
-    def undo_transform(self, sample):
-        return sample
+    def __call__(self, sample, metadata={}):
+        data_out = (sample - np.mean(sample)) / np.std(sample)
+        return data_out, metadata
 
 
 class Crop2D(ImedTransform):
