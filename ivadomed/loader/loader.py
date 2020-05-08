@@ -341,18 +341,22 @@ class MRI2DSegmentationDataset(Dataset):
         if all(v is None for v in list_roi):
             list_roi, roi_pair_slice['gt_metadata'] = None, None
 
+        # TODO: handle if transform is None
+        # Run transforms on images
+        list_input, metadata_input = self.transform['im'](list_input, seg_pair_slice['input_metadata'])
+        # Run transforms on ROI
+        list_roi, metadata_roi = self.transform['roi'](list_roi, roi_pair_slice['roi_metadata'])
+        # Run transforms on images
+        list_gt, metadata_gt = self.transform['gt'](list_gt, seg_pair_slice['gt_metadata'])
+
         data_dict = {
             'input': list_input,
             'gt': list_gt,
             'roi': list_roi,
-            'input_metadata': seg_pair_slice['input_metadata'],
-            'gt_metadata': seg_pair_slice['gt_metadata'],
-            'roi_metadata': roi_pair_slice['gt_metadata']
+            'input_metadata': metadata_input,
+            'gt_metadata': metadata_gt,
+            'roi_metadata': metadata_roi
         }
-
-        # Run transforms
-        if self.transform is not None:
-            data_dict = self.transform(data_dict)
 
         return data_dict
 
