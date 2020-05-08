@@ -577,7 +577,6 @@ def save_mixup_sample(x, y, fname):
     plt.savefig(fname, bbox_inches='tight', pad_inches=0, dpi=100)
     plt.close()
 
-
 def segment_volume(folder_model, fname_image, fname_roi=None):
     """Segment an image.
 
@@ -665,7 +664,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     if not context['unet_3D']:
         print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
     else:
-        print(f"\nLoaded {len(ds)} {context['slice_axis']} volumes..")
+        print(f"\nLoaded {len(ds)} {context['slice_axis']} volumes of shape {context['length_3D']}")
 
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["batch_size"],
@@ -683,6 +682,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     preds_list, sliceIdx_list = [], []
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
+
             preds = model(batch['input'])
 
         rdict = {}
