@@ -179,7 +179,7 @@ def test_NormalizeInstance(im_seg):
 
     # Transform on Numpy
     transform = NormalizeInstance()
-    do_im, _ = transform(im, metadata_in)
+    do_im, _ = transform(im.copy(), metadata_in)
     # Check normalization
     for i in do_im:
         assert abs(np.mean(i) - 0.0) <= 1e-2
