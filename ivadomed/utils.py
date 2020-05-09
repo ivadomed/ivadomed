@@ -651,8 +651,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
                                                   slice_axis=AXIS_DCT[context['slice_axis']],
                                                   cache=True,
                                                   transform=do_transforms,
-                                                  slice_filter_fn=SliceFilter(**context["slice_filter"]),
-                                                  canonical=True)
+                                                  slice_filter_fn=SliceFilter(**context["slice_filter"]))
     else:
         print('\n3D unet is not implemented yet.')
         exit()
@@ -851,7 +850,7 @@ def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axi
     # Generate color labels
     multi_labeled_pred = np.zeros((h, w, d, 3))
     if binarize:
-        rdict['gt'] = threshold_predictions(gt_data)
+        rdict['gt'] = imed_postpro.threshold_predictions(gt_data)
 
     # Keep always the same color labels
     np.random.seed(6)

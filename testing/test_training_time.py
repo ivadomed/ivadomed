@@ -156,6 +156,7 @@ def test_unet():
             init_lst.append(tot_init)
 
             num_steps = 0
+            start_gen = 0
             for i, batch in enumerate(train_loader):
                 if i > 0:
                     tot_gen = time.time() - start_gen
