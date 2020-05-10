@@ -161,12 +161,46 @@ class SegmentationPair(object):
 
         return input_data, gt_data
 
+    def get_pair_metadata(self, slice_index):
+        gt_meta_dict = []
+        for gt in self.gt_handle:
+            if gt is not None:
+                gt_meta_dict.append(imed_loader_utils.SampleMetadata({
+                    "zooms": gt.header.get_zooms()[:2],
+                    "data_shape": gt.header.get_data_shape()[:2],
+                    "gt_filenames": self.metadata[0]["gt_filenames"]
+                }))
+            else:
+                gt_meta_dict.append(imed_loader_utils.SampleMetadata({}))
+
+        input_meta_dict = []
+        for handle in self.input_handle:
+            input_meta_dict.append(imed_loader_utils.SampleMetadata({
+                "zooms": handle.header.get_zooms()[:2],
+                "data_shape": handle.header.get_data_shape()[:2],
+            }))
+
+        dreturn = {
+            "input_metadata": input_meta_dict,
+            "gt_metadata": gt_meta_dict,
+        }
+
+        for idx, metadata in enumerate(self.metadata):  # loop across channels
+            metadata["slice_index"] = slice_index
+            self.metadata[idx] = metadata
+            for metadata_key in metadata.keys():  # loop across input metadata
+                dreturn["input_metadata"][idx][metadata_key] = metadata[metadata_key]
+
+        return dreturn
+
     def get_pair_slice(self, slice_index, slice_axis=2):
         """Return the specified slice from (input, ground truth).
 
         :param slice_index: the slice number.
         :param slice_axis: axis to make the slicing.
         """
+
+        metadata = self.get_pair_metadata(slice_index)
         if self.cache:
             input_dataobj, gt_dataobj = self.get_pair_data()
         else:
@@ -195,7 +229,6 @@ class SegmentationPair(object):
                                                dtype=np.float32))
 
         # Handle the case for unlabeled data
-        gt_meta_dict = None
         if self.gt_handle is None:
             gt_slices = None
         else:
@@ -211,37 +244,12 @@ class SegmentationPair(object):
                     gt_slices.append(np.asarray(gt_obj[slice_index, ...],
                                                 dtype=np.float32))
 
-            gt_meta_dict = []
-            for gt in self.gt_handle:
-                if gt is not None:
-                    gt_meta_dict.append(imed_loader_utils.SampleMetadata({
-                        "zooms": gt.header.get_zooms()[:2],
-                        "data_shape": gt.header.get_data_shape()[:2],
-                        "gt_filenames": self.metadata[0]["gt_filenames"]
-                    }))
-                else:
-                    gt_meta_dict.append(imed_loader_utils.SampleMetadata({}))
-
-        input_meta_dict = []
-        for handle in self.input_handle:
-            input_meta_dict.append(imed_loader_utils.SampleMetadata({
-                "zooms": handle.header.get_zooms()[:2],
-                "data_shape": handle.header.get_data_shape()[:2],
-            }))
-
         dreturn = {
             "input": input_slices,
             "gt": gt_slices,
-            "input_metadata": input_meta_dict,
-            "gt_metadata": gt_meta_dict,
+            "input_metadata": metadata["input_metadata"],
+            "gt_metadata": metadata["gt_metadata"],
         }
-
-        if self.metadata:
-            for idx, metadata in enumerate(self.metadata):  # loop across channels
-                metadata["slice_index"] = slice_index
-                self.metadata[idx] = metadata
-                for metadata_key in metadata.keys():  # loop across input metadata
-                    dreturn["input_metadata"][idx][metadata_key] = metadata[metadata_key]
 
         return dreturn
 
@@ -445,7 +453,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         coord = self.indexes[index]
         input_img, gt_img = self.handlers[coord['handler_index']].get_pair_data()
         data_shape = input_img[0].shape
-        seg_pair_slice = self.handlers[coord['handler_index']].get_pair_slice(coord['handler_index'])
+        seg_pair_slice = self.handlers[coord['handler_index']].get_pair_metadata(coord['handler_index'])
         data_dict = {
             'input': input_img,
             'gt': gt_img,
