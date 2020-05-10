@@ -316,6 +316,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
     Args:
         data_lst (list of np arrays): predictions, either 2D slices either 3D patches.
+                                      Required shape for 3D arrays: depth, height, width, number of channels
         z_lst (list of ints): slice indexes to reconstruct a 3D volume.
         fname_ref (string): Filename of the input image: its header is copied to the output nibabel object.
         fname_out (string): If not None, then the generated nibabel object is saved with this filename.
@@ -349,7 +350,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         arr = np.stack(tmp_lst, axis=0)
 
     else:
-        arr = data_lst
+        arr = data_lst[0]
 
     # Reorient data
     arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
@@ -577,6 +578,7 @@ def save_mixup_sample(x, y, fname):
     plt.savefig(fname, bbox_inches='tight', pad_inches=0, dpi=100)
     plt.close()
 
+
 def segment_volume(folder_model, fname_image, fname_roi=None):
     """Segment an image.
 
@@ -679,7 +681,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     model.eval()
 
     # Loop across batches
-    preds_list, sliceIdx_list = [], []
+    preds_list, slice_idx_list = [], []
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
 
@@ -706,17 +708,19 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
             if isinstance(rdict_undo['gt'], list):
                 pred_cur = np.array(pil_list_to_numpy(rdict_undo['gt']))
             else:
-                pred_cur = rdict_undo['gt']
+                # required shape: d, w, h, number of channels
+                pred_cur = rdict_undo['gt'] if not context["unet_3D"] else rdict_undo['gt'].transpose(2, 3, 1, 0)
+
             preds_list.append(pred_cur)
             # Store the slice index of pred_cur in the original 3D image
-            sliceIdx_list.append(int(rdict_undo['input_metadata']['slice_index']))
+            slice_idx_list.append(int(rdict_undo['input_metadata']['slice_index']))
 
             # If last batch and last sample of this batch, then reconstruct 3D object
             if i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1:
                 pred_nib = pred_to_nib(data_lst=preds_list,
-                                       z_lst=sliceIdx_list,
                                        fname_ref=fname_image,
                                        fname_out=None,
+                                       z_lst=slice_idx_list,
                                        slice_axis=AXIS_DCT[context['slice_axis']],
                                        kernel_dim='3d' if context['unet_3D'] else '2d',
                                        debug=False,
