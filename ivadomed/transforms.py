@@ -644,15 +644,23 @@ class CenterCrop3D(IMEDTransform):
         fd = max(int(round((d - td) / 2.)), 0)
         npad = ((0, 0), (fh, fh), (fd, fd), (fw, fw))
 
-        # Apply undo
+        # Pad the cropped areas
         input_undo = np.pad(sample['input'],
                             pad_width=npad,
                             mode='constant',
                             constant_values=0)
-        gt_undo = np.pad(sample['input'],
+        gt_undo = np.pad(sample['gt'],
                          pad_width=npad,
                          mode='constant',
                          constant_values=0)
+
+        # Crop the padded areas
+        if np.any([fh, fw, fd]):
+            fh = max(int(round((th - h) / 2.)), 0)
+            fw = max(int(round((tw - w) / 2.)), 0)
+            fd = max(int(round((td - d) / 2.)), 0)
+            input_undo = input_undo[:, fh:h + fh, fd:d + fd, fw:w + fw]
+            gt_undo = gt_undo[:, fh:h + fh, fd:d + fd, fw:w + fw]
 
         # Update
         rdict = {'input': input_undo, 'gt': gt_undo}

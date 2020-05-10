@@ -774,7 +774,7 @@ def cmd_test(context):
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
-                    output_nii = imed_utils.pred_to_nib(data_lst=rdict_undo['gt'].transpose((2, 3, 1, 0)),
+                    output_nii = imed_utils.pred_to_nib(data_lst=[rdict_undo['gt'].transpose((2, 3, 1, 0))],
                                                         z_lst=[],
                                                         fname_ref=fname_ref,
                                                         fname_out=fname_pred,
