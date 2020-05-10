@@ -134,8 +134,7 @@ def cmd_train(context):
     if not unet_3D:
         print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
     else:
-        print(
-            f"Loaded {len(ds_train)} volumes of size {context['length_3D']} for the training set.")
+        print(f"Loaded {len(ds_train)} volumes of size {context['length_3D']} for the training set.")
 
     if context['balance_samples'] and not HeMIS:
         sampler_train = imed_loader_utils.BalancedSampler(ds_train)
@@ -206,6 +205,7 @@ def cmd_train(context):
         elif unet_3D:
             model = imed_models.UNet3D(in_channels=in_channel,
                                        n_classes=out_channel,
+                                       base_n_filter=context["n_filters"],
                                        attention=attention)
         else:
             model = imed_models.Unet(in_channel=in_channel,
@@ -712,7 +712,7 @@ def cmd_test(context):
             if not i_monteCarlo:
                 batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
                 batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
-                if batch["roi"][0] is not None:
+                if "roi" in batch and batch["roi"][0] is not None:
                     batch["roi"] = batch["roi"][0]
                     batch["roi_metadata"] = batch["roi_metadata"][0]
 
