@@ -166,8 +166,8 @@ class SegmentationPair(object):
         for gt in self.gt_handle:
             if gt is not None:
                 gt_meta_dict.append(imed_loader_utils.SampleMetadata({
-                    "zooms": gt.header.get_zooms()[:2],
-                    "data_shape": gt.header.get_data_shape()[:2],
+                    "zooms": gt.header.get_zooms(),
+                    "data_shape": gt.header.get_data_shape(),
                     "gt_filenames": self.metadata[0]["gt_filenames"]
                 }))
             else:
@@ -176,8 +176,8 @@ class SegmentationPair(object):
         input_meta_dict = []
         for handle in self.input_handle:
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
-                "zooms": handle.header.get_zooms()[:2],
-                "data_shape": handle.header.get_data_shape()[:2],
+                "zooms": handle.header.get_zooms(),
+                "data_shape": handle.header.get_data_shape(),
             }))
 
         dreturn = {
