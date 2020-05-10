@@ -642,7 +642,7 @@ class CenterCrop3D(IMEDTransform):
         fh = max(int(round((h - th) / 2.)), 0)
         fw = max(int(round((w - tw) / 2.)), 0)
         fd = max(int(round((d - td) / 2.)), 0)
-        npad = ((0, 0), (fw, fw), (fd, fd), (fh, fh))
+        npad = ((0, 0), (fh, fh), (fd, fd), (fw, fw))
 
         # Apply undo
         input_undo = np.pad(sample['input'],
@@ -732,7 +732,7 @@ class NormalizeInstance3D(IMEDTransform):
                                [mean for _ in range(0, data.shape[0])],
                                [std for _ in range(0, data.shape[0])]).unsqueeze(0)
         else:
-            return data
+            return data.unsqueeze(0)
 
     def __call__(self, sample):
         input_data = sample['input']
