@@ -63,8 +63,11 @@ class Compose(object):
             parameters = dict_transforms[transform]
 
             # Get list of data type
-            list_applied_to = parameters["applied_to"]
-            del parameters['applied_to']
+            if "applied_to" in parameters:
+                list_applied_to = parameters["applied_to"]
+                del parameters['applied_to']
+            else:
+                list_applied_to = ["im", "gt", "roi"]
 
             # call transform
             transform_obj = globals()[transform](**parameters)
