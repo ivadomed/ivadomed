@@ -337,22 +337,18 @@ class MRI2DSegmentationDataset(Dataset):
                 roi_scaled = (roi_slice * 255).astype(np.uint8)
                 list_roi.append(Image.fromarray(roi_scaled, mode='L'))
 
-        # If ROI data all empty
-        if all(v is None for v in list_roi):
-            list_roi, roi_pair_slice['gt_metadata'] = None, None
-
         # Run transforms on images
         list_input, metadata_input = self.transform(sample=list_input,
                                                     metdata=seg_pair_slice['input_metadata'],
                                                     data_type="im")
         # Run transforms on ROI
         list_roi, metadata_roi = self.transform(sample=list_roi,
-                                                    metdata=roi_pair_slice['roi_metadata'],
-                                                    data_type="roi")
+                                                metdata=roi_pair_slice['roi_metadata'],
+                                                data_type="roi")
         # Run transforms on images
         list_gt, metadata_gt = self.transform(sample=list_gt,
-                                                    metdata=seg_pair_slice['gt_metadata'],
-                                                    data_type="gt")
+                                              metdata=seg_pair_slice['gt_metadata'],
+                                              data_type="gt")
 
         data_dict = {
             'input': list_input,

@@ -29,7 +29,11 @@ def list_capable(wrapped):
                 list_data.append(data_cur)
                 list_metadata.append(metadata_cur)
             return list_data, list_metadata
-        return wrapped(self, sample, metadata)
+        # If sample is None, then return a pair (None, None)
+        if sample is None:
+            return None, None
+        else:
+            return wrapped(self, sample, metadata)
     return wrapper
 
 
