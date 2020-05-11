@@ -690,6 +690,7 @@ class CenterCrop3D(IMEDTransform):
     def undo_transform(self, sample):
         # TODO: Make it compatible with lists
         # Compute parameters
+        crop_size = self.size
         self.size = sample['input_metadata']["__centercrop"]
         td, tw, th = self.size
         h, d, w = sample['input'][0, ].shape
@@ -709,6 +710,8 @@ class CenterCrop3D(IMEDTransform):
                                             cval=0)[0].transpose((2, 0, 1))
         # Update
         rdict = {'input': undo_input, 'gt': undo_gt}
+        self.size = crop_size
+
         sample.update(rdict)
         return sample
 
