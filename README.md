@@ -69,7 +69,10 @@ pip install -e .
 
 ivadomed and its requirements are installed directly using `pip` :
 
-```pip install ivadomed```
+```
+pip install --upgrade pip
+pip install ivadomed
+```
 
 ## Training
 
