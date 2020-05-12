@@ -287,10 +287,6 @@ class CenterCrop2D(Crop2D):
 
 class ROICrop2D(Crop2D):
     """Make a crop of a specified size around a ROI."""
-
-    def __init__(self, size):
-        super().__init__(size)
-
     @list_capable
     def __call__(self, sample, metadata={}):
         # If crop_params are not in metadata,
