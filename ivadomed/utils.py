@@ -358,6 +358,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         oriented_volumes = []
         for i in range(n_channel):
             oriented_volumes.append(reorient_image(arr[i, ], slice_axis, nib_ref, nib_ref_can))
+        # transpose to locate the channel dimension at the end to properly see image on viewer
         arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
 
     if bin_thr >= 0:
