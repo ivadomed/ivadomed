@@ -261,10 +261,8 @@ class CenterCrop2D(Crop2D):
         params = (fh, fw, h, w)
         metadata['crop_params'] = params
 
-        # Crop data
-        data_out = sample[fh:fh+th, fw:fw+tw]
-
-        return data_out, metadata
+        # Call base method
+        super.__call__(sample, metadata)
 
     @list_capable
     def undo_transform(self, sample, metadata):
