@@ -134,9 +134,9 @@ def orient_img_ras(data, slice_axis):
     :return: numpy array oriented in RAS
     """
     if slice_axis == 0:
-        return data.transpose(2, 1, 0)
+        return data.transpose(2, 1, 0) if len(data.shape) == 3 else data.transpose(0, 3, 2, 1)
     elif slice_axis == 1:
-        return data.transpose(1, 2, 0)
+        return data.transpose(1, 2, 0) if len(data.shape) == 3 else data.transpose(0, 2, 3, 1)
     elif slice_axis == 2:
         return data
 
