@@ -234,6 +234,7 @@ class Crop2D(ImedTransform):
     def __init__(self, size):
         self.size = size
 
+    # TODO: negative coords
     @list_capable
     def __call__(self, sample, metadata={}):
         # Get params

@@ -207,7 +207,7 @@ def test_Crop2D(im_seg, crop_transform):
     if crop_transform.__class__.__name__ == "ROICrop2D":
         _, metadata_in = crop_transform(seg, metadata_in)
         for metadata in metadata_in:
-            assert "crop_params" in metadata_in
+            assert "crop_params" in metadata
 
     # Apply transform
     do_im, do_metadata = crop_transform(im, metadata_in)
