@@ -9,7 +9,7 @@ from math import isclose
 
 import torch
 
-from ivadomed.transforms import NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
+from ivadomed.transforms import ROICrop2D, CenterCrop2D, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
 from ivadomed.metrics import dice_score, mse
 
 DEBUGGING = False
@@ -192,3 +192,25 @@ def test_NormalizeInstance(im_seg):
     for t in do_tensor:
         assert abs(t.mean() - 0.0) <= 1e-2
         assert abs(t.std() - 1.0) <= 1e-2
+
+
+@pytest.mark.parametrize('im_seg', [create_test_image_2d(100, 100, 1)])
+@pytest.mark.parametrize('crop_transform', [CenterCrop2D((80, 60)),
+                                            CenterCrop2D((60, 80))])
+def test_CenterCrop2D(im_seg, crop_transform):
+    im, seg = im_seg
+    metadata_ = {'data_shape': im[0].shape}
+    metadata_in = [metadata_ for _ in im] if isinstance(im, list) else {}
+
+    # Apply transform
+    do_im, do_metadata = crop_transform(im, metadata_in)
+    do_seg, do_seg_metadata = crop_transform(seg, metadata_in)
+
+    for idx, i in im:
+        # Check data shape
+        assert do_im[idx].shape == crop_transform.size
+        assert do_seg[idx].shape == crop_transform.size
+        # Check metadata
+        assert do_metadata[idx]['crop_params'] == do_seg_metadata[idx]['crop_params']
+
+    print(do_metadata[idx]['crop_params'], do_seg_metadata[idx]['crop_params'])
