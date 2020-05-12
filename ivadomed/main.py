@@ -712,7 +712,7 @@ def cmd_test(context):
             if not i_monteCarlo:
                 batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
                 batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
-                if batch["roi"][0] is not None:
+                if "roi" in batch and batch["roi"][0] is not None:
                     batch["roi"] = batch["roi"][0]
                     batch["roi_metadata"] = batch["roi_metadata"][0]
 
@@ -774,7 +774,7 @@ def cmd_test(context):
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
-                    output_nii = imed_utils.pred_to_nib(data_lst=rdict_undo['gt'].transpose((2, 3, 1, 0)),
+                    output_nii = imed_utils.pred_to_nib(data_lst=rdict_undo['gt'],
                                                         z_lst=[],
                                                         fname_ref=fname_ref,
                                                         fname_out=fname_pred,
