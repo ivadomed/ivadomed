@@ -237,45 +237,23 @@ class Crop2D(ImedTransform):
 class CenterCrop2D(Crop2D):
     """Make a centered crop of a specified size."""
 
-    def __init__(self, size, labeled=True):
-        super().__init__(size, labeled)
+    def __init__(self, size):
+        super().__init__(size)
 
-    def __call__(self, sample):
-        rdict = {}
+    @list_capable
+    def __call__(self, sample, metadata={}):
+        # Crop parameters
         th, tw = self.size
-
-        # Input data
-        input_data = sample['input']
-
-        # As the modalities are registered, the cropping params are the same
-        w, h = input_data[0].size
+        h, w = sample.shape
         fh = int(round((h - th) / 2.))
         fw = int(round((w - tw) / 2.))
         params = (fh, fw, w, h)
+        metadata['crop_params'] = params
 
-        # Loop across input modalities
-        for i in range(len(input_data)):
-            # Updating the parameters in the input metadata
-            self.propagate_params(sample, params, i)
-            # Cropping
-            input_data[i] = F.center_crop(input_data[i], self.size)
+        # Crop data
+        data_out = sample[fh:fh+th, fw:fw+tw]
 
-        # Update
-        rdict['input'] = input_data
-
-        # Labeled data
-        if self.labeled:
-            gt_data = sample['gt']
-            # Loop across GT
-            for i in range(len(gt_data)):
-                # Cropping
-                gt_data[i] = F.center_crop(gt_data[i], self.size)
-
-            # Update
-            rdict['gt'] = gt_data
-
-        sample.update(rdict)
-        return sample
+        return data_out, metadata
 
     def do_uncrop(self, data, params):
         fh, fw, w, h = params
