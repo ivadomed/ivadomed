@@ -247,7 +247,7 @@ class CenterCrop2D(Crop2D):
         h, w = sample.shape
         fh = int(round((h - th) / 2.))
         fw = int(round((w - tw) / 2.))
-        params = (fh, fw, w, h)
+        params = (fh, fw, h, w)
         metadata['crop_params'] = params
 
         # Crop data
@@ -256,7 +256,7 @@ class CenterCrop2D(Crop2D):
         return data_out, metadata
 
     def do_uncrop(self, data, params):
-        fh, fw, w, h = params
+        fh, fw, h, h = params
         th, tw = self.size
         pad_left = fw
         pad_right = w - pad_left - tw
@@ -265,33 +265,25 @@ class CenterCrop2D(Crop2D):
         padding = (pad_left, pad_top, pad_right, pad_bottom)
         return F.pad(data, padding)
 
-    def undo_transform(self, sample):
-        rdict = {}
+    @list_capable
+    def undo_transform(self, sample, metadata):
+        # Get crop params
+        fh, fw, h, w = metadata["crop_params"]
+        th, tw = self.size
 
-        crop_params = sample['input_metadata']["__centercrop"]
+        # Get padding params
+        pad_left = fw
+        pad_right = w - pad_left - tw
+        pad_top = fh
+        pad_bottom = h - pad_top - th
 
-        # TODO: Decorator?
-        # Input data
-        if isinstance(sample['input'], list):
-            rdict['input'] = sample['input']
-            for i in range(len(sample['input'])):
-                # TODO: sample['input_metadata'][i]["__centercrop"]
-                rdict['input'][i] = self.do_uncrop(data=sample['input'][i],
-                                                   params=crop_params)
-        else:
-            rdict['input'] = self.do_uncrop(data=sample['input'],
-                                            params=crop_params)
+        # Apply padding
+        data_out = np.pad(sample,
+                          [(pad_top, pad_bottom), (pad_left, pad_right)],
+                          mode='constant',
+                          constant_values=0).astype(sample.dtype)
 
-        # Labeled data
-        # Note: undo_transform: we force labeled=True because used with predictions
-        rdict['gt'] = sample['gt']
-        for i in range(len(sample['gt'])):
-            rdict['gt'][i] = self.do_uncrop(data=sample['gt'][i],
-                                            params=crop_params)
-
-        # Update
-        sample.update(rdict)
-        return sample
+        return data_out, metadata
 
 
 class ROICrop2D(Crop2D):
