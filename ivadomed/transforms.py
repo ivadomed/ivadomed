@@ -260,10 +260,14 @@ class ToTensor(IMEDTransform):
         # Input data
         if len(input_data) > 1:
             # Multiple inputs
-            ret_input = [F.to_tensor(item) for item in input_data]
+            # F.to_tensor transposes numpy arrays, to use torch.from_numpy, the array needs to be contiguous
+            ret_input = [torch.from_numpy(np.ascontiguousarray(item)) if isinstance(item, np.ndarray) else
+                         F.to_tensor(item) for item in input_data]
         else:
             # single input
-            ret_input = F.to_tensor(input_data[0])
+            ret_input = torch.from_numpy(np.ascontiguousarray(input_data[0])) if isinstance(input_data[0], np.ndarray) \
+                        else F.to_tensor(input_data[0])
+
         rdict['input'] = ret_input
 
         # Labeled data
@@ -273,7 +277,8 @@ class ToTensor(IMEDTransform):
                 if isinstance(gt_data, list):
                     # multiple GT
                     # torch.cat is used to be compatible with StackTensors
-                    ret_gt = torch.cat([F.to_tensor(item) for item in gt_data], dim=0)
+                    ret_gt = torch.cat([torch.from_numpy(np.ascontiguousarray(item)) if isinstance(item, np.ndarray)
+                                        else F.to_tensor(item) for item in gt_data], dim=0)
 
                     # Add dim 0 for 3D images (i.e. 2D slices with multiple GT)
                     if isinstance(gt_data[0], np.ndarray) and len(gt_data[0].shape) == 3:
@@ -281,7 +286,8 @@ class ToTensor(IMEDTransform):
 
                 else:
                     # single GT
-                    ret_gt = F.to_tensor(gt_data)
+                    ret_gt = torch.from_numpy(np.ascontiguousarray(gt_data)) if isinstance(gt_data, np.ndarray) else \
+                             F.to_tensor(gt_data)
 
                 rdict['gt'] = ret_gt
 
