@@ -14,8 +14,8 @@ from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_
 from scipy.ndimage.interpolation import map_coordinates
 
 import torch
-import torch.nn.functional as F
-from torchvision import transforms as torchvision_transforms
+#import torch.nn.functional as F
+#from torchvision import transforms as torchvision_transforms
 
 
 def list_capable(wrapped):
@@ -268,10 +268,6 @@ class Crop2D(ImedTransform):
 
 class CenterCrop2D(Crop2D):
     """Make a centered crop of a specified size."""
-
-    def __init__(self, size):
-        super().__init__(size)
-
     @list_capable
     def __call__(self, sample, metadata={}):
         # Crop parameters
@@ -283,7 +279,7 @@ class CenterCrop2D(Crop2D):
         metadata['crop_params'] = params
 
         # Call base method
-        super().__call__(sample, metadata)
+        return super().__call__(sample, metadata)
 
 
 class ROICrop2D(Crop2D):
@@ -309,7 +305,7 @@ class ROICrop2D(Crop2D):
             metadata['crop_params'] = params
 
         # Call base method
-        super.__call__(sample, metadata)
+        return super.__call__(sample, metadata)
 
 
 class DilateGT(ImedTransform):
