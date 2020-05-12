@@ -345,11 +345,11 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
             for arr in tmp_lst:
                 print("Shape element lst {}".format(arr.shape))
 
-        # create data
-        arr = np.stack(tmp_lst, axis=0)
+        # create data and stack on depth dimension
+        arr = np.stack(tmp_lst, axis=-1)
 
     else:
-        arr = data_lst
+        arr = data_lst[0, ]
 
     # Reorient data
     arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
@@ -792,10 +792,7 @@ class HookBasedFeatureExtractor(nn.Module):
 
 
 def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
-    if slice_axis == 2:
-        arr = np.swapaxes(arr, 1, 2)
-    # move axis according to slice_axis to RAS orientation
-    arr_ras = np.swapaxes(arr, 0, slice_axis)
+    arr_ras = imed_loaded_utils.orient_img_ras(arr, slice_axis)
 
     # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
     ref_orientation = nib.orientations.io_orientation(nib_ref.affine)
@@ -901,7 +898,8 @@ def convert_labels_to_RGB(grid_img):
 
 def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, unet_3D):
     if unet_3D:
-        num_2d_img = input_samples.shape[3]
+        # Take all images stacked on depth dimension
+        num_2d_img = input_samples.shape[-1]
     else:
         num_2d_img = 1
     if isinstance(input_samples, list):
@@ -912,16 +910,16 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
     gt_samples_copy = gt_samples.clone()
     for idx in range(num_2d_img):
         if unet_3D:
-            input_samples = input_samples_copy[:, :, :, idx, :]
-            preds = preds_copy[:, :, :, idx, :]
-            gt_samples = gt_samples_copy[:, :, :, idx, :]
+            input_samples = input_samples_copy[..., idx]
+            preds = preds_copy[..., idx]
+            gt_samples = gt_samples_copy[..., idx]
             # Only display images with labels
             if gt_samples.sum() == 0:
                 continue
 
         # take only one modality for grid
         if not isinstance(input_samples, list) and input_samples.shape[1] > 1:
-            tensor = input_samples[:, 0, :, :][:, None, :, :]
+            tensor = input_samples[:, 0, ][:, None, ]
             input_samples = torch.cat((tensor, tensor, tensor), 1)
         elif isinstance(input_samples, list):
             input_samples = input_samples[0]
