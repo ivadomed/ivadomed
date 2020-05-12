@@ -132,7 +132,6 @@ class NumpyToTensor(ImedTransform):
     @list_capable
     def __call__(self, sample, metadata={}):
         # TODO: https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/transforms.py#L275
-        # TODO: check F.to_tensor VERSUS torch.from_numpy
         return torch.from_numpy(sample), metadata
 
 
@@ -231,21 +230,8 @@ class NormalizeInstance(ImedTransform):
 
 
 class Crop2D(ImedTransform):
-
-    def __init__(self, size, labeled=True):
+    def __init__(self, size):
         self.size = size
-        self.labeled = labeled
-
-    # TODO: return
-    @staticmethod
-    def propagate_params(sample, params, i):
-        input_metadata = sample['input_metadata'][i]
-        input_metadata["__centercrop"] = params
-        return input_metadata
-
-    @staticmethod
-    def get_params(sample):
-        return [sample['input_metadata'][i]["__centercrop"] for i in range(len(sample))]
 
 
 class CenterCrop2D(Crop2D):
