@@ -131,8 +131,9 @@ class NumpyToTensor(ImedTransform):
 
     @list_capable
     def __call__(self, sample, metadata={}):
-        # TODO: https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/transforms.py#L275
-        return torch.from_numpy(sample), metadata
+        # Use np.ascontiguousarray to avoid axes permutations issues
+        arr_contig = np.ascontiguousarray(sample, dtype=sample.dtype)
+        return torch.from_numpy(arr_contig), metadata
 
 
 class Resample(ImedTransform):
