@@ -262,7 +262,7 @@ class CenterCrop2D(Crop2D):
         metadata['crop_params'] = params
 
         # Call base method
-        super.__call__(sample, metadata)
+        super().__call__(sample, metadata)
 
     @list_capable
     def undo_transform(self, sample, metadata):
@@ -329,40 +329,26 @@ class ROICrop2D(Crop2D):
 
     @list_capable
     def __call__(self, sample, metadata={}):
-        # Check if crop_params are in metadata, ie already extracted from ROI
-        if 'crop_params' in metadata:
-            super.__call__(sample, metadata)
+        # If crop_params are not in metadata,
+        # then we are here dealing with ROI data to determine crop params
+        if 'crop_params' not in metadata:
+            # Compute center of mass of the ROI
+            h_roi, w_roi = center_of_mass(sample.astype(np.int))
+            h_roi, w_roi = int(round(h_roi)), int(round(w_roi))
+            th, tw = self.size
+            th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
 
-        # compute center of mass of the ROI
-        x_roi, y_roi = center_of_mass(np.array(roi_data).astype(np.int))
-        x_roi, y_roi = int(round(x_roi)), int(round(y_roi))
-        tw, th = self.size
-        th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
+            # compute top left corner of the crop area
+            fh = h_roi - th_half
+            fw = w_roi - tw_half
 
-        # compute top left corner of the crop area
-        fh = y_roi - th_half
-        fw = x_roi - tw_half
-        # params are shared across modalities because are all registered
-        w, h = input_data[0].size
-        params = (fh, fw, h, w)
-        self.propagate_params(sample, params, 0)
+            # Crop params
+            h, w = sample.shape
+            params = (fh, fw, h, w)
+            metadata['crop_params'] = params
 
-        # Loop across modalities
-        for i in range(len(input_data)):
-            # crop data
-            input_data[i] = F.crop(input_data[i], fw, fh, tw, th)
-        # Update
-        rdict['input'] = input_data
-
-        # Labeled data
-        if self.labeled:
-            gt_data = sample['gt']
-            for i in range(len(gt_data)):
-                gt_data[i] = F.crop(gt_data[i], fw, fh, tw, th)
-            rdict['gt'] = gt_data
-
-        sample.update(rdict)
-        return sample
+        # Call base method
+        super.__call__(sample, metadata)
 
 
 class DilateGT(ImedTransform):
