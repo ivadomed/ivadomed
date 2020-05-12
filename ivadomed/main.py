@@ -774,7 +774,7 @@ def cmd_test(context):
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
-                    output_nii = imed_utils.pred_to_nib(data_lst=rdict_undo['gt'][0, ],
+                    output_nii = imed_utils.pred_to_nib(data_lst=rdict_undo['gt'],
                                                         z_lst=[],
                                                         fname_ref=fname_ref,
                                                         fname_out=fname_pred,
@@ -783,7 +783,6 @@ def cmd_test(context):
                                                         bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                     # Save merged labels with color
-                    output_nii_shape = output_nii.get_fdata().shape
                     if isinstance(rdict_undo['gt'], np.ndarray) and rdict_undo['gt'].shape[0] > 1:
                         imed_utils.save_color_labels(rdict_undo['gt'],
                                                      context['binarize_prediction'],
