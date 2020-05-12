@@ -305,7 +305,7 @@ class ROICrop2D(Crop2D):
             metadata['crop_params'] = params
 
         # Call base method
-        return super.__call__(sample, metadata)
+        return super().__call__(sample, metadata)
 
 
 class DilateGT(ImedTransform):
