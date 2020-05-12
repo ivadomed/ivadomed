@@ -245,25 +245,6 @@ class Crop2D(ImedTransform):
 
         return data_out, metadata
 
-class CenterCrop2D(Crop2D):
-    """Make a centered crop of a specified size."""
-
-    def __init__(self, size):
-        super().__init__(size)
-
-    @list_capable
-    def __call__(self, sample, metadata={}):
-        # Crop parameters
-        th, tw = self.size
-        h, w = sample.shape
-        fh = int(round((h - th) / 2.))
-        fw = int(round((w - tw) / 2.))
-        params = (fh, fw, h, w)
-        metadata['crop_params'] = params
-
-        # Call base method
-        super().__call__(sample, metadata)
-
     @list_capable
     def undo_transform(self, sample, metadata):
         # Get crop params
@@ -283,6 +264,26 @@ class CenterCrop2D(Crop2D):
                           constant_values=0).astype(sample.dtype)
 
         return data_out, metadata
+
+
+class CenterCrop2D(Crop2D):
+    """Make a centered crop of a specified size."""
+
+    def __init__(self, size):
+        super().__init__(size)
+
+    @list_capable
+    def __call__(self, sample, metadata={}):
+        # Crop parameters
+        th, tw = self.size
+        h, w = sample.shape
+        fh = int(round((h - th) / 2.))
+        fw = int(round((w - tw) / 2.))
+        params = (fh, fw, h, w)
+        metadata['crop_params'] = params
+
+        # Call base method
+        super().__call__(sample, metadata)
 
 
 class ROICrop2D(Crop2D):
