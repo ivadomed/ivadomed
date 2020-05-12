@@ -291,42 +291,6 @@ class ROICrop2D(Crop2D):
     def __init__(self, size):
         super().__init__(size)
 
-    def do_uncrop(self, data, params):
-        fh, fw, w, h = params
-        tw, th = self.size
-        pad_left = fw
-        pad_right = w - pad_left - tw
-        pad_top = fh
-        pad_bottom = h - pad_top - th
-        padding = (pad_top, pad_left, pad_bottom, pad_right)
-        return F.pad(data, padding)
-
-    def undo_transform(self, sample):
-        rdict = {
-            'input': [],
-            'gt': []
-        }
-
-        crop_params = sample['input_metadata']["__centercrop"]
-
-        # TODO: call get_params
-        # TODO: Decorator?
-        if isinstance(sample['input'], list):
-            for input_data in sample['input']:
-                rdict['input'].append(self.do_uncrop(data=input_data,
-                                                     params=crop_params))
-        else:
-            rdict['input'] = self.do_uncrop(data=sample['input'],
-                                            params=crop_params)
-
-        # Note: undo_transform: we force labeled=True because used with predictions
-        for gt in sample['gt']:
-            rdict['gt'].append(self.do_uncrop(data=gt,
-                                              params=crop_params))
-
-        sample.update(rdict)
-        return sample
-
     @list_capable
     def __call__(self, sample, metadata={}):
         # If crop_params are not in metadata,
