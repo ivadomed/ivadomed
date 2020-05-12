@@ -234,6 +234,16 @@ class Crop2D(ImedTransform):
     def __init__(self, size):
         self.size = size
 
+    @list_capable
+    def __call__(self, sample, metadata={}):
+        # Get params
+        th, tw = self.size
+        fh, fw, h, w = metadata['crop_params']
+
+        # Crop data
+        data_out = sample[fh:fh+th, fw:fw+tw]
+
+        return data_out, metadata
 
 class CenterCrop2D(Crop2D):
     """Make a centered crop of a specified size."""
@@ -255,16 +265,6 @@ class CenterCrop2D(Crop2D):
         data_out = sample[fh:fh+th, fw:fw+tw]
 
         return data_out, metadata
-
-    def do_uncrop(self, data, params):
-        fh, fw, h, h = params
-        th, tw = self.size
-        pad_left = fw
-        pad_right = w - pad_left - tw
-        pad_top = fh
-        pad_bottom = h - pad_top - th
-        padding = (pad_left, pad_top, pad_right, pad_bottom)
-        return F.pad(data, padding)
 
     @list_capable
     def undo_transform(self, sample, metadata):
@@ -290,8 +290,8 @@ class CenterCrop2D(Crop2D):
 class ROICrop2D(Crop2D):
     """Make a crop of a specified size around a ROI."""
 
-    def __init__(self, size, labeled=True):
-        super().__init__(size, labeled)
+    def __init__(self, size):
+        super().__init__(size)
 
     def do_uncrop(self, data, params):
         fh, fw, w, h = params
@@ -329,11 +329,11 @@ class ROICrop2D(Crop2D):
         sample.update(rdict)
         return sample
 
-    def __call__(self, sample):
-        rdict = {}
-
-        input_data = sample['input']
-        roi_data = sample['roi'][0]
+    @list_capable
+    def __call__(self, sample, metadata={}):
+        # Check if crop_params are in metadata, ie already extracted from ROI
+        if 'crop_params' in metadata:
+            super.__call__(sample, metadata)
 
         # compute center of mass of the ROI
         x_roi, y_roi = center_of_mass(np.array(roi_data).astype(np.int))
