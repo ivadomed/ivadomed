@@ -139,14 +139,15 @@ class SegmentationPair(object):
 
         return input_shape[0], gt_shape[0] if len(gt_shape) else None
 
-    def get_pair_data(self):
+    def get_pair_data(self, slice_axis=2):
         """Return the tuble (input, ground truth) with the data content in
         numpy array."""
         cache_mode = 'fill' if self.cache else 'unchanged'
 
         input_data = []
         for handle in self.input_handle:
-            input_data.append(handle.get_fdata(cache_mode, dtype=np.float32))
+            hwd_oriented = imed_loader_utils.orient_img_hwd(handle.get_fdata(cache_mode, dtype=np.float32), slice_axis)
+            input_data.append(hwd_oriented)
 
         gt_data = []
         # Handle unlabeled data
@@ -154,7 +155,8 @@ class SegmentationPair(object):
             gt_data = None
         for gt in self.gt_handle:
             if gt is not None:
-                gt_data.append(gt.get_fdata(cache_mode, dtype=np.float32))
+                hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32), slice_axis)
+                gt_data.append(hwd_oriented)
             else:
                 gt_data.append(np.zeros(self.input_handle[0].shape, dtype=np.float32))
 
@@ -167,7 +169,7 @@ class SegmentationPair(object):
         :param slice_axis: axis to make the slicing.
         """
         if self.cache:
-            input_dataobj, gt_dataobj = self.get_pair_data()
+            input_dataobj, gt_dataobj = self.get_pair_data(slice_axis)
         else:
             # use dataobj to avoid caching
             input_dataobj = [handle.dataobj for handle in self.input_handle]
@@ -183,15 +185,8 @@ class SegmentationPair(object):
         input_slices = []
         # Loop over modalities
         for data_object in input_dataobj:
-            if slice_axis == 2:
-                input_slices.append(np.asarray(data_object[..., slice_index],
-                                               dtype=np.float32))
-            elif slice_axis == 1:
-                input_slices.append(np.asarray(data_object[:, slice_index, ...],
-                                               dtype=np.float32))
-            elif slice_axis == 0:
-                input_slices.append(np.asarray(data_object[slice_index, ...],
-                                               dtype=np.float32))
+            input_slices.append(np.asarray(data_object[..., slice_index],
+                                           dtype=np.float32))
 
         # Handle the case for unlabeled data
         gt_meta_dict = None
@@ -200,22 +195,16 @@ class SegmentationPair(object):
         else:
             gt_slices = []
             for gt_obj in gt_dataobj:
-                if slice_axis == 2:
-                    gt_slices.append(np.asarray(gt_obj[..., slice_index],
-                                                dtype=np.float32))
-                elif slice_axis == 1:
-                    gt_slices.append(np.asarray(gt_obj[:, slice_index, ...],
-                                                dtype=np.float32))
-                elif slice_axis == 0:
-                    gt_slices.append(np.asarray(gt_obj[slice_index, ...],
-                                                dtype=np.float32))
+                gt_slices.append(np.asarray(gt_obj[..., slice_index],
+                                            dtype=np.float32))
+
 
             gt_meta_dict = []
             for gt in self.gt_handle:
                 if gt is not None:
                     gt_meta_dict.append(imed_loader_utils.SampleMetadata({
-                        "zooms": gt.header.get_zooms()[:2],
-                        "data_shape": gt.header.get_data_shape()[:2],
+                        "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), slice_axis)[:2],
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), slice_axis)[:2],
                         "gt_filenames": self.metadata[0]["gt_filenames"]
                     }))
                 else:
@@ -224,8 +213,8 @@ class SegmentationPair(object):
         input_meta_dict = []
         for handle in self.input_handle:
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
-                "zooms": handle.header.get_zooms()[:2],
-                "data_shape": handle.header.get_data_shape()[:2],
+                "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), slice_axis)[:2],
+                "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), slice_axis)[:2]
             }))
 
         dreturn = {
@@ -381,13 +370,14 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
     :param padding: size of the overlapping per subvolume and dimensions
     """
 
-    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), padding=0):
+    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), padding=0, slice_axis=0):
         self.filename_pairs = filename_pairs
         self.handlers = []
         self.indexes = []
         self.length = length
         self.padding = padding
         self.transform = transform
+        self.slice_axis = slice_axis
 
         self._load_filenames()
         self._prepare_indices()
@@ -410,7 +400,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
         for i in range(0, len(self.handlers)):
             if not crop:
-                input_img, _ = self.handlers[i].get_pair_data()
+                input_img, _ = self.handlers[i].get_pair_data(self.slice_axis)
                 shape = input_img[0].shape
             else:
                 shape = shape_crop
@@ -442,7 +432,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         :param index: subvolume index.
         """
         coord = self.indexes[index]
-        input_img, gt_img = self.handlers[coord['handler_index']].get_pair_data()
+        input_img, gt_img = self.handlers[coord['handler_index']].get_pair_data(self.slice_axis)
         data_shape = gt_img[0].shape
         seg_pair_slice = self.handlers[coord['handler_index']].get_pair_slice(coord['handler_index'])
         data_dict = {
