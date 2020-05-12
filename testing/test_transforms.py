@@ -12,7 +12,7 @@ import torch
 from ivadomed.transforms import ROICrop2D, CenterCrop2D, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
 from ivadomed.metrics import dice_score, mse
 
-DEBUGGING = False
+DEBUGGING = True
 if DEBUGGING:
     from testing.utils import plot_transformed_sample
 
@@ -206,11 +206,32 @@ def test_CenterCrop2D(im_seg, crop_transform):
     do_im, do_metadata = crop_transform(im, metadata_in)
     do_seg, do_seg_metadata = crop_transform(seg, metadata_in)
 
-    for idx, i in im:
+    # Loop and check
+    for idx, i in enumerate(im):
         # Check data shape
         assert do_im[idx].shape == crop_transform.size
         assert do_seg[idx].shape == crop_transform.size
         # Check metadata
         assert do_metadata[idx]['crop_params'] == do_seg_metadata[idx]['crop_params']
 
-    print(do_metadata[idx]['crop_params'], do_seg_metadata[idx]['crop_params'])
+    # Apply undo transform
+    undo_im, _ = crop_transform.undo_transform(do_im, do_metadata)
+    undo_seg, _ = crop_transform.undo_transform(do_seg, do_seg_metadata)
+
+    # Loop and check
+    for idx, i in enumerate(im):
+        # Check data shape
+        assert undo_im[idx].shape == i.shape
+        assert undo_seg[idx].shape == seg[idx].shape
+        # Check data type
+        assert do_im[idx].dtype == undo_im[idx].dtype == i.dtype
+        assert do_seg[idx].dtype == undo_seg[idx].dtype == seg[idx].dtype
+        # Check data consistency
+        fh, fw, _, _ = do_metadata[idx]['crop_params']
+        th, tw = crop_transform.size
+        assert np.array_equal(i[fh:fh+th, fw:fw+tw], undo_im[idx][fh:fh+th, fw:fw+tw])
+        assert np.array_equal(seg[idx][fh:fh+th, fw:fw+tw], undo_seg[idx][fh:fh+th, fw:fw+tw])
+        # Plot for debugging
+        if DEBUGGING:
+            plot_transformed_sample(seg[idx], undo_seg[idx])
+            plot_transformed_sample(i, undo_im[idx])
