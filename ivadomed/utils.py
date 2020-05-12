@@ -308,7 +308,8 @@ class Evaluation3DMetrics(object):
         return dct, self.data_painted
 
 
-def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5):
+def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
+                discard_noise=True):
     """Convert the NN predictions as nibabel object.
 
     Based on the header of fname_ref image, it creates a nibabel object from the NN predictions (data_lst),
@@ -349,14 +350,14 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         arr = np.stack(tmp_lst, axis=-1)
 
     else:
-        arr = data_lst[0, ]
+        arr = data_lst
 
     # Reorient data
     arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
 
     if bin_thr >= 0:
         arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
-    else:  # discard noise
+    elif discard_noise:  # discard noise
         arr_pred_ref_space[arr_pred_ref_space <= 1e-3] = 0
 
     # create nibabel object
@@ -842,7 +843,7 @@ def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
 
 def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axis):
     rdict = {}
-    h, w, d, n_class = gt_data.shape
+    n_class, h, w, d = gt_data.shape
     labels = range(n_class)
     # Generate color labels
     multi_labeled_pred = np.zeros((h, w, d, 3))
@@ -854,16 +855,15 @@ def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axi
 
     for label in labels:
         r, g, b = np.random.randint(0, 256, size=3)
-        multi_labeled_pred[..., 0] += r * gt_data[..., label]
-        multi_labeled_pred[..., 1] += g * gt_data[..., label]
-        multi_labeled_pred[..., 2] += b * gt_data[..., label]
+        multi_labeled_pred[..., 0] += r * gt_data[label, ]
+        multi_labeled_pred[..., 1] += g * gt_data[label, ]
+        multi_labeled_pred[..., 2] += b * gt_data[label, ]
 
     rgb_dtype = np.dtype([('R', 'u1'), ('G', 'u1'), ('B', 'u1')])
     multi_labeled_pred = multi_labeled_pred.copy().astype('u1').view(dtype=rgb_dtype).reshape((h, w, d))
-    multi_labeled_pred = np.flip(multi_labeled_pred, axis=0)
 
-    pred_to_nib(multi_labeled_pred.transpose((2, 0, 1)), [], gt_filename,
-                output_filename, slice_axis=slice_axis, kernel_dim='3d', bin_thr=-1)
+    pred_to_nib(multi_labeled_pred, [], gt_filename,
+                output_filename, slice_axis=slice_axis, kernel_dim='3d', bin_thr=-1, discard_noise=False)
 
     return multi_labeled_pred
 
