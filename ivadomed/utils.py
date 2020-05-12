@@ -349,11 +349,16 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         # create data and stack on depth dimension
         arr = np.stack(tmp_lst, axis=-1)
 
+        # Reorient data
+        arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
+
     else:
         arr = data_lst
-
-    # Reorient data
-    arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
+        n_channel = arr.shape[0]
+        oriented_volumes = []
+        for i in range(n_channel):
+            oriented_volumes.append(reorient_image(arr[i, ], slice_axis, nib_ref, nib_ref_can))
+        arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
 
     if bin_thr >= 0:
         arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
