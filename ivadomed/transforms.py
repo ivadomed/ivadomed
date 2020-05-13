@@ -244,23 +244,39 @@ class Crop2D(ImedTransform):
         # Crop data
         data_out = sample[fh:fh+th, fw:fw+tw]
 
-        return data_out, metadata
-
-    @list_capable
-    def undo_transform(self, sample, metadata):
-        # Get crop params
-        fh, fw, h, w = metadata["crop_params"]
-        th, tw = self.size
-
-        # Get padding params
+        # Compute params to undo transform
         pad_left = fw
         pad_right = w - pad_left - tw
         pad_top = fh
         pad_bottom = h - pad_top - th
 
+        # Pad image if crop out of boundaries
+        ch, cw = data_out.shape
+        if (ch, cw) != (th, tw):
+            h_offset = (th - ch) / 2.
+            h_eps = 1 if h_offset % 1 != 0 else 0
+            w_offset = (tw - cw) / 2.
+            w_eps = 1 if w_offset % 1 != 0 else 0
+            npad = ((int(h_offset) + h_eps, int(h_offset)),
+                    (int(w_offset) + w_eps, int(w_offset)))
+            data_out = np.pad(data_out,
+                              pad_width=npad,
+                              mode='constant',
+                              constant_values=np.min(data_out)).astype(sample.dtype)
+
+        # Save undo params
+        metadata['crop_undo'] = [(pad_top, pad_bottom), (pad_left, pad_right)]
+
+        return data_out, metadata
+
+    @list_capable
+    def undo_transform(self, sample, metadata):
+        # Get crop params
+        npad = metadata["crop_undo"]
+
         # Apply padding
         data_out = np.pad(sample,
-                          [(pad_top, pad_bottom), (pad_left, pad_right)],
+                          npad,
                           mode='constant',
                           constant_values=0).astype(sample.dtype)
 
