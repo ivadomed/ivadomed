@@ -799,6 +799,7 @@ class HookBasedFeatureExtractor(nn.Module):
 
 
 def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
+    # Orient image in RAS according to slice axis
     arr_ras = imed_loaded_utils.orient_img_ras(arr, slice_axis)
 
     # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
