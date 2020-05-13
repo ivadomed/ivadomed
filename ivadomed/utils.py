@@ -308,7 +308,8 @@ class Evaluation3DMetrics(object):
         return dct, self.data_painted
 
 
-def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5):
+def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
+                discard_noise=True):
     """Convert the NN predictions as nibabel object.
 
     Based on the header of fname_ref image, it creates a nibabel object from the NN predictions (data_lst),
@@ -346,18 +347,24 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
             for arr in tmp_lst:
                 print("Shape element lst {}".format(arr.shape))
 
-        # create data
-        arr = np.stack(tmp_lst, axis=0)
+        # create data and stack on depth dimension
+        arr = np.stack(tmp_lst, axis=-1)
+
+        # Reorient data
+        arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
 
     else:
         arr = data_lst[0]
-
-    # Reorient data
-    arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
+        n_channel = arr.shape[0]
+        oriented_volumes = []
+        for i in range(n_channel):
+            oriented_volumes.append(reorient_image(arr[i, ], slice_axis, nib_ref, nib_ref_can))
+        # transpose to locate the channel dimension at the end to properly see image on viewer
+        arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
 
     if bin_thr >= 0:
         arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
-    else:  # discard noise
+    elif discard_noise:  # discard noise
         arr_pred_ref_space[arr_pred_ref_space <= 1e-3] = 0
 
     # create nibabel object
@@ -803,10 +810,8 @@ class HookBasedFeatureExtractor(nn.Module):
 
 
 def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
-    if slice_axis == 2:
-        arr = np.swapaxes(arr, 1, 2)
-    # move axis according to slice_axis to RAS orientation
-    arr_ras = np.swapaxes(arr, 0, slice_axis)
+    # Orient image in RAS according to slice axis
+    arr_ras = imed_loaded_utils.orient_img_ras(arr, slice_axis)
 
     # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
     ref_orientation = nib.orientations.io_orientation(nib_ref.affine)
@@ -856,7 +861,7 @@ def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
 
 def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axis):
     rdict = {}
-    h, w, d, n_class = gt_data.shape
+    n_class, h, w, d = gt_data.shape
     labels = range(n_class)
     # Generate color labels
     multi_labeled_pred = np.zeros((h, w, d, 3))
@@ -868,16 +873,15 @@ def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axi
 
     for label in labels:
         r, g, b = np.random.randint(0, 256, size=3)
-        multi_labeled_pred[..., 0] += r * gt_data[..., label]
-        multi_labeled_pred[..., 1] += g * gt_data[..., label]
-        multi_labeled_pred[..., 2] += b * gt_data[..., label]
+        multi_labeled_pred[..., 0] += r * gt_data[label, ]
+        multi_labeled_pred[..., 1] += g * gt_data[label, ]
+        multi_labeled_pred[..., 2] += b * gt_data[label, ]
 
     rgb_dtype = np.dtype([('R', 'u1'), ('G', 'u1'), ('B', 'u1')])
     multi_labeled_pred = multi_labeled_pred.copy().astype('u1').view(dtype=rgb_dtype).reshape((h, w, d))
-    multi_labeled_pred = np.flip(multi_labeled_pred, axis=0)
 
-    pred_to_nib(multi_labeled_pred.transpose((2, 0, 1)), [], gt_filename,
-                output_filename, slice_axis=slice_axis, kernel_dim='3d', bin_thr=-1)
+    pred_to_nib(multi_labeled_pred, [], gt_filename,
+                output_filename, slice_axis=slice_axis, kernel_dim='3d', bin_thr=-1, discard_noise=False)
 
     return multi_labeled_pred
 
@@ -912,7 +916,8 @@ def convert_labels_to_RGB(grid_img):
 
 def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, unet_3D):
     if unet_3D:
-        num_2d_img = input_samples.shape[3]
+        # Take all images stacked on depth dimension
+        num_2d_img = input_samples.shape[-1]
     else:
         num_2d_img = 1
     if isinstance(input_samples, list):
@@ -923,16 +928,16 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
     gt_samples_copy = gt_samples.clone()
     for idx in range(num_2d_img):
         if unet_3D:
-            input_samples = input_samples_copy[:, :, :, idx, :]
-            preds = preds_copy[:, :, :, idx, :]
-            gt_samples = gt_samples_copy[:, :, :, idx, :]
+            input_samples = input_samples_copy[..., idx]
+            preds = preds_copy[..., idx]
+            gt_samples = gt_samples_copy[..., idx]
             # Only display images with labels
             if gt_samples.sum() == 0:
                 continue
 
         # take only one modality for grid
         if not isinstance(input_samples, list) and input_samples.shape[1] > 1:
-            tensor = input_samples[:, 0, :, :][:, None, :, :]
+            tensor = input_samples[:, 0, ][:, None, ]
             input_samples = torch.cat((tensor, tensor, tensor), 1)
         elif isinstance(input_samples, list):
             input_samples = input_samples[0]

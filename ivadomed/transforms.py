@@ -313,10 +313,14 @@ class ToTensor(IMEDTransform):
         # Input data
         if len(input_data) > 1:
             # Multiple inputs
-            ret_input = [F.to_tensor(item) for item in input_data]
+            # F.to_tensor transposes numpy arrays, to use torch.from_numpy, the array needs to be contiguous
+            ret_input = [torch.from_numpy(np.ascontiguousarray(item)) if isinstance(item, np.ndarray) else
+                         F.to_tensor(item) for item in input_data]
         else:
             # single input
-            ret_input = F.to_tensor(input_data[0])
+            ret_input = torch.from_numpy(np.ascontiguousarray(input_data[0])) if isinstance(input_data[0], np.ndarray) \
+                        else F.to_tensor(input_data[0])
+
         rdict['input'] = ret_input
 
         # Labeled data
@@ -325,12 +329,13 @@ class ToTensor(IMEDTransform):
             if gt_data is not None:
                 if isinstance(gt_data, list):
                     # multiple GT
-                    # torch.cat is used to be compatible with StackTensors
-                    ret_gt = torch.stack([F.to_tensor(item) for item in gt_data], dim=0)
+                    ret_gt = torch.stack([torch.from_numpy(np.ascontiguousarray(item)) if isinstance(item, np.ndarray)
+                                          else F.to_tensor(item)[0] for item in gt_data], dim=0)
 
                 else:
                     # single GT
-                    ret_gt = F.to_tensor(gt_data)
+                    ret_gt = torch.from_numpy(np.ascontiguousarray(gt_data)) if isinstance(gt_data, np.ndarray) else \
+                             F.to_tensor(gt_data)
 
                 rdict['gt'] = ret_gt
 
@@ -693,8 +698,8 @@ class CenterCrop3D(IMEDTransform):
         fh = max(int(round((h - th) / 2.)), 0)
         fw = max(int(round((w - tw) / 2.)), 0)
         fd = max(int(round((d - td) / 2.)), 0)
-        crop_params = (fd, fw, fh)
 
+        crop_params = (fd, fw, fh)
         n_channel = sample["input"].shape[0]
         undo_input = np.zeros((n_channel, th, td, tw))
         undo_gt = np.zeros((n_channel, th, td, tw))

@@ -273,9 +273,11 @@ class Bids_to_hdf5:
             else:
                 grp = self.hdf5_file.create_group(str(subject_id))
 
-            roi_pair = imed_loader.SegmentationPair(input_filename, roi_filename, metadata=metadata, cache=False)
+            roi_pair = imed_loader.SegmentationPair(input_filename, roi_filename, metadata=metadata,
+                                                    slice_axis=self.slice_axis, cache=False)
 
-            seg_pair = imed_loader.SegmentationPair(input_filename, gt_filename, metadata=metadata, cache=False)
+            seg_pair = imed_loader.SegmentationPair(input_filename, gt_filename, metadata=metadata,
+                                                    slice_axis=self.slice_axis, cache=False)
             print("gt filename", gt_filename)
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
@@ -286,8 +288,7 @@ class Bids_to_hdf5:
 
             for idx_pair_slice in range(input_data_shape[self.slice_axis]):
 
-                slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice,
-                                                         self.slice_axis)
+                slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
 
                 # keeping idx of slices with gt
                 if self.slice_filter_fn:
@@ -295,7 +296,7 @@ class Bids_to_hdf5:
                 if self.slice_filter_fn and filter_fn_ret_seg:
                     useful_slices.append(idx_pair_slice)
 
-                roi_pair_slice = roi_pair.get_pair_slice(idx_pair_slice, self.slice_axis)
+                roi_pair_slice = roi_pair.get_pair_slice(idx_pair_slice)
 
                 input_volumes.append(slice_seg_pair["input"][0])
 

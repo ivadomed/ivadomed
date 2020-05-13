@@ -68,12 +68,13 @@ class SegmentationPair(object):
     :param cache: if the data should be cached in memory or not.
     """
 
-    def __init__(self, input_filenames, gt_filenames, metadata=None, cache=True):
+    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True):
 
         self.input_filenames = input_filenames
         self.gt_filenames = gt_filenames
         self.metadata = metadata
         self.cache = cache
+        self.slice_axis = slice_axis
 
         # list of the images
         self.input_handle = []
@@ -124,7 +125,8 @@ class SegmentationPair(object):
         and ground truth shapes."""
         input_shape = []
         for handle in self.input_handle:
-            input_shape.append(handle.header.get_data_shape())
+            shape = imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis)
+            input_shape.append(tuple(shape))
 
             if not len(set(input_shape)):
                 raise RuntimeError('Inputs have different dimensions.')
@@ -133,7 +135,8 @@ class SegmentationPair(object):
 
         for gt in self.gt_handle:
             if gt is not None:
-                gt_shape.append(gt.header.get_data_shape())
+                shape = imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis)
+                gt_shape.append(tuple(shape))
 
                 if not len(set(gt_shape)):
                     raise RuntimeError('Labels have different dimensions.')
@@ -147,7 +150,9 @@ class SegmentationPair(object):
 
         input_data = []
         for handle in self.input_handle:
-            input_data.append(handle.get_fdata(cache_mode, dtype=np.float32))
+            hwd_oriented = imed_loader_utils.orient_img_hwd(handle.get_fdata(cache_mode, dtype=np.float32),
+                                                            self.slice_axis)
+            input_data.append(hwd_oriented)
 
         gt_data = []
         # Handle unlabeled data
@@ -155,7 +160,9 @@ class SegmentationPair(object):
             gt_data = None
         for gt in self.gt_handle:
             if gt is not None:
-                gt_data.append(gt.get_fdata(cache_mode, dtype=np.float32))
+                hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
+                                                                self.slice_axis)
+                gt_data.append(hwd_oriented)
             else:
                 gt_data.append(np.zeros(self.input_handle[0].shape, dtype=np.float32))
 
@@ -193,11 +200,10 @@ class SegmentationPair(object):
 
         return dreturn
 
-    def get_pair_slice(self, slice_index, slice_axis=2):
+    def get_pair_slice(self, slice_index):
         """Return the specified slice from (input, ground truth).
 
-        :param slice_index: the slice number.
-        :param slice_axis: axis to make the slicing.
+        :param slice_index: the slice number
         """
 
         metadata = self.get_pair_metadata(slice_index)
@@ -212,21 +218,14 @@ class SegmentationPair(object):
             else:
                 gt_dataobj = [gt.dataobj for gt in self.gt_handle]
 
-        if slice_axis not in [0, 1, 2]:
+        if self.slice_axis not in [0, 1, 2]:
             raise RuntimeError("Invalid axis, must be between 0 and 2.")
 
         input_slices = []
         # Loop over modalities
         for data_object in input_dataobj:
-            if slice_axis == 2:
-                input_slices.append(np.asarray(data_object[..., slice_index],
-                                               dtype=np.float32))
-            elif slice_axis == 1:
-                input_slices.append(np.asarray(data_object[:, slice_index, ...],
-                                               dtype=np.float32))
-            elif slice_axis == 0:
-                input_slices.append(np.asarray(data_object[slice_index, ...],
-                                               dtype=np.float32))
+            input_slices.append(np.asarray(data_object[..., slice_index],
+                                           dtype=np.float32))
 
         # Handle the case for unlabeled data
         if self.gt_handle is None:
@@ -234,15 +233,8 @@ class SegmentationPair(object):
         else:
             gt_slices = []
             for gt_obj in gt_dataobj:
-                if slice_axis == 2:
-                    gt_slices.append(np.asarray(gt_obj[..., slice_index],
-                                                dtype=np.float32))
-                elif slice_axis == 1:
-                    gt_slices.append(np.asarray(gt_obj[:, slice_index, ...],
-                                                dtype=np.float32))
-                elif slice_axis == 0:
-                    gt_slices.append(np.asarray(gt_obj[slice_index, ...],
-                                                dtype=np.float32))
+                gt_slices.append(np.asarray(gt_obj[..., slice_index],
+                                            dtype=np.float32))
 
         dreturn = {
             "input": input_slices,
@@ -278,22 +270,22 @@ class MRI2DSegmentationDataset(Dataset):
 
     def _load_filenames(self):
         for input_filenames, gt_filenames, roi_filename, metadata in self.filename_pairs:
-            roi_pair = SegmentationPair(input_filenames, roi_filename, metadata=metadata, cache=self.cache)
+            roi_pair = SegmentationPair(input_filenames, roi_filename, metadata=metadata, slice_axis=self.slice_axis,
+                                        cache=self.cache)
 
-            seg_pair = SegmentationPair(input_filenames, gt_filenames, metadata=metadata, cache=self.cache)
+            seg_pair = SegmentationPair(input_filenames, gt_filenames, metadata=metadata, slice_axis=self.slice_axis,
+                                        cache=self.cache)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
-            for idx_pair_slice in range(input_data_shape[self.slice_axis]):
-                slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice,
-                                                         self.slice_axis)
+            for idx_pair_slice in range(input_data_shape[-1]):
+                slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
                 if self.slice_filter_fn:
                     filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
                 if self.slice_filter_fn and not filter_fn_ret_seg:
                     continue
 
-                slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice,
-                                                         self.slice_axis)
+                slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice)
 
                 item = (slice_seg_pair, slice_roi_pair)
                 self.indexes.append(item)
@@ -390,20 +382,21 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
     :param padding: size of the overlapping per subvolume and dimensions
     """
 
-    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), padding=0):
+    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), padding=0, slice_axis=0):
         self.filename_pairs = filename_pairs
         self.handlers = []
         self.indexes = []
         self.length = length
         self.padding = padding
         self.transform = transform
+        self.slice_axis = slice_axis
 
         self._load_filenames()
         self._prepare_indices()
 
     def _load_filenames(self):
         for input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
-            segpair = SegmentationPair(input_filename, gt_filename, metadata=metadata)
+            segpair = SegmentationPair(input_filename, gt_filename, metadata=metadata, slice_axis=self.slice_axis)
             self.handlers.append(segpair)
 
     def _prepare_indices(self):
