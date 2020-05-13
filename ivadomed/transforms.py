@@ -311,7 +311,7 @@ class CroppableArray(np.ndarray):
 
 class Crop2D(ImedTransform):
     def __init__(self, size):
-        self.size = size
+        self.size = size if len(size) == 3 else size + tuple([0])
 
     @staticmethod
     def _adjust_padding(npad, sample):
@@ -380,11 +380,12 @@ class CenterCrop2D(Crop2D):
     def __call__(self, sample, metadata={}):
         print(sample.shape)
         # Crop parameters
-        th, tw = self.size
-        h, w = sample.shape
+        th, tw, td = self.size
+        h, w, d = sample.shape
         fh = int(round((h - th) / 2.))
         fw = int(round((w - tw) / 2.))
-        params = (fh, fw, h, w)
+        fd = int(round((d - td) / 2.))
+        params = (fh, fw, fd, h, w, d)
         metadata['crop_params'] = params
 
         # Call base method
