@@ -308,7 +308,7 @@ class CroppableArray(np.ndarray):
         return ret
 
 
-class Crop2D(ImedTransform):
+class Crop(ImedTransform):
     def __init__(self, size):
         self.size = size if len(size) == 3 else size + tuple([0])
         self.is_2D = True if len(size) == 2 else False
@@ -380,7 +380,7 @@ class Crop2D(ImedTransform):
         return data_out, metadata
 
 
-class CenterCrop2D(Crop2D):
+class CenterCrop(Crop):
     """Make a centered crop of a specified size."""
     @list_capable
     @two_dim_compatible
@@ -398,7 +398,7 @@ class CenterCrop2D(Crop2D):
         return super().__call__(sample, metadata)
 
 
-class ROICrop2D(Crop2D):
+class ROICrop(Crop):
     """Make a crop of a specified size around a ROI."""
     @list_capable
     @two_dim_compatible
