@@ -353,17 +353,20 @@ class Crop2D(ImedTransform):
         return data_out, metadata
 
     @list_capable
+    @two_dim_compatible
     def undo_transform(self, sample, metadata):
         # Get crop params
-        th, tw = self.size
-        fh, fw, h, w = metadata["crop_params"]
+        th, tw, td = self.size
+        fh, fw, fd, h, w, d = metadata["crop_params"]
 
         # Compute params to undo transform
         pad_left = fw
         pad_right = w - pad_left - tw
         pad_top = fh
         pad_bottom = h - pad_top - th
-        npad = [(pad_top, pad_bottom), (pad_left, pad_right)]
+        pad_front = fd
+        pad_back = d - pad_front - td
+        npad = [(pad_top, pad_bottom), (pad_left, pad_right), (pad_front, pad_back)]
 
         # Check and adjust npad if needed, i.e. if crop out of boundaries
         npad_adj, sample_adj = self._adjust_padding(npad, sample.copy())
