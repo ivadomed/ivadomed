@@ -1,12 +1,15 @@
+import numpy as np
+import nibabel as nib
 import torch
+from torchvision import transforms as torch_transforms
+from torch.utils.data import DataLoader
+
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
-from torchvision import transforms as torch_transforms
-from torch.utils.data import DataLoader
-import numpy as np
+from ivadomed import postprocessing as imed_postpro
+from ivadomed import losses as imed_losses
 
-import nibabel as nib
 
 GPU_NUMBER = 0
 PATH_BIDS = 'testing_data'
@@ -22,8 +25,8 @@ def test_image_orientation():
     train_lst = ['sub-test001']
 
     training_transform_list = [
-        imed_transforms.Resample(hspace=2, wspace=2),
-        imed_transforms.CenterCrop2D(size=[96, 96]),
+        imed_transforms.Resample(hspace=2, wspace=3),
+        imed_transforms.CenterCrop2D(size=[108, 96]),
         imed_transforms.ToTensor(),
         imed_transforms.NormalizeInstance(),
     ]
@@ -48,16 +51,15 @@ def test_image_orientation():
 
         input_filename, gt_filename, roi_filename, metadata = ds.filename_pairs[0]
         segpair = imed_loader.SegmentationPair(input_filename, gt_filename, metadata=metadata)
-        nib_original = nib.load(input_filename[0])
+        nib_original = nib.load(gt_filename[0])
+        # Get image with original, ras and hwd orientations
         input_init = nib_original.get_fdata()
         input_ras = nib.as_closest_canonical(nib_original).get_fdata()
-        img, gt = segpair.get_pair_data()
-        input_hwd = img[0]
+        img, gt = segpair.get_pair_data(slice_axis)
+        input_hwd = gt[0]
 
         pred_tmp_lst, z_tmp_lst = [], []
         for i, batch in enumerate(loader):
-            input_samples, gt_samples = batch["input"], batch["gt"]
-
             batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
             batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
 
@@ -69,7 +71,7 @@ def test_image_orientation():
                 rdict_undo = training_undo_transform(rdict)
 
                 # add new sample to pred_tmp_lst
-                pred_tmp_lst.append(imed_utils.pil_list_to_numpy(rdict_undo['input']))
+                pred_tmp_lst.append(imed_utils.pil_list_to_numpy(rdict_undo['gt']))
                 z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
                 fname_ref = rdict_undo['input_metadata']['gt_filenames'][0]
 
@@ -80,15 +82,17 @@ def test_image_orientation():
 
                     tmp_lst = []
                     for z in range(nib_ref_can.header.get_data_shape()[slice_axis]):
-                        if not z in z_tmp_lst:
-                            tmp_lst.append(np.zeros(pred_tmp_lst[0].shape))
-                        else:
-                            tmp_lst.append(pred_tmp_lst[z_tmp_lst.index(z)])
+                        tmp_lst.append(pred_tmp_lst[z_tmp_lst.index(z)])
 
-                    # create data and stack on depth dimension
-                    input_hwd_2 = np.stack(tmp_lst, axis=-1)
-                    input_ras_2 = imed_loader_utils.orient_img_ras(nib_ref_can.get_fdata())
+                    # verify image after transform, undo transform and 3D reconstruction
+                    input_hwd_2 = imed_postpro.threshold_predictions(np.stack(tmp_lst, axis=-1))
+                    # Some difference are generated due to transform and undo transform (e.i. Resample interpolation)
+                    assert imed_losses.dice_loss(input_hwd_2, input_hwd) >= 0.85
+                    input_ras_2 = imed_loader_utils.orient_img_ras(input_hwd_2, slice_axis)
+                    assert imed_losses.dice_loss(input_ras_2, input_ras) >= 0.85
                     input_init_2 = imed_utils.reorient_image(input_hwd_2, slice_axis, nib_ref, nib_ref_can)
+                    assert imed_losses.dice_loss(input_init_2, input_init) >= 0.85
+
 
                     # re-init pred_stack_lst
                     pred_tmp_lst, z_tmp_lst = [], []
