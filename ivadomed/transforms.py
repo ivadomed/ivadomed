@@ -37,6 +37,22 @@ def list_capable(wrapped):
     return wrapper
 
 
+def two_dim_compatible(wrapped):
+    @functools.wraps(wrapped)
+    def wrapper(self, sample, metadata):
+        # Check if sample is 2D
+        if len(sample.shape) == 2:
+            # Add one dimension
+            sample = np.expand_dims(sample, axis=-1)
+            # Run transform
+            result_sample, result_metadata = wrapped(self, sample, metadata)
+            # Remove last dimension
+            return np.squeeze(result_sample, axis=-1), result_metadata
+        else:
+            return wrapped(self, sample, metadata)
+    return wrapper
+
+
 class ImedTransform(object):
 
     def __call__(self, sample, metadata={}):
@@ -360,7 +376,9 @@ class Crop2D(ImedTransform):
 class CenterCrop2D(Crop2D):
     """Make a centered crop of a specified size."""
     @list_capable
+    @two_dim_compatible
     def __call__(self, sample, metadata={}):
+        print(sample.shape)
         # Crop parameters
         th, tw = self.size
         h, w = sample.shape

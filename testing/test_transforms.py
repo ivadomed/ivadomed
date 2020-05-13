@@ -195,10 +195,10 @@ def test_NormalizeInstance(im_seg):
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image_2d(100, 100, 1)])
-@pytest.mark.parametrize('crop_transform', [CenterCrop2D((80, 60)),
-                                            CenterCrop2D((60, 80)),
-                                            ROICrop2D((80, 60)),
-                                            ROICrop2D((60, 80))])
+@pytest.mark.parametrize('crop_transform', [CenterCrop2D((80, 60))])
+                                            #CenterCrop2D((60, 80)),
+                                            #ROICrop2D((80, 60)),
+                                            #ROICrop2D((60, 80))])
 def test_Crop2D(im_seg, crop_transform):
     im, seg = im_seg
     metadata_ = {'data_shape': im[0].shape}
