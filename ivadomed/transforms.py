@@ -365,7 +365,7 @@ class Crop2D(ImedTransform):
         pad_top = fh
         pad_bottom = h - pad_top - th
         pad_front = fd
-        pad_back = d - pad_front - td
+        pad_back = d - pad_front - td if not self.is_2D else 0
         npad = [(pad_top, pad_bottom), (pad_left, pad_right), (pad_front, pad_back)]
 
         # Check and adjust npad if needed, i.e. if crop out of boundaries
