@@ -712,7 +712,7 @@ def cmd_test(context):
             if not i_monteCarlo:
                 batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
                 batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
-                if batch["roi"][0] is not None:
+                if "roi" in batch and batch["roi"][0] is not None:
                     batch["roi"] = batch["roi"][0]
                     batch["roi_metadata"] = batch["roi_metadata"][0]
 
@@ -774,7 +774,7 @@ def cmd_test(context):
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
-                    output_nii = imed_utils.pred_to_nib(data_lst=rdict_undo['gt'].transpose((2, 3, 1, 0)),
+                    output_nii = imed_utils.pred_to_nib(data_lst=rdict_undo['gt'],
                                                         z_lst=[],
                                                         fname_ref=fname_ref,
                                                         fname_out=fname_pred,
@@ -783,9 +783,8 @@ def cmd_test(context):
                                                         bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                     # Save merged labels with color
-                    output_nii_shape = output_nii.get_fdata().shape
-                    if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
-                        imed_utils.save_color_labels(output_nii.get_fdata(),
+                    if isinstance(rdict_undo['gt'], np.ndarray) and rdict_undo['gt'].shape[0] > 1:
+                        imed_utils.save_color_labels(rdict_undo['gt'],
                                                      context['binarize_prediction'],
                                                      rdict_undo['input_metadata']['gt_filenames'][0],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
