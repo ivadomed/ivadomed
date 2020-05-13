@@ -50,12 +50,12 @@ def test_image_orientation():
                             num_workers=1)
 
         input_filename, gt_filename, roi_filename, metadata = ds.filename_pairs[0]
-        segpair = imed_loader.SegmentationPair(input_filename, gt_filename, metadata=metadata)
+        segpair = imed_loader.SegmentationPair(input_filename, gt_filename, metadata=metadata, slice_axis=slice_axis)
         nib_original = nib.load(gt_filename[0])
         # Get image with original, ras and hwd orientations
         input_init = nib_original.get_fdata()
         input_ras = nib.as_closest_canonical(nib_original).get_fdata()
-        img, gt = segpair.get_pair_data(slice_axis)
+        img, gt = segpair.get_pair_data()
         input_hwd = gt[0]
 
         pred_tmp_lst, z_tmp_lst = [], []
@@ -92,7 +92,6 @@ def test_image_orientation():
                     assert imed_losses.dice_loss(input_ras_2, input_ras) >= 0.85
                     input_init_2 = imed_utils.reorient_image(input_hwd_2, slice_axis, nib_ref, nib_ref_can)
                     assert imed_losses.dice_loss(input_init_2, input_init) >= 0.85
-
 
                     # re-init pred_stack_lst
                     pred_tmp_lst, z_tmp_lst = [], []
