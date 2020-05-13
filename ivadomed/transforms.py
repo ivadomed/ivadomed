@@ -401,23 +401,25 @@ class CenterCrop2D(Crop2D):
 class ROICrop2D(Crop2D):
     """Make a crop of a specified size around a ROI."""
     @list_capable
+    @two_dim_compatible
     def __call__(self, sample, metadata={}):
         # If crop_params are not in metadata,
         # then we are here dealing with ROI data to determine crop params
         if 'crop_params' not in metadata:
             # Compute center of mass of the ROI
-            h_roi, w_roi = center_of_mass(sample.astype(np.int))
-            h_roi, w_roi = int(round(h_roi)), int(round(w_roi))
-            th, tw = self.size
-            th_half, tw_half = int(round(th / 2.)), int(round(tw / 2.))
+            h_roi, w_roi, d_roi = center_of_mass(sample.astype(np.int))
+            h_roi, w_roi, d_roi = int(round(h_roi)), int(round(w_roi)), int(round(d_roi))
+            th, tw, td = self.size
+            th_half, tw_half, td_half = int(round(th / 2.)), int(round(tw / 2.)), int(round(td / 2.))
 
             # compute top left corner of the crop area
             fh = h_roi - th_half
             fw = w_roi - tw_half
+            fd = d_roi - td_half
 
             # Crop params
-            h, w = sample.shape
-            params = (fh, fw, h, w)
+            h, w, d = sample.shape
+            params = (fh, fw, fd, h, w, d)
             metadata['crop_params'] = params
 
         # Call base method
