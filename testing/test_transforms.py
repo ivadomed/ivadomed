@@ -210,14 +210,15 @@ def test_Crop2D(im_seg, crop_transform):
             assert "crop_params" in metadata
 
     # Apply transform
+    crop_transfrom_size = crop_transform.size if not crop_transform.is_2D else crop_transform.size[:2]
     do_im, do_metadata = crop_transform(im, metadata_in)
     do_seg, do_seg_metadata = crop_transform(seg, metadata_in)
 
     # Loop and check
     for idx, i in enumerate(im):
         # Check data shape
-        assert do_im[idx].shape == crop_transform.size
-        assert do_seg[idx].shape == crop_transform.size
+        assert do_im[idx].shape == crop_transfrom_size
+        assert do_seg[idx].shape == crop_transfrom_size
         # Check metadata
         assert do_metadata[idx]['crop_params'] == do_seg_metadata[idx]['crop_params']
     """

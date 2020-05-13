@@ -247,9 +247,8 @@ class NormalizeInstance(ImedTransform):
 
 
 class CroppableArray(np.ndarray):
-    """From: https://stackoverflow.com/a/41155020/13306686"""
+    """Adapted From: https://stackoverflow.com/a/41155020/13306686"""
     def __getitem__(self, item):
-
         all_in_slices = []
         pad = []
         for dim in range(self.ndim):
@@ -312,6 +311,7 @@ class CroppableArray(np.ndarray):
 class Crop2D(ImedTransform):
     def __init__(self, size):
         self.size = size if len(size) == 3 else size + tuple([0])
+        self.is_2D = True if len(size) == 2 else False
 
     @staticmethod
     def _adjust_padding(npad, sample):
@@ -341,12 +341,15 @@ class Crop2D(ImedTransform):
         # Get params
         th, tw, td = self.size
         fh, fw, fd, h, w, d = metadata['crop_params']
-        print(fh, fw, fd, h, w, d)
+
         # Crop data
         # Note we use here CroppableArray in order to deal with "out of boundaries" crop
         # e.g. if fh is negative or fh+th out of bounds, then it will pad
-        data_out = sample.view(CroppableArray)[fh:fh+th, fw:fw+tw, fd:fd+td]
-        print(data_out.shape)
+        if self.is_2D:
+            data_out = sample.view(CroppableArray)[fh:fh + th, fw:fw + tw, :]
+        else:
+            data_out = sample.view(CroppableArray)[fh:fh+th, fw:fw+tw, fd:fd+td]
+
         return data_out, metadata
 
     @list_capable
@@ -379,7 +382,6 @@ class CenterCrop2D(Crop2D):
     @list_capable
     @two_dim_compatible
     def __call__(self, sample, metadata={}):
-        print(sample.shape)
         # Crop parameters
         th, tw, td = self.size
         h, w, d = sample.shape
