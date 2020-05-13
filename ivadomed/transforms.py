@@ -336,16 +336,17 @@ class Crop2D(ImedTransform):
         return npad_out_tuple, sample
 
     @list_capable
+    @two_dim_compatible
     def __call__(self, sample, metadata={}):
         # Get params
-        th, tw = self.size
-        fh, fw, h, w = metadata['crop_params']
-
+        th, tw, td = self.size
+        fh, fw, fd, h, w, d = metadata['crop_params']
+        print(fh, fw, fd, h, w, d)
         # Crop data
         # Note we use here CroppableArray in order to deal with "out of boundaries" crop
         # e.g. if fh is negative or fh+th out of bounds, then it will pad
-        data_out = sample.view(CroppableArray)[fh:fh+th, fw:fw+tw]
-
+        data_out = sample.view(CroppableArray)[fh:fh+th, fw:fw+tw, fd:fd+td]
+        print(data_out.shape)
         return data_out, metadata
 
     @list_capable
