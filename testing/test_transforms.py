@@ -4,16 +4,16 @@
 
 
 import pytest
-import random
 import numpy as np
 from math import isclose
+from scipy.ndimage.measurements import center_of_mass
 
 import torch
 
 from ivadomed.transforms import ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
 from ivadomed.metrics import dice_score, mse
 
-DEBUGGING = True
+DEBUGGING = False
 if DEBUGGING:
     from testing.utils import plot_transformed_sample
 
@@ -60,15 +60,18 @@ def create_test_image(width, height, depth=0, num_modalities=1, noise_max=10.0, 
 
     seg = np.ceil(image).astype(np.int32)
 
+    if depth == 0:
+        _ , _, z_slice = center_of_mass(seg.astype(np.int))
+        z_slice = int(round(z_slice))
+        seg = seg[:, :, z_slice]
+
     list_im, list_seg = [], []
     for _ in range(num_modalities):
         norm = np.random.uniform(0, num_seg_classes * noise_max, size=image.shape)
         noisy_image = rescale_array(np.maximum(image, norm))
 
         if depth == 0:
-            rnd_slice = random.randint(0, noisy_image.shape[2]-1)
-            noisy_image = noisy_image[:, :, rnd_slice]
-            seg = seg[:, :, rnd_slice]
+            noisy_image = noisy_image[:, :, z_slice]
 
         list_im.append(noisy_image)
         list_seg.append(seg)
@@ -76,8 +79,8 @@ def create_test_image(width, height, depth=0, num_modalities=1, noise_max=10.0, 
     return list_im, list_seg
 
 
-@pytest.mark.parametrize('im_seg', [create_test_image_2d(100, 100, 1),
-                                    create_test_image_2d(100, 100, 3)])
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 100, 2),
+                                    create_test_image(100, 100, 0, 1)])
 def test_HistogramClipping(im_seg):
     im, _ = im_seg
     # Transform
@@ -95,8 +98,8 @@ def test_HistogramClipping(im_seg):
         assert isclose(np.max(r), np.percentile(i, max_percentile), rel_tol=1e-02)
 
 
-@pytest.mark.parametrize('im_seg', [create_test_image_2d(100, 100, 1),
-                                    create_test_image_2d(100, 100, 3)])
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 100, 1),
+                                    create_test_image(100, 100, 0, 2)])
 def test_RandomShiftIntensity(im_seg):
     im, _ = im_seg
     # Transform
@@ -111,7 +114,7 @@ def test_RandomShiftIntensity(im_seg):
     assert all('offset' in m for m in do_metadata)
     # Check shifting
     for idx, i in enumerate(im):
-        assert isclose(np.max(do_im[idx]-i), do_metadata[idx]['offset'], rel_tol=1e-02)
+        assert isclose(np.max(do_im[idx]-i), do_metadata[idx]['offset'], rel_tol=1e-01)
 
     # Apply Undo Transform
     undo_im, undo_metadata = transform.undo_transform(sample=do_im, metadata=do_metadata)
@@ -119,11 +122,11 @@ def test_RandomShiftIntensity(im_seg):
     assert len(undo_im) == len(im)
     # Check undo
     for idx, i in enumerate(im):
-        assert np.allclose(undo_im[idx], i, rtol=1e-02)
+        assert np.allclose(undo_im[idx], i, rtol=1e-01)
 
 
-@pytest.mark.parametrize('im_seg', [create_test_image_2d(100, 100, 1),
-                                    create_test_image_2d(100, 100, 3)])
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 100, 1),
+                                    create_test_image(100, 100, 0, 2)])
 def test_NumpyToTensor(im_seg):
     im, seg = im_seg
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
@@ -145,8 +148,9 @@ def test_NumpyToTensor(im_seg):
             assert i.dtype == im_cur[idx].dtype
 
 
-@pytest.mark.parametrize('im_seg', [create_test_image_2d(80, 100, 1),
-                                    create_test_image_2d(100, 80, 1)])
+# TODO: Adapt to 3D
+@pytest.mark.parametrize('im_seg', [create_test_image(80, 100, 0),
+                                    create_test_image(100, 80, 0)])
 @pytest.mark.parametrize('resample_transform', [Resample(0.8, 1.0, interpolation_order=2),
                                                 Resample(1.0, 0.8, interpolation_order=2)])
 @pytest.mark.parametrize('native_resolution', [(0.9, 1.0),
@@ -183,8 +187,9 @@ def test_Resample(im_seg, resample_transform, native_resolution):
         assert dice_score(undo_seg[idx], seg[idx]) > 0.8
         assert mse(undo_im[idx], im[idx]) < 1e-1
 
-@pytest.mark.parametrize('im_seg', [create_test_image_2d(100, 100, 1),
-                                    create_test_image_2d(100, 100, 3)])
+
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 100, 1),
+                                    create_test_image(100, 100, 0, 2)])
 def test_NormalizeInstance(im_seg):
     im, seg = im_seg
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
@@ -206,18 +211,12 @@ def test_NormalizeInstance(im_seg):
         assert abs(t.std() - 1.0) <= 1e-2
 
 
-@pytest.mark.parametrize('im_seg', [create_test_image_2d(100, 100, 1)])
-@pytest.mark.parametrize('crop_transform', [CenterCrop((80, 60)),
-                                            CenterCrop((60, 80)),
-                                            ROICrop((80, 60)),
-                                            ROICrop((60, 80))])
-# TODO: Create 3D test data
-def test_Crop(im_seg, crop_transform):
+def _test_Crop(im_seg, crop_transform):
     im, seg = im_seg
     metadata_ = {'data_shape': im[0].shape}
     metadata_in = [metadata_ for _ in im] if isinstance(im, list) else {}
 
-    if crop_transform.__class__.__name__ == "ROICrop2D":
+    if crop_transform.__class__.__name__ == "ROICrop":
         _, metadata_in = crop_transform(seg, metadata_in)
         for metadata in metadata_in:
             assert "crop_params" in metadata
@@ -260,3 +259,21 @@ def test_Crop(im_seg, crop_transform):
         else:
             assert np.array_equal(i[fh:fh+th, fw:fw+tw, fd:fd+td], undo_im[idx][fh:fh+th, fw:fw+tw, fd:fd+td])
             assert np.array_equal(seg[idx][fh:fh+th, fw:fw+tw, fd:fd+td], undo_seg[idx][fh:fh+th, fw:fw+tw, fd:fd+td])
+
+
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 2)])
+@pytest.mark.parametrize('crop_transform', [CenterCrop((80, 60)),
+                                            CenterCrop((60, 80)),
+                                            ROICrop((80, 60)),
+                                            ROICrop((60, 80))])
+def test_Crop_2D(im_seg, crop_transform):
+    _test_Crop(im_seg, crop_transform)
+
+
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 100, 1)])
+@pytest.mark.parametrize('crop_transform', [CenterCrop((80, 60, 40)),
+                                            CenterCrop((60, 80, 50)),
+                                            ROICrop((80, 60, 40)),
+                                            ROICrop((60, 80, 50))])
+def test_Crop_3D(im_seg, crop_transform):
+    _test_Crop(im_seg, crop_transform)
