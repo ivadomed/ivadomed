@@ -16,3 +16,7 @@ All the subject treated will be saved in a file called list_done.txt that will a
 Specific:
 possible file suffix to file are _acq-sag_T2w, _T2w, _T1w, _acq-sagcerv_T2w
 suffix to label is labels-disc-manual
+
+Example image for manual labeling:
+![example](label_disc_capture.png)
+
