@@ -152,7 +152,7 @@ class NumpyToTensor(ImedTransform):
         return torch.from_numpy(arr_contig), metadata
 
 
-# TODO: tweak order GT / IM
+# TODO: tweak order GT / IM + 3D
 class Resample(ImedTransform):
     """
     Resample image to a given resolution.
@@ -427,6 +427,7 @@ class ROICrop(Crop):
         return super().__call__(sample, metadata)
 
 
+# TODO
 class DilateGT(ImedTransform):
     """Randomly dilate a tensor ground-truth.
     :param dilation_factor: float, controls the number of dilation iterations.
@@ -549,30 +550,6 @@ class DilateGT(ImedTransform):
             rdict = {'gt': gt_t}
             sample.update(rdict)
 
-        return sample
-
-
-class StackTensors(ImedTransform):
-    """Stack all modalities, as a list, in a single tensor."""
-
-    def __call__(self, sample):
-        rdict = {}
-
-        # Input data
-        if isinstance(sample['input'], list):
-            input_data = sample['input']
-            rdict['input'] = torch.cat(input_data, dim=0)
-            sample.update(rdict)
-
-        # Labeled data
-        if isinstance(sample['gt'], list):
-            gt_data = sample['gt']
-            rdict['gt'] = torch.cat(gt_data, dim=0)
-            sample.update(rdict)
-
-        return sample
-
-    def undo_transform(self, sample):
         return sample
 
 
