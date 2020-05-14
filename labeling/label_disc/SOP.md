@@ -4,7 +4,7 @@ First give it permission:
 chmod 777 SCRIPT_NAME.sh
 Run it with ./SCRIPT_NAME.sh TXT_FILE_WITH_SUB_NAME PATH_TO_DUKE SUFFIX_OF_FILE SUFFIX_OF_LABEL_FILE OUTPUT_FOLDER AUTHOR_NAME
 
-- TXT_FILE_WITH_SUB_NAME: The txt file contain the list of subject you want to process which might not contain all the subject in sct testing large separated by '\n'
+- TXT_FILE_WITH_SUB_NAME: The txt file contain the list of subject you want to process which might not contain all the subject in sct_testing/large separated by '\n' (if you want all subject just use ls > file.txt)
 - PATH_TO_DUKE:Use the absolut path as this is easier
 - SUFFIX_OF_FILE: The suffix of the file you want to process (e.g. _T2w) might differ depending on subject. we recommend making a list according to suffix. 
 - SUFFIX_OF_LABEL_FILE: The suffix of the label file is the same as the previous one (in the labels-disc-manual case) so it will open them with the -ilabel option from sct_label_utils 
