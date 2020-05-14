@@ -243,6 +243,7 @@ class NormalizeInstance(ImedTransform):
 
     @list_capable
     def __call__(self, sample, metadata={}):
+        assert isinstance(sample, np.ndarray)
         data_out = (sample - sample.mean()) / sample.std()
         return data_out, metadata
 
@@ -550,40 +551,6 @@ class DilateGT(ImedTransform):
             rdict = {'gt': gt_t}
             sample.update(rdict)
 
-        return sample
-
-
-class NormalizeInstance3D(ImedTransform):
-
-    @staticmethod
-    def do_normalize(data):
-        # TODO: instance_norm?
-        # Check if not empty
-        if data.type(torch.bool).any():
-            mean, std = data.mean(), data.std()
-            return F.normalize(data,
-                               [mean for _ in range(0, data.shape[0])],
-                               [std for _ in range(0, data.shape[0])]).unsqueeze(0)
-        else:
-            return data
-
-    def __call__(self, sample):
-        input_data = sample['input']
-
-        # TODO: Decorator
-        if isinstance(input_data, list):
-            input_data_normalized = []
-            for i in range(len(input_data)):
-                input_data_normalized.append(self.do_normalize(input_data[i]))
-        else:
-            input_data_normalized = self.do_normalize(input_data)
-
-        # Update
-        rdict = {'input': input_data_normalized}
-        sample.update(rdict)
-        return sample
-
-    def undo_transform(self, sample):
         return sample
 
 
