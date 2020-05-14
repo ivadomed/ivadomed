@@ -592,8 +592,8 @@ class RandomRotation(ImedTransform):
     @two_dim_compatible
     def __call__(self, sample, metadata={}):
         # If angle and metadata have been already defined for this sample, then use them
-        if 'angle' in metadata and 'rotation' in metadata:
-            angle, axes = metadata['rotation'][0]
+        if 'rotation' in metadata:
+            angle, axes = metadata['rotation']
         # Otherwise, get random ones
         else:
             # Get the random angle
@@ -609,7 +609,6 @@ class RandomRotation(ImedTransform):
                           axes=axes,
                           reshape=False,
                           order=1).astype(sample.dtype)
-        print(data_out.dtype, np.sum(data_out), np.sum(sample), angle, axes)
 
         return data_out, metadata
 
@@ -618,7 +617,7 @@ class RandomRotation(ImedTransform):
     def undo_transform(self, sample, metadata):
         assert "rotation" in metadata
         # Opposite rotation, same axes
-        angle, axes = - metadata['rotation'][0], metadata['rotation'][1]
+        angle, axes = - metadata['rotation'][0], metadata['rotation'][1][::-1]
 
         # Undo rotation
         data_out = rotate(sample,

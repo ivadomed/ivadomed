@@ -13,7 +13,7 @@ import torch
 from ivadomed.transforms import RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
 from ivadomed.metrics import dice_score, mse
 
-DEBUGGING = False
+DEBUGGING = True
 if DEBUGGING:
     from testing.utils import plot_transformed_sample
 
@@ -279,18 +279,28 @@ def test_Crop_3D(im_seg, crop_transform):
     _test_Crop(im_seg, crop_transform)
 
 
-@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 100, 1),
-                                    create_test_image(100, 100, 0, 2)])
-@pytest.mark.parametrize('rot_transform', [RandomRotation(10),
-                                           RandomRotation((18, 36))])
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10)])
+#                                    create_test_image(100, 100, 100, 1)])
+@pytest.mark.parametrize('rot_transform', [RandomRotation(50)])
+#                                           RandomRotation((18, 36))])
 def test_RandomRotation(im_seg, rot_transform):
     im, seg = im_seg
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
 
     # Transform on Numpy
-    do_im, metadata_do_im = rot_transform(im.copy(), metadata_in)
-    do_seg, metadata_do_seg = rot_transform(seg.copy(), metadata_in)
+    do_im, metadata_do = rot_transform(im.copy(), metadata_in)
+    do_seg, metadata_do = rot_transform(seg.copy(), metadata_do)
 
-    if DEBUGGING and im[0].shape == 2:
+    if DEBUGGING and len(im[0].shape) == 2:
         plot_transformed_sample(im[0], do_im[0])
         plot_transformed_sample(seg[0], do_seg[0])
+
+    # Transform on Numpy
+    undo_im, _ = rot_transform.undo_transform(do_im, metadata_do)
+    undo_seg, _ = rot_transform.undo_transform(do_seg, metadata_do)
+
+    if DEBUGGING and len(im[0].shape) == 2:
+        plot_transformed_sample(im[0], undo_im[0])
+        plot_transformed_sample(seg[0], undo_seg[0])
+
+
