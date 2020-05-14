@@ -594,7 +594,7 @@ class RandomRotation(ImedTransform):
         # Get the random angle
         angle = np.random.uniform(self.degrees[0], self.degrees[1])
         # Get the two axes that define the plane of rotation
-        axes = random.sample(range(3), 2)
+        axes = tuple(random.sample(range(3), 2))
 
         # Do rotation
         data_out = rotate(sample,
@@ -605,29 +605,21 @@ class RandomRotation(ImedTransform):
 
         return data_out, metadata
 
-    def undo_transform(self, sample):
-        rdict = {}
-        # Opposite rotation
-        angle = - sample['input_metadata']['randomRotation']
+    @list_capable
+    @two_dim_compatible
+    def undo_transform(self, sample, metadata):
+        assert "rotation" in metadata
+        # Opposite rotation, same axes
+        angle, axes = - metadata['rotation'][0], metadata['rotation'][1]
 
-        # TODO: Decorator or function?
-        if isinstance(sample['input'], list):
-            rdict['input'] = sample['input']
-            for i in range(len(sample['input'])):
-                rdict['input'][i] = self.do_rotate(sample['input'][i], angle)
-        else:
-            rdict['input'] = self.do_rotate(sample['input'], angle)
+        # Undo rotation
+        data_out = rotate(sample,
+                          angle=angle,
+                          axes=axes,
+                          reshape=False,
+                          order=1)
 
-        if isinstance(sample['gt'], list):
-            rdict['gt'] = sample['gt']
-            for i in range(len(sample['gt'])):
-                rdict['gt'][i] = self.do_rotate(sample['gt'][i], angle)
-        else:
-            rdict['gt'] = self.do_rotate(sample['gt'], angle)
-
-        # Update
-        sample.update(rdict)
-        return sample
+        return data_out, metadata
 
 
 # TODO: Merge RandomRotation and RandomRotation3D
