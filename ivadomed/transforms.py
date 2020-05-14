@@ -554,19 +554,25 @@ class DilateGT(ImedTransform):
         return sample
 
 
-class BackgroundClass(ImedTransform):
+class AddBackgroundClass(ImedTransform):
 
-    def undo_transform(self, sample):
-        return sample
+    # TODO
+    #def undo_transform(self, sample):
+    #    return sample
 
-    def __call__(self, sample):
-        rdict = {}
+    # Note: We do not apply @list_capable to AddBackgroundClass
+    # because we need all the channels to determine the Background.
+    def __call__(self, sample, metadata={}):
+        # Sum across the channels (i.e. labels)
+        sum_labels = np.sum(sample, axis=0)
+        # Get background
+        background = (sum_labels == 0).astype(sample.dtype)
+        # Expand dim
+        background = np.expand_dims(background, axis=0)
+        # Concatenate
+        data_out = np.concatenate(background, sample)
 
-        background = (sample['gt'].sum(axis=0) == 0).type('torch.FloatTensor')[None,]
-        rdict['gt'] = torch.cat((background, sample['gt']), dim=0)
-
-        sample.update(rdict)
-        return sample
+        return data_out, metadata
 
 
 class RandomRotation(ImedTransform):
