@@ -595,13 +595,15 @@ class RandomRotation(ImedTransform):
         angle = np.random.uniform(self.degrees[0], self.degrees[1])
         # Get the two axes that define the plane of rotation
         axes = tuple(random.sample(range(3), 2))
+        # Save params
+        metadata['rotation'] = [angle, axes]
 
         # Do rotation
         data_out = rotate(sample,
                           angle=angle,
                           axes=axes,
                           reshape=False,
-                          order=1)
+                          order=1).astype(sample.dtype)
 
         return data_out, metadata
 
@@ -617,7 +619,7 @@ class RandomRotation(ImedTransform):
                           angle=angle,
                           axes=axes,
                           reshape=False,
-                          order=1)
+                          order=1).astype(sample.dtype)
 
         return data_out, metadata
 
