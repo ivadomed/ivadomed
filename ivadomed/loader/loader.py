@@ -173,8 +173,8 @@ class SegmentationPair(object):
         for gt in self.gt_handle:
             if gt is not None:
                 gt_meta_dict.append(imed_loader_utils.SampleMetadata({
-                    "zooms": gt.header.get_zooms(),
-                    "data_shape": gt.header.get_data_shape(),
+                    "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
+                    "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
                     "gt_filenames": self.metadata[0]["gt_filenames"]
                 }))
             else:
@@ -183,8 +183,8 @@ class SegmentationPair(object):
         input_meta_dict = []
         for handle in self.input_handle:
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
-                "zooms": handle.header.get_zooms(),
-                "data_shape": handle.header.get_data_shape(),
+                "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
+                "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis)
             }))
 
         dreturn = {
@@ -464,23 +464,23 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         shape_z = coord["z_max"] - coord["z_min"]
 
         subvolumes = {
-            'input': torch.zeros(data_dict['input'].shape[0], shape_z, shape_x, shape_y),
-            'gt': torch.zeros(data_dict['input'].shape[0], shape_z, shape_x, shape_y),
+            'input': torch.zeros(data_dict['input'].shape[0], shape_x, shape_y, shape_z),
+            'gt': torch.zeros(data_dict['input'].shape[0], shape_x, shape_y, shape_z),
             'input_metadata': seg_pair_slice['input_metadata'],
             'gt_metadata': seg_pair_slice['gt_metadata']
         }
 
         for idx in range(len(data_dict['input'])):
             subvolumes['input'] = data_dict['input'][:,
-                                  coord['z_min']:coord['z_max'],
                                   coord['x_min']:coord['x_max'],
-                                  coord['y_min']:coord['y_max']]
+                                  coord['y_min']:coord['y_max'],
+                                  coord['z_min']:coord['z_max']]
 
         for idx in range(len(data_dict['gt'])):
             subvolumes['gt'] = data_dict['gt'][:,
-                               coord['z_min']:coord['z_max'],
                                coord['x_min']:coord['x_max'],
-                               coord['y_min']:coord['y_max']]
+                               coord['y_min']:coord['y_max'],
+                               coord['z_min']:coord['z_max']]
         subvolumes['gt'] = subvolumes['gt'].type(torch.BoolTensor)
         return subvolumes
 
