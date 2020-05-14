@@ -578,9 +578,7 @@ class AddBackgroundClass(ImedTransform):
 
 
 class RandomRotation(ImedTransform):
-    def __init__(self, degrees, resample=False,
-                 expand=False, center=None,
-                 labeled=True):
+    def __init__(self, degrees):
         if isinstance(degrees, numbers.Number):
             if degrees < 0:
                 raise ValueError("If degrees is a single number, it must be positive.")
