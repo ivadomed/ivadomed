@@ -712,11 +712,11 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
             # Add new segmented slice to preds_list
             # Convert PIL to numpy
-            if isinstance(rdict_undo['gt'], list):
+            if not isinstance(rdict_undo['gt'][0], np.ndarray):
                 pred_cur = np.array(pil_list_to_numpy(rdict_undo['gt']))
             else:
-                # required shape: d, w, h, number of channels
-                pred_cur = rdict_undo['gt'] if not context["unet_3D"] else rdict_undo['gt'].transpose(2, 3, 1, 0)
+                # 3D images
+                pred_cur = rdict_undo['gt']
 
             preds_list.append(pred_cur)
             # Store the slice index of pred_cur in the original 3D image
