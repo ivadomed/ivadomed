@@ -317,7 +317,6 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
     Args:
         data_lst (list of np arrays): predictions, either 2D slices either 3D patches.
-                                      Required shape for 3D arrays: depth, height, width, number of channels
         z_lst (list of ints): slice indexes to reconstruct a 3D volume.
         fname_ref (string): Filename of the input image: its header is copied to the output nibabel object.
         fname_out (string): If not None, then the generated nibabel object is saved with this filename.
