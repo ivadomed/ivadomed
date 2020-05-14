@@ -500,7 +500,8 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               transform=transform,
                               multichannel=multichannel)
 
-        super().__init__(dataset.filename_pairs, length=length, padding=padding, transform=transform)
+        super().__init__(dataset.filename_pairs, length=length, padding=padding, transform=transform,
+                         slice_axis=slice_axis)
 
 
 class BidsDataset(MRI2DSegmentationDataset):
