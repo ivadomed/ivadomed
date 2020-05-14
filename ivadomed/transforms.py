@@ -5,11 +5,11 @@ import numpy as np
 from PIL import Image
 
 from skimage.exposure import equalize_adapthist
-from skimage.transform import resize
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 from scipy.ndimage.interpolation import map_coordinates
+from scipy.ndimage import zoom
 
 import torch
 import torchvision.transforms.functional as F
@@ -118,21 +118,15 @@ class Resample(IMEDTransform):
         self.slice_axis = imed_utils.AXIS_DCT[slice_axis]
         self.labeled = labeled
 
-    def do_resample(self, list_data, new_shape, interpolation_order=2, interpolation_mode=Image.BILINEAR):
+    def do_resample(self, list_data, zooms, interpolation_order=2):
         list_data_out = []
         for i, data in enumerate(list_data):
             if isinstance(data, np.ndarray):
-                resampled_data = resize(data,
-                                        output_shape=new_shape,
-                                        order=interpolation_order,
-                                        preserve_range=True,
-                                        anti_aliasing=True).astype(data.dtype)
+                resampled_data = zoom(data, zooms, order=interpolation_order).astype(data.dtype)
 
             # if ... else temporary until transform refactor PR passes
             else:
-                # transpose: PIL switched height and width
-                resampled_data = data.resize(np.flip(new_shape),
-                                             resample=interpolation_mode)
+                resampled_data = Image.fromarray(zoom(data, zooms, order=interpolation_order))
 
             list_data_out.append(resampled_data)
         return list_data_out
@@ -141,24 +135,30 @@ class Resample(IMEDTransform):
         rdict = {}
 
         # Get original data shape
-        self.hzoom, self.wzoom, self.dzoom = sample["input_metadata"]["zooms"]
         self.hshape, self.wshape, self.dshape = sample["input_metadata"]["data_shape"]
+
+        if isinstance(sample['input'], np.ndarray):
+            h, w, d = sample['input'][0, ].shape
+            dfactor = self.dshape / d
+        else:
+            w, h = sample['input'][0].size
+        hfactor = self.hshape / h
+        wfactor = self.wshape / w
         # `isinstance(sample["input"], np.ndarray)` temporary until refactor transform is merged
         self.is_3D = isinstance(sample["input"], np.ndarray) and len(sample["input"].shape) == 4
-        new_shape = (self.hshape, self.wshape, self.dshape) if self.is_3D else (self.hshape, self.wshape)
+        factors = (hfactor, wfactor, dfactor) if self.is_3D else (hfactor, wfactor)
 
         # Input data
         rdict['input'] = self.do_resample(list_data=sample["input"],
-                                          new_shape=new_shape,
+                                          zooms=factors,
                                           interpolation_order=2)
 
         # Prediction data
         # Note: We use here self.interpolation instead of forcing Image.NEAREST
         #       in order to ensure soft output
         rdict['gt'] = self.do_resample(list_data=sample["gt"],
-                                       new_shape=new_shape,
-                                       interpolation_order=0,
-                                       interpolation_mode=Image.NEAREST)
+                                       zooms=factors,
+                                       interpolation_order=0)
         if self.is_3D:
             n_channel = sample["input"].shape[0]
             undo_input = np.zeros((n_channel, self.hshape, self.wshape, self.dshape))
@@ -188,28 +188,24 @@ class Resample(IMEDTransform):
         hfactor = self.hzoom / self.hspace
         wfactor = self.wzoom / self.wspace
         dfactor = self.dzoom / self.dspace
-        hshape_new = int(round(self.hshape * hfactor))
-        wshape_new = int(round(self.wshape * wfactor))
-        dshape_new = int(round(self.dshape * dfactor))
-        new_shape = (hshape_new, wshape_new, dshape_new) if self.is_3D else (hshape_new, wshape_new)
+
+        factors = (hfactor, wfactor, dfactor) if self.is_3D else (hfactor, wfactor)
 
         # Input data
         rdict['input'] = self.do_resample(list_data=sample["input"],
-                                          new_shape=new_shape)
+                                          zooms=factors)
 
         # Labeled data
         if self.labeled:
             rdict['gt'] = self.do_resample(list_data=sample["gt"],
-                                           new_shape=new_shape,
-                                           interpolation_order=0,
-                                           interpolation_mode=Image.NEAREST)
+                                           zooms=factors,
+                                           interpolation_order=0)
 
         # ROI data
         if "roi" in sample and sample['roi'] is not None:
             rdict['roi'] = self.do_resample(list_data=sample["roi"],
-                                            new_shape=new_shape,
-                                            interpolation_order=0,
-                                            interpolation_mode=Image.NEAREST)
+                                            zooms=factors,
+                                            interpolation_order=0)
 
         # Update
         sample.update(rdict)
