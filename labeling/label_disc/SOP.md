@@ -14,7 +14,9 @@ Run it with ./SCRIPT_NAME.sh TXT_FILE_WITH_SUB_NAME PATH_TO_DUKE SUFFIX_OF_FILE 
 All the subject treated will be saved in a file called list_done.txt that will allow you to keep track of progression and subject in output
 
 Specific:
+
 possible file suffix to file are _acq-sag_T2w, _T2w, _T1w, _acq-sagcerv_T2w
+
 suffix to label is labels-disc-manual
 
 Example image for manual labeling:
