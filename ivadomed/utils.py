@@ -690,7 +690,6 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     preds_list, slice_idx_list = [], []
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
-
             preds = model(batch['input'])
 
         rdict = {}
