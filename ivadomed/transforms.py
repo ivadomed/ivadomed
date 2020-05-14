@@ -8,6 +8,7 @@ from PIL import Image
 
 from skimage.exposure import equalize_adapthist
 from skimage.transform import resize
+from scipy.ndimage import rotate
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
@@ -554,6 +555,7 @@ class DilateGT(ImedTransform):
         return sample
 
 
+# TODO: unit test
 class AddBackgroundClass(ImedTransform):
 
     # TODO
@@ -588,47 +590,22 @@ class RandomRotation(ImedTransform):
                 "degrees should be a list or tuple and it must be of length 2."
             self.degrees = degrees
 
-        self.resample = resample
-        self.expand = expand
-        self.center = center
-        self.labeled = labeled
-
-    def get_params(self):
+    @list_capable
+    @two_dim_compatible
+    def __call__(self, sample, metadata={}):
+        # Get the random angle
         angle = np.random.uniform(self.degrees[0], self.degrees[1])
-        return angle
+        # Get the two axes that define the plane of rotation
+        axes = random.sample(range(3), 2)
 
-    def do_rotate(self, data, angle):
-        return F.rotate(data, angle, self.resample, self.expand, self.center)
+        # Do rotation
+        data_out = rotate(sample,
+                          angle=angle,
+                          axes=axes,
+                          reshape=False,
+                          order=1)
 
-    def __call__(self, sample):
-        rdict = {}
-
-        input_data = sample['input']
-
-        angle = self.get_params()
-
-        # save angle in metadata
-        rdict['input_metadata'] = sample['input_metadata']
-
-        # Input data
-        input_transform = []
-        # TODO: Always a list?
-        # TODO: Decorator or function?
-        for idx, input_data in enumerate(input_data):
-            rdict['input_metadata'][idx]['randomRotation'] = angle
-            input_transform.append(self.do_rotate(input_data, angle))
-        rdict['input'] = input_transform
-
-        # Labeled data
-        if self.labeled:
-            gt_transform = []
-            for gt_data in sample['gt']:
-                gt_transform.append(self.do_rotate(gt_data, angle))
-            rdict['gt'] = gt_transform
-
-        # Update
-        sample.update(rdict)
-        return sample
+        return data_out, metadata
 
     def undo_transform(self, sample):
         rdict = {}
