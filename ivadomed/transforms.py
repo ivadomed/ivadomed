@@ -591,12 +591,17 @@ class RandomRotation(ImedTransform):
     @list_capable
     @two_dim_compatible
     def __call__(self, sample, metadata={}):
-        # Get the random angle
-        angle = np.random.uniform(self.degrees[0], self.degrees[1])
-        # Get the two axes that define the plane of rotation
-        axes = tuple(random.sample(range(3), 2))
-        # Save params
-        metadata['rotation'] = [angle, axes]
+        # If angle and metadata have been already defined for this sample, then use them
+        if 'angle' in metadata and 'rotation' in metadata:
+            angle, axes = metadata['rotation'][0]
+        # Otherwise, get random ones
+        else:
+            # Get the random angle
+            angle = np.random.uniform(self.degrees[0], self.degrees[1])
+            # Get the two axes that define the plane of rotation
+            axes = tuple(random.sample(range(3 if sample.shape[2] > 1 else 2), 2))
+            # Save params
+            metadata['rotation'] = [angle, axes]
 
         # Do rotation
         data_out = rotate(sample,
@@ -604,6 +609,7 @@ class RandomRotation(ImedTransform):
                           axes=axes,
                           reshape=False,
                           order=1).astype(sample.dtype)
+        print(data_out.dtype, np.sum(data_out), np.sum(sample), angle, axes)
 
         return data_out, metadata
 
