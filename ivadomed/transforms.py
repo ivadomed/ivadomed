@@ -152,6 +152,7 @@ class NumpyToTensor(ImedTransform):
         return torch.from_numpy(arr_contig), metadata
 
 
+# TODO: tweak order GT / IM
 class Resample(ImedTransform):
     """
     Resample image to a given resolution.

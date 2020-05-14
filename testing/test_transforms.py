@@ -4,52 +4,59 @@
 
 
 import pytest
+import random
 import numpy as np
 from math import isclose
 
 import torch
 
-from ivadomed.transforms import ROICrop2D, CenterCrop2D, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
+from ivadomed.transforms import ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
 from ivadomed.metrics import dice_score, mse
 
-DEBUGGING = False
+DEBUGGING = True
 if DEBUGGING:
     from testing.utils import plot_transformed_sample
 
 
-def create_test_image_2d(width, height, num_modalities, noise_max=10.0, num_objs=1, rad_max=30, num_seg_classes=1):
+def create_test_image(width, height, depth=0, num_modalities=1, noise_max=10.0, num_objs=1, rad_max=30, num_seg_classes=1):
     """Create test image.
 
     Create test image and its segmentation with a given number of objects, classes, and maximum radius.
+    Compatible with both 2D (depth=0) and 3D images.
 
     Args:
-        width (int): width image
         height (int): height image
+        width (int): width image
+        depth (int): depth image, if 0 then 2D images are returned
         num_modalities (int): number of modalities
         noise_max (float): noise from the uniform distribution [0,noise_max)
         num_objs (int): number of objects
         rad_max (int): maximum radius of objects
         num_seg_classes (int): number of classes
     Return:
-        list, list: image and segmentation, list of num_modalities elements of shape (width, height).
+        list, list: image and segmentation, list of num_modalities elements of shape (height, width, depth).
 
     Adapted from: https://github.com/Project-MONAI/MONAI/blob/master/monai/data/synthetic.py#L17
     """
     assert num_modalities >= 1
 
-    image = np.zeros((width, height))
+    depth_ = depth if depth >= 1 else 2 * rad_max + 1
+    assert (height > 2 * rad_max) and (width > 2 * rad_max) and (depth_ > 2 * rad_max)
+
+    image = np.zeros((height, width, depth_))
 
     for i in range(num_objs):
-        x = np.random.randint(rad_max, width - rad_max)
-        y = np.random.randint(rad_max, height - rad_max)
+        x = np.random.randint(rad_max, height - rad_max)
+        y = np.random.randint(rad_max, width - rad_max)
+        z = np.random.randint(rad_max, depth_ - rad_max)
         rad = np.random.randint(5, rad_max)
-        spy, spx = np.ogrid[-x:width - x, -y:height - y]
-        circle = (spx * spx + spy * spy) <= rad * rad
+        spy, spx, spz = np.ogrid[-x:height - x, -y:width - y, -z:depth_ - z]
+        sphere = (spx * spx + spy * spy + spz * spz) <= rad * rad * rad
 
         if num_seg_classes > 1:
-            image[circle] = np.ceil(np.random.random() * num_seg_classes)
+            image[sphere] = np.ceil(np.random.random() * num_seg_classes)
         else:
-            image[circle] = np.random.random() * 0.5 + 0.5
+            image[sphere] = np.random.random() * 0.5 + 0.5
 
     seg = np.ceil(image).astype(np.int32)
 
@@ -57,6 +64,11 @@ def create_test_image_2d(width, height, num_modalities, noise_max=10.0, num_objs
     for _ in range(num_modalities):
         norm = np.random.uniform(0, num_seg_classes * noise_max, size=image.shape)
         noisy_image = rescale_array(np.maximum(image, norm))
+
+        if depth == 0:
+            rnd_slice = random.randint(0, noisy_image.shape[2]-1)
+            noisy_image = noisy_image[:, :, rnd_slice]
+            seg = seg[:, :, rnd_slice]
 
         list_im.append(noisy_image)
         list_seg.append(seg)
@@ -195,10 +207,10 @@ def test_NormalizeInstance(im_seg):
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image_2d(100, 100, 1)])
-@pytest.mark.parametrize('crop_transform', [CenterCrop2D((80, 60)),
-                                            CenterCrop2D((60, 80)),
-                                            ROICrop2D((80, 60)),
-                                            ROICrop2D((60, 80))])
+@pytest.mark.parametrize('crop_transform', [CenterCrop((80, 60)),
+                                            CenterCrop((60, 80)),
+                                            ROICrop((80, 60)),
+                                            ROICrop((60, 80))])
 # TODO: Create 3D test data
 def test_Crop(im_seg, crop_transform):
     im, seg = im_seg
