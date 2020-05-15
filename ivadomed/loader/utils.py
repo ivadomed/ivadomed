@@ -172,6 +172,7 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
     def __len__(self):
         return self.num_samples
 
+
 def clean_metadata(metadata_lst):
     metadata_out = []
     for metadata_cur in metadata_lst:
@@ -180,3 +181,11 @@ def clean_metadata(metadata_lst):
                 del metadata_cur[key_]
             metadata_out.append(metadata_cur)
     return metadata_out
+
+
+def update_metadata(metadata_src_lst, metadata_dest_lst):
+    metadata_out_lst = []
+    for idx in range(len(metadata_src_lst)):
+        metadata_updated = dict(list(metadata_src_lst[idx].items()) + list(metadata_dest_lst[idx].items()))
+        metadata_out_lst.append(metadata_updated)
+    return metadata_out_lst
