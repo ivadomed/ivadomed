@@ -8,7 +8,7 @@ from PIL import Image
 
 from skimage.exposure import equalize_adapthist
 from skimage.transform import resize
-from scipy.ndimage import rotate
+from scipy.ndimage import rotate, zoom
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
@@ -190,18 +190,14 @@ class Resample(ImedTransform):
         # Get new data shape
         # Voxel dimension in mm
         hzoom, wzoom = metadata["zooms"]
-        hshape, wshape = metadata["data_shape"]
         hfactor = hzoom / self.hspace
         wfactor = wzoom / self.wspace
-        hshape_new = int(round(hshape * hfactor))
-        wshape_new = int(round(wshape * wfactor))
 
-        # Run resize from https://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.resize
-        data_out = resize(sample,
-                          output_shape=(hshape_new, wshape_new),
-                          order=self.interpolation_order,
-                          preserve_range=True,
-                          anti_aliasing=True)
+        # Run resampling
+        data_out = zoom(sample,
+                        zoom=(hfactor, wfactor),
+                        order=self.interpolation_order)
+
         # Data type
         data_out = data_out.astype(sample.dtype)
 
