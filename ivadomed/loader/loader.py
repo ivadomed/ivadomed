@@ -337,23 +337,27 @@ class MRI2DSegmentationDataset(Dataset):
                 roi_scaled = (roi_slice * 255).astype(np.uint8)
                 list_roi.append(Image.fromarray(roi_scaled, mode='L'))
 
+        # Stack data
+        # Shape: [channel, h, w(, d)]
+        stack_input, stack_roi, stack_gt = np.stack(list_input), np.stack(list_roi), np.stack(list_gt)
+
         # Run transforms on images
-        list_input, metadata_input = self.transform(sample=list_input,
+        stack_input, metadata_input = self.transform(sample=stack_input,
                                                     metdata=seg_pair_slice['input_metadata'],
                                                     data_type="im")
         # Run transforms on ROI
-        list_roi, metadata_roi = self.transform(sample=list_roi,
+        stack_roi, metadata_roi = self.transform(sample=stack_roi,
                                                 metdata=roi_pair_slice['roi_metadata'],
                                                 data_type="roi")
         # Run transforms on images
-        list_gt, metadata_gt = self.transform(sample=list_gt,
+        stack_gt, metadata_gt = self.transform(sample=stack_gt,
                                               metdata=seg_pair_slice['gt_metadata'],
                                               data_type="gt")
 
         data_dict = {
-            'input': list_input,
-            'gt': list_gt,
-            'roi': list_roi,
+            'input': stack_input,
+            'gt': stack_gt,
+            'roi': stack_roi,
             'input_metadata': metadata_input,
             'gt_metadata': metadata_gt,
             'roi_metadata': metadata_roi
