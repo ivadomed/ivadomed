@@ -205,6 +205,8 @@ def cmd_train(context):
         elif unet_3D:
             model = imed_models.UNet3D(in_channels=in_channel,
                                        n_classes=out_channel,
+                                       drop_rate=context["dropout_rate"],
+                                       momentum=context["batch_norm_momentum"],
                                        base_n_filter=context["n_filters"],
                                        attention=attention)
         else:

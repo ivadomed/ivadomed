@@ -346,15 +346,16 @@ class UNet3D(nn.Module):
     https://github.com/ozan-oktay/Attention-Gated-Networks
     """
 
-    def __init__(self, in_channels, n_classes, base_n_filter=16, attention=False):
+    def __init__(self, in_channels, n_classes, base_n_filter=16, attention=False, drop_rate=0.6, momentum=0.1):
         super(UNet3D, self).__init__()
         self.in_channels = in_channels
         self.n_classes = n_classes
         self.base_n_filter = base_n_filter
         self.attention = attention
+        self.momentum = momentum
 
         self.lrelu = nn.LeakyReLU()
-        self.dropout3d = nn.Dropout3d(p=0.6)
+        self.dropout3d = nn.Dropout3d(p=drop_rate)
         self.upsacle = nn.Upsample(scale_factor=2, mode='nearest')
         self.softmax = nn.Softmax(dim=1)
 
@@ -369,7 +370,7 @@ class UNet3D(nn.Module):
         )
         self.lrelu_conv_c1 = self.lrelu_conv(
             self.base_n_filter, self.base_n_filter)
-        self.inorm3d_c1 = nn.InstanceNorm3d(self.base_n_filter)
+        self.inorm3d_c1 = nn.InstanceNorm3d(self.base_n_filter, momentum=momentum)
 
         # Level 2 context pathway
         self.conv3d_c2 = nn.Conv3d(
@@ -378,7 +379,7 @@ class UNet3D(nn.Module):
         )
         self.norm_lrelu_conv_c2 = self.norm_lrelu_conv(
             self.base_n_filter * 2, self.base_n_filter * 2)
-        self.inorm3d_c2 = nn.InstanceNorm3d(self.base_n_filter * 2)
+        self.inorm3d_c2 = nn.InstanceNorm3d(self.base_n_filter * 2, momentum=momentum)
 
         # Level 3 context pathway
         self.conv3d_c3 = nn.Conv3d(
@@ -387,7 +388,7 @@ class UNet3D(nn.Module):
         )
         self.norm_lrelu_conv_c3 = self.norm_lrelu_conv(
             self.base_n_filter * 4, self.base_n_filter * 4)
-        self.inorm3d_c3 = nn.InstanceNorm3d(self.base_n_filter * 4)
+        self.inorm3d_c3 = nn.InstanceNorm3d(self.base_n_filter * 4, momentum=momentum)
 
         # Level 4 context pathway
         self.conv3d_c4 = nn.Conv3d(
@@ -396,7 +397,7 @@ class UNet3D(nn.Module):
         )
         self.norm_lrelu_conv_c4 = self.norm_lrelu_conv(
             self.base_n_filter * 8, self.base_n_filter * 8)
-        self.inorm3d_c4 = nn.InstanceNorm3d(self.base_n_filter * 8)
+        self.inorm3d_c4 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=momentum)
 
         # Level 5 context pathway, level 0 localization pathway
         self.conv3d_c5 = nn.Conv3d(
@@ -414,7 +415,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 8, self.base_n_filter * 8,
             kernel_size=1, stride=1, padding=0, bias=False
         )
-        self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 8)
+        self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=momentum)
 
         # Attention UNet
         if self.attention:
@@ -437,7 +438,7 @@ class UNet3D(nn.Module):
                                                         inter_channels=self.base_n_filter * 8,
                                                         sub_sample_factor=(2, 2, 2),
                                                         )
-            self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 16)
+            self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 16, momentum=momentum)
 
         # Level 1 localization pathway
         self.conv_norm_lrelu_l1 = self.conv_norm_lrelu(
@@ -493,12 +494,12 @@ class UNet3D(nn.Module):
         return nn.Sequential(
             nn.Conv3d(feat_in, feat_out, kernel_size=3,
                       stride=1, padding=1, bias=False),
-            nn.InstanceNorm3d(feat_out),
+            nn.InstanceNorm3d(feat_out, momentum=self.momentum),
             nn.LeakyReLU())
 
     def norm_lrelu_conv(self, feat_in, feat_out):
         return nn.Sequential(
-            nn.InstanceNorm3d(feat_in),
+            nn.InstanceNorm3d(feat_in, momentum=self.momentum),
             nn.LeakyReLU(),
             nn.Conv3d(feat_in, feat_out,
                       kernel_size=3, stride=1, padding=1, bias=False))
@@ -511,13 +512,13 @@ class UNet3D(nn.Module):
 
     def norm_lrelu_upscale_conv_norm_lrelu(self, feat_in, feat_out):
         return nn.Sequential(
-            nn.InstanceNorm3d(feat_in),
+            nn.InstanceNorm3d(feat_in, momentum=self.momentum),
             nn.LeakyReLU(),
             nn.Upsample(scale_factor=2, mode='nearest'),
             # should be feat_in*2 or feat_in
             nn.Conv3d(feat_in, feat_out, kernel_size=3,
                       stride=1, padding=1, bias=False),
-            nn.InstanceNorm3d(feat_out),
+            nn.InstanceNorm3d(feat_out, momentum=self.momentum),
             nn.LeakyReLU())
 
     def forward(self, x):
