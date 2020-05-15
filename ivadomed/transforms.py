@@ -617,7 +617,7 @@ class RandomRotation(ImedTransform):
                           axes=axes,
                           reshape=False,
                           order=1).astype(sample.dtype)
-
+        print(angle)
         return data_out, metadata
 
     @list_capable
@@ -625,7 +625,7 @@ class RandomRotation(ImedTransform):
     def undo_transform(self, sample, metadata):
         assert "rotation" in metadata
         # Opposite rotation, same axes
-        angle, axes = - metadata['rotation'][0], metadata['rotation'][1][::-1]
+        angle, axes = - metadata['rotation'][0], metadata['rotation'][1]
 
         # Undo rotation
         data_out = rotate(sample,
