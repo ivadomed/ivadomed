@@ -21,6 +21,7 @@ __numpy_type_map = {
     'uint8': torch.ByteTensor,
 }
 
+TRANSFORM_PARAMS = ['resample', 'elastic', 'rotation', 'offset', 'crop_params']
 
 def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
     # read participants.tsv as pandas dataframe
@@ -170,3 +171,12 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 
     def __len__(self):
         return self.num_samples
+
+def clean_metadata(metadata_lst):
+    metadata_out = []
+    for metadata_cur in metadata_lst:
+        for key_ in metadata_cur:
+            if key_ in TRANSFORM_PARAMS:
+                del metadata_cur[key_]
+            metadata_out.append(metadata_cur)
+    return metadata_out
