@@ -183,7 +183,7 @@ def clean_metadata(metadata_lst):
     for metadata_cur in metadata_lst:
         for key_ in list(metadata_cur.keys()):
             if key_ in TRANSFORM_PARAMS:
-                del metadata_cur[key_]
+                del metadata_cur.metadata[key_]
             metadata_out.append(metadata_cur)
     return metadata_out
 
