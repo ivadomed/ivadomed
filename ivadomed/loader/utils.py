@@ -126,6 +126,9 @@ class SampleMetadata(object):
     def __contains__(self, key):
         return key in self.metadata
 
+    def items(self):
+        return self.metadata.items() 
+
     def keys(self):
         return self.metadata.keys()
 
