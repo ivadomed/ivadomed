@@ -4,7 +4,6 @@ import numbers
 import random
 import functools
 import numpy as np
-from PIL import Image
 
 from skimage.exposure import equalize_adapthist
 from skimage.transform import resize
@@ -192,6 +191,7 @@ class Resample(ImedTransform):
     @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata):
+        print(metadata)
         # Get params
         # Voxel dimension in mm
         zooms = metadata["zooms"]
