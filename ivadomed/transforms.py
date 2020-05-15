@@ -171,15 +171,16 @@ class Resample(ImedTransform):
         self.interpolation_order = interpolation_order
 
     @list_capable
+    @two_dim_compatible
     def undo_transform(self, sample, metadata):
+        assert "resample" in metadata
+
         # Get params
-        hzoom, wzoom = metadata["zooms"]
-        hfactor = self.hspace / hzoom
-        wfactor = self.wspace / wzoom
+        params = metadata["resample"]
 
         # Undo resampling
         data_out = zoom(sample,
-                        zoom=(hfactor, wfactor),
+                        zoom=params,
                         order=self.interpolation_order)
 
         # Data type
@@ -198,10 +199,14 @@ class Resample(ImedTransform):
         hfactor = zooms[0] / self.hspace
         wfactor = zooms[1] / self.wspace
         dfactor = zooms[2] / self.dspace
+        params_resample = (hfactor, wfactor, dfactor)
+
+        # Save params
+        metadata['resample'] = params_resample
 
         # Run resampling
         data_out = zoom(sample,
-                        zoom=(hfactor, wfactor, dfactor),
+                        zoom=params_resample,
                         order=self.interpolation_order)
 
         # Data type
