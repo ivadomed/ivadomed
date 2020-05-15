@@ -122,12 +122,16 @@ class Compose(object):
 
 class UndoCompose(object):
     def __init__(self, compose):
-        self.transforms = compose.transforms
+        self.transforms = compose
 
-    def __call__(self, img):
-        for t in self.transforms[::-1]:
-            img = t.undo_transform(img)
-        return img
+    def __call__(self, sample, metadata, data_type='im'):
+        if self.transform[data_type] is None:
+            # In case self.transform[data_type] is None
+            return None, None
+        else:
+            for tr in self.transform[data_type].transforms[::-1]:
+                sample, metadata = tr.undo_transform(sample, metadata)
+            return sample, metadata
 
 
 class UndoTransform(object):
