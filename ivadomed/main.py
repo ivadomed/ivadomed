@@ -318,7 +318,7 @@ def cmd_train(context):
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
 
-        lr = scheduler.get_lr()[0]
+        lr = scheduler.get_last_lr()[0]
         writer.add_scalar('learning_rate', lr, epoch)
 
         model.train()
