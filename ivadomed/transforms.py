@@ -176,11 +176,12 @@ class Resample(ImedTransform):
         assert "resample" in metadata
 
         # Get params
-        params = metadata["resample"]
+        params_do = metadata["resample"]
+        params_undo = [1 / x for x in params_do]
 
         # Undo resampling
         data_out = zoom(sample,
-                        zoom=params,
+                        zoom=params_undo,
                         order=self.interpolation_order)
 
         # Data type
@@ -191,11 +192,11 @@ class Resample(ImedTransform):
     @list_capable
     @two_dim_compatible
     def __call__(self, sample, metadata):
-        # Get new data shape
+        # Get params
         # Voxel dimension in mm
         zooms = metadata["zooms"]
         if len(zooms) == 2:
-            metadata["zooms"] += tuple(1)
+            zooms += tuple([1.0])
         hfactor = zooms[0] / self.hspace
         wfactor = zooms[1] / self.wspace
         dfactor = zooms[2] / self.dspace
