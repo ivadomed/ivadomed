@@ -10,7 +10,7 @@ from scipy.ndimage.measurements import center_of_mass
 
 import torch
 
-from ivadomed.transforms import RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
+from ivadomed.transforms import ElasticTransform, RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
 from ivadomed.metrics import dice_score, mse
 
 DEBUGGING = False
@@ -325,3 +325,30 @@ def test_RandomRotation(im_seg, rot_transform):
         assert do_seg[idx].dtype == undo_seg[idx].dtype == seg[idx].dtype
         # Data consistency
         assert dice_score(undo_seg[idx], seg[idx]) > 0.8
+
+
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 2, rad_max=10),
+                                    create_test_image(100, 100, 100, 1, rad_max=10)])
+@pytest.mark.parametrize('elastic_transform', [ElasticTransform(alpha_range=[28.0, 30.0],
+                                                                sigma_range=[3.5, 4.5],
+                                                                p=1)])
+def test_ElasticTransform(im_seg, elastic_transform):
+    im, seg = im_seg
+    metadata_in = [{} for _ in im] if isinstance(im, list) else {}
+
+    # Transform on Numpy
+    do_im, metadata_do = elastic_transform(im.copy(), metadata_in)
+    do_seg, metadata_do = elastic_transform(seg.copy(), metadata_do)
+
+    if DEBUGGING and len(im[0].shape) == 2:
+        plot_transformed_sample(im[0], do_im[0], ['raw', 'do'])
+        plot_transformed_sample(seg[0], do_seg[0], ['raw', 'do'])
+
+    # Loop and check
+    for idx, i in enumerate(im):
+        # Check data shape
+        assert do_im[idx].shape == i.shape
+        assert do_seg[idx].shape == seg[idx].shape
+        # Check data type
+        assert do_im[idx].dtype == i.dtype
+        assert do_seg[idx].dtype == seg[idx].dtype
