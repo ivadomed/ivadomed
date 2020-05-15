@@ -192,7 +192,6 @@ class Resample(ImedTransform):
     @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata):
-        print(metadata)
         # Get params
         # Voxel dimension in mm
         zooms = metadata["zooms"]
