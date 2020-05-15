@@ -171,15 +171,16 @@ class Resample(ImedTransform):
 
     @list_capable
     def undo_transform(self, sample, metadata):
-        # Get original data shape
-        hshape, wshape = metadata['data_shape']
+        # Get params
+        hzoom, wzoom = metadata["zooms"]
+        hfactor = self.hspace / hzoom
+        wfactor = self.wspace / wzoom
 
         # Undo resampling
-        data_out = resize(sample,
-                          output_shape=(hshape, wshape),
-                          order=self.interpolation_order,
-                          preserve_range=True,
-                          anti_aliasing=True)
+        data_out = zoom(sample,
+                        zoom=(hfactor, wfactor),
+                        order=self.interpolation_order)
+
         # Data type
         data_out = data_out.astype(sample.dtype)
 
