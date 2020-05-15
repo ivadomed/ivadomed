@@ -182,6 +182,7 @@ def test_Resample(im_seg, resample_transform, native_resolution):
         assert seg[idx].dtype == do_seg[idx].dtype == undo_seg[idx].dtype
         # Plot for debugging
         if DEBUGGING:
+            plot_transformed_sample(im[idx], undo_im[idx])
             plot_transformed_sample(seg[idx], undo_seg[idx])
         # Data consistency
         assert dice_score(undo_seg[idx], seg[idx]) > 0.8

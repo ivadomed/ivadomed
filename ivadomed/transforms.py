@@ -153,20 +153,21 @@ class NumpyToTensor(ImedTransform):
         return torch.from_numpy(arr_contig), metadata
 
 
-# TODO: tweak order GT / IM + 3D
 class Resample(ImedTransform):
     """
     Resample image to a given resolution.
 
     Args:
-        wspace (float): Resolution along the first axis, in mm.
-        hspace (float): Resolution along the second axis, in mm.
+        hspace (float): Resolution along the first axis, in mm.
+        wspace (float): Resolution along the second axis, in mm.
+        dspace (float): Resolution along the third axis, in mm.
         interpolation_order (int): Order of spline interpolation. Set to 0 for label data. Default=2.
     """
 
-    def __init__(self, wspace, hspace, interpolation_order=2):
+    def __init__(self, hspace, wspace, dspace=1., interpolation_order=2):
         self.hspace = hspace
         self.wspace = wspace
+        self.dspace = dspace
         self.interpolation_order = interpolation_order
 
     @list_capable
@@ -187,16 +188,20 @@ class Resample(ImedTransform):
         return data_out, metadata
 
     @list_capable
+    @two_dim_compatible
     def __call__(self, sample, metadata):
         # Get new data shape
         # Voxel dimension in mm
-        hzoom, wzoom = metadata["zooms"]
-        hfactor = hzoom / self.hspace
-        wfactor = wzoom / self.wspace
+        zooms = metadata["zooms"]
+        if len(zooms) == 2:
+            metadata["zooms"] += tuple(1)
+        hfactor = zooms[0] / self.hspace
+        wfactor = zooms[1] / self.wspace
+        dfactor = zooms[2] / self.dspace
 
         # Run resampling
         data_out = zoom(sample,
-                        zoom=(hfactor, wfactor),
+                        zoom=(hfactor, wfactor, dfactor),
                         order=self.interpolation_order)
 
         # Data type
