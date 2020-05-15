@@ -13,7 +13,7 @@ import torch
 from ivadomed.transforms import ElasticTransform, RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_array
 from ivadomed.metrics import dice_score, mse
 
-DEBUGGING = False
+DEBUGGING = True
 if DEBUGGING:
     from testing.utils import plot_transformed_sample
 
@@ -327,11 +327,10 @@ def test_RandomRotation(im_seg, rot_transform):
         assert dice_score(undo_seg[idx], seg[idx]) > 0.8
 
 
-@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 2, rad_max=10),
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
                                     create_test_image(100, 100, 100, 1, rad_max=10)])
-@pytest.mark.parametrize('elastic_transform', [ElasticTransform(alpha_range=[28.0, 30.0],
-                                                                sigma_range=[3.5, 4.5],
-                                                                p=1)])
+@pytest.mark.parametrize('elastic_transform', [ElasticTransform(alpha_range=[150.0, 250.0],
+                                                                sigma_range=[100 * 0.06, 100 * 0.09])])
 def test_ElasticTransform(im_seg, elastic_transform):
     im, seg = im_seg
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
