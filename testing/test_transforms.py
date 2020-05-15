@@ -175,8 +175,8 @@ def _test_Resample(im_seg, resample_transform, native_resolution, is_2D=False):
         assert seg[idx].dtype == do_seg[idx].dtype == undo_seg[idx].dtype
         # Plot for debugging
         if DEBUGGING and is_2D:
-            plot_transformed_sample(im[idx], undo_im[idx])
-            plot_transformed_sample(seg[idx], undo_seg[idx])
+            plot_transformed_sample(im[idx], undo_im[idx], ['raw', 'undo'])
+            plot_transformed_sample(seg[idx], undo_seg[idx], ['raw', 'undo'])
         # Data consistency
         assert dice_score(undo_seg[idx], seg[idx]) > 0.8
 
@@ -265,8 +265,8 @@ def _test_Crop(im_seg, crop_transform):
             assert np.array_equal(seg[idx][fh:fh+th, fw:fw+tw], undo_seg[idx][fh:fh+th, fw:fw+tw])
             # Plot for debugging
             if DEBUGGING:
-                plot_transformed_sample(seg[idx], undo_seg[idx])
-                plot_transformed_sample(i, undo_im[idx])
+                plot_transformed_sample(seg[idx], undo_seg[idx], ['raw', 'undo'])
+                plot_transformed_sample(i, undo_im[idx], ['raw', 'undo'])
         else:
             assert np.array_equal(i[fh:fh+th, fw:fw+tw, fd:fd+td], undo_im[idx][fh:fh+th, fw:fw+tw, fd:fd+td])
             assert np.array_equal(seg[idx][fh:fh+th, fw:fw+tw, fd:fd+td], undo_seg[idx][fh:fh+th, fw:fw+tw, fd:fd+td])
@@ -303,8 +303,8 @@ def test_RandomRotation(im_seg, rot_transform):
     do_seg, metadata_do = rot_transform(seg.copy(), metadata_do)
 
     if DEBUGGING and len(im[0].shape) == 2:
-        plot_transformed_sample(im[0], do_im[0])
-        plot_transformed_sample(seg[0], do_seg[0])
+        plot_transformed_sample(im[0], do_im[0], ['raw', 'do'])
+        plot_transformed_sample(seg[0], do_seg[0], ['raw', 'do'])
 
     # Transform on Numpy
     undo_im, _ = rot_transform.undo_transform(do_im, metadata_do)
@@ -312,8 +312,8 @@ def test_RandomRotation(im_seg, rot_transform):
 
     if DEBUGGING and len(im[0].shape) == 2:
         # TODO: ERROR for image but not for seg.....
-        plot_transformed_sample(im[0], undo_im[0])
-        plot_transformed_sample(seg[0], undo_seg[0])
+        plot_transformed_sample(im[0], undo_im[0], ['raw', 'undo'])
+        plot_transformed_sample(seg[0], undo_seg[0], ['raw', 'undo'])
 
     # Loop and check
     for idx, i in enumerate(im):
