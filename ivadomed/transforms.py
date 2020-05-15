@@ -915,6 +915,7 @@ class ElasticTransform(ImedTransform):
         return data_out, metadata
 
 
+# TODO
 class AdditiveGaussianNoise(ImedTransform):
 
     def __init__(self, mean=0.0, std=0.01):
@@ -942,6 +943,7 @@ class AdditiveGaussianNoise(ImedTransform):
         return sample
 
 
+# TODO
 class Clahe(ImedTransform):
 
     def __init__(self, clip_limit=3.0, kernel_size=(8, 8)):
@@ -991,7 +993,8 @@ class HistogramClipping(ImedTransform):
         data[sample >= percentile2] = percentile2
         return data, metadata
 
-def rescale_array(arr, minv=0.0, maxv=1.0, dtype=np.float32):
+
+def rescale_values_array(arr, minv=0.0, maxv=1.0, dtype=np.float32):
     """Rescale the values of numpy array `arr` to be from `minv` to `maxv`."""
     if dtype is not None:
         arr = arr.astype(dtype)
