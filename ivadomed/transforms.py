@@ -19,7 +19,7 @@ import torch
 #from torchvision import transforms as torchvision_transforms
 
 
-def list_capable(wrapped):
+def multichannel_capable(wrapped):
     @functools.wraps(wrapped)
     def wrapper(self, sample, metadata):
         if isinstance(sample, list):
@@ -142,11 +142,11 @@ class UndoTransform(object):
 class NumpyToTensor(ImedTransform):
     """Converts numpy array to tensor object."""
 
-    @list_capable
+    @multichannel_capable
     def undo_transform(self, sample, metadata={}):
         return sample.numpy(), metadata
 
-    @list_capable
+    @multichannel_capable
     def __call__(self, sample, metadata={}):
         # Use np.ascontiguousarray to avoid axes permutations issues
         arr_contig = np.ascontiguousarray(sample, dtype=sample.dtype)
@@ -170,7 +170,7 @@ class Resample(ImedTransform):
         self.dspace = dspace
         self.interpolation_order = interpolation_order
 
-    @list_capable
+    @multichannel_capable
     @two_dim_compatible
     def undo_transform(self, sample, metadata):
         assert "resample" in metadata
@@ -189,7 +189,7 @@ class Resample(ImedTransform):
 
         return data_out, metadata
 
-    @list_capable
+    @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata):
         # Get params
@@ -250,7 +250,7 @@ class NormalizeInstance(ImedTransform):
     from the sample itself.
     """
 
-    @list_capable
+    @multichannel_capable
     def __call__(self, sample, metadata={}):
         assert isinstance(sample, np.ndarray)
         data_out = (sample - sample.mean()) / sample.std()
@@ -346,7 +346,7 @@ class Crop(ImedTransform):
 
         return npad_out_tuple, sample
 
-    @list_capable
+    @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata={}):
         # Get params
@@ -363,7 +363,7 @@ class Crop(ImedTransform):
 
         return data_out, metadata
 
-    @list_capable
+    @multichannel_capable
     @two_dim_compatible
     def undo_transform(self, sample, metadata):
         # Get crop params
@@ -393,7 +393,7 @@ class Crop(ImedTransform):
 
 class CenterCrop(Crop):
     """Make a centered crop of a specified size."""
-    @list_capable
+    @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata={}):
         # Crop parameters
@@ -411,7 +411,7 @@ class CenterCrop(Crop):
 
 class ROICrop(Crop):
     """Make a crop of a specified size around a ROI."""
-    @list_capable
+    @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata={}):
         # If crop_params are not in metadata,
@@ -570,7 +570,7 @@ class AddBackgroundClass(ImedTransform):
     #def undo_transform(self, sample):
     #    return sample
 
-    # Note: We do not apply @list_capable to AddBackgroundClass
+    # Note: We do not apply @multichannel_capable to AddBackgroundClass
     # because we need all the channels to determine the Background.
     def __call__(self, sample, metadata={}):
         # Sum across the channels (i.e. labels)
@@ -596,7 +596,7 @@ class RandomRotation(ImedTransform):
                 "degrees should be a list or tuple and it must be of length 2."
             self.degrees = degrees
 
-    @list_capable
+    @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata={}):
         # If angle and metadata have been already defined for this sample, then use them
@@ -620,7 +620,7 @@ class RandomRotation(ImedTransform):
         print(angle)
         return data_out, metadata
 
-    @list_capable
+    @multichannel_capable
     @two_dim_compatible
     def undo_transform(self, sample, metadata):
         assert "rotation" in metadata
@@ -841,7 +841,7 @@ class RandomShiftIntensity(ImedTransform):
         self.shift_range = shift_range
         self.prob = prob
 
-    @list_capable
+    @multichannel_capable
     def __call__(self, sample, metadata={}):
         if np.random.random() < self.prob:
             # Get random offset
@@ -855,7 +855,7 @@ class RandomShiftIntensity(ImedTransform):
         data = (sample + offset).astype(sample.dtype)
         return data, metadata
 
-    @list_capable
+    @multichannel_capable
     def undo_transform(self, sample, metadata={}):
         assert 'offset' in metadata
         # Get offset
@@ -872,7 +872,7 @@ class ElasticTransform(ImedTransform):
         self.alpha_range = alpha_range
         self.sigma_range = sigma_range
 
-    @list_capable
+    @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata={}):
         # if params already defined, i.e. sample is GT
@@ -983,7 +983,7 @@ class HistogramClipping(ImedTransform):
         self.min_percentile = min_percentile
         self.max_percentile = max_percentile
 
-    @list_capable
+    @multichannel_capable
     def __call__(self, sample, metadata={}):
         data = np.copy(sample)
         # Run clipping
