@@ -116,7 +116,7 @@ class Compose(object):
             # In case self.transform[data_type] is None
             return None, None
         else:
-            for tr in list(self.transform[data_type]):
+            for tr in self.transform[data_type].transforms:
                 sample, metadata = tr(sample, metadata)
             return sample, metadata
 
