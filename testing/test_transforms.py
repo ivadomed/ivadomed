@@ -148,14 +148,7 @@ def test_NumpyToTensor(im_seg):
             assert i.dtype == im_cur[idx].dtype
 
 
-# TODO: Adapt to 3D
-@pytest.mark.parametrize('im_seg', [create_test_image(80, 100, 0),
-                                    create_test_image(100, 80, 0)])
-@pytest.mark.parametrize('resample_transform', [Resample(0.8, 1.0, interpolation_order=2),
-                                                Resample(1.0, 0.8, interpolation_order=2)])
-@pytest.mark.parametrize('native_resolution', [(0.9, 1.0),
-                                               (1.0, 0.9)])
-def test_Resample(im_seg, resample_transform, native_resolution):
+def _test_Resample(im_seg, resample_transform, native_resolution, is_2D=False):
     im, seg = im_seg
     metadata_ = {'zooms': native_resolution, 'data_shape': im[0].shape}
     metadata_in = [metadata_ for _ in im] if isinstance(im, list) else {}
@@ -181,12 +174,29 @@ def test_Resample(im_seg, resample_transform, native_resolution):
         assert i.dtype == do_im[idx].dtype == undo_im[idx].dtype
         assert seg[idx].dtype == do_seg[idx].dtype == undo_seg[idx].dtype
         # Plot for debugging
-        if DEBUGGING:
+        if DEBUGGING and is_2D:
             plot_transformed_sample(im[idx], undo_im[idx])
             plot_transformed_sample(seg[idx], undo_seg[idx])
         # Data consistency
         assert dice_score(undo_seg[idx], seg[idx]) > 0.8
-        assert mse(undo_im[idx], im[idx]) < 1e-1
+
+
+@pytest.mark.parametrize('im_seg', [create_test_image(80, 100, 0, 2, rad_max=10)])
+@pytest.mark.parametrize('resample_transform', [Resample(0.8, 1.0, interpolation_order=2),
+                                                Resample(1.0, 0.8, interpolation_order=2)])
+@pytest.mark.parametrize('native_resolution', [(0.9, 1.0),
+                                               (1.0, 0.9)])
+def test_Resample_2D(im_seg, resample_transform, native_resolution):
+    _test_Resample(im_seg, resample_transform, native_resolution, is_2D=True)
+
+
+@pytest.mark.parametrize('im_seg', [create_test_image(80, 100, 100, 1, rad_max=10)])
+@pytest.mark.parametrize('resample_transform', [Resample(0.8, 1.0, 0.5, interpolation_order=2),
+                                                Resample(1.0, 0.8, 0.7, interpolation_order=2)])
+@pytest.mark.parametrize('native_resolution', [(0.9, 1.0, 0.8),
+                                               (1.0, 0.9, 1.1)])
+def test_Resample_3D(im_seg, resample_transform, native_resolution):
+    _test_Resample(im_seg, resample_transform, native_resolution)
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 100, 1),
