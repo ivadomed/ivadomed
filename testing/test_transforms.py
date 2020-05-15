@@ -13,7 +13,7 @@ import torch
 from ivadomed.transforms import ElasticTransform, RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_values_array
 from ivadomed.metrics import dice_score, mse
 
-DEBUGGING = True
+DEBUGGING = False
 if DEBUGGING:
     from testing.utils import plot_transformed_sample
 

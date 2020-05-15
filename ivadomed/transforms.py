@@ -252,7 +252,6 @@ class NormalizeInstance(ImedTransform):
 
     @multichannel_capable
     def __call__(self, sample, metadata={}):
-        assert isinstance(sample, np.ndarray)
         data_out = (sample - sample.mean()) / sample.std()
         return data_out, metadata
 
@@ -617,7 +616,7 @@ class RandomRotation(ImedTransform):
                           axes=axes,
                           reshape=False,
                           order=1).astype(sample.dtype)
-        print(angle)
+
         return data_out, metadata
 
     @multichannel_capable
