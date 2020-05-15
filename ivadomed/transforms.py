@@ -637,61 +637,6 @@ class RandomRotation(ImedTransform):
         return data_out, metadata
 
 
-# TODO: Merge RandomRotation and RandomRotation3D
-class RandomRotation3D(RandomRotation):
-    """Make a rotation of the volume's values.
-
-    :param degrees: Maximum rotation's degrees.
-    :param axis: Axis of the rotation.
-    :param labeled: Boolean if label data is provided.
-    """
-
-    def __init__(self, degrees, axis=0, labeled=True):
-        super().__init__(degrees, labeled=labeled)
-        self.axis = axis
-
-    # TODO: use code of RandomRotation that could output a list then reconstruct 3D arr
-    def do_rotate(self, data, angle):
-        for x in range(data.shape[0]):
-            data[x, :, :] = F.rotate(Image.fromarray(data[x, :, :], mode='F'), angle)
-        return data
-
-    def __call__(self, sample):
-        rdict = {}
-
-        input_data = sample['input']
-
-        # Check if input data is 3D
-        if len(sample['input'][0].shape) != 3:
-            raise ValueError("Input of RandomRotation3D should be a 3 dimensionnal tensor.")
-
-        # Get angles
-        angle = self.get_params()
-
-        # Move axis of interest to the first dimension
-        input_data_movedaxis = np.moveaxis(input_data, self.axis, 0)
-
-        # Transform data
-        input_rotated = self.do_rotate(input_data_movedaxis, angle)
-
-        # Reorient data
-        input_out = np.moveaxis(input_rotated, 0, self.axis)
-
-        # Update
-        rdict['input'] = input_out
-
-        # If labeled data
-        if self.labeled:
-            gt_data = sample['gt']
-            gt_data_movedaxis = np.moveaxis(gt_data, self.axis, 0)
-            gt_rotated = self.do_rotate(gt_data_movedaxis, angle)
-            gt_out = np.moveaxis(gt_rotated, 0, self.axis)
-            rdict['gt'] = gt_out
-
-        sample.update(rdict)
-        return sample
-
-
 # TODO: Extend to 2D?
 class RandomReverse3D(ImedTransform):
     """Make a randomized symmetric inversion of the different values of each dimensions."""
