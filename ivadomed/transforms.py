@@ -637,7 +637,7 @@ class RandomRotation(ImedTransform):
         return data_out, metadata
 
 
-# TODO: Extend to 2D?
+# TODO
 class RandomReverse3D(ImedTransform):
     """Make a randomized symmetric inversion of the different values of each dimensions."""
 
@@ -680,13 +680,13 @@ class RandomReverse3D(ImedTransform):
         return sample
 
 
+# TODO
 class RandomAffine(RandomRotation):
 
     def __init__(self, degrees, translate=None,
                  scale=None, shear=None,
-                 resample=False, fillcolor=0,
-                 labeled=True):
-        super().__init__(degrees, labeled=labeled)
+                 resample=False, fillcolor=0):
+        super().__init__(degrees)
 
         # Check Translate
         if translate is not None:
@@ -796,6 +796,7 @@ class RandomAffine(RandomRotation):
         return sample
 
 
+# TODO
 class RandomAffine3D(RandomAffine):
 
     def __call__(self, sample):
@@ -865,117 +866,51 @@ class RandomShiftIntensity(ImedTransform):
 
 
 class ElasticTransform(ImedTransform):
-    "Elastic transform for 2D and 3D inputs"
+    """Elastic transform for 2D and 3D inputs."""
 
-    def __init__(self, alpha_range, sigma_range,
-                 p=0.5, labeled=True):
+    def __init__(self, alpha_range, sigma_range, p=0.5):
         self.alpha_range = alpha_range
         self.sigma_range = sigma_range
-        self.labeled = labeled
         self.p = p
-        self.is3D = False  # Set as default, it will be re-assesed when called
 
-    @staticmethod
-    def get_params(alpha, sigma):
-        alpha = np.random.uniform(alpha[0], alpha[1])
-        sigma = np.random.uniform(sigma[0], sigma[1])
-        return alpha, sigma
+    @list_capable
+    @two_dim_compatible
+    def __call__(self, sample, metadata={}):
+        # Check probability of occurence
+        if np.random.random() < self.p:
+            # Get params
+            alpha = np.random.uniform(self.alpha_range[0], self.alpha_range[1])
+            sigma = np.random.uniform(self.sigma_range[0], self.sigma_range[1])
 
-    def elastic_transform(self, image, alpha, sigma):
-        shape = image.shape
+            # Get shape
+            shape = sample.shape
 
-        # Compute random deformation
-        dx = gaussian_filter((np.random.rand(*shape) * 2 - 1),
-                             sigma, mode="constant", cval=0) * alpha
-        dy = gaussian_filter((np.random.rand(*shape) * 2 - 1),
-                             sigma, mode="constant", cval=0) * alpha
+            # Compute random deformation
+            dx = gaussian_filter((np.random.rand(*shape) * 2 - 1),
+                                 sigma, mode="constant", cval=0) * alpha
+            dy = gaussian_filter((np.random.rand(*shape) * 2 - 1),
+                                 sigma, mode="constant", cval=0) * alpha
 
-        if self.is3D:
             dz = gaussian_filter((np.random.rand(*shape) * 2 - 1),
                                  sigma, mode="constant", cval=0) * alpha
             x, y, z = np.meshgrid(np.arange(shape[0]),
                                   np.arange(shape[1]),
                                   np.arange(shape[2]), indexing='ij')
-            indices = np.reshape(x + dx, (-1, 1)), np.reshape(y + dy, (-1, 1)), np.reshape(z + dz, (-1, 1))
+            indices = np.reshape(x + dx, (-1, 1)),\
+                      np.reshape(y + dy, (-1, 1)),\
+                      np.reshape(z + dz, (-1, 1))
+
+            # Apply deformation
+            data_out = map_coordinates(sample, indices, order=1)
+            # Keep input shape
+            data_out = data_out.reshape(shape)
+            # Keep data type
+            data_out = data_out.astype(sample.dtype)
+
+            return data_out, metadata
+
         else:
-            x, y = np.meshgrid(np.arange(shape[0]),
-                               np.arange(shape[1]), indexing='ij')
-            indices = np.reshape(x + dx, (-1, 1)), np.reshape(y + dy, (-1, 1))
-
-        # Apply deformation
-        return map_coordinates(image, indices, order=1).reshape(shape)
-
-    def sample_augment(self, input_data, params):
-        param_alpha, param_sigma = params
-
-        np_input_data = np.array(input_data)
-
-        # Check if input is 3D data
-        if len(np_input_data.shape) == 3:
-            self.is3D = True
-
-        # Run transform
-        np_output_data = self.elastic_transform(np_input_data,
-                                                param_alpha, param_sigma)
-
-        # TODO: CHeck with Andreanne
-        if self.is3D:
-            output_data = np_output_data
-        else:
-            output_data = Image.fromarray(np_output_data, mode='F')
-
-        return output_data
-
-    def label_augment(self, gt_data, params):
-        param_alpha, param_sigma = params
-
-        np_gt_data = np.array(gt_data)
-
-        # Run transform
-        np_gt_data = self.elastic_transform(np_gt_data,
-                                            param_alpha, param_sigma)
-
-        # TODO: CHeck with Andreanne
-        if self.is3D:
-            output_data = np_gt_data
-        else:
-            np_gt_data[np_gt_data >= 0.5] = 255.0
-            np_gt_data[np_gt_data < 0.5] = 0.0
-            np_gt_data = np_gt_data.astype(np.uint8)
-            output_data = Image.fromarray(np_gt_data, mode='L')
-
-        return output_data
-
-    def __call__(self, sample):
-        rdict = {}
-
-        # Check probability of occurence
-        if np.random.random() < self.p:
-            input_data = sample['input']
-            params = self.get_params(self.alpha_range,
-                                     self.sigma_range)
-            # TODO: decorator
-            if isinstance(input_data, list):
-                ret_input = [self.sample_augment(item, params)
-                             for item in input_data]
-            else:
-                ret_input = self.sample_augment(input_data, params)
-
-            # Update
-            rdict['input'] = ret_input
-
-            # Labeled data
-            if self.labeled:
-                gt_data = sample['gt']
-                if isinstance(gt_data, list):
-                    ret_gt = [self.label_augment(item, params)
-                              for item in gt_data]
-                else:
-                    ret_gt = self.label_augment(gt_data, params)
-                rdict['gt'] = ret_gt
-
-        sample.update(rdict)
-        return sample
+            return sample, metadata
 
 
 class AdditiveGaussianNoise(ImedTransform):
