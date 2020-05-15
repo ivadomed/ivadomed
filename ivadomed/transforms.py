@@ -15,8 +15,8 @@ from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_
 from scipy.ndimage.interpolation import map_coordinates
 
 import torch
-#import torch.nn.functional as F
-#from torchvision import transforms as torchvision_transforms
+import torch.nn.functional as F
+from torchvision import transforms as torchvision_transforms
 
 
 def multichannel_capable(wrapped):
@@ -320,7 +320,7 @@ class CroppableArray(np.ndarray):
 
 class Crop(ImedTransform):
     def __init__(self, size):
-        self.size = size if len(size) == 3 else size + tuple([0])
+        self.size = size if len(size) == 3 else size + [0]
         self.is_2D = True if len(size) == 2 else False
 
     @staticmethod
