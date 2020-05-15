@@ -7,9 +7,6 @@ from bids_neuropoly import bids
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
 
-from ivadomed.loader import adaptative as imed_adaptative, loader as imed_loader
-from ivadomed import utils as imed_utils
-
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
     'float32': torch.FloatTensor,
