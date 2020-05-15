@@ -344,27 +344,27 @@ class MRI2DSegmentationDataset(Dataset):
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
         metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
-        metadata_roi = imed_loader_utils.clean_metadata(roi_pair_slice['roi_metadata'])
+        metadata_roi = imed_loader_utils.clean_metadata(roi_pair_slice['gt_metadata'])
         metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
 
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
         stack_roi, metadata_roi = self.transform(sample=stack_roi,
-                                                metdata=metadata_roi,
+                                                metadata=metadata_roi,
                                                 data_type="roi")
         # Update metadata_input with metadata_roi
         metadata_input = imed_loader_utils.update_metadata(metadata_roi, metadata_input)
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=stack_input,
-                                                    metdata=metadata_input,
+                                                    metadata=metadata_input,
                                                     data_type="im")
         # Update metadata_input with metadata_roi
         metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
 
         # Run transforms on images
         stack_gt, metadata_gt = self.transform(sample=stack_gt,
-                                              metdata=metadata_gt,
+                                              metadata=metadata_gt,
                                               data_type="gt")
 
         data_dict = {

@@ -173,7 +173,7 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 def clean_metadata(metadata_lst):
     metadata_out = []
     for metadata_cur in metadata_lst:
-        for key_ in metadata_cur:
+        for key_ in list(metadata_cur.keys()):
             if key_ in TRANSFORM_PARAMS:
                 del metadata_cur[key_]
             metadata_out.append(metadata_cur)
