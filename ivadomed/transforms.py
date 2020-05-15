@@ -141,12 +141,13 @@ class UndoTransform(object):
 class NumpyToTensor(ImedTransform):
     """Converts numpy array to tensor object."""
 
-    @multichannel_capable
+    #@multichannel_capable
     def undo_transform(self, sample, metadata={}):
         return sample.numpy(), metadata
 
-    @multichannel_capable
+    #@multichannel_capable
     def __call__(self, sample, metadata={}):
+        sample = np.array(sample)
         # Use np.ascontiguousarray to avoid axes permutations issues
         arr_contig = np.ascontiguousarray(sample, dtype=sample.dtype)
         return torch.from_numpy(arr_contig), metadata
