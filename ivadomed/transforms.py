@@ -1108,9 +1108,10 @@ class RandomAffine3D(RandomAffine):
         ret_input = []
         for volume in input_data:
             img_data = np.zeros(input_data[0].shape)
-            for idx, img in enumerate(volume):
+            for idx in range(volume.shape[-1]):
+                img = volume[:, :, idx]
                 pil_img = Image.fromarray(img, mode='F')
-                img_data[idx, :, :] = np.array(self.sample_augment(pil_img, params))
+                img_data[:, :, idx] = np.array(self.sample_augment(pil_img, params))
             ret_input.append(img_data.astype('float32'))
 
         rdict['input'] = ret_input
