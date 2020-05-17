@@ -1109,9 +1109,9 @@ class RandomAffine3D(RandomAffine):
         for volume in input_data:
             img_data = np.zeros(input_data[0].shape)
             for idx in range(volume.shape[-1]):
-                img = volume[:, :, idx]
+                img = volume[..., idx]
                 pil_img = Image.fromarray(img, mode='F')
-                img_data[:, :, idx] = np.array(self.sample_augment(pil_img, params))
+                img_data[..., idx] = np.array(self.sample_augment(pil_img, params))
             ret_input.append(img_data.astype('float32'))
 
         rdict['input'] = ret_input
@@ -1121,9 +1121,10 @@ class RandomAffine3D(RandomAffine):
             ret_gt = []
             for labels in gt_data:
                 gt_vol = np.zeros(labels.shape)
-                for idx, gt in enumerate(labels):
+                for idx in range(labels.shape[-1]):
+                    gt = labels[..., idx]
                     pil_img = Image.fromarray(gt, mode='F')
-                    gt_vol[idx, :, :] = np.array(self.sample_augment(pil_img, params))
+                    gt_vol[..., idx] = np.array(self.sample_augment(pil_img, params))
                 ret_gt.append(gt_vol.astype('float32'))
             rdict['gt'] = ret_gt
 
@@ -1132,7 +1133,6 @@ class RandomAffine3D(RandomAffine):
 
 
 class RandomTensorChannelShift(IMEDTransform):
-
     def __init__(self, shift_range):
         self.shift_range = shift_range
 
