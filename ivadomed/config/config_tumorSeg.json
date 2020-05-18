@@ -69,15 +69,15 @@
       "scale": [0.98, 1.02]
       },
       "NumpyToTensor": {},
-      "NormalizeInstance": {}
+      "NormalizeInstance": {"applied_to": ["im"]}
     },
     "transformation_validation": {
         "NumpyToTensor": {},
-        "NormalizeInstance": {}
+        "NormalizeInstance": {"applied_to": ["im"]}
     },
     "transformation_testing": {
       "NumpyToTensor": {},
-      "NormalizeInstance": {}
+      "NormalizeInstance": {"applied_to": ["im"]}
     },
     "debugging": false
 }

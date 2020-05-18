@@ -45,10 +45,7 @@
             "wspace": 0.75,
             "hspace": 0.75
         },
-        "DilateGT": {
-            "dilation_factor": 0
-        },
-        "CenterCrop2D": {
+        "CenterCrop": {
             "size": [128, 128]
         },
         "ElasticTransform": {
@@ -62,29 +59,29 @@
             "scale": [0.98, 1.02]
         },
         "NumpyToTensor": {},
-        "NormalizeInstance": {}
+        "NormalizeInstance": {"applied_to": ["im"]}
     },
     "transformation_validation": {
         "Resample": {
             "wspace": 0.75,
             "hspace": 0.75
         },
-        "CenterCrop2D": {
+        "CenterCrop": {
             "size": [128, 128]
         },
         "NumpyToTensor": {},
-        "NormalizeInstance": {}
+        "NormalizeInstance": {"applied_to": ["im"]}
     },
     "transformation_testing": {
         "Resample": {
             "wspace": 0.75,
             "hspace": 0.75
         },
-        "CenterCrop2D": {
+        "CenterCrop": {
             "size": [128, 128]
         },
         "NumpyToTensor": {},
-        "NormalizeInstance": {}
+        "NormalizeInstance": {"applied_to": ["im"]}
     },
     "debugging": false
 }
