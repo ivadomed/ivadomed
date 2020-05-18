@@ -14,8 +14,8 @@ from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_
 from scipy.ndimage.interpolation import map_coordinates
 
 import torch
-import torch.nn.functional as F
-from torchvision import transforms as torchvision_transforms
+#import torch.nn.functional as F
+#from torchvision import transforms as torchvision_transforms
 
 
 def multichannel_capable(wrapped):
@@ -848,9 +848,10 @@ class RandomShiftIntensity(ImedTransform):
 class ElasticTransform(ImedTransform):
     """Elastic transform for 2D and 3D inputs."""
 
-    def __init__(self, alpha_range, sigma_range):
+    def __init__(self, alpha_range, sigma_range, p=0.1):
         self.alpha_range = alpha_range
         self.sigma_range = sigma_range
+        self.p = p
 
     @multichannel_capable
     @two_dim_compatible
@@ -858,7 +859,8 @@ class ElasticTransform(ImedTransform):
         # if params already defined, i.e. sample is GT
         if "elastic" in metadata:
             alpha, sigma = metadata["elastic"]
-        else:
+
+        elif np.random.random() < self.p:
             # Get params
             alpha = np.random.uniform(self.alpha_range[0], self.alpha_range[1])
             sigma = np.random.uniform(self.sigma_range[0], self.sigma_range[1])
@@ -866,33 +868,40 @@ class ElasticTransform(ImedTransform):
             # Save params
             metadata["elastic"] = [alpha, sigma]
 
-        # Get shape
-        shape = sample.shape
+        else:
+            metadata["elastic"] = [None, None]
 
-        # Compute random deformation
-        dx = gaussian_filter((np.random.rand(*shape) * 2 - 1),
-                             sigma, mode="constant", cval=0) * alpha
-        dy = gaussian_filter((np.random.rand(*shape) * 2 - 1),
-                             sigma, mode="constant", cval=0) * alpha
-        dz = gaussian_filter((np.random.rand(*shape) * 2 - 1),
-                             sigma, mode="constant", cval=0) * alpha
-        if shape[2] == 1:
-            dz = 0  # No deformation along the last dimension
-        x, y, z = np.meshgrid(np.arange(shape[0]),
-                              np.arange(shape[1]),
-                              np.arange(shape[2]), indexing='ij')
-        indices = np.reshape(x + dx, (-1, 1)),\
-                  np.reshape(y + dy, (-1, 1)),\
-                  np.reshape(z + dz, (-1, 1))
+        if any(metadata["elastic"]):
+            # Get shape
+            shape = sample.shape
 
-        # Apply deformation
-        data_out = map_coordinates(sample, indices, order=1, mode='reflect')
-        # Keep input shape
-        data_out = data_out.reshape(shape)
-        # Keep data type
-        data_out = data_out.astype(sample.dtype)
+            # Compute random deformation
+            dx = gaussian_filter((np.random.rand(*shape) * 2 - 1),
+                                 sigma, mode="constant", cval=0) * alpha
+            dy = gaussian_filter((np.random.rand(*shape) * 2 - 1),
+                                 sigma, mode="constant", cval=0) * alpha
+            dz = gaussian_filter((np.random.rand(*shape) * 2 - 1),
+                                 sigma, mode="constant", cval=0) * alpha
+            if shape[2] == 1:
+                dz = 0  # No deformation along the last dimension
+            x, y, z = np.meshgrid(np.arange(shape[0]),
+                                  np.arange(shape[1]),
+                                  np.arange(shape[2]), indexing='ij')
+            indices = np.reshape(x + dx, (-1, 1)),\
+                      np.reshape(y + dy, (-1, 1)),\
+                      np.reshape(z + dz, (-1, 1))
 
-        return data_out, metadata
+            # Apply deformation
+            data_out = map_coordinates(sample, indices, order=1, mode='reflect')
+            # Keep input shape
+            data_out = data_out.reshape(shape)
+            # Keep data type
+            data_out = data_out.astype(sample.dtype)
+
+            return data_out, metadata
+
+        else:
+            return sample, metadata
 
 
 # TODO
