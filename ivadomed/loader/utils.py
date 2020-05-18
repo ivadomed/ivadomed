@@ -165,6 +165,14 @@ class SampleMetadata(object):
     def __contains__(self, key):
         return key in self.metadata
 
+    def items(self):
+        return self.metadata.items()
+
+    def _update(self, ref, list_keys):
+        for k in list_keys:
+            if k not in self.metadata.keys() and k in ref.metadata.keys():
+                self.metadata[k] = ref.metadata[k]
+
     def keys(self):
         return self.metadata.keys()
 
@@ -212,16 +220,14 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 def clean_metadata(metadata_lst):
     metadata_out = []
     for metadata_cur in metadata_lst:
-        for key_ in metadata_cur:
+        for key_ in list(metadata_cur.keys()):
             if key_ in TRANSFORM_PARAMS:
-                del metadata_cur[key_]
+                del metadata_cur.metadata[key_]
             metadata_out.append(metadata_cur)
     return metadata_out
 
 
 def update_metadata(metadata_src_lst, metadata_dest_lst):
-    metadata_out_lst = []
     for idx in range(len(metadata_src_lst)):
-        metadata_updated = dict(list(metadata_src_lst[idx].items()) + list(metadata_dest_lst[idx].items()))
-        metadata_out_lst.append(metadata_updated)
-    return metadata_out_lst
+        metadata_dest_lst[idx]._update(metadata_src_lst[idx], TRANSFORM_PARAMS)
+    return metadata_dest_lst

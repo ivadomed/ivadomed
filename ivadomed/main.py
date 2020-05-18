@@ -586,7 +586,7 @@ def cmd_test(context):
         transformation_dict = context["transformation_validation"]
 
     # Compose Testing transforms
-    val_transform = imed_transforms.compose_transforms(transformation_dict, requires_undo=True)
+    val_transform = imed_transforms.Compose(transformation_dict, requires_undo=True)
 
     # inverse transformations
     val_undo_transform = imed_transforms.UndoCompose(val_transform)

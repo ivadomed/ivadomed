@@ -1,6 +1,5 @@
 import nibabel as nib
 import numpy as np
-from PIL import Image
 from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
@@ -301,63 +300,30 @@ class MRI2DSegmentationDataset(Dataset):
         """
         seg_pair_slice, roi_pair_slice = self.indexes[index]
 
-        # Input data
-        list_input = []
-        for idx, input_slice in enumerate(seg_pair_slice["input"]):
-            # Consistency with torchvision, returning PIL Image
-            # Using the "Float mode" of PIL, the only mode
-            # supporting unbounded float32 values
-            input_img = Image.fromarray(input_slice, mode='F')
-            list_input.append(input_img)
-
-        # Labeled data
-        list_gt = []
-        for gt_slice in seg_pair_slice["gt"]:
-            # Handle unlabeled data
-            if gt_slice is None:
-                list_gt.append(None)
-            else:
-                gt_scaled = (gt_slice * 255).astype(np.uint8)
-                list_gt.append(Image.fromarray(gt_scaled, mode='L'))
-
-        # ROI data
-        list_roi = []
-        for roi_slice in roi_pair_slice["gt"]:
-            # Handle data with no ROI provided
-            if roi_pair_slice["gt"] is None:
-                list_roi.append(None)
-            else:
-                roi_scaled = (roi_slice * 255).astype(np.uint8)
-                list_roi.append(Image.fromarray(roi_scaled, mode='L'))
-
-        # Stack data
-        # Shape: [channel, h, w(, d)]
-        stack_input, stack_roi, stack_gt = np.stack(list_input), np.stack(list_roi), np.stack(list_gt)
-
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
         metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
-        metadata_roi = imed_loader_utils.clean_metadata(roi_pair_slice['roi_metadata'])
+        metadata_roi = imed_loader_utils.clean_metadata(roi_pair_slice['gt_metadata'])
         metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
 
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
-        stack_roi, metadata_roi = self.transform(sample=stack_roi,
-                                                metdata=metadata_roi,
+        stack_roi, metadata_roi = self.transform(sample=roi_pair_slice["gt"],
+                                                metadata=metadata_roi,
                                                 data_type="roi")
         # Update metadata_input with metadata_roi
         metadata_input = imed_loader_utils.update_metadata(metadata_roi, metadata_input)
 
         # Run transforms on images
-        stack_input, metadata_input = self.transform(sample=stack_input,
-                                                    metdata=metadata_input,
+        stack_input, metadata_input = self.transform(sample=seg_pair_slice["input"],
+                                                    metadata=metadata_input,
                                                     data_type="im")
         # Update metadata_input with metadata_roi
         metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
 
         # Run transforms on images
-        stack_gt, metadata_gt = self.transform(sample=stack_gt,
-                                              metdata=metadata_gt,
+        stack_gt, metadata_gt = self.transform(sample=seg_pair_slice["gt"],
+                                              metadata=metadata_gt,
                                               data_type="gt")
 
         data_dict = {

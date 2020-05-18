@@ -4,7 +4,6 @@ import numbers
 import random
 import functools
 import numpy as np
-from PIL import Image
 
 from skimage.exposure import equalize_adapthist
 from skimage.transform import resize
@@ -15,8 +14,8 @@ from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_
 from scipy.ndimage.interpolation import map_coordinates
 
 import torch
-#import torch.nn.functional as F
-#from torchvision import transforms as torchvision_transforms
+import torch.nn.functional as F
+from torchvision import transforms as torchvision_transforms
 
 
 def multichannel_capable(wrapped):
@@ -116,19 +115,23 @@ class Compose(object):
             # In case self.transform[data_type] is None
             return None, None
         else:
-            for tr in list(self.transform[data_type]):
+            for tr in self.transform[data_type].transforms:
                 sample, metadata = tr(sample, metadata)
             return sample, metadata
 
 
 class UndoCompose(object):
     def __init__(self, compose):
-        self.transforms = compose.transforms
+        self.transforms = compose
 
-    def __call__(self, img):
-        for t in self.transforms[::-1]:
-            img = t.undo_transform(img)
-        return img
+    def __call__(self, sample, metadata, data_type='im'):
+        if self.transform[data_type] is None:
+            # In case self.transform[data_type] is None
+            return None, None
+        else:
+            for tr in self.transform[data_type].transforms[::-1]:
+                sample, metadata = tr.undo_transform(sample, metadata)
+            return sample, metadata
 
 
 class UndoTransform(object):
@@ -142,12 +145,13 @@ class UndoTransform(object):
 class NumpyToTensor(ImedTransform):
     """Converts numpy array to tensor object."""
 
-    @multichannel_capable
+    #@multichannel_capable
     def undo_transform(self, sample, metadata={}):
         return sample.numpy(), metadata
 
-    @multichannel_capable
+    #@multichannel_capable
     def __call__(self, sample, metadata={}):
+        sample = np.array(sample)
         # Use np.ascontiguousarray to avoid axes permutations issues
         arr_contig = np.ascontiguousarray(sample, dtype=sample.dtype)
         return torch.from_numpy(arr_contig), metadata
@@ -319,7 +323,7 @@ class CroppableArray(np.ndarray):
 
 class Crop(ImedTransform):
     def __init__(self, size):
-        self.size = size if len(size) == 3 else size + tuple([0])
+        self.size = size if len(size) == 3 else size + [0]
         self.is_2D = True if len(size) == 2 else False
 
     @staticmethod
