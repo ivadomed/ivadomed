@@ -6,7 +6,6 @@ import functools
 import numpy as np
 
 from skimage.exposure import equalize_adapthist
-from skimage.transform import resize
 from scipy.ndimage import rotate, zoom
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.filters import gaussian_filter
@@ -439,7 +438,6 @@ class ROICrop(Crop):
         return super().__call__(sample, metadata)
 
 
-# TODO
 class DilateGT(ImedTransform):
     """Randomly dilate a tensor ground-truth.
     :param dilation_factor: float, controls the number of dilation iterations.
@@ -500,7 +498,7 @@ class DilateGT(ImedTransform):
         arr_soft_out = np.copy(arr_soft)
 
         # coordinates of the new voxels, i.e. the ones from the dilation
-        new_voxels_xx, new_voxels_yy = np.where(np.logical_xor(arr_bin, arr_in))
+        new_voxels_xx, new_voxels_yy, new_voxels_zz = np.where(np.logical_xor(arr_bin, arr_in))
         nb_new_voxels = new_voxels_xx.shape[0]
 
         # ratio of voxels added to the input mask from the dilated mask
@@ -510,7 +508,9 @@ class DilateGT(ImedTransform):
                                       int(round(nb_new_voxels * (1 - new_voxel_ratio))))
 
         # set to zero the here-above randomly selected new voxels
-        arr_soft_out[new_voxels_xx[idx_to_remove], new_voxels_yy[idx_to_remove]] = 0.0
+        arr_soft_out[new_voxels_xx[idx_to_remove],
+                     new_voxels_yy[idx_to_remove],
+                     new_voxels_zz[idx_to_remove]] = 0.0
         arr_bin_out = (arr_soft_out > 0).astype(np.int)
 
         return arr_soft_out, arr_bin_out
@@ -519,13 +519,15 @@ class DilateGT(ImedTransform):
     def post_processing(arr_in, arr_soft, arr_bin, arr_dil):
         # remove new object that are not connected to the input mask
         arr_labeled, lb_nb = label(arr_bin)
+
         connected_to_in = arr_labeled * arr_in
         for lb in range(1, lb_nb + 1):
             if np.sum(connected_to_in == lb) == 0:
                 arr_soft[arr_labeled == lb] = 0
 
+        struct = np.ones((3, 3, 1) if arr_soft.shape[2] == 1 else (3, 3, 3))
         # binary closing
-        arr_bin_closed = binary_closing((arr_soft > 0).astype(bool))
+        arr_bin_closed = binary_closing((arr_soft > 0).astype(np.int), structure=struct)
         # fill binary holes
         arr_bin_filled = binary_fill_holes(arr_bin_closed)
 
@@ -534,35 +536,26 @@ class DilateGT(ImedTransform):
 
         return arr_soft_out
 
-    def __call__(self, sample):
-        gt_data = sample['gt']
-        gt_t = []
-        for gt in gt_data:
-            gt_data_np = np.array(gt)
-            # binarize for processing
-            gt_data_np = (gt_data_np > 0.5).astype(np.int_)
+    @multichannel_capable
+    @two_dim_compatible
+    def __call__(self, sample, metadata={}):
+        # binarize for processing
+        gt_data_np = (sample > 0.5).astype(np.int_)
 
-            if self.dil_factor > 0 and np.sum(gt):
-                # dilation
-                gt_dil, gt_dil_bin = self.dilate_arr(gt_data_np, self.dil_factor)
+        if self.dil_factor > 0 and np.sum(sample):
+            # dilation
+            gt_dil, gt_dil_bin = self.dilate_arr(gt_data_np, self.dil_factor)
 
-                # random holes in dilated area
-                gt_holes, gt_holes_bin = self.random_holes(gt_data_np, gt_dil, gt_dil_bin)
+            # random holes in dilated area
+            gt_holes, gt_holes_bin = self.random_holes(gt_data_np, gt_dil, gt_dil_bin)
 
-                # post-processing
-                gt_pp = self.post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
+            # post-processing
+            gt_pp = self.post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
 
-                # mask with ROI
-                if sample['roi'][0] is not None:
-                    gt_pp[np.array(sample['roi'][0]) == 0] = 0.0
+            return gt_pp.astype(np.float32), metadata
 
-                gt_t.append(Image.fromarray(gt_pp))
-
-        if len(gt_t):
-            rdict = {'gt': gt_t}
-            sample.update(rdict)
-
-        return sample
+        else:
+            return sample, metadata
 
 
 class RandomRotation(ImedTransform):
