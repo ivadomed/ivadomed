@@ -309,22 +309,22 @@ class MRI2DSegmentationDataset(Dataset):
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
         stack_roi, metadata_roi = self.transform(sample=roi_pair_slice["gt"],
-                                                metadata=metadata_roi,
-                                                data_type="roi")
+                                                 metadata=metadata_roi,
+                                                 data_type="roi")
         # Update metadata_input with metadata_roi
         metadata_input = imed_loader_utils.update_metadata(metadata_roi, metadata_input)
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=seg_pair_slice["input"],
-                                                    metadata=metadata_input,
-                                                    data_type="im")
+                                                     metadata=metadata_input,
+                                                     data_type="im")
         # Update metadata_input with metadata_roi
         metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
 
         # Run transforms on images
         stack_gt, metadata_gt = self.transform(sample=seg_pair_slice["gt"],
-                                              metadata=metadata_gt,
-                                              data_type="gt")
+                                               metadata=metadata_gt,
+                                               data_type="gt")
 
         data_dict = {
             'input': stack_input,
@@ -425,29 +425,48 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         input_img, gt_img = self.handlers[coord['handler_index']].get_pair_data()
         data_shape = gt_img[0].shape
         seg_pair_slice = self.handlers[coord['handler_index']].get_pair_slice(coord['handler_index'])
-        data_dict = {
-            'input': input_img,
-            'gt': gt_img
-        }
 
-        for idx in range(len(data_dict['input'])):
-            data_dict['input'][idx] = data_dict['input'][idx][coord['x_min']:coord['x_max'],
+        # Subvolume Image and GT
+        for idx in range(len(input_img)):
+            input_img[idx] = input_img[idx][coord['x_min']:coord['x_max'],
                                       coord['y_min']:coord['y_max'],
                                       coord['z_min']:coord['z_max']]
+            gt_img[idx] = gt_img[idx][coord['x_min']:coord['x_max'],
+                          coord['y_min']:coord['y_max'],
+                          coord['z_min']:coord['z_max']]
 
-        for idx in range(len(data_dict['gt'])):
-            data_dict['gt'][idx] = data_dict['gt'][idx][coord['x_min']:coord['x_max'],
-                                   coord['y_min']:coord['y_max'],
-                                   coord['z_min']:coord['z_max']]
+        # Metadata
+        metadata_input = seg_pair_slice['input_metadata']
+        metadata_gt = seg_pair_slice['gt_metadata']
+        # Add data_shape to metadata
+        for idx in range(len(metadata_input)):
+            metadata_input[idx]['data_shape'] = data_shape
+            metadata_gt[idx]['data_shape'] = data_shape
 
-        data_dict['input_metadata'] = seg_pair_slice['input_metadata']
-        data_dict['gt_metadata'] = seg_pair_slice['gt_metadata']
-        for idx in range(len(data_dict["input"])):
-            data_dict['input_metadata'][idx]['data_shape'] = data_shape
+        # Clean transforms params from previous transforms
+        # i.e. remove params from previous iterations so that the coming transforms are different
+        metadata_input = imed_loader_utils.clean_metadata(metadata_input)
+        metadata_gt = imed_loader_utils.clean_metadata(metadata_gt)
 
-        # Run transforms
-        if self.transform is not None:
-            data_dict = self.transform(data_dict)
+        # Run transforms on images
+        stack_input, metadata_input = self.transform(sample=input_img,
+                                                     metadata=metadata_input,
+                                                     data_type="im")
+        # Update metadata_gt with metadata_input
+        metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
+
+        # Run transforms on images
+        stack_gt, metadata_gt = self.transform(sample=gt_img,
+                                               metadata=metadata_gt,
+                                               data_type="gt")
+
+        # Store data in dict
+        data_dict = {
+            'input': stack_input,
+            'gt': stack_gt,
+            'input_metadata': metadata_input,
+            'gt_metadata': metadata_gt,
+        }
 
         return data_dict
 
@@ -545,7 +564,8 @@ class BidsDataset(MRI2DSegmentationDataset):
                 metadata['contrast'] = subject.record["modality"]
 
                 if metadata_choice == 'mri_params':
-                    if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in self.metadata.keys()]):
+                    if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
+                                self.metadata.keys()]):
                         continue
 
                 # Fill multichannel dictionary
