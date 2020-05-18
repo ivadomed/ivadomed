@@ -6,8 +6,8 @@ import functools
 import numpy as np
 
 from skimage.exposure import equalize_adapthist
-from skimage.transform import resize
-from scipy.ndimage import rotate, zoom
+from scipy.ndimage import zoom
+from scipy.spatial.transform import Rotation as R
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
@@ -579,24 +579,23 @@ class RandomRotation(ImedTransform):
     @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata={}):
-        # If angle and metadata have been already defined for this sample, then use them
+        # If rotation transform has been already defined for this sample, then use it
         if 'rotation' in metadata:
-            angle, axes = metadata['rotation']
-        # Otherwise, get random ones
+            rot = metadata['rotation']
+        # Otherwise, get random new one
         else:
-            # Get the random angle
-            angle = np.random.uniform(self.degrees[0], self.degrees[1])
+            # Get the random angle, in radians
+            angle = np.random.uniform(math.radians(self.degrees[0]),
+                                      math.radians(self.degrees[1]))
             # Get the two axes that define the plane of rotation
-            axes = tuple(random.sample(range(3 if sample.shape[2] > 1 else 2), 2))
-            # Save params
-            metadata['rotation'] = [angle, axes]
+            axes = np.array([random.randint(0, 1) for _ in range(3 if sample.shape[2] > 1 else 2)])
+            # Define rotation
+            rot = R.from_rotvec(angle * axes)
+            # Save transform
+            metadata['rotation'] = rot
 
         # Do rotation
-        data_out = rotate(sample,
-                          angle=angle,
-                          axes=axes,
-                          reshape=False,
-                          order=1).astype(sample.dtype)
+        data_out = rot.apply(sample).astype(sample.dtype)
 
         return data_out, metadata
 
@@ -604,15 +603,11 @@ class RandomRotation(ImedTransform):
     @two_dim_compatible
     def undo_transform(self, sample, metadata):
         assert "rotation" in metadata
-        # Opposite rotation, same axes
-        angle, axes = - metadata['rotation'][0], metadata['rotation'][1]
+        # Get rotation transform
+        rot = metadata['rotation']
 
         # Undo rotation
-        data_out = rotate(sample,
-                          angle=angle,
-                          axes=axes,
-                          reshape=False,
-                          order=1).astype(sample.dtype)
+        data_out = rot.inv().apply(sample).astype(sample.dtype)
 
         return data_out, metadata
 
