@@ -41,7 +41,7 @@ def test_slice_filter_center():
 
     training_transform_list = [
         imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.CenterCrop2D(size=[100, 100])
+        imed_transforms.CenterCrop(size=[100, 100])
     ]
     train_transform = torch_transforms.Compose(training_transform_list)
 
@@ -84,7 +84,7 @@ def test_slice_filter_roi():
 
     training_transform_list = [
         imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.ROICrop2D(size=[100, 100])
+        imed_transforms.ROICrop(size=[100, 100])
     ]
     train_transform = torch_transforms.Compose(training_transform_list)
 

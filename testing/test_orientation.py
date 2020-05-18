@@ -26,8 +26,8 @@ def test_image_orientation():
 
     training_transform_list = [
         imed_transforms.Resample(hspace=2, wspace=3),
-        imed_transforms.CenterCrop2D(size=[108, 96]),
-        imed_transforms.ToTensor(),
+        imed_transforms.CenterCrop(size=[108, 96]),
+        imed_transforms.NumpyToTensor(),
         imed_transforms.NormalizeInstance(),
     ]
     training_transform = torch_transforms.Compose(training_transform_list)

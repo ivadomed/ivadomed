@@ -40,9 +40,8 @@ def test_unet():
     # 2D monochannel
     training_transform_list = [
         imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.ROICrop2D(size=[48, 48]),
-        imed_transforms.NumpyToTensor(),
-        imed_transforms.StackTensors()
+        imed_transforms.ROICrop(size=[48, 48]),
+        imed_transforms.NumpyToTensor()
     ]
     train_transform = torch_transforms.Compose(training_transform_list)
 
@@ -52,10 +51,9 @@ def test_unet():
 
     # 3D multichannel
     training_transform_3d_list = [
-        imed_transforms.CenterCrop3D(size=[96, 96, 16]),
+        imed_transforms.CenterCrop(size=[96, 96, 16]),
         imed_transforms.NumpyToTensor(),
-        imed_transforms.NormalizeInstance3D(),
-        imed_transforms.StackTensors()
+        imed_transforms.NormalizeInstance(),
     ]
     training_transform_3d = torch_transforms.Compose(training_transform_3d_list)
 

@@ -30,17 +30,16 @@ def test_undo(contrast='T2star', tol=3):
         print("using GPU number {}".format(device))
 
     # reference
-    test_1 = [imed_transforms.NumpyToTensor(), imed_transforms.NormalizeInstance(),
-              imed_transforms.StackTensors()]
+    test_1 = [imed_transforms.NumpyToTensor(), imed_transforms.NormalizeInstance()]
     name_1 = 'ToTensor_NormalizeInstance'
 
     test_2 = [imed_transforms.RandomRotation(degrees=10)] + test_1
     name_2 = 'RandomRotation_' + name_1
 
-    test_3 = [imed_transforms.CenterCrop2D(size=[40, 48])] + test_2
+    test_3 = [imed_transforms.CenterCrop(size=[40, 48])] + test_2
     name_3 = 'CenterCrop2D_' + name_2
 
-    test_4 = [imed_transforms.ROICrop2D(size=[40, 48])] + test_2
+    test_4 = [imed_transforms.ROICrop(size=[40, 48])] + test_2
     name_4 = 'ROICrop2D_' + name_2
 
     test_5 = [imed_transforms.Resample(wspace=0.75, hspace=0.75)] + test_3

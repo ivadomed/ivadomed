@@ -63,7 +63,7 @@ def test_hdf5():
 
     training_transform_list = [
         imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.CenterCrop2D(size=[48, 48]),
+        imed_transforms.CenterCrop(size=[48, 48]),
         imed_transforms.NumpyToTensor()
     ]
     train_transform = torch_transforms.Compose(training_transform_list)
