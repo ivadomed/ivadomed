@@ -273,10 +273,10 @@ def _test_Crop(im_seg, crop_transform):
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 2)])
-@pytest.mark.parametrize('crop_transform', [CenterCrop((80, 60)),
-                                            CenterCrop((60, 80)),
-                                            ROICrop((80, 60)),
-                                            ROICrop((60, 80))])
+@pytest.mark.parametrize('crop_transform', [CenterCrop([80, 60]),
+                                            CenterCrop([60, 80]),
+                                            ROICrop([80, 60]),
+                                            ROICrop([60, 80])])
 def test_Crop_2D(im_seg, crop_transform):
     _test_Crop(im_seg, crop_transform)
 
