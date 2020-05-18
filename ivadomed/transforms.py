@@ -749,6 +749,51 @@ class CenterCrop3D(IMEDTransform):
         return sample
 
 
+class BoundingBoxCrop(CenterCrop3D):
+    """
+    Crops image according to given bounding box
+    :param dimensions: image dimensions (x_min, x_max, y_min, y_max, z_min, z_max)
+    :param safety: value by which each dimension is multiplied to increase or decrease box size
+    :param multiple_16: Unet 3D requires dimensions multiple of 16 , if True will crop image according to this
+                        restriction
+    """
+    def __init__(self, size, safety_factor=(1.0, 1.0, 1.0), multiple_16=True):
+        self.size = size
+        self.safety_factor = safety_factor
+        self.multiple_16 = multiple_16
+        super().__init__(size, True)
+
+    def do_crop(self, data):
+        coord = []
+        for i in range(len(self.safety_factor)):
+            d_min, d_max = self.size[i:i + 2]
+            d_factor = self.safety_factor[0]
+            dim_len = (d_min - d_max) * d_factor
+            if self.multiple_16:
+                dim_len = dim_len + (16 - dim_len % 16)
+
+            # new min and max coordinates
+            coord.append(max(d_min - (dim_len - (d_max - d_min)) // 2, 0))
+            coord.append(min(d_max + (dim_len - (d_max - d_min)) / 2, data.shape[i]))
+        x_min, x_max, y_min, y_max, z_min, z_max = coord
+        return data[x_min:x_max, y_min, y_max, z_min:z_max]
+
+    def __call__(self, sample):
+        input_data = []
+        for idx, data in enumerate(sample["input"]):
+            sample['input_metadata'][idx]["__centercrop"] = data.shape
+            input_data.append(self.do_crop(data))
+
+        gt_data = []
+        for gt in sample["gt"]:
+            gt_data.append(self.do_crop(gt))
+
+        rdict = {"input": input_data, "gt": gt_data}
+
+        sample.update(rdict)
+        return sample
+
+
 class NormalizeInstance3D(IMEDTransform):
 
     @staticmethod
@@ -1112,6 +1157,7 @@ class RandomAffine3D(RandomAffine):
                 img = volume[..., idx]
                 pil_img = Image.fromarray(img, mode='F')
                 img_data[..., idx] = np.array(self.sample_augment(pil_img, params))
+
             ret_input.append(img_data.astype('float32'))
 
         rdict['input'] = ret_input
@@ -1125,6 +1171,7 @@ class RandomAffine3D(RandomAffine):
                     gt = labels[..., idx]
                     pil_img = Image.fromarray(gt, mode='F')
                     gt_vol[..., idx] = np.array(self.sample_augment(pil_img, params))
+
                 ret_gt.append(gt_vol.astype('float32'))
             rdict['gt'] = ret_gt
 

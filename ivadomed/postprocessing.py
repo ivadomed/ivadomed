@@ -120,3 +120,18 @@ def mask_predictions(predictions, mask_binary):
     assert predictions.shape == mask_binary.shape
     assert np.array_equal(mask_binary, mask_binary.astype(bool))
     return predictions * mask_binary
+
+
+def generate_bounding_box(mask):
+    """
+    Generates a 3D bounding box around a given mask
+    :param mask: numpy array with the mask of the ROI
+    :return: bounding box coordinate (x_min, x_max, y_min, y_max, z_min, z_max)
+    """
+    coords = np.where(mask != 0)
+    dimensions = []
+    for i in range(len(coords.shape)):
+        dimensions.append(coords[i].min())
+        dimensions.append(coords[i].max())
+
+    return dimensions
