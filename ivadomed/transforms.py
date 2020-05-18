@@ -603,6 +603,7 @@ class RandomRotation(ImedTransform):
     @multichannel_capable
     @two_dim_compatible
     def undo_transform(self, sample, metadata):
+        # IMPORTANT NOTE: this function does not work with images (but works with labels)
         assert "rotation" in metadata
         # Opposite rotation, same axes
         angle, axes = - metadata['rotation'][0], metadata['rotation'][1]
