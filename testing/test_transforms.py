@@ -7,13 +7,14 @@ import pytest
 import numpy as np
 from math import isclose
 from scipy.ndimage.measurements import center_of_mass
+from scipy.ndimage.measurements import label
 
 import torch
 
-from ivadomed.transforms import ElasticTransform, RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_values_array
+from ivadomed.transforms import DilateGT, ElasticTransform, RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_values_array
 from ivadomed.metrics import dice_score, mse
 
-DEBUGGING = False
+DEBUGGING = True
 if DEBUGGING:
     from testing.utils import plot_transformed_sample
 
@@ -351,3 +352,40 @@ def test_ElasticTransform(im_seg, elastic_transform):
         # Check data type
         assert do_im[idx].dtype == i.dtype
         assert do_seg[idx].dtype == seg[idx].dtype
+
+
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10)])
+@pytest.mark.parametrize('dilate_transform', [DilateGT(dilation_factor=0.2)])
+def test_DilateGT(im_seg, dilate_transform):
+    im, seg = im_seg
+    metadata_in = [{} for _ in im] if isinstance(im, list) else {}
+
+    # Transform on Numpy
+    do_seg, metadata_do = dilate_transform(seg.copy(), metadata_in)
+
+    if DEBUGGING and len(im[0].shape) == 2:
+        plot_transformed_sample(seg[0], do_seg[0], ['raw', 'do'])
+
+    # Check data shape and type
+    _check_shape(ref=seg, mov=do_seg)
+
+    # Check data augmentation
+    for idx, i in enumerate(seg):
+        # data aug
+        assert np.sum((do_seg[idx] > 0).astype(np.int)) >= np.sum(i)
+        # same number of objects
+        assert label((do_seg[idx] > 0).astype(np.int))[1] == label(i)[1]
+
+
+def _check_shape(ref, mov):
+    # Loop and check
+    for idx, i in enumerate(ref):
+        # Check data shape
+        assert mov[idx].shape == i.shape
+
+
+def _check_dtype(ref, mov):
+    # Loop and check
+    for idx, i in enumerate(ref):
+        # Check data type
+        assert mov[idx].dtype == i.dtype
