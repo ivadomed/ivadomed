@@ -13,7 +13,7 @@ metadata_type = ['FlipAngle', 'EchoTime', 'RepetitionTime']
 
 def run_main(context):
     no_transform = torch_transforms.Compose([
-        imed_transforms.CenterCrop2D((128, 128)),
+        imed_transforms.CenterCrop([128, 128]),
         imed_transforms.NumpyToTensor(),
         imed_transforms.NormalizeInstance(),
     ])
