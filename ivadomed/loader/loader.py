@@ -397,7 +397,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
     def _load_filenames(self):
         for input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
             segpair = SegmentationPair(input_filename, gt_filename, metadata=metadata, slice_axis=self.slice_axis)
-            self.handlers.append(segpair)
+            roipair = SegmentationPair(input_filename, roi_filename, metadata=metadata, slice_axis=self.slice_axis)
+            self.handlers.append((segpair, roipair))
 
     def _prepare_indices(self):
         length = self.length
@@ -444,14 +445,20 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         :param index: subvolume index.
         """
         coord = self.indexes[index]
-        input_img, gt_img = self.handlers[coord['handler_index']].get_pair_data()
+        seg_pair, roi_pair = self.handlers[coord['handler_index']]
+        seg_metadata = seg_pair.get_pair_metadata(index)
+        roi_metadata = roi_pair.get_pair_metadata(index)
+        input_img, gt_img = seg_pair.get_pair_data()
+        _, roi_img = roi_pair.get_pair_data()
         data_shape = input_img[0].shape
-        seg_pair_slice = self.handlers[coord['handler_index']].get_pair_metadata(coord['handler_index'])
+
         data_dict = {
             'input': input_img,
             'gt': gt_img,
-            'input_metadata': seg_pair_slice['input_metadata'],
-            'gt_metadata': seg_pair_slice['gt_metadata']
+            'roi': roi_img,
+            'input_metadata': seg_metadata['input_metadata'],
+            'gt_metadata': seg_metadata['gt_metadata'],
+            'roi_metadata': roi_metadata['gt_metadata']
         }
         for idx in range(len(data_dict["input"])):
             data_dict['input_metadata'][idx]['data_shape'] = data_shape
@@ -466,8 +473,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         subvolumes = {
             'input': torch.zeros(data_dict['input'].shape[0], shape_x, shape_y, shape_z),
             'gt': torch.zeros(data_dict['input'].shape[0], shape_x, shape_y, shape_z),
-            'input_metadata': seg_pair_slice['input_metadata'],
-            'gt_metadata': seg_pair_slice['gt_metadata']
+            'input_metadata': seg_metadata['input_metadata'],
+            'gt_metadata': seg_metadata['gt_metadata']
         }
 
         for idx in range(len(data_dict['input'])):
