@@ -249,7 +249,6 @@ class NormalizeInstance(ImedTransform):
     """Normalize a tensor or an array image with mean and standard deviation estimated
     from the sample itself.
     """
-
     @multichannel_capable
     def __call__(self, sample, metadata={}):
         data_out = (sample - sample.mean()) / sample.std()
@@ -560,28 +559,6 @@ class DilateGT(ImedTransform):
             sample.update(rdict)
 
         return sample
-
-
-# TODO: unit test
-class AddBackgroundClass(ImedTransform):
-
-    # TODO
-    #def undo_transform(self, sample):
-    #    return sample
-
-    # Note: We do not apply @multichannel_capable to AddBackgroundClass
-    # because we need all the channels to determine the Background.
-    def __call__(self, sample, metadata={}):
-        # Sum across the channels (i.e. labels)
-        sum_labels = np.sum(sample, axis=0)
-        # Get background
-        background = (sum_labels == 0).astype(sample.dtype)
-        # Expand dim
-        background = np.expand_dims(background, axis=0)
-        # Concatenate
-        data_out = np.concatenate(background, sample)
-
-        return data_out, metadata
 
 
 class RandomRotation(ImedTransform):

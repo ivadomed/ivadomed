@@ -113,6 +113,45 @@ def filter_roi(ds, nb_nonzero_thr):
     return ds
 
 
+def orient_img_hwd(data, slice_axis):
+    """
+    Orient a given RAS image to height, width, depth according to slice axis.
+    :return: numpy array oriented with the following dimensions: (height, width, depth)
+    """
+    if slice_axis == 0:
+        return data.transpose(2, 1, 0)
+    elif slice_axis == 1:
+        return data.transpose(2, 0, 1)
+    elif slice_axis == 2:
+        return data
+
+
+def orient_img_ras(data, slice_axis):
+    """
+    Orient a given numpy array with dimensions (height, width, depth) to RAS oriented.
+    :return: numpy array oriented in RAS
+    """
+    if slice_axis == 0:
+        return data.transpose(2, 1, 0) if len(data.shape) == 3 else data.transpose(0, 3, 2, 1)
+    elif slice_axis == 1:
+        return data.transpose(1, 2, 0) if len(data.shape) == 3 else data.transpose(0, 2, 3, 1)
+    elif slice_axis == 2:
+        return data
+
+
+def orient_shapes_hwd(data, slice_axis):
+    """
+    Swap dimensions according to match the height, width, depth orientation
+    :return: numpy array containing the swapped dimensions
+    """
+    if slice_axis == 0:
+        return np.array(data)[[2, 1, 0]]
+    elif slice_axis == 1:
+        return np.array(data)[[2, 0, 1]]
+    elif slice_axis == 2:
+        return np.array(data)
+
+
 class SampleMetadata(object):
     def __init__(self, d=None):
         self.metadata = {} or d
