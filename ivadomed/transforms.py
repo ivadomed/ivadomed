@@ -771,32 +771,24 @@ class ElasticTransform(ImedTransform):
             return sample, metadata
 
 
-# TODO
 class AdditiveGaussianNoise(ImedTransform):
 
     def __init__(self, mean=0.0, std=0.01):
         self.mean = mean
         self.std = std
 
-    def __call__(self, sample):
-        rdict = {}
-        input_data = sample['input']
-
-        # Get random noise
-        noise = np.random.normal(self.mean, self.std, input_data[0].size)
-        noise = noise.astype(np.float32)
+    def __call__(self, sample, metadata={}):
+        if "gaussian_noise" in metadata:
+            noise = metadata["gaussian_noise"]
+        else:
+            # Get random noise
+            noise = np.random.normal(self.mean, self.std, sample.shape)
+            noise = noise.astype(np.float32)
 
         # Apply noise
-        noisy_input = []
-        for item in input_data:
-            np_input_data = np.array(item)
-            np_input_data += noise
-            noisy_input.append(Image.fromarray(np_input_data, mode='F'))
+        data_out = sample + noise
 
-        # Update
-        rdict['input'] = noisy_input
-        sample.update(rdict)
-        return sample
+        return data_out.astype(sample.dtype), metadata
 
 
 # TODO
