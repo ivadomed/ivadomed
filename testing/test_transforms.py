@@ -11,7 +11,7 @@ from scipy.ndimage.measurements import label
 
 import torch
 
-from ivadomed.transforms import DilateGT, ElasticTransform, RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_values_array
+from ivadomed.transforms import RandomReverse, DilateGT, ElasticTransform, RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_values_array
 from ivadomed.metrics import dice_score, mse
 
 DEBUGGING = True
@@ -350,7 +350,8 @@ def test_ElasticTransform(im_seg, elastic_transform):
     _check_shape(seg, [do_seg])
 
 
-@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10)])
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
+                                    create_test_image(100, 100, 100, 1, rad_max=10)])
 @pytest.mark.parametrize('dilate_transform', [DilateGT(dilation_factor=0.2)])
 def test_DilateGT(im_seg, dilate_transform):
     im, seg = im_seg
@@ -371,6 +372,33 @@ def test_DilateGT(im_seg, dilate_transform):
         assert np.sum((do_seg[idx] > 0).astype(np.int)) >= np.sum(i)
         # same number of objects
         assert label((do_seg[idx] > 0).astype(np.int))[1] == label(i)[1]
+
+
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
+                                    create_test_image(100, 100, 100, 1, rad_max=10)])
+@pytest.mark.parametrize('reverse_transform', [RandomReverse()])
+def test_RandomReverse(im_seg, reverse_transform):
+    im, seg = im_seg
+    metadata_in = [{} for _ in im] if isinstance(im, list) else {}
+
+    # Transform on Numpy
+    do_im, metadata_do = reverse_transform(im.copy(), metadata_in)
+    do_seg, metadata_do = reverse_transform(seg.copy(), metadata_do)
+
+    # Transform on Numpy
+    undo_im, _ = reverse_transform.undo_transform(do_im, metadata_do)
+    undo_seg, _ = reverse_transform.undo_transform(do_seg, metadata_do)
+
+    if DEBUGGING and len(im[0].shape) == 2:
+        plot_transformed_sample(im[0], do_im[0], ['raw', 'do'])
+        plot_transformed_sample(seg[0], do_seg[0], ['raw', 'do'])
+        plot_transformed_sample(im[0], undo_im[0], ['raw', 'undo'])
+        plot_transformed_sample(seg[0], undo_seg[0], ['raw', 'undo'])
+
+    _check_dtype(im, [do_im])
+    _check_shape(im, [do_im])
+    _check_dtype(seg, [do_seg])
+    _check_shape(seg, [do_seg])
 
 
 def _check_shape(ref, list_mov):
