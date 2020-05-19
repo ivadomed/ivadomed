@@ -361,6 +361,10 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         # transpose to locate the channel dimension at the end to properly see image on viewer
         arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
 
+    # If only one channel then return 3D arr
+    if arr_pred_ref_space.shape[0] == 1:
+        arr_pred_ref_space = arr_pred_ref_space[0, :]
+
     if bin_thr >= 0:
         arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
     elif discard_noise:  # discard noise
