@@ -13,7 +13,7 @@ import torchvision.utils as vutils
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
-from ivadomed.loader import utils as imed_loaded_utils, loader as imed_loader
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import metrics as imed_metrics
 from ivadomed import transforms as imed_transforms
@@ -585,7 +585,7 @@ def save_mixup_sample(x, y, fname):
     plt.close()
 
 
-def segment_volume(folder_model, fname_image, fname_roi=None):
+def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
     """Segment an image.
 
     Segment an image (fname_image) using a pre-trained model (folder_model). If provided, a region of interest (fname_roi)
@@ -600,12 +600,13 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         fname_roi (string): Binary image filename (e.g. .nii.gz) defining a region of interest,
             e.g. spinal cord centerline, used to crop the image prior to segment it if provided.
             The segmentation is not performed on the slices that are empty in this image.
+        gpu_number (int): Number representing gpu number if available.
     Returns:
         nibabelObject: Object containing the soft segmentation.
 
     """
     # Define device
-    device = torch.device("cpu")
+    device = torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:" + str(gpu_number))
 
     # Check if model folder exists
     # TODO: this check already exists in sct.deepseg.core.segment_nifti(). We should probably keep only one check in
@@ -667,7 +668,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     # If fname_roi provided, then remove slices without ROI
     if fname_roi is not None:
-        ds = imed_loaded_utils.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
+        ds = imed_loader_utils.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
 
     if not context['unet_3D']:
         print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
@@ -677,7 +678,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["batch_size"],
                              shuffle=False, pin_memory=True,
-                             collate_fn=imed_loaded_utils.imed_collate,
+                             collate_fn=imed_loader_utils.imed_collate,
                              num_workers=0)
 
     # Load model
@@ -690,7 +691,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     preds_list, slice_idx_list = [], []
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
-            preds = model(batch['input'])
+            input_data = batch['input'].cuda() if torch.cuda.is_available() else batch['input']
+            preds = model(input_data).cpu()
 
         rdict = {}
         rdict['gt'] = preds
@@ -809,7 +811,7 @@ class HookBasedFeatureExtractor(nn.Module):
 
 def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     # Orient image in RAS according to slice axis
-    arr_ras = imed_loaded_utils.orient_img_ras(arr, slice_axis)
+    arr_ras = imed_loader_utils.orient_img_ras(arr, slice_axis)
 
     # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
     ref_orientation = nib.orientations.io_orientation(nib_ref.affine)
@@ -956,6 +958,24 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
                                     scale_each=True)
 
         writer.add_image(dataset_type + '/Ground Truth', grid_img, epoch)
+
+
+def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, slice_axis=0, keep_largest_only=True):
+    bounding_box_dict = {}
+    for subject in subject_list:
+        subject_path = str(subject.record["absolute_path"])
+        object_mask = segment_volume(model_path, subject_path, gpu_number=gpu_number)
+        if keep_largest_only:
+            object_mask = imed_postpro.keep_largest_object(object_mask)
+        ras_orientation = nib.as_closest_canonical(object_mask)
+        hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata()[..., 0], slice_axis)
+        bounding_box = imed_postpro.get_bounding_boxes(hwd_orientation)
+        bounding_box_dict[subject_path] = list(bounding_box)
+
+    file_path = os.path.join(log_dir, 'bounding_boxes.json')
+    with open(file_path, 'w') as fp:
+        json.dump(bounding_box_dict, fp, indent=4)
+    return bounding_box_dict
 
 
 class SliceFilter(object):
