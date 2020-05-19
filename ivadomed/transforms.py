@@ -777,6 +777,7 @@ class AdditiveGaussianNoise(ImedTransform):
         self.mean = mean
         self.std = std
 
+    @multichannel_capable
     def __call__(self, sample, metadata={}):
         if "gaussian_noise" in metadata:
             noise = metadata["gaussian_noise"]
@@ -791,38 +792,24 @@ class AdditiveGaussianNoise(ImedTransform):
         return data_out.astype(sample.dtype), metadata
 
 
-# TODO
 class Clahe(ImedTransform):
-
+    # TODO: Adapt to 3D
     def __init__(self, clip_limit=3.0, kernel_size=(8, 8)):
         # Default values are based upon the following paper:
         # https://arxiv.org/abs/1804.09400 (3D Consistent Cardiac Segmentation)
         self.clip_limit = clip_limit
         self.kernel_size = kernel_size
 
-    def do_clahe(self, data):
-        data = np.copy(data)
-        # Ensure that data is a numpy array
-        data = np.array(data)
+    @multichannel_capable
+    def __call__(self, sample, metadata={}):
+        assert len(sample.shape) == 2
+        assert len(self.kernel_size) == len(sample.shape)
         # Run equalization
-        clahe_data = equalize_adapthist(data,
-                                        kernel_size=self.kernel_size,
-                                        clip_limit=self.clip_limit)
-        return clahe_data
+        data_out = equalize_adapthist(sample,
+                                      kernel_size=self.kernel_size,
+                                      clip_limit=self.clip_limit).astype(sample.dtype)
 
-    def __call__(self, sample):
-        input_data = sample['input']
-
-        # TODO: Decorator?
-        if isinstance(input_data, list):
-            output_data = [self.do_clahe(data) for data in input_data]
-        else:
-            output_data = self.do_clahe(input_data)
-
-        # Update
-        rdict = {'input': output_data}
-        sample.update(rdict)
-        return sample
+        return data_out, metadata
 
 
 class HistogramClipping(ImedTransform):

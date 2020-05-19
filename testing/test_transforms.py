@@ -11,7 +11,7 @@ from scipy.ndimage.measurements import label
 
 import torch
 
-from ivadomed.transforms import RandomAffine, RandomReverse, DilateGT, ElasticTransform, RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_values_array
+from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomAffine, RandomReverse, DilateGT, ElasticTransform, RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_values_array
 from ivadomed.metrics import dice_score, mse
 
 DEBUGGING = True
@@ -419,15 +419,47 @@ def test_RandomAffine(im_seg, aff_transform):
         plot_transformed_sample(seg[0], do_seg[0], ['raw', 'do'])
         plot_transformed_sample(seg[0], undo_seg[0], ['raw', 'undo'])
 
-    _check_dtype(im, [do_im])
-    _check_shape(im, [do_im])
-    _check_dtype(seg, [do_seg])
-    _check_shape(seg, [do_seg])
+    _check_dtype(im, [do_im, undo_im])
+    _check_shape(im, [do_im, undo_im])
+    _check_dtype(seg, [do_seg, undo_seg])
+    _check_shape(seg, [do_seg, undo_seg])
 
     # Loop and check
     for idx, i in enumerate(im):
         # Data consistency
         assert dice_score(undo_seg[idx], seg[idx]) > 0.7
+
+
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
+                                    create_test_image(100, 100, 100, 1, rad_max=10)])
+@pytest.mark.parametrize('noise_transform', [AdditiveGaussianNoise(mean=1., std=0.01)])
+def test_AdditiveGaussianNoise(im_seg, noise_transform):
+    im, seg = im_seg
+    metadata_in = [{} for _ in im] if isinstance(im, list) else {}
+
+    # Transform on Numpy
+    do_im, metadata_do = noise_transform(im.copy(), metadata_in)
+
+    _check_dtype(im, [do_im])
+    _check_shape(im, [do_im])
+
+    if DEBUGGING and len(im[0].shape) == 2:
+        plot_transformed_sample(im[0], do_im[0], ['raw', 'do'])
+
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10)])
+@pytest.mark.parametrize('clahe', [Clahe(kernel_size=(8, 8))])
+def test_Clahe(im_seg, clahe):
+    im, seg = im_seg
+    metadata_in = [{} for _ in im] if isinstance(im, list) else {}
+
+    # Transform on Numpy
+    do_im, metadata_do = clahe(im.copy(), metadata_in)
+
+    _check_dtype(im, [do_im])
+    _check_shape(im, [do_im])
+
+    if DEBUGGING and len(im[0].shape) == 2:
+        plot_transformed_sample(im[0], do_im[0], ['raw', 'do'])
 
 
 def _check_shape(ref, list_mov):
