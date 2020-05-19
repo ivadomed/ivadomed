@@ -2,6 +2,8 @@ import math
 import numbers
 import random
 import numpy as np
+import os
+import json
 from PIL import Image
 
 from skimage.exposure import equalize_adapthist
@@ -757,13 +759,19 @@ class BoundingBoxCrop(CenterCrop3D):
     :param multiple_16: Unet 3D requires dimensions multiple of 16 , if True will crop image according to this
                         restriction
     """
-    def __init__(self, size, safety_factor=(1.0, 1.0, 1.0), multiple_16=True):
-        self.size = size
+    def __init__(self, log_dir, safety_factor=(1.0, 1.0, 1.0), multiple_16=True):
         self.safety_factor = safety_factor
         self.multiple_16 = multiple_16
-        super().__init__(size, True)
+        bounding_box_path = os.path.join(log_dir, 'bounding_boxes.json')
+        if os.path.exists(bounding_box_path):
+            with open(bounding_box_path, 'r') as fp:
+                bounding_box_dict = json.load(fp)
+        else:
+            raise RuntimeError("File path {} don't exists".format(bounding_box_path))
+        self.bounding_boxes = bounding_box_dict
+        super().__init__((0, 0, 0), True)
 
-    def do_crop(self, data):
+    def bb_crop(self, data):
         coord = []
         for i in range(len(self.safety_factor)):
             d_min, d_max = self.size[i:i + 2]
@@ -782,11 +790,12 @@ class BoundingBoxCrop(CenterCrop3D):
         input_data = []
         for idx, data in enumerate(sample["input"]):
             sample['input_metadata'][idx]["__centercrop"] = data.shape
-            input_data.append(self.do_crop(data))
+            self.size = self.bounding_boxes[sample['input_metadata']["filename"]]
+            input_data.append(self.bb_crop(data))
 
         gt_data = []
         for gt in sample["gt"]:
-            gt_data.append(self.do_crop(gt))
+            gt_data.append(self.bb_crop(gt))
 
         rdict = {"input": input_data, "gt": gt_data}
 
