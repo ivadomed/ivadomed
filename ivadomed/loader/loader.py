@@ -158,11 +158,11 @@ class SegmentationPair(object):
             gt_data = None
         for gt in self.gt_handle:
             if gt is not None:
-                hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float16),
+                hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
                                                                 self.slice_axis)
-                gt_data.append(hwd_oriented)
+                gt_data.append(hwd_oriented.astype(np.uint8))
             else:
-                gt_data.append(np.zeros(self.input_handle[0].shape, dtype=np.float16))
+                gt_data.append(np.zeros(self.input_handle[0].shape, dtype=np.float32).astype(np.uint8))
 
         return input_data, gt_data
 
