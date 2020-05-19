@@ -293,7 +293,7 @@ class CroppableArray(np.ndarray):
 
 class Crop(ImedTransform):
     def __init__(self, size):
-        self.size = size if len(size) == 3 else size + tuple([0])
+        self.size = size if len(size) == 3 else size + [0]
         self.is_2D = True if len(size) == 2 else False
 
     @staticmethod

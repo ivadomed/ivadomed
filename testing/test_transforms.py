@@ -167,10 +167,10 @@ def _test_Resample(im_seg, resample_transform, native_resolution, is_2D=False):
     undo_seg, _ = resample_transform.undo_transform(sample=do_seg, metadata=do_metadata)
 
     # Check data type and shape
-    _check_dtype(im, [do_im, undo_im])
-    _check_shape(im, [do_im, undo_im])
-    _check_dtype(seg, [undo_seg, do_seg])
-    _check_shape(seg, [undo_seg, do_seg])
+    _check_dtype(im, [undo_im])
+    _check_shape(im, [undo_im])
+    _check_dtype(seg, [undo_seg])
+    _check_shape(seg, [undo_seg])
 
     # Check data content and data shape between input data and undo
     for idx, i in enumerate(im):
@@ -241,8 +241,8 @@ def _test_Crop(im_seg, crop_transform):
     # Loop and check
     for idx, i in enumerate(im):
         # Check data shape
-        assert do_im[idx].shape == crop_transfrom_size
-        assert do_seg[idx].shape == crop_transfrom_size
+        assert list(do_im[idx].shape) == crop_transfrom_size
+        assert list(do_seg[idx].shape) == crop_transfrom_size
         # Check metadata
         assert do_metadata[idx]['crop_params'] == do_seg_metadata[idx]['crop_params']
 
@@ -274,19 +274,19 @@ def _test_Crop(im_seg, crop_transform):
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 2)])
-@pytest.mark.parametrize('crop_transform', [CenterCrop((80, 60)),
-                                            CenterCrop((60, 80)),
-                                            ROICrop((80, 60)),
-                                            ROICrop((60, 80))])
+@pytest.mark.parametrize('crop_transform', [CenterCrop([80, 60]),
+                                            CenterCrop([60, 80]),
+                                            ROICrop([80, 60]),
+                                            ROICrop([60, 80])])
 def test_Crop_2D(im_seg, crop_transform):
     _test_Crop(im_seg, crop_transform)
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 100, 1)])
-@pytest.mark.parametrize('crop_transform', [CenterCrop((80, 60, 40)),
-                                            CenterCrop((60, 80, 50)),
-                                            ROICrop((80, 60, 40)),
-                                            ROICrop((60, 80, 50))])
+@pytest.mark.parametrize('crop_transform', [CenterCrop([80, 60, 40]),
+                                            CenterCrop([60, 80, 50]),
+                                            ROICrop([80, 60, 40]),
+                                            ROICrop([60, 80, 50])])
 def test_Crop_3D(im_seg, crop_transform):
     _test_Crop(im_seg, crop_transform)
 
