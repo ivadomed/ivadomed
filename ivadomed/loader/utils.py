@@ -75,8 +75,8 @@ def imed_collate(batch):
     elif isinstance(batch[0], collections.Mapping):
         return {key: imed_collate([d[key] for d in batch]) for key in batch[0]}
     elif isinstance(batch[0], collections.Sequence):
-        transposed = zip(*batch)
-        return [imed_collate(samples) for samples in transposed]
+        #transposed = zip(*batch)
+        return [imed_collate(samples) for samples in batch]
 
     return batch
 
@@ -223,7 +223,7 @@ def clean_metadata(metadata_lst):
         for key_ in list(metadata_cur.keys()):
             if key_ in TRANSFORM_PARAMS:
                 del metadata_cur.metadata[key_]
-            metadata_out.append(metadata_cur)
+        metadata_out.append(metadata_cur)
     return metadata_out
 
 
