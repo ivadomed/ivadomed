@@ -634,19 +634,13 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         context = json.load(fhandle)
 
     # If ROI is not provided then force center cropping
-    if fname_roi is None and 'ROICrop2D' in context["transformation_validation"].keys():
-        context["transformation_validation"] = dict((key, value) if key != 'ROICrop2D'
-                                                    else ('CenterCrop2D', value)
+    if fname_roi is None and 'ROICrop' in context["transformation_validation"].keys():
+        context["transformation_validation"] = dict((key, value) if key != 'ROICrop'
+                                                    else ('CenterCrop', value)
                                                     for (key, value) in context["transformation_validation"].items())
 
-    # Force labeled to False in transforms
-    context["transformation_validation"] = dict((key, {**value, **{"labeled": False}})
-                                                if not key.startswith('NormalizeInstance')
-                                                else (key, value)
-                                                for (key, value) in context["transformation_validation"].items())
-
     # Compose transforms
-    do_transforms = imed_transforms.compose_transforms(context['transformation_validation'], requires_undo=True)
+    do_transforms = imed_transforms.Compose(context['transformation_validation'], requires_undo=True)
 
     # Undo Transforms
     undo_transforms = imed_transforms.UndoCompose(do_transforms)
