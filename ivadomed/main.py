@@ -693,6 +693,7 @@ def cmd_test(context):
                     # Input the metadata related to the input samples
                     preds = model(test_input, test_metadata)
                 elif HeMIS:
+                    # TODO: @Andreanne: to modify?
                     missing_mod = batch["Missing_mod"]
                     preds = model(test_input, missing_mod)
 
@@ -740,7 +741,6 @@ def cmd_test(context):
                                                             bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                         output_nii_shape = output_nii.get_fdata().shape
-                        print(output_nii_shape, fname_pred)
                         if len(output_nii_shape) == 4 and output_nii_shape[0] > 1:
                             imed_utils.save_color_labels(output_nii.get_fdata(),
                                                          context["binarize_prediction"],
