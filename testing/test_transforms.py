@@ -14,7 +14,7 @@ import torch
 from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomAffine, RandomReverse, DilateGT, ElasticTransform, RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_values_array
 from ivadomed.metrics import dice_score, mse
 
-DEBUGGING = True
+DEBUGGING = False
 if DEBUGGING:
     from testing.utils import plot_transformed_sample
 
@@ -251,10 +251,10 @@ def _test_Crop(im_seg, crop_transform):
     undo_seg, _ = crop_transform.undo_transform(do_seg, do_seg_metadata)
 
     # Check data type and shape
-    _check_dtype(im, [do_im, undo_im])
-    _check_shape(im, [do_im, undo_im])
-    _check_dtype(seg, [undo_seg, do_seg])
-    _check_shape(seg, [undo_seg, do_seg])
+    _check_dtype(im, [undo_im])
+    _check_shape(im, [undo_im])
+    _check_dtype(seg, [undo_seg])
+    _check_shape(seg, [undo_seg])
 
     # Loop and check
     for idx, i in enumerate(im):
@@ -274,10 +274,10 @@ def _test_Crop(im_seg, crop_transform):
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 2)])
-@pytest.mark.parametrize('crop_transform', [CenterCrop([80, 60]),
-                                            CenterCrop([60, 80]),
-                                            ROICrop([80, 60]),
-                                            ROICrop([60, 80])])
+@pytest.mark.parametrize('crop_transform', [CenterCrop((80, 60)),
+                                            CenterCrop((60, 80)),
+                                            ROICrop((80, 60)),
+                                            ROICrop((60, 80))])
 def test_Crop_2D(im_seg, crop_transform):
     _test_Crop(im_seg, crop_transform)
 
@@ -352,7 +352,7 @@ def test_ElasticTransform(im_seg, elastic_transform):
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
                                     create_test_image(100, 100, 100, 1, rad_max=10)])
-@pytest.mark.parametrize('dilate_transform', [DilateGT(dilation_factor=0.2)])
+@pytest.mark.parametrize('dilate_transform', [DilateGT(dilation_factor=0.3)])
 def test_DilateGT(im_seg, dilate_transform):
     im, seg = im_seg
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
@@ -402,7 +402,7 @@ def test_RandomReverse(im_seg, reverse_transform):
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
                                     create_test_image(100, 100, 100, 1, rad_max=10)])
 @pytest.mark.parametrize('aff_transform', [RandomAffine(20),
-                                               RandomAffine(20, [0.4, 0.6, 0])])
+                                               RandomAffine(20, [0.1, 0.2, 0])])
 def test_RandomAffine(im_seg, aff_transform):
     im, seg = im_seg
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
