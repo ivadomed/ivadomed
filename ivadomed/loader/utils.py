@@ -18,7 +18,7 @@ __numpy_type_map = {
     'uint8': torch.ByteTensor,
 }
 
-TRANSFORM_PARAMS = ['resample', 'elastic', 'rotation', 'offset', 'crop_params']
+TRANSFORM_PARAMS = ['resample', 'elastic', 'rotation', 'offset', 'crop_params', 'reverse']
 
 def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
     # read participants.tsv as pandas dataframe

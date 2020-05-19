@@ -584,7 +584,6 @@ class RandomRotation(ImedTransform):
 
 class RandomReverse(ImedTransform):
     """Make a randomized symmetric inversion of the different values of each dimensions."""
-
     @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata={}):
@@ -602,6 +601,12 @@ class RandomReverse(ImedTransform):
                 sample = np.flip(sample, axis=idx_axis).copy()
 
         return sample, metadata
+
+    @multichannel_capable
+    @two_dim_compatible
+    def undo_transform(self, sample, metadata):
+        assert "reverse" in metadata
+        return self.__call__(sample, metadata)
 
 
 # TODO
