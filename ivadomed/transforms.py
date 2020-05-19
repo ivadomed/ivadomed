@@ -219,35 +219,6 @@ class Resample(ImedTransform):
         return data_out, metadata
 
 
-# TODO
-class Normalize(ImedTransform):
-    """Normalize a tensor image with mean and standard deviation.
-    :param mean: mean value.
-    :param std: standard deviation value.
-    In case of multiple inputs, both mean and std are lists.
-    """
-
-    def __init__(self, mean, std):
-        self.mean = mean
-        self.std = std
-
-    def __call__(self, sample):
-        input_data = sample['input']
-        # TODO: Decorator?
-        # Normalize
-        if isinstance(input_data, list):
-            # TODO: .instance_norm?
-            input_data = [F.normalize(input_data[i], self.mean[i], self.std[i]) for i in range(len(input_data))]
-        else:
-            # TODO: .instance_norm?
-            input_data = F.normalize(input_data, self.mean, self.std)
-
-        # Update
-        rdict = {'input': input_data}
-        sample.update(rdict)
-        return sample
-
-
 class NormalizeInstance(ImedTransform):
     """Normalize a tensor or an array image with mean and standard deviation estimated
     from the sample itself.
