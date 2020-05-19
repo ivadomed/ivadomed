@@ -711,7 +711,7 @@ def cmd_test(context):
             preds_cpu = preds.cpu()
 
             # reconstruct 3D image
-            for smp_idx in range(len(batch['gt'])):
+            for smp_idx in range(len(preds_cpu)):
                 # undo transformations
                 preds_idx_undo, metadata_idx = val_undo_transform(preds_cpu[smp_idx], batch["gt_metadata"][smp_idx], data_type='gt')
 

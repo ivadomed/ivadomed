@@ -646,7 +646,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
                                                 for (key, value) in context["transformation_validation"].items())
 
     # Compose transforms
-    do_transforms = imed_transforms.compose_transforms(context['transformation_validation'])
+    do_transforms = imed_transforms.compose_transforms(context['transformation_validation'], requires_undo=True)
 
     # Undo Transforms
     undo_transforms = imed_transforms.UndoCompose(do_transforms)
@@ -672,7 +672,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         ds = imed_loaded_utils.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
 
     if not context['unet_3D']:
-        print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
+        print("\nLoaded {len(ds)} {context['slice_axis']} slices..")
 
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["batch_size"],
@@ -692,28 +692,12 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         with torch.no_grad():
             preds = model(batch['input'])
 
-        rdict = {}
-        rdict['gt'] = preds
-        batch.update(rdict)
-        # Take only metadata from one input
-        batch["input_metadata"] = batch["input_metadata"][0]
-
         # Reconstruct 3D object
-        for i_slice in range(len(batch['gt'])):
-            # Undo transformations
-            rdict = {}
-            # Import transformations parameters
-            for k in batch.keys():
-                if len(batch[k]):
-                    rdict[k] = batch[k][i_slice]
-            rdict_undo = undo_transforms(rdict)
-
-            # Add new segmented slice to preds_list
-            # Convert PIL to numpy
-            pred_cur = np.array(pil_list_to_numpy(rdict_undo['gt']))
-            preds_list.append(pred_cur)
-            # Store the slice index of pred_cur in the original 3D image
-            sliceIdx_list.append(int(rdict_undo['input_metadata']['slice_index']))
+        for i_slice in range(len(preds)):
+            # undo transformations
+            preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
+                                                         batch["gt_metadata"][i_slice],
+                                                         data_type='gt')
 
             # If last batch and last sample of this batch, then reconstruct 3D object
             if i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1:
@@ -725,6 +709,11 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
                                        kernel_dim='3d' if context['unet_3D'] else '2d',
                                        debug=False,
                                        bin_thr=-1)
+
+            # Add new segmented slice to preds_list
+            preds_list.append(np.array(preds_i_undo))
+            # Store the slice index of preds_i_undo in the original 3D image
+            sliceIdx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
 
     return pred_nib
 
