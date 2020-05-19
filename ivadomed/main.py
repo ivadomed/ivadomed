@@ -779,7 +779,7 @@ def cmd_test(context):
                     if preds_idx_arr.shape[0] > 1:
                         imed_utils.save_color_labels(preds_idx_arr,
                                                      context['binarize_prediction'],
-                                                     rdict_undo['input_metadata']['gt_filenames'][0],
+                                                     batch['input_metadata'][smp_idx][0]['slice_index'],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                      imed_utils.AXIS_DCT[context['slice_axis']])
 
