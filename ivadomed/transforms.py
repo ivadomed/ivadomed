@@ -582,47 +582,26 @@ class RandomRotation(ImedTransform):
         return data_out, metadata
 
 
-# TODO
-class RandomReverse3D(ImedTransform):
+class RandomReverse(ImedTransform):
     """Make a randomized symmetric inversion of the different values of each dimensions."""
 
-    def __init__(self, labeled=True):
-        self.labeled = labeled
-
-    def __call__(self, sample):
-        rdict = {}
-
-        input_list = sample['input']
-
-        # TODO: Generalize this in constructor?
-        if not isinstance(input_list, list):
-            input_list = [sample['input']]
-
-        # Flip axis booleans
-        flip_axes = [np.random.randint(2) == 1 for axis in [0, 1, 2]]
+    @multichannel_capable
+    @two_dim_compatible
+    def __call__(self, sample, metadata={}):
+        if 'reverse' in metadata:
+            flip_axes = metadata['reverse']
+        else:
+            # Flip axis booleans
+            flip_axes = [np.random.randint(2) == 1 for _ in [0, 1, 2]]
+            # Save in metadata
+            metadata['reverse'] = flip_axes
 
         # Run flip
-        reverse_input = []
-        for input_data in input_list:
-            for idx_axis, flip_bool in enumerate(flip_axes):
-                if flip_axes:
-                    input_data = np.flip(input_data, axis=idx_axis).copy()
-            reverse_input.append(input_data)
+        for idx_axis, flip_bool in enumerate(flip_axes):
+            if flip_axes:
+                sample = np.flip(sample, axis=idx_axis).copy()
 
-        # Update
-        rdict['input'] = reverse_input
-
-        # Labeled data
-        if self.labeled:
-            gt_data = sample['gt']
-            for idx_axis, flip_bool in enumerate(flip_axes):
-                if flip_axes:
-                    gt_data = np.flip(gt_data, axis=idx_axis).copy()
-            rdict['gt'] = gt_data
-
-        # Update
-        sample.update(rdict)
-        return sample
+        return sample, metadata
 
 
 # TODO
