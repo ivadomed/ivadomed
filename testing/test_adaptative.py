@@ -61,12 +61,20 @@ def test_hdf5():
     print('\n[INFO]: Dataframe successfully generated. ')
     print('[INFO]: Creating dataset ...\n')
 
-    training_transform_list = [
-        imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.CenterCrop(size=[48, 48]),
-        imed_transforms.NumpyToTensor()
-    ]
-    train_transform = torch_transforms.Compose(training_transform_list)
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+             },
+        "CenterCrop":
+            {
+                "size": [48, 48]
+            },
+        "NumpyToTensor": {}
+    }
+
+    train_transform = imed_transforms.Compose(training_transform_dict)
 
     dataset = imed_adaptative.HDF5Dataset(root_dir=PATH_BIDS,
                                           subject_lst=train_lst,
