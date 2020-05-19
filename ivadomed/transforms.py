@@ -13,8 +13,8 @@ from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_
 from scipy.ndimage.interpolation import map_coordinates
 
 import torch
-#import torch.nn.functional as F
-#from torchvision import transforms as torchvision_transforms
+import torch.nn.functional as F
+from torchvision import transforms as torchvision_transforms
 
 
 def multichannel_capable(wrapped):
@@ -197,9 +197,11 @@ class Resample(ImedTransform):
     def __call__(self, sample, metadata):
         # Get params
         # Voxel dimension in mm
-        zooms = metadata["zooms"]
+        zooms = list(metadata["zooms"])
+
         if len(zooms) == 2:
-            zooms += tuple([1.0])
+            zooms += [1.0]
+
         hfactor = zooms[0] / self.hspace
         wfactor = zooms[1] / self.wspace
         dfactor = zooms[2] / self.dspace
