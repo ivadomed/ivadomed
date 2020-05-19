@@ -87,7 +87,12 @@ class Compose(object):
                 list_applied_to = ["im", "gt", "roi"]
 
             # call transform
-            transform_obj = globals()[transform](**parameters)
+            if transform in globals():
+                transform_obj = globals()[transform](**parameters)
+            else:
+                print('ERROR: {} transform is not available in your ivadomed package. '
+                      'Please check its compatibility with your model json file.'.format(transform))
+                exit()
 
             # check if undo_transform method is implemented
             if requires_undo:

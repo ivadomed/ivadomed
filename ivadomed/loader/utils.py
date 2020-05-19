@@ -44,7 +44,7 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
         X_test, X_val = train_test_split(X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
 
     else:
-        print(f" {split_method} is not a supported split method")
+        print(" {split_method} is not a supported split method")
 
     return X_train, X_val, X_test
 
