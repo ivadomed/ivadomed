@@ -166,14 +166,14 @@ def _test_Resample(im_seg, resample_transform, native_resolution, is_2D=False):
     # Undo Resample on label data
     undo_seg, _ = resample_transform.undo_transform(sample=do_seg, metadata=do_metadata)
 
+    # Check data type and shape
+    _check_dtype(im, [do_im, undo_im])
+    _check_shape(im, [do_im, undo_im])
+    _check_dtype(seg, [undo_seg, do_seg])
+    _check_shape(seg, [undo_seg, do_seg])
+
     # Check data content and data shape between input data and undo
     for idx, i in enumerate(im):
-        # Check shapes
-        assert i.shape == undo_im[idx].shape == seg[idx].shape == undo_seg[idx].shape
-        assert do_seg[idx].shape == do_im[idx].shape
-        # Check data type
-        assert i.dtype == do_im[idx].dtype == undo_im[idx].dtype
-        assert seg[idx].dtype == do_seg[idx].dtype == undo_seg[idx].dtype
         # Plot for debugging
         if DEBUGGING and is_2D:
             plot_transformed_sample(im[idx], undo_im[idx], ['raw', 'undo'])
@@ -250,14 +250,14 @@ def _test_Crop(im_seg, crop_transform):
     undo_im, _ = crop_transform.undo_transform(do_im, do_metadata)
     undo_seg, _ = crop_transform.undo_transform(do_seg, do_seg_metadata)
 
+    # Check data type and shape
+    _check_dtype(im, [do_im, undo_im])
+    _check_shape(im, [do_im, undo_im])
+    _check_dtype(seg, [undo_seg, do_seg])
+    _check_shape(seg, [undo_seg, do_seg])
+
     # Loop and check
     for idx, i in enumerate(im):
-        # Check data shape
-        assert undo_im[idx].shape == i.shape
-        assert undo_seg[idx].shape == seg[idx].shape
-        # Check data type
-        assert do_im[idx].dtype == undo_im[idx].dtype == i.dtype
-        assert do_seg[idx].dtype == undo_seg[idx].dtype == seg[idx].dtype
         # Check data consistency
         fh, fw, fd, _, _, _ = do_metadata[idx]['crop_params']
         th, tw, td = crop_transform.size
@@ -316,14 +316,14 @@ def test_RandomRotation(im_seg, rot_transform):
         plot_transformed_sample(im[0], undo_im[0], ['raw', 'undo'])
         plot_transformed_sample(seg[0], undo_seg[0], ['raw', 'undo'])
 
+    # Check data type and shape
+    _check_dtype(im, [do_im, undo_im])
+    _check_shape(im, [do_im, undo_im])
+    _check_dtype(seg, [undo_seg, do_seg])
+    _check_shape(seg, [undo_seg, do_seg])
+
     # Loop and check
     for idx, i in enumerate(im):
-        # Check data shape
-        assert undo_im[idx].shape == i.shape
-        assert undo_seg[idx].shape == seg[idx].shape
-        # Check data type
-        assert do_im[idx].dtype == undo_im[idx].dtype == i.dtype
-        assert do_seg[idx].dtype == undo_seg[idx].dtype == seg[idx].dtype
         # Data consistency
         assert dice_score(undo_seg[idx], seg[idx]) > 0.8
 
@@ -344,14 +344,10 @@ def test_ElasticTransform(im_seg, elastic_transform):
         plot_transformed_sample(im[0], do_im[0], ['raw', 'do'])
         plot_transformed_sample(seg[0], do_seg[0], ['raw', 'do'])
 
-    # Loop and check
-    for idx, i in enumerate(im):
-        # Check data shape
-        assert do_im[idx].shape == i.shape
-        assert do_seg[idx].shape == seg[idx].shape
-        # Check data type
-        assert do_im[idx].dtype == i.dtype
-        assert do_seg[idx].dtype == seg[idx].dtype
+    _check_dtype(im, [do_im])
+    _check_shape(im, [do_im])
+    _check_dtype(seg, [do_seg])
+    _check_shape(seg, [do_seg])
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10)])
@@ -367,7 +363,7 @@ def test_DilateGT(im_seg, dilate_transform):
         plot_transformed_sample(seg[0], do_seg[0], ['raw', 'do'])
 
     # Check data shape and type
-    _check_shape(ref=seg, mov=do_seg)
+    _check_shape(ref=seg, list_mov=[do_seg])
 
     # Check data augmentation
     for idx, i in enumerate(seg):
@@ -377,15 +373,17 @@ def test_DilateGT(im_seg, dilate_transform):
         assert label((do_seg[idx] > 0).astype(np.int))[1] == label(i)[1]
 
 
-def _check_shape(ref, mov):
+def _check_shape(ref, list_mov):
     # Loop and check
-    for idx, i in enumerate(ref):
-        # Check data shape
-        assert mov[idx].shape == i.shape
+    for mov in list_mov:
+        for idx, i in enumerate(ref):
+            # Check data shape
+            assert mov[idx].shape == i.shape
 
 
-def _check_dtype(ref, mov):
+def _check_dtype(ref, list_mov):
     # Loop and check
-    for idx, i in enumerate(ref):
+    for mov in list_mov:
+        for idx, i in enumerate(ref):
         # Check data type
         assert mov[idx].dtype == i.dtype
