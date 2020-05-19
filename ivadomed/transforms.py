@@ -1,4 +1,3 @@
-
 import math
 import numbers
 import random
@@ -123,12 +122,12 @@ class UndoCompose(object):
     def __init__(self, compose):
         self.transforms = compose
 
-    def __call__(self, sample, metadata, data_type='im'):
-        if self.transform[data_type] is None:
-            # In case self.transform[data_type] is None
+    def __call__(self, sample, metadata, data_type='gt'):
+        if self.transforms.transform[data_type] is None:
+            # In case self.transforms.transform[data_type] is None
             return None, None
         else:
-            for tr in self.transform[data_type].transforms[::-1]:
+            for tr in self.transforms.transform[data_type].transforms[::-1]:
                 sample, metadata = tr.undo_transform(sample, metadata)
             return sample, metadata
 
@@ -146,7 +145,7 @@ class NumpyToTensor(ImedTransform):
 
     #@multichannel_capable
     def undo_transform(self, sample, metadata={}):
-        return sample.numpy(), metadata
+        return list(sample.numpy()), metadata
 
     #@multichannel_capable
     def __call__(self, sample, metadata={}):
