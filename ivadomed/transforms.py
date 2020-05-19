@@ -725,45 +725,6 @@ class RandomAffine(RandomRotation):
         return sample
 
 
-# TODO
-class RandomAffine3D(RandomAffine):
-
-    def __call__(self, sample):
-        rdict = {}
-
-        input_data = sample['input']
-        # TODO: To generalize?
-        if not isinstance(input_data, list):
-            input_data = [sample['input']]
-
-        self.input_data_size = input_data[0][0, :, :].shape
-        params = self.get_params()
-
-        ret_input = []
-        for volume in input_data:
-            img_data = np.zeros(input_data[0].shape)
-            for idx, img in enumerate(volume):
-                pil_img = Image.fromarray(img, mode='F')
-                img_data[idx, :, :] = np.array(self.sample_augment(pil_img, params))
-            ret_input.append(img_data.astype('float32'))
-
-        rdict['input'] = ret_input
-
-        if self.labeled:
-            gt_data = sample['gt']
-            ret_gt = []
-            for labels in gt_data:
-                gt_vol = np.zeros(labels.shape)
-                for idx, gt in enumerate(labels):
-                    pil_img = Image.fromarray(gt, mode='F')
-                    gt_vol[idx, :, :] = np.array(self.sample_augment(pil_img, params))
-                ret_gt.append(gt_vol.astype('float32'))
-            rdict['gt'] = ret_gt
-
-        sample.update(rdict)
-        return sample
-
-
 class RandomShiftIntensity(ImedTransform):
 
     def __init__(self, shift_range, prob=0.1):
