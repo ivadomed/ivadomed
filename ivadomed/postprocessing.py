@@ -122,7 +122,7 @@ def mask_predictions(predictions, mask_binary):
     return predictions * mask_binary
 
 
-def generate_bounding_box(mask):
+def get_bounding_boxes(mask):
     """
     Generates a 3D bounding box around a given mask
     :param mask: numpy array with the mask of the ROI
@@ -130,8 +130,8 @@ def generate_bounding_box(mask):
     """
     coords = np.where(mask != 0)
     dimensions = []
-    for i in range(len(coords.shape)):
-        dimensions.append(coords[i].min())
-        dimensions.append(coords[i].max())
+    for i in range(len(coords)):
+        dimensions.append(int(coords[i].min()))
+        dimensions.append(int(coords[i].max()))
 
     return dimensions
