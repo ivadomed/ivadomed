@@ -390,9 +390,7 @@ def test_RandomReverse(im_seg, reverse_transform):
     undo_seg, _ = reverse_transform.undo_transform(do_seg, metadata_do)
 
     if DEBUGGING and len(im[0].shape) == 2:
-        plot_transformed_sample(im[0], do_im[0], ['raw', 'do'])
         plot_transformed_sample(seg[0], do_seg[0], ['raw', 'do'])
-        plot_transformed_sample(im[0], undo_im[0], ['raw', 'undo'])
         plot_transformed_sample(seg[0], undo_seg[0], ['raw', 'undo'])
 
     _check_dtype(im, [do_im])
@@ -413,5 +411,5 @@ def _check_dtype(ref, list_mov):
     # Loop and check
     for mov in list_mov:
         for idx, i in enumerate(ref):
-        # Check data type
-        assert mov[idx].dtype == i.dtype
+            # Check data type
+            assert mov[idx].dtype == i.dtype
