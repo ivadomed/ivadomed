@@ -1,6 +1,8 @@
 import nibabel as nib
 import numpy as np
 import torch
+import os
+import json
 from PIL import Image
 from bids_neuropoly import bids
 from torch.utils.data import Dataset
@@ -23,7 +25,10 @@ def load_dataset(data_list, data_transform, context):
                                 transform=data_transform,
                                 multichannel=context['multichannel'],
                                 length=context["length_3D"],
-                                padding=context["padding_3D"])
+                                padding=context["padding_3D"],
+                                object_detection_path=context["object_detection_path"],
+                                gpu_number=context["gpu"],
+                                log_dir=context['log_directory'])
     elif context["HeMIS"]:
         dataset = imed_adaptative.HDF5Dataset(root_dir=context["bids_path"],
                                               subject_lst=data_list,
@@ -51,6 +56,9 @@ def load_dataset(data_list, data_transform, context):
                               slice_axis=imed_utils.AXIS_DCT[context["slice_axis"]],
                               transform=data_transform,
                               multichannel=context['multichannel'],
+                              object_detection_path=context["object_detection_path"],
+                              log_dir=context['log_directory'],
+                              gpu_number=context["gpu"],
                               slice_filter_fn=imed_utils.SliceFilter(**context["slice_filter"]))
 
     return dataset
@@ -413,10 +421,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
         for i in range(0, len(self.handlers)):
             if not crop:
-                input_img, _ = self.handlers[i].get_pair_data()
+                input_img, _ = self.handlers[i][0].get_pair_data()
                 shape = input_img[0].shape
             else:
                 shape = shape_crop
+
             if (shape[0] - 2 * padding) % length[0] != 0 or shape[0] % 16 != 0 \
                     or (shape[1] - 2 * padding) % length[1] != 0 or shape[1] % 16 != 0 \
                     or (shape[2] - 2 * padding) % length[2] != 0 or shape[2] % 16 != 0:
@@ -494,8 +503,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance=None, slice_axis=2,
-                 cache=True, transform=None, metadata_choice=False, roi_suffix=None,
-                 multichannel=False, length=(64, 64, 64), padding=0):
+                 cache=True, transform=None, metadata_choice=False, roi_suffix=None, multichannel=False,
+                 length=(64, 64, 64), padding=0, object_detection_path=None, log_dir=None, gpu_number=0):
         dataset = BidsDataset(root_dir,
                               subject_lst=subject_lst,
                               target_suffix=target_suffix,
@@ -505,7 +514,10 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               contrast_balance=contrast_balance,
                               slice_axis=slice_axis,
                               transform=transform,
-                              multichannel=multichannel)
+                              multichannel=multichannel,
+                              object_detection_path=object_detection_path,
+                              gpu_number=gpu_number,
+                              log_dir=log_dir)
 
         super().__init__(dataset.filename_pairs, length=length, padding=padding, transform=transform,
                          slice_axis=slice_axis)
@@ -514,7 +526,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
 class BidsDataset(MRI2DSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance=None, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
-                 multichannel=False):
+                 multichannel=False, object_detection_path=None, log_dir=None, gpu_number=0):
 
         self.bids_ds = bids.BIDS(root_dir)
 
@@ -548,6 +560,21 @@ class BidsDataset(MRI2DSegmentationDataset):
                                                "deriv_path": None,
                                                "roi_filename": None,
                                                "metadata": [None] * num_contrast} for subject in subject_lst}
+
+        # Load or generate bounding boxes and save them in json file
+        bounding_box_path = os.path.join(log_dir, 'bounding_boxes.json')
+        if os.path.exists(bounding_box_path):
+            with open(bounding_box_path, 'r') as fp:
+                bounding_box_dict = json.load(fp)
+        elif os.path.exists(object_detection_path):
+            print("Generating bounding boxes...")
+            bounding_box_dict = imed_utils.generate_bounding_box_file(bids_subjects,
+                                                                      object_detection_path,
+                                                                      log_dir,
+                                                                      gpu_number,
+                                                                      slice_axis)
+        elif object_detection_path is not None:
+            raise RuntimeError("Path to object detection model doesn't exist")
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_lst:
@@ -583,6 +610,8 @@ class BidsDataset(MRI2DSegmentationDataset):
 
                 # add contrast to metadata
                 metadata['contrast'] = subject.record["modality"]
+                if bounding_box_dict:
+                    metadata['bounding_box'] = bounding_box_dict[str(subject.record["absolute_path"])]
 
                 if metadata_choice == 'mri_params':
                     if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
