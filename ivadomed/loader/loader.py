@@ -158,11 +158,11 @@ class SegmentationPair(object):
             gt_data = None
         for gt in self.gt_handle:
             if gt is not None:
-                hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.uint8),
+                hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float16),
                                                                 self.slice_axis)
                 gt_data.append(hwd_oriented)
             else:
-                gt_data.append(np.zeros(self.input_handle[0].shape, dtype=np.float32))
+                gt_data.append(np.zeros(self.input_handle[0].shape, dtype=np.float16))
 
         return input_data, gt_data
 
@@ -313,19 +313,19 @@ class MRI2DSegmentationDataset(Dataset):
                                                  data_type="roi")
         # Update metadata_input with metadata_roi
         metadata_input = imed_loader_utils.update_metadata(metadata_roi, metadata_input)
-        print(seg_pair_slice["input"][0].dtype)
+
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=seg_pair_slice["input"],
                                                      metadata=metadata_input,
                                                      data_type="im")
         # Update metadata_input with metadata_roi
         metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
-        print(stack_input[0].dtype)
+
         # Run transforms on images
         stack_gt, metadata_gt = self.transform(sample=seg_pair_slice["gt"],
                                                metadata=metadata_gt,
                                                data_type="gt")
-        print('gt', stack_gt[0].dtype, stack_roi[0].dtype)
+
         data_dict = {
             'input': stack_input,
             'gt': stack_gt,
