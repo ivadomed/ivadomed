@@ -879,18 +879,6 @@ def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axi
     return multi_labeled_pred
 
 
-def pil_list_to_numpy(pil_list):
-    n_classes = len(pil_list)
-    w, h = pil_list[0].size
-    numpy_array = np.zeros((h, w, n_classes))
-    for idx, pil_img in enumerate(pil_list):
-        numpy_array[..., idx] = np.array(pil_img)
-    # If only one class, then remove the last dimension
-    if n_classes == 1:
-        numpy_array = np.squeeze(numpy_array, axis=-1)
-    return numpy_array
-
-
 def convert_labels_to_RGB(grid_img):
     # Keep always the same color labels
     batch_size, n_class, h, w = grid_img.shape
