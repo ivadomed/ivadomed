@@ -36,9 +36,9 @@ def test_segment_volume_2d():
 
         "transformation_validation": {
             "Resample": {"wspace": 0.75, "hspace": 0.75},
-            "ROICrop2D": {"size": [48, 48]},
-            "ToTensor": {},
-            "NormalizeInstance": {}
+            "ROICrop": {"size": [48, 48]},
+            "NumpyToTensor": {},
+            "NormalizeInstance": {"applied_to": ["im"]}
         },
         "slice_filter": {
             "filter_empty_mask": False,
@@ -48,6 +48,7 @@ def test_segment_volume_2d():
         "slice_axis": "axial",
         "unet_3D": False,
     }
+
     PATH_CONFIG = os.path.join(PATH_MODEL, 'model_test.json')
     with open(PATH_CONFIG, 'w') as fp:
         json.dump(config, fp)
@@ -76,9 +77,9 @@ def test_segment_volume_3d():
         "batch_size": BATCH_SIZE,
         "transformation_validation": {
             "Resample": {"wspace": 1.0, "hspace": 1.0, "dspace": 2.0},
-            "CenterCrop3D": {"size": LENGTH_3D},
-            "ToTensor3D": {},
-            "NormalizeInstance3D": {}
+            "CenterCrop": {"size": LENGTH_3D},
+            "NumpyToTensor": {},
+            "NormalizeInstance": {"applied_to": ["im"]}
         },
         "slice_filter": {
             "filter_empty_mask": False,
