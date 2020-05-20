@@ -12,7 +12,7 @@ from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_
 from scipy.ndimage.interpolation import map_coordinates
 
 import torch
-#from torchvision import transforms as torchvision_transforms
+from torchvision import transforms as torchvision_transforms
 
 
 def multichannel_capable(wrapped):
@@ -113,7 +113,7 @@ class Compose(object):
             "roi": torchvision_transforms.Compose(list_tr_roi)}
 
     def __call__(self, sample, metadata, data_type='im'):
-        if self.transform[data_type] is None:
+        if self.transform[data_type] is None or len(metadata) == 0:
             # In case self.transform[data_type] is None
             return None, None
         else:
