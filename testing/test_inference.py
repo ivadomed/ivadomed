@@ -36,14 +36,22 @@ def test_inference(film_bool=False):
         torch.cuda.set_device(device)
         print("using GPU number {}".format(device))
 
-    validation_transform_list = [
-        imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.ROICrop(size=[48, 48]),
-        imed_transforms.NumpyToTensor(),
-        imed_transforms.NormalizeInstance()
-    ]
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+             },
+        "CenterCrop":
+            {
+                "size": [48, 48]
+            },
+        "NumpyToTensor": {},
+        "NormalizeInstance": {"applied_to": ["im"]}
+    }
 
-    val_transform = torch_transforms.Compose(validation_transform_list)
+    val_transform = imed_transforms.Compose(training_transform_dict)
+
     val_undo_transform = imed_transforms.UndoCompose(val_transform)
 
     test_lst = ['sub-test001']
