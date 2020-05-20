@@ -183,8 +183,8 @@ def _test_Resample(im_seg, resample_transform, native_resolution, is_2D=False):
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(80, 100, 0, 2, rad_max=10)])
-@pytest.mark.parametrize('resample_transform', [Resample(0.8, 1.0, interpolation_order=2),
-                                                Resample(1.0, 0.8, interpolation_order=2)])
+@pytest.mark.parametrize('resample_transform', [Resample(0.8, 1.0),
+                                                Resample(1.0, 0.8)])
 @pytest.mark.parametrize('native_resolution', [(0.9, 1.0),
                                                (1.0, 0.9)])
 def test_Resample_2D(im_seg, resample_transform, native_resolution):
@@ -192,8 +192,8 @@ def test_Resample_2D(im_seg, resample_transform, native_resolution):
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(80, 100, 100, 1, rad_max=10)])
-@pytest.mark.parametrize('resample_transform', [Resample(0.8, 1.0, 0.5, interpolation_order=2),
-                                                Resample(1.0, 0.8, 0.7, interpolation_order=2)])
+@pytest.mark.parametrize('resample_transform', [Resample(0.8, 1.0, 0.5),
+                                                Resample(1.0, 0.8, 0.7)])
 @pytest.mark.parametrize('native_resolution', [(0.9, 1.0, 0.8),
                                                (1.0, 0.9, 1.1)])
 def test_Resample_3D(im_seg, resample_transform, native_resolution):
