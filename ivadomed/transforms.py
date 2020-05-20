@@ -9,10 +9,13 @@ from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 from scipy.ndimage.interpolation import map_coordinates
+from scipy.ndimage import zoom
 
 import torch
 import torchvision.transforms.functional as F
 from torchvision import transforms as torchvision_transforms
+
+from ivadomed import utils as imed_utils
 
 
 class IMEDTransform(object):
@@ -108,20 +111,23 @@ def compose_transforms(dict_transforms, requires_undo=False):
 
 class Resample(IMEDTransform):
 
-    def __init__(self, wspace, hspace,
-                 interpolation=Image.BILINEAR,
-                 labeled=True):
+    def __init__(self, wspace, hspace, dspace=1, slice_axis="axial", labeled=True):
         self.hspace = hspace
         self.wspace = wspace
-        self.interpolation = interpolation
+        self.dspace = dspace
+        self.slice_axis = imed_utils.AXIS_DCT[slice_axis]
         self.labeled = labeled
 
-    @staticmethod
-    def do_resample(list_data, new_shape, interpolation_mode):
+    def do_resample(self, list_data, zooms, interpolation_order=2):
         list_data_out = []
         for i, data in enumerate(list_data):
-            resampled_data = data.resize(new_shape,
-                                         resample=interpolation_mode)
+            if isinstance(data, np.ndarray):
+                resampled_data = zoom(data, zooms, order=interpolation_order).astype(data.dtype)
+
+            # if ... else temporary until transform refactor PR passes
+            else:
+                resampled_data = Image.fromarray(zoom(data, zooms, order=interpolation_order))
+
             list_data_out.append(resampled_data)
         return list_data_out
 
@@ -129,19 +135,40 @@ class Resample(IMEDTransform):
         rdict = {}
 
         # Get original data shape
-        hshape, wshape = sample['input_metadata']['data_shape']
+        self.hshape, self.wshape, self.dshape = sample["input_metadata"]["data_shape"]
+
+        if isinstance(sample['input'], np.ndarray):
+            h, w, d = sample['input'][0, ].shape
+            dfactor = self.dshape / d
+        else:
+            w, h = sample['input'][0].size
+        hfactor = self.hshape / h
+        wfactor = self.wshape / w
+        # `isinstance(sample["input"], np.ndarray)` temporary until refactor transform is merged
+        self.is_3D = isinstance(sample["input"], np.ndarray) and len(sample["input"].shape) == 4
+        factors = (hfactor, wfactor, dfactor) if self.is_3D else (hfactor, wfactor)
 
         # Input data
         rdict['input'] = self.do_resample(list_data=sample["input"],
-                                          new_shape=(wshape, hshape),
-                                          interpolation_mode=self.interpolation)
+                                          zooms=factors,
+                                          interpolation_order=2)
 
         # Prediction data
         # Note: We use here self.interpolation instead of forcing Image.NEAREST
         #       in order to ensure soft output
         rdict['gt'] = self.do_resample(list_data=sample["gt"],
-                                       new_shape=(wshape, hshape),
-                                       interpolation_mode=self.interpolation)
+                                       zooms=factors,
+                                       interpolation_order=0)
+        if self.is_3D:
+            n_channel = sample["input"].shape[0]
+            undo_input = np.zeros((n_channel, self.hshape, self.wshape, self.dshape))
+            undo_gt = np.zeros((n_channel, self.hshape, self.wshape, self.dshape))
+
+            for i in range(len(rdict['gt'])):
+                undo_input[i, ] = rdict['input'][0]
+                undo_gt[i, ] = rdict['gt'][0]
+            rdict["input"] = undo_input
+            rdict["gt"] = undo_gt
 
         # Update
         sample.update(rdict)
@@ -153,30 +180,32 @@ class Resample(IMEDTransform):
         # Get new data shape
         # Based on the assumption that the metadata of every modality are equal.
         # Voxel dimension in mm
-        input_metadata = sample['input_metadata']
-        hzoom, wzoom = input_metadata[0]["zooms"]
-        hshape, wshape = input_metadata[0]["data_shape"]
-        hfactor = hzoom / self.hspace
-        wfactor = wzoom / self.wspace
-        hshape_new = int(round(hshape * hfactor))
-        wshape_new = int(round(wshape * wfactor))
+        self.hzoom, self.wzoom, self.dzoom = sample["input_metadata"][0]["zooms"]
+        self.hshape, self.wshape, self.dshape = sample["input_metadata"][0]["data_shape"]
+        # `isinstance(sample["input"][0], np.ndarray)` temporary -> until transforms refactor is merged
+        self.is_3D = isinstance(sample["input"][0], np.ndarray) and len(sample["input"][0].shape) == 3
+
+        hfactor = self.hzoom / self.hspace
+        wfactor = self.wzoom / self.wspace
+        dfactor = self.dzoom / self.dspace
+
+        factors = (hfactor, wfactor, dfactor) if self.is_3D else (hfactor, wfactor)
 
         # Input data
         rdict['input'] = self.do_resample(list_data=sample["input"],
-                                          new_shape=(wshape_new, hshape_new),
-                                          interpolation_mode=self.interpolation)
+                                          zooms=factors)
 
         # Labeled data
         if self.labeled:
             rdict['gt'] = self.do_resample(list_data=sample["gt"],
-                                           new_shape=(wshape_new, hshape_new),
-                                           interpolation_mode=Image.NEAREST)
+                                           zooms=factors,
+                                           interpolation_order=0)
 
         # ROI data
-        if sample['roi'] is not None:
+        if "roi" in sample and sample['roi'] is not None:
             rdict['roi'] = self.do_resample(list_data=sample["roi"],
-                                            new_shape=(wshape_new, hshape_new),
-                                            interpolation_mode=Image.NEAREST)
+                                            zooms=factors,
+                                            interpolation_order=0)
 
         # Update
         sample.update(rdict)
@@ -266,7 +295,7 @@ class ToTensor(IMEDTransform):
         else:
             # single input
             ret_input = torch.from_numpy(np.ascontiguousarray(input_data[0])) if isinstance(input_data[0], np.ndarray) \
-                        else F.to_tensor(input_data[0])
+                                         else F.to_tensor(input_data[0])
 
         rdict['input'] = ret_input
 
@@ -276,14 +305,13 @@ class ToTensor(IMEDTransform):
             if gt_data is not None:
                 if isinstance(gt_data, list):
                     # multiple GT
-                    # torch.cat is used to be compatible with StackTensors
                     ret_gt = torch.stack([torch.from_numpy(np.ascontiguousarray(item)) if isinstance(item, np.ndarray)
                                           else F.to_tensor(item)[0] for item in gt_data], dim=0)
 
                 else:
                     # single GT
                     ret_gt = torch.from_numpy(np.ascontiguousarray(gt_data)) if isinstance(gt_data, np.ndarray) else \
-                             F.to_tensor(gt_data)
+                                              F.to_tensor(gt_data)
 
                 rdict['gt'] = ret_gt
 
@@ -639,39 +667,39 @@ class CenterCrop3D(IMEDTransform):
     def undo_transform(self, sample):
         # TODO: Make it compatible with lists
         # Compute parameters
-        td, tw, th = sample['input_metadata']["__centercrop"]
-        d, w, h = sample['input_metadata']["data_shape"]
+        crop_size = self.size
+        self.size = sample['input_metadata']["__centercrop"]
+        th, tw, td = self.size
+        h, w, d = sample['input'][0,].shape
         fh = max(int(round((h - th) / 2.)), 0)
         fw = max(int(round((w - tw) / 2.)), 0)
         fd = max(int(round((d - td) / 2.)), 0)
-        npad = ((0, 0), (fw, fw), (fd, fd), (fh, fh))
 
-        # Apply undo
-        input_undo = np.pad(sample['input'],
-                            pad_width=npad,
-                            mode='constant',
-                            constant_values=0)
-        gt_undo = np.pad(sample['gt'],
-                         pad_width=npad,
-                         mode='constant',
-                         constant_values=0)
-
+        crop_params = (fh, fw, fd)
+        n_channel = sample["input"].shape[0]
+        undo_input = np.zeros((n_channel, th, tw, td))
+        undo_gt = np.zeros((n_channel, th, tw, td))
+        for i in range(sample['input'].shape[0]):
+            undo_input[i,] = self.do_crop(list_data=[sample['input'][i,]], crop_params=crop_params)[0]
+            undo_gt[i,] = self.do_crop(list_data=[sample['gt'][i,]], crop_params=crop_params, cval=0)[0]
         # Update
-        rdict = {'input': input_undo, 'gt': gt_undo}
+        rdict = {'input': undo_input, 'gt': undo_gt}
+        self.size = crop_size
+
         sample.update(rdict)
         return sample
 
     def do_crop(self, list_data, crop_params, cval=None):
-        td, tw, th = self.size
-        fd, fw, fh = crop_params
+        th, tw, td = self.size
+        fh, fw, fd = crop_params
 
         list_crop_data = []
         for data in list_data:
             # Do crop
-            crop_data = data[fd:fd + td, fw:fw + tw, fh:fh + th]
+            crop_data = data[fh:fh + th,  fw:fw + tw, fd:fd + td]
 
             # Pad image with mean if image smaller than crop size
-            cd, cw, ch = crop_data.shape
+            ch, cw, cd = crop_data.shape
             if (cw, ch, cd) != (tw, th, td):
                 w_diff = (tw - cw) / 2.
                 iw = 1 if w_diff % 1 != 0 else 0
@@ -679,9 +707,9 @@ class CenterCrop3D(IMEDTransform):
                 ih = 1 if h_diff % 1 != 0 else 0
                 d_diff = (td - cd) / 2.
                 id_ = 1 if d_diff % 1 != 0 else 0
-                npad = ((int(d_diff) + id_, int(d_diff)),
+                npad = ((int(h_diff) + ih, int(h_diff)),
                         (int(w_diff) + iw, int(w_diff)),
-                        (int(h_diff) + ih, int(h_diff)))
+                        (int(d_diff) + id_, int(d_diff)))
                 constant_values = cval if not cval is None else np.mean(crop_data)
                 crop_data = np.pad(crop_data,
                                    pad_width=npad,
@@ -697,25 +725,24 @@ class CenterCrop3D(IMEDTransform):
         # TODO: ROI
 
         # Get params
-        d, w, h = sample['input'][0].shape
-        td, tw, th = self.size
+        h, w, d = sample['input'][0].shape
+        th, tw, td = self.size
         fh = max(int(round((h - th) / 2.)), 0)
         fw = max(int(round((w - tw) / 2.)), 0)
         fd = max(int(round((d - td) / 2.)), 0)
-        crop_params = (fd, fw, fh)
+        crop_params = (fh, fw, fd)
 
         # Propagate params
         for idx, img in enumerate(sample['input']):
-            sample['input_metadata'][idx]["__centercrop"] = td, tw, th
+            sample['input_metadata'][idx]["__centercrop"] = h, w, d
 
         # Do crop
         do_input = self.do_crop(list_data=sample['input'], crop_params=crop_params)
         rdict = {'input': do_input,
                  'input_metadata': sample['input_metadata']}
 
-        if self.labeled:
-            do_gt = self.do_crop(list_data=sample['gt'], crop_params=crop_params, cval=0)
-            rdict['gt'] = do_gt
+        do_gt = self.do_crop(list_data=sample['gt'], crop_params=crop_params, cval=0)
+        rdict['gt'] = do_gt
 
         # Update
         sample.update(rdict)
@@ -734,7 +761,7 @@ class NormalizeInstance3D(IMEDTransform):
                                [mean for _ in range(0, data.shape[0])],
                                [std for _ in range(0, data.shape[0])]).unsqueeze(0)
         else:
-            return data
+            return data.unsqueeze(0)
 
     def __call__(self, sample):
         input_data = sample['input']
@@ -1081,9 +1108,10 @@ class RandomAffine3D(RandomAffine):
         ret_input = []
         for volume in input_data:
             img_data = np.zeros(input_data[0].shape)
-            for idx, img in enumerate(volume):
+            for idx in range(volume.shape[-1]):
+                img = volume[..., idx]
                 pil_img = Image.fromarray(img, mode='F')
-                img_data[idx, :, :] = np.array(self.sample_augment(pil_img, params))
+                img_data[..., idx] = np.array(self.sample_augment(pil_img, params))
             ret_input.append(img_data.astype('float32'))
 
         rdict['input'] = ret_input
@@ -1093,9 +1121,10 @@ class RandomAffine3D(RandomAffine):
             ret_gt = []
             for labels in gt_data:
                 gt_vol = np.zeros(labels.shape)
-                for idx, gt in enumerate(labels):
+                for idx in range(labels.shape[-1]):
+                    gt = labels[..., idx]
                     pil_img = Image.fromarray(gt, mode='F')
-                    gt_vol[idx, :, :] = np.array(self.sample_augment(pil_img, params))
+                    gt_vol[..., idx] = np.array(self.sample_augment(pil_img, params))
                 ret_gt.append(gt_vol.astype('float32'))
             rdict['gt'] = ret_gt
 
@@ -1104,7 +1133,6 @@ class RandomAffine3D(RandomAffine):
 
 
 class RandomTensorChannelShift(IMEDTransform):
-
     def __init__(self, shift_range):
         self.shift_range = shift_range
 

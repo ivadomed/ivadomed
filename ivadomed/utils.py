@@ -199,7 +199,7 @@ class Evaluation3DMetrics(object):
             # if label_size is None, then we look at all object sizes
             # we check if the currrent object belongs to the current size range
             if label_size is None or \
-               np.max(self.data_gt_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
+                    np.max(self.data_gt_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
 
                 if self.overlap_vox is None:
                     overlap_vox = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
@@ -353,7 +353,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
 
     else:
-        arr = data_lst
+        arr = data_lst[0]
         n_channel = arr.shape[0]
         oriented_volumes = []
         for i in range(n_channel):
@@ -367,7 +367,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         arr_pred_ref_space[arr_pred_ref_space <= 1e-3] = 0
 
     # create nibabel object
-    nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
+    nib_pred = nib.Nifti1Image(arr_pred_ref_space.astype('float32'), nib_ref.affine)
 
     # save as nifti file
     if fname_out is not None:
@@ -651,6 +651,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     if fname_roi is None and 'filter_empty_mask' in context["slice_filter"]:
         context["slice_filter"]["filter_empty_mask"] = False
 
+    fname_roi = [fname_roi] if fname_roi is not None else None
+
     # Load data
     filename_pairs = [([fname_image], None, fname_roi, [{}])]
     if not context['unet_3D']:  # TODO: rename this param 'model_name' or 'kernel_dim'
@@ -660,8 +662,10 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
                                                   transform=do_transforms,
                                                   slice_filter_fn=SliceFilter(**context["slice_filter"]))
     else:
-        print('\n3D unet is not implemented yet.')
-        exit()
+        ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
+                                                           transform=do_transforms,
+                                                           length=context["length_3D"],
+                                                           padding=context["padding_3D"])
 
     # If fname_roi provided, then remove slices without ROI
     if fname_roi is not None:
@@ -669,6 +673,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     if not context['unet_3D']:
         print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
+    else:
+        print(f"\nLoaded {len(ds)} {context['slice_axis']} volumes of shape {context['length_3D']}")
 
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["batch_size"],
@@ -683,7 +689,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     model.eval()
 
     # Loop across batches
-    preds_list, sliceIdx_list = [], []
+    preds_list, slice_idx_list = [], []
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
             preds = model(batch['input'])
@@ -706,17 +712,22 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
             # Add new segmented slice to preds_list
             # Convert PIL to numpy
-            pred_cur = np.array(pil_list_to_numpy(rdict_undo['gt']))
+            if not isinstance(rdict_undo['gt'][0], np.ndarray):
+                pred_cur = np.array(pil_list_to_numpy(rdict_undo['gt']))
+            else:
+                # 3D images
+                pred_cur = rdict_undo['gt']
+
             preds_list.append(pred_cur)
             # Store the slice index of pred_cur in the original 3D image
-            sliceIdx_list.append(int(rdict_undo['input_metadata']['slice_index']))
+            slice_idx_list.append(int(rdict_undo['input_metadata']['slice_index']))
 
             # If last batch and last sample of this batch, then reconstruct 3D object
             if i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1:
                 pred_nib = pred_to_nib(data_lst=preds_list,
-                                       z_lst=sliceIdx_list,
                                        fname_ref=fname_image,
                                        fname_out=None,
+                                       z_lst=slice_idx_list,
                                        slice_axis=AXIS_DCT[context['slice_axis']],
                                        kernel_dim='3d' if context['unet_3D'] else '2d',
                                        debug=False,
