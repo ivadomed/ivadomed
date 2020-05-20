@@ -118,7 +118,7 @@ def test_HeMIS(p=0.0001):
                 gen_lst.append(tot_gen)
 
             start_load = time.time()
-            input_samples, gt_samples = batch["input"], batch["gt"]
+            input_samples, gt_samples = imed_loader_utils.unstack_tensor(batch["input"]), batch["gt"]
 
             print(batch["Missing_mod"])
             missing_mod = batch["Missing_mod"]

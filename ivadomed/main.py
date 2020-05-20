@@ -326,7 +326,8 @@ def cmd_train(context):
 
         num_steps = 0
         for i, batch in enumerate(train_loader):
-            input_samples, gt_samples = batch["input"], batch["gt"]
+            input_samples, gt_samples = batch["input"] if not HeMIS \
+                                            else imed_utils.unstack_tensors(batch["input"]), batch["gt"]
 
             # mixup data
             if mixup_bool and not film_bool:
@@ -417,7 +418,8 @@ def cmd_train(context):
         metric_mgr = imed_metrics.MetricManager(metric_fns)
 
         for i, batch in enumerate(val_loader):
-            input_samples, gt_samples = batch["input"], batch["gt"]
+            input_samples, gt_samples = batch["input"] if not HeMIS \
+                                            else imed_utils.unstack_tensors(batch["input"]), batch["gt"]
 
             with torch.no_grad():
                 if cuda_available:
@@ -665,7 +667,8 @@ def cmd_test(context):
             # input_samples: list of n_batch tensors, whose size is n_channels X height X width X depth
             # gt_samples: idem with n_labels
             # batch['*_metadata']: list of n_batch lists, whose size is n_channels or n_labels
-            input_samples, gt_samples = batch["input"], batch["gt"]
+            input_samples, gt_samples = batch["input"] if not HeMIS \
+                                            else imed_utils.unstack_tensors(batch["input"]), batch["gt"]
 
             with torch.no_grad():
                 if cuda_available:
