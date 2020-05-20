@@ -651,8 +651,10 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     if fname_roi is None and 'filter_empty_mask' in context["slice_filter"]:
         context["slice_filter"]["filter_empty_mask"] = False
 
+    fname_roi = [fname_roi] if fname_roi is not None else None
+
     # Load data
-    filename_pairs = [([fname_image], None, [fname_roi], [{}])]
+    filename_pairs = [([fname_image], None, fname_roi, [{}])]
     if not context['unet_3D']:  # TODO: rename this param 'model_name' or 'kernel_dim'
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
                                                   slice_axis=AXIS_DCT[context['slice_axis']],
