@@ -384,9 +384,9 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
         crop = False
         for transfo in self.transform.transforms:
-            if "CenterCrop3D" in str(type(transfo)):
+            if "CenterCrop" == transfo:
                 crop = True
-                shape_crop = transfo.size
+                shape_crop = self.transform.transforms["CenterCrop"]["size"]
                 break
 
         for i in range(0, len(self.handlers)):
