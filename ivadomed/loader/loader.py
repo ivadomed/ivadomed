@@ -473,11 +473,13 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                   coord['y_min']:coord['y_max'],
                                   coord['z_min']:coord['z_max']]
 
-        for _ in range(len(stack_gt)):
-            subvolumes['gt'] = stack_gt[:,
-                               coord['x_min']:coord['x_max'],
-                               coord['y_min']:coord['y_max'],
-                               coord['z_min']:coord['z_max']]
+        if stack_gt is not None:
+            for _ in range(len(stack_gt)):
+                subvolumes['gt'] = stack_gt[:,
+                                   coord['x_min']:coord['x_max'],
+                                   coord['y_min']:coord['y_max'],
+                                   coord['z_min']:coord['z_max']]
+
         subvolumes['gt'] = subvolumes['gt'].type(torch.BoolTensor)
         return subvolumes
 
