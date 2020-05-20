@@ -181,11 +181,15 @@ class Resample(ImedTransform):
     @multichannel_capable
     @two_dim_compatible
     def undo_transform(self, sample, metadata):
-        assert "resample" in metadata
+        assert "data_shape" in metadata
+        is_2d = sample.shape[-1] == 1
 
         # Get params
-        params_do = metadata["resample"]
-        params_undo = [1. / x for x in params_do]
+        original_shape = metadata["data_shape"]
+        current_shape = sample.shape
+        params_undo = [x / y for x, y in zip(original_shape, current_shape)]
+        if is_2d:
+            params_undo[-1] = 1.0
 
         # Undo resampling
         data_out = zoom(sample,
@@ -203,6 +207,7 @@ class Resample(ImedTransform):
     def __call__(self, sample, metadata):
         # Get params
         # Voxel dimension in mm
+        is_2d = sample.shape[-1] == 1
         zooms = list(metadata["zooms"])
 
         if len(zooms) == 2:
@@ -211,10 +216,7 @@ class Resample(ImedTransform):
         hfactor = zooms[0] / self.hspace
         wfactor = zooms[1] / self.wspace
         dfactor = zooms[2] / self.dspace
-        params_resample = (hfactor, wfactor, dfactor)
-
-        # Save params
-        metadata['resample'] = params_resample
+        params_resample = (hfactor, wfactor, dfactor) if not is_2d else (hfactor, wfactor, 1.0)
 
         # Run resampling
         data_out = zoom(sample,
@@ -302,7 +304,6 @@ class CroppableArray(np.ndarray):
 class Crop(ImedTransform):
     def __init__(self, size):
         self.size = size if len(size) == 3 else size + [0]
-        self.is_2D = True if len(size) == 2 else False
 
     @staticmethod
     def _adjust_padding(npad, sample):
@@ -314,13 +315,13 @@ class Crop(ImedTransform):
                 sample_reorient = np.swapaxes(sample, 0, idx_dim)
                 # Adjust pad and crop
                 if pad_start < 0 and pad_end < 0:
-                    sample_crop = sample_reorient[abs(pad_start):pad_end, :]
+                    sample_crop = sample_reorient[abs(pad_start):pad_end, ]
                     pad_end, pad_start = 0, 0
                 elif pad_start < 0:
-                    sample_crop = sample_reorient[abs(pad_start):, :]
+                    sample_crop = sample_reorient[abs(pad_start):, ]
                     pad_start = 0
                 else: # i.e. pad_end < 0:
-                    sample_crop = sample_reorient[:pad_end, :]
+                    sample_crop = sample_reorient[:pad_end, ]
                     pad_end = 0
                 # Reorient
                 sample = np.swapaxes(sample_crop, 0, idx_dim)
@@ -332,13 +333,14 @@ class Crop(ImedTransform):
     @multichannel_capable
     def __call__(self, sample, metadata={}):
         # Get params
+        is_2d = sample.shape[-1] == 1
         th, tw, td = self.size
         fh, fw, fd, h, w, d = metadata['crop_params']
 
         # Crop data
         # Note we use here CroppableArray in order to deal with "out of boundaries" crop
         # e.g. if fh is negative or fh+th out of bounds, then it will pad
-        if self.is_2D:
+        if is_2d:
             data_out = sample.view(CroppableArray)[fh:fh + th, fw:fw + tw, :]
         else:
             data_out = sample.view(CroppableArray)[fh:fh+th, fw:fw+tw, fd:fd+td]
@@ -349,6 +351,7 @@ class Crop(ImedTransform):
     @two_dim_compatible
     def undo_transform(self, sample, metadata):
         # Get crop params
+        is_2d = sample.shape[-1] == 1
         th, tw, td = self.size
         fh, fw, fd, h, w, d = metadata["crop_params"]
 
@@ -357,8 +360,8 @@ class Crop(ImedTransform):
         pad_right = w - pad_left - tw
         pad_top = fh
         pad_bottom = h - pad_top - th
-        pad_front = fd
-        pad_back = d - pad_front - td if not self.is_2D else 0
+        pad_front = fd if not is_2d else 0
+        pad_back = d - pad_front - td if not is_2d else 0
         npad = [(pad_top, pad_bottom), (pad_left, pad_right), (pad_front, pad_back)]
 
         # Check and adjust npad if needed, i.e. if crop out of boundaries
