@@ -383,11 +383,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         padding = self.padding
 
         crop = False
-        for transfo in self.transform.transform:
-            if "CenterCrop" == transfo:
+
+        for idx, transfo in enumerate(self.transform.transform["im"].transforms):
+            if "CenterCrop" in str(type(transfo)):
                 crop = True
-                shape_crop = self.transform.transforms["CenterCrop"]["size"]
-                break
+                shape_crop = transfo.size
 
         for i in range(0, len(self.handlers)):
             if not crop:

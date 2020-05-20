@@ -63,7 +63,7 @@ def test_unet():
             },
         "NumpyToTensor": {}
     }
-    training_transform_3d = torch_transforms.Compose(training_transform_dict)
+    training_transform_3d = imed_transforms.Compose(training_transform_dict)
 
     # STEP 2: LOAD DATASETS
     ds_train = imed_loader.BidsDataset(PATH_BIDS,
