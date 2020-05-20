@@ -39,11 +39,20 @@ def test_sampler():
         torch.cuda.set_device(device)
         print("Using GPU number {}".format(device))
 
-    training_transform_list = [
-        imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.ROICrop(size=[48, 48])
-    ]
-    train_transform = torch_transforms.Compose(training_transform_list)
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+             },
+        "ROICrop":
+            {
+                "size": [48, 48]
+            },
+        "NumpyToTensor": {}
+    }
+
+    train_transform = imed_transforms.Compose(training_transform_dict)
 
     train_lst = ['sub-test001']
 

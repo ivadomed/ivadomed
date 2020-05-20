@@ -39,11 +39,20 @@ def test_slice_filter_center():
         torch.cuda.set_device(device)
         print("Using GPU number {}".format(device))
 
-    training_transform_list = [
-        imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.CenterCrop(size=[100, 100])
-    ]
-    train_transform = torch_transforms.Compose(training_transform_list)
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+             },
+        "CenterCrop":
+            {
+                "size": [100, 100]
+            },
+        "NumpyToTensor": {}
+    }
+
+    train_transform = imed_transforms.Compose(training_transform_dict)
 
     train_lst = ['sub-test001']
     roi_lst = [None]

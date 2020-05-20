@@ -38,24 +38,32 @@ def test_unet():
 
     # STEP 1: SET TRANSFORMS
     # 2D monochannel
-    training_transform_list = [
-        imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.ROICrop(size=[48, 48]),
-        imed_transforms.NumpyToTensor()
-    ]
-    train_transform = torch_transforms.Compose(training_transform_list)
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+             },
+        "ROICrop":
+            {
+                "size": [48, 48]
+            },
+        "NumpyToTensor": {}
+    }
+    train_transform = imed_transforms.Compose(training_transform_dict)
 
     # 2D multichannel
-    training_transform_list_multichannel = training_transform_list.copy()
-    training_transform_multichannel = torch_transforms.Compose(training_transform_list_multichannel)
+    training_transform_multichannel = imed_transforms.Compose(training_transform_dict)
 
     # 3D multichannel
-    training_transform_3d_list = [
-        imed_transforms.CenterCrop(size=[96, 96, 16]),
-        imed_transforms.NumpyToTensor(),
-        imed_transforms.NormalizeInstance(),
-    ]
-    training_transform_3d = torch_transforms.Compose(training_transform_3d_list)
+    training_transform_dict = {
+        "CenterCrop":
+            {
+                "size": [96, 96, 16]
+            },
+        "NumpyToTensor": {}
+    }
+    training_transform_3d = torch_transforms.Compose(training_transform_dict)
 
     # STEP 2: LOAD DATASETS
     ds_train = imed_loader.BidsDataset(PATH_BIDS,
