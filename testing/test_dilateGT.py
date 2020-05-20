@@ -52,7 +52,24 @@ def test_dilateGT(dil_fac=0.25):
         imed_transforms.ROICrop(size=[48, 48]),
         imed_transforms.NumpyToTensor()
     ]
-    train_transform = torch_transforms.Compose(training_transform_list)
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+             },
+        "DilateGT":
+            {
+                "dilation_factor": dil_fac
+            },
+        "ROICrop":
+            {
+                "size": [48, 48]
+            },
+        "NumpyToTensor": {}
+    }
+
+    train_transform = imed_transforms.Compose(training_transform_dict)
 
     train_lst = ['sub-test001']
     #    train_lst = ['sub-rennesMS056', 'sub-rennesMS057', 'sub-rennesMS058', 'sub-rennesMS059', 'sub-rennesMS060']
