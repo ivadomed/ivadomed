@@ -310,10 +310,13 @@ class Crop(ImedTransform):
                 # Move axis of interest
                 sample_reorient = np.swapaxes(sample, 0, idx_dim)
                 # Adjust pad and crop
-                if pad_start < 0:
+                if pad_start < 0 and pad_end < 0:
+                    sample_crop = sample_reorient[abs(pad_start):pad_end, :]
+                    pad_end, pad_start = 0, 0
+                elif pad_start < 0:
                     sample_crop = sample_reorient[abs(pad_start):, :]
                     pad_start = 0
-                if pad_end < 0:
+                else: # i.e. pad_end < 0:
                     sample_crop = sample_reorient[:pad_end, :]
                     pad_end = 0
                 # Reorient
@@ -324,7 +327,6 @@ class Crop(ImedTransform):
         return npad_out_tuple, sample
 
     @multichannel_capable
-    @two_dim_compatible
     def __call__(self, sample, metadata={}):
         # Get params
         th, tw, td = self.size
