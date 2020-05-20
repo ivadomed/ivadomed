@@ -349,6 +349,10 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         # create data and stack on depth dimension
         arr = np.stack(tmp_lst, axis=-1)
 
+        # If only one channel then return 3D arr
+        if arr.shape[0] == 1:
+            arr = arr[0, :]
+
         # Reorient data
         arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
 
@@ -368,7 +372,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     if bin_thr >= 0:
         arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
     elif discard_noise:  # discard noise
-        arr_pred_ref_space[arr_pred_ref_space <= 1e-3] = 0
+        arr_pred_ref_space[arr_pred_ref_space <= 1e-1] = 0
 
     # create nibabel object
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
@@ -666,7 +670,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         ds = imed_loaded_utils.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
 
     if not context['unet_3D']:
-        print("\nLoaded {len(ds)} {context['slice_axis']} slices..")
+        print("\nLoaded {} {} slices..".format(len(ds), context['slice_axis']))
 
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["batch_size"],
@@ -690,8 +694,13 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         for i_slice in range(len(preds)):
             # undo transformations
             preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
-                                                         batch["gt_metadata"][i_slice],
+                                                         batch["input_metadata"][i_slice],
                                                          data_type='gt')
+
+            # Add new segmented slice to preds_list
+            preds_list.append(np.array(preds_i_undo))
+            # Store the slice index of preds_i_undo in the original 3D image
+            sliceIdx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
 
             # If last batch and last sample of this batch, then reconstruct 3D object
             if i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1:
@@ -703,11 +712,6 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
                                        kernel_dim='3d' if context['unet_3D'] else '2d',
                                        debug=False,
                                        bin_thr=-1)
-
-            # Add new segmented slice to preds_list
-            preds_list.append(np.array(preds_i_undo))
-            # Store the slice index of preds_i_undo in the original 3D image
-            sliceIdx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
 
     return pred_nib
 
