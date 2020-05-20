@@ -104,7 +104,7 @@ def test_HeMIS(p=0.0001):
         start_time = time.time()
 
         start_init = time.time()
-        lr = scheduler.get_lr()[0]
+        lr = scheduler.get_last_lr()[0]
         model.train()
 
         tot_init = time.time() - start_init

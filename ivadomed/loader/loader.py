@@ -1,5 +1,7 @@
 import nibabel as nib
 import numpy as np
+import torch
+
 from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
@@ -166,11 +168,45 @@ class SegmentationPair(object):
 
         return input_data, gt_data
 
+    def get_pair_metadata(self, slice_index):
+        gt_meta_dict = []
+        for gt in self.gt_handle:
+            if gt is not None:
+                gt_meta_dict.append(imed_loader_utils.SampleMetadata({
+                    "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
+                    "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
+                    "gt_filenames": self.metadata[0]["gt_filenames"]
+                }))
+            else:
+                gt_meta_dict.append(imed_loader_utils.SampleMetadata({}))
+
+        input_meta_dict = []
+        for handle in self.input_handle:
+            input_meta_dict.append(imed_loader_utils.SampleMetadata({
+                "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
+                "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis)
+            }))
+
+        dreturn = {
+            "input_metadata": input_meta_dict,
+            "gt_metadata": gt_meta_dict,
+        }
+
+        for idx, metadata in enumerate(self.metadata):  # loop across channels
+            metadata["slice_index"] = slice_index
+            self.metadata[idx] = metadata
+            for metadata_key in metadata.keys():  # loop across input metadata
+                dreturn["input_metadata"][idx][metadata_key] = metadata[metadata_key]
+
+        return dreturn
+
     def get_pair_slice(self, slice_index):
         """Return the specified slice from (input, ground truth).
 
         :param slice_index: the slice number
         """
+
+        metadata = self.get_pair_metadata(slice_index)
         if self.cache:
             input_dataobj, gt_dataobj = self.get_pair_data()
         else:
@@ -192,7 +228,6 @@ class SegmentationPair(object):
                                            dtype=np.float32))
 
         # Handle the case for unlabeled data
-        gt_meta_dict = None
         if self.gt_handle is None:
             gt_slices = None
         else:
@@ -201,38 +236,12 @@ class SegmentationPair(object):
                 gt_slices.append(np.asarray(gt_obj[..., slice_index],
                                             dtype=np.float32))
 
-            gt_meta_dict = []
-            for gt in self.gt_handle:
-                if gt is not None:
-                    gt_meta_dict.append(imed_loader_utils.SampleMetadata({
-                        "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
-                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(),
-                                                                          self.slice_axis),
-                        "gt_filenames": self.metadata[0]["gt_filenames"]
-                    }))
-                else:
-                    gt_meta_dict.append(imed_loader_utils.SampleMetadata({}))
-
-        input_meta_dict = []
-        for handle in self.input_handle:
-            input_meta_dict.append(imed_loader_utils.SampleMetadata({
-                "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
-                "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis)
-            }))
-
         dreturn = {
             "input": input_slices,
             "gt": gt_slices,
-            "input_metadata": input_meta_dict,
-            "gt_metadata": gt_meta_dict,
+            "input_metadata": metadata["input_metadata"],
+            "gt_metadata": metadata["gt_metadata"],
         }
-
-        if self.metadata:
-            for idx, metadata in enumerate(self.metadata):  # loop across channels
-                metadata["slice_index"] = slice_index
-                self.metadata[idx] = metadata
-                for metadata_key in metadata.keys():  # loop across input metadata
-                    dreturn["input_metadata"][idx][metadata_key] = metadata[metadata_key]
 
         return dreturn
 
@@ -424,28 +433,16 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         """
         coord = self.indexes[index]
         input_img, gt_img = self.handlers[coord['handler_index']].get_pair_data()
-        data_shape = gt_img[0].shape
-        seg_pair_slice = self.handlers[coord['handler_index']].get_pair_slice(coord['handler_index'])
+        # data_shape = input_img[0].shape
+        seg_pair_slice = self.handlers[coord['handler_index']].get_pair_metadata(coord['handler_index'])
 
-        # Subvolume Image and GT
-        for idx in range(len(input_img)):
-            input_img[idx] = input_img[idx][coord['x_min']:coord['x_max'],
-                                      coord['y_min']:coord['y_max'],
-                                      coord['z_min']:coord['z_max']]
-
-        for idx in range(len(gt_img)):
-            gt_img[idx] = gt_img[idx][coord['x_min']:coord['x_max'],
-                          coord['y_min']:coord['y_max'],
-                          coord['z_min']:coord['z_max']]
-
-        # Metadata
-        metadata_input = seg_pair_slice['input_metadata']
-        metadata_gt = seg_pair_slice['gt_metadata']
+        # for idx in range(len(data_dict["input"])):
+        #     data_dict['input_metadata'][idx]['data_shape'] = data_shape
 
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
-        metadata_input = imed_loader_utils.clean_metadata(metadata_input)
-        metadata_gt = imed_loader_utils.clean_metadata(metadata_gt)
+        metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
+        metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=input_img,
@@ -459,15 +456,30 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                                metadata=metadata_gt,
                                                data_type="gt")
 
-        # Store data in dict
-        data_dict = {
-            'input': stack_input,
-            'gt': stack_gt,
-            'input_metadata': metadata_input,
-            'gt_metadata': metadata_gt,
+        shape_x = coord["x_max"] - coord["x_min"]
+        shape_y = coord["y_max"] - coord["y_min"]
+        shape_z = coord["z_max"] - coord["z_min"]
+
+        subvolumes = {
+            'input': torch.zeros(data_dict['input'].shape[0], shape_x, shape_y, shape_z),
+            'gt': torch.zeros(data_dict['input'].shape[0], shape_x, shape_y, shape_z),
+            'input_metadata': seg_pair_slice['input_metadata'],
+            'gt_metadata': seg_pair_slice['gt_metadata']
         }
 
-        return data_dict
+        for _ in range(len(data_dict['input'])):
+            subvolumes['input'] = data_dict['input'][:,
+                                  coord['x_min']:coord['x_max'],
+                                  coord['y_min']:coord['y_max'],
+                                  coord['z_min']:coord['z_max']]
+
+        for _ in range(len(data_dict['gt'])):
+            subvolumes['gt'] = data_dict['gt'][:,
+                               coord['x_min']:coord['x_max'],
+                               coord['y_min']:coord['y_max'],
+                               coord['z_min']:coord['z_max']]
+        subvolumes['gt'] = subvolumes['gt'].type(torch.BoolTensor)
+        return subvolumes
 
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
@@ -485,7 +497,8 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               transform=transform,
                               multichannel=multichannel)
 
-        super().__init__(dataset.filename_pairs, length=length, padding=padding, transform=transform)
+        super().__init__(dataset.filename_pairs, length=length, padding=padding, transform=transform,
+                         slice_axis=slice_axis)
 
 
 class BidsDataset(MRI2DSegmentationDataset):
@@ -554,7 +567,6 @@ class BidsDataset(MRI2DSegmentationDataset):
                     continue
 
                 if not subject.has_metadata():
-                    print("Subject without metadata.")
                     metadata = {}
                 else:
                     metadata = subject.metadata()

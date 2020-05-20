@@ -126,16 +126,15 @@ def cmd_train(context):
             metadata_clustering_models = None
 
         ds_train, train_onehotencoder = imed_film.normalize_metadata(ds_train,
-                                                                      metadata_clustering_models,
-                                                                      context["debugging"],
-                                                                      context["metadata"],
-                                                                      True)
+                                                                     metadata_clustering_models,
+                                                                     context["debugging"],
+                                                                     context["metadata"],
+                                                                     True)
 
     if not unet_3D:
         print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
     else:
-        print(
-            f"Loaded {len(ds_train)} volumes of size {context['length_3D']} for the training set.")
+        print(f"Loaded {len(ds_train)} volumes of size {context['length_3D']} for the training set.")
 
     if context['balance_samples'] and not HeMIS:
         sampler_train = imed_loader_utils.BalancedSampler(ds_train)
@@ -158,10 +157,10 @@ def cmd_train(context):
 
     if film_bool:  # normalize metadata before sending to network
         ds_val = imed_film.normalize_metadata(ds_val,
-                                               metadata_clustering_models,
-                                               context["debugging"],
-                                               context["metadata"],
-                                               False)
+                                              metadata_clustering_models,
+                                              context["debugging"],
+                                              context["metadata"],
+                                              False)
 
     if not unet_3D:
         print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")
@@ -206,6 +205,9 @@ def cmd_train(context):
         elif unet_3D:
             model = imed_models.UNet3D(in_channels=in_channel,
                                        n_classes=out_channel,
+                                       drop_rate=context["dropout_rate"],
+                                       momentum=context["batch_norm_momentum"],
+                                       base_n_filter=context["n_filters"],
                                        attention=attention)
         else:
             model = imed_models.Unet(in_channel=in_channel,
@@ -318,7 +320,7 @@ def cmd_train(context):
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
 
-        lr = scheduler.get_lr()[0]
+        lr = scheduler.get_last_lr()[0]
         writer.add_scalar('learning_rate', lr, epoch)
 
         model.train()
@@ -609,10 +611,10 @@ def cmd_test(context):
             "./" + context["log_directory"] + "/clustering_models.joblib")
 
         ds_test = imed_film.normalize_metadata(ds_test,
-                                                metadata_clustering_models,
-                                                context["debugging"],
-                                                context["metadata"],
-                                                False)
+                                               metadata_clustering_models,
+                                               context["debugging"],
+                                               context["metadata"],
+                                               False)
 
         one_hot_encoder = joblib.load("./" + context["log_directory"] + "/one_hot_encoder.joblib")
 
@@ -770,13 +772,13 @@ def cmd_test(context):
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
-                    output_nii = imed_utils.pred_to_nib(data_lst=preds_idx_arr,
-                                                        z_lst=[],
-                                                        fname_ref=fname_ref,
-                                                        fname_out=fname_pred,
-                                                        slice_axis=imed_utils.AXIS_DCT[context['slice_axis']],
-                                                        kernel_dim='3d',
-                                                        bin_thr=0.5 if context["binarize_prediction"] else -1)
+                    imed_utils.pred_to_nib(data_lst=[preds_idx_arr],
+                                           z_lst=[],
+                                           fname_ref=fname_ref,
+                                           fname_out=fname_pred,
+                                           slice_axis=imed_utils.AXIS_DCT[context['slice_axis']],
+                                           kernel_dim='3d',
+                                           bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                     # Save merged labels with color
                     if preds_idx_arr.shape[0] > 1:
@@ -798,7 +800,7 @@ def cmd_test(context):
 
     # COMPUTE UNCERTAINTY MAPS
     if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and \
-        context['uncertainty']['n_it'] > 0:
+            context['uncertainty']['n_it'] > 0:
         imed_utils.run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()

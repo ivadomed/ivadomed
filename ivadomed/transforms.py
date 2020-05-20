@@ -10,9 +10,12 @@ from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 from scipy.ndimage.interpolation import map_coordinates
+from scipy.ndimage import zoom
 
 import torch
 from torchvision import transforms as torchvision_transforms
+
+from ivadomed import utils as imed_utils
 
 
 def multichannel_capable(wrapped):
@@ -143,7 +146,6 @@ class UndoTransform(object):
     def __call__(self, sample):
         return self.transform.undo_transform(sample)
 
-
 class NumpyToTensor(ImedTransform):
     """Converts numpy array to tensor object."""
 
@@ -194,6 +196,7 @@ class Resample(ImedTransform):
         data_out = data_out.astype(sample.dtype)
 
         return data_out, metadata
+
 
     @multichannel_capable
     @two_dim_compatible
@@ -514,6 +517,7 @@ class DilateGT(ImedTransform):
 
         return arr_soft_out
 
+
     @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata={}):
@@ -689,8 +693,8 @@ class RandomAffine(RandomRotation):
         return data_out, metadata
 
 
-class RandomShiftIntensity(ImedTransform):
 
+class RandomShiftIntensity(ImedTransform):
     def __init__(self, shift_range, prob=0.1):
         self.shift_range = shift_range
         self.prob = prob
