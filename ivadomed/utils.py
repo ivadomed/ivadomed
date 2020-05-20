@@ -367,7 +367,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         arr_pred_ref_space[arr_pred_ref_space <= 1e-3] = 0
 
     # create nibabel object
-    nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
+    nib_pred = nib.Nifti1Image(arr_pred_ref_space.astype('float32'), nib_ref.affine)
 
     # save as nifti file
     if fname_out is not None:
