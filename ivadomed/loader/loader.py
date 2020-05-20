@@ -470,13 +470,13 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             'gt_metadata': seg_pair_slice['gt_metadata']
         }
 
-        for idx in range(len(data_dict['input'])):
+        for _ in range(len(data_dict['input'])):
             subvolumes['input'] = data_dict['input'][:,
                                   coord['x_min']:coord['x_max'],
                                   coord['y_min']:coord['y_max'],
                                   coord['z_min']:coord['z_max']]
 
-        for idx in range(len(data_dict['gt'])):
+        for _ in range(len(data_dict['gt'])):
             subvolumes['gt'] = data_dict['gt'][:,
                                coord['x_min']:coord['x_max'],
                                coord['y_min']:coord['y_max'],
