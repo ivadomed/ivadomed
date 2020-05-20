@@ -23,9 +23,9 @@ def multichannel_capable(wrapped):
     def wrapper(self, sample, metadata, data_type):
         if isinstance(sample, list):
             list_data, list_metadata = [], []
-            for s_cur, m_cur, d_cur in zip(sample, metadata, data_type):
+            for s_cur, m_cur in zip(sample, metadata):
                 # Run function for each sample of the list
-                data_cur, metadata_cur = wrapped(self, s_cur, m_cur, d_cur)
+                data_cur, metadata_cur = wrapped(self, s_cur, m_cur, data_type)
                 list_data.append(data_cur)
                 list_metadata.append(metadata_cur)
             return list_data, list_metadata
@@ -418,7 +418,7 @@ class ROICrop(Crop):
             metadata['crop_params'] = params
 
         # Call base method
-        return super().__call__(sample, metadata=None, data_type="im")
+        return super().__call__(sample, metadata, data_type)
 
 
 class DilateGT(ImedTransform):
@@ -665,7 +665,7 @@ class RandomAffine(RandomRotation):
             metadata['affine'] = [angle, axes_rot, translations]
 
         # Run Rotation
-        data_rot, _ = RandomRotation(self.degrees).__call__(sample, {'rotation': [angle, axes_rot]})
+        data_rot, _ = RandomRotation(self.degrees).__call__(sample, {'rotation': [angle, axes_rot]}, data_type)
         # Run Translation
         data_rot_trans = shift(data_rot, shift=translations, order=1).astype(sample.dtype)
         # Run Scaling
