@@ -229,6 +229,9 @@ def clean_metadata(metadata_lst):
 
 def update_metadata(metadata_src_lst, metadata_dest_lst):
     if metadata_src_lst and metadata_dest_lst:
+        if len(metadata_src_lst) > len(metadata_dest_lst):
+            metadata_dest_lst = metadata_dest_lst + [SampleMetadata({})] * \
+                                (len(metadata_src_lst) - len(metadata_dest_lst))
         for idx in range(len(metadata_src_lst)):
             metadata_dest_lst[idx]._update(metadata_src_lst[idx], TRANSFORM_PARAMS)
     return metadata_dest_lst
