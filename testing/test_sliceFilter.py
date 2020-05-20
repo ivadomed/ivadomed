@@ -21,8 +21,9 @@ def _cmpt_slice(ds_loader, gt_roi='gt'):
     cmpt_label, cmpt_sample = {0: 0, 1: 0}, 0
     for i, batch in enumerate(ds_loader):
         for idx in range(len(batch[gt_roi])):
+            smp_np = batch[gt_roi][idx].numpy()
             # For now only supports 1 label
-            if np.any(batch[gt_roi][idx][0]):
+            if np.any(smp_np[0, :]):
                 cmpt_label[1] += 1
             else:
                 cmpt_label[0] += 1
@@ -47,8 +48,7 @@ def test_slice_filter_center():
         "CenterCrop":
             {
                 "size": [100, 100]
-            },
-        "NumpyToTensor": {}
+            }
     }
 
     train_transform = imed_transforms.Compose(training_transform_dict)
@@ -99,8 +99,7 @@ def test_slice_filter_roi():
         "ROICrop":
             {
                 "size": [100, 100]
-            },
-        "NumpyToTensor": {}
+            }
     }
 
     train_transform = imed_transforms.Compose(training_transform_dict)

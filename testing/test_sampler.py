@@ -20,7 +20,7 @@ def _cmpt_label(ds_loader):
     for i, batch in enumerate(ds_loader):
         for gt in batch['gt']:
             for idx in range(len(gt)):
-                if np.any(gt[idx]):
+                if np.any(gt[idx].numpy()[0]):
                     cmpt_label[1] += 1
                 else:
                     cmpt_label[0] += 1
