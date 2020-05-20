@@ -383,7 +383,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         padding = self.padding
 
         crop = False
-        for transfo in self.transform.transforms:
+        for transfo in self.transform.transform:
             if "CenterCrop" == transfo:
                 crop = True
                 shape_crop = self.transform.transforms["CenterCrop"]["size"]
@@ -432,6 +432,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             input_img[idx] = input_img[idx][coord['x_min']:coord['x_max'],
                                       coord['y_min']:coord['y_max'],
                                       coord['z_min']:coord['z_max']]
+
+        for idx in range(len(gt_img)):
             gt_img[idx] = gt_img[idx][coord['x_min']:coord['x_max'],
                           coord['y_min']:coord['y_max'],
                           coord['z_min']:coord['z_max']]
@@ -439,10 +441,6 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         # Metadata
         metadata_input = seg_pair_slice['input_metadata']
         metadata_gt = seg_pair_slice['gt_metadata']
-        # Add data_shape to metadata
-        for idx in range(len(metadata_input)):
-            metadata_input[idx]['data_shape'] = data_shape
-            metadata_gt[idx]['data_shape'] = data_shape
 
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
