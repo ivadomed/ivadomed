@@ -205,9 +205,9 @@ class SegmentationPair(object):
             for gt in self.gt_handle:
                 if gt is not None:
                     gt_meta_dict.append(imed_loader_utils.SampleMetadata({
-                        "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis)[:2],
+                        "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
                         "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(),
-                                                                          self.slice_axis)[:2],
+                                                                          self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"]
                     }))
                 else:
@@ -216,8 +216,8 @@ class SegmentationPair(object):
         input_meta_dict = []
         for handle in self.input_handle:
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
-                "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis)[:2],
-                "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis)[:2]
+                "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
+                "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis)
             }))
 
         dreturn = {
