@@ -24,14 +24,22 @@ def test_image_orientation():
 
     train_lst = ['sub-test001']
 
-    training_transform_list = [
-        imed_transforms.Resample(hspace=2, wspace=3),
-        imed_transforms.CenterCrop(size=[108, 96]),
-        imed_transforms.NumpyToTensor(),
-        imed_transforms.NormalizeInstance(),
-    ]
-    training_transform = torch_transforms.Compose(training_transform_list)
-    training_undo_transform = imed_transforms.UndoCompose(training_transform)
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 3,
+                "hspace": 2
+             },
+        "CenterCrop":
+            {
+                "size": [108, 96]
+            },
+        "NumpyToTensor": {},
+        "NormalizeInstance": {"applied_to": ['im']}
+    }
+
+    train_transform = imed_transforms.Compose(training_transform_dict)
+    training_undo_transform = imed_transforms.UndoCompose(train_transform)
 
     for slice_axis in [0, 1, 2]:
         ds = imed_loader.BidsDataset(PATH_BIDS,
@@ -41,7 +49,7 @@ def test_image_orientation():
                                      metadata_choice="without",
                                      contrast_balance={},
                                      slice_axis=slice_axis,
-                                     transform=training_transform,
+                                     transform=train_transform,
                                      multichannel=False)
 
         loader = DataLoader(ds, batch_size=1,
@@ -60,6 +68,7 @@ def test_image_orientation():
 
         pred_tmp_lst, z_tmp_lst = [], []
         for i, batch in enumerate(loader):
+            # TODO: @Andreanne: could you please help me here?
             batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
             batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
 
