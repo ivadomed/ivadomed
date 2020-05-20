@@ -711,12 +711,11 @@ def cmd_test(context):
             rdict['gt'] = preds.cpu()
             batch.update(rdict)
 
-            if not i_monteCarlo:
-                batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
-                batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
-                if "roi" in batch and batch["roi"][0] is not None:
-                    batch["roi"] = batch["roi"][0]
-                    batch["roi_metadata"] = batch["roi_metadata"][0]
+            batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
+            batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
+            if "roi" in batch and batch["roi"][0] is not None:
+                batch["roi"] = batch["roi"][0]
+                batch["roi_metadata"] = batch["roi_metadata"][0]
 
             # reconstruct 3D image
             for smp_idx in range(len(batch['gt'])):
