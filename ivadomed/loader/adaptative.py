@@ -586,8 +586,6 @@ class HDF5Dataset:
                                                      metadata=metadata_input,
                                                      data_type="im")
         # Update metadata_input with metadata_roi
-        # TODO: @Andreanne: metadata_input and gt_metadata do not have the same lenght: normal with this loader?
-        print(len(metadata_input), len(gt_metadata))
         metadata_gt = imed_loader_utils.update_metadata(metadata_input, gt_metadata)
 
         # Run transforms on images
