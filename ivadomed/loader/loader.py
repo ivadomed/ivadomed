@@ -461,20 +461,20 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         shape_z = coord["z_max"] - coord["z_min"]
 
         subvolumes = {
-            'input': torch.zeros(data_dict['input'].shape[0], shape_x, shape_y, shape_z),
-            'gt': torch.zeros(data_dict['input'].shape[0], shape_x, shape_y, shape_z),
-            'input_metadata': seg_pair_slice['input_metadata'],
-            'gt_metadata': seg_pair_slice['gt_metadata']
+            'input': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
+            'gt': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
+            'input_metadata': metadata_input,
+            'gt_metadata': metadata_gt
         }
 
-        for _ in range(len(data_dict['input'])):
-            subvolumes['input'] = data_dict['input'][:,
+        for _ in range(len(stack_input)):
+            subvolumes['input'] = stack_input[:,
                                   coord['x_min']:coord['x_max'],
                                   coord['y_min']:coord['y_max'],
                                   coord['z_min']:coord['z_max']]
 
-        for _ in range(len(data_dict['gt'])):
-            subvolumes['gt'] = data_dict['gt'][:,
+        for _ in range(len(stack_gt)):
+            subvolumes['gt'] = stack_gt[:,
                                coord['x_min']:coord['x_max'],
                                coord['y_min']:coord['y_max'],
                                coord['z_min']:coord['z_max']]
