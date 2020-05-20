@@ -533,8 +533,7 @@ class HDF5Dataset:
             else:
                 input_tensor = self.hdf5_file[line[ct]][line['Slices']] * missing_modalities[i]
 
-            # convert array to pil
-            input_tensors.append(Image.fromarray(input_tensor, mode='F'))
+            input_tensors.append(input_tensor)
             # input Metadata
             metadata = imed_loader_utils.SampleMetadata({key: value for key, value in self.hdf5_file['{}/inputs/{}'
                                                         .format(line['Subjects'], ct)].attrs.items()})
@@ -550,9 +549,8 @@ class HDF5Dataset:
             else:
                 gt_data = self.hdf5_file[line['gt/' + gt]][line['Slices']]
 
-            # convert array to pil
             gt_data = gt_data.astype(np.uint8)
-            gt_img.append(Image.fromarray(gt_data, mode='L'))
+            gt_img.append(gt_data)
             gt_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
                                                                  self.hdf5_file[line['gt/' + gt]].attrs.items()}))
 
@@ -565,28 +563,50 @@ class HDF5Dataset:
             else:
                 roi_data = self.hdf5_file[line['roi/' + self.roi_lst[0]]][line['Slices']]
 
-            # convert array to pil
-            roi_data = (roi_data * 255).astype(np.uint8)
-            roi_img.append(Image.fromarray(roi_data, mode='L'))
+            roi_data = roi_data.astype(np.uint8)
+            roi_img.append(roi_data)
 
             roi_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
                                                                   self.hdf5_file[
                                                                       line['roi/' + self.roi_lst[0]]].attrs.items()}))
         else:
             roi_img, roi_metadata = None, None
-        data_dict = {'input': input_tensors,
-                     'gt': gt_img,
-                     'roi': roi_img,
-                     'input_metadata': input_metadata,
-                     'Missing_mod': missing_modalities,
-                     'gt_metadata': gt_metadata,
-                     'roi_metadata': roi_metadata
-                     }
 
-        if self.transform is not None:
-            data_dict = self.transform(data_dict)
+
+        # Run transforms on ROI
+        # ROI goes first because params of ROICrop are needed for the followings
+        stack_roi, metadata_roi = self.transform(sample=roi_img,
+                                                 metadata=roi_metadata,
+                                                 data_type="roi")
+        # Update metadata_input with metadata_roi
+        metadata_input = imed_loader_utils.update_metadata(metadata_roi, input_metadata)
+
+        # Run transforms on images
+        stack_input, metadata_input = self.transform(sample=input_tensors,
+                                                     metadata=metadata_input,
+                                                     data_type="im")
+        # Update metadata_input with metadata_roi
+        # TODO: @Andreanne: metadata_input and gt_metadata do not have the same lenght: normal with this loader?
+        print(len(metadata_input), len(gt_metadata))
+        metadata_gt = imed_loader_utils.update_metadata(metadata_input, gt_metadata)
+
+        # Run transforms on images
+        stack_gt, metadata_gt = self.transform(sample=gt_img,
+                                               metadata=metadata_gt,
+                                               data_type="gt")
+
+        data_dict = {
+            'input': stack_input,
+            'gt': stack_gt,
+            'roi': stack_roi,
+            'Missing_mod': missing_modalities,
+            'input_metadata': metadata_input,
+            'gt_metadata': metadata_gt,
+            'roi_metadata': metadata_roi
+        }
 
         return data_dict
+
 
     def update(self, strategy="Missing", p=0.0001):
         """
