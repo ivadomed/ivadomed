@@ -155,7 +155,9 @@ def test_NumpyToTensor(im_seg):
 def _test_Resample(im_seg, resample_transform, native_resolution, is_2D=False):
     im, seg = im_seg
     metadata_ = {'zooms': native_resolution,
-                 'data_shape': im[0].shape if len(im[0].shape) == 3 else list(im[0].shape) + [1]}
+                 'data_shape': im[0].shape if len(im[0].shape) == 3 else list(im[0].shape) + [1],
+                 'data_type': 'im'
+                 }
     metadata_in = [metadata_ for _ in im] if isinstance(im, list) else {}
 
     # Resample input data
