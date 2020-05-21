@@ -17,12 +17,12 @@ from torchvision import transforms as torchvision_transforms
 
 def multichannel_capable(wrapped):
     @functools.wraps(wrapped)
-    def wrapper(self, sample, metadata, data_type='im'):
+    def wrapper(self, sample, metadata):
         if isinstance(sample, list):
             list_data, list_metadata = [], []
             for s_cur, m_cur in zip(sample, metadata):
                 # Run function for each sample of the list
-                data_cur, metadata_cur = wrapped(self, s_cur, m_cur, data_type)
+                data_cur, metadata_cur = wrapped(self, s_cur, m_cur)
                 list_data.append(data_cur)
                 list_metadata.append(metadata_cur)
             return list_data, list_metadata
@@ -30,34 +30,34 @@ def multichannel_capable(wrapped):
         if sample is None:
             return None, None
         else:
-            return wrapped(self, sample, metadata, data_type)
+            return wrapped(self, sample, metadata)
 
     return wrapper
 
 
 def two_dim_compatible(wrapped):
     @functools.wraps(wrapped)
-    def wrapper(self, sample, metadata, data_type='im'):
+    def wrapper(self, sample, metadata):
         # Check if sample is 2D
         if len(sample.shape) == 2:
             # Add one dimension
             sample = np.expand_dims(sample, axis=-1)
             # Run transform
-            result_sample, result_metadata = wrapped(self, sample, metadata, data_type)
+            result_sample, result_metadata = wrapped(self, sample, metadata)
             # Remove last dimension
             return np.squeeze(result_sample, axis=-1), result_metadata
         else:
-            return wrapped(self, sample, metadata, data_type)
+            return wrapped(self, sample, metadata)
 
     return wrapper
 
 
 class ImedTransform(object):
 
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
         raise NotImplementedError("You need to implement the transform() method.")
 
-    def undo_transform(self, sample, metadata=None, data_type="im"):
+    def undo_transform(self, sample, metadata=None):
         raise NotImplementedError("You need to implement the undo_transform() method.")
 
 
@@ -121,7 +121,7 @@ class Compose(object):
             return None, None
         else:
             for tr in self.transform[data_type].transforms:
-                sample, metadata = tr(sample, metadata, data_type)
+                sample, metadata = tr(sample, metadata)
             return sample, metadata
 
 
@@ -135,7 +135,7 @@ class UndoCompose(object):
             return None, None
         else:
             for tr in self.transforms.transform[data_type].transforms[::-1]:
-                sample, metadata = tr.undo_transform(sample, metadata, data_type)
+                sample, metadata = tr.undo_transform(sample, metadata)
             return sample, metadata
 
 
@@ -150,10 +150,10 @@ class UndoTransform(object):
 class NumpyToTensor(ImedTransform):
     """Converts numpy array to tensor object."""
 
-    def undo_transform(self, sample, metadata=None, data_type="im"):
+    def undo_transform(self, sample, metadata=None):
         return list(sample.numpy()), metadata
 
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
         sample = np.array(sample)
         # Use np.ascontiguousarray to avoid axes permutations issues
         arr_contig = np.ascontiguousarray(sample, dtype=sample.dtype)
@@ -178,7 +178,7 @@ class Resample(ImedTransform):
 
     @multichannel_capable
     @two_dim_compatible
-    def undo_transform(self, sample, metadata=None, data_type="im"):
+    def undo_transform(self, sample, metadata=None):
         assert "data_shape" in metadata
         is_2d = sample.shape[-1] == 1
 
@@ -192,7 +192,7 @@ class Resample(ImedTransform):
         # Undo resampling
         data_out = zoom(sample,
                         zoom=params_undo,
-                        order=0 if data_type == 'gt' else 2)
+                        order=0 if metadata['data_type'] == 'gt' else 2)
 
         # Data type
         data_out = data_out.astype(sample.dtype)
@@ -201,7 +201,7 @@ class Resample(ImedTransform):
 
     @multichannel_capable
     @two_dim_compatible
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
         # Get params
         # Voxel dimension in mm
         is_2d = sample.shape[-1] == 1
@@ -218,7 +218,7 @@ class Resample(ImedTransform):
         # Run resampling
         data_out = zoom(sample,
                         zoom=params_resample,
-                        order=0 if data_type == 'gt' else 2)
+                        order=0 if metadata['data_type'] == 'gt' else 2)
 
         # Data type
         data_out = data_out.astype(sample.dtype)
@@ -232,7 +232,7 @@ class NormalizeInstance(ImedTransform):
     """
 
     @multichannel_capable
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
         data_out = (sample - sample.mean()) / sample.std()
         return data_out, metadata
 
@@ -330,7 +330,7 @@ class Crop(ImedTransform):
         return npad_out_tuple, sample
 
     @multichannel_capable
-    def __call__(self, sample, metadata, data_type="im"):
+    def __call__(self, sample, metadata):
         # Get params
         is_2d = sample.shape[-1] == 1
         th, tw, td = self.size
@@ -348,7 +348,7 @@ class Crop(ImedTransform):
 
     @multichannel_capable
     @two_dim_compatible
-    def undo_transform(self, sample, metadata=None, data_type="im"):
+    def undo_transform(self, sample, metadata=None):
         # Get crop params
         is_2d = sample.shape[-1] == 1
         th, tw, td = self.size
@@ -380,7 +380,7 @@ class CenterCrop(Crop):
 
     @multichannel_capable
     @two_dim_compatible
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
         # Crop parameters
         th, tw, td = self.size
         h, w, d = sample.shape
@@ -391,7 +391,7 @@ class CenterCrop(Crop):
         metadata['crop_params'] = params
 
         # Call base method
-        return super().__call__(sample, metadata, data_type)
+        return super().__call__(sample, metadata)
 
 
 class ROICrop(Crop):
@@ -399,7 +399,7 @@ class ROICrop(Crop):
 
     @multichannel_capable
     @two_dim_compatible
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
         # If crop_params are not in metadata,
         # then we are here dealing with ROI data to determine crop params
         if 'crop_params' not in metadata:
@@ -420,7 +420,7 @@ class ROICrop(Crop):
             metadata['crop_params'] = params
 
         # Call base method
-        return super().__call__(sample, metadata, data_type)
+        return super().__call__(sample, metadata)
 
 
 class DilateGT(ImedTransform):
@@ -523,7 +523,7 @@ class DilateGT(ImedTransform):
 
     @multichannel_capable
     @two_dim_compatible
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
         # binarize for processing
         gt_data_np = (sample > 0.5).astype(np.int_)
 
@@ -556,7 +556,7 @@ class RandomRotation(ImedTransform):
 
     @multichannel_capable
     @two_dim_compatible
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
         # If angle and metadata have been already defined for this sample, then use them
         if 'rotation' in metadata:
             angle, axes = metadata['rotation']
@@ -580,7 +580,7 @@ class RandomRotation(ImedTransform):
 
     @multichannel_capable
     @two_dim_compatible
-    def undo_transform(self, sample, metadata=None, data_type="im"):
+    def undo_transform(self, sample, metadata=None):
         # IMPORTANT NOTE: this function does not work with images (but works with labels)
         assert "rotation" in metadata
         # Opposite rotation, same axes
@@ -601,7 +601,7 @@ class RandomReverse(ImedTransform):
 
     @multichannel_capable
     @two_dim_compatible
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
         if 'reverse' in metadata:
             flip_axes = metadata['reverse']
         else:
@@ -619,9 +619,9 @@ class RandomReverse(ImedTransform):
 
     @multichannel_capable
     @two_dim_compatible
-    def undo_transform(self, sample, metadata=None, data_type="im"):
+    def undo_transform(self, sample, metadata=None):
         assert "reverse" in metadata
-        return self.__call__(sample, metadata, data_type)
+        return self.__call__(sample, metadata)
 
 
 class RandomAffine(RandomRotation):
@@ -642,7 +642,7 @@ class RandomAffine(RandomRotation):
 
     @multichannel_capable
     @two_dim_compatible
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
 
         # Get params
         if 'affine' in metadata:
@@ -667,7 +667,7 @@ class RandomAffine(RandomRotation):
             metadata['affine'] = [angle, axes_rot, translations]
 
         # Run Rotation
-        data_rot, _ = RandomRotation(self.degrees).__call__(sample, {'rotation': [angle, axes_rot]}, data_type)
+        data_rot, _ = RandomRotation(self.degrees).__call__(sample, {'rotation': [angle, axes_rot]})
         # Run Translation
         data_rot_trans = shift(data_rot, shift=translations, order=1).astype(sample.dtype)
         # Run Scaling
@@ -677,7 +677,7 @@ class RandomAffine(RandomRotation):
 
     @multichannel_capable
     @two_dim_compatible
-    def undo_transform(self, sample, metadata=None, data_type="im"):
+    def undo_transform(self, sample, metadata=None):
         # IMPORTANT NOTE: this function does not work with images (but works with labels)
         assert "affine" in metadata
         # Opposite rotation, same axesopposite translations
@@ -691,7 +691,7 @@ class RandomAffine(RandomRotation):
         dict_params = {"affine": [angle, axes, translations]}  # , scale]}
 
         # Undo rotation
-        data_out, metadata = self.__call__(sample, dict_params, data_type)
+        data_out, metadata = self.__call__(sample, dict_params)
 
         return data_out, metadata
 
@@ -702,7 +702,7 @@ class RandomShiftIntensity(ImedTransform):
         self.prob = prob
 
     @multichannel_capable
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
         if np.random.random() < self.prob:
             # Get random offset
             offset = np.random.uniform(self.shift_range[0], self.shift_range[1])
@@ -716,7 +716,7 @@ class RandomShiftIntensity(ImedTransform):
         return data, metadata
 
     @multichannel_capable
-    def undo_transform(self, sample, metadata=None, data_type="im"):
+    def undo_transform(self, sample, metadata=None):
         assert 'offset' in metadata
         # Get offset
         offset = metadata['offset']
@@ -735,7 +735,7 @@ class ElasticTransform(ImedTransform):
 
     @multichannel_capable
     @two_dim_compatible
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
         # if params already defined, i.e. sample is GT
         if "elastic" in metadata:
             alpha, sigma = metadata["elastic"]
@@ -791,7 +791,7 @@ class AdditiveGaussianNoise(ImedTransform):
         self.std = std
 
     @multichannel_capable
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
         if "gaussian_noise" in metadata:
             noise = metadata["gaussian_noise"]
         else:
@@ -814,7 +814,7 @@ class Clahe(ImedTransform):
         self.kernel_size = kernel_size
 
     @multichannel_capable
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
         assert len(sample.shape) == 2
         assert len(self.kernel_size) == len(sample.shape)
         # Run equalization
@@ -832,7 +832,7 @@ class HistogramClipping(ImedTransform):
         self.max_percentile = max_percentile
 
     @multichannel_capable
-    def __call__(self, sample, metadata=None, data_type="im"):
+    def __call__(self, sample, metadata=None):
         data = np.copy(sample)
         # Run clipping
         percentile1 = np.percentile(sample, self.min_percentile)

@@ -440,6 +440,12 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
         metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
 
+        for idx in range(len(metadata_input)):
+            metadata_input[idx]["data_type"] = 'im'
+
+        for idx in range(len(metadata_gt)):
+            metadata_gt[idx]["data_type"] = 'gt'
+
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=input_img,
                                                      metadata=metadata_input,
