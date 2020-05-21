@@ -58,7 +58,7 @@ def test_segment_volume_2d():
     nib_img = imed_utils.segment_volume(PATH_MODEL, IMAGE_PATH, ROI_PATH)
 
     assert nib_img.shape == nib.load(IMAGE_PATH).shape
-    assert (nib_img.dataobj.max() < 1.0) and (nib_img.dataobj.max() > 0.0)
+    assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.max() >= 0.0)
     assert nib_img.dataobj.dtype == 'float32'
 
     shutil.rmtree(PATH_MODEL)
