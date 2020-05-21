@@ -3,6 +3,7 @@ import json
 import torch
 import nibabel as nib
 import shutil
+import numpy as np
 
 from ivadomed import utils as imed_utils
 from ivadomed import models as imed_models
@@ -97,7 +98,7 @@ def test_segment_volume_3d():
         json.dump(config, fp)
 
     nib_img = imed_utils.segment_volume(PATH_MODEL, IMAGE_PATH)
-    assert nib_img.get_fdata()[..., 0].shape == nib.load(IMAGE_PATH).shape
+    assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
     assert (nib_img.dataobj.max() < 1.0) and (nib_img.dataobj.max() > 0.0)
     assert nib_img.dataobj.dtype == 'float32'
 
