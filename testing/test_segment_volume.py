@@ -1,11 +1,13 @@
-import os
 import json
-import torch
-import nibabel as nib
+import os
 import shutil
 
-from ivadomed import utils as imed_utils
+import nibabel as nib
+import numpy as np
+import torch
+
 from ivadomed import models as imed_models
+from ivadomed import utils as imed_utils
 
 SLICE_AXIS = 2
 PATH_BIDS = 'testing_data'
@@ -36,9 +38,9 @@ def test_segment_volume_2d():
 
         "transformation_validation": {
             "Resample": {"wspace": 0.75, "hspace": 0.75},
-            "ROICrop2D": {"size": [48, 48]},
-            "ToTensor": {},
-            "NormalizeInstance": {}
+            "ROICrop": {"size": [48, 48]},
+            "NumpyToTensor": {},
+            "NormalizeInstance": {"applied_to": ["im"]}
         },
         "slice_filter": {
             "filter_empty_mask": False,
@@ -48,6 +50,7 @@ def test_segment_volume_2d():
         "slice_axis": "axial",
         "unet_3D": False,
     }
+
     PATH_CONFIG = os.path.join(PATH_MODEL, 'model_test.json')
     with open(PATH_CONFIG, 'w') as fp:
         json.dump(config, fp)
@@ -55,14 +58,13 @@ def test_segment_volume_2d():
     nib_img = imed_utils.segment_volume(PATH_MODEL, IMAGE_PATH, ROI_PATH)
 
     assert nib_img.shape == nib.load(IMAGE_PATH).shape
-    assert (nib_img.dataobj.max() < 1.0) and (nib_img.dataobj.max() > 0.0)
+    assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
     assert nib_img.dataobj.dtype == 'float32'
 
     shutil.rmtree(PATH_MODEL)
 
 
 def test_segment_volume_3d():
-
     model = imed_models.UNet3D(in_channels=1,
                                n_classes=1,
                                base_n_filter=1)
@@ -76,9 +78,9 @@ def test_segment_volume_3d():
         "batch_size": BATCH_SIZE,
         "transformation_validation": {
             "Resample": {"wspace": 1.0, "hspace": 1.0, "dspace": 2.0},
-            "CenterCrop3D": {"size": LENGTH_3D},
-            "ToTensor3D": {},
-            "NormalizeInstance3D": {}
+            "CenterCrop": {"size": LENGTH_3D},
+            "NumpyToTensor": {},
+            "NormalizeInstance": {"applied_to": ["im"]}
         },
         "slice_filter": {
             "filter_empty_mask": False,
@@ -96,15 +98,8 @@ def test_segment_volume_3d():
         json.dump(config, fp)
 
     nib_img = imed_utils.segment_volume(PATH_MODEL, IMAGE_PATH)
-    assert nib_img.get_fdata()[..., 0].shape == nib.load(IMAGE_PATH).shape
-    assert (nib_img.dataobj.max() < 1.0) and (nib_img.dataobj.max() > 0.0)
+    assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
+    assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
     assert nib_img.dataobj.dtype == 'float32'
 
     shutil.rmtree(PATH_MODEL)
-
-
-print("Test segment volume with 2D model.")
-test_segment_volume_2d()
-
-print("Test segment volume with 3D model.")
-test_segment_volume_3d()

@@ -1,19 +1,18 @@
 import os
 import time
-import numpy as np
 
+import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch import optim
 from torch.utils.data import DataLoader
-from torchvision import transforms as torch_transforms
 from tqdm import tqdm
 
 import ivadomed.transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed import losses
 from ivadomed import models
 from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 
 cudnn.benchmark = True
 
@@ -29,12 +28,20 @@ p = 0.0001
 
 def test_HeMIS(p=0.0001):
     print('[INFO]: Starting test ... \n')
-    training_transform_list = [
-        imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.CenterCrop2D(size=[48, 48]),
-        imed_transforms.ToTensor()
-    ]
-    train_transform = torch_transforms.Compose(training_transform_list)
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+            },
+        "CenterCrop":
+            {
+                "size": [48, 48]
+            },
+        "NumpyToTensor": {}
+    }
+
+    train_transform = imed_transforms.Compose(training_transform_dict)
 
     train_lst = ['sub-test001']
     contrasts = ['T1w', 'T2w', 'T2star']
@@ -96,7 +103,7 @@ def test_HeMIS(p=0.0001):
         start_time = time.time()
 
         start_init = time.time()
-        lr = scheduler.get_lr()[0]
+        lr = scheduler.get_last_lr()[0]
         model.train()
 
         tot_init = time.time() - start_init
@@ -110,7 +117,7 @@ def test_HeMIS(p=0.0001):
                 gen_lst.append(tot_gen)
 
             start_load = time.time()
-            input_samples, gt_samples = batch["input"], batch["gt"]
+            input_samples, gt_samples = imed_utils.unstack_tensors(batch["input"]), batch["gt"]
 
             print(batch["Missing_mod"])
             missing_mod = batch["Missing_mod"]
@@ -183,6 +190,3 @@ def test_HeMIS(p=0.0001):
     print("[INFO]: Deleting HDF5 file.")
     os.remove('testing_data/mytestfile.hdf5')
     print('\n [INFO]: Test of HeMIS passed successfully.')
-
-
-test_HeMIS()

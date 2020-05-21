@@ -10,6 +10,7 @@ class MetricManager(object):
         self.result_dict = defaultdict(float)
         self.num_samples = 0
         self.result_dict = defaultdict(list)
+
     def __call__(self, prediction, ground_truth):
         self.num_samples += len(prediction)
         for metric_fn in self.metric_fns:
@@ -75,6 +76,30 @@ def dice_score(im1, im2, empty_score=np.nan):
 
     intersection = (im1 * im2).sum()
     return (2. * intersection) / im_sum
+
+
+def mse(im1, im2):
+    """ Compute the Mean Squared Error.
+
+    Compute the Mean Squared Error between the two images, i.e. sum of the squared difference.
+
+    Args:
+        im1 (array): First array.
+        im2 (array): Second array.
+    Returns:
+        float: Mean Squared Error.
+
+    """
+    im1 = np.asarray(im1)
+    im2 = np.asarray(im2)
+
+    if im1.shape != im2.shape:
+        raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
+
+    err = np.sum((im1.astype("float") - im2.astype("float")) ** 2)
+    err /= float(im1.shape[0] * im1.shape[1])
+
+    return err
 
 
 def jaccard_score(prediction, groundtruth):
@@ -152,7 +177,7 @@ def multi_class_dice_score(im1, im2):
     n_classes = im1.shape[0]
 
     for i in range(n_classes):
-        dice_per_class += dice_score(im1[i, ], im2[i, ]) \
-            if not dice_score(im1[i, ], im2[i, ]) == np.nan else 1.0
+        dice_per_class += dice_score(im1[i,], im2[i,]) \
+            if not dice_score(im1[i,], im2[i,]) == np.nan else 1.0
 
     return dice_per_class / n_classes

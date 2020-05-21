@@ -42,8 +42,8 @@ def run_main(args):
 
     transform_lst = torch_transforms.Compose([
         imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.CenterCrop2D((128, 128)),
-        imed_transforms.ToTensor(),
+        imed_transforms.CenterCrop([128, 128]),
+        imed_transforms.NumpyToTensor(),
         imed_transforms.NormalizeInstance(),
     ])
 

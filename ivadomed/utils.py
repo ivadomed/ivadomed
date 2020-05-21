@@ -1,22 +1,22 @@
 import json
 import os
+
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
-from scipy.ndimage import label, generate_binary_structure
-from tqdm import tqdm
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.utils as vutils
+from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
-from ivadomed.loader import utils as imed_loaded_utils, loader as imed_loader
-from ivadomed import postprocessing as imed_postpro
 from ivadomed import metrics as imed_metrics
+from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
+from ivadomed.loader import utils as imed_loaded_utils, loader as imed_loader
 
 # labels of paint_objects method
 TP_COLOUR = 1
@@ -349,25 +349,34 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         # create data and stack on depth dimension
         arr = np.stack(tmp_lst, axis=-1)
 
+        # If only one channel then return 3D arr
+        if arr.shape[0] == 1:
+            arr = arr[0, :]
+
         # Reorient data
-        arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
+        arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can).astype('float32')
 
     else:
-        arr = data_lst[0]
-        n_channel = arr.shape[0]
+        arr_pred_ref_space = data_lst[0]
+        n_channel = arr_pred_ref_space.shape[0]
         oriented_volumes = []
-        for i in range(n_channel):
-            oriented_volumes.append(reorient_image(arr[i, ], slice_axis, nib_ref, nib_ref_can))
-        # transpose to locate the channel dimension at the end to properly see image on viewer
-        arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
+        if len(arr_pred_ref_space.shape) == 4:
+            for i in range(n_channel):
+                oriented_volumes.append(reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
+            # transpose to locate the channel dimension at the end to properly see image on viewer
+            arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
+
+    # If only one channel then return 3D arr
+    if arr_pred_ref_space.shape[0] == 1:
+        arr_pred_ref_space = arr_pred_ref_space[0, :]
 
     if bin_thr >= 0:
         arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
     elif discard_noise:  # discard noise
-        arr_pred_ref_space[arr_pred_ref_space <= 1e-3] = 0
+        arr_pred_ref_space[arr_pred_ref_space <= 1e-1] = 0
 
     # create nibabel object
-    nib_pred = nib.Nifti1Image(arr_pred_ref_space.astype('float32'), nib_ref.affine)
+    nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
 
     # save as nifti file
     if fname_out is not None:
@@ -630,19 +639,13 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         context = json.load(fhandle)
 
     # If ROI is not provided then force center cropping
-    if fname_roi is None and 'ROICrop2D' in context["transformation_validation"].keys():
-        context["transformation_validation"] = dict((key, value) if key != 'ROICrop2D'
-                                                    else ('CenterCrop2D', value)
+    if fname_roi is None and 'ROICrop' in context["transformation_validation"].keys():
+        context["transformation_validation"] = dict((key, value) if key != 'ROICrop'
+                                                    else ('CenterCrop', value)
                                                     for (key, value) in context["transformation_validation"].items())
 
-    # Force labeled to False in transforms
-    context["transformation_validation"] = dict((key, {**value, **{"labeled": False}})
-                                                if not key.startswith('NormalizeInstance')
-                                                else (key, value)
-                                                for (key, value) in context["transformation_validation"].items())
-
     # Compose transforms
-    do_transforms = imed_transforms.compose_transforms(context['transformation_validation'])
+    do_transforms = imed_transforms.Compose(context['transformation_validation'], requires_undo=True)
 
     # Undo Transforms
     undo_transforms = imed_transforms.UndoCompose(do_transforms)
@@ -694,33 +697,19 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         with torch.no_grad():
             preds = model(batch['input'])
 
-        rdict = {}
-        rdict['gt'] = preds
-        batch.update(rdict)
-        # Take only metadata from one input
-        batch["input_metadata"] = batch["input_metadata"][0]
-
         # Reconstruct 3D object
-        for i_slice in range(len(batch['gt'])):
-            # Undo transformations
-            rdict = {}
-            # Import transformations parameters
-            for k in batch.keys():
-                if len(batch[k]):
-                    rdict[k] = batch[k][i_slice]
-            rdict_undo = undo_transforms(rdict)
+        for i_slice in range(len(preds)):
+            for i_label in range(preds[i_slice].shape[0]):
+                batch["input_metadata"][i_slice][i_label]['data_type'] = 'gt'
+            # undo transformations
+            preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
+                                                         batch["input_metadata"][i_slice],
+                                                         data_type='gt')
 
             # Add new segmented slice to preds_list
-            # Convert PIL to numpy
-            if not isinstance(rdict_undo['gt'][0], np.ndarray):
-                pred_cur = np.array(pil_list_to_numpy(rdict_undo['gt']))
-            else:
-                # 3D images
-                pred_cur = rdict_undo['gt']
-
-            preds_list.append(pred_cur)
-            # Store the slice index of pred_cur in the original 3D image
-            slice_idx_list.append(int(rdict_undo['input_metadata']['slice_index']))
+            preds_list.append(np.array(preds_i_undo))
+            # Store the slice index of preds_i_undo in the original 3D image
+            slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
 
             # If last batch and last sample of this batch, then reconstruct 3D object
             if i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1:
@@ -873,29 +862,17 @@ def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axi
 
     for label in labels:
         r, g, b = np.random.randint(0, 256, size=3)
-        multi_labeled_pred[..., 0] += r * gt_data[label, ]
-        multi_labeled_pred[..., 1] += g * gt_data[label, ]
-        multi_labeled_pred[..., 2] += b * gt_data[label, ]
+        multi_labeled_pred[..., 0] += r * gt_data[label,]
+        multi_labeled_pred[..., 1] += g * gt_data[label,]
+        multi_labeled_pred[..., 2] += b * gt_data[label,]
 
     rgb_dtype = np.dtype([('R', 'u1'), ('G', 'u1'), ('B', 'u1')])
     multi_labeled_pred = multi_labeled_pred.copy().astype('u1').view(dtype=rgb_dtype).reshape((h, w, d))
 
-    pred_to_nib(multi_labeled_pred, [], gt_filename,
+    pred_to_nib([multi_labeled_pred], [], gt_filename,
                 output_filename, slice_axis=slice_axis, kernel_dim='3d', bin_thr=-1, discard_noise=False)
 
     return multi_labeled_pred
-
-
-def pil_list_to_numpy(pil_list):
-    n_classes = len(pil_list)
-    w, h = pil_list[0].size
-    numpy_array = np.zeros((h, w, n_classes))
-    for idx, pil_img in enumerate(pil_list):
-        numpy_array[..., idx] = np.array(pil_img)
-    # If only one class, then remove the last dimension
-    if n_classes == 1:
-        numpy_array = np.squeeze(numpy_array, axis=-1)
-    return numpy_array
 
 
 def convert_labels_to_RGB(grid_img):
@@ -978,3 +955,10 @@ class SliceFilter(object):
                 return False
 
         return True
+
+
+def unstack_tensors(sample):
+    list_tensor = []
+    for i in range(sample.shape[1]):
+        list_tensor.append(sample[:, i, ].unsqueeze(1))
+    return list_tensor

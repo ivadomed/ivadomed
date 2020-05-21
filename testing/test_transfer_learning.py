@@ -1,9 +1,7 @@
+import copy
+
 import torch
 import torch.backends.cudnn as cudnn
-import torch.nn as nn
-from torch import optim
-
-import copy
 
 from ivadomed import models as imed_models
 
@@ -71,7 +69,3 @@ def test_transfer_learning(film_layers=FILM_LAYERS,
     #    else:
     #        print('\t', name_p1[0], False)
     # assert(weights_reset)
-
-
-print("test transfer learning")
-test_transfer_learning()

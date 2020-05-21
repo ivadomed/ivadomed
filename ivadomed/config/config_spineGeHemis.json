@@ -51,35 +51,34 @@
                 "wspace": 0.75,
                 "hspace": 0.75
         },
-        "DilateGT": {
-            "dilation_factor": 0
-        },
-        "CenterCrop2D": {
+        "CenterCrop": {
             "size": [48, 48]
         },
         "ElasticTransform": {
             "alpha_range": [28.0, 30.0],
             "sigma_range":  [3.5, 4.5],
-            "p": 0.1
+            "p": 0.1,
+            "applied_to": ["im", "gt"]
         },
         "RandomAffine": {
             "degrees": 4.6,
             "translate": [0.03, 0.03],
-            "scale": [0.98, 1.02]
+            "scale": [0.98, 1.02],
+            "applied_to": ["im", "gt"]
         },
-        "ToTensor": {},
-        "NormalizeInstance": {}
+        "NumpyToTensor": {"applied_to": ["im", "gt"]},
+        "NormalizeInstance": {"applied_to": ["im"]}
     },
     "transformation_validation": {
         "Resample": {
             "wspace": 0.75,
             "hspace": 0.75
         },
-        "CenterCrop2D": {
+        "CenterCrop": {
             "size": [48, 48]
         },
-        "ToTensor": {},
-        "NormalizeInstance": {}
+        "NumpyToTensor": {"applied_to": ["im", "gt"]},
+        "NormalizeInstance": {"applied_to": ["im"]}
     },
     "debugging": false
 }

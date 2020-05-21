@@ -4,11 +4,10 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-from torchvision import transforms as torch_transforms
 
 import ivadomed.transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
 
@@ -20,10 +19,10 @@ PATH_BIDS = 'testing_data'
 def _cmpt_slice(ds_loader, gt_roi='gt'):
     cmpt_label, cmpt_sample = {0: 0, 1: 0}, 0
     for i, batch in enumerate(ds_loader):
-        # For now only supports 1 label
-        gt_samples = batch[gt_roi][0]
-        for idx in range(len(gt_samples)):
-            if np.any(gt_samples[idx]):
+        for idx in range(len(batch[gt_roi])):
+            smp_np = batch[gt_roi][idx].numpy()
+            # For now only supports 1 label
+            if np.any(smp_np[0, :]):
                 cmpt_label[1] += 1
             else:
                 cmpt_label[0] += 1
@@ -39,11 +38,19 @@ def test_slice_filter_center():
         torch.cuda.set_device(device)
         print("Using GPU number {}".format(device))
 
-    training_transform_list = [
-        imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.CenterCrop2D(size=[100, 100])
-    ]
-    train_transform = torch_transforms.Compose(training_transform_list)
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+            },
+        "CenterCrop":
+            {
+                "size": [100, 100]
+            }
+    }
+
+    train_transform = imed_transforms.Compose(training_transform_dict)
 
     train_lst = ['sub-test001']
     roi_lst = [None]
@@ -82,11 +89,19 @@ def test_slice_filter_roi():
         torch.cuda.set_device(device)
         print("Using GPU number {}".format(device))
 
-    training_transform_list = [
-        imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.ROICrop2D(size=[100, 100])
-    ]
-    train_transform = torch_transforms.Compose(training_transform_list)
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+            },
+        "ROICrop":
+            {
+                "size": [100, 100]
+            }
+    }
+
+    train_transform = imed_transforms.Compose(training_transform_dict)
 
     train_lst = ['sub-test001']
     roi_lst = ['_seg-manual']
@@ -120,10 +135,3 @@ def test_slice_filter_roi():
         _cmpt_slice(train_loader, 'gt')
         print('\tNumber of Neg/Pos slices in ROI.')
         _cmpt_slice(train_loader, 'roi')
-
-
-print("Test test_slice_filter_center")
-test_slice_filter_center()
-
-print("Test test_slice_filter_roi")
-test_slice_filter_roi()

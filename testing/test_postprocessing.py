@@ -3,10 +3,10 @@
 # pytest unit tests for ivadomed.postprocessing
 
 
+import nibabel as nib
+import numpy as np
 import pytest
 import scipy
-import numpy as np
-import nibabel as nib
 
 from ivadomed import postprocessing as imed_postpro
 

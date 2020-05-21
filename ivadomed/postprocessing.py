@@ -13,6 +13,7 @@ def nifti_capable(wrapped):
         if isinstance(data, nib.Nifti1Image):
             return nib.Nifti1Image(wrapper(np.copy(np.asanyarray(data.dataobj)), *args, **kwargs), data.affine)
         return wrapped(data, *args, **kwargs)
+
     return wrapper
 
 
@@ -22,6 +23,7 @@ def binarize_with_low_threshold(wrapped):
         if not np.array_equal(data, data.astype(bool)):
             return mask_predictions(data, wrapper(threshold_predictions(data, thr=0.001), *args, **kwargs))
         return wrapped(data, *args, **kwargs)
+
     return wrapper
 
 

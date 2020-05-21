@@ -2,11 +2,10 @@ import os
 
 import torch
 from torch.utils.data import DataLoader
-from torchvision import transforms as torch_transforms
 
 import ivadomed.transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 
 GPU_NUMBER = 0
 BATCH_SIZE = 4
@@ -61,12 +60,20 @@ def test_hdf5():
     print('\n[INFO]: Dataframe successfully generated. ')
     print('[INFO]: Creating dataset ...\n')
 
-    training_transform_list = [
-        imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.CenterCrop2D(size=[48, 48]),
-        imed_transforms.ToTensor()
-    ]
-    train_transform = torch_transforms.Compose(training_transform_list)
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+            },
+        "CenterCrop":
+            {
+                "size": [48, 48]
+            },
+        "NumpyToTensor": {}
+    }
+
+    train_transform = imed_transforms.Compose(training_transform_dict)
 
     dataset = imed_adaptative.HDF5Dataset(root_dir=PATH_BIDS,
                                           subject_lst=train_lst,
@@ -122,6 +129,3 @@ def test_hdf5():
     os.remove('testing_data/mytestfile.hdf5')
     print("Congrats your dataloader works! You can go Home now and get a beer.")
     return 0
-
-
-test_hdf5()

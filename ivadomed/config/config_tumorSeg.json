@@ -1,5 +1,5 @@
 {
-    "command": "train",
+    "command": "test",
     "gpu": 0,
     "target_suffix": ["_seg-tumor"],
     "roi_suffix": null,
@@ -7,7 +7,7 @@
     "random_seed": 6,
     "contrast_train_validation": ["T1w", "T2w"],
     "contrast_balance": {},
-    "contrast_test": ["T2w"],
+    "contrast_test": ["T1w","T2w"],
     "center_test": [],
     "retrain_model": null,
     "retrain_fraction": 1.0,
@@ -31,19 +31,20 @@
     "missing_probability_growth": 0.9,
     "out_channel": 1,
     "depth": 4,
-    "length_3D": [16, 320, 320],
+    "length_3D": [256, 128, 16],
     "padding_3D": 0,
     "balance_samples": false,
     "slice_axis": "sagittal",
     "split_method": "per_patient",
     "train_fraction": 0.6,
     "test_fraction": 0.2,
-    "unet_3D": false,
+    "unet_3D": true,
     "target_lst": ["T2w"],
     "roi_lst": null,
     "HeMIS": false,
     "binarize_prediction": true,
     "attention_unet": false,
+    "n_filters": 1,
     "uncertainty": {"epistemic": false, "aleatoric": false, "n_it": 10},
     "slice_filter": {
         "filter_empty_mask": true,
@@ -58,26 +59,43 @@
         "overlap": {"unit": "vox", "thr": 3}
     },
     "transformation_training": {
-      "ElasticTransform": {
-        "alpha_range": [28.0, 30.0],
-        "sigma_range":  [3.5, 4.5],
-        "p": 0.1
-      },
-      "RandomAffine": {
-      "degrees": 4.6,
-      "translate": [0.03, 0.03],
-      "scale": [0.98, 1.02]
-      },
-      "ToTensor": {},
-      "NormalizeInstance": {}
+        "Resample":
+        {
+            "wspace": 1,
+            "hspace": 1,
+            "dspace": 2
+        },
+        "CenterCrop": {
+            "size": [256, 128, 16]
+        },
+      "NumpyToTensor": {},
+      "NormalizeInstance": {"applied_to": ["im"]}
     },
     "transformation_validation": {
-        "ToTensor": {},
-        "NormalizeInstance": {}
+                "Resample":
+        {
+            "wspace": 1,
+            "hspace": 1,
+            "dspace": 2
+        },
+                "CenterCrop": {
+            "size": [256, 128, 16]
+        },
+        "NumpyToTensor": {},
+        "NormalizeInstance": {"applied_to": ["im"]}
     },
     "transformation_testing": {
-      "ToTensor": {},
-      "NormalizeInstance": {}
+                "Resample":
+        {
+            "wspace": 1,
+            "hspace": 1,
+            "dspace": 2
+        },
+                "CenterCrop": {
+            "size": [256, 128, 16]
+        },
+      "NumpyToTensor": {},
+      "NormalizeInstance": {"applied_to": ["im"]}
     },
     "debugging": false
 }

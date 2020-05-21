@@ -5,7 +5,6 @@ import torch
 import torch.backends.cudnn as cudnn
 from torch import optim
 from torch.utils.data import DataLoader
-from torchvision import transforms as torch_transforms
 from tqdm import tqdm
 
 import ivadomed.transforms as imed_transforms
@@ -38,26 +37,32 @@ def test_unet():
 
     # STEP 1: SET TRANSFORMS
     # 2D monochannel
-    training_transform_list = [
-        imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.ROICrop2D(size=[48, 48]),
-        imed_transforms.ToTensor(),
-        imed_transforms.StackTensors()
-    ]
-    train_transform = torch_transforms.Compose(training_transform_list)
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+            },
+        "ROICrop":
+            {
+                "size": [48, 48]
+            },
+        "NumpyToTensor": {}
+    }
+    train_transform = imed_transforms.Compose(training_transform_dict)
 
     # 2D multichannel
-    training_transform_list_multichannel = training_transform_list.copy()
-    training_transform_multichannel = torch_transforms.Compose(training_transform_list_multichannel)
+    training_transform_multichannel = imed_transforms.Compose(training_transform_dict)
 
     # 3D multichannel
-    training_transform_3d_list = [
-        imed_transforms.CenterCrop3D(size=[96, 96, 16]),
-        imed_transforms.ToTensor3D(),
-        imed_transforms.NormalizeInstance3D(),
-        imed_transforms.StackTensors()
-    ]
-    training_transform_3d = torch_transforms.Compose(training_transform_3d_list)
+    training_transform_dict = {
+        "CenterCrop":
+            {
+                "size": [96, 96, 16]
+            },
+        "NumpyToTensor": {}
+    }
+    training_transform_3d = imed_transforms.Compose(training_transform_dict)
 
     # STEP 2: LOAD DATASETS
     ds_train = imed_loader.BidsDataset(PATH_BIDS,
@@ -150,7 +155,7 @@ def test_unet():
             start_time = time.time()
 
             start_init = time.time()
-            lr = scheduler.get_lr()[0]
+            lr = scheduler.get_last_lr()[0]
             model.train()
             tot_init = time.time() - start_init
             init_lst.append(tot_init)
@@ -219,7 +224,3 @@ def test_unet():
         print('Mean SDopt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
         print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
         print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
-
-
-print("Test training time")
-test_unet()
