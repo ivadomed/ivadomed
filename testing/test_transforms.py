@@ -167,6 +167,11 @@ def _test_Resample(im_seg, resample_transform, native_resolution, is_2D=False):
 
     # Resampler for label data
     resample_transform.interpolation_order = 0
+    metadata_ = {'zooms': native_resolution,
+                 'data_shape': seg[0].shape if len(seg[0].shape) == 3 else list(seg[0].shape) + [1],
+                 'data_type': 'gt'
+                 }
+    metadata_in = [metadata_ for _ in seg] if isinstance(seg, list) else {}
     # Resample label data
     do_seg, do_metadata = resample_transform(sample=seg, metadata=metadata_in)
     # Undo Resample on label data
