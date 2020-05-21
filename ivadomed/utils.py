@@ -354,16 +354,17 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
             arr = arr[0, :]
 
         # Reorient data
-        arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
+        arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can).astype('float32')
 
     else:
-        arr = data_lst[0]
-        n_channel = arr.shape[0]
+        arr_pred_ref_space = data_lst[0]
+        n_channel = arr_pred_ref_space.shape[0]
         oriented_volumes = []
-        for i in range(n_channel):
-            oriented_volumes.append(reorient_image(arr[i, ], slice_axis, nib_ref, nib_ref_can))
-        # transpose to locate the channel dimension at the end to properly see image on viewer
-        arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
+        if len(arr_pred_ref_space.shape) == 4:
+            for i in range(n_channel):
+                oriented_volumes.append(reorient_image(arr_pred_ref_space[i, ], slice_axis, nib_ref, nib_ref_can))
+            # transpose to locate the channel dimension at the end to properly see image on viewer
+            arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
 
     # If only one channel then return 3D arr
     if arr_pred_ref_space.shape[0] == 1:
@@ -375,7 +376,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         arr_pred_ref_space[arr_pred_ref_space <= 1e-1] = 0
 
     # create nibabel object
-    nib_pred = nib.Nifti1Image(arr_pred_ref_space.astype('float32'), nib_ref.affine)
+    nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
 
     # save as nifti file
     if fname_out is not None:
@@ -866,7 +867,7 @@ def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axi
     rgb_dtype = np.dtype([('R', 'u1'), ('G', 'u1'), ('B', 'u1')])
     multi_labeled_pred = multi_labeled_pred.copy().astype('u1').view(dtype=rgb_dtype).reshape((h, w, d))
 
-    pred_to_nib(multi_labeled_pred, [], gt_filename,
+    pred_to_nib([multi_labeled_pred], [], gt_filename,
                 output_filename, slice_axis=slice_axis, kernel_dim='3d', bin_thr=-1, discard_noise=False)
 
     return multi_labeled_pred
