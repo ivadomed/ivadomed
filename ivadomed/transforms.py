@@ -196,7 +196,6 @@ class Resample(ImedTransform):
 
         # Data type
         data_out = data_out.astype(sample.dtype)
-        data_out = np.clip(data_out, 0.0, 1.0) if metadata['data_type'] == 'gt' else data_out
 
         return data_out, metadata
 
