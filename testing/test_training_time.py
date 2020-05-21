@@ -5,7 +5,6 @@ import torch
 import torch.backends.cudnn as cudnn
 from torch import optim
 from torch.utils.data import DataLoader
-from torchvision import transforms as torch_transforms
 from tqdm import tqdm
 
 import ivadomed.transforms as imed_transforms
@@ -43,7 +42,7 @@ def test_unet():
             {
                 "wspace": 0.75,
                 "hspace": 0.75
-             },
+            },
         "ROICrop":
             {
                 "size": [48, 48]
@@ -225,4 +224,3 @@ def test_unet():
         print('Mean SDopt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
         print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
         print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
-

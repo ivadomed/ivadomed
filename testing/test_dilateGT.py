@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-from torchvision import transforms as torch_transforms
 
 import ivadomed.transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
@@ -57,7 +56,7 @@ def test_dilateGT(dil_fac=0.25):
             {
                 "wspace": 0.75,
                 "hspace": 0.75
-             },
+            },
         "DilateGT":
             {
                 "dilation_factor": dil_fac

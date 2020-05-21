@@ -1,21 +1,18 @@
+import functools
 import math
 import numbers
 import random
-import functools
+
 import numpy as np
-
-from skimage.exposure import equalize_adapthist
-from scipy.ndimage import rotate, zoom, shift
-from scipy.ndimage.measurements import label, center_of_mass
-from scipy.ndimage.filters import gaussian_filter
-from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
-from scipy.ndimage.interpolation import map_coordinates
-from scipy.ndimage import zoom
-
 import torch
+from scipy.ndimage import rotate, shift
+from scipy.ndimage import zoom
+from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage.interpolation import map_coordinates
+from scipy.ndimage.measurements import label, center_of_mass
+from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
+from skimage.exposure import equalize_adapthist
 from torchvision import transforms as torchvision_transforms
-
-from ivadomed import utils as imed_utils
 
 
 def multichannel_capable(wrapped):
@@ -34,6 +31,7 @@ def multichannel_capable(wrapped):
             return None, None
         else:
             return wrapped(self, sample, metadata, data_type)
+
     return wrapper
 
 
@@ -50,6 +48,7 @@ def two_dim_compatible(wrapped):
             return np.squeeze(result_sample, axis=-1), result_metadata
         else:
             return wrapped(self, sample, metadata, data_type)
+
     return wrapper
 
 
@@ -77,6 +76,7 @@ class Compose(object):
         requires_undo (bool): If True, does not include transforms which do not have an undo_transform
             implemented yet.
     """
+
     def __init__(self, dict_transforms, requires_undo=False):
         list_tr_im, list_tr_gt, list_tr_roi = [], [], []
         for transform in dict_transforms.keys():
@@ -146,14 +146,13 @@ class UndoTransform(object):
     def __call__(self, sample):
         return self.transform.undo_transform(sample)
 
+
 class NumpyToTensor(ImedTransform):
     """Converts numpy array to tensor object."""
 
-    #@multichannel_capable
     def undo_transform(self, sample, metadata=None, data_type="im"):
         return list(sample.numpy()), metadata
 
-    #@multichannel_capable
     def __call__(self, sample, metadata=None, data_type="im"):
         sample = np.array(sample)
         # Use np.ascontiguousarray to avoid axes permutations issues
@@ -200,7 +199,6 @@ class Resample(ImedTransform):
 
         return data_out, metadata
 
-
     @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata=None, data_type="im"):
@@ -232,6 +230,7 @@ class NormalizeInstance(ImedTransform):
     """Normalize a tensor or an array image with mean and standard deviation estimated
     from the sample itself.
     """
+
     @multichannel_capable
     def __call__(self, sample, metadata=None, data_type="im"):
         data_out = (sample - sample.mean()) / sample.std()
@@ -240,6 +239,7 @@ class NormalizeInstance(ImedTransform):
 
 class CroppableArray(np.ndarray):
     """Adapted From: https://stackoverflow.com/a/41155020/13306686"""
+
     def __getitem__(self, item):
         all_in_slices = []
         pad = []
@@ -254,7 +254,7 @@ class CroppableArray(np.ndarray):
             except TypeError:
                 if isinstance(item, int):
                     return super().__getitem__(item)
-                newitem = [slice(None)]*self.ndim
+                newitem = [slice(None)] * self.ndim
                 newitem[0] = item
                 item = newitem
             # We're out of items, just append noop slices
@@ -264,7 +264,7 @@ class CroppableArray(np.ndarray):
             # We're dealing with an integer (no padding even if it's
             # out of bounds)
             if isinstance(item[dim], int):
-                all_in_slices.append(slice(item[dim], item[dim]+1))
+                all_in_slices.append(slice(item[dim], item[dim] + 1))
                 pad.append((0, 0))
             # Dealing with a slice, here it get's complicated, we need
             # to correctly deal with None start/stop as well as with
@@ -319,7 +319,7 @@ class Crop(ImedTransform):
                 elif pad_start < 0:
                     sample_crop = sample_reorient[abs(pad_start):, ]
                     pad_start = 0
-                else: # i.e. pad_end < 0:
+                else:  # i.e. pad_end < 0:
                     sample_crop = sample_reorient[:pad_end, ]
                     pad_end = 0
                 # Reorient
@@ -342,7 +342,7 @@ class Crop(ImedTransform):
         if is_2d:
             data_out = sample.view(CroppableArray)[fh:fh + th, fw:fw + tw, :]
         else:
-            data_out = sample.view(CroppableArray)[fh:fh+th, fw:fw+tw, fd:fd+td]
+            data_out = sample.view(CroppableArray)[fh:fh + th, fw:fw + tw, fd:fd + td]
 
         return data_out, metadata
 
@@ -377,6 +377,7 @@ class Crop(ImedTransform):
 
 class CenterCrop(Crop):
     """Make a centered crop of a specified size."""
+
     @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata=None, data_type="im"):
@@ -395,6 +396,7 @@ class CenterCrop(Crop):
 
 class ROICrop(Crop):
     """Make a crop of a specified size around a ROI."""
+
     @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata=None, data_type="im"):
@@ -519,7 +521,6 @@ class DilateGT(ImedTransform):
 
         return arr_soft_out
 
-
     @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata=None, data_type="im"):
@@ -597,6 +598,7 @@ class RandomRotation(ImedTransform):
 
 class RandomReverse(ImedTransform):
     """Make a randomized symmetric inversion of the different values of each dimensions."""
+
     @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata=None, data_type="im"):
@@ -669,10 +671,9 @@ class RandomAffine(RandomRotation):
         # Run Translation
         data_rot_trans = shift(data_rot, shift=translations, order=1).astype(sample.dtype)
         # Run Scaling
-        #data_rot_trans_scaled = zoom(data_rot_trans, zoom=scale, order=1)
+        # data_rot_trans_scaled = zoom(data_rot_trans, zoom=scale, order=1)
 
         return data_rot_trans, metadata
-
 
     @multichannel_capable
     @two_dim_compatible
@@ -684,16 +685,15 @@ class RandomAffine(RandomRotation):
         # Opposite translation
         translations = tuple([-t for t in metadata['affine'][2]])
         # Inverse scaling
-        #scale = 1. / metadata['affine'][3]
+        # scale = 1. / metadata['affine'][3]
 
         # Params
-        dict_params = {"affine": [angle, axes, translations]}  #, scale]}
+        dict_params = {"affine": [angle, axes, translations]}  # , scale]}
 
         # Undo rotation
         data_out, metadata = self.__call__(sample, dict_params, data_type)
 
         return data_out, metadata
-
 
 
 class RandomShiftIntensity(ImedTransform):
@@ -767,8 +767,8 @@ class ElasticTransform(ImedTransform):
             x, y, z = np.meshgrid(np.arange(shape[0]),
                                   np.arange(shape[1]),
                                   np.arange(shape[2]), indexing='ij')
-            indices = np.reshape(x + dx, (-1, 1)),\
-                      np.reshape(y + dy, (-1, 1)),\
+            indices = np.reshape(x + dx, (-1, 1)), \
+                      np.reshape(y + dy, (-1, 1)), \
                       np.reshape(z + dz, (-1, 1))
 
             # Apply deformation

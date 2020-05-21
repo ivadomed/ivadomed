@@ -3,23 +3,26 @@
 # pytest unit tests for ivadomed.postprocessing
 
 
-import pytest
-import numpy as np
 from math import isclose
+
+import numpy as np
+import pytest
+import torch
 from scipy.ndimage.measurements import center_of_mass
 from scipy.ndimage.measurements import label
 
-import torch
-
-from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomAffine, RandomReverse, DilateGT, ElasticTransform, RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, Resample, rescale_values_array
-from ivadomed.metrics import dice_score, mse
+from ivadomed.metrics import dice_score
+from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomAffine, RandomReverse, DilateGT, ElasticTransform, \
+    RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, \
+    Resample, rescale_values_array
 
 DEBUGGING = False
 if DEBUGGING:
     from testing.utils import plot_transformed_sample
 
 
-def create_test_image(width, height, depth=0, num_modalities=1, noise_max=10.0, num_objs=1, rad_max=30, num_seg_classes=1):
+def create_test_image(width, height, depth=0, num_modalities=1, noise_max=10.0, num_objs=1, rad_max=30,
+                      num_seg_classes=1):
     """Create test image.
 
     Create test image and its segmentation with a given number of objects, classes, and maximum radius.
@@ -62,7 +65,7 @@ def create_test_image(width, height, depth=0, num_modalities=1, noise_max=10.0, 
     seg = np.ceil(image).astype(np.int32)
 
     if depth == 0:
-        _ , _, z_slice = center_of_mass(seg.astype(np.int))
+        _, _, z_slice = center_of_mass(seg.astype(np.int))
         z_slice = int(round(z_slice))
         seg = seg[:, :, z_slice]
 
@@ -115,7 +118,7 @@ def test_RandomShiftIntensity(im_seg):
     assert all('offset' in m for m in do_metadata)
     # Check shifting
     for idx, i in enumerate(im):
-        assert isclose(np.max(do_im[idx]-i), do_metadata[idx]['offset'], rel_tol=1e-01)
+        assert isclose(np.max(do_im[idx] - i), do_metadata[idx]['offset'], rel_tol=1e-01)
 
     # Apply Undo Transform
     undo_im, undo_metadata = transform.undo_transform(sample=do_im, metadata=do_metadata)
@@ -151,7 +154,8 @@ def test_NumpyToTensor(im_seg):
 
 def _test_Resample(im_seg, resample_transform, native_resolution, is_2D=False):
     im, seg = im_seg
-    metadata_ = {'zooms': native_resolution, 'data_shape': im[0].shape if len(im[0].shape) == 3 else list(im[0].shape) + [1]}
+    metadata_ = {'zooms': native_resolution,
+                 'data_shape': im[0].shape if len(im[0].shape) == 3 else list(im[0].shape) + [1]}
     metadata_in = [metadata_ for _ in im] if isinstance(im, list) else {}
 
     # Resample input data
@@ -262,15 +266,17 @@ def _test_Crop(im_seg, crop_transform):
         fh, fw, fd, _, _, _ = do_metadata[idx]['crop_params']
         th, tw, td = crop_transform.size
         if not td:
-            assert np.array_equal(i[fh:fh+th, fw:fw+tw], undo_im[idx][fh:fh+th, fw:fw+tw])
-            assert np.array_equal(seg[idx][fh:fh+th, fw:fw+tw], undo_seg[idx][fh:fh+th, fw:fw+tw])
+            assert np.array_equal(i[fh:fh + th, fw:fw + tw], undo_im[idx][fh:fh + th, fw:fw + tw])
+            assert np.array_equal(seg[idx][fh:fh + th, fw:fw + tw], undo_seg[idx][fh:fh + th, fw:fw + tw])
             # Plot for debugging
             if DEBUGGING:
                 plot_transformed_sample(seg[idx], undo_seg[idx], ['raw', 'undo'])
                 plot_transformed_sample(i, undo_im[idx], ['raw', 'undo'])
         else:
-            assert np.array_equal(i[fh:fh+th, fw:fw+tw, fd:fd+td], undo_im[idx][fh:fh+th, fw:fw+tw, fd:fd+td])
-            assert np.array_equal(seg[idx][fh:fh+th, fw:fw+tw, fd:fd+td], undo_seg[idx][fh:fh+th, fw:fw+tw, fd:fd+td])
+            assert np.array_equal(i[fh:fh + th, fw:fw + tw, fd:fd + td],
+                                  undo_im[idx][fh:fh + th, fw:fw + tw, fd:fd + td])
+            assert np.array_equal(seg[idx][fh:fh + th, fw:fw + tw, fd:fd + td],
+                                  undo_seg[idx][fh:fh + th, fw:fw + tw, fd:fd + td])
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 2)])
@@ -402,7 +408,7 @@ def test_RandomReverse(im_seg, reverse_transform):
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
                                     create_test_image(100, 100, 100, 1, rad_max=10)])
 @pytest.mark.parametrize('aff_transform', [RandomAffine(20),
-                                               RandomAffine(20, [0.1, 0.2, 0])])
+                                           RandomAffine(20, [0.1, 0.2, 0])])
 def test_RandomAffine(im_seg, aff_transform):
     im, seg = im_seg
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
@@ -445,6 +451,7 @@ def test_AdditiveGaussianNoise(im_seg, noise_transform):
 
     if DEBUGGING and len(im[0].shape) == 2:
         plot_transformed_sample(im[0], do_im[0], ['raw', 'do'])
+
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10)])
 @pytest.mark.parametrize('clahe', [Clahe(kernel_size=(8, 8))])

@@ -4,11 +4,10 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-from torchvision import transforms as torch_transforms
 
 import ivadomed.transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
 
@@ -44,7 +43,7 @@ def test_slice_filter_center():
             {
                 "wspace": 0.75,
                 "hspace": 0.75
-             },
+            },
         "CenterCrop":
             {
                 "size": [100, 100]
@@ -95,7 +94,7 @@ def test_slice_filter_roi():
             {
                 "wspace": 0.75,
                 "hspace": 0.75
-             },
+            },
         "ROICrop":
             {
                 "size": [100, 100]

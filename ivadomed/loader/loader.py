@@ -433,11 +433,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         """
         coord = self.indexes[index]
         input_img, gt_img = self.handlers[coord['handler_index']].get_pair_data()
-        # data_shape = input_img[0].shape
         seg_pair_slice = self.handlers[coord['handler_index']].get_pair_metadata(coord['handler_index'])
-
-        # for idx in range(len(data_dict["input"])):
-        #     data_dict['input_metadata'][idx]['data_shape'] = data_shape
 
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different

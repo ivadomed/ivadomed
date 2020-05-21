@@ -1,14 +1,13 @@
-import numpy as np
 import nibabel as nib
+import numpy as np
 import torch
-from torchvision import transforms as torch_transforms
 from torch.utils.data import DataLoader
 
+from ivadomed import losses as imed_losses
+from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
-from ivadomed import postprocessing as imed_postpro
-from ivadomed import losses as imed_losses
 
 GPU_NUMBER = 0
 PATH_BIDS = 'testing_data'
@@ -127,4 +126,3 @@ def test_image_orientation():
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
-

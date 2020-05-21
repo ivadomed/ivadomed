@@ -1,16 +1,15 @@
 import os
-import numpy as np
 
+import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-from torchvision import transforms as torch_transforms
 
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
-from ivadomed import utils as imed_utils
 from ivadomed import transforms as imed_transforms
+from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
 
@@ -41,7 +40,7 @@ def test_inference(film_bool=False):
             {
                 "wspace": 0.75,
                 "hspace": 0.75
-             },
+            },
         "CenterCrop":
             {
                 "size": [48, 48]
@@ -166,4 +165,3 @@ def test_inference(film_bool=False):
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
     print(metrics_dict)
-

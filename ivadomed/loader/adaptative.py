@@ -1,12 +1,11 @@
 import copy
 import os
 from os import path
-import nibabel as nib
 
 import h5py
+import nibabel as nib
 import numpy as np
 import pandas as pd
-from PIL import Image
 from bids_neuropoly import bids
 from tqdm import tqdm
 
@@ -572,7 +571,6 @@ class HDF5Dataset:
         else:
             roi_img, roi_metadata = None, None
 
-
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
         stack_roi, metadata_roi = self.transform(sample=roi_img,
@@ -605,7 +603,6 @@ class HDF5Dataset:
 
         return data_dict
 
-
     def update(self, strategy="Missing", p=0.0001):
         """
         Update the Dataframe itself.
@@ -623,7 +620,7 @@ class HDF5Dataset:
                 if not np.any(missing_mod):
                     missing_mod = np.zeros((len(self.cst_lst)))
                     missing_mod[np.random.randint(2, size=1)] = 1
-                self.cst_matrix[idx, ] = missing_mod
+                self.cst_matrix[idx,] = missing_mod
 
             print("Missing modalities = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
 

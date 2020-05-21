@@ -1,19 +1,18 @@
 import os
 import time
-import numpy as np
 
+import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch import optim
 from torch.utils.data import DataLoader
-from torchvision import transforms as torch_transforms
 from tqdm import tqdm
 
 import ivadomed.transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed import losses
 from ivadomed import models
 from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 
 cudnn.benchmark = True
 
@@ -34,7 +33,7 @@ def test_HeMIS(p=0.0001):
             {
                 "wspace": 0.75,
                 "hspace": 0.75
-             },
+            },
         "CenterCrop":
             {
                 "size": [48, 48]
@@ -191,4 +190,3 @@ def test_HeMIS(p=0.0001):
     print("[INFO]: Deleting HDF5 file.")
     os.remove('testing_data/mytestfile.hdf5')
     print('\n [INFO]: Test of HeMIS passed successfully.')
-

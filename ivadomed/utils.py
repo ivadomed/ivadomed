@@ -1,22 +1,22 @@
 import json
 import os
+
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
-from scipy.ndimage import label, generate_binary_structure
-from tqdm import tqdm
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.utils as vutils
+from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
-from ivadomed.loader import utils as imed_loaded_utils, loader as imed_loader
-from ivadomed import postprocessing as imed_postpro
 from ivadomed import metrics as imed_metrics
+from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
+from ivadomed.loader import utils as imed_loaded_utils, loader as imed_loader
 
 # labels of paint_objects method
 TP_COLOUR = 1
@@ -362,7 +362,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         oriented_volumes = []
         if len(arr_pred_ref_space.shape) == 4:
             for i in range(n_channel):
-                oriented_volumes.append(reorient_image(arr_pred_ref_space[i, ], slice_axis, nib_ref, nib_ref_can))
+                oriented_volumes.append(reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
             # transpose to locate the channel dimension at the end to properly see image on viewer
             arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
 
@@ -860,9 +860,9 @@ def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axi
 
     for label in labels:
         r, g, b = np.random.randint(0, 256, size=3)
-        multi_labeled_pred[..., 0] += r * gt_data[label, ]
-        multi_labeled_pred[..., 1] += g * gt_data[label, ]
-        multi_labeled_pred[..., 2] += b * gt_data[label, ]
+        multi_labeled_pred[..., 0] += r * gt_data[label,]
+        multi_labeled_pred[..., 1] += g * gt_data[label,]
+        multi_labeled_pred[..., 2] += b * gt_data[label,]
 
     rgb_dtype = np.dtype([('R', 'u1'), ('G', 'u1'), ('B', 'u1')])
     multi_labeled_pred = multi_labeled_pred.copy().astype('u1').view(dtype=rgb_dtype).reshape((h, w, d))

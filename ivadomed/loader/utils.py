@@ -20,6 +20,7 @@ __numpy_type_map = {
 
 TRANSFORM_PARAMS = ['resample', 'elastic', 'rotation', 'offset', 'crop_params', 'reverse', 'affine', 'gaussian_noise']
 
+
 def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
     # read participants.tsv as pandas dataframe
     df = bids.BIDS(path_folder).participants.content
@@ -75,7 +76,6 @@ def imed_collate(batch):
     elif isinstance(batch[0], collections.Mapping):
         return {key: imed_collate([d[key] for d in batch]) for key in batch[0]}
     elif isinstance(batch[0], collections.Sequence):
-        #transposed = zip(*batch)
         return [imed_collate(samples) for samples in batch]
 
     return batch

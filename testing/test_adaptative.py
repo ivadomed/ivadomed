@@ -2,11 +2,10 @@ import os
 
 import torch
 from torch.utils.data import DataLoader
-from torchvision import transforms as torch_transforms
 
 import ivadomed.transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 
 GPU_NUMBER = 0
 BATCH_SIZE = 4
@@ -66,7 +65,7 @@ def test_hdf5():
             {
                 "wspace": 0.75,
                 "hspace": 0.75
-             },
+            },
         "CenterCrop":
             {
                 "size": [48, 48]
@@ -130,4 +129,3 @@ def test_hdf5():
     os.remove('testing_data/mytestfile.hdf5')
     print("Congrats your dataloader works! You can go Home now and get a beer.")
     return 0
-

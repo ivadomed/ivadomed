@@ -2,7 +2,6 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-from torchvision import transforms as torch_transforms
 
 import ivadomed.transforms as imed_transforms
 from ivadomed import utils as imed_utils
@@ -44,7 +43,7 @@ def test_sampler():
             {
                 "wspace": 0.75,
                 "hspace": 0.75
-             },
+            },
         "ROICrop":
             {
                 "size": [48, 48]
@@ -85,4 +84,3 @@ def test_sampler():
                                        collate_fn=imed_loader_utils.imed_collate,
                                        num_workers=0)
     _cmpt_label(train_loader_balanced)
-

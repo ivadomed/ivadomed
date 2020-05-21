@@ -1,9 +1,7 @@
+import copy
+
 import torch
 import torch.backends.cudnn as cudnn
-import torch.nn as nn
-from torch import optim
-
-import copy
 
 from ivadomed import models as imed_models
 

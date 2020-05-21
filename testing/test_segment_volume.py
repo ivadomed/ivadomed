@@ -1,12 +1,13 @@
-import os
 import json
-import torch
-import nibabel as nib
+import os
 import shutil
-import numpy as np
 
-from ivadomed import utils as imed_utils
+import nibabel as nib
+import numpy as np
+import torch
+
 from ivadomed import models as imed_models
+from ivadomed import utils as imed_utils
 
 SLICE_AXIS = 2
 PATH_BIDS = 'testing_data'
@@ -64,7 +65,6 @@ def test_segment_volume_2d():
 
 
 def test_segment_volume_3d():
-
     model = imed_models.UNet3D(in_channels=1,
                                n_classes=1,
                                base_n_filter=1)
@@ -103,4 +103,3 @@ def test_segment_volume_3d():
     assert nib_img.dataobj.dtype == 'float32'
 
     shutil.rmtree(PATH_MODEL)
-

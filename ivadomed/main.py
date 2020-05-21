@@ -718,7 +718,8 @@ def cmd_test(context):
             # reconstruct 3D image
             for smp_idx in range(len(preds_cpu)):
                 # undo transformations
-                preds_idx_undo, metadata_idx = val_undo_transform(preds_cpu[smp_idx], batch["gt_metadata"][smp_idx], data_type='gt')
+                preds_idx_undo, metadata_idx = val_undo_transform(preds_cpu[smp_idx], batch["gt_metadata"][smp_idx],
+                                                                  data_type='gt')
 
                 # preds_idx_undo is a list of length n_label of arrays
                 preds_idx_arr = np.array(preds_idx_undo)
