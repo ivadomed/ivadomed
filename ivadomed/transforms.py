@@ -20,7 +20,7 @@ from ivadomed import utils as imed_utils
 
 def multichannel_capable(wrapped):
     @functools.wraps(wrapped)
-    def wrapper(self, sample, metadata, data_type):
+    def wrapper(self, sample, metadata, data_type='im'):
         if isinstance(sample, list):
             list_data, list_metadata = [], []
             for s_cur, m_cur in zip(sample, metadata):
@@ -39,7 +39,7 @@ def multichannel_capable(wrapped):
 
 def two_dim_compatible(wrapped):
     @functools.wraps(wrapped)
-    def wrapper(self, sample, metadata, data_type):
+    def wrapper(self, sample, metadata, data_type='im'):
         # Check if sample is 2D
         if len(sample.shape) == 2:
             # Add one dimension
