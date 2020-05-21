@@ -306,8 +306,8 @@ def test_Crop_3D(im_seg, crop_transform):
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
                                     create_test_image(100, 100, 100, 1, rad_max=10)])
-@pytest.mark.parametrize('rot_transform', [RandomRotation(50),
-                                           RandomRotation((18, 36))])
+@pytest.mark.parametrize('rot_transform', [RandomRotation(10),
+                                           RandomRotation((5, 20))])
 def test_RandomRotation(im_seg, rot_transform):
     im, seg = im_seg
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
@@ -414,8 +414,8 @@ def test_RandomReverse(im_seg, reverse_transform):
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
                                     create_test_image(100, 100, 100, 1, rad_max=10)])
-@pytest.mark.parametrize('aff_transform', [RandomAffine(20),
-                                           RandomAffine(20, [0.1, 0.2, 0])])
+@pytest.mark.parametrize('aff_transform', [RandomAffine(10),
+                                           RandomAffine(10, [0.05, 0.1, 0])])
 def test_RandomAffine(im_seg, aff_transform):
     im, seg = im_seg
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
