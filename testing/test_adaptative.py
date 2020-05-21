@@ -131,5 +131,3 @@ def test_hdf5():
     print("Congrats your dataloader works! You can go Home now and get a beer.")
     return 0
 
-
-test_hdf5()

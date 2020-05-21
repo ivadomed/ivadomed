@@ -192,5 +192,3 @@ def test_HeMIS(p=0.0001):
     os.remove('testing_data/mytestfile.hdf5')
     print('\n [INFO]: Test of HeMIS passed successfully.')
 
-
-test_HeMIS()

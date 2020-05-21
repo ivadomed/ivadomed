@@ -103,9 +103,3 @@ def test_segment_volume_3d():
 
     shutil.rmtree(PATH_MODEL)
 
-
-print("Test segment volume with 2D model.")
-test_segment_volume_2d()
-
-print("Test segment volume with 3D model.")
-test_segment_volume_3d()

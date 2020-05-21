@@ -128,7 +128,3 @@ def test_image_orientation():
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
 
-
-
-print("Test image orientation")
-test_image_orientation()

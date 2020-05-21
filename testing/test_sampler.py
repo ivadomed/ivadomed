@@ -86,6 +86,3 @@ def test_sampler():
                                        num_workers=0)
     _cmpt_label(train_loader_balanced)
 
-
-print("Test sampler")
-test_sampler()

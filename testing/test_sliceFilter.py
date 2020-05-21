@@ -136,10 +136,3 @@ def test_slice_filter_roi():
         _cmpt_slice(train_loader, 'gt')
         print('\tNumber of Neg/Pos slices in ROI.')
         _cmpt_slice(train_loader, 'roi')
-
-
-print("Test test_slice_filter_center")
-test_slice_filter_center()
-
-print("Test test_slice_filter_roi")
-test_slice_filter_roi()

@@ -167,8 +167,3 @@ def test_inference(film_bool=False):
     metric_mgr.reset()
     print(metrics_dict)
 
-
-print("Test unet")
-test_inference()
-print("test unet-filmed")
-# test_inference(film_bool=True)

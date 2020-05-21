@@ -226,6 +226,3 @@ def test_unet():
         print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
         print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
 
-
-print("Test training time")
-test_unet()

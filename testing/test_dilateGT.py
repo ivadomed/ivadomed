@@ -105,6 +105,3 @@ def test_dilateGT(dil_fac=0.25):
     #       save_im_gt(np.array(input_samples[b_idx, 0]),
     #                   np.array(gt_samples[b_idx, 0]),
     #                   fname_out)
-
-
-test_dilateGT()
