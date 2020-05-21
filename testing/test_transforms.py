@@ -151,7 +151,7 @@ def test_NumpyToTensor(im_seg):
 
 def _test_Resample(im_seg, resample_transform, native_resolution, is_2D=False):
     im, seg = im_seg
-    metadata_ = {'zooms': native_resolution, 'data_shape': im[0].shape}
+    metadata_ = {'zooms': native_resolution, 'data_shape': im[0].shape if len(im[0].shape) == 3 else list(im[0].shape) + [1]}
     metadata_in = [metadata_ for _ in im] if isinstance(im, list) else {}
 
     # Resample input data
@@ -234,9 +234,9 @@ def _test_Crop(im_seg, crop_transform):
             assert "crop_params" in metadata
 
     # Apply transform
-    crop_transfrom_size = crop_transform.size if not crop_transform.is_2D else crop_transform.size[:2]
     do_im, do_metadata = crop_transform(im, metadata_in)
     do_seg, do_seg_metadata = crop_transform(seg, metadata_in)
+    crop_transfrom_size = crop_transform.size if not len(do_im[0].shape) == 2 else crop_transform.size[:2]
 
     # Loop and check
     for idx, i in enumerate(im):
@@ -261,7 +261,7 @@ def _test_Crop(im_seg, crop_transform):
         # Check data consistency
         fh, fw, fd, _, _, _ = do_metadata[idx]['crop_params']
         th, tw, td = crop_transform.size
-        if crop_transform.is_2D:
+        if not td:
             assert np.array_equal(i[fh:fh+th, fw:fw+tw], undo_im[idx][fh:fh+th, fw:fw+tw])
             assert np.array_equal(seg[idx][fh:fh+th, fw:fw+tw], undo_seg[idx][fh:fh+th, fw:fw+tw])
             # Plot for debugging
@@ -427,7 +427,7 @@ def test_RandomAffine(im_seg, aff_transform):
     # Loop and check
     for idx, i in enumerate(im):
         # Data consistency
-        assert dice_score(undo_seg[idx], seg[idx]) > 0.7
+        assert dice_score(undo_seg[idx], seg[idx]) > 0.65
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
