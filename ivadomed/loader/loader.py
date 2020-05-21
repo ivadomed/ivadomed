@@ -178,7 +178,7 @@ class SegmentationPair(object):
                     "gt_filenames": self.metadata[0]["gt_filenames"]
                 }))
             else:
-                gt_meta_dict.append(imed_loader_utils.SampleMetadata({}))
+                gt_meta_dict.append(gt_meta_dict[0])
 
         input_meta_dict = []
         for handle in self.input_handle:
