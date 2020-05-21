@@ -175,7 +175,8 @@ class SegmentationPair(object):
                 gt_meta_dict.append(imed_loader_utils.SampleMetadata({
                     "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
                     "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
-                    "gt_filenames": self.metadata[0]["gt_filenames"]
+                    "gt_filenames": self.metadata[0]["gt_filenames"],
+                    "data_type": 'gt'
                 }))
             else:
                 gt_meta_dict.append(gt_meta_dict[0])
@@ -184,7 +185,8 @@ class SegmentationPair(object):
         for handle in self.input_handle:
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
                 "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
-                "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis)
+                "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis),
+                "data_type": 'im'
             }))
 
         dreturn = {
@@ -439,12 +441,6 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         # i.e. remove params from previous iterations so that the coming transforms are different
         metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
         metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
-
-        for idx in range(len(metadata_input)):
-            metadata_input[idx]["data_type"] = 'im'
-
-        for idx in range(len(metadata_gt)):
-            metadata_gt[idx]["data_type"] = 'gt'
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=input_img,
