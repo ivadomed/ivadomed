@@ -699,8 +699,9 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
         # Reconstruct 3D object
         for i_slice in range(len(preds)):
+            for i_label in range(preds[i_slice].shape[0]):
+                batch["input_metadata"][i_slice][i_label]['data_type'] = 'gt'
             # undo transformations
-            batch["input_metadata"][i_slice][0]['data_type'] = 'gt'
             preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
                                                          batch["input_metadata"][i_slice],
                                                          data_type='gt')
