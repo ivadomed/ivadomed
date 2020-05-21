@@ -1,7 +1,7 @@
 {
-    "command": "train",
+    "command": "test",
     "gpu": 0,
-    "target_suffix": ["_seg-tumor", "_edema"],
+    "target_suffix": ["_seg-tumor"],
     "roi_suffix": null,
     "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
     "random_seed": 6,
@@ -44,6 +44,7 @@
     "HeMIS": false,
     "binarize_prediction": true,
     "attention_unet": false,
+    "n_filters": 1,
     "uncertainty": {"epistemic": false, "aleatoric": false, "n_it": 10},
     "slice_filter": {
         "filter_empty_mask": true,
@@ -58,6 +59,12 @@
         "overlap": {"unit": "vox", "thr": 3}
     },
     "transformation_training": {
+        "Resample":
+        {
+            "wspace": 1,
+            "hspace": 1,
+            "dspace": 2
+        },
         "CenterCrop": {
             "size": [256, 128, 16]
         },
@@ -65,6 +72,12 @@
       "NormalizeInstance": {"applied_to": ["im"]}
     },
     "transformation_validation": {
+                "Resample":
+        {
+            "wspace": 1,
+            "hspace": 1,
+            "dspace": 2
+        },
                 "CenterCrop": {
             "size": [256, 128, 16]
         },
@@ -72,6 +85,12 @@
         "NormalizeInstance": {"applied_to": ["im"]}
     },
     "transformation_testing": {
+                "Resample":
+        {
+            "wspace": 1,
+            "hspace": 1,
+            "dspace": 2
+        },
                 "CenterCrop": {
             "size": [256, 128, 16]
         },
