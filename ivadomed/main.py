@@ -433,17 +433,17 @@ def run_main():
     cuda_available = define_device(context['gpu'])
 
     # Get subject lists
-    if context["split_path"]:
+    if context["split_dataset"]["fname_split"]:
         # Load subjects lists
-        old_split = joblib.load(context["split_path"])
+        old_split = joblib.load(context["split_dataset"]["fname_split"])
         train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
     else:
         train_lst, valid_lst, test_lst = get_new_subject_split(path_folder=context['bids_path'],
-                                                               center_test=context['center_test'],
-                                                               split_method=context['split_method'],
-                                                               random_seed=context['random_seed'],
-                                                               train_frac=context['train_fraction'],
-                                                               test_frac=context['test_fraction'],
+                                                               center_test=context["split_dataset"]['center_test'],
+                                                               split_method=context["split_dataset"]['method'],
+                                                               random_seed=context["split_dataset"]['random_seed'],
+                                                               train_frac=context["split_dataset"]['train_fraction'],
+                                                               test_frac=context["split_dataset"]['test_fraction'],
                                                                log_directory=log_directory)
 
     if command == 'train':
