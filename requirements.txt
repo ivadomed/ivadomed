@@ -3,6 +3,7 @@ h5py
 joblib
 matplotlib>=3.0.3
 nibabel
+onnxruntime
 pandas
 pillow>=7.0.0
 pytest
