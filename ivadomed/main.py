@@ -418,6 +418,20 @@ def normalize_film_metadata(ds_train, ds_val, metadata_type, debugging):
     return ds_train, ds_val, train_onehotencoder
 
 
+def display_selected_model_spec(name, params):
+    """Display in terminal the selected model and its parameters.
+
+    Args:
+        name (string): model name
+        params (dict): keys are param names and values are param values
+    Returns:
+        None
+    """
+    print('\nSelected architecture: {}, with the following parameters:'.format(name))
+    for k in list(params.keys()):
+        print('\t{}: {}'.format(k, params[k]))
+
+
 def run_main():
     if len(sys.argv) <= 1:
         print("\nivadomed [config.json]\n")
@@ -447,10 +461,12 @@ def run_main():
                                                                log_directory=log_directory)
 
     if command == 'train':
+        # Parse parameters
         film_params = context["FiLM"] if context["FiLM"]["metadata"] != "without" else None
-        multichannel_params = context["contrast_train_validation"] if context["multichannel"] else None
-        mixup_params = float(context["mixup_alpha"])
+        multichannel_params = context["contrast"]["train_validation"] if context["multichannel"] else None
+        mixup_params = float(context["mixup_alpha"]) if context["mixup_alpha"] else None
 
+        # Disable some attributes
         if film_params:
             multichannel_params = None
             context["HeMIS"] = False
@@ -458,11 +474,12 @@ def run_main():
         if multichannel_params:
             context["HeMIS"] = False
 
-        model_available = ['unet_2D', 'unet_3D', 'HeMIS', 'attention_unet']
+        model_available = ['unet_2D', 'unet3D', 'HeMIS']
         model_context_list = [model_name for model_name in model_available
-                              if model_name in context and context[model_name]]
+                              if model_name in context and context[model_name]["applied"]]
         if len(model_context_list) == 1:
             model_name = model_context_list[0]
+            model_params = context[model_name]
         elif len(model_context_list) > 1:
             print('ERROR: Several models are selected in the configuration file: {}.'
                   'Please select only one.'.format(model_context_list))
@@ -470,9 +487,13 @@ def run_main():
         else:
             # Select default model
             model_name = 'unet_2D'
-        print('\nSelected architecture: {} with a depth of {}.\n'.format(model_name, context['depth']))
+            model_params = context[model_name]
 
-        hemis_params = None if model_name != 'HeMIS' else context["missing_probability"]
+        # Update params
+        model_params.update({"depth": context['depth'],
+                             "multichannel": multichannel_params,
+                             "n_out_channel": context["out_channel"]})
+        display_selected_model_spec(name=model_name, params=model_params)
 
         # Compose training transforms
         train_transform = imed_transforms.Compose(context["transformation_training"])
