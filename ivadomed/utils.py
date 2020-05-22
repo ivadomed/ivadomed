@@ -1,6 +1,7 @@
 import json
 import os
 
+import onnxruntime
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
@@ -962,3 +963,21 @@ def unstack_tensors(sample):
     for i in range(sample.shape[1]):
         list_tensor.append(sample[:, i, ].unsqueeze(1))
     return list_tensor
+
+
+def save_onnx_model(model, inputs, model_path):
+    model.eval()
+    dynamic_axes = list(range(len(inputs.shape)))
+    torch.onnx.export(model, inputs, model_path,
+                      opset_version=11,
+                      input_names=['input'],
+                      output_names=['output'],
+                      dynamic_axes={'input': dynamic_axes, 'output': dynamic_axes})
+
+
+def onnx_inference(model_path, inputs):
+    inputs = np.array(inputs)
+    ort_session = onnxruntime.InferenceSession(model_path)
+    ort_inputs = {ort_session.get_inputs()[0].name: inputs}
+    ort_outs = ort_session.run(None, ort_inputs)
+    return torch.tensor(ort_outs[0])
