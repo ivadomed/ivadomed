@@ -447,8 +447,7 @@ def run_main():
                                                                log_directory=log_directory)
 
     if command == 'train':
-        metadata_params = context["metadata"] if context["metadata"] != "without" else None
-        film_params = context["film_layers"] if metadata_params else None
+        film_params = context["FiLM"] if context["FiLM"]["metadata"] != "without" else None
         multichannel_params = context["contrast_train_validation"] if context["multichannel"] else None
         mixup_params = float(context["mixup_alpha"])
 
@@ -495,9 +494,9 @@ def run_main():
             # Normalize metadata before sending to the FiLM network
             ds_train, ds_val, train_onehotencoder = normalize_film_metadata(ds_train=ds_train,
                                                                             ds_val=ds_val,
-                                                                            metadata_type=metadata_params,
+                                                                            metadata_type=film_params['metadata'],
                                                                             debugging=context["debugging"])
-            film_params = {"film_layers": film_params, "film_onehotencoder": train_onehotencoder}
+            film_params.update({"film_onehotencoder": train_onehotencoder})
 
         imed_training.train(model_name=model_name,
                             dataset_train=ds_train,
@@ -505,7 +504,7 @@ def run_main():
                             log_directory=log_directory,
                             cuda_available=cuda_available,
                             multichannel_params=multichannel_params,
-                            metadata_type=metadata_params,
+                            metadata_type=film_params['metadata'],
                             hemis_params=hemis_params,
                             film_params=film_params,
                             mixup_params=mixup_params)
