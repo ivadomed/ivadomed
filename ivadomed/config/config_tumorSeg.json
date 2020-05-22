@@ -9,6 +9,7 @@
         "slice_filter_roi": null
     },
     "split_dataset": {
+        "fname_split": null,
         "random_seed": 6,
         "center_test": [],
         "method": "per_patient",
