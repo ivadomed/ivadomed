@@ -540,7 +540,10 @@ def cmd_train(context):
             break
 
     # Save final model
-    torch.save(model, "./" + context["log_directory"] + "/final_model.pt")
+    model_path = os.path.join(context['log_directory'], 'final_model.pt')
+    torch.save(model, model_path)
+    imed_utils.save_onnx_model(model, var_input, model_path.replace('pt', 'onnx'))
+
     if film_bool:  # save clustering and OneHotEncoding models
         joblib.dump(metadata_clustering_models, "./" +
                     context["log_directory"] + "/clustering_models.joblib")
