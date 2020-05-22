@@ -1,14 +1,9 @@
-import json
 import os
 import random
-import shutil
-import sys
 import time
 
 import joblib
-import nibabel as nib
 import numpy as np
-import pandas as pd
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -28,23 +23,12 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 cudnn.benchmark = True
 
 
-def cmd_train(context):
+def train(cuda_available=True):
     """Main command to train the network.
 
     :param context: this is a dictionary with all data from the
                     configuration file
     """
-    ##### DEFINE DEVICE #####
-    device = torch.device("cuda:" + str(context['gpu']) if torch.cuda.is_available() else "cpu")
-    cuda_available = torch.cuda.is_available()
-    if not cuda_available:
-        print("Cuda is not available.")
-        print("Working on {}.".format(device))
-    if cuda_available:
-        # Set the GPU
-        gpu_number = int(context["gpu"])
-        torch.cuda.set_device(gpu_number)
-        print("Using GPU number {}".format(gpu_number))
 
     # Boolean which determines if the selected architecture is FiLMed-Unet or Unet or Mixup-Unet
     metadata_bool = False if context["metadata"] == "without" else True

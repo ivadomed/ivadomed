@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
+from ivadomed import training as imed_training
 from ivadomed import losses as imed_losses
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
@@ -345,6 +346,28 @@ def cmd_eval(context):
     return metrics_dict, df_results
 
 
+def define_device(gpu_id):
+    """
+    Define the device used for the process of interest.
+
+    Args:
+        gpu_id (int): ID of the GPU
+    Returns:
+        Bool: True if cuda is available
+    """
+    device = torch.device("cuda:" + str(gpu_id) if torch.cuda.is_available() else "cpu")
+    cuda_available = torch.cuda.is_available()
+    if not cuda_available:
+        print("Cuda is not available.")
+        print("Working on {}.".format(device))
+    if cuda_available:
+        # Set the GPU
+        gpu_number = int(gpu_id)
+        torch.cuda.set_device(gpu_number)
+        print("Using GPU number {}".format(gpu_number))
+    return cuda_available
+
+
 def run_main():
     if len(sys.argv) <= 1:
         print("\nivadomed [config.json]\n")
@@ -355,8 +378,11 @@ def run_main():
 
     command = context["command"]
 
+    # Define device
+    cuda_available = define_device(context['gpu'])
+
     if command == 'train':
-        cmd_train(context)
+        imed_training.train(cuda_available=cuda_available)
         shutil.copyfile(sys.argv[1], "./" + context["log_directory"] + "/config_file.json")
     elif command == 'test':
         cmd_test(context)
