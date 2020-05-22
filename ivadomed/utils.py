@@ -971,7 +971,9 @@ def unstack_tensors(sample):
 
 def save_onnx_model(model, inputs, model_path):
     model.eval()
-    dynamic_axes = list(range(len(inputs.shape)))
+    dynamic_axes = {0: 'batch', 1: 'num_channels', 2: 'height', 3: 'width', 4: 'depth'}
+    if len(inputs.shape) == 4:
+        del dynamic_axes[4]
     torch.onnx.export(model, inputs, model_path,
                       opset_version=11,
                       input_names=['input'],
