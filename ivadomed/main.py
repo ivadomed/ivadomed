@@ -398,6 +398,31 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
     return train_lst, valid_lst, test_lst
 
 
+def get_subdatasets_subjects_list(split_params, bids_path, log_directory):
+    """Get lists of subjects for each sub-dataset between training / validation / testing.
+
+    Args:
+        split_params (dict):
+        bids_path (string): Path to the BIDS dataset
+        log_directory (string): output folder
+    Returns:
+        list, list list: Training, validation and testing subjects lists
+    """
+    if split_params["fname_split"]:
+        # Load subjects lists
+        old_split = joblib.load(split_params["fname_split"])
+        train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
+    else:
+        train_lst, valid_lst, test_lst = get_new_subject_split(path_folder=bids_path,
+                                                               center_test=split_params['center_test'],
+                                                               split_method=split_params['method'],
+                                                               random_seed=split_params['random_seed'],
+                                                               train_frac=split_params['train_fraction'],
+                                                               test_frac=split_params['test_fraction'],
+                                                               log_directory=log_directory)
+    return train_lst, valid_lst, test_lst
+
+
 def normalize_film_metadata(ds_train, ds_val, metadata_type, debugging):
     if metadata_type == "mri_params":
         metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
@@ -447,18 +472,7 @@ def run_main():
     cuda_available = define_device(context['gpu'])
 
     # Get subject lists
-    if context["split_dataset"]["fname_split"]:
-        # Load subjects lists
-        old_split = joblib.load(context["split_dataset"]["fname_split"])
-        train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
-    else:
-        train_lst, valid_lst, test_lst = get_new_subject_split(path_folder=context['bids_path'],
-                                                               center_test=context["split_dataset"]['center_test'],
-                                                               split_method=context["split_dataset"]['method'],
-                                                               random_seed=context["split_dataset"]['random_seed'],
-                                                               train_frac=context["split_dataset"]['train_fraction'],
-                                                               test_frac=context["split_dataset"]['test_fraction'],
-                                                               log_directory=log_directory)
+    train_lst, valid_lst, test_lst = get_subdatasets_subjects_list()
 
     if command == 'train':
         # Parse parameters
