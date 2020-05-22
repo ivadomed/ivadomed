@@ -382,7 +382,15 @@ def run_main():
     cuda_available = define_device(context['gpu'])
 
     if command == 'train':
-        imed_training.train(cuda_available=cuda_available)
+        # Compose training transforms
+        train_transform = imed_transforms.Compose(context["transformation_training"])
+        # Compose validation transforms
+        val_transform = imed_transforms.Compose(context["transformation_validation"])
+
+        imed_training.train(train_transform=train_transform,
+                            val_transform=val_transform,
+                            log_directory=context["log_directory"],
+                            cuda_available=cuda_available)
         shutil.copyfile(sys.argv[1], "./" + context["log_directory"] + "/config_file.json")
     elif command == 'test':
         cmd_test(context)

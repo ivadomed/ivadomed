@@ -23,7 +23,7 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 cudnn.benchmark = True
 
 
-def train(cuda_available=True):
+def train(train_transform, val_transform, log_directory, cuda_available=True):
     """Main command to train the network.
 
     :param context: this is a dictionary with all data from the
@@ -68,13 +68,7 @@ def train(cuda_available=True):
         print('\tUsing multichannel model with modalities {}.\n'.format(context['contrast_train_validation']))
 
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(log_dir=context["log_directory"])
-
-    # Compose training transforms
-    train_transform = imed_transforms.Compose(context["transformation_training"])
-
-    # Compose validation transforms
-    val_transform = imed_transforms.Compose(context["transformation_validation"])
+    writer = SummaryWriter(log_dir=log_directory)
 
     # Randomly split dataset between training / validation / testing
     if context.get("split_path") is None:
@@ -87,7 +81,7 @@ def train(cuda_available=True):
 
         # save the subject distribution
         split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-        joblib.dump(split_dct, "./" + context["log_directory"] + "/split_datasets.joblib")
+        joblib.dump(split_dct, "./" + log_directory + "/split_datasets.joblib")
 
     else:
         train_lst = joblib.load(context["split_path"])['train']
@@ -322,7 +316,7 @@ def train(cuda_available=True):
 
                 # if debugging and first epoch, then save samples as png in log folder
                 if context["debugging"] and epoch == 1 and random.random() < 0.1:
-                    mixup_folder = os.path.join(context["log_directory"], 'mixup')
+                    mixup_folder = os.path.join(log_directory, 'mixup')
                     if not os.path.isdir(mixup_folder):
                         os.makedirs(mixup_folder)
                     random_idx = np.random.randint(0, input_samples.size()[0])
@@ -509,7 +503,7 @@ def train(cuda_available=True):
             else:
                 best_validation_dice = best_validation_loss
                 best_training_dice = best_training_loss
-            torch.save(model, "./" + context["log_directory"] + "/best_model.pt")
+            torch.save(model, "./" + log_directory + "/best_model.pt")
 
         # Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
         val_losses.append(val_loss_total_avg)
@@ -522,12 +516,12 @@ def train(cuda_available=True):
             break
 
     # Save final model
-    torch.save(model, "./" + context["log_directory"] + "/final_model.pt")
+    torch.save(model, "./" + log_directory + "/final_model.pt")
     if film_bool:  # save clustering and OneHotEncoding models
         joblib.dump(metadata_clustering_models, "./" +
-                    context["log_directory"] + "/clustering_models.joblib")
+                    log_directory + "/clustering_models.joblib")
         joblib.dump(train_onehotencoder, "./" +
-                    context["log_directory"] + "/one_hot_encoder.joblib")
+                    log_directory + "/one_hot_encoder.joblib")
 
         # Convert list of gammas/betas into numpy arrays
         gammas_dict = {i: np.array(gammas_dict[i]) for i in range(1, 2 * depth + 3)}
@@ -535,12 +529,12 @@ def train(cuda_available=True):
 
         # Save the numpy arrays for gammas/betas inside files.npy in log_directory
         for i in range(1, 2 * depth + 3):
-            np.save(context["log_directory"] + f"/gamma_layer_{i}.npy", gammas_dict[i])
-            np.save(context["log_directory"] + f"/beta_layer_{i}.npy", betas_dict[i])
+            np.save(log_directory + f"/gamma_layer_{i}.npy", gammas_dict[i])
+            np.save(log_directory + f"/beta_layer_{i}.npy", betas_dict[i])
 
         # Convert into numpy and save the contrasts of all batch images
         contrast_images = np.array(var_contrast_list)
-        np.save(context["log_directory"] + "/contrast_images.npy", contrast_images)
+        np.save(log_directory + "/contrast_images.npy", contrast_images)
 
     writer.close()
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
