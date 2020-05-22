@@ -520,16 +520,17 @@ def run_main():
             film_params.update({"film_onehotencoder": train_onehotencoder})
 
         imed_training.train(model_name=model_name,
+                            model_params=model_params,
                             dataset_train=ds_train,
                             dataset_val=ds_val,
                             log_directory=log_directory,
                             cuda_available=cuda_available,
-                            multichannel_params=multichannel_params,
                             metadata_type=film_params['metadata'],
-                            hemis_params=hemis_params,
                             film_params=film_params,
                             mixup_params=mixup_params)
-        shutil.copyfile(sys.argv[1], "./" + context["log_directory"] + "/config_file.json")
+
+        # Save config file within log_directory
+        shutil.copyfile(sys.argv[1], "./" + log_directory + "/config_file.json")
 
     elif command == 'test':
         cmd_test(context)
