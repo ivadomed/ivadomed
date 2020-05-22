@@ -456,6 +456,7 @@ def display_selected_model_spec(name, params):
     for k in list(params.keys()):
         print('\t{}: {}'.format(k, params[k]))
 
+
 def get_subdatasets_transforms(transform_params):
     """Get transformation parameters for each subdataset: training, validation and testing.
 
@@ -477,6 +478,25 @@ def get_subdatasets_transforms(transform_params):
             if subds_name in subdataset_list:
                 subds_dict.update({transform_params[transform_name]})
     return train, valid, test
+
+
+def get_dataset(bids_path, dataset_type, target_suffix, roi_params, contrast_params, model_params, transform_params,
+                subject_list):
+    # Compose transforms
+    transforms = imed_transforms.Compose(transform_params)
+
+    # This code will iterate over the folders and load the data, filtering
+    # the slices without labels and then concatenating all the datasets together
+    ds = imed_loader.load_dataset(subject_list,
+                                  transforms,
+                                  context)
+
+    # if ROICrop in transform, then apply SliceFilter to ROI slices
+    if 'ROICrop' in transform_params:
+        ds = imed_loader_utils.filter_roi(ds, nb_nonzero_thr=roi_params["slice_filter_roi"])
+
+    return ds
+
 
 def run_main():
     if len(sys.argv) <= 1:
@@ -506,7 +526,6 @@ def run_main():
         film_params = context["FiLM"] if context["FiLM"]["metadata"] != "without" else None
         multichannel_params = context["contrast"]["train_validation"] if context["multichannel"] else None
         mixup_params = float(context["mixup_alpha"]) if context["mixup_alpha"] else None
-
         # Disable some attributes
         if film_params:
             multichannel_params = None
@@ -515,6 +534,7 @@ def run_main():
         if multichannel_params:
             context["HeMIS"] = False
 
+        # MODEL PARAMETERS
         model_available = ['unet_2D', 'unet3D', 'HeMIS']
         model_context_list = [model_name for model_name in model_available
                               if model_name in context and context[model_name]["applied"]]
@@ -529,28 +549,13 @@ def run_main():
             # Select default model
             model_name = 'unet_2D'
             model_params = context[model_name]
-
         # Update params
         model_params.update({"depth": context['depth'],
                              "multichannel": multichannel_params,
                              "n_out_channel": context["out_channel"]})
         display_selected_model_spec(name=model_name, params=model_params)
 
-        # Compose training transforms
-        train_transform = imed_transforms.Compose(context["transformation_training"])
-        # Compose validation transforms
-        val_transform = imed_transforms.Compose(context["transformation_validation"])
-
-        # This code will iterate over the folders and load the data, filtering
-        # the slices without labels and then concatenating all the datasets together
-        ds_train = imed_loader.load_dataset(train_lst, train_transform, context)
-        ds_val = imed_loader.load_dataset(valid_lst, val_transform, context)
-
-        # if ROICrop in transform, then apply SliceFilter to ROI slices
-        if 'ROICrop' in context["transformation_training"].keys():
-            ds_train = imed_loader_utils.filter_roi(ds_train, nb_nonzero_thr=context["slice_filter_roi"])
-        if 'ROICrop' in context["transformation_validation"].keys():
-            ds_val = imed_loader_utils.filter_roi(ds_val, nb_nonzero_thr=context["slice_filter_roi"])
+        # HERE
 
         if film_params:
             # Normalize metadata before sending to the FiLM network
