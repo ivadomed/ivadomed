@@ -10,9 +10,9 @@ from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adapt
 from ivadomed import utils as imed_utils
 
 
-def load_dataset(data_list, data_transform, context):
-    if context["unet_3D"]:
-        dataset = Bids3DDataset(context["bids_path"],
+def load_dataset(data_list, bids_path, data_transform, model_params):
+    if model_params["name"] == "unet3D":
+        dataset = Bids3DDataset(bids_path,
                                 subject_lst=data_list,
                                 target_suffix=context["target_suffix"],
                                 roi_suffix=context["roi_suffix"],
@@ -22,26 +22,26 @@ def load_dataset(data_list, data_transform, context):
                                 slice_axis=imed_utils.AXIS_DCT[context["slice_axis"]],
                                 transform=data_transform,
                                 multichannel=context['multichannel'],
-                                length=context["length_3D"],
-                                padding=context["padding_3D"])
-    elif context["HeMIS"]:
-        dataset = imed_adaptative.HDF5Dataset(root_dir=context["bids_path"],
+                                length=model_params["length_3D"],
+                                padding=model_params["padding_3D"])
+    elif model_params["name"] == "HeMIS":
+        dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
                                               subject_lst=data_list,
-                                              hdf5_name=context["hdf5_path"],
-                                              csv_name=context["csv_path"],
+                                              hdf5_name=model_params["hdf5_path"],
+                                              csv_name=model_params["csv_path"],
                                               target_suffix=context["target_suffix"],
                                               contrast_lst=context["contrast_train_validation"],
-                                              ram=context['ram'],
+                                              ram=model_params['ram'],
                                               contrast_balance=context["contrast_balance"],
                                               slice_axis=imed_utils.AXIS_DCT[context["slice_axis"]],
                                               transform=data_transform,
                                               metadata_choice=context["metadata"],
                                               slice_filter_fn=imed_utils.SliceFilter(**context["slice_filter"]),
                                               roi_suffix=context["roi_suffix"],
-                                              target_lst=context['target_lst'],
-                                              roi_lst=context['roi_lst'])
+                                              target_lst=model_params['target_lst'],
+                                              roi_lst=model_params['roi_lst'])
     else:
-        dataset = BidsDataset(context["bids_path"],
+        dataset = BidsDataset(bids_path,
                               subject_lst=data_list,
                               target_suffix=context["target_suffix"],
                               roi_suffix=context["roi_suffix"],
