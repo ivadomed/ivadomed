@@ -1,6 +1,7 @@
 import json
 import os
 
+import onnxruntime
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
@@ -621,11 +622,13 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     #  ivadomed, and do it in a separate, more specific file (e.g. models.py)
     if os.path.isdir(folder_model):
         prefix_model = os.path.basename(folder_model)
-        # Check if model and model metadata exist
-        fname_model = os.path.join(folder_model, prefix_model + '.pt')
+        # Check if model and model metadata exist. Verify if ONNX model exists, if not try to find .pt model
+        fname_model = os.path.join(folder_model, prefix_model + '.onnx')
         if not os.path.isfile(fname_model):
-            print('Model file not found: {}'.format(fname_model))
-            exit()
+            fname_model = os.path.join(folder_model, prefix_model + '.pt')
+            if not os.path.exists(fname_model):
+                print('Model file not found: {}'.format(fname_model))
+                exit()
         fname_model_metadata = os.path.join(folder_model, prefix_model + '.json')
         if not os.path.isfile(fname_model_metadata):
             print('Model metadata file not found: {}'.format(fname_model_metadata))
@@ -686,16 +689,18 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
                              num_workers=0)
 
     # Load model
-    model = torch.load(fname_model, map_location=device)
+    if fname_model.endswith('.pt'):
+        model = torch.load(fname_model, map_location=device)
 
-    # Inference time
-    model.eval()
+        # Inference time
+        model.eval()
 
     # Loop across batches
     preds_list, slice_idx_list = [], []
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
-            preds = model(batch['input'])
+            img = batch['input']
+            preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
 
         # Reconstruct 3D object
         for i_slice in range(len(preds)):
@@ -962,3 +967,23 @@ def unstack_tensors(sample):
     for i in range(sample.shape[1]):
         list_tensor.append(sample[:, i, ].unsqueeze(1))
     return list_tensor
+
+
+def save_onnx_model(model, inputs, model_path):
+    model.eval()
+    dynamic_axes = {0: 'batch', 1: 'num_channels', 2: 'height', 3: 'width', 4: 'depth'}
+    if len(inputs.shape) == 4:
+        del dynamic_axes[4]
+    torch.onnx.export(model, inputs, model_path,
+                      opset_version=11,
+                      input_names=['input'],
+                      output_names=['output'],
+                      dynamic_axes={'input': dynamic_axes, 'output': dynamic_axes})
+
+
+def onnx_inference(model_path, inputs):
+    inputs = np.array(inputs)
+    ort_session = onnxruntime.InferenceSession(model_path)
+    ort_inputs = {ort_session.get_inputs()[0].name: inputs}
+    ort_outs = ort_session.run(None, ort_inputs)
+    return torch.tensor(ort_outs[0])
