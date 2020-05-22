@@ -23,94 +23,31 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 cudnn.benchmark = True
 
 
-def train(train_transform, val_transform, log_directory, cuda_available=True):
+def train(model_name, dataset_train, dataset_val, log_directory, cuda_available=True,
+          multichannel_params=None, metadata_type=None, hemis_params=None, film_params=None,
+          mixup_params=None):
     """Main command to train the network.
 
-    :param context: this is a dictionary with all data from the
-                    configuration file
+    Args:
+        model_name (string): Model's name.
+        dataset_train (imed_loader): Training dataset
+        dataset_val (imed_loader): Validation dataset
+        log_directory (string):
+        cuda_available (Bool):
+        multichannel_params (list): list of the contrasts of interest
+        metadata_type (string): type of extra metadata to import
+        hemis_params (float): missing modality probability
+        film_params (dict): keys: film_layers, film_onehotencoder
+        mixup_params (float): alpha parameter
+    Returns:
+        Bool: True if cuda is available
     """
-
-    # Boolean which determines if the selected architecture is FiLMed-Unet or Unet or Mixup-Unet
-    metadata_bool = False if context["metadata"] == "without" else True
-    film_bool = (bool(sum(context["film_layers"])) and metadata_bool)
-
-    unet_3D = context["unet_3D"]
-    HeMIS = context['HeMIS']
-    attention = context["attention_unet"]
-    if film_bool:
-        context["multichannel"] = False
-        HeMIS = False
-    elif context["multichannel"]:
-        HeMIS = False
-    if HeMIS:
-        # Initializing the probability of missing modalities for HeMIS.
-        # Higher probability means a more missing modalities
-        p = context["missing_probability"]
-
-    if bool(sum(context["film_layers"])) and not (metadata_bool):
-        print('\tWarning FiLM disabled since metadata is disabled')
-    else:
-
-        print('\nArchitecture: {} with a depth of {}.\n' \
-              .format('FiLMedUnet' if film_bool else 'HeMIS-Unet' if HeMIS else "Attention UNet" if attention else
-        '3D Unet' if unet_3D else "Unet", context['depth']))
-
-    mixup_bool = False if film_bool else bool(context["mixup_bool"])
-    mixup_alpha = float(context["mixup_alpha"])
-
-    if not film_bool and mixup_bool:
-        print('\twith Mixup (alpha={})\n'.format(mixup_alpha))
-    if context["metadata"] == "mri_params":
-        print('\tInclude subjects with acquisition metadata available only.\n')
-    else:
-        print('\tInclude all subjects, with or without acquisition metadata.\n')
-    if context['multichannel']:
-        print('\tUsing multichannel model with modalities {}.\n'.format(context['contrast_train_validation']))
-
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=log_directory)
 
-    # Randomly split dataset between training / validation / testing
-    if context.get("split_path") is None:
-        train_lst, valid_lst, test_lst = imed_loader_utils.split_dataset(path_folder=context["bids_path"],
-                                                                         center_test_lst=context["center_test"],
-                                                                         split_method=context["split_method"],
-                                                                         random_seed=context["random_seed"],
-                                                                         train_frac=context["train_fraction"],
-                                                                         test_frac=context["test_fraction"])
-
-        # save the subject distribution
-        split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-        joblib.dump(split_dct, "./" + log_directory + "/split_datasets.joblib")
-
-    else:
-        train_lst = joblib.load(context["split_path"])['train']
-        valid_lst = joblib.load(context["split_path"])['valid']
-
-    # This code will iterate over the folders and load the data, filtering
-    # the slices without labels and then concatenating all the datasets together
-    ds_train = imed_loader.load_dataset(train_lst, train_transform, context)
-
-    # if ROICrop2D in transform, then apply SliceFilter to ROI slices
-    # todo: not supported by the adaptative loader
-    if 'ROICrop2D' in context["transformation_training"].keys():
-        ds_train = imed_loader_utils.filter_roi(ds_train, nb_nonzero_thr=context["slice_filter_roi"])
-
-    if film_bool:  # normalize metadata before sending to the network
-        if context["metadata"] == "mri_params":
-            metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
-            metadata_clustering_models = imed_film.clustering_fit(ds_train.metadata, metadata_vector)
-        else:
-            metadata_clustering_models = None
-
-        ds_train, train_onehotencoder = imed_film.normalize_metadata(ds_train,
-                                                                     metadata_clustering_models,
-                                                                     context["debugging"],
-                                                                     context["metadata"],
-                                                                     True)
-
+    ## HERE
     if not unet_3D:
-        print(f"Loaded {len(ds_train)} {context['slice_axis']} slices for the training set.")
+        print(f"Loaded {len(dataset_train)} {dataset_train['slice_axis']} slices for the training set.")
     else:
         print(f"Loaded {len(ds_train)} volumes of size {context['length_3D']} for the training set.")
 
@@ -124,21 +61,6 @@ def train(train_transform, val_transform, log_directory, cuda_available=True):
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
-    print("Validation")
-
-    # Validation dataset ------------------------------------------------------
-    ds_val = imed_loader.load_dataset(valid_lst, val_transform, context)
-
-    # if ROICrop2D in transform, then apply SliceFilter to ROI slices
-    if 'ROICrop2D' in context["transformation_validation"].keys():
-        ds_val = imed_loader_utils.filter_roi(ds_val, nb_nonzero_thr=context["slice_filter_roi"])
-
-    if film_bool:  # normalize metadata before sending to network
-        ds_val = imed_film.normalize_metadata(ds_val,
-                                              metadata_clustering_models,
-                                              context["debugging"],
-                                              context["metadata"],
-                                              False)
 
     if not unet_3D:
         print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")

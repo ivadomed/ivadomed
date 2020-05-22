@@ -347,8 +347,7 @@ def cmd_eval(context):
 
 
 def define_device(gpu_id):
-    """
-    Define the device used for the process of interest.
+    """Define the device used for the process of interest.
 
     Args:
         gpu_id (int): ID of the GPU
@@ -368,6 +367,57 @@ def define_device(gpu_id):
     return cuda_available
 
 
+def get_new_subject_split(path_folder, center_test, split_method, random_seed,
+                          train_frac, test_frac, log_directory):
+    """Randomly split dataset between training / validation / testing.
+
+    Randomly split dataset between training / validation / testing
+        and save it in log_directory + "/split_datasets.joblib"
+    Args:
+        path_folder (string): Dataset folder
+        center_test (list): list of centers to include in the testing set
+        split_method (string): see imed_loader_utils.split_dataset
+        random_seed (int):
+        train_frac (float): between 0 and 1
+        test_frac (float): between 0 and 1
+        log_directory (string): output folder
+    Returns:
+        list, list list: Training, validation and testing subjects lists
+    """
+    train_lst, valid_lst, test_lst = imed_loader_utils.split_dataset(path_folder=path_folder,
+                                                                     center_test_lst=center_test,
+                                                                     split_method=split_method,
+                                                                     random_seed=random_seed,
+                                                                     train_frac=train_frac,
+                                                                     test_frac=test_frac)
+
+    # save the subject distribution
+    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
+    joblib.dump(split_dct, "./" + log_directory + "/split_datasets.joblib")
+
+    return train_lst, valid_lst, test_lst
+
+
+def normalize_film_metadata(ds_train, ds_val, metadata_type, debugging):
+    if metadata_type == "mri_params":
+        metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
+        metadata_clustering_models = imed_film.clustering_fit(ds_train.metadata, metadata_vector)
+    else:
+        metadata_clustering_models = None
+
+    ds_train, train_onehotencoder = imed_film.normalize_metadata(ds_train,
+                                                                 metadata_clustering_models,
+                                                                 debugging,
+                                                                 metadata_type,
+                                                                 True)
+    ds_val = imed_film.normalize_metadata(ds_val,
+                                          metadata_clustering_models,
+                                          debugging,
+                                          metadata_type)
+
+    return ds_train, ds_val, train_onehotencoder
+
+
 def run_main():
     if len(sys.argv) <= 1:
         print("\nivadomed [config.json]\n")
@@ -377,21 +427,90 @@ def run_main():
         context = json.load(fhandle)
 
     command = context["command"]
+    log_directory = context["log_directory"]
 
     # Define device
     cuda_available = define_device(context['gpu'])
 
+    # Get subject lists
+    if context["split_path"]:
+        # Load subjects lists
+        old_split = joblib.load(context["split_path"])
+        train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
+    else:
+        train_lst, valid_lst, test_lst = get_new_subject_split(path_folder=context['bids_path'],
+                                                               center_test=context['center_test'],
+                                                               split_method=context['split_method'],
+                                                               random_seed=context['random_seed'],
+                                                               train_frac=context['train_fraction'],
+                                                               test_frac=context['test_fraction'],
+                                                               log_directory=log_directory)
+
     if command == 'train':
+        metadata_params = context["metadata"] if context["metadata"] != "without" else None
+        film_params = context["film_layers"] if metadata_params else None
+        multichannel_params = context["contrast_train_validation"] if context["multichannel"] else None
+        mixup_params = float(context["mixup_alpha"])
+
+        if film_params:
+            multichannel_params = None
+            context["HeMIS"] = False
+            mixup_params = False
+        if multichannel_params:
+            context["HeMIS"] = False
+
+        model_available = ['unet_2D', 'unet_3D', 'HeMIS', 'attention_unet']
+        model_context_list = [model_name for model_name in model_available
+                              if model_name in context and context[model_name]]
+        if len(model_context_list) == 1:
+            model_name = model_context_list[0]
+        elif len(model_context_list) > 1:
+            print('ERROR: Several models are selected in the configuration file: {}.'
+                  'Please select only one.'.format(model_context_list))
+            exit()
+        else:
+            # Select default model
+            model_name = 'unet_2D'
+        print('\nSelected architecture: {} with a depth of {}.\n'.format(model_name, context['depth']))
+
+        hemis_params = None if model_name != 'HeMIS' else context["missing_probability"]
+
         # Compose training transforms
         train_transform = imed_transforms.Compose(context["transformation_training"])
         # Compose validation transforms
         val_transform = imed_transforms.Compose(context["transformation_validation"])
 
-        imed_training.train(train_transform=train_transform,
-                            val_transform=val_transform,
-                            log_directory=context["log_directory"],
-                            cuda_available=cuda_available)
+        # This code will iterate over the folders and load the data, filtering
+        # the slices without labels and then concatenating all the datasets together
+        ds_train = imed_loader.load_dataset(train_lst, train_transform, context)
+        ds_val = imed_loader.load_dataset(valid_lst, val_transform, context)
+
+        # if ROICrop in transform, then apply SliceFilter to ROI slices
+        if 'ROICrop' in context["transformation_training"].keys():
+            ds_train = imed_loader_utils.filter_roi(ds_train, nb_nonzero_thr=context["slice_filter_roi"])
+        if 'ROICrop' in context["transformation_validation"].keys():
+            ds_val = imed_loader_utils.filter_roi(ds_val, nb_nonzero_thr=context["slice_filter_roi"])
+
+        if film_params:
+            # Normalize metadata before sending to the FiLM network
+            ds_train, ds_val, train_onehotencoder = normalize_film_metadata(ds_train=ds_train,
+                                                                            ds_val=ds_val,
+                                                                            metadata_type=metadata_params,
+                                                                            debugging=context["debugging"])
+            film_params = {"film_layers": film_params, "film_onehotencoder": train_onehotencoder}
+
+        imed_training.train(model_name=model_name,
+                            dataset_train=ds_train,
+                            dataset_val=ds_val,
+                            log_directory=log_directory,
+                            cuda_available=cuda_available,
+                            multichannel_params=multichannel_params,
+                            metadata_type=metadata_params,
+                            hemis_params=hemis_params,
+                            film_params=film_params,
+                            mixup_params=mixup_params)
         shutil.copyfile(sys.argv[1], "./" + context["log_directory"] + "/config_file.json")
+
     elif command == 'test':
         cmd_test(context)
     elif command == 'eval':
