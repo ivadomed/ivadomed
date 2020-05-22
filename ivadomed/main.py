@@ -525,7 +525,9 @@ def cmd_train(context):
             else:
                 best_validation_dice = best_validation_loss
                 best_training_dice = best_training_loss
-            torch.save(model, "./" + context["log_directory"] + "/best_model.pt")
+            model_path = os.path.join(context['log_directory'], 'best_model.pt')
+            torch.save(model, model_path)
+            imed_utils.save_onnx_model(model, var_input, model_path.replace('pt', 'onnx'))
 
         # Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
         val_losses.append(val_loss_total_avg)
