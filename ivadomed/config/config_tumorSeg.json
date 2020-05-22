@@ -1,22 +1,47 @@
 {
     "command": "test",
     "gpu": 0,
+    "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
+    "log_directory": "HeMIS",
     "target_suffix": ["_seg-tumor"],
     "roi": {
         "suffix": null,
         "slice_filter_roi": null
     },
-    "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
-    "random_seed": 6,
-    "contrast_train_validation": ["T1w", "T2w"],
-    "contrast_test": ["T1w","T2w"],
-    "contrast_balance": {},
-    "center_test": [],
-    "batch_size": 1,
-    "dropout_rate": 0.3,
-    "batch_norm_momentum": 0.9,
-    "loss": {"name": "dice"},
-    "log_directory": "HeMIS",
+    "split_dataset": {
+        "random_seed": 6,
+        "center_test": [],
+        "method": "per_patient",
+        "train_fraction": 0.6,
+        "test_fraction": 0.2
+    },
+    "contrasts": {
+        "train_validation": ["T1w", "T2w"],
+        "test": ["T1w","T2w"],
+        "contrast_balance": {}
+    },
+    "slice_axis": "sagittal",
+    "training_parameters": {
+        "batch_size": 1,
+        "dropout_rate": 0.3,
+        "batch_norm_momentum": 0.9,
+        "loss": {
+            "name": "dice",
+        },
+        "training_time": {
+            "num_epochs": 100,
+            "early_stopping_patience": 50,
+            "early_stopping_epsilon": 0.001
+        },
+        "scheduler": {
+            "initial_lr": 0.001,
+            "lr_scheduler": {
+                "name": "CosineAnnealingLR",
+                "base_lr": 1e-5,
+                "max_lr": 1e-2,
+            }
+        }
+    },
     "FiLM": {
         "metadata": "without",
         "film_layers": []
@@ -42,25 +67,17 @@
         "retrain_model": null,
         "retrain_fraction": 1.0
     },
-    "training_time": {
-        "num_epochs": 100,
-        "early_stopping_patience": 50,
-        "early_stopping_epsilon": 0.001
-    },
-    "scheduler": {
-        "initial_lr": 0.001,
-        "lr_scheduler": {"name": "CosineAnnealingLR", "base_lr": 1e-5, "max_lr": 1e-2},
-    },
     "depth": 4,
     "mixup_alpha": null,
     "multichannel": false,
     "out_channel": 1,
     "balance_samples": false,
-    "slice_axis": "sagittal",
-    "split_method": "per_patient",
-    "train_test_fraction": [0.6, 0.2],
     "binarize_prediction": true,
-    "uncertainty": {"epistemic": false, "aleatoric": false, "n_it": 10},
+    "uncertainty": {
+        "epistemic": false,
+        "aleatoric": false,
+        "n_it": 10,
+    },
     "slice_filter": {
         "filter_empty_mask": true,
         "filter_empty_input": true
