@@ -87,10 +87,10 @@ def cmd_train(context):
     writer = SummaryWriter(log_dir=context["log_directory"])
 
     # Compose training transforms
-    train_transform = imed_transforms.compose_transforms(context["transformation_training"])
+    train_transform = imed_transforms.Compose(context["transformation_training"])
 
     # Compose validation transforms
-    val_transform = imed_transforms.compose_transforms(context["transformation_validation"])
+    val_transform = imed_transforms.Compose(context["transformation_validation"])
 
     # Randomly split dataset between training / validation / testing
     if context.get("split_path") is None:
@@ -320,7 +320,7 @@ def cmd_train(context):
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
 
-        lr = scheduler.get_lr()[0]
+        lr = scheduler.get_last_lr()[0]
         writer.add_scalar('learning_rate', lr, epoch)
 
         model.train()
@@ -328,7 +328,8 @@ def cmd_train(context):
 
         num_steps = 0
         for i, batch in enumerate(train_loader):
-            input_samples, gt_samples = batch["input"], batch["gt"]
+            input_samples, gt_samples = batch["input"] if not HeMIS \
+                                            else imed_utils.unstack_tensors(batch["input"]), batch["gt"]
 
             # mixup data
             if mixup_bool and not film_bool:
@@ -419,7 +420,8 @@ def cmd_train(context):
         metric_mgr = imed_metrics.MetricManager(metric_fns)
 
         for i, batch in enumerate(val_loader):
-            input_samples, gt_samples = batch["input"], batch["gt"]
+            input_samples, gt_samples = batch["input"] if not HeMIS \
+                                            else imed_utils.unstack_tensors(batch["input"]), batch["gt"]
 
             with torch.no_grad():
                 if cuda_available:
@@ -523,7 +525,9 @@ def cmd_train(context):
             else:
                 best_validation_dice = best_validation_loss
                 best_training_dice = best_training_loss
-            torch.save(model, "./" + context["log_directory"] + "/best_model.pt")
+            model_path = os.path.join(context['log_directory'], 'best_model.pt')
+            torch.save(model, model_path)
+            imed_utils.save_onnx_model(model, var_input, model_path.replace('pt', 'onnx'))
 
         # Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
         val_losses.append(val_loss_total_avg)
@@ -536,7 +540,10 @@ def cmd_train(context):
             break
 
     # Save final model
-    torch.save(model, "./" + context["log_directory"] + "/final_model.pt")
+    model_path = os.path.join(context['log_directory'], 'final_model.pt')
+    torch.save(model, model_path)
+    imed_utils.save_onnx_model(model, var_input, model_path.replace('pt', 'onnx'))
+
     if film_bool:  # save clustering and OneHotEncoding models
         joblib.dump(metadata_clustering_models, "./" +
                     context["log_directory"] + "/clustering_models.joblib")
@@ -588,7 +595,7 @@ def cmd_test(context):
         transformation_dict = context["transformation_validation"]
 
     # Compose Testing transforms
-    val_transform = imed_transforms.compose_transforms(transformation_dict, requires_undo=True)
+    val_transform = imed_transforms.Compose(transformation_dict, requires_undo=True)
 
     # inverse transformations
     val_undo_transform = imed_transforms.UndoCompose(val_transform)
@@ -664,7 +671,11 @@ def cmd_test(context):
     for i_monteCarlo in range(n_monteCarlo):
         pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
         for i, batch in enumerate(test_loader):
-            input_samples, gt_samples = batch["input"], batch["gt"]
+            # input_samples: list of n_batch tensors, whose size is n_channels X height X width X depth
+            # gt_samples: idem with n_labels
+            # batch['*_metadata']: list of n_batch lists, whose size is n_channels or n_labels
+            input_samples, gt_samples = batch["input"] if not HeMIS \
+                                            else imed_utils.unstack_tensors(batch["input"]), batch["gt"]
 
             with torch.no_grad():
                 if cuda_available:
@@ -692,6 +703,7 @@ def cmd_test(context):
                     # Input the metadata related to the input samples
                     preds = model(test_input, test_metadata)
                 elif HeMIS:
+                    # TODO: @Andreanne: to modify?
                     missing_mod = batch["Missing_mod"]
                     preds = model(test_input, missing_mod)
 
@@ -705,32 +717,20 @@ def cmd_test(context):
                         imed_utils.save_feature_map(batch, "attentionblock2", context, model, test_input,
                                                     imed_utils.AXIS_DCT[context["slice_axis"]])
 
-            # WARNING: sample['gt'] is actually the pred in the return sample implementation justification: the other
-            # option: rdict['pred'] = preds would require to largely modify mt_transforms
-            rdict = {}
-            rdict['gt'] = preds.cpu()
-            batch.update(rdict)
-
-            if not i_monteCarlo:
-                batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
-                batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
-                if "roi" in batch and batch["roi"][0] is not None:
-                    batch["roi"] = batch["roi"][0]
-                    batch["roi_metadata"] = batch["roi_metadata"][0]
+            # Preds to CPU
+            preds_cpu = preds.cpu()
 
             # reconstruct 3D image
-            for smp_idx in range(len(batch['gt'])):
+            for smp_idx in range(len(preds_cpu)):
                 # undo transformations
-                rdict = {}
-                for k in batch.keys():
-                    rdict[k] = batch[k][smp_idx]
-                if rdict["input"].shape[0] > 1:
-                    rdict["input"] = rdict["input"][1,][None,]
+                preds_idx_undo, metadata_idx = val_undo_transform(preds_cpu[smp_idx], batch["gt_metadata"][smp_idx],
+                                                                  data_type='gt')
 
-                # If multiclass merge labels
-                rdict_undo = val_undo_transform(rdict)
+                # preds_idx_undo is a list of length n_label of arrays
+                preds_idx_arr = np.array(preds_idx_undo)
 
-                fname_ref = rdict_undo['gt_metadata']['gt_filenames'][0]
+                # TODO: gt_filenames should not be a list
+                fname_ref = metadata_idx[0]['gt_filenames'][0]
 
                 if not context['unet_3D']:
                     if pred_tmp_lst and (fname_ref != fname_tmp or (
@@ -752,7 +752,7 @@ def cmd_test(context):
                                                             bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                         output_nii_shape = output_nii.get_fdata().shape
-                        if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
+                        if len(output_nii_shape) == 4 and output_nii_shape[0] > 1:
                             imed_utils.save_color_labels(output_nii.get_fdata(),
                                                          context["binarize_prediction"],
                                                          fname_tmp,
@@ -762,9 +762,11 @@ def cmd_test(context):
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
 
-                    # add new sample to pred_tmp_lst
-                    pred_tmp_lst.append(imed_utils.pil_list_to_numpy(rdict_undo['gt']))
-                    z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
+                    # add new sample to pred_tmp_lst, of size n_label X h X w ...
+                    pred_tmp_lst.append(preds_idx_arr)
+
+                    # TODO: slice_index should be stored in gt_metadata as well
+                    z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
                     fname_tmp = fname_ref
 
                 else:
@@ -776,8 +778,7 @@ def cmd_test(context):
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
-
-                    imed_utils.pred_to_nib(data_lst=[rdict_undo['gt']],
+                    imed_utils.pred_to_nib(data_lst=[preds_idx_arr],
                                            z_lst=[],
                                            fname_ref=fname_ref,
                                            fname_out=fname_pred,
@@ -786,10 +787,10 @@ def cmd_test(context):
                                            bin_thr=0.5 if context["binarize_prediction"] else -1)
 
                     # Save merged labels with color
-                    if isinstance(rdict_undo['gt'], np.ndarray) and rdict_undo['gt'].shape[0] > 1:
-                        imed_utils.save_color_labels(rdict_undo['gt'],
+                    if preds_idx_arr.shape[0] > 1:
+                        imed_utils.save_color_labels(preds_idx_arr,
                                                      context['binarize_prediction'],
-                                                     rdict_undo['input_metadata']['gt_filenames'][0],
+                                                     batch['input_metadata'][smp_idx][0]['input_filenames'],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                      imed_utils.AXIS_DCT[context['slice_axis']])
 

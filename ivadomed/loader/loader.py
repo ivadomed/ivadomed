@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import os
 import json
-from PIL import Image
+
 from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
@@ -170,9 +170,9 @@ class SegmentationPair(object):
             if gt is not None:
                 hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
                                                                 self.slice_axis)
-                gt_data.append(hwd_oriented)
+                gt_data.append(hwd_oriented.astype(np.uint8))
             else:
-                gt_data.append(np.zeros(self.input_handle[0].shape, dtype=np.float32))
+                gt_data.append(np.zeros(self.input_handle[0].shape, dtype=np.float32).astype(np.uint8))
 
         return input_data, gt_data
 
@@ -183,16 +183,18 @@ class SegmentationPair(object):
                 gt_meta_dict.append(imed_loader_utils.SampleMetadata({
                     "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
                     "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
-                    "gt_filenames": self.metadata[0]["gt_filenames"]
+                    "gt_filenames": self.metadata[0]["gt_filenames"],
+                    "data_type": 'gt'
                 }))
             else:
-                gt_meta_dict.append(imed_loader_utils.SampleMetadata({}))
+                gt_meta_dict.append(gt_meta_dict[0])
 
         input_meta_dict = []
         for handle in self.input_handle:
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
                 "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
-                "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis)
+                "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis),
+                "data_type": 'im'
             }))
 
         dreturn = {
@@ -317,53 +319,41 @@ class MRI2DSegmentationDataset(Dataset):
         """
         seg_pair_slice, roi_pair_slice = self.indexes[index]
 
-        input_tensors = []
-        input_metadata = []
-        data_dict = {}
+        # Clean transforms params from previous transforms
+        # i.e. remove params from previous iterations so that the coming transforms are different
+        metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
+        metadata_roi = imed_loader_utils.clean_metadata(roi_pair_slice['gt_metadata'])
+        metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
 
-        # Looping over all modalities (one or more)
-        for idx, input_slice in enumerate(seg_pair_slice["input"]):
-            # Consistency with torchvision, returning PIL Image
-            # Using the "Float mode" of PIL, the only mode
-            # supporting unbounded float32 values
+        # Run transforms on ROI
+        # ROI goes first because params of ROICrop are needed for the followings
+        stack_roi, metadata_roi = self.transform(sample=roi_pair_slice["gt"],
+                                                 metadata=metadata_roi,
+                                                 data_type="roi")
+        # Update metadata_input with metadata_roi
+        metadata_input = imed_loader_utils.update_metadata(metadata_roi, metadata_input)
 
-            input_img = Image.fromarray(input_slice, mode='F')
-            input_tensors.append(input_img)
+        # Run transforms on images
+        stack_input, metadata_input = self.transform(sample=seg_pair_slice["input"],
+                                                     metadata=metadata_input,
+                                                     data_type="im")
 
-        gt_img = []
-        for gt_slice in seg_pair_slice["gt"]:
-            # Handle unlabeled data
-            if gt_slice is None:
-                gt_img.append(None)
-            else:
-                gt_scaled = (gt_slice * 255).astype(np.uint8)
-                gt_img.append(Image.fromarray(gt_scaled, mode='L'))
+        # Update metadata_input with metadata_roi
+        metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
 
-        if not len(roi_pair_slice['gt']):
-            roi_img = None
-            roi_pair_slice['gt_metadata'] = None
-        else:
-            roi_img = []
-
-        for roi_slice in roi_pair_slice["gt"]:
-            # Handle data with no ROI provided
-            if roi_pair_slice["gt"] is None:
-                roi_img.append(None)
-            else:
-                roi_scaled = (roi_slice * 255).astype(np.uint8)
-                roi_img.append(Image.fromarray(roi_scaled, mode='L'))
+        # Run transforms on images
+        stack_gt, metadata_gt = self.transform(sample=seg_pair_slice["gt"],
+                                               metadata=metadata_gt,
+                                               data_type="gt")
 
         data_dict = {
-            'input': input_tensors,
-            'gt': gt_img,
-            'roi': roi_img,
-            'input_metadata': seg_pair_slice['input_metadata'],
-            'gt_metadata': seg_pair_slice['gt_metadata'],
-            'roi_metadata': roi_pair_slice['gt_metadata']
+            'input': stack_input,
+            'gt': stack_gt,
+            'roi': stack_roi,
+            'input_metadata': metadata_input,
+            'gt_metadata': metadata_gt,
+            'roi_metadata': metadata_roi
         }
-
-        if self.transform is not None:
-            data_dict = self.transform(data_dict)
 
         return data_dict
 
@@ -413,11 +403,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         padding = self.padding
 
         crop = False
-        for transfo in self.transform.transforms:
-            if "CenterCrop3D" in str(type(transfo)):
+
+        for idx, transfo in enumerate(self.transform.transform["im"].transforms):
+            if "CenterCrop" in str(type(transfo)):
                 crop = True
                 shape_crop = transfo.size
-                break
 
         for i in range(0, len(self.handlers)):
             if not crop:
@@ -454,49 +444,50 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         :param index: subvolume index.
         """
         coord = self.indexes[index]
-        seg_pair, roi_pair = self.handlers[coord['handler_index']]
-        seg_metadata = seg_pair.get_pair_metadata(index)
-        roi_metadata = roi_pair.get_pair_metadata(index)
-        input_img, gt_img = seg_pair.get_pair_data()
-        _, roi_img = roi_pair.get_pair_data()
-        data_shape = input_img[0].shape
+        input_img, gt_img = self.handlers[coord['handler_index']].get_pair_data()
+        seg_pair_slice = self.handlers[coord['handler_index']].get_pair_metadata(coord['handler_index'])
 
-        data_dict = {
-            'input': input_img,
-            'gt': gt_img,
-            'roi': roi_img,
-            'input_metadata': seg_metadata['input_metadata'],
-            'gt_metadata': seg_metadata['gt_metadata'],
-            'roi_metadata': roi_metadata['gt_metadata']
-        }
-        for idx in range(len(data_dict["input"])):
-            data_dict['input_metadata'][idx]['data_shape'] = data_shape
+        # Clean transforms params from previous transforms
+        # i.e. remove params from previous iterations so that the coming transforms are different
+        metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
+        metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
 
-        if self.transform is not None:
-            data_dict = self.transform(data_dict)
+        # Run transforms on images
+        stack_input, metadata_input = self.transform(sample=input_img,
+                                                     metadata=metadata_input,
+                                                     data_type="im")
+        # Update metadata_gt with metadata_input
+        metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
+
+        # Run transforms on images
+        stack_gt, metadata_gt = self.transform(sample=gt_img,
+                                               metadata=metadata_gt,
+                                               data_type="gt")
 
         shape_x = coord["x_max"] - coord["x_min"]
         shape_y = coord["y_max"] - coord["y_min"]
         shape_z = coord["z_max"] - coord["z_min"]
 
         subvolumes = {
-            'input': torch.zeros(data_dict['input'].shape[0], shape_x, shape_y, shape_z),
-            'gt': torch.zeros(data_dict['input'].shape[0], shape_x, shape_y, shape_z),
-            'input_metadata': seg_metadata['input_metadata'],
-            'gt_metadata': seg_metadata['gt_metadata']
+            'input': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
+            'gt': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
+            'input_metadata': metadata_input,
+            'gt_metadata': metadata_gt
         }
 
-        for idx in range(len(data_dict['input'])):
-            subvolumes['input'] = data_dict['input'][:,
+        for _ in range(len(stack_input)):
+            subvolumes['input'] = stack_input[:,
                                   coord['x_min']:coord['x_max'],
                                   coord['y_min']:coord['y_max'],
                                   coord['z_min']:coord['z_max']]
 
-        for idx in range(len(data_dict['gt'])):
-            subvolumes['gt'] = data_dict['gt'][:,
-                               coord['x_min']:coord['x_max'],
-                               coord['y_min']:coord['y_max'],
-                               coord['z_min']:coord['z_max']]
+        if stack_gt is not None:
+            for _ in range(len(stack_gt)):
+                subvolumes['gt'] = stack_gt[:,
+                                   coord['x_min']:coord['x_max'],
+                                   coord['y_min']:coord['y_max'],
+                                   coord['z_min']:coord['z_max']]
+
         subvolumes['gt'] = subvolumes['gt'].type(torch.BoolTensor)
         return subvolumes
 

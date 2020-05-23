@@ -49,10 +49,7 @@
 			"wspace": 0.75,
         		"hspace": 0.75
 			},
-		"DilateGT": {
-			"dilation_factor": 0
-			},
-                "ROICrop2D": {
+                "ROICrop": {
                         "size": [48, 48]
 			},
 		"ElasticTransform": {
@@ -65,33 +62,33 @@
 			"translate": [0.03, 0.03],
 			"scale": [0.98, 1.02]
 			},
-		"ToTensor": {},
-		"NormalizeInstance": {}
+		"NumpyToTensor": {},
+		"NormalizeInstance": {"applied_to": ["im"]}
 		},
 	"transformation_validation": {
 		"Resample": {
 			"wspace": 0.75,
 			"hspace": 0.75
 			},
-		"ROICrop2D": {
+		"ROICrop": {
 			"size": [48, 48]
 			},
-		"ToTensor": {},
-		"NormalizeInstance": {}
+		"NumpyToTensor": {},
+		"NormalizeInstance": {"applied_to": ["im"]}
 		},
         "transformation_testing": {
                 "Resample": {
                         "wspace": 0.75,
                         "hspace": 0.75
                         },
-                "ROICrop2D": {
+                "ROICrop": {
                         "size": [48, 48]
                         },
                 "RandomRotation": {
                         "degrees": 30
                         },
-                "ToTensor": {},
-                "NormalizeInstance": {}
+                "NumpyToTensor": {},
+                "NormalizeInstance": {"applied_to": ["im"]}
                 },
         "debugging": false
 }

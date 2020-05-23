@@ -1,16 +1,15 @@
 import os
-import numpy as np
 
+import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-from torchvision import transforms as torch_transforms
 
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
-from ivadomed import utils as imed_utils
 from ivadomed import transforms as imed_transforms
+from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
 
@@ -36,14 +35,22 @@ def test_inference(film_bool=False):
         torch.cuda.set_device(device)
         print("using GPU number {}".format(device))
 
-    validation_transform_list = [
-        imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.ROICrop2D(size=[48, 48]),
-        imed_transforms.ToTensor(),
-        imed_transforms.NormalizeInstance()
-    ]
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+            },
+        "CenterCrop":
+            {
+                "size": [48, 48]
+            },
+        "NumpyToTensor": {},
+        "NormalizeInstance": {"applied_to": ["im"]}
+    }
 
-    val_transform = torch_transforms.Compose(validation_transform_list)
+    val_transform = imed_transforms.Compose(training_transform_dict)
+
     val_undo_transform = imed_transforms.UndoCompose(val_transform)
 
     test_lst = ['sub-test001']
@@ -114,27 +121,19 @@ def test_inference(film_bool=False):
 
             preds = model(test_input)
 
-        # WARNING: sample['gt'] is actually the pred in the return sample
-        # implementation justification: the other option: rdict['pred'] = preds would require to largely modify
-        # mt_transforms
-        rdict = {'gt': preds.cpu()}
-        batch.update(rdict)
-
-        batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
-        batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
-        if batch["roi"][0] is not None:
-            batch["roi"] = batch["roi"][0]
-            batch["roi_metadata"] = batch["roi_metadata"][0]
+        preds_cpu = preds.cpu()
 
         # reconstruct 3D image
         for smp_idx in range(len(batch['gt'])):
             # undo transformations
-            rdict = {}
-            for k in batch.keys():
-                rdict[k] = batch[k][smp_idx]
-            rdict_undo = val_undo_transform(rdict)
+            preds_idx_undo, metadata_idx = val_undo_transform(preds_cpu[smp_idx], batch["gt_metadata"][smp_idx],
+                                                              data_type='gt')
 
-            fname_ref = rdict_undo['input_metadata']['gt_filenames'][0]
+            # preds_idx_undo is a list of length n_label of arrays
+            preds_idx_arr = np.array(preds_idx_undo)
+
+            # TODO: gt_filenames should not be a list
+            fname_ref = metadata_idx[0]['gt_filenames'][0]
             # new processed file
             if pred_tmp_lst and (
                     fname_ref != fname_tmp or (i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):
@@ -148,8 +147,8 @@ def test_inference(film_bool=False):
                 pred_tmp_lst, z_tmp_lst = [], []
 
             # add new sample to pred_tmp_lst
-            pred_tmp_lst.append(imed_utils.pil_list_to_numpy(rdict_undo['gt']))
-            z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
+            pred_tmp_lst.append(preds_idx_arr)
+            z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
             fname_tmp = fname_ref
 
         # Metrics computation
@@ -166,9 +165,3 @@ def test_inference(film_bool=False):
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
     print(metrics_dict)
-
-
-print("Test unet")
-test_inference()
-print("test unet-filmed")
-# test_inference(film_bool=True)

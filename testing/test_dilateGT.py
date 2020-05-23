@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-from torchvision import transforms as torch_transforms
 
 import ivadomed.transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
@@ -49,10 +48,27 @@ def test_dilateGT(dil_fac=0.25):
     training_transform_list = [
         imed_transforms.Resample(wspace=0.75, hspace=0.75),
         imed_transforms.DilateGT(dilation_factor=dil_fac),
-        imed_transforms.ROICrop2D(size=[48, 48]),
-        imed_transforms.ToTensor()
+        imed_transforms.ROICrop(size=[48, 48]),
+        imed_transforms.NumpyToTensor()
     ]
-    train_transform = torch_transforms.Compose(training_transform_list)
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+            },
+        "DilateGT":
+            {
+                "dilation_factor": dil_fac
+            },
+        "ROICrop":
+            {
+                "size": [48, 48]
+            },
+        "NumpyToTensor": {}
+    }
+
+    train_transform = imed_transforms.Compose(training_transform_dict)
 
     train_lst = ['sub-test001']
     #    train_lst = ['sub-rennesMS056', 'sub-rennesMS057', 'sub-rennesMS058', 'sub-rennesMS059', 'sub-rennesMS060']
@@ -88,6 +104,3 @@ def test_dilateGT(dil_fac=0.25):
     #       save_im_gt(np.array(input_samples[b_idx, 0]),
     #                   np.array(gt_samples[b_idx, 0]),
     #                   fname_out)
-
-
-test_dilateGT()

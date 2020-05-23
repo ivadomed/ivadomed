@@ -7,9 +7,6 @@ from bids_neuropoly import bids
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
 
-from ivadomed.loader import adaptative as imed_adaptative, loader as imed_loader
-from ivadomed import utils as imed_utils
-
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
     'float32': torch.FloatTensor,
@@ -20,6 +17,8 @@ __numpy_type_map = {
     'int8': torch.CharTensor,
     'uint8': torch.ByteTensor,
 }
+
+TRANSFORM_PARAMS = ['elastic', 'rotation', 'offset', 'crop_params', 'reverse', 'affine', 'gaussian_noise']
 
 
 def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
@@ -46,7 +45,7 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
         X_test, X_val = train_test_split(X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
 
     else:
-        print(f" {split_method} is not a supported split method")
+        print(" {split_method} is not a supported split method")
 
     return X_train, X_val, X_test
 
@@ -77,8 +76,7 @@ def imed_collate(batch):
     elif isinstance(batch[0], collections.Mapping):
         return {key: imed_collate([d[key] for d in batch]) for key in batch[0]}
     elif isinstance(batch[0], collections.Sequence):
-        transposed = zip(*batch)
-        return [imed_collate(samples) for samples in transposed]
+        return [imed_collate(samples) for samples in batch]
 
     return batch
 
@@ -167,6 +165,14 @@ class SampleMetadata(object):
     def __contains__(self, key):
         return key in self.metadata
 
+    def items(self):
+        return self.metadata.items()
+
+    def _update(self, ref, list_keys):
+        for k in list_keys:
+            if k not in self.metadata.keys() and k in ref.metadata.keys():
+                self.metadata[k] = ref.metadata[k]
+
     def keys(self):
         return self.metadata.keys()
 
@@ -209,3 +215,23 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 
     def __len__(self):
         return self.num_samples
+
+
+def clean_metadata(metadata_lst):
+    metadata_out = []
+    for metadata_cur in metadata_lst:
+        for key_ in list(metadata_cur.keys()):
+            if key_ in TRANSFORM_PARAMS:
+                del metadata_cur.metadata[key_]
+        metadata_out.append(metadata_cur)
+    return metadata_out
+
+
+def update_metadata(metadata_src_lst, metadata_dest_lst):
+    if metadata_src_lst and metadata_dest_lst:
+        if len(metadata_src_lst) > len(metadata_dest_lst):
+            metadata_dest_lst = metadata_dest_lst + [SampleMetadata({})] * \
+                                (len(metadata_src_lst) - len(metadata_dest_lst))
+        for idx in range(len(metadata_src_lst)):
+            metadata_dest_lst[idx]._update(metadata_src_lst[idx], TRANSFORM_PARAMS)
+    return metadata_dest_lst

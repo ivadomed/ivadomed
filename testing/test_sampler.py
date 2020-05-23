@@ -2,7 +2,6 @@ import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-from torchvision import transforms as torch_transforms
 
 import ivadomed.transforms as imed_transforms
 from ivadomed import utils as imed_utils
@@ -20,7 +19,7 @@ def _cmpt_label(ds_loader):
     for i, batch in enumerate(ds_loader):
         for gt in batch['gt']:
             for idx in range(len(gt)):
-                if np.any(gt[idx]):
+                if np.any(gt[idx].numpy()[0]):
                     cmpt_label[1] += 1
                 else:
                     cmpt_label[0] += 1
@@ -39,11 +38,20 @@ def test_sampler():
         torch.cuda.set_device(device)
         print("Using GPU number {}".format(device))
 
-    training_transform_list = [
-        imed_transforms.Resample(wspace=0.75, hspace=0.75),
-        imed_transforms.ROICrop2D(size=[48, 48])
-    ]
-    train_transform = torch_transforms.Compose(training_transform_list)
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+            },
+        "ROICrop":
+            {
+                "size": [48, 48]
+            },
+        "NumpyToTensor": {}
+    }
+
+    train_transform = imed_transforms.Compose(training_transform_dict)
 
     train_lst = ['sub-test001']
 
@@ -76,7 +84,3 @@ def test_sampler():
                                        collate_fn=imed_loader_utils.imed_collate,
                                        num_workers=0)
     _cmpt_label(train_loader_balanced)
-
-
-print("Test sampler")
-test_sampler()

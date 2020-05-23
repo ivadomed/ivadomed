@@ -1,14 +1,13 @@
-import numpy as np
 import nibabel as nib
+import numpy as np
 import torch
-from torchvision import transforms as torch_transforms
 from torch.utils.data import DataLoader
 
+from ivadomed import losses as imed_losses
+from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
-from ivadomed import postprocessing as imed_postpro
-from ivadomed import losses as imed_losses
 
 GPU_NUMBER = 0
 PATH_BIDS = 'testing_data'
@@ -23,25 +22,23 @@ def test_image_orientation():
 
     train_lst = ['sub-test001']
 
-    # 2D
-    training_transform_list = [
-        imed_transforms.Resample(hspace=2, wspace=3),
-        imed_transforms.CenterCrop2D(size=[108, 96]),
-        imed_transforms.ToTensor(),
-        imed_transforms.NormalizeInstance(),
-    ]
-    training_transform = torch_transforms.Compose(training_transform_list)
-    training_undo_transform = imed_transforms.UndoCompose(training_transform)
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 1.5,
+                "hspace": 1,
+                "dspace": 3,
+            },
+        "CenterCrop":
+            {
+                "size": [176, 128, 160]
+            },
+        "NumpyToTensor": {},
+        "NormalizeInstance": {"applied_to": ['im']}
+    }
 
-    # 3D
-    training_transform_list_3d = [
-        imed_transforms.Resample(hspace=2, wspace=1, dspace=3),
-        imed_transforms.CenterCrop3D(size=[176, 128, 160]),
-        imed_transforms.ToTensor3D(),
-        imed_transforms.NormalizeInstance3D(),
-    ]
-    training_transform_3d = torch_transforms.Compose(training_transform_list_3d)
-    training_undo_transform_3d = imed_transforms.UndoCompose(training_transform_3d)
+    train_transform = imed_transforms.Compose(training_transform_dict)
+    training_undo_transform = imed_transforms.UndoCompose(train_transform)
 
     for dim in ['3d', '2d']:
         for slice_axis in [0, 1, 2]:
@@ -53,7 +50,7 @@ def test_image_orientation():
                                              metadata_choice="without",
                                              contrast_balance={},
                                              slice_axis=slice_axis,
-                                             transform=training_transform,
+                                             transform=train_transform,
                                              multichannel=False)
             else:
                 ds = imed_loader.Bids3DDataset(PATH_BIDS,
@@ -63,7 +60,7 @@ def test_image_orientation():
                                                metadata_choice="without",
                                                contrast_balance={},
                                                slice_axis=slice_axis,
-                                               transform=training_transform_3d,
+                                               transform=train_transform,
                                                multichannel=False,
                                                length=[176, 128, 160])
 
@@ -84,24 +81,26 @@ def test_image_orientation():
 
             pred_tmp_lst, z_tmp_lst = [], []
             for i, batch in enumerate(loader):
-                batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
-                batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
+                # batch["input_metadata"] = batch["input_metadata"][0]  # Take only metadata from one input
+                # batch["gt_metadata"] = batch["gt_metadata"][0]  # Take only metadata from one label
 
                 for smp_idx in range(len(batch['gt'])):
                     # undo transformations
-                    rdict = {}
-                    for k in batch.keys():
-                        rdict[k] = batch[k][smp_idx]
                     if dim == '2d':
-                        rdict_undo = training_undo_transform(rdict)
+                        preds_idx_undo, metadata_idx = training_undo_transform(batch["gt"][smp_idx],
+                                                                               batch["gt_metadata"][smp_idx],
+                                                                               data_type='gt')
+
                         # add new sample to pred_tmp_lst
-                        pred_tmp_lst.append(imed_utils.pil_list_to_numpy(rdict_undo['gt']))
-                        z_tmp_lst.append(int(rdict_undo['input_metadata']['slice_index']))
+                        pred_tmp_lst.append(preds_idx_undo[0])
+                        z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
 
                     else:
-                        rdict_undo = training_undo_transform_3d(rdict)
+                        preds_idx_undo, metadata_idx = training_undo_transform(batch["gt"][smp_idx],
+                                                                               batch["gt_metadata"][smp_idx],
+                                                                               data_type='gt')
 
-                    fname_ref = rdict_undo['input_metadata']['gt_filenames'][0]
+                    fname_ref = metadata_idx[0]['gt_filenames'][0]
 
                     if (pred_tmp_lst and i == len(loader) - 1) or dim == '3d':
                         # save the completely processed file as a nii
@@ -114,7 +113,7 @@ def test_image_orientation():
                                 tmp_lst.append(pred_tmp_lst[z_tmp_lst.index(z)])
                             arr = np.stack(tmp_lst, axis=-1)
                         else:
-                            arr = rdict_undo['gt'][0, ]
+                            arr = np.array(preds_idx_undo[0])
 
                         # verify image after transform, undo transform and 3D reconstruction
                         input_hwd_2 = imed_postpro.threshold_predictions(arr)
@@ -127,7 +126,3 @@ def test_image_orientation():
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
-
-
-print("Test image orientation")
-test_image_orientation()
