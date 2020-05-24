@@ -544,6 +544,22 @@ class DilateGT(ImedTransform):
             return sample, metadata
 
 
+class BoundingBoxCrop(Crop):
+    """
+    Crops image according to given bounding box
+    """
+    @multichannel_capable
+    @two_dim_compatible
+    def __call__(self, sample, metadata):
+        assert 'bounding_box' in metadata
+        h_min, h_max, w_min, w_max, d_min, d_max = metadata['bounding_box']
+        h, w, d = sample.shape
+        metadata['crop_params'] = (h_min, w_min, d_min, h, w, d)
+
+        # Call base method
+        return super().__call__(sample, metadata)
+
+
 class RandomRotation(ImedTransform):
     def __init__(self, degrees):
         if isinstance(degrees, numbers.Number):
