@@ -544,58 +544,6 @@ class DilateGT(ImedTransform):
             return sample, metadata
 
 
-class BoundingBoxCrop(CenterCrop):
-    """
-    Crops image according to given bounding box
-    :param dimensions: image dimensions (x_min, x_max, y_min, y_max, z_min, z_max)
-    :param safety: value by which each dimension is multiplied to increase or decrease box size
-    :param multiple_16: Unet 3D requires dimensions multiple of 16 , if True will crop image according to this
-                        restriction
-    """
-    def __init__(self, log_dir, safety_factor=(1.0, 1.0, 1.0), multiple_16=True):
-        self.safety_factor = safety_factor
-        self.multiple_16 = multiple_16
-        bounding_box_path = os.path.join(log_dir, 'bounding_boxes.json')
-        if os.path.exists(bounding_box_path):
-            with open(bounding_box_path, 'r') as fp:
-                bounding_box_dict = json.load(fp)
-        else:
-            raise RuntimeError("File path {} don't exists".format(bounding_box_path))
-        self.bounding_boxes = bounding_box_dict
-        super().__init__((0, 0, 0), True)
-
-    def bb_crop(self, data):
-        coord = []
-        for i in range(len(self.safety_factor)):
-            d_min, d_max = self.size[i:i + 2]
-            d_factor = self.safety_factor[0]
-            dim_len = (d_min - d_max) * d_factor
-            if self.multiple_16:
-                dim_len = dim_len + (16 - dim_len % 16)
-
-            # new min and max coordinates
-            coord.append(max(d_min - (dim_len - (d_max - d_min)) // 2, 0))
-            coord.append(min(d_max + (dim_len - (d_max - d_min)) / 2, data.shape[i]))
-        x_min, x_max, y_min, y_max, z_min, z_max = coord
-        return data[x_min:x_max, y_min, y_max, z_min:z_max]
-
-    def __call__(self, sample):
-        input_data = []
-        for idx, data in enumerate(sample["input"]):
-            sample['input_metadata'][idx]["__centercrop"] = data.shape
-            self.size = self.bounding_boxes[sample['input_metadata']["filename"]]
-            input_data.append(self.bb_crop(data))
-
-        gt_data = []
-        for gt in sample["gt"]:
-            gt_data.append(self.bb_crop(gt))
-
-        rdict = {"input": input_data, "gt": gt_data}
-
-        sample.update(rdict)
-        return sample
-
-
 class RandomRotation(ImedTransform):
     def __init__(self, degrees):
         if isinstance(degrees, numbers.Number):
