@@ -1,15 +1,16 @@
+import json
+import os
+
 import nibabel as nib
 import numpy as np
 import torch
-import os
-import json
-
 from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
-from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 from ivadomed import utils as imed_utils
+from ivadomed import transforms as imed_transforms
+from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 
 
 def load_dataset(data_list, data_transform, context):
@@ -395,8 +396,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
     def _load_filenames(self):
         for input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
             segpair = SegmentationPair(input_filename, gt_filename, metadata=metadata, slice_axis=self.slice_axis)
-            roipair = SegmentationPair(input_filename, roi_filename, metadata=metadata, slice_axis=self.slice_axis)
-            self.handlers.append((segpair, roipair))
+            self.handlers.append(segpair)
 
     def _prepare_indices(self):
         length = self.length
@@ -410,8 +410,15 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 shape_crop = transfo.size
 
         for i in range(0, len(self.handlers)):
-            if not crop:
-                input_img, _ = self.handlers[i][0].get_pair_data()
+            self.bounding_box = 'bounding_box' in self.handlers[i].get_pair_metadata(i)['input_metadata'][0]
+            if self.bounding_box:
+                h_min, h_max, w_min, w_max, d_min, d_max = \
+                self.handlers[i].get_pair_metadata(i)['input_metadata'][0]['bounding_box']
+                length = [h_max - h_min, w_max - w_min, d_max - d_min]
+                shape = length
+
+            elif not crop:
+                input_img, _ = self.handlers[i].get_pair_data()
                 shape = input_img[0].shape
             else:
                 shape = shape_crop
@@ -451,6 +458,12 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         # i.e. remove params from previous iterations so that the coming transforms are different
         metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
         metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
+
+        if self.bounding_box:
+            for img_type in self.transform.transform:
+                h_min, h_max, w_min, w_max, d_min, d_max = seg_pair_slice['input_metadata'][0]['bounding_box']
+                transform_obj = imed_transforms.CenterCrop(size=[h_max - h_min, w_max - w_min, d_max - d_min])
+                self.transform.transform[img_type].transforms.insert(-2, transform_obj)
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=input_img,
@@ -559,7 +572,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                 bounding_box_dict = json.load(fp)
         elif os.path.exists(object_detection_path):
             print("Generating bounding boxes...")
-            bounding_box_dict = imed_utils.generate_bounding_box_file(bids_subjects,
+            bounding_box_dict = imed_utils.generate_bounding_box_file(self.bids_ds.get_subjects(),
                                                                       object_detection_path,
                                                                       log_dir,
                                                                       gpu_number,
