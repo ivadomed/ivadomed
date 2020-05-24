@@ -461,14 +461,20 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
 
         if self.bounding_box:
+            resample = False
             for img_type in self.transform.transform:
                 for idx, transfo in enumerate(self.transform.transform[img_type].transforms):
                     if "BoundingBoxCrop" in str(type(transfo)):
                         self.transform.transform[img_type].transforms.pop(idx)
+                    # Do this operation only once
+                    if "Resample" in str(type(transfo)) and img_type == 'im':
+                        resample_param = transfo.hspace, transfo.wspace, transfo.dspace
+                        imed_utils.resample_bounding_box(seg_pair_slice, resample_param)
             for img_type in self.transform.transform:
                 h_min, h_max, w_min, w_max, d_min, d_max = seg_pair_slice['input_metadata'][0]['bounding_box']
                 transform_obj = imed_transforms.BoundingBoxCrop(size=[h_max - h_min, w_max - w_min, d_max - d_min])
-                self.transform.transform[img_type].transforms.insert(-2, transform_obj)
+                idx = -2 if img_type == 'im' else -1
+                self.transform.transform[img_type].transforms.insert(idx, transform_obj)
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=input_img,
