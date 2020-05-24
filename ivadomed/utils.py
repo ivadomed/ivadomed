@@ -1,10 +1,10 @@
 import json
 import os
 
-import onnxruntime
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
+import onnxruntime
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -355,7 +355,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
             arr = arr[0, :]
 
         # Reorient data
-        arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can).astype('float32')
+        arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
 
     else:
         arr_pred_ref_space = data_lst[0]
@@ -377,7 +377,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         arr_pred_ref_space[arr_pred_ref_space <= 1e-1] = 0
 
     # create nibabel object
-    nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
+    nib_pred = nib.Nifti1Image(arr_pred_ref_space.astype('float32'), nib_ref.affine)
 
     # save as nifti file
     if fname_out is not None:
@@ -700,8 +700,9 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
     preds_list, slice_idx_list = [], []
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
-            img = batch['input']
+            img = batch['input'].cuda() if torch.cuda.is_available() else batch['input']
             preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
+            preds = preds.cpu()
 
         # Reconstruct 3D object
         for i_slice in range(len(preds)):
@@ -943,8 +944,11 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
         writer.add_image(dataset_type + '/Ground Truth', grid_img, epoch)
 
 
-def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, slice_axis=0, keep_largest_only=True):
+def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, slice_axis=0, keep_largest_only=True,
+                               multiple_16=True, safety_factor=None):
     bounding_box_dict = {}
+    if safety_factor is None:
+        safety_factor = [1.0, 1.0, 1.0]
     for subject in subject_list:
         subject_path = str(subject.record["absolute_path"])
         object_mask = segment_volume(model_path, subject_path, gpu_number=gpu_number)
@@ -953,7 +957,23 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
         ras_orientation = nib.as_closest_canonical(object_mask)
         hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata()[..., 0], slice_axis)
         bounding_box = imed_postpro.get_bounding_boxes(hwd_orientation)
-        bounding_box_dict[subject_path] = list(bounding_box)
+
+        coord = []
+        for i in range(len(bounding_box) // 2):
+            d_min, d_max = bounding_box[2 * i:(2 * i) + 2]
+            d_factor = safety_factor[i]
+            dim_len = (d_max - d_min) * d_factor
+            if multiple_16:
+                dim_len = dim_len + (16 - dim_len % 16)
+
+            # new min and max coordinates
+            min_coord = d_min - (dim_len - (d_max - d_min)) // 2
+            coord.append(int(max(min_coord, 0)))
+            # if min coordinate is negative add to max coordinate
+            max_coord_addition = abs(min_coord) if min_coord < 0 else 0
+            coord.append(int(np.ceil(d_max + (dim_len - (d_max - d_min)) / 2) + max_coord_addition))
+
+        bounding_box_dict[subject_path] = coord
 
     file_path = os.path.join(log_dir, 'bounding_boxes.json')
     with open(file_path, 'w') as fp:
