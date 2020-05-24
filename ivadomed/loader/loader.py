@@ -185,6 +185,7 @@ class SegmentationPair(object):
                     "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
                     "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
                     "gt_filenames": self.metadata[0]["gt_filenames"],
+                    "bounding_box": self.metadata[0]["bounding_box"],
                     "data_type": 'gt'
                 }))
             else:
@@ -461,8 +462,12 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
         if self.bounding_box:
             for img_type in self.transform.transform:
+                for idx, transfo in enumerate(self.transform.transform[img_type].transforms):
+                    if "BoundingBoxCrop" in str(type(transfo)):
+                        self.transform.transform[img_type].transforms.pop(idx)
+            for img_type in self.transform.transform:
                 h_min, h_max, w_min, w_max, d_min, d_max = seg_pair_slice['input_metadata'][0]['bounding_box']
-                transform_obj = imed_transforms.CenterCrop(size=[h_max - h_min, w_max - w_min, d_max - d_min])
+                transform_obj = imed_transforms.BoundingBoxCrop(size=[h_max - h_min, w_max - w_min, d_max - d_min])
                 self.transform.transform[img_type].transforms.insert(-2, transform_obj)
 
         # Run transforms on images
@@ -501,7 +506,6 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                    coord['y_min']:coord['y_max'],
                                    coord['z_min']:coord['z_max']]
 
-        subvolumes['gt'] = subvolumes['gt'].type(torch.BoolTensor)
         return subvolumes
 
 
