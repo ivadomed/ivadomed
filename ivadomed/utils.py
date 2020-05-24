@@ -964,7 +964,8 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
             d_factor = safety_factor[i]
             dim_len = (d_max - d_min) * d_factor
             if multiple_16:
-                dim_len = dim_len + (16 - dim_len % 16)
+                padding = (16 - dim_len % 16) if (16 - dim_len % 16) != 16 else 0
+                dim_len = dim_len + padding
 
             # new min and max coordinates
             min_coord = d_min - (dim_len - (d_max - d_min)) // 2
@@ -979,6 +980,36 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
     with open(file_path, 'w') as fp:
         json.dump(bounding_box_dict, fp, indent=4)
     return bounding_box_dict
+
+
+def resample_bounding_box(metadata, resample, multiple_16=True):
+    hspace, wspace, dspace = resample
+    hfactor = metadata['input_metadata'][0]['zooms'][0] / hspace
+    wfactor = metadata['input_metadata'][0]['zooms'][1] / wspace
+    dfactor = metadata['input_metadata'][0]['zooms'][2] / dspace
+    factor = (hfactor, wfactor, dfactor)
+    coord = []
+    for i in range(len(resample)):
+        d_min, d_max = metadata['input_metadata'][0]['bounding_box'][2 * i: (2 * i) + 2]
+        d_min_resampled, d_max_resampled = d_min * factor[i], d_max * factor[i]
+        dim_len = d_max_resampled - d_min_resampled
+        if multiple_16:
+            padding = (16 - dim_len % 16) if (16 - dim_len % 16) != 16 else 0
+            dim_len = int(round(dim_len + padding))
+        # new min and max coordinates
+        min_coord = d_min_resampled - (dim_len - (d_max_resampled - d_min_resampled)) // 2
+        coord.append(int(round(max(min_coord, 0))))
+        coord.append(int(coord[-1] + dim_len))
+        if multiple_16:
+            if (coord[-1] - coord[-2]) % 16 != 0:
+                print()
+            assert (coord[-1] - coord[-2]) % 16 == 0
+
+    for i in range(len(metadata['input_metadata'])):
+        metadata['input_metadata'][i]['bounding_box'] = coord
+
+    for i in range(len(metadata['input_metadata'])):
+        metadata['gt_metadata'][i]['bounding_box'] = coord
 
 
 class SliceFilter(object):
