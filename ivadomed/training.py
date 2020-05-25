@@ -1,25 +1,22 @@
-import os
-import random
 import time
-
-import joblib
 import numpy as np
+from tqdm import tqdm
 
 import torch
 import torch.backends.cudnn as cudnn
 from torch import optim, nn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from tqdm import tqdm
 
 from ivadomed import losses as imed_losses
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import utils as imed_utils
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
+
 
 def train(model_params, dataset_train, dataset_val, training_params, log_directory, cuda_available=True,
           metric_fns=None, debugging=False):
