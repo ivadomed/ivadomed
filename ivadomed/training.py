@@ -111,7 +111,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         num_steps = 0
         for i, batch in enumerate(train_loader):
             # GET SAMPLES
-            if model_params["name"] == "HeMIS":
+            if model_params["name"] == "HeMISUnet":
                 input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]))
             else:
                 input_samples = imed_utils.cuda(batch["input"])
@@ -123,7 +123,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                                                                 debugging and epoch == 1, log_directory)
 
             # RUN MODEL
-            if model_params["name"] in ["HeMIS", "FiLMedUnet"]:
+            if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
                 # TODO: @Andreanne: would it be possible to move missing_mod within input_metadata
                 metadata_type = "input_metadata" if model_params["name"] == "FiLMedUnet" else "Missing_mod"
                 metadata = get_metadata(batch[metadata_type], model_params)
@@ -158,15 +158,11 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             msg += "\tDice training loss: {:.4f}.".format(train_dice_loss_total / num_steps)
         tqdm.write(msg)
 
-        # In case of curriculum Learning we need to update the loader
-        if HeMIS:
+        # CURRICULUM LEARNING
+        if model_params["name"] == "HeMISUnet":
             # Increase the probability of a missing modality
-            p = p ** (context["missing_probability_growth"])
-            ds_train.update(p=p)
-            train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
-                                      shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
-                                      collate_fn=imed_loader_utils.imed_collate,
-                                      num_workers=0)
+            model_params["missing_probability"] **= model_params["missing_probability_growth"]
+            train_loader.__setattr__("dataset", dataset_train.update(p=model_params["missing_probability"]))
 
         # Validation loop -----------------------------------------------------
         model.eval()
