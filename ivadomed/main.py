@@ -577,6 +577,7 @@ def run_main():
                             dataset_val=ds_valid,
                             log_directory=log_directory,
                             cuda_available=cuda_available,
+                            balance_samples=context["balance_samples"],
                             mixup_params=mixup_params)
 
         # Save config file within log_directory
