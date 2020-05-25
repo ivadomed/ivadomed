@@ -199,6 +199,7 @@ def run_main():
 
     n_classes = len(context['target_suffix'])
 
+    # METRICS
     metric_fns = [imed_metrics.dice_score,
                   imed_metrics.multi_class_dice_score,
                   imed_metrics.hausdorff_3D_score,
@@ -208,50 +209,50 @@ def run_main():
                   imed_metrics.intersection_over_union,
                   imed_metrics.accuracy_score]
 
+    # PARSE PARAMETERS
+    film_params = context["FiLM"] if context["FiLM"]["metadata"] != "without" else None
+    multichannel_params = context["contrast"]["train_validation"] if context["multichannel"] else None
+    # Disable some attributes
+    if film_params:
+        multichannel_params = None
+        context["HeMIS"]["applied"] = False
+        context["training_parameters"]["mixup_alpha"] = None
+    if multichannel_params:
+        context["HeMIS"]["applied"] = False
+
+    # MODEL PARAMETERS
+    model_available = ['Unet', 'UNet3D', 'HeMISUnet']
+    model_context_list = [model_name for model_name in model_available
+                          if model_name in context and context[model_name]["applied"]]
+    if len(model_context_list) == 1:
+        model_name = model_context_list[0]
+        model_params = context[model_name]
+    elif len(model_context_list) > 1:
+        print('ERROR: Several models are selected in the configuration file: {}.'
+              'Please select only one.'.format(model_context_list))
+        exit()
+    elif film_params:
+        model_name = 'FiLMedUnet'
+        model_params = film_params
+    else:
+        # Select default model
+        model_name = 'Unet'
+        model_params = {}
+    # Update params
+    model_params.update({"name": model_name,
+                         "depth": context['depth'],
+                         "in_channel": len(multichannel_params) if context["multichannel"] else 1,
+                         "out_channel": n_classes + 1 if n_classes > 1 else 1,
+                         "multichannel": multichannel_params,
+                         "drop_rate": context["dropout_rate"],
+                         "n_metadata": None,
+                         "bn_momentum": context["batch_norm_momentum"]})
+    display_selected_model_spec(params=model_params)
+    # Update loader params
+    loader_params.update({"model_params": model_params})
+
     if command == 'train':
-        # PARSE PARAMETERS
-        film_params = context["FiLM"] if context["FiLM"]["metadata"] != "without" else None
-        multichannel_params = context["contrast"]["train_validation"] if context["multichannel"] else None
-        # Disable some attributes
-        if film_params:
-            multichannel_params = None
-            context["HeMIS"]["applied"] = False
-            context["training_parameters"]["mixup_alpha"] = None
-        if multichannel_params:
-            context["HeMIS"]["applied"] = False
-
-        # MODEL PARAMETERS
-        model_available = ['Unet', 'UNet3D', 'HeMISUnet']
-        model_context_list = [model_name for model_name in model_available
-                              if model_name in context and context[model_name]["applied"]]
-        if len(model_context_list) == 1:
-            model_name = model_context_list[0]
-            model_params = context[model_name]
-        elif len(model_context_list) > 1:
-            print('ERROR: Several models are selected in the configuration file: {}.'
-                  'Please select only one.'.format(model_context_list))
-            exit()
-        elif film_params:
-            model_name = 'FiLMedUnet'
-            model_params = film_params
-        else:
-            # Select default model
-            model_name = 'Unet'
-            model_params = {}
-        # Update params
-        model_params.update({"name": model_name,
-                             "depth": context['depth'],
-                             "in_channel": len(multichannel_params) if context["multichannel"] else 1,
-                             "out_channel": n_classes + 1 if n_classes > 1 else 1,
-                             "multichannel": multichannel_params,
-                             "drop_rate": context["dropout_rate"],
-                             "n_metadata": None,
-                             "bn_momentum": context["batch_norm_momentum"]})
-        display_selected_model_spec(params=model_params)
-
         # LOAD DATASET
-        # Update loader params
-        loader_params.update({"model_params": model_params})
         # Get Training dataset
         ds_train = imed_loader.load_dataset(**{**loader_params,
                                                **{'data_list': train_lst, 'transforms_params': transform_train_params,
@@ -289,7 +290,20 @@ def run_main():
         shutil.copyfile(sys.argv[1], "./" + log_directory + "/config_file.json")
 
     elif command == 'test':
-        cmd_test(context)
+        # LOAD DATASET
+        # Aleatoric uncertainty
+        if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
+            transformation_dict = transform_test_params
+            requires_undo = True
+        else:
+            transformation_dict = transform_valid_params
+            requires_undo = False
+        # Get Testing dataset
+        ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
+                                                                  'transforms_params': transformation_dict,
+                                                                  'dataset_type': 'testing',
+                                                                  'requires_undo': requires_undo}})
+        #cmd_test(context)
 
     elif command == 'eval':
         imed_evaluation.evaluate(bids_path=context['bids_path'],
