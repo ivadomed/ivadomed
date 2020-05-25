@@ -443,18 +443,18 @@ def normalize_film_metadata(ds_train, ds_val, metadata_type, debugging):
     return ds_train, ds_val, train_onehotencoder
 
 
-def display_selected_model_spec(name, params):
+def display_selected_model_spec(params):
     """Display in terminal the selected model and its parameters.
 
     Args:
-        name (string): model name
         params (dict): keys are param names and values are param values
     Returns:
         None
     """
-    print('\nSelected architecture: {}, with the following parameters:'.format(name))
+    print('\nSelected architecture: {}, with the following parameters:'.format(params["name"]))
     for k in list(params.keys()):
-        print('\t{}: {}'.format(k, params[k]))
+        if k != "name":
+            print('\t{}: {}'.format(k, params[k]))
 
 
 def get_subdatasets_transforms(transform_params):
@@ -549,7 +549,7 @@ def run_main():
                              "depth": context['depth'],
                              "multichannel": multichannel_params,
                              "n_out_channel": context["out_channel"]})
-        display_selected_model_spec(name=model_name, params=model_params)
+        display_selected_model_spec(params=model_params)
 
         # LOAD DATASET
         # Update loader params
