@@ -88,6 +88,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     # LOSS
     loss_fct = get_loss_function(training_params["loss"])
+    loss_dice_fct = imed_losses.DiceLoss()
 
     # TODO: display params and specs
 
@@ -126,17 +127,13 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 # TODO: @Andreanne: would it be possible to move missing_mod within input_metadata
                 metadata_type = "input_metadata" if model_params["name"] == "FiLMedUnet" else "Missing_mod"
                 metadata = get_metadata(batch[metadata_type], model_params)
-                preds = model(var_input, metadata)
+                preds = model(input_samples, metadata)
             else:
-                preds = model(var_input)
+                preds = model(input_samples)
 
-            if context["loss"]["name"] == "dice":
-                loss = - imed_losses.dice_loss(preds, var_gt)
-
-            else:
-                loss = loss_fct(preds, var_gt)
-                dice_train_loss_total += imed_losses.dice_loss(preds, var_gt).item()
-            train_loss_total += loss.item()
+            # LOSS
+            train_loss_total += loss_fct(preds, gt_samples).item()
+            train_dice_loss_total -= loss_dice_fct(preds, gt_samples).item()
 
             optimizer.zero_grad()
             loss.backward()
