@@ -1,30 +1,16 @@
 import json
-import os
-import random
 import shutil
 import sys
-import time
-
 import joblib
-import nibabel as nib
-import numpy as np
-import pandas as pd
 
 import torch
 import torch.backends.cudnn as cudnn
-from torch import optim, nn
-from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
-from tqdm import tqdm
 
 from ivadomed import training as imed_training
 from ivadomed import evaluation as imed_evaluation
-from ivadomed import losses as imed_losses
+from ivadomed import testing as imed_testing
 from ivadomed import metrics as imed_metrics
-from ivadomed import models as imed_models
-from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
-from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 
 cudnn.benchmark = True
@@ -307,7 +293,15 @@ def run_main():
                                                    film_params['metadata'])
             model_params.update({"film_onehotencoder": one_hot_encoder,
                                  "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
-        #cmd_test(context)
+
+        # RUN INFERENCE
+        imed_testing.test(model_params=model_params,
+                          dataset_test=ds_test,
+                            #training_params=context["training_parameters"],
+                          log_directory=log_directory,
+                          cuda_available=cuda_available,
+                          metric_fns=metric_fns,
+                          debugging=context["debugging"])
 
     elif command == 'eval':
         imed_evaluation.evaluate(bids_path=context['bids_path'],
