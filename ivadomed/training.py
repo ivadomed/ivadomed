@@ -16,7 +16,6 @@ from ivadomed import losses as imed_losses
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
-from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 
@@ -96,7 +95,6 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     best_training_dice, best_training_loss = float("inf"), float("inf")
     best_validation_loss, best_validation_dice = float("inf"), float("inf")
     patience_count = 0
-    val_losses = []
 
     # EPOCH LOOP
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
@@ -232,6 +230,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 """
 
         # METRICS COMPUTATION FOR CURRENT EPOCH
+        val_loss_total_avg_old = val_loss_total_avg if epoch > 1 else None
         metrics_dict = metric_mgr.get_results()
         metric_mgr.reset()
         writer.add_scalars('Validation/Metrics', metrics_dict, epoch)
@@ -255,16 +254,14 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             best_validation_dice, best_training_dice = val_dice_loss_total_avg, train_dice_loss_total_avg
             torch.save(model, "./" + log_directory + "/best_model.pt")
 
-        # Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
-        val_losses.append(val_loss_total_avg)
-
+        # EARLY STOPPING
         if epoch > 1:
-            val_diff = (val_losses[-2] - val_losses[-1]) * 100 / abs(val_losses[-1])
+            val_diff = (val_loss_total_avg_old - val_loss_total_avg) * 100 / abs(val_loss_total_avg)
             if val_diff < training_params["scheduler"]["early_stopping_epsilon"]:
                 patience_count += 1
-        if patience_count >= training_params["scheduler"]["early_stopping_patience"]:
-            print("Stopping training due to {} epochs without improvements".format(training_params["scheduler"]))
-            break
+            if patience_count >= training_params["scheduler"]["early_stopping_patience"]:
+                print("Stopping training due to {} epochs without improvements".format(training_params["scheduler"]))
+                break
 
     # Save final model
     torch.save(model, "./" + log_directory + "/final_model.pt")
