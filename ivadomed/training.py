@@ -33,9 +33,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         log_directory (string):
         cuda_available (Bool):
         metric_fns (list):
-        debugging (Bool)
+        debugging (Bool):
     Returns:
-        XX
+        float, float, float, float: best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
     """
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=log_directory)
@@ -81,6 +81,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     if model_params["name"] == "FiLMedUnet":
         gammas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
         betas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
+        contrast_list = []
 
     # LOSS
     loss_fct = get_loss_function(training_params["loss"])
@@ -201,30 +202,14 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
                                                 is_three_dim=model_params["name"].endswith("3D"))
 
-            """
-            # Store the values of gammas and betas after the last epoch for each batch
-            if film_bool and epoch == num_epochs and i < int(len(ds_val) / context["batch_size"]) + 1:
+            if model_params["name"] == "FiLMedUnet" and debugging and epoch == num_epochs \
+                and i < int(len(dataset_val) / training_params["batch_size"]) + 1:
 
-                # Get all the contrasts of all batches
-                var_contrast_list.append(var_contrast)
-
-                # Get the list containing the number of film layers
-                film_layers = context["film_layers"]
-
-                # Fill the lists of gammas and betas
-                for idx in [i for i, x in enumerate(film_layers) if x]:
-                    if idx < depth:
-                        layer_cur = model.encoder.down_path[idx * 3 + 1]
-                    elif idx == depth:
-                        layer_cur = model.encoder.film_bottom
-                    elif idx == depth * 2 + 1:
-                        layer_cur = model.decoder.last_film
-                    else:
-                        layer_cur = model.decoder.up_path[(idx - depth - 1) * 2 + 1]
-
-                    gammas_dict[idx + 1].append(layer_cur.gammas[:, :, 0, 0].cpu().numpy())
-                    betas_dict[idx + 1].append(layer_cur.betas[:, :, 0, 0].cpu().numpy())
-                """
+                # Store the values of gammas and betas after the last epoch for each batch
+                gammas_dict, betas_dict, contrast_list = store_film_params(gammas_dict, betas_dict, contrast_list,
+                                                                           batch['input_metadata'], model,
+                                                                           model_params["film_layers"],
+                                                                           model_params["depth"])
 
         # METRICS COMPUTATION FOR CURRENT EPOCH
         val_loss_total_avg_old = val_loss_total_avg if epoch > 1 else None
@@ -262,22 +247,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     # Save final model
     torch.save(model, "./" + log_directory + "/final_model.pt")
-    # TODO
-    if model_params["name"] == "FiLMedUnet":
-        """
-        # Convert list of gammas/betas into numpy arrays
-        gammas_dict = {i: np.array(gammas_dict[i]) for i in range(1, 2 * depth + 3)}
-        betas_dict = {i: np.array(betas_dict[i]) for i in range(1, 2 * depth + 3)}
+    if model_params["name"] == "FiLMedUnet" and debugging:
+        save_film_params(gammas_dict, betas_dict, contrast_list, model_params["depth"], log_directory)
 
-        # Save the numpy arrays for gammas/betas inside files.npy in log_directory
-        for i in range(1, 2 * depth + 3):
-            np.save(log_directory + f"/gamma_layer_{i}.npy", gammas_dict[i])
-            np.save(log_directory + f"/beta_layer_{i}.npy", betas_dict[i])
-
-        # Convert into numpy and save the contrasts of all batch images
-        contrast_images = np.array(var_contrast_list)
-        np.save(log_directory + "/contrast_images.npy", contrast_images)
-        """
     writer.close()
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
@@ -365,3 +337,62 @@ def get_metadata(metadata, model_params):
     else:
         return [model_params["train_onehotencoder"].transform([metadata[0][k]['film_input']]).tolist()[0]
                 for k in range(len(metadata[0]))]
+
+
+def store_film_params(gammas, betas, contrasts, metadata, model, film_layers, depth):
+    """Store FiLM params.
+
+    Args:
+        gammas (dict):
+        betas (dict):
+        contrasts (list): list of the batch sample's contrasts (eg T2w, T1w)
+        metadata (list):
+        model (nn.Module):
+        film_layers (list):
+        depth (int):
+    Returns:
+        dict, dict: gammas, betas
+    """
+    new_contrast = [metadata[0][k]['contrast'] for k in range(len(metadata[0]))]
+    contrasts.append(new_contrast)
+    # Fill the lists of gammas and betas
+    for idx in [i for i, x in enumerate(film_layers) if x]:
+        if idx < depth:
+            layer_cur = model.encoder.down_path[idx * 3 + 1]
+        elif idx == depth:
+            layer_cur = model.encoder.film_bottom
+        elif idx == depth * 2 + 1:
+            layer_cur = model.decoder.last_film
+        else:
+            layer_cur = model.decoder.up_path[(idx - depth - 1) * 2 + 1]
+
+        gammas[idx + 1].append(layer_cur.gammas[:, :, 0, 0].cpu().numpy())
+        betas[idx + 1].append(layer_cur.betas[:, :, 0, 0].cpu().numpy())
+    return gammas, betas, contrasts
+
+
+def save_film_params(gammas, betas, contrasts, depth, ofolder):
+    """Save FiLM params as npy files.
+
+    Further used for visualisation purposes.
+
+    Args:
+        gammas (dict):
+        betas (dict):
+        contrasts (list): list of the batch sample's contrasts (eg T2w, T1w)
+        depth (int):
+        ofolder (string)
+    Returns:
+    """
+    # Convert list of gammas/betas into numpy arrays
+    gammas_dict = {i: np.array(gammas[i]) for i in range(1, 2 * depth + 3)}
+    betas_dict = {i: np.array(betas[i]) for i in range(1, 2 * depth + 3)}
+
+    # Save the numpy arrays for gammas/betas inside files.npy in log_directory
+    for i in range(1, 2 * depth + 3):
+        np.save(ofolder + "/gamma_layer_{}.npy".format(i), gammas_dict[i])
+        np.save(ofolder + "/beta_layer_{}.npy".format(i), betas_dict[i])
+
+    # Convert into numpy and save the contrasts of all batch images
+    contrast_images = np.array(contrasts)
+    np.save(ofolder + "/contrast_images.npy", contrast_images)
