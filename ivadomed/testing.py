@@ -33,6 +33,7 @@ def test(model_params, dataset_test, training_params, log_directory, cuda_availa
     Returns:
         XX
     """
+    # DATA LOADER
     test_loader = DataLoader(dataset_test, batch_size=training_params["batch_size"],
                              shuffle=False, pin_memory=True,
                              collate_fn=imed_loader_utils.imed_collate,
