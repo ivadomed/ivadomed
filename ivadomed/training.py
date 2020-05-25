@@ -65,11 +65,11 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     if cuda_available:
         model.cuda()
 
-    num_epochs = context["num_epochs"]
-    initial_lr = context["initial_lr"]
+    num_epochs = training_params["training_time"]["num_epochs"]
 
     # Using Adam
     step_scheduler_batch = False
+    initial_lr = training_params["scheduler"]["initial_lr"]
     # filter out the parameters you are going to fine-tuning
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
