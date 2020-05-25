@@ -61,7 +61,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         model = imed_models.set_model_for_retrain(old_model_path, retrain_fraction=fraction)
     else:
         model_class = getattr(imed_models, model_params["name"])
-        model = model_class(model_params)
+        model = model_class(**model_params)
     if cuda_available:
         model.cuda()
 
@@ -73,52 +73,19 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
     # Using Adam
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
-    scheduler, step_scheduler_batch = get_scheduler(optimizer, num_epochs, training_params["scheduler"])
+    scheduler, step_scheduler_batch = get_scheduler(training_params["scheduler"], optimizer, num_epochs)
 
     # Create dict containing gammas and betas after each FiLM layer.
-    depth = context["depth"]
-    gammas_dict = {i: [] for i in range(1, 2 * depth + 3)}
-    betas_dict = {i: [] for i in range(1, 2 * depth + 3)}
+    #depth = context["depth"]
+    #gammas_dict = {i: [] for i in range(1, 2 * depth + 3)}
+    #betas_dict = {i: [] for i in range(1, 2 * depth + 3)}
 
     # Create a list containing the contrast of all batch images
-    var_contrast_list = []
+    #var_contrast_list = []
 
-    # Loss
-    if context["loss"]["name"] in ["dice", "cross_entropy", "focal", "gdl", "focal_dice", "multi_class_dice"]:
-        if context["loss"]["name"] == "cross_entropy":
-            loss_fct = nn.BCELoss()
+    # LOSS
+    loss_fct = get_loss_function(training_params["loss"])
 
-        elif context["loss"]["name"] == "focal":
-            loss_fct = imed_losses.FocalLoss(gamma=context["loss"]["params"]["gamma"],
-                                             alpha=context["loss"]["params"]["alpha"])
-            print("\nLoss function: {}, with gamma={}, alpha={}.\n".format(context["loss"]["name"],
-                                                                           context["loss"]["params"]["gamma"],
-                                                                           context["loss"]["params"]["alpha"]))
-        elif context["loss"]["name"] == "gdl":
-            loss_fct = imed_losses.GeneralizedDiceLoss()
-
-        elif context["loss"]["name"] == "focal_dice":
-            loss_fct = imed_losses.FocalDiceLoss(beta=context["loss"]["params"]["beta"],
-                                                 gamma=context["loss"]["params"]["gamma"],
-                                                 alpha=context["loss"]["params"]["alpha"])
-            print("\nLoss function: {}, with beta={}, gamma={} and alpha={}.\n".format(context["loss"]["name"],
-                                                                                       context["loss"]["params"][
-                                                                                           "beta"],
-                                                                                       context["loss"]["params"][
-                                                                                           "gamma"],
-                                                                                       context["loss"]["params"][
-                                                                                           "alpha"]))
-        elif context["loss"]["name"] == "multi_class_dice":
-            loss_fct = imed_losses.MultiClassDiceLoss(classes_of_interest=
-                                                      context["loss"]["params"]["classes_of_interest"])
-
-        if not context["loss"]["name"].startswith("focal"):
-            print("\nLoss function: {}.\n".format(context["loss"]["name"]))
-
-    else:
-        print("Unknown Loss function, please choose between 'dice', 'focal', 'focal_dice', 'gdl', 'cross_entropy' "
-              "or 'multi_class_dice'")
-        exit()
 
     # Training loop -----------------------------------------------------------
 
@@ -425,3 +392,29 @@ def get_scheduler(params, optimizer, num_epochs=0):
             "or 'CyclicLR'")
         exit()
     return scheduler, step_scheduler_batch
+
+
+def get_loss_function(params):
+    """Get Loss function.
+
+    Args:
+        params (dict):
+    Returns:
+        imed_losses:
+    """
+    # Loss function name
+    loss_name = params["name"]
+    del params["name"]
+
+    # Check if implemented
+    loss_function_available = ["dice", "cross_entropy", "FocalLoss", "GeneralizedDiceLoss", "FocalDiceLoss", "MultiClassDiceLoss"]
+    if loss_name not in loss_function_available:
+        print("Unknown Loss function, please choose between {}".format(loss_function_available))
+        exit()
+
+    if loss_name == "cross_entropy":
+        loss_fct = nn.BCELoss()
+    else:
+        loss_class = getattr(imed_losses, loss_name)
+        loss_fct = loss_class(**params)
+    return loss_fct
