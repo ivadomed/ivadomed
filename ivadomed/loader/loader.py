@@ -12,7 +12,8 @@ from ivadomed import transforms as imed_transforms
 
 
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
-                 contrast_params, slice_filter_params, slice_axis, multichannel, metadata_type):
+                 contrast_params, slice_filter_params, slice_axis, multichannel, metadata_type,
+                 dataset_type="training"):
     """Get loader.
 
     Args:
@@ -27,6 +28,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         slice_axis (string):
         multichannel (bool):
         metadata_type (string): None if no metadata
+        dataset_type (string): training, validation or testing
     Returns:
         BidsDataset
     """
@@ -78,6 +80,11 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
     # if ROICrop in transform, then apply SliceFilter to ROI slices
     if 'ROICrop' in transforms_params:
         dataset = imed_loader_utils.filter_roi(dataset, nb_nonzero_thr=roi_params["slice_filter_roi"])
+
+    if model_params["name"] != "unet3D":
+        print("Loaded {} {} slices for the {} set.".format(len(dataset), slice_axis, dataset_type))
+    else:
+        print("Loaded {} volumes of size {} for the {} set.".format(len(dataset), slice_axis, dataset_type))
 
     return dataset
 

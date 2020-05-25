@@ -38,12 +38,6 @@ def train(model_params, dataset_train, dataset_val, log_directory, cuda_availabl
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=log_directory)
 
-    ## HERE
-    if not unet_3D:
-        print(f"Loaded {len(dataset_train)} {dataset_train['slice_axis']} slices for the training set.")
-    else:
-        print(f"Loaded {len(ds_train)} volumes of size {context['length_3D']} for the training set.")
-
     if context['balance_samples'] and not HeMIS:
         sampler_train = imed_loader_utils.BalancedSampler(ds_train)
         shuffle_train = False
