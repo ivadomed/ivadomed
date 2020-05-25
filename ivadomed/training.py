@@ -112,10 +112,10 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         for i, batch in enumerate(train_loader):
             # GET SAMPLES
             if model_params["name"] == "HeMISUnet":
-                input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]))
+                input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
             else:
-                input_samples = imed_utils.cuda(batch["input"])
-            gt_samples = imed_utils.cuda(batch["gt"], non_blocking=True)
+                input_samples = imed_utils.cuda(batch["input"], cuda_available)
+            gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
 
             # MIXUP
             if training_params["mixup_alpha"]:
@@ -166,48 +166,31 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
         # Validation loop -----------------------------------------------------
         model.eval()
-        val_loss_total, dice_val_loss_total = 0.0, 0.0
+        val_loss_total, val_dice_loss_total = 0.0, 0.0
         num_steps = 0
-
         metric_mgr = imed_metrics.MetricManager(metric_fns)
-
         for i, batch in enumerate(val_loader):
-            input_samples, gt_samples = batch["input"] if not HeMIS \
-                                            else imed_utils.unstack_tensors(batch["input"]), batch["gt"]
-
             with torch.no_grad():
-                if cuda_available:
-                    var_input = imed_utils.cuda(input_samples)
-                    var_gt = imed_utils.cuda(gt_samples, non_blocking=True)
+                # GET SAMPLES
+                if model_params["name"] == "HeMISUnet":
+                    input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
                 else:
-                    var_input = input_samples
-                    var_gt = gt_samples
+                    input_samples = imed_utils.cuda(batch["input"], cuda_available)
+                gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
 
-                if film_bool:
-                    sample_metadata = batch["input_metadata"]
-                    # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
-                    var_contrast = [sample_metadata[0][k]['contrast']
-                                    for k in range(len(sample_metadata[0]))]
-
-                    var_metadata = [train_onehotencoder.transform([sample_metadata[0][k]['film_input']]).tolist()[0]
-                                    for k in range(len(sample_metadata[0]))]
-
-                    # Input the metadata related to the input samples
-                    preds = model(var_input, var_metadata)
-                elif HeMIS:
-                    missing_mod = batch["Missing_mod"]
-                    preds = model(var_input, missing_mod)
-
+                # RUN MODEL
+                if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
+                    # TODO: @Andreanne: would it be possible to move missing_mod within input_metadata
+                    metadata_type = "input_metadata" if model_params["name"] == "FiLMedUnet" else "Missing_mod"
+                    metadata = get_metadata(batch[metadata_type], model_params)
+                    preds = model(input_samples, metadata)
                 else:
-                    preds = model(var_input)
+                    preds = model(input_samples)
 
-                if context["loss"]["name"] == "dice":
-                    loss = - imed_losses.dice_loss(preds, var_gt)
-
-                else:
-                    loss = loss_fct(preds, var_gt)
-                    dice_val_loss_total += imed_losses.dice_loss(preds, var_gt).item()
+                # LOSS
+                loss = loss_fct(preds, gt_samples)
                 val_loss_total += loss.item()
+                val_dice_loss_total -= loss_dice_fct(preds, gt_samples).item()
 
             # Metrics computation
             gt_npy = gt_samples.numpy().astype(np.uint8)
