@@ -480,24 +480,6 @@ def get_subdatasets_transforms(transform_params):
     return train, valid, test
 
 
-def get_dataset(bids_path, dataset_type, target_suffix, roi_params, contrast_params, model_params, transform_params,
-                subject_list):
-    # Compose transforms
-    transforms = imed_transforms.Compose(transform_params)
-
-    # This code will iterate over the folders and load the data, filtering
-    # the slices without labels and then concatenating all the datasets together
-    ds = imed_loader.load_dataset(subject_list,
-                                  transforms,
-                                  context)
-
-    # if ROICrop in transform, then apply SliceFilter to ROI slices
-    if 'ROICrop' in transform_params:
-        ds = imed_loader_utils.filter_roi(ds, nb_nonzero_thr=roi_params["slice_filter_roi"])
-
-    return ds
-
-
 def run_main():
     if len(sys.argv) <= 1:
         print("\nivadomed [config.json]\n")
@@ -520,6 +502,16 @@ def run_main():
     # Get transforms for each subdataset
     transform_train_params, transform_valid_params, transform_test_params = \
         get_subdatasets_transforms(context["transformation"])
+
+    # Loader params
+    loader_params = {"bids_path": context['bids_path'],
+                     "target_suffix": context["target_suffix"],
+                     "roi_params": context["roi"],
+                     "contrast_params": context["contrasts"],
+                     "slice_filter_params": context["slice_filter"],
+                     "slice_axis": context["slice_axis"],
+                     "multichannel": context["multichannel"],
+                     "metadata_type": context["FiLM"]["metadata"]}
 
     if command == 'train':
         # Parse parameters
@@ -555,9 +547,16 @@ def run_main():
                              "n_out_channel": context["out_channel"]})
         display_selected_model_spec(name=model_name, params=model_params)
 
-        # HERE
+        # Update loader params
+        loader_params.update({"model_params": model_params})
+        # Get Training dataset
+        ds_train = imed_loader.load_dataset(**{**loader_params,
+                                               **{'data_list': train_lst, 'transforms_params': transform_train_params}})
+        # Get Validation dataset
+        ds_valid = imed_loader.load_dataset(**{**loader_params,
+                                               **{'data_list': valid_lst, 'transforms_params': transform_valid_params}})
 
-        if film_params:
+    if film_params:
             # Normalize metadata before sending to the FiLM network
             ds_train, ds_val, train_onehotencoder = normalize_film_metadata(ds_train=ds_train,
                                                                             ds_val=ds_val,
