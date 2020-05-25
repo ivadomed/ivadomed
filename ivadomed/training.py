@@ -93,9 +93,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     best_training_dice, best_training_loss, best_validation_loss, best_validation_dice = float("inf"), float(
         "inf"), float("inf"), float("inf")
 
-    patience = context["early_stopping_patience"]
     patience_count = 0
-    epsilon = context["early_stopping_epsilon"]
     val_losses = []
 
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
@@ -312,7 +310,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         val_losses.append(val_loss_total_avg)
 
         if epoch > 1:
-            if (val_losses[-2] - val_losses[-1]) * 100 / abs(val_losses[-1]) < epsilon:
+            val_diff = (val_losses[-2] - val_losses[-1]) * 100 / abs(val_losses[-1])
+            if val_diff < training_params["scheduler"]["early_stopping_epsilon"]:
                 patience_count += 1
         if patience_count >= training_params["scheduler"]["early_stopping_patience"]:
             print("Stopping training due to {} epochs without improvements".format(training_params["scheduler"]))
