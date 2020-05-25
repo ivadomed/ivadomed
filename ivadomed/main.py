@@ -22,7 +22,7 @@ def define_device(gpu_id):
     Args:
         gpu_id (int): ID of the GPU
     Returns:
-        Bool: True if cuda is available
+        Bool, device: True if cuda is available
     """
     device = torch.device("cuda:" + str(gpu_id) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
@@ -34,7 +34,7 @@ def define_device(gpu_id):
         gpu_number = int(gpu_id)
         torch.cuda.set_device(gpu_number)
         print("Using GPU number {}".format(gpu_number))
-    return cuda_available
+    return cuda_available, device
 
 
 def get_new_subject_split(path_folder, center_test, split_method, random_seed,
@@ -158,7 +158,7 @@ def run_main():
     log_directory = context["log_directory"]
 
     # Define device
-    cuda_available = define_device(context['gpu'])
+    cuda_available, device = define_device(context['gpu'])
 
     # Get subject lists
     train_lst, valid_lst, test_lst = get_subdatasets_subjects_list(context["split_dataset"],
@@ -299,6 +299,7 @@ def run_main():
                           dataset_test=ds_test,
                             #training_params=context["training_parameters"],
                           log_directory=log_directory,
+                          device=device,
                           cuda_available=cuda_available,
                           metric_fns=metric_fns,
                           debugging=context["debugging"])

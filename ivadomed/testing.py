@@ -1,4 +1,4 @@
-import time
+import os
 import numpy as np
 from tqdm import tqdm
 
@@ -18,8 +18,8 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 cudnn.benchmark = True
 
 
-def test(model_params, dataset_test, training_params, log_directory, cuda_available=True, metric_fns=None,
-         debugging=False):
+def test(model_params, dataset_test, training_params, log_directory, device, cuda_available=True,
+         metric_fns=None, debugging=False):
     """Main command to test the network.
 
     Args:
@@ -27,6 +27,7 @@ def test(model_params, dataset_test, training_params, log_directory, cuda_availa
         dataset_test (imed_loader): Testing dataset
         training_params (dict):
         log_directory (string):
+        device (torch.device):
         cuda_available (Bool):
         metric_fns (list):
         debugging (Bool):
@@ -39,26 +40,18 @@ def test(model_params, dataset_test, training_params, log_directory, cuda_availa
                              collate_fn=imed_loader_utils.imed_collate,
                              num_workers=0)
 
-    model = torch.load("./" + context["log_directory"] + "/best_model.pt", map_location=device)
-
+    # LOAD TRAIN MODEL
+    model = torch.load("./" + log_directory + "/best_model.pt", map_location=device)
     if cuda_available:
         model.cuda()
     model.eval()
 
-    # create output folder for 3D prediction masks
-    path_3Dpred = os.path.join(context['log_directory'], 'pred_masks')
+    # CREATE OUTPUT FOLDER
+    path_3Dpred = os.path.join(log_directory, 'pred_masks')
     if not os.path.isdir(path_3Dpred):
         os.makedirs(path_3Dpred)
 
-    metric_fns = [imed_metrics.dice_score,
-                  imed_metrics.multi_class_dice_score,
-                  imed_metrics.hausdorff_3D_score,
-                  imed_metrics.precision_score,
-                  imed_metrics.recall_score,
-                  imed_metrics.specificity_score,
-                  imed_metrics.intersection_over_union,
-                  imed_metrics.accuracy_score]
-
+    # METRIC MANAGER
     metric_mgr = imed_metrics.MetricManager(metric_fns)
 
     # number of Monte Carlo simulation
