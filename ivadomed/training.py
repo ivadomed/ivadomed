@@ -133,7 +133,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
             # LOSS
             loss = loss_fct(preds, gt_samples)
-            train_dice_loss_total += loss.item()
+            train_loss_total += loss.item()
             train_dice_loss_total -= loss_dice_fct(preds, gt_samples).item()
 
             # UPDATE OPTIMIZER
@@ -148,14 +148,15 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 imed_utils.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds,
                                                 is_three_dim=model_params["name"].endswith("3D"))
 
-        train_loss_total_avg = train_loss_total / num_steps
         if not step_scheduler_batch:
             scheduler.step()
 
-        tqdm.write(f"Epoch {epoch} training loss: {train_loss_total_avg:.4f}.")
-        if context["loss"]["name"] != 'dice':
-            dice_train_loss_total_avg = dice_train_loss_total / num_steps
-            tqdm.write(f"\tDice training loss: {dice_train_loss_total_avg:.4f}.")
+        # TRAINING LOSS
+        train_loss_total_avg = train_loss_total / num_steps
+        msg = "Epoch {} training loss: {:.4f}.". format(epoch, train_loss_total_avg)
+        if training_params["loss"]["name"] != "DiceLoss":
+            msg += "\tDice training loss: {:.4f}.".format(train_dice_loss_total / num_steps)
+        tqdm.write(msg)
 
         # In case of curriculum Learning we need to update the loader
         if HeMIS:
