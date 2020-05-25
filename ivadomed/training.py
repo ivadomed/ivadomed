@@ -22,45 +22,33 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 
 cudnn.benchmark = True
 
-def train(model_params, dataset_train, dataset_val, log_directory, cuda_available=True, balance_samples=False,
-          mixup_params=None):
+def train(model_params, dataset_train, dataset_val, training_params, log_directory, cuda_available=True):
     """Main command to train the network.
 
     Args:
         model_params (dict): Model's parameters.
         dataset_train (imed_loader): Training dataset
         dataset_val (imed_loader): Validation dataset
+        training_params (dict):
         log_directory (string):
         cuda_available (Bool):
-        balance_samples (Bool):
-        mixup_params (float): alpha parameter
     Returns:
         XX
     """
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=log_directory)
 
-    if context['balance_samples'] and not HeMIS:
-        sampler_train = imed_loader_utils.BalancedSampler(ds_train)
-        shuffle_train = False
-    else:
-        sampler_train, shuffle_train = None, True
+    # BALANCE SAMPLES
+    conditions = [training_params["balance_samples"], model_params["name"] != "HeMIS"]
+    sampler_train, shuffle_train = get_sampler(dataset_train, conditions)
+    sampler_val, shuffle_val = get_sampler(dataset_val, conditions)
 
-    train_loader = DataLoader(ds_train, batch_size=context["batch_size"],
+    # PYTORCH LOADER
+    train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
-
-    # BALANCE SAMPLES
-    conditions = [balance_samples, model_params["name"] != "HeMIS"]
-    sampler_val, suffler_val = get_sampler(balance_bool=all(conditions))
-    if context['balance_samples'] and not HeMIS:
-        sampler_val = imed_loader_utils.BalancedSampler(ds_val)
-        shuffle_val = False
-    else:
-        sampler_val, shuffle_val = None, True
-
-    val_loader = DataLoader(ds_val, batch_size=context["batch_size"],
+    val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
                             shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
                             collate_fn=imed_loader_utils.imed_collate,
                             num_workers=0)

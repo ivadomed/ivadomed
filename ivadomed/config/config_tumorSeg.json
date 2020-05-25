@@ -41,7 +41,9 @@
                 "base_lr": 1e-5,
                 "max_lr": 1e-2,
             }
-        }
+        },
+        "balance_samples": false,
+        "mixup_alpha": null
     },
     "FiLM": {
         "metadata": "without",
@@ -69,10 +71,8 @@
         "retrain_fraction": 1.0
     },
     "depth": 4,
-    "mixup_alpha": null,
     "multichannel": false,
     "out_channel": 1,
-    "balance_samples": false,
     "binarize_prediction": true,
     "uncertainty": {
         "epistemic": false,

@@ -517,14 +517,13 @@ def run_main():
         # PARSE PARAMETERS
         film_params = context["FiLM"] if context["FiLM"]["metadata"] != "without" else None
         multichannel_params = context["contrast"]["train_validation"] if context["multichannel"] else None
-        mixup_params = float(context["mixup_alpha"]) if context["mixup_alpha"] else None
         # Disable some attributes
         if film_params:
             multichannel_params = None
-            context["HeMIS"] = False
-            mixup_params = False
+            context["HeMIS"]["applied"] = False
+            context["training_parameters"]["mixup_alpha"] = None
         if multichannel_params:
-            context["HeMIS"] = False
+            context["HeMIS"]["applied"] = False
 
         # MODEL PARAMETERS
         model_available = ['unet_2D', 'unet3D', 'HeMIS']
@@ -575,10 +574,9 @@ def run_main():
         imed_training.train(model_params=model_params,
                             dataset_train=ds_train,
                             dataset_val=ds_valid,
+                            training_params=context["training_parameters"],
                             log_directory=log_directory,
-                            cuda_available=cuda_available,
-                            balance_samples=context["balance_samples"],
-                            mixup_params=mixup_params)
+                            cuda_available=cuda_available)
 
         # Save config file within log_directory
         shutil.copyfile(sys.argv[1], "./" + log_directory + "/config_file.json")
