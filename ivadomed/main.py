@@ -18,6 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from ivadomed import training as imed_training
+from ivadomed import evaluation as imed_evaluation
 from ivadomed import losses as imed_losses
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
@@ -537,9 +538,12 @@ def run_main():
 
     elif command == 'test':
         cmd_test(context)
-    elif command == 'eval':
-        cmd_eval(context)
 
+    elif command == 'eval':
+        imed_evaluation.evaluate(bids_path=context['bids_path'],
+                                 log_directory=log_directory,
+                                 target_suffix=context["target_suffix"],
+                                 eval_params=context["eval_params"])
 
 if __name__ == "__main__":
     run_main()
