@@ -171,14 +171,14 @@ class Unet(Module):
     """
 
     def __init__(self, in_channel=1, out_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4,
-                 bn_momentum=0.1):
+                 bn_momentum=0.1, **kwargs):
         super(Unet, self).__init__()
         print("depth", depth)
         # Verify if the length of boolean FiLM layers corresponds to the depth
         if film_layers:
             if len(film_layers) != 2 * depth + 2:
-                raise ValueError(f"The number of FiLM layers {len(film_layers)} entered does not correspond to the "
-                                 f"UNet depth. There should 2 * depth + 2 layers.")
+                raise ValueError("The number of FiLM layers {} entered does not correspond to the "
+                                 "UNet depth. There should 2 * depth + 2 layers.".format(len(film_layers)))
         else:
             film_layers = [0] * (2 * depth + 2)
 
@@ -287,7 +287,7 @@ class HeMISUnet(Module):
         ArXiv link: https://arxiv.org/abs/1907.11150
         """
 
-    def __init__(self, modalities, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1):
+    def __init__(self, modalities, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, **kwargs):
         super(HeMISUnet, self).__init__()
         self.film_layers = [0] * (2 * depth + 2)
         self.depth = depth
@@ -345,7 +345,7 @@ class UNet3D(nn.Module):
     https://github.com/ozan-oktay/Attention-Gated-Networks
     """
 
-    def __init__(self, in_channel, out_channel, base_n_filter=16, attention=False, drop_rate=0.6, bn_momentum=0.1):
+    def __init__(self, in_channel, out_channel, base_n_filter=16, attention=False, drop_rate=0.6, bn_momentum=0.1, **kwargs):
         super(UNet3D, self).__init__()
         self.in_channels = in_channel
         self.n_classes = out_channel
