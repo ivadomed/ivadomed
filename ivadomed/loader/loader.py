@@ -13,7 +13,7 @@ from ivadomed import transforms as imed_transforms
 
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel, metadata_type,
-                 dataset_type="training"):
+                 dataset_type="training", requires_undo=False):
     """Get loader.
 
     Args:
@@ -29,11 +29,12 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         multichannel (bool):
         metadata_type (string): None if no metadata
         dataset_type (string): training, validation or testing
+        requires_undo (Bool): If True, the transformations without undo_transform will be discarded
     Returns:
         BidsDataset
     """
     # Compose transforms
-    transforms = imed_transforms.Compose(transforms_params)
+    transforms = imed_transforms.Compose(transforms_params, requires_undo=requires_undo)
 
     if model_params["name"] == "unet3D":
         dataset = Bids3DDataset(bids_path,

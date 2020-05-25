@@ -15,27 +15,10 @@ from ivadomed import postprocessing as imed_postpro
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
+cudnn.benchmark = True
 
-def cmd_test(context):
-    ##### DEFINE DEVICE #####
-    device = torch.device("cuda:" + str(context['gpu']) if torch.cuda.is_available() else "cpu")
-    cuda_available = torch.cuda.is_available()
-    if not cuda_available:
-        print("cuda is not available.")
-        print("Working on {}.".format(device))
-    if cuda_available:
-        # Set the GPU
-        gpu_number = int(context["gpu"])
-        torch.cuda.set_device(gpu_number)
-        print("using GPU number {}".format(gpu_number))
-    HeMIS = context['HeMIS']
-    # Boolean which determines if the selected architecture is FiLMedUnet or Unet
-    film_bool = bool(sum(context["film_layers"]))
-    print('\nArchitecture: {}\n'.format('FiLMedUnet' if film_bool else 'Unet'))
-    if context["metadata"] == "mri_params":
-        print('\tInclude subjects with acquisition metadata available only.\n')
-    else:
-        print('\tInclude all subjects, with or without acquisition metadata.\n')
+
+def test(context):
 
     # Aleatoric uncertainty
     if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
@@ -48,11 +31,6 @@ def cmd_test(context):
 
     # inverse transformations
     val_undo_transform = imed_transforms.UndoCompose(val_transform)
-
-    if context.get("split_path") is None:
-        test_lst = joblib.load("./" + context["log_directory"] + "/split_datasets.joblib")['test']
-    else:
-        test_lst = joblib.load(context["split_path"])['test']
 
     ds_test = imed_loader.load_dataset(test_lst, val_transform, context)
 
