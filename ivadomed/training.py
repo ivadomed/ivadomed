@@ -67,27 +67,13 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     num_epochs = training_params["training_time"]["num_epochs"]
 
-    # Using Adam
-    step_scheduler_batch = False
+    # OPTIMISZER
     initial_lr = training_params["scheduler"]["initial_lr"]
     # filter out the parameters you are going to fine-tuning
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
+    # Using Adam
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
-    if context["lr_scheduler"]["name"] == "CosineAnnealingLR":
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
-    elif context["lr_scheduler"]["name"] == "CosineAnnealingWarmRestarts":
-        T_0 = context["lr_scheduler"]["T_0"]
-        T_mult = context["lr_scheduler"]["T_mult"]
-        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0, T_mult)
-    elif context["lr_scheduler"]["name"] == "CyclicLR":
-        base_lr, max_lr = context["lr_scheduler"]["base_lr"], context["lr_scheduler"]["max_lr"]
-        scheduler = optim.lr_scheduler.CyclicLR(
-            optimizer, base_lr, max_lr, mode="triangular2", cycle_momentum=False)
-        step_scheduler_batch = True
-    else:
-        print(
-            "Unknown LR Scheduler name, please choose between 'CosineAnnealingLR', 'CosineAnnealingWarmRestarts', or 'CyclicLR'")
-        exit()
+    scheduler, step_scheduler_batch = get_scheduler(optimizer, num_epochs, training_params["scheduler"])
 
     # Create dict containing gammas and betas after each FiLM layer.
     depth = context["depth"]
@@ -411,3 +397,31 @@ def get_sampler(ds, balance_bool):
         return imed_loader_utils.BalancedSampler(ds), False
     else:
         return None, True
+
+
+def get_scheduler(params, optimizer, num_epochs=0):
+    """Get scheduler.
+
+    Args:
+        params (dict):
+        optimizer (torch.optim):
+        num_epochs (int):
+    Returns:
+        torch.optim, Bool:
+    """
+    step_scheduler_batch = False
+    scheduler_name = params["name"]
+    del params["name"]
+    if scheduler_name == "CosineAnnealingLR":
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, num_epochs)
+    elif scheduler_name == "CosineAnnealingWarmRestarts":
+        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, **params)
+    elif scheduler_name == "CyclicLR":
+        scheduler = optim.lr_scheduler.CyclicLR(optimizer, **params, mode="triangular2", cycle_momentum=False)
+        step_scheduler_batch = True
+    else:
+        print(
+            "Unknown LR Scheduler name, please choose between 'CosineAnnealingLR', 'CosineAnnealingWarmRestarts',"
+            "or 'CyclicLR'")
+        exit()
+    return scheduler, step_scheduler_batch
