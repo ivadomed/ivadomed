@@ -537,12 +537,16 @@ def run_main():
             print('ERROR: Several models are selected in the configuration file: {}.'
                   'Please select only one.'.format(model_context_list))
             exit()
+        elif film_params:
+            model_name = 'FiLMedUnet_2D'
+            model_params = film_params
         else:
             # Select default model
             model_name = 'unet_2D'
-            model_params = context[model_name]
+            model_params = {}
         # Update params
-        model_params.update({"depth": context['depth'],
+        model_params.update({"name": model_name,
+                             "depth": context['depth'],
                              "multichannel": multichannel_params,
                              "n_out_channel": context["out_channel"]})
         display_selected_model_spec(name=model_name, params=model_params)
