@@ -514,7 +514,7 @@ def run_main():
                      "metadata_type": context["FiLM"]["metadata"]}
 
     if command == 'train':
-        # Parse parameters
+        # PARSE PARAMETERS
         film_params = context["FiLM"] if context["FiLM"]["metadata"] != "without" else None
         multichannel_params = context["contrast"]["train_validation"] if context["multichannel"] else None
         mixup_params = float(context["mixup_alpha"]) if context["mixup_alpha"] else None
@@ -547,6 +547,7 @@ def run_main():
                              "n_out_channel": context["out_channel"]})
         display_selected_model_spec(name=model_name, params=model_params)
 
+        # LOAD DATASET
         # Update loader params
         loader_params.update({"model_params": model_params})
         # Get Training dataset
@@ -555,22 +556,21 @@ def run_main():
         # Get Validation dataset
         ds_valid = imed_loader.load_dataset(**{**loader_params,
                                                **{'data_list': valid_lst, 'transforms_params': transform_valid_params}})
-
-    if film_params:
+        # If FiLM, normalize data
+        if film_params:
             # Normalize metadata before sending to the FiLM network
             ds_train, ds_val, train_onehotencoder = normalize_film_metadata(ds_train=ds_train,
-                                                                            ds_val=ds_val,
+                                                                            ds_val=ds_valid,
                                                                             metadata_type=film_params['metadata'],
                                                                             debugging=context["debugging"])
             film_params.update({"film_onehotencoder": train_onehotencoder})
 
-        imed_training.train(model_name=model_name,
-                            model_params=model_params,
+        # RUN TRAINING
+        imed_training.train(model_params=model_params,
                             dataset_train=ds_train,
-                            dataset_val=ds_val,
+                            dataset_val=ds_valid,
                             log_directory=log_directory,
                             cuda_available=cuda_available,
-                            metadata_type=film_params['metadata'],
                             film_params=film_params,
                             mixup_params=mixup_params)
 

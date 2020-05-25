@@ -21,10 +21,16 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 
 cudnn.benchmark = True
+model_params=model_params,
+                            dataset_train=ds_train,
+                            dataset_val=ds_valid,
+                            log_directory=log_directory,
+                            cuda_available=cuda_available,
+                            film_params=film_params,
+                            mixup_params=mixup_params
 
-
-def train(model_name, dataset_train, dataset_val, log_directory, cuda_available=True,
-          multichannel_params=None, metadata_type=None, hemis_params=None, film_params=None,
+def train(model_params, dataset_train, dataset_val, log_directory, cuda_available=True,
+          multichannel_params=None, hemis_params=None, film_params=None,
           mixup_params=None):
     """Main command to train the network.
 
