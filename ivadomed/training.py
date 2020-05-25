@@ -194,19 +194,18 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
             num_steps += 1
 
-            # Metrics computation
+            # METRICS COMPUTATION
             gt_npy = gt_samples.numpy().astype(np.uint8)
             preds_npy = preds.data.cpu().numpy()
             if training_params["binarize_prediction"]:
                 preds_npy = imed_postpro.threshold_predictions(preds_npy)
-            c(preds_npy.astype(np.uint8), gt_npy)
+            metric_mgr(preds_npy.astype(np.uint8), gt_npy)
+
             if i == 0 and debugging:
                 imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
                                                 is_three_dim=model_params["name"].endswith("3D"))
 
-
-
-
+            """
             # Store the values of gammas and betas after the last epoch for each batch
             if film_bool and epoch == num_epochs and i < int(len(ds_val) / context["batch_size"]) + 1:
 
@@ -229,22 +228,21 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
                     gammas_dict[idx + 1].append(layer_cur.gammas[:, :, 0, 0].cpu().numpy())
                     betas_dict[idx + 1].append(layer_cur.betas[:, :, 0, 0].cpu().numpy())
+                """
 
+        # METRICS COMPUTATION FOR CURRENT EPOCH
         metrics_dict = metric_mgr.get_results()
         metric_mgr.reset()
-
         writer.add_scalars('Validation/Metrics', metrics_dict, epoch)
         val_loss_total_avg = val_loss_total / num_steps
         writer.add_scalars('losses', {
             'train_loss': train_loss_total_avg,
             'val_loss': val_loss_total_avg,
         }, epoch)
-
-        tqdm.write(f"Epoch {epoch} validation loss: {val_loss_total_avg:.4f}.")
-        if context["loss"]["name"] != 'dice':
-            dice_val_loss_total_avg = dice_val_loss_total / num_steps
-            tqdm.write(f"\tDice validation loss: {dice_val_loss_total_avg:.4f}.")
-
+        msg = "Epoch {} validation loss: {:.4f}.". format(epoch, val_loss_total_avg)
+        if training_params["loss"]["name"] != "DiceLoss":
+            msg += "\tDice validation loss: {:.4f}.".format(val_dice_loss_total / num_steps)
+        tqdm.write(msg)
         end_time = time.time()
         total_time = end_time - start_time
         tqdm.write("Epoch {} took {:.2f} seconds.".format(epoch, total_time))
