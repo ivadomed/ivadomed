@@ -8,20 +8,42 @@ from tqdm import tqdm
 
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 from ivadomed import utils as imed_utils
+from ivadomed import transforms as imed_transforms
 
 
-def load_dataset(data_list, bids_path, data_transform, model_params):
+def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
+                 contrast_params, slice_filter_params, slice_axis, multichannel, metadata_type):
+    """Get loader.
+
+    Args:
+        data_list (list):
+        bids_path (string):
+        transforms_params (dict):
+        model_name (string):
+        target_suffix (list):
+        roi_params (dict):
+        contrast_params (dict):
+        slice_filter_params (dict):
+        slice_axis (string):
+        multichannel (bool):
+        metadata_type (string): None if no metadata
+    Returns:
+        BidsDataset
+    """
+    # Compose transforms
+    transforms = imed_transforms.Compose(transforms_params)
+
     if model_params["name"] == "unet3D":
         dataset = Bids3DDataset(bids_path,
                                 subject_lst=data_list,
-                                target_suffix=context["target_suffix"],
-                                roi_suffix=context["roi_suffix"],
-                                contrast_lst=context["contrast_train_validation"],
-                                metadata_choice=context["metadata"],
-                                contrast_balance=context["contrast_balance"],
-                                slice_axis=imed_utils.AXIS_DCT[context["slice_axis"]],
-                                transform=data_transform,
-                                multichannel=context['multichannel'],
+                                target_suffix=target_suffix,
+                                roi_suffix=roi_params["suffix"],
+                                contrast_lst=contrast_params["train_validation"],
+                                metadata_choice=metadata_type,
+                                contrast_balance=contrast_params["contrast_balance"],
+                                slice_axis=imed_utils.AXIS_DCT[slice_axis],
+                                transform=transforms,
+                                multichannel=multichannel,
                                 length=model_params["length_3D"],
                                 padding=model_params["padding_3D"])
     elif model_params["name"] == "HeMIS":
@@ -29,29 +51,33 @@ def load_dataset(data_list, bids_path, data_transform, model_params):
                                               subject_lst=data_list,
                                               hdf5_name=model_params["hdf5_path"],
                                               csv_name=model_params["csv_path"],
-                                              target_suffix=context["target_suffix"],
-                                              contrast_lst=context["contrast_train_validation"],
+                                              target_suffix=target_suffix,
+                                              contrast_lst=contrast_params["train_validation"],
                                               ram=model_params['ram'],
-                                              contrast_balance=context["contrast_balance"],
-                                              slice_axis=imed_utils.AXIS_DCT[context["slice_axis"]],
-                                              transform=data_transform,
-                                              metadata_choice=context["metadata"],
-                                              slice_filter_fn=imed_utils.SliceFilter(**context["slice_filter"]),
-                                              roi_suffix=context["roi_suffix"],
+                                              contrast_balance=contrast_params["contrast_balance"],
+                                              slice_axis=imed_utils.AXIS_DCT[slice_axis],
+                                              transform=transforms,
+                                              metadata_choice=metadata_type,
+                                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
+                                              roi_suffix=roi_params["suffix"],
                                               target_lst=model_params['target_lst'],
                                               roi_lst=model_params['roi_lst'])
     else:
         dataset = BidsDataset(bids_path,
                               subject_lst=data_list,
-                              target_suffix=context["target_suffix"],
-                              roi_suffix=context["roi_suffix"],
-                              contrast_lst=context["contrast_train_validation"],
-                              metadata_choice=context["metadata"],
-                              contrast_balance=context["contrast_balance"],
-                              slice_axis=imed_utils.AXIS_DCT[context["slice_axis"]],
-                              transform=data_transform,
-                              multichannel=context['multichannel'],
-                              slice_filter_fn=imed_utils.SliceFilter(**context["slice_filter"]))
+                              target_suffix=target_suffix,
+                              roi_suffix=roi_params["suffix"],
+                              contrast_lst=contrast_params["train_validation"],
+                              metadata_choice=metadata_type,
+                              contrast_balance=contrast_params["contrast_balance"],
+                              slice_axis=imed_utils.AXIS_DCT[slice_axis],
+                              transform=transforms,
+                              multichannel=multichannel,
+                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params))
+
+    # if ROICrop in transform, then apply SliceFilter to ROI slices
+    if 'ROICrop' in transforms_params:
+        dataset = imed_loader_utils.filter_roi(dataset, nb_nonzero_thr=roi_params["slice_filter_roi"])
 
     return dataset
 
