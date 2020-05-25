@@ -46,6 +46,7 @@
         "mixup_alpha": null
     },
     "FiLM": {
+        "film_bool": false,
         "metadata": "without",
         "film_layers": []
     },
@@ -53,6 +54,7 @@
         "applied": false,
         "missing_probability": 0.00001,
         "missing_probability_growth": 0.9,
+        "modalities": ["T1w", "T2w"],
         "ram": true,
         "hdf5_path": "/home/andreanne/Documents/dataset/HeMIS.hdf5",
         "csv_path": "/home/andreanne/Documents/dataset/HeMIS.csv",
@@ -63,7 +65,7 @@
         "applied": true,
         "length_3D": [256, 128, 16],
         "padding_3D": 0,
-        "attention_unet": false,
+        "attention": false,
         "n_filters": 1
     },
     "transfer_learning": {

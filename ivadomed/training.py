@@ -52,22 +52,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                             shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
                             collate_fn=imed_loader_utils.imed_collate,
                             num_workers=0)
-    if film_bool:
-        n_metadata = len([ll for l in train_onehotencoder.categories_ for ll in l])
-    else:
-        n_metadata = None
 
-    # Traditional U-Net model
-    if context['multichannel']:
-        in_channel = len(context['contrast_train_validation'])
-    else:
-        in_channel = 1
 
-    if len(context['target_suffix']) > 1:
-        # + 1 for background class
-        out_channel = len(context["target_suffix"]) + 1
-    else:
-        out_channel = 1
 
     if context['retrain_model'] is None:
         if HeMIS:
@@ -77,10 +63,10 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                                           drop_rate=context["dropout_rate"],
                                           bn_momentum=context["batch_norm_momentum"])
         elif unet_3D:
-            model = imed_models.UNet3D(in_channels=in_channel,
-                                       n_classes=out_channel,
+            model = imed_models.UNet3D(in_channel=in_channel,
+                                       out_channel=out_channel,
                                        drop_rate=context["dropout_rate"],
-                                       momentum=context["batch_norm_momentum"],
+                                       bn_momentum=context["batch_norm_momentum"],
                                        base_n_filter=context["n_filters"],
                                        attention=attention)
         else:
@@ -90,8 +76,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                                      film_layers=context["film_layers"],
                                      n_metadata=n_metadata,
                                      drop_rate=context["dropout_rate"],
-                                     bn_momentum=context["batch_norm_momentum"],
-                                     film_bool=film_bool)
+                                     bn_momentum=context["batch_norm_momentum"])
     else:
         # Load pretrained model
         model = torch.load(context['retrain_model'])

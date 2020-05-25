@@ -345,13 +345,13 @@ class UNet3D(nn.Module):
     https://github.com/ozan-oktay/Attention-Gated-Networks
     """
 
-    def __init__(self, in_channel, out_channel, base_n_filter=16, attention=False, drop_rate=0.6, momentum=0.1):
+    def __init__(self, in_channel, out_channel, base_n_filter=16, attention=False, drop_rate=0.6, bn_momentum=0.1):
         super(UNet3D, self).__init__()
         self.in_channels = in_channel
         self.n_classes = out_channel
         self.base_n_filter = base_n_filter
         self.attention = attention
-        self.momentum = momentum
+        self.momentum = bn_momentum
 
         self.lrelu = nn.LeakyReLU()
         self.dropout3d = nn.Dropout3d(p=drop_rate)

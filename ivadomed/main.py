@@ -513,6 +513,8 @@ def run_main():
                      "multichannel": context["multichannel"],
                      "metadata_type": context["FiLM"]["metadata"]}
 
+    n_classes = len(context['target_suffix'])
+
     if command == 'train':
         # PARSE PARAMETERS
         film_params = context["FiLM"] if context["FiLM"]["metadata"] != "without" else None
@@ -526,7 +528,7 @@ def run_main():
             context["HeMIS"]["applied"] = False
 
         # MODEL PARAMETERS
-        model_available = ['unet_2D', 'unet3D', 'HeMIS']
+        model_available = ['Unet', 'UNet3D', 'HeMISUnet']
         model_context_list = [model_name for model_name in model_available
                               if model_name in context and context[model_name]["applied"]]
         if len(model_context_list) == 1:
@@ -537,17 +539,21 @@ def run_main():
                   'Please select only one.'.format(model_context_list))
             exit()
         elif film_params:
-            model_name = 'FiLMedUnet_2D'
+            model_name = 'FiLMedUnet'
             model_params = film_params
         else:
             # Select default model
-            model_name = 'unet_2D'
+            model_name = 'Unet'
             model_params = {}
         # Update params
         model_params.update({"name": model_name,
                              "depth": context['depth'],
+                             "in_channel": len(multichannel_params) if context["multichannel"] else 1,
+                             "out_channel": n_classes + 1 if n_classes > 1 else 1,
                              "multichannel": multichannel_params,
-                             "n_out_channel": context["out_channel"]})
+                             "drop_rate": context["dropout_rate"],
+                             "n_metadata": None,
+                             "bn_momentum": context["batch_norm_momentum"]})
         display_selected_model_spec(params=model_params)
 
         # LOAD DATASET
@@ -568,7 +574,8 @@ def run_main():
                                                                               ds_val=ds_valid,
                                                                               metadata_type=film_params['metadata'],
                                                                               debugging=context["debugging"])
-            film_params.update({"film_onehotencoder": train_onehotencoder})
+            model_params.update({"film_onehotencoder": train_onehotencoder,
+                                 "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
 
         # RUN TRAINING
         imed_training.train(model_params=model_params,
