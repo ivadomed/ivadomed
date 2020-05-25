@@ -109,43 +109,24 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         train_loss_total, dice_train_loss_total = 0.0, 0.0
         num_steps = 0
         for i, batch in enumerate(train_loader):
-            # Get samples
-            input_samples = batch["input"]
-            gt_samples = batch["gt"]
+            # GET SAMPLES
             if model_params["name"] == "HeMIS":
-                input_samples = imed_utils.unstack_tensors(input_samples)
-
-            # mixup data
-            if training_params["mixup_alpha"]:
-                input_samples, gt_samples, lambda_tensor = imed_utils.mixup(
-                    input_samples, gt_samples, training_params["mixup_alpha"])
-
-                # if debugging and first epoch, then save samples as png in log folder
-                if debugging and epoch == 1:
-                    imed_utils.save_mixup_sample(log_directory, input_samples, gt_samples, lambda_tensor)
-
-
-            # The variable sample_metadata is where the MRI physics parameters are
-
-            if cuda_available:
-                var_input = imed_utils.cuda(input_samples)
-                var_gt = imed_utils.cuda(gt_samples, non_blocking=True)
+                input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]))
             else:
-                var_input = input_samples
-                var_gt = gt_samples
+                input_samples = imed_utils.cuda(batch["input"])
+            gt_samples = imed_utils.cuda(batch["gt"], non_blocking=True)
 
-            if film_bool:
-                # var_contrast is the list of the batch sample's contrasts (eg T2w, T1w).
-                sample_metadata = batch["input_metadata"]
-                var_contrast = [sample_metadata[0][k]['contrast'] for k in range(len(sample_metadata[0]))]
-                var_metadata = [train_onehotencoder.transform([sample_metadata[0][k]['film_input']]).tolist()[0]
-                                for k in range(len(sample_metadata[0]))]
+            # MIXUP
+            if training_params["mixup_alpha"]:
+                input_samples, gt_samples = imed_utils.mixup(input_samples, gt_samples, training_params["mixup_alpha"],
+                                                                debugging and epoch == 1, log_directory)
 
-                # Input the metadata related to the input samples
-                preds = model(var_input, var_metadata)
-            elif HeMIS:
-                missing_mod = batch["Missing_mod"]
-                preds = model(var_input, missing_mod)
+            # RUN MODEL
+            if model_params["name"] in ["HeMIS", "FiLMedUnet"]:
+                # TODO: @Andreanne: would it be possible to move missing_mod within input_metadata
+                metadata_type = "input_metadata" if model_params["name"] == "FiLMedUnet" else "Missing_mod"
+                metadata = get_metadata(batch[metadata_type], model_params)
+                preds = model(var_input, metadata)
             else:
                 preds = model(var_input)
 
@@ -406,3 +387,19 @@ def get_loss_function(params):
         loss_class = getattr(imed_losses, loss_name)
         loss_fct = loss_class(**params)
     return loss_fct
+
+
+def get_metadata(metadata, model_params):
+    """Get metadata during training.
+
+    Args:
+        metadata (batch):
+        model_params (dict):
+    Returns:
+        list:
+    """
+    if model_params["name"] == "HeMIS":
+        return metadata
+    else:
+        return [model_params["train_onehotencoder"].transform([metadata[0][k]['film_input']]).tolist()[0]
+                for k in range(len(metadata[0]))]
