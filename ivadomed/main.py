@@ -440,7 +440,7 @@ def normalize_film_metadata(ds_train, ds_val, metadata_type, debugging):
                                           debugging,
                                           metadata_type)
 
-    return ds_train, ds_val, train_onehotencoder
+    return ds_train, ds_val, train_onehotencoder, metadata_clustering_models
 
 
 def display_selected_model_spec(params):
@@ -579,12 +579,16 @@ def run_main():
         # If FiLM, normalize data
         if film_params:
             # Normalize metadata before sending to the FiLM network
-            ds_train, ds_valid, train_onehotencoder = normalize_film_metadata(ds_train=ds_train,
-                                                                              ds_val=ds_valid,
-                                                                              metadata_type=film_params['metadata'],
-                                                                              debugging=context["debugging"])
+            results = normalize_film_metadata(ds_train=ds_train,
+                                                ds_val=ds_valid,
+                                                metadata_type=film_params['metadata'],
+                                                debugging=context["debugging"])
+            ds_train, ds_valid, train_onehotencoder, metadata_clustering_models = results
             model_params.update({"film_onehotencoder": train_onehotencoder,
                                  "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
+            joblib.dump(metadata_clustering_models, "./" + log_directory + "/clustering_models.joblib")
+            joblib.dump(train_onehotencoder, "./" + log_directory + "/one_hot_encoder.joblib")
+
 
         # RUN TRAINING
         context["training_parameters"].update({"binarize_prediction": context["binarize_prediction"]})

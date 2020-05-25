@@ -265,11 +265,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     # Save final model
     torch.save(model, "./" + log_directory + "/final_model.pt")
-    if film_bool:  # save clustering and OneHotEncoding models
-        joblib.dump(metadata_clustering_models, "./" +
-                    log_directory + "/clustering_models.joblib")
-        joblib.dump(train_onehotencoder, "./" +
-                    log_directory + "/one_hot_encoder.joblib")
+    # Save clustering and OneHotEncoding models
+    if model_params["name"] == "FiLMedUnet":
+
 
         # Convert list of gammas/betas into numpy arrays
         gammas_dict = {i: np.array(gammas_dict[i]) for i in range(1, 2 * depth + 3)}
