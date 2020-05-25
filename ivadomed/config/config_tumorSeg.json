@@ -49,7 +49,7 @@
         "metadata": "without",
         "film_layers": []
     },
-    "HeMIS": {
+    "HeMISUnet": {
         "applied": false,
         "missing_probability": 0.00001,
         "missing_probability_growth": 0.9,
@@ -59,7 +59,7 @@
         "target_lst": ["T2w"],
         "roi_lst": null
     },
-    "unet3D": {
+    "UNet3D": {
         "applied": true,
         "length_3D": [256, 128, 16],
         "padding_3D": 0,
@@ -72,7 +72,6 @@
     },
     "depth": 4,
     "multichannel": false,
-    "out_channel": 1,
     "binarize_prediction": true,
     "uncertainty": {
         "epistemic": false,
