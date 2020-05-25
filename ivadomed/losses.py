@@ -25,14 +25,17 @@ class MultiClassDiceLoss(nn.Module):
         return - dice_per_class / len(self.classes_of_interest)
 
 
-def dice_loss(input, target):
-    smooth = 1.0
+class DiceLoss(nn.Module):
+    def __init__(self, smooth=1.0):
+        super(DiceLoss, self).__init__()
+        self.smooth = smooth
 
-    iflat = input.reshape(-1)
-    tflat = target.reshape(-1)
-    intersection = (iflat * tflat).sum()
+    def forward(self, prediction, target):
+        iflat = prediction.reshape(-1)
+        tflat = target.reshape(-1)
+        intersection = (iflat * tflat).sum()
 
-    return (2.0 * intersection + smooth) / (iflat.sum() + tflat.sum() + smooth)
+        return (2.0 * intersection + self.smooth) / (iflat.sum() + tflat.sum() + self.smooth)
 
 
 class FocalLoss(nn.Module):
