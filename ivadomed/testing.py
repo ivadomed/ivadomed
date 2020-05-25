@@ -18,9 +18,22 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 cudnn.benchmark = True
 
 
-def test(context):
+def test(model_params, dataset_test, training_params, log_directory, cuda_available=True, metric_fns=None,
+         debugging=False):
+    """Main command to test the network.
 
-    test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
+    Args:
+        model_params (dict): Model's parameters.
+        dataset_test (imed_loader): Testing dataset
+        training_params (dict):
+        log_directory (string):
+        cuda_available (Bool):
+        metric_fns (list):
+        debugging (Bool):
+    Returns:
+        XX
+    """
+    test_loader = DataLoader(dataset_test, batch_size=training_params["batch_size"],
                              shuffle=False, pin_memory=True,
                              collate_fn=imed_loader_utils.imed_collate,
                              num_workers=0)
