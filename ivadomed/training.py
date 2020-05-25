@@ -53,38 +53,15 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                             collate_fn=imed_loader_utils.imed_collate,
                             num_workers=0)
 
-
-
-    if context['retrain_model'] is None:
-        if HeMIS:
-            model = imed_models.HeMISUnet(modalities=context['contrast_train_validation'],
-                                          out_channel=out_channel,
-                                          depth=context['depth'],
-                                          drop_rate=context["dropout_rate"],
-                                          bn_momentum=context["batch_norm_momentum"])
-        elif unet_3D:
-            model = imed_models.UNet3D(in_channel=in_channel,
-                                       out_channel=out_channel,
-                                       drop_rate=context["dropout_rate"],
-                                       bn_momentum=context["batch_norm_momentum"],
-                                       base_n_filter=context["n_filters"],
-                                       attention=attention)
-        else:
-            model = imed_models.Unet(in_channel=in_channel,
-                                     out_channel=out_channel,
-                                     depth=context['depth'],
-                                     film_layers=context["film_layers"],
-                                     n_metadata=n_metadata,
-                                     drop_rate=context["dropout_rate"],
-                                     bn_momentum=context["batch_norm_momentum"])
-    else:
-        # Load pretrained model
-        model = torch.load(context['retrain_model'])
-
+    # GET MODEL
+    if training_params["transfer_learning"]["retrain_model"]:
+        old_model_path = training_params["transfer_learning"]["retrain_model"]
+        fraction = training_params["transfer_learning"]['retrain_fraction']
         # Freeze first layers and reset last layers
-        model = imed_models.set_model_for_retrain(model,
-                                                  retrain_fraction=context['retrain_fraction'])
-
+        model = imed_models.set_model_for_retrain(old_model_path, retrain_fraction=fraction)
+    else:
+        model_class = getattr(imed_models, model_params["name"])
+        model = model_class(model_params)
     if cuda_available:
         model.cuda()
 

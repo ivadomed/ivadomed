@@ -43,7 +43,11 @@
             }
         },
         "balance_samples": false,
-        "mixup_alpha": null
+        "mixup_alpha": null,
+        "transfer_learning": {
+            "retrain_model": null,
+            "retrain_fraction": 1.0
+        }
     },
     "FiLM": {
         "film_bool": false,
@@ -67,10 +71,6 @@
         "padding_3D": 0,
         "attention": false,
         "n_filters": 1
-    },
-    "transfer_learning": {
-        "retrain_model": null,
-        "retrain_fraction": 1.0
     },
     "depth": 4,
     "multichannel": false,
