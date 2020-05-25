@@ -22,7 +22,7 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 
 cudnn.benchmark = True
 
-def train(model_params, dataset_train, dataset_val, training_params, log_directory, cuda_available=True):
+def train(model_params, dataset_train, dataset_val, training_params, log_directory, cuda_available=True, metric_fns=[]):
     """Main command to train the network.
 
     Args:
@@ -32,6 +32,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         training_params (dict):
         log_directory (string):
         cuda_available (Bool):
+        metric_fns (list):
     Returns:
         XX
     """
@@ -86,8 +87,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     # LOSS
     loss_fct = get_loss_function(training_params["loss"])
 
+    # TODO: display params and specs
 
-    # Training loop -----------------------------------------------------------
 
     best_training_dice, best_training_loss, best_validation_loss, best_validation_dice = float("inf"), float(
         "inf"), float("inf"), float("inf")
@@ -97,24 +98,15 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     epsilon = context["early_stopping_epsilon"]
     val_losses = []
 
-    metric_fns = [imed_metrics.dice_score,
-                  imed_metrics.multi_class_dice_score,
-                  imed_metrics.hausdorff_3D_score,
-                  imed_metrics.precision_score,
-                  imed_metrics.recall_score,
-                  imed_metrics.specificity_score,
-                  imed_metrics.intersection_over_union,
-                  imed_metrics.accuracy_score]
-
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
 
         lr = scheduler.get_last_lr()[0]
         writer.add_scalar('learning_rate', lr, epoch)
 
+        # Training loop -----------------------------------------------------------
         model.train()
         train_loss_total, dice_train_loss_total = 0.0, 0.0
-
         num_steps = 0
         for i, batch in enumerate(train_loader):
             input_samples, gt_samples = batch["input"] if not HeMIS \
@@ -322,8 +314,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         if epoch > 1:
             if (val_losses[-2] - val_losses[-1]) * 100 / abs(val_losses[-1]) < epsilon:
                 patience_count += 1
-        if patience_count >= patience:
-            print(f"Stopping training due to {patience} epochs without improvements")
+        if patience_count >= training_params["scheduler"]["early_stopping_patience"]:
+            print("Stopping training due to {} epochs without improvements".format(training_params["scheduler"]))
             break
 
     # Save final model

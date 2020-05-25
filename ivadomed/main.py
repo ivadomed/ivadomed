@@ -515,6 +515,15 @@ def run_main():
 
     n_classes = len(context['target_suffix'])
 
+    metric_fns = [imed_metrics.dice_score,
+                  imed_metrics.multi_class_dice_score,
+                  imed_metrics.hausdorff_3D_score,
+                  imed_metrics.precision_score,
+                  imed_metrics.recall_score,
+                  imed_metrics.specificity_score,
+                  imed_metrics.intersection_over_union,
+                  imed_metrics.accuracy_score]
+
     if command == 'train':
         # PARSE PARAMETERS
         film_params = context["FiLM"] if context["FiLM"]["metadata"] != "without" else None
@@ -583,7 +592,8 @@ def run_main():
                             dataset_val=ds_valid,
                             training_params=context["training_parameters"],
                             log_directory=log_directory,
-                            cuda_available=cuda_available)
+                            cuda_available=cuda_available,
+                            metric_fns=metric_fns)
 
         # Save config file within log_directory
         shutil.copyfile(sys.argv[1], "./" + log_directory + "/config_file.json")
