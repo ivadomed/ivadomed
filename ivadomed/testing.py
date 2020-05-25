@@ -20,41 +20,6 @@ cudnn.benchmark = True
 
 def test(context):
 
-    # Aleatoric uncertainty
-    if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
-        transformation_dict = context["transformation_testing"]
-    else:
-        transformation_dict = context["transformation_validation"]
-
-    # Compose Testing transforms
-    val_transform = imed_transforms.Compose(transformation_dict, requires_undo=True)
-
-    # inverse transformations
-    val_undo_transform = imed_transforms.UndoCompose(val_transform)
-
-    ds_test = imed_loader.load_dataset(test_lst, val_transform, context)
-
-    # if ROICrop2D in transform, then apply SliceFilter to ROI slices
-    if 'ROICrop2D' in context["transformation_validation"].keys():
-        ds_test = imed_loader_utils.filter_roi(ds_test, nb_nonzero_thr=context["slice_filter_roi"])
-
-    if film_bool:  # normalize metadata before sending to network
-        metadata_clustering_models = joblib.load(
-            "./" + context["log_directory"] + "/clustering_models.joblib")
-
-        ds_test = imed_film.normalize_metadata(ds_test,
-                                               metadata_clustering_models,
-                                               context["debugging"],
-                                               context["metadata"],
-                                               False)
-
-        one_hot_encoder = joblib.load("./" + context["log_directory"] + "/one_hot_encoder.joblib")
-
-    if not context["unet_3D"]:
-        print(f"\nLoaded {len(ds_test)} {context['slice_axis']} slices for the test set.")
-    else:
-        print(f"\nLoaded {len(ds_test)} volumes of size {context['length_3D']} for the test set.")
-
     test_loader = DataLoader(ds_test, batch_size=context["batch_size"],
                              shuffle=False, pin_memory=True,
                              collate_fn=imed_loader_utils.imed_collate,

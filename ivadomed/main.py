@@ -107,7 +107,7 @@ def get_subdatasets_subjects_list(split_params, bids_path, log_directory):
     return train_lst, valid_lst, test_lst
 
 
-def normalize_film_metadata(ds_train, ds_val, metadata_type, debugging):
+def get_film_metadata_models(ds_train, metadata_type, debugging=False):
     if metadata_type == "mri_params":
         metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
         metadata_clustering_models = imed_film.clustering_fit(ds_train.metadata, metadata_vector)
@@ -119,12 +119,8 @@ def normalize_film_metadata(ds_train, ds_val, metadata_type, debugging):
                                                                  debugging,
                                                                  metadata_type,
                                                                  True)
-    ds_val = imed_film.normalize_metadata(ds_val,
-                                          metadata_clustering_models,
-                                          debugging,
-                                          metadata_type)
 
-    return ds_train, ds_val, train_onehotencoder, metadata_clustering_models
+    return ds_train, train_onehotencoder, metadata_clustering_models
 
 
 def display_selected_model_spec(params):
@@ -264,16 +260,15 @@ def run_main():
         # If FiLM, normalize data
         if film_params:
             # Normalize metadata before sending to the FiLM network
-            results = normalize_film_metadata(ds_train=ds_train,
-                                                ds_val=ds_valid,
-                                                metadata_type=film_params['metadata'],
-                                                debugging=context["debugging"])
-            ds_train, ds_valid, train_onehotencoder, metadata_clustering_models = results
+            results = get_film_metadata_models(ds_train=ds_train, metadata_type=film_params['metadata'],
+                                               debugging=context["debugging"])
+            ds_train, train_onehotencoder, metadata_clustering_models = results
+            ds_valid = imed_film.normalize_metadata(ds_valid, metadata_clustering_models, context["debugging"],
+                                                    film_params['metadata'])
             model_params.update({"film_onehotencoder": train_onehotencoder,
                                  "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
             joblib.dump(metadata_clustering_models, "./" + log_directory + "/clustering_models.joblib")
             joblib.dump(train_onehotencoder, "./" + log_directory + "/one_hot_encoder.joblib")
-
 
         # RUN TRAINING
         context["training_parameters"].update({"binarize_prediction": context["binarize_prediction"]})
@@ -294,15 +289,24 @@ def run_main():
         # Aleatoric uncertainty
         if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
             transformation_dict = transform_test_params
-            requires_undo = True
         else:
             transformation_dict = transform_valid_params
-            requires_undo = False
         # Get Testing dataset
         ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
                                                                   'transforms_params': transformation_dict,
                                                                   'dataset_type': 'testing',
-                                                                  'requires_undo': requires_undo}})
+                                                                  'requires_undo': True}})
+
+        # UNDO TRANSFORMS
+        undo_transforms = imed_transforms.UndoCompose(transformation_dict)
+
+        if film_params:
+            metadata_clustering_models = joblib.load("./" + log_directory + "/clustering_models.joblib")
+            one_hot_encoder = joblib.load("./" + log_directory + "/one_hot_encoder.joblib")
+            ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"],
+                                                   film_params['metadata'])
+            model_params.update({"film_onehotencoder": one_hot_encoder,
+                                 "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
         #cmd_test(context)
 
     elif command == 'eval':
