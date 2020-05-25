@@ -192,21 +192,20 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 val_loss_total += loss.item()
                 val_dice_loss_total -= loss_dice_fct(preds, gt_samples).item()
 
-            # Metrics computation
-            gt_npy = gt_samples.numpy().astype(np.uint8)
-
-            preds_npy = preds.data.cpu().numpy()
-            if context["binarize_prediction"]:
-                preds_npy = imed_postpro.threshold_predictions(preds_npy)
-            preds_npy = preds_npy.astype(np.uint8)
-
-            metric_mgr(preds_npy, gt_npy)
-
             num_steps += 1
 
-            # Only write sample at the first step
-            if i == 0:
-                imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds, unet_3D)
+            # Metrics computation
+            gt_npy = gt_samples.numpy().astype(np.uint8)
+            preds_npy = preds.data.cpu().numpy()
+            if training_params["binarize_prediction"]:
+                preds_npy = imed_postpro.threshold_predictions(preds_npy)
+            c(preds_npy.astype(np.uint8), gt_npy)
+            if i == 0 and debugging:
+                imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
+                                                is_three_dim=model_params["name"].endswith("3D"))
+
+
+
 
             # Store the values of gammas and betas after the last epoch for each batch
             if film_bool and epoch == num_epochs and i < int(len(ds_val) / context["batch_size"]) + 1:

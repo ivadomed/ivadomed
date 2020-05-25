@@ -587,6 +587,7 @@ def run_main():
                                  "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
 
         # RUN TRAINING
+        context["training_parameters"].update({"binarize_prediction": context["binarize_prediction"]})
         imed_training.train(model_params=model_params,
                             dataset_train=ds_train,
                             dataset_val=ds_valid,
