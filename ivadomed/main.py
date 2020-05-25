@@ -563,10 +563,10 @@ def run_main():
         # If FiLM, normalize data
         if film_params:
             # Normalize metadata before sending to the FiLM network
-            ds_train, ds_val, train_onehotencoder = normalize_film_metadata(ds_train=ds_train,
-                                                                            ds_val=ds_valid,
-                                                                            metadata_type=film_params['metadata'],
-                                                                            debugging=context["debugging"])
+            ds_train, ds_valid, train_onehotencoder = normalize_film_metadata(ds_train=ds_train,
+                                                                              ds_val=ds_valid,
+                                                                              metadata_type=film_params['metadata'],
+                                                                              debugging=context["debugging"])
             film_params.update({"film_onehotencoder": train_onehotencoder})
 
         # RUN TRAINING
@@ -575,7 +575,6 @@ def run_main():
                             dataset_val=ds_valid,
                             log_directory=log_directory,
                             cuda_available=cuda_available,
-                            film_params=film_params,
                             mixup_params=mixup_params)
 
         # Save config file within log_directory

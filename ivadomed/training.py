@@ -21,32 +21,19 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 
 cudnn.benchmark = True
-model_params=model_params,
-                            dataset_train=ds_train,
-                            dataset_val=ds_valid,
-                            log_directory=log_directory,
-                            cuda_available=cuda_available,
-                            film_params=film_params,
-                            mixup_params=mixup_params
 
-def train(model_params, dataset_train, dataset_val, log_directory, cuda_available=True,
-          multichannel_params=None, hemis_params=None, film_params=None,
-          mixup_params=None):
+def train(model_params, dataset_train, dataset_val, log_directory, cuda_available=True, mixup_params=None):
     """Main command to train the network.
 
     Args:
-        model_name (string): Model's name.
+        model_params (dict): Model's parameters.
         dataset_train (imed_loader): Training dataset
         dataset_val (imed_loader): Validation dataset
         log_directory (string):
         cuda_available (Bool):
-        multichannel_params (list): list of the contrasts of interest
-        metadata_type (string): type of extra metadata to import
-        hemis_params (float): missing modality probability
-        film_params (dict): keys: film_layers, film_onehotencoder
         mixup_params (float): alpha parameter
     Returns:
-        Bool: True if cuda is available
+        XX
     """
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=log_directory)
