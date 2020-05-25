@@ -22,7 +22,8 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 
 cudnn.benchmark = True
 
-def train(model_params, dataset_train, dataset_val, training_params, log_directory, cuda_available=True, metric_fns=[]):
+def train(model_params, dataset_train, dataset_val, training_params, log_directory, cuda_available=True,
+          metric_fns=None, debugging=False):
     """Main command to train the network.
 
     Args:
@@ -33,6 +34,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         log_directory (string):
         cuda_available (Bool):
         metric_fns (list):
+        debugging (Bool)
     Returns:
         XX
     """
@@ -89,13 +91,13 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     # TODO: display params and specs
 
-
-    best_training_dice, best_training_loss, best_validation_loss, best_validation_dice = float("inf"), float(
-        "inf"), float("inf"), float("inf")
-
+    # INIT TRAINING VARIABLES
+    best_training_dice, best_training_loss = float("inf"), float("inf")
+    best_validation_loss, best_validation_dice = float("inf"), float("inf")
     patience_count = 0
     val_losses = []
 
+    # EPOCH LOOP
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
 
@@ -107,26 +109,21 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         train_loss_total, dice_train_loss_total = 0.0, 0.0
         num_steps = 0
         for i, batch in enumerate(train_loader):
-            input_samples, gt_samples = batch["input"] if not HeMIS \
-                                            else imed_utils.unstack_tensors(batch["input"]), batch["gt"]
+            # Get samples
+            input_samples = batch["input"]
+            gt_samples = batch["gt"]
+            if model_params["name"] == "HeMIS":
+                input_samples = imed_utils.unstack_tensors(input_samples)
 
             # mixup data
-            if mixup_bool and not film_bool:
+            if training_params["mixup_alpha"]:
                 input_samples, gt_samples, lambda_tensor = imed_utils.mixup(
-                    input_samples, gt_samples, mixup_alpha)
+                    input_samples, gt_samples, training_params["mixup_alpha"])
 
                 # if debugging and first epoch, then save samples as png in log folder
-                if context["debugging"] and epoch == 1 and random.random() < 0.1:
-                    mixup_folder = os.path.join(log_directory, 'mixup')
-                    if not os.path.isdir(mixup_folder):
-                        os.makedirs(mixup_folder)
-                    random_idx = np.random.randint(0, input_samples.size()[0])
-                    val_gt = np.unique(gt_samples.data.numpy()[random_idx, 0, :, :])
-                    mixup_fname_pref = os.path.join(mixup_folder, str(i).zfill(3) + '_' + str(
-                        lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png')
-                    imed_utils.save_mixup_sample(input_samples.data.numpy()[random_idx, 0, :, :],
-                                                 gt_samples.data.numpy()[random_idx, 0, :, :],
-                                                 mixup_fname_pref)
+                if debugging and epoch == 1:
+                    imed_utils.save_mixup_sample(log_directory, input_samples, gt_samples, lambda_tensor)
+
 
             # The variable sample_metadata is where the MRI physics parameters are
 

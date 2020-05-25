@@ -593,7 +593,8 @@ def run_main():
                             training_params=context["training_parameters"],
                             log_directory=log_directory,
                             cuda_available=cuda_available,
-                            metric_fns=metric_fns)
+                            metric_fns=metric_fns,
+                            debugging=context["debugging"])
 
         # Save config file within log_directory
         shutil.copyfile(sys.argv[1], "./" + log_directory + "/config_file.json")

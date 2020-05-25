@@ -580,17 +580,37 @@ def mixup(data, targets, alpha):
     return data, targets, lambda_tensor
 
 
-def save_mixup_sample(x, y, fname):
+def save_mixup_sample(log_directory, input_data, labeled_data, lambda_tensor):
+    """Save mixup samples as png files in a "mixup" folder.
+
+    Args:
+        log_directory (string): Output folder where "mixup" folder is created.
+        input_data (Tensor):
+        labeled_data (Tensor):
+        lambda_tensor (Tensor):
+    Returns:
+    """
+    #Mixup folder
+    mixup_folder = os.path.join(log_directory, 'mixup')
+    if not os.path.isdir(mixup_folder):
+        os.makedirs(mixup_folder)
+    # Random sample
+    random_idx = np.random.randint(0, input_data.size()[0])
+    # Output fname
+    ofname =  str(lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png'
+    ofname = os.path.join(mixup_folder, ofname)
+    # Tensor to Numpy
+    x = input_data.data.numpy()[random_idx, 0, :, :]
+    y = labeled_data.data.numpy()[random_idx, 0, :, :]
+    # Plot
     plt.figure(figsize=(20, 10))
     plt.subplot(1, 2, 1)
     plt.axis("off")
     plt.imshow(x, interpolation='nearest', aspect='auto', cmap='gray')
-
     plt.subplot(1, 2, 2)
     plt.axis("off")
     plt.imshow(y, interpolation='nearest', aspect='auto', cmap='jet', vmin=0, vmax=1)
-
-    plt.savefig(fname, bbox_inches='tight', pad_inches=0, dpi=100)
+    plt.savefig(ofname, bbox_inches='tight', pad_inches=0, dpi=100)
     plt.close()
 
 
