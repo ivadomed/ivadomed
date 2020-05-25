@@ -176,7 +176,7 @@ class Evaluation3DMetrics(object):
         if vol_gt == 0.0:
             return np.nan
 
-        rvd = (vol_gt - vol_pred) * 100.
+        rvd = (vol_gt - vol_pred)
         rvd /= vol_gt
 
         return rvd
@@ -203,7 +203,7 @@ class Evaluation3DMetrics(object):
                     np.max(self.data_gt_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
 
                 if self.overlap_vox is None:
-                    overlap_vox = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
+                    overlap_vox = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent)
                 else:
                     overlap_vox = self.overlap_vox
 
@@ -236,7 +236,7 @@ class Evaluation3DMetrics(object):
                     np.max(self.data_pred_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
 
                 if self.overlap_vox is None:
-                    overlap_thr = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
+                    overlap_thr = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent)
                 else:
                     overlap_thr = self.overlap_vox
 
@@ -261,7 +261,7 @@ class Evaluation3DMetrics(object):
         if denom == 0 or n_obj == 0:
             return np.nan, n_obj
 
-        return ltp * 100. / denom, n_obj
+        return ltp / denom, n_obj
 
     def get_lfdr(self, label_size=None, class_idx=0):
         """Lesion False Detection Rate / 1 - Precision.
@@ -275,7 +275,7 @@ class Evaluation3DMetrics(object):
         if denom == 0 or n_obj == 0:
             return np.nan
 
-        return lfp * 100. / denom
+        return lfp / denom
 
     def run_eval(self):
         dct = {}
@@ -284,7 +284,7 @@ class Evaluation3DMetrics(object):
             dct['vol_pred_class' + str(n)] = self.get_vol(self.data_pred)
             dct['vol_gt_class' + str(n)] = self.get_vol(self.data_gt)
             dct['rvd_class' + str(n)], dct['avd_class' + str(n)] = self.get_rvd(), self.get_avd()
-            dct['dice_class' + str(n)] = imed_metrics.dice_score(self.data_gt[..., n], self.data_pred[..., n]) * 100.
+            dct['dice_class' + str(n)] = imed_metrics.dice_score(self.data_gt[..., n], self.data_pred[..., n])
             dct['recall_class' + str(n)] = imed_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
             dct['precision_class' + str(n)] = imed_metrics.precision_score(self.data_pred, self.data_gt,
                                                                            err_value=np.nan)
