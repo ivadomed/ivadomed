@@ -171,16 +171,15 @@ class Unet(Module):
     """
 
     def __init__(self, in_channel=1, out_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4,
-                 bn_momentum=0.1, film_bool=False):
+                 bn_momentum=0.1):
         super(Unet, self).__init__()
         print("depth", depth)
         # Verify if the length of boolean FiLM layers corresponds to the depth
-        if film_bool and len(film_layers) != 2 * depth + 2:
-            raise ValueError(f"The number of FiLM layers {len(film_layers)} entered does not correspond to the "
-                             f"UNet depth. There should 2 * depth + 2 layers.")
-
-        # If no metadata type is entered all layers should be to 0
-        if not film_bool:
+        if film_layers:
+            if len(film_layers) != 2 * depth + 2:
+                raise ValueError(f"The number of FiLM layers {len(film_layers)} entered does not correspond to the "
+                                 f"UNet depth. There should 2 * depth + 2 layers.")
+        else:
             film_layers = [0] * (2 * depth + 2)
 
         # Encoder path
@@ -346,10 +345,10 @@ class UNet3D(nn.Module):
     https://github.com/ozan-oktay/Attention-Gated-Networks
     """
 
-    def __init__(self, in_channels, n_classes, base_n_filter=16, attention=False, drop_rate=0.6, momentum=0.1):
+    def __init__(self, in_channel, out_channel, base_n_filter=16, attention=False, drop_rate=0.6, momentum=0.1):
         super(UNet3D, self).__init__()
-        self.in_channels = in_channels
-        self.n_classes = n_classes
+        self.in_channels = in_channel
+        self.n_classes = out_channel
         self.base_n_filter = base_n_filter
         self.attention = attention
         self.momentum = momentum
