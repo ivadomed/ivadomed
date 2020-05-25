@@ -22,7 +22,8 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 
 cudnn.benchmark = True
 
-def train(model_params, dataset_train, dataset_val, log_directory, cuda_available=True, mixup_params=None):
+def train(model_params, dataset_train, dataset_val, log_directory, cuda_available=True, balance_samples=False,
+          mixup_params=None):
     """Main command to train the network.
 
     Args:
@@ -31,6 +32,7 @@ def train(model_params, dataset_train, dataset_val, log_directory, cuda_availabl
         dataset_val (imed_loader): Validation dataset
         log_directory (string):
         cuda_available (Bool):
+        balance_samples (Bool):
         mixup_params (float): alpha parameter
     Returns:
         XX
@@ -49,12 +51,9 @@ def train(model_params, dataset_train, dataset_val, log_directory, cuda_availabl
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
 
-    if not unet_3D:
-        print(f"Loaded {len(ds_val)} {context['slice_axis']} slices for the validation set.")
-    else:
-        print(
-            f"Loaded {len(ds_val)} volumes of size {context['length_3D']} for the validation set.")
-
+    # BALANCE SAMPLES
+    conditions = [balance_samples, model_params["name"] != "HeMIS"]
+    sampler_val, suffler_val = get_sampler(balance_bool=all(conditions))
     if context['balance_samples'] and not HeMIS:
         sampler_val = imed_loader_utils.BalancedSampler(ds_val)
         shuffle_val = False
@@ -447,3 +446,18 @@ def train(model_params, dataset_train, dataset_val, log_directory, cuda_availabl
 
     writer.close()
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
+
+
+def get_sampler(ds, balance_bool):
+    """Get sampler.
+
+    Args:
+        ds (BidsDataset):
+        balance_bool (Bool):
+    Returns:
+        Sampler, Bool: Sampler and boolean for shuffling
+    """
+    if balance_bool:
+        return imed_loader_utils.BalancedSampler(ds), False
+    else:
+        return None, True
