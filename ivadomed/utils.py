@@ -562,9 +562,18 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     nib.save(nib_avgUnc, fname_avgUnc)
 
 
-def mixup(data, targets, alpha):
+def mixup(data, targets, alpha, debugging=False, ofolder=None):
     """Compute the mixup data.
-    Return mixed inputs and targets, lambda.
+
+    Args:
+        data (Tensor):
+        targets (Tensor):
+        alpha (float): MixUp parameter
+        debugging (Bool): If True, then samples of mixup are saved as png files
+        log_directory (string): If debugging, Output folder where "mixup" folder is created.
+
+    Returns:
+        Tensor, Tensor: Mixed data
     """
     indices = torch.randperm(data.size(0))
     data2 = data[indices]
@@ -577,21 +586,24 @@ def mixup(data, targets, alpha):
     data = data * lambda_tensor + data2 * (1 - lambda_tensor)
     targets = targets * lambda_tensor + targets2 * (1 - lambda_tensor)
 
-    return data, targets, lambda_tensor
+    if debugging:
+        save_mixup_sample(ofolder, data, targets, lambda_tensor)
+
+    return data, targets
 
 
-def save_mixup_sample(log_directory, input_data, labeled_data, lambda_tensor):
+def save_mixup_sample(ofolder, input_data, labeled_data, lambda_tensor):
     """Save mixup samples as png files in a "mixup" folder.
 
     Args:
-        log_directory (string): Output folder where "mixup" folder is created.
+        ofolder (string): Output folder where "mixup" folder is created.
         input_data (Tensor):
         labeled_data (Tensor):
         lambda_tensor (Tensor):
     Returns:
     """
     #Mixup folder
-    mixup_folder = os.path.join(log_directory, 'mixup')
+    mixup_folder = os.path.join(ofolder, 'mixup')
     if not os.path.isdir(mixup_folder):
         os.makedirs(mixup_folder)
     # Random sample
@@ -745,18 +757,24 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     return pred_nib
 
 
-def cuda(input_var, non_blocking=False):
-    """
-    This function sends input_var to GPU.
-    :param input_var: either a tensor or a list of tensors
-    :param non_blocking
-    :return: same as input_var
-    """
+def cuda(input_var, cuda_available=True, non_blocking=False):
+    """Passes input_var to GPU.
 
-    if isinstance(input_var, list):
-        return [t.cuda(non_blocking=non_blocking) for t in input_var]
+    Args:
+        input_var (Tensor): either a tensor or a list of tensors
+        cuda_available (Bool): If false, then return identity
+        non_blocking (Bool):
+
+    Returns:
+        Tensor
+    """
+    if cuda_available:
+        if isinstance(input_var, list):
+            return [t.cuda(non_blocking=non_blocking) for t in input_var]
+        else:
+            return input_var.cuda(non_blocking=non_blocking)
     else:
-        return input_var.cuda(non_blocking=non_blocking)
+        return input_var
 
 
 class HookBasedFeatureExtractor(nn.Module):
