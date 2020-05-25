@@ -99,8 +99,8 @@ class Evaluation3DMetrics(object):
                 self.overlap_vox = params["overlap"]["thr"]
             elif params["overlap"]["unit"] == 'mm3':
                 self.overlap_vox = np.round(params["overlap"]["thr"] / (self.px * self.py * self.pz))
-            elif params["overlap"]["unit"] == 'percent':  # percentage of the GT object
-                self.overlap_percent = params["overlap"]["thr"]
+            elif params["overlap"]["unit"] == 'ratio':  # The ratio of the GT object
+                self.overlap_ratio = params["overlap"]["thr"]
                 self.overlap_vox = None
         else:
             self.overlap_vox = 3
@@ -203,7 +203,7 @@ class Evaluation3DMetrics(object):
                     np.max(self.data_gt_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
 
                 if self.overlap_vox is None:
-                    overlap_vox = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent)
+                    overlap_vox = np.round(np.count_nonzero(data_gt_idx) * self.overlap_ratio)
                 else:
                     overlap_vox = self.overlap_vox
 
@@ -236,7 +236,7 @@ class Evaluation3DMetrics(object):
                     np.max(self.data_pred_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
 
                 if self.overlap_vox is None:
-                    overlap_thr = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent)
+                    overlap_thr = np.round(np.count_nonzero(data_gt_idx) * self.overlap_ratio)
                 else:
                     overlap_thr = self.overlap_vox
 
