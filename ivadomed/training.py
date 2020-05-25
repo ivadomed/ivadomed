@@ -154,8 +154,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         # TRAINING LOSS
         train_loss_total_avg = train_loss_total / num_steps
         msg = "Epoch {} training loss: {:.4f}.". format(epoch, train_loss_total_avg)
+        train_dice_loss_total_avg = train_dice_loss_total / num_steps
         if training_params["loss"]["name"] != "DiceLoss":
-            msg += "\tDice training loss: {:.4f}.".format(train_dice_loss_total / num_steps)
+            msg += "\tDice training loss: {:.4f}.".format(train_dice_loss_total_avg)
         tqdm.write(msg)
 
         # CURRICULUM LEARNING
@@ -240,23 +241,18 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             'val_loss': val_loss_total_avg,
         }, epoch)
         msg = "Epoch {} validation loss: {:.4f}.". format(epoch, val_loss_total_avg)
+        val_dice_loss_total_avg = val_dice_loss_total / num_steps
         if training_params["loss"]["name"] != "DiceLoss":
-            msg += "\tDice validation loss: {:.4f}.".format(val_dice_loss_total / num_steps)
+            msg += "\tDice validation loss: {:.4f}.".format(val_dice_loss_total_avg)
         tqdm.write(msg)
         end_time = time.time()
         total_time = end_time - start_time
         tqdm.write("Epoch {} took {:.2f} seconds.".format(epoch, total_time))
 
+        # UPDATE BEST RESULTS
         if val_loss_total_avg < best_validation_loss:
-            best_validation_loss = val_loss_total_avg
-            best_training_loss = train_loss_total_avg
-
-            if context["loss"]["name"] != 'dice':
-                best_validation_dice = dice_val_loss_total_avg
-                best_training_dice = dice_train_loss_total_avg
-            else:
-                best_validation_dice = best_validation_loss
-                best_training_dice = best_training_loss
+            best_validation_loss, best_training_loss = val_loss_total_avg, train_loss_total_avg
+            best_validation_dice, best_training_dice = val_dice_loss_total_avg, train_dice_loss_total_avg
             torch.save(model, "./" + log_directory + "/best_model.pt")
 
         # Early stopping : break if val loss doesn't improve by at least epsilon percent for N=patience epochs
