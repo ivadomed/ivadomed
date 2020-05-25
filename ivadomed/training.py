@@ -78,12 +78,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     scheduler, step_scheduler_batch = get_scheduler(training_params["scheduler"], optimizer, num_epochs)
 
     # Create dict containing gammas and betas after each FiLM layer.
-    #depth = context["depth"]
-    #gammas_dict = {i: [] for i in range(1, 2 * depth + 3)}
-    #betas_dict = {i: [] for i in range(1, 2 * depth + 3)}
-
-    # Create a list containing the contrast of all batch images
-    #var_contrast_list = []
+    if model_params["name"] == "FiLMedUnet":
+        gammas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
+        betas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
 
     # LOSS
     loss_fct = get_loss_function(training_params["loss"])
