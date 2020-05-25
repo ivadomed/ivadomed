@@ -265,10 +265,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     # Save final model
     torch.save(model, "./" + log_directory + "/final_model.pt")
-    # Save clustering and OneHotEncoding models
+    # TODO
     if model_params["name"] == "FiLMedUnet":
-
-
+        """
         # Convert list of gammas/betas into numpy arrays
         gammas_dict = {i: np.array(gammas_dict[i]) for i in range(1, 2 * depth + 3)}
         betas_dict = {i: np.array(betas_dict[i]) for i in range(1, 2 * depth + 3)}
@@ -281,7 +280,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         # Convert into numpy and save the contrasts of all batch images
         contrast_images = np.array(var_contrast_list)
         np.save(log_directory + "/contrast_images.npy", contrast_images)
-
+        """
     writer.close()
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
