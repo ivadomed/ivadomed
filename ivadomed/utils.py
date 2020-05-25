@@ -929,8 +929,8 @@ def convert_labels_to_RGB(grid_img):
     return rgb_img
 
 
-def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, unet_3D):
-    if unet_3D:
+def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, is_three_dim=False):
+    if is_three_dim:
         # Take all images stacked on depth dimension
         num_2d_img = input_samples.shape[-1]
     else:
@@ -942,7 +942,7 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
     preds_copy = preds.clone()
     gt_samples_copy = gt_samples.clone()
     for idx in range(num_2d_img):
-        if unet_3D:
+        if is_three_dim:
             input_samples = input_samples_copy[..., idx]
             preds = preds_copy[..., idx]
             gt_samples = gt_samples_copy[..., idx]

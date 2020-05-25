@@ -88,7 +88,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     # LOSS
     loss_fct = get_loss_function(training_params["loss"])
-    loss_dice_fct = imed_losses.DiceLoss()
+    loss_dice_fct = imed_losses.DiceLoss()  # For comparison when another loss is used
 
     # TODO: display params and specs
 
@@ -107,7 +107,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
         # Training loop -----------------------------------------------------------
         model.train()
-        train_loss_total, dice_train_loss_total = 0.0, 0.0
+        train_loss_total, train_dice_loss_total = 0.0, 0.0
         num_steps = 0
         for i, batch in enumerate(train_loader):
             # GET SAMPLES
@@ -132,20 +132,21 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 preds = model(input_samples)
 
             # LOSS
-            train_loss_total += loss_fct(preds, gt_samples).item()
+            loss = loss_fct(preds, gt_samples)
+            train_dice_loss_total += loss.item()
             train_dice_loss_total -= loss_dice_fct(preds, gt_samples).item()
 
+            # UPDATE OPTIMIZER
             optimizer.zero_grad()
             loss.backward()
-
             optimizer.step()
             if step_scheduler_batch:
                 scheduler.step()
-
             num_steps += 1
 
-            if i == 0:
-                imed_utils.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds, unet_3D)
+            if i == 0 and debugging:
+                imed_utils.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds,
+                                                is_three_dim=model_params["name"].endswith("3D"))
 
         train_loss_total_avg = train_loss_total / num_steps
         if not step_scheduler_batch:
