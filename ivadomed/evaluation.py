@@ -82,7 +82,12 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
 
 class Evaluation3DMetrics(object):
     def __init__(self, data_pred, data_gt, dim_lst, params={}):
-
+        """
+        :param data_pred: numpy.array, bin
+        :param data_gt: numpy.array, bin
+        :param dim_lst: resolution along the 3 axes
+        :param params: evaluation parameters
+        """
         self.data_pred = data_pred
         if len(self.data_pred.shape) == 3:
             self.data_pred = np.expand_dims(self.data_pred, -1)
