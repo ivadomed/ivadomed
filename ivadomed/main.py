@@ -275,7 +275,8 @@ def run_main():
         # RUN INFERENCE
         testing_params = context["testing_parameters"]
         testing_params.update(context["training_parameters"])
-        testing_params.update({'undo_transforms': undo_transforms})
+        testing_params.update({context["target_suffix"]})
+        testing_params.update({'undo_transforms': undo_transforms, 'slice_axis': loader_params['slice_axis']})
         imed_testing.test(model_params=model_params,
                           dataset_test=ds_test,
                           testing_params=testing_params,

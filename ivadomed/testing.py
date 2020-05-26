@@ -55,11 +55,13 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
     if (testing_params['uncertainty']['epistemic'] or testing_params['uncertainty']['aleatoric']) and \
             testing_params['uncertainty']['n_it'] > 0:
         n_monteCarlo = testing_params['uncertainty']['n_it']
+        testing_params['uncertainty']['applied'] = True
     else:
         n_monteCarlo = 1
 
     for i_monteCarlo in range(n_monteCarlo):
-        preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, cuda_available)
+        preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, path_3Dpred,
+                                          cuda_available, i_monteCarlo)
         metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
@@ -72,7 +74,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
     return metrics_dict
 
 
-def run_inference(test_loader, model, model_params, testing_params, cuda_available):
+def run_inference(test_loader, model, model_params, testing_params, ofolder, cuda_available, i_monteCarlo=None):
     # INIT STORAGE VARIABLES
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     # LOOP ACROSS DATASET
@@ -120,44 +122,46 @@ def run_inference(test_loader, model, model_params, testing_params, cuda_availab
         gt_npy = gt_samples.numpy().astype(np.uint8)
         preds_npy = preds_cpu.data.numpy().astype(np.uint8)
 
-        # reconstruct 3D image
+        # RECONSTRUCT 3D IMAGE
+        last_batch_bool = (i == len(test_loader) - 1)
+        # LOOP ACROSS SAMPLES
         for smp_idx in range(len(preds_cpu)):
+            last_sample_bool = (last_batch_bool and smp_idx == len(batch) - 1)
             # undo transformations
-            preds_idx_undo, metadata_idx = val_undo_transform(preds_cpu[smp_idx], batch["gt_metadata"][smp_idx],
-                                                              data_type='gt')
-
-            # preds_idx_undo is a list of length n_label of arrays
+            preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
+                                                                             batch['gt_metadata'][smp_idx],
+                                                                             data_type='gt')
+            # preds_idx_undo is a list n_label arrays
             preds_idx_arr = np.array(preds_idx_undo)
 
             # TODO: gt_filenames should not be a list
             fname_ref = metadata_idx[0]['gt_filenames'][0]
 
-            if not context['unet_3D']:
-                if pred_tmp_lst and (fname_ref != fname_tmp or (
-                        i == len(test_loader) - 1 and smp_idx == len(batch['gt']) - 1)):  # new processed file
+            if not model_params["name"].endswith('3D'):
+                # NEW COMPLETE VOLUME
+                if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool):
                     # save the completely processed file as a nifti file
-                    fname_pred = os.path.join(path_3Dpred, fname_tmp.split('/')[-1])
-                    fname_pred = fname_pred.split(context['target_suffix'][0])[0] + '_pred.nii.gz'
-
-                    # If MonteCarlo, then we save each simulation result
-                    if n_monteCarlo > 1:
+                    fname_pred = os.path.join(ofolder, fname_tmp.split('/')[-1])
+                    fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
+                    # If Uncertainty running, then we save each simulation result
+                    if testing_params['uncertainty']['applied']:
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                     output_nii = imed_utils.pred_to_nib(data_lst=pred_tmp_lst,
                                                         z_lst=z_tmp_lst,
                                                         fname_ref=fname_tmp,
                                                         fname_out=fname_pred,
-                                                        slice_axis=imed_utils.AXIS_DCT[context['slice_axis']],
+                                                        slice_axis=imed_utils.AXIS_DCT[testing_params['slice_axis']],
                                                         kernel_dim='2d',
-                                                        bin_thr=0.5 if context["binarize_prediction"] else -1)
+                                                        bin_thr=0.5 if testing_params["binarize_prediction"] else -1)
 
                     output_nii_shape = output_nii.get_fdata().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[0] > 1:
                         imed_utils.save_color_labels(output_nii.get_fdata(),
-                                                     context["binarize_prediction"],
+                                                     testing_params["binarize_prediction"],
                                                      fname_tmp,
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                     imed_utils.AXIS_DCT[context['slice_axis']])
+                                                     imed_utils.AXIS_DCT[testing_params['slice_axis']])
 
                     # re-init pred_stack_lst
                     pred_tmp_lst, z_tmp_lst = [], []
@@ -171,10 +175,10 @@ def run_inference(test_loader, model, model_params, testing_params, cuda_availab
 
             else:
                 # TODO: Add reconstruction for subvolumes
-                fname_pred = os.path.join(path_3Dpred, fname_ref.split('/')[-1])
-                fname_pred = fname_pred.split(context['target_suffix'][0])[0] + '_pred.nii.gz'
-                # If MonteCarlo, then we save each simulation result
-                if n_monteCarlo > 1:
+                fname_pred = os.path.join(ofolder, fname_ref.split('/')[-1])
+                fname_pred = fname_pred.split(ofolder['target_suffix'][0])[0] + '_pred.nii.gz'
+                # If uncertainty running, then we save each simulation result
+                if testing_params['uncertainty']['applied']:
                     fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
                 # Choose only one modality
@@ -182,16 +186,16 @@ def run_inference(test_loader, model, model_params, testing_params, cuda_availab
                                        z_lst=[],
                                        fname_ref=fname_ref,
                                        fname_out=fname_pred,
-                                       slice_axis=imed_utils.AXIS_DCT[context['slice_axis']],
+                                       slice_axis=imed_utils.AXIS_DCT[testing_params['slice_axis']],
                                        kernel_dim='3d',
-                                       bin_thr=0.5 if context["binarize_prediction"] else -1)
+                                       bin_thr=0.5 if testing_params["binarize_prediction"] else -1)
 
                 # Save merged labels with color
                 if preds_idx_arr.shape[0] > 1:
                     imed_utils.save_color_labels(preds_idx_arr,
-                                                 context['binarize_prediction'],
+                                                 testing_params['binarize_prediction'],
                                                  batch['input_metadata'][smp_idx][0]['input_filenames'],
                                                  fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                 imed_utils.AXIS_DCT[context['slice_axis']])
+                                                 imed_utils.AXIS_DCT[testing_params['slice_axis']])
 
         return preds_npy, gt_npy
