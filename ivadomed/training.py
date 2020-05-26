@@ -191,8 +191,6 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             # METRICS COMPUTATION
             gt_npy = gt_samples.numpy().astype(np.uint8)
             preds_npy = preds.data.cpu().numpy()
-            if training_params["binarize_prediction"]:
-                preds_npy = imed_postpro.threshold_predictions(preds_npy)
             metric_mgr(preds_npy.astype(np.uint8), gt_npy)
 
             if i == 0 and debugging:

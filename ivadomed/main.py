@@ -171,16 +171,13 @@ def run_main():
         get_subdatasets_transforms(context["transformation"])
 
     # Loader params
-    loader_params = {"bids_path": context['bids_path'],
-                     "target_suffix": context["target_suffix"],
-                     "roi_params": context["roi"],
-                     "contrast_params": context["contrasts"],
-                     "slice_filter_params": context["slice_filter"],
-                     "slice_axis": context["slice_axis"],
-                     "multichannel": context["multichannel"],
-                     "metadata_type": context["FiLM"]["metadata"]}
-
-    n_classes = len(context['target_suffix'])
+    loader_params = context["loader_parameters"]
+    extra_params = {"bids_path": context['bids_path'],
+                    "target_suffix": context["target_suffix"],
+                    "metadata_type": False
+                    }
+    if "FiLMedUnet" in context and context["FiLMedUnet"]["applied"]:
+        extra_params.update({"metadata_type": context["FiLMedUnet"]["metadata"]})
 
     # METRICS
     metric_fns = [imed_metrics.dice_score,

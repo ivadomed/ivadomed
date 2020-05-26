@@ -4,9 +4,22 @@
     "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
     "log_directory": "HeMIS",
     "target_suffix": ["_seg-tumor"],
-    "roi": {
-        "suffix": null,
-        "slice_filter_roi": null
+    "loader_parameters": {
+        "roi": {
+            "suffix": null,
+            "slice_filter_roi": null
+        },
+        "contrasts": {
+            "train_validation": ["T1w", "T2w"],
+            "test": ["T1w","T2w"],
+            "contrast_balance": {}
+        },
+        "slice_filter": {
+            "filter_empty_mask": true,
+            "filter_empty_input": true
+        },
+        "slice_axis": "sagittal",
+        "multichannel": false
     },
     "split_dataset": {
         "fname_split": null,
@@ -16,18 +29,10 @@
         "train_fraction": 0.6,
         "test_fraction": 0.2
     },
-    "contrasts": {
-        "train_validation": ["T1w", "T2w"],
-        "test": ["T1w","T2w"],
-        "contrast_balance": {}
-    },
-    "slice_axis": "sagittal",
     "training_parameters": {
         "batch_size": 1,
-        "dropout_rate": 0.3,
-        "batch_norm_momentum": 0.9,
         "loss": {
-            "name": "dice",
+            "name": "dice"
         },
         "training_time": {
             "num_epochs": 100,
@@ -49,10 +54,19 @@
             "retrain_fraction": 1.0
         }
     },
-    "FiLM": {
-        "film_bool": false,
-        "metadata": "without",
-        "film_layers": []
+    "default_model": {
+        "name": "Unet",
+        "dropout_rate": 0.3,
+        "bn_momentum": 0.9,
+        "depth": 4,
+        "in_channel": 1,
+        "out_channel": 1,
+        "n_metadata": null
+    },
+    "FiLMedUnet": {
+        "applied": false,
+        "metadata": "mri_params",
+        "film_layers": [0, 1, 0, 0, 0, 0, 0, 0]
     },
     "HeMISUnet": {
         "applied": false,
@@ -72,17 +86,13 @@
         "attention": false,
         "n_filters": 1
     },
-    "depth": 4,
-    "multichannel": false,
-    "binarize_prediction": true,
-    "uncertainty": {
-        "epistemic": false,
-        "aleatoric": false,
-        "n_it": 10,
-    },
-    "slice_filter": {
-        "filter_empty_mask": true,
-        "filter_empty_input": true
+    "testing_parameters": {
+        "binarize_prediction": true,
+        "uncertainty": {
+            "epistemic": false,
+            "aleatoric": false,
+            "n_it": 10
+        }
     },
     "evaluation_parameters": {
         "targetSize": {"unit": "vox", "thr": [20, 100]},
