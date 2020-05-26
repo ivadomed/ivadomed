@@ -11,6 +11,7 @@ from tqdm import tqdm
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
+from ivadomed.object_detection import utils as imed_obj_detect
 
 
 def load_dataset(data_list, data_transform, context):
@@ -418,7 +419,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             metadata = self.handlers[i].get_pair_metadata(i)
             if self.bounding_box:
                 if resample:
-                    imed_utils.resample_bounding_box(metadata, resample_param)
+                    imed_obj_detect.resample_bounding_box(metadata, resample_param)
 
                 h_min, h_max, w_min, w_max, d_min, d_max = metadata['input_metadata'][0]['bounding_box']
                 length = [h_max - h_min, w_max - w_min, d_max - d_min]
@@ -475,7 +476,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                     # Do this operation only once
                     if "Resample" in str(type(transfo)) and img_type == 'im':
                         resample_param = transfo.hspace, transfo.wspace, transfo.dspace
-                        imed_utils.resample_bounding_box(seg_pair_slice, resample_param)
+                        imed_obj_detect.resample_bounding_box(seg_pair_slice, resample_param)
             for img_type in self.transform.transform:
                 h_min, h_max, w_min, w_max, d_min, d_max = seg_pair_slice['input_metadata'][0]['bounding_box']
                 transform_obj = imed_transforms.BoundingBoxCrop(size=[h_max - h_min, w_max - w_min, d_max - d_min])
@@ -588,11 +589,11 @@ class BidsDataset(MRI2DSegmentationDataset):
                 bounding_box_dict = json.load(fp)
         elif os.path.exists(object_detection_path):
             print("Generating bounding boxes...")
-            bounding_box_dict = imed_utils.generate_bounding_box_file(self.bids_ds.get_subjects(),
-                                                                      object_detection_path,
-                                                                      log_dir,
-                                                                      gpu_number,
-                                                                      slice_axis)
+            bounding_box_dict = imed_obj_detect.generate_bounding_box_file(self.bids_ds.get_subjects(),
+                                                                           object_detection_path,
+                                                                           log_dir,
+                                                                           gpu_number,
+                                                                           slice_axis)
         elif object_detection_path is not None:
             raise RuntimeError("Path to object detection model doesn't exist")
 
