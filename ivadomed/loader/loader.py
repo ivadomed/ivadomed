@@ -8,8 +8,8 @@ from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
-from ivadomed import utils as imed_utils
 from ivadomed import transforms as imed_transforms
+from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 
 
@@ -404,17 +404,23 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         padding = self.padding
 
         crop = False
-
+        resample = False
         for idx, transfo in enumerate(self.transform.transform["im"].transforms):
             if "CenterCrop" in str(type(transfo)):
                 crop = True
                 shape_crop = transfo.size
+            if "Resample" in str(type(transfo)):
+                resample = True
+                resample_param = (transfo.hspace, transfo.wspace, transfo.dspace)
 
         for i in range(0, len(self.handlers)):
             self.bounding_box = 'bounding_box' in self.handlers[i].get_pair_metadata(i)['input_metadata'][0]
+            metadata = self.handlers[i].get_pair_metadata(i)
             if self.bounding_box:
-                h_min, h_max, w_min, w_max, d_min, d_max = \
-                self.handlers[i].get_pair_metadata(i)['input_metadata'][0]['bounding_box']
+                if resample:
+                    imed_utils.resample_bounding_box(metadata, resample_param)
+
+                h_min, h_max, w_min, w_max, d_min, d_max = metadata['input_metadata'][0]['bounding_box']
                 length = [h_max - h_min, w_max - w_min, d_max - d_min]
                 shape = length
 
