@@ -319,7 +319,7 @@ def run_main():
                                  log_directory=log_directory,
                                  path_preds=path_preds,
                                  target_suffix=context["target_suffix"],
-                                 eval_params=context["eval_params"])
+                                 eval_params=context["evaluation_parameters"])
 
 if __name__ == "__main__":
     run_main()
