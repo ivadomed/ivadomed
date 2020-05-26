@@ -186,7 +186,7 @@ class SegmentationPair(object):
                     "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
                     "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
                     "gt_filenames": self.metadata[0]["gt_filenames"],
-                    "bounding_box": self.metadata[0]["bounding_box"],
+                    "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
                     "data_type": 'gt'
                 }))
             else:
@@ -420,6 +420,9 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             if self.bounding_box:
                 if resample:
                     imed_obj_detect.resample_bounding_box(metadata, resample_param)
+                    # Save value to avoid recompuing in getitem
+                    for meta in self.handlers[i].metadata:
+                        meta['bounding_box'] = metadata['input_metadata'][0]['bounding_box']
 
                 h_min, h_max, w_min, w_max, d_min, d_max = metadata['input_metadata'][0]['bounding_box']
                 length = [h_max - h_min, w_max - w_min, d_max - d_min]
@@ -468,15 +471,13 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
 
         if self.bounding_box:
-            resample = False
+            # Appropriate cropping according to bounding box
             for img_type in self.transform.transform:
                 for idx, transfo in enumerate(self.transform.transform[img_type].transforms):
                     if "BoundingBoxCrop" in str(type(transfo)):
                         self.transform.transform[img_type].transforms.pop(idx)
-                    # Do this operation only once
-                    if "Resample" in str(type(transfo)) and img_type == 'im':
-                        resample_param = transfo.hspace, transfo.wspace, transfo.dspace
-                        imed_obj_detect.resample_bounding_box(seg_pair_slice, resample_param)
+                        break
+
             for img_type in self.transform.transform:
                 h_min, h_max, w_min, w_max, d_min, d_max = seg_pair_slice['input_metadata'][0]['bounding_box']
                 transform_obj = imed_transforms.BoundingBoxCrop(size=[h_max - h_min, w_max - w_min, d_max - d_min])
