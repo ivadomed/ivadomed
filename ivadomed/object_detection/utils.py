@@ -97,3 +97,22 @@ def adjust_transforms(transforms, seg_pair_slice):
         transform_obj = imed_transforms.BoundingBoxCrop(size=[h_max - h_min, w_max - w_min, d_max - d_min])
         idx = -2 if img_type == 'im' else -1
         transforms[img_type].transforms.insert(idx, transform_obj)
+
+
+def compute_bb_statistics(bounding_box_path):
+    with open(bounding_box_path, 'r') as fp:
+        bounding_box_dict = json.load(fp)
+
+    h, w, d, v = [], [], [], []
+    for box in bounding_box_dict:
+        if "T2w" in box:
+            h_min, h_max, w_min, w_max, d_min, d_max = bounding_box_dict[box]
+            h.append(h_max - h_min)
+            w.append(w_max - w_min)
+            d.append(d_max - d_min)
+            v.append((h_max - h_min) * (w_max - w_min) * 2 * (d_max - d_min))
+
+    print('Mean height: {} +/- {}, min: {}, max: {}'.format(statistics.mean(h), statistics.stdev(h), min(h), max(h)))
+    print('Mean width: {} +/- {}, min: {}, max: {}'.format(statistics.mean(w), statistics.stdev(w), min(w), max(w)))
+    print('Mean depth: {} +/- {}, min: {}, max: {}'.format(statistics.mean(d), statistics.stdev(d), min(d), max(d)))
+    print('Mean volume: {} +/- {}, min: {}, max: {}'.format(statistics.mean(v), statistics.stdev(v), min(v), max(v)))
