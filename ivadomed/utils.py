@@ -14,15 +14,9 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loaded_utils, loader as imed_loader
-
-# labels of paint_objects method
-TP_COLOUR = 1
-FP_COLOUR = 2
-FN_COLOUR = 3
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 

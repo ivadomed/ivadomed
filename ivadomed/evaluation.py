@@ -3,8 +3,15 @@ import pandas as pd
 import numpy as np
 import nibabel as nib
 from tqdm import tqdm
+from scipy.ndimage import label, generate_binary_structure
 
 from ivadomed import utils as imed_utils
+from ivadomed import metrics as imed_metrics
+
+# labels of paint_objects method
+TP_COLOUR = 1
+FP_COLOUR = 2
+FN_COLOUR = 3
 
 
 def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
