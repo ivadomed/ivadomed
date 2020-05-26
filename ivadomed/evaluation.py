@@ -7,24 +7,17 @@ from tqdm import tqdm
 from ivadomed import utils as imed_utils
 
 
-def evaluate(bids_path, log_directory, target_suffix, eval_params):
+def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
     """Evaluate predictions from inference step.
     
     Args:
           bids_path (string): Folder where data is stored
-          log_directory (string): Output folder where predictions were saved
+          log_directory (string): Folder where the output folder "results_eval" will be created.
+          path_preds (string): Folder where model predictions were saved
           target_suffix (list): list of suffixes
           eval_params (dict):
     Returns:
           pd.DataFrame: results for each prediction
-    """
-    # PREDICTION FOLDER
-    path_pred = os.path.join(log_directory, 'pred_masks')
-    # If the prediction folder does not exist, run Inference first
-    """
-    if not os.path.isdir(path_pred):
-        print('\nRun Inference\n')
-        metrics_dict = cmd_test(context)
     """
     print('\nRun Evaluation on {}\n'.format(path_pred))
 

@@ -1,3 +1,4 @@
+import os
 import json
 import shutil
 import sys
@@ -305,8 +306,18 @@ def run_main():
                           debugging=context["debugging"])
 
     elif command == 'eval':
+        # PREDICTION FOLDER
+        path_preds = os.path.join(log_directory, 'pred_masks')
+        # If the prediction folder does not exist, run Inference first
+        if not os.path.isdir(path_preds):
+            print('\nRun Inference\n')
+            context["command"] = "test"
+            run_main(context)
+
+        # RUN EVALUATION
         imed_evaluation.evaluate(bids_path=context['bids_path'],
                                  log_directory=log_directory,
+                                 path_preds=path_preds,
                                  target_suffix=context["target_suffix"],
                                  eval_params=context["eval_params"])
 
