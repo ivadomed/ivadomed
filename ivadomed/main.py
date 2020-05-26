@@ -264,11 +264,11 @@ def run_main():
         # UNDO TRANSFORMS
         undo_transforms = imed_transforms.UndoCompose(transformation_dict)
 
-        if film_params:
+        if model_params["name"] == "FiLMedUnet":
             metadata_clustering_models = joblib.load("./" + log_directory + "/clustering_models.joblib")
             one_hot_encoder = joblib.load("./" + log_directory + "/one_hot_encoder.joblib")
             ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"],
-                                                   film_params['metadata'])
+                                                   model_params['metadata'])
             model_params.update({"film_onehotencoder": one_hot_encoder,
                                  "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
 

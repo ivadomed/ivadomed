@@ -11,7 +11,6 @@ from torch.utils.tensorboard import SummaryWriter
 from ivadomed import losses as imed_losses
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
-from ivadomed import postprocessing as imed_postpro
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
@@ -269,7 +268,7 @@ def get_scheduler(params, optimizer, num_epochs=0):
 
     Args:
         params (dict):
-        optimizer (torch.optim):
+        optimizer (torch optim):
         num_epochs (int):
     Returns:
         torch.optim, Bool:
