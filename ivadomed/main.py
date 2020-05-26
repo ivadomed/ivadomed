@@ -273,9 +273,11 @@ def run_main():
                                  "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
 
         # RUN INFERENCE
+        testing_params = context["testing_parameters"]
+        testing_params.update(context["training_parameters"])
         imed_testing.test(model_params=model_params,
                           dataset_test=ds_test,
-                            #training_params=context["training_parameters"],
+                          testing_params=testing_params,
                           log_directory=log_directory,
                           device=device,
                           cuda_available=cuda_available,

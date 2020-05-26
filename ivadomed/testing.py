@@ -18,14 +18,14 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 cudnn.benchmark = True
 
 
-def test(model_params, dataset_test, training_params, log_directory, device, cuda_available=True,
+def test(model_params, dataset_test, testing_params, log_directory, device, cuda_available=True,
          metric_fns=None, debugging=False):
     """Main command to test the network.
 
     Args:
         model_params (dict): Model's parameters.
         dataset_test (imed_loader): Testing dataset
-        training_params (dict):
+        testing_params (dict):
         log_directory (string):
         device (torch.device):
         cuda_available (Bool):
@@ -35,7 +35,7 @@ def test(model_params, dataset_test, training_params, log_directory, device, cud
         XX
     """
     # DATA LOADER
-    test_loader = DataLoader(dataset_test, batch_size=training_params["batch_size"],
+    test_loader = DataLoader(dataset_test, batch_size=testing_params["batch_size"],
                              shuffle=False, pin_memory=True,
                              collate_fn=imed_loader_utils.imed_collate,
                              num_workers=0)
@@ -54,18 +54,16 @@ def test(model_params, dataset_test, training_params, log_directory, device, cud
     # METRIC MANAGER
     metric_mgr = imed_metrics.MetricManager(metric_fns)
 
-    # number of Monte Carlo simulation
-    if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and \
-            context['uncertainty']['n_it'] > 0:
-        n_monteCarlo = context['uncertainty']['n_it']
+    # UNCERTAINTY SETTINGS
+    if (testing_params['uncertainty']['epistemic'] or testing_params['uncertainty']['aleatoric']) and \
+            testing_params['uncertainty']['n_it'] > 0:
+        n_monteCarlo = testing_params['uncertainty']['n_it']
+        if testing_params['uncertainty']['epistemic']:
+            for m in model.modules():
+                if m.__class__.__name__.startswith('Dropout'):
+                    m.train()
     else:
         n_monteCarlo = 1
-
-    # Epistemic uncertainty
-    if context['uncertainty']['epistemic'] and context['uncertainty']['n_it'] > 0:
-        for m in model.modules():
-            if m.__class__.__name__.startswith('Dropout'):
-                m.train()
 
     for i_monteCarlo in range(n_monteCarlo):
         pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
