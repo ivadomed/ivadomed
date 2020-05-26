@@ -11,7 +11,7 @@
     "center_test": [],
     "retrain_model": null,
     "retrain_fraction": 1.0,
-    "batch_size": 2,
+    "batch_size": 1,
     "dropout_rate": 0.3,
     "batch_norm_momentum": 0.9,
     "num_epochs": 100,
@@ -46,7 +46,6 @@
     "n_filters": 8,
     "binarize_prediction": true,
     "attention_unet": false,
-    "n_filters": 1,
     "uncertainty": {"epistemic": false, "aleatoric": false, "n_it": 10},
     "slice_filter": {
         "filter_empty_mask": true,
@@ -67,37 +66,28 @@
             "hspace": 1,
             "dspace": 2
         },
-        "CenterCrop": {
-            "size": [256, 128, 16]
-        },
-      "NumpyToTensor": {},
-      "NormalizeInstance": {"applied_to": ["im"]}
+        "NumpyToTensor": {},
+        "NormalizeInstance": {"applied_to": ["im"]}
     },
     "transformation_validation": {
-                "Resample":
+        "Resample":
         {
             "wspace": 1,
             "hspace": 1,
             "dspace": 2
-        },
-                "CenterCrop": {
-            "size": [256, 128, 16]
         },
         "NumpyToTensor": {},
         "NormalizeInstance": {"applied_to": ["im"]}
     },
     "transformation_testing": {
-                "Resample":
+        "Resample":
         {
             "wspace": 1,
             "hspace": 1,
             "dspace": 2
         },
-                "CenterCrop": {
-            "size": [256, 128, 16]
-        },
-      "NumpyToTensor": {},
-      "NormalizeInstance": {"applied_to": ["im"]}
+        "NumpyToTensor": {},
+        "NormalizeInstance": {"applied_to": ["im"]}
     },
     "debugging": false
 }
