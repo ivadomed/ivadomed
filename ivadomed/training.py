@@ -318,7 +318,7 @@ def get_loss_function(params):
 
 
 def get_metadata(metadata, model_params):
-    """Get metadata during training.
+    """Get metadata during batch loop.
 
     Args:
         metadata (batch):

@@ -4,15 +4,12 @@ from tqdm import tqdm
 
 import torch
 import torch.backends.cudnn as cudnn
-from torch import optim, nn
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
 
-from ivadomed import losses as imed_losses
 from ivadomed import metrics as imed_metrics
-from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import utils as imed_utils
+from ivadomed.training import get_metadata
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
@@ -58,15 +55,11 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
     if (testing_params['uncertainty']['epistemic'] or testing_params['uncertainty']['aleatoric']) and \
             testing_params['uncertainty']['n_it'] > 0:
         n_monteCarlo = testing_params['uncertainty']['n_it']
-        if testing_params['uncertainty']['epistemic']:
-            for m in model.modules():
-                if m.__class__.__name__.startswith('Dropout'):
-                    m.train()
     else:
         n_monteCarlo = 1
 
     for i_monteCarlo in range(n_monteCarlo):
-        run_inference(test_loader, model_params, testing_params, cuda_available)
+        run_inference(test_loader, model, model_params, testing_params, cuda_available)
 
     # COMPUTE UNCERTAINTY MAPS
     if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and \
@@ -79,32 +72,36 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
     return metrics_dict
 
 
-def run_inference(test_loader, model_params, testing_params, cuda_available):
+def run_inference(test_loader, model, model_params, testing_params, cuda_available):
     # INIT STORAGE VARIABLES
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     # LOOP ACROSS DATASET
     for i, batch in enumerate(test_loader):
-        # input_samples: list of n_batch tensors, whose size is n_channels X height X width X depth
-        # gt_samples: idem with n_labels
-        # batch['*_metadata']: list of n_batch lists, whose size is n_channels or n_labels
-        input_samples, gt_samples = batch["input"] if not HeMIS \
-                                        else imed_utils.unstack_tensors(batch["input"]), batch["gt"]
-
         with torch.no_grad():
-            if cuda_available:
-                test_input = imed_utils.cuda(input_samples)
-                test_gt = imed_utils.cuda(gt_samples, non_blocking=True)
-
+            # GET SAMPLES
+            # input_samples: list of batch_size tensors, whose size is n_channels X height X width X depth
+            # gt_samples: idem with n_labels
+            # batch['*_metadata']: list of batch_size lists, whose size is n_channels or n_labels
+            if model_params["name"] == "HeMISUnet":
+                input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
             else:
-                test_input = input_samples
-                test_gt = gt_samples
+                input_samples = imed_utils.cuda(batch["input"], cuda_available)
+            gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
 
-            # Epistemic uncertainty
-            if context['uncertainty']['epistemic'] and context['uncertainty']['n_it'] > 0:
+            # EPISTEMIC UNCERTAINTY
+            if testing_params['uncertainty']['epistemic'] and testing_params['uncertainty']['n_it'] > 0:
                 for m in model.modules():
                     if m.__class__.__name__.startswith('Dropout'):
                         m.train()
 
+            # RUN MODEL
+            if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
+                # TODO: @Andreanne: would it be possible to move missing_mod within input_metadata
+                metadata_type = "input_metadata" if model_params["name"] == "FiLMedUnet" else "Missing_mod"
+                metadata = get_metadata(batch[metadata_type], model_params)
+                preds = model(input_samples, metadata)
+            else:
+                preds = model(input_samples)
             if film_bool:
                 sample_metadata = batch["input_metadata"]
                 test_contrast = [sample_metadata[0][k]['contrast']
