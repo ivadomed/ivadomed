@@ -1,13 +1,11 @@
 import os
 import numpy as np
-from tqdm import tqdm
 
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 
 from ivadomed import metrics as imed_metrics
-from ivadomed import postprocessing as imed_postpro
 from ivadomed import utils as imed_utils
 from ivadomed.training import get_metadata
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
@@ -61,7 +59,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
 
     for i_monteCarlo in range(n_monteCarlo):
         preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, path_3Dpred,
-                                          cuda_available, i_monteCarlo)
+                                          cuda_available, debugging, i_monteCarlo)
         metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
@@ -74,7 +72,22 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
     return metrics_dict
 
 
-def run_inference(test_loader, model, model_params, testing_params, ofolder, cuda_available, i_monteCarlo=None):
+def run_inference(test_loader, model, model_params, testing_params, ofolder, cuda_available, debugging, i_monteCarlo=None):
+    """Run inference on the test data and save results as nibabel files.
+
+    Args:
+        test_loader (torch DataLoader):
+        model (nn.Module):
+        model_params (dict):
+        testing_params (dict):
+        ofolder (string): Where the nibabel files are saved
+        device (torch.device):
+        cuda_available (Bool):
+        debugging (Bool):
+        i_monteCarlo (int): i_th Monte Carlo iteration
+    Returns:
+        np.array, np.array: pred, gt
+    """
     # INIT STORAGE VARIABLES
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     # LOOP ACROSS DATASET
