@@ -16,6 +16,8 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 
 cudnn.benchmark = True
 
+# List of not-default available models i.e. different from Unet
+MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet']
 
 def define_device(gpu_id):
     """Define the device used for the process of interest.
@@ -189,44 +191,23 @@ def run_main():
                   imed_metrics.intersection_over_union,
                   imed_metrics.accuracy_score]
 
-    # PARSE PARAMETERS
-    film_params = context["FiLM"] if context["FiLM"]["metadata"] != "without" else None
-    multichannel_params = context["contrast"]["train_validation"] if context["multichannel"] else None
-    # Disable some attributes
-    if film_params:
-        multichannel_params = None
-        context["HeMIS"]["applied"] = False
-        context["training_parameters"]["mixup_alpha"] = None
-    if multichannel_params:
-        context["HeMIS"]["applied"] = False
-
     # MODEL PARAMETERS
-    model_available = ['Unet', 'UNet3D', 'HeMISUnet']
-    model_context_list = [model_name for model_name in model_available
+    model_params = context["default_model"]
+    model_context_list = [model_name for model_name in MODEL_LIST
                           if model_name in context and context[model_name]["applied"]]
     if len(model_context_list) == 1:
-        model_name = model_context_list[0]
-        model_params = context[model_name]
+        model_params.update(context[model_context_list[0]])
     elif len(model_context_list) > 1:
         print('ERROR: Several models are selected in the configuration file: {}.'
-              'Please select only one.'.format(model_context_list))
+              'Please select only one (i.e. only one where: "applied": true).'.format(model_context_list))
         exit()
-    elif film_params:
-        model_name = 'FiLMedUnet'
-        model_params = film_params
     else:
-        # Select default model
-        model_name = 'Unet'
-        model_params = {}
-    # Update params
-    model_params.update({"name": model_name,
-                         "depth": context['depth'],
-                         "in_channel": len(multichannel_params) if context["multichannel"] else 1,
-                         "out_channel": n_classes + 1 if n_classes > 1 else 1,
-                         "multichannel": multichannel_params,
-                         "drop_rate": context["dropout_rate"],
-                         "n_metadata": None,
-                         "bn_momentum": context["batch_norm_momentum"]})
+        # Default model i.e. Unet
+        pass
+    # If multi-class output, then add background class
+    if model_params["out_channel"] > 1:
+        model_params.update({"out_channel": model_params["out_channel"] + 1})
+    # Display for spec' check
     display_selected_model_spec(params=model_params)
     # Update loader params
     loader_params.update({"model_params": model_params})
