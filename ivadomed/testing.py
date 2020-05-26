@@ -29,7 +29,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
         metric_fns (list):
         debugging (Bool):
     Returns:
-        XX
+        dict: result metrics
     """
     # DATA LOADER
     test_loader = DataLoader(dataset_test, batch_size=testing_params["batch_size"],
@@ -59,11 +59,11 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
         n_monteCarlo = 1
 
     for i_monteCarlo in range(n_monteCarlo):
-        run_inference(test_loader, model, model_params, testing_params, cuda_available)
+        preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, cuda_available)
+        metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
-    if (context['uncertainty']['epistemic'] or context['uncertainty']['aleatoric']) and \
-            context['uncertainty']['n_it'] > 0:
+    if n_monteCarlo > 1:
         imed_utils.run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()
@@ -191,11 +191,8 @@ def run_inference(test_loader, model, model_params, testing_params, cuda_availab
                                                  fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                  imed_utils.AXIS_DCT[context['slice_axis']])
 
-        # Metrics computation
+        # METRICS COMPUTATION
         gt_npy = gt_samples.numpy().astype(np.uint8)
-        preds_npy = preds_cpu.data.numpy()
-        if context["binarize_prediction"]:
-            preds_npy = imed_postpro.threshold_predictions(preds_npy)
-        preds_npy = preds_npy.astype(np.uint8)
+        preds_npy = preds_cpu.data.numpy().astype(np.uint8)
 
-        metric_mgr(preds_npy, gt_npy)
+        return preds_npy, gt_npy
