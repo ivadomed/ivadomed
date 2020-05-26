@@ -584,7 +584,8 @@ class BidsDataset(MRI2DSegmentationDataset):
                                                                            object_detection_path,
                                                                            log_dir,
                                                                            gpu_number,
-                                                                           slice_axis)
+                                                                           slice_axis,
+                                                                           contrast_lst)
         elif object_detection_path is not None:
             raise RuntimeError("Path to object detection model doesn't exist")
 

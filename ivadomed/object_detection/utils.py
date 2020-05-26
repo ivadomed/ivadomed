@@ -2,6 +2,7 @@ import os
 import json
 import nibabel as nib
 import numpy as np
+import statistics
 
 from ivadomed import  utils as imed_utils
 from ivadomed import postprocessing as imed_postpro
@@ -47,20 +48,21 @@ def adjust_bb_size(bounding_box, factor, multiple_16, resample=False):
     return coord
 
 
-def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, slice_axis=0, keep_largest_only=True,
-                               multiple_16=True, safety_factor=None):
+def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, slice_axis=0, contrast_lst=["T2w"],
+                               keep_largest_only=True, multiple_16=True, safety_factor=None):
     bounding_box_dict = {}
     if safety_factor is None:
         safety_factor = [1.0, 1.0, 1.0]
     for subject in subject_list:
-        subject_path = str(subject.record["absolute_path"])
-        object_mask = imed_utils.segment_volume(model_path, subject_path, gpu_number=gpu_number)
-        if keep_largest_only:
-            object_mask = imed_postpro.keep_largest_object(object_mask)
-        ras_orientation = nib.as_closest_canonical(object_mask)
-        hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata()[..., 0], slice_axis)
-        bounding_box = get_bounding_boxes(hwd_orientation)
-        bounding_box_dict[subject_path] = adjust_bb_size(bounding_box, safety_factor, multiple_16)
+        if subject.record["modality"] in contrast_lst:
+            subject_path = str(subject.record["absolute_path"])
+            object_mask = imed_utils.segment_volume(model_path, subject_path, gpu_number=gpu_number)
+            if keep_largest_only:
+                object_mask = imed_postpro.keep_largest_object(object_mask)
+            ras_orientation = nib.as_closest_canonical(object_mask)
+            hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata()[..., 0], slice_axis)
+            bounding_box = get_bounding_boxes(hwd_orientation)
+            bounding_box_dict[subject_path] = adjust_bb_size(bounding_box, safety_factor, multiple_16)
 
     file_path = os.path.join(log_dir, 'bounding_boxes.json')
     with open(file_path, 'w') as fp:
