@@ -102,32 +102,19 @@ def run_inference(test_loader, model, model_params, testing_params, cuda_availab
                 preds = model(input_samples, metadata)
             else:
                 preds = model(input_samples)
-            if film_bool:
-                sample_metadata = batch["input_metadata"]
-                test_contrast = [sample_metadata[0][k]['contrast']
-                                 for k in range(len(sample_metadata[0]))]
 
-                test_metadata = [one_hot_encoder.transform([sample_metadata[0][k]["film_input"]]).tolist()[0]
-                                 for k in range(len(sample_metadata[0]))]
+        if model_params["name"] == "HeMISUnet":
+            # Reconstruct image with only one modality
+            input_samples = batch['input'][0]
+            batch['input_metadata'] = batch['input_metadata'][0]
+        if model_params["name"] == "UNet3D" and model_params["attention"]:
+            pass
+            """
+            imed_utils.save_feature_map(batch, "attentionblock2", context, model, test_input,
+                                        imed_utils.AXIS_DCT[context["slice_axis"]])
+            """
 
-                # Input the metadata related to the input samples
-                preds = model(test_input, test_metadata)
-            elif HeMIS:
-                # TODO: @Andreanne: to modify?
-                missing_mod = batch["Missing_mod"]
-                preds = model(test_input, missing_mod)
-
-                # Reconstruct image with only one modality
-                batch['input'] = batch['input'][0]
-                batch['input_metadata'] = batch['input_metadata'][0]
-
-            else:
-                preds = model(test_input)
-                if context["attention_unet"]:
-                    imed_utils.save_feature_map(batch, "attentionblock2", context, model, test_input,
-                                                imed_utils.AXIS_DCT[context["slice_axis"]])
-
-        # Preds to CPU
+        # PREDS TO CPU
         preds_cpu = preds.cpu()
 
         # reconstruct 3D image
@@ -206,8 +193,7 @@ def run_inference(test_loader, model, model_params, testing_params, cuda_availab
 
         # Metrics computation
         gt_npy = gt_samples.numpy().astype(np.uint8)
-
-        preds_npy = preds.data.cpu().numpy()
+        preds_npy = preds_cpu.data.numpy()
         if context["binarize_prediction"]:
             preds_npy = imed_postpro.threshold_predictions(preds_npy)
         preds_npy = preds_npy.astype(np.uint8)
