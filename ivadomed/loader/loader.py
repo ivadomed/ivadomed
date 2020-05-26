@@ -472,17 +472,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
         if self.bounding_box:
             # Appropriate cropping according to bounding box
-            for img_type in self.transform.transform:
-                for idx, transfo in enumerate(self.transform.transform[img_type].transforms):
-                    if "BoundingBoxCrop" in str(type(transfo)):
-                        self.transform.transform[img_type].transforms.pop(idx)
-                        break
-
-            for img_type in self.transform.transform:
-                h_min, h_max, w_min, w_max, d_min, d_max = seg_pair_slice['input_metadata'][0]['bounding_box']
-                transform_obj = imed_transforms.BoundingBoxCrop(size=[h_max - h_min, w_max - w_min, d_max - d_min])
-                idx = -2 if img_type == 'im' else -1
-                self.transform.transform[img_type].transforms.insert(idx, transform_obj)
+            imed_obj_detect.adjust_transforms(self.transform.transform, seg_pair_slice)
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=input_img,
