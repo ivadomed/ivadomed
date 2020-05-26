@@ -223,20 +223,19 @@ def run_main():
                                                **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
                                                   'dataset_type': 'validation'}})
         # If FiLM, normalize data
-        if film_params:
+        if model_params["name"] == "FiLMedUnet":
             # Normalize metadata before sending to the FiLM network
-            results = get_film_metadata_models(ds_train=ds_train, metadata_type=film_params['metadata'],
+            results = get_film_metadata_models(ds_train=ds_train, metadata_type=model_params['metadata'],
                                                debugging=context["debugging"])
             ds_train, train_onehotencoder, metadata_clustering_models = results
             ds_valid = imed_film.normalize_metadata(ds_valid, metadata_clustering_models, context["debugging"],
-                                                    film_params['metadata'])
+                                                    model_params['metadata'])
             model_params.update({"film_onehotencoder": train_onehotencoder,
                                  "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
             joblib.dump(metadata_clustering_models, "./" + log_directory + "/clustering_models.joblib")
             joblib.dump(train_onehotencoder, "./" + log_directory + "/one_hot_encoder.joblib")
 
         # RUN TRAINING
-        context["training_parameters"].update({"binarize_prediction": context["binarize_prediction"]})
         imed_training.train(model_params=model_params,
                             dataset_train=ds_train,
                             dataset_val=ds_valid,
