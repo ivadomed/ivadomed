@@ -574,18 +574,20 @@ class BidsDataset(MRI2DSegmentationDataset):
                                                "metadata": [None] * num_contrast} for subject in subject_lst}
 
         # Load or generate bounding boxes and save them in json file
-        bounding_box_path = os.path.join(log_dir, 'bounding_boxes.json')
-        if os.path.exists(bounding_box_path):
-            with open(bounding_box_path, 'r') as fp:
-                bounding_box_dict = json.load(fp)
-        elif os.path.exists(object_detection_path):
-            print("Generating bounding boxes...")
-            bounding_box_dict = imed_obj_detect.generate_bounding_box_file(self.bids_ds.get_subjects(),
-                                                                           object_detection_path,
-                                                                           log_dir,
-                                                                           gpu_number,
-                                                                           slice_axis,
-                                                                           contrast_lst)
+        bounding_box_dict = {}
+        if log_dir is not None:
+            bounding_box_path = os.path.join(log_dir, 'bounding_boxes.json')
+            if os.path.exists(bounding_box_path):
+                with open(bounding_box_path, 'r') as fp:
+                    bounding_box_dict = json.load(fp)
+            elif os.path.exists(object_detection_path):
+                print("Generating bounding boxes...")
+                bounding_box_dict = imed_obj_detect.generate_bounding_box_file(self.bids_ds.get_subjects(),
+                                                                               object_detection_path,
+                                                                               log_dir,
+                                                                               gpu_number,
+                                                                               slice_axis,
+                                                                               contrast_lst)
         elif object_detection_path is not None:
             raise RuntimeError("Path to object detection model doesn't exist")
 
@@ -623,7 +625,7 @@ class BidsDataset(MRI2DSegmentationDataset):
 
                 # add contrast to metadata
                 metadata['contrast'] = subject.record["modality"]
-                if bounding_box_dict:
+                if len(bounding_box_dict):
                     metadata['bounding_box'] = bounding_box_dict[str(subject.record["absolute_path"])]
 
                 if metadata_choice == 'mri_params':
