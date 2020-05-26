@@ -109,6 +109,7 @@ def run_inference(test_loader, model, model_params, testing_params, cuda_availab
             batch['input_metadata'] = batch['input_metadata'][0]
         if model_params["name"] == "UNet3D" and model_params["attention"]:
             pass
+            # TODO
             """
             imed_utils.save_feature_map(batch, "attentionblock2", context, model, test_input,
                                         imed_utils.AXIS_DCT[context["slice_axis"]])
@@ -116,6 +117,8 @@ def run_inference(test_loader, model, model_params, testing_params, cuda_availab
 
         # PREDS TO CPU
         preds_cpu = preds.cpu()
+        gt_npy = gt_samples.numpy().astype(np.uint8)
+        preds_npy = preds_cpu.data.numpy().astype(np.uint8)
 
         # reconstruct 3D image
         for smp_idx in range(len(preds_cpu)):
@@ -190,9 +193,5 @@ def run_inference(test_loader, model, model_params, testing_params, cuda_availab
                                                  batch['input_metadata'][smp_idx][0]['input_filenames'],
                                                  fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                  imed_utils.AXIS_DCT[context['slice_axis']])
-
-        # METRICS COMPUTATION
-        gt_npy = gt_samples.numpy().astype(np.uint8)
-        preds_npy = preds_cpu.data.numpy().astype(np.uint8)
 
         return preds_npy, gt_npy
