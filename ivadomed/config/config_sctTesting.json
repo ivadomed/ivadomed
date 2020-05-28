@@ -33,7 +33,7 @@
     "training_parameters": {
         "batch_size": 64,
         "loss": {
-            "name": "dice"
+            "name": "DiceLoss"
         },
         "training_time": {
             "num_epochs": 100,
