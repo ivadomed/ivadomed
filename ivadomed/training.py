@@ -71,7 +71,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
     # Using Adam
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
-    scheduler, step_scheduler_batch = get_scheduler(training_params["scheduler"], optimizer, num_epochs)
+    scheduler, step_scheduler_batch = get_scheduler(training_params["scheduler"]["lr_scheduler"], optimizer, num_epochs)
 
     # Create dict containing gammas and betas after each FiLM layer.
     if model_params["name"] == "FiLMedUnet":
