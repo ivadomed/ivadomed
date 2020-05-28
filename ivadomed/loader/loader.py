@@ -52,19 +52,14 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
     elif model_params["name"] == "HeMIS":
         dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
                                               subject_lst=data_list,
-                                              hdf5_name=model_params["hdf5_path"],
-                                              csv_name=model_params["csv_path"],
+                                              model_params=model_params,
+                                              contrast_params=contrast_params,
                                               target_suffix=target_suffix,
-                                              contrast_lst=contrast_params["train_validation"],
-                                              ram=model_params['ram'],
-                                              contrast_balance=contrast_params["balance"],
                                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                               transform=transforms,
                                               metadata_choice=metadata_type,
                                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
-                                              roi_suffix=roi_params["suffix"],
-                                              target_lst=model_params['target_lst'],
-                                              roi_lst=model_params['roi_lst'])
+                                              roi_suffix=roi_params["suffix"])
     else:
         dataset = BidsDataset(bids_path,
                               subject_lst=data_list,

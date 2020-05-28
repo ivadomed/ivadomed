@@ -408,56 +408,53 @@ class Bids_to_hdf5:
 
 
 class HDF5Dataset:
-    def __init__(self, root_dir, subject_lst, hdf5_name, csv_name, target_suffix, contrast_lst, ram=True,
-                 contrast_balance=None, slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
-                 slice_filter_fn=None, roi_suffix=None, target_lst=None, roi_lst=None):
+    def __init__(self, root_dir, subject_lst, model_params, target_suffix, contrast_params,
+                 slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
+                 slice_filter_fn=None, roi_suffix=None):
 
         """
 
         :param root_dir: path of bids and data
         :param subject_lst: list of patients
-        :param hdf5_name: path of the hdf5 file
-        :param csv_name: path of the dataframe
+        :param model_params: dict containing model parameters
         :param target_suffix: suffix of the gt
         :param roi_suffix: suffix of the roi
-        :param contrast_lst: list of the contrast
-        :param contrast_balance: contrast balance
+        :param contrast_params: dict containing contrast parameters
         :param slice_axis: slice axis. by default it's set to 2
         :param transform: transformation
         :param dim: number of dimension of our data. Either 2 or 3
         :param metadata_choice:
         :param slice_filter_fn:
         :param roi_suffix:
-        :param target_lst:
-        :param roi_lst:
         """
 
-        self.cst_lst = copy.deepcopy(contrast_lst)
-        self.gt_lst = copy.deepcopy(target_lst)
-        self.roi_lst = copy.deepcopy(roi_lst)
+        self.cst_lst = copy.deepcopy(contrast_params["training_validation"])
+        self.gt_lst = copy.deepcopy(model_params["target_lst"] if "target_lst" in model_params else None)
+        self.roi_lst = copy.deepcopy(model_params["roi_lst"] if "roi_lst" in model_params else None)
         self.dim = dim
         self.filter_slices = slice_filter_fn
         self.transform = transform
         # Getting HDS5 dataset file
-        if not os.path.exists(hdf5_name):
+        if not os.path.exists(model_params["hdf5_name"]):
             print("Computing hdf5 file of the data")
             hdf5_file = Bids_to_hdf5(root_dir,
                                      subject_lst=subject_lst,
-                                     hdf5_name=hdf5_name,
+                                     hdf5_name=model_params["hdf5_name"],
                                      target_suffix=target_suffix,
                                      roi_suffix=roi_suffix,
                                      contrast_lst=self.cst_lst,
                                      metadata_choice=metadata_choice,
-                                     contrast_balance=contrast_balance,
+                                     contrast_balance=self.cst_lst,
                                      slice_axis=slice_axis,
                                      slice_filter_fn=slice_filter_fn
                                      )
             self.hdf5_file = hdf5_file.hdf5_file
         else:
-            self.hdf5_file = h5py.File(hdf5_name, "r")
+            self.hdf5_file = h5py.File(model_params["hdf5_name"], "r")
         # Loading dataframe object
-        self.df_object = Dataframe(self.hdf5_file, contrast_lst, csv_name, target_suffix=target_lst,
-                                   roi_suffix=roi_lst, dim=self.dim, filter_slices=slice_filter_fn)
+        self.df_object = Dataframe(self.hdf5_file, self.cst_lst, model_params["csv_name"],
+                                   target_suffix=self.target_lst, roi_suffix=self.roi_lst, dim=self.dim,
+                                   filter_slices=slice_filter_fn)
         if complet:
             self.df_object.clean(self.cst_lst)
         print("after cleaning")
@@ -472,6 +469,7 @@ class HDF5Dataset:
         # RAM status
         self.status = {ct: False for ct in self.df_object.contrasts}
 
+        ram = model_params["ram"] if "ram" in model_params else True
         if ram:
             self.load_into_ram(self.cst_lst)
 
