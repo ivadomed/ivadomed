@@ -82,7 +82,7 @@
         {
             "wspace": 0.75,
             "hspace": 0.75,
-            "dspace": 0
+            "dspace": 1
         },
         "ROICrop": {
             "size": [128, 128]
