@@ -6,16 +6,16 @@
     "target_suffix": ["_seg-tumor"],
     "debugging": false,
     "loader_parameters": {
-        "roi": {
+        "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
         },
-        "contrasts": {
-            "train_validation": ["T1w", "T2w"],
-            "test": ["T1w","T2w"],
+        "contrast_params": {
+            "training_validation": ["T1w", "T2w"],
+            "testing": ["T1w","T2w"],
             "balance": {}
         },
-        "slice_filter": {
+        "slice_filter_params": {
             "filter_empty_mask": true,
             "filter_empty_input": true
         },
