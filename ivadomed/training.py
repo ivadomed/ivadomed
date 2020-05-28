@@ -1,4 +1,4 @@
-import time
+8import time
 import copy
 import numpy as np
 from tqdm import tqdm
@@ -81,7 +81,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         contrast_list = []
 
     # LOSS
-    loss_fct = get_loss_function(copy(training_params["loss"]))
+    loss_fct = get_loss_function(copy.copy(training_params["loss"]))
     loss_dice_fct = imed_losses.DiceLoss()  # For comparison when another loss is used
 
     # TODO: display params and specs
@@ -189,7 +189,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             num_steps += 1
 
             # METRICS COMPUTATION
-            gt_npy = gt_samples.numpy().astype(np.uint8)
+            gt_npy = gt_samples.cpu().numpy().astype(np.uint8)
             preds_npy = preds.data.cpu().numpy()
             metric_mgr(preds_npy.astype(np.uint8), gt_npy)
 
@@ -234,9 +234,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         # EARLY STOPPING
         if epoch > 1:
             val_diff = (val_loss_total_avg_old - val_loss_total_avg) * 100 / abs(val_loss_total_avg)
-            if val_diff < training_params["scheduler"]["early_stopping_epsilon"]:
+            if val_diff < training_params["scheduler"]["lr_scheduler"]["early_stopping_epsilon"]:
                 patience_count += 1
-            if patience_count >= training_params["scheduler"]["early_stopping_patience"]:
+            if patience_count >= training_params["scheduler"]["lr_scheduler"]["early_stopping_patience"]:
                 print("Stopping training due to {} epochs without improvements".format(training_params["scheduler"]))
                 break
 
