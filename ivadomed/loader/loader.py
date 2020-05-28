@@ -43,7 +43,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                 roi_suffix=roi_params["suffix"],
                                 contrast_lst=contrast_params["train_validation"],
                                 metadata_choice=metadata_type,
-                                contrast_balance=contrast_params["contrast_balance"],
+                                contrast_balance=contrast_params["balance"],
                                 slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                 transform=transforms,
                                 multichannel=multichannel,
@@ -57,7 +57,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               target_suffix=target_suffix,
                                               contrast_lst=contrast_params["train_validation"],
                                               ram=model_params['ram'],
-                                              contrast_balance=contrast_params["contrast_balance"],
+                                              contrast_balance=contrast_params["balance"],
                                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                               transform=transforms,
                                               metadata_choice=metadata_type,
@@ -70,9 +70,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               subject_lst=data_list,
                               target_suffix=target_suffix,
                               roi_suffix=roi_params["suffix"],
-                              contrast_lst=contrast_params["train_validation"],
+                              contrast_params=contrast_params,
                               metadata_choice=metadata_type,
-                              contrast_balance=contrast_params["contrast_balance"],
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                               transform=transforms,
                               multichannel=multichannel,
@@ -536,7 +535,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
 
 
 class BidsDataset(MRI2DSegmentationDataset):
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance=None, slice_axis=2,
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
                  multichannel=False):
 
@@ -557,16 +556,16 @@ class BidsDataset(MRI2DSegmentationDataset):
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
 
         tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast])
-               for contrast in contrast_balance.keys()}
+               for contrast in contrast_params["balance"].keys()}
 
         # Create a counter that helps to balance the contrasts
-        c = {contrast: 0 for contrast in contrast_balance.keys()}
+        c = {contrast: 0 for contrast in contrast_params["balance"].keys()}
 
         multichannel_subjects = {}
         if multichannel:
-            num_contrast = len(contrast_lst)
+            num_contrast = len(contrast_params["training_validation"])
             idx_dict = {}
-            for idx, contrast in enumerate(contrast_lst):
+            for idx, contrast in enumerate(contrast_params["training_validation"]):
                 idx_dict[contrast] = idx
             multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
                                                "deriv_path": None,
@@ -574,11 +573,11 @@ class BidsDataset(MRI2DSegmentationDataset):
                                                "metadata": [None] * num_contrast} for subject in subject_lst}
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
-            if subject.record["modality"] in contrast_lst:
+            if subject.record["modality"] in contrast_params["training_validation"]:
                 # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
-                if subject.record["modality"] in contrast_balance.keys():
+                if subject.record["modality"] in contrast_params["balance"].keys():
                     c[subject.record["modality"]] = c[subject.record["modality"]] + 1
-                    if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_balance[
+                    if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_params["balance"][
                         subject.record["modality"]]:
                         continue
 

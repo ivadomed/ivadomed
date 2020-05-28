@@ -12,7 +12,7 @@
         "contrasts": {
             "train_validation": ["T1w", "T2w"],
             "test": ["T1w","T2w"],
-            "contrast_balance": {}
+            "balance": {}
         },
         "slice_filter": {
             "filter_empty_mask": true,
@@ -44,7 +44,7 @@
             "lr_scheduler": {
                 "name": "CosineAnnealingLR",
                 "base_lr": 1e-5,
-                "max_lr": 1e-2,
+                "max_lr": 1e-2
             }
         },
         "balance_samples": false,
