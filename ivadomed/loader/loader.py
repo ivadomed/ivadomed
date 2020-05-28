@@ -36,6 +36,11 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
     # Compose transforms
     transforms = imed_transforms.Compose(transforms_params, requires_undo=requires_undo)
 
+    if dataset_type == "testing":
+        contrast_params["contrast_lst"] = contrast_params["test"]
+    else:
+        contrast_params["contrast_lst"] = contrast_params["training_validation"]
+
     if model_params["name"] == "unet3D":
         dataset = Bids3DDataset(bids_path,
                                 subject_lst=data_list,
@@ -555,9 +560,9 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         multichannel_subjects = {}
         if multichannel:
-            num_contrast = len(contrast_params["training_validation"])
+            num_contrast = len(contrast_params["contrast_lst"])
             idx_dict = {}
-            for idx, contrast in enumerate(contrast_params["training_validation"]):
+            for idx, contrast in enumerate(contrast_params["contrast_lst"]):
                 idx_dict[contrast] = idx
             multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
                                                "deriv_path": None,
@@ -565,7 +570,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                                                "metadata": [None] * num_contrast} for subject in subject_lst}
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
-            if subject.record["modality"] in contrast_params["training_validation"]:
+            if subject.record["modality"] in contrast_params["contrast_lst"]:
                 # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
                 if subject.record["modality"] in contrast_params["balance"].keys():
                     c[subject.record["modality"]] = c[subject.record["modality"]] + 1

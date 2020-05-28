@@ -428,7 +428,7 @@ class HDF5Dataset:
         :param roi_suffix:
         """
 
-        self.cst_lst = copy.deepcopy(contrast_params["training_validation"])
+        self.cst_lst = copy.deepcopy(contrast_params["contrast_lst"])
         self.gt_lst = copy.deepcopy(model_params["target_lst"] if "target_lst" in model_params else None)
         self.roi_lst = copy.deepcopy(model_params["roi_lst"] if "roi_lst" in model_params else None)
         self.dim = dim
