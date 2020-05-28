@@ -64,13 +64,8 @@
         "out_channel": 1,
         "n_metadata": null
     },
-    "FiLMedUnet": {
-        "applied": false,
-        "metadata": "mri_params",
-        "film_layers": [0, 1, 0, 0, 0, 0, 0, 0]
-    },
     "HeMISUnet": {
-        "applied": false,
+        "applied": true,
         "missing_probability": 0.00001,
         "missing_probability_growth": 0.9,
         "modalities": ["T1w", "T2w"],

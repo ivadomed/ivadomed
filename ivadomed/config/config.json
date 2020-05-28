@@ -65,7 +65,7 @@
         "n_metadata": null
     },
     "FiLMedUnet": {
-        "applied": false,
+        "applied": true,
         "metadata": "mri_params",
         "film_layers": [0, 1, 0, 0, 0, 0, 0, 0]
     },
