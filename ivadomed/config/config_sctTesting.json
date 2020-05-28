@@ -6,16 +6,16 @@
     "target_suffix": ["_lesion-manual"],
     "debugging": false,
     "loader_parameters": {
-        "roi": {
+        "roi_params": {
             "suffix": "_seg-manual",
             "slice_filter_roi": 10
         },
-        "contrasts": {
-            "train_validation": ["acq-ax00012_T2w", "acq-axtop00100_T2w", "acq-axtsp_T2w", "acq-c4c7_T2star", "acq-axmid00100_T2w", "acq-axlow_T2w", "acq-sup_T2w", "acq-ax_T2star", "acq-inf_T2star", "acq-ax_T2w", "acq-axcsp_T2w", "acq-c1c3_T2star", "T2star", "acq-axtop_T2w", "acq-axbottom_T2w", "acq-ax00014_T2w", "T2w", "acq-sup_T2star", "acq-axmid00005_T2w", "acq-inf_T2w"],
-            "test": ["acq-ax00012_T2w", "acq-axtop00100_T2w", "acq-axtsp_T2w", "acq-c4c7_T2star", "acq-axmid00100_T2w", "acq-axlow_T2w", "acq-sup_T2w", "acq-ax_T2star", "acq-inf_T2star", "acq-ax_T2w", "acq-axcsp_T2w", "acq-c1c3_T2star", "T2star", "acq-axtop_T2w", "acq-axbottom_T2w", "acq-ax00014_T2w", "T2w", "acq-sup_T2star", "acq-axmid00005_T2w", "acq-inf_T2w"],
+        "contrast_params": {
+            "training_validation": ["acq-ax00012_T2w", "acq-axtop00100_T2w", "acq-axtsp_T2w", "acq-c4c7_T2star", "acq-axmid00100_T2w", "acq-axlow_T2w", "acq-sup_T2w", "acq-ax_T2star", "acq-inf_T2star", "acq-ax_T2w", "acq-axcsp_T2w", "acq-c1c3_T2star", "T2star", "acq-axtop_T2w", "acq-axbottom_T2w", "acq-ax00014_T2w", "T2w", "acq-sup_T2star", "acq-axmid00005_T2w", "acq-inf_T2w"],
+            "testing": ["acq-ax00012_T2w", "acq-axtop00100_T2w", "acq-axtsp_T2w", "acq-c4c7_T2star", "acq-axmid00100_T2w", "acq-axlow_T2w", "acq-sup_T2w", "acq-ax_T2star", "acq-inf_T2star", "acq-ax_T2w", "acq-axcsp_T2w", "acq-c1c3_T2star", "T2star", "acq-axtop_T2w", "acq-axbottom_T2w", "acq-ax00014_T2w", "T2w", "acq-sup_T2star", "acq-axmid00005_T2w", "acq-inf_T2w"],
             "balance": {}
         },
-        "slice_filter": {
+        "slice_filter_params": {
             "filter_empty_mask": false,
             "filter_empty_input": true
         },
@@ -33,7 +33,7 @@
     "training_parameters": {
         "batch_size": 64,
         "loss": {
-            "name": "dice"
+            "name": "DiceLoss"
         },
         "training_time": {
             "num_epochs": 100,
@@ -82,7 +82,7 @@
         {
             "wspace": 0.75,
             "hspace": 0.75,
-            "dspace": 0
+            "dspace": 1
         },
         "ROICrop": {
             "size": [128, 128]

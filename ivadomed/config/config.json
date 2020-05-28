@@ -6,16 +6,16 @@
     "target_suffix": ["_seg-manual"],
     "debugging": false,
     "loader_parameters": {
-        "roi": {
+        "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
         },
-        "contrasts": {
-            "train_validation": ["T1w", "T2w", "T2star", "acq-MToff_MTS", "acq-MTon_MTS", "acq-T1w_MTS"],
-            "test": ["T1w", "T2w", "T2star", "acq-MToff_MTS", "acq-MTon_MTS", "acq-T1w_MTS"],
+        "contrast_params": {
+            "training_validation": ["T1w", "T2w", "T2star", "acq-MToff_MTS", "acq-MTon_MTS", "acq-T1w_MTS"],
+            "testing": ["T1w", "T2w", "T2star", "acq-MToff_MTS", "acq-MTon_MTS", "acq-T1w_MTS"],
             "balance": {}
         },
-        "slice_filter": {
+        "slice_filter_params": {
             "filter_empty_mask": false,
             "filter_empty_input": true
         },
@@ -33,7 +33,7 @@
     "training_parameters": {
         "batch_size": 18,
         "loss": {
-            "name": "dice"
+            "name": "DiceLoss"
         },
         "training_time": {
             "num_epochs": 100,
@@ -87,7 +87,7 @@
         {
             "wspace": 0.75,
             "hspace": 0.75,
-            "dspace": 0
+            "dspace": 1
         },
         "CenterCrop": {
             "size": [128, 128]
