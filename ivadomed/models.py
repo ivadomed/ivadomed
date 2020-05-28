@@ -173,7 +173,7 @@ class Unet(Module):
     def __init__(self, in_channel=1, out_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4,
                  bn_momentum=0.1, **kwargs):
         super(Unet, self).__init__()
-        print("depth", depth)
+
         # Verify if the length of boolean FiLM layers corresponds to the depth
         if film_layers:
             if len(film_layers) != 2 * depth + 2:
