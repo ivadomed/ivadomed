@@ -4,6 +4,7 @@
     "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
     "log_directory": "HeMIS",
     "target_suffix": ["_seg-tumor"],
+    "debugging": false,
     "loader_parameters": {
         "roi": {
             "suffix": null,
@@ -63,22 +64,6 @@
         "out_channel": 1,
         "n_metadata": null
     },
-    "FiLMedUnet": {
-        "applied": false,
-        "metadata": "mri_params",
-        "film_layers": [0, 1, 0, 0, 0, 0, 0, 0]
-    },
-    "HeMISUnet": {
-        "applied": false,
-        "missing_probability": 0.00001,
-        "missing_probability_growth": 0.9,
-        "modalities": ["T1w", "T2w"],
-        "ram": true,
-        "hdf5_path": "/home/andreanne/Documents/dataset/HeMIS.hdf5",
-        "csv_path": "/home/andreanne/Documents/dataset/HeMIS.csv",
-        "target_lst": ["T2w"],
-        "roi_lst": null
-    },
     "UNet3D": {
         "applied": true,
         "length_3D": [256, 128, 16],
@@ -118,6 +103,5 @@
         },
       "NumpyToTensor": {},
       "NormalizeInstance": {"applied_to": ["im"]}
-    },
-    "debugging": false
+    }
 }
