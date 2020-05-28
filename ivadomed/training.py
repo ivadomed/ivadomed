@@ -1,4 +1,5 @@
 import time
+import copy
 import numpy as np
 from tqdm import tqdm
 
@@ -80,7 +81,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         contrast_list = []
 
     # LOSS
-    loss_fct = get_loss_function(training_params["loss"])
+    loss_fct = get_loss_function(copy(training_params["loss"]))
     loss_dice_fct = imed_losses.DiceLoss()  # For comparison when another loss is used
 
     # TODO: display params and specs
