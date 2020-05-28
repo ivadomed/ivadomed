@@ -132,7 +132,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
         # PREDS TO CPU
         preds_cpu = preds.cpu()
-        gt_npy = gt_samples.numpy().astype(np.uint8)
+        gt_npy = gt_samples.cpu().numpy().astype(np.uint8)
         preds_npy = preds_cpu.data.numpy().astype(np.uint8)
 
         # RECONSTRUCT 3D IMAGE

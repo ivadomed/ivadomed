@@ -66,7 +66,7 @@
     },
     "FiLMedUnet": {
         "applied": true,
-        "metadata": "mri_params",
+        "metadata": "contrasts",
         "film_layers": [0, 1, 0, 0, 0, 0, 0, 0]
     },
     "testing_parameters": {
