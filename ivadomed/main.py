@@ -159,6 +159,10 @@ def run_main():
 
     command = context["command"]
     log_directory = context["log_directory"]
+    if not os.path.isdir(log_directory):
+        print('Creating log directory: {}'.format(log_directory))
+    else:
+        print('Log directory already exists: {}'.format(log_directory))
 
     # Define device
     cuda_available, device = define_device(context['gpu'])
