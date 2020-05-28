@@ -41,14 +41,12 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                 subject_lst=data_list,
                                 target_suffix=target_suffix,
                                 roi_suffix=roi_params["suffix"],
-                                contrast_lst=contrast_params["train_validation"],
+                                contrast_params=contrast_params,
                                 metadata_choice=metadata_type,
-                                contrast_balance=contrast_params["balance"],
                                 slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                 transform=transforms,
                                 multichannel=multichannel,
-                                length=model_params["length_3D"],
-                                padding=model_params["padding_3D"])
+                                model_params=model_params)
     elif model_params["name"] == "HeMIS":
         dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
                                               subject_lst=data_list,
@@ -511,22 +509,21 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance=None, slice_axis=2,
+    def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_suffix=None,
-                 multichannel=False, length=(64, 64, 64), padding=0):
+                 multichannel=False):
         dataset = BidsDataset(root_dir,
                               subject_lst=subject_lst,
                               target_suffix=target_suffix,
                               roi_suffix=roi_suffix,
-                              contrast_lst=contrast_lst,
+                              contrast_params=contrast_params,
                               metadata_choice=metadata_choice,
-                              contrast_balance=contrast_balance,
                               slice_axis=slice_axis,
                               transform=transform,
                               multichannel=multichannel)
 
-        super().__init__(dataset.filename_pairs, length=length, padding=padding, transform=transform,
-                         slice_axis=slice_axis)
+        super().__init__(dataset.filename_pairs, length=model_params["length_3D"], padding=model_params["padding_3D"],
+                         transform=transform, slice_axis=slice_axis)
 
 
 class BidsDataset(MRI2DSegmentationDataset):
