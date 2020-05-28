@@ -145,7 +145,7 @@ def get_subdatasets_transforms(transform_params):
         # Add current transformation to the relevant subdataset transformation dictionaries
         for subds_name, subds_dict in zip(subdataset_default, [train, valid, test]):
             if subds_name in subdataset_list:
-                subds_dict.update({transform_params[transform_name]})
+                subds_dict[transform_name] = transform_params[transform_name]
     return train, valid, test
 
 
@@ -161,6 +161,7 @@ def run_main():
     log_directory = context["log_directory"]
     if not os.path.isdir(log_directory):
         print('Creating log directory: {}'.format(log_directory))
+        os.makedirs(log_directory)
     else:
         print('Log directory already exists: {}'.format(log_directory))
 
