@@ -146,6 +146,8 @@ def get_subdatasets_transforms(transform_params):
         for subds_name, subds_dict in zip(subdataset_default, [train, valid, test]):
             if subds_name in subdataset_list:
                 subds_dict[transform_name] = transform_params[transform_name]
+                if "dataset_type" in subds_dict[transform_name]:
+                    del subds_dict[transform_name]["dataset_type"]
     return train, valid, test
 
 
@@ -185,6 +187,7 @@ def run_main():
                     }
     if "FiLMedUnet" in context and context["FiLMedUnet"]["applied"]:
         extra_params.update({"metadata_type": context["FiLMedUnet"]["metadata"]})
+    loader_params.update(extra_params)
 
     # METRICS
     metric_fns = [imed_metrics.dice_score,

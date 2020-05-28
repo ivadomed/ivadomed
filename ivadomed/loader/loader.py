@@ -13,7 +13,7 @@ from ivadomed import transforms as imed_transforms
 
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel, metadata_type,
-                 dataset_type="training", requires_undo=False):
+                 dataset_type="training", requires_undo=False, **kwargs):
     """Get loader.
 
     Args:
@@ -37,7 +37,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
     transforms = imed_transforms.Compose(transforms_params, requires_undo=requires_undo)
 
     if dataset_type == "testing":
-        contrast_params["contrast_lst"] = contrast_params["test"]
+        contrast_params["contrast_lst"] = contrast_params["testing"]
     else:
         contrast_params["contrast_lst"] = contrast_params["training_validation"]
 
