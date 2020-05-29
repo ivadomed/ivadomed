@@ -97,7 +97,6 @@
         "RandomAffine": {
             "degrees": 4.6,
             "translate": [0.03, 0.03],
-            "scale": [0.98, 1.02],
             "applied_to": ["im", "gt"],
             "dataset_type": ["training"]
         },

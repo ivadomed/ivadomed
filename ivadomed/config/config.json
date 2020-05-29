@@ -1,6 +1,6 @@
 {
-    "command": "test",
-    "gpu": 0,
+    "command": "train",
+    "gpu": 7,
     "bids_path": "../duke/projects/ivado-medical-imaging/spineGeneric_201907041011/result/",
     "log_directory": "spineGeneric",
     "target_suffix": ["_seg-manual"],
@@ -66,7 +66,7 @@
     },
     "FiLMedUnet": {
         "applied": true,
-        "metadata": "mri_params",
+        "metadata": "contrasts",
         "film_layers": [0, 1, 0, 0, 0, 0, 0, 0]
     },
     "testing_parameters": {
@@ -95,7 +95,6 @@
         "RandomAffine": {
             "degrees": 4.6,
             "translate": [0.03, 0.03],
-            "scale": [0.98, 1.02],
             "applied_to": ["im", "gt"],
             "dataset_type": ["training"]
         },

@@ -221,6 +221,7 @@ def run_main():
     model_context_list = [model_name for model_name in MODEL_LIST
                           if model_name in context and context[model_name]["applied"]]
     if len(model_context_list) == 1:
+        model_params["name"] = model_context_list[0]
         model_params.update(context[model_context_list[0]])
     elif len(model_context_list) > 1:
         print('ERROR: Several models are selected in the configuration file: {}.'

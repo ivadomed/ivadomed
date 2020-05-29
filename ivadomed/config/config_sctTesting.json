@@ -1,6 +1,6 @@
 {
-    "command": "test",
-    "gpu": 0,
+    "command": "train",
+    "gpu": 6,
     "bids_path": "../duke/sct_testing/large/",
     "log_directory": "sct_testing_lesion_ax",
     "target_suffix": ["_lesion-manual"],
@@ -90,7 +90,6 @@
         "RandomAffine": {
             "degrees": 4.6,
             "translate": [0.03, 0.03],
-            "scale": [0.98, 1.02],
             "applied_to": ["im", "gt"],
             "dataset_type": ["training"]
         },
