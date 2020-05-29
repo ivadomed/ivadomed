@@ -61,8 +61,7 @@
         "bn_momentum": 0.9,
         "depth": 4,
         "in_channel": 1,
-        "out_channel": 1,
-        "n_metadata": null
+        "out_channel": 1
     },
     "UNet3D": {
         "applied": true,

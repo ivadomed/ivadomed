@@ -126,21 +126,18 @@ def display_selected_model_spec(params):
             print('\t{}: {}'.format(k, params[k]))
 
 
-def display_selected_transfoms(params_list, dataset_list):
-    """Display in terminal the selected model and its parameters.
+def display_selected_transfoms(params, dataset_type):
+    """Display in terminal the selected transforms for a given dataset.
 
     Args:
-        params_list (list): list of dict
+        params (dict):
         dataset_list (list): e.g. ['testing'] or ['training', 'validation']
     Returns:
         None
     """
-    assert params_list == dataset_list
-    for dataset_type in dataset_list:
-        print('\nSelected architecture: {}, with the following parameters:'.format(params["name"]))
-        for k in list(params.keys()):
-            if k != "name":
-                print('\t{}: {}'.format(k, params[k]))
+    print('\nSelected transformations for the {} dataset:'.format(dataset_type))
+    for k in list(params.keys()):
+        print('\t{}: {}'.format(k, params[k]))
 
 
 def get_subdatasets_transforms(transform_params):
@@ -195,6 +192,11 @@ def run_main():
     # Get transforms for each subdataset
     transform_train_params, transform_valid_params, transform_test_params = \
         get_subdatasets_transforms(context["transformation"])
+    if command == "train":
+        display_selected_transfoms(transform_train_params, dataset_type="training")
+        display_selected_transfoms(transform_valid_params, dataset_type="validation")
+    elif command == "test":
+        display_selected_transfoms(transform_test_params, dataset_type="testing")
 
     # Loader params
     loader_params = context["loader_parameters"]

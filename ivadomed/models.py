@@ -194,7 +194,7 @@ class Unet(Module):
 class FiLMedUnet(Module):
     def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4,
                  bn_momentum=0.1, n_metadata=None, film_layers=None, **kwargs):
-        super(Unet, self).__init__()
+        super(Unet, self).__init__(in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1)
 
         # Verify if the length of boolean FiLM layers corresponds to the depth
         if film_layers:

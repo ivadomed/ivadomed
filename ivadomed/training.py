@@ -54,11 +54,14 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     # GET MODEL
     if training_params["transfer_learning"]["retrain_model"]:
+        print("\nLoading pretrained model's weights: {}.")
+        print("\tFreezing the {}% first layers.".format(100-training_params["transfer_learning"]['retrain_fraction']*100.))
         old_model_path = training_params["transfer_learning"]["retrain_model"]
         fraction = training_params["transfer_learning"]['retrain_fraction']
         # Freeze first layers and reset last layers
         model = imed_models.set_model_for_retrain(old_model_path, retrain_fraction=fraction)
     else:
+        print("\nInitialising model's weights from scratch.")
         model_class = getattr(imed_models, model_params["name"])
         model = model_class(**model_params)
     if cuda_available:
@@ -73,6 +76,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     # Using Adam
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
     scheduler, step_scheduler_batch = get_scheduler(training_params["scheduler"]["lr_scheduler"], optimizer, num_epochs)
+    print("\nScheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
 
     # Create dict containing gammas and betas after each FiLM layer.
     if model_params["name"] == "FiLMedUnet":
@@ -81,6 +85,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         contrast_list = []
 
     # LOSS
+    print("\nSelected Loss: {}".format(training_params["loss"]["name"]))
+    print("\twith the parameters: {}".format([training_params["loss"][k] for k in training_params["loss"] if k != "name"]))
     loss_fct = get_loss_function(copy.copy(training_params["loss"]))
     loss_dice_fct = imed_losses.DiceLoss()  # For comparison when another loss is used
 
