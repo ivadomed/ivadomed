@@ -61,8 +61,7 @@
         "bn_momentum": 0.9,
         "depth": 2,
         "in_channel": 1,
-        "out_channel": 1,
-        "n_metadata": null
+        "out_channel": 1
     },
     "HeMISUnet": {
         "applied": true,
