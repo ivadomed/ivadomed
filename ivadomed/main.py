@@ -126,6 +126,23 @@ def display_selected_model_spec(params):
             print('\t{}: {}'.format(k, params[k]))
 
 
+def display_selected_transfoms(params_list, dataset_list):
+    """Display in terminal the selected model and its parameters.
+
+    Args:
+        params_list (list): list of dict
+        dataset_list (list): e.g. ['testing'] or ['training', 'validation']
+    Returns:
+        None
+    """
+    assert params_list == dataset_list
+    for dataset_type in dataset_list:
+        print('\nSelected architecture: {}, with the following parameters:'.format(params["name"]))
+        for k in list(params.keys()):
+            if k != "name":
+                print('\t{}: {}'.format(k, params[k]))
+
+
 def get_subdatasets_transforms(transform_params):
     """Get transformation parameters for each subdataset: training, validation and testing.
 
