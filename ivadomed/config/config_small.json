@@ -36,7 +36,7 @@
             "name": "DiceLoss"
         },
         "training_time": {
-            "num_epochs": 5,
+            "num_epochs": 20,
             "early_stopping_patience": 50,
             "early_stopping_epsilon": 0.001
         },
@@ -58,8 +58,8 @@
     "default_model": {
         "name": "Unet",
         "dropout_rate": 0.3,
-        "bn_momentum": 0.9,
-        "depth": 4,
+        "bn_momentum": 0.1,
+        "depth": 2,
         "in_channel": 1,
         "out_channel": 1
     },

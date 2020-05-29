@@ -85,13 +85,13 @@ class Compose(object):
             # Get list of data type
             if "applied_to" in parameters:
                 list_applied_to = parameters["applied_to"]
-                del parameters['applied_to']
             else:
                 list_applied_to = ["im", "gt", "roi"]
 
             # call transform
             if transform in globals():
-                transform_obj = globals()[transform](**parameters)
+                params_cur = {k: parameters[k] for k in parameters if k!="applied_to"}
+                transform_obj = globals()[transform](**params_cur)
             else:
                 print('ERROR: {} transform is not available in your ivadomed package. '
                       'Please check its compatibility with your model json file.'.format(transform))
