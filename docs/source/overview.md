@@ -1,13 +1,16 @@
-# Test2
+# Overview
 
-yooooooo
+The purpose of the `ivadomed` project is to provide researchers
+with an open-source framework for training deep learning models for
+applications in medical imaging.
 
-## yay
 
-~~~
-code!
-~~~
+## Ivadomed and other projects
 
-## boo
+We acknowledge the existence of similar projects. The specificity of `ivadomed`
+is highlighted in the table below:
 
-fdf
+``` warning:: Not Implemented
+```
+
+## Features
