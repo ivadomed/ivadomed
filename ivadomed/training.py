@@ -237,7 +237,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             if val_diff < training_params["training_time"]["early_stopping_epsilon"]:
                 patience_count += 1
             if patience_count >= training_params["training_time"]["early_stopping_patience"]:
-                print("Stopping training due to {} epochs without improvements".format(patience_count)
+                print("Stopping training due to {} epochs without improvements".format(patience_count))
                 break
 
     # Save final model
