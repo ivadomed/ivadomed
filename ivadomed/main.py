@@ -244,11 +244,11 @@ def run_main():
         # LOAD DATASET
         # Get Training dataset
         ds_train = imed_loader.load_dataset(**{**loader_params,
-                                               **{'data_list': train_lst, 'transforms_params': transform_train_params,
+                                               **{'data_list': train_lst[:3], 'transforms_params': transform_train_params,
                                                   'dataset_type': 'training'}})
         # Get Validation dataset
         ds_valid = imed_loader.load_dataset(**{**loader_params,
-                                               **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
+                                               **{'data_list': valid_lst[:3], 'transforms_params': transform_valid_params,
                                                   'dataset_type': 'validation'}})
         # If FiLM, normalize data
         if model_params["name"] == "FiLMedUnet":

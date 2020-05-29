@@ -89,14 +89,14 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     print("\twith the parameters: {}".format([training_params["loss"][k] for k in training_params["loss"] if k != "name"]))
     loss_fct = get_loss_function(copy.copy(training_params["loss"]))
     loss_dice_fct = imed_losses.DiceLoss()  # For comparison when another loss is used
-
+    print(loss_fct)
     # TODO: display params and specs
 
     # INIT TRAINING VARIABLES
     best_training_dice, best_training_loss = float("inf"), float("inf")
     best_validation_loss, best_validation_dice = float("inf"), float("inf")
     patience_count = 0
-
+    print(model)
     # EPOCH LOOP
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
         start_time = time.time()
@@ -132,8 +132,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
             # LOSS
             loss = loss_fct(preds, gt_samples)
-            train_loss_total += loss.item()
-            train_dice_loss_total -= loss_dice_fct(preds, gt_samples).item()
+            train_loss_total = loss.item()
+            train_dice_loss_total = loss_dice_fct(preds, gt_samples).item()
 
             # UPDATE OPTIMIZER
             optimizer.zero_grad()
@@ -189,8 +189,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
                 # LOSS
                 loss = loss_fct(preds, gt_samples)
-                val_loss_total += loss.item()
-                val_dice_loss_total -= loss_dice_fct(preds, gt_samples).item()
+                val_loss_total = loss.item()
+                val_dice_loss_total = loss_dice_fct(preds, gt_samples).item()
 
             num_steps += 1
 
@@ -240,6 +240,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         # EARLY STOPPING
         if epoch > 1:
             val_diff = (val_loss_total_avg_old - val_loss_total_avg) * 100 / abs(val_loss_total_avg)
+            print(val_diff)
             if val_diff < training_params["training_time"]["early_stopping_epsilon"]:
                 patience_count += 1
             if patience_count >= training_params["training_time"]["early_stopping_patience"]:

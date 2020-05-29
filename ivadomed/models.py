@@ -54,7 +54,7 @@ class Encoder(Module):
         self.down_path = nn.ModuleList()
         # first block
         self.down_path.append(DownConv(in_channel, 64, drop_rate, bn_momentum))
-        self.down_path.append(FiLMlayer(n_metadata, 64) if film_layers and film_layers[0] else None)
+#        self.down_path.append(FiLMlayer(n_metadata, 64) if film_layers and film_layers[0] else None)
         self.down_path.append(nn.MaxPool2d(2))
 
         # other blocks
@@ -62,36 +62,36 @@ class Encoder(Module):
 
         for i in range(depth - 1):
             self.down_path.append(DownConv(in_channel, in_channel * 2, drop_rate, bn_momentum))
-            self.down_path.append(FiLMlayer(n_metadata, in_channel * 2) if film_layers and film_layers[i + 1] else None)
+            #self.down_path.append(FiLMlayer(n_metadata, in_channel * 2) if film_layers and film_layers[i + 1] else None)
             self.down_path.append(nn.MaxPool2d(2))
             in_channel = in_channel * 2
 
         # Bottom
         self.conv_bottom = DownConv(in_channel, in_channel, drop_rate, bn_momentum)
-        self.film_bottom = FiLMlayer(n_metadata, in_channel) if film_layers and film_layers[self.depth] else None
+        #self.film_bottom = FiLMlayer(n_metadata, in_channel) if film_layers and film_layers[self.depth] else None
 
     def forward(self, x, context=None):
         features = []
 
         # First block
         x = self.down_path[0](x)
-        if self.down_path[1]:
-            x, w_film = self.down_path[1](x, context, None)
+        #if self.down_path[1]:
+        #    x, w_film = self.down_path[1](x, context, None)
         features.append(x)
         x = self.down_path[2](x)
 
         # Down-sampling path (other blocks)
         for i in range(1, self.depth):
             x = self.down_path[i * 3](x)
-            if self.down_path[i * 3 + 1]:
-                x, w_film = self.down_path[i * 3 + 1](x, context, None if 'w_film' not in locals() else w_film)
+         #   if self.down_path[i * 3 + 1]:
+         #       x, w_film = self.down_path[i * 3 + 1](x, context, None if 'w_film' not in locals() else w_film)
             features.append(x)
             x = self.down_path[i * 3 + 2](x)
 
         # Bottom level
         x = self.conv_bottom(x)
-        if self.film_bottom:
-            x, w_film = self.film_bottom(x, context, None if 'w_film' not in locals() else w_film)
+        #if self.film_bottom:
+        #    x, w_film = self.film_bottom(x, context, None if 'w_film' not in locals() else w_film)
         features.append(x)
 
         return features, None if 'w_film' not in locals() else w_film
@@ -116,19 +116,19 @@ class Decoder(Module):
         if hemis:
             in_channel = 64 * 2 ** (self.depth)
             self.up_path.append(UpConv(in_channel * 2, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
-            if film_layers and film_layers[self.depth + 1]:
-                self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)))
-            else:
-                self.up_path.append(None)
+         #   if film_layers and film_layers[self.depth + 1]:
+         #       self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)))
+         #   else:
+         #       self.up_path.append(None)
             # self.depth += 1
         else:
             in_channel = 64 * 2 ** self.depth
 
             self.up_path.append(UpConv(in_channel, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
-            if film_layers and film_layers[self.depth + 1]:
-                self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)))
-            else:
-                self.up_path.append(None)
+          #  if film_layers and film_layers[self.depth + 1]:
+          #      self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)))
+          #  else:
+          #      self.up_path.append(None)
 
         for i in range(1, depth):
             in_channel //= 2
@@ -137,27 +137,27 @@ class Decoder(Module):
                 UpConv(in_channel + 64 * 2 ** (self.depth - i - 1 + int(hemis)), 64 * 2 ** (self.depth - i - 1),
                        drop_rate,
                        bn_momentum))
-            if film_layers and film_layers[self.depth + i + 1]:
-                self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - i - 1)))
-            else:
-                self.up_path.append(None)
+           # if film_layers and film_layers[self.depth + i + 1]:
+           #     self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - i - 1)))
+           # else:
+           #     self.up_path.append(None)
 
         # Last Convolution
         self.last_conv = nn.Conv2d(in_channel // 2, out_channel, kernel_size=3, padding=1)
-        self.last_film = FiLMlayer(n_metadata, 1) if film_layers and film_layers[-1] else None
+        #self.last_film = FiLMlayer(n_metadata, 1) if film_layers and film_layers[-1] else None
 
     def forward(self, features, context=None, w_film=None):
         x = features[-1]
 
         for i in reversed(range(self.depth)):
             x = self.up_path[-(i + 1) * 2](x, features[i])
-            if self.up_path[-(i + 1) * 2 + 1]:
-                x, w_film = self.up_path[-(i + 1) * 2 + 1](x, context, w_film)
+         #   if self.up_path[-(i + 1) * 2 + 1]:
+         #       x, w_film = self.up_path[-(i + 1) * 2 + 1](x, context, w_film)
 
         # Last convolution
         x = self.last_conv(x)
-        if self.last_film:
-            x, w_film = self.last_film(x, context, w_film)
+        #if self.last_film:
+        #    x, w_film = self.last_film(x, context, w_film)
         if self.out_channel > 1:
             preds = F.softmax(x, dim=1)
             # Remove background class
@@ -191,10 +191,10 @@ class Unet(Module):
         return preds
 
 
-class FiLMedUnet(Module):
+class FiLMedUnet(Unet):
     def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4,
                  bn_momentum=0.1, n_metadata=None, film_layers=None, **kwargs):
-        super(Unet, self).__init__(in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1)
+        super().__init__(in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1)
 
         # Verify if the length of boolean FiLM layers corresponds to the depth
         if film_layers:
