@@ -17,7 +17,7 @@ Contents
 * [Getting started](getting_started.md)
 * [Tutorials](tutorials.md)
 * [Data](data.md)
-* [API Reference](api_ref.md)
+* [API Reference](api_ref.rst)
 
 
 ## Support
