@@ -12,38 +12,9 @@
 Comprehensive and open-source repository of deep learning methods for medical data segmentation.
 Collaboration between MILA and NeuroPoly for the IVADO project on medical imaging.
 
-- [Installing](#installing)
 - [Contributions](#contributions-and-features)
 - [Training](#training)
 - [Data](#data)
-
-## Installing
-
-
-This project requires Python 3.6 and PyTorch >= 1.5.0. We recommend you work under a virtual environment:
-
-~~~
-virtualenv venv-ivadomed --python=python3.6
-source venv-ivadomed/bin/activate
-~~~
-
-### Option 1 : development version from Github
-ivadomed is installed from Github and the requirements are installed using `pip`:
-
-```
-git clone https://github.com/neuropoly/ivado-medical-imaging.git
-cd ivado-medical-imaging
-pip install -e .
-```
-
-### Option 2 : release from PyPI
-
-ivadomed and its requirements are installed directly using `pip` :
-
-```
-pip install --upgrade pip
-pip install ivadomed
-```
 
 ## Training
 
