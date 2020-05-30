@@ -10,7 +10,7 @@ applications in medical imaging.
 We acknowledge the existence of similar projects. The specificity of `ivadomed`
 is highlighted in the table below:
 
-``` warning:: Not Implemented
+``` warning:: TODO: Add comparative table
 ```
 
 ## Features

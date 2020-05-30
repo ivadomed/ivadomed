@@ -14,7 +14,9 @@ Contents
 
 * [Overview](overview.md)
 * [Installation](installation.md)
+* [Getting started](getting_started.md)
 * [Tutorials](tutorials.md)
+* [Data](data.md)
 * [API Reference](api_ref.md)
 
 
