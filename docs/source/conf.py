@@ -231,3 +231,12 @@ def setup(app):
         'enable_eval_rst': True,
     }, True)
     app.add_transform(AutoStructify)
+
+autodoc_default_options = {
+    'members': True,
+    'member-order': 'bysource',  # 'alphabetical'
+    'special-members': True,  # can list e.g. __init__
+    'show-inheritance': True,
+    # 'undoc-members': True,  # members without docstrings
+    'exclude-members': '__weakref__'
+}
