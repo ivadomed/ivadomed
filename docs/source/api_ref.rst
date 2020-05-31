@@ -22,6 +22,30 @@ This document is for developers of ``ivadomed``, it contains the API functions.
 .. autoclass:: ivadomed.loader.film.clustering_fit
 .. autoclass:: ivadomed.loader.film.check_isMRIparam
 
+:mod:`ivadomed.loader.loader`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: ivadomed.loader.loader.load_dataset
+.. autoclass:: ivadomed.loader.loader.SegmentationPair
+.. autoclass:: ivadomed.loader.loader.MRI2DSegmentationDataset
+.. autoclass:: ivadomed.loader.loader.MRI3DSubVolumeSegmentationDataset
+.. autoclass:: ivadomed.loader.loader.Bids3DDataset
+.. autoclass:: ivadomed.loader.loader.BidsDataset
+
+:mod:`ivadomed.loader.utils`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: ivadomed.loader.utils.split_dataset
+.. automethod:: ivadomed.loader.utils.imed_collate
+.. automethod:: ivadomed.loader.utils.filter_roi
+.. automethod:: ivadomed.loader.utils.orient_img_hwd
+.. automethod:: ivadomed.loader.utils.orient_img_ras
+.. automethod:: ivadomed.loader.utils.orient_shapes_hwd
+.. autoclass:: ivadomed.loader.utils.SampleMetadata
+.. autoclass:: ivadomed.loader.utils.BalancedSampler
+.. automethod:: ivadomed.loader.utils.clean_metadata
+.. automethod:: ivadomed.loader.utils.update_metadata
+
 :mod:`ivadomed.losses`
 ----------------------
 
