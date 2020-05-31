@@ -5,7 +5,6 @@ import nibabel as nib
 from tqdm import tqdm
 from scipy.ndimage import label, generate_binary_structure
 
-from ivadomed import utils as imed_utils
 from ivadomed import metrics as imed_metrics
 
 # labels of paint_objects method
@@ -16,7 +15,7 @@ FN_COLOUR = 3
 
 def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
     """Evaluate predictions from inference step.
-    
+
     Args:
           bids_path (string): Folder where data is stored
           log_directory (string): Folder where the output folder "results_eval" will be created.
@@ -37,7 +36,7 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
     df_results = pd.DataFrame()
 
     # LIST PREDS
-    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_pred) if f.endswith('_pred.nii.gz')]
+    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_preds) if f.endswith('_pred.nii.gz')]
 
     # LOOP ACROSS PREDS
     for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
@@ -58,7 +57,7 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
                 data_gt[..., idx] = nib.load(file).get_fdata()
             else:
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
-        eval = imed_utils.Evaluation3DMetrics(data_pred=data_pred,
+        eval = Evaluation3DMetrics(data_pred=data_pred,
                                               data_gt=data_gt,
                                               dim_lst=nib_pred.header['pixdim'][1:4],
                                               params=eval_params)
