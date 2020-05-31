@@ -12,7 +12,7 @@ This document is for developers of ``ivadomed``, it contains the API functions.
 .. autoclass:: ivadomed.loader.adaptative.Dataframe
 .. autoclass:: ivadomed.loader.adaptative.Bids_to_hdf5
 .. autoclass:: ivadomed.loader.adaptative.HDF5Dataset
-.. autoclass:: ivadomed.loader.adaptative.HDF5_to_Bids
+.. automethod:: ivadomed.loader.adaptative.HDF5_to_Bids
 
 :mod:`ivadomed.loader.film`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -26,7 +26,7 @@ This document is for developers of ``ivadomed``, it contains the API functions.
 ----------------------
 
 .. autoclass:: ivadomed.losses.MultiClassDiceLoss
-.. autoclass:: ivadomed.losses.dice_loss
+.. automethod:: ivadomed.losses.dice_loss
 .. autoclass:: ivadomed.losses.FocalLoss
 .. autoclass:: ivadomed.losses.FocalDiceLoss
 .. autoclass:: ivadomed.losses.GeneralizedDiceLoss
