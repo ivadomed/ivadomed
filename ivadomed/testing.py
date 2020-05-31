@@ -1,4 +1,5 @@
 import os
+from tqdm import tqdm
 import numpy as np
 
 import torch
@@ -36,7 +37,9 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
                              num_workers=0)
 
     # LOAD TRAIN MODEL
-    model = torch.load("./" + log_directory + "/best_model.pt", map_location=device)
+    fname_model = "./" + log_directory + "/best_model.pt"
+    print('\nLoading model: {}'.format(fname_model))
+    model = torch.load(fname_model, map_location=device)
     if cuda_available:
         model.cuda()
     model.eval()
@@ -54,7 +57,9 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
             testing_params['uncertainty']['n_it'] > 0:
         n_monteCarlo = testing_params['uncertainty']['n_it']
         testing_params['uncertainty']['applied'] = True
+        print('\nComputing model uncertainty over {} iterations.'.format(n_monteCarlo))
     else:
+        testing_params['uncertainty']['applied'] = False
         n_monteCarlo = 1
 
     for i_monteCarlo in range(n_monteCarlo):
@@ -91,7 +96,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     # INIT STORAGE VARIABLES
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     # LOOP ACROSS DATASET
-    for i, batch in enumerate(test_loader):
+    for i, batch in enumerate(tqdm(test_loader, desc="Inference - Iteration "+str(i_monteCarlo))):
         with torch.no_grad():
             # GET SAMPLES
             # input_samples: list of batch_size tensors, whose size is n_channels X height X width X depth
@@ -211,4 +216,4 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                  fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                  imed_utils.AXIS_DCT[testing_params['slice_axis']])
 
-        return preds_npy, gt_npy
+    return preds_npy, gt_npy

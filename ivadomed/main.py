@@ -286,7 +286,7 @@ def run_main():
         else:
             transformation_dict = transform_valid_params
         # Get Testing dataset
-        ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst[:3],
+        ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst[:10],
                                                                   'transforms_params': transformation_dict,
                                                                   'dataset_type': 'testing',
                                                                   'requires_undo': True}})
