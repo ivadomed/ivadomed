@@ -1,7 +1,7 @@
 API Reference
 =============
 
-This document is for developers of `ivadomed`, it contains the API functions.
+This document is for developers of ``ivadomed``, it contains the API functions.
 
 :mod:`ivadomed.loader`
 ----------------------
