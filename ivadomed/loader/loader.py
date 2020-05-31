@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 from ivadomed import utils as imed_utils
+from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 
 
@@ -368,6 +369,8 @@ class MRI2DSegmentationDataset(Dataset):
         stack_gt, metadata_gt = self.transform(sample=seg_pair_slice["gt"],
                                                metadata=metadata_gt,
                                                data_type="gt")
+        # Make sure stack_gt is binarized
+        stack_gt = torch.as_tensor([imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in range(len(stack_gt))])
 
         data_dict = {
             'input': stack_input,
@@ -484,6 +487,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         stack_gt, metadata_gt = self.transform(sample=gt_img,
                                                metadata=metadata_gt,
                                                data_type="gt")
+        # Make sure stack_gt is binarized
+        stack_gt = torch.as_tensor([imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in range(len(stack_gt))])
 
         shape_x = coord["x_max"] - coord["x_min"]
         shape_y = coord["y_max"] - coord["y_min"]

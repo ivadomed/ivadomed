@@ -84,7 +84,7 @@
             "dspace": 1
         },
         "ROICrop": {
-            "size": [128, 128]
+            "size": [48, 48]
         },
         "RandomAffine": {
             "degrees": 4.6,
@@ -99,7 +99,7 @@
             "applied_to": ["im", "gt"],
             "dataset_type": ["training"]
         },
-      "NumpyToTensor": {},
+      "NumpyToTensor": {"applied_to": ["im", "gt"]},
       "NormalizeInstance": {"applied_to": ["im"]}
     }
 }
