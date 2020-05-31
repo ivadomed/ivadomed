@@ -3,9 +3,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 
 <p float="left">
-  <img src="images/neuropoly_logo.png" height="120" />
+  <img src="images/neuropoly_logo.png" height="80" />
   <img src="images/mila_logo.png" height="80" />
-  <img src="images/ivado_logo.png" height="120" />
+  <img src="images/ivado_logo.png" height="80" />
 </p>
 
 # IVADO Medical Imaging
