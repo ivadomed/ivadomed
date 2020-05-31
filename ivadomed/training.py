@@ -335,7 +335,7 @@ def get_metadata(metadata, model_params):
     if model_params["name"] == "HeMIS":
         return metadata
     else:
-        return [model_params["train_onehotencoder"].transform([metadata[0][k]['film_input']]).tolist()[0]
+        return [model_params["film_onehotencoder"].transform([metadata[0][k]['film_input']]).tolist()[0]
                 for k in range(len(metadata[0]))]
 
 
