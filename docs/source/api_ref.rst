@@ -14,6 +14,14 @@ This document is for developers of ``ivadomed``, it contains the API functions.
 .. autoclass:: ivadomed.loader.adaptative.HDF5Dataset
 .. autoclass:: ivadomed.loader.adaptative.HDF5_to_Bids
 
+:mod:`ivadomed.loader.film`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: ivadomed.loader.film.normalize_metadata
+.. autoclass:: ivadomed.loader.film.Kde_model
+.. autoclass:: ivadomed.loader.film.clustering_fit
+.. autoclass:: ivadomed.loader.film.check_isMRIparam
+
 :mod:`ivadomed.losses`
 ----------------------
 
