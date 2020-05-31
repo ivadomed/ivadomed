@@ -107,7 +107,7 @@ class Decoder(Module):
                 """
 
     def __init__(self, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1,
-                 hemis=False, n_metadata=None, film_layers=None):
+                 n_metadata=None, film_layers=None, hemis=False):
         super(Decoder, self).__init__()
         self.depth = depth
         self.out_channel = out_channel
@@ -179,10 +179,10 @@ class Unet(Module):
         super(Unet, self).__init__()
 
         # Encoder path
-        self.encoder = Encoder(in_channel, depth, drop_rate, bn_momentum)
+        self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum)
 
         # Decoder path
-        self.decoder = Decoder(out_channel, depth, drop_rate, bn_momentum)
+        self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum)
 
     def forward(self, x):
         features, _ = self.encoder(x)
@@ -204,9 +204,11 @@ class FiLMedUnet(Unet):
         else:
             film_layers = [0] * (2 * depth + 2)
         # Encoder path
-        self.encoder = Encoder(in_channel, depth, drop_rate, bn_momentum, n_metadata, film_layers)
+        self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
+                               n_metadata=n_metadata, film_layers=film_layers)
         # Decoder path
-        self.decoder = Decoder(out_channel, depth, drop_rate, bn_momentum, n_metadata, film_layers)
+        self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
+                               n_metadata=n_metadata, film_layers=film_layers)
 
     def forward(self, x, context=None):
         features, w_film = self.encoder(x, context)
@@ -309,17 +311,16 @@ class HeMISUnet(Module):
 
     def __init__(self, modalities, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, **kwargs):
         super(HeMISUnet, self).__init__()
-        self.film_layers = [0] * (2 * depth + 2)
         self.depth = depth
         self.modalities = modalities
 
         # Encoder path
         self.Encoder_mod = nn.ModuleDict(
-            [['Encoder_{}'.format(Mod), Encoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate,
+            [['Encoder_{}'.format(Mod), Encoder(in_channel=1, depth=depth, drop_rate=drop_rate,
                                                 bn_momentum=bn_momentum)] for Mod in self.modalities])
 
         # Decoder path
-        self.decoder = Decoder(out_channel, depth, film_layers=self.film_layers, drop_rate=drop_rate,
+        self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate,
                                bn_momentum=bn_momentum, hemis=True)
 
     def forward(self, x_mods, indexes_mod):
