@@ -233,9 +233,9 @@ def setup(app):
     app.add_transform(AutoStructify)
 
 autodoc_default_options = {
-    'members': True,
+    'members': None,
     'member-order': 'bysource',  # 'alphabetical'
-    'special-members': True,  # can list e.g. __init__
+    'special-members': None,  # can list e.g. __init__
     'show-inheritance': True,
     # 'undoc-members': True,  # members without docstrings
     'exclude-members': '__weakref__'
