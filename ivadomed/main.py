@@ -245,11 +245,11 @@ def run_main():
         # LOAD DATASET
         # Get Validation dataset
         ds_valid = imed_loader.load_dataset(**{**loader_params,
-                                               **{'data_list': valid_lst[:10], 'transforms_params': transform_valid_params,
+                                               **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
                                                   'dataset_type': 'validation'}})
         # Get Training dataset
         ds_train = imed_loader.load_dataset(**{**loader_params,
-                                               **{'data_list': train_lst[:10], 'transforms_params': transform_train_params,
+                                               **{'data_list': train_lst, 'transforms_params': transform_train_params,
                                                   'dataset_type': 'training'}})
 
         # If FiLM, normalize data
@@ -281,18 +281,18 @@ def run_main():
     elif command == 'test':
         # LOAD DATASET
         # Aleatoric uncertainty
-        if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
+        if context['testing_parameters']['uncertainty']['aleatoric'] and context['testing_parameters']['uncertainty']['n_it'] > 0:
             transformation_dict = transform_test_params
         else:
             transformation_dict = transform_valid_params
         # Get Testing dataset
-        ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
+        ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst[:3],
                                                                   'transforms_params': transformation_dict,
                                                                   'dataset_type': 'testing',
                                                                   'requires_undo': True}})
 
         # UNDO TRANSFORMS
-        undo_transforms = imed_transforms.UndoCompose(transformation_dict)
+        undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))
 
         if model_params["name"] == "FiLMedUnet":
             metadata_clustering_models = joblib.load("./" + log_directory + "/clustering_models.joblib")
@@ -305,8 +305,7 @@ def run_main():
         # RUN INFERENCE
         testing_params = context["testing_parameters"]
         testing_params.update(context["training_parameters"])
-        testing_params.update({context["target_suffix"]})
-        testing_params.update({'undo_transforms': undo_transforms, 'slice_axis': loader_params['slice_axis']})
+        testing_params.update({'target_suffix': context["target_suffix"], 'undo_transforms': undo_transforms, 'slice_axis': loader_params['slice_axis']})
         imed_testing.test(model_params=model_params,
                           dataset_test=ds_test,
                           testing_params=testing_params,
