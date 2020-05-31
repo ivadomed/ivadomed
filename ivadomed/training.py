@@ -129,9 +129,10 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 preds = model(input_samples)
 
             # LOSS
+            np.save("t.npy", np.concatenate([np.array(input_samples.data.cpu().numpy()), np.array(gt_samples.data.cpu().numpy()), np.array(preds.data.cpu().numpy())]))
             loss = loss_fct(preds, gt_samples)
-            train_loss_total = loss.item()
-            train_dice_loss_total = loss_dice_fct(preds, gt_samples).item()
+            train_loss_total += loss.item()
+            train_dice_loss_total += loss_dice_fct(preds, gt_samples).item()
 
             # UPDATE OPTIMIZER
             optimizer.zero_grad()
@@ -187,8 +188,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
                 # LOSS
                 loss = loss_fct(preds, gt_samples)
-                val_loss_total = loss.item()
-                val_dice_loss_total = loss_dice_fct(preds, gt_samples).item()
+                val_loss_total += loss.item()
+                val_dice_loss_total += loss_dice_fct(preds, gt_samples).item()
 
             num_steps += 1
 
