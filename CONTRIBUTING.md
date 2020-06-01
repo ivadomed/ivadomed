@@ -2,7 +2,7 @@
 
 ## Introduction
 
-First off, thanks for taking the time to contribute! :tada::+1:
+First off, thanks for taking the time to contribute!
 
 When contributing to this repository, please first discuss the change you wish
 to make via Github issue, email, or any other method with the core team before
@@ -43,7 +43,7 @@ If you experience an error, copy/paste the Terminal output (include your
 syntax) and please follow these guidelines for clarity:
 
 -   If there is less than 10 lines of text, embed it directly in your
-    comment in github. Use \"\~\~\~\" to format as code.
+    comment in Github. Use \"\~\~\~\" to format as code.
 -   If there is 10+ lines, either use an external website such as
     [pastebin](https://pastebin.com/) (copy/paste your text and include
     the URL in your comment), or use [collapsable Github markdown
