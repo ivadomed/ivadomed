@@ -1,13 +1,14 @@
-import time
 import copy
-import numpy as np
-from tqdm import tqdm
+import time
+import os
 
+import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch import optim, nn
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 
 from ivadomed import losses as imed_losses
 from ivadomed import metrics as imed_metrics
@@ -55,7 +56,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     # GET MODEL
     if training_params["transfer_learning"]["retrain_model"]:
         print("\nLoading pretrained model's weights: {}.")
-        print("\tFreezing the {}% first layers.".format(100-training_params["transfer_learning"]['retrain_fraction']*100.))
+        print("\tFreezing the {}% first layers.".format(
+            100 - training_params["transfer_learning"]['retrain_fraction'] * 100.))
         old_model_path = training_params["transfer_learning"]["retrain_model"]
         fraction = training_params["transfer_learning"]['retrain_fraction']
         # Freeze first layers and reset last layers
@@ -69,7 +71,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     num_epochs = training_params["training_time"]["num_epochs"]
 
-    # OPTIMISZER
+    # OPTIMIZER
     initial_lr = training_params["scheduler"]["initial_lr"]
     # filter out the parameters you are going to fine-tuning
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
@@ -86,7 +88,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     # LOSS
     print("\nSelected Loss: {}".format(training_params["loss"]["name"]))
-    print("\twith the parameters: {}".format([training_params["loss"][k] for k in training_params["loss"] if k != "name"]))
+    print("\twith the parameters: {}".format(
+        [training_params["loss"][k] for k in training_params["loss"] if k != "name"]))
     loss_fct = get_loss_function(copy.copy(training_params["loss"]))
     loss_dice_fct = imed_losses.DiceLoss()  # For comparison when another loss is used
 
@@ -117,7 +120,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             # MIXUP
             if training_params["mixup_alpha"]:
                 input_samples, gt_samples = imed_utils.mixup(input_samples, gt_samples, training_params["mixup_alpha"],
-                                                                debugging and epoch == 1, log_directory)
+                                                             debugging and epoch == 1, log_directory)
 
             # RUN MODEL
             if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
@@ -150,7 +153,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
         # TRAINING LOSS
         train_loss_total_avg = train_loss_total / num_steps
-        msg = "Epoch {} training loss: {:.4f}.". format(epoch, train_loss_total_avg)
+        msg = "Epoch {} training loss: {:.4f}.".format(epoch, train_loss_total_avg)
         train_dice_loss_total_avg = train_dice_loss_total / num_steps
         if training_params["loss"]["name"] != "DiceLoss":
             msg += "\tDice training loss: {:.4f}.".format(train_dice_loss_total_avg)
@@ -202,8 +205,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                                                 is_three_dim=model_params["name"].endswith("3D"))
 
             if model_params["name"] == "FiLMedUnet" and debugging and epoch == num_epochs \
-                and i < int(len(dataset_val) / training_params["batch_size"]) + 1:
-
+                    and i < int(len(dataset_val) / training_params["batch_size"]) + 1:
                 # Store the values of gammas and betas after the last epoch for each batch
                 gammas_dict, betas_dict, contrast_list = store_film_params(gammas_dict, betas_dict, contrast_list,
                                                                            batch['input_metadata'], model,
@@ -220,7 +222,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             'train_loss': train_loss_total_avg,
             'val_loss': val_loss_total_avg,
         }, epoch)
-        msg = "Epoch {} validation loss: {:.4f}.". format(epoch, val_loss_total_avg)
+        msg = "Epoch {} validation loss: {:.4f}.".format(epoch, val_loss_total_avg)
         val_dice_loss_total_avg = val_dice_loss_total / num_steps
         if training_params["loss"]["name"] != "DiceLoss":
             msg += "\tDice validation loss: {:.4f}.".format(val_dice_loss_total_avg)
@@ -394,4 +396,5 @@ def save_film_params(gammas, betas, contrasts, depth, ofolder):
 
     # Convert into numpy and save the contrasts of all batch images
     contrast_images = np.array(contrasts)
-    np.save(ofolder + "/contrast_images.npy", contrast_images)
+    contrast_path = os.path.join(ofolder, "contrast_image.npy")
+    np.save(contrast_path, contrast_images)
