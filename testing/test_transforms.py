@@ -234,9 +234,8 @@ def test_NormalizeInstance(im_seg):
     tensor, metadata_tensor = NumpyToTensor()(im, metadata_in)
     do_tensor, _ = transform(tensor, metadata_tensor)
     # Check normalization
-    for t in do_tensor:
-        assert abs(t.mean() - 0.0) <= 1e-2
-        assert abs(t.std() - 1.0) <= 1e-2
+    assert abs(do_tensor.mean() - 0.0) <= 1e-2
+    assert abs(do_tensor.std() - 1.0) <= 1e-2
 
 
 def _test_Crop(im_seg, crop_transform):

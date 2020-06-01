@@ -90,7 +90,7 @@
         },
         "RandomTranslation": {
             "translate": [0.1, 0.3],
-            "applied_to": ["im", "gt"],
+            "applied_to": ["im", "gt"]
         },
         "NumpyToTensor": {"applied_to": ["im", "gt"]},
         "NormalizeInstance": {"applied_to": ["im"]}
