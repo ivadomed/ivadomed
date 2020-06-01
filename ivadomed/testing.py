@@ -1,15 +1,15 @@
 import os
-from tqdm import tqdm
-import numpy as np
 
+import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from ivadomed import metrics as imed_metrics
 from ivadomed import utils as imed_utils
-from ivadomed.training import get_metadata
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed.training import get_metadata
 
 cudnn.benchmark = True
 
@@ -77,7 +77,8 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
     return metrics_dict
 
 
-def run_inference(test_loader, model, model_params, testing_params, ofolder, cuda_available, debugging, i_monteCarlo=None):
+def run_inference(test_loader, model, model_params, testing_params, ofolder, cuda_available, debugging,
+                  i_monteCarlo=None):
     """Run inference on the test data and save results as nibabel files.
 
     Args:
@@ -96,7 +97,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     # INIT STORAGE VARIABLES
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     # LOOP ACROSS DATASET
-    for i, batch in enumerate(tqdm(test_loader, desc="Inference - Iteration "+str(i_monteCarlo))):
+    for i, batch in enumerate(tqdm(test_loader, desc="Inference - Iteration " + str(i_monteCarlo))):
         with torch.no_grad():
             # GET SAMPLES
             # input_samples: list of batch_size tensors, whose size is n_channels X height X width X depth
