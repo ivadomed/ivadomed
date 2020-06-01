@@ -16,7 +16,7 @@ from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomTranslation,
     RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, \
     Resample, rescale_values_array
 
-DEBUGGING = True
+DEBUGGING = False
 if DEBUGGING:
     from testing.utils import plot_transformed_sample
 
