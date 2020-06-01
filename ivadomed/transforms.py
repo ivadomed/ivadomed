@@ -532,12 +532,13 @@ class DilateGT(ImedTransform):
             gt_dil, gt_dil_bin = self.dilate_arr(gt_data_np, self.dil_factor)
 
             # random holes in dilated area
-            gt_holes, gt_holes_bin = self.random_holes(gt_data_np, gt_dil, gt_dil_bin)
+            # gt_holes, gt_holes_bin = self.random_holes(gt_data_np, gt_dil, gt_dil_bin)
 
             # post-processing
-            gt_pp = self.post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
+            # gt_pp = self.post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
 
-            return gt_pp.astype(np.float32), metadata
+            # return gt_pp.astype(np.float32), metadata
+            return gt_dil.astype(np.float32), metadata
 
         else:
             return sample, metadata
@@ -624,10 +625,8 @@ class RandomReverse(ImedTransform):
         return self.__call__(sample, metadata)
 
 
-class RandomAffine(RandomRotation):
-    # TODO: implement scale and shear
-    def __init__(self, degrees, translate=None):
-        super().__init__(degrees)
+class RandomTranslation(ImedTransform):
+    def __init__(self, translate):
 
         # Check Translate
         if translate is not None:
@@ -645,14 +644,10 @@ class RandomAffine(RandomRotation):
     def __call__(self, sample, metadata=None):
 
         # Get params
-        if 'affine' in metadata:
-            angle, axes_rot, translations = metadata['affine']
+        if 'translation' in metadata:
+            translations = metadata['translation']
         else:
             self.data_shape = sample.shape
-
-            angle = np.random.uniform(self.degrees[0], self.degrees[1])
-            # Get the two axes that define the plane of rotation
-            axes_rot = tuple(random.sample(range(3 if sample.shape[2] > 1 else 2), 2))
 
             if self.translate is not None:
                 max_dx = self.translate[0] * self.data_shape[0]
@@ -664,31 +659,24 @@ class RandomAffine(RandomRotation):
             else:
                 translations = (0, 0, 0)
 
-            metadata['affine'] = [angle, axes_rot, translations]
+            metadata['translation'] = translations
 
-        # Run Rotation
-        data_rot, _ = RandomRotation(self.degrees).__call__(sample, {'rotation': [angle, axes_rot]})
         # Run Translation
-        data_rot_trans = shift(data_rot, shift=translations, order=1).astype(sample.dtype)
-        # Run Scaling
-        # data_rot_trans_scaled = zoom(data_rot_trans, zoom=scale, order=1)
+        data_shift = shift(sample, shift=translations, order=1).astype(sample.dtype)
 
-        return data_rot_trans, metadata
+        return data_shift, metadata
 
     @multichannel_capable
     @two_dim_compatible
     def undo_transform(self, sample, metadata=None):
-        # IMPORTANT NOTE: this function does not work with images (but works with labels)
-        assert "affine" in metadata
-        # Opposite rotation, same axesopposite translations
-        angle, axes = - metadata['affine'][0], metadata['affine'][1]
+        assert "translation" in metadata
         # Opposite translation
-        translations = tuple([-t for t in metadata['affine'][2]])
+        opposite_translations = tuple([-t for t in metadata['translation']])
         # Inverse scaling
         # scale = 1. / metadata['affine'][3]
 
         # Params
-        dict_params = {"affine": [angle, axes, translations]}  # , scale]}
+        dict_params = {"translation": opposite_translations}  # , scale]}
 
         # Undo rotation
         data_out, metadata = self.__call__(sample, dict_params)
