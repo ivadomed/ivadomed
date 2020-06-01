@@ -16,7 +16,7 @@ is highlighted in the table below:
 ## Features
 
 ### Physic-informed network
-CNNs can be modulated, at each layer, using the [Feature-wise Linear Modulation (FiLM)](https://arxiv.org/pdf/1709.07871.pdf)) technique. FiLM permits to add priors during training/inference
+CNNs can be modulated, at each layer, using the [Feature-wise Linear Modulation (FiLM)](https://arxiv.org/pdf/1709.07871.pdf) technique. FiLM permits to add priors during training/inference
 based on the imaging physics (e.g. acquisition parameters), thereby improving the
 performance of the output segmentations.
 
