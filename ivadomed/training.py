@@ -235,7 +235,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         if val_loss_total_avg < best_validation_loss:
             best_validation_loss, best_training_loss = val_loss_total_avg, train_loss_total_avg
             best_validation_dice, best_training_dice = val_dice_loss_total_avg, train_dice_loss_total_avg
-            torch.save(model, "./" + log_directory + "/best_model.pt")
+            model_path = os.path.join(log_directory, "best_model.pt")
+            torch.save(model, model_path)
 
         # EARLY STOPPING
         if epoch > 1:
@@ -247,7 +248,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 break
 
     # Save final model
-    torch.save(model, "./" + log_directory + "/final_model.pt")
+    final_model_path = os.path.join(log_directory, "final_model.pt")
+    torch.save(model, final_model_path)
     if model_params["name"] == "FiLMedUnet" and debugging:
         save_film_params(gammas_dict, betas_dict, contrast_list, model_params["depth"], log_directory)
 
@@ -391,8 +393,10 @@ def save_film_params(gammas, betas, contrasts, depth, ofolder):
 
     # Save the numpy arrays for gammas/betas inside files.npy in log_directory
     for i in range(1, 2 * depth + 3):
-        np.save(ofolder + "/gamma_layer_{}.npy".format(i), gammas_dict[i])
-        np.save(ofolder + "/beta_layer_{}.npy".format(i), betas_dict[i])
+        gamma_layer_path = os.path.join(ofolder, "gamma_layer_{}.npy".format(i))
+        np.save(gamma_layer_path, gammas_dict[i])
+        beta_layer_path = os.path.join(ofolder, "beta_layer_{}.npy".format(i))
+        np.save(beta_layer_path, betas_dict[i])
 
     # Convert into numpy and save the contrasts of all batch images
     contrast_images = np.array(contrasts)
