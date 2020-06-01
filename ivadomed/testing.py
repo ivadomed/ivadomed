@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from ivadomed import metrics as imed_metrics
 from ivadomed import utils as imed_utils
 from ivadomed.training import get_metadata
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed.loader import utils as imed_loader_utils
 
 cudnn.benchmark = True
 
