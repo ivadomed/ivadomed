@@ -4,15 +4,15 @@
     "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
     "log_directory": "HeMIS",
     "target_suffix": ["_seg-tumor"],
-    "debugging": false,
+    "debugging": true,
     "loader_parameters": {
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
         },
         "contrast_params": {
-            "training_validation": ["T1w", "T2w"],
-            "testing": ["T1w","T2w"],
+            "training_validation": ["T2w"],
+            "testing": ["T2w"],
             "balance": {}
         },
         "slice_filter_params": {
@@ -65,10 +65,10 @@
     },
     "UNet3D": {
         "applied": true,
-        "length_3D": [256, 128, 16],
+        "length_3D": [512, 256, 16],
         "padding_3D": 0,
-        "attention": false,
-        "n_filters": 1
+        "attention": true,
+        "n_filters": 8
     },
     "testing_parameters": {
         "binarize_prediction": true,
@@ -91,7 +91,7 @@
             "dspace": 2
         },
         "CenterCrop": {
-            "size": [256, 128, 16]
+            "size": [512, 256, 16]
         },
         "RandomAffine": {
             "degrees": 4.6,

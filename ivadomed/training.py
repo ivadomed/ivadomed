@@ -14,7 +14,7 @@ from ivadomed import losses as imed_losses
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed.loader import utils as imed_loader_utils
 
 cudnn.benchmark = True
 
