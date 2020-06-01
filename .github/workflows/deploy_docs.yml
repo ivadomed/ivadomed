@@ -27,5 +27,5 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@3.5.3
 
         env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RTD_TOKEN }}
           CUSTOM_DOMAIN: www.ivadomed.org
