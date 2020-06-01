@@ -124,16 +124,33 @@ class TverskyLoss(nn.Module):
 
     """
 
-    def __init__(self, alpha=0.5, beta=0.5):
+    def __init__(self, alpha=0.5, beta=0.5, smooth=1.0):
+        """
+        Args:
+            alpha (float): weight of false positive voxels
+            beta  (float): weight of false negative voxels
+            smooth (float): epsilon to avoid division by zero, when both Numerator and Denominator of Tversky are zeros
+        """
         super(TverskyLoss, self).__init__()
         self.alpha = alpha
         self.beta = beta
+        self.smooth = smooth
 
     def forward(self, input, target):
         n_classes = input.shape[1]
 
         # TODO: Add class_of_interest?
-
         for i_label in range(n_classes):
+            # Get samples for a given class
             y_pred, y_true = input[:, i_label, ], target[:, i_label, ]
+            # Compute TP
+            tp = torch.sum(y_true * y_pred)
+            # Compute FN
+            fn = torch.sum(y_true * (1 - y_pred))
+            # Compute FP
+            fp = torch.sum((1 - y_true) * y_pred)
+            # Compute Tversky for the current class, see Equation 3 of the original paper
+            numerator = tp + self.smooth
+            denominator = tp + self.alpha * fn + self.beta * fp + self.smooth
+            tversky_label = numerator / denominator
 
