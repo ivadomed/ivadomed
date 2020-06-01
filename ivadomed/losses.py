@@ -140,6 +140,28 @@ class TverskyLoss(nn.Module):
         self.beta = beta
         self.smooth = smooth
 
+    def tversky_index(self, y_pred, y_true):
+        """Compute Tversky index
+
+        Args:
+            y_pred (torch Tensor): prediction
+            y_true (torch Tensor): target
+
+        Returns:
+            float: Tversky index
+        """
+        # Compute TP
+        tp = torch.sum(y_true * y_pred)
+        # Compute FN
+        fn = torch.sum(y_true * (1 - y_pred))
+        # Compute FP
+        fp = torch.sum((1 - y_true) * y_pred)
+        # Compute Tversky for the current class, see Equation 3 of the original paper
+        numerator = tp + self.smooth
+        denominator = tp + self.alpha * fn + self.beta * fp + self.smooth
+        tversky_label = numerator / denominator
+        return tversky_label
+
     def forward(self, input, target):
         n_classes = input.shape[1]
         tversky_sum = 0.
@@ -148,18 +170,8 @@ class TverskyLoss(nn.Module):
         for i_label in range(n_classes):
             # Get samples for a given class
             y_pred, y_true = input[:, i_label, ], target[:, i_label, ]
-            # Compute TP
-            tp = torch.sum(y_true * y_pred)
-            # Compute FN
-            fn = torch.sum(y_true * (1 - y_pred))
-            # Compute FP
-            fp = torch.sum((1 - y_true) * y_pred)
-            # Compute Tversky for the current class, see Equation 3 of the original paper
-            numerator = tp + self.smooth
-            denominator = tp + self.alpha * fn + self.beta * fp + self.smooth
-            tversky_label = numerator / denominator
-            # Add to the total
-            tversky_sum += tversky_label
+            # Compute Tversky index
+            tversky_sum += self.tversky_index(y_pred, y_true)
 
         return - tversky_sum / n_classes
 
