@@ -12,8 +12,8 @@ from scipy.ndimage.measurements import center_of_mass
 from scipy.ndimage.measurements import label
 
 from ivadomed.metrics import dice_score
-from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomTranslation, RandomReverse, DilateGT, ElasticTransform, \
-    RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, \
+from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomTranslation, RandomReverse, DilateGT, \
+    ElasticTransform, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, \
     Resample, rescale_values_array
 
 DEBUGGING = False
@@ -345,6 +345,7 @@ def test_RandomRotation(im_seg, rot_transform):
         # Data consistency
         assert dice_score(undo_seg[idx], seg[idx]) > 0.9
 """
+
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
                                     create_test_image(100, 100, 100, 1, rad_max=10)])
