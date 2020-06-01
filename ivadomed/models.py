@@ -366,7 +366,8 @@ class UNet3D(nn.Module):
     https://github.com/ozan-oktay/Attention-Gated-Networks
     """
 
-    def __init__(self, in_channel, out_channel, n_filters=16, attention=False, drop_rate=0.6, bn_momentum=0.1, **kwargs):
+    def __init__(self, in_channel, out_channel, n_filters=16, attention=False, drop_rate=0.6, bn_momentum=0.1,
+                 **kwargs):
         super(UNet3D, self).__init__()
         self.in_channels = in_channel
         self.n_classes = out_channel
@@ -390,7 +391,7 @@ class UNet3D(nn.Module):
         )
         self.lrelu_conv_c1 = self.lrelu_conv(
             self.base_n_filter, self.base_n_filter)
-        self.inorm3d_c1 = nn.InstanceNorm3d(self.base_n_filter, momentum=momentum)
+        self.inorm3d_c1 = nn.InstanceNorm3d(self.base_n_filter, momentum=self.momentum)
 
         # Level 2 context pathway
         self.conv3d_c2 = nn.Conv3d(
@@ -399,7 +400,7 @@ class UNet3D(nn.Module):
         )
         self.norm_lrelu_conv_c2 = self.norm_lrelu_conv(
             self.base_n_filter * 2, self.base_n_filter * 2)
-        self.inorm3d_c2 = nn.InstanceNorm3d(self.base_n_filter * 2, momentum=momentum)
+        self.inorm3d_c2 = nn.InstanceNorm3d(self.base_n_filter * 2, momentum=self.momentum)
 
         # Level 3 context pathway
         self.conv3d_c3 = nn.Conv3d(
@@ -408,7 +409,7 @@ class UNet3D(nn.Module):
         )
         self.norm_lrelu_conv_c3 = self.norm_lrelu_conv(
             self.base_n_filter * 4, self.base_n_filter * 4)
-        self.inorm3d_c3 = nn.InstanceNorm3d(self.base_n_filter * 4, momentum=momentum)
+        self.inorm3d_c3 = nn.InstanceNorm3d(self.base_n_filter * 4, momentum=self.momentum)
 
         # Level 4 context pathway
         self.conv3d_c4 = nn.Conv3d(
@@ -417,7 +418,7 @@ class UNet3D(nn.Module):
         )
         self.norm_lrelu_conv_c4 = self.norm_lrelu_conv(
             self.base_n_filter * 8, self.base_n_filter * 8)
-        self.inorm3d_c4 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=momentum)
+        self.inorm3d_c4 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=self.momentum)
 
         # Level 5 context pathway, level 0 localization pathway
         self.conv3d_c5 = nn.Conv3d(
@@ -435,7 +436,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 8, self.base_n_filter * 8,
             kernel_size=1, stride=1, padding=0, bias=False
         )
-        self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=momentum)
+        self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=self.momentum)
 
         # Attention UNet
         if self.attention:
@@ -458,7 +459,7 @@ class UNet3D(nn.Module):
                                                         inter_channels=self.base_n_filter * 8,
                                                         sub_sample_factor=(2, 2, 2),
                                                         )
-            self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 16, momentum=momentum)
+            self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 16, momentum=self.momentum)
 
         # Level 1 localization pathway
         self.conv_norm_lrelu_l1 = self.conv_norm_lrelu(
