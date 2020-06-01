@@ -114,3 +114,26 @@ class GeneralizedDiceLoss(nn.Module):
         denominator = ((input + target).sum(-1) * class_weights).sum()
 
         return 1. - 2. * intersect / denominator.clamp(min=self.epsilon)
+
+
+class TverskyLoss(nn.Module):
+    """Tversky Loss.
+
+    Compute the Tversky loss defined in:
+        Sadegh et al. (2017) Tversky loss function for image segmentation using 3D fully convolutional deep networks
+
+    """
+
+    def __init__(self, alpha=0.5, beta=0.5):
+        super(TverskyLoss, self).__init__()
+        self.alpha = alpha
+        self.beta = beta
+
+    def forward(self, input, target):
+        n_classes = input.shape[1]
+
+        # TODO: Add class_of_interest?
+
+        for i_label in range(n_classes):
+            y_pred, y_true = input[:, i_label, ], target[:, i_label, ]
+
