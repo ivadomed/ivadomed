@@ -319,9 +319,7 @@ def test_RandomRotation(im_seg, rot_transform):
 
     # Transform on Numpy
     do_im, metadata_do = rot_transform(im.copy(), metadata_in)
-    print(metadata_do)
     do_seg, metadata_do = rot_transform(seg.copy(), metadata_do)
-    print(metadata_do)
 
     if DEBUGGING and len(im[0].shape) == 2:
         plot_transformed_sample(im[0], do_im[0], ['raw', 'do'])
@@ -419,35 +417,40 @@ def test_RandomReverse(im_seg, reverse_transform):
     _check_shape(seg, [do_seg])
 
 
-@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
-                                    create_test_image(100, 100, 100, 1, rad_max=10)])
-@pytest.mark.parametrize('aff_transform', [RandomAffine(10),
-                                           RandomAffine(10, [0.05, 0.1, 0])])
+@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10)])
+                                    #create_test_image(100, 100, 100, 1, rad_max=10)])
+@pytest.mark.parametrize('aff_transform', [#RandomAffine(180),
+                                           RandomAffine(180, [0.1, 0.2, 0])])
 def test_RandomAffine(im_seg, aff_transform):
     im, seg = im_seg
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
 
     # Transform on Numpy
     do_im, metadata_do = aff_transform(im.copy(), metadata_in)
+    print(metadata_do)
     do_seg, metadata_do = aff_transform(seg.copy(), metadata_do)
-
-    # Transform on Numpy
-    undo_im, _ = aff_transform.undo_transform(do_im, metadata_do)
-    undo_seg, _ = aff_transform.undo_transform(do_seg, metadata_do)
+    print(metadata_do)
 
     if DEBUGGING and len(im[0].shape) == 2:
         plot_transformed_sample(seg[0], do_seg[0], ['raw', 'do'])
+
+    # Transform on Numpy
+    #undo_im, _ = aff_transform.undo_transform(do_im, metadata_do)
+    print(metadata_do)
+    undo_seg, _ = aff_transform.undo_transform(do_seg.copy(), metadata_do)
+
+    if DEBUGGING and len(im[0].shape) == 2:
         plot_transformed_sample(seg[0], undo_seg[0], ['raw', 'undo'])
 
-    _check_dtype(im, [do_im, undo_im])
-    _check_shape(im, [do_im, undo_im])
+    #_check_dtype(im, [do_im, undo_im])
+    #_check_shape(im, [do_im, undo_im])
     _check_dtype(seg, [do_seg, undo_seg])
     _check_shape(seg, [do_seg, undo_seg])
 
     # Loop and check
     for idx, i in enumerate(im):
         # Data consistency
-        assert dice_score(undo_seg[idx], seg[idx]) > 0.7
+        assert dice_score(undo_seg[idx], seg[idx]) > 0.9
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
