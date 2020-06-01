@@ -3,7 +3,7 @@
 New model can be generated using the command-line tool from the terminal:
 
 ```
-ivadomed config/config.json
+ivadomed ivadomed/config/config.json
 ```
 
 where `config.json` is a configuration file, which parameters are described [here](https://github.com/neuropoly/ivado-medical-imaging/wiki/configuration-file).
