@@ -93,8 +93,7 @@
         "CenterCrop": {
             "size": [512, 256, 16]
         },
-        "RandomAffine": {
-            "degrees": 4.6,
+        "RandomTranslation": {
             "translate": [0.03, 0.03],
             "applied_to": ["im", "gt"],
             "dataset_type": ["training"]

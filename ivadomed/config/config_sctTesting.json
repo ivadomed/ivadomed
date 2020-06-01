@@ -86,8 +86,7 @@
         "ROICrop": {
             "size": [48, 48]
         },
-        "RandomAffine": {
-            "degrees": 4.6,
+        "RandomTranslation": {
             "translate": [0.03, 0.03],
             "applied_to": ["im", "gt"],
             "dataset_type": ["training"]

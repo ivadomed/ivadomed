@@ -1,9 +1,9 @@
 {
-    "command": "test",
+    "command": "train",
     "gpu": 0,
-    "bids_path": "../duke/projects/csf_deepseg/spineGeneric/result/",
+    "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
     "log_directory": "HeMIS",
-    "target_suffix": ["_seg-manual"],
+    "target_suffix": ["_seg-tumor"],
     "debugging": false,
     "loader_parameters": {
         "roi_params": {
@@ -11,15 +11,15 @@
             "slice_filter_roi": null
         },
         "contrast_params": {
-            "training_validation": ["T2star", "T2w", "T1w"],
-            "testing": ["T2star", "T2w", "T1w"],
+            "training_validation": ["T2w", "T1w"],
+            "testing": ["T2w", "T1w"],
             "balance": {}
         },
         "slice_filter_params": {
             "filter_empty_mask": true,
             "filter_empty_input": true
         },
-        "slice_axis": "axial",
+        "slice_axis": "sagittal",
         "multichannel": false
     },
     "split_dataset": {
@@ -75,7 +75,7 @@
         "roi_lst": null
     },
     "UNet3D": {
-        "applied": true,
+        "applied": false,
         "length_3D": [256, 128, 16],
         "padding_3D": 0,
         "attention": false,
@@ -104,8 +104,7 @@
         "CenterCrop": {
             "size": [128, 128]
         },
-        "RandomAffine": {
-            "degrees": 4.6,
+        "RandomTranslation": {
             "translate": [0.03, 0.03],
             "applied_to": ["im", "gt"],
             "dataset_type": ["training"]
