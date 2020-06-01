@@ -44,7 +44,7 @@ def test_multiclassdiceloss(params):
     loss = loss_fct.forward(input, target)
     assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-3)
 
-
+# TODO: add multilabel test
 @pytest.mark.parametrize('params', [
     (torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
      torch.tensor([[[[1.0, 0.0], [1.0, 1.0]]]]),
