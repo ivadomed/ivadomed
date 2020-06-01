@@ -22,7 +22,7 @@ if DEBUGGING:
 
 
 def create_test_image(width, height, depth=0, num_modalities=1, noise_max=10.0, num_objs=1, rad_max=30,
-                      num_seg_classes=1):
+                      num_seg_classes=1, random_position=False):
     """Create test image.
 
     Create test image and its segmentation with a given number of objects, classes, and maximum radius.
@@ -37,6 +37,8 @@ def create_test_image(width, height, depth=0, num_modalities=1, noise_max=10.0, 
         num_objs (int): number of objects
         rad_max (int): maximum radius of objects
         num_seg_classes (int): number of classes
+        random_position (bool): If false, the object is located at the center of the image. Otherwise, randomly located.
+
     Return:
         list, list: image and segmentation, list of num_modalities elements of shape (height, width, depth).
 
@@ -50,9 +52,12 @@ def create_test_image(width, height, depth=0, num_modalities=1, noise_max=10.0, 
     image = np.zeros((height, width, depth_))
 
     for i in range(num_objs):
-        x = np.random.randint(rad_max, height - rad_max)
-        y = np.random.randint(rad_max, width - rad_max)
-        z = np.random.randint(rad_max, depth_ - rad_max)
+        if random_position:
+            x = np.random.randint(rad_max, height - rad_max)
+            y = np.random.randint(rad_max, width - rad_max)
+            z = np.random.randint(rad_max, depth_ - rad_max)
+        else:
+            x, y, z = np.rint(height / 2), np.rint(width / 2), np.rint(depth_ / 2)
         rad = np.random.randint(5, rad_max)
         spy, spx, spz = np.ogrid[-x:height - x, -y:width - y, -z:depth_ - z]
         sphere = (spx * spx + spy * spy + spz * spz) <= rad * rad * rad
