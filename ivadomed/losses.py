@@ -124,12 +124,16 @@ class TverskyLoss(nn.Module):
 
     """
 
-    def __init__(self, alpha=0.7, beta=0.3, smooth=1.0):
+    def __init__(self, alpha=0.3, beta=0.7, smooth=1.0):
         """
         Args:
             alpha (float): weight of false positive voxels
             beta  (float): weight of false negative voxels
             smooth (float): epsilon to avoid division by zero, when both Numerator and Denominator of Tversky are zeros
+
+        Notes:
+            - setting alpha=beta=0.5: equivalent to DiceLoss
+            - default parameters were suggested by https://arxiv.org/pdf/1706.05721.pdf
         """
         super(TverskyLoss, self).__init__()
         self.alpha = alpha
