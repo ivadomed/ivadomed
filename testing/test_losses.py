@@ -35,6 +35,11 @@ from ivadomed.losses import FocalLoss, FocalDiceLoss, GeneralizedDiceLoss, Multi
      MultiClassDiceLoss(classes_of_interest=[1]))
 ])
 def test_multiclassdiceloss(params):
+    """Test MultiClassDiceLoss.
+
+    Args:
+        params (tuple): containing input tensor, target tensor, expected value, loss function
+    """
     input, target, expected_value, loss_fct = params
     loss = loss_fct.forward(input, target)
     assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-3)
