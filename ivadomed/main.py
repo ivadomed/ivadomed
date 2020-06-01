@@ -19,6 +19,7 @@ cudnn.benchmark = True
 # List of not-default available models i.e. different from Unet
 MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet']
 
+
 def define_device(gpu_id):
     """Define the device used for the process of interest.
 
@@ -229,9 +230,7 @@ def run_main():
         print('ERROR: Several models are selected in the configuration file: {}.'
               'Please select only one (i.e. only one where: "applied": true).'.format(model_context_list))
         exit()
-    else:
-        # Default model i.e. Unet
-        pass
+
     # If multi-class output, then add background class
     if model_params["out_channel"] > 1:
         model_params.update({"out_channel": model_params["out_channel"] + 1})
@@ -281,7 +280,8 @@ def run_main():
     elif command == 'test':
         # LOAD DATASET
         # Aleatoric uncertainty
-        if context['testing_parameters']['uncertainty']['aleatoric'] and context['testing_parameters']['uncertainty']['n_it'] > 0:
+        if context['testing_parameters']['uncertainty']['aleatoric'] and \
+                context['testing_parameters']['uncertainty']['n_it'] > 0:
             transformation_dict = transform_test_params
         else:
             transformation_dict = transform_valid_params
@@ -295,8 +295,10 @@ def run_main():
         undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))
 
         if model_params["name"] == "FiLMedUnet":
-            metadata_clustering_models = joblib.load("./" + log_directory + "/clustering_models.joblib")
-            one_hot_encoder = joblib.load("./" + log_directory + "/one_hot_encoder.joblib")
+            clustering_path = os.path.join(log_directory, "clustering_models.joblib")
+            metadata_clustering_models = joblib.load(clustering_path)
+            ohe_path = os.path.join(log_directory, "one_hot_encoder.joblib")
+            one_hot_encoder = joblib.load(ohe_path)
             ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"],
                                                    model_params['metadata'])
             model_params.update({"film_onehotencoder": one_hot_encoder,
@@ -305,7 +307,8 @@ def run_main():
         # RUN INFERENCE
         testing_params = context["testing_parameters"]
         testing_params.update(context["training_parameters"])
-        testing_params.update({'target_suffix': context["target_suffix"], 'undo_transforms': undo_transforms, 'slice_axis': loader_params['slice_axis']})
+        testing_params.update({'target_suffix': context["target_suffix"], 'undo_transforms': undo_transforms,
+                               'slice_axis': loader_params['slice_axis']})
         imed_testing.test(model_params=model_params,
                           dataset_test=ds_test,
                           testing_params=testing_params,
@@ -330,6 +333,7 @@ def run_main():
                                  path_preds=path_preds,
                                  target_suffix=context["target_suffix"],
                                  eval_params=context["evaluation_parameters"])
+
 
 if __name__ == "__main__":
     run_main()
