@@ -203,8 +203,8 @@ above so that the issue(s) will be closed upon merging the PR.
 ### Continuous Integration
 
 The PR can't be merged if [Github Actions "Run tests"](https://github.com/neuropoly/ivado-medical-imaging/actions)
-hasn't succeeded. If you are familiar with it, consult the test results
-and check for possibility of allowed failures.
+hasn't succeeded. If you are familiar with it, consult the test results to fix
+the problem. 
 
 ### Reviewers
 
