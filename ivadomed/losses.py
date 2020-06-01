@@ -124,7 +124,7 @@ class TverskyLoss(nn.Module):
 
     """
 
-    def __init__(self, alpha=0.3, beta=0.7, smooth=1.0):
+    def __init__(self, alpha=0.7, beta=0.3, smooth=1.0):
         """
         Args:
             alpha (float): weight of false positive voxels
@@ -158,7 +158,7 @@ class TverskyLoss(nn.Module):
         fp = torch.sum((1 - y_true) * y_pred)
         # Compute Tversky for the current class, see Equation 3 of the original paper
         numerator = tp + self.smooth
-        denominator = tp + self.alpha * fn + self.beta * fp + self.smooth
+        denominator = tp + self.alpha * fp + self.beta * fn + self.smooth
         tversky_label = numerator / denominator
         return tversky_label
 
