@@ -124,7 +124,7 @@ class TverskyLoss(nn.Module):
 
     """
 
-    def __init__(self, alpha=0.5, beta=0.5, smooth=1.0):
+    def __init__(self, alpha=0.7, beta=0.3, smooth=1.0):
         """
         Args:
             alpha (float): weight of false positive voxels
@@ -138,6 +138,7 @@ class TverskyLoss(nn.Module):
 
     def forward(self, input, target):
         n_classes = input.shape[1]
+        tversky_sum = 0.
 
         # TODO: Add class_of_interest?
         for i_label in range(n_classes):
@@ -153,4 +154,7 @@ class TverskyLoss(nn.Module):
             numerator = tp + self.smooth
             denominator = tp + self.alpha * fn + self.beta * fp + self.smooth
             tversky_label = numerator / denominator
+            # Add to the total
+            tversky_sum += tversky_label
 
+        return - tversky_sum / n_classes
