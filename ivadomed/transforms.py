@@ -671,7 +671,7 @@ class RandomTranslation(ImedTransform):
     def undo_transform(self, sample, metadata=None):
         assert "translation" in metadata
         # Opposite translation
-        opposite_translations = tuple([-t for t in metadata['affine'][2]])
+        opposite_translations = tuple([-t for t in metadata['translation']])
         # Inverse scaling
         # scale = 1. / metadata['affine'][3]
 
