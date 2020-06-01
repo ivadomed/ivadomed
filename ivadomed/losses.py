@@ -114,3 +114,103 @@ class GeneralizedDiceLoss(nn.Module):
         denominator = ((input + target).sum(-1) * class_weights).sum()
 
         return 1. - 2. * intersect / denominator.clamp(min=self.epsilon)
+
+
+class TverskyLoss(nn.Module):
+    """Tversky Loss.
+
+    Compute the Tversky loss defined in:
+        Sadegh et al. (2017) Tversky loss function for image segmentation using 3D fully convolutional deep networks
+
+    """
+
+    def __init__(self, alpha=0.7, beta=0.3, smooth=1.0):
+        """
+        Args:
+            alpha (float): weight of false positive voxels
+            beta  (float): weight of false negative voxels
+            smooth (float): epsilon to avoid division by zero, when both Numerator and Denominator of Tversky are zeros
+
+        Notes:
+            - setting alpha=beta=0.5: equivalent to DiceLoss
+            - default parameters were suggested by https://arxiv.org/pdf/1706.05721.pdf
+        """
+        super(TverskyLoss, self).__init__()
+        self.alpha = alpha
+        self.beta = beta
+        self.smooth = smooth
+
+    def tversky_index(self, y_pred, y_true):
+        """Compute Tversky index
+
+        Args:
+            y_pred (torch Tensor): prediction
+            y_true (torch Tensor): target
+
+        Returns:
+            float: Tversky index
+        """
+        # Compute TP
+        tp = torch.sum(y_true * y_pred)
+        # Compute FN
+        fn = torch.sum(y_true * (1 - y_pred))
+        # Compute FP
+        fp = torch.sum((1 - y_true) * y_pred)
+        # Compute Tversky for the current class, see Equation 3 of the original paper
+        numerator = tp + self.smooth
+        denominator = tp + self.alpha * fp + self.beta * fn + self.smooth
+        tversky_label = numerator / denominator
+        return tversky_label
+
+    def forward(self, input, target):
+        n_classes = input.shape[1]
+        tversky_sum = 0.
+
+        # TODO: Add class_of_interest?
+        for i_label in range(n_classes):
+            # Get samples for a given class
+            y_pred, y_true = input[:, i_label, ], target[:, i_label, ]
+            # Compute Tversky index
+            tversky_sum += self.tversky_index(y_pred, y_true)
+
+        return - tversky_sum / n_classes
+
+
+class FocalTverskyLoss(TverskyLoss):
+    """Focal Tversky Loss.
+
+    Compute the Focal Tversky loss defined in:
+        Abraham et al. (2018) A Novel Focal Tversky loss function with improved Attention U-Net for lesion segmentation
+
+    """
+
+    def __init__(self, alpha=0.7, beta=0.3, gamma=1.33, smooth=1.0):
+        """
+        Args:
+            alpha (float): weight of false positive voxels
+            beta  (float): weight of false negative voxels
+            gamma (float): typically between 1 and 3. Control between easy background and hard ROI training examples.
+            smooth (float): epsilon to avoid division by zero, when both Numerator and Denominator of Tversky are zeros
+
+        Notes:
+            - setting alpha=beta=0.5 and gamma=1: equivalent to DiceLoss
+            - default parameters were suggested by https://arxiv.org/pdf/1810.07842.pdf
+        """
+        super(TverskyLoss).__init__(alpha=alpha, beta=beta, smooth=smooth)
+        self.gamma = gamma
+
+    def forward(self, input, target):
+        n_classes = input.shape[1]
+        focal_tversky_sum = 0.
+
+        # TODO: Add class_of_interest?
+        for i_label in range(n_classes):
+            # Get samples for a given class
+            y_pred, y_true = input[:, i_label, ], target[:, i_label, ]
+            # Compute Tversky index
+            tversky_index = self.tversky.tversky_index(y_pred, y_true)
+            # Compute Focal Tversky loss, Equation 4 in the original paper
+            focal_tversky_sum += torch.pow(1 - tversky_index, exponent=1 / self.gamma)
+
+        # TODO: Take the opposite?
+        return focal_tversky_sum / n_classes
