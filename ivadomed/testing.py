@@ -195,7 +195,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             else:
                 # TODO: Add reconstruction for subvolumes
                 fname_pred = os.path.join(ofolder, fname_ref.split('/')[-1])
-                fname_pred = fname_pred.split(ofolder['target_suffix'][0])[0] + '_pred.nii.gz'
+                fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
                 # If uncertainty running, then we save each simulation result
                 if testing_params['uncertainty']['applied']:
                     fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
