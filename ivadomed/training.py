@@ -163,7 +163,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         if model_params["name"] == "HeMISUnet":
             # Increase the probability of a missing modality
             model_params["missing_probability"] **= model_params["missing_probability_growth"]
-            train_loader.__setattr__("dataset", dataset_train.update(p=model_params["missing_probability"]))
+            dataset_train.update(p=model_params["missing_probability"])
 
         # Validation loop -----------------------------------------------------
         model.eval()
@@ -335,7 +335,7 @@ def get_metadata(metadata, model_params):
     Returns:
         list:
     """
-    if model_params["name"] == "HeMIS":
+    if model_params["name"] == "HeMISUnet":
         return metadata
     else:
         return [model_params["film_onehotencoder"].transform([metadata[0][k]['film_input']]).tolist()[0]
