@@ -43,3 +43,28 @@ def test_multiclassdiceloss(params):
     input, target, expected_value, loss_fct = params
     loss = loss_fct.forward(input, target)
     assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-3)
+
+
+@pytest.mark.parametrize('params', [
+    (torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
+     torch.tensor([[[[1.0, 0.0], [1.0, 1.0]]]]),
+     -0.8,
+     GeneralizedDiceLoss(epsilon=1e-5)),
+    (torch.tensor([[[[1.0, 0.0], [1.0, 1.0]]]]),
+     torch.tensor([[[[1.0, 0.0], [1.0, 1.0]]]]),
+     -1.,
+     GeneralizedDiceLoss(epsilon=1e-5)),
+    (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
+     torch.tensor([[[[1.0, 0.0], [1.0, 1.0]]]]),
+     0.0,
+     GeneralizedDiceLoss(epsilon=1e-5))
+])
+def test_generalizeddiceloss(params):
+    """Test GeneralizedDiceLoss.
+
+    Args:
+        params (tuple): containing input tensor, target tensor, expected value, loss function
+    """
+    input, target, expected_value, loss_fct = params
+    loss = loss_fct.forward(input, target)
+    assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-5)
