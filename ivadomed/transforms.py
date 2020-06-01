@@ -5,7 +5,6 @@ import random
 
 import numpy as np
 import torch
-
 from scipy.ndimage import rotate, shift
 from scipy.ndimage import zoom
 from scipy.ndimage.filters import gaussian_filter
@@ -533,12 +532,12 @@ class DilateGT(ImedTransform):
             gt_dil, gt_dil_bin = self.dilate_arr(gt_data_np, self.dil_factor)
 
             # random holes in dilated area
-            #gt_holes, gt_holes_bin = self.random_holes(gt_data_np, gt_dil, gt_dil_bin)
+            # gt_holes, gt_holes_bin = self.random_holes(gt_data_np, gt_dil, gt_dil_bin)
 
             # post-processing
-            #gt_pp = self.post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
+            # gt_pp = self.post_processing(gt_data_np, gt_holes, gt_holes_bin, gt_dil)
 
-            #return gt_pp.astype(np.float32), metadata
+            # return gt_pp.astype(np.float32), metadata
             return gt_dil.astype(np.float32), metadata
 
         else:
