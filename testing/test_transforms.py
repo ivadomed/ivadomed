@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-# pytest unit tests for ivadomed.postprocessing
+# pytest unit tests for ivadomed.transforms
 
 
 from math import isclose
