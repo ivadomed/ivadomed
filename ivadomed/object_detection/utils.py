@@ -105,12 +105,11 @@ def compute_bb_statistics(bounding_box_path):
 
     h, w, d, v = [], [], [], []
     for box in bounding_box_dict:
-        if "T2w" in box:
-            h_min, h_max, w_min, w_max, d_min, d_max = bounding_box_dict[box]
-            h.append(h_max - h_min)
-            w.append(w_max - w_min)
-            d.append(d_max - d_min)
-            v.append((h_max - h_min) * (w_max - w_min) * 2 * (d_max - d_min))
+        h_min, h_max, w_min, w_max, d_min, d_max = bounding_box_dict[box]
+        h.append(h_max - h_min)
+        w.append(w_max - w_min)
+        d.append(d_max - d_min)
+        v.append((h_max - h_min) * (w_max - w_min) * 2 * (d_max - d_min))
 
     print('Mean height: {} +/- {}, min: {}, max: {}'.format(statistics.mean(h), statistics.stdev(h), min(h), max(h)))
     print('Mean width: {} +/- {}, min: {}, max: {}'.format(statistics.mean(w), statistics.stdev(w), min(w), max(w)))
