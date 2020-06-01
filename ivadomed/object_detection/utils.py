@@ -30,7 +30,7 @@ def adjust_bb_size(bounding_box, factor, multiple_16, resample=False):
     for i in range(len(bounding_box) // 2):
         d_min, d_max = bounding_box[2 * i: (2 * i) + 2]
         if resample:
-            d_min, d_max_ = d_min * factor[i], d_max * factor[i]
+            d_min, d_max = d_min * factor[i], d_max * factor[i]
             dim_len = d_max - d_min
         else:
             dim_len = (d_max - d_min) * factor[i]
@@ -89,7 +89,7 @@ def adjust_transforms(transforms, seg_pair_slice):
     for img_type in transforms:
         for idx, transfo in enumerate(transforms[img_type].transforms):
             if "BoundingBoxCrop" in str(type(transfo)):
-                transfo[img_type].transforms.pop(idx)
+                transforms[img_type].transforms.pop(idx)
                 break
 
     for img_type in transforms:
