@@ -210,7 +210,7 @@ class FocalTverskyLoss(TverskyLoss):
             # Compute Tversky index
             tversky_index = self.tversky.tversky_index(y_pred, y_true)
             # Compute Focal Tversky loss, Equation 4 in the original paper
-            focal_tversky_sum += torch.pow(1-tversky_index, exponent=1/self.gamma)
+            focal_tversky_sum += torch.pow(1 - tversky_index, exponent=1 / self.gamma)
 
         # TODO: Take the opposite?
         return focal_tversky_sum / n_classes
