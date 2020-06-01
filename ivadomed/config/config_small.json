@@ -92,7 +92,6 @@
             "size": [128, 128]
         },
         "RandomAffine": {
-            "degrees": 4.6,
             "translate": [0.03, 0.03],
             "applied_to": ["im", "gt"],
             "dataset_type": ["training"]
