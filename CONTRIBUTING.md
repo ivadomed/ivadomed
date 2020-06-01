@@ -11,6 +11,8 @@
     1. [Opening a Branch](#opening-a-branch)
     2. [Naming your Branch](#naming-your-branch)
     3. [Developing](#developing)
+        1. [Documentation and docstrings](#documentation-and-docstrings)
+        2. [Code style](#code-style)
     4. [Committing](#committing)
     5. [Submitting a Pull Request](#submitting-a-pull-request)
 4. [Versioning](#versioning)
@@ -121,18 +123,38 @@ Examples:
 -   `ol/100-fixup-lr-scheduler`
 -   `ab/loader-pep8`
 
-### Developing
 
+### Developing
 
 #### Conflicts
 
+Make sure the PR changes are not in conflict with the master branch.
 
-Make sure the PR changes are not in conflict with the documentation,
-either documentation files ([/README.md]{.title-ref},
-[/wiki/]{.title-ref}).
+#### Code style
+
+Please review your changes for styling issues, clarity, according to the
+[PEP8 convention](https://www.python.org/dev/peps/pep-0008/). Correct
+any code style suggested by an analyzer on your changes.
+[PyCharm](https://www.jetbrains.com/help/pycharm/2016.1/code-inspection.html)
+has a code analyser integrated or you can use
+[pyflakes](https://github.com/PyCQA/pyflakes).
+
+Do not address your functional changes in the same commits as any
+styling clean-up you may be doing on existing code.
+
+#### Documentation and docstrings
+
+If you are implementing a new feature, update the documentation to
+describe the feature, and comment the code (things that are not
+trivially understandable from the code) to improve its maintainability.
+
+Make sure to cite any papers, algorithms or articles that can help
+understand the implementation of the feature. If you are implementing an
+algorithm described in a paper, add pointers to the section / steps.
+
+Please use the [Google style docstrings](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html).
 
 #### Testing
-
 
 Please add tests, especially with new code. As of now, we have
 integration tests, and unit tests (in [/testing/]{.title-ref}). They are
@@ -145,41 +167,16 @@ Consider that if you add test cases, they will ensure that your feature
 \-- which you probably care about \-- does not stop working in the
 future.
 
-#### Documentation
-
-
-If you are implementing a new feature, update the documentation to
-describe the feature, and comment the code (things that are not
-trivially understandable from the code) to improve its maintainability.
-
-Make sure to cite any papers, algorithms or articles that can help
-understand the implementation of the feature. If you are implementing an
-algorithm described in a paper, add pointers to the section / steps.
-
-#### Code style
-
-
-Please review your changes for styling issues, clarity, according to the
-[PEP8 convention](https://www.python.org/dev/peps/pep-0008/). Correct
-any code style suggested by an analyzer on your changes.
-[PyCharm](https://www.jetbrains.com/help/pycharm/2016.1/code-inspection.html)
-has a code analyser integrated or you can use
-[pyflakes](https://github.com/PyCQA/pyflakes).
-
-Do not address your functional changes in the same commits as any
-styling clean-up you may be doing on existing code.
-
 #### Licensing
 
 Ensure that you are the original author of your changes, and if that is
 not the case, ensure that the borrowed/adapted code is compatible with
 the MIT license.
 
+
 ### Committing
 
-
 #### Commit Titles
-
 
 Provide a concise and self-descriptive title (avoid \> 80 characters).
 You may "scope" the title using the applicable command name(s), folder
