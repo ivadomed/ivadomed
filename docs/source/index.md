@@ -19,7 +19,6 @@ Contents
 * [Data](data.md)
 * [Contributing](contributing.md)
 * [API Reference](api_ref.rst)
+* [License](license.rst)
 
 ## Support
-
-## License
