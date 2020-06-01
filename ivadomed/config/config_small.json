@@ -59,8 +59,8 @@
             "p": 0.3,
             "applied_to": ["im", "gt"]
         },
-        "RandomRotation": {
-            "degrees": 10,
+        "RandomTranslation": {
+            "translate": [0.1, 0.3],
             "applied_to": ["im", "gt"]
         },
         "NumpyToTensor": {"applied_to": ["im", "gt"]},
