@@ -176,7 +176,7 @@ class TverskyLoss(nn.Module):
         return - tversky_sum / n_classes
 
 
-class FocalTverskyLoss(nn.Module):
+class FocalTverskyLoss(TverskyLoss):
     """Focal Tversky Loss.
 
     Compute the Focal Tversky loss defined in:
@@ -196,29 +196,21 @@ class FocalTverskyLoss(nn.Module):
             - setting alpha=beta=0.5 and gamma=1: equivalent to DiceLoss
             - default parameters were suggested by https://arxiv.org/pdf/1810.07842.pdf
         """
-        super(FocalTverskyLoss, self).__init__()
+        super(TverskyLoss).__init__(alpha=alpha, beta=beta, smooth=smooth)
         self.gamma = gamma
-        self.tversky = TverskyLoss(alpha=alpha, beta=beta, smooth=smooth)
 
     def forward(self, input, target):
         n_classes = input.shape[1]
-        tversky_sum = 0.
+        focal_tversky_sum = 0.
 
         # TODO: Add class_of_interest?
         for i_label in range(n_classes):
             # Get samples for a given class
             y_pred, y_true = input[:, i_label, ], target[:, i_label, ]
-            # Compute TP
-            tp = torch.sum(y_true * y_pred)
-            # Compute FN
-            fn = torch.sum(y_true * (1 - y_pred))
-            # Compute FP
-            fp = torch.sum((1 - y_true) * y_pred)
-            # Compute Tversky for the current class, see Equation 3 of the original paper
-            numerator = tp + self.smooth
-            denominator = tp + self.alpha * fn + self.beta * fp + self.smooth
-            tversky_label = numerator / denominator
-            # Add to the total
-            tversky_sum += tversky_label
+            # Compute Tversky index
+            tversky_index = self.tversky.tversky_index(y_pred, y_true)
+            # Compute Focal Tversky loss, Equation 4 in the original paper
+            focal_tversky_sum += torch.pow(1-tversky_index, exponent=1/self.gamma)
 
-        return - tversky_sum / n_classes
+        # TODO: Take the opposite?
+        return focal_tversky_sum / n_classes
