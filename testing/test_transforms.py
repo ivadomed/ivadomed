@@ -16,7 +16,7 @@ from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomAffine, Rand
     RandomRotation, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, \
     Resample, rescale_values_array
 
-DEBUGGING = False
+DEBUGGING = True
 if DEBUGGING:
     from testing.utils import plot_transformed_sample
 
@@ -311,15 +311,17 @@ def test_Crop_3D(im_seg, crop_transform):
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
                                     create_test_image(100, 100, 100, 1, rad_max=10)])
-@pytest.mark.parametrize('rot_transform', [RandomRotation(10),
-                                           RandomRotation((5, 20))])
+@pytest.mark.parametrize('rot_transform', [RandomRotation(180),
+                                           RandomRotation((5, 180))])
 def test_RandomRotation(im_seg, rot_transform):
     im, seg = im_seg
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
 
     # Transform on Numpy
     do_im, metadata_do = rot_transform(im.copy(), metadata_in)
+    print(metadata_do)
     do_seg, metadata_do = rot_transform(seg.copy(), metadata_do)
+    print(metadata_do)
 
     if DEBUGGING and len(im[0].shape) == 2:
         plot_transformed_sample(im[0], do_im[0], ['raw', 'do'])
@@ -343,7 +345,7 @@ def test_RandomRotation(im_seg, rot_transform):
     # Loop and check
     for idx, i in enumerate(im):
         # Data consistency
-        assert dice_score(undo_seg[idx], seg[idx]) > 0.8
+        assert dice_score(undo_seg[idx], seg[idx]) > 0.9
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
