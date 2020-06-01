@@ -112,7 +112,7 @@ def test_HistogramClipping(im_seg):
 def test_RandomShiftIntensity(im_seg):
     im, _ = im_seg
     # Transform
-    transform = RandomShiftIntensity(shift_range=[0., 10.])
+    transform = RandomShiftIntensity(shift_range=[0., 10.], prob=0.9)
 
     # Apply Do Transform
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
@@ -123,7 +123,7 @@ def test_RandomShiftIntensity(im_seg):
     assert all('offset' in m for m in do_metadata)
     # Check shifting
     for idx, i in enumerate(im):
-        assert isclose(np.max(do_im[idx] - i), do_metadata[idx]['offset'], rel_tol=1e-01)
+        assert isclose(np.max(do_im[idx] - i), do_metadata[idx]['offset'], rel_tol=1e-03)
 
     # Apply Undo Transform
     undo_im, undo_metadata = transform.undo_transform(sample=do_im, metadata=do_metadata)
@@ -131,7 +131,7 @@ def test_RandomShiftIntensity(im_seg):
     assert len(undo_im) == len(im)
     # Check undo
     for idx, i in enumerate(im):
-        assert np.allclose(undo_im[idx], i, rtol=1e-01)
+        assert np.max(abs(undo_im[idx] - i)) <= 1e-03
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 100, 1),
