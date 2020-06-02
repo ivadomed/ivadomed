@@ -377,33 +377,37 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         context["transformation"] = dict((key, value) if key != 'ROICrop'
                                                     else ('CenterCrop', value)
                                                     for (key, value) in context["transformation"].items())
+
     # Compose transforms
     do_transforms = imed_transforms.Compose(context['transformation'], requires_undo=True)
     # Undo Transforms
     undo_transforms = imed_transforms.UndoCompose(do_transforms)
 
-    # Force filter_empty_mask to False if fname_roi = None
-    if fname_roi is None and 'filter_empty_mask' in context["loader_parameters"]["slice_filter_params"]:
-        print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
-        context["loader_parameters"]["slice_filter_params"]["filter_empty_mask"] = False
-
     # LOADER
+    loader_params = context["loader_parameters"]
+
+    # Force filter_empty_mask to False if fname_roi = None
+    if fname_roi is None and 'filter_empty_mask' in loader_params["slice_filter_params"]:
+        print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
+        loader_params["slice_filter_params"]["filter_empty_mask"] = False
+
     filename_pairs = [([fname_image], None, [fname_roi], [{}])]
-    if 'UNet3D' not in context:
-        ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
-                                                  slice_axis=AXIS_DCT[context['loader_parameters']['slice_axis']],
-                                                  cache=True,
-                                                  transform=do_transforms,
-                                                  slice_filter_fn=SliceFilter(**context["loader_parameters"]["slice_filter_params"]))
-    else:
+
+    if 'UNet3D' in context and context['UNet3D']['applied']:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                            transform=do_transforms,
-                                                           length=context["length_3D"],
-                                                           padding=context["padding_3D"])
+                                                           length=context["UNet3D"]["length_3D"],
+                                                           padding=context["UNet3D"]["padding_3D"])
+    else:
+        ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
+                                                  slice_axis=AXIS_DCT[loader_params['slice_axis']],
+                                                  cache=True,
+                                                  transform=do_transforms,
+                                                  slice_filter_fn=SliceFilter(**loader_params["slice_filter_params"]))
 
     # If fname_roi provided, then remove slices without ROI
     if fname_roi is not None:
-        ds = imed_loaded_utils.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
+        ds = imed_loaded_utils.filter_roi(ds, nb_nonzero_thr=loader_params["roi_params"]["slice_filter_roi"])
 
     if not context['unet_3D']:
         print("\nLoaded {len(ds)} {context['slice_axis']} slices..")
