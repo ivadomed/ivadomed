@@ -372,6 +372,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     # TRANSFORMATIONS
     # If ROI is not provided then force center cropping
     if fname_roi is None and 'ROICrop' in context["transformation"].keys():
+        print("\nWARNING: fname_roi has not been specified, then a cropping around the center of the image is performed"
+              " instead of a cropping around a Region of Interest.")
         context["transformation"] = dict((key, value) if key != 'ROICrop'
                                                     else ('CenterCrop', value)
                                                     for (key, value) in context["transformation"].items())
@@ -382,12 +384,11 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     # Force filter_empty_mask to False if fname_roi = None
     if fname_roi is None and 'filter_empty_mask' in context["slice_filter"]:
+        print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
         context["slice_filter"]["filter_empty_mask"] = False
 
-    fname_roi = [fname_roi] if fname_roi is not None else None
-
     # Load data
-    filename_pairs = [([fname_image], None, fname_roi, [{}])]
+    filename_pairs = [([fname_image], None, [fname_roi], [{}])]
     if not context['unet_3D']:  # TODO: rename this param 'model_name' or 'kernel_dim'
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
                                                   slice_axis=AXIS_DCT[context['slice_axis']],
