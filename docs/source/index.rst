@@ -11,7 +11,7 @@ The purpose of the ``ivadomed`` project is to:
 
 - Provide researchers with an open-source framework for training deep learning models for applications in medical imaging;
 
-- Provide ready-to-use models trained on multi-center data.
+- Provide ready-to-use :doc:`models` trained on multi-center data.
 
 .. toctree::
    :maxdepth: 1
@@ -28,6 +28,7 @@ The purpose of the ``ivadomed`` project is to:
    getting_started.md
    tutorials.md
    data.md
+   models.rst
 
 .. toctree::
    :maxdepth: 1
