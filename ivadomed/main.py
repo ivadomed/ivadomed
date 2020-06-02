@@ -187,7 +187,7 @@ def run_main():
 
     # Get subject lists
     train_lst, valid_lst, test_lst = get_subdatasets_subjects_list(context["split_dataset"],
-                                                                   context['bids_path'],
+                                                                   context['loader_parameters']['bids_path'],
                                                                    log_directory)
 
     # Get transforms for each subdataset
@@ -205,10 +205,7 @@ def run_main():
         loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
     else:
         loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["testing"]
-    extra_params = {"bids_path": context['bids_path'],
-                    "target_suffix": context["target_suffix"],
-                    "metadata_type": False
-                    }
+    extra_params = {"metadata_type": False}
     if "FiLMedUnet" in context and context["FiLMedUnet"]["applied"]:
         extra_params.update({"metadata_type": context["FiLMedUnet"]["metadata"]})
     loader_params.update(extra_params)
@@ -240,7 +237,7 @@ def run_main():
     else:
         model_params["in_channel"] = 1
     # Get out_channel from target_suffix
-    model_params["out_channel"] = len(context["target_suffix"])
+    model_params["out_channel"] = len(loader_params["target_suffix"])
     # If multi-class output, then add background class
     if model_params["out_channel"] > 1:
         model_params.update({"out_channel": model_params["out_channel"] + 1})
@@ -317,7 +314,7 @@ def run_main():
         # RUN INFERENCE
         testing_params = context["testing_parameters"]
         testing_params.update(context["training_parameters"])
-        testing_params.update({'target_suffix': context["target_suffix"], 'undo_transforms': undo_transforms,
+        testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
                                'slice_axis': loader_params['slice_axis']})
         imed_testing.test(model_params=model_params,
                           dataset_test=ds_test,
@@ -338,10 +335,10 @@ def run_main():
             run_main(context)
 
         # RUN EVALUATION
-        imed_evaluation.evaluate(bids_path=context['bids_path'],
+        imed_evaluation.evaluate(bids_path=loader_params['bids_path'],
                                  log_directory=log_directory,
                                  path_preds=path_preds,
-                                 target_suffix=context["target_suffix"],
+                                 target_suffix=loader_params["target_suffix"],
                                  eval_params=context["evaluation_parameters"])
 
 
