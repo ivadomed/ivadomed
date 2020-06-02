@@ -167,11 +167,17 @@ def get_subdatasets_transforms(transform_params):
 
 
 def run_main():
-    if len(sys.argv) <= 1:
-        print("\nivadomed [config.json]\n")
+
+    if len(sys.argv) != 2:
+        print("\nERROR: Please indicate the path of your configuration file, "
+              "e.g. ivadomed ivadomed/config/config.json\n")
+        return
+    path_config_file = sys.argv[1]
+    if not os.path.isfile(path_config_file) and not path_config_file.endswith('.json'):
+        print("\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(path_config_file))
         return
 
-    with open(sys.argv[1], "r") as fhandle:
+    with open(path_config_file, "r") as fhandle:
         context = json.load(fhandle)
 
     command = context["command"]

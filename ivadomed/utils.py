@@ -422,9 +422,9 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         ds = imed_loaded_utils.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
 
     if not context['unet_3D']:
-        print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
+        print("\nLoaded {len(ds)} {context['slice_axis']} slices..")
     else:
-        print(f"\nLoaded {len(ds)} {context['slice_axis']} volumes of shape {context['length_3D']}")
+        print("\nLoaded {len(ds)} {context['slice_axis']} volumes of shape {context['length_3D']}")
 
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["batch_size"],
