@@ -34,27 +34,32 @@ def test_segment_volume_2d():
 
     torch.save(model, os.path.join(PATH_MODEL, "model_test.pt"))
     config = {
-        "batch_size": BATCH_SIZE,
-
-        "transformation_validation": {
+        "loader_parameters": {
+            "slice_filter_params": {
+                "filter_empty_mask": False,
+                "filter_empty_input": False
+            },
+            "roi_params": {
+                "suffix": None,
+                "slice_filter_roi": 10
+            },
+            "slice_axis": "axial"
+        },
+        "transformation": {
             "Resample": {"wspace": 0.75, "hspace": 0.75},
             "ROICrop": {"size": [48, 48]},
             "NumpyToTensor": {},
             "NormalizeInstance": {"applied_to": ["im"]}
         },
-        "slice_filter": {
-            "filter_empty_mask": False,
-            "filter_empty_input": False
-        },
-        "slice_filter_roi": 10,
-        "slice_axis": "axial",
-        "unet_3D": False,
+        "training_parameters": {
+            "batch_size": BATCH_SIZE
+        }
     }
 
     PATH_CONFIG = os.path.join(PATH_MODEL, 'model_test.json')
     with open(PATH_CONFIG, 'w') as fp:
         json.dump(config, fp)
-
+    print(config)
     nib_img = imed_utils.segment_volume(PATH_MODEL, IMAGE_PATH, ROI_PATH)
 
     assert nib_img.shape == nib.load(IMAGE_PATH).shape
