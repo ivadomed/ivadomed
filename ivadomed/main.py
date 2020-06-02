@@ -234,7 +234,11 @@ def run_main():
         print('ERROR: Several models are selected in the configuration file: {}.'
               'Please select only one (i.e. only one where: "applied": true).'.format(model_context_list))
         exit()
-
+    # Get in_channel from contrast_lst
+    if loader_params["multichannel"]:
+        model_params["in_channel"] = len(loader_params["contrast_params"]["contrast_lst"])
+    else:
+        model_params["in_channel"] = 1
     # If multi-class output, then add background class
     if model_params["out_channel"] > 1:
         model_params.update({"out_channel": model_params["out_channel"] + 1})
