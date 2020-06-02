@@ -90,7 +90,7 @@ class Compose(object):
 
             # call transform
             if transform in globals():
-                params_cur = {k: parameters[k] for k in parameters if k!="applied_to"}
+                params_cur = {k: parameters[k] for k in parameters if k != "applied_to"}
                 transform_obj = globals()[transform](**params_cur)
             else:
                 print('ERROR: {} transform is not available in your ivadomed package. '
