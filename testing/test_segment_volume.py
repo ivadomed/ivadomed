@@ -65,8 +65,8 @@ def test_segment_volume_2d():
 
 
 def test_segment_volume_3d():
-    model = imed_models.UNet3D(in_channels=1,
-                               n_classes=1,
+    model = imed_models.UNet3D(in_channel=1,
+                               out_channel=1,
                                base_n_filter=1)
 
     # temporary folder that will be deleted at the end of the test
