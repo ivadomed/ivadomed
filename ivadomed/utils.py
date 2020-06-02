@@ -383,18 +383,18 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     undo_transforms = imed_transforms.UndoCompose(do_transforms)
 
     # Force filter_empty_mask to False if fname_roi = None
-    if fname_roi is None and 'filter_empty_mask' in context["slice_filter"]:
+    if fname_roi is None and 'filter_empty_mask' in context["loader_parameters"]["slice_filter_params"]:
         print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
-        context["slice_filter"]["filter_empty_mask"] = False
+        context["loader_parameters"]["slice_filter_params"]["filter_empty_mask"] = False
 
-    # Load data
+    # LOADER
     filename_pairs = [([fname_image], None, [fname_roi], [{}])]
-    if not context['unet_3D']:  # TODO: rename this param 'model_name' or 'kernel_dim'
+    if 'UNet3D' not in context:
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
-                                                  slice_axis=AXIS_DCT[context['slice_axis']],
+                                                  slice_axis=AXIS_DCT[context['loader_parameters']['slice_axis']],
                                                   cache=True,
                                                   transform=do_transforms,
-                                                  slice_filter_fn=SliceFilter(**context["slice_filter"]))
+                                                  slice_filter_fn=SliceFilter(**context["loader_parameters"]["slice_filter_params"]))
     else:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                            transform=do_transforms,
