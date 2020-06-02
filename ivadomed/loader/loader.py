@@ -36,11 +36,6 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
     # Compose transforms
     transforms = imed_transforms.Compose(transforms_params, requires_undo=requires_undo)
 
-    if dataset_type == "testing":
-        contrast_params["contrast_lst"] = contrast_params["testing"]
-    else:
-        contrast_params["contrast_lst"] = contrast_params["training_validation"]
-
     if model_params["name"] == "UNet3D":
         dataset = Bids3DDataset(bids_path,
                                 subject_lst=data_list,
