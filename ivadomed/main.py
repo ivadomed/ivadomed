@@ -239,6 +239,8 @@ def run_main():
         model_params["in_channel"] = len(loader_params["contrast_params"]["contrast_lst"])
     else:
         model_params["in_channel"] = 1
+    # Get out_channel from target_suffix
+    model_params["out_channel"] = len(context["target_suffix"])
     # If multi-class output, then add background class
     if model_params["out_channel"] > 1:
         model_params.update({"out_channel": model_params["out_channel"] + 1})
