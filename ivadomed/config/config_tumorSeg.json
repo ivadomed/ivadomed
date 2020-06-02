@@ -59,9 +59,7 @@
         "name": "Unet",
         "dropout_rate": 0.3,
         "bn_momentum": 0.9,
-        "depth": 4,
-        "in_channel": 1,
-        "out_channel": 1
+        "depth": 4
     },
     "UNet3D": {
         "applied": true,

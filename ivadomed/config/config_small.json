@@ -59,9 +59,7 @@
         "name": "Unet",
         "dropout_rate": 0.3,
         "bn_momentum": 0.1,
-        "depth": 2,
-        "in_channel": 1,
-        "out_channel": 1
+        "depth": 2
     },
     "FiLMedUnet": {
         "applied": false,
