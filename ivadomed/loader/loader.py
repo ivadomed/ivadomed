@@ -355,8 +355,9 @@ class MRI2DSegmentationDataset(Dataset):
                                                metadata=metadata_gt,
                                                data_type="gt")
         # Make sure stack_gt is binarized
-        stack_gt = torch.as_tensor(
-            [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in range(len(stack_gt))])
+        if stack_gt:
+            stack_gt = torch.as_tensor(
+                [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in range(len(stack_gt))])
 
         data_dict = {
             'input': stack_input,
@@ -474,8 +475,9 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                                metadata=metadata_gt,
                                                data_type="gt")
         # Make sure stack_gt is binarized
-        stack_gt = torch.as_tensor(
-            [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in range(len(stack_gt))])
+        if stack_gt:
+            stack_gt = torch.as_tensor(
+                [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in range(len(stack_gt))])
 
         shape_x = coord["x_max"] - coord["x_min"]
         shape_y = coord["y_max"] - coord["y_min"]
