@@ -1,13 +1,14 @@
 import json
 import os
 import shutil
-
+from collections import OrderedDict
 import nibabel as nib
 import numpy as np
 import torch
 
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils
 
 SLICE_AXIS = 2
 PATH_BIDS = 'testing_data'
@@ -45,21 +46,26 @@ def test_segment_volume_2d():
             },
             "slice_axis": "axial"
         },
-        "transformation": {
-            "Resample": {"wspace": 0.75, "hspace": 0.75},
-            "ROICrop": {"size": [48, 48]},
-            "NumpyToTensor": {},
-            "NormalizeInstance": {"applied_to": ["im"]}
-        },
         "training_parameters": {
             "batch_size": BATCH_SIZE
         }
     }
+    # Use OrderedDict to ensure the order of the transforms is preserved.
+    # Alternatively we could save these configs as json
+    dict_transforms = {
+            "Resample": {"wspace": 0.75, "hspace": 0.75},
+            "ROICrop": {"size": [48, 48]},
+            "NumpyToTensor": {},
+            "NormalizeInstance": {"applied_to": ["im"]}
+    }
+    config["transformation"] = OrderedDict()
+    for k in ["Resample", "ROICrop", "NumpyToTensor", "NormalizeInstance"]:
+        config["transformation"][k] = dict_transforms[k]
 
     PATH_CONFIG = os.path.join(PATH_MODEL, 'model_test.json')
     with open(PATH_CONFIG, 'w') as fp:
         json.dump(config, fp)
-    print(config)
+
     nib_img = imed_utils.segment_volume(PATH_MODEL, IMAGE_PATH, ROI_PATH)
 
     assert nib_img.shape == nib.load(IMAGE_PATH).shape
