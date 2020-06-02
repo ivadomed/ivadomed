@@ -187,8 +187,7 @@ for each new release, so please follow the following rules:
     Title](#issue-title)).
 -   Do not include the applicable issue number in the title (do it in
     the [PR Body](#pr-body)).
--   If the PR is not ready for review, add \"(WIP)\" at the beginning of
-    the title.
+-   If the PR is not ready for review, convert it to a draft.
 
 ### PR Body
 
