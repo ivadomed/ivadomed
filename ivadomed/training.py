@@ -124,9 +124,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
             # RUN MODEL
             if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
-                # TODO: @Andreanne: would it be possible to move missing_mod within input_metadata
-                metadata_type = "input_metadata" if model_params["name"] == "FiLMedUnet" else "Missing_mod"
-                metadata = get_metadata(batch[metadata_type], model_params)
+                metadata = get_metadata(batch["input_metadata"], model_params)
                 preds = model(input_samples, metadata)
             else:
                 preds = model(input_samples)
@@ -181,9 +179,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
                 # RUN MODEL
                 if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
-                    # TODO: @Andreanne: would it be possible to move missing_mod within input_metadata
-                    metadata_type = "input_metadata" if model_params["name"] == "FiLMedUnet" else "Missing_mod"
-                    metadata = get_metadata(batch[metadata_type], model_params)
+                    metadata = get_metadata(batch["input_metadata"], model_params)
                     preds = model(input_samples, metadata)
                 else:
                     preds = model(input_samples)
@@ -336,7 +332,7 @@ def get_metadata(metadata, model_params):
         list:
     """
     if model_params["name"] == "HeMISUnet":
-        return metadata
+        return np.array([m[0]["missing_mod"] for m in metadata])
     else:
         return [model_params["film_onehotencoder"].transform([metadata[0][k]['film_input']]).tolist()[0]
                 for k in range(len(metadata[0]))]
