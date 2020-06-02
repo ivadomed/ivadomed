@@ -53,6 +53,10 @@ extensions = [
     'recommonmark',
 ]
 
+autoclass_content = "both"
+add_module_names = True
+autosectionlabel_prefix_document = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
