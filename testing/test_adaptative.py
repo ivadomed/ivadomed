@@ -91,7 +91,7 @@ def test_hdf5():
             "roi_lst": ["T2w"]
         }
     contrast_params = {
-        "contrast_lst": ["T2w", "T1w"],
+        "contrast_lst": ['T1w', 'T2w', 'T2star'],
         "balance": {}
     }
 
