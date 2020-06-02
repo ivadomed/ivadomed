@@ -98,6 +98,15 @@ def test_worker(config):
 
     return config["log_directory"], test_dice
 
+def make_category(base_item, keys, values):
+    items = []
+    for combination in product(*values):
+        new_item = copy.deepcopy(base_item)
+        for i in range(len(keys)):
+            new_item[keys[i]] = combination[i]
+
+        items.append(new_item)
+    return items
 
 if __name__ == '__main__':
 
@@ -112,61 +121,63 @@ if __name__ == '__main__':
 
     # Step 1 : batch size, initial LR and LR scheduler
 
+    ### Training parameters
+    category = "training_parameters"
+    base_item = context[category]
+    keys = ["batch_sizes", "initial_lrs", "lr_scheduler", "loss", "mixup_alpha"]
+
     batch_sizes = [8, 16, 32, 64]
     initial_lrs = [1e-2, 1e-3, 1e-4, 1e-5]
-
-    """
     lr_schedulers = [{"name": "CosineAnnealingLR"},
                     {"name": "CosineAnnealingWarmRestarts", "T_0": 10}
                     {"name": "CyclicLR", "base_lr" : X, "max_lr" : Y}]
-    """
 
-    # Step 2 : Losses (dice, cross_entropy, focal, mixed, gdl)
+    values = [batch_sizes, initial_lrs, lr_schedulers]
 
-    # losses = [{"name": "dice"}, {"name": "cross_entropy"}, {"name": "gdl"}]
+    #Losses
+    ### Simple case (one config per loss type)
+    losses = [{"name": "dice"},
+            {"name": "cross_entropy"},
+            {"name": "gdl"},
+            {"name": "focal", "params": {"gamma": 0.5, "alpha" : 0.2}}]
 
-    # Focal loss
+    ### Complex case (nested combinations)
+
     """
     base_loss = {"name": "focal", "params": {"gamma": 0.5, "alpha" : 0.2}}
     alphas = [0.2, 0.5, 0.75, 1]
     gammas = [0.5, 1, 1.5, 2]
-    for combination in product(*[alphas, gammas]):
-        new_loss = copy.deepcopy(base_loss)
-        new_loss["params"]["alpha"] = combination[0]
-        new_loss["params"]["gamma"] = combination[1]
-        losses.append(new_loss)
-    # print(losses)
+
+    loss_params = make_category(context["training_parameters"]["loss"]["params"], ["gamma","alpha"], [alphas, gammas])
+    losses = make_category(context["training_parameters"]["loss"], ["params"], [loss_params])
     """
 
-    # Focal dice
+    #MixUp
+    mixup_alphas = [0.5, 1, 2]
 
-    """
-    base_loss = {"name": "focal_dice", "params": {"gamma": 0.5, "alpha" : 0.2, beta : "1"}}
-    betas = [0.25, 0.5, 1, 2, 4]
-    for beta in betas:
-        new_loss = copy.deepcopy(base_loss)
-        new_loss["params"]["beta"] = beta
-        losses.append(new_loss)
-    # print(losses)
-    """
+    values = [batch_sizes, initial_lrs, lr_schedulers, losses, mixup_alphas]
+    training_parameters = make_category(base_item, keys, values)
 
-    # Step 3 : FiLM
 
-    # metadatas = ["contrast"]
+    # Step 2 : FiLM
 
-    # film_layers = [ [1, 0, 0, 0, 0, 0, 0, 0],
-    #                [0, 0, 0, 0, 1, 0, 0, 0],
-    #                [0, 0, 0, 0, 0, 0, 0, 1],
-    #                [1, 1, 1, 1, 1, 1, 1, 1]]
+    category = "FiLMedUnet"
+    base_item = context[category]
+    keys = ["applied", "metadata", "film_layers"]
 
-    # Step 4 : Mixup
+    applied = ["true"]
+    metadata = ["contrasts"]
 
-    # mixup_bools = [True]
-    # mixup_alphas = [0.5, 1, 2]
+    film_layers = [ [1, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1]]
 
-    # Step 5 : Dilation
+    values = [applied, metadata, film_layers]
+    film_parameters = make_category(base_item, keys, values)
 
-    # gt_dilations = [0, 0.5, 1]
+
+    # Add other steps here
 
     # Split dataset if not already done
 
@@ -185,7 +196,7 @@ if __name__ == '__main__':
         initial_config["split_path"] = split_path
 
     # Dict with key corresponding to name of the param in the config file
-    param_dict = {"batch_size": batch_sizes, "initial_lr": initial_lrs}
+    param_dict = {"training_parameters": training_parameters, "FiLMedUnet": film_parameters}
 
     config_list = []
     # Test all combinations (change multiple parameters for each test)
