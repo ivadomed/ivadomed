@@ -392,8 +392,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
     filename_pairs = [([fname_image], None, [fname_roi], [{}])]
-
-    if 'UNet3D' in context and context['UNet3D']['applied']:
+    kernel_3D = bool('UNet3D' in context and context['UNet3D']['applied'])
+    if kernel_3D:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                            transform=do_transforms,
                                                            length=context["UNet3D"]["length_3D"],
@@ -409,7 +409,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     if fname_roi is not None:
         ds = imed_loaded_utils.filter_roi(ds, nb_nonzero_thr=loader_params["roi_params"]["slice_filter_roi"])
 
-    if 'UNet3D' in context and context['UNet3D']['applied']:
+    if kernel_3D:
         print("\nLoaded {len(ds)} {loader_params['slice_axis']} volumes of shape {context['UNet3D']['length_3D']}.")
     else:
         print("\nLoaded {len(ds)} {loader_params['slice_axis']} slices.")
@@ -435,11 +435,9 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
         # Reconstruct 3D object
         for i_slice in range(len(preds)):
-            for i_label in range(preds[i_slice].shape[0]):
-                batch["input_metadata"][i_slice][i_label]['data_type'] = 'gt'
             # undo transformations
             preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
-                                                         batch["input_metadata"][i_slice],
+                                                         batch["gt_metadata"][i_slice],
                                                          data_type='gt')
 
             # Add new segmented slice to preds_list
@@ -453,8 +451,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
                                        fname_ref=fname_image,
                                        fname_out=None,
                                        z_lst=slice_idx_list,
-                                       slice_axis=AXIS_DCT[context['slice_axis']],
-                                       kernel_dim='3d' if context['unet_3D'] else '2d',
+                                       slice_axis=AXIS_DCT[loader_params['slice_axis']],
+                                       kernel_dim='3d' if kernel_3D else '2d',
                                        debug=False,
                                        bin_thr=-1)
 
