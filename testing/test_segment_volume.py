@@ -46,21 +46,16 @@ def test_segment_volume_2d():
             },
             "slice_axis": "axial"
         },
-        "training_parameters": {
-            "batch_size": BATCH_SIZE
-        }
-    }
-    # Use OrderedDict to ensure the order of the transforms is preserved.
-    # Alternatively we could save these configs as json
-    dict_transforms = {
+        "transformation": {
             "Resample": {"wspace": 0.75, "hspace": 0.75},
             "ROICrop": {"size": [48, 48]},
             "NumpyToTensor": {},
             "NormalizeInstance": {"applied_to": ["im"]}
+        },
+        "training_parameters": {
+            "batch_size": BATCH_SIZE
+        }
     }
-    config["transformation"] = OrderedDict()
-    for k in ["Resample", "ROICrop", "NumpyToTensor", "NormalizeInstance"]:
-        config["transformation"][k] = dict_transforms[k]
 
     PATH_CONFIG = os.path.join(PATH_MODEL, 'model_test.json')
     with open(PATH_CONFIG, 'w') as fp:
@@ -86,22 +81,32 @@ def test_segment_volume_3d():
 
     torch.save(model, os.path.join(PATH_MODEL, "model_test.pt"))
     config = {
-        "batch_size": BATCH_SIZE,
-        "transformation_validation": {
+        "UNet3D": {
+            "applied": True,
+            "length_3D": LENGTH_3D,
+            "padding_3D": 0,
+            "attention": False
+        },
+        "loader_parameters": {
+            "slice_filter_params": {
+                "filter_empty_mask": False,
+                "filter_empty_input": False
+            },
+            "roi_params": {
+                "suffix": None,
+                "slice_filter_roi": None
+            },
+            "slice_axis": "sagittal"
+        },
+        "transformation": {
             "Resample": {"wspace": 1.0, "hspace": 1.0, "dspace": 2.0},
             "CenterCrop": {"size": LENGTH_3D},
             "NumpyToTensor": {},
             "NormalizeInstance": {"applied_to": ["im"]}
         },
-        "slice_filter": {
-            "filter_empty_mask": False,
-            "filter_empty_input": False
-        },
-        "slice_filter_roi": None,
-        "slice_axis": "sagittal",
-        "unet_3D": True,
-        "length_3D": LENGTH_3D,
-        "padding_3D": 0,
+        "training_parameters": {
+            "batch_size": BATCH_SIZE
+        }
     }
 
     PATH_CONFIG = os.path.join(PATH_MODEL, 'model_test.json')
