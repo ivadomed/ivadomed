@@ -433,11 +433,15 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
             img = batch['input']
             preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
 
+        # Set datatype to gt since prediction should be processed the same way as gt
+        for modality in batch['input_metadata']:
+            modality[0]['data_type'] = 'gt'
+
         # Reconstruct 3D object
         for i_slice in range(len(preds)):
             # undo transformations
             preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
-                                                         batch["gt_metadata"][i_slice],
+                                                         batch["input_metadata"][i_slice],
                                                          data_type='gt')
 
             # Add new segmented slice to preds_list
