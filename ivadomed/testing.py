@@ -117,9 +117,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
             # RUN MODEL
             if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
-                # TODO: @Andreanne: would it be possible to move missing_mod within input_metadata
-                metadata_type = "input_metadata" if model_params["name"] == "FiLMedUnet" else "Missing_mod"
-                metadata = get_metadata(batch[metadata_type], model_params)
+                metadata = get_metadata(batch["input_metadata"], model_params)
                 preds = model(input_samples, metadata)
             else:
                 preds = model(input_samples)
@@ -127,7 +125,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         if model_params["name"] == "HeMISUnet":
             # Reconstruct image with only one modality
             input_samples = batch['input'][0]
-            batch['input_metadata'] = batch['input_metadata'][0]
+
         if model_params["name"] == "UNet3D" and model_params["attention"]:
             imed_utils.save_feature_map(batch, "attentionblock2", log_directory, model, input_samples,
                                         slice_axis=test_loader.dataset.slice_axis)
