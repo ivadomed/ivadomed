@@ -4,12 +4,13 @@ ivadomed
 .. note:: This website is under construction.
 
 ``ivadomed`` is an integrated framework for medical image analysis with deep
-learning. The name is a portmanteau between "IVADO" (The [Institute for data
-valorization](https://ivado.ca/en/)) and "Medical".
+learning. The name is a portmanteau between *IVADO* (The `Institute for data
+valorization <https://ivado.ca/en/>`_) and *Medical*.
 
-The purpose of the `ivadomed` project is to:
-- Provide researchers with an open-source framework for training deep
-learning models for applications in medical imaging;
+The purpose of the ``ivadomed`` project is to:
+
+- Provide researchers with an open-source framework for training deep learning models for applications in medical imaging;
+
 - Provide ready-to-use models trained on multi-center data.
 
 .. toctree::
@@ -38,8 +39,26 @@ learning models for applications in medical imaging;
 
 Contributors
 ------------
+.. image:: ../../images/neuropoly_logo.png
+  :height: 80
+  :alt: Alternative text
 
+.. image:: ../../images/mila_logo.png
+  :height: 80
+  :alt: Alternative text
 
+This project results from a collaboration between the
+`NeuroPoly Lab <https://www.neuro.polymtl.ca>`_ and `Mila <https://mila.quebec/en/>`_.
+
+A list of contributors is available `here <https://github.com/neuropoly/ivado-medical-imaging/graphs/contributors>`_.
+
+Sponsors
+--------
+.. image:: ../../images/ivado_logo.png
+  :height: 80
+  :alt: Alternative text
+
+If you wish to sponsor this project, please consider `donating <https://github.com/sponsors/neuropoly>`_.
 
 License
 -------
