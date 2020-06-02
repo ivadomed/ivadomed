@@ -205,10 +205,8 @@ def run_main():
         loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
     else:
         loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["testing"]
-    extra_params = {"metadata_type": False}
     if "FiLMedUnet" in context and context["FiLMedUnet"]["applied"]:
-        extra_params.update({"metadata_type": context["FiLMedUnet"]["metadata"]})
-    loader_params.update(extra_params)
+        loader_params.update({"metadata_type": context["FiLMedUnet"]["metadata"]})
 
     # METRICS
     metric_fns = [imed_metrics.dice_score,

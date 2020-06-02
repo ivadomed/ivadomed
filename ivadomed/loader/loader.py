@@ -12,8 +12,8 @@ from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adapt
 
 
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
-                 contrast_params, slice_filter_params, slice_axis, multichannel, metadata_type,
-                 dataset_type="training", requires_undo=False, **kwargs):
+                 contrast_params, slice_filter_params, slice_axis, multichannel,
+                 dataset_type="training", requires_undo=False, metadata_type=None, **kwargs):
     """Get loader.
 
     Args:
