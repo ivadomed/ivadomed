@@ -285,7 +285,7 @@ class Bids_to_hdf5:
             gt_volume = []
             roi_volume = []
 
-            for idx_pair_slice in range(input_data_shape[self.slice_axis]):
+            for idx_pair_slice in range(input_data_shape[-1]):
 
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
 
@@ -539,6 +539,7 @@ class HDF5Dataset:
             metadata = imed_loader_utils.SampleMetadata({key: value for key, value in self.hdf5_file['{}/inputs/{}'
                                                         .format(line['Subjects'], ct)].attrs.items()})
             metadata['slice_index'] = line["Slices"]
+            metadata['missing_mod'] = missing_modalities
             input_metadata.append(metadata)
 
         # GT
@@ -590,12 +591,10 @@ class HDF5Dataset:
         stack_gt, metadata_gt = self.transform(sample=gt_img,
                                                metadata=metadata_gt,
                                                data_type="gt")
-
         data_dict = {
             'input': stack_input,
             'gt': stack_gt,
             'roi': stack_roi,
-            'Missing_mod': missing_modalities,
             'input_metadata': metadata_input,
             'gt_metadata': metadata_gt,
             'roi_metadata': metadata_roi
