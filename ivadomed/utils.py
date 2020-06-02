@@ -14,6 +14,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loaded_utils, loader as imed_loader
@@ -361,25 +362,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     # Define device
     device = torch.device("cpu")
 
-    # Check if model folder exists
-    # TODO: this check already exists in sct.deepseg.core.segment_nifti(). We should probably keep only one check in
-    #  ivadomed, and do it in a separate, more specific file (e.g. models.py)
-    if os.path.isdir(folder_model):
-        prefix_model = os.path.basename(folder_model)
-        # Check if model and model metadata exist. Verify if ONNX model exists, if not try to find .pt model
-        fname_model = os.path.join(folder_model, prefix_model + '.onnx')
-        if not os.path.isfile(fname_model):
-            fname_model = os.path.join(folder_model, prefix_model + '.pt')
-            if not os.path.exists(fname_model):
-                print('Model file not found: {}'.format(fname_model))
-                exit()
-        fname_model_metadata = os.path.join(folder_model, prefix_model + '.json')
-        if not os.path.isfile(fname_model_metadata):
-            print('Model metadata file not found: {}'.format(fname_model_metadata))
-            exit()
-    else:
-        print('Model folder not found: {}'.format(folder_model))
-        exit()
+    # Check if model folder exists and get filenames
+    fname_model, fname_model_metadata = imed_models.get_model_filenames(folder_model)
 
     # Load model training config
     with open(fname_model_metadata, "r") as fhandle:
