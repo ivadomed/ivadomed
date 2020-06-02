@@ -201,6 +201,10 @@ def run_main():
 
     # Loader params
     loader_params = context["loader_parameters"]
+    if command == "train":
+        loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
+    else:
+        loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["testing"]
     extra_params = {"bids_path": context['bids_path'],
                     "target_suffix": context["target_suffix"],
                     "metadata_type": False
