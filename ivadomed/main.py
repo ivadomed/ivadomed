@@ -173,7 +173,7 @@ def run_main():
               "e.g. ivadomed ivadomed/config/config.json\n")
         return
     path_config_file = sys.argv[1]
-    if not os.path.isfile(path_config_file) and not path_config_file.endswith('.json'):
+    if not os.path.isfile(path_config_file) or not path_config_file.endswith('.json'):
         print("\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(path_config_file))
         return
 
