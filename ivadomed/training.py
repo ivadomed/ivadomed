@@ -38,17 +38,19 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=log_directory)
 
-    # BALANCE SAMPLES
+    # BALANCE SAMPLES AND PYTORCH LOADER
     conditions = [training_params["balance_samples"], model_params["name"] != "HeMIS"]
     sampler_train, shuffle_train = get_sampler(dataset_train, conditions)
-    sampler_val, shuffle_val = get_sampler(dataset_val, conditions)
 
-    # PYTORCH LOADER
     train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
-    val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
+
+    if dataset_val:
+        sampler_val, shuffle_val = get_sampler(dataset_val, conditions)
+
+        val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
                             shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
                             collate_fn=imed_loader_utils.imed_collate,
                             num_workers=0)
@@ -168,80 +170,81 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         val_loss_total, val_dice_loss_total = 0.0, 0.0
         num_steps = 0
         metric_mgr = imed_metrics.MetricManager(metric_fns)
-        for i, batch in enumerate(val_loader):
-            with torch.no_grad():
-                # GET SAMPLES
-                if model_params["name"] == "HeMISUnet":
-                    input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
-                else:
-                    input_samples = imed_utils.cuda(batch["input"], cuda_available)
-                gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
+        if dataset_val:
+            for i, batch in enumerate(val_loader):
+                with torch.no_grad():
+                    # GET SAMPLES
+                    if model_params["name"] == "HeMISUnet":
+                        input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
+                    else:
+                        input_samples = imed_utils.cuda(batch["input"], cuda_available)
+                    gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
 
-                # RUN MODEL
-                if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
-                    metadata = get_metadata(batch["input_metadata"], model_params)
-                    preds = model(input_samples, metadata)
-                else:
-                    preds = model(input_samples)
+                    # RUN MODEL
+                    if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
+                        metadata = get_metadata(batch["input_metadata"], model_params)
+                        preds = model(input_samples, metadata)
+                    else:
+                        preds = model(input_samples)
 
-                # LOSS
-                loss = loss_fct(preds, gt_samples)
-                val_loss_total += loss.item()
-                val_dice_loss_total += loss_dice_fct(preds, gt_samples).item()
+                    # LOSS
+                    loss = loss_fct(preds, gt_samples)
+                    val_loss_total += loss.item()
+                    val_dice_loss_total += loss_dice_fct(preds, gt_samples).item()
 
-            num_steps += 1
+                num_steps += 1
 
-            # METRICS COMPUTATION
-            gt_npy = gt_samples.cpu().numpy().astype(np.uint8)
-            preds_npy = preds.data.cpu().numpy()
-            metric_mgr(preds_npy.astype(np.uint8), gt_npy)
+                # METRICS COMPUTATION
+                gt_npy = gt_samples.cpu().numpy().astype(np.uint8)
+                preds_npy = preds.data.cpu().numpy()
+                metric_mgr(preds_npy.astype(np.uint8), gt_npy)
 
-            if i == 0 and debugging:
-                imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
-                                                is_three_dim=model_params["name"].endswith("3D"))
+                if i == 0 and debugging:
+                    imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
+                                                    is_three_dim=model_params["name"].endswith("3D"))
 
-            if model_params["name"] == "FiLMedUnet" and debugging and epoch == num_epochs \
-                    and i < int(len(dataset_val) / training_params["batch_size"]) + 1:
-                # Store the values of gammas and betas after the last epoch for each batch
-                gammas_dict, betas_dict, contrast_list = store_film_params(gammas_dict, betas_dict, contrast_list,
-                                                                           batch['input_metadata'], model,
-                                                                           model_params["film_layers"],
-                                                                           model_params["depth"])
+                if model_params["name"] == "FiLMedUnet" and debugging and epoch == num_epochs \
+                        and i < int(len(dataset_val) / training_params["batch_size"]) + 1:
+                    # Store the values of gammas and betas after the last epoch for each batch
+                    gammas_dict, betas_dict, contrast_list = store_film_params(gammas_dict, betas_dict, contrast_list,
+                                                                               batch['input_metadata'], model,
+                                                                               model_params["film_layers"],
+                                                                               model_params["depth"])
 
-        # METRICS COMPUTATION FOR CURRENT EPOCH
-        val_loss_total_avg_old = val_loss_total_avg if epoch > 1 else None
-        metrics_dict = metric_mgr.get_results()
-        metric_mgr.reset()
-        writer.add_scalars('Validation/Metrics', metrics_dict, epoch)
-        val_loss_total_avg = val_loss_total / num_steps
-        writer.add_scalars('losses', {
-            'train_loss': train_loss_total_avg,
-            'val_loss': val_loss_total_avg,
-        }, epoch)
-        msg = "Epoch {} validation loss: {:.4f}.".format(epoch, val_loss_total_avg)
-        val_dice_loss_total_avg = val_dice_loss_total / num_steps
-        if training_params["loss"]["name"] != "DiceLoss":
-            msg += "\tDice validation loss: {:.4f}.".format(val_dice_loss_total_avg)
-        tqdm.write(msg)
-        end_time = time.time()
-        total_time = end_time - start_time
-        tqdm.write("Epoch {} took {:.2f} seconds.".format(epoch, total_time))
+            # METRICS COMPUTATION FOR CURRENT EPOCH
+            val_loss_total_avg_old = val_loss_total_avg if epoch > 1 else None
+            metrics_dict = metric_mgr.get_results()
+            metric_mgr.reset()
+            writer.add_scalars('Validation/Metrics', metrics_dict, epoch)
+            val_loss_total_avg = val_loss_total / num_steps
+            writer.add_scalars('losses', {
+                'train_loss': train_loss_total_avg,
+                'val_loss': val_loss_total_avg,
+            }, epoch)
+            msg = "Epoch {} validation loss: {:.4f}.".format(epoch, val_loss_total_avg)
+            val_dice_loss_total_avg = val_dice_loss_total / num_steps
+            if training_params["loss"]["name"] != "DiceLoss":
+                msg += "\tDice validation loss: {:.4f}.".format(val_dice_loss_total_avg)
+            tqdm.write(msg)
+            end_time = time.time()
+            total_time = end_time - start_time
+            tqdm.write("Epoch {} took {:.2f} seconds.".format(epoch, total_time))
 
-        # UPDATE BEST RESULTS
-        if val_loss_total_avg < best_validation_loss:
-            best_validation_loss, best_training_loss = val_loss_total_avg, train_loss_total_avg
-            best_validation_dice, best_training_dice = val_dice_loss_total_avg, train_dice_loss_total_avg
-            model_path = os.path.join(log_directory, "best_model.pt")
-            torch.save(model, model_path)
+            # UPDATE BEST RESULTS
+            if val_loss_total_avg < best_validation_loss:
+                best_validation_loss, best_training_loss = val_loss_total_avg, train_loss_total_avg
+                best_validation_dice, best_training_dice = val_dice_loss_total_avg, train_dice_loss_total_avg
+                model_path = os.path.join(log_directory, "best_model.pt")
+                torch.save(model, model_path)
 
-        # EARLY STOPPING
-        if epoch > 1:
-            val_diff = (val_loss_total_avg_old - val_loss_total_avg) * 100 / abs(val_loss_total_avg)
-            if val_diff < training_params["training_time"]["early_stopping_epsilon"]:
-                patience_count += 1
-            if patience_count >= training_params["training_time"]["early_stopping_patience"]:
-                print("Stopping training due to {} epochs without improvements".format(patience_count))
-                break
+            # EARLY STOPPING
+            if epoch > 1:
+                val_diff = (val_loss_total_avg_old - val_loss_total_avg) * 100 / abs(val_loss_total_avg)
+                if val_diff < training_params["training_time"]["early_stopping_epsilon"]:
+                    patience_count += 1
+                if patience_count >= training_params["training_time"]["early_stopping_patience"]:
+                    print("Stopping training due to {} epochs without improvements".format(patience_count))
+                    break
 
     # Save final model
     final_model_path = os.path.join(log_directory, "final_model.pt")
