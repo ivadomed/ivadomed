@@ -56,6 +56,14 @@ extensions = [
 autoclass_content = "both"
 add_module_names = True
 autosectionlabel_prefix_document = True
+autodoc_default_options = {
+    'members': None,
+    'member-order': 'bysource',  # 'alphabetical'
+    'special-members': None,  # can list e.g. __init__
+    'show-inheritance': True,
+    # 'undoc-members': True,  # members without docstrings
+    'exclude-members': '__weakref__'
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -235,12 +243,3 @@ def setup(app):
         'enable_eval_rst': True,
     }, True)
     app.add_transform(AutoStructify)
-
-autodoc_default_options = {
-    'members': None,
-    'member-order': 'bysource',  # 'alphabetical'
-    'special-members': None,  # can list e.g. __init__
-    'show-inheritance': True,
-    # 'undoc-members': True,  # members without docstrings
-    'exclude-members': '__weakref__'
-}
