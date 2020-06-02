@@ -241,16 +241,7 @@ class SegmentationPair(object):
         """
 
         metadata = self.get_pair_metadata(slice_index)
-        if self.cache:
-            input_dataobj, gt_dataobj = self.get_pair_data()
-        else:
-            # use dataobj to avoid caching
-            input_dataobj = [handle.dataobj for handle in self.input_handle]
-
-            if self.gt_handle is None:
-                gt_dataobj = None
-            else:
-                gt_dataobj = [gt.dataobj for gt in self.gt_handle]
+        input_dataobj, gt_dataobj = self.get_pair_data()
 
         if self.slice_axis not in [0, 1, 2]:
             raise RuntimeError("Invalid axis, must be between 0 and 2.")
