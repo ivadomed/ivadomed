@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -828,3 +830,35 @@ def set_model_for_retrain(model_path, retrain_fraction):
             layer.reset_parameters()
 
     return model
+
+
+def get_model_filenames(folder_model):
+    """Get trained model filenames from its folder path.
+
+    This function checks if the folder_model exists and get trained model (.pt or .onnx) and its configuration file
+    (.json) from it.
+    Note: if the model exists as .onnx, then this function returns its onnx path instead of the .pt version.
+
+    Args:
+        folder_name (string): path of the model folder
+    Returns:
+        string, string: paths of the model (.onnx) and its configuration file (.json)
+
+    """
+    if os.path.isdir(folder_model):
+        prefix_model = os.path.basename(folder_model)
+        # Check if model and model metadata exist. Verify if ONNX model exists, if not try to find .pt model
+        fname_model = os.path.join(folder_model, prefix_model + '.onnx')
+        if not os.path.isfile(fname_model):
+            fname_model = os.path.join(folder_model, prefix_model + '.pt')
+            if not os.path.exists(fname_model):
+                print('Model file not found: {}'.format(fname_model))
+                exit()
+        fname_model_metadata = os.path.join(folder_model, prefix_model + '.json')
+        if not os.path.isfile(fname_model_metadata):
+            print('Model metadata file not found: {}'.format(fname_model_metadata))
+            exit()
+    else:
+        print('Model folder not found: {}'.format(folder_model))
+        exit()
+    return fname_model, fname_model_metadata
