@@ -54,14 +54,16 @@ def test_inference(film_bool=False):
     val_undo_transform = imed_transforms.UndoCompose(val_transform)
 
     test_lst = ['sub-test001']
-
+    contrast_params = {
+        "contrast_lst": ['T2w', 'T2star'],
+        "balance": {}
+    }
     ds_test = imed_loader.BidsDataset(PATH_BIDS,
                                       subject_lst=test_lst,
                                       target_suffix=["_lesion-manual"],
                                       roi_suffix="_seg-manual",
-                                      contrast_lst=['T2w', 'T2star'],
+                                      contrast_params=contrast_params,
                                       metadata_choice="contrast",
-                                      contrast_balance={},
                                       slice_axis=SLICE_AXIS,
                                       transform=val_transform,
                                       multichannel=False,
