@@ -1,11 +1,11 @@
 {
     "command": "test",
     "gpu": 0,
-    "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
     "log_directory": "HeMIS",
-    "target_suffix": ["_seg-tumor"],
     "debugging": true,
     "loader_parameters": {
+        "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
+        "target_suffix": ["_seg-tumor"],
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null

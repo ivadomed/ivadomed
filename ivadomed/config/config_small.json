@@ -1,11 +1,11 @@
 {
     "command": "train",
     "gpu": 2,
-    "bids_path": "../duke/projects/ivado-medical-imaging/spineGeneric_201907041011/result/",
     "log_directory": "spineGeneric_small",
-    "target_suffix": ["_seg-manual"],
     "debugging": false,
     "loader_parameters": {
+        "bids_path": "../duke/projects/ivado-medical-imaging/spineGeneric_201907041011/result/",
+        "target_suffix": ["_seg-manual"],
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
