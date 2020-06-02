@@ -15,7 +15,7 @@ cudnn.benchmark = True
 
 
 def test(model_params, dataset_test, testing_params, log_directory, device, cuda_available=True,
-         metric_fns=None, debugging=False):
+         metric_fns=None):
     """Main command to test the network.
 
     Args:
@@ -64,7 +64,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
 
     for i_monteCarlo in range(n_monteCarlo):
         preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, path_3Dpred,
-                                          cuda_available, debugging, i_monteCarlo, log_directory)
+                                          cuda_available, i_monteCarlo, log_directory)
         metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
@@ -77,7 +77,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
     return metrics_dict
 
 
-def run_inference(test_loader, model, model_params, testing_params, ofolder, cuda_available, debugging,
+def run_inference(test_loader, model, model_params, testing_params, ofolder, cuda_available,
                   i_monteCarlo=None, log_directory=None):
     """Run inference on the test data and save results as nibabel files.
 
@@ -89,7 +89,6 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         ofolder (string): Where the nibabel files are saved
         device (torch.device):
         cuda_available (Bool):
-        debugging (Bool):
         i_monteCarlo (int): i_th Monte Carlo iteration
     Returns:
         np.array, np.array: pred, gt

@@ -409,21 +409,20 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     if fname_roi is not None:
         ds = imed_loaded_utils.filter_roi(ds, nb_nonzero_thr=loader_params["roi_params"]["slice_filter_roi"])
 
-    if not context['unet_3D']:
-        print("\nLoaded {len(ds)} {context['slice_axis']} slices..")
+    if 'UNet3D' in context and context['UNet3D']['applied']:
+        print("\nLoaded {len(ds)} {loader_params['slice_axis']} volumes of shape {context['UNet3D']['length_3D']}.")
     else:
-        print("\nLoaded {len(ds)} {context['slice_axis']} volumes of shape {context['length_3D']}")
+        print("\nLoaded {len(ds)} {loader_params['slice_axis']} slices.")
 
     # Data Loader
-    data_loader = DataLoader(ds, batch_size=context["batch_size"],
+    data_loader = DataLoader(ds, batch_size=context["training_parameters"]["batch_size"],
                              shuffle=False, pin_memory=True,
                              collate_fn=imed_loaded_utils.imed_collate,
                              num_workers=0)
 
-    # Load model
+    # MODEL
     if fname_model.endswith('.pt'):
         model = torch.load(fname_model, map_location=device)
-
         # Inference time
         model.eval()
 

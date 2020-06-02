@@ -326,8 +326,7 @@ def run_main():
                           log_directory=log_directory,
                           device=device,
                           cuda_available=cuda_available,
-                          metric_fns=metric_fns,
-                          debugging=context["debugging"])
+                          metric_fns=metric_fns)
 
     elif command == 'eval':
         # PREDICTION FOLDER
