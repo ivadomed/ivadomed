@@ -91,17 +91,11 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params):
 
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     for i, batch in enumerate(test_loader):
-        input_samples, gt_samples = batch["input"], batch["gt"]
-
         with torch.no_grad():
-            if cuda_available:
-                test_input = imed_utils.cuda(input_samples)
-                test_gt = imed_utils.cuda(gt_samples, non_blocking=True)
-            else:
-                test_input = input_samples
-                test_gt = gt_samples
+            input_samples = imed_utils.cuda(batch["input"], cuda_available)
+            gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
 
-            preds = model(test_input)
+            preds = model(input_samples)
 
         preds_cpu = preds.cpu()
 
