@@ -1,14 +1,14 @@
 import os
 import pytest
-import numpy as np
+import shutil
 import torch
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 
 from ivadomed import metrics as imed_metrics
-from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
+from ivadomed import testing as imed_testing
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
@@ -40,6 +40,7 @@ PATH_OUT = 'tmp'
 def test_inference(transforms_dict, test_lst, target_lst, roi_params):
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
+    model_params = {"name": "Unet"},
     loader_params = {
         "transforms_params": transforms_dict,
         "data_list": test_lst,
@@ -49,7 +50,6 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params):
         "bids_path": PATH_BIDS,
         "target_suffix": target_lst,
         "roi_params": roi_params,
-        "model_params": {"name": "Unet"},
         "slice_filter_params": {
             "filter_empty_mask": False,
             "filter_empty_input": True
@@ -57,6 +57,7 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params):
         "slice_axis": SLICE_AXIS,
         "multichannel": False
     }
+    loader_params.update(model_params)
 
     # Get Testing dataset
     ds_test = imed_loader.load_dataset(**loader_params)
@@ -89,6 +90,11 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params):
     if not os.path.isdir(PATH_OUT):
         os.makedirs(PATH_OUT)
 
+    preds_npy, gt_npy = imed_testing.run_inference(test_loader, model, model_params,
+                               testing_params,
+                               ofolder=PATH_OUT,
+                               cuda_available=cuda_available)
+    """
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     for i, batch in enumerate(test_loader):
         with torch.no_grad():
@@ -135,9 +141,10 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params):
         preds_npy = imed_postpro.threshold_predictions(preds_npy)
         preds_npy = preds_npy.astype(np.uint8)
         preds_npy = preds_npy.squeeze(axis=1)
-
-        metric_mgr(preds_npy, gt_npy)
+    """
+    metric_mgr(preds_npy, gt_npy)
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
     print(metrics_dict)
+    shutil.rmtree(PATH_OUT)
