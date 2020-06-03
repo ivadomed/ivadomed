@@ -94,6 +94,11 @@ class GeneralizedDiceLoss(nn.Module):
     """
 
     def __init__(self, epsilon=1e-5, include_background=True):
+        """
+        Args:
+            epsilon (float):
+            include_background (float): If True, then an extra channel is added, which represents the background class
+        """
         super(GeneralizedDiceLoss, self).__init__()
         self.epsilon = epsilon
         self.include_background = include_background
@@ -104,11 +109,12 @@ class GeneralizedDiceLoss(nn.Module):
 
         if self.include_background:
             # init
-            input_background = torch.zeros(input.size(), dtype=input.dtype)
-            target_background = torch.zeros(target.size(), dtype=target.dtype)
+            size_background = [input.size(0), 1] + list(input.size())[2:]
+            input_background = torch.zeros(size_background, dtype=input.dtype)
+            target_background = torch.zeros(size_background, dtype=target.dtype)
             # fill with opposite
-            input_background[input == 0] = 1
-            target_background[target == 0] = 1
+            input_background[input.sum(1).expand_as(input_background) == 0] = 1
+            target_background[target.sum(1).expand_as(input_background) == 0] = 1
             # Concat
             input = torch.cat([input, input_background], dim=1)
             target = torch.cat([target, target_background], dim=1)
