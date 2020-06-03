@@ -35,11 +35,16 @@ def _cmpt_slice(ds_loader, gt_roi='gt'):
      "NumpyToTensor": {"applied_to": ["im", "gt"]}}])
 @pytest.mark.parametrize('train_lst', [['sub-test001']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
+@pytest.mark.parametrize('slice_filter_params', [
+    {"filter_empty_mask": False, "filter_empty_input": True},
+    {"filter_empty_mask": True, "filter_empty_input": True}])
 @pytest.mark.parametrize('roi_params', [
     {"suffix": "_seg-manual", "slice_filter_roi": 10},
     {"suffix": None, "slice_filter_roi": 0}])
-def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params):
-    """Test SliceFilter when using mt_transforms.CenterCrop2D."""
+def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_filter_params):
+    if "ROICrop" in transforms_dict and roi_params["suffix"] == None:
+        return
+
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
     loader_params = {
@@ -53,10 +58,7 @@ def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params):
         "target_suffix": target_lst,
         "roi_params": roi_params,
         "model_params": {"name": "Unet"},
-        "slice_filter_params": {
-            "filter_empty_mask": False,
-            "filter_empty_input": True
-        },
+        "slice_filter_params": slice_filter_params,
         "slice_axis": "axial",
         "multichannel": False
     }
