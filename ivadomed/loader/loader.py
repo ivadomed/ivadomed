@@ -626,7 +626,8 @@ class BidsDataset(MRI2DSegmentationDataset):
                 # add contrast to metadata
                 metadata['contrast'] = subject.record["modality"]
                 if len(bounding_box_dict):
-                    metadata['bounding_box'] = bounding_box_dict[str(subject.record["absolute_path"])]
+                    # Take only one bounding box for cropping
+                    metadata['bounding_box'] = bounding_box_dict[str(subject.record["absolute_path"])][0]
 
                 if metadata_choice == 'mri_params':
                     if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
