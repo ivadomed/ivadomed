@@ -58,6 +58,7 @@ def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
         "bids_path": PATH_BIDS,
         "target_suffix": target_lst,
         "roi_params": roi_params,
+        "model_params": {"name": "Unet"},
         "slice_filter_params": {
             "filter_empty_mask": False,
             "filter_empty_input": True
