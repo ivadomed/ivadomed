@@ -313,7 +313,7 @@ def get_loss_function(params):
     del params["name"]
 
     # Check if implemented
-    loss_function_available = ["DiceLoss", "FocalLoss", "GeneralizedDiceLoss", "FocalDiceLoss", "MultiClassDiceLoss", "cross_entropy"]
+    loss_function_available = ["DiceLoss", "FocalLoss", "GeneralizedDiceLoss", "FocalDiceLoss", "MultiClassDiceLoss"]
     if loss_name not in loss_function_available:
         print("Unknown Loss function, please choose between {}".format(loss_function_available))
         exit()
