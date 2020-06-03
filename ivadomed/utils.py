@@ -726,3 +726,24 @@ def onnx_inference(model_path, inputs):
     ort_inputs = {ort_session.get_inputs()[0].name: inputs}
     ort_outs = ort_session.run(None, ort_inputs)
     return torch.tensor(ort_outs[0])
+
+
+def define_device(gpu_id):
+    """Define the device used for the process of interest.
+
+    Args:
+        gpu_id (int): ID of the GPU
+    Returns:
+        Bool, device: True if cuda is available
+    """
+    device = torch.device("cuda:" + str(gpu_id) if torch.cuda.is_available() else "cpu")
+    cuda_available = torch.cuda.is_available()
+    if not cuda_available:
+        print("Cuda is not available.")
+        print("Working on {}.".format(device))
+    if cuda_available:
+        # Set the GPU
+        gpu_number = int(gpu_id)
+        torch.cuda.set_device(gpu_number)
+        print("Using GPU number {}".format(gpu_number))
+    return cuda_available, device

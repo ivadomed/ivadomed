@@ -4,12 +4,12 @@ import shutil
 import sys
 import joblib
 
-import torch
 import torch.backends.cudnn as cudnn
 
 from ivadomed import training as imed_training
 from ivadomed import evaluation as imed_evaluation
 from ivadomed import testing as imed_testing
+from ivadomed import utils as imed_utils
 from ivadomed import metrics as imed_metrics
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
@@ -18,27 +18,6 @@ cudnn.benchmark = True
 
 # List of not-default available models i.e. different from Unet
 MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet']
-
-
-def define_device(gpu_id):
-    """Define the device used for the process of interest.
-
-    Args:
-        gpu_id (int): ID of the GPU
-    Returns:
-        Bool, device: True if cuda is available
-    """
-    device = torch.device("cuda:" + str(gpu_id) if torch.cuda.is_available() else "cpu")
-    cuda_available = torch.cuda.is_available()
-    if not cuda_available:
-        print("Cuda is not available.")
-        print("Working on {}.".format(device))
-    if cuda_available:
-        # Set the GPU
-        gpu_number = int(gpu_id)
-        torch.cuda.set_device(gpu_number)
-        print("Using GPU number {}".format(gpu_number))
-    return cuda_available, device
 
 
 def get_new_subject_split(path_folder, center_test, split_method, random_seed,
@@ -189,7 +168,7 @@ def run_main():
         print('Log directory already exists: {}'.format(log_directory))
 
     # Define device
-    cuda_available, device = define_device(context['gpu'])
+    cuda_available, device = imed_utils.define_device(context['gpu'])
 
     # Get subject lists
     train_lst, valid_lst, test_lst = get_subdatasets_subjects_list(context["split_dataset"],
