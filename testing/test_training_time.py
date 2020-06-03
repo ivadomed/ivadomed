@@ -15,7 +15,7 @@ cudnn.benchmark = True
 
 GPU_NUMBER = 0
 BATCH_SIZE = 8
-N_EPOCHS = 10
+N_EPOCHS = 2
 INIT_LR = 0.01
 PATH_BIDS = 'testing_data'
 MODEL_DEFAULT = {
@@ -129,24 +129,19 @@ def test_unet_time(train_lst, target_lst, config):
                 gen_lst.append(tot_gen)
 
             start_load = time.time()
-            input_samples, gt_samples = batch["input"], batch["gt"]
-            if cuda_available:
-                var_input = input_samples.cuda()
-                var_gt = gt_samples.cuda(non_blocking=True)
-            else:
-                var_input = input_samples
-                var_gt = gt_samples
+            input_samples = imed_utils.cuda(batch["input"], cuda_available)
+            gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
 
             tot_load = time.time() - start_load
             load_lst.append(tot_load)
 
             start_pred = time.time()
-            preds = model(var_input)
+            preds = model(input_samples)
             tot_pred = time.time() - start_pred
             pred_lst.append(tot_pred)
 
             start_opt = time.time()
-            loss = losses.DiceLoss(preds, var_gt)
+            loss = losses.DiceLoss(preds, gt_samples)
 
             optimizer.zero_grad()
             loss.backward()
