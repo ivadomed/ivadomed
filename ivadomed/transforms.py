@@ -843,3 +843,28 @@ def rescale_values_array(arr, minv=0.0, maxv=1.0, dtype=np.float32):
 
     norm = (arr - mina) / (maxa - mina)  # normalize the array first
     return (norm * (maxv - minv)) + minv  # rescale by minv and maxv, which is the normalized array by default
+
+
+def get_subdatasets_transforms(transform_params):
+    """Get transformation parameters for each subdataset: training, validation and testing.
+
+    Args:
+        transform_params (dict):
+    Returns:
+        dict, dict, dict
+    """
+    train, valid, test = {}, {}, {}
+    subdataset_default = ["training", "validation", "testing"]
+    # Loop across transformations
+    for transform_name in transform_params:
+        subdataset_list = ["training", "validation", "testing"]
+        # Only consider subdatasets listed in dataset_type
+        if "dataset_type" in transform_params[transform_name]:
+            subdataset_list = transform_params[transform_name]["dataset_type"]
+        # Add current transformation to the relevant subdataset transformation dictionaries
+        for subds_name, subds_dict in zip(subdataset_default, [train, valid, test]):
+            if subds_name in subdataset_list:
+                subds_dict[transform_name] = transform_params[transform_name]
+                if "dataset_type" in subds_dict[transform_name]:
+                    del subds_dict[transform_name]["dataset_type"]
+    return train, valid, test

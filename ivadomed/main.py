@@ -20,34 +20,6 @@ cudnn.benchmark = True
 MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet']
 
 
-
-
-
-def get_subdatasets_transforms(transform_params):
-    """Get transformation parameters for each subdataset: training, validation and testing.
-
-    Args:
-        transform_params (dict):
-    Returns:
-        dict, dict, dict
-    """
-    train, valid, test = {}, {}, {}
-    subdataset_default = ["training", "validation", "testing"]
-    # Loop across transformations
-    for transform_name in transform_params:
-        subdataset_list = ["training", "validation", "testing"]
-        # Only consider subdatasets listed in dataset_type
-        if "dataset_type" in transform_params[transform_name]:
-            subdataset_list = transform_params[transform_name]["dataset_type"]
-        # Add current transformation to the relevant subdataset transformation dictionaries
-        for subds_name, subds_dict in zip(subdataset_default, [train, valid, test]):
-            if subds_name in subdataset_list:
-                subds_dict[transform_name] = transform_params[transform_name]
-                if "dataset_type" in subds_dict[transform_name]:
-                    del subds_dict[transform_name]["dataset_type"]
-    return train, valid, test
-
-
 def run_main():
 
     if len(sys.argv) != 2:
@@ -80,7 +52,7 @@ def run_main():
 
     # Get transforms for each subdataset
     transform_train_params, transform_valid_params, transform_test_params = \
-        get_subdatasets_transforms(context["transformation"])
+        imed_transforms.get_subdatasets_transforms(context["transformation"])
     if command == "train":
         imed_utils.display_selected_transfoms(transform_train_params, dataset_type="training")
         imed_utils.display_selected_transfoms(transform_valid_params, dataset_type="validation")
