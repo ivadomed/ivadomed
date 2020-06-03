@@ -34,7 +34,7 @@ def _cmpt_slice(ds_loader, gt_roi='gt'):
      "CenterCrop": {"size": [100, 100], "applied_to": ["im", "gt"]},
      "NumpyToTensor": {"applied_to": ["im", "gt"]}}])
 @pytest.mark.parametrize('train_lst', [['sub-test001']])
-@pytest.mark.parametrize('target_lst', [["_seg-manual"]])
+@pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('roi_params', [
     {"suffix": "_seg-manual", "slice_filter_roi": 10},
     {"suffix": None, "slice_filter_roi": 0}])

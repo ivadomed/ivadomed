@@ -111,7 +111,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
 
             # EPISTEMIC UNCERTAINTY
-            if testing_params['uncertainty']['epistemic'] and testing_params['uncertainty']['n_it'] > 0:
+            if testing_params['uncertainty']['applied'] and testing_params['uncertainty']['epistemic']:
                 for m in model.modules():
                     if m.__class__.__name__.startswith('Dropout'):
                         m.train()
