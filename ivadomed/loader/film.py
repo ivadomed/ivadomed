@@ -146,6 +146,19 @@ def check_isMRIparam(mri_param_type, mri_param, subject, metadata):
 
 
 def get_film_metadata_models(ds_train, metadata_type, debugging=False):
+    """Get FiLM models.
+
+    This function pulls the clustering and one-hot encoder models that are used by FiLMedUnet.
+    It also calls the normalization of metadata.
+
+    Args:
+        ds_train (MRI2DSegmentationDataset): training dataset
+        metadata_type (string): eg mri_params, contrasts
+        debugging (bool):
+
+    Returns:
+        MRI2DSegmentationDataset, OneHotEncoder, KernelDensity: dataset, one-hot encoder and KDE model
+    """
     if metadata_type == "mri_params":
         metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
         metadata_clustering_models = clustering_fit(ds_train.metadata, metadata_vector)
