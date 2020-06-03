@@ -27,11 +27,7 @@ PATH_BIDS = 'testing_data'
 
 
 def test_unet():
-    device = torch.device("cuda:" + str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
-    cuda_available = torch.cuda.is_available()
-    if cuda_available:
-        torch.cuda.set_device(device)
-        print("Using GPU number {}".format(device))
+    cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
     train_lst = ['sub-test001']
 
