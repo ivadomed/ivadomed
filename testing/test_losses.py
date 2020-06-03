@@ -4,6 +4,7 @@
 
 import torch
 import pytest
+import numpy as np
 from math import isclose
 
 from ivadomed.losses import FocalLoss, FocalDiceLoss, GeneralizedDiceLoss, MultiClassDiceLoss
@@ -44,7 +45,7 @@ def test_multiclassdiceloss(params):
     loss = loss_fct.forward(input, target)
     assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-3)
 
-# TODO: add multilabel test
+
 @pytest.mark.parametrize('params', [
     (torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
      torch.tensor([[[[1.0, 0.0], [1.0, 1.0]]]]),
@@ -57,7 +58,11 @@ def test_multiclassdiceloss(params):
     (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
      torch.tensor([[[[1.0, 0.0], [1.0, 1.0]]]]),
      0.0,
-     GeneralizedDiceLoss(epsilon=1e-5))
+     GeneralizedDiceLoss(epsilon=1e-5)),
+    (torch.tensor([[[[1.0, 0.0], [1.0, 0.0]], [[0.0, 1.0], [0.0, 1.0]]]]),
+    torch.tensor([[[[1.0, 0.0], [1.0, 1.0]], [[1.0, 0.0], [1.0, 1.0]]]]),
+    -0.6,
+    GeneralizedDiceLoss(epsilon=1e-5))
 ])
 def test_generalizeddiceloss(params):
     """Test GeneralizedDiceLoss.
@@ -67,4 +72,4 @@ def test_generalizeddiceloss(params):
     """
     input, target, expected_value, loss_fct = params
     loss = loss_fct.forward(input, target)
-    assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-5)
+    assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-2)
