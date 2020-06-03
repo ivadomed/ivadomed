@@ -60,16 +60,16 @@ def test_multiclassdiceloss(params):
      -1.,
      GeneralizedDiceLoss(epsilon=1e-5)),
     (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
-     torch.tensor([[[[1.0, 0.0], [1.0, 1.0]]]]),
-     0.0,
+     torch.tensor([[[[1.0, 0.0], [0.0, 0.0]]]]),
+     -3/8,
      GeneralizedDiceLoss(epsilon=1e-5)),
     (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
-     torch.tensor([[[[1.0, 0.0], [1.0, 1.0]]]]),
+     torch.tensor([[[[1.0, 0.0], [0.0, 0.0]]]]),
      0.0,
      GeneralizedDiceLoss(epsilon=1e-5, include_background=False)),
-    (torch.tensor([[[[1.0, 0.0], [1.0, 0.0]], [[0.0, 1.0], [0.0, 1.0]]]]),
-    torch.tensor([[[[1.0, 0.0], [1.0, 1.0]], [[1.0, 0.0], [1.0, 1.0]]]]),
-    -0.6,
+    (torch.tensor([[[[1.0, 0.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 1.0]]]]),
+    torch.tensor([[[[1.0, 0.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 0.0]]]]),
+    -18/23,
     GeneralizedDiceLoss(epsilon=1e-5))
 ])
 def test_generalizeddiceloss(params):
