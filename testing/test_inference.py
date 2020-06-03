@@ -17,7 +17,7 @@ GPU_NUMBER = 0
 BATCH_SIZE = 8
 DROPOUT = 0.4
 BN = 0.1
-SLICE_AXIS = 2
+SLICE_AXIS = "axial"
 PATH_BIDS = 'testing_data'
 PATH_OUT = 'tmp'
 
