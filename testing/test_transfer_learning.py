@@ -1,5 +1,5 @@
 import copy
-
+import pytest
 import torch
 import torch.backends.cudnn as cudnn
 
@@ -10,15 +10,10 @@ cudnn.benchmark = True
 N_METADATA = 1
 OUT_CHANNEL = 1
 INITIAL_LR = 0.001
-FILM_LAYERS = [0, 0, 0, 0, 0, 0, 0, 0]
-PATH_PRETRAINED_MODEL = 'testing_data/model_unet_test.pt'
-RETRAIN_FRACTION = 0.3
 
-
-def test_transfer_learning(film_layers=FILM_LAYERS,
-                           path_model=PATH_PRETRAINED_MODEL,
-                           fraction=RETRAIN_FRACTION,
-                           tolerance=0.1):
+@pytest.mark.parametrize('fraction', [0.1, 0.3, 0.5])
+@pytest.mark.parametrize('path_model', ['testing_data/model_unet_test.pt'])
+def test_transfer_learning(path_model, fraction, tolerance=0.1):
     device = torch.device("cpu")
     print("Working on {}.".format('cpu'))
 
