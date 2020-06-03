@@ -143,3 +143,19 @@ def check_isMRIparam(mri_param_type, mri_param, subject, metadata):
 
         metadata[mri_param_type].append(value)
         return True
+
+
+def get_film_metadata_models(ds_train, metadata_type, debugging=False):
+    if metadata_type == "mri_params":
+        metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
+        metadata_clustering_models = clustering_fit(ds_train.metadata, metadata_vector)
+    else:
+        metadata_clustering_models = None
+
+    ds_train, train_onehotencoder = normalize_metadata(ds_train,
+                                                       metadata_clustering_models,
+                                                       debugging,
+                                                       metadata_type,
+                                                       True)
+
+    return ds_train, train_onehotencoder, metadata_clustering_models

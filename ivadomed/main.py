@@ -20,20 +20,7 @@ cudnn.benchmark = True
 MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet']
 
 
-def get_film_metadata_models(ds_train, metadata_type, debugging=False):
-    if metadata_type == "mri_params":
-        metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
-        metadata_clustering_models = imed_film.clustering_fit(ds_train.metadata, metadata_vector)
-    else:
-        metadata_clustering_models = None
 
-    ds_train, train_onehotencoder = imed_film.normalize_metadata(ds_train,
-                                                                 metadata_clustering_models,
-                                                                 debugging,
-                                                                 metadata_type,
-                                                                 True)
-
-    return ds_train, train_onehotencoder, metadata_clustering_models
 
 
 def get_subdatasets_transforms(transform_params):
@@ -160,8 +147,9 @@ def run_main():
         # If FiLM, normalize data
         if model_params["name"] == "FiLMedUnet":
             # Normalize metadata before sending to the FiLM network
-            results = get_film_metadata_models(ds_train=ds_train, metadata_type=model_params['metadata'],
-                                               debugging=context["debugging"])
+            results = imed_film.get_film_metadata_models(ds_train=ds_train,
+                                                         metadata_type=model_params['metadata'],
+                                                         debugging=context["debugging"])
             ds_train, train_onehotencoder, metadata_clustering_models = results
             ds_valid = imed_film.normalize_metadata(ds_valid, metadata_clustering_models, context["debugging"],
                                                     model_params['metadata'])
