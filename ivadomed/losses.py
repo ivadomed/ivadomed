@@ -93,13 +93,25 @@ class GeneralizedDiceLoss(nn.Module):
     Generalized Dice Loss: https://arxiv.org/pdf/1707.03237
     """
 
-    def __init__(self, epsilon=1e-5):
+    def __init__(self, epsilon=1e-5, include_background=True):
         super(GeneralizedDiceLoss, self).__init__()
         self.epsilon = epsilon
+        self.include_background = include_background
 
     def forward(self, input, target):
         if not (target.size() == input.size()):
             raise ValueError("Target size ({}) must be the same as input size ({})".format(target.size(), input.size()))
+
+        if self.include_background:
+            # init
+            input_background = torch.zeros(input.size(), dtype=input.dtype)
+            target_background = torch.zeros(target.size(), dtype=target.dtype)
+            # fill with opposite
+            input_background[input == 0] = 1
+            target_background[target == 0] = 1
+            # Concat
+            input = torch.cat([input, input_background], dim=1)
+            target = torch.cat([target, target_background], dim=1)
 
         input = input.view(-1)
         target = target.view(-1)
