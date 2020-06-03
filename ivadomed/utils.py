@@ -761,3 +761,17 @@ def display_selected_model_spec(params):
     for k in list(params.keys()):
         if k != "name":
             print('\t{}: {}'.format(k, params[k]))
+
+
+def display_selected_transfoms(params, dataset_type):
+    """Display in terminal the selected transforms for a given dataset.
+
+    Args:
+        params (dict):
+        dataset_list (list): e.g. ['testing'] or ['training', 'validation']
+    Returns:
+        None
+    """
+    print('\nSelected transformations for the {} dataset:'.format(dataset_type))
+    for k in list(params.keys()):
+        print('\t{}: {}'.format(k, params[k]))

@@ -92,20 +92,6 @@ def get_film_metadata_models(ds_train, metadata_type, debugging=False):
     return ds_train, train_onehotencoder, metadata_clustering_models
 
 
-def display_selected_transfoms(params, dataset_type):
-    """Display in terminal the selected transforms for a given dataset.
-
-    Args:
-        params (dict):
-        dataset_list (list): e.g. ['testing'] or ['training', 'validation']
-    Returns:
-        None
-    """
-    print('\nSelected transformations for the {} dataset:'.format(dataset_type))
-    for k in list(params.keys()):
-        print('\t{}: {}'.format(k, params[k]))
-
-
 def get_subdatasets_transforms(transform_params):
     """Get transformation parameters for each subdataset: training, validation and testing.
 
@@ -165,10 +151,10 @@ def run_main():
     transform_train_params, transform_valid_params, transform_test_params = \
         get_subdatasets_transforms(context["transformation"])
     if command == "train":
-        display_selected_transfoms(transform_train_params, dataset_type="training")
-        display_selected_transfoms(transform_valid_params, dataset_type="validation")
+        imed_utils.display_selected_transfoms(transform_train_params, dataset_type="training")
+        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type="validation")
     elif command == "test":
-        display_selected_transfoms(transform_test_params, dataset_type="testing")
+        imed_utils.display_selected_transfoms(transform_test_params, dataset_type="testing")
 
     # Loader params
     loader_params = context["loader_parameters"]
