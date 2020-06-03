@@ -1,4 +1,3 @@
-import copy
 import pytest
 import torch
 import torch.backends.cudnn as cudnn
@@ -22,28 +21,25 @@ def test_transfer_learning(path_model, fraction, tolerance=0.1):
     # Setup model for retrain
     model_to_retrain = imed_models.set_model_for_retrain(path_model, retrain_fraction=fraction)
 
-    # Set model for retrain
-    model = imed_models.set_model_for_retrain(model, fraction)
-
     print('\nSet fraction to retrain: ' + str(fraction))
 
     # Check Frozen part
-    grad_list = [param.requires_grad for name, param in model.named_parameters()]
+    grad_list = [param.requires_grad for name, param in model_to_retrain.named_parameters()]
     fraction_retrain_measured = sum(grad_list) * 1.0 / len(grad_list)
     print('\nMeasure: retrained fraction of the model: ' + str(round(fraction_retrain_measured, 1)))
     # for name, param in model.named_parameters():
     #    print("\t", name, param.requires_grad)
     assert (abs(fraction_retrain_measured - fraction) <= tolerance)
-    total_params = sum(p.numel() for p in model.parameters())
-    print(f'{total_params:,} total parameters.')
+    total_params = sum(p.numel() for p in model_to_retrain.parameters())
+    print('{:,} total parameters.'.format(total_params))
     total_trainable_params = sum(
-        p.numel() for p in model.parameters() if p.requires_grad)
-    print(f'{total_trainable_params:,} parameters to retrain.')
+        p.numel() for p in model_to_retrain.parameters() if p.requires_grad)
+    print('{:,} parameters to retrain.'.format(total_trainable_params))
     assert (total_params > total_trainable_params)
 
     # Check reset weights
     reset_list = [(p1.data.ne(p2.data).sum() > 0).cpu().numpy() \
-                  for p1, p2 in zip(model_copy.parameters(), model.parameters())]
+                  for p1, p2 in zip(model_pretrained.parameters(), model_to_retrain.parameters())]
     reset_measured = sum(reset_list) * 1.0 / len(reset_list)
     print('\nMeasure: reset fraction of the model: ' + str(round(reset_measured, 1)))
     assert (abs(reset_measured - fraction) <= tolerance)
