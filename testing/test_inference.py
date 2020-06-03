@@ -23,17 +23,7 @@ PATH_OUT = 'tmp'
 
 
 def test_inference(film_bool=False):
-    device = torch.device("cuda:" + str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
-    cuda_available = torch.cuda.is_available()
-    if not cuda_available:
-        pin_memory = False
-        print("cuda is not available.")
-        print("Working on {}.".format("cpu"))
-    if cuda_available:
-        pin_memory = True
-        # Set the GPU
-        torch.cuda.set_device(device)
-        print("using GPU number {}".format(device))
+    cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
     training_transform_dict = {
         "Resample":
