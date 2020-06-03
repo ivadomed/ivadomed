@@ -136,6 +136,7 @@ def run_main():
                             dataset_val=ds_valid,
                             training_params=context["training_parameters"],
                             log_directory=log_directory,
+                            device=device,
                             cuda_available=cuda_available,
                             metric_fns=metric_fns,
                             debugging=context["debugging"])
