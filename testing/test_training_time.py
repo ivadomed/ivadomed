@@ -6,7 +6,7 @@ from torch import optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from ivadomed import losses
+from ivadomed import losses as imed_losses
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
@@ -28,7 +28,7 @@ MODEL_DEFAULT = {
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('config', [
     {
-        "transformation": {"Resample": {"wspace": 0.75, "hspace": 0.75},
+        "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75},
                            "ROICrop": {"size": [48, 48]},
                            "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
@@ -37,7 +37,7 @@ MODEL_DEFAULT = {
         "model_params": {"name": "Unet"},
     },
     {
-        "transformation": {"Resample": {"wspace": 0.75, "hspace": 0.75},
+        "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75},
                            "ROICrop": {"size": [48, 48]},
                            "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
@@ -46,7 +46,7 @@ MODEL_DEFAULT = {
         "model_params": {"name": "Unet"},
     },
     {
-        "transformation": {"CenterCrop": {"size": [96, 96, 16]},
+        "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                            "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
@@ -55,7 +55,7 @@ MODEL_DEFAULT = {
                          "attention": True},
     },
     {
-        "transformation": {"CenterCrop": {"size": [96, 96, 16]},
+        "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                            "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
@@ -110,6 +110,9 @@ def test_unet_time(train_lst, target_lst, config):
     optimizer = optim.Adam(model.parameters(), lr=INIT_LR)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, N_EPOCHS)
 
+    # TODO: add to pytest
+    loss_fct = imed_losses.DiceLoss()
+
     load_lst, pred_lst, opt_lst, schedul_lst, init_lst, gen_lst = [], [], [], [], [], []
     for epoch in tqdm(range(1, N_EPOCHS + 1), desc="Training"):
         start_time = time.time()
@@ -141,7 +144,7 @@ def test_unet_time(train_lst, target_lst, config):
             pred_lst.append(tot_pred)
 
             start_opt = time.time()
-            loss = losses.DiceLoss(preds, gt_samples)
+            loss = loss_fct(preds, gt_samples)
 
             optimizer.zero_grad()
             loss.backward()
