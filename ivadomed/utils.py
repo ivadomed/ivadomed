@@ -747,3 +747,17 @@ def define_device(gpu_id):
         torch.cuda.set_device(gpu_number)
         print("Using GPU number {}".format(gpu_number))
     return cuda_available, device
+
+
+def display_selected_model_spec(params):
+    """Display in terminal the selected model and its parameters.
+
+    Args:
+        params (dict): keys are param names and values are param values
+    Returns:
+        None
+    """
+    print('\nSelected architecture: {}, with the following parameters:'.format(params["name"]))
+    for k in list(params.keys()):
+        if k != "name":
+            print('\t{}: {}'.format(k, params[k]))

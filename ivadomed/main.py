@@ -92,20 +92,6 @@ def get_film_metadata_models(ds_train, metadata_type, debugging=False):
     return ds_train, train_onehotencoder, metadata_clustering_models
 
 
-def display_selected_model_spec(params):
-    """Display in terminal the selected model and its parameters.
-
-    Args:
-        params (dict): keys are param names and values are param values
-    Returns:
-        None
-    """
-    print('\nSelected architecture: {}, with the following parameters:'.format(params["name"]))
-    for k in list(params.keys()):
-        if k != "name":
-            print('\t{}: {}'.format(k, params[k]))
-
-
 def display_selected_transfoms(params, dataset_type):
     """Display in terminal the selected transforms for a given dataset.
 
@@ -225,7 +211,7 @@ def run_main():
     if model_params["out_channel"] > 1:
         model_params.update({"out_channel": model_params["out_channel"] + 1})
     # Display for spec' check
-    display_selected_model_spec(params=model_params)
+    imed_utils.display_selected_model_spec(params=model_params)
     # Update loader params
     loader_params.update({"model_params": model_params})
 
