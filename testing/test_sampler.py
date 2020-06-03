@@ -53,7 +53,7 @@ def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
         "data_list": train_lst,
         "dataset_type": "training",
         "requires_undo": False,
-        "contrast_lst": ['T2w'],
+        "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
         "balance": {},
         "bids_path": PATH_BIDS,
         "target_suffix": target_lst,
