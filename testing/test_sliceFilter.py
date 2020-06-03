@@ -13,18 +13,18 @@ BATCH_SIZE = 8
 PATH_BIDS = 'testing_data'
 
 
-def _cmpt_slice(ds_loader, gt_roi='gt'):
-    cmpt_label, cmpt_sample = {0: 0, 1: 0}, 0
+def _cmpt_slice(ds_loader):
+    cmpt_label = {0: 0, 1: 0}
     for i, batch in enumerate(ds_loader):
-        for idx in range(len(batch[gt_roi])):
-            smp_np = batch[gt_roi][idx].numpy()
-            # For now only supports 1 label
-            if np.any(smp_np[0, :]):
+        for gt in batch['gt']:
+            # TODO: multi label
+            if np.any(gt.numpy()):
                 cmpt_label[1] += 1
             else:
                 cmpt_label[0] += 1
-            cmpt_sample += 1
     print(cmpt_label)
+    return cmpt_label[0], cmpt_label[1]
+
 
 @pytest.mark.parametrize('transforms_dict', [
     {"Resample": {"wspace": 0.75, "hspace": 0.75},
@@ -72,6 +72,9 @@ def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
     print('\tNumber of Neg/Pos slices in GT.')
-    _cmpt_slice(train_loader, 'gt')
-    print('\tNumber of Neg/Pos slices in ROI.')
-    _cmpt_slice(train_loader, 'roi')
+    cmpt_neg, cmpt_pos = _cmpt_slice(train_loader, 'gt')
+    if slice_filter_params["filter_empty_mask"]:
+        assert cmpt_neg == 0
+        assert cmpt_pos != 0
+    else:
+        assert cmpt_neg > cmpt_pos
