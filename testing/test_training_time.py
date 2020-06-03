@@ -17,7 +17,6 @@ GPU_NUMBER = 0
 BATCH_SIZE = 8
 N_EPOCHS = 10
 INIT_LR = 0.01
-FILM_LAYERS = [0, 0, 0, 0, 0, 1, 1, 1]
 PATH_BIDS = 'testing_data'
 MODEL_DEFAULT = {
     "dropout_rate": 0.3,
