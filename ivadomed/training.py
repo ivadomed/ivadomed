@@ -19,8 +19,8 @@ from ivadomed.loader import utils as imed_loader_utils
 cudnn.benchmark = True
 
 
-def train(model_params, dataset_train, dataset_val, training_params, log_directory, cuda_available=True,
-          metric_fns=None, debugging=False):
+def train(model_params, dataset_train, dataset_val, training_params, log_directory, device,
+          cuda_available=True, metric_fns=None, debugging=False):
     """Main command to train the network.
 
     Args:
@@ -29,6 +29,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         dataset_val (imed_loader): Validation dataset
         training_params (dict):
         log_directory (string):
+        device (string):
         cuda_available (Bool):
         metric_fns (list):
         debugging (Bool):
@@ -63,7 +64,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         old_model_path = training_params["transfer_learning"]["retrain_model"]
         fraction = training_params["transfer_learning"]['retrain_fraction']
         # Freeze first layers and reset last layers
-        model = imed_models.set_model_for_retrain(old_model_path, retrain_fraction=fraction)
+        model = imed_models.set_model_for_retrain(old_model_path, retrain_fraction=fraction, map_location=device)
     else:
         print("\nInitialising model's weights from scratch.")
         model_class = getattr(imed_models, model_params["name"])

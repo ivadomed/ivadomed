@@ -795,7 +795,7 @@ class UnetGridGatingSignal3(nn.Module):
         return outputs
 
 
-def set_model_for_retrain(model_path, retrain_fraction):
+def set_model_for_retrain(model_path, retrain_fraction, map_location):
     """Set model for transfer learning.
 
     The first layers (defined by 1-retrain_fraction) are frozen (i.e. requires_grad=False).
@@ -804,11 +804,12 @@ def set_model_for_retrain(model_path, retrain_fraction):
         model_path (string): pretrained model path.
         retrain_fraction (float): Fraction of the model that will be retrained, between 0 and 1. If set to 0.3,
             then the 30% last fraction of the model will be re-initalised and retrained.
+        map_location (string): device
     Returns:
         torch module: model ready for retrain.
     """
     # Load pretrained model
-    model = torch.load(model_path)
+    model = torch.load(model_path, map_location=map_location)
     # Get number of layers with learnt parameters
     layer_names = [name for name, layer in model.named_modules() if hasattr(layer, 'reset_parameters')]
     n_layers = len(layer_names)

@@ -19,7 +19,7 @@ def test_transfer_learning(path_model, fraction, tolerance=0.1):
     # Load pretrained model
     model_pretrained = torch.load(path_model, map_location=device)
     # Setup model for retrain
-    model_to_retrain = imed_models.set_model_for_retrain(path_model, retrain_fraction=fraction)
+    model_to_retrain = imed_models.set_model_for_retrain(path_model, retrain_fraction=fraction, map_location=device)
 
     print('\nSet fraction to retrain: ' + str(fraction))
 
