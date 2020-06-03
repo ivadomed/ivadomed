@@ -82,6 +82,31 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
     return train_lst, valid_lst, test_lst
 
 
+def get_subdatasets_subjects_list(split_params, bids_path, log_directory):
+    """Get lists of subjects for each sub-dataset between training / validation / testing.
+
+    Args:
+        split_params (dict):
+        bids_path (string): Path to the BIDS dataset
+        log_directory (string): output folder
+    Returns:
+        list, list list: Training, validation and testing subjects lists
+    """
+    if split_params["fname_split"]:
+        # Load subjects lists
+        old_split = joblib.load(split_params["fname_split"])
+        train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
+    else:
+        train_lst, valid_lst, test_lst = get_new_subject_split(path_folder=bids_path,
+                                                               center_test=split_params['center_test'],
+                                                               split_method=split_params['method'],
+                                                               random_seed=split_params['random_seed'],
+                                                               train_frac=split_params['train_fraction'],
+                                                               test_frac=split_params['test_fraction'],
+                                                               log_directory=log_directory)
+    return train_lst, valid_lst, test_lst
+
+
 def imed_collate(batch):
     error_msg = "batch must contain tensors, numbers, dicts or lists; found {}"
     elem_type = type(batch[0])

@@ -20,31 +20,6 @@ cudnn.benchmark = True
 MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet']
 
 
-def get_subdatasets_subjects_list(split_params, bids_path, log_directory):
-    """Get lists of subjects for each sub-dataset between training / validation / testing.
-
-    Args:
-        split_params (dict):
-        bids_path (string): Path to the BIDS dataset
-        log_directory (string): output folder
-    Returns:
-        list, list list: Training, validation and testing subjects lists
-    """
-    if split_params["fname_split"]:
-        # Load subjects lists
-        old_split = joblib.load(split_params["fname_split"])
-        train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
-    else:
-        train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_split(path_folder=bids_path,
-                                                                                 center_test=split_params['center_test'],
-                                                                                 split_method=split_params['method'],
-                                                                                 random_seed=split_params['random_seed'],
-                                                                                 train_frac=split_params['train_fraction'],
-                                                                                 test_frac=split_params['test_fraction'],
-                                                                                 log_directory=log_directory)
-    return train_lst, valid_lst, test_lst
-
-
 def get_film_metadata_models(ds_train, metadata_type, debugging=False):
     if metadata_type == "mri_params":
         metadata_vector = ["RepetitionTime", "EchoTime", "FlipAngle"]
@@ -112,9 +87,9 @@ def run_main():
     cuda_available, device = imed_utils.define_device(context['gpu'])
 
     # Get subject lists
-    train_lst, valid_lst, test_lst = get_subdatasets_subjects_list(context["split_dataset"],
-                                                                   context['loader_parameters']['bids_path'],
-                                                                   log_directory)
+    train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
+                                                                                     context['loader_parameters']['bids_path'],
+                                                                                     log_directory)
 
     # Get transforms for each subdataset
     transform_train_params, transform_valid_params, transform_test_params = \
