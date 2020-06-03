@@ -72,7 +72,7 @@ def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
     print('\tNumber of Neg/Pos slices in GT.')
-    cmpt_neg, cmpt_pos = _cmpt_slice(train_loader, 'gt')
+    cmpt_neg, cmpt_pos = _cmpt_slice(train_loader)
     if slice_filter_params["filter_empty_mask"]:
         assert cmpt_neg == 0
         assert cmpt_pos != 0
