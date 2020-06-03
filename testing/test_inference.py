@@ -1,5 +1,5 @@
 import os
-
+import pytest
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
@@ -21,11 +21,7 @@ SLICE_AXIS = 2
 PATH_BIDS = 'testing_data'
 PATH_OUT = 'tmp'
 
-
-def test_inference():
-    cuda_available, device = imed_utils.define_device(GPU_NUMBER)
-
-    training_transform_dict = {
+@pytest.mark.parametrize('transforms_dict', [{
         "Resample":
             {
                 "wspace": 0.75,
@@ -37,30 +33,36 @@ def test_inference():
             },
         "NumpyToTensor": {},
         "NormalizeInstance": {"applied_to": ["im"]}
-    }
+    }])
+@pytest.mark.parametrize('test_lst', [['sub-test001']])
+@pytest.mark.parametrize('target_lst', [["_seg-manual"]])
+@pytest.mark.parametrize('roi_params', [{"suffix": None, "slice_filter_roi": None}])
+def test_inference(transforms_dict, test_lst, target_lst, roi_params):
+    cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
-    val_transform = imed_transforms.Compose(training_transform_dict)
-
-    val_undo_transform = imed_transforms.UndoCompose(val_transform)
-
-    test_lst = ['sub-test001']
-    contrast_params = {
+    loader_params = {
+        "transforms_params": transforms_dict,
+        "data_list": test_lst,
+        "dataset_type": "testing",
+        "requires_undo": True,
         "contrast_lst": ['T2w', 'T2star'],
-        "balance": {}
+        "balance": {},
+        "bids_path": PATH_BIDS,
+        "target_suffix": target_lst,
+        "roi_params": roi_params,
+        "slice_filter_params": {
+            "filter_empty_mask": False,
+            "filter_empty_input": True
+        },
+        "slice_axis": SLICE_AXIS,
+        "multichannel": False
     }
-    ds_test = imed_loader.BidsDataset(PATH_BIDS,
-                                      subject_lst=test_lst,
-                                      target_suffix=["_lesion-manual"],
-                                      roi_suffix="_seg-manual",
-                                      contrast_params=contrast_params,
-                                      metadata_choice="contrast",
-                                      slice_axis=SLICE_AXIS,
-                                      transform=val_transform,
-                                      multichannel=False,
-                                      slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
-                                                                             filter_empty_mask=False))
 
-    ds_test = imed_loader_utils.filter_roi(ds_test, nb_nonzero_thr=10)
+    # Get Testing dataset
+    ds_test = imed_loader.load_dataset(**loader_params)
+
+    # Undo transform
+    val_undo_transform = imed_transforms.UndoCompose(imed_transforms.Compose(transforms_dict))
 
     test_loader = DataLoader(ds_test, batch_size=BATCH_SIZE,
                              shuffle=False, pin_memory=pin_memory,
