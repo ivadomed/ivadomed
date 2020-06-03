@@ -49,6 +49,11 @@ def test_segment_volume_2d():
         "transformation": {
             "Resample": {"wspace": 0.75, "hspace": 0.75},
             "ROICrop": {"size": [48, 48]},
+            "RandomTranslation": {
+                "translate": [0.03, 0.03],
+                "applied_to": ["im", "gt"],
+                "dataset_type": ["training"]
+            },
             "NumpyToTensor": {},
             "NormalizeInstance": {"applied_to": ["im"]}
         },
@@ -99,8 +104,20 @@ def test_segment_volume_3d():
             "slice_axis": "sagittal"
         },
         "transformation": {
-            "Resample": {"wspace": 1.0, "hspace": 1.0, "dspace": 2.0},
-            "CenterCrop": {"size": LENGTH_3D},
+            "Resample":
+                {
+                    "wspace": 1,
+                    "hspace": 1,
+                    "dspace": 2
+                },
+            "CenterCrop": {
+                "size": LENGTH_3D
+            },
+            "RandomTranslation": {
+                "translate": [0.03, 0.03],
+                "applied_to": ["im", "gt"],
+                "dataset_type": ["training"]
+            },
             "NumpyToTensor": {},
             "NormalizeInstance": {"applied_to": ["im"]}
         },
