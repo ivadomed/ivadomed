@@ -17,19 +17,10 @@ def test_transfer_learning(path_model, fraction, tolerance=0.1):
     device = torch.device("cpu")
     print("Working on {}.".format('cpu'))
 
-    film_bool = bool(sum(film_layers))
-
-    if film_bool:
-        n_metadata = N_METADATA
-
-    # Traditional U-Net model
-    in_channel = 1
-
     # Load pretrained model
-    model = torch.load(path_model, map_location=device)
-
-    # Deep copy of the model
-    model_copy = copy.deepcopy(model)
+    model_pretrained = torch.load(path_model, map_location=device)
+    # Setup model for retrain
+    model_to_retrain = imed_models.set_model_for_retrain(path_model, retrain_fraction=fraction)
 
     # Set model for retrain
     model = imed_models.set_model_for_retrain(model, fraction)
