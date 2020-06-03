@@ -379,7 +379,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
                                                     for (key, value) in context["transformation"].items())
 
     # Compose transforms
-    do_transforms = imed_transforms.Compose(context['transformation'], requires_undo=True)
+    _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context["transformation"])
+    do_transforms = imed_transforms.Compose(transform_test_params, requires_undo=True)
     # Undo Transforms
     undo_transforms = imed_transforms.UndoCompose(do_transforms)
 
