@@ -475,7 +475,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                                metadata=metadata_gt,
                                                data_type="gt")
         # Make sure stack_gt is binarized
-        if stack_gt:
+        if stack_gt is not None:
             stack_gt = torch.as_tensor(
                 [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in range(len(stack_gt))])
 
