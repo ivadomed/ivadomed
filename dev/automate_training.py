@@ -137,7 +137,6 @@ if __name__ == '__main__':
     #Losses
     ### Simple case (one config per loss type)
     losses = [{"name": "DiceLoss"},
-            {"name": "cross_entropy"},
             {"name": "GeneralizedDiceLoss"},
             {"name": "FocalLoss", "params": {"gamma": 0.5, "alpha" : 0.2}}]
 
