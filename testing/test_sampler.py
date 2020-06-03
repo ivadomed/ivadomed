@@ -1,9 +1,8 @@
 import numpy as np
-import torch
+import pytest
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 
-import ivadomed.transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
@@ -31,40 +30,43 @@ def _cmpt_label(ds_loader):
            'pos_sample_ratio': pos_sample_ratio})
 
 
-def test_sampler():
+@pytest.mark.parametrize('transforms_dict', [{
+    "Resample":
+        {
+            "wspace": 0.75,
+            "hspace": 0.75
+        },
+    "ROICrop":
+        {
+            "size": [48, 48]
+        },
+    "NumpyToTensor": {}
+    }])
+@pytest.mark.parametrize('train_lst', [['sub-test001']])
+@pytest.mark.parametrize('target_lst', [["_seg-manual"]])
+@pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
+def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
-    training_transform_dict = {
-        "Resample":
-            {
-                "wspace": 0.75,
-                "hspace": 0.75
-            },
-        "ROICrop":
-            {
-                "size": [48, 48]
-            },
-        "NumpyToTensor": {}
+    loader_params = {
+        "transforms_params": transforms_dict,
+        "data_list": train_lst,
+        "dataset_type": "training",
+        "requires_undo": False,
+        "contrast_lst": ['T2w'],
+        "balance": {},
+        "bids_path": PATH_BIDS,
+        "target_suffix": target_lst,
+        "roi_params": roi_params,
+        "slice_filter_params": {
+            "filter_empty_mask": False,
+            "filter_empty_input": True
+        },
+        "slice_axis": "axial",
+        "multichannel": False
     }
-
-    train_transform = imed_transforms.Compose(training_transform_dict)
-
-    train_lst = ['sub-test001']
-
-    ds_train = imed_loader.BidsDataset(PATH_BIDS,
-                                       subject_lst=train_lst,
-                                       target_suffix=["_lesion-manual"],
-                                       roi_suffix="_seg-manual",
-                                       contrast_lst=['T2w'],
-                                       metadata_choice="without",
-                                       contrast_balance={},
-                                       slice_axis=2,
-                                       transform=train_transform,
-                                       multichannel=False,
-                                       slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
-                                                                              filter_empty_mask=False))
-
-    ds_train = imed_loader_utils.filter_roi(ds_train, nb_nonzero_thr=10)
+    # Get Training dataset
+    ds_train = imed_loader.load_dataset(**loader_params)
 
     print('\nLoading without sampling')
     train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,

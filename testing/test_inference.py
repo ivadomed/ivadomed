@@ -36,7 +36,7 @@ PATH_OUT = 'tmp'
     }])
 @pytest.mark.parametrize('test_lst', [['sub-test001']])
 @pytest.mark.parametrize('target_lst', [["_seg-manual"]])
-@pytest.mark.parametrize('roi_params', [{"suffix": None, "slice_filter_roi": None}])
+@pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
 def test_inference(transforms_dict, test_lst, target_lst, roi_params):
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
