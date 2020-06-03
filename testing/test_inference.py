@@ -60,17 +60,17 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params):
 
     # Get Testing dataset
     ds_test = imed_loader.load_dataset(**loader_params)
+    test_loader = DataLoader(ds_test, batch_size=BATCH_SIZE,
+                             shuffle=False, pin_memory=True,
+                             collate_fn=imed_loader_utils.imed_collate,
+                             num_workers=0)
 
     # Undo transform
     val_undo_transform = imed_transforms.UndoCompose(imed_transforms.Compose(transforms_dict))
 
-    test_loader = DataLoader(ds_test, batch_size=BATCH_SIZE,
-                             shuffle=False, pin_memory=pin_memory,
-                             collate_fn=imed_loader_utils.imed_collate,
-                             num_workers=1)
-
-    model = torch.load(os.path.join(PATH_BIDS, "model_unet_test.pt"),
-                       map_location=device)
+    # Model
+    model_path = os.path.join(PATH_BIDS, "model_unet_test.pt")
+    model = torch.load(model_path, map_location=device)
 
     if cuda_available:
         model.cuda()

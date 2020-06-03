@@ -37,7 +37,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
                              num_workers=0)
 
     # LOAD TRAIN MODEL
-    fname_model = "./" + log_directory + "/best_model.pt"
+    fname_model = os.path.join(log_directory, "best_model.pt")
     print('\nLoading model: {}'.format(fname_model))
     model = torch.load(fname_model, map_location=device)
     if cuda_available:
