@@ -17,18 +17,17 @@ def _cmpt_label(ds_loader):
     cmpt_label, cmpt_sample = {0: 0, 1: 0}, 0
     for i, batch in enumerate(ds_loader):
         for gt in batch['gt']:
-            for idx in range(len(gt)):
-                if np.any(gt[idx].numpy()[0]):
-                    cmpt_label[1] += 1
-                else:
-                    cmpt_label[0] += 1
-                cmpt_sample += 1
+            if np.any(gt.numpy()):
+                cmpt_label[1] += 1
+            else:
+                cmpt_label[0] += 1
+        cmpt_sample += len(batch['gt'])
 
     neg_sample_ratio = cmpt_label[0] * 100. / cmpt_sample
     pos_sample_ratio = cmpt_label[1] * 100. / cmpt_sample
     print({'neg_sample_ratio': neg_sample_ratio,
            'pos_sample_ratio': pos_sample_ratio})
-
+    return neg_sample_ratio, pos_sample_ratio
 
 @pytest.mark.parametrize('transforms_dict', [{
     "Resample":
@@ -74,7 +73,8 @@ def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
                               shuffle=True, pin_memory=True,
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
-    _cmpt_label(train_loader)
+    neg_percent, pos_percent = _cmpt_label(train_loader)
+    assert neg_percent > pos_percent
 
     print('\nLoading with sampling')
     train_loader_balanced = DataLoader(ds_train, batch_size=BATCH_SIZE,
@@ -82,4 +82,5 @@ def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
                                        shuffle=False, pin_memory=True,
                                        collate_fn=imed_loader_utils.imed_collate,
                                        num_workers=0)
-    _cmpt_label(train_loader_balanced)
+    neg_percent, pos_percent = _cmpt_label(train_loader_balanced)
+    assert abs(neg_percent - pos_percent) <= 10.
