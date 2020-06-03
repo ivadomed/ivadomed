@@ -65,8 +65,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
     for i_monteCarlo in range(n_monteCarlo):
         preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, path_3Dpred,
                                           cuda_available, i_monteCarlo, log_directory)
-        # TODO: adapt for multi-label
-        metric_mgr(preds_npy.squeeze(1), gt_npy.squeeze(1))
+        metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
     if n_monteCarlo > 1:

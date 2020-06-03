@@ -1,11 +1,11 @@
 {
-    "command": "test",
+    "command": "train",
     "gpu": 0,
-    "log_directory": "HeMIS",
+    "log_directory": "tumor_segmentation",
     "debugging": true,
     "loader_parameters": {
         "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
-        "target_suffix": ["_seg-tumor"],
+        "target_suffix": ["_seg-tumor", "_edema"],
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
@@ -33,7 +33,8 @@
     "training_parameters": {
         "batch_size": 1,
         "loss": {
-            "name": "DiceLoss"
+            "name": "MultiClassDiceLoss",
+            "classes_of_interest": null
         },
         "training_time": {
             "num_epochs": 100,
@@ -65,7 +66,7 @@
         "applied": true,
         "length_3D": [512, 256, 16],
         "padding_3D": 0,
-        "attention": true,
+        "attention": false,
         "n_filters": 8
     },
     "testing_parameters": {
