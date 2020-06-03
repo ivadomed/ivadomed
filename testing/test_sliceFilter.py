@@ -1,5 +1,5 @@
 import itertools
-
+import pytest
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
@@ -29,26 +29,19 @@ def _cmpt_slice(ds_loader, gt_roi='gt'):
             cmpt_sample += 1
     print(cmpt_label)
 
-
-def test_slice_filter_center():
+@pytest.mark.parametrize('transforms_dict', [
+    {"Resample": {"wspace": 0.75, "hspace": 0.75},
+     "ROICrop": {"size": [48, 48]},
+     "NumpyToTensor": {}},
+    {"Resample": {"wspace": 0.75, "hspace": 0.75},
+     "CenterCrop": {"size": [100, 100]},
+     "NumpyToTensor": {}}])
+@pytest.mark.parametrize('train_lst', [['sub-test001']])
+@pytest.mark.parametrize('target_lst', [["_seg-manual"]])
+@pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
+def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params):
     """Test SliceFilter when using mt_transforms.CenterCrop2D."""
-    device = torch.device("cuda:" + str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
-    cuda_available = torch.cuda.is_available()
-    if cuda_available:
-        torch.cuda.set_device(device)
-        print("Using GPU number {}".format(device))
-
-    training_transform_dict = {
-        "Resample":
-            {
-                "wspace": 0.75,
-                "hspace": 0.75
-            },
-        "CenterCrop":
-            {
-                "size": [100, 100]
-            }
-    }
+    cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
     train_transform = imed_transforms.Compose(training_transform_dict)
 
