@@ -37,7 +37,14 @@ PATH_OUT = 'tmp'
 @pytest.mark.parametrize('test_lst', [['sub-test001']])
 @pytest.mark.parametrize('target_lst', [["_seg-manual"]])
 @pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
-def test_inference(transforms_dict, test_lst, target_lst, roi_params):
+@pytest.mark.parametrize('testing_params', [{
+    "binarize_prediction": True,
+    "uncertainty": {
+        "epistemic": False,
+        "aleatoric": False,
+        "n_it": 0
+    }}])
+def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_params):
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
     model_params = {"name": "Unet"},
@@ -68,6 +75,8 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params):
 
     # Undo transform
     val_undo_transform = imed_transforms.UndoCompose(imed_transforms.Compose(transforms_dict))
+
+    tes
 
     # Model
     model_path = os.path.join(PATH_BIDS, "model_unet_test.pt")
