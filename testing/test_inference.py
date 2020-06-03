@@ -47,7 +47,7 @@ PATH_OUT = 'tmp'
 def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_params):
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
-    model_params = {"name": "Unet"},
+    model_params = {"name": "Unet"}
     loader_params = {
         "transforms_params": transforms_dict,
         "data_list": test_lst,
@@ -76,7 +76,12 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_pa
     # Undo transform
     val_undo_transform = imed_transforms.UndoCompose(imed_transforms.Compose(transforms_dict))
 
-    tes
+    # Update testing_params
+    testing_params.update({
+        "slice_axis": loader_params["slice_axis"],
+        "target_suffix": loader_params["target_suffix"],
+        "undo_transforms": val_undo_transform
+    })
 
     # Model
     model_path = os.path.join(PATH_BIDS, "model_unet_test.pt")
@@ -99,10 +104,12 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_pa
     if not os.path.isdir(PATH_OUT):
         os.makedirs(PATH_OUT)
 
-    preds_npy, gt_npy = imed_testing.run_inference(test_loader, model, model_params,
-                               testing_params,
-                               ofolder=PATH_OUT,
-                               cuda_available=cuda_available)
+    preds_npy, gt_npy = imed_testing.run_inference(test_loader=test_loader,
+                                                   model=model,
+                                                   model_params=model_params,
+                                                   testing_params=testing_params,
+                                                   ofolder=PATH_OUT,
+                                                   cuda_available=cuda_available)
     """
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     for i, batch in enumerate(test_loader):
