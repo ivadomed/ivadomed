@@ -91,9 +91,10 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         cuda_available (Bool):
         i_monteCarlo (int): i_th Monte Carlo iteration
     Returns:
-        np.array, np.array: pred, gt
+        np.array, np.array: pred, gt of shape n_sample, n_label, h, w, d
     """
     # INIT STORAGE VARIABLES
+    pred_npy_list, gt_npy_list = [], []
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     # LOOP ACROSS DATASET
     for i, batch in enumerate(tqdm(test_loader, desc="Inference - Iteration " + str(i_monteCarlo))):
@@ -131,8 +132,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
         # PREDS TO CPU
         preds_cpu = preds.cpu()
-        gt_npy = gt_samples.cpu().numpy().astype(np.uint8)
-        preds_npy = preds_cpu.data.numpy().astype(np.uint8)
+        gt_npy_list.append(gt_samples.cpu().numpy().astype(np.uint8))
+        preds_npy_list.append(preds_cpu.data.numpy().astype(np.uint8))
 
         # RECONSTRUCT 3D IMAGE
         last_batch_bool = (i == len(test_loader) - 1)
@@ -210,4 +211,4 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                  fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                  imed_utils.AXIS_DCT[testing_params['slice_axis']])
 
-    return preds_npy, gt_npy
+    return np.concatenate(preds_npy_list, axis=0), np.concatenate(gt_npy_list, axis=0)
