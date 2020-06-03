@@ -3,6 +3,7 @@ import json
 import nibabel as nib
 import numpy as np
 import statistics
+from scipy import ndimage
 
 from ivadomed import  utils as imed_utils
 from ivadomed import postprocessing as imed_postpro
@@ -12,17 +13,24 @@ from ivadomed import transforms as imed_transforms
 
 def get_bounding_boxes(mask):
     """
-    Generates a 3D bounding box around a given mask
+    Generates a 3D bounding box around a given mask.
     :param mask: numpy array with the mask of the ROI
     :return: bounding box coordinate (x_min, x_max, y_min, y_max, z_min, z_max)
     """
-    coords = np.where(mask != 0)
-    dimensions = []
-    for i in range(len(coords)):
-        dimensions.append(int(coords[i].min()))
-        dimensions.append(int(coords[i].max()))
+    # Label the different objects in the mask
+    labeled_mask, _ = ndimage.measurements.label(mask)
+    object_labels = np.unique(labeled_mask)
+    bounding_boxes = []
+    for label in object_labels[1:]:
+        single_object = labeled_mask == label
+        coords = np.where(single_object)
+        dimensions = []
+        for i in range(len(coords)):
+            dimensions.append(int(coords[i].min()))
+            dimensions.append(int(coords[i].max()))
+        bounding_boxes.append(dimensions)
 
-    return dimensions
+    return bounding_boxes
 
 
 def adjust_bb_size(bounding_box, factor, multiple_16, resample=False):
@@ -59,10 +67,11 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
             object_mask = imed_utils.segment_volume(model_path, subject_path, gpu_number=gpu_number)
             if keep_largest_only:
                 object_mask = imed_postpro.keep_largest_object(object_mask)
+
             ras_orientation = nib.as_closest_canonical(object_mask)
             hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata()[..., 0], slice_axis)
-            bounding_box = get_bounding_boxes(hwd_orientation)
-            bounding_box_dict[subject_path] = adjust_bb_size(bounding_box, safety_factor, multiple_16)
+            bounding_boxes = get_bounding_boxes(hwd_orientation)
+            bounding_box_dict[subject_path] = [adjust_bb_size(bb, safety_factor, multiple_16) for bb in bounding_boxes]
 
     file_path = os.path.join(log_dir, 'bounding_boxes.json')
     with open(file_path, 'w') as fp:
