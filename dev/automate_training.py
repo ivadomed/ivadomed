@@ -123,7 +123,7 @@ if __name__ == '__main__':
 
     ### Training parameters
     category = "training_parameters"
-    base_item = context[category]
+    base_item = initial_config[category]
     keys = ["batch_sizes", "initial_lrs", "lr_scheduler", "loss", "mixup_alpha"]
 
     batch_sizes = [8, 16, 32, 64]
@@ -148,8 +148,8 @@ if __name__ == '__main__':
     alphas = [0.2, 0.5, 0.75, 1]
     gammas = [0.5, 1, 1.5, 2]
 
-    loss_params = make_category(context["training_parameters"]["loss"]["params"], ["gamma","alpha"], [alphas, gammas])
-    losses = make_category(context["training_parameters"]["loss"], ["params"], [loss_params])
+    loss_params = make_category(initial_config["training_parameters"]["loss"]["params"], ["gamma","alpha"], [alphas, gammas])
+    losses = make_category(initial_config["training_parameters"]["loss"], ["params"], [loss_params])
     """
 
     #MixUp
@@ -162,7 +162,7 @@ if __name__ == '__main__':
     # Step 2 : FiLM
 
     category = "FiLMedUnet"
-    base_item = context[category]
+    base_item = initial_config[category]
     keys = ["applied", "metadata", "film_layers"]
 
     applied = ["true"]
