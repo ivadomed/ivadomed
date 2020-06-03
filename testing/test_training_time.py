@@ -52,9 +52,23 @@ PATH_BIDS = 'testing_data'
     }
 ])
 
-def test_unet(train_lst):
+def test_unet_time(train_lst, config):
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
+    loader_params = {
+        "data_list": train_lst,
+        "dataset_type": "training",
+        "requires_undo": False,
+        "bids_path": PATH_BIDS,
+        "target_suffix": target_lst,
+        "roi_params": roi_params,
+        "model_params": {"name": "Unet"},
+        "slice_filter_params": slice_filter_params,
+        "slice_axis": "axial",
+        "multichannel": False
+    }
+    # Get Training dataset
+    ds_train = imed_loader.load_dataset(**loader_params)
 
 
 

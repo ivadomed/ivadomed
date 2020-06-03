@@ -53,7 +53,6 @@ def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_
         "dataset_type": "training",
         "requires_undo": False,
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
-        "balance": {},
         "bids_path": PATH_BIDS,
         "target_suffix": target_lst,
         "roi_params": roi_params,
