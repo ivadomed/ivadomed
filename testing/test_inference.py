@@ -22,7 +22,7 @@ PATH_BIDS = 'testing_data'
 PATH_OUT = 'tmp'
 
 
-def test_inference(film_bool=False):
+def test_inference():
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
     training_transform_dict = {
@@ -61,18 +61,6 @@ def test_inference(film_bool=False):
                                                                              filter_empty_mask=False))
 
     ds_test = imed_loader_utils.filter_roi(ds_test, nb_nonzero_thr=10)
-
-    if film_bool:  # normalize metadata before sending to network
-        print('FiLM inference not implemented yet.')
-        return 0
-        # metadata_clustering_models = joblib.load("./" + context["log_directory"] + "/clustering_models.joblib")
-        # ds_test = imed_film.normalize_metadata(ds_test,
-        #                                     metadata_clustering_models,
-        #                                     context["debugging"],
-        #                                     context["metadata"],
-        #                                     False)
-
-        # one_hot_encoder = joblib.load("./" + context["log_directory"] + "/one_hot_encoder.joblib")
 
     test_loader = DataLoader(ds_test, batch_size=BATCH_SIZE,
                              shuffle=False, pin_memory=pin_memory,
