@@ -1,31 +1,32 @@
 import time
 import pytest
 import numpy as np
-import torch
 import torch.backends.cudnn as cudnn
 from torch import optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-import ivadomed.transforms as imed_transforms
 from ivadomed import losses
-from ivadomed import models
+from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
 
 GPU_NUMBER = 0
 BATCH_SIZE = 8
-DROPOUT = 0.4
-DEPTH = 3
-BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01
 FILM_LAYERS = [0, 0, 0, 0, 0, 1, 1, 1]
 PATH_BIDS = 'testing_data'
+MODEL_DEFAULT = {
+    "dropout_rate": 0.3,
+    "bn_momentum": 0.1,
+    "depth": 3
+}
 
 @pytest.mark.parametrize('train_lst', [['sub-test001']])
+@pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('config', [
     {
         "transformation": {"Resample": {"wspace": 0.75, "hspace": 0.75},
@@ -33,7 +34,8 @@ PATH_BIDS = 'testing_data'
                            "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
-        "multichannel": False
+        "multichannel": False,
+        "model_params": {"name": "Unet"},
     },
     {
         "transformation": {"Resample": {"wspace": 0.75, "hspace": 0.75},
@@ -41,18 +43,30 @@ PATH_BIDS = 'testing_data'
                            "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
-        "multichannel": True
+        "multichannel": True,
+        "model_params": {"name": "Unet"},
     },
     {
         "transformation": {"CenterCrop": {"size": [96, 96, 16]},
                            "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
-        "multichannel": False
+        "multichannel": False,
+        "model_params": {"name": "UNet3D", "length_3D": [96, 96, 16], "n_filters": 8, "padding_3D": 0,
+                         "attention": True},
+    },
+    {
+        "transformation": {"CenterCrop": {"size": [96, 96, 16]},
+                           "NumpyToTensor": {}},
+        "roi_params": {"suffix": None, "slice_filter_roi": 0},
+        "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
+        "multichannel": False,
+        "model_params": {"name": "UNet3D", "length_3D": [96, 96, 16], "n_filters": 8, "padding_3D": 0,
+                         "attention": False},
     }
 ])
 
-def test_unet_time(train_lst, config):
+def test_unet_time(train_lst, target_lst, config):
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
     loader_params = {
@@ -61,46 +75,33 @@ def test_unet_time(train_lst, config):
         "requires_undo": False,
         "bids_path": PATH_BIDS,
         "target_suffix": target_lst,
-        "roi_params": roi_params,
-        "model_params": {"name": "Unet"},
-        "slice_filter_params": slice_filter_params,
-        "slice_axis": "axial",
-        "multichannel": False
+        "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+        "slice_axis": "axial"
     }
+    # Update loader_params with config
+    loader_params.update(config)
     # Get Training dataset
     ds_train = imed_loader.load_dataset(**loader_params)
 
-
-
-    train_loader = DataLoader(ds_train, batch_size=BATCH_SIZE,
-                              shuffle=True, pin_memory=True,
-                              collate_fn=imed_loader_utils.imed_collate,
-                              num_workers=1)
-
-    multichannel_loader = DataLoader(ds_mutichannel, batch_size=BATCH_SIZE,
-                                     shuffle=True, pin_memory=True,
-                                     collate_fn=imed_loader_utils.imed_collate,
-                                     num_workers=1)
-    loader_3d = DataLoader(ds_3d, batch_size=1,
+    # Loader
+    train_loader = DataLoader(ds_train, batch_size=1 if config["model_params"]["name"] == "UNet3D" else BATCH_SIZE,
                            shuffle=True, pin_memory=True,
                            collate_fn=imed_loader_utils.imed_collate,
                            num_workers=1)
 
-    model_list = [(models.Unet(depth=DEPTH,
-                               film_layers=FILM_LAYERS,
-                               n_metadata=len(
-                                   [ll for l in train_onehotencoder.categories_ for ll in l]),
-                               drop_rate=DROPOUT,
-                               bn_momentum=BN,
-                               film_bool=True), train_loader, True, 'Filmed-Unet'),
-                  (models.Unet(in_channel=1,
-                               out_channel=1,
-                               depth=2,
-                               drop_rate=DROPOUT,
-                               bn_momentum=BN), train_loader, False, 'Unet'),
-                  (models.Unet(in_channel=2), multichannel_loader, False, 'Multi-Channels Unet'),
-                  (models.UNet3D(in_channels=1, n_classes=2 + 1), loader_3d, False, '3D Unet'),
-                  (models.UNet3D(in_channels=1, n_classes=2 + 1, attention=True), loader_3d, False, 'Attention UNet')]
+    # MODEL
+    model_params = loader_params["model_params"]
+    model_params.update(MODEL_DEFAULT)
+    # Get in_channel from contrast_lst
+    if loader_params["multichannel"]:
+        model_params["in_channel"] = len(loader_params["contrast_params"]["contrast_lst"])
+    else:
+        model_params["in_channel"] = 1
+    # Get out_channel from target_suffix
+    model_params["out_channel"] = len(loader_params["target_suffix"])
+    model_class = getattr(imed_models, model_params["name"])
+    model = model_class(**model_params)
+
 
     for model, train_loader, film_bool, model_name in model_list:
         print("Training {}".format(model_name))
