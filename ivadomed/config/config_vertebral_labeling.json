@@ -4,14 +4,14 @@
     "log_directory": "spineGeneric",
     "debugging": false,
     "loader_parameters": {
-        "bids_path": "../duke/projects/ivado-medical-imaging/spineGeneric_201907041011/result/",
-        "target_suffix": ["_labels-disc-manualheatmap"],
+        "bids_path": "/home/GRAMES.POLYMTL.CA/luroub/testing_ivadomed/",
+        "target_suffix": ["_heatmap"],
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
         },
         "contrast_params": {
-            "training_validation": [ "T2w_mid"],
+            "training_validation": [ "acq-sag_T2w_mid"],
             "testing": [ "T2w_mid"],
             "balance": {}
         },
