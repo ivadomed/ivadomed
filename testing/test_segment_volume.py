@@ -1,13 +1,14 @@
 import json
 import os
 import shutil
-
+from collections import OrderedDict
 import nibabel as nib
 import numpy as np
 import torch
 
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils
 
 SLICE_AXIS = 2
 PATH_BIDS = 'testing_data'
@@ -34,21 +35,31 @@ def test_segment_volume_2d():
 
     torch.save(model, os.path.join(PATH_MODEL, "model_test.pt"))
     config = {
-        "batch_size": BATCH_SIZE,
-
-        "transformation_validation": {
+        "loader_parameters": {
+            "slice_filter_params": {
+                "filter_empty_mask": False,
+                "filter_empty_input": False
+            },
+            "roi_params": {
+                "suffix": None,
+                "slice_filter_roi": 10
+            },
+            "slice_axis": "axial"
+        },
+        "transformation": {
             "Resample": {"wspace": 0.75, "hspace": 0.75},
             "ROICrop": {"size": [48, 48]},
+            "RandomTranslation": {
+                "translate": [0.03, 0.03],
+                "applied_to": ["im", "gt"],
+                "dataset_type": ["training"]
+            },
             "NumpyToTensor": {},
             "NormalizeInstance": {"applied_to": ["im"]}
         },
-        "slice_filter": {
-            "filter_empty_mask": False,
-            "filter_empty_input": False
-        },
-        "slice_filter_roi": 10,
-        "slice_axis": "axial",
-        "unet_3D": False,
+        "training_parameters": {
+            "batch_size": BATCH_SIZE
+        }
     }
 
     PATH_CONFIG = os.path.join(PATH_MODEL, 'model_test.json')
@@ -65,8 +76,8 @@ def test_segment_volume_2d():
 
 
 def test_segment_volume_3d():
-    model = imed_models.UNet3D(in_channels=1,
-                               n_classes=1,
+    model = imed_models.UNet3D(in_channel=1,
+                               out_channel=1,
                                base_n_filter=1)
 
     # temporary folder that will be deleted at the end of the test
@@ -75,22 +86,44 @@ def test_segment_volume_3d():
 
     torch.save(model, os.path.join(PATH_MODEL, "model_test.pt"))
     config = {
-        "batch_size": BATCH_SIZE,
-        "transformation_validation": {
-            "Resample": {"wspace": 1.0, "hspace": 1.0, "dspace": 2.0},
-            "CenterCrop": {"size": LENGTH_3D},
+        "UNet3D": {
+            "applied": True,
+            "length_3D": LENGTH_3D,
+            "padding_3D": 0,
+            "attention": False
+        },
+        "loader_parameters": {
+            "slice_filter_params": {
+                "filter_empty_mask": False,
+                "filter_empty_input": False
+            },
+            "roi_params": {
+                "suffix": None,
+                "slice_filter_roi": None
+            },
+            "slice_axis": "sagittal"
+        },
+        "transformation": {
+            "Resample":
+                {
+                    "wspace": 1,
+                    "hspace": 1,
+                    "dspace": 2
+                },
+            "CenterCrop": {
+                "size": LENGTH_3D
+            },
+            "RandomTranslation": {
+                "translate": [0.03, 0.03],
+                "applied_to": ["im", "gt"],
+                "dataset_type": ["training"]
+            },
             "NumpyToTensor": {},
             "NormalizeInstance": {"applied_to": ["im"]}
         },
-        "slice_filter": {
-            "filter_empty_mask": False,
-            "filter_empty_input": False
-        },
-        "slice_filter_roi": None,
-        "slice_axis": "sagittal",
-        "unet_3D": True,
-        "length_3D": LENGTH_3D,
-        "padding_3D": 0,
+        "training_parameters": {
+            "batch_size": BATCH_SIZE
+        }
     }
 
     PATH_CONFIG = os.path.join(PATH_MODEL, 'model_test.json')

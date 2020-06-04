@@ -1,57 +1,83 @@
 import nibabel as nib
 import numpy as np
 import torch
-
 from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
-from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
+from ivadomed import postprocessing as imed_postpro
+from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 
 
-def load_dataset(data_list, data_transform, context):
-    if context["unet_3D"]:
-        dataset = Bids3DDataset(context["bids_path"],
+def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
+                 contrast_params, slice_filter_params, slice_axis, multichannel,
+                 dataset_type="training", requires_undo=False, metadata_type=None, **kwargs):
+    """Get loader.
+
+    Args:
+        data_list (list):
+        bids_path (string):
+        transforms_params (dict):
+        model_name (string):
+        target_suffix (list):
+        roi_params (dict):
+        contrast_params (dict):
+        slice_filter_params (dict):
+        slice_axis (string):
+        multichannel (bool):
+        metadata_type (string): None if no metadata
+        dataset_type (string): training, validation or testing
+        requires_undo (Bool): If True, the transformations without undo_transform will be discarded
+    Returns:
+        BidsDataset
+    """
+    # Compose transforms
+    transforms = imed_transforms.Compose(transforms_params, requires_undo=requires_undo)
+
+    if model_params["name"] == "UNet3D":
+        dataset = Bids3DDataset(bids_path,
                                 subject_lst=data_list,
-                                target_suffix=context["target_suffix"],
-                                roi_suffix=context["roi_suffix"],
-                                contrast_lst=context["contrast_train_validation"],
-                                metadata_choice=context["metadata"],
-                                contrast_balance=context["contrast_balance"],
-                                slice_axis=imed_utils.AXIS_DCT[context["slice_axis"]],
-                                transform=data_transform,
-                                multichannel=context['multichannel'],
-                                length=context["length_3D"],
-                                padding=context["padding_3D"])
-    elif context["HeMIS"]:
-        dataset = imed_adaptative.HDF5Dataset(root_dir=context["bids_path"],
+                                target_suffix=target_suffix,
+                                roi_suffix=roi_params["suffix"],
+                                contrast_params=contrast_params,
+                                metadata_choice=metadata_type,
+                                slice_axis=imed_utils.AXIS_DCT[slice_axis],
+                                transform=transforms,
+                                multichannel=multichannel,
+                                model_params=model_params)
+    elif model_params["name"] == "HeMISUnet":
+        dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
                                               subject_lst=data_list,
-                                              hdf5_name=context["hdf5_path"],
-                                              csv_name=context["csv_path"],
-                                              target_suffix=context["target_suffix"],
-                                              contrast_lst=context["contrast_train_validation"],
-                                              ram=context['ram'],
-                                              contrast_balance=context["contrast_balance"],
-                                              slice_axis=imed_utils.AXIS_DCT[context["slice_axis"]],
-                                              transform=data_transform,
-                                              metadata_choice=context["metadata"],
-                                              slice_filter_fn=imed_utils.SliceFilter(**context["slice_filter"]),
-                                              roi_suffix=context["roi_suffix"],
-                                              target_lst=context['target_lst'],
-                                              roi_lst=context['roi_lst'])
+                                              model_params=model_params,
+                                              contrast_params=contrast_params,
+                                              target_suffix=target_suffix,
+                                              slice_axis=imed_utils.AXIS_DCT[slice_axis],
+                                              transform=transforms,
+                                              metadata_choice=metadata_type,
+                                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
+                                              roi_suffix=roi_params["suffix"])
     else:
-        dataset = BidsDataset(context["bids_path"],
+        dataset = BidsDataset(bids_path,
                               subject_lst=data_list,
-                              target_suffix=context["target_suffix"],
-                              roi_suffix=context["roi_suffix"],
-                              contrast_lst=context["contrast_train_validation"],
-                              metadata_choice=context["metadata"],
-                              contrast_balance=context["contrast_balance"],
-                              slice_axis=imed_utils.AXIS_DCT[context["slice_axis"]],
-                              transform=data_transform,
-                              multichannel=context['multichannel'],
-                              slice_filter_fn=imed_utils.SliceFilter(**context["slice_filter"]))
+                              target_suffix=target_suffix,
+                              roi_suffix=roi_params["suffix"],
+                              contrast_params=contrast_params,
+                              metadata_choice=metadata_type,
+                              slice_axis=imed_utils.AXIS_DCT[slice_axis],
+                              transform=transforms,
+                              multichannel=multichannel,
+                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params))
+
+    # if ROICrop in transform, then apply SliceFilter to ROI slices
+    if 'ROICrop' in transforms_params:
+        dataset = imed_loader_utils.filter_roi(dataset, nb_nonzero_thr=roi_params["slice_filter_roi"])
+
+    if model_params["name"] != "UNet3D":
+        print("Loaded {} {} slices for the {} set.".format(len(dataset), slice_axis, dataset_type))
+    else:
+        print("Loaded {} volumes of size {} for the {} set.".format(len(dataset), slice_axis, dataset_type))
 
     return dataset
 
@@ -209,16 +235,7 @@ class SegmentationPair(object):
         """
 
         metadata = self.get_pair_metadata(slice_index)
-        if self.cache:
-            input_dataobj, gt_dataobj = self.get_pair_data()
-        else:
-            # use dataobj to avoid caching
-            input_dataobj = [handle.dataobj for handle in self.input_handle]
-
-            if self.gt_handle is None:
-                gt_dataobj = None
-            else:
-                gt_dataobj = [gt.dataobj for gt in self.gt_handle]
+        input_dataobj, gt_dataobj = self.get_pair_data()
 
         if self.slice_axis not in [0, 1, 2]:
             raise RuntimeError("Invalid axis, must be between 0 and 2.")
@@ -337,6 +354,10 @@ class MRI2DSegmentationDataset(Dataset):
         stack_gt, metadata_gt = self.transform(sample=seg_pair_slice["gt"],
                                                metadata=metadata_gt,
                                                data_type="gt")
+        # Make sure stack_gt is binarized
+        if stack_gt is not None:
+            stack_gt = torch.as_tensor(
+                [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in range(len(stack_gt))])
 
         data_dict = {
             'input': stack_input,
@@ -453,6 +474,10 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         stack_gt, metadata_gt = self.transform(sample=gt_img,
                                                metadata=metadata_gt,
                                                data_type="gt")
+        # Make sure stack_gt is binarized
+        if stack_gt is not None:
+            stack_gt = torch.as_tensor(
+                [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in range(len(stack_gt))])
 
         shape_x = coord["x_max"] - coord["x_min"]
         shape_y = coord["y_max"] - coord["y_min"]
@@ -483,26 +508,25 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance=None, slice_axis=2,
+    def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_suffix=None,
-                 multichannel=False, length=(64, 64, 64), padding=0):
+                 multichannel=False):
         dataset = BidsDataset(root_dir,
                               subject_lst=subject_lst,
                               target_suffix=target_suffix,
                               roi_suffix=roi_suffix,
-                              contrast_lst=contrast_lst,
+                              contrast_params=contrast_params,
                               metadata_choice=metadata_choice,
-                              contrast_balance=contrast_balance,
                               slice_axis=slice_axis,
                               transform=transform,
                               multichannel=multichannel)
 
-        super().__init__(dataset.filename_pairs, length=length, padding=padding, transform=transform,
-                         slice_axis=slice_axis)
+        super().__init__(dataset.filename_pairs, length=model_params["length_3D"], padding=model_params["padding_3D"],
+                         transform=transform, slice_axis=slice_axis)
 
 
 class BidsDataset(MRI2DSegmentationDataset):
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, contrast_balance=None, slice_axis=2,
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
                  multichannel=False):
 
@@ -523,16 +547,16 @@ class BidsDataset(MRI2DSegmentationDataset):
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
 
         tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast])
-               for contrast in contrast_balance.keys()}
+               for contrast in contrast_params["balance"].keys()}
 
         # Create a counter that helps to balance the contrasts
-        c = {contrast: 0 for contrast in contrast_balance.keys()}
+        c = {contrast: 0 for contrast in contrast_params["balance"].keys()}
 
         multichannel_subjects = {}
         if multichannel:
-            num_contrast = len(contrast_lst)
+            num_contrast = len(contrast_params["contrast_lst"])
             idx_dict = {}
-            for idx, contrast in enumerate(contrast_lst):
+            for idx, contrast in enumerate(contrast_params["contrast_lst"]):
                 idx_dict[contrast] = idx
             multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
                                                "deriv_path": None,
@@ -540,11 +564,11 @@ class BidsDataset(MRI2DSegmentationDataset):
                                                "metadata": [None] * num_contrast} for subject in subject_lst}
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
-            if subject.record["modality"] in contrast_lst:
+            if subject.record["modality"] in contrast_params["contrast_lst"]:
                 # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
-                if subject.record["modality"] in contrast_balance.keys():
+                if subject.record["modality"] in contrast_params["balance"].keys():
                     c[subject.record["modality"]] = c[subject.record["modality"]] + 1
-                    if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_balance[
+                    if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_params["balance"][
                         subject.record["modality"]]:
                         continue
 

@@ -2,15 +2,18 @@ import torch
 import torch.nn as nn
 
 
-# Inspired from https://arxiv.org/pdf/1802.10508.pdf
 class MultiClassDiceLoss(nn.Module):
-    """
+    """ Multi-class Dice Loss.
+
+    Inspired from https://arxiv.org/pdf/1802.10508.
+
     :param classes_of_interest:  list containing the index of a class which dice will be added to the loss.
     """
 
     def __init__(self, classes_of_interest):
         super(MultiClassDiceLoss, self).__init__()
         self.classes_of_interest = classes_of_interest
+        self.dice_loss = DiceLoss()
 
     def forward(self, prediction, target):
         dice_per_class = 0
@@ -20,19 +23,34 @@ class MultiClassDiceLoss(nn.Module):
             self.classes_of_interest = range(n_classes)
 
         for i in self.classes_of_interest:
-            dice_per_class += dice_loss(prediction[:, i, ], target[:, i, ])
+            dice_per_class += self.dice_loss(prediction[:, i, ], target[:, i, ])
 
-        return - dice_per_class / len(self.classes_of_interest)
+        return dice_per_class / len(self.classes_of_interest)
 
 
-def dice_loss(input, target):
-    smooth = 1.0
+class DiceLoss(nn.Module):
+    def __init__(self, smooth=1.0):
+        super(DiceLoss, self).__init__()
+        self.smooth = smooth
 
-    iflat = input.reshape(-1)
-    tflat = target.reshape(-1)
-    intersection = (iflat * tflat).sum()
+    def forward(self, prediction, target):
+        iflat = prediction.reshape(-1)
+        tflat = target.reshape(-1)
+        intersection = (iflat * tflat).sum()
 
-    return (2.0 * intersection + smooth) / (iflat.sum() + tflat.sum() + smooth)
+        return - (2.0 * intersection + self.smooth) / (iflat.sum() + tflat.sum() + self.smooth)
+
+
+class BinaryCrossEntropyLoss(nn.Module):
+    """
+    Binary Cross Entropy Loss, calls https://pytorch.org/docs/master/generated/torch.nn.BCELoss.html#bceloss
+    """
+    def __init__(self):
+        super(BinaryCrossEntropyLoss, self).__init__()
+        self.loss_fct = nn.BCELoss()
+
+    def forward(self, prediction, target):
+        return self.loss_fct(prediction, target)
 
 
 class FocalLoss(nn.Module):
@@ -70,9 +88,10 @@ class FocalDiceLoss(nn.Module):
         super().__init__()
         self.beta = beta
         self.focal = FocalLoss(gamma, alpha)
+        self.dice = DiceLoss()
 
     def forward(self, input, target):
-        dc_loss = dice_loss(input, target)
+        dc_loss = - self.dice(input, target)
         fc_loss = self.focal(input, target)
 
         # used to fine tune beta

@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from ivadomed import losses as imed_losses
+from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
@@ -40,15 +40,31 @@ def test_image_orientation():
     train_transform = imed_transforms.Compose(training_transform_dict)
     training_undo_transform = imed_transforms.UndoCompose(train_transform)
 
-    for dim in ['3d', '2d']:
+    model_params = {
+            "name": "UNet3D",
+            "dropout_rate": 0.3,
+            "bn_momentum": 0.9,
+            "depth": 2,
+            "in_channel": 1,
+            "out_channel": 1,
+            "length_3D": [176, 128, 160],
+            "padding_3D": 0,
+            "attention": False,
+            "n_filters": 8
+        }
+    contrast_params = {
+        "contrast_lst": ['T1w'],
+        "balance": {}
+    }
+
+    for dim in ['2d', '3d']:
         for slice_axis in [0, 1, 2]:
             if dim == '2d':
                 ds = imed_loader.BidsDataset(PATH_BIDS,
                                              subject_lst=train_lst,
                                              target_suffix=["_seg-manual"],
-                                             contrast_lst=['T1w'],
+                                             contrast_params=contrast_params,
                                              metadata_choice="without",
-                                             contrast_balance={},
                                              slice_axis=slice_axis,
                                              transform=train_transform,
                                              multichannel=False)
@@ -56,13 +72,12 @@ def test_image_orientation():
                 ds = imed_loader.Bids3DDataset(PATH_BIDS,
                                                subject_lst=train_lst,
                                                target_suffix=["_seg-manual"],
-                                               contrast_lst=['T1w'],
+                                               model_params=model_params,
+                                               contrast_params=contrast_params,
                                                metadata_choice="without",
-                                               contrast_balance={},
                                                slice_axis=slice_axis,
                                                transform=train_transform,
-                                               multichannel=False,
-                                               length=[176, 128, 160])
+                                               multichannel=False)
 
             loader = DataLoader(ds, batch_size=1,
                                 shuffle=True, pin_memory=True,
@@ -118,11 +133,11 @@ def test_image_orientation():
                         # verify image after transform, undo transform and 3D reconstruction
                         input_hwd_2 = imed_postpro.threshold_predictions(arr)
                         # Some difference are generated due to transform and undo transform (e.i. Resample interpolation)
-                        assert imed_losses.dice_loss(input_hwd_2, input_hwd) >= 0.85
+                        assert imed_metrics.dice_score(input_hwd_2, input_hwd) >= 0.85
                         input_ras_2 = imed_loader_utils.orient_img_ras(input_hwd_2, slice_axis)
-                        assert imed_losses.dice_loss(input_ras_2, input_ras) >= 0.85
+                        assert imed_metrics.dice_score(input_ras_2, input_ras) >= 0.85
                         input_init_2 = imed_utils.reorient_image(input_hwd_2, slice_axis, nib_ref, nib_ref_can)
-                        assert imed_losses.dice_loss(input_init_2, input_init) >= 0.85
+                        assert imed_metrics.dice_score(input_init_2, input_init) >= 0.85
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []

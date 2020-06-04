@@ -177,7 +177,6 @@ def multi_class_dice_score(im1, im2):
     n_classes = im1.shape[0]
 
     for i in range(n_classes):
-        dice_per_class += dice_score(im1[i,], im2[i,]) \
-            if not dice_score(im1[i,], im2[i,]) == np.nan else 1.0
+        dice_per_class += dice_score(im1[i,], im2[i,], empty_score=1.0)
 
     return dice_per_class / n_classes

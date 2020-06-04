@@ -85,13 +85,13 @@ class Compose(object):
             # Get list of data type
             if "applied_to" in parameters:
                 list_applied_to = parameters["applied_to"]
-                del parameters['applied_to']
             else:
                 list_applied_to = ["im", "gt", "roi"]
 
             # call transform
             if transform in globals():
-                transform_obj = globals()[transform](**parameters)
+                params_cur = {k: parameters[k] for k in parameters if k != "applied_to"}
+                transform_obj = globals()[transform](**params_cur)
             else:
                 print('ERROR: {} transform is not available in your ivadomed package. '
                       'Please check its compatibility with your model json file.'.format(transform))
@@ -843,3 +843,28 @@ def rescale_values_array(arr, minv=0.0, maxv=1.0, dtype=np.float32):
 
     norm = (arr - mina) / (maxa - mina)  # normalize the array first
     return (norm * (maxv - minv)) + minv  # rescale by minv and maxv, which is the normalized array by default
+
+
+def get_subdatasets_transforms(transform_params):
+    """Get transformation parameters for each subdataset: training, validation and testing.
+
+    Args:
+        transform_params (dict):
+    Returns:
+        dict, dict, dict
+    """
+    train, valid, test = {}, {}, {}
+    subdataset_default = ["training", "validation", "testing"]
+    # Loop across transformations
+    for transform_name in transform_params:
+        subdataset_list = ["training", "validation", "testing"]
+        # Only consider subdatasets listed in dataset_type
+        if "dataset_type" in transform_params[transform_name]:
+            subdataset_list = transform_params[transform_name]["dataset_type"]
+        # Add current transformation to the relevant subdataset transformation dictionaries
+        for subds_name, subds_dict in zip(subdataset_default, [train, valid, test]):
+            if subds_name in subdataset_list:
+                subds_dict[transform_name] = transform_params[transform_name]
+                if "dataset_type" in subds_dict[transform_name]:
+                    del subds_dict[transform_name]["dataset_type"]
+    return train, valid, test

@@ -3,6 +3,7 @@ import re
 
 import numpy as np
 import torch
+import joblib
 from bids_neuropoly import bids
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
@@ -48,6 +49,62 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
         print(" {split_method} is not a supported split method")
 
     return X_train, X_val, X_test
+
+
+def get_new_subject_split(path_folder, center_test, split_method, random_seed,
+                          train_frac, test_frac, log_directory):
+    """Randomly split dataset between training / validation / testing.
+
+    Randomly split dataset between training / validation / testing
+        and save it in log_directory + "/split_datasets.joblib"
+    Args:
+        path_folder (string): Dataset folder
+        center_test (list): list of centers to include in the testing set
+        split_method (string): see imed_loader_utils.split_dataset
+        random_seed (int):
+        train_frac (float): between 0 and 1
+        test_frac (float): between 0 and 1
+        log_directory (string): output folder
+    Returns:
+        list, list list: Training, validation and testing subjects lists
+    """
+    train_lst, valid_lst, test_lst = split_dataset(path_folder=path_folder,
+                                                   center_test_lst=center_test,
+                                                   split_method=split_method,
+                                                   random_seed=random_seed,
+                                                   train_frac=train_frac,
+                                                   test_frac=test_frac)
+
+    # save the subject distribution
+    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
+    joblib.dump(split_dct, "./" + log_directory + "/split_datasets.joblib")
+
+    return train_lst, valid_lst, test_lst
+
+
+def get_subdatasets_subjects_list(split_params, bids_path, log_directory):
+    """Get lists of subjects for each sub-dataset between training / validation / testing.
+
+    Args:
+        split_params (dict):
+        bids_path (string): Path to the BIDS dataset
+        log_directory (string): output folder
+    Returns:
+        list, list list: Training, validation and testing subjects lists
+    """
+    if split_params["fname_split"]:
+        # Load subjects lists
+        old_split = joblib.load(split_params["fname_split"])
+        train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
+    else:
+        train_lst, valid_lst, test_lst = get_new_subject_split(path_folder=bids_path,
+                                                               center_test=split_params['center_test'],
+                                                               split_method=split_params['method'],
+                                                               random_seed=split_params['random_seed'],
+                                                               train_frac=split_params['train_fraction'],
+                                                               test_frac=split_params['test_fraction'],
+                                                               log_directory=log_directory)
+    return train_lst, valid_lst, test_lst
 
 
 def imed_collate(batch):
