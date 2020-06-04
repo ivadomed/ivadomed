@@ -57,9 +57,8 @@
     },
     "default_model": {
         "name": "Countception",
-        "dropout_rate": 0.3,
-        "bn_momentum": 0.9,
-        "depth": 4
+        "inplanes": 1,
+        "outplanes": 1
     },
     "FiLMedUnet": {
         "applied": false,

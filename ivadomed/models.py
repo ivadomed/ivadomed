@@ -824,12 +824,12 @@ class SimpleBlock(nn.Module):
         output = self.MP(output)
         return output
 
-class Countception_v2(nn.Module):
+class Countception(nn.Module):
     """based on : https://arxiv.org/abs/1703.08710
     modified from github https://github.com/roggirg/count-ception_mbm/blob/master/train.py
     """
-    def __init__(self, inplanes=3, outplanes=1, use_logits=False, logits_per_output=12, debug=False):
-        super(ModelCountception_v2, self).__init__()
+    def __init__(self, inplanes=3, outplanes=1, use_logits=False,in_channel=1,out_channel=1, logits_per_output=12, debug=False,name='CC'):
+        super(Countception, self).__init__()
         # params
         self.inplanes = inplanes
         self.outplanes = outplanes
@@ -887,7 +887,6 @@ class Countception_v2(nn.Module):
         else:
             net = self.conv6(net)
 
-            self._print(net)
         return net
 
 
