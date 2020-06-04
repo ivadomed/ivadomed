@@ -41,6 +41,18 @@ class DiceLoss(nn.Module):
         return - (2.0 * intersection + self.smooth) / (iflat.sum() + tflat.sum() + self.smooth)
 
 
+class BinaryCrossEntropyLoss(nn.Module):
+    """
+    Binary Cross Entropy Loss, calls https://pytorch.org/docs/master/generated/torch.nn.BCELoss.html#bceloss
+    """
+    def __init__(self):
+        super(BinaryCrossEntropyLoss, self).__init__()
+        self.loss_fct = nn.BCELoss()
+
+    def forward(self, prediction, target):
+        return self.loss_fct(prediction, target)
+
+
 class FocalLoss(nn.Module):
     def __init__(self, gamma=2, alpha=0.25, eps=1e-7):
         super(FocalLoss, self).__init__()
