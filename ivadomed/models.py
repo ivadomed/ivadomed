@@ -794,6 +794,8 @@ class UnetGridGatingSignal3(nn.Module):
         outputs = self.conv1(inputs)
         return outputs
 
+
+
 class ConvBlock(nn.Module):
     def __init__(self, in_chan, out_chan, ksize=3, stride=1, pad=0, activation=nn.LeakyReLU()):
         super(ConvBlock, self).__init__()
@@ -818,9 +820,6 @@ class SimpleBlock(nn.Module):
         conv1_out = self.conv1(x)
         conv2_out = self.conv2(x)
         conv3_out = self.conv3(x)
-        # print(conv1_out.size())
-        # print(conv2_out.size())
-        # print(conv3_out.size())
         output = torch.cat([conv1_out, conv2_out, conv3_out], 1)
         output = self.MP(output)
         return output
@@ -890,6 +889,8 @@ class Countception_v2(nn.Module):
 
             self._print(net)
         return net
+
+
 
 def set_model_for_retrain(model_path, retrain_fraction, map_location):
     """Set model for transfer learning.
