@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-
+import cv2
+import numpy as np
 
 class MultiClassDiceLoss(nn.Module):
     """ Multi-class Dice Loss.
@@ -233,3 +234,60 @@ class FocalTverskyLoss(TverskyLoss):
 
         # TODO: Take the opposite?
         return focal_tversky_sum / n_classes
+
+
+class L2loss(nn.module):
+
+    def __init__(self):
+        super(L2_loss, self).__init__()
+
+    def forward(self, input, target):
+        return torch.sum((input - target) ** 2) / 2
+
+
+class AdapWingLoss(nn.module):
+
+    def __init__(self):
+        super(AdapWingLoss, self).__init__()
+    """
+    adaptive Wing loss : https://arxiv.org/abs/1904.07399
+
+    """
+    def forward(self,input,target):
+        theta = 0.5
+        alpha = 2.1
+        w = 14
+        e = 1
+        A = w * (1 / (1 + torch.pow(theta / e, alpha - target))) * (alpha - target) * torch.pow(theta / e,
+                                                                                              alpha - target - 1) * (1 / e)
+        C = (theta * A - w * torch.log(1 + torch.pow(theta / e, alpha - target)))
+
+        batch_size = target.size()[0]
+        hm_num = target.size()[1]
+
+        mask = torch.zeros_like(target)
+        # W=10
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+        for i in range(batch_size):
+            img_list = []
+
+            img_list.append(np.round(target[i].cpu().numpy() * 255))
+            img_merge = cv2.merge(img_list)
+            img_dilate = cv2.morphologyEx(img_merge, cv2.MORPH_DILATE, kernel)
+            img_dilate[img_dilate < 51] = 1  # 0*W+1
+            img_dilate[img_dilate >= 51] = 11  # 1*W+1
+            img_dilate = np.array(img_dilate, dtype=np.int)
+
+            mask[i] = torch.tensor(img_dilate)
+
+        diff_hm = torch.abs(target - input)
+        AWingLoss = A * diff_hm - C
+        idx = diff_hm < theta
+        AWingLoss[idx] = w * torch.log(1 + torch.pow(diff_hm / e, alpha - target))[idx]
+
+        AWingLoss *= mask
+        sum_loss = torch.sum(AWingLoss)
+        all_pixel = torch.sum(mask)
+        mean_loss = sum_loss  # / all_pixel
+
+        return mean_loss
