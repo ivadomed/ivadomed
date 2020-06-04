@@ -313,16 +313,14 @@ def get_loss_function(params):
     del params["name"]
 
     # Check if implemented
-    loss_function_available = ["DiceLoss", "FocalLoss", "GeneralizedDiceLoss", "FocalDiceLoss", "MultiClassDiceLoss", "cross_entropy"]
+    loss_function_available = ["DiceLoss", "FocalLoss", "GeneralizedDiceLoss", "FocalDiceLoss", "MultiClassDiceLoss",
+                               "BinaryCrossEntropyLoss"]
     if loss_name not in loss_function_available:
         print("Unknown Loss function, please choose between {}".format(loss_function_available))
         exit()
 
-    if loss_name == "cross_entropy":
-        loss_fct = nn.BCELoss()
-    else:
-        loss_class = getattr(imed_losses, loss_name)
-        loss_fct = loss_class(**params)
+    loss_class = getattr(imed_losses, loss_name)
+    loss_fct = loss_class(**params)
     return loss_fct
 
 
