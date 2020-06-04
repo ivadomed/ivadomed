@@ -148,6 +148,7 @@ def get_midNifti(path_im, ind):
     a = Image(path_im)
     a.change_orientation('RPI')
     arr = np.array(a.data)
+    print(arr.shape)
     return np.mean(arr[ind - 3:ind + 3, :, :], 0)
 
 
@@ -194,15 +195,24 @@ def transform_dataset(bids_path, suffix, aim):
         path_label = bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix +'_labels-disc-manual.nii.gz'
         list_points = mask2label(path_label, aim=aim)
         image = nib.load(path_image)
-        mid = Image(get_midNifti(path_image, list_points[0][0]), image.header)
+        imsh = np.array(image.dataobj).shape
+        mid = get_midNifti(path_image, list_points[0][0])
+        image_mid = Image(param=[imsh[0], imsh[1], imsh[2]], hdr=image.header)
+        original_orient = image_mid.orientation
+        image_mid.change_orientation('RPI')
+        image_mid.data[list_points[0][0], :, :] = np.flip(mid[:, :], axis=1)
+        image_mid.change_orientation(original_orient)
+        image_mid.save(bids_path + t[i] + '/anat/' + t[i] + suffix + '_mid.nii.gz')
 
-        mid.save(bids_path + t[i] + '/anat/' + t[i] + suffix + '_mid.nii.gz')
+
         heatmap = extract_all(list_points, np.array(image.dataobj).shape)
-
         lab = nib.load(path_label)
-        map = Image(heatmap, lab.header)
+        image_heatmap = Image(param=[imsh[0], imsh[1], imsh[2]], hdr=lab.header)
+        image_heatmap.change_orientation('RPI')
+        image_heatmap.data[list_points[0][0], :, :] = np.flip(heatmap[0, :, :], axis=2)
+        image_heatmap.change_orientation(original_orient)
 
-        map.save(bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + 'heatmap.nii.gz')
+        image_heatmap.save(bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + 'heatmap.nii.gz')
 
 
 
