@@ -99,8 +99,50 @@ def test_generalizeddiceloss(params):
      -1,
      DiceLoss()),
 ])
-def test_DiceLoss(params):
+def test_diceloss(params):
     """Test Dice Loss.
+
+    Args:
+        params (tuple): containing input tensor, target tensor, expected value, loss function
+    """
+    input, target, expected_value, loss_fct = params
+    loss = loss_fct.forward(input, target)
+    assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-2)
+
+
+@pytest.mark.parametrize('params', [
+    (torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
+     torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
+     -1.0,
+     TverskyLoss(alpha=0.7, beta=0.3)),
+
+    (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
+     torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
+     -0.625,
+     TverskyLoss(alpha=0.7, beta=0.3)),
+
+    (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
+     torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
+     -0.417,
+     TverskyLoss(alpha=0.3, beta=0.7, smooth=1.)),
+
+    (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
+     torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
+     -0.0071,
+     TverskyLoss(alpha=0.3, beta=0.7, smooth=0.01)),
+
+    (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
+     torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
+     -1.,
+     TverskyLoss(alpha=0.3, beta=0.7)),
+
+    (torch.tensor([[[[0.0, 0.0], [1.0, 0.0]], [[0.0, 0.0], [0.0, 0.0]]]]),
+     torch.tensor([[[[0.0, 0.0], [1.0, 0.0]], [[1.0, 0.0], [0.0, 0.0]]]]),
+     - (2 / (1 + 1) + (1 / (1 + 0.7))) / 2,
+     TverskyLoss(alpha=0.3, beta=0.7)),
+])
+def test_tverskyloss(params):
+    """Test TverskyLoss.
 
     Args:
         params (tuple): containing input tensor, target tensor, expected value, loss function
