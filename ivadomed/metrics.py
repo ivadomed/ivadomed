@@ -105,7 +105,7 @@ def mse(im1, im2):
 def jaccard_score(prediction, groundtruth):
     pflat = prediction.flatten()
     gflat = groundtruth.flatten()
-    return (1 - spatial.distance.jaccard(pflat, gflat)) * 100.0
+    return (1 - spatial.distance.jaccard(pflat, gflat))
 
 
 def hausdorff_2D_score(prediction, groundtruth):
@@ -138,7 +138,7 @@ def precision_score(prediction, groundtruth, err_value=0.0):
         return err_value
 
     precision = np.divide(TP, TP + FP)
-    return precision * 100.0
+    return precision
 
 
 def recall_score(prediction, groundtruth, err_value=0.0):
@@ -147,7 +147,7 @@ def recall_score(prediction, groundtruth, err_value=0.0):
     if (TP + FN) <= 0.0:
         return err_value
     TPR = np.divide(TP, TP + FN)
-    return TPR * 100.0
+    return TPR
 
 
 def specificity_score(prediction, groundtruth, err_value=0.0):
@@ -155,21 +155,21 @@ def specificity_score(prediction, groundtruth, err_value=0.0):
     if (TN + FP) <= 0.0:
         return err_value
     TNR = np.divide(TN, TN + FP)
-    return TNR * 100.0
+    return TNR
 
 
 def intersection_over_union(prediction, groundtruth, err_value=0.0):
     FP, FN, TP, TN = numeric_score(prediction, groundtruth)
     if (TP + FP + FN) <= 0.0:
         return err_value
-    return TP / (TP + FP + FN) * 100.0
+    return TP / (TP + FP + FN)
 
 
 def accuracy_score(prediction, groundtruth):
     FP, FN, TP, TN = numeric_score(prediction, groundtruth)
     N = FP + FN + TP + TN
     accuracy = np.divide(TP + TN, N)
-    return accuracy * 100.0
+    return accuracy
 
 
 def multi_class_dice_score(im1, im2):
@@ -177,7 +177,6 @@ def multi_class_dice_score(im1, im2):
     n_classes = im1.shape[0]
 
     for i in range(n_classes):
-        dice_per_class += dice_score(im1[i,], im2[i,]) \
-            if not dice_score(im1[i,], im2[i,]) == np.nan else 1.0
+        dice_per_class += dice_score(im1[i,], im2[i,], empty_score=1.0)
 
     return dice_per_class / n_classes

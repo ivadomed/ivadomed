@@ -156,7 +156,7 @@ class Bids_to_hdf5:
 
     """
 
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, hdf5_name, contrast_balance={},
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, hdf5_name, contrast_balance=None,
                  slice_axis=2, metadata_choice=False, slice_filter_fn=None, roi_suffix=None):
         """
 
@@ -285,7 +285,7 @@ class Bids_to_hdf5:
             gt_volume = []
             roi_volume = []
 
-            for idx_pair_slice in range(input_data_shape[self.slice_axis]):
+            for idx_pair_slice in range(input_data_shape[-1]):
 
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
 
@@ -303,13 +303,13 @@ class Bids_to_hdf5:
                 if not len(slice_seg_pair["gt"]):
                     gt_volume = []
                 else:
-                    gt_volume.append((slice_seg_pair["gt"][0] * 255).astype(np.uint8))
+                    gt_volume.append((slice_seg_pair["gt"][0] * 255).astype(np.uint8) / 255.)
 
                 # Handle data with no ROI provided
                 if not len(roi_pair_slice["gt"]):
                     roi_volume = []
                 else:
-                    roi_volume.append((roi_pair_slice["gt"][0] * 255).astype(np.uint8))
+                    roi_volume.append((roi_pair_slice["gt"][0] * 255).astype(np.uint8) / 255.)
 
             # Getting metadata using the one from the last slice
             input_metadata = slice_seg_pair['input_metadata'][0]
@@ -408,56 +408,53 @@ class Bids_to_hdf5:
 
 
 class HDF5Dataset:
-    def __init__(self, root_dir, subject_lst, hdf5_name, csv_name, target_suffix, contrast_lst, ram=True,
-                 contrast_balance=None, slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
-                 slice_filter_fn=None, roi_suffix=None, target_lst=None, roi_lst=None):
+    def __init__(self, root_dir, subject_lst, model_params, target_suffix, contrast_params,
+                 slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
+                 slice_filter_fn=None, roi_suffix=None):
 
         """
 
         :param root_dir: path of bids and data
         :param subject_lst: list of patients
-        :param hdf5_name: path of the hdf5 file
-        :param csv_name: path of the dataframe
+        :param model_params: dict containing model parameters
         :param target_suffix: suffix of the gt
         :param roi_suffix: suffix of the roi
-        :param contrast_lst: list of the contrast
-        :param contrast_balance: contrast balance
+        :param contrast_params: dict containing contrast parameters
         :param slice_axis: slice axis. by default it's set to 2
         :param transform: transformation
         :param dim: number of dimension of our data. Either 2 or 3
         :param metadata_choice:
         :param slice_filter_fn:
         :param roi_suffix:
-        :param target_lst:
-        :param roi_lst:
         """
 
-        self.cst_lst = copy.deepcopy(contrast_lst)
-        self.gt_lst = copy.deepcopy(target_lst)
-        self.roi_lst = copy.deepcopy(roi_lst)
+        self.cst_lst = copy.deepcopy(contrast_params["contrast_lst"])
+        self.gt_lst = copy.deepcopy(model_params["target_lst"] if "target_lst" in model_params else None)
+        self.roi_lst = copy.deepcopy(model_params["roi_lst"] if "roi_lst" in model_params else None)
         self.dim = dim
         self.filter_slices = slice_filter_fn
         self.transform = transform
         # Getting HDS5 dataset file
-        if not os.path.exists(hdf5_name):
+        if not os.path.exists(model_params["hdf5_path"]):
             print("Computing hdf5 file of the data")
             hdf5_file = Bids_to_hdf5(root_dir,
                                      subject_lst=subject_lst,
-                                     hdf5_name=hdf5_name,
+                                     hdf5_name=model_params["hdf5_path"],
                                      target_suffix=target_suffix,
                                      roi_suffix=roi_suffix,
                                      contrast_lst=self.cst_lst,
                                      metadata_choice=metadata_choice,
-                                     contrast_balance=contrast_balance,
+                                     contrast_balance=contrast_params["balance"],
                                      slice_axis=slice_axis,
                                      slice_filter_fn=slice_filter_fn
                                      )
             self.hdf5_file = hdf5_file.hdf5_file
         else:
-            self.hdf5_file = h5py.File(hdf5_name, "r")
+            self.hdf5_file = h5py.File(model_params["hdf5_path"], "r")
         # Loading dataframe object
-        self.df_object = Dataframe(self.hdf5_file, contrast_lst, csv_name, target_suffix=target_lst,
-                                   roi_suffix=roi_lst, dim=self.dim, filter_slices=slice_filter_fn)
+        self.df_object = Dataframe(self.hdf5_file, self.cst_lst, model_params["csv_path"],
+                                   target_suffix=self.gt_lst, roi_suffix=self.roi_lst, dim=self.dim,
+                                   filter_slices=slice_filter_fn)
         if complet:
             self.df_object.clean(self.cst_lst)
         print("after cleaning")
@@ -472,6 +469,7 @@ class HDF5Dataset:
         # RAM status
         self.status = {ct: False for ct in self.df_object.contrasts}
 
+        ram = model_params["ram"] if "ram" in model_params else True
         if ram:
             self.load_into_ram(self.cst_lst)
 
@@ -541,6 +539,7 @@ class HDF5Dataset:
             metadata = imed_loader_utils.SampleMetadata({key: value for key, value in self.hdf5_file['{}/inputs/{}'
                                                         .format(line['Subjects'], ct)].attrs.items()})
             metadata['slice_index'] = line["Slices"]
+            metadata['missing_mod'] = missing_modalities
             input_metadata.append(metadata)
 
         # GT
@@ -572,8 +571,6 @@ class HDF5Dataset:
             roi_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
                                                                   self.hdf5_file[
                                                                       line['roi/' + self.roi_lst[0]]].attrs.items()}))
-        else:
-            roi_img, roi_metadata = None, None
 
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
@@ -594,12 +591,10 @@ class HDF5Dataset:
         stack_gt, metadata_gt = self.transform(sample=gt_img,
                                                metadata=metadata_gt,
                                                data_type="gt")
-
         data_dict = {
             'input': stack_input,
             'gt': stack_gt,
             'roi': stack_roi,
-            'Missing_mod': missing_modalities,
             'input_metadata': metadata_input,
             'gt_metadata': metadata_gt,
             'roi_metadata': metadata_roi

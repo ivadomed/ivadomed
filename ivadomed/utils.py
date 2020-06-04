@@ -14,299 +14,12 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from ivadomed import metrics as imed_metrics
+from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
-# labels of paint_objects method
-TP_COLOUR = 1
-FP_COLOUR = 2
-FN_COLOUR = 3
-
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
-
-
-class Evaluation3DMetrics(object):
-
-    def __init__(self, data_pred, data_gt, dim_lst, params={}):
-
-        self.data_pred = data_pred
-        if len(self.data_pred.shape) == 3:
-            self.data_pred = np.expand_dims(self.data_pred, -1)
-
-        self.data_gt = data_gt
-        if len(self.data_gt.shape) == 3:
-            self.data_gt = np.expand_dims(self.data_gt, -1)
-
-        h, w, d, self.n_classes = self.data_gt.shape
-        self.px, self.py, self.pz = dim_lst
-
-        self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
-
-        # Remove small objects
-        if "removeSmall" in params:
-            size_min = params['removeSmall']['thr']
-            if params['removeSmall']['unit'] == 'vox':
-                self.size_min = size_min
-            elif params['removeSmall']['unit'] == 'mm3':
-                self.size_min = np.round(size_min / (self.px * self.py * self.pz))
-            else:
-                print('Please choose a different unit for removeSmall. Chocies: vox or mm3')
-                exit()
-
-            for idx in range(self.n_classes):
-                self.data_pred[..., idx] = self.remove_small_objects(data=self.data_pred[..., idx])
-                self.data_gt[..., idx] = self.remove_small_objects(data=self.data_gt[..., idx])
-        else:
-            self.size_min = 0
-
-        if "targetSize" in params:
-            self.size_rng_lst, self.size_suffix_lst = \
-                self._get_size_ranges(thr_lst=params["targetSize"]["thr"],
-                                      unit=params["targetSize"]["unit"])
-            self.label_size_lst = []
-            self.data_gt_per_size = np.zeros(self.data_gt.shape)
-            self.data_pred_per_size = np.zeros(self.data_gt.shape)
-            for idx in range(self.n_classes):
-                self.data_gt_per_size[..., idx] = self.label_per_size(self.data_gt[..., idx])
-                label_gt_size_lst = list(set(self.data_gt_per_size[np.nonzero(self.data_gt_per_size)]))
-                self.data_pred_per_size[..., idx] = self.label_per_size(self.data_pred[..., idx])
-                label_pred_size_lst = list(set(self.data_pred_per_size[np.nonzero(self.data_pred_per_size)]))
-                self.label_size_lst.append([label_gt_size_lst + label_pred_size_lst,
-                                            ['gt'] * len(label_gt_size_lst) + ['pred'] * len(label_pred_size_lst)])
-
-        else:
-            self.label_size_lst = [[[], []] * self.n_classes]
-
-        # 18-connected components
-        self.data_pred_label = np.zeros((h, w, d, self.n_classes), dtype='u1')
-        self.data_gt_label = np.zeros((h, w, d, self.n_classes), dtype='u1')
-        self.n_pred = [None] * self.n_classes
-        self.n_gt = [None] * self.n_classes
-        for idx in range(self.n_classes):
-            self.data_pred_label[..., idx], self.n_pred[idx] = label(self.data_pred[..., idx],
-                                                                     structure=self.bin_struct)
-            self.data_gt_label[..., idx], self.n_gt[idx] = label(self.data_gt[..., idx],
-                                                                 structure=self.bin_struct)
-
-        # painted data, object wise
-        self.data_painted = np.copy(self.data_pred)
-
-        # overlap_vox is used to define the object-wise TP, FP, FN
-        if "overlap" in params:
-            if params["overlap"]["unit"] == 'vox':
-                self.overlap_vox = params["overlap"]["thr"]
-            elif params["overlap"]["unit"] == 'mm3':
-                self.overlap_vox = np.round(params["overlap"]["thr"] / (self.px * self.py * self.pz))
-            elif params["overlap"]["unit"] == 'percent':  # percentage of the GT object
-                self.overlap_percent = params["overlap"]["thr"]
-                self.overlap_vox = None
-        else:
-            self.overlap_vox = 3
-
-    def remove_small_objects(self, data):
-        data_label, n = label(data,
-                              structure=self.bin_struct)
-
-        for idx in range(1, n + 1):
-            data_idx = (data_label == idx).astype(np.int)
-            n_nonzero = np.count_nonzero(data_idx)
-
-            if n_nonzero < self.size_min:
-                data[data_label == idx] = 0
-
-        return data
-
-    def _get_size_ranges(self, thr_lst, unit):
-        assert unit in ['vox', 'mm3']
-
-        rng_lst, suffix_lst = [], []
-        for i, thr in enumerate(thr_lst):
-            if i == 0:
-                thr_low = self.size_min
-            else:
-                thr_low = thr_lst[i - 1] + 1
-
-            thr_high = thr
-
-            if unit == 'mm3':
-                thr_low = np.round(thr_low / (self.px * self.py * self.pz))
-                thr_high = np.round(thr_high / (self.px * self.py * self.pz))
-
-            rng_lst.append([thr_low, thr_high])
-
-            suffix_lst.append('_' + str(thr_low) + '-' + str(thr_high) + unit)
-
-        # last subgroup
-        thr_low = thr_lst[i] + 1
-        if unit == 'mm3':
-            thr_low = np.round(thr_low / (self.px * self.py * self.pz))
-        thr_high = np.inf
-        rng_lst.append([thr_low, thr_high])
-        suffix_lst.append('_' + str(thr_low) + '-INF' + unit)
-
-        return rng_lst, suffix_lst
-
-    def label_per_size(self, data):
-        data_label, n = label(data,
-                              structure=self.bin_struct)
-        data_out = np.zeros(data.shape)
-
-        for idx in range(1, n + 1):
-            data_idx = (data_label == idx).astype(np.int)
-            n_nonzero = np.count_nonzero(data_idx)
-
-            for idx_size, rng in enumerate(self.size_rng_lst):
-                if n_nonzero >= rng[0] and n_nonzero <= rng[1]:
-                    data_out[np.nonzero(data_idx)] = idx_size + 1
-
-        return data_out.astype(np.int)
-
-    def get_vol(self, data):
-        vol = np.sum(data)
-        vol *= self.px * self.py * self.pz
-        return vol
-
-    def get_rvd(self):
-        """Relative volume difference."""
-        vol_gt = self.get_vol(self.data_gt)
-        vol_pred = self.get_vol(self.data_pred)
-
-        if vol_gt == 0.0:
-            return np.nan
-
-        rvd = (vol_gt - vol_pred) * 100.
-        rvd /= vol_gt
-
-        return rvd
-
-    def get_avd(self):
-        """Absolute volume difference."""
-        return abs(self.get_rvd())
-
-    def _get_ltp_lfn(self, label_size, class_idx=0):
-        """Number of true positive and false negative lesion.
-
-            Note1: if two lesion_pred overlap with the current lesion_gt,
-                then only one detection is counted.
-        """
-        ltp, lfn, n_obj = 0, 0, 0
-
-        for idx in range(1, self.n_gt[class_idx] + 1):
-            data_gt_idx = (self.data_gt_label[..., class_idx] == idx).astype(np.int)
-            overlap = (data_gt_idx * self.data_pred[..., class_idx]).astype(np.int)
-
-            # if label_size is None, then we look at all object sizes
-            # we check if the currrent object belongs to the current size range
-            if label_size is None or \
-                    np.max(self.data_gt_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
-
-                if self.overlap_vox is None:
-                    overlap_vox = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
-                else:
-                    overlap_vox = self.overlap_vox
-
-                if np.count_nonzero(overlap) >= overlap_vox:
-                    ltp += 1
-
-                else:
-                    lfn += 1
-
-                    if label_size is None:  # painting is done while considering all objects
-                        self.data_painted[..., class_idx][self.data_gt_label[..., class_idx] == idx] = FN_COLOUR
-
-                n_obj += 1
-
-        return ltp, lfn, n_obj
-
-    def _get_lfp(self, label_size, class_idx=0):
-        """Number of false positive lesion."""
-        lfp = 0
-        for idx in range(1, self.n_pred[class_idx] + 1):
-            data_pred_idx = (self.data_pred_label[..., class_idx] == idx).astype(np.int)
-            overlap = (data_pred_idx * self.data_gt[..., class_idx]).astype(np.int)
-
-            label_gt = np.max(data_pred_idx * self.data_gt_label[..., class_idx])
-            data_gt_idx = (self.data_gt_label[..., class_idx] == label_gt).astype(np.int)
-            # if label_size is None, then we look at all object sizes
-            # we check if the current object belongs to the current size range
-
-            if label_size is None or \
-                    np.max(self.data_pred_per_size[..., class_idx][np.nonzero(data_gt_idx)]) == label_size:
-
-                if self.overlap_vox is None:
-                    overlap_thr = np.round(np.count_nonzero(data_gt_idx) * self.overlap_percent / 100.)
-                else:
-                    overlap_thr = self.overlap_vox
-
-                if np.count_nonzero(overlap) < overlap_thr:
-                    lfp += 1
-                    if label_size is None:  # painting is done while considering all objects
-                        self.data_painted[..., class_idx][self.data_pred_label[..., class_idx] == idx] = FP_COLOUR
-                else:
-                    if label_size is None:  # painting is done while considering all objects
-                        self.data_painted[..., class_idx][self.data_pred_label[..., class_idx] == idx] = TP_COLOUR
-
-        return lfp
-
-    def get_ltpr(self, label_size=None, class_idx=0):
-        """Lesion True Positive Rate / Recall / Sensitivity.
-
-            Note: computed only if n_obj >= 1.
-        """
-        ltp, lfn, n_obj = self._get_ltp_lfn(label_size, class_idx)
-
-        denom = ltp + lfn
-        if denom == 0 or n_obj == 0:
-            return np.nan, n_obj
-
-        return ltp * 100. / denom, n_obj
-
-    def get_lfdr(self, label_size=None, class_idx=0):
-        """Lesion False Detection Rate / 1 - Precision.
-
-            Note: computed only if n_obj >= 1.
-        """
-        ltp, _, n_obj = self._get_ltp_lfn(label_size, class_idx)
-        lfp = self._get_lfp(label_size, class_idx)
-
-        denom = ltp + lfp
-        if denom == 0 or n_obj == 0:
-            return np.nan
-
-        return lfp * 100. / denom
-
-    def run_eval(self):
-        dct = {}
-
-        for n in range(self.n_classes):
-            dct['vol_pred_class' + str(n)] = self.get_vol(self.data_pred)
-            dct['vol_gt_class' + str(n)] = self.get_vol(self.data_gt)
-            dct['rvd_class' + str(n)], dct['avd_class' + str(n)] = self.get_rvd(), self.get_avd()
-            dct['dice_class' + str(n)] = imed_metrics.dice_score(self.data_gt[..., n], self.data_pred[..., n]) * 100.
-            dct['recall_class' + str(n)] = imed_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
-            dct['precision_class' + str(n)] = imed_metrics.precision_score(self.data_pred, self.data_gt,
-                                                                           err_value=np.nan)
-            dct['specificity_class' + str(n)] = imed_metrics.specificity_score(self.data_pred, self.data_gt,
-                                                                               err_value=np.nan)
-            dct['n_pred_class' + str(n)], dct['n_gt_class' + str(n)] = self.n_pred[n], self.n_gt[n]
-            dct['ltpr_class' + str(n)], _ = self.get_ltpr()
-            dct['lfdr_class' + str(n)] = self.get_lfdr()
-
-            for lb_size, gt_pred in zip(self.label_size_lst[n][0], self.label_size_lst[n][1]):
-                suffix = self.size_suffix_lst[int(lb_size) - 1]
-
-                if gt_pred == 'gt':
-                    dct['ltpr' + suffix + "_class" + str(n)], dct['n' + suffix] = self.get_ltpr(label_size=lb_size,
-                                                                                                class_idx=n)
-                else:  # gt_pred == 'pred'
-                    dct['lfdr' + suffix + "_class" + str(n)] = self.get_lfdr(label_size=lb_size, class_idx=n)
-
-        if self.n_classes == 1:
-            self.data_painted = np.squeeze(self.data_painted, axis=-1)
-
-        return dct, self.data_painted
 
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
@@ -563,9 +276,18 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     nib.save(nib_avgUnc, fname_avgUnc)
 
 
-def mixup(data, targets, alpha):
+def mixup(data, targets, alpha, debugging=False, ofolder=None):
     """Compute the mixup data.
-    Return mixed inputs and targets, lambda.
+
+    Args:
+        data (Tensor):
+        targets (Tensor):
+        alpha (float): MixUp parameter
+        debugging (Bool): If True, then samples of mixup are saved as png files
+        log_directory (string): If debugging, Output folder where "mixup" folder is created.
+
+    Returns:
+        Tensor, Tensor: Mixed data
     """
     indices = torch.randperm(data.size(0))
     data2 = data[indices]
@@ -578,20 +300,43 @@ def mixup(data, targets, alpha):
     data = data * lambda_tensor + data2 * (1 - lambda_tensor)
     targets = targets * lambda_tensor + targets2 * (1 - lambda_tensor)
 
-    return data, targets, lambda_tensor
+    if debugging:
+        save_mixup_sample(ofolder, data, targets, lambda_tensor)
+
+    return data, targets
 
 
-def save_mixup_sample(x, y, fname):
+def save_mixup_sample(ofolder, input_data, labeled_data, lambda_tensor):
+    """Save mixup samples as png files in a "mixup" folder.
+
+    Args:
+        ofolder (string): Output folder where "mixup" folder is created.
+        input_data (Tensor):
+        labeled_data (Tensor):
+        lambda_tensor (Tensor):
+    Returns:
+    """
+    #Mixup folder
+    mixup_folder = os.path.join(ofolder, 'mixup')
+    if not os.path.isdir(mixup_folder):
+        os.makedirs(mixup_folder)
+    # Random sample
+    random_idx = np.random.randint(0, input_data.size()[0])
+    # Output fname
+    ofname =  str(lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png'
+    ofname = os.path.join(mixup_folder, ofname)
+    # Tensor to Numpy
+    x = input_data.data.numpy()[random_idx, 0, :, :]
+    y = labeled_data.data.numpy()[random_idx, 0, :, :]
+    # Plot
     plt.figure(figsize=(20, 10))
     plt.subplot(1, 2, 1)
     plt.axis("off")
     plt.imshow(x, interpolation='nearest', aspect='auto', cmap='gray')
-
     plt.subplot(1, 2, 2)
     plt.axis("off")
     plt.imshow(y, interpolation='nearest', aspect='auto', cmap='jet', vmin=0, vmax=1)
-
-    plt.savefig(fname, bbox_inches='tight', pad_inches=0, dpi=100)
+    plt.savefig(ofname, bbox_inches='tight', pad_inches=0, dpi=100)
     plt.close()
 
 
@@ -618,81 +363,69 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
     # Define device
     device = torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:" + str(gpu_number))
 
-    # Check if model folder exists
-    # TODO: this check already exists in sct.deepseg.core.segment_nifti(). We should probably keep only one check in
-    #  ivadomed, and do it in a separate, more specific file (e.g. models.py)
-    if os.path.isdir(folder_model):
-        prefix_model = os.path.basename(folder_model)
-        # Check if model and model metadata exist. Verify if ONNX model exists, if not try to find .pt model
-        fname_model = os.path.join(folder_model, prefix_model + '.onnx')
-        if not os.path.isfile(fname_model):
-            fname_model = os.path.join(folder_model, prefix_model + '.pt')
-            if not os.path.exists(fname_model):
-                print('Model file not found: {}'.format(fname_model))
-                exit()
-        fname_model_metadata = os.path.join(folder_model, prefix_model + '.json')
-        if not os.path.isfile(fname_model_metadata):
-            print('Model metadata file not found: {}'.format(fname_model_metadata))
-            exit()
-    else:
-        print('Model folder not found: {}'.format(folder_model))
-        exit()
+    # Check if model folder exists and get filenames
+    fname_model, fname_model_metadata = imed_models.get_model_filenames(folder_model)
 
     # Load model training config
     with open(fname_model_metadata, "r") as fhandle:
         context = json.load(fhandle)
 
+    # TRANSFORMATIONS
     # If ROI is not provided then force center cropping
-    if fname_roi is None and 'ROICrop' in context["transformation_validation"].keys():
-        context["transformation_validation"] = dict((key, value) if key != 'ROICrop'
+    if fname_roi is None and 'ROICrop' in context["transformation"].keys():
+        print("\nWARNING: fname_roi has not been specified, then a cropping around the center of the image is performed"
+              " instead of a cropping around a Region of Interest.")
+        context["transformation"] = dict((key, value) if key != 'ROICrop'
                                                     else ('CenterCrop', value)
-                                                    for (key, value) in context["transformation_validation"].items())
+                                                    for (key, value) in context["transformation"].items())
 
     # Compose transforms
-    do_transforms = imed_transforms.Compose(context['transformation_validation'], requires_undo=True)
-
+    _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context["transformation"])
+    do_transforms = imed_transforms.Compose(transform_test_params, requires_undo=True)
     # Undo Transforms
     undo_transforms = imed_transforms.UndoCompose(do_transforms)
 
+    # LOADER
+    loader_params = context["loader_parameters"]
+
     # Force filter_empty_mask to False if fname_roi = None
-    if fname_roi is None and 'filter_empty_mask' in context["slice_filter"]:
-        context["slice_filter"]["filter_empty_mask"] = False
+    if fname_roi is None and 'filter_empty_mask' in loader_params["slice_filter_params"]:
+        print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
+        loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
-    fname_roi = [fname_roi] if fname_roi is not None else None
-
-    # Load data
-    filename_pairs = [([fname_image], None, fname_roi, [{}])]
-    if not context['unet_3D']:  # TODO: rename this param 'model_name' or 'kernel_dim'
-        ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
-                                                  slice_axis=AXIS_DCT[context['slice_axis']],
-                                                  cache=True,
-                                                  transform=do_transforms,
-                                                  slice_filter_fn=SliceFilter(**context["slice_filter"]))
-    else:
+    filename_pairs = [([fname_image], None, [fname_roi], [{}])]
+    kernel_3D = bool('UNet3D' in context and context['UNet3D']['applied'])
+    if kernel_3D:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                            transform=do_transforms,
-                                                           length=context["length_3D"],
-                                                           padding=context["padding_3D"])
+                                                           length=context["UNet3D"]["length_3D"],
+                                                           padding=context["UNet3D"]["padding_3D"])
+    else:
+        ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
+                                                  slice_axis=AXIS_DCT[loader_params['slice_axis']],
+                                                  cache=True,
+                                                  transform=do_transforms,
+                                                  slice_filter_fn=SliceFilter(**loader_params["slice_filter_params"]))
 
     # If fname_roi provided, then remove slices without ROI
     if fname_roi is not None:
-        ds = imed_loader_utils.filter_roi(ds, nb_nonzero_thr=context["slice_filter_roi"])
+        ds = imed_loader_utils.filter_roi(ds, nb_nonzero_thr=loader_params["roi_params"]["slice_filter_roi"])
 
-    if not context['unet_3D']:
-        print(f"\nLoaded {len(ds)} {context['slice_axis']} slices..")
+    if kernel_3D:
+        print("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
+                                                           context['UNet3D']['length_3D']))
     else:
-        print(f"\nLoaded {len(ds)} {context['slice_axis']} volumes of shape {context['length_3D']}")
+        print("\nLoaded {} {} slices.".format(len(ds), loader_params['slice_axis']))
 
     # Data Loader
-    data_loader = DataLoader(ds, batch_size=context["batch_size"],
+    data_loader = DataLoader(ds, batch_size=context["training_parameters"]["batch_size"],
                              shuffle=False, pin_memory=True,
                              collate_fn=imed_loader_utils.imed_collate,
                              num_workers=0)
 
-    # Load model
+    # MODEL
     if fname_model.endswith('.pt'):
         model = torch.load(fname_model, map_location=device)
-
         # Inference time
         model.eval()
 
@@ -704,10 +437,12 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
             preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
             preds = preds.cpu()
 
+        # Set datatype to gt since prediction should be processed the same way as gt
+        for modality in batch['input_metadata']:
+            modality[0]['data_type'] = 'gt'
+
         # Reconstruct 3D object
         for i_slice in range(len(preds)):
-            for i_label in range(preds[i_slice].shape[0]):
-                batch["input_metadata"][i_slice][i_label]['data_type'] = 'gt'
             # undo transformations
             preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
                                                          batch["input_metadata"][i_slice],
@@ -724,26 +459,32 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
                                        fname_ref=fname_image,
                                        fname_out=None,
                                        z_lst=slice_idx_list,
-                                       slice_axis=AXIS_DCT[context['slice_axis']],
-                                       kernel_dim='3d' if context['unet_3D'] else '2d',
+                                       slice_axis=AXIS_DCT[loader_params['slice_axis']],
+                                       kernel_dim='3d' if kernel_3D else '2d',
                                        debug=False,
                                        bin_thr=-1)
 
     return pred_nib
 
 
-def cuda(input_var, non_blocking=False):
-    """
-    This function sends input_var to GPU.
-    :param input_var: either a tensor or a list of tensors
-    :param non_blocking
-    :return: same as input_var
-    """
+def cuda(input_var, cuda_available=True, non_blocking=False):
+    """Passes input_var to GPU.
 
-    if isinstance(input_var, list):
-        return [t.cuda(non_blocking=non_blocking) for t in input_var]
+    Args:
+        input_var (Tensor): either a tensor or a list of tensors
+        cuda_available (Bool): If false, then return identity
+        non_blocking (Bool):
+
+    Returns:
+        Tensor
+    """
+    if cuda_available:
+        if isinstance(input_var, list):
+            return [t.cuda(non_blocking=non_blocking) for t in input_var]
+        else:
+            return input_var.cuda(non_blocking=non_blocking)
     else:
-        return input_var.cuda(non_blocking=non_blocking)
+        return input_var
 
 
 class HookBasedFeatureExtractor(nn.Module):
@@ -818,9 +559,9 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     return nib.orientations.apply_orientation(arr_ras, trans_orient)
 
 
-def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
-    if not os.path.exists(os.path.join(context["log_directory"], layer_name)):
-        os.mkdir(os.path.join(context["log_directory"], layer_name))
+def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_axis):
+    if not os.path.exists(os.path.join(log_directory, layer_name)):
+        os.mkdir(os.path.join(log_directory, layer_name))
 
     # Save for subject in batch
     for i in range(batch['input'].size(0)):
@@ -828,28 +569,28 @@ def save_feature_map(batch, layer_name, context, model, test_input, slice_axis):
             HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input[i][None,]))
 
         # Display the input image and Down_sample the input image
-        orig_input_img = test_input[i][None,].permute(3, 4, 2, 0, 1).cpu().numpy()
+        orig_input_img = test_input[i][None,].cpu().numpy()
         upsampled_attention = F.interpolate(out_fmap[1],
                                             size=test_input[i][None,].size()[2:],
                                             mode='trilinear',
-                                            align_corners=True).data.permute(3, 4, 2, 0, 1).cpu().numpy()
+                                            align_corners=True).data.cpu().numpy()
 
         path = batch["input_metadata"][0][i]["input_filenames"]
 
         basename = path.split('/')[-1]
-        save_directory = os.path.join(context['log_directory'], layer_name, basename)
+        save_directory = os.path.join(log_directory, layer_name, basename)
 
         # Write the attentions to a nifti image
         nib_ref = nib.load(path)
         nib_ref_can = nib.as_closest_canonical(nib_ref)
-        oriented_image = reorient_image(orig_input_img[:, :, :, 0, 0], slice_axis, nib_ref, nib_ref_can)
+        oriented_image = reorient_image(orig_input_img[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
 
         nib_pred = nib.Nifti1Image(oriented_image, nib_ref.affine)
         nib.save(nib_pred, save_directory)
 
         basename = basename.split(".")[0] + "_att.nii.gz"
-        save_directory = os.path.join(context['log_directory'], layer_name, basename)
-        attention_map = reorient_image(upsampled_attention[:, :, :, 0, ], slice_axis, nib_ref, nib_ref_can)
+        save_directory = os.path.join(log_directory, layer_name, basename)
+        attention_map = reorient_image(upsampled_attention[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
         nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
 
         nib.save(nib_pred, save_directory)
@@ -898,8 +639,8 @@ def convert_labels_to_RGB(grid_img):
     return rgb_img
 
 
-def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, unet_3D):
-    if unet_3D:
+def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, is_three_dim=False):
+    if is_three_dim:
         # Take all images stacked on depth dimension
         num_2d_img = input_samples.shape[-1]
     else:
@@ -911,7 +652,7 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
     preds_copy = preds.clone()
     gt_samples_copy = gt_samples.clone()
     for idx in range(num_2d_img):
-        if unet_3D:
+        if is_three_dim:
             input_samples = input_samples_copy[..., idx]
             preds = preds_copy[..., idx]
             gt_samples = gt_samples_copy[..., idx]
@@ -989,3 +730,52 @@ def onnx_inference(model_path, inputs):
     ort_inputs = {ort_session.get_inputs()[0].name: inputs}
     ort_outs = ort_session.run(None, ort_inputs)
     return torch.tensor(ort_outs[0])
+
+
+def define_device(gpu_id):
+    """Define the device used for the process of interest.
+
+    Args:
+        gpu_id (int): ID of the GPU
+    Returns:
+        Bool, device: True if cuda is available
+    """
+    device = torch.device("cuda:" + str(gpu_id) if torch.cuda.is_available() else "cpu")
+    cuda_available = torch.cuda.is_available()
+    if not cuda_available:
+        print("Cuda is not available.")
+        print("Working on {}.".format(device))
+    if cuda_available:
+        # Set the GPU
+        gpu_number = int(gpu_id)
+        torch.cuda.set_device(gpu_number)
+        print("Using GPU number {}".format(gpu_number))
+    return cuda_available, device
+
+
+def display_selected_model_spec(params):
+    """Display in terminal the selected model and its parameters.
+
+    Args:
+        params (dict): keys are param names and values are param values
+    Returns:
+        None
+    """
+    print('\nSelected architecture: {}, with the following parameters:'.format(params["name"]))
+    for k in list(params.keys()):
+        if k != "name":
+            print('\t{}: {}'.format(k, params[k]))
+
+
+def display_selected_transfoms(params, dataset_type):
+    """Display in terminal the selected transforms for a given dataset.
+
+    Args:
+        params (dict):
+        dataset_list (list): e.g. ['testing'] or ['training', 'validation']
+    Returns:
+        None
+    """
+    print('\nSelected transformations for the {} dataset:'.format(dataset_type))
+    for k in list(params.keys()):
+        print('\t{}: {}'.format(k, params[k]))

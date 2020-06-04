@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -48,13 +50,13 @@ class Encoder(Module):
             ArXiv link: https://arxiv.org/abs/1505.04597
                 """
 
-    def __init__(self, in_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4, bn_momentum=0.1):
+    def __init__(self, in_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, n_metadata=None, film_layers=None):
         super(Encoder, self).__init__()
         self.depth = depth
         self.down_path = nn.ModuleList()
         # first block
         self.down_path.append(DownConv(in_channel, 64, drop_rate, bn_momentum))
-        self.down_path.append(FiLMlayer(n_metadata, 64) if film_layers[0] else None)
+        self.down_path.append(FiLMlayer(n_metadata, 64) if film_layers and film_layers[0] else None)
         self.down_path.append(nn.MaxPool2d(2))
 
         # other blocks
@@ -62,13 +64,13 @@ class Encoder(Module):
 
         for i in range(depth - 1):
             self.down_path.append(DownConv(in_channel, in_channel * 2, drop_rate, bn_momentum))
-            self.down_path.append(FiLMlayer(n_metadata, in_channel * 2) if film_layers[i + 1] else None)
+            self.down_path.append(FiLMlayer(n_metadata, in_channel * 2) if film_layers and film_layers[i + 1] else None)
             self.down_path.append(nn.MaxPool2d(2))
             in_channel = in_channel * 2
 
         # Bottom
         self.conv_bottom = DownConv(in_channel, in_channel, drop_rate, bn_momentum)
-        self.film_bottom = FiLMlayer(n_metadata, in_channel) if film_layers[self.depth] else None
+        self.film_bottom = FiLMlayer(n_metadata, in_channel) if film_layers and film_layers[self.depth] else None
 
     def forward(self, x, context=None):
         features = []
@@ -106,8 +108,8 @@ class Decoder(Module):
             ArXiv link: https://arxiv.org/abs/1505.04597
                 """
 
-    def __init__(self, out_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4, bn_momentum=0.1,
-                 hemis=False):
+    def __init__(self, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1,
+                 n_metadata=None, film_layers=None, hemis=False):
         super(Decoder, self).__init__()
         self.depth = depth
         self.out_channel = out_channel
@@ -116,15 +118,19 @@ class Decoder(Module):
         if hemis:
             in_channel = 64 * 2 ** (self.depth)
             self.up_path.append(UpConv(in_channel * 2, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
-            self.up_path.append(
-                FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)) if film_layers[self.depth + 1] else None)
+            if film_layers and film_layers[self.depth + 1]:
+                self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)))
+            else:
+                self.up_path.append(None)
             # self.depth += 1
         else:
             in_channel = 64 * 2 ** self.depth
 
             self.up_path.append(UpConv(in_channel, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
-            self.up_path.append(
-                FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)) if film_layers[self.depth + 1] else None)
+            if film_layers and film_layers[self.depth + 1]:
+                self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)))
+            else:
+                self.up_path.append(None)
 
         for i in range(1, depth):
             in_channel //= 2
@@ -133,18 +139,19 @@ class Decoder(Module):
                 UpConv(in_channel + 64 * 2 ** (self.depth - i - 1 + int(hemis)), 64 * 2 ** (self.depth - i - 1),
                        drop_rate,
                        bn_momentum))
-            self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - i - 1)) if film_layers[self.depth + i + 1]
-                                else None)
+            if film_layers and film_layers[self.depth + i + 1]:
+                self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - i - 1)))
+            else:
+                self.up_path.append(None)
 
         # Last Convolution
         self.last_conv = nn.Conv2d(in_channel // 2, out_channel, kernel_size=3, padding=1)
-        self.last_film = FiLMlayer(n_metadata, 1) if film_layers[-1] else None
+        self.last_film = FiLMlayer(n_metadata, 1) if film_layers and film_layers[-1] else None
 
     def forward(self, features, context=None, w_film=None):
         x = features[-1]
 
         for i in reversed(range(self.depth)):
-
             x = self.up_path[-(i + 1) * 2](x, features[i])
             if self.up_path[-(i + 1) * 2 + 1]:
                 x, w_film = self.up_path[-(i + 1) * 2 + 1](x, context, w_film)
@@ -170,24 +177,40 @@ class Unet(Module):
         ArXiv link: https://arxiv.org/abs/1505.04597
     """
 
-    def __init__(self, in_channel=1, out_channel=1, depth=3, n_metadata=None, film_layers=None, drop_rate=0.4,
-                 bn_momentum=0.1, film_bool=False):
+    def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, **kwargs):
         super(Unet, self).__init__()
-        print("depth", depth)
-        # Verify if the length of boolean FiLM layers corresponds to the depth
-        if film_bool and len(film_layers) != 2 * depth + 2:
-            raise ValueError(f"The number of FiLM layers {len(film_layers)} entered does not correspond to the "
-                             f"UNet depth. There should 2 * depth + 2 layers.")
-
-        # If no metadata type is entered all layers should be to 0
-        if not film_bool:
-            film_layers = [0] * (2 * depth + 2)
 
         # Encoder path
-        self.encoder = Encoder(in_channel, depth, n_metadata, film_layers, drop_rate, bn_momentum)
+        self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum)
 
         # Decoder path
-        self.decoder = Decoder(out_channel, depth, n_metadata, film_layers, drop_rate, bn_momentum)
+        self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum)
+
+    def forward(self, x):
+        features, _ = self.encoder(x)
+        preds = self.decoder(features)
+
+        return preds
+
+
+class FiLMedUnet(Unet):
+    def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4,
+                 bn_momentum=0.1, n_metadata=None, film_layers=None, **kwargs):
+        super().__init__(in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1)
+
+        # Verify if the length of boolean FiLM layers corresponds to the depth
+        if film_layers:
+            if len(film_layers) != 2 * depth + 2:
+                raise ValueError("The number of FiLM layers {} entered does not correspond to the "
+                                 "UNet depth. There should 2 * depth + 2 layers.".format(len(film_layers)))
+        else:
+            film_layers = [0] * (2 * depth + 2)
+        # Encoder path
+        self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
+                               n_metadata=n_metadata, film_layers=film_layers)
+        # Decoder path
+        self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
+                               n_metadata=n_metadata, film_layers=film_layers)
 
     def forward(self, x, context=None):
         features, w_film = self.encoder(x, context)
@@ -288,19 +311,18 @@ class HeMISUnet(Module):
         ArXiv link: https://arxiv.org/abs/1907.11150
         """
 
-    def __init__(self, modalities, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1):
+    def __init__(self, modalities, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, **kwargs):
         super(HeMISUnet, self).__init__()
-        self.film_layers = [0] * (2 * depth + 2)
         self.depth = depth
         self.modalities = modalities
 
         # Encoder path
         self.Encoder_mod = nn.ModuleDict(
-            [['Encoder_{}'.format(Mod), Encoder(1, depth, film_layers=self.film_layers, drop_rate=drop_rate,
+            [['Encoder_{}'.format(Mod), Encoder(in_channel=1, depth=depth, drop_rate=drop_rate,
                                                 bn_momentum=bn_momentum)] for Mod in self.modalities])
 
         # Decoder path
-        self.decoder = Decoder(out_channel, depth, film_layers=self.film_layers, drop_rate=drop_rate,
+        self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate,
                                bn_momentum=bn_momentum, hemis=True)
 
     def forward(self, x_mods, indexes_mod):
@@ -346,13 +368,14 @@ class UNet3D(nn.Module):
     https://github.com/ozan-oktay/Attention-Gated-Networks
     """
 
-    def __init__(self, in_channels, n_classes, base_n_filter=16, attention=False, drop_rate=0.6, momentum=0.1):
+    def __init__(self, in_channel, out_channel, n_filters=16, attention=False, drop_rate=0.6, bn_momentum=0.1,
+                 **kwargs):
         super(UNet3D, self).__init__()
-        self.in_channels = in_channels
-        self.n_classes = n_classes
-        self.base_n_filter = base_n_filter
+        self.in_channels = in_channel
+        self.n_classes = out_channel
+        self.base_n_filter = n_filters
         self.attention = attention
-        self.momentum = momentum
+        self.momentum = bn_momentum
 
         self.lrelu = nn.LeakyReLU()
         self.dropout3d = nn.Dropout3d(p=drop_rate)
@@ -370,7 +393,7 @@ class UNet3D(nn.Module):
         )
         self.lrelu_conv_c1 = self.lrelu_conv(
             self.base_n_filter, self.base_n_filter)
-        self.inorm3d_c1 = nn.InstanceNorm3d(self.base_n_filter, momentum=momentum)
+        self.inorm3d_c1 = nn.InstanceNorm3d(self.base_n_filter, momentum=self.momentum)
 
         # Level 2 context pathway
         self.conv3d_c2 = nn.Conv3d(
@@ -379,7 +402,7 @@ class UNet3D(nn.Module):
         )
         self.norm_lrelu_conv_c2 = self.norm_lrelu_conv(
             self.base_n_filter * 2, self.base_n_filter * 2)
-        self.inorm3d_c2 = nn.InstanceNorm3d(self.base_n_filter * 2, momentum=momentum)
+        self.inorm3d_c2 = nn.InstanceNorm3d(self.base_n_filter * 2, momentum=self.momentum)
 
         # Level 3 context pathway
         self.conv3d_c3 = nn.Conv3d(
@@ -388,7 +411,7 @@ class UNet3D(nn.Module):
         )
         self.norm_lrelu_conv_c3 = self.norm_lrelu_conv(
             self.base_n_filter * 4, self.base_n_filter * 4)
-        self.inorm3d_c3 = nn.InstanceNorm3d(self.base_n_filter * 4, momentum=momentum)
+        self.inorm3d_c3 = nn.InstanceNorm3d(self.base_n_filter * 4, momentum=self.momentum)
 
         # Level 4 context pathway
         self.conv3d_c4 = nn.Conv3d(
@@ -397,7 +420,7 @@ class UNet3D(nn.Module):
         )
         self.norm_lrelu_conv_c4 = self.norm_lrelu_conv(
             self.base_n_filter * 8, self.base_n_filter * 8)
-        self.inorm3d_c4 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=momentum)
+        self.inorm3d_c4 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=self.momentum)
 
         # Level 5 context pathway, level 0 localization pathway
         self.conv3d_c5 = nn.Conv3d(
@@ -415,7 +438,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 8, self.base_n_filter * 8,
             kernel_size=1, stride=1, padding=0, bias=False
         )
-        self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=momentum)
+        self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=self.momentum)
 
         # Attention UNet
         if self.attention:
@@ -438,7 +461,7 @@ class UNet3D(nn.Module):
                                                         inter_channels=self.base_n_filter * 8,
                                                         sub_sample_factor=(2, 2, 2),
                                                         )
-            self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 16, momentum=momentum)
+            self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 16, momentum=self.momentum)
 
         # Level 1 localization pathway
         self.conv_norm_lrelu_l1 = self.conv_norm_lrelu(
@@ -772,18 +795,21 @@ class UnetGridGatingSignal3(nn.Module):
         return outputs
 
 
-def set_model_for_retrain(model, retrain_fraction):
+def set_model_for_retrain(model_path, retrain_fraction, map_location):
     """Set model for transfer learning.
 
     The first layers (defined by 1-retrain_fraction) are frozen (i.e. requires_grad=False).
     The weights of the last layers (defined by retrain_fraction) are reset.
     Args:
-        model (torch module): pretrained model.
+        model_path (string): pretrained model path.
         retrain_fraction (float): Fraction of the model that will be retrained, between 0 and 1. If set to 0.3,
             then the 30% last fraction of the model will be re-initalised and retrained.
+        map_location (string): device
     Returns:
         torch module: model ready for retrain.
     """
+    # Load pretrained model
+    model = torch.load(model_path, map_location=map_location)
     # Get number of layers with learnt parameters
     layer_names = [name for name, layer in model.named_modules() if hasattr(layer, 'reset_parameters')]
     n_layers = len(layer_names)
@@ -805,3 +831,35 @@ def set_model_for_retrain(model, retrain_fraction):
             layer.reset_parameters()
 
     return model
+
+
+def get_model_filenames(folder_model):
+    """Get trained model filenames from its folder path.
+
+    This function checks if the folder_model exists and get trained model (.pt or .onnx) and its configuration file
+    (.json) from it.
+    Note: if the model exists as .onnx, then this function returns its onnx path instead of the .pt version.
+
+    Args:
+        folder_name (string): path of the model folder
+    Returns:
+        string, string: paths of the model (.onnx) and its configuration file (.json)
+
+    """
+    if os.path.isdir(folder_model):
+        prefix_model = os.path.basename(folder_model)
+        # Check if model and model metadata exist. Verify if ONNX model exists, if not try to find .pt model
+        fname_model = os.path.join(folder_model, prefix_model + '.onnx')
+        if not os.path.isfile(fname_model):
+            fname_model = os.path.join(folder_model, prefix_model + '.pt')
+            if not os.path.exists(fname_model):
+                print('Model file not found: {}'.format(fname_model))
+                exit()
+        fname_model_metadata = os.path.join(folder_model, prefix_model + '.json')
+        if not os.path.isfile(fname_model_metadata):
+            print('Model metadata file not found: {}'.format(fname_model_metadata))
+            exit()
+    else:
+        print('Model folder not found: {}'.format(folder_model))
+        exit()
+    return fname_model, fname_model_metadata

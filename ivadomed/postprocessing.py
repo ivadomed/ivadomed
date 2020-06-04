@@ -27,6 +27,20 @@ def binarize_with_low_threshold(wrapped):
     return wrapper
 
 
+def multilabel_capable(wrapped):
+    @functools.wraps(wrapped)
+    def wrapper(data, *args, **kwargs):
+        if len(data.shape) == 4:
+            label_list = []
+            for i in range(data.shape[-1]):
+                out_data = wrapped(data[..., i], *args, **kwargs)
+                label_list.append(out_data)
+            return np.array(label_list).transpose((1, 2, 3, 0))
+        return wrapped(data, *args, **kwargs)
+
+    return wrapper
+
+
 @nifti_capable
 def threshold_predictions(predictions, thr=0.5):
     """
@@ -91,6 +105,7 @@ def keep_largest_object_per_slice(predictions, axis=2):
 
 
 @nifti_capable
+@multilabel_capable
 def fill_holes(predictions, structure=(3, 3, 3)):
     """
     Fill holes in the predictions using a given structuring element.

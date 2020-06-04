@@ -1,4 +1,4 @@
-bids-neuropoly>=0.1
+bids-neuropoly>=0.2
 h5py
 joblib
 matplotlib>=3.0.3

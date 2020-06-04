@@ -13,6 +13,7 @@ from ivadomed import losses
 from ivadomed import models
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
+from ivadomed import training as imed_training
 
 cudnn.benchmark = True
 
@@ -47,23 +48,38 @@ def test_HeMIS(p=0.0001):
     contrasts = ['T1w', 'T2w', 'T2star']
 
     print('[INFO]: Creating dataset ...\n')
+    model_params = {
+            "name": "HeMISUnet",
+            "dropout_rate": 0.3,
+            "bn_momentum": 0.9,
+            "depth": 2,
+            "in_channel": 1,
+            "out_channel": 1,
+            "missing_probability": 0.00001,
+            "missing_probability_growth": 0.9,
+            "modalities": ["T1w", "T2w"],
+            "ram": False,
+            "hdf5_path": 'testing_data/mytestfile.hdf5',
+            "csv_path": 'testing_data/hdf5.csv',
+            "target_lst": ["T2w"],
+            "roi_lst": ["T2w"]
+        }
+    contrast_params = {
+        "contrast_lst": ['T1w', 'T2w', 'T2star'],
+        "balance": {}
+    }
     dataset = imed_adaptative.HDF5Dataset(root_dir=PATH_BIDS,
                                           subject_lst=train_lst,
-                                          hdf5_name='testing_data/mytestfile.hdf5',
-                                          csv_name='testing_data/hdf5.csv',
+                                          model_params=model_params,
+                                          contrast_params=contrast_params,
                                           target_suffix=["_lesion-manual"],
-                                          contrast_lst=['T1w', 'T2w', 'T2star'],
-                                          ram=False,
-                                          contrast_balance={},
                                           slice_axis=2,
                                           transform=train_transform,
                                           metadata_choice=False,
                                           dim=2,
                                           slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
                                                                                  filter_empty_mask=True),
-                                          roi_suffix="_seg-manual",
-                                          target_lst=['T2w'],
-                                          roi_lst=['T2w'])
+                                          roi_suffix="_seg-manual")
 
     dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
     print("[INFO]: Dataset RAM status:")
@@ -119,8 +135,8 @@ def test_HeMIS(p=0.0001):
             start_load = time.time()
             input_samples, gt_samples = imed_utils.unstack_tensors(batch["input"]), batch["gt"]
 
-            print(batch["Missing_mod"])
-            missing_mod = batch["Missing_mod"]
+            print(batch["input_metadata"][0][0]["missing_mod"])
+            missing_mod = imed_training.get_metadata(batch["input_metadata"], model_params)
 
             print("Number of missing modalities = {}."
                   .format(len(input_samples) * len(input_samples[0]) - missing_mod.sum()))
@@ -143,7 +159,7 @@ def test_HeMIS(p=0.0001):
             pred_lst.append(tot_pred)
 
             start_opt = time.time()
-            loss = - losses.dice_loss(preds, var_gt)
+            loss = - losses.DiceLoss()(preds, var_gt)
 
             optimizer.zero_grad()
             loss.backward()
