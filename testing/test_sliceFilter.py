@@ -9,7 +9,7 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 cudnn.benchmark = True
 
 GPU_NUMBER = 0
-BATCH_SIZE = 8
+BATCH_SIZE = 1
 PATH_BIDS = 'testing_data'
 
 
