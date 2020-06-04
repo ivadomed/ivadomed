@@ -74,24 +74,39 @@ def test_hdf5():
     }
 
     train_transform = imed_transforms.Compose(training_transform_dict)
+    model_params = {
+            "name": "HeMISUnet",
+            "dropout_rate": 0.3,
+            "bn_momentum": 0.9,
+            "depth": 2,
+            "in_channel": 1,
+            "out_channel": 1,
+            "missing_probability": 0.00001,
+            "missing_probability_growth": 0.9,
+            "modalities": ["T1w", "T2w"],
+            "ram": False,
+            "hdf5_path": 'testing_data/mytestfile.hdf5',
+            "csv_path": 'testing_data/hdf5.csv',
+            "target_lst": ["T2w"],
+            "roi_lst": ["T2w"]
+        }
+    contrast_params = {
+        "contrast_lst": ['T1w', 'T2w', 'T2star'],
+        "balance": {}
+    }
 
     dataset = imed_adaptative.HDF5Dataset(root_dir=PATH_BIDS,
                                           subject_lst=train_lst,
-                                          hdf5_name='testing_data/mytestfile.hdf5',
-                                          csv_name='testing_data/hdf5.csv',
                                           target_suffix="_lesion-manual",
-                                          contrast_lst=['T1w', 'T2w', 'T2star'],
-                                          ram=False,
-                                          contrast_balance={},
                                           slice_axis=2,
+                                          model_params=model_params,
+                                          contrast_params=contrast_params,
                                           transform=train_transform,
                                           metadata_choice=False,
                                           dim=2,
                                           slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
                                                                                  filter_empty_mask=True),
-                                          roi_suffix="_seg-manual",
-                                          target_lst=['T2w'],
-                                          roi_lst=['T2w'])
+                                          roi_suffix="_seg-manual")
 
     dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
     print("Dataset RAM status:")
