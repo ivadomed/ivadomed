@@ -4,10 +4,10 @@
 
 import torch
 import pytest
-import numpy as np
 from math import isclose
 
-from ivadomed.losses import FocalLoss, FocalDiceLoss, GeneralizedDiceLoss, MultiClassDiceLoss
+from ivadomed.losses import FocalLoss, FocalDiceLoss, GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss, \
+    FocalTverskyLoss
 
 @pytest.mark.parametrize('params', [
     (torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
