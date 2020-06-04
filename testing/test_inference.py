@@ -93,7 +93,7 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_pa
     model.eval()
 
     metric_fns = [imed_metrics.dice_score,
-                  imed_metrics.hausdorff_2D_score,
+                  imed_metrics.hausdorff_3D_score,
                   imed_metrics.precision_score,
                   imed_metrics.recall_score,
                   imed_metrics.specificity_score,
@@ -112,8 +112,7 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_pa
                                                    ofolder=PATH_OUT,
                                                    cuda_available=cuda_available)
 
-    # TODO: adapt to multi label
-    metric_mgr(preds_npy.squeeze(1), gt_npy.squeeze(1))
+    metric_mgr(preds_npy, gt_npy)
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
     print(metrics_dict)

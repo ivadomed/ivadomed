@@ -1,5 +1,5 @@
 {
-    "command": "train",
+    "command": "test",
     "gpu": 2,
     "log_directory": "spineGeneric_small",
     "debugging": false,
