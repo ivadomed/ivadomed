@@ -236,7 +236,7 @@ class FocalTverskyLoss(TverskyLoss):
         return focal_tversky_sum / n_classes
 
 
-class L2loss(nn.module):
+class L2loss(nn.Module):
 
     def __init__(self):
         super(L2_loss, self).__init__()
@@ -245,7 +245,7 @@ class L2loss(nn.module):
         return torch.sum((input - target) ** 2) / 2
 
 
-class AdapWingLoss(nn.module):
+class AdapWingLoss(nn.Module):
 
     def __init__(self):
         super(AdapWingLoss, self).__init__()
