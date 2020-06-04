@@ -232,8 +232,9 @@ class FocalTverskyLoss(TverskyLoss):
             - setting alpha=beta=0.5 and gamma=1: equivalent to DiceLoss
             - default parameters were suggested by https://arxiv.org/pdf/1810.07842.pdf
         """
-        super(TverskyLoss).__init__(alpha=alpha, beta=beta, smooth=smooth)
+        super(FocalTverskyLoss, self).__init__()
         self.gamma = gamma
+        self.tversky = TverskyLoss(alpha=alpha, beta=beta, smooth=smooth)
 
     def forward(self, input, target):
         n_classes = input.shape[1]

@@ -150,3 +150,40 @@ def test_tverskyloss(params):
     input, target, expected_value, loss_fct = params
     loss = loss_fct.forward(input, target)
     assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-2)
+
+
+@pytest.mark.parametrize('params', [
+    (torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
+     torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
+     0.,
+     FocalTverskyLoss(alpha=0.7, beta=0.3)),
+
+    (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
+     torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
+     0.52,
+     FocalTverskyLoss(alpha=0.7, beta=0.3, gamma=1.5)),
+
+    (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
+     torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
+     0.375,
+     FocalTverskyLoss(alpha=0.7, beta=0.3, gamma=1)),
+
+    (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
+     torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
+     0.,
+     FocalTverskyLoss(alpha=0.7, beta=0.3)),
+
+    (torch.tensor([[[[0.0, 0.0], [1.0, 0.0]], [[0.0, 0.0], [0.0, 0.0]]]]),
+     torch.tensor([[[[0.0, 0.0], [1.0, 0.0]], [[1.0, 0.0], [0.0, 0.0]]]]),
+     (pow(1 - (2 / (1 + 1)), 1/1.33) + pow(1 - (1 / (1 + 0.3)), 1/1.33)) / 2,
+     FocalTverskyLoss(alpha=0.7, beta=0.3, gamma=1.33)),
+])
+def test_focaltverskyloss(params):
+    """Test FocalTverskyLoss.
+
+    Args:
+        params (tuple): containing input tensor, target tensor, expected value, loss function
+    """
+    input, target, expected_value, loss_fct = params
+    loss = loss_fct.forward(input, target)
+    assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-2)
