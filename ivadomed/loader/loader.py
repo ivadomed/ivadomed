@@ -17,7 +17,8 @@ from ivadomed.object_detection import utils as imed_obj_detect
 
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
-                 dataset_type="training", requires_undo=False, metadata_type=None, **kwargs):
+                 dataset_type="training", requires_undo=False, metadata_type=None,
+                 object_detection_params=None, **kwargs):
     """Get loader.
 
     Args:
@@ -34,6 +35,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         metadata_type (string): None if no metadata
         dataset_type (string): training, validation or testing
         requires_undo (Bool): If True, the transformations without undo_transform will be discarded
+        object_detection_params (dict):
     Returns:
         BidsDataset
     """
@@ -50,7 +52,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                 slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                 transform=transforms,
                                 multichannel=multichannel,
-                                model_params=model_params)
+                                model_params=model_params,
+                                object_detection_params=object_detection_params)
 
     elif model_params["name"] == "HeMISUnet":
         dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
@@ -73,7 +76,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                               transform=transforms,
                               multichannel=multichannel,
-                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params))
+                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
+                              object_detection_params=object_detection_params)
 
     # if ROICrop in transform, then apply SliceFilter to ROI slices
     if 'ROICrop' in transforms_params:
@@ -536,7 +540,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_suffix=None,
-                 multichannel=False):
+                 multichannel=False, object_detection_params=None):
         dataset = BidsDataset(root_dir,
                               subject_lst=subject_lst,
                               target_suffix=target_suffix,
@@ -545,7 +549,8 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               metadata_choice=metadata_choice,
                               slice_axis=slice_axis,
                               transform=transform,
-                              multichannel=multichannel)
+                              multichannel=multichannel,
+                              object_detection_params=object_detection_params)
 
         super().__init__(dataset.filename_pairs, length=model_params["length_3D"], padding=model_params["padding_3D"],
                          transform=transform, slice_axis=slice_axis)
@@ -554,7 +559,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
 class BidsDataset(MRI2DSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
-                 multichannel=False, object_detection_path=None, log_dir=None, gpu_number=0):
+                 multichannel=False, object_detection_params=None):
 
         self.bids_ds = bids.BIDS(root_dir)
 
@@ -591,20 +596,20 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         # Load or generate bounding boxes and save them in json file
         bounding_box_dict = {}
-        if log_dir is not None:
-            bounding_box_path = os.path.join(log_dir, 'bounding_boxes.json')
-            if os.path.exists(bounding_box_path):
-                with open(bounding_box_path, 'r') as fp:
-                    bounding_box_dict = json.load(fp)
-            elif os.path.exists(object_detection_path):
-                print("Generating bounding boxes...")
-                bounding_box_dict = imed_obj_detect.generate_bounding_box_file(self.bids_ds.get_subjects(),
-                                                                               object_detection_path,
-                                                                               log_dir,
-                                                                               gpu_number,
-                                                                               slice_axis,
-                                                                               contrast_lst)
-        elif object_detection_path is not None:
+        bounding_box_path = os.path.join(object_detection_params['log_directory'], 'bounding_boxes.json')
+        if os.path.exists(bounding_box_path):
+            with open(bounding_box_path, 'r') as fp:
+                bounding_box_dict = json.load(fp)
+        elif os.path.exists(object_detection_params['object_detection_path']):
+            print("Generating bounding boxes...")
+            bounding_box_dict = imed_obj_detect.generate_bounding_box_file(self.bids_ds.get_subjects(),
+                                                                           object_detection_params[
+                                                                               'object_detection_path'],
+                                                                           object_detection_params['log_directory'],
+                                                                           object_detection_params['gpu'],
+                                                                           slice_axis,
+                                                                           contrast_params["contrast_lst"])
+        elif object_detection_params['object_detection_path'] is not None:
             raise RuntimeError("Path to object detection model doesn't exist")
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):

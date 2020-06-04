@@ -102,7 +102,10 @@ def run_main():
     # Display for spec' check
     imed_utils.display_selected_model_spec(params=model_params)
     # Update loader params
-    loader_params.update({"model_params": model_params})
+    object_detection_params = {"object_detection_path": context['object_detection_path'],
+                               "gpu": context['gpu'],
+                               "log_directory": context['log_directory']}
+    loader_params.update({"model_params": model_params, "object_detection_params": object_detection_params})
 
     if command == 'train':
 
