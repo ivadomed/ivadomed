@@ -82,4 +82,4 @@ def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
                                        collate_fn=imed_loader_utils.imed_collate,
                                        num_workers=0)
     neg_percent, pos_percent = _cmpt_label(train_loader_balanced)
-    assert abs(neg_percent - pos_percent) <= 15.
+    assert abs(neg_percent - pos_percent) <= 20.
