@@ -50,15 +50,6 @@ def run_main():
                                                                                      context['loader_parameters']['bids_path'],
                                                                                      log_directory)
 
-    # Get transforms for each subdataset
-    transform_train_params, transform_valid_params, transform_test_params = \
-        imed_transforms.get_subdatasets_transforms(context["transformation"])
-    if command == "train":
-        imed_utils.display_selected_transfoms(transform_train_params, dataset_type="training")
-        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type="validation")
-    elif command == "test":
-        imed_utils.display_selected_transfoms(transform_test_params, dataset_type="testing")
-
     # Loader params
     loader_params = context["loader_parameters"]
     if command == "train":
@@ -67,6 +58,20 @@ def run_main():
         loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["testing"]
     if "FiLMedUnet" in context and context["FiLMedUnet"]["applied"]:
         loader_params.update({"metadata_type": context["FiLMedUnet"]["metadata"]})
+
+    # Task selection
+    # TODO: add distinction between classification and BBbox detections
+    print("\nTask: {}.\n".format("Classification" if loader_params["detection_params"]["applied"] else "Segmentation"))
+    # QUESTION: Do we want to force applied=im (not gt) in transforms if classification? or do we trust ourselves?
+
+    # Get transforms for each subdataset
+    transform_train_params, transform_valid_params, transform_test_params = \
+        imed_transforms.get_subdatasets_transforms(context["transformation"])
+    if command == "train":
+        imed_utils.display_selected_transfoms(transform_train_params, dataset_type="training")
+        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type="validation")
+    elif command == "test":
+        imed_utils.display_selected_transfoms(transform_test_params, dataset_type="testing")
 
     # METRICS
     metric_fns = [imed_metrics.dice_score,
