@@ -1,14 +1,15 @@
-import os
 import json
+import os
+import statistics
+
 import nibabel as nib
 import numpy as np
-import statistics
 from scipy import ndimage
 
-from ivadomed import  utils as imed_utils
 from ivadomed import postprocessing as imed_postpro
-from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import transforms as imed_transforms
+from ivadomed import utils as imed_utils
+from ivadomed.loader import utils as imed_loader_utils
 
 
 def get_bounding_boxes(mask):
@@ -107,6 +108,27 @@ def adjust_transforms(transforms, seg_pair_slice):
         h_min, h_max, w_min, w_max, d_min, d_max = seg_pair_slice['input_metadata'][0]['bounding_box']
         transform_obj = imed_transforms.BoundingBoxCrop(size=[h_max - h_min, w_max - w_min, d_max - d_min])
         transforms[img_type].transforms.insert(transform_idx + 1, transform_obj)
+
+
+def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast_lst):
+    # Load or generate bounding boxes and save them in json file
+    bounding_box_dict = {}
+    bounding_box_path = os.path.join(object_detection_params['log_directory'], 'bounding_boxes.json')
+    if os.path.exists(bounding_box_path):
+        with open(bounding_box_path, 'r') as fp:
+            bounding_box_dict = json.load(fp)
+    elif os.path.exists(object_detection_params['object_detection_path']):
+        print("Generating bounding boxes...")
+        bounding_box_dict = generate_bounding_box_file(subjects,
+                                                       object_detection_params['object_detection_path'],
+                                                       object_detection_params['log_directory'],
+                                                       object_detection_params['gpu'],
+                                                       slice_axis,
+                                                       constrast_lst)
+    elif object_detection_params['object_detection_path'] is not None:
+        raise RuntimeError("Path to object detection model doesn't exist")
+
+    return bounding_box_dict
 
 
 def compute_bb_statistics(bounding_box_path):

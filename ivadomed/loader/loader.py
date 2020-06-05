@@ -610,23 +610,10 @@ class BidsDataset(MRI2DSegmentationDataset):
                                                "roi_filename": None,
                                                "metadata": [None] * num_contrast} for subject in subject_lst}
 
-        # Load or generate bounding boxes and save them in json file
-        bounding_box_dict = {}
-        bounding_box_path = os.path.join(object_detection_params['log_directory'], 'bounding_boxes.json')
-        if os.path.exists(bounding_box_path):
-            with open(bounding_box_path, 'r') as fp:
-                bounding_box_dict = json.load(fp)
-        elif os.path.exists(object_detection_params['object_detection_path']):
-            print("Generating bounding boxes...")
-            bounding_box_dict = imed_obj_detect.generate_bounding_box_file(self.bids_ds.get_subjects(),
-                                                                           object_detection_params[
-                                                                               'object_detection_path'],
-                                                                           object_detection_params['log_directory'],
-                                                                           object_detection_params['gpu'],
-                                                                           slice_axis,
-                                                                           contrast_params["contrast_lst"])
-        elif object_detection_params['object_detection_path'] is not None:
-            raise RuntimeError("Path to object detection model doesn't exist")
+        imed_obj_detect.load_bounding_boxes(object_detection_params,
+                                            self.bids_ds.get_subjects(),
+                                            slice_axis,
+                                            contrast_params["contrast_lst"])
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_params["contrast_lst"]:
