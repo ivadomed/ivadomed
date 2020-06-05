@@ -272,9 +272,11 @@ class SegmentationPair(object):
                                                 dtype=np.float32))
                 else:
                     # Assert that there is only one non_zero_label in the current slice
-                    assert len(gt_obj[..., slice_index][np.nonzero(gt_obj[..., slice_index])].tolist()) <= 1
-                    # Note_CG: I initially went with int(not np.any(gt_obj[..., slice_index])) but changed it to handle
-                    #   non binary classification
+                    labels_in_slice = np.unique(gt_obj[..., slice_index][np.nonzero(gt_obj[..., slice_index])]).tolist()
+                    if len(labels_in_slice) > 1:
+                        print(metadata["gt_metadata"])
+                    #assert len(labels_in_slice) <= 1
+                    # We use np.max instead of (not np.any(gt_obj[..., slice_index]) to handle non binary classification
                     gt_slices.append(int(np.max(gt_obj[..., slice_index])))
 
         dreturn = {
