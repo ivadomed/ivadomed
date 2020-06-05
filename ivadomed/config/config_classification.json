@@ -6,10 +6,6 @@
     "loader_parameters": {
         "bids_path": "../duke/sct_testing/large/",
         "target_suffix": ["_lesion-manual"],
-        "detection_params": {
-            "applied": true,
-            "model_path": null
-        },
         "roi_params": {
             "suffix": "_seg-manual",
             "slice_filter_roi": 10
@@ -64,6 +60,9 @@
         "dropout_rate": 0.3,
         "bn_momentum": 0.9,
         "depth": 2
+    },
+    "NAME_CLASSIFIER_1": {
+        "applied": true
     },
     "testing_parameters": {
         "binarize_prediction": true,
