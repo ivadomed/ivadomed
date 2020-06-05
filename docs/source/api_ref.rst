@@ -54,3 +54,5 @@ This document is for developers of ``ivadomed``, it contains the API functions.
 .. autoclass:: ivadomed.losses.FocalLoss
 .. autoclass:: ivadomed.losses.FocalDiceLoss
 .. autoclass:: ivadomed.losses.GeneralizedDiceLoss
+.. autoclass:: ivadomed.losses.L2loss
+.. autoclass:: ivadomed.losses.AdapWingLoss
