@@ -180,7 +180,7 @@ def extract_all(list_coord_label, shape_im=(1, 150, 200)):
     return final
 
 
-def transform_dataset(bids_path, suffix, aim):
+def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim):
    """This function takes as input a path to a dataset and generate two sets of images: (i) mid-sagittal image and (ii) heatmap of disc labels associated with the mid-sagittal image. 
     t = os.listdir(bids_path)
     print(t)
@@ -206,7 +206,6 @@ def transform_dataset(bids_path, suffix, aim):
         arr_pred_ref_space = reorient_image(np.flip(heatmap[:, :, :], axis=2), 2, lab, nib_ref_can)
         nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
         nib.save(nib_pred,bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + 'heatmap.nii.gz')
-
 
 
 
