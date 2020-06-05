@@ -96,7 +96,7 @@ class SegmentationPair(object):
     a pair of of two data volumes (the input data and the ground truth data).
     """
 
-    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, task="segmentation"):
+    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True):
         """
         Args:
             input_filenames (list): the input filename list (supported by nibabel). For single channel, the list will
@@ -105,8 +105,6 @@ class SegmentationPair(object):
             metadata (list): metadata list with each item corresponding to an image (modality) in input_filenames.
                 For single channel, the list will contain metadata related to one image.
             cache (bool): if the data should be cached in memory or not.
-            task (string): choice between segmentation or classification. If classification: GT is discrete values.
-                If segmentation: GT is binary mask.
         """
         self.input_filenames = input_filenames
         self.gt_filenames = gt_filenames
@@ -151,6 +149,8 @@ class SegmentationPair(object):
             for idx, gt in enumerate(self.gt_handle):
                 if gt is not None:
                     self.gt_handle[idx] = nib.as_closest_canonical(gt)
+
+        # If binary classification, then extract labels from GT mask
 
         if self.metadata:
             self.metadata = []
@@ -241,10 +241,13 @@ class SegmentationPair(object):
 
         return dreturn
 
-    def get_pair_slice(self, slice_index):
+    def get_pair_slice(self, slice_index, gt_type="segmentation"):
         """Return the specified slice from (input, ground truth).
 
-        :param slice_index: the slice number
+        Args:
+            slice_index (int): the slice number
+            gt_type (string): choice between segmentation or classification, returns mask (array) or label (int) resp.
+                for the ground truth.
         """
 
         metadata = self.get_pair_metadata(slice_index)
@@ -265,8 +268,11 @@ class SegmentationPair(object):
         else:
             gt_slices = []
             for gt_obj in gt_dataobj:
-                gt_slices.append(np.asarray(gt_obj[..., slice_index],
-                                            dtype=np.float32))
+                if gt_type == "segmentation":
+                    gt_slices.append(np.asarray(gt_obj[..., slice_index],
+                                                dtype=np.float32))
+                else:
+                    pass
 
         dreturn = {
             "input": input_slices,
@@ -307,23 +313,23 @@ class MRI2DSegmentationDataset(Dataset):
 
     def _load_filenames(self):
         for input_filenames, gt_filenames, roi_filename, metadata in self.filename_pairs:
-            # Note: We force task=segmentation for ROI because we need the ROI mask to perform the im cropping
             roi_pair = SegmentationPair(input_filenames, roi_filename, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache, task="segmentation")
+                                        cache=self.cache)
 
             seg_pair = SegmentationPair(input_filenames, gt_filenames, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache, task=self.task)
+                                        cache=self.cache)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
             for idx_pair_slice in range(input_data_shape[-1]):
-                slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
+                slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice, gt_type=self.task)
                 if self.slice_filter_fn:
                     filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
                 if self.slice_filter_fn and not filter_fn_ret_seg:
                     continue
 
-                slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice)
+                # Note: we force here gt_type=segmentation since ROI slice is needed to Crop the image
+                slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice, gt_type="segmentation")
 
                 item = (slice_seg_pair, slice_roi_pair)
                 self.indexes.append(item)
