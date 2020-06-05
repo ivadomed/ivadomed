@@ -798,6 +798,16 @@ class UnetGridGatingSignal3(nn.Module):
 
 class ConvBlock(nn.Module):
     def __init__(self, in_chan, out_chan, ksize=3, stride=1, pad=0, activation=nn.LeakyReLU()):
+        """
+        perform convolution, activation and  batch normalization and
+        Args:
+            in_chan: number of channels on input
+            out_chan: number of channel on output
+            ksize: size of kernel for the 2d convolution
+            stride: strides for 2d convolution
+            pad: pad for nn.conv2d
+            activation: activation layer. default Leaky ReLu
+        """
         super(ConvBlock, self).__init__()
         self.conv1 = nn.Conv2d(in_chan, out_chan, kernel_size=ksize, stride=stride, padding=pad)
         self.activation = activation
@@ -809,6 +819,14 @@ class ConvBlock(nn.Module):
 
 class SimpleBlock(nn.Module):
     def __init__(self, in_chan, out_chan_1x1, out_chan_3x3, activation=nn.LeakyReLU()):
+        """
+        Inception module with 3 convolutions that are then concatenated. Max pooling performed on concatenation
+        Args:
+            in_chan: number of channel of input
+            out_chan_1x1: number of channel after first convolution block
+            out_chan_3x3: numer of channel for the other convolution blocks
+            activation: activation layer used in convolution block
+        """
         super(SimpleBlock, self).__init__()
         self.conv1 = ConvBlock(in_chan, out_chan_1x1, ksize=3, pad=0, activation=activation)
         self.conv2 = ConvBlock(in_chan, out_chan_3x3, ksize=5, pad=1, activation=activation)
@@ -816,7 +834,6 @@ class SimpleBlock(nn.Module):
         self.MP = nn.MaxPool2d(1)
 
     def forward(self, x):
-        # print('ok')
         conv1_out = self.conv1(x)
         conv2_out = self.conv2(x)
         conv3_out = self.conv3(x)
@@ -826,10 +843,19 @@ class SimpleBlock(nn.Module):
 
 class Countception(nn.Module):
     """based on : https://arxiv.org/abs/1703.08710
-    modified from github https://github.com/roggirg/count-ception_mbm/blob/master/train.py
+    modified from github https://github.com/roggirg/count-ception_mbm/
     """
-    def __init__(self, in_channel=3, out_channel=1, use_logits=False, logits_per_output=12, debug=False, name='CC'):
+    def __init__(self, in_channel=3, out_channel=1, use_logits=False, logits_per_output=12, name='CC'):
+        """
+
+        Args:
+            in_channel: number of channel on input image
+            out_channel: number of channels on output image
+            use_logits: boolean to change output
+            logits_per_output: number of outputs of final convolution which will mulitplied by the number of chanel
+        """
         super(Countception, self).__init__()
+
         # params
         self.in_channel = in_channel
         self.out_channel = out_channel
@@ -838,7 +864,6 @@ class Countception(nn.Module):
         self.patch_size = 40
         self.use_logits = use_logits
         self.logits_per_output = logits_per_output
-        self.debug = debug
 
         torch.LongTensor()
 
@@ -853,6 +878,7 @@ class Countception(nn.Module):
         self.conv3 = ConvBlock(224, 32, ksize=20, activation=self.activation)
         self.conv4 = ConvBlock(32, 64, ksize=10, activation=self.activation)
         self.conv5 = ConvBlock(64, 32, ksize=9, activation=self.activation)
+
         if use_logits:
             self.conv6 = nn.ModuleList([ConvBlock(
                 64, logits_per_output, ksize=1, activation=self.final_activation) for _ in range(out_channel)])

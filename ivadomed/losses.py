@@ -253,7 +253,7 @@ class AdapWingLoss(nn.Module):
     """
     adaptive Wing loss : https://arxiv.org/abs/1904.07399
     Used for heatmap ground truth.
-    
+
     """
 
     def __init__(self):
