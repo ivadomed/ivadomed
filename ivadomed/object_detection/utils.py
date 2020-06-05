@@ -95,17 +95,18 @@ def resample_bounding_box(metadata, resample, multiple_16=True):
 
 
 def adjust_transforms(transforms, seg_pair_slice):
+    transform_idx = -1
     for img_type in transforms:
         for idx, transfo in enumerate(transforms[img_type].transforms):
             if "BoundingBoxCrop" in str(type(transfo)):
                 transforms[img_type].transforms.pop(idx)
-                break
+            if "Resample" in str(type(transfo)):
+                transform_idx = idx
 
     for img_type in transforms:
         h_min, h_max, w_min, w_max, d_min, d_max = seg_pair_slice['input_metadata'][0]['bounding_box']
         transform_obj = imed_transforms.BoundingBoxCrop(size=[h_max - h_min, w_max - w_min, d_max - d_min])
-        idx = -2 if img_type == 'im' else -1
-        transforms[img_type].transforms.insert(idx, transform_obj)
+        transforms[img_type].transforms.insert(transform_idx + 1, transform_obj)
 
 
 def compute_bb_statistics(bounding_box_path):
