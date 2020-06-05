@@ -135,8 +135,8 @@ class GeneralizedDiceLoss(nn.Module):
             input_background[input.sum(1).expand_as(input_background) == 0] = 1
             target_background[target.sum(1).expand_as(input_background) == 0] = 1
             # Concat
-            input = torch.cat([input, torch.tensor(input_background, device=input.device)], dim=1)
-            target = torch.cat([target, torch.tensor(target_background, device=target.device)], dim=1)
+            input = torch.cat([input, input_background.to(input.device)], dim=1)
+            target = torch.cat([target, target_background.to(target.device)], dim=1)
 
         # Compute class weights
         target = target.float()
