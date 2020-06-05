@@ -38,7 +38,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
     preprocessing_transforms = imed_prepro.get_preprocessing_transforms(transforms_params)
     prepro_transforms = imed_transforms.Compose(preprocessing_transforms, requires_undo=requires_undo)
     transforms = imed_transforms.Compose(transforms_params, requires_undo=requires_undo)
-    tranform_lst = [prepro_transforms, transforms]
+    tranform_lst = [prepro_transforms if len(preprocessing_transforms) else None, transforms]
 
     if model_params["name"] == "UNet3D":
         dataset = Bids3DDataset(bids_path,
@@ -312,7 +312,7 @@ class MRI2DSegmentationDataset(Dataset):
 
                 slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice)
 
-                item = (slice_seg_pair, slice_roi_pair)
+                item = imed_prepro.apply_transforms(self.prepro_transforms, slice_seg_pair, slice_roi_pair)
                 self.indexes.append(item)
 
     def set_transform(self, transform):
