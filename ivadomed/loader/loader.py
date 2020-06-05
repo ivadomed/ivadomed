@@ -307,8 +307,18 @@ class MRI2DSegmentationDataset(Dataset):
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
+            resample = False
+            for idx, transfo in enumerate(self.transform.transform["im"].transforms):
+                if "Resample" in str(type(transfo)):
+                    resample = True
+                    resample_param = (transfo.hspace, transfo.wspace, transfo.dspace)
+
             for idx_pair_slice in range(input_data_shape[-1]):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
+                self.bounding_box = 'bounding_box' in slice_seg_pair['input_metadata'][0]
+                if self.bounding_box and resample:
+                    imed_obj_detect.resample_bounding_box(slice_seg_pair, resample_param)
+
                 if self.slice_filter_fn:
                     filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
                 if self.slice_filter_fn and not filter_fn_ret_seg:
@@ -343,6 +353,10 @@ class MRI2DSegmentationDataset(Dataset):
         metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
         metadata_roi = imed_loader_utils.clean_metadata(roi_pair_slice['gt_metadata'])
         metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
+
+        if self.bounding_box:
+            # Appropriate cropping according to bounding box
+            imed_obj_detect.adjust_transforms(self.transform.transform, seg_pair_slice)
 
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
