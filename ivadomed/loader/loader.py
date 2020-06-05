@@ -271,14 +271,14 @@ class SegmentationPair(object):
                     gt_slices.append(np.asarray(gt_obj[..., slice_index],
                                                 dtype=np.float32))
                 else:
+                    # TODO: rm when Anne replies
                     # Assert that there is only one non_zero_label in the current slice
-                    labels_in_slice = np.unique(gt_obj[..., slice_index][np.nonzero(gt_obj[..., slice_index])]).tolist()
-                    if len(labels_in_slice) > 1:
-                        print(metadata["gt_metadata"][0]["gt_filenames"])
-                    #assert len(labels_in_slice) <= 1
-                    # We use np.max instead of (not np.any(gt_obj[..., slice_index]) to handle non binary classification
-                    gt_slices.append(int(np.max(gt_obj[..., slice_index])))
-
+                    #labels_in_slice = np.unique(gt_obj[..., slice_index][np.nonzero(gt_obj[..., slice_index])]).tolist()
+                    #if len(labels_in_slice) > 1:
+                    #    print(metadata["gt_metadata"][0]["gt_filenames"])
+                    # TODO: uncomment when Anne replies
+                    # assert int(np.max(labels_in_slice)) <= 1
+                    gt_slices.append(int(not np.any(gt_obj[..., slice_index])))
         dreturn = {
             "input": input_slices,
             "gt": gt_slices,
@@ -391,9 +391,9 @@ class MRI2DSegmentationDataset(Dataset):
                     [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in
                      range(len(stack_gt))])
         else:
-            # Force no transformation on labels
+            # Force no transformation on labels for classification task
+            # stack_gt is a list of length n_label, values: 0 or 1
             stack_gt = seg_pair_slice["gt"]
-        print(stack_gt)
 
         data_dict = {
             'input': stack_input,
