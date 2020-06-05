@@ -113,7 +113,7 @@ def adjust_transforms(transforms, seg_pair_slice):
 def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast_lst):
     # Load or generate bounding boxes and save them in json file
     bounding_box_dict = {}
-    if object_detection_params is None:
+    if object_detection_params is None or object_detection_params['object_detection_path'] is None:
         return bounding_box_dict
     bounding_box_path = os.path.join(object_detection_params['log_directory'], 'bounding_boxes.json')
     if os.path.exists(bounding_box_path):
@@ -132,6 +132,16 @@ def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast
         raise RuntimeError("Path to object detection model doesn't exist")
 
     return bounding_box_dict
+
+
+def verify_metadata(metadata, has_bounding_box):
+    input_has_bounding_box = all(['bounding_box' in metadata['input_metadata'][i]
+                                  for i in range(len(metadata['input_metadata']))])
+    gt_has_bounding_box = all(['bounding_box' in metadata['gt_metadata'][i]
+                               for i in range(len(metadata['gt_metadata']))])
+    index_has_bounding_box = input_has_bounding_box and gt_has_bounding_box
+    has_bounding_box &= index_has_bounding_box
+    return has_bounding_box
 
 
 def compute_bb_statistics(bounding_box_path):

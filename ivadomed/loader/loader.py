@@ -294,6 +294,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
+        self.has_bounding_box = True
 
         self._load_filenames()
 
@@ -315,8 +316,8 @@ class MRI2DSegmentationDataset(Dataset):
 
             for idx_pair_slice in range(input_data_shape[-1]):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
-                self.bounding_box = 'bounding_box' in slice_seg_pair['input_metadata'][0]
-                if self.bounding_box and resample:
+                self.has_bounding_box = imed_obj_detect.verify_metadata(slice_seg_pair, self.has_bounding_box)
+                if self.has_bounding_box and resample:
                     imed_obj_detect.resample_bounding_box(slice_seg_pair, resample_param)
 
                 if self.slice_filter_fn:
@@ -354,7 +355,7 @@ class MRI2DSegmentationDataset(Dataset):
         metadata_roi = imed_loader_utils.clean_metadata(roi_pair_slice['gt_metadata'])
         metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
 
-        if self.bounding_box:
+        if self.has_bounding_box:
             # Appropriate cropping according to bounding box
             imed_obj_detect.adjust_transforms(self.transform.transform, seg_pair_slice)
 
@@ -425,6 +426,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         self.padding = padding
         self.transform = transform
         self.slice_axis = slice_axis
+        self.has_bounding_box = True
 
         self._load_filenames()
         self._prepare_indices()
@@ -449,9 +451,10 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 resample_param = (transfo.hspace, transfo.wspace, transfo.dspace)
 
         for i in range(0, len(self.handlers)):
-            self.bounding_box = 'bounding_box' in self.handlers[i].get_pair_metadata(i)['input_metadata'][0]
             metadata = self.handlers[i].get_pair_metadata(i)
-            if self.bounding_box:
+            self.has_bounding_box = imed_obj_detect.verify_metadata(metadata, self.has_bounding_box)
+
+            if self.has_bounding_box:
                 if resample:
                     imed_obj_detect.resample_bounding_box(metadata, resample_param)
                     # Save value to avoid recompuing in getitem
@@ -504,7 +507,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
         metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
 
-        if self.bounding_box:
+        if self.has_bounding_box:
             # Appropriate cropping according to bounding box
             imed_obj_detect.adjust_transforms(self.transform.transform, seg_pair_slice)
 
