@@ -3,6 +3,7 @@
     "gpu": 0,
     "log_directory": "HeMIS",
     "debugging": false,
+    "object_detection_path": null,
     "loader_parameters": {
         "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
         "target_suffix": ["_seg-tumor"],
