@@ -9,6 +9,11 @@ from math import isclose
 from ivadomed.losses import GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss, FocalTverskyLoss, DiceLoss
 
 @pytest.mark.parametrize('params', [
+    (torch.tensor([[[[[0.0, 1.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 0.0]]]]]),
+     torch.tensor([[[[[0.0, 1.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 0.0]]]]]),
+     -1.0,
+     MultiClassDiceLoss(None)),
+
     (torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
      torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
      -1.0,
@@ -114,6 +119,11 @@ def test_diceloss(params):
 
 
 @pytest.mark.parametrize('params', [
+    (torch.tensor([[[[[0.0, 1.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 0.0]]]]]),
+     torch.tensor([[[[[0.0, 1.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 0.0]]]]]),
+     -1.0,
+     TverskyLoss(alpha=0.7, beta=0.3)),
+
     (torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
      torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
      -1.0,
@@ -156,6 +166,11 @@ def test_tverskyloss(params):
 
 
 @pytest.mark.parametrize('params', [
+    (torch.tensor([[[[[0.0, 1.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 0.0]]]]]),
+     torch.tensor([[[[[0.0, 1.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 0.0]]]]]),
+     0.,
+     FocalTverskyLoss(alpha=0.7, beta=0.3)),
+
     (torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
      torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
      0.,
