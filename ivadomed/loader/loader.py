@@ -65,7 +65,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               transform=transforms,
                                               metadata_choice=metadata_type,
                                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
-                                              roi_suffix=roi_params["suffix"])
+                                              roi_suffix=roi_params["suffix"],
+                                              object_detection_params=object_detection_params)
     else:
         dataset = BidsDataset(bids_path,
                               subject_lst=data_list,

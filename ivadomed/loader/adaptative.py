@@ -10,6 +10,7 @@ from bids_neuropoly import bids
 from tqdm import tqdm
 
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
+from ivadomed.object_detection import utils as imed_obj_detect
 
 
 class Dataframe:
@@ -157,7 +158,8 @@ class Bids_to_hdf5:
     """
 
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, hdf5_name, contrast_balance=None,
-                 slice_axis=2, metadata_choice=False, slice_filter_fn=None, roi_suffix=None):
+                 slice_axis=2, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
+                 object_detection_params=None):
         """
 
         :param root_dir: path of the bids
@@ -170,6 +172,7 @@ class Bids_to_hdf5:
         :param slice_axis:
         :param metadata_choice:
         :param slice_filter_fn:
+        :param object_detection_params
 
         """
 
@@ -201,6 +204,11 @@ class Bids_to_hdf5:
 
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
+
+        imed_obj_detect.load_bounding_boxes(object_detection_params,
+                                            self.bids_ds.get_subjects(),
+                                            slice_axis,
+                                            contrast_lst)
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
 
@@ -410,7 +418,7 @@ class Bids_to_hdf5:
 class HDF5Dataset:
     def __init__(self, root_dir, subject_lst, model_params, target_suffix, contrast_params,
                  slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
-                 slice_filter_fn=None, roi_suffix=None):
+                 slice_filter_fn=None, roi_suffix=None, object_detection_params=None):
 
         """
 
@@ -446,8 +454,8 @@ class HDF5Dataset:
                                      metadata_choice=metadata_choice,
                                      contrast_balance=contrast_params["balance"],
                                      slice_axis=slice_axis,
-                                     slice_filter_fn=slice_filter_fn
-                                     )
+                                     slice_filter_fn=slice_filter_fn,
+                                     object_detection_params=object_detection_params)
             self.hdf5_file = hdf5_file.hdf5_file
         else:
             self.hdf5_file = h5py.File(model_params["hdf5_path"], "r")
