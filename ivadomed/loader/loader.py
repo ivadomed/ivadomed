@@ -382,8 +382,9 @@ class MRI2DSegmentationDataset(Dataset):
         stack_gt, metadata_gt = self.transform(sample=seg_pair_slice["gt"],
                                                metadata=metadata_gt,
                                                data_type="gt")
+        print(stack_gt)
         # Make sure stack_gt is binarized
-        if stack_gt is not None:
+        if stack_gt is not None and self.task == "segmentation":
             stack_gt = torch.as_tensor(
                 [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in range(len(stack_gt))])
 
