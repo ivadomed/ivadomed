@@ -6,7 +6,7 @@
     "object_detection_path": "/home/andreanne/Documents/models/sc_model_30mm",
     "loader_parameters": {
         "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
-        "target_suffix": ["_seg-tumor", "_edema"],
+        "target_suffix": ["_seg-tumor"],
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
@@ -34,8 +34,7 @@
     "training_parameters": {
         "batch_size": 1,
         "loss": {
-            "name": "MultiClassDiceLoss",
-            "classes_of_interest": null
+            "name": "DiceLoss"
         },
         "training_time": {
             "num_epochs": 100,
@@ -64,7 +63,7 @@
         "depth": 4
     },
     "UNet3D": {
-        "applied": true,
+        "applied": false,
         "length_3D": [512, 256, 16],
         "padding_3D": 0,
         "attention": false,
@@ -89,9 +88,6 @@
             "wspace": 1,
             "hspace": 1,
             "dspace": 2
-        },
-        "CenterCrop": {
-            "size": [512, 256, 16]
         },
         "RandomTranslation": {
             "translate": [0.03, 0.03],
