@@ -33,7 +33,7 @@
     "training_parameters": {
         "batch_size": 18,
         "loss": {
-            "name": "DiceLoss"
+            "name": "AdapWingLoss"
         },
         "training_time": {
             "num_epochs": 100,

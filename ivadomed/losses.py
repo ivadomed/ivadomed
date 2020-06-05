@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import cv2
+import scipy
 import numpy as np
 
 class MultiClassDiceLoss(nn.Module):
