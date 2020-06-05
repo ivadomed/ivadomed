@@ -94,22 +94,26 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
 class SegmentationPair(object):
     """This class is used to build segmentation datasets. It represents
     a pair of of two data volumes (the input data and the ground truth data).
-
-    :param input_filenames: the input filename list (supported by nibabel). For single channel, the list will contain 1
-                           input filename.
-    :param gt_filenames: the ground-truth filenames list.
-    :param metadata: metadata list with each item corresponding to an image (modality) in input_filenames.  For single
-                     channel, the list will contain metadata related to one image.
-    :param cache: if the data should be cached in memory or not.
     """
 
-    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True):
-
+    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, task="segmentation"):
+        """
+        Args:
+            input_filenames (list): the input filename list (supported by nibabel). For single channel, the list will
+                contain 1 input filename.
+            gt_filenames (list): the ground-truth filenames list.
+            metadata (list): metadata list with each item corresponding to an image (modality) in input_filenames.
+                For single channel, the list will contain metadata related to one image.
+            cache (bool): if the data should be cached in memory or not.
+            task (string): choice between segmentation or classification. If classification: GT is discrete values.
+                If segmentation: GT is binary mask.
+        """
         self.input_filenames = input_filenames
         self.gt_filenames = gt_filenames
         self.metadata = metadata
         self.cache = cache
         self.slice_axis = slice_axis
+        self.task = task
 
         # list of the images
         self.input_handle = []
@@ -303,11 +307,12 @@ class MRI2DSegmentationDataset(Dataset):
 
     def _load_filenames(self):
         for input_filenames, gt_filenames, roi_filename, metadata in self.filename_pairs:
+            # Note: We force task=segmentation for ROI because we need the ROI mask to perform the im cropping
             roi_pair = SegmentationPair(input_filenames, roi_filename, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache)
+                                        cache=self.cache, task="segmentation")
 
             seg_pair = SegmentationPair(input_filenames, gt_filenames, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache)
+                                        cache=self.cache, task=self.task)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
