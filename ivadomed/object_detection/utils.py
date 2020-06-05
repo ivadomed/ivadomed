@@ -117,7 +117,8 @@ def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast
     if os.path.exists(bounding_box_path):
         with open(bounding_box_path, 'r') as fp:
             bounding_box_dict = json.load(fp)
-    elif os.path.exists(object_detection_params['object_detection_path']):
+    elif object_detection_params['object_detection_path'] is not None and \
+            os.path.exists(object_detection_params['object_detection_path']):
         print("Generating bounding boxes...")
         bounding_box_dict = generate_bounding_box_file(subjects,
                                                        object_detection_params['object_detection_path'],
