@@ -828,11 +828,11 @@ class Countception(nn.Module):
     """based on : https://arxiv.org/abs/1703.08710
     modified from github https://github.com/roggirg/count-ception_mbm/blob/master/train.py
     """
-    def __init__(self, inplanes=3, outplanes=1, use_logits=False,in_channel=1,out_channel=1, logits_per_output=12, debug=False,name='CC'):
+    def __init__(self, in_channel=3, out_channel=1, use_logits=False, logits_per_output=12, debug=False, name='CC'):
         super(Countception, self).__init__()
         # params
-        self.inplanes = inplanes
-        self.outplanes = outplanes
+        self.in_channel = in_channel
+        self.out_channel = out_channel
         self.activation = nn.LeakyReLU(0.01)
         self.final_activation = nn.LeakyReLU(0.3)
         self.patch_size = 40
@@ -842,7 +842,7 @@ class Countception(nn.Module):
 
         torch.LongTensor()
 
-        self.conv1 = ConvBlock(self.inplanes, 64, ksize=3, pad=self.patch_size, activation=self.activation)
+        self.conv1 = ConvBlock(self.in_channel, 64, ksize=3, pad=self.patch_size, activation=self.activation)
         self.simple1 = SimpleBlock(64, 16, 16, activation=self.activation)
         self.simple2 = SimpleBlock(48, 16, 32, activation=self.activation)
         self.conv2 = ConvBlock(80, 16, ksize=14, activation=self.activation)
@@ -855,9 +855,9 @@ class Countception(nn.Module):
         self.conv5 = ConvBlock(64, 32, ksize=9, activation=self.activation)
         if use_logits:
             self.conv6 = nn.ModuleList([ConvBlock(
-                64, logits_per_output, ksize=1, activation=self.final_activation) for _ in range(outplanes)])
+                64, logits_per_output, ksize=1, activation=self.final_activation) for _ in range(out_channel)])
         else:
-            self.conv6 = ConvBlock(32, self.outplanes, ksize=20, pad=1, activation=self.final_activation)
+            self.conv6 = ConvBlock(32, self.out_channel, ksize=20, pad=1, activation=self.final_activation)
 
         # Weight initialization
         for m in self.modules():
