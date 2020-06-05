@@ -307,16 +307,17 @@ class MRI2DSegmentationDataset(Dataset):
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
-            resample = False
+            # Check if Resample is included in self.transform.transform["im"]
+            resample_bool = False
             for idx, transfo in enumerate(self.transform.transform["im"].transforms):
                 if "Resample" in str(type(transfo)):
-                    resample = True
+                    resample_bool = True
                     resample_param = (transfo.hspace, transfo.wspace, transfo.dspace)
 
             for idx_pair_slice in range(input_data_shape[-1]):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
                 self.bounding_box = 'bounding_box' in slice_seg_pair['input_metadata'][0]
-                if self.bounding_box and resample:
+                if self.bounding_box and resample_bool:
                     imed_obj_detect.resample_bounding_box(slice_seg_pair, resample_param)
 
                 if self.slice_filter_fn:
