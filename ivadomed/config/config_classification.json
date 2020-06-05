@@ -1,7 +1,7 @@
 {
     "command": "train",
     "gpu": 6,
-    "log_directory": "sct_testing_lesion_ax",
+    "log_directory": "classification_lesion_ax",
     "debugging": false,
     "loader_parameters": {
         "bids_path": "../duke/sct_testing/large/",
