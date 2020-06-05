@@ -46,6 +46,10 @@ def test_multiclassdiceloss(params):
 
 
 @pytest.mark.parametrize('params', [
+    (torch.tensor([[[[[0.0, 1.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 0.0]]]]]),
+     torch.tensor([[[[[0.0, 1.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 0.0]]]]]),
+     -1.,
+     GeneralizedDiceLoss(epsilon=1e-5, include_background=True)),
     (torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
      torch.tensor([[[[1.0, 0.0], [1.0, 1.0]]]]),
      -0.8,
