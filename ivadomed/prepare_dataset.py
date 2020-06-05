@@ -14,10 +14,10 @@ def normalize(arr):
     return ((arr - mi) / (ma - mi))
 
 
-# Useful function to generate a Gaussian Function on given coordinates. Used to generate groudtruth.
+# Useful function to generate a Gaussian Function on given coordinates. Used to generate ground truth.
 def label2maskmap_gt(data, shape, c_dx=0, c_dy=0, radius=10, normalize=False):
     """
-    Generate a Mask map from the coordenates
+    Generate a heatmap resulting from the convolution between a 2D Gaussian kernel and a pair of 2D coordinates.
     :param shape: dimension of output
     :param data : input image
     :param radius: is the radius of the gaussian function
@@ -181,6 +181,7 @@ def extract_all(list_coord_label, shape_im=(1, 150, 200)):
 
 
 def transform_dataset(bids_path, suffix, aim):
+   """This function takes as input a path to a dataset and generate two sets of images: (i) mid-sagittal image and (ii) heatmap of disc labels associated with the mid-sagittal image. 
     t = os.listdir(bids_path)
     print(t)
     t.remove('derivatives')
@@ -205,7 +206,6 @@ def transform_dataset(bids_path, suffix, aim):
         arr_pred_ref_space = reorient_image(np.flip(heatmap[:, :, :], axis=2), 2, lab, nib_ref_can)
         nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
         nib.save(nib_pred,bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + 'heatmap.nii.gz')
-
 
 
 
