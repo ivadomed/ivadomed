@@ -80,9 +80,10 @@ class FocalLoss(nn.Module):
 class FocalDiceLoss(nn.Module):
     """
     Motivated by https://arxiv.org/pdf/1809.00076.pdf
-    :param beta: to bring the dice and focal losses at similar scale.
-    :param gamma: gamma value used in the focal loss.
-    :param alpha: alpha value used in the focal loss.
+    Args:
+            beta: to bring the dice and focal losses at similar scale.
+            gamma: gamma value used in the focal loss.
+            alpha: alpha value used in the focal loss.
     """
 
     def __init__(self, beta=1, gamma=2, alpha=0.25):
@@ -237,6 +238,9 @@ class FocalTverskyLoss(TverskyLoss):
 
 
 class L2loss(nn.Module):
+    """
+    L2 loss between two images : inputs and target
+    """
 
     def __init__(self):
         super(L2_loss, self).__init__()
@@ -246,13 +250,15 @@ class L2loss(nn.Module):
 
 
 class AdapWingLoss(nn.Module):
+    """
+    adaptive Wing loss : https://arxiv.org/abs/1904.07399
+    Used for heatmap ground truth.
+    
+    """
 
     def __init__(self):
         super(AdapWingLoss, self).__init__()
-    """
-    adaptive Wing loss : https://arxiv.org/abs/1904.07399
 
-    """
     def forward(self,input,target):
         theta = 0.5
         alpha = 2.1
