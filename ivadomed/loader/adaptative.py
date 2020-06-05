@@ -298,17 +298,19 @@ class Bids_to_hdf5:
             gt_volume = []
             roi_volume = []
 
-            resample = False
-            for idx, transfo in enumerate(self.transform.transform["im"].transforms):
-                if "Resample" in str(type(transfo)):
-                    resample = True
-                    resample_param = (transfo.hspace, transfo.wspace, transfo.dspace)
+            bounding_box = 'bounding_box' in seg_pair.get_pair_slice(0)['input_metadata'][0]
+            if bounding_box:
+                resample = False
+                for idx, transfo in enumerate(self.transform.transform["im"].transforms):
+                    if "Resample" in str(type(transfo)):
+                        resample = True
+                        resample_param = (transfo.hspace, transfo.wspace, transfo.dspace)
 
             for idx_pair_slice in range(input_data_shape[-1]):
 
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
 
-                if 'bounding_box' in slice_seg_pair['input_metadata'][0] and resample:
+                if bounding_box and resample:
                     imed_obj_detect.resample_bounding_box(slice_seg_pair, resample_param)
 
                 # keeping idx of slices with gt
@@ -396,7 +398,7 @@ class Bids_to_hdf5:
                 grp[key].attrs["zooms"] = gt_metadata['zooms']
             if "data_shape" in gt_metadata.keys():
                 grp[key].attrs["data_shape"] = gt_metadata['data_shape']
-            if "bounding_box" in gt_metadata.keys():
+            if gt_metadata['bounding_box'] is not None:
                 grp[key].attrs["bounding_box"] = gt_metadata['bounding_box']
 
             # ROI
