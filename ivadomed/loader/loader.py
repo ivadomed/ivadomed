@@ -272,7 +272,10 @@ class SegmentationPair(object):
                     gt_slices.append(np.asarray(gt_obj[..., slice_index],
                                                 dtype=np.float32))
                 else:
-                    pass
+                    # TODO_future: Deal with non binary classification, eg get np.max(slice)
+                    # Note_CG: I initially went with int(not np.any(gt_obj[..., slice_index])) but changed it to handle
+                    #   non binary classification
+                    gt_slices.append(int(np.max(gt_obj[..., slice_index])))
 
         dreturn = {
             "input": input_slices,
