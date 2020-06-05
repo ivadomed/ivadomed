@@ -81,6 +81,17 @@ def gkern(kernlen=10):
 
 
 def heatmap_generation(image, kernel_size):
+    """
+    Generate heatmap from image containing sing voxel label using
+    convolution with gaussian kernel
+    Args:
+        image: 2D array containing single voxel label
+        kernel_size: size of gaussian kernel
+
+    Returns:
+        array: 2d array heatmap matching the label.
+
+    """
     kernel = gkern(kernel_size)
     map = scipy.signal.convolve(image, kernel)
     return normalize(map)
@@ -109,10 +120,13 @@ def multivariate_gaussian(pos, mu, Sigma):
 def add_zero_padding(img_list, x_val=512, y_val=512):
     """
     Add zero padding to each image in an array so they all have matching dimension.
-    :param img_list: list of input image to pad
-    :param x_val: shape of output alongside x axis
-    :param y_val: shape of output alongside y axis
-    :return: list of images
+    Args:
+        img_list: list of input image to pad
+        x_val: shape of output alongside x axis
+        y_val: shape of output alongside y axis
+
+    Returns:
+        list of padded images
     """
     if type(img_list) != list:
         img_list = [img_list]
@@ -199,9 +213,20 @@ def extract_all(list_coord_label, shape_im=(1, 150, 200)):
 
 
 def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim):
-   """This function takes as input a path to a dataset and generate two sets of images:
+    """
+     This function takes as input a path to a dataset and generate two sets of images:
    (i) mid-sagittal image and
-   (ii) heatmap of disc labels associated with the mid-sagittal image."""
+   (ii) heatmap of disc labels associated with the mid-sagittal image.
+
+    Args:
+        bids_path (string): path to BIDS dataset form which images will be generated
+        suffix (string): suffix of image that will be processed (e.g., T2w)
+        aim(string): 'full' or 'c2'. If 'c2' retrieves only c2 label (value = 3) else create heatmap with all label.
+
+    Returns:
+        None. Image are saved in Bids folder
+
+    """
    t = os.listdir(bids_path)
    print(t)
    t.remove('derivatives')
@@ -221,7 +246,15 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
        nib.save(nib_pred, bids_path + t[i] + '/anat/' + t[i] + suffix + '_mid.nii.gz')
        lab = nib.load(path_label)
        nib_ref_can = nib.as_closest_canonical(lab)
-       label_array = np.array(nib_ref_can.dataobj)
+       label_array = np.zeros(imsh[1:])
+
+       if aim == 'c2':
+           for j in range (len (list_points[0])):
+               if label_array[list_points[1][j],list_points[0][j]]==3:
+                   label_array[list_points[1][j], list_points[0][j]] = 1
+       elif aim =='full':
+           for j in range(len(list_points[0])):
+               label_array[list_points[1][j], list_points[0][j]] = 1
 
        heatmap = heatmap_generation(label_array[list_points[0][0], :, :],10)
 
