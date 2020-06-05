@@ -130,4 +130,10 @@ Indicate the transformation in the same order you would like them to be applied 
 - ` RandomReverse`
 
 ## Examples
-Examples of configuration files: [here](https://github.com/neuropoly/ivado-medical-imaging/tree/master/ivadomed/config)
+Examples of configuration files: [here](https://github.com/neuropoly/ivado-medical-imaging/tree/master/ivadomed/config).
+
+In particular:
+- [config_classification.json](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/config/config_classification.json) is dedicated to classification task.
+- [config_sctTesting.json](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/config/config_sctTesting.json) is a user case of 2D segmentation using a U-Net model.
+- [config_spineGeHemis.json](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/config/config_spineGeHemis.json) shows how to use the HeMIS-UNet.
+- [config_tumorSeg.json](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/config/config_tumorSeg.json) runs a 3D segmentation using a 3D UNet.
