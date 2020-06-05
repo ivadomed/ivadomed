@@ -138,7 +138,7 @@ future.
 
 Ensure that you are the original author of your changes, and if that is
 not the case, ensure that the borrowed/adapted code is compatible with
-the [project's license](https://ivado-medical-imaging.readthedocs.io/en/latest/license.html).
+the [project's license](https://ivadomed.org/en/latest/index.html#license).
 
 
 ## Committing
