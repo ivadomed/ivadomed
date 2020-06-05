@@ -9,6 +9,7 @@ from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
+from ivadomed import preprocessing as imed_prepro
 
 
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
@@ -34,7 +35,10 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         BidsDataset
     """
     # Compose transforms
+    preprocessing_transforms = imed_prepro.get_preprocessing_transforms(transforms_params)
+    prepro_transforms = imed_transforms.Compose(preprocessing_transforms, requires_undo=requires_undo)
     transforms = imed_transforms.Compose(transforms_params, requires_undo=requires_undo)
+    tranform_lst = [prepro_transforms, transforms]
 
     if model_params["name"] == "UNet3D":
         dataset = Bids3DDataset(bids_path,
@@ -44,7 +48,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                 contrast_params=contrast_params,
                                 metadata_choice=metadata_type,
                                 slice_axis=imed_utils.AXIS_DCT[slice_axis],
-                                transform=transforms,
+                                transform=tranform_lst,
                                 multichannel=multichannel,
                                 model_params=model_params)
     elif model_params["name"] == "HeMISUnet":
@@ -54,7 +58,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               contrast_params=contrast_params,
                                               target_suffix=target_suffix,
                                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
-                                              transform=transforms,
+                                              transform=tranform_lst,
                                               metadata_choice=metadata_type,
                                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
                                               roi_suffix=roi_params["suffix"])
@@ -66,7 +70,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               contrast_params=contrast_params,
                               metadata_choice=metadata_type,
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
-                              transform=transforms,
+                              transform=tranform_lst,
                               multichannel=multichannel,
                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params))
 
@@ -94,13 +98,15 @@ class SegmentationPair(object):
     :param cache: if the data should be cached in memory or not.
     """
 
-    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True):
+    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True,
+                 prepro_transforms=None):
 
         self.input_filenames = input_filenames
         self.gt_filenames = gt_filenames
         self.metadata = metadata
         self.cache = cache
         self.slice_axis = slice_axis
+        self.prepro_transforms = prepro_transforms
 
         # list of the images
         self.input_handle = []
@@ -279,7 +285,7 @@ class MRI2DSegmentationDataset(Dataset):
 
         self.indexes = []
         self.filename_pairs = filename_pairs
-        self.transform = transform
+        self.prepro_transforms, self.transform = transform
         self.cache = cache
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
@@ -290,10 +296,10 @@ class MRI2DSegmentationDataset(Dataset):
     def _load_filenames(self):
         for input_filenames, gt_filenames, roi_filename, metadata in self.filename_pairs:
             roi_pair = SegmentationPair(input_filenames, roi_filename, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache)
+                                        cache=self.cache, prepro_transforms=self.prepro_transforms)
 
             seg_pair = SegmentationPair(input_filenames, gt_filenames, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache)
+                                        cache=self.cache, prepro_transforms=self.prepro_transforms)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
