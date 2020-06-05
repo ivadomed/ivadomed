@@ -82,9 +82,9 @@ Float. Alpha parameter of the Beta distribution, see [original paper](https://ar
 
 ## Architecture
 Architectures for both segmentation and classification are available and described [here](models.rst).
-If the selected architecture is listed HERE, then a classification task is run, ie the ground-truth are labels extracted from `target`, instead of arrays for the segmentation task.
+If the selected architecture is listed [here](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/loader/loader.py#L14), then a classification task is run, ie the ground-truth are labels extracted from `target`, instead of arrays for the segmentation task.
 ### default_model (Mandatory)
-Define the default model (`Unet`) and mandatory parameters that are common to all available architectures (listed [here](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/main.py#L20)). If a tailored model is defined (see next section), then the default parameters are merged with the parameters that are specific to the tailored model.
+Define the default model (`Unet`) and mandatory parameters that are common to all available architectures (listed [here](models.rst)). If a tailored model is defined (see next section), then the default parameters are merged with the parameters that are specific to the tailored model.
 - `name`: `Unet` (default)
 - `dropout_rate`: float (e.g. 0.4).
 - `batch_norm_momentum`: float (e.g. 0.1).
