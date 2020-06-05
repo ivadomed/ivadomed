@@ -308,16 +308,17 @@ class MRI2DSegmentationDataset(Dataset):
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
-            resample = False
+            # Check if Resample is included in self.transform.transform["im"]
+            is_resampled = False
             for idx, transfo in enumerate(self.transform.transform["im"].transforms):
                 if "Resample" in str(type(transfo)):
-                    resample = True
+                    is_resampled = True
                     resample_param = (transfo.hspace, transfo.wspace, transfo.dspace)
 
             for idx_pair_slice in range(input_data_shape[-1]):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
                 self.has_bounding_box = imed_obj_detect.verify_metadata(slice_seg_pair, self.has_bounding_box)
-                if self.has_bounding_box and resample:
+                if self.has_bounding_box and is_resampled:
                     imed_obj_detect.resample_bounding_box(slice_seg_pair, resample_param)
 
                 if self.slice_filter_fn:
@@ -441,13 +442,13 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         padding = self.padding
 
         crop = False
-        resample = False
+        is_resampled = False
         for idx, transfo in enumerate(self.transform.transform["im"].transforms):
             if "CenterCrop" in str(type(transfo)):
                 crop = True
                 shape_crop = transfo.size
             if "Resample" in str(type(transfo)):
-                resample = True
+                is_resampled = True
                 resample_param = (transfo.hspace, transfo.wspace, transfo.dspace)
 
         for i in range(0, len(self.handlers)):
@@ -455,7 +456,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             self.has_bounding_box = imed_obj_detect.verify_metadata(metadata, self.has_bounding_box)
 
             if self.has_bounding_box:
-                if resample:
+                if is_resampled:
                     imed_obj_detect.resample_bounding_box(metadata, resample_param)
                     # Save value to avoid recompuing in getitem
                     for meta in self.handlers[i].metadata:
