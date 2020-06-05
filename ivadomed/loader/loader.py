@@ -10,6 +10,9 @@ from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 
+# List of classifier models (ie not segmentation output)
+CLASSIFIER_LIST = ['NAME_CLASSIFIER_1']
+
 
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
@@ -47,6 +50,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                 transform=transforms,
                                 multichannel=multichannel,
                                 model_params=model_params)
+
     elif model_params["name"] == "HeMISUnet":
         dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
                                               subject_lst=data_list,
@@ -58,7 +62,11 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               metadata_choice=metadata_type,
                                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
                                               roi_suffix=roi_params["suffix"])
+
     else:
+        # Task selection
+        task = "classification" if model_params["name"] in CLASSIFIER_LIST else "segmentation"
+
         dataset = BidsDataset(bids_path,
                               subject_lst=data_list,
                               target_suffix=target_suffix,
@@ -68,7 +76,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                               transform=transforms,
                               multichannel=multichannel,
-                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params))
+                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
+                              task=task)
 
     # if ROICrop in transform, then apply SliceFilter to ROI slices
     if 'ROICrop' in transforms_params:
@@ -528,7 +537,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
 class BidsDataset(MRI2DSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
-                 multichannel=False):
+                 multichannel=False, task="segmentation"):
 
         self.bids_ds = bids.BIDS(root_dir)
 

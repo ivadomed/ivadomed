@@ -17,7 +17,7 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 cudnn.benchmark = True
 
 # List of not-default available models i.e. different from Unet
-MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet']
+MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'NAME_CLASSIFIER_1']
 
 
 def run_main():
@@ -58,11 +58,6 @@ def run_main():
         loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["testing"]
     if "FiLMedUnet" in context and context["FiLMedUnet"]["applied"]:
         loader_params.update({"metadata_type": context["FiLMedUnet"]["metadata"]})
-
-    # Task selection
-    # TODO: add distinction between classification and BBbox detections
-    print("\nTask: {}.\n".format("Classification" if loader_params["detection_params"]["applied"] else "Segmentation"))
-    # QUESTION: Do we want to force applied=im (not gt) in transforms if classification? or do we trust ourselves?
 
     # Get transforms for each subdataset
     transform_train_params, transform_valid_params, transform_test_params = \
