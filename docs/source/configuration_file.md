@@ -1,7 +1,5 @@
 # Configuration file
 
-Examples of configuration files: [here](https://github.com/neuropoly/ivado-medical-imaging/tree/master/ivadomed/config)
-
 * [General parameters](#general-parameters)
 * [Loader parameters](#loader-parameters)
 * [Split dataset](#split-dataset)
@@ -9,6 +7,7 @@ Examples of configuration files: [here](https://github.com/neuropoly/ivado-medic
 * [Architecture](#architecture)
 * [Testing parameters](#testing-parameters)
 * [Transformations](#transformations)
+* [Examples](#examples)
 
 ## General parameters
 #### command
@@ -129,3 +128,6 @@ Indicate the transformation in the same order you would like them to be applied 
 - `HistogramClipping` (parameters: `min_percentile`, `max_percentile`)
 - `Clage` (parameters: `clip_limit`, `kernel_size`)
 - ` RandomReverse`
+
+## Examples
+Examples of configuration files: [here](https://github.com/neuropoly/ivado-medical-imaging/tree/master/ivadomed/config)
