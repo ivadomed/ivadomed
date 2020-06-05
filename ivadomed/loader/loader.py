@@ -275,17 +275,21 @@ class SegmentationPair(object):
 
 
 class MRI2DSegmentationDataset(Dataset):
-    """This is a generic class for 2D (slice-wise) segmentation datasets.
+    """This is a generic class for 2D (slice-wise) segmentation datasets."""
 
-    :param filename_pairs: a list of tuples in the format (input filename list containing all modalities,
-                           ground truth filename, ROI filename, metadata).
-    :param slice_axis: axis to make the slicing (default axial).
-    :param cache: if the data should be cached in memory or not.
-    :param transform: transformations to apply.
-    """
-
-    def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None):
-
+    def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None,
+                 task="segmentation"):
+        """
+        Args
+            filename_pairs (list): a list of tuples in the format (input filename list containing all modalities,ground
+                truth filename, ROI filename, metadata).
+            slice_axis (int): axis to make the slicing (default axial).
+            cache (bool): if the data should be cached in memory or not.
+            transform (torchvision.Compose): transformations to apply.
+            slice_filter_fn ():
+            task (string): choice between segmentation or classification. If classification: GT is discrete values.
+                If segmentation: GT is binary mask.
+        """
         self.indexes = []
         self.filename_pairs = filename_pairs
         self.transform = transform
@@ -293,6 +297,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
+        self.task = task
 
         self._load_filenames()
 
@@ -632,4 +637,4 @@ class BidsDataset(MRI2DSegmentationDataset):
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
 
-        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn)
+        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task)
