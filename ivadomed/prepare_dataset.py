@@ -6,6 +6,7 @@ import skimage
 import os
 import sys
 from utils import reorient_image
+import scipy
 
 # normalize Image
 def normalize(arr):
@@ -68,6 +69,21 @@ def label2maskmap_gt(data, shape, c_dx=0, c_dy=0, radius=10, normalize=False):
         maskMap = maskMap[0]
 
     return np.asarray(maskMap)
+
+
+def gkern(kernlen=10):
+    """Returns a 2D Gaussian kernel."""
+
+    x = np.linspace(0, 1, kernlen+1)
+    kern1d = np.diff(scipy.stats.norm.cdf(x))
+    kern2d = np.outer(kern1d, kern1d)
+    return normalize(kern2d/kern2d.sum())
+
+
+def heatmap_generation(image, kernel_size):
+    kernel = gkern(kernel_size)
+    map = scipy.signal.convolve(image, kernel)
+    return normalize(map)
 
 
 def multivariate_gaussian(pos, mu, Sigma):
@@ -166,9 +182,11 @@ def images_normalization(img_list, std=True):
 def extract_all(list_coord_label, shape_im=(1, 150, 200)):
     """
     Create groundtruth by creating gaussian Function for every ground truth points for a single image
-    :param list_coord_label: list of ground truth coordinates
-    :param shape_im: shape of output image with zero padding
-    :return: a 2d heatmap image.
+    Args:
+        list_coord_label(list): list of ground truth coordinates
+        shape_im (tuple): shape of output image with zero padding
+    Returns:
+         2D-array: a 2d heatmap image.
     """
     shape_tmp = (1, shape_im[0], shape_im[1])
     final = np.zeros(shape_tmp)
@@ -181,31 +199,36 @@ def extract_all(list_coord_label, shape_im=(1, 150, 200)):
 
 
 def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim):
-   """This function takes as input a path to a dataset and generate two sets of images: (i) mid-sagittal image and (ii) heatmap of disc labels associated with the mid-sagittal image. 
-    t = os.listdir(bids_path)
-    print(t)
-    t.remove('derivatives')
-    print(t)
+   """This function takes as input a path to a dataset and generate two sets of images:
+   (i) mid-sagittal image and
+   (ii) heatmap of disc labels associated with the mid-sagittal image."""
+   t = os.listdir(bids_path)
+   print(t)
+   t.remove('derivatives')
+   print(t)
 
-    for i in range(len(t)):
-        sub = t[i]
-        path_image = bids_path + t[i] + '/anat/' + t[i] + suffix + '.nii.gz'
-        path_label = bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix +'_labels-disc-manual.nii.gz'
-        list_points = mask2label(path_label, aim=aim)
-        image_ref = nib.load(path_image)
-        nib_ref_can = nib.as_closest_canonical(image_ref)
-        imsh = np.array(image_ref.dataobj).shape
-        mid = get_midnifti(path_image, list_points[0][0])
-        arr_pred_ref_space = reorient_image(np.expand_dims(np.flip(mid[:, :], axis=1), axis=0), 2, image_ref, nib_ref_can).astype('float32')
-        nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
-        nib.save(nib_pred, bids_path + t[i] + '/anat/' + t[i] + suffix + '_mid.nii.gz')
+   for i in range(len(t)):
+       sub = t[i]
+       path_image = bids_path + t[i] + '/anat/' + t[i] + suffix + '.nii.gz'
+       path_label = bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix +'_labels-disc-manual.nii.gz'
+       list_points = mask2label(path_label, aim=aim)
+       image_ref = nib.load(path_image)
+       nib_ref_can = nib.as_closest_canonical(image_ref)
+       imsh = np.array(image_ref.dataobj).shape
+       mid = get_midnifti(path_image, list_points[0][0])
+       arr_pred_ref_space = reorient_image(np.expand_dims(np.flip(mid[:, :], axis=1), axis=0), 2, image_ref, nib_ref_can).astype('float32')
+       nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
+       nib.save(nib_pred, bids_path + t[i] + '/anat/' + t[i] + suffix + '_mid.nii.gz')
+       lab = nib.load(path_label)
+       nib_ref_can = nib.as_closest_canonical(lab)
+       label_array = np.array(nib_ref_can.dataobj)
 
-        heatmap = extract_all(list_points, np.array(image_ref.dataobj).shape)
-        lab = nib.load(path_label)
-        nib_ref_can = nib.as_closest_canonical(lab)
-        arr_pred_ref_space = reorient_image(np.flip(heatmap[:, :, :], axis=2), 2, lab, nib_ref_can)
-        nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
-        nib.save(nib_pred,bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + 'heatmap.nii.gz')
+       heatmap = heatmap_generation(label_array[list_points[0][0], :, :],10)
+
+       nib_ref_can = nib.as_closest_canonical(lab)
+       arr_pred_ref_space = reorient_image(np.expand_dims(np.flip(heatmap[:, :], axis=1), axis=0), 2, lab, nib_ref_can)
+       nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
+       nib.save(nib_pred,bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + 'heatmap.nii.gz')
 
 
 
