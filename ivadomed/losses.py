@@ -188,6 +188,7 @@ class TverskyLoss(nn.Module):
             float: Tversky index
         """
         # Compute TP
+        y_true = y_true.float()
         tp = torch.sum(y_true * y_pred)
         # Compute FN
         fn = torch.sum(y_true * (1 - y_pred))
