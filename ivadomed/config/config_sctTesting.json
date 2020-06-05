@@ -3,7 +3,9 @@
     "gpu": 6,
     "log_directory": "sct_testing_lesion_ax",
     "debugging": false,
-    "object_detection_path": null,
+    "object_detection_params": {
+        "object_detection_path": null
+    },
     "loader_parameters": {
         "bids_path": "../duke/sct_testing/large/",
         "target_suffix": ["_lesion-manual"],

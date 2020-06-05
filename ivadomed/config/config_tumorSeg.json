@@ -3,7 +3,9 @@
     "gpu": 0,
     "log_directory": "tumor_segmentation",
     "debugging": true,
-    "object_detection_path": "/home/andreanne/Documents/models/sc_model_30mm",
+    "object_detection_params": {
+        "object_detection_path": "/home/andreanne/Documents/models/sc_model_30mm"
+    },
     "loader_parameters": {
         "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
         "target_suffix": ["_seg-tumor"],
