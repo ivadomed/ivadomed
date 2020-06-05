@@ -267,13 +267,13 @@ class AdapWingLoss(nn.Module):
 
         mask = torch.zeros_like(target)
         # W=10
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+        kernel = scipy.ndimage.morphology.generate_binary_structure(2,2)
         for i in range(batch_size):
             img_list = []
 
             img_list.append(np.round(target[i].cpu().numpy() * 255))
-            img_merge = cv2.merge(img_list)
-            img_dilate = cv2.morphologyEx(img_merge, cv2.MORPH_DILATE, kernel)
+            img_merge = np.concatenate(img_list)
+            img_dilate = scipy.ndimage.morphology.binary_opening(img_merge, kernel)
             img_dilate[img_dilate < 51] = 1  # 0*W+1
             img_dilate[img_dilate >= 51] = 11  # 1*W+1
             img_dilate = np.array(img_dilate, dtype=np.int)
