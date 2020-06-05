@@ -1,6 +1,3 @@
-import json
-import os
-
 import nibabel as nib
 import numpy as np
 import torch
@@ -611,10 +608,10 @@ class BidsDataset(MRI2DSegmentationDataset):
                                                "roi_filename": None,
                                                "metadata": [None] * num_contrast} for subject in subject_lst}
 
-        imed_obj_detect.load_bounding_boxes(object_detection_params,
-                                            self.bids_ds.get_subjects(),
-                                            slice_axis,
-                                            contrast_params["contrast_lst"])
+        bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
+                                                                self.bids_ds.get_subjects(),
+                                                                slice_axis,
+                                                                contrast_params["contrast_lst"])
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_params["contrast_lst"]:
