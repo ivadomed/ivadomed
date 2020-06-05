@@ -140,14 +140,15 @@ class GeneralizedDiceLoss(nn.Module):
 
         # Compute class weights
         target = target.float()
-        target_sum = target.sum(-1).sum(-1)
+        axes_to_sum = tuple(range(2, len(target.shape)))
+        target_sum = target.sum(axis=axes_to_sum)
         class_weights = nn.Parameter(1. / (target_sum * target_sum).clamp(min=self.epsilon))
 
         # W Intersection
-        intersect = ((input * target).sum(-1).sum(-1) * class_weights).sum()
+        intersect = ((input * target).sum(axis=axes_to_sum) * class_weights).sum()
 
         # W Union
-        denominator = ((input + target).sum(-1).sum(-1) * class_weights).sum()
+        denominator = ((input + target).sum(axis=axes_to_sum) * class_weights).sum()
 
         return - 2. * intersect / denominator.clamp(min=self.epsilon)
 
