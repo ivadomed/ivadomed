@@ -81,7 +81,8 @@ Float. Alpha parameter of the Beta distribution, see [original paper](https://ar
 - `retrain_fraction`: Float between 0. and 1. Controls the fraction of the pre-trained model that will be fine-tuned. For instance, if set to 0.5, then the second half of the model will be fine-tuned, while the first layers will be frozen.
 
 ## Architecture
-Architectures for both segmentation and classification are available. If the selected architecture is listed HERE, then a classification task is run, ie the ground-truth are labels extracted from `target`, instead of arrays for the segmentation task.
+Architectures for both segmentation and classification are available and described [here](models.rst).
+If the selected architecture is listed HERE, then a classification task is run, ie the ground-truth are labels extracted from `target`, instead of arrays for the segmentation task.
 ### default_model (Mandatory)
 Define the default model (`Unet`) and mandatory parameters that are common to all available architectures (listed [here](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/main.py#L20)). If a tailored model is defined (see next section), then the default parameters are merged with the parameters that are specific to the tailored model.
 - `name`: `Unet` (default)
