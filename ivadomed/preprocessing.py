@@ -7,7 +7,6 @@ def get_preprocessing_transforms(transforms):
     for idx, tr in enumerate(original_transforms):
         if "preprocessing" in transforms[tr] and transforms[tr]["preprocessing"]:
             del transforms[tr]
-            del preprocessing_transforms[tr]["preprocessing"]
         else:
             del preprocessing_transforms[tr]
 
@@ -18,9 +17,10 @@ def apply_transforms(transforms, seg_pair, roi_pair=None):
     if transforms is None:
         return (seg_pair, roi_pair)
 
-    stack_roi, metadata_roi = transforms(sample=roi_pair["gt"],
-                                         metadata=roi_pair['gt_metadata'],
-                                         data_type="roi")
+    if roi_pair is not None:
+        stack_roi, metadata_roi = transforms(sample=roi_pair["gt"],
+                                             metadata=roi_pair['gt_metadata'],
+                                             data_type="roi")
     # Run transforms on images
     stack_input, metadata_input = transforms(sample=seg_pair["input"],
                                              metadata=seg_pair['input_metadata'],
@@ -36,7 +36,7 @@ def apply_transforms(transforms, seg_pair, roi_pair=None):
         'gt_metadata': metadata_gt
     }
 
-    if len(roi_pair['gt']):
+    if roi_pair is not None and len(roi_pair['gt']):
         roi_pair = {
             'input': stack_input,
             'gt': stack_roi,
