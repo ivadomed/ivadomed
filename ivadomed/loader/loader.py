@@ -126,6 +126,8 @@ class SegmentationPair(object):
 
         # Unlabeled data (inference time)
         if self.gt_filenames is not None:
+            if not isinstance(self.gt_filenames, list):
+                self.gt_filenames = [self.gt_filenames]
             for gt in self.gt_filenames:
                 if gt is not None:
                     self.gt_handle.append(nib.load(gt))
