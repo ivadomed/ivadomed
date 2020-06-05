@@ -274,7 +274,7 @@ class SegmentationPair(object):
                     # Assert that there is only one non_zero_label in the current slice
                     labels_in_slice = np.unique(gt_obj[..., slice_index][np.nonzero(gt_obj[..., slice_index])]).tolist()
                     if len(labels_in_slice) > 1:
-                        print(metadata["gt_metadata"])
+                        print(metadata["gt_metadata"][0]["gt_filenames"])
                     #assert len(labels_in_slice) <= 1
                     # We use np.max instead of (not np.any(gt_obj[..., slice_index]) to handle non binary classification
                     gt_slices.append(int(np.max(gt_obj[..., slice_index])))
