@@ -16,7 +16,6 @@ from ivadomed.object_detection import utils as imed_obj_detect
 CLASSIFIER_LIST = ['NAME_CLASSIFIER_1']
 
 
-
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
                  dataset_type="training", requires_undo=False, metadata_type=None,
@@ -497,7 +496,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
             self.has_bounding_box = imed_obj_detect.verify_metadata(seg_pair, self.has_bounding_box)
             if self.has_bounding_box:
-                imed_obj_detect.adjust_transforms(self.prepro_transforms, seg_pair)
+                imed_obj_detect.adjust_transforms(self.prepro_transforms, seg_pair, length=self.length,
+                                                  stride=self.stride)
 
             self.handlers.append(imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                                 seg_pair=seg_pair))
@@ -508,9 +508,9 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             input_img = self.handlers[i][0]['input']
             shape = input_img[0].shape
 
-            if (shape[0] % self.stride[0]) != 0 or self.length[0] % 16 != 0 \
-                    or (shape[1] % self.stride[1]) != 0 or self.length[1] % 16 != 0 \
-                    or (shape[2] % self.stride[2]) != 0 or self.length[2] % 16 != 0:
+            if (shape[0] % self.stride[0]) != 0 or self.length[0] % 16 != 0 or shape[0] < self.length[0] \
+                    or (shape[1] % self.stride[1]) != 0 or self.length[1] % 16 != 0 or shape[1] < self.length[1] \
+                    or (shape[2] % self.stride[2]) != 0 or self.length[2] % 16 != 0 or shape[2] < self.length[2]:
                 raise RuntimeError('Input shape of each dimension should be a \
                                     multiple of length plus 2 * padding and a multiple of 16.')
 
