@@ -200,7 +200,7 @@ class SegmentationPair(object):
 
         return input_data, gt_data
 
-    def get_pair_metadata(self, slice_index=None):
+    def get_pair_metadata(self, slice_index=0):
         gt_meta_dict = []
         for gt in self.gt_handle:
             if gt is not None:
@@ -285,7 +285,11 @@ class MRI2DSegmentationDataset(Dataset):
 
         self.indexes = []
         self.filename_pairs = filename_pairs
-        self.prepro_transforms, self.transform = transform
+        if isinstance(transform, list):
+            self.prepro_transforms, self.transform = transform
+        else:
+            self.transform = transform
+            self.prepro_transforms = None
         self.cache = cache
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
@@ -334,19 +338,13 @@ class MRI2DSegmentationDataset(Dataset):
         """
         seg_pair_slice, roi_pair_slice = self.indexes[index]
 
-        # Clean transforms params from previous transforms
-        # i.e. remove params from previous iterations so that the coming transforms are different
-        metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
-        metadata_roi = imed_loader_utils.clean_metadata(roi_pair_slice['gt_metadata'])
-        metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
-
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
         stack_roi, metadata_roi = self.transform(sample=roi_pair_slice["gt"],
-                                                 metadata=metadata_roi,
+                                                 metadata=roi_pair_slice['gt_metadata'],
                                                  data_type="roi")
         # Update metadata_input with metadata_roi
-        metadata_input = imed_loader_utils.update_metadata(metadata_roi, metadata_input)
+        metadata_input = imed_loader_utils.update_metadata(metadata_roi, seg_pair_slice['input_metadata'])
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=seg_pair_slice["input"],
@@ -354,7 +352,7 @@ class MRI2DSegmentationDataset(Dataset):
                                                      data_type="im")
 
         # Update metadata_input with metadata_roi
-        metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
+        metadata_gt = imed_loader_utils.update_metadata(metadata_input, seg_pair_slice['gt_metadata'])
 
         # Run transforms on images
         stack_gt, metadata_gt = self.transform(sample=seg_pair_slice["gt"],
@@ -405,7 +403,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         self.indexes = []
         self.length = length
         self.padding = padding
-        self.prepro_transforms, self.transform = transform
+        if isinstance(transform, list):
+            self.prepro_transforms, self.transform = transform
+        else:
+            self.transform = transform
+            self.prepro_transforms = None
         self.slice_axis = slice_axis
 
         self._load_filenames()
@@ -472,17 +474,12 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         coord = self.indexes[index]
         seg_pair, _ = self.handlers[coord['handler_index']]
 
-        # Clean transforms params from previous transforms
-        # i.e. remove params from previous iterations so that the coming transforms are different
-        metadata_input = imed_loader_utils.clean_metadata(seg_pair['input_metadata'])
-        metadata_gt = imed_loader_utils.clean_metadata(seg_pair['gt_metadata'])
-
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=seg_pair['input'],
-                                                     metadata=metadata_input,
+                                                     metadata=seg_pair['input_metadata'],
                                                      data_type="im")
         # Update metadata_gt with metadata_input
-        metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
+        metadata_gt = imed_loader_utils.update_metadata(metadata_input, seg_pair['gt_metadata'])
 
         # Run transforms on images
         stack_gt, metadata_gt = self.transform(sample=seg_pair['gt'],
