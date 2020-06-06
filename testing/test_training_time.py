@@ -1,6 +1,7 @@
 import time
-import pytest
+
 import numpy as np
+import pytest
 import torch.backends.cudnn as cudnn
 from torch import optim
 from torch.utils.data import DataLoader
@@ -24,13 +25,14 @@ MODEL_DEFAULT = {
     "depth": 3
 }
 
+
 @pytest.mark.parametrize('train_lst', [['sub-test001']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('config', [
     {
         "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75},
-                           "ROICrop": {"size": [48, 48]},
-                           "NumpyToTensor": {}},
+                              "ROICrop": {"size": [48, 48]},
+                              "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
         "multichannel": False,
@@ -38,8 +40,8 @@ MODEL_DEFAULT = {
     },
     {
         "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75},
-                           "ROICrop": {"size": [48, 48]},
-                           "NumpyToTensor": {}},
+                              "ROICrop": {"size": [48, 48]},
+                              "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
         "multichannel": True,
@@ -47,7 +49,7 @@ MODEL_DEFAULT = {
     },
     {
         "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
-                           "NumpyToTensor": {}},
+                              "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
         "multichannel": False,
@@ -56,7 +58,7 @@ MODEL_DEFAULT = {
     },
     {
         "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
-                           "NumpyToTensor": {}},
+                              "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
         "multichannel": False,
@@ -64,7 +66,6 @@ MODEL_DEFAULT = {
                          "attention": False},
     }
 ])
-
 def test_unet_time(train_lst, target_lst, config):
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
@@ -84,9 +85,9 @@ def test_unet_time(train_lst, target_lst, config):
 
     # Loader
     train_loader = DataLoader(ds_train, batch_size=1 if config["model_params"]["name"] == "UNet3D" else BATCH_SIZE,
-                           shuffle=True, pin_memory=True,
-                           collate_fn=imed_loader_utils.imed_collate,
-                           num_workers=1)
+                              shuffle=True, pin_memory=True,
+                              collate_fn=imed_loader_utils.imed_collate,
+                              num_workers=1)
 
     # MODEL
     model_params = loader_params["model_params"]

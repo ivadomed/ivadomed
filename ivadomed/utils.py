@@ -406,6 +406,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
                                                   cache=True,
                                                   transform=do_transforms,
                                                   slice_filter_fn=SliceFilter(**loader_params["slice_filter_params"]))
+        ds.load_filenames()
 
     # If fname_roi provided, then remove slices without ROI
     if fname_roi is not None:

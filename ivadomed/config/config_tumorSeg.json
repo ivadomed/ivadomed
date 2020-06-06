@@ -19,7 +19,7 @@
             "balance": {}
         },
         "slice_filter_params": {
-            "filter_empty_mask": true,
+            "filter_empty_mask": false,
             "filter_empty_input": true
         },
         "slice_axis": "sagittal",
@@ -34,12 +34,12 @@
         "test_fraction": 0.2
     },
     "training_parameters": {
-        "batch_size": 16,
+        "batch_size": 2,
         "loss": {
             "name": "DiceLoss"
         },
         "training_time": {
-            "num_epochs": 100,
+            "num_epochs": 10,
             "early_stopping_patience": 50,
             "early_stopping_epsilon": 0.001
         },
@@ -87,9 +87,10 @@
     "transformation": {
         "Resample":
         {
-            "wspace": 1,
-            "hspace": 1,
-            "dspace": 2
+            "wspace": 0.5,
+            "hspace": 0.5,
+            "dspace": 2,
+            "preprocessing": true
         },
         "RandomTranslation": {
             "translate": [0.03, 0.03],

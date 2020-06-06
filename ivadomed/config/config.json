@@ -87,10 +87,12 @@
         {
             "wspace": 0.75,
             "hspace": 0.75,
-            "dspace": 1
+            "dspace": 1,
+            "preprocessing": true
         },
         "CenterCrop": {
-            "size": [128, 128]
+            "size": [128, 128],
+            "preprocessing": true
         },
         "RandomTranslation": {
             "translate": [0.03, 0.03],

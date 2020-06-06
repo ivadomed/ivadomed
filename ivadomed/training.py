@@ -40,7 +40,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     writer = SummaryWriter(log_dir=log_directory)
 
     # BALANCE SAMPLES AND PYTORCH LOADER
-    conditions = [training_params["balance_samples"], model_params["name"] != "HeMIS"]
+    conditions = all([training_params["balance_samples"], model_params["name"] != "HeMIS"])
     sampler_train, shuffle_train = get_sampler(dataset_train, conditions)
 
     train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
@@ -314,7 +314,7 @@ def get_loss_function(params):
 
     # Check if implemented
     loss_function_available = ["DiceLoss", "FocalLoss", "GeneralizedDiceLoss", "FocalDiceLoss", "MultiClassDiceLoss",
-                               "BinaryCrossEntropyLoss"]
+                               "BinaryCrossEntropyLoss", "TverskyLoss", "FocalTverskyLoss"]
     if loss_name not in loss_function_available:
         print("Unknown Loss function, please choose between {}".format(loss_function_available))
         exit()
