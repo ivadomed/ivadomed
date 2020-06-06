@@ -33,7 +33,7 @@
     "training_parameters": {
         "batch_size": 64,
         "loss": {
-            "name": "DiceLoss"
+            "name": "BinaryCrossEntropyLoss"
         },
         "training_time": {
             "num_epochs": 100,
