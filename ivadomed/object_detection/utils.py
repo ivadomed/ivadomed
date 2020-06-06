@@ -58,7 +58,7 @@ def adjust_bb_size(bounding_box, factor, multiple_16, resample=False):
 
 
 def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, slice_axis=0, contrast_lst=["T2w"],
-                               keep_largest_only=True, multiple_16=True, safety_factor=None):
+                               keep_largest_only=True, multiple_16=False, safety_factor=None):
     bounding_box_dict = {}
     if safety_factor is None:
         safety_factor = [1.0, 1.0, 1.0]
@@ -80,34 +80,32 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
     return bounding_box_dict
 
 
-def resample_bounding_box(metadata, resample, multiple_16=True):
-    hspace, wspace, dspace = resample
-    hfactor = metadata['input_metadata'][0]['zooms'][0] / hspace
-    wfactor = metadata['input_metadata'][0]['zooms'][1] / wspace
-    dfactor = metadata['input_metadata'][0]['zooms'][2] / dspace
-    factor = (hfactor, wfactor, dfactor)
-    coord = adjust_bb_size(metadata['input_metadata'][0]['bounding_box'], factor, multiple_16, resample=True)
+def resample_bounding_box(metadata, transform, multiple_16=True):
+    for idx, transfo in enumerate(transform.transform["im"].transforms):
+        if "Resample" in str(type(transfo)):
+            hspace, wspace, dspace = (transfo.hspace, transfo.wspace, transfo.dspace)
+            hfactor = metadata['input_metadata'][0]['zooms'][0] / hspace
+            wfactor = metadata['input_metadata'][0]['zooms'][1] / wspace
+            dfactor = metadata['input_metadata'][0]['zooms'][2] / dspace
+            factor = (hfactor, wfactor, dfactor)
+            coord = adjust_bb_size(metadata['input_metadata'][0]['bounding_box'], factor, multiple_16, resample=True)
 
-    for i in range(len(metadata['input_metadata'])):
-        metadata['input_metadata'][i]['bounding_box'] = coord
+            for i in range(len(metadata['input_metadata'])):
+                metadata['input_metadata'][i]['bounding_box'] = coord
 
-    for i in range(len(metadata['input_metadata'])):
-        metadata['gt_metadata'][i]['bounding_box'] = coord
+            for i in range(len(metadata['input_metadata'])):
+                metadata['gt_metadata'][i]['bounding_box'] = coord
+            break
+        else:
+            return
 
 
-def adjust_transforms(transforms, seg_pair_slice):
-    transform_idx = -1
-    for img_type in transforms:
-        for idx, transfo in enumerate(transforms[img_type].transforms):
-            if "BoundingBoxCrop" in str(type(transfo)):
-                transforms[img_type].transforms.pop(idx)
-            if "Resample" in str(type(transfo)):
-                transform_idx = idx
-
-    for img_type in transforms:
-        h_min, h_max, w_min, w_max, d_min, d_max = seg_pair_slice['input_metadata'][0]['bounding_box']
+def adjust_transforms(transforms, seg_pair):
+    for img_type in transforms.transform:
+        bouding_box = adjust_bb_size(seg_pair['input_metadata'][0]['bounding_box'], (1, 1, 1), True)
+        h_min, h_max, w_min, w_max, d_min, d_max = bouding_box
         transform_obj = imed_transforms.BoundingBoxCrop(size=[h_max - h_min, w_max - w_min, d_max - d_min])
-        transforms[img_type].transforms.insert(transform_idx + 1, transform_obj)
+        transforms.transform[img_type].transforms.insert(0, transform_obj)
 
 
 def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast_lst):
@@ -135,11 +133,12 @@ def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast
 
 
 def verify_metadata(metadata, has_bounding_box):
-    input_has_bounding_box = all(['bounding_box' in metadata['input_metadata'][i]
+    index_has_bounding_box = all(['bounding_box' in metadata['input_metadata'][i]
                                   for i in range(len(metadata['input_metadata']))])
-    gt_has_bounding_box = all(['bounding_box' in metadata['gt_metadata'][i]
-                               for i in range(len(metadata['gt_metadata']))])
-    index_has_bounding_box = input_has_bounding_box and gt_has_bounding_box
+    for gt_metadata in metadata['gt_metadata']:
+        if gt_metadata is not None:
+            index_has_bounding_box &= 'bounding_box' in gt_metadata
+
     has_bounding_box &= index_has_bounding_box
     return has_bounding_box
 
