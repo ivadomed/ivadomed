@@ -65,6 +65,6 @@ the prior knowledge about the subjective lesion borders is then leveraged to the
 - FiLMed-UNet, based on [FiLM](https://arxiv.org/pdf/1709.07871.pdf) strategy adapted to the [segmentation task](#physic-informed-network).
 
 ## Loss functions
-- [Dice Loss](https://arxiv.org/abs/1606.04797)
-- [Focal Loss](https://arxiv.org/pdf/1708.02002.pdf)
-- [Generalised Dice Loss](https://arxiv.org/pdf/1707.03237.pdf)
+- [Dice Loss](https://arxiv.org/abs/1606.04797). Also adapted for multi-label segmentation tasks, by averaging the loss for each class.
+- [Focal Loss](https://arxiv.org/pdf/1708.02002.pdf). Additional possibility to be combined with the DiceLoss is a linear combination.
+- [Generalised Dice Loss](https://arxiv.org/pdf/1707.03237.pdf). In particular, for cases of high class imbalance, the background volume is here accounted by a weighting of the inverse of its volume.
