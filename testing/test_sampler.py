@@ -29,6 +29,7 @@ def _cmpt_label(ds_loader):
            'pos_sample_ratio': pos_sample_ratio})
     return neg_sample_ratio, pos_sample_ratio
 
+
 @pytest.mark.parametrize('transforms_dict', [{
     "Resample":
         {
@@ -40,7 +41,7 @@ def _cmpt_label(ds_loader):
             "size": [48, 48]
         },
     "NumpyToTensor": {}
-    }])
+}])
 @pytest.mark.parametrize('train_lst', [['sub-test001']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])

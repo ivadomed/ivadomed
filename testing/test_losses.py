@@ -2,11 +2,13 @@
 # -*- coding: utf-8
 # pytest unit tests for ivadomed.losses
 
-import torch
-import pytest
 from math import isclose
 
+import pytest
+import torch
+
 from ivadomed.losses import GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss, FocalTverskyLoss, DiceLoss
+
 
 @pytest.mark.parametrize('params', [
     (torch.tensor([[[[[0.0, 1.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 0.0]]]]]),
@@ -21,7 +23,7 @@ from ivadomed.losses import GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss
 
     (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
      torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
-     -1/3,
+     -1 / 3,
      MultiClassDiceLoss(None)),
 
     (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
@@ -31,7 +33,7 @@ from ivadomed.losses import GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss
 
     (torch.tensor([[[[0.0, 0.0], [1.0, 0.0]], [[0.0, 0.0], [0.0, 0.0]]]]),
      torch.tensor([[[[0.0, 0.0], [1.0, 0.0]], [[1.0, 0.0], [0.0, 0.0]]]]),
-     -(1 + 1/2) / 2,
+     -(1 + 1 / 2) / 2,
      MultiClassDiceLoss(None)),
 
     (torch.tensor([[[[0.0, 0.0], [1.0, 0.0]], [[0.0, 0.0], [0.0, 0.0]]]]),
@@ -61,7 +63,7 @@ def test_multiclassdiceloss(params):
      GeneralizedDiceLoss(epsilon=1e-5, include_background=False)),
     (torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
      torch.tensor([[[[1.0, 0.0], [1.0, 1.0]]]]),
-     -11/16,
+     -11 / 16,
      GeneralizedDiceLoss(epsilon=1e-5)),
     (torch.tensor([[[[1.0, 0.0], [1.0, 1.0]]]]),
      torch.tensor([[[[1.0, 0.0], [1.0, 1.0]]]]),
@@ -69,16 +71,16 @@ def test_multiclassdiceloss(params):
      GeneralizedDiceLoss(epsilon=1e-5)),
     (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
      torch.tensor([[[[1.0, 0.0], [0.0, 0.0]]]]),
-     -3/8,
+     -3 / 8,
      GeneralizedDiceLoss(epsilon=1e-5)),
     (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
      torch.tensor([[[[1.0, 0.0], [0.0, 0.0]]]]),
      0.0,
      GeneralizedDiceLoss(epsilon=1e-5, include_background=False)),
     (torch.tensor([[[[1.0, 0.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 1.0]]]]),
-    torch.tensor([[[[1.0, 0.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 0.0]]]]),
-    -18/23,
-    GeneralizedDiceLoss(epsilon=1e-5))
+     torch.tensor([[[[1.0, 0.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 0.0]]]]),
+     -18 / 23,
+     GeneralizedDiceLoss(epsilon=1e-5))
 ])
 def test_generalizeddiceloss(params):
     """Test GeneralizedDiceLoss.
@@ -193,7 +195,7 @@ def test_tverskyloss(params):
 
     (torch.tensor([[[[0.0, 0.0], [1.0, 0.0]], [[0.0, 0.0], [0.0, 0.0]]]]),
      torch.tensor([[[[0.0, 0.0], [1.0, 0.0]], [[1.0, 0.0], [0.0, 0.0]]]]),
-     (pow(1 - (2 / (1 + 1)), 1/1.33) + pow(1 - (1 / (1 + 0.3)), 1/1.33)) / 2,
+     (pow(1 - (2 / (1 + 1)), 1 / 1.33) + pow(1 - (1 / (1 + 0.3)), 1 / 1.33)) / 2,
      FocalTverskyLoss(alpha=0.7, beta=0.3, gamma=1.33)),
 ])
 def test_focaltverskyloss(params):

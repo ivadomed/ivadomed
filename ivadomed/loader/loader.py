@@ -37,7 +37,10 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         BidsDataset
     """
     # Compose transforms
+    preprocessing_transforms = imed_transforms.get_preprocessing_transforms(transforms_params)
+    prepro_transforms = imed_transforms.Compose(preprocessing_transforms, requires_undo=requires_undo)
     transforms = imed_transforms.Compose(transforms_params, requires_undo=requires_undo)
+    tranform_lst = [prepro_transforms if len(preprocessing_transforms) else None, transforms]
 
     if model_params["name"] == "UNet3D":
         dataset = Bids3DDataset(bids_path,
@@ -47,7 +50,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                 contrast_params=contrast_params,
                                 metadata_choice=metadata_type,
                                 slice_axis=imed_utils.AXIS_DCT[slice_axis],
-                                transform=transforms,
+                                transform=tranform_lst,
                                 multichannel=multichannel,
                                 model_params=model_params)
 
@@ -58,7 +61,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               contrast_params=contrast_params,
                                               target_suffix=target_suffix,
                                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
-                                              transform=transforms,
+                                              transform=tranform_lst,
                                               metadata_choice=metadata_type,
                                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
                                               roi_suffix=roi_params["suffix"])
@@ -74,10 +77,11 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               contrast_params=contrast_params,
                               metadata_choice=metadata_type,
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
-                              transform=transforms,
+                              transform=tranform_lst,
                               multichannel=multichannel,
                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
                               task=task)
+        dataset.load_filenames()
 
     # if ROICrop in transform, then apply SliceFilter to ROI slices
     if 'ROICrop' in transforms_params:
@@ -95,8 +99,7 @@ class SegmentationPair(object):
     """This class is used to build segmentation datasets. It represents
     a pair of of two data volumes (the input data and the ground truth data).
     """
-
-    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True):
+    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None):
         """
         Args:
             input_filenames (list): the input filename list (supported by nibabel). For single channel, the list will
@@ -111,6 +114,7 @@ class SegmentationPair(object):
         self.metadata = metadata
         self.cache = cache
         self.slice_axis = slice_axis
+        self.prepro_transforms = prepro_transforms
 
         # list of the images
         self.input_handle = []
@@ -206,7 +210,7 @@ class SegmentationPair(object):
 
         return input_data, gt_data
 
-    def get_pair_metadata(self, slice_index):
+    def get_pair_metadata(self, slice_index=0):
         gt_meta_dict = []
         for gt in self.gt_handle:
             if gt is not None:
@@ -307,22 +311,24 @@ class MRI2DSegmentationDataset(Dataset):
         """
         self.indexes = []
         self.filename_pairs = filename_pairs
-        self.transform = transform
+        if isinstance(transform, list):
+            self.prepro_transforms, self.transform = transform
+        else:
+            self.transform = transform
+            self.prepro_transforms = None
         self.cache = cache
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
         self.task = task
 
-        self._load_filenames()
-
-    def _load_filenames(self):
+    def load_filenames(self):
         for input_filenames, gt_filenames, roi_filename, metadata in self.filename_pairs:
             roi_pair = SegmentationPair(input_filenames, roi_filename, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache)
+                                        cache=self.cache, prepro_transforms=self.prepro_transforms)
 
             seg_pair = SegmentationPair(input_filenames, gt_filenames, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache)
+                                        cache=self.cache, prepro_transforms=self.prepro_transforms)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
@@ -336,7 +342,9 @@ class MRI2DSegmentationDataset(Dataset):
                 # Note: we force here gt_type=segmentation since ROI slice is needed to Crop the image
                 slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice, gt_type="segmentation")
 
-                item = (slice_seg_pair, slice_roi_pair)
+                item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                                                                      slice_seg_pair,
+                                                                      slice_roi_pair)
                 self.indexes.append(item)
 
     def set_transform(self, transform):
@@ -429,13 +437,17 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
     :param padding: size of the overlapping per subvolume and dimensions
     """
 
-    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), padding=0, slice_axis=0):
+    def __init__(self, filename_pairs, transform, length=(64, 64, 64), padding=0, slice_axis=0):
         self.filename_pairs = filename_pairs
         self.handlers = []
         self.indexes = []
         self.length = length
         self.padding = padding
-        self.transform = transform
+        if isinstance(transform, list):
+            self.prepro_transforms, self.transform = transform
+        else:
+            self.transform = transform
+            self.prepro_transforms = None
         self.slice_axis = slice_axis
 
         self._load_filenames()
@@ -444,7 +456,17 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
     def _load_filenames(self):
         for input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
             segpair = SegmentationPair(input_filename, gt_filename, metadata=metadata, slice_axis=self.slice_axis)
-            self.handlers.append(segpair)
+            input_data, gt_data = segpair.get_pair_data()
+            metadata = segpair.get_pair_metadata()
+            seg_pair = {
+                'input': input_data,
+                'gt': gt_data,
+                'input_metadata': metadata['input_metadata'],
+                'gt_metadata': metadata['gt_metadata']
+            }
+
+            self.handlers.append(imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                                                                                seg_pair=seg_pair))
 
     def _prepare_indices(self):
         length = self.length
@@ -459,7 +481,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
         for i in range(0, len(self.handlers)):
             if not crop:
-                input_img, _ = self.handlers[i].get_pair_data()
+                input_img = self.handlers[i][0]['input']
                 shape = input_img[0].shape
             else:
                 shape = shape_crop
@@ -491,23 +513,22 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         :param index: subvolume index.
         """
         coord = self.indexes[index]
-        input_img, gt_img = self.handlers[coord['handler_index']].get_pair_data()
-        seg_pair_slice = self.handlers[coord['handler_index']].get_pair_metadata(coord['handler_index'])
+        seg_pair, _ = self.handlers[coord['handler_index']]
 
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
-        metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
-        metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
+        metadata_input = imed_loader_utils.clean_metadata(seg_pair['input_metadata'])
+        metadata_gt = imed_loader_utils.clean_metadata(seg_pair['gt_metadata'])
 
         # Run transforms on images
-        stack_input, metadata_input = self.transform(sample=input_img,
+        stack_input, metadata_input = self.transform(sample=seg_pair['input'],
                                                      metadata=metadata_input,
                                                      data_type="im")
         # Update metadata_gt with metadata_input
         metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
 
         # Run transforms on images
-        stack_gt, metadata_gt = self.transform(sample=gt_img,
+        stack_gt, metadata_gt = self.transform(sample=seg_pair['gt'],
                                                metadata=metadata_gt,
                                                data_type="gt")
         # Make sure stack_gt is binarized
