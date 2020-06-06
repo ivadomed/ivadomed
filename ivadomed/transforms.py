@@ -912,9 +912,13 @@ def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
                                              metadata=seg_pair['input_metadata'],
                                              data_type="im")
     # Run transforms on images
-    stack_gt, metadata_gt = transforms(sample=seg_pair["gt"],
-                                       metadata=seg_pair['gt_metadata'],
-                                       data_type="gt")
+    if seg_pair['gt_metadata'][0] is not None:
+        stack_gt, metadata_gt = transforms(sample=seg_pair["gt"],
+                                           metadata=seg_pair['gt_metadata'],
+                                           data_type="gt")
+    else:
+        stack_gt, metadata_gt = seg_pair["gt"], []
+
     seg_pair = {
         'input': stack_input,
         'gt': stack_gt,
