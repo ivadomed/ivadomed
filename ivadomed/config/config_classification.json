@@ -61,7 +61,7 @@
         "bn_momentum": 0.9,
         "depth": 2
     },
-    "NAME_CLASSIFIER_1": {
+    "resnet": {
         "applied": true
     },
     "testing_parameters": {
