@@ -686,7 +686,7 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
 class SliceFilter(object):
     def __init__(self, filter_empty_mask=True,
                  filter_empty_input=True,
-                 filter_classification=False, classifier_path):
+                 filter_classification=False, classifier_path=None):
         self.filter_empty_mask = filter_empty_mask
         self.filter_empty_input = filter_empty_input
         self.filter_classification = filter_classification
