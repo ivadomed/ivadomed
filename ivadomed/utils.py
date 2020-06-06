@@ -685,9 +685,14 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
 
 class SliceFilter(object):
     def __init__(self, filter_empty_mask=True,
-                 filter_empty_input=True):
+                 filter_empty_input=True,
+                 filter_classification=False, classifier_path):
         self.filter_empty_mask = filter_empty_mask
         self.filter_empty_input = filter_empty_input
+        self.filter_classification = filter_classification
+
+        if self.filter_classification:
+            self.classifier = torch.load(path_classifier)
 
     def __call__(self, sample):
         input_data, gt_data = sample['input'], sample['gt']
@@ -698,6 +703,10 @@ class SliceFilter(object):
 
         if self.filter_empty_input:
             if not np.all([np.any(img) for img in input_data]):
+                return False
+
+        if self.filter_classification:
+            if not np.all([int(self.classifier(img) for img in input_data]):
                 return False
 
         return True
