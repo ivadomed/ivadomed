@@ -1,6 +1,6 @@
 import copy
-import time
 import os
+import time
 
 import numpy as np
 import torch
@@ -52,9 +52,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         sampler_val, shuffle_val = get_sampler(dataset_val, conditions)
 
         val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
-                            shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
-                            collate_fn=imed_loader_utils.imed_collate,
-                            num_workers=0)
+                                shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
+                                collate_fn=imed_loader_utils.imed_collate,
+                                num_workers=0)
 
     # GET MODEL
     if training_params["transfer_learning"]["retrain_model"]:
