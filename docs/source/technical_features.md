@@ -29,6 +29,8 @@ From the Monte Carlo samples, different measures of uncertainty can be derived:
 
 These measures can be used to perform some [post-processing](https://arxiv.org/pdf/1808.01200.pdf) based on the uncertainty measures.
 
+![Figure Uncertainty](https://github.com/neuropoly/ivado-medical-imaging/raw/master/images/uncertainty_measures.png)
+
 ## Two steps training scheme with class sampling
 Class sampling, coupled with a transfer learning strategy, can mitigate class
 imbalance issues, while addressing the limitations of classical under-sampling
