@@ -16,7 +16,6 @@ performance of the output segmentations.
 ![Figure FiLM](https://github.com/neuropoly/ivado-medical-imaging/raw/master/images/film_figure.png)
 
 ## Uncertainty measures
-
 At inference time, uncertainty can be estimated via two ways:
 - model-based uncertainty (epistemic) based on [Monte Carlo Dropout](https://arxiv.org/pdf/1506.02142.pdf).
 - image-based uncertainty (aleatoric) [based on test-time augmentation](https://doi.org/10.1016/j.neucom.2019.01.103).
