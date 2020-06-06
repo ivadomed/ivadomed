@@ -7,8 +7,8 @@ from torch.nn import Module
 from torch.nn import init
 import torchvision.models
 
-class resnet(torchvision.models.resnet18)
-    def __init__(self)
+class resnet(torchvision.models.resnet18):
+    def __init__(self):
         super().__init__(pretrained=False, progress=False)
 
 class DownConv(Module):
