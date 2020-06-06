@@ -706,7 +706,7 @@ class SliceFilter(object):
                 return False
 
         if self.filter_classification:
-            if not np.all([int(self.classifier(img) for img in input_data]):
+            if not np.all([int(self.classifier(img)) for img in input_data]):
                 return False
 
         return True
