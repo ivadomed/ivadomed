@@ -399,7 +399,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                            transform=do_transforms,
                                                            length=context["UNet3D"]["length_3D"],
-                                                           padding=context["UNet3D"]["padding_3D"])
+                                                           stride=context["UNet3D"]["stride_3D"])
     else:
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
                                                   slice_axis=AXIS_DCT[loader_params['slice_axis']],

@@ -89,7 +89,7 @@ def test_segment_volume_3d():
         "UNet3D": {
             "applied": True,
             "length_3D": LENGTH_3D,
-            "padding_3D": 0,
+            "stride_3D": 0,
             "attention": False
         },
         "loader_parameters": {

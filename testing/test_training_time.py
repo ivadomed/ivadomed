@@ -53,7 +53,7 @@ MODEL_DEFAULT = {
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
         "multichannel": False,
-        "model_params": {"name": "UNet3D", "length_3D": [96, 96, 16], "n_filters": 8, "padding_3D": 0,
+        "model_params": {"name": "UNet3D", "length_3D": [96, 96, 16], "n_filters": 8, "sride_3D": 0,
                          "attention": True},
     },
     {
@@ -62,7 +62,7 @@ MODEL_DEFAULT = {
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
         "multichannel": False,
-        "model_params": {"name": "UNet3D", "length_3D": [96, 96, 16], "n_filters": 8, "padding_3D": 0,
+        "model_params": {"name": "UNet3D", "length_3D": [96, 96, 16], "n_filters": 8, "stride_3D": 0,
                          "attention": False},
     }
 ])
