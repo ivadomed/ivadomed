@@ -15,6 +15,20 @@ performance of the output segmentations.
 
 ![Figure FiLM](https://github.com/neuropoly/ivado-medical-imaging/raw/master/images/film_figure.png)
 
+## Uncertainty measures
+
+At inference time, uncertainty can be estimated via two ways:
+- model-based uncertainty (epistemic) based on [Monte Carlo Dropout](https://arxiv.org/pdf/1506.02142.pdf).
+- image-based uncertainty (aleatoric) [based on test-time augmentation](https://doi.org/10.1016/j.neucom.2019.01.103).
+
+From the Monte Carlo samples, different measures of uncertainty can be derived:
+- voxel-wise entropy
+- structure-wise intersection over union
+- structure-wise coefficient of variation
+- structure-wise averaged voxel-wise uncertainty within the structure
+
+These measures can be used to perform some [post-processing](https://arxiv.org/pdf/1808.01200.pdf) based on the uncertainty measures.
+
 ## Two steps training scheme with class sampling
 Class sampling, coupled with a transfer learning strategy, can mitigate class
 imbalance issues, while addressing the limitations of classical under-sampling
