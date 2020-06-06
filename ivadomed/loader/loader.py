@@ -73,6 +73,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               transform=tranform_lst,
                               multichannel=multichannel,
                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params))
+        dataset.load_filenames()
 
     # if ROICrop in transform, then apply SliceFilter to ROI slices
     if 'ROICrop' in transforms_params:
@@ -282,7 +283,6 @@ class MRI2DSegmentationDataset(Dataset):
     """
 
     def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None):
-
         self.indexes = []
         self.filename_pairs = filename_pairs
         if isinstance(transform, list):
@@ -295,9 +295,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.slice_filter_fn = slice_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
 
-        self._load_filenames()
-
-    def _load_filenames(self):
+    def load_filenames(self):
         for input_filenames, gt_filenames, roi_filename, metadata in self.filename_pairs:
             roi_pair = SegmentationPair(input_filenames, roi_filename, metadata=metadata, slice_axis=self.slice_axis,
                                         cache=self.cache, prepro_transforms=self.prepro_transforms)
