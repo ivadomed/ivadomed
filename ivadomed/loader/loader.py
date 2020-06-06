@@ -419,12 +419,12 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
     :param padding: size of the overlapping per subvolume and dimensions
     """
 
-    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), padding=0, slice_axis=0):
+    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0):
         self.filename_pairs = filename_pairs
         self.handlers = []
         self.indexes = []
         self.length = length
-        self.padding = padding
+        self.stride = stride
         self.transform = transform
         self.slice_axis = slice_axis
         self.has_bounding_box = True
@@ -438,9 +438,6 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             self.handlers.append(segpair)
 
     def _prepare_indices(self):
-        length = self.length
-        padding = self.padding
-
         crop = False
         is_resampled = False
         for idx, transfo in enumerate(self.transform.transform["im"].transforms):
@@ -463,8 +460,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                         meta['bounding_box'] = metadata['input_metadata'][0]['bounding_box']
 
                 h_min, h_max, w_min, w_max, d_min, d_max = metadata['input_metadata'][0]['bounding_box']
-                length = [h_max - h_min, w_max - w_min, d_max - d_min]
-                shape = length
+                shape = [h_max - h_min, w_max - w_min, d_max - d_min]
 
             elif not crop:
                 input_img, _ = self.handlers[i].get_pair_data()
@@ -472,22 +468,22 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             else:
                 shape = shape_crop
 
-            if (shape[0] - 2 * padding) % length[0] != 0 or shape[0] % 16 != 0 \
-                    or (shape[1] - 2 * padding) % length[1] != 0 or shape[1] % 16 != 0 \
-                    or (shape[2] - 2 * padding) % length[2] != 0 or shape[2] % 16 != 0:
+            if (shape[0] % self.stride[0]) != 0 or self.length[0] % 16 != 0 \
+                    or (shape[1] % self.stride[1]) != 0 or self.length[1] % 16 != 0 \
+                    or (shape[2] % self.stride[2]) != 0 or self.length[2] % 16 != 0:
                 raise RuntimeError('Input shape of each dimension should be a \
                                     multiple of length plus 2 * padding and a multiple of 16.')
 
-            for x in range(length[0] + padding, shape[0] - padding + 1, length[0]):
-                for y in range(length[1] + padding, shape[1] - padding + 1, length[1]):
-                    for z in range(length[2] + padding, shape[2] - padding + 1, length[2]):
+            for x in range(0, (shape[0] - self.length[0]) + 1, self.stride[0]):
+                for y in range(0, (shape[1] - self.length[1]) + 1, self.stride[1]):
+                    for z in range(0, (shape[2] - self.length[2]) + 1, self.stride[2]):
                         self.indexes.append({
-                            'x_min': x - length[0] - padding,
-                            'x_max': x + padding,
-                            'y_min': y - length[1] - padding,
-                            'y_max': y + padding,
-                            'z_min': z - length[2] - padding,
-                            'z_max': z + padding,
+                            'x_min': x,
+                            'x_max': x + self.length[0],
+                            'y_min': y,
+                            'y_max': y + self.length[1],
+                            'z_min': z,
+                            'z_max': z + self.length[2],
                             'handler_index': i})
 
     def __len__(self):
@@ -570,7 +566,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               multichannel=multichannel,
                               object_detection_params=object_detection_params)
 
-        super().__init__(dataset.filename_pairs, length=model_params["length_3D"], padding=model_params["padding_3D"],
+        super().__init__(dataset.filename_pairs, length=model_params["length_3D"], stride=model_params["stride_3D"],
                          transform=transform, slice_axis=slice_axis)
 
 

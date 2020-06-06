@@ -34,7 +34,7 @@
         "test_fraction": 0.2
     },
     "training_parameters": {
-        "batch_size": 1,
+        "batch_size": 16,
         "loss": {
             "name": "DiceLoss"
         },
@@ -65,9 +65,9 @@
         "depth": 4
     },
     "UNet3D": {
-        "applied": false,
-        "length_3D": [512, 256, 16],
-        "padding_3D": 0,
+        "applied": true,
+        "length_3D": [160, 48, 32],
+        "stride_3D": [16, 16, 1],
         "attention": false,
         "n_filters": 8
     },
