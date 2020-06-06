@@ -34,7 +34,7 @@ def get_bounding_boxes(mask):
     return bounding_boxes
 
 
-def adjust_bb_size(bounding_box, factor, multiple_16, resample=False):
+def adjust_bb_size(bounding_box, factor, resample=False):
     coord = []
     for i in range(len(bounding_box) // 2):
         d_min, d_max = bounding_box[2 * i: (2 * i) + 2]
@@ -44,21 +44,24 @@ def adjust_bb_size(bounding_box, factor, multiple_16, resample=False):
         else:
             dim_len = (d_max - d_min) * factor[i]
 
-        if multiple_16:
-            padding = (16 - dim_len % 16) if (16 - dim_len % 16) != 16 else 0
-            dim_len = dim_len + padding
         # new min and max coordinates
         min_coord = d_min - (dim_len - (d_max - d_min)) // 2
         coord.append(int(round(max(min_coord, 0))))
         coord.append(int(coord[-1] + dim_len))
-        if multiple_16:
-            assert (coord[-1] - coord[-2]) % 16 == 0
 
     return coord
 
 
-def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, slice_axis=0, contrast_lst=["T2w"],
-                               keep_largest_only=True, multiple_16=False, safety_factor=None):
+def resize_to_multiple(shape, multiple):
+    new_dim = []
+    for dim_len, m in zip(shape, multiple):
+        padding = (m - dim_len % m) if (m - dim_len % m) != m else 0
+        new_dim.append(dim_len + padding)
+    return new_dim
+
+
+def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, slice_axis=0, contrast_lst=None,
+                               keep_largest_only=True, safety_factor=None):
     bounding_box_dict = {}
     if safety_factor is None:
         safety_factor = [1.0, 1.0, 1.0]
@@ -72,7 +75,7 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
             ras_orientation = nib.as_closest_canonical(object_mask)
             hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata()[..., 0], slice_axis)
             bounding_boxes = get_bounding_boxes(hwd_orientation)
-            bounding_box_dict[subject_path] = [adjust_bb_size(bb, safety_factor, multiple_16) for bb in bounding_boxes]
+            bounding_box_dict[subject_path] = [adjust_bb_size(bb, safety_factor) for bb in bounding_boxes]
 
     file_path = os.path.join(log_dir, 'bounding_boxes.json')
     with open(file_path, 'w') as fp:
@@ -100,12 +103,25 @@ def resample_bounding_box(metadata, transform, multiple_16=True):
             return
 
 
-def adjust_transforms(transforms, seg_pair):
+def adjust_transforms(transforms, seg_pair, length=None, stride=None):
     for img_type in transforms.transform:
-        bouding_box = adjust_bb_size(seg_pair['input_metadata'][0]['bounding_box'], (1, 1, 1), True)
-        h_min, h_max, w_min, w_max, d_min, d_max = bouding_box
-        transform_obj = imed_transforms.BoundingBoxCrop(size=[h_max - h_min, w_max - w_min, d_max - d_min])
+        for idx, transfo in enumerate(transforms.transform[img_type].transforms):
+            if "BoundingBoxCrop" in str(type(transfo)) or "ResizeToMultiple16" in str(type(transfo)):
+                transforms.transform[img_type].transforms.pop(idx)
+
+    for img_type in transforms.transform:
+        h_min, h_max, w_min, w_max, d_min, d_max = seg_pair['input_metadata'][0]['bounding_box']
+        size = [h_max - h_min, w_max - w_min, d_max - d_min]
+        transform_obj = imed_transforms.BoundingBoxCrop(size=size)
         transforms.transform[img_type].transforms.insert(0, transform_obj)
+
+        if length is not None and stride is not None:
+            for idx, dim in enumerate(size):
+                if dim < length[idx]:
+                    size[idx] = length[idx]
+            new_size = resize_to_multiple(size, stride)
+            transform_obj = imed_transforms.ResizeToMultiple(size=new_size)
+            transforms.transform[img_type].transforms.append(transform_obj)
 
 
 def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast_lst):
@@ -125,7 +141,8 @@ def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast
                                                        object_detection_params['log_directory'],
                                                        object_detection_params['gpu'],
                                                        slice_axis,
-                                                       constrast_lst)
+                                                       constrast_lst,
+                                                       safety_factor=object_detection_params['safety_factor'])
     elif object_detection_params['object_detection_path'] is not None:
         raise RuntimeError("Path to object detection model doesn't exist")
 
