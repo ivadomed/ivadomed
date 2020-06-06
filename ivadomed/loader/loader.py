@@ -150,7 +150,7 @@ class SegmentationPair(object):
         # Sanity check for dimensions, should be the same
         input_shape, gt_shape = self.get_pair_shapes()
 
-        if self.gt_filenames is not None:
+        if self.gt_filenames is not None and self.gt_filenames[0] is not None:
             if not np.allclose(input_shape, gt_shape):
                 raise RuntimeError('Input and ground truth with different dimensions.')
 
@@ -231,8 +231,10 @@ class SegmentationPair(object):
                     "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
                     "data_type": 'gt'
                 }))
-            else:
+            elif len(gt_meta_dict):
                 gt_meta_dict.append(gt_meta_dict[0])
+            else:
+                gt_meta_dict.append(gt)
 
         input_meta_dict = []
         for handle in self.input_handle:
@@ -493,39 +495,18 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 'gt_metadata': metadata['gt_metadata']
             }
 
+            self.has_bounding_box = imed_obj_detect.verify_metadata(seg_pair, self.has_bounding_box)
+            if self.has_bounding_box:
+                imed_obj_detect.adjust_transforms(self.prepro_transforms, seg_pair)
+
             self.handlers.append(imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                                 seg_pair=seg_pair))
 
     def _prepare_indices(self):
-        crop = False
-        is_resampled = False
-        for idx, transfo in enumerate(self.transform.transform["im"].transforms):
-            if "CenterCrop" in str(type(transfo)):
-                crop = True
-                shape_crop = transfo.size
-            if "Resample" in str(type(transfo)):
-                is_resampled = True
-                resample_param = (transfo.hspace, transfo.wspace, transfo.dspace)
-
         for i in range(0, len(self.handlers)):
             segpair, _ = self.handlers[i]
-            self.has_bounding_box = imed_obj_detect.verify_metadata(segpair, self.has_bounding_box)
-
-            if self.has_bounding_box:
-                if is_resampled:
-                    imed_obj_detect.resample_bounding_box(segpair, resample_param)
-                    # Save value to avoid recompuing in getitem
-                    for meta in self.handlers[i].metadata:
-                        meta['bounding_box'] = segpair['input_metadata'][0]['bounding_box']
-
-                h_min, h_max, w_min, w_max, d_min, d_max = segpair['input_metadata'][0]['bounding_box']
-                shape = [h_max - h_min, w_max - w_min, d_max - d_min]
-
-            elif not crop:
-                input_img = self.handlers[i][0]['input']
-                shape = input_img[0].shape
-            else:
-                shape = shape_crop
+            input_img = self.handlers[i][0]['input']
+            shape = input_img[0].shape
 
             if (shape[0] % self.stride[0]) != 0 or self.length[0] % 16 != 0 \
                     or (shape[1] % self.stride[1]) != 0 or self.length[1] % 16 != 0 \
@@ -556,10 +537,6 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         """
         coord = self.indexes[index]
         seg_pair, _ = self.handlers[coord['handler_index']]
-
-        if self.has_bounding_box:
-            # Appropriate cropping according to bounding box
-            imed_obj_detect.adjust_transforms(self.transform.transform, seg_pair)
 
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
