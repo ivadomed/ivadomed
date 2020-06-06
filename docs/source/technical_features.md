@@ -1,13 +1,21 @@
 # Technical features
 
-## Physic-informed network
+* [Physic informed network](#physic-informed-network)
+* [Uncertainty measures](#uncertainty-measures)
+* [Two step training scheme with class sampling](#two-steps-training-scheme-with-class-sampling)
+* [MixUp](#mixup)
+* [Data augmentation on lesion labels](#data-augmentation-on-lesion-labels)
+* [Network architectures](#network-architectures)
+* [Loss functions](#loss-functions)
+
+## Physic informed network
 CNNs can be modulated, at each layer, using the [Feature-wise Linear Modulation (FiLM)](https://arxiv.org/pdf/1709.07871.pdf) technique. FiLM permits to add priors during training/inference
 based on the imaging physics (e.g. acquisition parameters), thereby improving the
 performance of the output segmentations.
 
 ![Figure FiLM](https://github.com/neuropoly/ivado-medical-imaging/raw/master/images/film_figure.png)
 
-## Two-step training with class sampling
+## Two steps training scheme with class sampling
 Class sampling, coupled with a transfer learning strategy, can mitigate class
 imbalance issues, while addressing the limitations of classical under-sampling
 (risk of loss of information) or over-sampling (risk of overfitting) approaches.
@@ -25,7 +33,7 @@ is to regularize the network while extending the training distribution.
 
 ![Figure mixup](https://github.com/neuropoly/ivado-medical-imaging/raw/master/images/mixup.png)
 
-## Data augmentation on lesion ground-truths
+## Data augmentation on lesion labels
 This data augmentation is motivated by the large inter-rater variability that is
 typical in medical image segmentation tasks. Typically, raters disagree on the boundaries
 of pathologies (e.g., tumors, lesions). A soft mask is constructed by morphological
