@@ -5,7 +5,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Module
 from torch.nn import init
+import torchvision.models
 
+class resnet(torchvision.models.resnet18)
+    def __init__(self)
+        super().__init__(pretrained=False, progress=False)
 
 class DownConv(Module):
     def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1):
