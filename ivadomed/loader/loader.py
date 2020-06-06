@@ -9,7 +9,6 @@ from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
-from ivadomed import preprocessing as imed_prepro
 
 # List of classifier models (ie not segmentation output)
 CLASSIFIER_LIST = ['NAME_CLASSIFIER_1']
@@ -38,7 +37,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         BidsDataset
     """
     # Compose transforms
-    preprocessing_transforms = imed_prepro.get_preprocessing_transforms(transforms_params)
+    preprocessing_transforms = imed_transforms.get_preprocessing_transforms(transforms_params)
     prepro_transforms = imed_transforms.Compose(preprocessing_transforms, requires_undo=requires_undo)
     transforms = imed_transforms.Compose(transforms_params, requires_undo=requires_undo)
     tranform_lst = [prepro_transforms if len(preprocessing_transforms) else None, transforms]
@@ -343,7 +342,9 @@ class MRI2DSegmentationDataset(Dataset):
                 # Note: we force here gt_type=segmentation since ROI slice is needed to Crop the image
                 slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice, gt_type="segmentation")
 
-                item = imed_prepro.apply_transforms(self.prepro_transforms, slice_seg_pair, slice_roi_pair)
+                item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                                                                      slice_seg_pair,
+                                                                      slice_roi_pair)
                 self.indexes.append(item)
 
     def set_transform(self, transform):
@@ -464,7 +465,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 'gt_metadata': metadata['gt_metadata']
             }
 
-            self.handlers.append(imed_prepro.apply_transforms(self.prepro_transforms, seg_pair=seg_pair))
+            self.handlers.append(imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                                                                                seg_pair=seg_pair))
 
     def _prepare_indices(self):
         length = self.length
