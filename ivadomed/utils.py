@@ -381,6 +381,12 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
 
     # Compose transforms
     _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context["transformation"])
+
+    preprocessing_transforms = imed_transforms.get_preprocessing_transforms(transform_test_params)
+    prepro_transforms = imed_transforms.Compose(preprocessing_transforms, requires_undo=True)
+    transforms = imed_transforms.Compose(transform_test_params, requires_undo=True)
+    tranform_lst = [prepro_transforms if len(preprocessing_transforms) else None, transforms]
+
     do_transforms = imed_transforms.Compose(transform_test_params, requires_undo=True)
     # Undo Transforms
     undo_transforms = imed_transforms.UndoCompose(do_transforms)
@@ -393,18 +399,18 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
         print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
-    filename_pairs = [([fname_image], None, fname_roi, [{}])]
+    filename_pairs = [([fname_image], [None], fname_roi, [{}])]
     kernel_3D = bool('UNet3D' in context and context['UNet3D']['applied'])
     if kernel_3D:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
-                                                           transform=do_transforms,
+                                                           transform=tranform_lst,
                                                            length=context["UNet3D"]["length_3D"],
                                                            stride=context["UNet3D"]["stride_3D"])
     else:
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
                                                   slice_axis=AXIS_DCT[loader_params['slice_axis']],
                                                   cache=True,
-                                                  transform=do_transforms,
+                                                  transform=tranform_lst,
                                                   slice_filter_fn=SliceFilter(**loader_params["slice_filter_params"]))
         ds.load_filenames()
 
