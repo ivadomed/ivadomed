@@ -382,12 +382,13 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
     # Compose transforms
     _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context["transformation"])
 
+    do_transforms = imed_transforms.Compose(transform_test_params.copy(), requires_undo=True)
     preprocessing_transforms = imed_transforms.get_preprocessing_transforms(transform_test_params)
     prepro_transforms = imed_transforms.Compose(preprocessing_transforms, requires_undo=True)
     transforms = imed_transforms.Compose(transform_test_params, requires_undo=True)
     tranform_lst = [prepro_transforms if len(preprocessing_transforms) else None, transforms]
 
-    do_transforms = imed_transforms.Compose(transform_test_params, requires_undo=True)
+
     # Undo Transforms
     undo_transforms = imed_transforms.UndoCompose(do_transforms)
 
