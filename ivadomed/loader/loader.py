@@ -10,7 +10,7 @@ from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed import preprocessing as imed_prepro
+
 
 # List of classifier models (ie not segmentation output)
 CLASSIFIER_LIST = ['NAME_CLASSIFIER_1']
@@ -42,7 +42,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         BidsDataset
     """
     # Compose transforms
-    preprocessing_transforms = imed_prepro.get_preprocessing_transforms(transforms_params)
+    preprocessing_transforms = imed_transforms.get_preprocessing_transforms(transforms_params)
     prepro_transforms = imed_transforms.Compose(preprocessing_transforms, requires_undo=requires_undo)
     transforms = imed_transforms.Compose(transforms_params, requires_undo=requires_undo)
     tranform_lst = [prepro_transforms if len(preprocessing_transforms) else None, transforms]
@@ -365,7 +365,9 @@ class MRI2DSegmentationDataset(Dataset):
                 # Note: we force here gt_type=segmentation since ROI slice is needed to Crop the image
                 slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice, gt_type="segmentation")
 
-                item = imed_prepro.apply_transforms(self.prepro_transforms, slice_seg_pair, slice_roi_pair)
+                item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                                                                      slice_seg_pair,
+                                                                      slice_roi_pair)
                 self.indexes.append(item)
 
     def set_transform(self, transform):
@@ -391,13 +393,19 @@ class MRI2DSegmentationDataset(Dataset):
             # Appropriate cropping according to bounding box
             imed_obj_detect.adjust_transforms(self.transform.transform, seg_pair_slice)
 
+        # Clean transforms params from previous transforms
+        # i.e. remove params from previous iterations so that the coming transforms are different
+        metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
+        metadata_roi = imed_loader_utils.clean_metadata(roi_pair_slice['gt_metadata'])
+        metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
+
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
         stack_roi, metadata_roi = self.transform(sample=roi_pair_slice["gt"],
-                                                 metadata=roi_pair_slice['gt_metadata'],
+                                                 metadata=metadata_roi,
                                                  data_type="roi")
         # Update metadata_input with metadata_roi
-        metadata_input = imed_loader_utils.update_metadata(metadata_roi, seg_pair_slice['input_metadata'])
+        metadata_input = imed_loader_utils.update_metadata(metadata_roi, metadata_input)
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=seg_pair_slice["input"],
@@ -405,7 +413,7 @@ class MRI2DSegmentationDataset(Dataset):
                                                      data_type="im")
 
         # Update metadata_input with metadata_roi
-        metadata_gt = imed_loader_utils.update_metadata(metadata_input, seg_pair_slice['gt_metadata'])
+        metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
 
         if self.task == "segmentation":
             # Run transforms on images
@@ -485,7 +493,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 'gt_metadata': metadata['gt_metadata']
             }
 
-            self.handlers.append(imed_prepro.apply_transforms(self.prepro_transforms, seg_pair=seg_pair))
+            self.handlers.append(imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                                                                                seg_pair=seg_pair))
 
     def _prepare_indices(self):
         crop = False
@@ -552,12 +561,17 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             # Appropriate cropping according to bounding box
             imed_obj_detect.adjust_transforms(self.transform.transform, seg_pair)
 
+        # Clean transforms params from previous transforms
+        # i.e. remove params from previous iterations so that the coming transforms are different
+        metadata_input = imed_loader_utils.clean_metadata(seg_pair['input_metadata'])
+        metadata_gt = imed_loader_utils.clean_metadata(seg_pair['gt_metadata'])
+
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=seg_pair['input'],
-                                                     metadata=seg_pair['input_metadata'],
+                                                     metadata=metadata_input,
                                                      data_type="im")
         # Update metadata_gt with metadata_input
-        metadata_gt = imed_loader_utils.update_metadata(metadata_input, seg_pair['gt_metadata'])
+        metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
 
         # Run transforms on images
         stack_gt, metadata_gt = self.transform(sample=seg_pair['gt'],
