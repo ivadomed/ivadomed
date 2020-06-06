@@ -847,6 +847,17 @@ class HistogramClipping(ImedTransform):
         return data, metadata
 
 
+class ResizeToMultiple(Crop):
+    @multichannel_capable
+    @two_dim_compatible
+    def __call__(self, sample, metadata):
+        h, w, d = self.size
+        metadata['crop_params'] = (0, 0, 0, h, w, d)
+
+        # Call base method
+        return super().__call__(sample, metadata)
+
+
 def rescale_values_array(arr, minv=0.0, maxv=1.0, dtype=np.float32):
     """Rescale the values of numpy array `arr` to be from `minv` to `maxv`."""
     if dtype is not None:
