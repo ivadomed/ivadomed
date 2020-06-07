@@ -19,6 +19,28 @@ cudnn.benchmark = True
 # List of not-default available models i.e. different from Unet
 MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'resnet18']
 
+# METRICS
+def get_metric_fns(task):
+    if task == "segmentation":
+
+            metric_fns = [imed_metrics.dice_score,
+                          imed_metrics.multi_class_dice_score,
+                          imed_metrics.hausdorff_3D_score,
+                          imed_metrics.precision_score,
+                          imed_metrics.recall_score,
+                          imed_metrics.specificity_score,
+                          imed_metrics.intersection_over_union,
+                          imed_metrics.accuracy_score]
+    else:
+            metric_fns = [imed_metrics.dice_score,
+                      imed_metrics.multi_class_dice_score,
+                      imed_metrics.precision_score,
+                      imed_metrics.recall_score,
+                      imed_metrics.specificity_score,
+                      imed_metrics.intersection_over_union,
+                      imed_metrics.accuracy_score]
+
+    return metric_fns
 
 def run_main():
 
@@ -68,15 +90,7 @@ def run_main():
     elif command == "test":
         imed_utils.display_selected_transfoms(transform_test_params, dataset_type="testing")
 
-    # METRICS
-    metric_fns = [imed_metrics.dice_score,
-                  imed_metrics.multi_class_dice_score,
-                  imed_metrics.hausdorff_3D_score,
-                  imed_metrics.precision_score,
-                  imed_metrics.recall_score,
-                  imed_metrics.specificity_score,
-                  imed_metrics.intersection_over_union,
-                  imed_metrics.accuracy_score]
+
 
     # MODEL PARAMETERS
     model_params = context["default_model"]
@@ -115,6 +129,8 @@ def run_main():
         ds_train = imed_loader.load_dataset(**{**loader_params,
                                                **{'data_list': train_lst, 'transforms_params': transform_train_params,
                                                   'dataset_type': 'training'}})
+
+        metric_fns = get_metric_fns(ds_train.task)
 
         # If FiLM, normalize data
         if model_params["name"] == "FiLMedUnet":
@@ -157,6 +173,8 @@ def run_main():
                                                                   'transforms_params': transformation_dict.copy(),
                                                                   'dataset_type': 'testing',
                                                                   'requires_undo': True}})
+
+        metric_fns = get_metric_fns(ds_test.task)
 
         # UNDO TRANSFORMS
         undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))
