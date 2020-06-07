@@ -219,7 +219,7 @@ class SegmentationPair(object):
 
         return input_data, gt_data
 
-    def get_pair_metadata(self, slice_index=0):
+    def get_pair_metadata(self, slice_index=0, coord=None):
         gt_meta_dict = []
         for gt in self.gt_handle:
             if gt is not None:
@@ -250,6 +250,7 @@ class SegmentationPair(object):
 
         for idx, metadata in enumerate(self.metadata):  # loop across channels
             metadata["slice_index"] = slice_index
+            metadata["coord"] = coord
             self.metadata[idx] = metadata
             for metadata_key in metadata.keys():  # loop across input metadata
                 dreturn["input_metadata"][idx][metadata_key] = metadata[metadata_key]
@@ -563,6 +564,10 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         shape_y = coord["y_max"] - coord["y_min"]
         shape_z = coord["z_max"] - coord["z_min"]
 
+        # add coordonates to metadata to reconstruct volume
+        for metadata in metadata_input:
+            metadata['coord'] = [coord["x_min"], coord["x_max"], coord["y_min"], coord["y_max"], coord["z_min"],
+                                 coord["z_max"]]
         subvolumes = {
             'input': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
             'gt': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
