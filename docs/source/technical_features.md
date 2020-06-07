@@ -50,7 +50,7 @@ is to regularize the network while extending the training distribution.
 
 ## Data augmentation on lesion labels
 This data augmentation is motivated by the large inter-rater variability that is
-typical in medical image segmentation tasks. Typically, raters disagree on the boundaries
+common in medical image segmentation tasks. Typically, raters disagree on the boundaries
 of pathologies (e.g., tumors, lesions). A soft mask is constructed by morphological
 dilation of the binary segmentation (i.e. mask provided by expert), where
 expert-labeled voxels have one as value while the augmented voxels are assigned
