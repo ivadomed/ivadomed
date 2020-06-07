@@ -120,7 +120,7 @@ def adjust_transforms(transforms, seg_pair, length=None, stride=None):
                 if dim < length[idx]:
                     size[idx] = length[idx]
             new_size = resize_to_multiple(size, stride)
-            transform_obj = imed_transforms.ResizeToMultiple(size=new_size)
+            transform_obj = imed_transforms.CenterCrop(size=new_size)
             transforms.transform[img_type].transforms.append(transform_obj)
 
 
