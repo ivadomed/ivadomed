@@ -23,7 +23,7 @@ Suffix list of the derivative file containing the ground-truth of interest (e.g.
 Bool. Indicated if more than a contrast (e.g. `T1w` and `T2w`) is used by the model. See details in both `train_validation` and `test` for the contrasts that are input.
 #### slice_axis
 Choice between `"sagittal"`, `"coronal"`, and `"axial"`.
-This parameter decides the slice orientation on which the model will train.
+Sets the slice orientation for on which the model will be used.
 #### slice_filter
 Dict:
 - `filter_empty_input`: Bool. Filter empty images if `true`.
