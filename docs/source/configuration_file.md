@@ -1,14 +1,5 @@
 # Configuration file
 
-* [General parameters](#general-parameters)
-* [Loader parameters](#loader-parameters)
-* [Split dataset](#split-dataset)
-* [Training parameters](#training-parameters)
-* [Architecture](#architecture)
-* [Testing parameters](#testing-parameters)
-* [Transformations](#transformations)
-* [Examples](#examples)
-
 ## General parameters
 #### command
 Run the specified command. Choices: ``"train"``, ``"test"``, ``"eval"``, to train, test and evaluate a model respectively.
