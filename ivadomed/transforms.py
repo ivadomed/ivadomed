@@ -934,3 +934,9 @@ def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
             'gt_metadata': metadata_roi
         }
     return (seg_pair, roi_pair)
+
+
+def update_transforms(transform_source, transform_dest):
+    for data_type in transform_source.transform:
+        for idx, transfo in enumerate(transform_source.transform[data_type].transforms):
+            transform_dest.transform[data_type].transforms.insert(idx, transfo)
