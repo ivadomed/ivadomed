@@ -67,7 +67,7 @@ Bool. Balance positive and negative ground truths in both the training and the v
 #### mixup_alpha
 Float. Alpha parameter of the Beta distribution, see [original paper](https://arxiv.org/abs/1710.09412).
 #### transfer_learning
-- `retrain_model`: Filename of the pretrained model (`path/to/pretrained-model`). If `null`, then no transfer learning is performed and the network is trained from scratch.
+- `retrain_model`: Filename of the pretrained model (`path/to/pretrained-model`). If `null`, no transfer learning is performed and the network is trained from scratch.
 - `retrain_fraction`: Float between 0. and 1. Controls the fraction of the pre-trained model that will be fine-tuned. For instance, if set to 0.5, then the second half of the model will be fine-tuned, while the first layers will be frozen.
 
 ## Architecture
