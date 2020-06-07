@@ -228,8 +228,7 @@ class SegmentationPair(object):
                     "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
                     "gt_filenames": self.metadata[0]["gt_filenames"],
                     "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
-                    "data_type": 'gt',
-                    "crop_params": []
+                    "data_type": 'gt'
                 }))
             elif len(gt_meta_dict):
                 gt_meta_dict.append(gt_meta_dict[0])
@@ -241,8 +240,7 @@ class SegmentationPair(object):
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
                 "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
                 "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis),
-                "data_type": 'im',
-                "crop_params": []
+                "data_type": 'im'
             }))
 
         dreturn = {
@@ -570,6 +568,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         for metadata in metadata_input:
             metadata['coord'] = [coord["x_min"], coord["x_max"], coord["y_min"], coord["y_max"], coord["z_min"],
                                  coord["z_max"]]
+            metadata['index_shape'] = stack_input.shape[1:]
+
         subvolumes = {
             'input': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
             'gt': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
