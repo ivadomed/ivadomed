@@ -83,7 +83,7 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
     return bounding_box_dict
 
 
-def resample_bounding_box(metadata, transform, multiple_16=True):
+def resample_bounding_box(metadata, transform):
     for idx, transfo in enumerate(transform.transform["im"].transforms):
         if "Resample" in str(type(transfo)):
             hspace, wspace, dspace = (transfo.hspace, transfo.wspace, transfo.dspace)
@@ -91,7 +91,7 @@ def resample_bounding_box(metadata, transform, multiple_16=True):
             wfactor = metadata['input_metadata'][0]['zooms'][1] / wspace
             dfactor = metadata['input_metadata'][0]['zooms'][2] / dspace
             factor = (hfactor, wfactor, dfactor)
-            coord = adjust_bb_size(metadata['input_metadata'][0]['bounding_box'], factor, multiple_16, resample=True)
+            coord = adjust_bb_size(metadata['input_metadata'][0]['bounding_box'], factor, resample=True)
 
             for i in range(len(metadata['input_metadata'])):
                 metadata['input_metadata'][i]['bounding_box'] = coord
