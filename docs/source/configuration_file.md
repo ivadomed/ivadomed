@@ -18,7 +18,7 @@ Suffix list of the derivative file containing the ground-truth of interest (e.g.
 #### contrasts
 - `train_validation`: list of image contrasts (e.g. `T1w`, `T2w`) loaded for the training and validation. If `multichannel`, then this list represent the different channels of the input tensors. Otherwise, the contrasts are mixed and the model has only one input channel.
 - `test`: list of image contrasts (e.g. `T1w`, `T2w`) loaded in the testing dataset. Same comment than for `train_validation` regarding `multichannel`.
-- `balance`: Dict. Used to under-represent some contrasts in the dataset: e.g. `{"T1w": 0.1}` will include only 10% of the available `T1w` images into the training/validation/test set. Please set `multichannel` to `false` if you are using this parameter.
+- `balance`: Dict. Enables to weight the importance of specific channels (or contrasts) in the dataset: e.g. `{"T1w": 0.1}` means that only 10% of the available `T1w` images will be included into the training/validation/test set. Please set `multichannel` to `false` if you are using this parameter.
 #### multichannel
 Bool. Indicated if more than a contrast (e.g. `T1w` and `T2w`) is used by the model. See details in both `train_validation` and `test` for the contrasts that are input.
 #### slice_axis
