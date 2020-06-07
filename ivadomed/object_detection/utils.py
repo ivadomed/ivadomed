@@ -99,29 +99,39 @@ def resample_bounding_box(metadata, transform):
             for i in range(len(metadata['input_metadata'])):
                 metadata['gt_metadata'][i]['bounding_box'] = coord
             break
-        else:
-            return
 
 
 def adjust_transforms(transforms, seg_pair, length=None, stride=None):
+    resample_idx = -1
     for img_type in transforms.transform:
         for idx, transfo in enumerate(transforms.transform[img_type].transforms):
-            if "BoundingBoxCrop" in str(type(transfo)) or "ResizeToMultiple16" in str(type(transfo)):
+            if "BoundingBoxCrop" in str(type(transfo)):
                 transforms.transform[img_type].transforms.pop(idx)
+            if "Resample" in str(type(transfo)):
+                resample_idx = idx
 
+    resample_bounding_box(seg_pair, transforms)
     for img_type in transforms.transform:
         h_min, h_max, w_min, w_max, d_min, d_max = seg_pair['input_metadata'][0]['bounding_box']
         size = [h_max - h_min, w_max - w_min, d_max - d_min]
-        transform_obj = imed_transforms.BoundingBoxCrop(size=size)
-        transforms.transform[img_type].transforms.insert(0, transform_obj)
 
         if length is not None and stride is not None:
             for idx, dim in enumerate(size):
                 if dim < length[idx]:
                     size[idx] = length[idx]
-            new_size = resize_to_multiple(size, stride)
-            transform_obj = imed_transforms.CenterCrop(size=new_size)
-            transforms.transform[img_type].transforms.append(transform_obj)
+            size = resize_to_multiple(size, stride)
+        transform_obj = imed_transforms.BoundingBoxCrop(size=size)
+        transforms.transform[img_type].transforms.insert(resample_idx + 1, transform_obj)
+
+
+def adjust_undo_transforms(transforms, seg_pair):
+    for img_type in transforms.transform:
+        for idx, transfo in enumerate(transforms.transform[img_type].transforms):
+            if "BoundingBoxCrop" in str(type(transfo)):
+                transforms.transform[img_type].transforms.pop(idx)
+                size = list(seg_pair['input_metadata'][0][0]['index_shape'])
+                transform_obj = imed_transforms.BoundingBoxCrop(size=size)
+                transforms.transform[img_type].transforms.insert(idx, transform_obj)
 
 
 def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast_lst):
