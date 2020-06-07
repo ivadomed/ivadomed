@@ -8,7 +8,7 @@ Integer. ID of the GPU to use.
 #### log_directory
 Folder name that will contain the output files (e.g., trained model, predictions, results).
 #### debugging
-Bool. Allows extended verbosity and intermediate outputs.
+Bool. Extended verbosity and intermediate outputs.
 
 ## Loader parameters
 #### bids_path
