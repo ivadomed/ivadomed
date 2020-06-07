@@ -335,7 +335,7 @@ class Crop(ImedTransform):
         # Get params
         is_2d = sample.shape[-1] == 1
         th, tw, td = self.size
-        fh, fw, fd, h, w, d = metadata['crop_params'][-1]
+        fh, fw, fd, h, w, d = metadata['crop_params']
 
         # Crop data
         # Note we use here CroppableArray in order to deal with "out of boundaries" crop
@@ -353,7 +353,7 @@ class Crop(ImedTransform):
         # Get crop params
         is_2d = sample.shape[-1] == 1
         th, tw, td = self.size
-        fh, fw, fd, h, w, d = metadata["crop_params"].pop()
+        fh, fw, fd, h, w, d = metadata["crop_params"]
 
         # Compute params to undo transform
         pad_left = fw
@@ -389,7 +389,7 @@ class CenterCrop(Crop):
         fw = int(round((w - tw) / 2.))
         fd = int(round((d - td) / 2.))
         params = (fh, fw, fd, h, w, d)
-        metadata['crop_params'].append(params)
+        metadata['crop_params'] = params
 
         # Call base method
         return super().__call__(sample, metadata)
@@ -403,7 +403,7 @@ class ROICrop(Crop):
     def __call__(self, sample, metadata=None):
         # If crop_params are not in metadata,
         # then we are here dealing with ROI data to determine crop params
-        if len(metadata['crop_params']):
+        if 'crop_params' not in metadata:
             # Compute center of mass of the ROI
             h_roi, w_roi, d_roi = center_of_mass(sample.astype(np.int))
             h_roi, w_roi, d_roi = int(round(h_roi)), int(round(w_roi)), int(round(d_roi))
@@ -418,7 +418,7 @@ class ROICrop(Crop):
             # Crop params
             h, w, d = sample.shape
             params = (fh, fw, fd, h, w, d)
-            metadata['crop_params'].append(params)
+            metadata['crop_params'] = params
 
         # Call base method
         return super().__call__(sample, metadata)
@@ -555,7 +555,7 @@ class BoundingBoxCrop(Crop):
         assert 'bounding_box' in metadata
         h_min, h_max, w_min, w_max, d_min, d_max = metadata['bounding_box']
         h, w, d = sample.shape
-        metadata['crop_params'].append((h_min, w_min, d_min, h, w, d))
+        metadata['crop_params'] = (h_min, w_min, d_min, h, w, d)
 
         # Call base method
         return super().__call__(sample, metadata)
