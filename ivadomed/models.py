@@ -8,7 +8,7 @@ from torch.nn import init
 import torchvision.models
 
 class resnet(torchvision.models.ResNet):
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__(BasicBlock, [2, 2, 2, 2])
 
 class DownConv(Module):
