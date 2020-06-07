@@ -63,7 +63,7 @@ Strictly positive integer.
 1. `name`: Choice between: `"CosineAnnealingLR"`, `"CosineAnnealingWarmRestarts"` and `"CyclicLR"`. Please find documentation [here](https://pytorch.org/docs/stable/optim.html).
 2. Other parameters that are needed for the scheduler of interest (e.g. `"base_lr": 1e-5, "max_lr": 1e-2` for `"CosineAnnealingLR"`).
 #### balance_samples
-Bool. If `true`, then positive and negative GT samples are balanced in both training and validation datasets.
+Bool. Balance positive and negative ground truths in both the training and the validation datasets.
 #### mixup_alpha
 Float. Alpha parameter of the Beta distribution, see [original paper](https://arxiv.org/pdf/1710.09412.pdf).
 #### transfer_learning
