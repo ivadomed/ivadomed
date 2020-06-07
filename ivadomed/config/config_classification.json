@@ -61,7 +61,7 @@
         "bn_momentum": 0.9,
         "depth": 2
     },
-    "resnet": {
+    "resnet18": {
         "applied": true
     },
     "testing_parameters": {

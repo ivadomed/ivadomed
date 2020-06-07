@@ -111,7 +111,7 @@ class ResNet(nn.Module):
         return self._forward_impl(x)
 
 
-class resnet(ResNet):
+class resnet18(ResNet):
     def __init__(self, **kwargs):
         super().__init__(torchvision.models.resnet.BasicBlock, [2, 2, 2, 2])
 

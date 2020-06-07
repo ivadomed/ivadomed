@@ -11,7 +11,7 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 
 # List of classifier models (ie not segmentation output)
-CLASSIFIER_LIST = ['resnet']
+CLASSIFIER_LIST = ['resnet18']
 
 
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
@@ -282,7 +282,7 @@ class SegmentationPair(object):
                     #    print(metadata["gt_metadata"][0]["gt_filenames"])
                     # TODO: uncomment when Anne replies
                     # assert int(np.max(labels_in_slice)) <= 1
-                    gt_slices.append(int(not np.any(gt_obj[..., slice_index])))
+                    gt_slices.append(np.asarray(int(not np.any(gt_obj[..., slice_index]))))
         dreturn = {
             "input": input_slices,
             "gt": gt_slices,
