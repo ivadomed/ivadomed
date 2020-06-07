@@ -16,11 +16,11 @@ String. Path of the BIDS folder.
 #### target_suffix
 Suffix list of the derivative file containing the ground-truth of interest (e.g. [`"_seg-manual"`, `"_lesion-manual"`]). If the list has a length greater than 1, then a multi-class model will be trained.
 #### contrasts
-- `train_validation`: list of image modalities loaded for the training and validation. If `multichannel`, then this list represent the different channels of the input tensors. Otherwise, the modalities are mixed and the model has only one input channel.
-- `test`: list of image modalities loaded in the testing dataset. Same comment than for `train_validation` regarding `multichannel`.
-- `balance`: Dict. Used to under-represent some modalities in the dataset: e.g. `{"T1w": 0.1}` will include only 10% of the available `T1w` images into the training/validation/test set. Please set `multichannel` to `false` if you are using this parameter.
+- `train_validation`: list of image contrasts (e.g. `T1w`, `T2w`) loaded for the training and validation. If `multichannel`, then this list represent the different channels of the input tensors. Otherwise, the contrasts are mixed and the model has only one input channel.
+- `test`: list of image contrasts (e.g. `T1w`, `T2w`) loaded in the testing dataset. Same comment than for `train_validation` regarding `multichannel`.
+- `balance`: Dict. Used to under-represent some contrasts in the dataset: e.g. `{"T1w": 0.1}` will include only 10% of the available `T1w` images into the training/validation/test set. Please set `multichannel` to `false` if you are using this parameter.
 #### multichannel
-Bool. Indicated if more than a modality is used by the model. See details in both `train_validation` and `test` for the modalities that are input.
+Bool. Indicated if more than a contrast (e.g. `T1w` and `T2w`) is used by the model. See details in both `train_validation` and `test` for the contrasts that are input.
 #### slice_axis
 Choice between `"sagittal"`, `"coronal"`, and `"axial"`.
 This parameter decides the slice orientation on which the model will train.
