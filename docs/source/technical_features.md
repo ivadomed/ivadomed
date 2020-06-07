@@ -17,7 +17,7 @@ performance of the output segmentations.
 
 ## Uncertainty measures
 At inference time, uncertainty can be estimated via two ways:
-- model-based uncertainty (epistemic) based on [Monte Carlo Dropout](https://arxiv.org/pdf/1506.02142.pdf).
+- model-based uncertainty (epistemic) based on [Monte Carlo Dropout](https://arxiv.org/abs/1506.02142).
 - image-based uncertainty (aleatoric) [based on test-time augmentation](https://doi.org/10.1016/j.neucom.2019.01.103).
 
 From the Monte Carlo samples, different measures of uncertainty can be derived:
