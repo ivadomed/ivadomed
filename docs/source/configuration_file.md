@@ -12,7 +12,7 @@ Bool. Extended verbosity and intermediate outputs.
 
 ## Loader parameters
 #### bids_path
-String. Relative path of the BIDS folder.
+String. Path of the BIDS folder.
 #### target_suffix
 Suffix list of the derivative file containing the ground-truth of interest (e.g. [`"_seg-manual"`, `"_lesion-manual"`]). If the list has a length greater than 1, then a multi-class model will be trained.
 #### contrasts
