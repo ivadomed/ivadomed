@@ -67,4 +67,4 @@ the prior knowledge about the subjective lesion borders is then leveraged to the
 ## Loss functions
 - [Dice Loss](https://arxiv.org/abs/1606.04797). Also adapted for multi-label segmentation tasks, by averaging the loss for each class.
 - [Focal Loss](https://arxiv.org/abs/1708.02002). Additional possibility to be combined with the DiceLoss is a linear combination.
-- [Generalised Dice Loss](https://arxiv.org/pdf/1707.03237.pdf). In particular, for cases of high class imbalance, the background volume is here accounted by a weighting of the inverse of its volume.
+- [Generalised Dice Loss](https://arxiv.org/abs/1707.03237): The background volume is weighted by the inverse of its area. This loss is particularly interesting with class imbalance.
