@@ -228,7 +228,8 @@ class SegmentationPair(object):
                     "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
                     "gt_filenames": self.metadata[0]["gt_filenames"],
                     "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
-                    "data_type": 'gt'
+                    "data_type": 'gt',
+                    "crop_params": []
                 }))
             elif len(gt_meta_dict):
                 gt_meta_dict.append(gt_meta_dict[0])
@@ -240,7 +241,8 @@ class SegmentationPair(object):
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
                 "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
                 "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis),
-                "data_type": 'im'
+                "data_type": 'im',
+                "crop_params": []
             }))
 
         dreturn = {
