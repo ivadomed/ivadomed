@@ -49,7 +49,7 @@ Float. Between `0` and `1` representing the fraction of the dataset used as test
 
 ## Training parameters
 #### batch_size
-Integer.
+Strictly positive integer.
 #### loss
 - `name`: Name of the loss function: Choice among the classes that are available [here](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/losses.py).
 - Other parameters that could be needed in the Loss function definition: see attributes of the Loss function of interest (e.g. `"gamma": 0.5` for `FocalLoss`).
