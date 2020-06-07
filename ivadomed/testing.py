@@ -8,8 +8,9 @@ from tqdm import tqdm
 
 from ivadomed import metrics as imed_metrics
 from ivadomed import utils as imed_utils
-from ivadomed.training import get_metadata
 from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.training import get_metadata
+from ivadomed.object_detection import utils as imed_obj_detect
 
 cudnn.benchmark = True
 
@@ -137,78 +138,97 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
         # RECONSTRUCT 3D IMAGE
         last_batch_bool = (i == len(test_loader) - 1)
+
         # LOOP ACROSS SAMPLES
         for smp_idx in range(len(preds_cpu)):
-            last_sample_bool = (last_batch_bool and smp_idx == len(batch) - 1)
-            # undo transformations
-            preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
-                                                                             batch['gt_metadata'][smp_idx],
-                                                                             data_type='gt')
-            # preds_idx_undo is a list n_label arrays
-            preds_idx_arr = np.array(preds_idx_undo)
-
-            # TODO: gt_filenames should not be a list
-            fname_ref = metadata_idx[0]['gt_filenames'][0]
-
             if not model_params["name"].endswith('3D'):
-                # NEW COMPLETE VOLUME
-                if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool):
-                    # save the completely processed file as a nifti file
-                    fname_pred = os.path.join(ofolder, fname_tmp.split('/')[-1])
+                last_sample_bool = (last_batch_bool and smp_idx == len(batch) - 1)
+                # undo transformations
+                preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
+                                                                                 batch['gt_metadata'][smp_idx],
+                                                                                 data_type='gt')
+                # preds_idx_undo is a list n_label arrays
+                preds_idx_arr = np.array(preds_idx_undo)
+
+                # TODO: gt_filenames should not be a list
+                fname_ref = metadata_idx[0]['gt_filenames'][0]
+
+                if not model_params["name"].endswith('3D'):
+                    # NEW COMPLETE VOLUME
+                    if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool):
+                        # save the completely processed file as a nifti file
+                        fname_pred = os.path.join(ofolder, fname_tmp.split('/')[-1])
+                        fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
+                        # If Uncertainty running, then we save each simulation result
+                        if testing_params['uncertainty']['applied']:
+                            fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
+
+                        output_nii = imed_utils.pred_to_nib(data_lst=pred_tmp_lst,
+                                                            z_lst=z_tmp_lst,
+                                                            fname_ref=fname_tmp,
+                                                            fname_out=fname_pred,
+                                                            slice_axis=imed_utils.AXIS_DCT[testing_params['slice_axis']],
+                                                            kernel_dim='2d',
+                                                            bin_thr=0.5 if testing_params["binarize_prediction"] else -1)
+
+                        output_nii_shape = output_nii.get_fdata().shape
+                        if len(output_nii_shape) == 4 and output_nii_shape[0] > 1:
+                            imed_utils.save_color_labels(output_nii.get_fdata(),
+                                                         testing_params["binarize_prediction"],
+                                                         fname_tmp,
+                                                         fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                                                         imed_utils.AXIS_DCT[testing_params['slice_axis']])
+
+                        # re-init pred_stack_lst
+                        pred_tmp_lst, z_tmp_lst = [], []
+
+                    # add new sample to pred_tmp_lst, of size n_label X h X w ...
+                    pred_tmp_lst.append(preds_idx_arr)
+
+                    # TODO: slice_index should be stored in gt_metadata as well
+                    z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
+                    fname_tmp = fname_ref
+
+            else:
+                h_min, h_max, w_min, w_max, d_min, d_max = batch['input_metadata'][0][0]['coord']
+                num_pred = preds_cpu.shape[0]
+                if not any([h_min, w_min, d_min]):
+                    h, w, d = batch['input_metadata'][0][0]['index_shape']
+                    volume = np.zeros((num_pred, h, w, d))
+
+                # Average predictions
+                volume[:, h_min:h_max, w_min:w_max, d_min:d_max] = (preds_cpu + volume[:, h_min:h_max, w_min:w_max,
+                                                                                d_min:d_max]) / 2
+                if "bounding_box" in batch['input_metadata'][0][0]:
+                    imed_obj_detect.adjust_undo_transforms(testing_params["undo_transforms"].transforms, batch)
+                pred_undo, metadata = testing_params["undo_transforms"](torch.tensor(volume),
+                                                                        batch['gt_metadata'][smp_idx],
+                                                                        data_type='gt')
+                fname_ref = metadata[0]['gt_filenames'][0]
+                # Indicator of last batch
+                if h_max == h and w_max == w and d_max == d:
+                    pred_undo = np.array(pred_undo)
+                    fname_pred = os.path.join(ofolder, fname_ref.split('/')[-1])
                     fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
-                    # If Uncertainty running, then we save each simulation result
+                    # If uncertainty running, then we save each simulation result
                     if testing_params['uncertainty']['applied']:
                         fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
-                    output_nii = imed_utils.pred_to_nib(data_lst=pred_tmp_lst,
-                                                        z_lst=z_tmp_lst,
-                                                        fname_ref=fname_tmp,
-                                                        fname_out=fname_pred,
-                                                        slice_axis=imed_utils.AXIS_DCT[testing_params['slice_axis']],
-                                                        kernel_dim='2d',
-                                                        bin_thr=0.5 if testing_params["binarize_prediction"] else -1)
+                    # Choose only one modality
+                    imed_utils.pred_to_nib(data_lst=[pred_undo],
+                                           z_lst=[],
+                                           fname_ref=fname_ref,
+                                           fname_out=fname_pred,
+                                           slice_axis=imed_utils.AXIS_DCT[testing_params['slice_axis']],
+                                           kernel_dim='3d',
+                                           bin_thr=0.5 if testing_params["binarize_prediction"] else -1)
 
-                    output_nii_shape = output_nii.get_fdata().shape
-                    if len(output_nii_shape) == 4 and output_nii_shape[0] > 1:
-                        imed_utils.save_color_labels(output_nii.get_fdata(),
-                                                     testing_params["binarize_prediction"],
-                                                     fname_tmp,
+                    # Save merged labels with color
+                    if volume.shape[0] > 1:
+                        imed_utils.save_color_labels(pred_undo,
+                                                     testing_params['binarize_prediction'],
+                                                     batch['input_metadata'][smp_idx][0]['input_filenames'],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                      imed_utils.AXIS_DCT[testing_params['slice_axis']])
-
-                    # re-init pred_stack_lst
-                    pred_tmp_lst, z_tmp_lst = [], []
-
-                # add new sample to pred_tmp_lst, of size n_label X h X w ...
-                pred_tmp_lst.append(preds_idx_arr)
-
-                # TODO: slice_index should be stored in gt_metadata as well
-                z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
-                fname_tmp = fname_ref
-
-            else:
-                # TODO: Add reconstruction for subvolumes
-                fname_pred = os.path.join(ofolder, fname_ref.split('/')[-1])
-                fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
-                # If uncertainty running, then we save each simulation result
-                if testing_params['uncertainty']['applied']:
-                    fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
-
-                # Choose only one modality
-                imed_utils.pred_to_nib(data_lst=[preds_idx_arr],
-                                       z_lst=[],
-                                       fname_ref=fname_ref,
-                                       fname_out=fname_pred,
-                                       slice_axis=imed_utils.AXIS_DCT[testing_params['slice_axis']],
-                                       kernel_dim='3d',
-                                       bin_thr=0.5 if testing_params["binarize_prediction"] else -1)
-
-                # Save merged labels with color
-                if preds_idx_arr.shape[0] > 1:
-                    imed_utils.save_color_labels(preds_idx_arr,
-                                                 testing_params['binarize_prediction'],
-                                                 batch['input_metadata'][smp_idx][0]['input_filenames'],
-                                                 fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                 imed_utils.AXIS_DCT[testing_params['slice_axis']])
 
     return np.concatenate(preds_npy_list, axis=0), np.concatenate(gt_npy_list, axis=0)
