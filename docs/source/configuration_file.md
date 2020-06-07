@@ -87,7 +87,7 @@ Here are defined the tailored model and the parameters that are specific to it (
 - [FiLMedUnet](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/config/config.json#L64)
     - `metadata`: choice between `"without"`, `"mri_params"`, and `"contrast"`. If `"mri_params"`, then vectors of [FlipAngle, EchoTime, RepetitionTime, Manufacturer] are input to the FiLM generator. If `"contrast"`, then image contrasts (according to `config/contrast_dct.json`) are input to the FiLM generator.
 - [HeMISUnet](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/config/config_spineGeHemis.json#L64)
-    - `missing_modality`: Bool.
+    - `missing_contrast`: Bool.
 - [UNet3D](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/config/config_tumorSeg.json#L65)
     - `length_3D`: tuple indicating the size of the subvolumes or volume used for unet 3D model (depth, width, height).
     - `padding_3D`: size of the overlapping per subvolume and dimensions (e.i `padding:0`). Note: In order to be used, each dimension of an input image needs to be a multiple of length plus 2 * padding and a multiple of 16. To change input image size use the following transformation `CenterCrop3D`. 

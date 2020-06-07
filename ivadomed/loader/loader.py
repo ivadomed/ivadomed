@@ -89,7 +89,7 @@ class SegmentationPair(object):
     :param input_filenames: the input filename list (supported by nibabel). For single channel, the list will contain 1
                            input filename.
     :param gt_filenames: the ground-truth filenames list.
-    :param metadata: metadata list with each item corresponding to an image (modality) in input_filenames.  For single
+    :param metadata: metadata list with each item corresponding to an image (contrast) in input_filenames.  For single
                      channel, the list will contain metadata related to one image.
     :param cache: if the data should be cached in memory or not.
     """
@@ -241,7 +241,7 @@ class SegmentationPair(object):
             raise RuntimeError("Invalid axis, must be between 0 and 2.")
 
         input_slices = []
-        # Loop over modalities
+        # Loop over contrasts
         for data_object in input_dataobj:
             input_slices.append(np.asarray(data_object[..., slice_index],
                                            dtype=np.float32))
@@ -268,7 +268,7 @@ class SegmentationPair(object):
 class MRI2DSegmentationDataset(Dataset):
     """This is a generic class for 2D (slice-wise) segmentation datasets.
 
-    :param filename_pairs: a list of tuples in the format (input filename list containing all modalities,
+    :param filename_pairs: a list of tuples in the format (input filename list containing all contrasts,
                            ground truth filename, ROI filename, metadata).
     :param slice_axis: axis to make the slicing (default axial).
     :param cache: if the data should be cached in memory or not.

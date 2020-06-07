@@ -65,7 +65,7 @@
         "applied": true,
         "missing_probability": 0.00001,
         "missing_probability_growth": 0.9,
-        "modalities": ["T1w", "T2w"],
+        "contrasts": ["T1w", "T2w"],
         "ram": true,
         "hdf5_path": "/home/andreanne/Documents/dataset/HeMIS.hdf5",
         "csv_path": "/home/andreanne/Documents/dataset/HeMIS.csv",
