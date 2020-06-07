@@ -70,7 +70,7 @@ Float. Between `0` and `1` representing the fraction of the dataset used as test
 Strictly positive integer.
 
 #### loss
-- `name`: Name of the loss function: Choice among the classes that are available [here](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/losses.py).
+- `name`: Name of the loss function: Choice among the classes that are available [here](../../ivadomed/losses.py).
 - Other parameters that could be needed in the Loss function definition: see attributes of the Loss function of interest (e.g. `"gamma": 0.5` for `FocalLoss`).
 
 #### training_time
@@ -96,7 +96,7 @@ Float. Alpha parameter of the Beta distribution, see [original paper](https://ar
 
 ## Architecture
 Architectures for both segmentation and classification are available and described [here](models.rst).
-If the selected architecture is listed [here](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/loader/loader.py#L14), then a classification task is run, ie the ground-truth are labels extracted from `target`, instead of arrays for the segmentation task.
+If the selected architecture is listed [here](../../ivadomed/loader/loader.py#L14), then a classification task is run, ie the ground-truth are labels extracted from `target`, instead of arrays for the segmentation task.
 
 ### default_model (Mandatory)
 Define the default model (`Unet`) and mandatory parameters that are common to all available architectures (listed [here](models.rst)). If a tailored model is defined (see next section), then the default parameters are merged with the parameters that are specific to the tailored model.
@@ -110,11 +110,11 @@ Note:
 
 ### Tailored model (optional)
 Here are defined the tailored model and the parameters that are specific to it (ie not defined in the default model). See examples:
-- [FiLMedUnet](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/config/config.json#L64)
+- [FiLMedUnet](../../ivadomed/config/config.json#L64)
     - `metadata`: choice between `"without"`, `"mri_params"`, and `"contrast"`. If `"mri_params"`, then vectors of [FlipAngle, EchoTime, RepetitionTime, Manufacturer] are input to the FiLM generator. If `"contrast"`, then image contrasts (according to `config/contrast_dct.json`) are input to the FiLM generator.
-- [HeMISUnet](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/config/config_spineGeHemis.json#L64)
+- [HeMISUnet](../../ivadomed/config/config_spineGeHemis.json#L64)
     - `missing_contrast`: Bool.
-- [UNet3D](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/config/config_tumorSeg.json#L65)
+- [UNet3D](../../ivadomed/config/config_tumorSeg.json#L65)
     - `length_3D`: tuple indicating the size of the subvolumes or volume used for unet 3D model (depth, width, height).
     - `padding_3D`: size of the overlapping per subvolume and dimensions (e.i `padding:0`). Note: In order to be used, each dimension of an input image needs to be a multiple of length plus 2 * padding and a multiple of 16. To change input image size use the following transformation `CenterCrop3D`. 
     - `attention_unet`: indicates if attention gates are used in the Unet's decoder.
@@ -150,10 +150,10 @@ Indicate the transformation in the same order you would like them to be applied 
 - ` RandomReverse`
 
 ## Examples
-Examples of configuration files: [here](https://github.com/neuropoly/ivado-medical-imaging/tree/master/ivadomed/config).
+Examples of configuration files: [here](../../ivadomed/config).
 
 In particular:
-- [config_classification.json](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/config/config_classification.json) is dedicated to classification task.
-- [config_sctTesting.json](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/config/config_sctTesting.json) is a user case of 2D segmentation using a U-Net model.
-- [config_spineGeHemis.json](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/config/config_spineGeHemis.json) shows how to use the HeMIS-UNet.
-- [config_tumorSeg.json](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/config/config_tumorSeg.json) runs a 3D segmentation using a 3D UNet.
+- [config_classification.json](../../ivadomed/config/config_classification.json) is dedicated to classification task.
+- [config_sctTesting.json](../../ivadomed/config/config_sctTesting.json) is a user case of 2D segmentation using a U-Net model.
+- [config_spineGeHemis.json](../../ivadomed/config/config_spineGeHemis.json) shows how to use the HeMIS-UNet.
+- [config_tumorSeg.json](../../ivadomed/config/config_tumorSeg.json) runs a 3D segmentation using a 3D UNet.
