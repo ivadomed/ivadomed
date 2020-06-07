@@ -6,7 +6,7 @@ Run the specified command. Choices: ``"train"``, ``"test"``, ``"eval"``, to trai
 #### gpu
 Integer. ID of the GPU to use.
 #### log_directory
-Folder name where output files (e.g. trained model, predictions, results) are saved.
+Folder name that will contain the output files (e.g., trained model, predictions, results).
 #### debugging
 Bool. Allows extended verbosity and intermediate outputs.
 
