@@ -60,7 +60,7 @@ the prior knowledge about the subjective lesion borders is then leveraged to the
 ![Figure Data Augmentation on lesion ground truths](https://github.com/neuropoly/ivado-medical-imaging/raw/master/images/dilate-gt.png)
 
 ## Network architectures
-- [UNet](https://arxiv.org/pdf/1505.04597.pdf), with control of the network depth.
+- [UNet](https://arxiv.org/abs/1505.04597), with control of the network depth.
 - HeMIS-UNet: integrates the [HeMIS](https://arxiv.org/abs/1607.05194) strategy to deal with missing modalities within a UNet training scheme.
 - FiLMed-UNet, based on [FiLM](https://arxiv.org/abs/1709.07871) strategy adapted to the [segmentation task](#physic-informed-network).
 
