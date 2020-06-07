@@ -1,13 +1,5 @@
 # Technical features
 
-* [Physic informed network](#physic-informed-network)
-* [Uncertainty measures](#uncertainty-measures)
-* [Two step training scheme with class sampling](#two-steps-training-scheme-with-class-sampling)
-* [MixUp](#mixup)
-* [Data augmentation on lesion labels](#data-augmentation-on-lesion-labels)
-* [Network architectures](#network-architectures)
-* [Loss functions](#loss-functions)
-
 ## Physics-informed network
 CNNs can be modulated, at each layer, using the [Feature-wise Linear Modulation (FiLM)](https://arxiv.org/pdf/1709.07871.pdf) technique. FiLM permits to add priors during training/inference
 based on the imaging physics (e.g. acquisition parameters), thereby improving the
