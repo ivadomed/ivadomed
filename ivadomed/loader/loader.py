@@ -402,8 +402,6 @@ class MRI2DSegmentationDataset(Dataset):
             # Force no transformation on labels for classification task
             # stack_gt is a list of length n_label, values: 0 or 1
             stack_gt = seg_pair_slice["gt"]
-            stack_gt = torch.as_tensor(
-                [stack_gt[i_label, :] for i_label in range(len(stack_gt))])
 
         data_dict = {
             'input': stack_input,
