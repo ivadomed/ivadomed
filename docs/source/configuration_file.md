@@ -31,7 +31,7 @@ Dict. Discard a slice from the dataset if it meets a condition, see below.
 #### roi
 Dict. of parameters about the region of interest
 - `suffix`: String. Suffix of the derivative file containing the ROI used to crop (e.g. `"_seg-manual"`) with `ROICrop` as transform. Please use `null` if you do not want to use a ROI to crop.
-- `slice_filter_roi`: int. It filters (i.e. discards from the dataset) slices where the ROI mask has with less than this threshold of non zero voxels. Active when using `"ROICrop"`.
+- `slice_filter_roi`: int. It filters (i.e. discards from the dataset) slices where the ROI mask has with less than this number of non zero voxels. Active when using `"ROICrop"`.
 
 ## Split dataset
 #### fname_split
