@@ -54,7 +54,7 @@ Strictly positive integer.
 - `name`: Name of the loss function: Choice among the classes that are available [here](https://github.com/neuropoly/ivado-medical-imaging/blob/master/ivadomed/losses.py).
 - Other parameters that could be needed in the Loss function definition: see attributes of the Loss function of interest (e.g. `"gamma": 0.5` for `FocalLoss`).
 #### training_time
-- `num_epochs`: int.
+- `num_epochs`: Strictly positive integer.
 - `early_stopping_epsilon`: Threshold (percentage) for an improvement in the validation loss to be considered meaningful
 - `early_stopping_patience`: Number of epochs after which the training is stopped if the validation loss improvement not meaningful (i.e. less than `early_stopping_epsilon`)
 #### scheduler
