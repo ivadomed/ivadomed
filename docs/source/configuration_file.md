@@ -39,13 +39,13 @@ Filename of a joblib file containing the list of training/validation/testing sub
 #### random_seed
 Seed used by the random number generator to split the dataset between training/validation/testing.
 #### center_test
-List. List of centers to only include in the testing dataset.
+List of strings. List of centers to only include in the testing dataset. If used, please include a column `institution_id` in your `bids_dataset/participants.tsv`.
 #### method
-Choice between `"per_patient"` (i.e. shuffle all subjects then splits) or `"per_center"` (split subject according to their acquisition centers).
+Choice between `"per_patient"` (i.e. shuffle all subjects then splits, using the `participant_id` column from `my_bids_dataset/participants.tsv`) or `"per_center"` (split subjects according to their acquisition centers, using the `institution_id` column from `my_bids_dataset/participants.tsv`).
 #### train_fraction
-Number between `0` and `1` representing the fraction of the dataset used as training set.
+Float. Between `0` and `1` representing the fraction of the dataset used as training set.
 #### test_fraction
-Number between `0` and `1` representing the fraction of the dataset used as test set. This parameter is only used if the `method` is `"per_patient"`.
+Float. Between `0` and `1` representing the fraction of the dataset used as test set. This parameter is only used if the `method` is `"per_patient"`.
 
 ## Training parameters
 #### batch_size
