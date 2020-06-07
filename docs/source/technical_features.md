@@ -62,7 +62,7 @@ the prior knowledge about the subjective lesion borders is then leveraged to the
 ## Network architectures
 - [UNet](https://arxiv.org/pdf/1505.04597.pdf), with control of the network depth.
 - HeMIS-UNet: integrates the [HeMIS](https://arxiv.org/abs/1607.05194) strategy to deal with missing modalities within a UNet training scheme.
-- FiLMed-UNet, based on [FiLM](https://arxiv.org/pdf/1709.07871.pdf) strategy adapted to the [segmentation task](#physic-informed-network).
+- FiLMed-UNet, based on [FiLM](https://arxiv.org/abs/1709.07871) strategy adapted to the [segmentation task](#physic-informed-network).
 
 ## Loss functions
 - [Dice Loss](https://arxiv.org/abs/1606.04797). Also adapted for multi-label segmentation tasks, by averaging the loss for each class.
