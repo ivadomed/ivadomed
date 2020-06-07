@@ -30,7 +30,7 @@ These measures can be used to perform some [post-processing](https://arxiv.org/a
 
 ![Figure Uncertainty](https://github.com/neuropoly/ivado-medical-imaging/raw/master/images/uncertainty_measures.png)
 
-## Two steps training scheme with class sampling
+## Two-step training scheme with class sampling
 Class sampling, coupled with a transfer learning strategy, can mitigate class
 imbalance issues, while addressing the limitations of classical under-sampling
 (risk of loss of information) or over-sampling (risk of overfitting) approaches.
