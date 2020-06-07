@@ -7,10 +7,8 @@ from torch.nn import Module
 from torch.nn import init
 import torchvision.models
 
-class resnet(ResNet):
-    def __init__(self, **kwargs):
-        super().__init__(torchvision.models.resnet.BasicBlock, [2, 2, 2, 2])
 
+#Modified from torchvision.models.resnet.Resnet
 class ResNet(nn.Module):
 
     def __init__(self, block, layers, num_classes=1000, zero_init_residual=False,
@@ -108,6 +106,10 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         return self._forward_impl(x)
+
+class resnet(ResNet):
+    def __init__(self, **kwargs):
+        super().__init__(torchvision.models.resnet.BasicBlock, [2, 2, 2, 2])
 
 
 class DownConv(Module):
