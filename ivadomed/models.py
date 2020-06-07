@@ -105,7 +105,7 @@ class ResNet(nn.Module):
         preds = F.softmax(x, dim=1)
         # Remove background class
         preds = preds[:, 1:]
-        return x
+        return preds
 
     def forward(self, x):
         return self._forward_impl(x)
