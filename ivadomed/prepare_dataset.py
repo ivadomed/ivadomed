@@ -19,11 +19,17 @@ def normalize(arr):
 def label2maskmap_gt(data, shape, c_dx=0, c_dy=0, radius=10, normalize=False):
     """
     Generate a heatmap resulting from the convolution between a 2D Gaussian kernel and a pair of 2D coordinates.
-    :param shape: dimension of output
-    :param data : input image
-    :param radius: is the radius of the gaussian function
-    :param normalize : bool for normalization.
-    :return: a MxN normalized array
+    Args:
+        data: input image
+        shape: dimension of output
+        c_dx: shift along the x axis
+        c_dy: shift along th y axis
+        radius: is the radius of the gaussian function
+        normalize: bool for normalization.
+
+    Returns:
+        array: a MxN normalized array
+
     """
 
     # Our 2-dimensional distribution will be over variables X and Y
@@ -143,8 +149,15 @@ def add_zero_padding(img_list, x_val=512, y_val=512):
 def mask2label(path_label, aim='full'):
     """
     Convert nifti image to an array of coordinates
-    :param path_label: path of nifti image
+    :param path_label:
     :return:
+    Args:
+        path_label: path of nifti image
+        aim: 'full' or 'c2' full will return all points with label between 3 and 30 , c2 will return only the coordinates of points label 3
+
+    Returns:
+        array: array containing the asked point in the format [x,y,z,value]
+
     """
     image = nib.load(path_label)
     image = nib.as_closest_canonical(image)
@@ -155,7 +168,7 @@ def mask2label(path_label, aim='full'):
         y = arr.nonzero()[1][i]
         z = arr.nonzero()[2][i]
         if aim == 'full':
-            if arr[x, y, z] <30 and arr[x, y, z] != 1:
+            if arr[x, y, z] < 30 and arr[x, y, z] != 1:
                 list_label_image.append([x, y, z, arr[x, y, z]])
         elif aim == 'c2':
             if arr[x, y, z] == 3:
@@ -269,11 +282,9 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
                 label_array[list_points[1][j], list_points[0][j]] = 1
 
         heatmap = heatmap_generation(label_array[list_points[0][0], :, :], 10)
-
-        nib_ref_can = nib.as_closest_canonical(lab)
         arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(np.flip(heatmap[:, :], axis=1), axis=0), 2, lab, nib_ref_can)
         nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
-        nib.save(nib_pred,bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + 'heatmap.nii.gz')
+        nib.save(nib_pred, bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + 'heatmap.nii.gz')
 
 
 
