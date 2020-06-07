@@ -25,9 +25,9 @@ Bool. Indicated if more than a contrast (e.g. `T1w` and `T2w`) is used by the mo
 Choice between `"sagittal"`, `"coronal"`, and `"axial"`.
 Sets the slice orientation for on which the model will be used.
 #### slice_filter
-Dict:
-- `filter_empty_input`: Bool. Filter empty images.
-- `filter_empty_mask`: Bool. Filter empty GT mask slices if `true`.
+Dict. Discard a slice from the dataset if it meets a condition, see below.
+- `filter_empty_input`: Bool. Discard slices where all voxel intensities are zeros.
+- `filter_empty_mask`: Bool. Discard slices where all voxel labels are zeros.
 #### roi
 Dict. of parameters about the region of interest
 - `suffix`: suffix of the derivative file containing the ROI used to crop (e.g. `"_seg-manual"`) with `ROICrop` as transform. Please use `null` if you do not want to use a ROI to crop.
