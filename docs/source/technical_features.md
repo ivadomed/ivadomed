@@ -26,7 +26,7 @@ From the Monte Carlo samples, different measures of uncertainty can be derived:
 - structure-wise coefficient of variation
 - structure-wise averaged voxel-wise uncertainty within the structure
 
-These measures can be used to perform some [post-processing](https://arxiv.org/pdf/1808.01200.pdf) based on the uncertainty measures.
+These measures can be used to perform some [post-processing](https://arxiv.org/abs/1808.01200) based on the uncertainty measures.
 
 ![Figure Uncertainty](https://github.com/neuropoly/ivado-medical-imaging/raw/master/images/uncertainty_measures.png)
 
