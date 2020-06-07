@@ -26,7 +26,7 @@ Choice between `"sagittal"`, `"coronal"`, and `"axial"`.
 Sets the slice orientation for on which the model will be used.
 #### slice_filter
 Dict:
-- `filter_empty_input`: Bool. Filter empty images if `true`.
+- `filter_empty_input`: Bool. Filter empty images.
 - `filter_empty_mask`: Bool. Filter empty GT mask slices if `true`.
 #### roi
 Dict. of parameters about the region of interest
