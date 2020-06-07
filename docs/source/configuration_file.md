@@ -55,7 +55,7 @@ Strictly positive integer.
 - Other parameters that could be needed in the Loss function definition: see attributes of the Loss function of interest (e.g. `"gamma": 0.5` for `FocalLoss`).
 #### training_time
 - `num_epochs`: Strictly positive integer.
-- `early_stopping_epsilon`: Threshold (percentage) for an improvement in the validation loss to be considered meaningful
+- `early_stopping_epsilon`: Float. If the validation loss difference during one epoch (i.e. `abs(validation_loss[n] - validation_loss[n-1]` where n is the current epoch) is inferior to this epsilon for `early_stopping_patience` consecutive epochs, then  the early stopping of the training is triggered.
 - `early_stopping_patience`: Number of epochs after which the training is stopped if the validation loss improvement not meaningful (i.e. less than `early_stopping_epsilon`)
 #### scheduler
 - `initial_lr`: Float. Initial learning rate.
