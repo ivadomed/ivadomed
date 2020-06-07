@@ -179,7 +179,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                         input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
                     else:
                         input_samples = imed_utils.cuda(batch["input"], cuda_available)
-                    gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
+                    gt_samples = imed_utils.cuda(torch.stack(batch["gt"]), cuda_available, non_blocking=True)
 
                     # RUN MODEL
                     if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
