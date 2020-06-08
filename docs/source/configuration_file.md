@@ -47,7 +47,7 @@ Dict. of parameters about the region of interest
 ## Split dataset
 
 #### fname_split
-Filename of a joblib file containing the list of training/validation/testing subjects. This file can later be used to re-train a model using the same data splitting scheme.
+String. File name of the log (joblib) that contains the list of training/validation/testing subjects. This file can later be used to re-train a model using the same data splitting scheme.
 
 #### random_seed
 Seed used by the random number generator to split the dataset between training/validation/testing.
