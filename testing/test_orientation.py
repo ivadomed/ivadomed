@@ -39,11 +39,7 @@ def test_image_orientation():
         "NormalizeInstance": {"applied_to": ['im']}
     }
 
-    training_undo_transform = imed_transforms.UndoCompose(imed_transforms.Compose(training_transform_dict.copy()))
-    preprocessing_transforms = imed_transforms.get_preprocessing_transforms(training_transform_dict)
-    prepro_transforms = imed_transforms.Compose(preprocessing_transforms, requires_undo=True)
-    transforms = imed_transforms.Compose(training_transform_dict, requires_undo=True)
-    tranform_lst = [prepro_transforms if len(preprocessing_transforms) else None, transforms]
+    tranform_lst, training_undo_transform = imed_transforms.preprare_transforms(training_transform_dict)
 
     model_params = {
             "name": "UNet3D",

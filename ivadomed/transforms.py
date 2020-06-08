@@ -15,6 +15,8 @@ from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_
 from skimage.exposure import equalize_adapthist
 from torchvision import transforms as torchvision_transforms
 
+from ivadomed.loader import utils as imed_loader_utils
+
 
 def multichannel_capable(wrapped):
     @functools.wraps(wrapped)
@@ -904,18 +906,21 @@ def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
     if transforms is None:
         return (seg_pair, roi_pair)
 
+    metadata_input = seg_pair['input_metadata']
     if roi_pair is not None:
         stack_roi, metadata_roi = transforms(sample=roi_pair["gt"],
                                              metadata=roi_pair['gt_metadata'],
                                              data_type="roi")
+        metadata_input = imed_loader_utils.update_metadata(metadata_roi, metadata_input)
     # Run transforms on images
     stack_input, metadata_input = transforms(sample=seg_pair["input"],
-                                             metadata=seg_pair['input_metadata'],
+                                             metadata=metadata_input,
                                              data_type="im")
     # Run transforms on images
     if seg_pair['gt_metadata'][0] is not None:
+        metadata_gt = imed_loader_utils.update_metadata(metadata_input, seg_pair['gt_metadata'])
         stack_gt, metadata_gt = transforms(sample=seg_pair["gt"],
-                                           metadata=seg_pair['gt_metadata'],
+                                           metadata=metadata_gt,
                                            data_type="gt")
     else:
         stack_gt, metadata_gt = seg_pair["gt"], []
@@ -941,3 +946,12 @@ def update_transforms(transform_source, transform_dest):
     for data_type in transform_source.transform:
         for idx, transfo in enumerate(transform_source.transform[data_type].transforms):
             transform_dest.transform[data_type].transforms.insert(idx, transfo)
+
+
+def preprare_transforms(transform_dict, requires_undo=True):
+    training_undo_transform = UndoCompose(Compose(transform_dict.copy()))
+    preprocessing_transforms = get_preprocessing_transforms(transform_dict)
+    prepro_transforms = Compose(preprocessing_transforms, requires_undo=requires_undo)
+    transforms = Compose(transform_dict, requires_undo=requires_undo)
+    tranform_lst = [prepro_transforms if len(preprocessing_transforms) else None, transforms]
+    return tranform_lst, training_undo_transform
