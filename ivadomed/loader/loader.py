@@ -4,6 +4,7 @@ import torch
 from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
+import copy
 
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
@@ -41,10 +42,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         BidsDataset
     """
     # Compose transforms
-    preprocessing_transforms = imed_transforms.get_preprocessing_transforms(transforms_params)
-    prepro_transforms = imed_transforms.Compose(preprocessing_transforms, requires_undo=requires_undo)
-    transforms = imed_transforms.Compose(transforms_params, requires_undo=requires_undo)
-    tranform_lst = [prepro_transforms if len(preprocessing_transforms) else None, transforms]
+    tranform_lst, _ = imed_transforms.preprare_transforms(transforms_params, requires_undo)
 
     if model_params["name"] == "UNet3D":
         dataset = Bids3DDataset(bids_path,
@@ -532,8 +530,9 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
-        metadata_input = imed_loader_utils.clean_metadata(seg_pair['input_metadata'])
-        metadata_gt = imed_loader_utils.clean_metadata(seg_pair['gt_metadata'])
+        # Use copy to have different coordinates for reconstruction for a given handler
+        metadata_input = imed_loader_utils.clean_metadata(copy.deepcopy(seg_pair['input_metadata']))
+        metadata_gt = imed_loader_utils.clean_metadata(copy.deepcopy(seg_pair['gt_metadata']))
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=seg_pair['input'],
@@ -555,7 +554,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         shape_y = coord["y_max"] - coord["y_min"]
         shape_z = coord["z_max"] - coord["z_min"]
 
-        # add coordonates to metadata to reconstruct volume
+        # add coordinates to metadata to reconstruct volume
         for metadata in metadata_input:
             metadata['coord'] = [coord["x_min"], coord["x_max"], coord["y_min"], coord["y_max"], coord["z_min"],
                                  coord["z_max"]]
