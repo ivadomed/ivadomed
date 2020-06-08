@@ -199,8 +199,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 gt_npy = gt_samples.cpu().numpy().astype(np.uint8)
                 preds_npy = preds.data.cpu().numpy()
 
-                if dataset_train.task == "segmentation":
-                    metric_mgr(preds_npy.astype(np.uint8), gt_npy)
+
+                metric_mgr(preds_npy.astype(np.uint8), gt_npy)
 
                 if i == 0 and debugging:
                     imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
@@ -216,10 +216,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
             # METRICS COMPUTATION FOR CURRENT EPOCH
             val_loss_total_avg_old = val_loss_total_avg if epoch > 1 else None
-            if dataset_train.task == "segmentation":
-                metrics_dict = metric_mgr.get_results()
-                metric_mgr.reset()
-                writer.add_scalars('Validation/Metrics', metrics_dict, epoch)
+            metrics_dict = metric_mgr.get_results()
+            metric_mgr.reset()
+            writer.add_scalars('Validation/Metrics', metrics_dict, epoch)
             val_loss_total_avg = val_loss_total / num_steps
             writer.add_scalars('losses', {
                 'train_loss': train_loss_total_avg,
