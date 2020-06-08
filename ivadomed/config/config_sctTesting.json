@@ -17,7 +17,9 @@
         },
         "slice_filter_params": {
             "filter_empty_mask": false,
-            "filter_empty_input": true
+            "filter_empty_input": true,
+            "filter_classification" :false,
+             "classifier_path": null
         },
         "slice_axis": "axial",
         "multichannel": false
