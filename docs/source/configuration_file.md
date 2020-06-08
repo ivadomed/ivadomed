@@ -41,22 +41,22 @@ Dict. Discard a slice from the dataset if it meets a condition, see below.
 
 #### roi
 Dict. of parameters about the region of interest
-- `suffix`: String. Suffix of the derivative file containing the ROI used to crop (e.g. `"_seg-manual"`) with `ROICrop` as transform. Please use `null` if you do not want to use a ROI to crop.
-- `slice_filter_roi`: int. It filters (i.e. discards from the dataset) slices where the ROI mask has with less than this number of non zero voxels. Active when using `"ROICrop"`.
+- `suffix`: String. Suffix of the derivative file containing the ROI used to crop (e.g. `"_seg-manual"`) with `ROICrop` as transform. Please use `null` if you do not want to use an ROI to crop.
+- `slice_filter_roi`: int. If the ROI mask contains less than `slice_filter_roi` non-zero voxels, the slice will be discarded from the dataset. This feature helps with noisy labels, e.g., if a slice contains only 2-3 labeled voxels, we do not want to use these labels to crop the image. This parameter is only considered when using `"ROICrop"`.
 
 ## Split dataset
 
 #### fname_split
-Filename of a joblib file containing the list of training/validation/testing subjects. This file can later be used to re-train a model using the same data splitting scheme.
+String. File name of the log (joblib) that contains the list of training/validation/testing subjects. This file can later be used to re-train a model using the same data splitting scheme.
 
 #### random_seed
 Int. Seed used by the random number generator to split the dataset between training/validation/testing. The use of the same seed ensure the same split between the sub-datasets, which is useful to reproduce results.
 
 #### center_test
-List of strings. List of centers to only include in the testing dataset. If used, please include a column `institution_id` in your `bids_dataset/participants.tsv`.
+List of strings. Each string corresponds to an institution/center to only include in the testing dataset (not validation). If used, the file `bids_dataset/participants.tsv` needs to contain a column `institution_id`, which associates a subject with an institution/center.
 
 #### method
-Choice between `"per_patient"` (i.e. shuffle all subjects then splits, using the `participant_id` column from `my_bids_dataset/participants.tsv`) or `"per_center"` (split subjects according to their acquisition centers, using the `institution_id` column from `my_bids_dataset/participants.tsv`).
+`{'per_patient', 'per_center'}`. `"per_patient"`: all subjects are shuffled, then split between train/validation/test, regardless their institution. `"per_center"`: all subjects are split so as not to mix institutions between the train, validation and test sets. The latter option enables to ensure the model is working across domains (institutions). Note: the institution information is contained within the `institution_id` column in the `participants.tsv` file.
 
 #### train_fraction
 Float. Between `0` and `1` representing the fraction of the dataset used as training set.
@@ -70,7 +70,7 @@ Float. Between `0` and `1` representing the fraction of the dataset used as test
 Strictly positive integer.
 
 #### loss
-- `name`: Name of the loss function: Choice among the classes that are available [here](https://ivadomed.org/en/latest/api_ref.html#ivadomed-losses).
+- `name`: Name of the [loss function Class](../../ivadomed/losses.py).
 - Other parameters that could be needed in the Loss function definition: see attributes of the Loss function of interest (e.g. `"gamma": 0.5` for `FocalLoss`).
 
 #### training_time
@@ -101,7 +101,7 @@ If the selected architecture is listed in the [loader.py](../../ivadomed/loader/
 ### default_model (Mandatory)
 Define the default model (`Unet`) and mandatory parameters that are common to all available architectures (listed in the [Models](models.rst) section). If a tailored model is defined (see next section), the default parameters are merged with the parameters that are specific to the tailored model.
 - `name`: `Unet` (default)
-- `dropout_rate`: float (e.g. 0.4).
+- `dropout_rate`: Float (e.g. 0.4).
 - `batch_norm_momentum`: Float (e.g. 0.1).
 - `depth`: Strictly positive integer. Number of down-sampling operations.
 Note:
