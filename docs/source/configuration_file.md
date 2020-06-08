@@ -111,7 +111,7 @@ Note:
 ### Tailored model (optional)
 Here are defined the tailored model and the parameters that are specific to it (ie not defined in the default model). See examples:
 - `FiLMedUnet`
-    - `metadata`: choice between `"without"`, `"mri_params"`, and `"contrast"`. If `"mri_params"`, then vectors of [FlipAngle, EchoTime, RepetitionTime, Manufacturer] are input to the FiLM generator. If `"contrast"`, then image contrasts (according to `config/contrast_dct.json`) are input to the FiLM generator.
+    - `metadata`: `{'without', 'mri_params', 'contrast'}`. `mri_params`: Vectors of [FlipAngle, EchoTime, RepetitionTime, Manufacturer] are input to the FiLM generator. `contrast`: Image contrasts (according to `config/contrast_dct.json`) are input to the FiLM generator.
 - [HeMISUnet](../../ivadomed/config/config_spineGeHemis.json#L64)
     - `missing_contrast`: Bool.
 - [UNet3D](../../ivadomed/config/config_tumorSeg.json#L65)
