@@ -115,7 +115,7 @@ Dict. Define the default model (`Unet`) and mandatory parameters that are common
 - `missing_probability_growth`: Float. Controls missing probability growth at each epoch: at each epoch, the `missing_probability` is modified with the exponent `missing_probability_growth`.
 
 ### UNet3D (Optional)
-- `length_3D`: (Integer, Integer, Integer). Size of the 3D patches used as model's input tensors, along the first, second and third dimension.
+- `length_3D`: (Int, Int, Int). Size of the 3D patches used as model's input tensors.
 - `attention_unet`: Bool. Use attention gates in the Unet's decoder.
 
 ## Testing parameters
