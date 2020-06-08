@@ -129,7 +129,7 @@ Uncertainty computation is performed if `n_it>0` and at least `epistemic` or `al
 - `n_it`: Integer. Number of Monte Carlo iterations. Set to 0 for no uncertainty computation.
 
 ## Transformations
-Indicate the transformation in the same order you would like them to be applied to your samples. For each transformation, please indicate the parameters as well as the following two optional entries:
+Transformations applied during data augmentation. Transformations are sorted in the order they are applied to the image samples. For each transformation, the following parameters are customizable:
 - `applied_to`: list betweem `"im", "gt", "roi"`. If not specified, then the transformation is applied to all loaded samples. Otherwise, only applied to the specified types: eg `["gt"]` implies that this transformation is only applied to the ground-truth data.
 - `dataset_type`: list between `"training", "validation", "testing"`. If not specified, then the transformation is applied to the three sub-datasets. Otherwise, only applied to the specified subdatasets: eg `["testing"]` implies that this transformation is only applied to the testing sub-dataset.
 
