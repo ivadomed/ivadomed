@@ -28,17 +28,22 @@ def test_image_orientation():
                 "wspace": 1.5,
                 "hspace": 1,
                 "dspace": 3,
+                "preprocessing": True
             },
         "CenterCrop":
             {
-                "size": [176, 128, 160]
+                "size": [176, 128, 160],
+                "preprocessing": True
             },
         "NumpyToTensor": {},
         "NormalizeInstance": {"applied_to": ['im']}
     }
 
-    train_transform = imed_transforms.Compose(training_transform_dict)
-    training_undo_transform = imed_transforms.UndoCompose(train_transform)
+    training_undo_transform = imed_transforms.UndoCompose(imed_transforms.Compose(training_transform_dict.copy()))
+    preprocessing_transforms = imed_transforms.get_preprocessing_transforms(training_transform_dict)
+    prepro_transforms = imed_transforms.Compose(preprocessing_transforms, requires_undo=True)
+    transforms = imed_transforms.Compose(training_transform_dict, requires_undo=True)
+    tranform_lst = [prepro_transforms if len(preprocessing_transforms) else None, transforms]
 
     model_params = {
             "name": "UNet3D",
@@ -48,7 +53,7 @@ def test_image_orientation():
             "in_channel": 1,
             "out_channel": 1,
             "length_3D": [176, 128, 160],
-            "padding_3D": 0,
+            "stride_3D": [176, 128, 160],
             "attention": False,
             "n_filters": 8
         }
@@ -66,7 +71,7 @@ def test_image_orientation():
                                              contrast_params=contrast_params,
                                              metadata_choice="without",
                                              slice_axis=slice_axis,
-                                             transform=train_transform,
+                                             transform=tranform_lst,
                                              multichannel=False)
                 ds.load_filenames()
             else:
@@ -77,7 +82,7 @@ def test_image_orientation():
                                                contrast_params=contrast_params,
                                                metadata_choice="without",
                                                slice_axis=slice_axis,
-                                               transform=train_transform,
+                                               transform=tranform_lst,
                                                multichannel=False)
 
             loader = DataLoader(ds, batch_size=1,
