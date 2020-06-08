@@ -120,10 +120,10 @@ Here are defined the tailored model and the parameters that are specific to it (
     - `attention_unet`: Bool. Use attention gates in the Unet's decoder.
 
 ## Testing parameters
-- `binarize_prediction`: Bool. Binarize output predictions using a threshold of 0.5. If 'false', output predictions are float between 0 and 1. 
+- `binarize_prediction`: Bool. Binarize output predictions using a threshold of 0.5. If `false`, output predictions are float between 0 and 1. 
 
 #### uncertainty
-Uncertainty computation is performed if `n_it>0` and at least `epistemic` or `aleatoric` is `True`. Note: both `epistemic` and `aleatoric` can be `true`.
+Uncertainty computation is performed if `n_it>0` and at least `epistemic` or `aleatoric` is `true`. Note: both `epistemic` and `aleatoric` can be `true`.
 - `epistemic`: Bool. Model-based uncertainty with [Monte Carlo Dropout](https://arxiv.org/abs/1506.02142).
 - `aleatoric`: Bool. Image-based uncertainty with [test-time augmentation](https://doi.org/10.1016/j.neucom.2019.01.103).
 - `n_it`: Integer. Number of Monte Carlo iterations. Set to 0 for no uncertainty computation.
