@@ -76,7 +76,7 @@ Strictly positive integer.
 #### training_time
 - `num_epochs`: Strictly positive integer.
 - `early_stopping_epsilon`: Float. If the validation loss difference during one epoch (i.e. `abs(validation_loss[n] - validation_loss[n-1]` where n is the current epoch) is inferior to this epsilon for `early_stopping_patience` consecutive epochs, then  the early stopping of the training is triggered.
-- `early_stopping_patience`: Strictly positive integer. Number of epochs after which the training is stopped if the validation loss improvement not meaningful (i.e. less than `early_stopping_epsilon`)
+- `early_stopping_patience`: Strictly positive integer. Number of epochs after which the training is stopped if the validation loss improvement is smaller than `early_stopping_epsilon`.
 
 #### scheduler
 - `initial_lr`: Float. Initial learning rate.
