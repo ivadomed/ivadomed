@@ -114,7 +114,7 @@ Here are defined the tailored model and the parameters that are specific to it (
     - `metadata`: `{'without', 'mri_params', 'contrast'}`. `mri_params`: Vectors of [FlipAngle, EchoTime, RepetitionTime, Manufacturer] are input to the FiLM generator. `contrast`: Image contrasts (according to `config/contrast_dct.json`) are input to the FiLM generator.
 - `HeMISUnet`
     - `missing_contrast`: Bool.
-- [UNet3D](../../ivadomed/config/config_tumorSeg.json#L65)
+- `UNet3D`
     - `length_3D`: tuple indicating the size of the subvolumes or volume used for unet 3D model (depth, width, height).
     - `padding_3D`: size of the overlapping per subvolume and dimensions (e.i `padding:0`). Note: In order to be used, each dimension of an input image needs to be a multiple of length plus 2 * padding and a multiple of 16. To change input image size use the following transformation `CenterCrop3D`. 
     - `attention_unet`: indicates if attention gates are used in the Unet's decoder.
