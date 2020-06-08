@@ -103,7 +103,7 @@ Define the default model (`Unet`) and mandatory parameters that are common to al
 - `name`: `Unet` (default)
 - `dropout_rate`: float (e.g. 0.4).
 - `batch_norm_momentum`: float (e.g. 0.1).
-- `depth`: int, number of down-sampling operations.
+- `depth`: Strictly positive integer. Number of down-sampling operations.
 Note:
 - `in_channel` is automatically defined with `multichannel` and `contrast/training_validation`.
 - `out_channel` is automatically defined with `target_suffix`.
