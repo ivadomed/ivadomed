@@ -99,7 +99,7 @@ Architectures for both segmentation and classification are available and describ
 If the selected architecture is listed in the [loader.py](../../ivadomed/loader/loader.py#L14) file, a classification (not segmentation) task is run. In the case of a classification task, the ground truth will correspond to a single label value extracted from `target`, instead being an array (the latter being used for the segmentation task).
 
 ### default_model (Mandatory)
-Dict. Define the default model (`Unet`) and mandatory parameters that are common to all available architectures (listed in the [Models](models.rst) section). If a tailored model is defined (see next section), the default parameters are merged with the parameters that are specific to the tailored model.
+Dict. Define the default model (`Unet`) and mandatory parameters that are common to all available architectures (listed in the [Models](models.rst) section). For more specific models (see below), the default parameters are merged with the parameters that are specific to the tailored model.
 - `name`: `Unet` (default)
 - `dropout_rate`: Float (e.g. 0.4).
 - `batch_norm_momentum`: Float (e.g. 0.1).
