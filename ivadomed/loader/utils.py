@@ -40,18 +40,9 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
         else:  # X_test contains data from centers seen during the training, eg gm_challenge
             X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
     elif split_method == 'per_patient':
-        lumbar_subj = ["sub-Epen456", "sub-Astr247", "sub-Epen451", "sub-Epen413", "sub-Astr259", "sub-Astr202",
-                       "sub-Astr255", "sub-Epen395", "sub-Hema372", "sub-Epen429", "sub-Hema286", "sub-Epen514",
-                       "sub-Epen471", "sub-Epen415", "sub-Epen437", "sub-Epen422", "sub-Hema368", "sub-Epen411",
-                       "sub-Hema329", "sub-Epen405", "sub-Epen407", "sub-Hema306", "sub-Hema278", "sub-Hema320",
-                       "sub-Epen393", "sub-Epen432", "sub-Hema353", "sub-Astr246", "sub-Epen481", "sub-Hema350",
-                       "sub-Epen462", "sub-Hema301", "sub-Astr250", "sub-Hema370", "sub-Epen452", "sub-Astr253",
-                       "sub-Epen474", "sub-Astr149", "sub-Epen497", "sub-Hema364", "sub-Astr254", "sub-Epen493",
-                       "sub-Astr170", "sub-Epen487", "sub-Epen458"]
-        participants = [subj for subj in df['participant_id'].tolist() if subj not in lumbar_subj]
-        X_train, X_remain = train_test_split(participants, train_size=train_frac,
+        # Separate dataset in test, train and validation using sklearn function
+        X_train, X_remain = train_test_split(df['participant_id'].tolist(), train_size=train_frac,
                                              random_state=random_seed)
-        X_train.extend(lumbar_subj)
         X_test, X_val = train_test_split(X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
 
     else:
