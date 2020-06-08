@@ -228,7 +228,8 @@ class SegmentationPair(object):
                     "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
                     "gt_filenames": self.metadata[0]["gt_filenames"],
                     "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
-                    "data_type": 'gt'
+                    "data_type": 'gt',
+                    "crop_params": {}
                 }))
             elif len(gt_meta_dict):
                 gt_meta_dict.append(gt_meta_dict[0])
@@ -240,7 +241,8 @@ class SegmentationPair(object):
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
                 "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
                 "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis),
-                "data_type": 'im'
+                "data_type": 'im',
+                "crop_params": {}
             }))
 
         dreturn = {
@@ -346,18 +348,11 @@ class MRI2DSegmentationDataset(Dataset):
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
-            # Check if Resample is included in self.transform.transform["im"]
-            is_resampled = False
-            for idx, transfo in enumerate(self.transform.transform["im"].transforms):
-                if "Resample" in str(type(transfo)):
-                    is_resampled = True
-                    resample_param = (transfo.hspace, transfo.wspace, transfo.dspace)
-
             for idx_pair_slice in range(input_data_shape[-1]):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice, gt_type=self.task)
                 self.has_bounding_box = imed_obj_detect.verify_metadata(slice_seg_pair, self.has_bounding_box)
-                if self.has_bounding_box and is_resampled:
-                    imed_obj_detect.resample_bounding_box(slice_seg_pair, resample_param)
+                if self.has_bounding_box:
+                    imed_obj_detect.adjust_transforms(self.prepro_transforms, slice_seg_pair)
 
                 if self.slice_filter_fn:
                     filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
@@ -390,10 +385,6 @@ class MRI2DSegmentationDataset(Dataset):
         :param index: slice index.
         """
         seg_pair_slice, roi_pair_slice = self.indexes[index]
-
-        if self.has_bounding_box:
-            # Appropriate cropping according to bounding box
-            imed_obj_detect.adjust_transforms(self.transform.transform, seg_pair_slice)
 
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
@@ -568,7 +559,6 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         for metadata in metadata_input:
             metadata['coord'] = [coord["x_min"], coord["x_max"], coord["y_min"], coord["y_max"], coord["z_min"],
                                  coord["z_max"]]
-            metadata['index_shape'] = stack_input.shape[1:]
 
         subvolumes = {
             'input': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
