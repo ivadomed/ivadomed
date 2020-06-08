@@ -68,6 +68,7 @@ def test_image_orientation():
                                              slice_axis=slice_axis,
                                              transform=train_transform,
                                              multichannel=False)
+                ds.load_filenames()
             else:
                 ds = imed_loader.Bids3DDataset(PATH_BIDS,
                                                subject_lst=train_lst,

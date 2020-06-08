@@ -5,9 +5,9 @@
     "debugging": true,
     "loader_parameters": {
         "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
-        "target_suffix": ["_seg-tumor", "_edema"],
+        "target_suffix": ["_seg-tumor"],
         "roi_params": {
-            "suffix": null,
+            "suffix": "_seg-tumor",
             "slice_filter_roi": null
         },
         "contrast_params": {
@@ -16,7 +16,7 @@
             "balance": {}
         },
         "slice_filter_params": {
-            "filter_empty_mask": true,
+            "filter_empty_mask": false,
             "filter_empty_input": true
         },
         "slice_axis": "sagittal",
@@ -31,13 +31,12 @@
         "test_fraction": 0.2
     },
     "training_parameters": {
-        "batch_size": 1,
+        "batch_size": 2,
         "loss": {
-            "name": "MultiClassDiceLoss",
-            "classes_of_interest": null
+            "name": "DiceLoss"
         },
         "training_time": {
-            "num_epochs": 100,
+            "num_epochs": 10,
             "early_stopping_patience": 50,
             "early_stopping_epsilon": 0.001
         },
@@ -87,10 +86,12 @@
         {
             "wspace": 1,
             "hspace": 1,
-            "dspace": 2
+            "dspace": 2,
+            "preprocessing": true
         },
         "CenterCrop": {
-            "size": [512, 256, 16]
+            "size": [512, 256, 16],
+            "preprocessing": true
         },
         "RandomTranslation": {
             "translate": [0.03, 0.03],
