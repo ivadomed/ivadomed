@@ -126,7 +126,7 @@ Here are defined the tailored model and the parameters that are specific to it (
 Uncertainty computation is performed if `n_it>0` and at least `epistemic` or `aleatoric` is `True`.
 - `epistemic`: Bool.
 - `aleatoric`: Bool.
-- `n_it`: int, number of Monte Carlo iterations.
+- `n_it`: Integer. Number of Monte Carlo iterations. Set to 0 for no uncertainty computation.
 
 ## Transformations
 Indicate the transformation in the same order you would like them to be applied to your samples. For each transformation, please indicate the parameters as well as the following two optional entries:
