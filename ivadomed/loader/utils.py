@@ -227,7 +227,7 @@ class SampleMetadata(object):
 
     def _update(self, ref, list_keys):
         for k in list_keys:
-            if k not in self.metadata.keys() and k in ref.metadata.keys():
+            if (k not in self.metadata.keys() or not bool(self.metadata[k])) and k in ref.metadata.keys():
                 self.metadata[k] = ref.metadata[k]
 
     def keys(self):
