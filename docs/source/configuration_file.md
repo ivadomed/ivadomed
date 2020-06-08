@@ -20,11 +20,11 @@ Bool. Extended verbosity and intermediate outputs.
 String. Path of the BIDS folder.
 
 #### target_suffix
-Suffix list of the derivative file containing the ground-truth of interest (e.g. [`"_seg-manual"`, `"_lesion-manual"`]). If the list has a length greater than 1, then a multi-class model will be trained.
+List. Suffix list of the derivative file containing the ground-truth of interest (e.g. [`"_seg-manual"`, `"_lesion-manual"`]). The length of this list controls the number of output channels of the model (i.e. `out_channel`). If the list has a length greater than 1, then a multi-class model will be trained.
 
 #### contrasts
-- `train_validation`: list of image contrasts (e.g. `T1w`, `T2w`) loaded for the training and validation. If `multichannel`, then this list represent the different channels of the input tensors. Otherwise, the contrasts are mixed and the model has only one input channel.
-- `test`: list of image contrasts (e.g. `T1w`, `T2w`) loaded in the testing dataset. Same comment than for `train_validation` regarding `multichannel`.
+- `train_validation`: List. List of image contrasts (e.g. `T1w`, `T2w`) loaded for the training and validation. If `multichannel` is `true`, this list represents the different channels of the input tensors (i.e. its length equals model's `in_channel`). Otherwise, the contrasts are mixed and the model has only one input channel (i.e. model's `in_channel=1`).
+- `test`: List. List of image contrasts (e.g. `T1w`, `T2w`) loaded in the testing dataset. Same comment than for `train_validation` regarding `multichannel`.
 - `balance`: Dict. Enables to weight the importance of specific channels (or contrasts) in the dataset: e.g. `{"T1w": 0.1}` means that only 10% of the available `T1w` images will be included into the training/validation/test set. Please set `multichannel` to `false` if you are using this parameter.
 
 #### multichannel
@@ -104,9 +104,6 @@ Define the default model (`Unet`) and mandatory parameters that are common to al
 - `dropout_rate`: Float (e.g. 0.4).
 - `batch_norm_momentum`: Float (e.g. 0.1).
 - `depth`: Strictly positive integer. Number of down-sampling operations.
-Note:
-- `in_channel` is automatically defined with `multichannel` and `contrast/training_validation`.
-- `out_channel` is automatically defined with `target_suffix`.
 
 ### Tailored model (optional)
 Here are defined the tailored model and the parameters that are specific to it (ie not defined in the default model). See examples:
