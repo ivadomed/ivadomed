@@ -99,6 +99,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     preds_npy_list, gt_npy_list = [], []
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     # LOOP ACROSS DATASET
+
     for i, batch in enumerate(tqdm(test_loader, desc="Inference - Iteration " + str(i_monteCarlo))):
         with torch.no_grad():
             # GET SAMPLES
@@ -197,22 +198,27 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     fname_tmp = fname_ref
 
             else:
-                h_min, h_max, w_min, w_max, d_min, d_max = batch['input_metadata'][0][0]['coord']
-                num_pred = preds_cpu.shape[0]
-                if not any([h_min, w_min, d_min]):
-                    h, w, d = batch['input_metadata'][0][0]['index_shape']
-                    volume = np.zeros((num_pred, h, w, d))
+                h_min, h_max, w_min, w_max, d_min, d_max = batch['input_metadata'][smp_idx][0]['coord']
+                num_pred = preds_cpu[smp_idx].shape[0]
+                last_sample_bool = h_max == h and w_max == w and d_max == d
+                first_sample_bool = not any([h_min, w_min, d_min])
+                if first_sample_bool:
+                    h, w, d = batch['input_metadata'][smp_idx][0]['index_shape']
+                    volume = torch.zeros((num_pred, h, w, d))
+                    weight_matrix = torch.zeros((num_pred, h, w, d))
 
                 # Average predictions
-                volume[:, h_min:h_max, w_min:w_max, d_min:d_max] = (preds_cpu + volume[:, h_min:h_max, w_min:w_max,
-                                                                                d_min:d_max]) / 2
+                volume[:, h_min:h_max, w_min:w_max, d_min:d_max] += preds_cpu[smp_idx]
+                weight_matrix[:, h_min:h_max, w_min:w_max, d_min:d_max] += 1
+                if last_sample_bool:
+                    volume /= weight_matrix
 
-                pred_undo, metadata = testing_params["undo_transforms"](torch.tensor(volume),
+                pred_undo, metadata = testing_params["undo_transforms"](volume,
                                                                         batch['gt_metadata'][smp_idx],
                                                                         data_type='gt')
                 fname_ref = metadata[0]['gt_filenames'][0]
                 # Indicator of last batch
-                if h_max == h and w_max == w and d_max == d:
+                if last_sample_bool:
                     pred_undo = np.array(pred_undo)
                     fname_pred = os.path.join(ofolder, fname_ref.split('/')[-1])
                     fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
