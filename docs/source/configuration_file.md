@@ -147,7 +147,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
 - `DilateGT` (parameters: `dilation_factor`) Float. Controls the number of iterations of ground-truth dilation depending on the size of each individual lesion, data augmentation of the training set. Use `0` to disable.
 - `HistogramClipping` (parameters: `min_percentile`, `max_percentile`)
 - `Clage` (parameters: `clip_limit`, `kernel_size`)
-- ` RandomReverse`
+- `RandomReverse`
 
 ## Examples
 Examples of configuration files: [here](../../ivadomed/config).
