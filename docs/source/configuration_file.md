@@ -117,7 +117,7 @@ Here are defined the tailored model and the parameters that are specific to it (
 - `UNet3D`
     - `length_3D`: (Integer, Integer, Integer). Size of the subvolumes or volume used for unet 3D model: (depth, width, height).
     - `padding_3D`: size of the overlapping per subvolume and dimensions (e.i `padding:0`). Note: In order to be used, each dimension of an input image needs to be a multiple of length plus 2 * padding and a multiple of 16. To change input image size use the following transformation `CenterCrop3D`. 
-    - `attention_unet`: indicates if attention gates are used in the Unet's decoder.
+    - `attention_unet`: Bool. Use attention gates in the Unet's decoder.
 
 ## Testing parameters
 - `binarize_prediction`: Indicates if predictions from the model are soft (prediction from 0 to 1) or binarized (either 1 or 0 according to the threshold 0.5).
