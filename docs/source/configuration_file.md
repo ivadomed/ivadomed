@@ -102,7 +102,7 @@ If the selected architecture is listed in the [loader.py](../../ivadomed/loader/
 Define the default model (`Unet`) and mandatory parameters that are common to all available architectures (listed in the [Models](models.rst) section). If a tailored model is defined (see next section), the default parameters are merged with the parameters that are specific to the tailored model.
 - `name`: `Unet` (default)
 - `dropout_rate`: float (e.g. 0.4).
-- `batch_norm_momentum`: float (e.g. 0.1).
+- `batch_norm_momentum`: Float (e.g. 0.1).
 - `depth`: Strictly positive integer. Number of down-sampling operations.
 Note:
 - `in_channel` is automatically defined with `multichannel` and `contrast/training_validation`.
