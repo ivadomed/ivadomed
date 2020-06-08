@@ -53,7 +53,7 @@ String. File name of the log (joblib) that contains the list of training/validat
 Seed used by the random number generator to split the dataset between training/validation/testing.
 
 #### center_test
-List of strings. List of centers to only include in the testing dataset. If used, please include a column `institution_id` in your `bids_dataset/participants.tsv`.
+List of strings. Each string corresponds to an institution/center to only include in the testing dataset (not validation). If used, the file `bids_dataset/participants.tsv` needs to contain a column `institution_id`, which associates a subject with an institution/center.
 
 #### method
 Choice between `"per_patient"` (i.e. shuffle all subjects then splits, using the `participant_id` column from `my_bids_dataset/participants.tsv`) or `"per_center"` (split subjects according to their acquisition centers, using the `institution_id` column from `my_bids_dataset/participants.tsv`).
