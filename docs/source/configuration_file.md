@@ -114,10 +114,10 @@ Dict. Define the default model (`Unet`) and mandatory parameters that are common
 - `missing_probability`: Float between 0 and 1. Initial probability of missing image contrasts as model's input (e.g. 0.25 results in a quarter of the image contrasts, i.e. channels, that will not been sent to the model for training).
 - `missing_probability_growth`: Float. Controls missing probability growth at each epoch: at each epoch, the `missing_probability` is modified with the exponent `missing_probability_growth`.
 
-- `UNet3D`
-    - `length_3D`: (Integer, Integer, Integer). Size of the subvolumes or volume used for unet 3D model: (depth, width, height).
-    - `padding_3D`: size of the overlapping per subvolume and dimensions (e.i `padding:0`). Note: In order to be used, each dimension of an input image needs to be a multiple of length plus 2 * padding and a multiple of 16. To change input image size use the following transformation `CenterCrop3D`. 
-    - `attention_unet`: Bool. Use attention gates in the Unet's decoder.
+### UNet3D (Optional)
+- `length_3D`: (Integer, Integer, Integer). Size of the 3D patches used as model's input tensors, along the first, second and third dimension.
+- `padding_3D`: size of the overlapping per subvolume and dimensions (e.i `padding:0`). Note: In order to be used, each dimension of an input image needs to be a multiple of length plus 2 * padding and a multiple of 16. To change input image size use the following transformation `CenterCrop3D`. 
+- `attention_unet`: Bool. Use attention gates in the Unet's decoder.
 
 ## Testing parameters
 - `binarize_prediction`: Bool. Binarize output predictions using a threshold of 0.5. If `false`, output predictions are float between 0 and 1. 
