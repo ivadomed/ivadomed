@@ -50,7 +50,7 @@ Dict. of parameters about the region of interest
 Filename of a joblib file containing the list of training/validation/testing subjects. This file can later be used to re-train a model using the same data splitting scheme.
 
 #### random_seed
-Seed used by the random number generator to split the dataset between training/validation/testing.
+Int. Seed used by the random number generator to split the dataset between training/validation/testing. The use of the same seed ensure the same split between the sub-datasets, which is useful to reproduce results.
 
 #### center_test
 List of strings. List of centers to only include in the testing dataset. If used, please include a column `institution_id` in your `bids_dataset/participants.tsv`.
