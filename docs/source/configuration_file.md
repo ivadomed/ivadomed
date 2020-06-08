@@ -144,7 +144,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
 - `ElasticTransform` (parameters: `alpha_range`, `sigma_range`, `p`)
 - `Resample` (parameters: `wspace`, `hspace`, `dspace`)
 - `AdditionGaussianNoise` (parameters: `mean`, `std`)
-- `DilateGT` (parameters: `dilation_factor`) float, controls the number of iterations of ground-truth dilation depending on the size of each individual lesion, data augmentation of the training set. Use `0` to disable.
+- `DilateGT` (parameters: `dilation_factor`) Float. Controls the number of iterations of ground-truth dilation depending on the size of each individual lesion, data augmentation of the training set. Use `0` to disable.
 - `HistogramClipping` (parameters: `min_percentile`, `max_percentile`)
 - `Clage` (parameters: `clip_limit`, `kernel_size`)
 - ` RandomReverse`
