@@ -70,7 +70,7 @@ Float. Between `0` and `1` representing the fraction of the dataset used as test
 Strictly positive integer.
 
 #### loss
-- `name`: Name of the loss function: Choice among the classes that are available [here](../../ivadomed/losses.py).
+- `name`: Name of the loss function: Choice among the classes that are available [here](https://ivadomed.org/en/latest/api_ref.html#ivadomed-losses).
 - Other parameters that could be needed in the Loss function definition: see attributes of the Loss function of interest (e.g. `"gamma": 0.5` for `FocalLoss`).
 
 #### training_time
