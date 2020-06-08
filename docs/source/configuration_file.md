@@ -99,18 +99,21 @@ Architectures for both segmentation and classification are available and describ
 If the selected architecture is listed in the [loader.py](../../ivadomed/loader/loader.py#L14) file, a classification (not segmentation) task is run. In the case of a classification task, the ground truth will correspond to a single label value extracted from `target`, instead being an array (the latter being used for the segmentation task).
 
 ### default_model (Mandatory)
-Define the default model (`Unet`) and mandatory parameters that are common to all available architectures (listed in the [Models](models.rst) section). If a tailored model is defined (see next section), the default parameters are merged with the parameters that are specific to the tailored model.
+Dict. Define the default model (`Unet`) and mandatory parameters that are common to all available architectures (listed in the [Models](models.rst) section). If a tailored model is defined (see next section), the default parameters are merged with the parameters that are specific to the tailored model.
 - `name`: `Unet` (default)
 - `dropout_rate`: Float (e.g. 0.4).
 - `batch_norm_momentum`: Float (e.g. 0.1).
 - `depth`: Strictly positive integer. Number of down-sampling operations.
 
-### Tailored model (optional)
-Here are defined the tailored model and the parameters that are specific to it (ie not defined in the default model). See examples:
-- `FiLMedUnet`
-    - `metadata`: `{'without', 'mri_params', 'contrast'}`. `mri_params`: Vectors of [FlipAngle, EchoTime, RepetitionTime, Manufacturer] are input to the FiLM generator. `contrast`: Image contrasts (according to `config/contrast_dct.json`) are input to the FiLM generator.
-- `HeMISUnet`
-    - `missing_contrast`: Bool.
+### FiLMedUnet (Optional)
+- `applied`: Bool. Set to `true` to use this model.
+- `metadata`: String. Choice between `"mri_params"` or `"contrast"`. `"mri_params"`: Vectors of `[FlipAngle, EchoTime, RepetitionTime, Manufacturer]` (defined in the json of each image) are input to the FiLM generator. `"contrast"`: Image contrasts (according to `config/contrast_dct.json`) are input to the FiLM generator.
+
+### HeMISUnet (Optional)
+- `applied`: Bool. Set to `true` to use this model.
+- `missing_probability`: Float between 0 and 1. Initial probability of missing image contrasts as model's input (e.g. 0.25 results in a quarter of the image contrasts, i.e. channels, that will not been sent to the model for training).
+- `missing_probability_growth`: Float. Controls missing probability growth at each epoch: at each epoch, the `missing_probability` is modified with the exponent `missing_probability_growth`.
+
 - `UNet3D`
     - `length_3D`: (Integer, Integer, Integer). Size of the subvolumes or volume used for unet 3D model: (depth, width, height).
     - `padding_3D`: size of the overlapping per subvolume and dimensions (e.i `padding:0`). Note: In order to be used, each dimension of an input image needs to be a multiple of length plus 2 * padding and a multiple of 16. To change input image size use the following transformation `CenterCrop3D`. 
