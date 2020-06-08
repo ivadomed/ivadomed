@@ -120,7 +120,7 @@ Here are defined the tailored model and the parameters that are specific to it (
     - `attention_unet`: Bool. Use attention gates in the Unet's decoder.
 
 ## Testing parameters
-- `binarize_prediction`: Indicates if predictions from the model are soft (prediction from 0 to 1) or binarized (either 1 or 0 according to the threshold 0.5).
+- `binarize_prediction`: Bool. Binarize output predictions using a threshold of 0.5. If 'false', output predictions are float between 0 and 1. 
 
 #### uncertainty
 Uncertainty computation is performed if `n_it>0` and at least `epistemic` or `aleatoric` is `True`.
