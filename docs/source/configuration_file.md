@@ -50,7 +50,7 @@ Dict. of parameters about the region of interest
 String. File name of the log (joblib) that contains the list of training/validation/testing subjects. This file can later be used to re-train a model using the same data splitting scheme.
 
 #### random_seed
-Int. Seed used by the random number generator to split the dataset between training/validation/testing. The use of the same seed ensure the same split between the sub-datasets, which is useful to reproduce results.
+Int. Seed used by the random number generator to split the dataset between training/validation/testing. The use of the same seed ensures the same split between the sub-datasets, which is useful to reproduce results.
 
 #### method
 `{"per_patient", "per_center"}`. `"per_patient"`: all subjects are shuffled, then split between train/validation/test according to `"train_fraction"` and `"test_fraction"`, regardless their institution. `"per_center"`: all subjects are split so as not to mix institutions between the train/validation/test sets according to `"train_fraction"` and `"center_test"`. The latter option enables to ensure the model is working across domains (institutions). Note: the institution information is contained within the `institution_id` column in the `participants.tsv` file.
