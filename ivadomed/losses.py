@@ -297,3 +297,20 @@ class AdapWingLoss(nn.Module):
         mean_loss = sum_loss  # / all_pixel
 
         return mean_loss
+
+
+class Loss_Combination(nn.module):
+    """
+    Loss that sums different other implemented loss
+    """
+
+    def __init__(self, losses_list):
+        super(Loss_Combination, self).__init__()
+        self.losses_list = losses_list
+
+    def forward(self, losses_list, input, target):
+        output = []
+        for loss in losses_list:
+            output.append(loss()(input.target))
+
+        return torch.sum(output)
