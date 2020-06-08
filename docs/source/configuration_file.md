@@ -112,7 +112,7 @@ Note:
 Here are defined the tailored model and the parameters that are specific to it (ie not defined in the default model). See examples:
 - `FiLMedUnet`
     - `metadata`: `{'without', 'mri_params', 'contrast'}`. `mri_params`: Vectors of [FlipAngle, EchoTime, RepetitionTime, Manufacturer] are input to the FiLM generator. `contrast`: Image contrasts (according to `config/contrast_dct.json`) are input to the FiLM generator.
-- [HeMISUnet](../../ivadomed/config/config_spineGeHemis.json#L64)
+- `HeMISUnet`
     - `missing_contrast`: Bool.
 - [UNet3D](../../ivadomed/config/config_tumorSeg.json#L65)
     - `length_3D`: tuple indicating the size of the subvolumes or volume used for unet 3D model (depth, width, height).
