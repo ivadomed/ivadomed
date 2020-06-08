@@ -143,6 +143,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         for smp_idx in range(len(preds_cpu)):
             if not model_params["name"].endswith('3D'):
                 last_sample_bool = (last_batch_bool and smp_idx == len(batch) - 1)
+                if "bounding_box" in batch['input_metadata'][0][0]:
+                    imed_obj_detect.adjust_undo_transforms(testing_params["undo_transforms"].transforms, batch)
                 # undo transformations
                 preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
                                                                                  batch['gt_metadata'][smp_idx],
@@ -153,34 +155,33 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 # TODO: gt_filenames should not be a list
                 fname_ref = metadata_idx[0]['gt_filenames'][0]
 
-                if not model_params["name"].endswith('3D'):
-                    # NEW COMPLETE VOLUME
-                    if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool):
-                        # save the completely processed file as a nifti file
-                        fname_pred = os.path.join(ofolder, fname_tmp.split('/')[-1])
-                        fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
-                        # If Uncertainty running, then we save each simulation result
-                        if testing_params['uncertainty']['applied']:
-                            fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
+                # NEW COMPLETE VOLUME
+                if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool):
+                    # save the completely processed file as a nifti file
+                    fname_pred = os.path.join(ofolder, fname_tmp.split('/')[-1])
+                    fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
+                    # If Uncertainty running, then we save each simulation result
+                    if testing_params['uncertainty']['applied']:
+                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
 
-                        output_nii = imed_utils.pred_to_nib(data_lst=pred_tmp_lst,
-                                                            z_lst=z_tmp_lst,
-                                                            fname_ref=fname_tmp,
-                                                            fname_out=fname_pred,
-                                                            slice_axis=imed_utils.AXIS_DCT[testing_params['slice_axis']],
-                                                            kernel_dim='2d',
-                                                            bin_thr=0.5 if testing_params["binarize_prediction"] else -1)
+                    output_nii = imed_utils.pred_to_nib(data_lst=pred_tmp_lst,
+                                                        z_lst=z_tmp_lst,
+                                                        fname_ref=fname_tmp,
+                                                        fname_out=fname_pred,
+                                                        slice_axis=imed_utils.AXIS_DCT[testing_params['slice_axis']],
+                                                        kernel_dim='2d',
+                                                        bin_thr=0.5 if testing_params["binarize_prediction"] else -1)
 
-                        output_nii_shape = output_nii.get_fdata().shape
-                        if len(output_nii_shape) == 4 and output_nii_shape[0] > 1:
-                            imed_utils.save_color_labels(output_nii.get_fdata(),
-                                                         testing_params["binarize_prediction"],
-                                                         fname_tmp,
-                                                         fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                         imed_utils.AXIS_DCT[testing_params['slice_axis']])
+                    output_nii_shape = output_nii.get_fdata().shape
+                    if len(output_nii_shape) == 4 and output_nii_shape[0] > 1:
+                        imed_utils.save_color_labels(output_nii.get_fdata(),
+                                                     testing_params["binarize_prediction"],
+                                                     fname_tmp,
+                                                     fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                                                     imed_utils.AXIS_DCT[testing_params['slice_axis']])
 
-                        # re-init pred_stack_lst
-                        pred_tmp_lst, z_tmp_lst = [], []
+                    # re-init pred_stack_lst
+                    pred_tmp_lst, z_tmp_lst = [], []
 
                     # add new sample to pred_tmp_lst, of size n_label X h X w ...
                     pred_tmp_lst.append(preds_idx_arr)
