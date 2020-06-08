@@ -294,20 +294,7 @@ class SegmentationPair(object):
 
 
 class MRI2DSegmentationDataset(Dataset):
-<<<<<<< HEAD
-    """This is a generic class for 2D (slice-wise) segmentation datasets.
-
-    :param filename_pairs: a list of tuples in the format (input filename list containing all contrasts,
-                           ground truth filename, ROI filename, metadata).
-    :param slice_axis: axis to make the slicing (default axial).
-    :param cache: if the data should be cached in memory or not.
-    :param transform: transformations to apply.
-    """
-
-    def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None):
-=======
     """This is a generic class for 2D (slice-wise) segmentation datasets."""
->>>>>>> c01ea104c85cf00f2783f92f3125c3b344bc9ff5
 
     def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None,
                  task="segmentation"):
