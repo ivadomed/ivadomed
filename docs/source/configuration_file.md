@@ -95,8 +95,8 @@ Float. Alpha parameter of the Beta distribution, see [original paper on the Mixu
 - `retrain_fraction`: Float between 0. and 1. Controls the fraction of the pre-trained model that will be fine-tuned. For instance, if set to 0.5, the second half of the model will be fine-tuned while the first layers will be frozen.
 
 ## Architecture
-Architectures for both segmentation and classification are available and described [here](models.rst).
-If the selected architecture is listed [here](../../ivadomed/loader/loader.py#L14), then a classification task is run, ie the ground-truth are labels extracted from `target`, instead of arrays for the segmentation task.
+Architectures for both segmentation and classification are available and described in the [Models](models.rst) section.
+If the selected architecture is listed in the [loader.py](../../ivadomed/loader/loader.py#L14) file, a classification (not segmentation) task is run. In the case of a classification task, the ground truth will correspond to a single label value extracted from `target`, instead being an array (the latter being used for the segmentation task).
 
 ### default_model (Mandatory)
 Define the default model (`Unet`) and mandatory parameters that are common to all available architectures (listed [here](models.rst)). If a tailored model is defined (see next section), then the default parameters are merged with the parameters that are specific to the tailored model.
