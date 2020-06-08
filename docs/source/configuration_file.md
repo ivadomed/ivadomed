@@ -116,7 +116,6 @@ Dict. Define the default model (`Unet`) and mandatory parameters that are common
 
 ### UNet3D (Optional)
 - `length_3D`: (Integer, Integer, Integer). Size of the 3D patches used as model's input tensors, along the first, second and third dimension.
-- `padding_3D`: size of the overlapping per subvolume and dimensions (e.i `padding:0`). Note: In order to be used, each dimension of an input image needs to be a multiple of length plus 2 * padding and a multiple of 16. To change input image size use the following transformation `CenterCrop3D`. 
 - `attention_unet`: Bool. Use attention gates in the Unet's decoder.
 
 ## Testing parameters
