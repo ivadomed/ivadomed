@@ -115,7 +115,7 @@ Here are defined the tailored model and the parameters that are specific to it (
 - `HeMISUnet`
     - `missing_contrast`: Bool.
 - `UNet3D`
-    - `length_3D`: tuple indicating the size of the subvolumes or volume used for unet 3D model (depth, width, height).
+    - `length_3D`: (Integer, Integer, Integer). Size of the subvolumes or volume used for unet 3D model: (depth, width, height).
     - `padding_3D`: size of the overlapping per subvolume and dimensions (e.i `padding:0`). Note: In order to be used, each dimension of an input image needs to be a multiple of length plus 2 * padding and a multiple of 16. To change input image size use the following transformation `CenterCrop3D`. 
     - `attention_unet`: indicates if attention gates are used in the Unet's decoder.
 
