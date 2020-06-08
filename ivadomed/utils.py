@@ -693,7 +693,7 @@ class SliceFilter(object):
         self.filter_classification = filter_classification
 
         if self.filter_classification:
-            self.classifier = torch.load(path_classifier)
+            self.classifier = torch.load(classifier_path)
 
     def __call__(self, sample):
         input_data, gt_data = sample['input'], sample['gt']
