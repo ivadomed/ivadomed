@@ -88,7 +88,7 @@ Strictly positive integer.
 Bool. Balance positive and negative labels in both the training and the validation datasets.
 
 #### mixup_alpha
-Float. Alpha parameter of the Beta distribution, see [original paper](https://arxiv.org/abs/1710.09412).
+Float. Alpha parameter of the Beta distribution, see [original paper on the Mixup technique](https://arxiv.org/abs/1710.09412).
 
 #### transfer_learning
 - `retrain_model`: Filename of the pretrained model (`path/to/pretrained-model`). If `null`, no transfer learning is performed and the network is trained from scratch.
