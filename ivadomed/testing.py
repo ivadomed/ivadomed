@@ -144,7 +144,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         # LOOP ACROSS SAMPLES
         for smp_idx in range(len(preds_cpu)):
             if "bounding_box" in batch['input_metadata'][0][0]:
-                imed_obj_detect.adjust_undo_transforms(testing_params["undo_transforms"].transforms, batch)
+                imed_obj_detect.adjust_undo_transforms(testing_params["undo_transforms"].transforms, batch, smp_idx)
 
             if not model_params["name"].endswith('3D'):
                 last_sample_bool = (last_batch_bool and smp_idx == len(batch) - 1)
@@ -173,7 +173,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         fname_out=fname_pred,
                                                         slice_axis=imed_utils.AXIS_DCT[testing_params['slice_axis']],
                                                         kernel_dim='2d',
-                                                        bin_thr=0.5 if testing_params["binarize_prediction"] else -1)
+                                                        bin_thr=0.9 if testing_params["binarize_prediction"] else -1)
                     preds_npy_list.append(output_nii.get_fdata())
                     gt_lst = []
                     for gt in metadata_idx[0]['gt_filenames']:
@@ -200,12 +200,14 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             else:
                 h_min, h_max, w_min, w_max, d_min, d_max = batch['input_metadata'][smp_idx][0]['coord']
                 num_pred = preds_cpu[smp_idx].shape[0]
-                last_sample_bool = h_max == h and w_max == w and d_max == d
+
                 first_sample_bool = not any([h_min, w_min, d_min])
                 if first_sample_bool:
                     h, w, d = batch['input_metadata'][smp_idx][0]['index_shape']
                     volume = torch.zeros((num_pred, h, w, d))
                     weight_matrix = torch.zeros((num_pred, h, w, d))
+
+                last_sample_bool = h_max == h and w_max == w and d_max == d
 
                 # Average predictions
                 volume[:, h_min:h_max, w_min:w_max, d_min:d_max] += preds_cpu[smp_idx]

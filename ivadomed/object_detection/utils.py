@@ -127,12 +127,12 @@ def adjust_transforms(transforms, seg_pair, length=None, stride=None):
         metadata['index_shape'] = size
 
 
-def adjust_undo_transforms(transforms, seg_pair):
+def adjust_undo_transforms(transforms, seg_pair, index=0):
     for img_type in transforms.transform:
         for idx, transfo in enumerate(transforms.transform[img_type].transforms):
             if "BoundingBoxCrop" in str(type(transfo)):
                 transforms.transform[img_type].transforms.pop(idx)
-                size = list(seg_pair['input_metadata'][0][0]['index_shape'])
+                size = list(seg_pair['input_metadata'][index][0]['index_shape'])
                 transform_obj = imed_transforms.BoundingBoxCrop(size=size)
                 transforms.transform[img_type].transforms.insert(idx, transform_obj)
 
