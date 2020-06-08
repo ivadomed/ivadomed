@@ -9,6 +9,7 @@ import pandas as pd
 from bids_neuropoly import bids
 from tqdm import tqdm
 
+from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
 
@@ -178,7 +179,11 @@ class Bids_to_hdf5:
 
         print("Starting conversion")
         # Getting all patients id
-        self.transform = transform
+        if isinstance(transform, list):
+            self.prepro_transforms, self.transform = transform
+        else:
+            self.transform = transform
+            self.prepro_transforms = None
         self.bids_ds = bids.BIDS(root_dir)
         bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
 
@@ -206,6 +211,7 @@ class Bids_to_hdf5:
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
 
+        self.has_bounding_box = True
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
                                                                 self.bids_ds.get_subjects(),
                                                                 slice_axis,
@@ -298,20 +304,13 @@ class Bids_to_hdf5:
             gt_volume = []
             roi_volume = []
 
-            bounding_box = 'bounding_box' in seg_pair.get_pair_slice(0)['input_metadata'][0]
-            if bounding_box:
-                resample = False
-                for idx, transfo in enumerate(self.transform.transform["im"].transforms):
-                    if "Resample" in str(type(transfo)):
-                        resample = True
-                        resample_param = (transfo.hspace, transfo.wspace, transfo.dspace)
-
             for idx_pair_slice in range(input_data_shape[-1]):
 
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
 
-                if bounding_box and resample:
-                    imed_obj_detect.resample_bounding_box(slice_seg_pair, resample_param)
+                self.has_bounding_box = imed_obj_detect.verify_metadata(slice_seg_pair, self.has_bounding_box)
+                if self.has_bounding_box:
+                    imed_obj_detect.adjust_transforms(self.prepro_transforms, slice_seg_pair)
 
                 # keeping idx of slices with gt
                 if self.slice_filter_fn:
@@ -320,6 +319,9 @@ class Bids_to_hdf5:
                     useful_slices.append(idx_pair_slice)
 
                 roi_pair_slice = roi_pair.get_pair_slice(idx_pair_slice)
+                slice_seg_pair, roi_pair_slice = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                                                                                                slice_seg_pair,
+                                                                                                roi_pair_slice)
 
                 input_volumes.append(slice_seg_pair["input"][0])
 
@@ -460,7 +462,11 @@ class HDF5Dataset:
         self.roi_lst = copy.deepcopy(model_params["roi_lst"] if "roi_lst" in model_params else None)
         self.dim = dim
         self.filter_slices = slice_filter_fn
-        self.transform = transform
+        if isinstance(transform, list):
+            self.prepro_transforms, self.transform = transform
+        else:
+            self.transform = transform
+            self.prepro_transforms = None
         metadata_choice = False if metadata_choice is None else metadata_choice
         # Getting HDS5 dataset file
         if not os.path.exists(model_params["hdf5_path"]):
@@ -475,7 +481,7 @@ class HDF5Dataset:
                                      contrast_balance=contrast_params["balance"],
                                      slice_axis=slice_axis,
                                      slice_filter_fn=slice_filter_fn,
-                                     transform=self.transform,
+                                     transform=[self.prepro_transforms, self.transform],
                                      object_detection_params=object_detection_params)
             self.hdf5_file = hdf5_file.hdf5_file
         else:
@@ -569,13 +575,13 @@ class HDF5Dataset:
                                                         .format(line['Subjects'], ct)].attrs.items()})
             metadata['slice_index'] = line["Slices"]
             metadata['missing_mod'] = missing_modalities
+            metadata['crop_params'] = {}
             input_metadata.append(metadata)
-
 
         # GT
         gt_img = []
         gt_metadata = []
-        for gt in self.gt_lst:
+        for idx, gt in enumerate(self.gt_lst):
             if self.status['gt/' + gt]:
                 gt_data = line['gt/' + gt]
             else:
@@ -585,6 +591,7 @@ class HDF5Dataset:
             gt_img.append(gt_data)
             gt_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
                                                                  self.hdf5_file[line['gt/' + gt]].attrs.items()}))
+            gt_metadata[idx]['crop_params'] = {}
 
         # ROI
         roi_img = []
@@ -601,10 +608,7 @@ class HDF5Dataset:
             roi_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
                                                                   self.hdf5_file[
                                                                       line['roi/' + self.roi_lst[0]]].attrs.items()}))
-
-        if "bounding_box" in metadata:
-            # Appropriate cropping according to bounding box
-            imed_obj_detect.adjust_transforms(self.transform.transform, {'input_metadata': [metadata]})
+            roi_metadata[0]['crop_params'] = {}
 
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
