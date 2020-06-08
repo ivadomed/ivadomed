@@ -56,7 +56,7 @@ Seed used by the random number generator to split the dataset between training/v
 List of strings. Each string corresponds to an institution/center to only include in the testing dataset (not validation). If used, the file `bids_dataset/participants.tsv` needs to contain a column `institution_id`, which associates a subject with an institution/center.
 
 #### method
-Choice between `"per_patient"` (i.e. shuffle all subjects then splits, using the `participant_id` column from `my_bids_dataset/participants.tsv`) or `"per_center"` (split subjects according to their acquisition centers, using the `institution_id` column from `my_bids_dataset/participants.tsv`).
+`{'per_patient', 'per_center'}`. `"per_patient"`: all subjects are shuffled, then split between train/validation/test, regardless their institution. `"per_center"`: all subjects are split so as not to mix institutions between the train, validation and test sets. The latter option enables to ensure the model is working across domains (institutions). Note: the institution information is contained within the `institution_id` column in the `participants.tsv` file.
 
 #### train_fraction
 Float. Between `0` and `1` representing the fraction of the dataset used as training set.
