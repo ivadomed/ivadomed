@@ -52,17 +52,17 @@ String. File name of the log (joblib) that contains the list of training/validat
 #### random_seed
 Int. Seed used by the random number generator to split the dataset between training/validation/testing. The use of the same seed ensure the same split between the sub-datasets, which is useful to reproduce results.
 
-#### center_test
-List of strings. Each string corresponds to an institution/center to only include in the testing dataset (not validation). If used, the file `bids_dataset/participants.tsv` needs to contain a column `institution_id`, which associates a subject with an institution/center.
-
 #### method
-`{'per_patient', 'per_center'}`. `"per_patient"`: all subjects are shuffled, then split between train/validation/test, regardless their institution. `"per_center"`: all subjects are split so as not to mix institutions between the train, validation and test sets. The latter option enables to ensure the model is working across domains (institutions). Note: the institution information is contained within the `institution_id` column in the `participants.tsv` file.
+`{"per_patient", "per_center"}`. `"per_patient"`: all subjects are shuffled, then split between train/validation/test according to `"train_fraction"` and `"test_fraction"`, regardless their institution. `"per_center"`: all subjects are split so as not to mix institutions between the train/validation/test sets according to `"train_fraction"` and `"center_test"`. The latter option enables to ensure the model is working across domains (institutions). Note: the institution information is contained within the `institution_id` column in the `participants.tsv` file.
 
 #### train_fraction
 Float. Between `0` and `1` representing the fraction of the dataset used as training set.
 
 #### test_fraction
 Float. Between `0` and `1` representing the fraction of the dataset used as test set. This parameter is only used if the `method` is `"per_patient"`.
+
+#### center_test
+List of strings. Each string corresponds to an institution/center to only include in the testing dataset (not validation). This parameter is only used if the `method` is `"per_center"`. If used, the file `bids_dataset/participants.tsv` needs to contain a column `institution_id`, which associates a subject with an institution/center.
 
 ## Training parameters
 
