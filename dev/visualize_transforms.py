@@ -9,6 +9,8 @@
 ##############################################################
 
 import argparse
+import nibabel as nib
+import numpy as np
 
 
 def get_parser():
@@ -28,6 +30,12 @@ def run_visualization(args):
         None
     """
     fname_input = args.i
+    # Load image
+    input_img = nib.load(fname_input)
+    # Reorient as canonical
+    input_img = nib.as_closest_canonical(input_img)
+    # Get input data
+    input_data = input_img.get_fdata(dtype=np.float32)
 
 
 if __name__ == '__main__':
