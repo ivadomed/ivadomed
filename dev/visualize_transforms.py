@@ -15,7 +15,7 @@ import random
 import json
 
 from ivadomed.loader import utils as imed_loader_utils
-
+from ivadomed import transforms as imed_transforms
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -58,6 +58,9 @@ def run_visualization(args):
     indexes = random.sample(range(0, input_data.shape[2]), n_slices)
     # Get slices list
     list_data = [np.expand_dims(input_data[:, :, i], axis=0) for i in indexes]
+
+    # Compose transforms
+    transforms = imed_transforms.Compose(context["transformation"])
 
 
 
