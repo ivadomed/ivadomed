@@ -4,10 +4,11 @@
 # This script apply a series of transforms to 2D slices extracted from an input image,
 #   and save as png the resulting sample after each transform.
 #
-# Usage: python dev/visualize_transforms.py -i <input_filename> -c <fname_config> -n <int>
+# Usage: python dev/visualize_transforms.py -i <input_filename> -c <fname_config> -n <int> -o <output_folder>
 #
 ##############################################################
 
+import os
 import argparse
 import nibabel as nib
 import numpy as np
@@ -28,6 +29,8 @@ def get_parser():
                         help="Config filename.")
     parser.add_argument("-n", "--number", required=False, default=1,
                         help="Number of random slices to visualize.")
+    parser.add_argument("-o", "--ofolder", required=False, default="./",
+                        help="Output folder.")
     return parser
 
 
@@ -45,6 +48,9 @@ def run_visualization(args):
     n_slices = int(args.number)
     with open(args.config, "r") as fhandle:
         context = json.load(fhandle)
+    folder_output = args.ofolder
+    if not os.path.isdir(folder_output):
+        os.makedirs(folder_output)
 
     # Load image
     input_img = nib.load(fname_input)
@@ -67,7 +73,11 @@ def run_visualization(args):
 
     # Compose transforms
     dict_transforms = {}
+    stg_transforms = ""
     for transform_name in training_transforms:
+        # Update stg_transforms
+        stg_transforms += "_" + transform_name
+
         # Add new transform to Compose
         dict_transforms.update(training_transforms[transform_name])
         composed_transforms = imed_transforms.Compose(training_transforms)
@@ -80,7 +90,8 @@ def run_visualization(args):
 
         # Plot before / after transformation
         for i, slice_idx in enumerate(indexes):
-            plot_transformed_sample(list_data[i][0, ], stack_im[i, 0, ])
+            fname_out = os.path.join(folder_output, stg_transforms+"_"+str(slice_idx)+".png")
+            plot_transformed_sample(list_data[i][0, ], stack_im[i, 0, ], fname_out=fname_out)
 
 
 
