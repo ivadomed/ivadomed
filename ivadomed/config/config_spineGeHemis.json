@@ -7,7 +7,7 @@
         "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
         "target_suffix": ["_seg-tumor"],
         "roi_params": {
-            "suffix": null,
+            "suffix": "",
             "slice_filter_roi": null
         },
         "contrast_params": {
@@ -23,7 +23,7 @@
         "multichannel": false
     },
     "split_dataset": {
-        "fname_split": null,
+        "fname_split": "",
         "random_seed": 6,
         "center_test": [],
         "method": "per_patient",
@@ -51,7 +51,7 @@
         "balance_samples": false,
         "mixup_alpha": null,
         "transfer_learning": {
-            "retrain_model": null,
+            "retrain_model": "",
             "retrain_fraction": 1.0
         }
     },
