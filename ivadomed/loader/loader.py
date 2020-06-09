@@ -312,14 +312,14 @@ class MRI2DSegmentationDataset(Dataset):
     def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None,
                  task="segmentation"):
         """
-        Args
-            filename_pairs (list): a list of tuples in the format (input filename list containing all modalities,ground
+        Args:
+            filename_pairs (list): a list of tuples in the format (input filename list containing all modalities,ground \
                 truth filename, ROI filename, metadata).
             slice_axis (int): axis to make the slicing (default axial).
             cache (bool): if the data should be cached in memory or not.
             transform (torchvision.Compose): transformations to apply.
             slice_filter_fn ():
-            task (string): choice between segmentation or classification. If classification: GT is discrete values.
+            task (string): choice between segmentation or classification. If classification: GT is discrete values, \
                 If segmentation: GT is binary mask.
         """
         self.indexes = []
