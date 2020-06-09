@@ -4,7 +4,7 @@
 # This script apply a series of transforms to 2D slices extracted from an input image,
 #   and save as png the resulting sample after each transform.
 #
-# Usage: python dev/visualize_transforms.py -i <input_filename> -a <int> -c <fname_config> -n <int>
+# Usage: python dev/visualize_transforms.py -i <input_filename> -c <fname_config> -n <int>
 #
 ##############################################################
 
@@ -16,6 +16,8 @@ import json
 
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import transforms as imed_transforms
+from ivadomed import utils as imed_utils
+
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -25,8 +27,6 @@ def get_parser():
                         help="Config filename.")
     parser.add_argument("-n", "--number", required=False, default=1,
                         help="Number of random slices to visualize.")
-    parser.add_argument("-a", "--axis", required=True, type=int,
-                        help="Slice axis for slice extraction: 0 for sagittal, 1 for coronal, 2 for axial.")
     return parser
 
 
@@ -41,7 +41,6 @@ def run_visualization(args):
     """
     # Get params
     fname_input = args.i
-    axis = args.a
     n_slices = args.n
     with open(args.c, "r") as fhandle:
         context = json.load(fhandle)
@@ -53,6 +52,7 @@ def run_visualization(args):
     # Get input data
     input_data = input_img.get_fdata(dtype=np.float32)
     # Reorient data
+    axis = imed_utils.AXIS_DCT[context["loader_parameters"]["slice_axis"]]
     input_data = imed_loader_utils.orient_img_hwd(input_data, slice_axis=axis)
     # Get indexes
     indexes = random.sample(range(0, input_data.shape[2]), n_slices)
