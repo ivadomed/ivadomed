@@ -23,7 +23,7 @@
         "multichannel": false
     },
     "split_dataset": {
-        "fname_split": null,
+        "fname_split": "",
         "random_seed": 6,
         "center_test": [],
         "method": "per_patient",
@@ -51,7 +51,7 @@
         "balance_samples": false,
         "mixup_alpha": null,
         "transfer_learning": {
-            "retrain_model": null,
+            "retrain_model": "",
             "retrain_fraction": 1.0
         }
     },
