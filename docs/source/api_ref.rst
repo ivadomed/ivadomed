@@ -50,7 +50,7 @@ This document is for developers of ``ivadomed``, it contains the API functions.
 ----------------------
 
 .. autoclass:: ivadomed.losses.MultiClassDiceLoss
-.. automethod:: ivadomed.losses.dice_loss
+.. autoclass:: ivadomed.losses.DiceLoss
 .. autoclass:: ivadomed.losses.FocalLoss
 .. autoclass:: ivadomed.losses.FocalDiceLoss
 .. autoclass:: ivadomed.losses.GeneralizedDiceLoss
