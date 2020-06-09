@@ -240,13 +240,12 @@ def test_NormalizeInstance(im_seg):
 
 def _test_Crop(im_seg, crop_transform):
     im, seg = im_seg
-    metadata_ = {'data_shape': im[0].shape}
+    metadata_ = {'data_shape': im[0].shape, 'crop_params': {}}
     metadata_in = [metadata_ for _ in im] if isinstance(im, list) else {}
-
     if crop_transform.__class__.__name__ == "ROICrop":
         _, metadata_in = crop_transform(seg, metadata_in)
         for metadata in metadata_in:
-            assert "crop_params" in metadata
+            assert crop_transform.__class__.__name__ in metadata["crop_params"]
 
     # Apply transform
     do_im, do_metadata = crop_transform(im, metadata_in)
@@ -259,7 +258,8 @@ def _test_Crop(im_seg, crop_transform):
         assert list(do_im[idx].shape) == crop_transfrom_size
         assert list(do_seg[idx].shape) == crop_transfrom_size
         # Check metadata
-        assert do_metadata[idx]['crop_params'] == do_seg_metadata[idx]['crop_params']
+        assert do_metadata[idx]['crop_params'][crop_transform.__class__.__name__] == \
+               do_seg_metadata[idx]['crop_params'][crop_transform.__class__.__name__]
 
     # Apply undo transform
     undo_im, _ = crop_transform.undo_transform(do_im, do_metadata)
@@ -274,7 +274,7 @@ def _test_Crop(im_seg, crop_transform):
     # Loop and check
     for idx, i in enumerate(im):
         # Check data consistency
-        fh, fw, fd, _, _, _ = do_metadata[idx]['crop_params']
+        fh, fw, fd, _, _, _ = do_metadata[idx]['crop_params'][crop_transform.__class__.__name__]
         th, tw, td = crop_transform.size
         if not td:
             assert np.array_equal(i[fh:fh + th, fw:fw + tw], undo_im[idx][fh:fh + th, fw:fw + tw])
