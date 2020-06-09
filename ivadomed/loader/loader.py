@@ -1,17 +1,17 @@
+import copy
+
 import nibabel as nib
 import numpy as np
 import torch
 from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
-import copy
 
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
-
 
 # List of classifier models (ie not segmentation output)
 CLASSIFIER_LIST = ['NAME_CLASSIFIER_1']
@@ -104,6 +104,7 @@ class SegmentationPair(object):
     """This class is used to build segmentation datasets. It represents
     a pair of of two data volumes (the input data and the ground truth data).
     """
+
     def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None):
         """
         Args:
@@ -290,8 +291,8 @@ class SegmentationPair(object):
                 else:
                     # TODO: rm when Anne replies
                     # Assert that there is only one non_zero_label in the current slice
-                    #labels_in_slice = np.unique(gt_obj[..., slice_index][np.nonzero(gt_obj[..., slice_index])]).tolist()
-                    #if len(labels_in_slice) > 1:
+                    # labels_in_slice = np.unique(gt_obj[..., slice_index][np.nonzero(gt_obj[..., slice_index])]).tolist()
+                    # if len(labels_in_slice) > 1:
                     #    print(metadata["gt_metadata"][0]["gt_filenames"])
                     # TODO: uncomment when Anne replies
                     # assert int(np.max(labels_in_slice)) <= 1
@@ -488,9 +489,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             if self.has_bounding_box:
                 imed_obj_detect.adjust_transforms(self.prepro_transforms, seg_pair, length=self.length,
                                                   stride=self.stride)
-
-            self.handlers.append(imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
-                                                                                seg_pair=seg_pair))
+            seg_pair, roi_pair = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                                                                                seg_pair=seg_pair)
+            for metadata in seg_pair['input_metadata']:
+                metadata['index_shape'] = seg_pair['input'][0].shape
+            self.handlers.append((seg_pair, roi_pair))
 
     def _prepare_indices(self):
         for i in range(0, len(self.handlers)):
