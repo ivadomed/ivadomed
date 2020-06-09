@@ -79,8 +79,8 @@ def run_visualization(args):
         stg_transforms += "_" + transform_name
 
         # Add new transform to Compose
-        dict_transforms.update(training_transforms[transform_name])
-        composed_transforms = imed_transforms.Compose(training_transforms)
+        dict_transforms.update({transform_name: training_transforms[transform_name]})
+        composed_transforms = imed_transforms.Compose(dict_transforms)
 
         # Apply transformations
         metadata = imed_loader_utils.SampleMetadata({"zooms": zooms, "data_type": "im"})
@@ -91,9 +91,12 @@ def run_visualization(args):
         # Plot before / after transformation
         for i, slice_idx in enumerate(indexes):
             fname_out = os.path.join(folder_output, stg_transforms+"_"+str(slice_idx)+".png")
-            plot_transformed_sample(list_data[i][0, ], stack_im[i, 0, ], fname_out=fname_out)
-
-
+            print(fname_out)
+            # rescale intensities
+            before = imed_transforms.rescale_values_array(list_data[i][0, ], 0.0, 1.0)
+            after = imed_transforms.rescale_values_array(stack_im[i][0, ], 0.0, 1.0)
+            # Plot
+            plot_transformed_sample(before, after, fname_out=fname_out, cmap="gray")
 
 if __name__ == '__main__':
     parser = get_parser()
