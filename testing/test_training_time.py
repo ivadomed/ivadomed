@@ -50,7 +50,7 @@ MODEL_DEFAULT = {
     {
         "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                               "NumpyToTensor": {}},
-        "roi_params": {"suffix": None, "slice_filter_roi": 0},
+        "roi_params": {"suffix": "", "slice_filter_roi": 0},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
         "multichannel": False,
         "model_params": {"name": "UNet3D", "length_3D": [96, 96, 16], "n_filters": 8, "padding_3D": 0,
@@ -59,7 +59,7 @@ MODEL_DEFAULT = {
     {
         "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                               "NumpyToTensor": {}},
-        "roi_params": {"suffix": None, "slice_filter_roi": 0},
+        "roi_params": {"suffix": "", "slice_filter_roi": 0},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
         "multichannel": False,
         "model_params": {"name": "UNet3D", "length_3D": [96, 96, 16], "n_filters": 8, "padding_3D": 0,
