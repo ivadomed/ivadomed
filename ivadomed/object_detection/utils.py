@@ -59,7 +59,7 @@ def adjust_bb_size(bounding_box, factor, resample=False):
     return coord
 
 
-def resize_to_multiple(shape, multiple):
+def resize_to_multiple(shape, multiple, length):
     """
     Modify a given shape so each dimension is a multiple of a given number. This is used to avoid dimension mismatch
     with patch training
@@ -68,8 +68,8 @@ def resize_to_multiple(shape, multiple):
     :return: new dimension (list of length 3)
     """
     new_dim = []
-    for dim_len, m in zip(shape, multiple):
-        padding = (m - dim_len % m) if (m - dim_len % m) != m else 0
+    for dim_len, m, l in zip(shape, multiple, length):
+        padding = (m - (dim_len - l) % m) if (m - (dim_len - l) % m) != m else 0
         new_dim.append(dim_len + padding)
     return new_dim
 
@@ -154,7 +154,7 @@ def adjust_transforms(transforms, seg_pair, length=None, stride=None):
                 if dim < length[idx]:
                     size[idx] = length[idx]
             # Adjust size according to stride to avoid dimension mismatch
-            size = resize_to_multiple(size, stride)
+            size = resize_to_multiple(size, stride, length)
         transform_obj = imed_transforms.BoundingBoxCrop(size=size)
         transforms.transform[img_type].transforms.insert(resample_idx[i] + 1, transform_obj)
 
