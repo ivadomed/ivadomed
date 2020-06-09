@@ -40,9 +40,9 @@ def run_visualization(args):
         None
     """
     # Get params
-    fname_input = args.i
-    n_slices = args.n
-    with open(args.c, "r") as fhandle:
+    fname_input = args.input
+    n_slices = int(args.number)
+    with open(args.config, "r") as fhandle:
         context = json.load(fhandle)
 
     # Load image
@@ -59,8 +59,21 @@ def run_visualization(args):
     # Get slices list
     list_data = [np.expand_dims(input_data[:, :, i], axis=0) for i in indexes]
 
+    # Get training transforms
+    training_transforms, _, _ = imed_transforms.get_subdatasets_transforms(context["transformation"])
+
     # Compose transforms
-    transforms = imed_transforms.Compose(context["transformation"])
+    dict_transforms = {}
+    for transform_name in training_transforms:
+        # Add new transform to Compose
+        dict_transforms.update(training_transforms[transform_name])
+        composed_transforms = imed_transforms.Compose(training_transforms)
+
+        # Apply transformations
+        metadata = {}
+        stack_im, _ = composed_transforms(sample=list_data,
+                                          metadata=metadata,
+                                          data_type="im")
 
 
 
