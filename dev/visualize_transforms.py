@@ -65,8 +65,6 @@ def run_visualization(args):
     zooms = imed_loader_utils.orient_shapes_hwd(input_img.header.get_zooms(), slice_axis=axis)
     # Get indexes
     indexes = random.sample(range(0, input_data.shape[2]), n_slices)
-    # Get slices list
-    list_data = [np.expand_dims(input_data[:, :, i], axis=0) for i in indexes]
 
     # Get training transforms
     training_transforms, _, _ = imed_transforms.get_subdatasets_transforms(context["transformation"])
@@ -82,19 +80,21 @@ def run_visualization(args):
         dict_transforms.update({transform_name: training_transforms[transform_name]})
         composed_transforms = imed_transforms.Compose(dict_transforms)
 
-        # Apply transformations
-        metadata = imed_loader_utils.SampleMetadata({"zooms": zooms, "data_type": "im"})
-        stack_im, _ = composed_transforms(sample=list_data,
-                                          metadata=[metadata for _ in range(n_slices)],
-                                          data_type="im")
+        # Loop across slices
+        for i in indexes:
+            data = [input_data[:, :, i]]
+            # Apply transformations
+            metadata = imed_loader_utils.SampleMetadata({"zooms": zooms, "data_type": "im"})
+            stack_im, _ = composed_transforms(sample=data,
+                                              metadata=[metadata for _ in range(n_slices)],
+                                              data_type="im")
 
-        # Plot before / after transformation
-        for i, slice_idx in enumerate(indexes):
-            fname_out = os.path.join(folder_output, stg_transforms+"_"+str(slice_idx)+".png")
+            # Plot before / after transformation
+            fname_out = os.path.join(folder_output, stg_transforms+"_"+str(i)+".png")
             print(fname_out)
             # rescale intensities
-            before = imed_transforms.rescale_values_array(list_data[i][0, ], 0.0, 1.0)
-            after = imed_transforms.rescale_values_array(stack_im[i][0, ], 0.0, 1.0)
+            before = imed_transforms.rescale_values_array(data[0], 0.0, 1.0)
+            after = imed_transforms.rescale_values_array(stack_im[0], 0.0, 1.0)
             # Plot
             plot_transformed_sample(before, after, fname_out=fname_out, cmap="gray")
 
