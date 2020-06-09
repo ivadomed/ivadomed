@@ -55,6 +55,8 @@ def run_visualization(args):
     # Reorient data
     axis = imed_utils.AXIS_DCT[context["loader_parameters"]["slice_axis"]]
     input_data = imed_loader_utils.orient_img_hwd(input_data, slice_axis=axis)
+    # Get zooms
+    zooms = imed_loader_utils.orient_shapes_hwd(input_img.header.get_zooms(), slice_axis=axis)
     # Get indexes
     indexes = random.sample(range(0, input_data.shape[2]), n_slices)
     # Get slices list
@@ -71,15 +73,13 @@ def run_visualization(args):
         composed_transforms = imed_transforms.Compose(training_transforms)
 
         # Apply transformations
-        metadata = {}
-        print(len(list_data), list_data[0].shape)
+        metadata = imed_loader_utils.SampleMetadata({"zooms": zooms, "data_type": "im"})
         stack_im, _ = composed_transforms(sample=list_data,
                                           metadata=[metadata for _ in range(n_slices)],
                                           data_type="im")
 
         # Plot before / after transformation
         for i, slice_idx in enumerate(indexes):
-            print(stack_im.size())
             plot_transformed_sample(list_data[i][0, ], stack_im[i, 0, ])
 
 
