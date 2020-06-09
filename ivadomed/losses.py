@@ -279,7 +279,7 @@ class AdapWingLoss(nn.Module):
 
             img_list.append(np.round(target[i].cpu().numpy() * 255))
             img_merge = np.concatenate(img_list)
-            img_dilate = scipy.ndimage.morphology.binary_opening(img_merge, kernel)
+            img_dilate = scipy.ndimage.morphology.binary_opening(img_merge, np.expand_dims(kernel,axis=0))
             img_dilate[img_dilate < 51] = 1  # 0*W+1
             img_dilate[img_dilate >= 51] = 11  # 1*W+1
             img_dilate = np.array(img_dilate, dtype=np.int)
