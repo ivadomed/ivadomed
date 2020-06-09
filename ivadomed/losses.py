@@ -243,7 +243,7 @@ class L2loss(nn.Module):
     """
 
     def __init__(self):
-        super(L2_loss, self).__init__()
+        super(L2loss, self).__init__()
 
     def forward(self, input, target):
         return torch.sum((input - target) ** 2) / 2
@@ -299,7 +299,7 @@ class AdapWingLoss(nn.Module):
         return mean_loss
 
 
-class Loss_Combination(nn.module):
+class Loss_Combination(nn.Module):
     """
     Loss that sums different other implemented loss
     """
@@ -308,9 +308,10 @@ class Loss_Combination(nn.module):
         super(Loss_Combination, self).__init__()
         self.losses_list = losses_list
 
-    def forward(self, losses_list, input, target):
+    def forward(self, input, target):
         output = []
-        for loss in losses_list:
-            output.append(loss()(input.target))
+        for loss in self.losses_list:
+            loss_class = eval(loss)
+            output.append(loss_class()(input,target))
 
         return torch.sum(output)
