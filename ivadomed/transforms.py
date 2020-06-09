@@ -891,6 +891,11 @@ def get_subdatasets_transforms(transform_params):
 
 
 def get_preprocessing_transforms(transforms):
+    """
+    Processes all the transforms and returns only the ones labeled for preprocessing
+    :param transforms: transformation dict
+    :return: preprocessing transforms (dict)
+    """
     original_transforms = copy.deepcopy(transforms)
     preprocessing_transforms = copy.deepcopy(transforms)
     for idx, tr in enumerate(original_transforms):
@@ -905,10 +910,10 @@ def get_preprocessing_transforms(transforms):
 def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
     """
     Applies preprocessing transforms to segmentation pair (input, gt and metadata).
-    :param transforms: preprocessin
-    :param seg_pair:
-    :param roi_pair:
-    :return:
+    :param transforms: preprocessing transforms (Compose object)
+    :param seg_pair: Segmentation pair containing input and gt
+    :param roi_pair: Segementation pair containing input and roi
+    :return: tuple of seg_pair and roi_pair
     """
     if transforms is None:
         return (seg_pair, roi_pair)
