@@ -17,6 +17,7 @@ import json
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
+from testing.utils import plot_transformed_sample
 
 
 def get_parser():
@@ -71,10 +72,15 @@ def run_visualization(args):
 
         # Apply transformations
         metadata = {}
+        print(len(list_data), list_data[0].shape)
         stack_im, _ = composed_transforms(sample=list_data,
-                                          metadata=metadata,
+                                          metadata=[metadata for _ in range(n_slices)],
                                           data_type="im")
 
+        # Plot before / after transformation
+        for i, slice_idx in enumerate(indexes):
+            print(stack_im.size())
+            plot_transformed_sample(list_data[i][0, ], stack_im[i, 0, ])
 
 
 
