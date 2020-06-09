@@ -903,6 +903,13 @@ def get_preprocessing_transforms(transforms):
 
 
 def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
+    """
+    Applies preprocessing transforms to segmentation pair (input, gt and metadata).
+    :param transforms: preprocessin
+    :param seg_pair:
+    :param roi_pair:
+    :return:
+    """
     if transforms is None:
         return (seg_pair, roi_pair)
 
@@ -942,14 +949,17 @@ def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
     return (seg_pair, roi_pair)
 
 
-def update_transforms(transform_source, transform_dest):
-    for data_type in transform_source.transform:
-        for idx, transfo in enumerate(transform_source.transform[data_type].transforms):
-            transform_dest.transform[data_type].transforms.insert(idx, transfo)
-
-
 def preprare_transforms(transform_dict, requires_undo=True):
-    training_undo_transform = UndoCompose(Compose(transform_dict.copy()))
+    """
+    This function seperates the preprocessing transforms from the others and generates the undo transforms related.
+    :param transform_dict (dict): Dictionary containing the transforms and there parameters
+    :param requires_undo (bool): Boolean indicating if transforms can be undone
+    :return: transform lst containing the preprocessing transforms and regular transforms, UndoCompose object containing
+    the transform to undo
+    """
+    training_undo_transform = None
+    if requires_undo:
+        training_undo_transform = UndoCompose(Compose(transform_dict.copy()))
     preprocessing_transforms = get_preprocessing_transforms(transform_dict)
     prepro_transforms = Compose(preprocessing_transforms, requires_undo=requires_undo)
     transforms = Compose(transform_dict, requires_undo=requires_undo)

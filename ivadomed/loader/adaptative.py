@@ -173,17 +173,13 @@ class Bids_to_hdf5:
         :param slice_axis:
         :param metadata_choice:
         :param slice_filter_fn:
+        :param transform
         :param object_detection_params
 
         """
 
         print("Starting conversion")
         # Getting all patients id
-        if isinstance(transform, list):
-            self.prepro_transforms, self.transform = transform
-        else:
-            self.transform = transform
-            self.prepro_transforms = None
         self.bids_ds = bids.BIDS(root_dir)
         bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
 
@@ -199,6 +195,7 @@ class Bids_to_hdf5:
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
 
+        self.prepro_transforms, self.transform = transform
         # Create a list with the filenames for all contrasts and subjects
         subjects_tot = []
         for subject in bids_subjects:
@@ -462,11 +459,8 @@ class HDF5Dataset:
         self.roi_lst = copy.deepcopy(model_params["roi_lst"] if "roi_lst" in model_params else None)
         self.dim = dim
         self.filter_slices = slice_filter_fn
-        if isinstance(transform, list):
-            self.prepro_transforms, self.transform = transform
-        else:
-            self.transform = transform
-            self.prepro_transforms = None
+        self.prepro_transforms, self.transform = transform
+
         metadata_choice = False if metadata_choice is None else metadata_choice
         # Getting HDS5 dataset file
         if not os.path.exists(model_params["hdf5_path"]):
@@ -481,7 +475,7 @@ class HDF5Dataset:
                                      contrast_balance=contrast_params["balance"],
                                      slice_axis=slice_axis,
                                      slice_filter_fn=slice_filter_fn,
-                                     transform=[self.prepro_transforms, self.transform],
+                                     transform=transform,
                                      object_detection_params=object_detection_params)
             self.hdf5_file = hdf5_file.hdf5_file
         else:

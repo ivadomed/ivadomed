@@ -156,18 +156,15 @@ def run_main():
             transformation_dict = transform_test_params
         else:
             transformation_dict = transform_valid_params
+
+        # UNDO TRANSFORMS
+        _, undo_transforms = imed_transforms.preprare_transforms(transformation_dict.copy())
+
         # Get Testing dataset
         ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
                                                                   'transforms_params': transformation_dict,
                                                                   'dataset_type': 'testing',
                                                                   'requires_undo': True}})
-
-        # UNDO TRANSFORMS
-        transforms = imed_transforms.Compose(transformation_dict)
-        # consider preprocessing transfoms in the undo
-        imed_transforms.update_transforms(ds_test.prepro_transforms, transforms)
-        undo_transforms = imed_transforms.UndoCompose(transforms)
-
 
         if model_params["name"] == "FiLMedUnet":
             clustering_path = os.path.join(log_directory, "clustering_models.joblib")

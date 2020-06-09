@@ -135,15 +135,13 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
         # PREDS TO CPU
         preds_cpu = preds.cpu()
-        # gt_npy_list.append(gt_samples.cpu().numpy().astype(np.uint8))
-        # preds_npy_list.append(preds_cpu.data.numpy().astype(np.uint8))
 
         # RECONSTRUCT 3D IMAGE
         last_batch_bool = (i == len(test_loader) - 1)
 
         # LOOP ACROSS SAMPLES
         for smp_idx in range(len(preds_cpu)):
-            if "bounding_box" in batch['input_metadata'][0][0]:
+            if "bounding_box" in batch['input_metadata'][smp_idx][0]:
                 imed_obj_detect.adjust_undo_transforms(testing_params["undo_transforms"].transforms, batch, smp_idx)
 
             if not model_params["name"].endswith('3D'):

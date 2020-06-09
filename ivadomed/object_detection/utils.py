@@ -85,7 +85,7 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
 
 def resample_bounding_box(metadata, transform):
     for idx, transfo in enumerate(transform.transform["im"].transforms):
-        if "Resample" in str(type(transfo)):
+        if "Resample" == transfo.__class__.__name__:
             hspace, wspace, dspace = (transfo.hspace, transfo.wspace, transfo.dspace)
             hfactor = metadata['input_metadata'][0]['zooms'][0] / hspace
             wfactor = metadata['input_metadata'][0]['zooms'][1] / wspace
@@ -102,16 +102,16 @@ def resample_bounding_box(metadata, transform):
 
 
 def adjust_transforms(transforms, seg_pair, length=None, stride=None):
-    resample_idx = -1
-    for img_type in transforms.transform:
+    resample_idx = [-1, -1, -1]
+    for i, img_type in enumerate(transforms.transform):
         for idx, transfo in enumerate(transforms.transform[img_type].transforms):
-            if "BoundingBoxCrop" in str(type(transfo)):
+            if "BoundingBoxCrop" == transfo.__class__.__name__:
                 transforms.transform[img_type].transforms.pop(idx)
-            if "Resample" in str(type(transfo)):
-                resample_idx = idx
+            if "Resample" == transfo.__class__.__name__:
+                resample_idx[i] = idx
 
     resample_bounding_box(seg_pair, transforms)
-    for img_type in transforms.transform:
+    for i, img_type in enumerate(transforms.transform):
         h_min, h_max, w_min, w_max, d_min, d_max = seg_pair['input_metadata'][0]['bounding_box']
         size = [h_max - h_min, w_max - w_min, d_max - d_min]
 
@@ -119,19 +119,24 @@ def adjust_transforms(transforms, seg_pair, length=None, stride=None):
             for idx, dim in enumerate(size):
                 if dim < length[idx]:
                     size[idx] = length[idx]
+            # Adjust size according to stride to avoid dimension mismatch
             size = resize_to_multiple(size, stride)
         transform_obj = imed_transforms.BoundingBoxCrop(size=size)
-        transforms.transform[img_type].transforms.insert(resample_idx + 1, transform_obj)
+        transforms.transform[img_type].transforms.insert(resample_idx[i] + 1, transform_obj)
 
 
 def adjust_undo_transforms(transforms, seg_pair, index=0):
     for img_type in transforms.transform:
+        resample_idx = -1
         for idx, transfo in enumerate(transforms.transform[img_type].transforms):
-            if "BoundingBoxCrop" in str(type(transfo)):
+            if "Resample" == transfo.__class__.__name__:
+                resample_idx = idx
+            if "BoundingBoxCrop" == transfo.__class__.__name__:
                 transforms.transform[img_type].transforms.pop(idx)
-                size = list(seg_pair['input_metadata'][index][0]['index_shape'])
-                transform_obj = imed_transforms.BoundingBoxCrop(size=size)
-                transforms.transform[img_type].transforms.insert(idx, transform_obj)
+        if "bounding_box" in seg_pair['input_metadata'][index][0]:
+            size = list(seg_pair['input_metadata'][index][0]['index_shape'])
+            transform_obj = imed_transforms.BoundingBoxCrop(size=size)
+            transforms.transform[img_type].transforms.insert(resample_idx + 1, transform_obj)
 
 
 def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast_lst):

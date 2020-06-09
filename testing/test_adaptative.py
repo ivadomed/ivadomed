@@ -22,6 +22,20 @@ def test_hdf5():
     print('[INFO]: Starting test ... \n')
     train_lst = ['sub-test001']
 
+    training_transform_dict = {
+        "Resample":
+            {
+                "wspace": 0.75,
+                "hspace": 0.75
+            },
+        "CenterCrop":
+            {
+                "size": [48, 48]
+            },
+        "NumpyToTensor": {}
+    }
+    transform_lst, _ = imed_transforms.preprare_transforms(training_transform_dict)
+
     hdf5_file = imed_adaptative.Bids_to_hdf5(PATH_BIDS,
                                              subject_lst=train_lst,
                                              hdf5_name='testing_data/mytestfile.hdf5',
@@ -29,6 +43,7 @@ def test_hdf5():
                                              roi_suffix="_seg-manual",
                                              contrast_lst=['T1w', 'T2w', 'T2star'],
                                              metadata_choice="contrast",
+                                             transform=transform_lst,
                                              contrast_balance={},
                                              slice_axis=2,
                                              slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
@@ -60,20 +75,6 @@ def test_hdf5():
     print('\n[INFO]: Dataframe successfully generated. ')
     print('[INFO]: Creating dataset ...\n')
 
-    training_transform_dict = {
-        "Resample":
-            {
-                "wspace": 0.75,
-                "hspace": 0.75
-            },
-        "CenterCrop":
-            {
-                "size": [48, 48]
-            },
-        "NumpyToTensor": {}
-    }
-
-    train_transform = imed_transforms.Compose(training_transform_dict)
     model_params = {
             "name": "HeMISUnet",
             "dropout_rate": 0.3,
@@ -101,7 +102,7 @@ def test_hdf5():
                                           slice_axis=2,
                                           model_params=model_params,
                                           contrast_params=contrast_params,
-                                          transform=train_transform,
+                                          transform=transform_lst,
                                           metadata_choice=False,
                                           dim=2,
                                           slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,

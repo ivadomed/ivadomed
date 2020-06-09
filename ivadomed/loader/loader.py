@@ -57,7 +57,6 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                 model_params=model_params,
                                 object_detection_params=object_detection_params)
 
-
     elif model_params["name"] == "HeMISUnet":
         dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
                                               subject_lst=data_list,
@@ -325,11 +324,7 @@ class MRI2DSegmentationDataset(Dataset):
         """
         self.indexes = []
         self.filename_pairs = filename_pairs
-        if isinstance(transform, list):
-            self.prepro_transforms, self.transform = transform
-        else:
-            self.transform = transform
-            self.prepro_transforms = None
+        self.prepro_transforms, self.transform = transform
         self.cache = cache
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
@@ -462,11 +457,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         self.indexes = []
         self.length = length
         self.stride = stride
-        if isinstance(transform, list):
-            self.prepro_transforms, self.transform = transform
-        else:
-            self.transform = transform
-            self.prepro_transforms = None
+        self.prepro_transforms, self.transform = transform
         self.slice_axis = slice_axis
         self.has_bounding_box = True
 
