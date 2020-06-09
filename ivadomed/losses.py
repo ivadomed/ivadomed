@@ -312,6 +312,6 @@ class Loss_Combination(nn.Module):
         output = []
         for loss in self.losses_list:
             loss_class = eval(loss)
-            output.append(loss_class()(input,target))
+            output.append(loss_class()(input,target).unsqueeze(0))
 
-        return torch.sum(output)
+        return torch.sum(torch.cat(output))
