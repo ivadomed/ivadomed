@@ -4,6 +4,8 @@
 # This script apply a series of transforms to 2D slices extracted from an input image,
 #   and save as png the resulting sample after each transform.
 #
+# This input image can either be a MRI image (e.g. T2w) either a binary mask.
+#
 # Step-by-step:
 #   1. load an image (i)
 #   2. extract n slices from this image according to the slice orientation defined in c
@@ -67,6 +69,8 @@ def run_visualization(args):
     # Reorient data
     axis = imed_utils.AXIS_DCT[context["loader_parameters"]["slice_axis"]]
     input_data = imed_loader_utils.orient_img_hwd(input_data, slice_axis=axis)
+    # Image or Mask
+    is_mask = np.array_equal(input_data, input_data.astype(bool))
     # Get zooms
     zooms = imed_loader_utils.orient_shapes_hwd(input_img.header.get_zooms(), slice_axis=axis)
     # Get indexes
@@ -90,7 +94,7 @@ def run_visualization(args):
         for i in indexes:
             data = [input_data[:, :, i]]
             # Apply transformations
-            metadata = imed_loader_utils.SampleMetadata({"zooms": zooms, "data_type": "im"})
+            metadata = imed_loader_utils.SampleMetadata({"zooms": zooms, "data_type": "gt" if is_mask else "im"})
             stack_im, _ = composed_transforms(sample=data,
                                               metadata=[metadata for _ in range(n_slices)],
                                               data_type="im")
@@ -107,7 +111,7 @@ def run_visualization(args):
                                     after,
                                     list_title=["_".join(stg_transforms[:-1].split("_")[:-1]), stg_transforms[:-1]],
                                     fname_out=fname_out,
-                                    cmap="gray")
+                                    cmap="jet" if is_mask else "gray")
 
 if __name__ == '__main__':
     parser = get_parser()
