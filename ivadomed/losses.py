@@ -304,14 +304,22 @@ class Loss_Combination(nn.Module):
     Loss that sums different other implemented loss
     """
 
-    def __init__(self, losses_list):
+    def __init__(self, losses_list,params_list=None):
         super(Loss_Combination, self).__init__()
         self.losses_list = losses_list
+        self.params_list = params_list
 
     def forward(self, input, target):
         output = []
-        for loss in self.losses_list:
-            loss_class = eval(loss)
-            output.append(loss_class()(input,target).unsqueeze(0))
+        for i in range (len(self.losses_list)):
+            loss_class = eval(self.losses_list[i])
+            if self.params_list is not None:
+                if self.params_list[i] is not None:
+                    loss_fct = loss_class(**self.params_list[i])
+                else:
+                    loss_fct = loss_class()
+                output.append(loss_fct(input,target).unsqueeze(0))
+            else: 
+                output.append(loss_class()(input,target).unsqueeze(0))
 
         return torch.sum(torch.cat(output))
