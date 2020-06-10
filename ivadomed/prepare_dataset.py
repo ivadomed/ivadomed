@@ -260,32 +260,35 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
     for i in range(len(t)):
         sub = t[i]
         path_image = bids_path + t[i] + '/anat/' + t[i] + suffix + '.nii.gz'
-        path_label = bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + '_labels-disc-manual.nii.gz'
-        list_points = mask2label(path_label, aim=aim)
-        image_ref = nib.load(path_image)
-        nib_ref_can = nib.as_closest_canonical(image_ref)
-        imsh = np.array(image_ref.dataobj).shape
-        mid = get_midslice_average(path_image, list_points[0][0])
-        arr_pred_ref_space = imad_utils.reorient_image(np.expand_dims(np.flip(mid[:, :], axis=1), axis=0), 2, image_ref, nib_ref_can).astype('float32')
-        nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
-        nib.save(nib_pred, bids_path + t[i] + '/anat/' + t[i] + suffix + '_mid.nii.gz')
-        lab = nib.load(path_label)
-        nib_ref_can = nib.as_closest_canonical(lab)
-        label_array = np.zeros(imsh[1:])
+        if os.path.isfile(path_image):
+            path_label = bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + '_labels-disc-manual.nii.gz'
+            list_points = mask2label(path_label, aim=aim)
+            image_ref = nib.load(path_image)
+            nib_ref_can = nib.as_closest_canonical(image_ref)
+            imsh = np.array(image_ref.dataobj).shape
+            mid = get_midslice_average(path_image, list_points[0][0])
+            arr_pred_ref_space = imad_utils.reorient_image(np.expand_dims(np.flip(mid[:, :], axis=1), axis=0), 2, image_ref, nib_ref_can).astype('float32')
+            nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
+            nib.save(nib_pred, bids_path + t[i] + '/anat/' + t[i] + suffix + '_mid.nii.gz')
+            lab = nib.load(path_label)
+            nib_ref_can = nib.as_closest_canonical(lab)
+            label_array = np.zeros(imsh[1:])
 
-        if aim == 'c2':
-            for j in range (len (list_points[0])):
-                if label_array[list_points[1][j],list_points[0][j]]==3:
+            if aim == 'c2':
+                for j in range (len (list_points[0])):
+                    if label_array[list_points[1][j],list_points[0][j]]==3:
+                        label_array[list_points[1][j], list_points[0][j]] = 1
+            elif aim == 'full':
+                for j in range(len(list_points[0])):
                     label_array[list_points[1][j], list_points[0][j]] = 1
-        elif aim == 'full':
-            for j in range(len(list_points[0])):
-                label_array[list_points[1][j], list_points[0][j]] = 1
 
-        heatmap = heatmap_generation(label_array[list_points[0][0], :, :], 10)
-        arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(np.flip(heatmap[:, :], axis=1), axis=0), 2, lab, nib_ref_can)
-        nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
-        nib.save(nib_pred, bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + 'heatmap.nii.gz')
-
+            heatmap = heatmap_generation(label_array[list_points[0][0], :, :], 10)
+            arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(np.flip(heatmap[:, :], axis=1), axis=0), 2, lab, nib_ref_can)
+            nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
+            nib.save(nib_pred, bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + 'heatmap.nii.gz')
+        else:
+            pass
+        
 
 
 
