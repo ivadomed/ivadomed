@@ -4,6 +4,12 @@
 # This script apply a series of transforms to 2D slices extracted from an input image,
 #   and save as png the resulting sample after each transform.
 #
+# Step-by-step:
+#   1. load an image (i)
+#   2. extract n slices from this image according to the slice orientation defined in c
+#   3. for each successive transforms defined in c applies these transforms to the extracted slices
+#   and save the visual result in a output folder o: transform0_slice19.png, transform0_transform1_slice19.png etc.
+#
 # Usage: python dev/visualize_transforms.py -i <input_filename> -c <fname_config> -n <int> -o <output_folder>
 #
 ##############################################################
