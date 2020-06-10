@@ -305,6 +305,17 @@ class Loss_Combination(nn.Module):
     """
 
     def __init__(self, losses_list,params_list=None):
+        """
+
+        Args:
+            losses_list: list of losses that will be summed
+            params_list: list of params for the losses, contain None or dictionnary definition of params for the loss
+            at same index. If no params list is given all default parameter will be used.
+            (e.g., losses_list = ["L2loss","DiceLoss"]
+                   params_list = [None,{"param1:0.5"}])
+        returns:
+            tensor: sum of losses computed on (input,target) with the params
+        """
         super(Loss_Combination, self).__init__()
         self.losses_list = losses_list
         self.params_list = params_list
