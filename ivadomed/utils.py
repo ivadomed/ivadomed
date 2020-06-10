@@ -699,7 +699,7 @@ class SliceFilter(object):
         input_data, gt_data = sample['input'], sample['gt']
 
         #Filter empty roi
-        if sample['gt_type'] == "roi":
+        if sample['gt_file_type'] == "roi":
             if self.filter_empty_input:
                 if not np.any(gt_data):
                     return False
