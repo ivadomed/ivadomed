@@ -283,7 +283,7 @@ class SegmentationPair(object):
                     #    print(metadata["gt_metadata"][0]["gt_filenames"])
                     # TODO: uncomment when Anne replies
                     # assert int(np.max(labels_in_slice)) <= 1
-                    gt_slices.append(np.asarray(int(not np.any(gt_obj[..., slice_index]))))
+                    gt_slices.append(np.asarray(int(np.any(gt_obj[..., slice_index]))))
         dreturn = {
             "input": input_slices,
             "gt": gt_slices,
