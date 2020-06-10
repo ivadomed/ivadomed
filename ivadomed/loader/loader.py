@@ -213,7 +213,9 @@ class SegmentationPair(object):
                                                                 self.slice_axis)
                 gt_data.append(hwd_oriented.astype(np.uint8))
             else:
-                gt_data.append(np.zeros(self.input_handle[0].shape, dtype=np.float32).astype(np.uint8))
+                gt_data.append(
+                    np.zeros(imed_loader_utils.orient_shapes_hwd(self.input_handle[0].shape, self.slice_axis),
+                             dtype=np.float32).astype(np.uint8))
 
         return input_data, gt_data
 
@@ -482,6 +484,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                                   stride=self.stride)
             seg_pair, roi_pair = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                                 seg_pair=seg_pair)
+
             for metadata in seg_pair['input_metadata']:
                 metadata['index_shape'] = seg_pair['input'][0].shape
             self.handlers.append((seg_pair, roi_pair))
@@ -492,9 +495,12 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             input_img = self.handlers[i][0]['input']
             shape = input_img[0].shape
 
-            if ((shape[0] - self.length[0]) % self.stride[0]) != 0 or self.length[0] % 16 != 0 or shape[0] < self.length[0] \
-                    or ((shape[1] - self.length[1]) % self.stride[1]) != 0 or self.length[1] % 16 != 0 or shape[1] < self.length[1] \
-                    or ((shape[2] - self.length[2]) % self.stride[2]) != 0 or self.length[2] % 16 != 0 or shape[2] < self.length[2]:
+            if ((shape[0] - self.length[0]) % self.stride[0]) != 0 or self.length[0] % 16 != 0 or shape[0] < \
+                    self.length[0] \
+                    or ((shape[1] - self.length[1]) % self.stride[1]) != 0 or self.length[1] % 16 != 0 or shape[1] < \
+                    self.length[1] \
+                    or ((shape[2] - self.length[2]) % self.stride[2]) != 0 or self.length[2] % 16 != 0 or shape[2] < \
+                    self.length[2]:
                 raise RuntimeError('Input shape of each dimension should be a \
                                     multiple of length plus 2 * padding and a multiple of 16.')
 
