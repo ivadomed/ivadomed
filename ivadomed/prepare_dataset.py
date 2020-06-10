@@ -80,7 +80,7 @@ def label2maskmap_gt(data, shape, c_dx=0, c_dy=0, radius=10, normalize=False):
 def gkern(kernlen=10):
     """Returns a 2D Gaussian kernel."""
 
-    x = np.linspace(0, 1, kernlen+1)
+    x = np.linspace(-1, 1, kernlen+1)
     kern1d = np.diff(scipy.stats.norm.cdf(x))
     kern2d = np.outer(kern1d, kern1d)
     return normalize(kern2d/kern2d.sum())
@@ -99,7 +99,7 @@ def heatmap_generation(image, kernel_size):
 
     """
     kernel = gkern(kernel_size)
-    map = scipy.signal.convolve(image, kernel)
+    map = scipy.signal.convolve(image, kernel,mode='same')
     return normalize(map)
 
 
@@ -196,7 +196,7 @@ def get_midslice_average(path_im, ind):
     image = nib.as_closest_canonical(image)
     arr = np.array(image.dataobj)
     numb_of_slice = 3
-    if ind + 3 < arr.shape[0] :
+    if ind + 3 > arr.shape[0] :
         numb_of_slice = arr.shape[0]-ind
     if ind - numb_of_slice < 0:
         numb_of_slice = ind
@@ -253,21 +253,20 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
         None. Image are saved in Bids folder
     """
     t = os.listdir(bids_path)
-    print(t)
     t.remove('derivatives')
-    print(t)
 
     for i in range(len(t)):
         sub = t[i]
         path_image = bids_path + t[i] + '/anat/' + t[i] + suffix + '.nii.gz'
         if os.path.isfile(path_image):
-            path_label = bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + '_labels-disc-manual.nii.gz'
+            print(sub)
+            path_label = bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + '_label-disc-manual.nii.gz'
             list_points = mask2label(path_label, aim=aim)
             image_ref = nib.load(path_image)
             nib_ref_can = nib.as_closest_canonical(image_ref)
             imsh = np.array(image_ref.dataobj).shape
             mid = get_midslice_average(path_image, list_points[0][0])
-            arr_pred_ref_space = imad_utils.reorient_image(np.expand_dims(np.flip(mid[:, :], axis=1), axis=0), 2, image_ref, nib_ref_can).astype('float32')
+            arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(mid[:, :], axis=0), 2, image_ref, nib_ref_can).astype('float32')
             nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
             nib.save(nib_pred, bids_path + t[i] + '/anat/' + t[i] + suffix + '_mid.nii.gz')
             lab = nib.load(path_label)
@@ -275,17 +274,18 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
             label_array = np.zeros(imsh[1:])
 
             if aim == 'c2':
-                for j in range (len (list_points[0])):
-                    if label_array[list_points[1][j],list_points[0][j]]==3:
-                        label_array[list_points[1][j], list_points[0][j]] = 1
+                for j in range (len (list_points)):
+                    if list_points[j][3]==3:
+                        label_array[list_points[j][1], list_points[j][2]] = 1
             elif aim == 'full':
-                for j in range(len(list_points[0])):
-                    label_array[list_points[1][j], list_points[0][j]] = 1
+                for j in range(len(list_points)):
+                    if list_points[j][3]<30 and list_points[j][3]>2:
+                        label_array[list_points[j][1], list_points[j][2]] = 1
 
-            heatmap = heatmap_generation(label_array[list_points[0][0], :, :], 10)
-            arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(np.flip(heatmap[:, :], axis=1), axis=0), 2, lab, nib_ref_can)
+            heatmap = heatmap_generation(label_array[ :, :],10)
+            arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(heatmap[:, :], axis=0), 2, lab, nib_ref_can)
             nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
-            nib.save(nib_pred, bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + 'heatmap.nii.gz')
+            nib.save(nib_pred, bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + '_mid_heatmap.nii.gz')
         else:
             pass
         
