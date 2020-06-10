@@ -33,7 +33,9 @@
     "training_parameters": {
         "batch_size": 18,
         "loss": {
-            "name": "AdapWingLoss"
+            "name": "Loss_Combination",
+	    "losses_list":["L2loss","AdapWingLoss","DiceLoss"],
+	    "params_list":[null,null,{"smooth":0.5}]
         },
         "training_time": {
             "num_epochs": 100,
