@@ -116,7 +116,7 @@ class SegmentationPair(object):
         self.cache = cache
         self.slice_axis = slice_axis
         self.prepro_transforms = prepro_transforms
-
+        self.gt_type = gt_type
         # list of the images
         self.input_handle = []
 
@@ -336,13 +336,15 @@ class MRI2DSegmentationDataset(Dataset):
 
             for idx_pair_slice in range(input_data_shape[-1]):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice, gt_type=self.task)
-                if self.slice_filter_fn:
-                    filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
-                if self.slice_filter_fn and not filter_fn_ret_seg:
-                    continue
 
                 # Note: we force here gt_type=segmentation since ROI slice is needed to Crop the image
                 slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice, gt_type="segmentation")
+
+                if self.slice_filter_fn:
+                    filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair) and self.slice_filter_fn(slice_roi_pair)
+                if self.slice_filter_fn and not filter_fn_ret_seg:
+                    continue
+
 
                 item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                       slice_seg_pair,
