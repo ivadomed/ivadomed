@@ -74,7 +74,7 @@ def run_visualization(args):
     stg_transforms = ""
     for transform_name in training_transforms:
         # Update stg_transforms
-        stg_transforms += "_" + transform_name
+        stg_transforms += transform_name + "_"
 
         # Add new transform to Compose
         dict_transforms.update({transform_name: training_transforms[transform_name]})
@@ -90,13 +90,18 @@ def run_visualization(args):
                                               data_type="im")
 
             # Plot before / after transformation
-            fname_out = os.path.join(folder_output, stg_transforms+"_"+str(i)+".png")
-            print(fname_out)
+            fname_out = os.path.join(folder_output, stg_transforms+"slice"+str(i)+".png")
+            print("Fname out: {}.".format(fname_out))
+            print("\t{}".format(dict(metadata)))
             # rescale intensities
             before = imed_transforms.rescale_values_array(data[0], 0.0, 1.0)
             after = imed_transforms.rescale_values_array(stack_im[0], 0.0, 1.0)
             # Plot
-            plot_transformed_sample(before, after, fname_out=fname_out, cmap="gray")
+            plot_transformed_sample(before,
+                                    after,
+                                    list_title=["_".join(stg_transforms[:-1].split("_")[:-1]), stg_transforms[:-1]],
+                                    fname_out=fname_out,
+                                    cmap="gray")
 
 if __name__ == '__main__':
     parser = get_parser()
