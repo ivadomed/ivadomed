@@ -70,7 +70,7 @@ List of strings. Each string corresponds to an institution/center to only includ
 Strictly positive integer.
 
 #### loss
-- `name`: Name of the [loss function Class](https://ivadomed.org/en/latest/api_ref.html#ivadomed-losses).
+- `name`: Name of the [loss function Class](./api_ref.html#ivadomed-losses).
 - Other parameters that could be needed in the Loss function definition: see attributes of the Loss function of interest (e.g. `"gamma": 0.5` for `FocalLoss`).
 
 #### training_time
