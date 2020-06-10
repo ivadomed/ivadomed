@@ -91,6 +91,10 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
             if keep_largest_only:
                 object_mask = imed_postpro.keep_largest_object(object_mask)
 
+            mask_path = os.path.join(log_dir, "detection_mask")
+            if not os.path.exists(mask_path):
+                os.mkdir(mask_path)
+            nib.save(object_mask, os.path.join(mask_path, subject_path.split("/")[-1]))
             ras_orientation = nib.as_closest_canonical(object_mask)
             hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata()[..., 0], slice_axis)
             bounding_boxes = get_bounding_boxes(hwd_orientation)
