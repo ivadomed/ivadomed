@@ -81,7 +81,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               transform=tranform_lst,
                               multichannel=multichannel,
                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
-                              soft_input=soft_input)
+                              soft_input=soft_input,
                               task=task)
         dataset.load_filenames()
 
