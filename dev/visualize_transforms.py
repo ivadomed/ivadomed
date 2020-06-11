@@ -84,6 +84,7 @@ def run_visualization(args):
     zooms = imed_loader_utils.orient_shapes_hwd(input_img.header.get_zooms(), slice_axis=axis)
     # Get indexes
     indexes = random.sample(range(0, input_data.shape[2]), n_slices)
+    indexes = [8]
 
     # Get training transforms
     training_transforms, _, _ = imed_transforms.get_subdatasets_transforms(context["transformation"])
@@ -115,6 +116,7 @@ def run_visualization(args):
             data = [input_data[:, :, i]]
             # Init metadata
             metadata = imed_loader_utils.SampleMetadata({"zooms": zooms, "data_type": "gt" if is_mask else "im"})
+            metadata = imed_loader_utils.SampleMetadata({'translation': (-10.0, 15.0, 0.0), 'data_type': 'im', 'crop_params': (132, 135, 0, 320, 320, 1), 'zooms': np.array([0.5 , 0.5 , 3.0000005])})
 
             # Apply transformations to ROI
             if "ROICrop" in training_transforms and os.path.isfile(args.roi):
@@ -136,7 +138,10 @@ def run_visualization(args):
             print("Fname out: {}.".format(fname_out))
             print("\t{}".format(dict(metadata)))
             # rescale intensities
-            before = imed_transforms.rescale_values_array(data[0], 0.0, 1.0)
+            if len(stg_transforms[:-1].split("_")) == 1:
+                before = imed_transforms.rescale_values_array(data[0], 0.0, 1.0)
+            else:
+                before = after
             after = imed_transforms.rescale_values_array(stack_im[0], 0.0, 1.0)
             # Plot
             plot_transformed_sample(before,
