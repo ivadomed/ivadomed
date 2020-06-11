@@ -13,7 +13,7 @@ from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adapt
 
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
-                 dataset_type="training", requires_undo=False, metadata_type=None, **kwargs):
+                 dataset_type="training", requires_undo=False, metadata_type=None, soft_input=False, **kwargs):
     """Get loader.
 
     Args:
@@ -30,6 +30,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         metadata_type (string): None if no metadata
         dataset_type (string): training, validation or testing
         requires_undo (Bool): If True, the transformations without undo_transform will be discarded
+        soft_input(Bool): if True ground truth will be float32 non binarized images
     Returns:
         BidsDataset
     """
@@ -68,7 +69,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                               transform=transforms,
                               multichannel=multichannel,
-                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params))
+                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
+                              soft_input=soft_input)
 
     # if ROICrop in transform, then apply SliceFilter to ROI slices
     if 'ROICrop' in transforms_params:
@@ -94,13 +96,14 @@ class SegmentationPair(object):
     :param cache: if the data should be cached in memory or not.
     """
 
-    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True):
+    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, soft_input=False):
 
         self.input_filenames = input_filenames
         self.gt_filenames = gt_filenames
         self.metadata = metadata
         self.cache = cache
         self.slice_axis = slice_axis
+        self.soft_input = soft_input
 
         # list of the images
         self.input_handle = []
@@ -185,10 +188,14 @@ class SegmentationPair(object):
         if self.gt_handle is None:
             gt_data = None
         for gt in self.gt_handle:
-            if gt is not None:
+            if gt is not None and self.soft_input==False:
                 hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
                                                                 self.slice_axis)
                 gt_data.append(hwd_oriented.astype(np.uint8))
+            elif gt is not None and self.soft_input:
+                hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
+                                                                self.slice_axis)
+                gt_data.append(hwd_oriented.astype(np.float32))
             else:
                 gt_data.append(np.zeros(self.input_handle[0].shape, dtype=np.float32).astype(np.uint8))
 
@@ -275,7 +282,7 @@ class MRI2DSegmentationDataset(Dataset):
     :param transform: transformations to apply.
     """
 
-    def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None):
+    def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None,soft_input=False):
 
         self.indexes = []
         self.filename_pairs = filename_pairs
@@ -284,6 +291,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
+        self.soft_input = soft_input
 
         self._load_filenames()
 
@@ -293,7 +301,7 @@ class MRI2DSegmentationDataset(Dataset):
                                         cache=self.cache)
 
             seg_pair = SegmentationPair(input_filenames, gt_filenames, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache)
+                                        cache=self.cache,soft_input=self.soft_input)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
@@ -354,8 +362,8 @@ class MRI2DSegmentationDataset(Dataset):
         stack_gt, metadata_gt = self.transform(sample=seg_pair_slice["gt"],
                                                metadata=metadata_gt,
                                                data_type="gt")
-        # Make sure stack_gt is binarized
-        if stack_gt is not None:
+        # Make sure stack_gt is binarized if needed
+        if stack_gt is not None and self.soft_input==False :
             stack_gt = torch.as_tensor(
                 [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in range(len(stack_gt))])
 
@@ -528,9 +536,11 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
 class BidsDataset(MRI2DSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
-                 multichannel=False):
+                 multichannel=False,soft_input=False):
 
         self.bids_ds = bids.BIDS(root_dir)
+
+        self.soft_input = soft_input
 
         self.filename_pairs = []
         if metadata_choice == 'mri_params':
@@ -623,4 +633,4 @@ class BidsDataset(MRI2DSegmentationDataset):
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
 
-        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn)
+        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, self.soft_input)
