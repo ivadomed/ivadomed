@@ -485,8 +485,9 @@ def detect_image(image,folder_model):
     if fname_model.endswith('.pt'):
         model = torch.load(fname_model, map_location=device)
         model.eval()
-    input = np.expand_dims(input, axis=0)
-    input = imed_transforms.NumpyToTensor()(input).unsqueeze(0)
+    input = np.expand_dims(image, axis=0)
+    input = imed_transforms.NumpyToTensor()(input)[0]
+    input = input.unsqueeze(0)
     input = input.float()
     output = model(input)
     heatmap = output.data.cpu().numpy()
