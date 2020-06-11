@@ -340,8 +340,6 @@ class MRI2DSegmentationDataset(Dataset):
 
                 if self.slice_filter_fn:
                     filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
-                    if roi_filename:
-                        filter_fn_ret_seg = filter_fn_ret_seg and self.slice_filter_fn(slice_roi_pair)
                 if self.slice_filter_fn and not filter_fn_ret_seg:
                     continue
 
