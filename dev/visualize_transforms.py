@@ -83,6 +83,10 @@ def run_visualization(args):
     dict_transforms = {}
     stg_transforms = ""
     for transform_name in training_transforms:
+        # We skip NumpyToTensor transform since that s only a change of data type
+        if transform_name == "NumpyToTensor":
+            continue
+
         # Update stg_transforms
         stg_transforms += transform_name + "_"
 
@@ -112,6 +116,7 @@ def run_visualization(args):
                                     list_title=["_".join(stg_transforms[:-1].split("_")[:-1]), stg_transforms[:-1]],
                                     fname_out=fname_out,
                                     cmap="jet" if is_mask else "gray")
+
 
 if __name__ == '__main__':
     parser = get_parser()
