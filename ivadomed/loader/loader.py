@@ -99,7 +99,7 @@ class SegmentationPair(object):
     """This class is used to build segmentation datasets. It represents
     a pair of of two data volumes (the input data and the ground truth data).
     """
-    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None, gt_file_type="target"):
+    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None):
         """
         Args:
             input_filenames (list): the input filename list (supported by nibabel). For single channel, the list will
@@ -108,7 +108,6 @@ class SegmentationPair(object):
             metadata (list): metadata list with each item corresponding to an image (modality) in input_filenames.
                 For single channel, the list will contain metadata related to one image.
             cache (bool): if the data should be cached in memory or not.
-            gt_file_type (string): type of gt : either target or roi
         """
         self.input_filenames = input_filenames
         self.gt_filenames = gt_filenames
@@ -289,7 +288,6 @@ class SegmentationPair(object):
             "gt": gt_slices,
             "input_metadata": metadata["input_metadata"],
             "gt_metadata": metadata["gt_metadata"],
-            "gt_file_type": self.gt_file_type
         }
 
         return dreturn
@@ -327,10 +325,10 @@ class MRI2DSegmentationDataset(Dataset):
     def load_filenames(self):
         for input_filenames, gt_filenames, roi_filename, metadata in self.filename_pairs:
             roi_pair = SegmentationPair(input_filenames, roi_filename, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache, prepro_transforms=self.prepro_transforms, gt_file_type="roi")
+                                        cache=self.cache, prepro_transforms=self.prepro_transforms)
 
             seg_pair = SegmentationPair(input_filenames, gt_filenames, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache, prepro_transforms=self.prepro_transforms, gt_file_type="target")
+                                        cache=self.cache, prepro_transforms=self.prepro_transforms)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
