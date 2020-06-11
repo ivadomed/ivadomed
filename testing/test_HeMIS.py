@@ -57,7 +57,7 @@ def test_HeMIS(p=0.0001):
             "out_channel": 1,
             "missing_probability": 0.00001,
             "missing_probability_growth": 0.9,
-            "modalities": ["T1w", "T2w"],
+            "contrasts": ["T1w", "T2w"],
             "ram": False,
             "hdf5_path": 'testing_data/mytestfile.hdf5',
             "csv_path": 'testing_data/hdf5.csv',
@@ -95,7 +95,7 @@ def test_HeMIS(p=0.0001):
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=1)
 
-    model = models.HeMISUnet(modalities=contrasts,
+    model = models.HeMISUnet(contrasts=contrasts,
                              depth=3,
                              drop_rate=DROPOUT,
                              bn_momentum=BN)
@@ -138,7 +138,7 @@ def test_HeMIS(p=0.0001):
             print(batch["input_metadata"][0][0]["missing_mod"])
             missing_mod = imed_training.get_metadata(batch["input_metadata"], model_params)
 
-            print("Number of missing modalities = {}."
+            print("Number of missing contrasts = {}."
                   .format(len(input_samples) * len(input_samples[0]) - missing_mod.sum()))
             print("len input = {}".format(len(input_samples)))
             print("Batch = {}, {}".format(input_samples[0].shape, gt_samples[0].shape))

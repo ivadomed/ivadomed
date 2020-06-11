@@ -605,23 +605,23 @@ class HDF5Dataset:
     def update(self, strategy="Missing", p=0.0001):
         """
         Update the Dataframe itself.
-        :param p: probability of the modality to be missing
+        :param p: probability of the contrast to be missing
         :param strategy: Update the dataframe using the corresponding strategy. For now the only the strategy
-        implemented is the one used by HeMIS (i.e. by removing modalities with a certain probability.) Other strategies
+        implemented is the one used by HeMIS (i.e. by removing contrasts with a certain probability.) Other strategies
         that could be implemented are Active Learning, Curriculum Learning, ...
 
         """
         if strategy == 'Missing':
-            print("Probalility of missing modality = {}".format(p))
+            print("Probalility of missing contrast = {}".format(p))
             for idx in range(len(self.dataframe)):
                 missing_mod = np.random.choice(2, len(self.cst_lst), p=[p, 1 - p])
-                # if all modalities are removed from a subject randomly choose 1
+                # if all contrasts are removed from a subject randomly choose 1
                 if not np.any(missing_mod):
                     missing_mod = np.zeros((len(self.cst_lst)))
                     missing_mod[np.random.randint(2, size=1)] = 1
                 self.cst_matrix[idx,] = missing_mod
 
-            print("Missing modalities = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
+            print("Missing contrasts = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
 
 
 def HDF5_to_Bids(HDF5, subjects, path_dir):

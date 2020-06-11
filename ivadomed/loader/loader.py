@@ -260,7 +260,7 @@ class SegmentationPair(object):
             raise RuntimeError("Invalid axis, must be between 0 and 2.")
 
         input_slices = []
-        # Loop over modalities
+        # Loop over contrasts
         for data_object in input_dataobj:
             input_slices.append(np.asarray(data_object[..., slice_index],
                                            dtype=np.float32))
