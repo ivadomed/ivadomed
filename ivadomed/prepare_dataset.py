@@ -8,6 +8,7 @@ import sys
 import ivadomed.utils as imed_utils
 import scipy
 
+
 # normalize Image
 def normalize(arr):
     ma = arr.max()
@@ -15,75 +16,22 @@ def normalize(arr):
     return ((arr - mi) / (ma - mi))
 
 
-# Useful function to generate a Gaussian Function on given coordinates. Used to generate ground truth.
-def label2maskmap_gt(data, shape, c_dx=0, c_dy=0, radius=10, normalize=False):
+def gkern(kernlen=10):
     """
-    Generate a heatmap resulting from the convolution between a 2D Gaussian kernel and a pair of 2D coordinates.
+    Returns a 2D Gaussian kernel.
+
     Args:
-        data: input image
-        shape: dimension of output
-        c_dx: shift along the x axis
-        c_dy: shift along th y axis
-        radius: is the radius of the gaussian function
-        normalize: bool for normalization.
+        kernlen(int): size of kernel
 
     Returns:
-        array: a MxN normalized array
+        array: a 2D array of size (kernlen,kernlen)
 
     """
 
-    # Our 2-dimensional distribution will be over variables X and Y
-    (M, N) = (shape[2], shape[1])
-    if len(data) <= 2:
-        # Output coordinates are reduced during post processing which poses a problem
-        data = [0, data[0], data[1]]
-    maskMap = []
-
-    x, y = data[2], data[1]
-
-    # Correct the labels
-    x += c_dx
-    y += c_dy
-
-    X = np.linspace(0, M - 1, M)
-    Y = np.linspace(0, N - 1, N)
-    X, Y = np.meshgrid(X, Y)
-
-    # Pack X and Y into a single 3-dimensional array
-    pos = np.empty(X.shape + (2,))
-    pos[:, :, 0] = X
-    pos[:, :, 1] = Y
-
-    # Mean vector and covariance matrix
-    mu = np.array([x, y])
-    Sigma = np.array([[radius, 0], [0, radius]])
-
-    # The distribution on the variables X, Y packed into pos.
-    Z = multivariate_gaussian(pos, mu, Sigma)
-
-    # Normalization
-    if normalize:
-        Z *= (1 / np.max(Z))
-    else:
-        # 8bit image values (the loss go to inf+)
-        Z *= (1 / np.max(Z))
-        Z = np.asarray(Z * 255, dtype=np.uint8)
-
-    maskMap.append(Z)
-
-    if len(maskMap) == 1:
-        maskMap = maskMap[0]
-
-    return np.asarray(maskMap)
-
-
-def gkern(kernlen=10):
-    """Returns a 2D Gaussian kernel."""
-
-    x = np.linspace(-1, 1, kernlen+1)
+    x = np.linspace(-1, 1, kernlen + 1)
     kern1d = np.diff(scipy.stats.norm.cdf(x))
     kern2d = np.outer(kern1d, kern1d)
-    return normalize(kern2d/kern2d.sum())
+    return normalize(kern2d / kern2d.sum())
 
 
 def heatmap_generation(image, kernel_size):
@@ -95,44 +43,24 @@ def heatmap_generation(image, kernel_size):
         kernel_size: size of gaussian kernel
 
     Returns:
-        array: 2d array heatmap matching the label.
+        array: 2D array heatmap matching the label.
 
     """
     kernel = gkern(kernel_size)
-    map = scipy.signal.convolve(image, kernel,mode='same')
+    map = scipy.signal.convolve(image, kernel, mode='same')
     return normalize(map)
-
-
-def multivariate_gaussian(pos, mu, Sigma):
-    """
-    Return the multivariate Gaussian distribution on array.
-
-    pos is an array constructed by packing the meshed arrays of variables
-    x_1, x_2, x_3, ..., x_k into its _last_ dimension.
-
-    """
-
-    n = mu.shape[0]
-    Sigma_det = np.linalg.det(Sigma)
-    Sigma_inv = np.linalg.inv(Sigma)
-    N = np.sqrt((2 * np.pi) ** n * Sigma_det)
-    # This einsum call calculates (x-mu)T.Sigma-1.(x-mu) in a vectorized
-    # way across all the input variables.
-    fac = np.einsum('...k,kl,...l->...', pos - mu, Sigma_inv, pos - mu)
-
-    return np.exp(-fac / 2) / N
 
 
 def add_zero_padding(img_list, x_val=512, y_val=512):
     """
     Add zero padding to each image in an array so they all have matching dimension.
     Args:
-        img_list: list of input image to pad
-        x_val: shape of output alongside x axis
-        y_val: shape of output alongside y axis
+        img_list(list): list of input image to pad if a single element is inputed it will change it to a list of len 1
+        x_val(int): shape of output alongside x axis
+        y_val(int): shape of output alongside y axis
 
     Returns:
-        list of padded images
+        list: list of padded images the same length as input list
     """
     if type(img_list) != list:
         img_list = [img_list]
@@ -140,7 +68,7 @@ def add_zero_padding(img_list, x_val=512, y_val=512):
     for i in range(len(img_list)):
         img = img_list[i]
         img_tmp = np.zeros((x_val, y_val), dtype=np.float64)
-        img_tmp[0:img.shape[0], 0:img.shape[1]] = img[:,:]
+        img_tmp[0:img.shape[0], 0:img.shape[1]] = img[:, :]
         img_zero_padding_list.append(img_tmp)
 
     return img_zero_padding_list
@@ -173,7 +101,7 @@ def mask2label(path_label, aim='full'):
         elif aim == 'c2':
             if arr[x, y, z] == 3:
                 list_label_image.append([x, y, z, arr[x, y, z]])
-    list_label_image.sort(key=lambda x : x[3])
+    list_label_image.sort(key=lambda x: x[3])
     return list_label_image
 
 
@@ -181,23 +109,20 @@ def get_midslice_average(path_im, ind):
     """
     Retrieve the input images for the network. This images are generated by
     averaging the 7 slices in the middle of the volume
-    :param path_im:
-    :param ind:
-    :return:
     Args:
-        path_im: path to image
-        ind: index of the slice around which we will average
+        path_im(string): path to image
+        ind(int): index of the slice around which we will average
 
     Returns:
-        array: an array containing the average image.
+        array: an array containing the average image oriented according to RAS+ convention.
 
     """
     image = nib.load(path_im)
     image = nib.as_closest_canonical(image)
     arr = np.array(image.dataobj)
     numb_of_slice = 3
-    if ind + 3 > arr.shape[0] :
-        numb_of_slice = arr.shape[0]-ind
+    if ind + 3 > arr.shape[0]:
+        numb_of_slice = arr.shape[0] - ind
     if ind - numb_of_slice < 0:
         numb_of_slice = ind
 
@@ -219,35 +144,20 @@ def images_normalization(img_list, std=True):
     return img_norm_list
 
 
-def extract_all(list_coord_label, shape_im=(1, 150, 200)):
-    """
-    Create groundtruth by creating gaussian Function for every ground truth points for a single image
-    Args:
-        list_coord_label(list): list of ground truth coordinates
-        shape_im (tuple): shape of output image with zero padding
-    Returns:
-         2D-array: a 2d heatmap image.
-    """
-    shape_tmp = (1, shape_im[0], shape_im[1])
-    final = np.zeros(shape_tmp)
-    for x in list_coord_label:
-        train_lbs_tmp_mask = label2maskmap_gt(x, shape_tmp)
-        for w in range(shape_im[0]):
-            for h in range(shape_im[1]):
-                final[0, w, h] = max(final[0, w, h], train_lbs_tmp_mask[w, h])
-    return final
-
-
-def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim,ap_pad=128,is_pad=320):
+def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim, ap_pad=128, is_pad=320):
     """
      This function takes as input a path to a dataset and generate two sets of images:
-   (i) mid-sagittal image and
+   (i) mid-sagittal image of common size (1,ap_pad,is_pad) and
    (ii) heatmap of disc labels associated with the mid-sagittal image.
 
     Args:
         bids_path (string): path to BIDS dataset form which images will be generated
         suffix (string): suffix of image that will be processed (e.g., T2w)
         aim(string): 'full' or 'c2'. If 'c2' retrieves only c2 label (value = 3) else create heatmap with all label.
+        ap_pad(int): desired output size of AP axis which will be
+                    achieved from padding small images and cropping bigger ones
+        is_pad(int): Desired output size of IS axis.
+
 
     Returns:
         None. Image are saved in Bids folder
@@ -259,54 +169,45 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
         sub = t[i]
         path_image = bids_path + t[i] + '/anat/' + t[i] + suffix + '.nii.gz'
         if os.path.isfile(path_image):
-            path_label = bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + '_label-disc-manual.nii.gz'
+            path_label = bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[
+                i] + suffix + '_labels-disc-manual.nii.gz'
             list_points = mask2label(path_label, aim=aim)
             image_ref = nib.load(path_image)
             nib_ref_can = nib.as_closest_canonical(image_ref)
             imsh = np.array(nib_ref_can.dataobj).shape
             mid = get_midslice_average(path_image, list_points[0][0])
             if mid.shape[1] > is_pad:
-                mid = mid[:,mid.shape[1]-is_pad:]
-            elif mid.shape[1]<is_pad:
-                mid = add_zero_padding(mid,mid.shape[0],is_pad)[0]
+                mid = mid[:, mid.shape[1] - is_pad:]
+            elif mid.shape[1] < is_pad:
+                mid = add_zero_padding(mid, mid.shape[0], is_pad)[0]
             if mid.shape[0] > ap_pad:
-                mid = mid[mid.shape[0]-ap_pad:,:]
-            elif mid.shape[0]<ap_pad:
-                mid = add_zero_padding(mid,ap_pad,mid.shape[1])[0]
-            arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(mid[:, :], axis=0), 2, image_ref, nib_ref_can).astype('float32')
+                mid = mid[mid.shape[0] - ap_pad:, :]
+            elif mid.shape[0] < ap_pad:
+                mid = add_zero_padding(mid, ap_pad, mid.shape[1])[0]
+            arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(mid[:, :], axis=0), 2, image_ref,
+                                                           nib_ref_can).astype('float32')
             nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
             nib.save(nib_pred, bids_path + t[i] + '/anat/' + t[i] + suffix + '_mid.nii.gz')
             lab = nib.load(path_label)
             nib_ref_can = nib.as_closest_canonical(lab)
             label_array = np.zeros(imsh[1:])
 
-            if aim == 'c2':
-                for j in range (len (list_points)):
-                    if list_points[j][3]==3:
-                        label_array[list_points[j][1], list_points[j][2]] = 1
-            elif aim == 'full':
-                for j in range(len(list_points)):
-                    if list_points[j][3]<30 and list_points[j][3]>2:
-                        label_array[list_points[j][1], list_points[j][2]] = 1
+            for j in range(len(list_points)):
+                    label_array[list_points[j][1], list_points[j][2]] = 1
 
-            heatmap = heatmap_generation(label_array[ :, :],10)
+            heatmap = heatmap_generation(label_array[:, :], 10)
             if heatmap.shape[1] > is_pad:
-                heatmap = heatmap[:,heatmap.shape[1]-is_pad:]
+                heatmap = heatmap[:, heatmap.shape[1] - is_pad:]
             elif heatmap.shape[1] < is_pad:
-                heatmap = add_zero_padding(heatmap,heatmap.shape[0],is_pad)[0]
+                heatmap = add_zero_padding(heatmap, heatmap.shape[0], is_pad)[0]
             if heatmap.shape[0] > ap_pad:
-                heatmap = heatmap[heatmap.shape[0]-ap_pad:,:]
+                heatmap = heatmap[heatmap.shape[0] - ap_pad:, :]
             elif heatmap.shape[0] < ap_pad:
-                heatmap = add_zero_padding(heatmap,ap_pad,heatmap.shape[1])[0]
+                heatmap = add_zero_padding(heatmap, ap_pad, heatmap.shape[1])[0]
 
             arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(heatmap[:, :], axis=0), 2, lab, nib_ref_can)
             nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
-            nib.save(nib_pred, bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + '_mid_heatmap.nii.gz')
+            nib.save(nib_pred,
+                     bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + '_mid_heatmap.nii.gz')
         else:
             pass
-        
-
-
-
-
-
