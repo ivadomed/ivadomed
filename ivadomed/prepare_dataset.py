@@ -292,7 +292,7 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
             heatmap = heatmap_generation(label_array[ :, :],10)
             if heatmap.shape[1] > is_pad:
                 heatmap = heatmap[:,heatmap.shape[1]-is_pad:]
-            elif label_array.shape[1] < is_pad:
+            elif heatmap.shape[1] < is_pad:
                 heatmap = add_zero_padding(heatmap,heatmap.shape[0],is_pad)[0]
             if heatmap.shape[0] > ap_pad:
                 heatmap = heatmap[heatmap.shape[0]-ap_pad:,:]
