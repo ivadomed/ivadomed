@@ -225,11 +225,11 @@ class Bids_to_hdf5:
                         if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
                             target_filename[idx] = deriv
 
-                    if not (roi_suffix is "") and \
+                    if not (roi_suffix is None) and \
                             deriv.endswith(subject.record["modality"] + roi_suffix + ".nii.gz"):
                         roi_filename = [deriv]
 
-                if (not any(target_filename)) or (not (roi_suffix is "") and (roi_filename is None)):
+                if (not any(target_filename)) or (not (roi_suffix is None) and (roi_filename is None)):
                     continue
 
                 if not subject.has_metadata():
@@ -410,7 +410,7 @@ class Bids_to_hdf5:
 class HDF5Dataset:
     def __init__(self, root_dir, subject_lst, model_params, target_suffix, contrast_params,
                  slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
-                 slice_filter_fn=None, roi_suffix=""):
+                 slice_filter_fn=None, roi_suffix=None):
 
         """
 

@@ -7,7 +7,7 @@
         "bids_path": "../duke/projects/ivado-medical-imaging/spineGeneric_201907041011/result/",
         "target_suffix": ["_seg-manual"],
         "roi_params": {
-            "suffix": "",
+            "suffix": null,
             "slice_filter_roi": null
         },
         "contrast_params": {
@@ -23,7 +23,7 @@
         "multichannel": false
     },
     "split_dataset": {
-        "fname_split": "",
+        "fname_split": null,
         "random_seed": 6,
         "center_test": ["stanford", "amu", "queensland", "cardiff"],
         "method": "per_center",
@@ -51,7 +51,7 @@
         "balance_samples": false,
         "mixup_alpha": null,
         "transfer_learning": {
-            "retrain_model": "",
+            "retrain_model": null,
             "retrain_fraction": 1.0
         }
     },

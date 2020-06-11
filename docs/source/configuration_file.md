@@ -41,13 +41,13 @@ Dict. Discard a slice from the dataset if it meets a condition, see below.
 
 #### roi
 Dict. of parameters about the region of interest
-- `suffix`: String. Suffix of the derivative file containing the ROI used to crop (e.g. `"_seg-manual"`) with `ROICrop` as transform. Please use `""` if you do not want to use an ROI to crop.
+- `suffix`: String. Suffix of the derivative file containing the ROI used to crop (e.g. `"_seg-manual"`) with `ROICrop` as transform. Please use `null` if you do not want to use an ROI to crop.
 - `slice_filter_roi`: int. If the ROI mask contains less than `slice_filter_roi` non-zero voxels, the slice will be discarded from the dataset. This feature helps with noisy labels, e.g., if a slice contains only 2-3 labeled voxels, we do not want to use these labels to crop the image. This parameter is only considered when using `"ROICrop"`.
 
 ## Split dataset
 
 #### fname_split
-String. File name of the log ([joblib](https://joblib.readthedocs.io/en/latest/)) that contains the list of training/validation/testing subjects. This file can later be used to re-train a model using the same data splitting scheme. If `""`, a new splitting scheme is performed.
+String. File name of the log ([joblib](https://joblib.readthedocs.io/en/latest/)) that contains the list of training/validation/testing subjects. This file can later be used to re-train a model using the same data splitting scheme. If `null`, a new splitting scheme is performed.
 
 #### random_seed
 Int. Seed used by the random number generator to split the dataset between training/validation/testing. The use of the same seed ensures the same split between the sub-datasets, which is useful to reproduce results.
@@ -91,7 +91,7 @@ Bool. Balance positive and negative labels in both the training and the validati
 Float. Alpha parameter of the Beta distribution, see [original paper on the Mixup technique](https://arxiv.org/abs/1710.09412).
 
 #### transfer_learning
-- `retrain_model`: Filename of the pretrained model (`path/to/pretrained-model`). If `""`, no transfer learning is performed and the network is trained from scratch.
+- `retrain_model`: Filename of the pretrained model (`path/to/pretrained-model`). If `null`, no transfer learning is performed and the network is trained from scratch.
 - `retrain_fraction`: Float between 0. and 1. Controls the fraction of the pre-trained model that will be fine-tuned. For instance, if set to 0.5, the second half of the model will be fine-tuned while the first layers will be frozen.
 
 ## Architecture
