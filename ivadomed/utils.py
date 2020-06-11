@@ -708,9 +708,9 @@ class SliceFilter(object):
                 if not np.any(gt_data):
                     return False
 
-            if self.filter_empty_input:
-                if not np.all([np.any(img) for img in input_data]):
-                    return False
+        if self.filter_empty_input:
+            if not np.all([np.any(img) for img in input_data]):
+                return False
 
             if self.filter_classification:
                 if not np.all([int(self.classifier(img)) for img in input_data]):
