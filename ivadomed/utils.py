@@ -698,23 +698,19 @@ class SliceFilter(object):
     def __call__(self, sample):
         input_data, gt_data = sample['input'], sample['gt']
 
-        #Filter empty roi
-        if sample['gt_file_type'] == "roi":
-            if self.filter_empty_input:
-                if not np.any(gt_data):
-                    return False
-        else:
-            if self.filter_empty_mask:
-                if not np.any(gt_data):
-                    return False
+        if self.filter_empty_mask:
+            if not np.any(gt_data):
+                return False
 
         if self.filter_empty_input:
             if not np.all([np.any(img) for img in input_data]):
                 return False
+            if sample['gt_type'] == "roi" and not np.any(gt_data):
+                return False
 
-            if self.filter_classification:
-                if not np.all([int(self.classifier(img)) for img in input_data]):
-                    return False
+        if self.filter_classification:
+            if not np.all([int(self.classifier(img)) for img in input_data]):
+                return False
 
         return True
 
