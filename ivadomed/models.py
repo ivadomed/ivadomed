@@ -294,12 +294,12 @@ class FiLMlayer(Module):
 
 
 class HeMISUnet(Module):
-    """A U-Net model inspired by HeMIS to deal with missing modalities.
-        1) It has as many encoders as modalities but only one decoder.
+    """A U-Net model inspired by HeMIS to deal with missing contrasts.
+        1) It has as many encoders as contrasts but only one decoder.
         2) Skip connections are the concatenations of the means and var of all encoders skip connections
 
         Param:
-        Modalities: list of all the possible modalities. ['T1', 'T2', 'T2S', 'F']
+        contrasts: list of all the possible contrasts. ['T1', 'T2', 'T2S', 'F']
 
         see also::
         Havaei, M., Guizard, N., Chapados, N., Bengio, Y.:
@@ -311,15 +311,15 @@ class HeMISUnet(Module):
         ArXiv link: https://arxiv.org/abs/1907.11150
         """
 
-    def __init__(self, modalities, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, **kwargs):
+    def __init__(self, contrasts, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, **kwargs):
         super(HeMISUnet, self).__init__()
         self.depth = depth
-        self.modalities = modalities
+        self.contrasts = contrasts
 
         # Encoder path
         self.Encoder_mod = nn.ModuleDict(
             [['Encoder_{}'.format(Mod), Encoder(in_channel=1, depth=depth, drop_rate=drop_rate,
-                                                bn_momentum=bn_momentum)] for Mod in self.modalities])
+                                                bn_momentum=bn_momentum)] for Mod in self.contrasts])
 
         # Decoder path
         self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate,
@@ -329,14 +329,14 @@ class HeMISUnet(Module):
         """"
             X is  list like X = [x_T1, x_T2, x_T2S, x_F]
             indexes_mod: list of arrays like [[1, 1, 1], [1, 1, 0], [1, 0, 1], [1, 1, 0]]
-            N.B. len(list) = number of modalities.
+            N.B. len(list) = number of contrasts.
             len(list[i]) = Batch size
         """
 
         features_mod = [[] for _ in range(self.depth + 1)]
 
         # Down-sampling
-        for i, Mod in enumerate(self.modalities):
+        for i, Mod in enumerate(self.contrasts):
             features, _ = self.Encoder_mod['Encoder_{}'.format(Mod)](x_mods[i])
 
             for j in range(self.depth + 1):

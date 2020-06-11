@@ -12,6 +12,7 @@
 Comprehensive and open-source repository of deep learning methods for medical data segmentation.
 Collaboration between MILA and NeuroPoly for the IVADO project on medical imaging.
 
+Technical documentation is available [here](https://ivadomed.org).
 
 ## Contributors
 [List of contributors](https://github.com/neuropoly/ivado-medical-imaging/graphs/contributors)

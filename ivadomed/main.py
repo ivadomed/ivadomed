@@ -17,7 +17,9 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 cudnn.benchmark = True
 
 # List of not-default available models i.e. different from Unet
-MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'Countception']
+
+MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'NAME_CLASSIFIER_1','Countception']
+
 
 
 def run_main():
@@ -50,15 +52,6 @@ def run_main():
                                                                                      context['loader_parameters']['bids_path'],
                                                                                      log_directory)
 
-    # Get transforms for each subdataset
-    transform_train_params, transform_valid_params, transform_test_params = \
-        imed_transforms.get_subdatasets_transforms(context["transformation"])
-    if command == "train":
-        imed_utils.display_selected_transfoms(transform_train_params, dataset_type="training")
-        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type="validation")
-    elif command == "test":
-        imed_utils.display_selected_transfoms(transform_test_params, dataset_type="testing")
-
     # Loader params
     loader_params = context["loader_parameters"]
     if command == "train":
@@ -67,6 +60,15 @@ def run_main():
         loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["testing"]
     if "FiLMedUnet" in context and context["FiLMedUnet"]["applied"]:
         loader_params.update({"metadata_type": context["FiLMedUnet"]["metadata"]})
+
+    # Get transforms for each subdataset
+    transform_train_params, transform_valid_params, transform_test_params = \
+        imed_transforms.get_subdatasets_transforms(context["transformation"])
+    if command == "train":
+        imed_utils.display_selected_transfoms(transform_train_params, dataset_type="training")
+        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type="validation")
+    elif command == "test":
+        imed_utils.display_selected_transfoms(transform_test_params, dataset_type="testing")
 
     # METRICS
     metric_fns = [imed_metrics.dice_score,
@@ -154,7 +156,7 @@ def run_main():
             transformation_dict = transform_valid_params
         # Get Testing dataset
         ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
-                                                                  'transforms_params': transformation_dict,
+                                                                  'transforms_params': transformation_dict.copy(),
                                                                   'dataset_type': 'testing',
                                                                   'requires_undo': True}})
 

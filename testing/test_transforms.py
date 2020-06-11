@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-# pytest unit tests for ivadomed.postprocessing
+# pytest unit tests for ivadomed.transforms
 
 
 from math import isclose
@@ -21,7 +21,7 @@ if DEBUGGING:
     from testing.utils import plot_transformed_sample
 
 
-def create_test_image(width, height, depth=0, num_modalities=1, noise_max=10.0, num_objs=1, rad_max=30,
+def create_test_image(width, height, depth=0, num_contrasts=1, noise_max=10.0, num_objs=1, rad_max=30,
                       num_seg_classes=1, random_position=False):
     """Create test image.
 
@@ -32,7 +32,7 @@ def create_test_image(width, height, depth=0, num_modalities=1, noise_max=10.0, 
         height (int): height image
         width (int): width image
         depth (int): depth image, if 0 then 2D images are returned
-        num_modalities (int): number of modalities
+        num_contrasts (int): number of contrasts
         noise_max (float): noise from the uniform distribution [0,noise_max)
         num_objs (int): number of objects
         rad_max (int): maximum radius of objects
@@ -40,11 +40,11 @@ def create_test_image(width, height, depth=0, num_modalities=1, noise_max=10.0, 
         random_position (bool): If false, the object is located at the center of the image. Otherwise, randomly located.
 
     Return:
-        list, list: image and segmentation, list of num_modalities elements of shape (height, width, depth).
+        list, list: image and segmentation, list of num_contrasts elements of shape (height, width, depth).
 
     Adapted from: https://github.com/Project-MONAI/MONAI/blob/master/monai/data/synthetic.py#L17
     """
-    assert num_modalities >= 1
+    assert num_contrasts >= 1
 
     depth_ = depth if depth >= 1 else 2 * rad_max + 1
     assert (height > 2 * rad_max) and (width > 2 * rad_max) and (depth_ > 2 * rad_max)
@@ -75,7 +75,7 @@ def create_test_image(width, height, depth=0, num_modalities=1, noise_max=10.0, 
         seg = seg[:, :, z_slice]
 
     list_im, list_seg = [], []
-    for _ in range(num_modalities):
+    for _ in range(num_contrasts):
         norm = np.random.uniform(0, num_seg_classes * noise_max, size=image.shape)
         noisy_image = rescale_values_array(np.maximum(image, norm))
 
@@ -97,7 +97,7 @@ def test_HistogramClipping(im_seg):
     # Apply Transform
     metadata = [{} for _ in im] if isinstance(im, list) else {}
     do_im, _ = transform(sample=im, metadata=metadata)
-    # Check result has the same number of modalities
+    # Check result has the same number of contrasts
     assert len(do_im) == len(im)
     # Check clipping
     min_percentile = transform.min_percentile
@@ -117,7 +117,7 @@ def test_RandomShiftIntensity(im_seg):
     # Apply Do Transform
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
     do_im, do_metadata = transform(sample=im, metadata=metadata_in)
-    # Check result has the same number of modalities
+    # Check result has the same number of contrasts
     assert len(do_im) == len(im)
     # Check metadata update
     assert all('offset' in m for m in do_metadata)
@@ -127,7 +127,7 @@ def test_RandomShiftIntensity(im_seg):
 
     # Apply Undo Transform
     undo_im, undo_metadata = transform.undo_transform(sample=do_im, metadata=do_metadata)
-    # Check result has the same number of modalities
+    # Check result has the same number of contrasts
     assert len(undo_im) == len(im)
     # Check undo
     for idx, i in enumerate(im):

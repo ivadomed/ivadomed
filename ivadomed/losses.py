@@ -114,27 +114,44 @@ class GeneralizedDiceLoss(nn.Module):
     Generalized Dice Loss: https://arxiv.org/pdf/1707.03237
     """
 
-    def __init__(self, epsilon=1e-5):
+    def __init__(self, epsilon=1e-5, include_background=True):
+        """
+        Args:
+            epsilon (float):
+            include_background (float): If True, then an extra channel is added, which represents the background class
+        """
         super(GeneralizedDiceLoss, self).__init__()
         self.epsilon = epsilon
+        self.include_background = include_background
 
     def forward(self, input, target):
         if not (target.size() == input.size()):
             raise ValueError("Target size ({}) must be the same as input size ({})".format(target.size(), input.size()))
 
-        input = input.view(-1)
-        target = target.view(-1)
+        if self.include_background:
+            # init
+            size_background = [input.size(0), 1] + list(input.size())[2:]
+            input_background = torch.zeros(size_background, dtype=input.dtype)
+            target_background = torch.zeros(size_background, dtype=target.dtype)
+            # fill with opposite
+            input_background[input.sum(1).expand_as(input_background) == 0] = 1
+            target_background[target.sum(1).expand_as(input_background) == 0] = 1
+            # Concat
+            input = torch.cat([input, input_background.to(input.device)], dim=1)
+            target = torch.cat([target, target_background.to(target.device)], dim=1)
 
+        # Compute class weights
         target = target.float()
-        target_sum = target.sum(-1)
+        axes_to_sum = tuple(range(2, len(target.shape)))
+        target_sum = target.sum(axis=axes_to_sum)
         class_weights = nn.Parameter(1. / (target_sum * target_sum).clamp(min=self.epsilon))
+        # W Intersection
+        intersect = ((input * target).sum(axis=axes_to_sum) * class_weights).sum()
 
-        intersect = (input * target).sum(-1) * class_weights
-        intersect = intersect.sum()
+        # W Union
+        denominator = ((input + target).sum(axis=axes_to_sum) * class_weights).sum()
 
-        denominator = ((input + target).sum(-1) * class_weights).sum()
-
-        return 1. - 2. * intersect / denominator.clamp(min=self.epsilon)
+        return - 2. * intersect / denominator.clamp(min=self.epsilon)
 
 
 class TverskyLoss(nn.Module):
@@ -172,6 +189,7 @@ class TverskyLoss(nn.Module):
             float: Tversky index
         """
         # Compute TP
+        y_true = y_true.float()
         tp = torch.sum(y_true * y_pred)
         # Compute FN
         fn = torch.sum(y_true * (1 - y_pred))
@@ -217,8 +235,9 @@ class FocalTverskyLoss(TverskyLoss):
             - setting alpha=beta=0.5 and gamma=1: equivalent to DiceLoss
             - default parameters were suggested by https://arxiv.org/pdf/1810.07842.pdf
         """
-        super(TverskyLoss).__init__(alpha=alpha, beta=beta, smooth=smooth)
+        super(FocalTverskyLoss, self).__init__()
         self.gamma = gamma
+        self.tversky = TverskyLoss(alpha=alpha, beta=beta, smooth=smooth)
 
     def forward(self, input, target):
         n_classes = input.shape[1]
