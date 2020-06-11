@@ -383,6 +383,7 @@ class MRI2DSegmentationDataset(Dataset):
         stack_roi, metadata_roi = self.transform(sample=roi_pair_slice["gt"],
                                                  metadata=metadata_roi,
                                                  data_type="roi")
+
         # Update metadata_input with metadata_roi
         metadata_input = imed_loader_utils.update_metadata(metadata_roi, metadata_input)
 

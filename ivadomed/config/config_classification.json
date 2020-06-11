@@ -83,11 +83,13 @@
             "wspace": 0.75,
             "hspace": 0.75,
             "dspace": 1,
-            "applied_to": ["im", "roi"]
+            "applied_to": ["im", "roi"],
+            "preprocessing": true
         },
         "ROICrop": {
             "size": [48, 48],
-            "applied_to": ["im"]
+            "applied_to": ["im", "roi"],
+            "preprocessing": true
         },
         "RandomTranslation": {
             "translate": [0.03, 0.03],
