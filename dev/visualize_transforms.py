@@ -89,7 +89,7 @@ def run_visualization(args):
     training_transforms, _, _ = imed_transforms.get_subdatasets_transforms(context["transformation"])
 
     if "ROICrop" in training_transforms:
-        if "roi" in args:
+        if args.roi and os.path.isfile(args.roi):
             roi_img, roi_data = get_data(args.roi, axis)
         else:
             print("\nPlease provide ROI image (-r) in order to apply ROICrop transformation.")
@@ -113,8 +113,20 @@ def run_visualization(args):
         # Loop across slices
         for i in indexes:
             data = [input_data[:, :, i]]
-            # Apply transformations
+            # Init metadata
             metadata = imed_loader_utils.SampleMetadata({"zooms": zooms, "data_type": "gt" if is_mask else "im"})
+
+            # Apply transformations to ROI
+            if "ROICrop" in training_transforms and os.path.isfile(args.roi):
+                roi = [roi_data[:, :, i]]
+                metadata.__setitem__('data_type', 'roi')
+                _, metadata = composed_transforms(sample=roi,
+                                                  metadata=[metadata for _ in range(n_slices)],
+                                                  data_type="roi")
+                metadata = metadata[0]
+                metadata.__setitem__('data_type', 'im')
+
+            # Apply transformations to image
             stack_im, _ = composed_transforms(sample=data,
                                               metadata=[metadata for _ in range(n_slices)],
                                               data_type="im")
