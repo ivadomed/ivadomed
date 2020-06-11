@@ -101,7 +101,6 @@ class SegmentationPair(object):
     """This class is used to build segmentation datasets. It represents
     a pair of of two data volumes (the input data and the ground truth data).
     """
-
     def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None,soft_input=False):
         """
         Args:
@@ -304,7 +303,6 @@ class SegmentationPair(object):
 class MRI2DSegmentationDataset(Dataset):
     """This is a generic class for 2D (slice-wise) segmentation datasets."""
 
-
     def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None,
                  task="segmentation",soft_input=False):
         """
@@ -340,7 +338,6 @@ class MRI2DSegmentationDataset(Dataset):
             seg_pair = SegmentationPair(input_filenames, gt_filenames, metadata=metadata, slice_axis=self.slice_axis,
                                         cache=self.cache, prepro_transforms=self.prepro_transforms,
                                         soft_input=self.soft_input)
-
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
@@ -414,7 +411,6 @@ class MRI2DSegmentationDataset(Dataset):
             # Force no transformation on labels for classification task
             # stack_gt is a list of length n_label, values: 0 or 1
             stack_gt = seg_pair_slice["gt"]
-
 
         data_dict = {
             'input': stack_input,
@@ -601,9 +597,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                  multichannel=False, task="segmentation",soft_input=False):
 
         self.bids_ds = bids.BIDS(root_dir)
-
         self.soft_input = soft_input
-
         self.filename_pairs = []
         if metadata_choice == 'mri_params':
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
