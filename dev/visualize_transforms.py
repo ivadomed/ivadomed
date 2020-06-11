@@ -13,6 +13,7 @@
 #   and save the visual result in a output folder o: transform0_slice19.png, transform0_transform1_slice19.png etc.
 #
 # Usage: python dev/visualize_transforms.py -i <input_filename> -c <fname_config> -n <int> -o <output_folder>
+#           -r <roi_fname>
 #
 ##############################################################
 
@@ -39,8 +40,21 @@ def get_parser():
                         help="Number of random slices to visualize.")
     parser.add_argument("-o", "--ofolder", required=False, default="./",
                         help="Output folder.")
+    parser.add_argument("-r", "--roi", required=False,
+                        help="ROI filename. Only required if ROICrop is part of the transformations.")
     return parser
 
+
+def get_data(fname_in, axis):
+    # Load image
+    input_img = nib.load(fname_in)
+    # Reorient as canonical
+    input_img = nib.as_closest_canonical(input_img)
+    # Get input data
+    input_data = input_img.get_fdata(dtype=np.float32)
+    # Reorient data
+    input_data = imed_loader_utils.orient_img_hwd(input_data, slice_axis=axis)
+    return input_img, input_data
 
 def run_visualization(args):
     """Run visualization. Main function of this script.
@@ -60,15 +74,10 @@ def run_visualization(args):
     if not os.path.isdir(folder_output):
         os.makedirs(folder_output)
 
-    # Load image
-    input_img = nib.load(fname_input)
-    # Reorient as canonical
-    input_img = nib.as_closest_canonical(input_img)
-    # Get input data
-    input_data = input_img.get_fdata(dtype=np.float32)
-    # Reorient data
+    # Slice extracted according to below axis
     axis = imed_utils.AXIS_DCT[context["loader_parameters"]["slice_axis"]]
-    input_data = imed_loader_utils.orient_img_hwd(input_data, slice_axis=axis)
+    # Get data
+    input_img, input_data = get_data(fname_input, axis)
     # Image or Mask
     is_mask = np.array_equal(input_data, input_data.astype(bool))
     # Get zooms
@@ -78,6 +87,13 @@ def run_visualization(args):
 
     # Get training transforms
     training_transforms, _, _ = imed_transforms.get_subdatasets_transforms(context["transformation"])
+
+    if "ROICrop" in training_transforms:
+        if "roi" in args:
+            roi_img, roi_data = get_data(args.roi, axis)
+        else:
+            print("\nPlease provide ROI image (-r) in order to apply ROICrop transformation.")
+            exit()
 
     # Compose transforms
     dict_transforms = {}
