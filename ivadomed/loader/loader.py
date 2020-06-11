@@ -299,14 +299,14 @@ class MRI2DSegmentationDataset(Dataset):
     def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None,
                  task="segmentation"):
         """
-        Args
-            filename_pairs (list): a list of tuples in the format (input filename list containing all modalities,ground
+        Args:
+            filename_pairs (list): a list of tuples in the format (input filename list containing all modalities,ground \
                 truth filename, ROI filename, metadata).
             slice_axis (int): axis to make the slicing (default axial).
             cache (bool): if the data should be cached in memory or not.
             transform (torchvision.Compose): transformations to apply.
             slice_filter_fn ():
-            task (string): choice between segmentation or classification. If classification: GT is discrete values.
+            task (string): choice between segmentation or classification. If classification: GT is discrete values, \
                 If segmentation: GT is binary mask.
         """
         self.indexes = []
@@ -566,7 +566,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
-                 cache=True, transform=None, metadata_choice=False, roi_suffix="",
+                 cache=True, transform=None, metadata_choice=False, roi_suffix=None,
                  multichannel=False):
         dataset = BidsDataset(root_dir,
                               subject_lst=subject_lst,
@@ -584,7 +584,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
 
 class BidsDataset(MRI2DSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
-                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix="",
+                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
                  multichannel=False, task="segmentation"):
 
         self.bids_ds = bids.BIDS(root_dir)
@@ -640,11 +640,11 @@ class BidsDataset(MRI2DSegmentationDataset):
                         if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
                             target_filename[idx] = deriv
 
-                    if not (roi_suffix is "") and \
+                    if not (roi_suffix is None) and \
                             deriv.endswith(subject.record["modality"] + roi_suffix + ".nii.gz"):
                         roi_filename = [deriv]
 
-                if (not any(target_filename)) or (not (roi_suffix is "") and (roi_filename is None)):
+                if (not any(target_filename)) or (not (roi_suffix is None) and (roi_filename is None)):
                     continue
 
                 if not subject.has_metadata():

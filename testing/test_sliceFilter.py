@@ -40,9 +40,9 @@ def _cmpt_slice(ds_loader):
     {"filter_empty_mask": True, "filter_empty_input": True}])
 @pytest.mark.parametrize('roi_params', [
     {"suffix": "_seg-manual", "slice_filter_roi": 10},
-    {"suffix": "", "slice_filter_roi": 0}])
+    {"suffix": None, "slice_filter_roi": 0}])
 def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_filter_params):
-    if "ROICrop" in transforms_dict and roi_params["suffix"] == "":
+    if "ROICrop" in transforms_dict and roi_params["suffix"] == None:
         return
 
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)

@@ -19,8 +19,8 @@ This document is for developers of ``ivadomed``, it contains the API functions.
 
 .. automethod:: ivadomed.loader.film.normalize_metadata
 .. autoclass:: ivadomed.loader.film.Kde_model
-.. autoclass:: ivadomed.loader.film.clustering_fit
-.. autoclass:: ivadomed.loader.film.check_isMRIparam
+.. automethod:: ivadomed.loader.film.clustering_fit
+.. automethod:: ivadomed.loader.film.check_isMRIparam
 
 :mod:`ivadomed.loader.loader`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -50,7 +50,7 @@ This document is for developers of ``ivadomed``, it contains the API functions.
 ----------------------
 
 .. autoclass:: ivadomed.losses.MultiClassDiceLoss
-.. automethod:: ivadomed.losses.dice_loss
+.. autoclass:: ivadomed.losses.DiceLoss
 .. autoclass:: ivadomed.losses.FocalLoss
 .. autoclass:: ivadomed.losses.FocalDiceLoss
 .. autoclass:: ivadomed.losses.GeneralizedDiceLoss
