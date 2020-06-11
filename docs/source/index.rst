@@ -26,6 +26,7 @@ The purpose of the ``ivadomed`` project is to:
 
    installation.md
    getting_started.md
+   configuration_file.md
    tutorials.md
    data.md
    models.rst

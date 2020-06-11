@@ -84,7 +84,7 @@ def test_hdf5():
             "out_channel": 1,
             "missing_probability": 0.00001,
             "missing_probability_growth": 0.9,
-            "modalities": ["T1w", "T2w"],
+            "contrasts": ["T1w", "T2w"],
             "ram": False,
             "hdf5_path": 'testing_data/mytestfile.hdf5',
             "csv_path": 'testing_data/hdf5.csv',
