@@ -141,7 +141,8 @@ def run_visualization(args):
             # Plot
             plot_transformed_sample(before,
                                     after,
-                                    list_title=["_".join(stg_transforms[:-1].split("_")[:-1]), stg_transforms[:-1]],
+                                    list_title=["\n".join(stg_transforms[:-1].split("_")[:-1]),
+                                                "\n".join(stg_transforms[:-1].split("_"))],
                                     fname_out=fname_out,
                                     cmap="jet" if is_mask else "gray")
 
