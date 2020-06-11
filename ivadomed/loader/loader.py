@@ -115,7 +115,6 @@ class SegmentationPair(object):
         self.cache = cache
         self.slice_axis = slice_axis
         self.prepro_transforms = prepro_transforms
-        self.gt_file_type = gt_file_type
         # list of the images
         self.input_handle = []
 
