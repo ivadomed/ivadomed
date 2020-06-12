@@ -7,9 +7,9 @@ Visualize data augmentation transformations
 ***********************************************
 Data augmentation is a key part of the Deep Learning training scheme. This script aims at facilitating the fine-tuning of data augmentation parameters. To do so, this script provides a step-by-step visualization of the transformations that are applied on data.
 
-The ``scripts/visualize_transforms.py`` script applies a series of transformations to 2D slices extracted from an input image, and save as png the resulting sample after each transform.
+The ``scripts/visualize_transforms.py`` script applies a series of transformations (defined in a configuration file ``-c``) to ``-n`` 2D slices randomly extracted from an input image (``-i``), and save as png the resulting sample after each transform.
 
-This is a simple example::
+For example::
 
     python scripts/visualize_transforms.py -i t2s.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
 
@@ -22,7 +22,7 @@ Provides a visualisation of a series of three transformation on a randomly selec
 
 And on a binary mask::
 
-    python dev/visualize_transforms.py -i t2s_gmseg.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
+    python scripts/visualize_transforms.py -i t2s_gmseg.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
 
 Gives:
 
@@ -35,3 +35,6 @@ Convert a model from PyTorch to ONNX format
 ***********************************************
 The integration of Deep Learning models into the clinical routine requires cpu optimized models. To export the PyTorch models to `ONNX <https://github.com/onnx/onnx>`_ format and to run the inference using `ONNX Runtime <https://github.com/microsoft/onnxruntime>`_ is a time and memory efficient way to answer this need.
 
+``scripts/convert_to_onnx.py`` converts a model from PyTorch to ONNX format, with information of whether it is a 2D or 3D model (``-d``)::
+
+    python scripts/convert_to_onnx.py -m path/to/model.pt -d 3
