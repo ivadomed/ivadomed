@@ -24,12 +24,12 @@ def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="je
 
     plt.subplot(1, 2, 1)
     plt.axis("off")
-    plt.imshow(before, interpolation='nearest', aspect='auto', cmap=cmap)
+    plt.imshow(before, interpolation='nearest', cmap=cmap)
     plt.title(list_title[0], fontsize=20)
 
     plt.subplot(1, 2, 2)
     plt.axis("off")
-    plt.imshow(after, interpolation='nearest', aspect='auto', cmap=cmap)
+    plt.imshow(after, interpolation='nearest', cmap=cmap)
     plt.title(list_title[1], fontsize=20)
 
     if fname_out:
