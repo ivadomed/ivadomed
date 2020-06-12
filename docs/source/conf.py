@@ -83,7 +83,7 @@ project = u'ivadomed'
 copyright = u'2020, Ivadomed team'
 author = u'Ivadomed team'
 
-github_doc_root = 'https://github.com/neuropoly/ivado-medical-imaging/tree/master/docs/'
+github_doc_root = 'https://github.com/neuropoly/ivadomed/tree/master/docs/'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -158,7 +158,7 @@ html_theme_options = {
 html_context = {
     "display_github": True,
     "github_user": "neuropoly",
-    "github_repo": "ivado-medical-imaging",
+    "github_repo": "ivadomed",
     "github_version": "master",
     "conf_py_path": "/docs/",
 }
