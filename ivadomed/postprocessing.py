@@ -157,15 +157,30 @@ def apply_crf(predictions, image, eps=1e-6):
     # Init DenseCRF
     d = dcrf.DenseCRF2D(width, height, n_label)
 
-    # Unary, negative log probabilities
+    # UNARY
     # Transpose axes
     predictions.transpose(2, 0, 1)
-    # Clip 0 probabilities
+    # Clip 0 probabilities as unary is negative log probabilities
     predictions = np.clip(predictions, eps, 1.0)
     # Get Unary
-    U = -np.log(predictions).astype(np.float32)
+    unary_potentials = -np.log(predictions).astype(np.float32)
     # Flatten
-    U.reshape([n_label, -1])
+    unary_potentials.reshape([n_label, -1])
     # Set Unary potentials
-    d.setUnaryEnergy(np.ascontiguousarray(U))
+    d.setUnaryEnergy(np.ascontiguousarray(unary_potentials))
+
+    # PAIRWISE
+    x_y_sd = (10, 10)
+    scale_feature = 0.01  # Image feature scaling factor per channel
+    spatial_potential_strength = 10
+    feature_potential_strength = 10
+    # Spatial prior: enforces more spatially consistent segmentation
+    spatial_prior = dcrf.create_pairwise_gaussian(sdims=x_y_sd, shape=(width, height))
+    d.addPairwiseEnergy(spatial_prior, compat=spatial_potential_strength)
+    # Feature prior: voxels with either a similar features are likely to belong to the same class
+    # TODO: add uncertainty as feature --> change chdim
+    feature_prior = dcrf.create_pairwise_bilateral(sdims=x_y_sd, schan=scale_feature, img=image, chdim=-1)
+    d.addPairwiseEnergy(feature_prior, compat=feature_potential_strength)
+
+
 
