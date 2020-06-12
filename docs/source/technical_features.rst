@@ -14,6 +14,7 @@ performance of the output segmentations.
    :alt: Figure FiLM
 
    Figure FiLM
+
 Uncertainty measures
 --------------------
 
@@ -36,6 +37,7 @@ uncertainty measures.
    :alt: Figure Uncertainty
 
    Figure Uncertainty
+
 Two-step training scheme with class sampling
 --------------------------------------------
 
@@ -62,6 +64,7 @@ extending the training distribution.
    :alt: Figure mixup
 
    Figure mixup
+
 Data augmentation on lesion labels
 ----------------------------------
 
@@ -79,6 +82,7 @@ network.
    :alt: Figure Data Augmentation on lesion ground truths
 
    Figure Data Augmentation on lesion ground truths
+
 Network architectures
 ---------------------
 

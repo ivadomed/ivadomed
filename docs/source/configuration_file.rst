@@ -5,7 +5,7 @@ General parameters
 ------------------
 
 command
-~~~~~~~
+^^^^^^^
 
 Run the specified command. Choices: ``"train"``, ``"test"``, ``"eval"``,
 to train, test and evaluate a model respectively.
@@ -221,14 +221,14 @@ Architecture
 Architectures for both segmentation and classification are available and
 described in the :ref:`models:Models` section. If the selected
 architecture is listed in the
-`loader.py <../../ivadomed/loader/loader.py#L14>`__ FIXME file, a
+`loader.py <../../ivadomed/loader/loader.py>`__ FIXME file, a
 classification (not segmentation) task is run. In the case of a
 classification task, the ground truth will correspond to a single label
 value extracted from ``target``, instead being an array (the latter
 being used for the segmentation task).
 
 default\_model (Mandatory)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Dict. Define the default model (``Unet``) and mandatory parameters that
 are common to all available architectures (listed in the
@@ -240,7 +240,7 @@ to the tailored model. - ``name``: ``Unet`` (default) -
 down-sampling operations.
 
 FiLMedUnet (Optional)
-~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^
 
 -  ``applied``: Bool. Set to ``true`` to use this model.
 -  ``metadata``: String. Choice between ``"mri_params"`` or
@@ -251,7 +251,7 @@ FiLMedUnet (Optional)
    ``config/contrast_dct.json``) are input to the FiLM generator.
 
 HeMISUnet (Optional)
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
 -  ``applied``: Bool. Set to ``true`` to use this model.
 -  ``missing_probability``: Float between 0 and 1. Initial probability
@@ -263,7 +263,7 @@ HeMISUnet (Optional)
    modified with the exponent ``missing_probability_growth``.
 
 UNet3D (Optional)
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 -  ``length_3D``: (Int, Int, Int). Size of the 3D patches used as
    model's input tensors.
@@ -306,7 +306,7 @@ sub-datasets. Otherwise, only applied to the specified subdatasets: eg
 testing sub-dataset.
 
 Available transformations:
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 -  ``NumpyToTensor``
 -  ``CenterCrop2D`` (parameters: ``size``)
