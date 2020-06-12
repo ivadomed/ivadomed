@@ -140,19 +140,23 @@ def mask_predictions(predictions, mask_binary):
     return predictions * mask_binary
 
 
-def apply_crf(predictions, image):
+def apply_crf(predictions, image, eps=1e-6):
     """
-    Apply Conditional Random Fields to the soft predictions. 2D inputs only.
+    Apply Conditional Random Fields to the soft predictions. 2D inputs, with shape: shape: n_label, height, width.
 
     Args:
         predictions (np.array): Input 2D soft segmentation.
         image (np.array): Input 2D image.
+        eps (float): To avoid log(0).
     Returns:
         Array.
     """
     # Get data shape
-    height, width = predictions.shape
-    # TODO: compatible with multi label
-    n_label = 1
+    height, width, n_label = predictions.shape
     # Init DenseCRF
     d = dcrf.DenseCRF2D(width, height, n_label)
+    # XX
+
+    # Get the Unary which is negative log probabilities
+    U = -np.log(predictions+eps)  # (n_label, height, width)
+
