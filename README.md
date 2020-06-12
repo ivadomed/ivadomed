@@ -17,4 +17,5 @@ The technical documentation is available [here](https://ivadomed.org).
 
 This project results from a collaboration between the [NeuroPoly Lab](https://www.neuro.polymtl.ca/)
 and the [Mila](https://mila.quebec/en/). The main funding source is [IVADO](https://ivado.ca/en/).
+
 [List of contributors](https://github.com/neuropoly/ivado-medical-imaging/graphs/contributors)
