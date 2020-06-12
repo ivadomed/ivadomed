@@ -31,8 +31,8 @@ The following Github documentation may be useful:
 desired changes, and open a Pull request to have your code reviewed and
 merged.
 
-**For internal contributor:** You can `open a
-branch <#opening-a-branch>`__ directly in this repository. If you don't
+**For internal contributor:** You can open a
+branch (see :ref:`contributing:Opening a branch`) directly in this repository. If you don't
 have the rights, contact the team leader.
 
 Opening an issue
@@ -208,10 +208,8 @@ The PR title is used to automatically generate the
 `Changelog <https://github.com/neuropoly/ivado-medical-imaging/blob/master/CHANGES.md>`__
 for each new release, so please follow the following rules:
 
--  Provide a concise and self-descriptive title (see `Issue
-   Title <#issue-title>`__).
--  Do not include the applicable issue number in the title (do it in the
-   `PR Body <#pr-body>`__).
+-  Provide a concise and self-descriptive title (see :ref:`contributing:Issue Title`).
+-  Do not include the applicable issue number in the title, do it in the PR body (see :ref:`contributing:PR Body`).
 -  If the PR is not ready for review, convert it to a draft.
 
 PR Body

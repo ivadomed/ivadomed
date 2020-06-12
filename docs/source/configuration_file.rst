@@ -1,4 +1,4 @@
-Configuration file
+Configuration File
 ==================
 
 General parameters
@@ -162,8 +162,7 @@ Strictly positive integer.
 loss
 ^^^^
 
--  ``name``: Name of the `loss function
-   Class <./api_ref.html#ivadomed-losses>`__.
+- ``name``: Name of the loss function class. See :mod:`ivadomed.losses`
 -  Other parameters that could be needed in the Loss function
    definition: see attributes of the Loss function of interest (e.g.
    ``"gamma": 0.5`` for ``FocalLoss``).
@@ -220,9 +219,9 @@ Architecture
 ------------
 
 Architectures for both segmentation and classification are available and
-described in the `Models <models.rst>`__ section. If the selected
+described in the :ref:`models:Models` section. If the selected
 architecture is listed in the
-`loader.py <../../ivadomed/loader/loader.py#L14>`__ file, a
+`loader.py <../../ivadomed/loader/loader.py#L14>`__ FIXME file, a
 classification (not segmentation) task is run. In the case of a
 classification task, the ground truth will correspond to a single label
 value extracted from ``target``, instead being an array (the latter
@@ -233,7 +232,7 @@ default\_model (Mandatory)
 
 Dict. Define the default model (``Unet``) and mandatory parameters that
 are common to all available architectures (listed in the
-`Models <models.rst>`__ section). For more specific models (see below),
+:ref:`models:Models` section). For more specific models (see below),
 the default parameters are merged with the parameters that are specific
 to the tailored model. - ``name``: ``Unet`` (default) -
 ``dropout_rate``: Float (e.g. 0.4). - ``batch_norm_momentum``: Float
@@ -332,14 +331,14 @@ Available transformations:
 Examples
 --------
 
-Examples of configuration files: `here <../../ivadomed/config>`__.
+Examples of configuration files: `here <../../ivadomed/config>`__ FIXME.
 
 In particular: -
-`config\_classification.json <../../ivadomed/config/config_classification.json>`__
+`config\_classification.json <../../ivadomed/config/config_classification.json>`__ FIXME
 is dedicated to classification task. -
-`config\_sctTesting.json <../../ivadomed/config/config_sctTesting.json>`__
+`config\_sctTesting.json <../../ivadomed/config/config_sctTesting.json>`__ FIXME
 is a user case of 2D segmentation using a U-Net model. -
-`config\_spineGeHemis.json <../../ivadomed/config/config_spineGeHemis.json>`__
+`config\_spineGeHemis.json <../../ivadomed/config/config_spineGeHemis.json>`__ FIXME
 shows how to use the HeMIS-UNet. -
-`config\_tumorSeg.json <../../ivadomed/config/config_tumorSeg.json>`__
+`config\_tumorSeg.json <../../ivadomed/config/config_tumorSeg.json>`__ FIXME
 runs a 3D segmentation using a 3D UNet.

@@ -24,6 +24,8 @@ import shlex
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../../'))
 sys.path.insert(0, os.path.abspath('../../ivadomed/'))
+
+
 # TODO: find a way to minimize the number of imports below (maybe by adding
 # "import *" in the __init__ files).
 import ivadomed
@@ -53,6 +55,7 @@ extensions = [
     'sphinx.ext.inheritance_diagram',
     'sphinx.ext.intersphinx',
     'sphinx_autodoc_typehints',
+    'sphinx.ext.autosectionlabel',
 ]
 
 autoclass_content = "both"
