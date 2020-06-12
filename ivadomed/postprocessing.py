@@ -147,16 +147,22 @@ def apply_crf(predictions, image, eps=1e-6):
     Args:
         predictions (np.array): Input 2D soft segmentation.
         image (np.array): Input 2D image.
-        eps (float): To avoid log(0).
+        eps (float): To avoid log(0): need to clip 0 probabilities to a positive value
     Returns:
         Array.
     """
     # Get data shape
     height, width, n_label = predictions.shape
+
     # Init DenseCRF
     d = dcrf.DenseCRF2D(width, height, n_label)
-    # XX
 
-    # Get the Unary which is negative log probabilities
-    U = -np.log(predictions+eps)  # (n_label, height, width)
-
+    # Unary, negative log probabilities
+    # Transpose axes
+    predictions.transpose(2, 0, 1)
+    # Clip 0 probabilities
+    predictions = np.clip(predictions, eps, 1.0)
+    # Get Unary
+    U = -np.log(predictions).astype(np.float32)
+    # Flatten
+    U.reshape([n_label, -1])
