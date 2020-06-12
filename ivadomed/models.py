@@ -194,7 +194,7 @@ class DenseNet(nn.Module):
         return preds
 
 
-class resnet121(DenseNet):
+class densenet121(DenseNet):
     def __init__(self, **kwargs):
         super().__init__(32, (6, 12, 24, 16), 64)
 

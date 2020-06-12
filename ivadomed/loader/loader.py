@@ -11,7 +11,7 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 
 # List of classifier models (ie not segmentation output)
-CLASSIFIER_LIST = ['resnet18']
+CLASSIFIER_LIST = ['resnet18', 'densenet121']
 
 
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
