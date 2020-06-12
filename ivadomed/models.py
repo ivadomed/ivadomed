@@ -188,7 +188,10 @@ class DenseNet(nn.Module):
         out = F.adaptive_avg_pool2d(out, (1, 1))
         out = torch.flatten(out, 1)
         out = self.classifier(out)
-        return out
+        preds = F.softmax(out, dim=1)
+        # Remove background class
+        preds = preds[:, 1:]
+        return preds
 
 
 class resnet121(DenseNet):
