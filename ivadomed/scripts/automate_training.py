@@ -32,7 +32,7 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, help="Base config file path.")
     parser.add_argument("-n", "--n-iterations", dest="n_iterations",
-                        type=int, help="Number of times to run each config .")
+                        type=int, help="Number of times to run each config.")
     parser.add_argument("--all-combin", dest='all_combin', action='store_true',
                         help="To run all combinations of config")
     parser.add_argument("--run-test", dest='run_test', action='store_true',
