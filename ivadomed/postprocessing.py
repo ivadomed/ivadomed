@@ -3,6 +3,7 @@
 import functools
 import numpy as np
 import nibabel as nib
+import pydensecrf.densecrf as dcrf
 from scipy.ndimage.measurements import label
 from scipy.ndimage.morphology import binary_fill_holes
 
@@ -141,12 +142,17 @@ def mask_predictions(predictions, mask_binary):
 
 def apply_crf(predictions, image):
     """
-    Apply Conditional Random Fields to the soft predictions.
+    Apply Conditional Random Fields to the soft predictions. 2D inputs only.
 
     Args:
-        predictions (array): Input soft segmentation. Image could be 2D or 3D.
-        image (array): Input image
+        predictions (np.array): Input 2D soft segmentation.
+        image (np.array): Input 2D image.
     Returns:
         Array.
     """
-    pass
+    # Get data shape
+    height, width = predictions.shape
+    # TODO: compatible with multi label
+    n_label = 1
+    # Init DenseCRF
+    d = dcrf.DenseCRF2D(width, height, n_label)
