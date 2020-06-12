@@ -348,7 +348,7 @@ class MRI2DSegmentationDataset(Dataset):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice, gt_type=self.task)
                 self.has_bounding_box = imed_obj_detect.verify_metadata(slice_seg_pair, self.has_bounding_box)
                 if self.has_bounding_box:
-                    imed_obj_detect.adjust_transforms(self.prepro_transforms, slice_seg_pair)
+                    self.prepro_transforms = imed_obj_detect.adjust_transforms(self.prepro_transforms, slice_seg_pair)
 
                 if self.slice_filter_fn:
                     filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
@@ -480,8 +480,9 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
             self.has_bounding_box = imed_obj_detect.verify_metadata(seg_pair, self.has_bounding_box)
             if self.has_bounding_box:
-                imed_obj_detect.adjust_transforms(self.prepro_transforms, seg_pair, length=self.length,
-                                                  stride=self.stride)
+                self.prepro_transforms = imed_obj_detect.adjust_transforms(self.prepro_transforms, seg_pair,
+                                                                           length=self.length,
+                                                                           stride=self.stride)
             seg_pair, roi_pair = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                                 seg_pair=seg_pair)
 

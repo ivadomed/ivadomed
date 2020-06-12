@@ -141,6 +141,8 @@ def adjust_transforms(transforms, seg_pair, length=None, stride=None):
     :return:
     """
     resample_idx = [-1, -1, -1]
+    if transforms is None:
+        transforms = imed_transforms.Compose({})
     for i, img_type in enumerate(transforms.transform):
         for idx, transfo in enumerate(transforms.transform[img_type].transforms):
             if "BoundingBoxCrop" == transfo.__class__.__name__:
@@ -161,6 +163,7 @@ def adjust_transforms(transforms, seg_pair, length=None, stride=None):
             size = resize_to_multiple(size, stride, length)
         transform_obj = imed_transforms.BoundingBoxCrop(size=size)
         transforms.transform[img_type].transforms.insert(resample_idx[i] + 1, transform_obj)
+    return transforms
 
 
 def adjust_undo_transforms(transforms, seg_pair, index=0):
