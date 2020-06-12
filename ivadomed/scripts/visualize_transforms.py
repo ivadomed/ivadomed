@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 ##############################################################
 #
-# This script apply a series of transforms to 2D slices extracted from an input image,
+# This script applies a series of transforms to 2D slices extracted from an input image,
 #   and save as png the resulting sample after each transform.
 #
 # This input image can either be a MRI image (e.g. T2w) either a binary mask.
