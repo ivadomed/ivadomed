@@ -166,3 +166,6 @@ def apply_crf(predictions, image, eps=1e-6):
     U = -np.log(predictions).astype(np.float32)
     # Flatten
     U.reshape([n_label, -1])
+    # Set Unary potentials
+    d.setUnaryEnergy(np.ascontiguousarray(U))
+
