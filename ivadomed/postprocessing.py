@@ -140,13 +140,14 @@ def mask_predictions(predictions, mask_binary):
     return predictions * mask_binary
 
 
-def apply_crf(predictions, image, eps=1e-6):
+def apply_crf(predictions, image, n_iterations=5, eps=1e-6):
     """
     Apply Conditional Random Fields to the soft predictions. 2D inputs, with shape: shape: n_label, height, width.
 
     Args:
         predictions (np.array): Input 2D soft segmentation.
         image (np.array): Input 2D image.
+        n_iterations (int):
         eps (float): To avoid log(0): need to clip 0 probabilities to a positive value
     Returns:
         Array.
@@ -181,6 +182,9 @@ def apply_crf(predictions, image, eps=1e-6):
     # TODO: add uncertainty as feature --> change chdim
     feature_prior = dcrf.create_pairwise_bilateral(sdims=x_y_sd, schan=scale_feature, img=image, chdim=-1)
     d.addPairwiseEnergy(feature_prior, compat=feature_potential_strength)
+
+    # INFERENCE
+    Q = d.inference(n_iterations)
 
 
 
