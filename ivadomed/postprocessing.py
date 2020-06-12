@@ -185,6 +185,16 @@ def apply_crf(predictions, image, n_iterations=5, eps=1e-6):
 
     # INFERENCE
     Q = d.inference(n_iterations)
+    # Get MAP predictions
+    map = np.argmax(Q, axis=0).reshape((height, width))
 
-
-
+    """
+    # STEP BY STEP INFERENCE
+    Q, tmp1, tmp2 = d.startInference()
+    for i in range(n_iterations):
+        print("KL-divergence at {}: {}".format(i, d.klDivergence(Q)))
+        d.stepInference(Q, tmp1, tmp2)
+    kl = d.klDivergence(Q) / (height * width)
+    map = np.argmax(Q, axis=0).reshape((height, width))
+    """
+    return map
