@@ -707,7 +707,7 @@ class SliceFilter(object):
                 return False
 
         if self.filter_classification:
-            if not np.all([int(self.classifier(torch.from_numpy(img).unsqueeze(0).unsqueeze(0)))) for img in input_data]):
+            if not np.all([int(self.classifier(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0))) for img in input_data]):
                 return False
 
         return True
