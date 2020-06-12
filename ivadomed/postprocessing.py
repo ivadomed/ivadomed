@@ -137,3 +137,16 @@ def mask_predictions(predictions, mask_binary):
     assert predictions.shape == mask_binary.shape
     assert np.array_equal(mask_binary, mask_binary.astype(bool))
     return predictions * mask_binary
+
+
+def apply_crf(predictions, image):
+    """
+    Apply Conditional Random Fields to the soft predictions.
+
+    Args:
+        predictions (array): Input soft segmentation. Image could be 2D or 3D.
+        image (array): Input image
+    Returns:
+        Array.
+    """
+    pass
