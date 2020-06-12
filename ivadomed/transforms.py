@@ -1,15 +1,16 @@
+import copy
 import functools
 import math
 import numbers
 import random
-import copy
-import numpy as np
+import math
 
+import numpy as np
 import torch
 from scipy.ndimage import rotate, shift
 from scipy.ndimage import zoom
 from scipy.ndimage.filters import gaussian_filter
-from scipy.ndimage.interpolation import map_coordinates
+from scipy.ndimage.interpolation import map_coordinates, affine_transform
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 from skimage.exposure import equalize_adapthist
@@ -552,6 +553,7 @@ class BoundingBoxCrop(Crop):
     """
     Crops image according to given bounding box
     """
+
     @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata):
@@ -584,18 +586,18 @@ class RandomRotation(ImedTransform):
         # Otherwise, get random ones
         else:
             # Get the random angle
-            angle = np.random.uniform(self.degrees[0], self.degrees[1])
+            angle = math.radians(np.random.uniform(self.degrees[0], self.degrees[1]))
             # Get the two axes that define the plane of rotation
             axes = tuple(random.sample(range(3 if sample.shape[2] > 1 else 2), 2))
             # Save params
             metadata['rotation'] = [angle, axes]
 
         # Do rotation
-        data_out = rotate(sample,
-                          angle=angle,
-                          axes=axes,
-                          reshape=False,
-                          order=1).astype(sample.dtype)
+        shape = 0.5 * np.array(sample.shape)
+        transform = np.array([[math.cos(angle), -math.sin(angle), 0], [math.sin(angle), math.cos(angle), 0], [0, 0, 1]])
+        offset = shape - shape.dot(transform)
+
+        data_out = affine_transform(sample, transform.T, order=1, offset=offset, output_shape=sample.shape)
 
         return data_out, metadata
 
@@ -608,11 +610,10 @@ class RandomRotation(ImedTransform):
         angle, axes = - metadata['rotation'][0], metadata['rotation'][1]
 
         # Undo rotation
-        data_out = rotate(sample,
-                          angle=angle,
-                          axes=axes,
-                          reshape=False,
-                          order=1).astype(sample.dtype)
+        shape = 0.5 * np.array(sample.shape)
+        transform = np.array([[math.cos(angle), -math.sin(angle), 0], [math.sin(angle), math.cos(angle), 0], [0, 0, 1]])
+        offset = shape - shape.dot(transform)
+        data_out = affine_transform(sample, transform.T, order=1, offset=offset, output_shape=sample.shape)
 
         return data_out, metadata
 
