@@ -693,7 +693,7 @@ class SliceFilter(object):
         self.filter_classification = filter_classification
 
         if self.filter_classification:
-            self.classifier = torch.load(classifier_path)
+            self.classifier = torch.load(classifier_path, map_location='cpu')
 
     def __call__(self, sample):
         input_data, gt_data = sample['input'], sample['gt']
@@ -707,7 +707,7 @@ class SliceFilter(object):
                 return False
 
         if self.filter_classification:
-            if not np.all([int(self.classifier(torch.from_numpy(img))) for img in input_data]):
+            if not np.all([int(self.classifier(torch.from_numpy(img).unsqueeze(0).unsqueeze(0)))) for img in input_data]):
                 return False
 
         return True
