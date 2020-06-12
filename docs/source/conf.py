@@ -11,6 +11,9 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
+#
+# To build the documentation locally, activate ivadomed venv, then run:
+#   make html
 
 import sys
 import os
@@ -144,7 +147,23 @@ html_theme = 'sphinx_rtd_theme'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
+html_theme_options = {
+    "collapse_navigation": True,
+    "display_version": True,
+    "sticky_navigation": True,  # Set to False to disable the sticky nav while scrolling.
+    "logo_only": True,  # if we have a html_logo below, this shows /only/ the logo with no title text
+}
+
+html_context = {
+    "display_github": True,
+    "github_user": "neuropoly",
+    "github_repo": "ivado-medical-imaging",
+    "github_version": "master",
+    "conf_py_path": "/docs/",
+}
+
+html_scaled_image_link = False
+html_show_sourcelink = True
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
@@ -158,7 +177,7 @@ html_theme = 'sphinx_rtd_theme'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = None
+html_logo = "../../images/ivadomed_logo.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
