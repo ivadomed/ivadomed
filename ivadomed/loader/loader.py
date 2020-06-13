@@ -304,7 +304,7 @@ class MRI2DSegmentationDataset(Dataset):
     """This is a generic class for 2D (slice-wise) segmentation datasets."""
 
     def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None,
-                 task="segmentation",soft_input=False):
+                 task="segmentation", soft_input=False):
         """
         Args:
             filename_pairs (list): a list of tuples in the format (input filename list containing all modalities,ground \
