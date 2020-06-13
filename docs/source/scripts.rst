@@ -26,7 +26,7 @@ And on a binary mask::
 Gives:
 
 .. image:: ../../images/transforms_gt.png
-    :width: 200px
+    :width: 600px
     :align: center
 
 Convert a model from PyTorch to ONNX format
