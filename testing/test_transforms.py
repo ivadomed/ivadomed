@@ -12,9 +12,9 @@ from scipy.ndimage.measurements import center_of_mass
 from scipy.ndimage.measurements import label
 
 from ivadomed.metrics import dice_score
-from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomTranslation, RandomReverse, DilateGT, \
+from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomAffine, RandomReverse, DilateGT, \
     ElasticTransform, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, \
-    Resample, rescale_values_array, RandomRotation
+    Resample, rescale_values_array
 
 DEBUGGING = False
 if DEBUGGING:
@@ -310,23 +310,28 @@ def test_Crop_3D(im_seg, crop_transform):
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
                                     create_test_image(100, 100, 100, 1, rad_max=10)])
-@pytest.mark.parametrize('rot_transform', [RandomRotation(180),
-                                           RandomRotation((5, 180))])
-def test_RandomRotation(im_seg, rot_transform):
+@pytest.mark.parametrize('transform', [RandomAffine(degrees=180),
+                                       RandomAffine(degrees=(5, 180)),
+                                       RandomAffine(translate=[0.1, 0.2, 0]),
+                                       RandomAffine(scale=[0.03, 0.07, 0.0]),
+                                       RandomAffine(translate=[0.1, 0.2, 0.05],
+                                                    scale=[0.05, 0.05, 0],
+                                                    degrees=5)])
+def test_RandomAffine(im_seg, transform):
     im, seg = im_seg
     metadata_in = [{} for _ in im] if isinstance(im, list) else {}
 
     # Transform on Numpy
-    do_im, metadata_do = rot_transform(im.copy(), metadata_in)
-    do_seg, metadata_do = rot_transform(seg.copy(), metadata_do)
+    do_im, metadata_do = transform(im.copy(), metadata_in)
+    do_seg, metadata_do = transform(seg.copy(), metadata_do)
 
     if DEBUGGING and len(im[0].shape) == 2:
         plot_transformed_sample(im[0], do_im[0], ['raw', 'do'])
         plot_transformed_sample(seg[0], do_seg[0], ['raw', 'do'])
 
     # Transform on Numpy
-    undo_im, _ = rot_transform.undo_transform(do_im, metadata_do)
-    undo_seg, _ = rot_transform.undo_transform(do_seg, metadata_do)
+    undo_im, _ = transform.undo_transform(do_im, metadata_do)
+    undo_seg, _ = transform.undo_transform(do_seg, metadata_do)
 
     if DEBUGGING and len(im[0].shape) == 2:
         # TODO: ERROR for image but not for seg.....
@@ -414,38 +419,6 @@ def test_RandomReverse(im_seg, reverse_transform):
     _check_shape(im, [do_im])
     _check_dtype(seg, [do_seg])
     _check_shape(seg, [do_seg])
-
-
-@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
-                                    create_test_image(100, 100, 100, 1, rad_max=10)])
-@pytest.mark.parametrize('tr_transform', [RandomTranslation([0.1, 0.2, 0])])
-def test_RandomTranslation(im_seg, tr_transform):
-    im, seg = im_seg
-    metadata_in = [{} for _ in im] if isinstance(im, list) else {}
-
-    # Transform on Numpy
-    do_im, metadata_do = tr_transform(im.copy(), metadata_in)
-    do_seg, metadata_do = tr_transform(seg.copy(), metadata_do)
-
-    if DEBUGGING and len(im[0].shape) == 2:
-        plot_transformed_sample(seg[0], do_seg[0], ['raw', 'do'])
-
-    # Transform on Numpy
-    undo_im, _ = tr_transform.undo_transform(do_im, metadata_do)
-    undo_seg, _ = tr_transform.undo_transform(do_seg.copy(), metadata_do)
-
-    if DEBUGGING and len(im[0].shape) == 2:
-        plot_transformed_sample(seg[0], undo_seg[0], ['raw', 'undo'])
-
-    _check_dtype(im, [do_im, undo_im])
-    _check_shape(im, [do_im, undo_im])
-    _check_dtype(seg, [do_seg, undo_seg])
-    _check_shape(seg, [do_seg, undo_seg])
-
-    # Loop and check
-    for idx, i in enumerate(im):
-        # Data consistency
-        assert dice_score(undo_seg[idx], seg[idx]) > 0.9
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
