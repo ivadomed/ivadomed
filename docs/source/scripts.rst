@@ -16,7 +16,7 @@ For example::
 Provides a visualization of a series of three transformation on a randomly selected slice:
 
 .. image:: ../../images/transforms_im.png
-    :width: 200px
+    :width: 600px
     :align: center
 
 And on a binary mask::
