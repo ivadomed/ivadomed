@@ -151,6 +151,7 @@ def adjust_transforms(transforms, seg_pair, length=None, stride=None):
                 resample_idx[i] = idx
 
     resample_bounding_box(seg_pair, transforms)
+    index_shape = []
     for i, img_type in enumerate(transforms.transform):
         h_min, h_max, w_min, w_max, d_min, d_max = seg_pair['input_metadata'][0]['bounding_box']
         size = [h_max - h_min, w_max - w_min, d_max - d_min]
@@ -161,8 +162,13 @@ def adjust_transforms(transforms, seg_pair, length=None, stride=None):
                     size[idx] = length[idx]
             # Adjust size according to stride to avoid dimension mismatch
             size = resize_to_multiple(size, stride, length)
+        index_shape.append(tuple(size))
         transform_obj = imed_transforms.BoundingBoxCrop(size=size)
         transforms.transform[img_type].transforms.insert(resample_idx[i] + 1, transform_obj)
+
+    for metadata in seg_pair['input_metadata']:
+        assert len(set(index_shape)) == 1
+        metadata['index_shape'] = index_shape[0]
     return transforms
 
 
