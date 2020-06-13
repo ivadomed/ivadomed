@@ -145,7 +145,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 imed_obj_detect.adjust_undo_transforms(testing_params["undo_transforms"].transforms, batch, smp_idx)
 
             if not model_params["name"].endswith('3D'):
-                last_sample_bool = (last_batch_bool and smp_idx == len(batch) - 1)
+                last_sample_bool = (last_batch_bool and smp_idx == len(preds_cpu) - 1)
                 # undo transformations
                 preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
                                                                                  batch['gt_metadata'][smp_idx],
@@ -172,7 +172,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         slice_axis=imed_utils.AXIS_DCT[testing_params['slice_axis']],
                                                         kernel_dim='2d',
                                                         bin_thr=0.9 if testing_params["binarize_prediction"] else -1)
-                    preds_npy_list.append(output_nii.get_fdata())
+                    preds_npy_list.append(output_nii.get_fdata().transpose(3, 0, 1, 2))
                     gt_lst = []
                     for gt in metadata_idx[0]['gt_filenames']:
                         gt_lst.append(nib.load(gt).get_fdata())
@@ -188,12 +188,12 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     # re-init pred_stack_lst
                     pred_tmp_lst, z_tmp_lst = [], []
 
-                    # add new sample to pred_tmp_lst, of size n_label X h X w ...
-                    pred_tmp_lst.append(preds_idx_arr)
+                # add new sample to pred_tmp_lst, of size n_label X h X w ...
+                pred_tmp_lst.append(preds_idx_arr)
 
-                    # TODO: slice_index should be stored in gt_metadata as well
-                    z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
-                    fname_tmp = fname_ref
+                # TODO: slice_index should be stored in gt_metadata as well
+                z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
+                fname_tmp = fname_ref
 
             else:
                 h_min, h_max, w_min, w_max, d_min, d_max = batch['input_metadata'][smp_idx][0]['coord']
