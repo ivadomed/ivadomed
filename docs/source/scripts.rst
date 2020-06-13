@@ -39,7 +39,7 @@ The integration of Deep Learning models into the clinical routine requires cpu o
 
 Hyperparameter optimization
 ***********************************************
-Model's hyper-parameters optimisation is tedious and time-consuming. ``scripts/automate_training.py`` allows to automatize this optimisation on multiple GPUs. The scripts runs trainings, on the same training and validation datasets, by combinating a given set of parameters and set of values for each of these parameters. Results are collected for each combination and reported into a dataframe to allow their comparison. The script efficiently allocates each training to one of the available GPUs. ::
+Hyperparameter optimization of models is tedious and time-consuming. ``scripts/automate_training.py`` automatizes this optimization across multiple GPUs. The scripts runs trainings, on the same training and validation datasets, by combining a given set of parameters and set of values for each of these parameters. Results are collected for each combination and reported into a dataframe to allow their comparison. The script efficiently allocates each training to one of the available GPUs. ::
 
     python scripts/automate_training.py -c path/to/config.json
 
