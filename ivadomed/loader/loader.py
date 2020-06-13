@@ -486,6 +486,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             seg_pair, roi_pair = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                                 seg_pair=seg_pair)
 
+            for metadata in seg_pair['input_metadata']:
+                metadata['index_shape'] = seg_pair['input'][0].shape
             self.handlers.append((seg_pair, roi_pair))
 
     def _prepare_indices(self):
