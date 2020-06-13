@@ -160,8 +160,8 @@ def run_main():
             transformation_dict = transform_valid_params
 
         # UNDO TRANSFORMS
-        _, undo_transforms = imed_transforms.preprare_transforms(transformation_dict.copy())
-
+        undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))
+        
         # Get Testing dataset
         ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
                                                                   'transforms_params': transformation_dict,
