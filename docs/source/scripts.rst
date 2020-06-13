@@ -28,7 +28,6 @@ Gives:
 .. image:: ../../images/transforms_gt.png
     :width: 200px
     :align: center
-    :height: 100px
 
 Convert a model from PyTorch to ONNX format
 ***********************************************
