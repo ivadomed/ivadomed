@@ -892,7 +892,7 @@ def get_subdatasets_transforms(transform_params):
 
 def get_preprocessing_transforms(transforms):
     """
-    Processes all the transforms and returns only the ones labeled for preprocessing
+    Checks the transformations parameters and selects the transformations which are done during preprocessing only.
     :param transforms: transformation dict
     :return: preprocessing transforms (dict)
     """
