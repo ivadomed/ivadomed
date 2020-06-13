@@ -54,14 +54,3 @@ This document is for developers of ``ivadomed``, it contains the API functions.
 .. autoclass:: ivadomed.losses.FocalLoss
 .. autoclass:: ivadomed.losses.FocalDiceLoss
 .. autoclass:: ivadomed.losses.GeneralizedDiceLoss
-
-:mod:`ivadomed.scripts`
------------------------
-
-:mod:`ivadomed.scripts.visualize_transforms`
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. automethod:: ivadomed.scripts.visualize_transforms.run_visualization
-.. automethod:: ivadomed.scripts.convert_to_onnx.convert_pytorch_to_onnx
-.. automethod:: ivadomed.scripts.automate_training.automate_training
-.. automethod:: ivadomed.scripts.compare_models.compute_statistics

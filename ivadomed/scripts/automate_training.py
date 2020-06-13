@@ -22,7 +22,9 @@ import torch.multiprocessing as mp
 from ivadomed import main as ivado
 from ivadomed.loader import utils as imed_loader_utils
 from itertools import product
-from dev.compare_models import compute_statistics
+
+# COMMENTED BY JULIEN: https://github.com/neuropoly/ivadomed/pull/289#issuecomment-643634124
+# from dev.compare_models import compute_statistics
 
 LOG_FILENAME = 'log.txt'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
@@ -110,7 +112,7 @@ def make_category(base_item, keys, values):
 
 def automate_training(fname_config, fixed_split, all_combinations, n_iterations=1, run_test=False):
     """Automate multiple training processes on multiple GPUs.
-    
+
     Hyperparameter optimization of models is tedious and time-consuming. This function automatizes this optimization
     across multiple GPUs. It runs trainings, on the same training and validation datasets, by combining a given set of
     parameters and set of values for each of these parameters. Results are collected for each combination and reported

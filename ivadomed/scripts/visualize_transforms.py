@@ -10,7 +10,9 @@ import json
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
-from testing.utils import plot_transformed_sample
+
+# COMMENTED BY JULIEN: https://github.com/neuropoly/ivadomed/pull/289#issuecomment-643632145
+# from testing.utils import plot_transformed_sample
 
 
 def get_parser():
