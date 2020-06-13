@@ -582,7 +582,7 @@ class RandomAffine(ImedTransform):
             assert isinstance(scale, list)
             self.scale = scale
         else:
-            self.scale = [1., 1., 1.]
+            self.scale = [0., 0., 0.]
 
         # Translation
         if translate is not None:
@@ -660,7 +660,8 @@ class RandomAffine(ImedTransform):
         transforms = rotate.dot(scale)
         offset = shape - shape.dot(transforms) + translations
 
-        data_out = affine_transform(sample, transforms.T, order=1, offset=offset, output_shape=sample.shape)
+        data_out = affine_transform(sample, transforms.T, order=1, offset=offset,
+                                    output_shape=sample.shape).astype(sample.dtype)
 
         return data_out, metadata
 
