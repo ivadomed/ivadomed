@@ -3,9 +3,6 @@
     "gpu": 2,
     "log_directory": "spineGeneric_small",
     "debugging": false,
-    "object_detection_params": {
-        "object_detection_path": null
-    },
     "loader_parameters": {
         "bids_path": "../duke/projects/ivado-medical-imaging/spineGeneric_201907041011/result/",
         "target_suffix": ["_seg-manual"],
