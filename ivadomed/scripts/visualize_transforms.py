@@ -12,7 +12,7 @@
 #   3. for each successive transforms defined in c applies these transforms to the extracted slices
 #   and save the visual result in a output folder o: transform0_slice19.png, transform0_transform1_slice19.png etc.
 #
-# Usage: python scripts/visualize_transforms.py -i <input_filename> -c <fname_config> -n <int> -o <output_folder>
+# Usage: visualize_transforms -i <input_filename> -c <fname_config> -n <int> -o <output_folder>
 #           -r <roi_fname>
 #
 ##############################################################
