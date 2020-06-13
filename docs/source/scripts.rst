@@ -13,7 +13,7 @@ For example::
 
     python scripts/visualize_transforms.py -i t2s.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
 
-Provides a visualisation of a series of three transformation on a randomly selected slice:
+Provides a visualization of a series of three transformation on a randomly selected slice:
 
 .. image:: ../../images/transforms_im.png
     :width: 200px
