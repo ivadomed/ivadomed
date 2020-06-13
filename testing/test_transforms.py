@@ -14,7 +14,7 @@ from scipy.ndimage.measurements import label
 from ivadomed.metrics import dice_score
 from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomTranslation, RandomReverse, DilateGT, \
     ElasticTransform, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, \
-    Resample, rescale_values_array
+    Resample, rescale_values_array, RandomRotation
 
 DEBUGGING = False
 if DEBUGGING:
@@ -308,7 +308,6 @@ def test_Crop_3D(im_seg, crop_transform):
     _test_Crop(im_seg, crop_transform)
 
 
-"""
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
                                     create_test_image(100, 100, 100, 1, rad_max=10)])
 @pytest.mark.parametrize('rot_transform', [RandomRotation(180),
@@ -344,7 +343,6 @@ def test_RandomRotation(im_seg, rot_transform):
     for idx, i in enumerate(im):
         # Data consistency
         assert dice_score(undo_seg[idx], seg[idx]) > 0.9
-"""
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
