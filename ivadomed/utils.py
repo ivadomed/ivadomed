@@ -361,7 +361,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
 
     """
     # Define device
-    device = torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:" + str(gpu_number))
+    cuda_available = torch.cuda.is_available()
+    device = torch.device("cpu") if not cuda_available else torch.device("cuda:" + str(gpu_number))
 
     # Check if model folder exists and get filenames
     fname_model, fname_model_metadata = imed_models.get_model_filenames(folder_model)
@@ -433,7 +434,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
     preds_list, slice_idx_list = [], []
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
-            img = batch['input'].cuda() if torch.cuda.is_available() else batch['input']
+            img = cuda(batch['input'], cuda_available=cuda_available)
             preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
             preds = preds.cpu()
 
