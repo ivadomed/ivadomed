@@ -127,6 +127,13 @@ Uncertainty computation is performed if `n_it>0` and at least `epistemic` or `al
 - `aleatoric`: Bool. Image-based uncertainty with [test-time augmentation](https://doi.org/10.1016/j.neucom.2019.01.103).
 - `n_it`: Integer. Number of Monte Carlo iterations. Set to 0 for no uncertainty computation.
 
+## Cascaded Architecture Features
+
+### object_detection_params (Optional)
+- `object_detection_path`: String. Path to object detection model. The model's prediction will be used to generate bounding boxes.
+- `safety_factor`: List. List of length 3 containing the factors to multiply each dimension of the bounding box.
+
+
 ## Transformations
 Transformations applied during data augmentation. Transformations are sorted in the order they are applied to the image samples. For each transformation, the following parameters are customizable:
 - `applied_to`: list betweem `"im", "gt", "roi"`. If not specified, then the transformation is applied to all loaded samples. Otherwise, only applied to the specified types: eg `["gt"]` implies that this transformation is only applied to the ground-truth data.
