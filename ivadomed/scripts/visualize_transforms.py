@@ -50,7 +50,8 @@ def get_data(fname_in, axis):
 
 
 def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_roi):
-    """
+    """Utility function to visualize Data Augmentation transformations.
+
     Data augmentation is a key part of the Deep Learning training scheme. This script aims at facilitating the
     fine-tuning of data augmentation parameters. To do so, this script provides a step-by-step visualization of the
     transformations that are applied on data.
