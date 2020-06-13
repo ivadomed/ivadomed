@@ -594,7 +594,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
 class BidsDataset(MRI2DSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
-                 multichannel=False, task="segmentation",soft_input=False):
+                 multichannel=False, task="segmentation", soft_input=False):
 
         self.bids_ds = bids.BIDS(root_dir)
         self.soft_input = soft_input
