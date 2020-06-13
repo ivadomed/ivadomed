@@ -18,7 +18,7 @@ cudnn.benchmark = True
 
 # List of not-default available models i.e. different from Unet
 
-MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'NAME_CLASSIFIER_1','Countception']
+MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'NAME_CLASSIFIER_1', 'Countception']
 
 
 

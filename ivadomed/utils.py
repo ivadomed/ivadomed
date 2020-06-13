@@ -466,7 +466,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     return pred_nib
 
 
-def detect_image(image,folder_model):
+def detect_image(image, folder_model):
     """ detect an object
     Function that uses a model to detect an object on a 2D images. It return a soft output the same size as the
     input (heatmap).

@@ -795,7 +795,6 @@ class UnetGridGatingSignal3(nn.Module):
         return outputs
 
 
-
 class ConvBlock(nn.Module):
     def __init__(self, in_chan, out_chan, ksize=3, stride=1, pad=0, activation=nn.LeakyReLU()):
         """
@@ -841,18 +840,20 @@ class SimpleBlock(nn.Module):
         output = self.MP(output)
         return output
 
+
 class Countception(nn.Module):
     """based on : https://arxiv.org/abs/1703.08710
     modified from github https://github.com/roggirg/count-ception_mbm/
     """
+
     def __init__(self, in_channel=3, out_channel=1, use_logits=False, logits_per_output=12, name='CC'):
         """
 
         Args:
-            in_channel: number of channel on input image
-            out_channel: number of channels on output image
-            use_logits: boolean to change output
-            logits_per_output: number of outputs of final convolution which will mulitplied by the number of chanel
+            in_channel(int): number of channel on input image
+            out_channel(int): number of channels on output image
+            use_logits(bool): boolean to change output
+            logits_per_output(int): number of outputs of final convolution which will mulitplied by the number of chanel
         """
         super(Countception, self).__init__()
 
@@ -893,7 +894,6 @@ class Countception(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
-
     def forward(self, x):
         net = self.conv1(x)  # 32
         net = self.simple1(net)
@@ -914,7 +914,6 @@ class Countception(nn.Module):
             net = self.conv6(net)
 
         return net
-
 
 
 def set_model_for_retrain(model_path, retrain_fraction, map_location):
