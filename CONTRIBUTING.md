@@ -5,7 +5,7 @@
 First off, thanks for taking the time to contribute!
 
 When contributing to this repository, please first discuss the change you wish
-to make by opening a new [Github issue](https://github.com/neuropoly/ivado-medical-imaging/issues).
+to make by opening a new [Github issue](https://github.com/neuropoly/ivadomed/issues).
 
 Contributions relating to content of the Github repository can be
 submitted through Github pull requests (PR).
@@ -33,7 +33,7 @@ in this repository. If you don't have the rights, contact the team leader.
 
 ## Opening an issue
 
-Issues (bugs, feature requests, or others) can be submitted [on our project's issue page.](https://github.com/neuropoly/ivado-medical-imaging/issues)
+Issues (bugs, feature requests, or others) can be submitted [on our project's issue page.](https://github.com/neuropoly/ivadomed/issues)
 
 ### Before Submitting a New Issue
 
@@ -179,7 +179,7 @@ on the subject.
 ### PR Title
 
 The PR title is used to automatically generate the
-[Changelog](https://github.com/neuropoly/ivado-medical-imaging/blob/master/CHANGES.md)
+[Changelog](https://github.com/neuropoly/ivadomed/blob/master/CHANGES.md)
 for each new release, so please follow the following rules:
 
 -   Provide a concise and self-descriptive title (see [Issue
@@ -200,7 +200,7 @@ above so that the issue(s) will be closed upon merging the PR.
 
 ### Continuous Integration
 
-The PR can't be merged if [Github Actions "Run tests"](https://github.com/neuropoly/ivado-medical-imaging/actions)
+The PR can't be merged if [Github Actions "Run tests"](https://github.com/neuropoly/ivadomed/actions)
 hasn't succeeded. If you are familiar with it, consult the test results to fix
 the problem. 
 

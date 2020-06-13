@@ -21,7 +21,7 @@ setup(
     description='Feature conditioning for IVADO medical imaging project.',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/neuropoly/ivado-medical-imaging',
+    url='https://github.com/neuropoly/ivadomed',
     author='NeuroPoly and Mila',
     author_email='none@none.com',
     classifiers=[
