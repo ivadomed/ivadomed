@@ -65,21 +65,24 @@ def get_data(fname_in, axis):
     input_data = imed_loader_utils.orient_img_hwd(input_data, slice_axis=axis)
     return input_img, input_data
 
-def run_visualization(args):
+
+def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_roi):
     """Run visualization. Main function of this script.
 
     Args:
-         args argparse.ArgumentParser:
+         fname_input (string): Image filename.
+         fname_config (string): Configuration file filename.
+         n_slices (int): Number of slices randomly extracted.
+         folder_output (string): Folder path where the results are saved.
+         fname_roi (string): Filename of the region of interest. Only needed if ROICrop is part of the transformations.
 
     Returns:
         None
     """
-    # Get params
-    fname_input = args.input
-    n_slices = int(args.number)
-    with open(args.config, "r") as fhandle:
+    # Load context
+    with open(fname_config, "r") as fhandle:
         context = json.load(fhandle)
-    folder_output = args.ofolder
+    # Create output folder
     if not os.path.isdir(folder_output):
         os.makedirs(folder_output)
 
@@ -98,8 +101,8 @@ def run_visualization(args):
     training_transforms, _, _ = imed_transforms.get_subdatasets_transforms(context["transformation"])
 
     if "ROICrop" in training_transforms:
-        if args.roi and os.path.isfile(args.roi):
-            roi_img, roi_data = get_data(args.roi, axis)
+        if fname_roi and os.path.isfile(fname_roi):
+            roi_img, roi_data = get_data(fname_roi, axis)
         else:
             print("\nPlease provide ROI image (-r) in order to apply ROICrop transformation.")
             exit()
@@ -126,7 +129,7 @@ def run_visualization(args):
             metadata = imed_loader_utils.SampleMetadata({"zooms": zooms, "data_type": "gt" if is_mask else "im"})
 
             # Apply transformations to ROI
-            if "ROICrop" in training_transforms and os.path.isfile(args.roi):
+            if "ROICrop" in training_transforms and os.path.isfile(fname_roi):
                 roi = [roi_data[:, :, i]]
                 metadata.__setitem__('data_type', 'roi')
                 _, metadata = composed_transforms(sample=roi,
@@ -162,4 +165,10 @@ def run_visualization(args):
 if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
-    run_visualization(args)
+    fname_input = args.input
+    fname_config = args.config
+    n_slices = int(args.number)
+    folder_output = args.ofolder
+    fname_roi = args.roi
+    # Run script
+    run_visualization(fname_input, fname_config, n_slices, folder_output, fname_roi)
