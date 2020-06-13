@@ -1,21 +1,4 @@
 #!/usr/bin/env python
-##############################################################
-#
-# This script applies a series of transforms to 2D slices extracted from an input image,
-#   and save as png the resulting sample after each transform.
-#
-# This input image can either be a MRI image (e.g. T2w) either a binary mask.
-#
-# Step-by-step:
-#   1. load an image (i)
-#   2. extract n slices from this image according to the slice orientation defined in c
-#   3. for each successive transforms defined in c applies these transforms to the extracted slices
-#   and save the visual result in a output folder o: transform0_slice19.png, transform0_transform1_slice19.png etc.
-#
-# Usage: visualize_transforms -i <input_filename> -c <fname_config> -n <int> -o <output_folder>
-#           -r <roi_fname>
-#
-##############################################################
 
 import os
 import argparse
@@ -67,7 +50,34 @@ def get_data(fname_in, axis):
 
 
 def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_roi):
-    """Run visualization. Main function of this script.
+    """
+    Data augmentation is a key part of the Deep Learning training scheme. This script aims at facilitating the
+    fine-tuning of data augmentation parameters. To do so, this script provides a step-by-step visualization of the
+    transformations that are applied on data.
+
+    The ``scripts/visualize_transforms.py`` script applies a series of transformations (defined in a configuration file
+    ``-c``) to ``-n`` 2D slices randomly extracted from an input image (``-i``), and save as png the resulting sample
+    after each transform.
+
+    For example::
+
+        python visualize_transforms.py -i t2s.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
+
+    Provides a visualization of a series of three transformation on a randomly selected slice:
+
+    .. image:: ../../images/transforms_im.png
+        :width: 600px
+        :align: center
+
+    And on a binary mask::
+
+        python visualize_transforms.py -i t2s_gmseg.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
+
+    Gives:
+
+    .. image:: ../../images/transforms_gt.png
+        :width: 600px
+        :align: center
 
     Args:
          fname_input (string): Image filename.
