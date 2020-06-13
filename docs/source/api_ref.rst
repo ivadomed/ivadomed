@@ -61,4 +61,5 @@ This document is for developers of ``ivadomed``, it contains the API functions.
 :mod:`ivadomed.scripts.visualize_transforms`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automethod:: ivadomed.scripts.visualize_transforms
+.. automethod:: ivadomed.scripts.visualize_transforms.run_visualization
+.. automethod:: ivadomed.scripts.convert_to_onnx.convert_pytorch_to_onnx
