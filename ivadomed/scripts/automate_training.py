@@ -96,6 +96,7 @@ def test_worker(config):
 
     return config["log_directory"], test_dice
 
+
 def make_category(base_item, keys, values):
     items = []
     for combination in product(*values):
@@ -106,13 +107,10 @@ def make_category(base_item, keys, values):
         items.append(new_item)
     return items
 
-if __name__ == '__main__':
 
-    parser = get_parser()
-    args = parser.parse_args()
-
+def automate_training(fname_config, fixed_split, all_combinations, n_iterations=1, run_test=False):
     # Load initial config
-    with open(args.config, "r") as fhandle:
+    with open(fname_config, "r") as fhandle:
         initial_config = json.load(fhandle)
 
     # Hyperparameters values to test
@@ -127,8 +125,8 @@ if __name__ == '__main__':
     batch_sizes = [8, 16, 32, 64]
     initial_lrs = [1e-2, 1e-3, 1e-4, 1e-5]
     lr_schedulers = [{"name": "CosineAnnealingLR"},
-                    {"name": "CosineAnnealingWarmRestarts", "T_0": 10}
-                    {"name": "CyclicLR", "base_lr" : X, "max_lr" : Y}]
+                    {"name": "CosineAnnealingWarmRestarts", "T_0": 10}]
+                    #{"name": "CyclicLR", "base_lr" : X, "max_lr" : Y}]
 
     values = [batch_sizes, initial_lrs, lr_schedulers]
 
@@ -178,7 +176,7 @@ if __name__ == '__main__':
 
     # Split dataset if not already done
 
-    if args.fixed_split and (initial_config.get("split_path") is None):
+    if fixed_split and (initial_config.get("split_path") is None):
         train_lst, valid_lst, test_lst = imed_loader_utils.split_dataset(path_folder=initial_config["bids_path"],
                                                                          center_test_lst=initial_config["center_test"],
                                                                          split_method=initial_config["split_method"],
@@ -197,7 +195,7 @@ if __name__ == '__main__':
 
     config_list = []
     # Test all combinations (change multiple parameters for each test)
-    if args.all_combin:
+    if all_combinations:
 
         # Cartesian product (all combinations)
         combinations = (dict(zip(param_dict.keys(), values))
@@ -230,14 +228,10 @@ if __name__ == '__main__':
 
     # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
     pool = mp.Pool(processes=len(initial_config["gpu"]))
-    if args.n_iterations is not None:
-        n_iterations = args.n_iterations
-    else:
-        n_iterations = 1
 
     results_df = pd.DataFrame()
     for i in range(n_iterations):
-        if not args.fixed_split:
+        if not fixed_split:
             # Set seed for iteration
             seed = random.randint(1, 10001)
             for config in config_list:
@@ -248,7 +242,7 @@ if __name__ == '__main__':
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
             'best_validation_loss'])
 
-        if args.run_test:
+        if run_test:
             for config in config_list:
                 # Delete path_pred
                 path_pred = os.path.join(config['log_directory'], 'pred_masks')
@@ -286,4 +280,12 @@ if __name__ == '__main__':
 
     # Compute avg, std, p-values
     if n_iterations > 1:
-        compute_statistics(results_df, n_iterations, args.run_test)
+        compute_statistics(results_df, n_iterations, run_test)
+
+
+if __name__ == '__main__':
+    parser = get_parser()
+    args = parser.parse_args()
+    # Run automate training
+    automate_training(args.config, bool(args.fixed_split), bool(args.all_combin), int(args.n_iterations),
+                      bool(args.run_test))
