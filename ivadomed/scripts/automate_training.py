@@ -109,6 +109,24 @@ def make_category(base_item, keys, values):
 
 
 def automate_training(fname_config, fixed_split, all_combinations, n_iterations=1, run_test=False):
+    """
+    Hyperparameter optimization of models is tedious and time-consuming. This function automatizes this optimization
+    across multiple GPUs. It runs trainings, on the same training and validation datasets, by combining a given set of
+    parameters and set of values for each of these parameters. Results are collected for each combination and reported
+    into a dataframe to allow their comparison. The script efficiently allocates each training to one of the available
+    GPUs.
+
+    # TODO: add example of DF
+
+    Args:
+        fname_config (string): Configuration filename.
+        fixed_split (bool): If True, all the experiments are run on the same training/validation/testing subdatasets.
+        all_combinations (bool): If True, all parameters combinations are run.
+        n_iterations (int): Controls the number of time that each experiment (ie set of parameter) are run.
+        run_test (bool): If True, the trained model is also run on the testing subdataset.
+    Returns:
+        None
+    """
     # Load initial config
     with open(fname_config, "r") as fhandle:
         initial_config = json.load(fhandle)
