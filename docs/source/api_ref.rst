@@ -54,3 +54,11 @@ This document is for developers of ``ivadomed``, it contains the API functions.
 .. autoclass:: ivadomed.losses.FocalLoss
 .. autoclass:: ivadomed.losses.FocalDiceLoss
 .. autoclass:: ivadomed.losses.GeneralizedDiceLoss
+
+:mod:`ivadomed.scripts`
+-----------------------
+
+:mod:`ivadomed.scripts.visualize_transforms`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automethod:: ivadomed.scripts.visualize_transforms
