@@ -4,7 +4,7 @@
     "log_directory": "spineGeneric",
     "debugging": false,
     "loader_parameters": {
-        "bids_path": "../duke/projects/ivado-medical-imaging/spineGeneric_201907041011/result/",
+        "bids_path": "../duke/projects/ivadomed/spineGeneric_201907041011/result/",
         "target_suffix": ["_seg-manual"],
         "roi_params": {
             "suffix": null,
