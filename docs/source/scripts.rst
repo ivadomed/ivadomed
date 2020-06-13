@@ -18,7 +18,6 @@ Provides a visualization of a series of three transformation on a randomly selec
 .. image:: ../../images/transforms_im.png
     :width: 200px
     :align: center
-    :height: 100px
 
 And on a binary mask::
 
