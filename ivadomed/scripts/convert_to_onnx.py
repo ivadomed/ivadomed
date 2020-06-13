@@ -13,7 +13,26 @@ def get_parser():
     return parser
 
 
-def convert_pytorch_to_onnx(fname_model, dimension, gpu):
+def convert_pytorch_to_onnx(fname_model, dimension, gpu=0):
+    """Convert PyTorch model to ONNX.
+
+    The integration of Deep Learning models into the clinical routine requires cpu optimized models. To export the
+    PyTorch models to `ONNX <https://github.com/onnx/onnx>`_ format and to run the inference using
+    `ONNX Runtime <https://github.com/microsoft/onnxruntime>`_ is a time and memory efficient way to answer this need.
+
+    This function converts a model from PyTorch to ONNX format, with information of whether it is a 2D or 3D model
+    (``-d``)::
+
+        python convert_to_onnx.py -m path/to/model.pt -d 3
+
+    Args:
+        fname_model (string): Model filename.
+        dimension (int): Indicates whether the model is 2D or 3D. Choice between 2 or 3.
+        gpu (string): GPU ID, if available
+
+    Returns:
+        None
+    """
     if torch.cuda.is_available():
         device = "cuda:" + str(gpu)
     else:

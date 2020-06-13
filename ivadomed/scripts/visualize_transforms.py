@@ -55,7 +55,7 @@ def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_
     fine-tuning of data augmentation parameters. To do so, this script provides a step-by-step visualization of the
     transformations that are applied on data.
 
-    This method applies a series of transformations (defined in a configuration file
+    This function applies a series of transformations (defined in a configuration file
     ``-c``) to ``-n`` 2D slices randomly extracted from an input image (``-i``), and save as png the resulting sample
     after each transform.
 
