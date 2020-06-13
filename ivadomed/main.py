@@ -161,7 +161,7 @@ def run_main():
 
         # UNDO TRANSFORMS
         undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))
-        
+
         # Get Testing dataset
         ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
                                                                   'transforms_params': transformation_dict,
