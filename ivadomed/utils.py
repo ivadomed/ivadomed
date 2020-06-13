@@ -344,7 +344,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
         folder_model (string): foldername which contains
             (1) the model ('folder_model/folder_model.pt') to use
             (2) its configuration file ('folder_model/folder_model.json') used for the training,
-                see https://github.com/neuropoly/ivado-medical-imaging/wiki/configuration-file
+                see https://github.com/neuropoly/ivadomed/wiki/configuration-file
         fname_image (string): image filename (e.g. .nii.gz) to segment.
         fname_roi (string): Binary image filename (e.g. .nii.gz) defining a region of interest,
             e.g. spinal cord centerline, used to crop the image prior to segment it if provided.

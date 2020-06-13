@@ -52,7 +52,7 @@ Contributors
 This project results from a collaboration between the
 `NeuroPoly Lab <https://www.neuro.polymtl.ca>`_ and `Mila <https://mila.quebec/en/>`_.
 
-A list of contributors is available `here <https://github.com/neuropoly/ivado-medical-imaging/graphs/contributors>`_.
+A list of contributors is available `here <https://github.com/neuropoly/ivadomed/graphs/contributors>`_.
 
 Sponsors
 --------
