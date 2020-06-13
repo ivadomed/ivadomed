@@ -3,11 +3,10 @@ import functools
 import math
 import numbers
 import random
-import math
 
 import numpy as np
 import torch
-from scipy.ndimage import rotate, shift
+from scipy.ndimage import shift
 from scipy.ndimage import zoom
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.interpolation import map_coordinates, affine_transform
@@ -566,8 +565,9 @@ class BoundingBoxCrop(Crop):
         return super().__call__(sample, metadata)
 
 
-class RandomRotation(ImedTransform):
-    def __init__(self, degrees):
+class RandomAffine(ImedTransform):
+    def __init__(self, degrees=0, translate=None, scale=None):
+        # Rotation
         if isinstance(degrees, numbers.Number):
             if degrees < 0:
                 raise ValueError("If degrees is a single number, it must be positive.")
@@ -577,9 +577,28 @@ class RandomRotation(ImedTransform):
                 "degrees should be a list or tuple and it must be of length 2."
             self.degrees = degrees
 
+        # Scale
+        if scale is not None:
+            assert isinstance(scale, list)
+            self.scale = scale
+        else:
+            self.scale = [1., 1., 1.]
+
+        # Translation
+        if translate is not None:
+            assert isinstance(translate, (tuple, list)) and (len(translate) == 2 or len(translate) == 3), \
+                "translate should be a list or tuple and it must be of length 2 or 3."
+            for t in translate:
+                if not (0.0 <= t <= 1.0):
+                    raise ValueError("translation values should be between 0 and 1")
+            if len(translate) == 2:
+                translate.append(0.0)
+        self.translate = translate
+
     @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata=None):
+        # Rotation
         # If angle and metadata have been already defined for this sample, then use them
         if 'rotation' in metadata:
             angle, axes = metadata['rotation']
@@ -588,32 +607,77 @@ class RandomRotation(ImedTransform):
             # Get the random angle
             angle = math.radians(np.random.uniform(self.degrees[0], self.degrees[1]))
             # Get the two axes that define the plane of rotation
-            axes = tuple(random.sample(range(3 if sample.shape[2] > 1 else 2), 2))
+            axes = list(random.sample(range(3 if sample.shape[2] > 1 else 2), 2))
+            axes.sort()
             # Save params
             metadata['rotation'] = [angle, axes]
 
+        # Scale
+        if "scale" in metadata:
+            scale_x, scale_y, scale_z = metadata['scale']
+        else:
+            scale_x = random.uniform(1 - self.scale[0], 1 + self.scale[0])
+            scale_y = random.uniform(1 - self.scale[1], 1 + self.scale[1])
+            scale_z = random.uniform(1 - self.scale[2], 1 + self.scale[2])
+            metadata['scale'] = [scale_x, scale_y, scale_z]
+
+        # Get params
+        if 'translation' in metadata:
+            translations = metadata['translation']
+        else:
+            self.data_shape = sample.shape
+
+            if self.translate is not None:
+                max_dx = self.translate[0] * self.data_shape[0]
+                max_dy = self.translate[1] * self.data_shape[1]
+                max_dz = self.translate[2] * self.data_shape[2]
+                translations = (np.round(np.random.uniform(-max_dx, max_dx)),
+                                np.round(np.random.uniform(-max_dy, max_dy)),
+                                np.round(np.random.uniform(-max_dz, max_dz)))
+            else:
+                translations = (0, 0, 0)
+
+            metadata['translation'] = translations
+
         # Do rotation
         shape = 0.5 * np.array(sample.shape)
-        transform = np.array([[math.cos(angle), -math.sin(angle), 0], [math.sin(angle), math.cos(angle), 0], [0, 0, 1]])
-        offset = shape - shape.dot(transform)
+        if axes == [0, 1]:
+            rotate = np.array([[math.cos(angle), -math.sin(angle), 0],
+                               [math.sin(angle), math.cos(angle), 0],
+                               [0, 0, 1]])
+        elif axes == [0, 2]:
+            rotate = np.array([[math.cos(angle), 0, math.sin(angle)],
+                               [0, 1, 0],
+                               [-math.sin(angle), 0, math.cos(angle)]])
+        elif axes == [1, 2]:
+            rotate = np.array([[1, 0, 0],
+                               [0, math.cos(angle), -math.sin(angle)],
+                               [0, math.sin(angle), math.cos(angle)]])
+        else:
+            raise ValueError("Unknown axes value")
 
-        data_out = affine_transform(sample, transform.T, order=1, offset=offset, output_shape=sample.shape)
+        scale = np.array([[1 / scale_x, 0, 0], [0, 1 / scale_y, 0], [0, 0, 1 / scale_z]])
+        transforms = rotate.dot(scale)
+        offset = shape - shape.dot(transforms) + translations
+
+        data_out = affine_transform(sample, transforms.T, order=1, offset=offset, output_shape=sample.shape)
 
         return data_out, metadata
 
     @multichannel_capable
     @two_dim_compatible
     def undo_transform(self, sample, metadata=None):
-        # IMPORTANT NOTE: this function does not work with images (but works with labels)
         assert "rotation" in metadata
+        assert "scale" in metadata
+        assert "translation" in metadata
         # Opposite rotation, same axes
         angle, axes = - metadata['rotation'][0], metadata['rotation'][1]
+        scale = 1 / np.array(metadata['scale'])
+        translation = - np.array(metadata['translation'])
 
         # Undo rotation
-        shape = 0.5 * np.array(sample.shape)
-        transform = np.array([[math.cos(angle), -math.sin(angle), 0], [math.sin(angle), math.cos(angle), 0], [0, 0, 1]])
-        offset = shape - shape.dot(transform)
-        data_out = affine_transform(sample, transform.T, order=1, offset=offset, output_shape=sample.shape)
+        dict_params = {"rotation": [angle, axes], "scale": scale, "translation": translation}
+        data_out, _ = self.__call__(sample, dict_params)
 
         return data_out, metadata
 
@@ -644,6 +708,40 @@ class RandomReverse(ImedTransform):
     def undo_transform(self, sample, metadata=None):
         assert "reverse" in metadata
         return self.__call__(sample, metadata)
+
+
+class RandomScale(ImedTransform):
+    def __init__(self, scale):
+        assert isinstance(scale, list)
+        self.scale = scale
+
+    @multichannel_capable
+    @two_dim_compatible
+    def __call__(self, sample, metadata=None):
+        if "scale" in metadata:
+            scale = metadata['scale']
+        else:
+            scale = random.uniform(self.scale[0], self.scale[1])
+            metadata['scale'] = scale
+
+        transform = np.array([[1 / scale, 0, 0], [0, 1 / scale, 0], [0, 0, 1 / scale]])
+        shape = 0.5 * np.array(sample.shape)
+        offset = shape - shape.dot(transform)
+        data_out = affine_transform(sample, transform.T, order=1, offset=offset, output_shape=sample.shape)
+
+        return data_out, metadata
+
+    @multichannel_capable
+    @two_dim_compatible
+    def undo_transform(self, sample, metadata=None):
+        assert "scale" in metadata
+        scale = metadata["scale"]
+        transform = np.array([[scale, 0, 0], [0, scale, 0], [0, 0, scale]])
+        shape = 0.5 * np.array(sample.shape)
+        offset = shape - shape.dot(transform)
+        data_out = affine_transform(sample, transform.T, order=1, offset=offset, output_shape=sample.shape)
+
+        return data_out, metadata
 
 
 class RandomTranslation(ImedTransform):
@@ -683,9 +781,11 @@ class RandomTranslation(ImedTransform):
             metadata['translation'] = translations
 
         # Run Translation
-        data_shift = shift(sample, shift=translations, order=1).astype(sample.dtype)
+        shape = 0.5 * np.array(sample.shape)
+        offset = shape - shape.dot(np.eye(3)) + translations
+        data_out = affine_transform(sample, np.eye(3).T, order=1, offset=offset, output_shape=sample.shape)
 
-        return data_shift, metadata
+        return data_out, metadata
 
     @multichannel_capable
     @two_dim_compatible
@@ -700,7 +800,7 @@ class RandomTranslation(ImedTransform):
         dict_params = {"translation": opposite_translations}  # , scale]}
 
         # Undo rotation
-        data_out, metadata = self.__call__(sample, dict_params)
+        data_out, _ = self.__call__(sample, dict_params)
 
         return data_out, metadata
 
