@@ -43,8 +43,8 @@ This document is for developers of ``ivadomed``, it contains the API functions.
 .. automethod:: ivadomed.loader.utils.orient_shapes_hwd
 .. autoclass:: ivadomed.loader.utils.SampleMetadata
 .. autoclass:: ivadomed.loader.utils.BalancedSampler
-.. automethod:: ivadomed.loader.utils.clean_metadata
-.. automethod:: ivadomed.loader.utils.update_metadata
+.. autofunction:: ivadomed.loader.utils.clean_metadata
+.. autofunction:: ivadomed.loader.utils.update_metadata
 
 :mod:`ivadomed.losses`
 ----------------------
@@ -61,7 +61,7 @@ This document is for developers of ``ivadomed``, it contains the API functions.
 :mod:`ivadomed.scripts.visualize_transforms`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automethod:: ivadomed.scripts.visualize_transforms.run_visualization
-.. automethod:: ivadomed.scripts.convert_to_onnx.convert_pytorch_to_onnx
-.. automethod:: ivadomed.scripts.automate_training.automate_training
-.. automethod:: ivadomed.scripts.compare_models.compute_statistics
+.. autofunction:: ivadomed.scripts.visualize_transforms.run_visualization
+.. autofunction:: ivadomed.scripts.convert_to_onnx.convert_pytorch_to_onnx
+.. autofunction:: ivadomed.scripts.automate_training.automate_training
+.. autofunction:: ivadomed.scripts.compare_models.compute_statistics
