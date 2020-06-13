@@ -21,9 +21,7 @@ def convert_pytorch_to_onnx(fname_model, dimension, gpu=0):
     `ONNX Runtime <https://github.com/microsoft/onnxruntime>`_ is a time and memory efficient way to answer this need.
 
     This function converts a model from PyTorch to ONNX format, with information of whether it is a 2D or 3D model
-    (``-d``)::
-
-        python convert_to_onnx.py -m path/to/model.pt -d 3
+    (``-d``).
 
     Args:
         fname_model (string): Model filename.

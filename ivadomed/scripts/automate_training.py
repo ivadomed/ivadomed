@@ -109,7 +109,8 @@ def make_category(base_item, keys, values):
 
 
 def automate_training(fname_config, fixed_split, all_combinations, n_iterations=1, run_test=False):
-    """
+    """Automate multiple training processes on multiple GPUs.
+    
     Hyperparameter optimization of models is tedious and time-consuming. This function automatizes this optimization
     across multiple GPUs. It runs trainings, on the same training and validation datasets, by combining a given set of
     parameters and set of values for each of these parameters. Results are collected for each combination and reported
