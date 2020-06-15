@@ -102,11 +102,13 @@ def run_main():
     # Display for spec' check
     imed_utils.display_selected_model_spec(params=model_params)
     # Update loader params
-    object_detection_params = context['object_detection_params']
-    object_detection_params.update({"gpu": context['gpu'],
-                                    "log_directory": context['log_directory']})
+    if 'object_detection_params' in context:
+        object_detection_params = context['object_detection_params']
+        object_detection_params.update({"gpu": context['gpu'],
+                                        "log_directory": context['log_directory']})
+        loader_params.update({"object_detection_params": object_detection_params})
 
-    loader_params.update({"model_params": model_params, "object_detection_params": object_detection_params})
+    loader_params.update({"model_params": model_params})
 
     if command == 'train':
 
@@ -158,7 +160,7 @@ def run_main():
             transformation_dict = transform_valid_params
 
         # UNDO TRANSFORMS
-        _, undo_transforms = imed_transforms.preprare_transforms(transformation_dict.copy())
+        undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))
 
         # Get Testing dataset
         ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,

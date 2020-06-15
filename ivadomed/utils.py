@@ -61,24 +61,18 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
                 print("Shape element lst {}".format(arr.shape))
 
         # create data and stack on depth dimension
-        arr = np.stack(tmp_lst, axis=-1)
-
-        # If only one channel then return 3D arr
-        if arr.shape[0] == 1:
-            arr = arr[0, :]
-
-        # Reorient data
-        arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can)
+        arr_pred_ref_space = np.stack(tmp_lst, axis=-1)
 
     else:
         arr_pred_ref_space = data_lst[0]
-        n_channel = arr_pred_ref_space.shape[0]
-        oriented_volumes = []
-        if len(arr_pred_ref_space.shape) == 4:
-            for i in range(n_channel):
-                oriented_volumes.append(reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
-            # transpose to locate the channel dimension at the end to properly see image on viewer
-            arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
+
+    n_channel = arr_pred_ref_space.shape[0]
+    oriented_volumes = []
+    if len(arr_pred_ref_space.shape) == 4:
+        for i in range(n_channel):
+            oriented_volumes.append(reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
+        # transpose to locate the channel dimension at the end to properly see image on viewer
+        arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
 
     # If only one channel then return 3D arr
     if arr_pred_ref_space.shape[0] == 1:
@@ -90,7 +84,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         arr_pred_ref_space[arr_pred_ref_space <= 1e-1] = 0
 
     # create nibabel object
-    nib_pred = nib.Nifti1Image(arr_pred_ref_space.astype('float32'), nib_ref.affine)
+    nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
 
     # save as nifti file
     if fname_out is not None:
@@ -361,7 +355,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
 
     """
     # Define device
-    device = torch.device("cpu") if not torch.cuda.is_available() else torch.device("cuda:" + str(gpu_number))
+    cuda_available = torch.cuda.is_available()
+    device = torch.device("cpu") if not cuda_available else torch.device("cuda:" + str(gpu_number))
 
     # Check if model folder exists and get filenames
     fname_model, fname_model_metadata = imed_models.get_model_filenames(folder_model)
@@ -433,7 +428,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
     preds_list, slice_idx_list = [], []
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
-            img = batch['input'].cuda() if torch.cuda.is_available() else batch['input']
+            img = cuda(batch['input'], cuda_available=cuda_available)
             preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
             preds = preds.cpu()
 
@@ -725,7 +720,7 @@ def save_onnx_model(model, inputs, model_path):
 
 
 def onnx_inference(model_path, inputs):
-    inputs = np.array(inputs)
+    inputs = np.array(inputs.cpu())
     ort_session = onnxruntime.InferenceSession(model_path)
     ort_inputs = {ort_session.get_inputs()[0].name: inputs}
     ort_outs = ort_session.run(None, ort_inputs)
