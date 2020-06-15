@@ -42,6 +42,21 @@ def remove_some_contrasts(folder, subject_list, good_contrast_list):
 
 
 def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_derivatives=True, seed=-1):
+    """Extract small BIDS dataset from a larger BIDS dataset.
+
+    Args:
+        ifolder (string): Input BIDS folder.
+        ofolder (string): Output folder.
+        n (int): Number of subjects in the output folder.
+        contrast_list (list): List of image contrasts to include. If set to None, then all available contrasts are
+            included.
+        include_derivatives (bool): If True, derivatives/labels/ content is also copied, only the raw images otherwise.
+        seed (int): Set np.random.RandomState to ensure reproducibility: the same subjects will be selected if the
+            function is run several times on the same dataset. If set to -1, each function run is independent.
+
+    Returns:
+        None
+    """
     # Create o folders
     if not os.path.isdir(ofolder):
         os.makedirs(ofolder)
@@ -108,6 +123,7 @@ def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_de
     # Drop subjects
     df = df[df.participant_id.isin(subject_random_list)]
     df.to_csv(oparticipantstsv, sep='\t', index=False)
+
 
 if __name__ == '__main__':
     parser = get_parser()
