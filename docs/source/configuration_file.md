@@ -116,6 +116,7 @@ Dict. Define the default model (`Unet`) and mandatory parameters that are common
 
 ### UNet3D (Optional)
 - `length_3D`: (Int, Int, Int). Size of the 3D patches used as model's input tensors.
+- `stride_3D`: [Int, Int, Int]. Voxels' shift over the input matrix to create patches. Ex: Stride of [1, 2, 3] will cause a patch translation of 1 voxel in the 1st dimension, 2 voxels in the 2nd dimension and 3 voxels in the 3rd dimension at every iteration until the whole input matrix is covered.
 - `attention_unet`: Bool. Use attention gates in the Unet's decoder.
 
 ## Testing parameters
