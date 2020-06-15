@@ -21,10 +21,8 @@ import torch.multiprocessing as mp
 
 from ivadomed import main as ivado
 from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.scripts.compare_models import compute_statistics
 from itertools import product
-
-# COMMENTED BY JULIEN: https://github.com/neuropoly/ivadomed/pull/289#issuecomment-643634124
-# from dev.compare_models import compute_statistics
 
 LOG_FILENAME = 'log.txt'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
