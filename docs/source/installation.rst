@@ -28,7 +28,7 @@ on Github. Installation procedure is the following:
 
 ::
 
-    git clone https://github.com/neuropoly/ivado-medical-imaging.git
-    cd ivado-medical-imaging
+    git clone https://github.com/neuropoly/ivadomed.git
+    cd ivadomed
     pip install -e .
 
