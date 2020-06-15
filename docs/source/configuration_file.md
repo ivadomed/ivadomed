@@ -131,7 +131,7 @@ Uncertainty computation is performed if `n_it>0` and at least `epistemic` or `al
 
 ### object_detection_params (Optional)
 - `object_detection_path`: String. Path to object detection model. The model's prediction will be used to generate bounding boxes.
-- `safety_factor`: List. List of length 3 containing the factors to multiply each dimension of the bounding box.
+- `safety_factor`: List. List of length 3 containing the factors to multiply each dimension of the bounding box. Ex: If the original bounding box has a size of 10x20x30 with a safety factor of [1.5, 1.5, 1.5], the final dimensions of the bounding box will be 15x30x45 with an unchanged center.
 
 
 ## Transformations
