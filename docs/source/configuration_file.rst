@@ -221,7 +221,7 @@ Architecture
 Architectures for both segmentation and classification are available and
 described in the :ref:`models:Models` section. If the selected
 architecture is listed in the
-`loader.py <../../ivadomed/loader/loader.py>`__ FIXME file, a
+`loader <ivadomed/loader/loader.py>`__ file, a
 classification (not segmentation) task is run. In the case of a
 classification task, the ground truth will correspond to a single label
 value extracted from ``target``, instead being an array (the latter
@@ -331,14 +331,14 @@ Available transformations:
 Examples
 --------
 
-Examples of configuration files: `here <../../ivadomed/config>`__ FIXME.
+Examples of configuration files: `config\_config.json <ivadomed/config/config.json>`__.
 
 In particular: -
-`config\_classification.json <../../ivadomed/config/config_classification.json>`__ FIXME
+`config\_classification.json <ivadomed/config/config_classification.json>`__.
 is dedicated to classification task. -
-`config\_sctTesting.json <../../ivadomed/config/config_sctTesting.json>`__ FIXME
+`config\_sctTesting.json <ivadomed/config/config_sctTesting.json>`__.
 is a user case of 2D segmentation using a U-Net model. -
-`config\_spineGeHemis.json <../../ivadomed/config/config_spineGeHemis.json>`__ FIXME
+`config\_spineGeHemis.json <ivadomed/config/config_spineGeHemis.json>`__.
 shows how to use the HeMIS-UNet. -
-`config\_tumorSeg.json <../../ivadomed/config/config_tumorSeg.json>`__ FIXME
+`config\_tumorSeg.json <ivadomed/config/config_tumorSeg.json>`__.
 runs a 3D segmentation using a 3D UNet.
