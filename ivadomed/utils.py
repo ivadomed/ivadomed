@@ -720,7 +720,7 @@ def save_onnx_model(model, inputs, model_path):
 
 
 def onnx_inference(model_path, inputs):
-    inputs = np.array(inputs)
+    inputs = np.array(inputs.cpu())
     ort_session = onnxruntime.InferenceSession(model_path)
     ort_inputs = {ort_session.get_inputs()[0].name: inputs}
     ort_outs = ort_session.run(None, ort_inputs)
