@@ -2,8 +2,8 @@
 
 import os
 import shutil
-import random
 import argparse
+import numpy as np
 import pandas as pd
 
 EXCLUDED_SUBJECT = ["sub-mniPilot1"]
@@ -18,7 +18,10 @@ def get_parser():
                         help="Contrast list.")
     parser.add_argument("-o", "--output", required=True,
                         help="Output BIDS Folder.")
-    parser.add_argument("-s", "--seg", required=False, default=1,
+    parser.add_argument("-s", "--seed", required=False, default=-1,
+                        help="Set np.random.RandomState to ensure reproducibility: the same subjects will be selected "
+                             "if the script is run several times on the same dataset. Set to -1 (default) otherwise.")
+    parser.add_argument("-d", "--derivatives", required=False, default=1,
                         help="1: Include derivatives/labels content. 0: Do not include derivatives/labels content.")
     return parser
 
@@ -38,7 +41,7 @@ def remove_some_contrasts(folder, subject_list, good_contrast_list):
         os.remove(ff)
 
 
-def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_derivatives=True):
+def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_derivatives=True, seed=-1):
     # Create o folders
     if not os.path.isdir(ofolder):
         os.makedirs(ofolder)
@@ -55,7 +58,12 @@ def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_de
     subject_list = [s for s in os.listdir(ifolder)
                     if s.startswith("sub-") and os.path.isdir(os.path.join(ifolder, s)) and not s in EXCLUDED_SUBJECT]
     # Randomly select subjects
-    subject_random_list = random.sample(subject_list, n)
+    if seed != -1:
+        # Reproducibility
+        r = np.random.RandomState(seed)
+        subject_random_list = list(r.choice(subject_list, n))
+    else:
+        subject_random_list = list(np.random.choice(subject_list, n))
 
     # Loop across subjects
     for subject in subject_random_list:
@@ -105,4 +113,5 @@ if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
     # Run script
-    extract_small_dataset(args.input, args.output, int(args.number), args.contrasts.split(","), bool(int(args.seg)))
+    extract_small_dataset(args.input, args.output, int(args.number), args.contrasts.split(","),
+                          bool(int(args.derivatives)), int(args.seed))
