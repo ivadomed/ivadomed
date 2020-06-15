@@ -11,9 +11,6 @@ from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 
-# COMMENTED BY JULIEN: https://github.com/neuropoly/ivadomed/pull/289#issuecomment-643632145
-# from testing.utils import plot_transformed_sample
-
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -167,12 +164,12 @@ def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_
                 before = after
             after = np.rot90(imed_transforms.rescale_values_array(stack_im[0], 0.0, 1.0))
             # Plot
-            plot_transformed_sample(before,
-                                    after,
-                                    list_title=["\n".join(stg_transforms[:-1].split("_")[:-1]),
-                                                "\n".join(stg_transforms[:-1].split("_"))],
-                                    fname_out=fname_out,
-                                    cmap="jet" if is_mask else "gray")
+            imed_utils.plot_transformed_sample(before,
+                                               after,
+                                               list_title=["\n".join(stg_transforms[:-1].split("_")[:-1]),
+                                                           "\n".join(stg_transforms[:-1].split("_"))],
+                                               fname_out=fname_out,
+                                               cmap="jet" if is_mask else "gray")
 
 
 if __name__ == '__main__':
