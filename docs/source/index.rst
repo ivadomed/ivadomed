@@ -27,9 +27,9 @@ The purpose of the ``ivadomed`` project is to:
    installation.md
    getting_started.md
    configuration_file.md
+   scripts.rst
    tutorials.md
    data.md
-   models.rst
 
 .. toctree::
    :maxdepth: 1
