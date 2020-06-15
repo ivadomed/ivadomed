@@ -195,20 +195,20 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 fname_tmp = fname_ref
 
             else:
-                h_min, h_max, w_min, w_max, d_min, d_max = batch['input_metadata'][smp_idx][0]['coord']
+                x_min, x_max, y_min, y_max, z_min, z_max = batch['input_metadata'][smp_idx][0]['coord']
                 num_pred = preds_cpu[smp_idx].shape[0]
 
-                first_sample_bool = not any([h_min, w_min, d_min])
+                first_sample_bool = not any([x_min, y_min, z_min])
                 if first_sample_bool:
-                    h, w, d = batch['input_metadata'][smp_idx][0]['index_shape']
-                    volume = torch.zeros((num_pred, h, w, d))
-                    weight_matrix = torch.zeros((num_pred, h, w, d))
+                    x, y, z = batch['input_metadata'][smp_idx][0]['index_shape']
+                    volume = torch.zeros((num_pred, x, y, z))
+                    weight_matrix = torch.zeros((num_pred, x, y, z))
 
-                last_sample_bool = h_max == h and w_max == w and d_max == d
+                last_sample_bool = x_max == x and y_max == y and z_max == z
 
                 # Average predictions
-                volume[:, h_min:h_max, w_min:w_max, d_min:d_max] += preds_cpu[smp_idx]
-                weight_matrix[:, h_min:h_max, w_min:w_max, d_min:d_max] += 1
+                volume[:, x_min:x_max, y_min:y_max, z_min:z_max] += preds_cpu[smp_idx]
+                weight_matrix[:, x_min:x_max, y_min:y_max, z_min:z_max] += 1
                 if last_sample_bool:
                     volume /= weight_matrix
 

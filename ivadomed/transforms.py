@@ -556,9 +556,9 @@ class BoundingBoxCrop(Crop):
     @two_dim_compatible
     def __call__(self, sample, metadata):
         assert 'bounding_box' in metadata
-        h_min, h_max, w_min, w_max, d_min, d_max = metadata['bounding_box']
-        h, w, d = sample.shape
-        metadata['crop_params'][self.__class__.__name__] = (h_min, w_min, d_min, h, w, d)
+        x_min, x_max, y_min, y_max, z_min, z_max = metadata['bounding_box']
+        x, y, z = sample.shape
+        metadata['crop_params'][self.__class__.__name__] = (x_min, y_min, z_min, x, y, z)
 
         # Call base method
         return super().__call__(sample, metadata)
@@ -893,8 +893,11 @@ def get_subdatasets_transforms(transform_params):
 def get_preprocessing_transforms(transforms):
     """
     Checks the transformations parameters and selects the transformations which are done during preprocessing only.
-    :param transforms: transformation dict
-    :return: preprocessing transforms (dict)
+    Args:
+        transforms (dict): transformation dict
+
+    Returns:
+        dict: preprocessing transforms
     """
     original_transforms = copy.deepcopy(transforms)
     preprocessing_transforms = copy.deepcopy(transforms)
@@ -910,10 +913,14 @@ def get_preprocessing_transforms(transforms):
 def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
     """
     Applies preprocessing transforms to segmentation pair (input, gt and metadata).
-    :param transforms: preprocessing transforms (Compose object)
-    :param seg_pair: Segmentation pair containing input and gt
-    :param roi_pair: Segementation pair containing input and roi
-    :return: tuple of seg_pair and roi_pair
+    Args:
+        transforms (Compose): preprocessing transforms
+        seg_pair (dict): segmentation pair containing input and gt
+        roi_pair (dict): segementation pair containing input and roi
+
+    Returns:
+        tuple: segmentation pair and roi pair
+
     """
     if transforms is None:
         return (seg_pair, roi_pair)
@@ -954,10 +961,13 @@ def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
 def preprare_transforms(transform_dict, requires_undo=True):
     """
     This function seperates the preprocessing transforms from the others and generates the undo transforms related.
-    :param transform_dict (dict): Dictionary containing the transforms and there parameters
-    :param requires_undo (bool): Boolean indicating if transforms can be undone
-    :return: transform lst containing the preprocessing transforms and regular transforms, UndoCompose object containing
-    the transform to undo
+    Args:
+        transform_dict (dict): Dictionary containing the transforms and there parameters
+        requires_undo (bool): Boolean indicating if transforms can be undone
+
+    Returns:
+        list, UndoCompose: transform lst containing the preprocessing transforms and regular transforms, UndoCompose
+        object containing the transform to undo
     """
     training_undo_transform = None
     if requires_undo:
