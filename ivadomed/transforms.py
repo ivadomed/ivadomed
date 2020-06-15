@@ -929,13 +929,10 @@ def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
                                              metadata=metadata_input,
                                              data_type="im")
     # Run transforms on images
-    if seg_pair['gt_metadata'][0] is not None:
-        metadata_gt = imed_loader_utils.update_metadata(metadata_input, seg_pair['gt_metadata'])
-        stack_gt, metadata_gt = transforms(sample=seg_pair["gt"],
-                                           metadata=metadata_gt,
-                                           data_type="gt")
-    else:
-        stack_gt, metadata_gt = seg_pair["gt"], []
+    metadata_gt = imed_loader_utils.update_metadata(metadata_input, seg_pair['gt_metadata'])
+    stack_gt, metadata_gt = transforms(sample=seg_pair["gt"],
+                                       metadata=metadata_gt,
+                                       data_type="gt")
 
     seg_pair = {
         'input': stack_input,

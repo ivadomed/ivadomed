@@ -233,8 +233,6 @@ class SegmentationPair(object):
                 }))
             elif len(gt_meta_dict):
                 gt_meta_dict.append(gt_meta_dict[0])
-            else:
-                gt_meta_dict.append(gt)
 
         input_meta_dict = []
         for handle in self.input_handle:
