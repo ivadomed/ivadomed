@@ -47,8 +47,8 @@ def test_segment_volume_2d():
             "slice_axis": "axial"
         },
         "transformation": {
-            "Resample": {"wspace": 0.75, "hspace": 0.75},
-            "ROICrop": {"size": [48, 48]},
+            "Resample": {"wspace": 0.75, "hspace": 0.75, "preprocessing": True},
+            "ROICrop": {"size": [48, 48], "preprocessing": True},
             "RandomTranslation": {
                 "translate": [0.03, 0.03],
                 "applied_to": ["im", "gt"],
@@ -68,7 +68,7 @@ def test_segment_volume_2d():
 
     nib_img = imed_utils.segment_volume(PATH_MODEL, IMAGE_PATH, ROI_PATH)
 
-    assert nib_img.shape == nib.load(IMAGE_PATH).shape
+    assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
     assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
     assert nib_img.dataobj.dtype == 'float32'
 
@@ -89,7 +89,7 @@ def test_segment_volume_3d():
         "UNet3D": {
             "applied": True,
             "length_3D": LENGTH_3D,
-            "padding_3D": 0,
+            "stride_3D": LENGTH_3D,
             "attention": False
         },
         "loader_parameters": {
@@ -108,10 +108,12 @@ def test_segment_volume_3d():
                 {
                     "wspace": 1,
                     "hspace": 1,
-                    "dspace": 2
+                    "dspace": 2,
+                    "preprocessing": True
                 },
             "CenterCrop": {
-                "size": LENGTH_3D
+                "size": LENGTH_3D,
+                "preprocessing": True
             },
             "RandomTranslation": {
                 "translate": [0.03, 0.03],

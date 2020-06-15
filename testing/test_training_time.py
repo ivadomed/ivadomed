@@ -30,8 +30,8 @@ MODEL_DEFAULT = {
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('config', [
     {
-        "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75},
-                              "ROICrop": {"size": [48, 48]},
+        "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75, "preprocessing": True},
+                              "ROICrop": {"size": [48, 48], "preprocessing": True},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
@@ -39,8 +39,8 @@ MODEL_DEFAULT = {
         "model_params": {"name": "Unet"},
     },
     {
-        "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75},
-                              "ROICrop": {"size": [48, 48]},
+        "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75, "preprocessing": True},
+                              "ROICrop": {"size": [48, 48], "preprocessing": True},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
@@ -48,21 +48,21 @@ MODEL_DEFAULT = {
         "model_params": {"name": "Unet"},
     },
     {
-        "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
+        "transforms_params": {"CenterCrop": {"size": [96, 96, 16], "preprocessing": True},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
         "multichannel": False,
-        "model_params": {"name": "UNet3D", "length_3D": [96, 96, 16], "n_filters": 8, "padding_3D": 0,
+        "model_params": {"name": "UNet3D", "length_3D": [96, 96, 16], "n_filters": 8, "stride_3D": [96, 96, 16],
                          "attention": True},
     },
     {
-        "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
+        "transforms_params": {"CenterCrop": {"size": [96, 96, 16], "preprocessing": True},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
         "multichannel": False,
-        "model_params": {"name": "UNet3D", "length_3D": [96, 96, 16], "n_filters": 8, "padding_3D": 0,
+        "model_params": {"name": "UNet3D", "length_3D": [96, 96, 16], "n_filters": 8, "stride_3D": [96, 96, 16],
                          "attention": False},
     }
 ])

@@ -116,6 +116,7 @@ Dict. Define the default model (`Unet`) and mandatory parameters that are common
 
 ### UNet3D (Optional)
 - `length_3D`: (Int, Int, Int). Size of the 3D patches used as model's input tensors.
+- `stride_3D`: [Int, Int, Int]. Voxels' shift over the input matrix to create patches. Ex: Stride of [1, 2, 3] will cause a patch translation of 1 voxel in the 1st dimension, 2 voxels in the 2nd dimension and 3 voxels in the 3rd dimension at every iteration until the whole input matrix is covered.
 - `attention_unet`: Bool. Use attention gates in the Unet's decoder.
 
 ## Testing parameters
@@ -126,6 +127,13 @@ Uncertainty computation is performed if `n_it>0` and at least `epistemic` or `al
 - `epistemic`: Bool. Model-based uncertainty with [Monte Carlo Dropout](https://arxiv.org/abs/1506.02142).
 - `aleatoric`: Bool. Image-based uncertainty with [test-time augmentation](https://doi.org/10.1016/j.neucom.2019.01.103).
 - `n_it`: Integer. Number of Monte Carlo iterations. Set to 0 for no uncertainty computation.
+
+## Cascaded Architecture Features
+
+### object_detection_params (Optional)
+- `object_detection_path`: String. Path to object detection model. The model's prediction will be used to generate bounding boxes.
+- `safety_factor`: List. List of length 3 containing the factors to multiply each dimension of the bounding box. Ex: If the original bounding box has a size of 10x20x30 with a safety factor of [1.5, 1.5, 1.5], the final dimensions of the bounding box will be 15x30x45 with an unchanged center.
+
 
 ## Transformations
 Transformations applied during data augmentation. Transformations are sorted in the order they are applied to the image samples. For each transformation, the following parameters are customizable:
