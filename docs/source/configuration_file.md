@@ -145,8 +145,7 @@ Transformations applied during data augmentation. Transformations are sorted in 
 - `CenterCrop2D` (parameters: `size`)
 - `ROICrop2D` (parameters: `size`)
 - `NormalizeInstance`
-- `RandomRotation` (parameters: `degrees`)
-- `RandomAffine` (parameters: `translate`)
+- `RandomAffine` (parameters: `degrees` (Positive integer), `translate` (List of floats between 0. and 1.), `scale` (List of floats between 0. and 1.))
 - `RandomShiftIntensity` (parameters: `shift_range`)
 - `ElasticTransform` (parameters: `alpha_range`, `sigma_range`, `p`)
 - `Resample` (parameters: `wspace`, `hspace`, `dspace`)
