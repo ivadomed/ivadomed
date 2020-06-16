@@ -54,7 +54,6 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.inheritance_diagram',
     'sphinx.ext.intersphinx',
-    'sphinx_autodoc_typehints',
     'sphinx.ext.autosectionlabel',
 ]
 
