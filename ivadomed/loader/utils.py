@@ -19,7 +19,7 @@ __numpy_type_map = {
     'uint8': torch.ByteTensor,
 }
 
-TRANSFORM_PARAMS = ['elastic', 'rotation', 'offset', 'crop_params', 'reverse', 'translation', 'gaussian_noise']
+TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 'reverse', 'translation', 'gaussian_noise']
 
 
 def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
