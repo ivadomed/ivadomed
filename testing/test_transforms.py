@@ -18,7 +18,7 @@ from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomAffine, Rand
 
 DEBUGGING = False
 if DEBUGGING:
-    from testing.utils import plot_transformed_sample
+    from ivadomed.utils import plot_transformed_sample
 
 
 def create_test_image(width, height, depth=0, num_contrasts=1, noise_max=10.0, num_objs=1, rad_max=30,
