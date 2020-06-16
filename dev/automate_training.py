@@ -57,8 +57,7 @@ def train_worker(config):
     # Call ivado cmd_train
     try:
         # Save best validation score
-        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = ivado.cmd_train(
-            config)
+        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = ivado.run_main(config)
 
     except:
         logging.exception('Got exception on main handler')
@@ -84,8 +83,8 @@ def test_worker(config):
     try:
         # Save best test score
 
-        config["command"] = "eval"
-        test_dict, eval_df = ivado.cmd_eval(config)
+        config["command"] = "test"
+        test_dict = ivado.run_main(config)
         test_dice = test_dict['dice_score']
 
         # Uncomment to use 3D dice
@@ -98,15 +97,32 @@ def test_worker(config):
 
     return config["log_directory"], test_dice
 
-def make_category(base_item, keys, values):
-    items = []
-    for combination in product(*values):
-        new_item = copy.deepcopy(base_item)
-        for i in range(len(keys)):
-            new_item[keys[i]] = combination[i]
 
-        items.append(new_item)
-    return items
+def make_category(base_item, keys, values, is_all_combin=False):
+    items = []
+    names = []
+
+    if is_all_combin:
+        for combination in product(*values):
+            new_item = copy.deepcopy(base_item)
+            name_str = ""
+            for i in range(len(keys)):
+                new_item[keys[i]] = combination[i]
+                name_str += "-" + str(keys[i]) + "=" + str(combination[i])
+
+            items.append(new_item)
+            names.append(name_str)
+
+    else:
+        for value_list, key in zip(values, keys):
+            for value in value_list:
+                new_item = copy.deepcopy(base_item)
+                new_item[key] = value
+                items.append(new_item)
+                names.append("-" + str(key) + "=" + str(value))
+
+    return items, names
+
 
 if __name__ == '__main__':
 
@@ -124,22 +140,24 @@ if __name__ == '__main__':
     ### Training parameters
     category = "training_parameters"
     base_item = initial_config[category]
-    keys = ["batch_sizes", "initial_lrs", "lr_scheduler", "loss", "mixup_alpha"]
+    keys = ["batch_size"]
 
-    batch_sizes = [8, 16, 32, 64]
+    batch_sizes = [2, 4]
+
+    """
     initial_lrs = [1e-2, 1e-3, 1e-4, 1e-5]
     lr_schedulers = [{"name": "CosineAnnealingLR"},
-                    {"name": "CosineAnnealingWarmRestarts", "T_0": 10}
-                    {"name": "CyclicLR", "base_lr" : X, "max_lr" : Y}]
-
-    values = [batch_sizes, initial_lrs, lr_schedulers]
+                {"name": "CosineAnnealingWarmRestarts", "T_0": 10},
+                {"name": "CyclicLR", "base_lr" : 1e-3, "max_lr" : 1e-2}]
+    """
 
     #Losses
     ### Simple case (one config per loss type)
+    """
     losses = [{"name": "DiceLoss"},
-            {"name": "GeneralizedDiceLoss"},
-            {"name": "FocalLoss", "params": {"gamma": 0.5, "alpha" : 0.2}}]
-
+        {"name": "GeneralizedDiceLoss"},
+        {"name": "FocalLoss", "params": {"gamma": 0.5, "alpha" : 0.2}}]
+    """
     ### Complex case (nested combinations)
 
     """
@@ -147,19 +165,20 @@ if __name__ == '__main__':
     alphas = [0.2, 0.5, 0.75, 1]
     gammas = [0.5, 1, 1.5, 2]
 
-    loss_params = make_category(initial_config["training_parameters"]["loss"]["params"], ["gamma","alpha"], [alphas, gammas])
-    losses = make_category(initial_config["training_parameters"]["loss"], ["params"], [loss_params])
+    loss_params = make_category(initial_config["training_parameters"]["loss"]["params"], ["gamma","alpha"], 
+                                [alphas, gammas], args.all_combin)
+    losses = make_category(initial_config["training_parameters"]["loss"], ["params"], [loss_params], args.all_combin)
     """
 
     #MixUp
-    mixup_alphas = [0.5, 1, 2]
+    # mixup_alphas = [0.5, 1]
 
-    values = [batch_sizes, initial_lrs, lr_schedulers, losses, mixup_alphas]
-    training_parameters = make_category(base_item, keys, values)
+    values = [batch_sizes]
+    training_parameters, names = make_category(base_item, keys, values, args.all_combin)
 
 
     # Step 2 : FiLM
-
+    """
     category = "FiLMedUnet"
     base_item = initial_config[category]
     keys = ["applied", "metadata", "film_layers"]
@@ -174,6 +193,8 @@ if __name__ == '__main__':
 
     values = [applied, metadata, film_layers]
     film_parameters = make_category(base_item, keys, values)
+    """
+
 
 
     # Add other steps here
@@ -195,7 +216,7 @@ if __name__ == '__main__':
         initial_config["split_path"] = split_path
 
     # Dict with key corresponding to name of the param in the config file
-    param_dict = {"training_parameters": training_parameters, "FiLMedUnet": film_parameters}
+    param_dict = {"training_parameters": training_parameters}
 
     config_list = []
     # Test all combinations (change multiple parameters for each test)
@@ -221,9 +242,9 @@ if __name__ == '__main__':
 
             new_config = copy.deepcopy(initial_config)
 
-            for value in param_dict[param]:
+            for value, name in zip(param_dict[param], names):
                 new_config[param] = value
-                new_config["log_directory"] = initial_config["log_directory"] + "-" + param + "=" + str(value)
+                new_config["log_directory"] = initial_config["log_directory"] + name
                 config_list.append(copy.deepcopy(new_config))
 
     # CUDA problem when forking process
