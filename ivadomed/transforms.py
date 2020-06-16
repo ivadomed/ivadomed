@@ -6,7 +6,6 @@ import random
 
 import numpy as np
 import torch
-from scipy.ndimage import shift
 from scipy.ndimage import zoom
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.interpolation import map_coordinates, affine_transform
@@ -579,7 +578,7 @@ class RandomAffine(ImedTransform):
 
         # Scale
         if scale is not None:
-            assert isinstance(scale, list)
+            assert isinstance(scale, list), "translate should be a list or tuple and it must be of length 2 or 3."
             self.scale = scale
         else:
             self.scale = [0., 0., 0.]

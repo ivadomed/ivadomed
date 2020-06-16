@@ -1,5 +1,5 @@
 {
-    "command": "test",
+    "command": "train",
     "gpu": 0,
     "log_directory": "tumor_segmentation",
     "debugging": true,
@@ -96,8 +96,9 @@
         "CenterCrop": {"size":  [512, 256, 16], "preprocessing": true},
         "RandomAffine": {
             "degrees": 5,
-            "scale": [0.1, 0.1, 0.24],
-            "translate": [0.25, 0.25]
+            "scale": [0.1, 0.1, 0.1],
+            "translate": [0.03, 0.03],
+            "dataset_type": ["training"]
         },
       "NumpyToTensor": {},
       "NormalizeInstance": {"applied_to": ["im"]}
