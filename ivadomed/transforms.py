@@ -578,7 +578,13 @@ class RandomAffine(ImedTransform):
 
         # Scale
         if scale is not None:
-            assert isinstance(scale, list), "translate should be a list or tuple and it must be of length 2 or 3."
+            assert isinstance(scale, (tuple, list)) and (len(scale) == 2 or len(scale) == 3), \
+                "scale should be a list or tuple and it must be of length 2 or 3."
+            for s in scale:
+                if not (0.0 <= s <= 1.0):
+                    raise ValueError("scale values should be between 0 and 1")
+            if len(scale) == 2:
+                scale.append(0.0)
             self.scale = scale
         else:
             self.scale = [0., 0., 0.]
