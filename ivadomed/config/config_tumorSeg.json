@@ -97,7 +97,8 @@
         "RandomAffine": {
             "degrees": 5,
             "scale": [0.1, 0.1, 0.24],
-            "translate": [0.25, 0.25]
+            "translate": [0.25, 0.25],
+            "dataset_type": ["training"]
         },
       "NumpyToTensor": {},
       "NormalizeInstance": {"applied_to": ["im"]}
