@@ -1,17 +1,16 @@
-import os
 import json
-import shutil
+import os
 import sys
-import joblib
 
+import joblib
 import torch.backends.cudnn as cudnn
 
-from ivadomed import training as imed_training
 from ivadomed import evaluation as imed_evaluation
-from ivadomed import testing as imed_testing
-from ivadomed import utils as imed_utils
 from ivadomed import metrics as imed_metrics
+from ivadomed import testing as imed_testing
+from ivadomed import training as imed_training
 from ivadomed import transforms as imed_transforms
+from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 
 cudnn.benchmark = True
@@ -20,19 +19,23 @@ cudnn.benchmark = True
 MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'NAME_CLASSIFIER_1']
 
 
-def run_main():
+def run_main(config=None):
+    # Necessary when calling run_main through python code instead of command-line
+    if config is None:
+        if len(sys.argv) != 2:
+            print("\nERROR: Please indicate the path of your configuration file, "
+                  "e.g. ivadomed ivadomed/config/config.json\n")
+            return
 
-    if len(sys.argv) != 2:
-        print("\nERROR: Please indicate the path of your configuration file, "
-              "e.g. ivadomed ivadomed/config/config.json\n")
-        return
-    path_config_file = sys.argv[1]
-    if not os.path.isfile(path_config_file) or not path_config_file.endswith('.json'):
-        print("\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(path_config_file))
-        return
+        path_config_file = sys.argv[1]
+        if not os.path.isfile(path_config_file) or not path_config_file.endswith('.json'):
+            print("\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(path_config_file))
+            return
 
-    with open(path_config_file, "r") as fhandle:
-        context = json.load(fhandle)
+        with open(path_config_file, "r") as fhandle:
+            context = json.load(fhandle)
+    else:
+        context = config
 
     command = context["command"]
     log_directory = context["log_directory"]
@@ -47,7 +50,8 @@ def run_main():
 
     # Get subject lists
     train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
-                                                                                     context['loader_parameters']['bids_path'],
+                                                                                     context['loader_parameters']
+                                                                                     ['bids_path'],
                                                                                      log_directory)
 
     # Loader params
@@ -137,18 +141,22 @@ def run_main():
             joblib.dump(train_onehotencoder, "./" + log_directory + "/one_hot_encoder.joblib")
 
         # RUN TRAINING
-        imed_training.train(model_params=model_params,
-                            dataset_train=ds_train,
-                            dataset_val=ds_valid,
-                            training_params=context["training_parameters"],
-                            log_directory=log_directory,
-                            device=device,
-                            cuda_available=cuda_available,
-                            metric_fns=metric_fns,
-                            debugging=context["debugging"])
+        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
+            model_params=model_params,
+            dataset_train=ds_train,
+            dataset_val=ds_valid,
+            training_params=context["training_parameters"],
+            log_directory=log_directory,
+            device=device,
+            cuda_available=cuda_available,
+            metric_fns=metric_fns,
+            debugging=context["debugging"])
 
         # Save config file within log_directory
-        shutil.copyfile(sys.argv[1], "./" + log_directory + "/config_file.json")
+        with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
+            json.dump(context, fp, indent=4)
+
+        return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
     elif command == 'test':
         # LOAD DATASET
@@ -183,13 +191,14 @@ def run_main():
         testing_params.update(context["training_parameters"])
         testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
                                'slice_axis': loader_params['slice_axis']})
-        imed_testing.test(model_params=model_params,
-                          dataset_test=ds_test,
-                          testing_params=testing_params,
-                          log_directory=log_directory,
-                          device=device,
-                          cuda_available=cuda_available,
-                          metric_fns=metric_fns)
+        metrics_dict = imed_testing.test(model_params=model_params,
+                                         dataset_test=ds_test,
+                                         testing_params=testing_params,
+                                         log_directory=log_directory,
+                                         device=device,
+                                         cuda_available=cuda_available,
+                                         metric_fns=metric_fns)
+        return metrics_dict
 
     elif command == 'eval':
         # PREDICTION FOLDER
@@ -201,11 +210,12 @@ def run_main():
             run_main(context)
 
         # RUN EVALUATION
-        imed_evaluation.evaluate(bids_path=loader_params['bids_path'],
-                                 log_directory=log_directory,
-                                 path_preds=path_preds,
-                                 target_suffix=loader_params["target_suffix"],
-                                 eval_params=context["evaluation_parameters"])
+        df_results = imed_evaluation.evaluate(bids_path=loader_params['bids_path'],
+                                              log_directory=log_directory,
+                                              path_preds=path_preds,
+                                              target_suffix=loader_params["target_suffix"],
+                                              eval_params=context["evaluation_parameters"])
+        return df_results
 
 
 if __name__ == "__main__":
