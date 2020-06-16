@@ -347,7 +347,7 @@ def test_RandomAffine(im_seg, transform):
     # Loop and check
     for idx, i in enumerate(im):
         # Data consistency
-        assert dice_score(undo_seg[idx], seg[idx]) > 0.9
+        assert dice_score(undo_seg[idx], seg[idx]) > 0.85
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 0, 1, rad_max=10),
