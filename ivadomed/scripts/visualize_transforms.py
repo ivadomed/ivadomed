@@ -1,21 +1,4 @@
 #!/usr/bin/env python
-##############################################################
-#
-# This script apply a series of transforms to 2D slices extracted from an input image,
-#   and save as png the resulting sample after each transform.
-#
-# This input image can either be a MRI image (e.g. T2w) either a binary mask.
-#
-# Step-by-step:
-#   1. load an image (i)
-#   2. extract n slices from this image according to the slice orientation defined in c
-#   3. for each successive transforms defined in c applies these transforms to the extracted slices
-#   and save the visual result in a output folder o: transform0_slice19.png, transform0_transform1_slice19.png etc.
-#
-# Usage: python dev/visualize_transforms.py -i <input_filename> -c <fname_config> -n <int> -o <output_folder>
-#           -r <roi_fname>
-#
-##############################################################
 
 import os
 import argparse
@@ -27,7 +10,6 @@ import json
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
-from testing.utils import plot_transformed_sample
 
 
 def get_parser():
@@ -46,6 +28,15 @@ def get_parser():
 
 
 def get_data(fname_in, axis):
+    """Get data from fname along an axis.
+
+    Args:
+         fname_in string: image fname
+         axis int:
+
+    Returns:
+        nibabel, np.array
+    """
     # Load image
     input_img = nib.load(fname_in)
     # Reorient as canonical
@@ -56,21 +47,52 @@ def get_data(fname_in, axis):
     input_data = imed_loader_utils.orient_img_hwd(input_data, slice_axis=axis)
     return input_img, input_data
 
-def run_visualization(args):
-    """Run visualization. Main function of this script.
+
+def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_roi):
+    """Utility function to visualize Data Augmentation transformations.
+
+    Data augmentation is a key part of the Deep Learning training scheme. This script aims at facilitating the
+    fine-tuning of data augmentation parameters. To do so, this script provides a step-by-step visualization of the
+    transformations that are applied on data.
+
+    This function applies a series of transformations (defined in a configuration file
+    ``-c``) to ``-n`` 2D slices randomly extracted from an input image (``-i``), and save as png the resulting sample
+    after each transform.
+
+    For example::
+
+        python visualize_transforms.py -i t2s.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
+
+    Provides a visualization of a series of three transformation on a randomly selected slice:
+
+    .. image:: ../../images/transforms_im.png
+        :width: 600px
+        :align: center
+
+    And on a binary mask::
+
+        python visualize_transforms.py -i t2s_gmseg.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
+
+    Gives:
+
+    .. image:: ../../images/transforms_gt.png
+        :width: 600px
+        :align: center
 
     Args:
-         args argparse.ArgumentParser:
+         fname_input (string): Image filename.
+         fname_config (string): Configuration file filename.
+         n_slices (int): Number of slices randomly extracted.
+         folder_output (string): Folder path where the results are saved.
+         fname_roi (string): Filename of the region of interest. Only needed if ROICrop is part of the transformations.
 
     Returns:
         None
     """
-    # Get params
-    fname_input = args.input
-    n_slices = int(args.number)
-    with open(args.config, "r") as fhandle:
+    # Load context
+    with open(fname_config, "r") as fhandle:
         context = json.load(fhandle)
-    folder_output = args.ofolder
+    # Create output folder
     if not os.path.isdir(folder_output):
         os.makedirs(folder_output)
 
@@ -89,8 +111,8 @@ def run_visualization(args):
     training_transforms, _, _ = imed_transforms.get_subdatasets_transforms(context["transformation"])
 
     if "ROICrop" in training_transforms:
-        if args.roi and os.path.isfile(args.roi):
-            roi_img, roi_data = get_data(args.roi, axis)
+        if fname_roi and os.path.isfile(fname_roi):
+            roi_img, roi_data = get_data(fname_roi, axis)
         else:
             print("\nPlease provide ROI image (-r) in order to apply ROICrop transformation.")
             exit()
@@ -117,7 +139,7 @@ def run_visualization(args):
             metadata = imed_loader_utils.SampleMetadata({"zooms": zooms, "data_type": "gt" if is_mask else "im"})
 
             # Apply transformations to ROI
-            if "ROICrop" in training_transforms and os.path.isfile(args.roi):
+            if "ROICrop" in training_transforms and os.path.isfile(fname_roi):
                 roi = [roi_data[:, :, i]]
                 metadata.__setitem__('data_type', 'roi')
                 _, metadata = composed_transforms(sample=roi,
@@ -142,15 +164,21 @@ def run_visualization(args):
                 before = after
             after = np.rot90(imed_transforms.rescale_values_array(stack_im[0], 0.0, 1.0))
             # Plot
-            plot_transformed_sample(before,
-                                    after,
-                                    list_title=["\n".join(stg_transforms[:-1].split("_")[:-1]),
-                                                "\n".join(stg_transforms[:-1].split("_"))],
-                                    fname_out=fname_out,
-                                    cmap="jet" if is_mask else "gray")
+            imed_utils.plot_transformed_sample(before,
+                                               after,
+                                               list_title=["\n".join(stg_transforms[:-1].split("_")[:-1]),
+                                                           "\n".join(stg_transforms[:-1].split("_"))],
+                                               fname_out=fname_out,
+                                               cmap="jet" if is_mask else "gray")
 
 
 if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
-    run_visualization(args)
+    fname_input = args.input
+    fname_config = args.config
+    n_slices = int(args.number)
+    folder_output = args.ofolder
+    fname_roi = args.roi
+    # Run script
+    run_visualization(fname_input, fname_config, n_slices, folder_output, fname_roi)
