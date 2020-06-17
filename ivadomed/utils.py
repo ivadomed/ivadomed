@@ -388,7 +388,6 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
         print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
         filename_pairs = [([fname_image], None, None, [{}])]
-
     else:
         filename_pairs = [([fname_image], None, [fname_roi], [{}])]
 
@@ -464,34 +463,6 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
                                        bin_thr=-1)
 
     return pred_nib
-
-
-def detect_image(image, folder_model):
-    """ detect an object
-    Function that uses a model to detect an object on a 2D images. It return a soft output the same size as the
-    input (heatmap).
-    Args:
-        image(array): 2D array representing the image that the model will infer on
-        folder_model (string): foldername which contains the model ('folder_model/folder_model.pt') to use
-    Returns:
-        2D array: the predicted heatmap on the image.
-    """
-    # Define device
-    device = torch.device("cpu")
-
-    # Check if model folder exists and get filenames
-    fname_model, fname_model_metadata = imed_models.get_model_filenames(folder_model)
-
-    if fname_model.endswith('.pt'):
-        model = torch.load(fname_model, map_location=device)
-        model.eval()
-    input = np.expand_dims(image, axis=0)
-    input = imed_transforms.NumpyToTensor()(input)[0]
-    input = input.unsqueeze(0)
-    input = input.float()
-    output = model(input)
-    heatmap = output.data.cpu().numpy()
-    return heatmap[0, 0, :, :]
 
 
 def cuda(input_var, cuda_available=True, non_blocking=False):
