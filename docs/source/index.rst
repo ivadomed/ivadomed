@@ -17,25 +17,26 @@ The purpose of the ``ivadomed`` project is to:
    :maxdepth: 1
    :caption: Overview
 
-   comparison_other_projects.md
-   technical_features.md
+   comparison_other_projects.rst
+   technical_features.rst
 
 .. toctree::
    :maxdepth: 1
    :caption: Getting started
 
-   installation.md
-   getting_started.md
-   configuration_file.md
+   installation.rst
+   getting_started.rst
+   configuration_file.rst
+   tutorials.rst
+   data.rst
+   models.rst
    scripts.rst
-   tutorials.md
-   data.md
 
 .. toctree::
    :maxdepth: 1
    :caption: Developer section
 
-   contributing.md
+   contributing.rst
    api_ref.rst
 
 

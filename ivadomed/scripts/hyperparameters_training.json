@@ -12,5 +12,7 @@
       {"initial_lr": 0.001, "lr_scheduler": {"name": "CyclicLR", "base_lr" : 1e-3, "max_lr" : 1e-2}},
       {"initial_lr": 0.001, "lr_scheduler": {"name": "CosineAnnealingWarmRestarts", "T_0": 10}}
     ]
-  }
+  },
+  "UNet3D": {"n_filters": [8, 16, 24]},
+  "default_model": {"depth": [2, 3, 4]}
 }
