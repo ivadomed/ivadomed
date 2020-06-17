@@ -1,0 +1,16 @@
+{
+  "training_parameters": {
+    "batch_size": [2, 4, 8, 16, 32, 64],
+    "loss": [
+      {"name": "DiceLoss"},
+      {"name": "FocalLoss", "params": {"gamma": 0.5, "alpha" : 0.2}},
+      {"name": "FocalLoss", "params": {"gamma": 0.2, "alpha" : 0.5}},
+      {"name": "GeneralizedDiceLoss"}
+    ],
+    "scheduler": [
+      {"initial_lr": 0.001, "lr_scheduler": {"name": "CosineAnnealingLR",  "base_lr": 1e-5,  "max_lr": 1e-2}},
+      {"initial_lr": 0.001, "lr_scheduler": {"name": "CyclicLR", "base_lr" : 1e-3, "max_lr" : 1e-2}},
+      {"initial_lr": 0.001, "lr_scheduler": {"name": "CosineAnnealingWarmRestarts", "T_0": 10}}
+    ]
+  }
+}
