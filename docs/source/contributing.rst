@@ -8,7 +8,7 @@ First off, thanks for taking the time to contribute!
 
 When contributing to this repository, please first discuss the change
 you wish to make by opening a new `Github
-issue <https://github.com/neuropoly/ivado-medical-imaging/issues>`__.
+issue <https://github.com/neuropoly/ivadomed/issues>`__.
 
 Contributions relating to content of the Github repository can be
 submitted through Github pull requests (PR).
