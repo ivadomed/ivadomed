@@ -138,8 +138,11 @@ def automate_training(fname_config, fname_param, fixed_split, all_combinations, 
     # TODO: add example of DF
 
     Args:
-        fname_config (string): Configuration filename.
-        fname_param (string): json file containing parameters configurations to experiment.
+        fname_config (string): Configuration filename, which is used as skeleton to configure the training. Some of its
+            parameters (defined in `fname_param` file) are modified across experiments.
+        fname_param (string): json file containing parameters configurations to compare. Parameter "keys" of this file
+            need to match the parameter "keys" of `fname_config` file. Parameter "values" are in a list. For example::
+                "default_model": {"depth": [2, 3, 4]}
         fixed_split (bool): If True, all the experiments are run on the same training/validation/testing subdatasets.
         all_combinations (bool): If True, all parameters combinations are run.
         n_iterations (int): Controls the number of time that each experiment (ie set of parameter) are run.
