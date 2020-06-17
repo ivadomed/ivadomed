@@ -120,7 +120,8 @@ def make_category(base_item, keys, values, is_all_combin=False):
                 new_item = copy.deepcopy(base_item)
                 new_item[key] = value
                 items.append(new_item)
-                names.append("-" + str(key) + "=" + str(value))
+                # replace / by _ to avoid creating new paths
+                names.append("-" + str(key) + "=" + str(value).replace("/", "_"))
 
     return items, names
 
