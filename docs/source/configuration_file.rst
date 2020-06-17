@@ -298,7 +298,7 @@ Cascaded Architecture Features
 ------------------------------
 
 object\_detection\_params (Optional)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 -  ``object_detection_path``: String. Path to object detection model.
    The model's prediction will be used to generate bounding boxes.
