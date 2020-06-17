@@ -123,7 +123,7 @@ def make_category(base_item, keys, values, is_all_combin=False):
     return items, names
 
 
-def automate_training(fname_config, fixed_split, all_combinations, n_iterations=1, run_test=False):
+def automate_training(fname_config, fname_param, fixed_split, all_combinations, n_iterations=1, run_test=False):
     """Automate multiple training processes on multiple GPUs.
 
     Hyperparameter optimization of models is tedious and time-consuming. This function automatizes this optimization
@@ -136,6 +136,7 @@ def automate_training(fname_config, fixed_split, all_combinations, n_iterations=
 
     Args:
         fname_config (string): Configuration filename.
+        fname_param (string): json file containing parameters configurations to experiment.
         fixed_split (bool): If True, all the experiments are run on the same training/validation/testing subdatasets.
         all_combinations (bool): If True, all parameters combinations are run.
         n_iterations (int): Controls the number of time that each experiment (ie set of parameter) are run.
@@ -148,8 +149,6 @@ def automate_training(fname_config, fixed_split, all_combinations, n_iterations=
         initial_config = json.load(fhandle)
 
     # Hyperparameters values to test
-
-    # Step 1 : batch size, initial LR and LR scheduler
 
     ### Training parameters
     category = "training_parameters"
