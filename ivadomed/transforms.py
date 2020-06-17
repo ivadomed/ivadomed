@@ -424,26 +424,6 @@ class ROICrop(Crop):
         return super().__call__(sample, metadata)
 
 
-class CropFreeInitial(Crop):
-    """Crop from user defined initial coordinates"""
-
-    @two_dim_compatible
-    def __call__(self, sample, init, metadata=None):
-        # If crop_params are not in metadata,
-        # then we are here dealing with user defined origin coordinates
-        if 'crop_params' not in metadata:
-            # retrieve bottom left corner of crop from parameters
-            fh = init[0]
-            fw = init[1]
-            fd = init[2]
-            # Crop params
-            h, w, d = sample.shape
-            params = (fh, fw, fd, h, w, d)
-            metadata['crop_params'] = params
-
-        return super().__call__(sample, metadata)
-
-
 class DilateGT(ImedTransform):
     """Randomly dilate a tensor ground-truth.
     :param dilation_factor: float, controls the number of dilation iterations.
