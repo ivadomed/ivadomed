@@ -86,7 +86,7 @@
             "size": [48, 48],
             "preprocessing": true
         },
-        "RandomTranslation": {
+        "RandomAffine": {
             "translate": [0.03, 0.03],
             "applied_to": ["im", "gt"],
             "dataset_type": ["training"]

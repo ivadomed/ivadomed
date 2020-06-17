@@ -267,6 +267,11 @@ UNet3D (Optional)
 
 -  ``length_3D``: (Int, Int, Int). Size of the 3D patches used as
    model's input tensors.
+-  ``stride_3D``: [Int, Int, Int]. Voxels' shift over the input matrix
+   to create patches. Ex: Stride of [1, 2, 3] will cause a patch
+   translation of 1 voxel in the 1st dimension, 2 voxels in the 2nd
+   dimension and 3 voxels in the 3rd dimension at every iteration until
+   the whole input matrix is covered.
 -  ``attention_unet``: Bool. Use attention gates in the Unet's decoder.
 
 Testing parameters
@@ -288,6 +293,20 @@ Image-based uncertainty with `test-time
 augmentation <https://doi.org/10.1016/j.neucom.2019.01.103>`__. -
 ``n_it``: Integer. Number of Monte Carlo iterations. Set to 0 for no
 uncertainty computation.
+
+Cascaded Architecture Features
+------------------------------
+
+object\_detection\_params (Optional)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  ``object_detection_path``: String. Path to object detection model.
+   The model's prediction will be used to generate bounding boxes.
+-  ``safety_factor``: List. List of length 3 containing the factors to
+   multiply each dimension of the bounding box. Ex: If the original
+   bounding box has a size of 10x20x30 with a safety factor of [1.5,
+   1.5, 1.5], the final dimensions of the bounding box will be 15x30x45
+   with an unchanged center.
 
 Transformations
 ---------------
@@ -312,8 +331,9 @@ Available transformations:
 -  ``CenterCrop2D`` (parameters: ``size``)
 -  ``ROICrop2D`` (parameters: ``size``)
 -  ``NormalizeInstance``
--  ``RandomRotation`` (parameters: ``degrees``)
--  ``RandomAffine`` (parameters: ``translate``)
+-  ``RandomAffine`` (parameters: ``degrees`` (Positive integer),
+   ``translate`` (List of floats between 0. and 1.), ``scale`` (List of
+   floats between 0. and 1.))
 -  ``RandomShiftIntensity`` (parameters: ``shift_range``)
 -  ``ElasticTransform`` (parameters: ``alpha_range``, ``sigma_range``,
    ``p``)

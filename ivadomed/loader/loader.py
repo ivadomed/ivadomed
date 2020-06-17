@@ -1,3 +1,5 @@
+import copy
+
 import nibabel as nib
 import numpy as np
 import torch
@@ -9,6 +11,7 @@ from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
+from ivadomed.object_detection import utils as imed_obj_detect
 
 # List of classifier models (ie not segmentation output)
 CLASSIFIER_LIST = ['NAME_CLASSIFIER_1']
@@ -16,7 +19,8 @@ CLASSIFIER_LIST = ['NAME_CLASSIFIER_1']
 
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
-                 dataset_type="training", requires_undo=False, metadata_type=None, **kwargs):
+                 dataset_type="training", requires_undo=False, metadata_type=None,
+                 object_detection_params=None, **kwargs):
     """Get loader.
 
     Args:
@@ -33,14 +37,12 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         metadata_type (string): None if no metadata
         dataset_type (string): training, validation or testing
         requires_undo (Bool): If True, the transformations without undo_transform will be discarded
+        object_detection_params (dict):
     Returns:
         BidsDataset
     """
     # Compose transforms
-    preprocessing_transforms = imed_transforms.get_preprocessing_transforms(transforms_params)
-    prepro_transforms = imed_transforms.Compose(preprocessing_transforms, requires_undo=requires_undo)
-    transforms = imed_transforms.Compose(transforms_params, requires_undo=requires_undo)
-    tranform_lst = [prepro_transforms if len(preprocessing_transforms) else None, transforms]
+    tranform_lst, _ = imed_transforms.preprare_transforms(transforms_params, requires_undo)
 
     if model_params["name"] == "UNet3D":
         dataset = Bids3DDataset(bids_path,
@@ -52,7 +54,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                 slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                 transform=tranform_lst,
                                 multichannel=multichannel,
-                                model_params=model_params)
+                                model_params=model_params,
+                                object_detection_params=object_detection_params)
 
     elif model_params["name"] == "HeMISUnet":
         dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
@@ -64,8 +67,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               transform=tranform_lst,
                                               metadata_choice=metadata_type,
                                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
-                                              roi_suffix=roi_params["suffix"])
-
+                                              roi_suffix=roi_params["suffix"],
+                                              object_detection_params=object_detection_params)
     else:
         # Task selection
         task = "classification" if model_params["name"] in CLASSIFIER_LIST else "segmentation"
@@ -80,6 +83,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               transform=tranform_lst,
                               multichannel=multichannel,
                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
+                              object_detection_params=object_detection_params,
                               task=task)
         dataset.load_filenames()
 
@@ -99,6 +103,7 @@ class SegmentationPair(object):
     """This class is used to build segmentation datasets. It represents
     a pair of of two data volumes (the input data and the ground truth data).
     """
+
     def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None):
         """
         Args:
@@ -131,6 +136,8 @@ class SegmentationPair(object):
 
         # Unlabeled data (inference time)
         if self.gt_filenames is not None:
+            if not isinstance(self.gt_filenames, list):
+                self.gt_filenames = [self.gt_filenames]
             for gt in self.gt_filenames:
                 if gt is not None:
                     self.gt_handle.append(nib.load(gt))
@@ -140,7 +147,7 @@ class SegmentationPair(object):
         # Sanity check for dimensions, should be the same
         input_shape, gt_shape = self.get_pair_shapes()
 
-        if self.gt_filenames is not None:
+        if self.gt_filenames is not None and self.gt_filenames[0] is not None:
             if not np.allclose(input_shape, gt_shape):
                 raise RuntimeError('Input and ground truth with different dimensions.')
 
@@ -206,11 +213,13 @@ class SegmentationPair(object):
                                                                 self.slice_axis)
                 gt_data.append(hwd_oriented.astype(np.uint8))
             else:
-                gt_data.append(np.zeros(self.input_handle[0].shape, dtype=np.float32).astype(np.uint8))
+                gt_data.append(
+                    np.zeros(imed_loader_utils.orient_shapes_hwd(self.input_handle[0].shape, self.slice_axis),
+                             dtype=np.float32).astype(np.uint8))
 
         return input_data, gt_data
 
-    def get_pair_metadata(self, slice_index=0):
+    def get_pair_metadata(self, slice_index=0, coord=None):
         gt_meta_dict = []
         for gt in self.gt_handle:
             if gt is not None:
@@ -218,9 +227,11 @@ class SegmentationPair(object):
                     "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
                     "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
                     "gt_filenames": self.metadata[0]["gt_filenames"],
-                    "data_type": 'gt'
+                    "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
+                    "data_type": 'gt',
+                    "crop_params": {}
                 }))
-            else:
+            elif len(gt_meta_dict):
                 gt_meta_dict.append(gt_meta_dict[0])
 
         input_meta_dict = []
@@ -228,7 +239,8 @@ class SegmentationPair(object):
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
                 "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
                 "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis),
-                "data_type": 'im'
+                "data_type": 'im',
+                "crop_params": {}
             }))
 
         dreturn = {
@@ -238,6 +250,7 @@ class SegmentationPair(object):
 
         for idx, metadata in enumerate(self.metadata):  # loop across channels
             metadata["slice_index"] = slice_index
+            metadata["coord"] = coord
             self.metadata[idx] = metadata
             for metadata_key in metadata.keys():  # loop across input metadata
                 dreturn["input_metadata"][idx][metadata_key] = metadata[metadata_key]
@@ -277,8 +290,8 @@ class SegmentationPair(object):
                 else:
                     # TODO: rm when Anne replies
                     # Assert that there is only one non_zero_label in the current slice
-                    #labels_in_slice = np.unique(gt_obj[..., slice_index][np.nonzero(gt_obj[..., slice_index])]).tolist()
-                    #if len(labels_in_slice) > 1:
+                    # labels_in_slice = np.unique(gt_obj[..., slice_index][np.nonzero(gt_obj[..., slice_index])]).tolist()
+                    # if len(labels_in_slice) > 1:
                     #    print(metadata["gt_metadata"][0]["gt_filenames"])
                     # TODO: uncomment when Anne replies
                     # assert int(np.max(labels_in_slice)) <= 1
@@ -311,15 +324,12 @@ class MRI2DSegmentationDataset(Dataset):
         """
         self.indexes = []
         self.filename_pairs = filename_pairs
-        if isinstance(transform, list):
-            self.prepro_transforms, self.transform = transform
-        else:
-            self.transform = transform
-            self.prepro_transforms = None
+        self.prepro_transforms, self.transform = transform
         self.cache = cache
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
+        self.has_bounding_box = True
         self.task = task
 
     def load_filenames(self):
@@ -334,6 +344,10 @@ class MRI2DSegmentationDataset(Dataset):
 
             for idx_pair_slice in range(input_data_shape[-1]):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice, gt_type=self.task)
+                self.has_bounding_box = imed_obj_detect.verify_metadata(slice_seg_pair, self.has_bounding_box)
+                if self.has_bounding_box:
+                    self.prepro_transforms = imed_obj_detect.adjust_transforms(self.prepro_transforms, slice_seg_pair)
+
                 if self.slice_filter_fn:
                     filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
                 if self.slice_filter_fn and not filter_fn_ret_seg:
@@ -437,18 +451,15 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
     :param padding: size of the overlapping per subvolume and dimensions
     """
 
-    def __init__(self, filename_pairs, transform, length=(64, 64, 64), padding=0, slice_axis=0):
+    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0):
         self.filename_pairs = filename_pairs
         self.handlers = []
         self.indexes = []
         self.length = length
-        self.padding = padding
-        if isinstance(transform, list):
-            self.prepro_transforms, self.transform = transform
-        else:
-            self.transform = transform
-            self.prepro_transforms = None
+        self.stride = stride
+        self.prepro_transforms, self.transform = transform
         self.slice_axis = slice_axis
+        self.has_bounding_box = True
 
         self._load_filenames()
         self._prepare_indices()
@@ -465,42 +476,43 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 'gt_metadata': metadata['gt_metadata']
             }
 
-            self.handlers.append(imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
-                                                                                seg_pair=seg_pair))
+            self.has_bounding_box = imed_obj_detect.verify_metadata(seg_pair, self.has_bounding_box)
+            if self.has_bounding_box:
+                self.prepro_transforms = imed_obj_detect.adjust_transforms(self.prepro_transforms, seg_pair,
+                                                                           length=self.length,
+                                                                           stride=self.stride)
+            seg_pair, roi_pair = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                                                                                seg_pair=seg_pair)
+
+            for metadata in seg_pair['input_metadata']:
+                metadata['index_shape'] = seg_pair['input'][0].shape
+            self.handlers.append((seg_pair, roi_pair))
 
     def _prepare_indices(self):
-        length = self.length
-        padding = self.padding
-
-        crop = False
-
-        for idx, transfo in enumerate(self.transform.transform["im"].transforms):
-            if "CenterCrop" in str(type(transfo)):
-                crop = True
-                shape_crop = transfo.size
-
         for i in range(0, len(self.handlers)):
-            if not crop:
-                input_img = self.handlers[i][0]['input']
-                shape = input_img[0].shape
-            else:
-                shape = shape_crop
-            if (shape[0] - 2 * padding) % length[0] != 0 or shape[0] % 16 != 0 \
-                    or (shape[1] - 2 * padding) % length[1] != 0 or shape[1] % 16 != 0 \
-                    or (shape[2] - 2 * padding) % length[2] != 0 or shape[2] % 16 != 0:
+            segpair, _ = self.handlers[i]
+            input_img = self.handlers[i][0]['input']
+            shape = input_img[0].shape
+
+            if ((shape[0] - self.length[0]) % self.stride[0]) != 0 or self.length[0] % 16 != 0 or shape[0] < \
+                    self.length[0] \
+                    or ((shape[1] - self.length[1]) % self.stride[1]) != 0 or self.length[1] % 16 != 0 or shape[1] < \
+                    self.length[1] \
+                    or ((shape[2] - self.length[2]) % self.stride[2]) != 0 or self.length[2] % 16 != 0 or shape[2] < \
+                    self.length[2]:
                 raise RuntimeError('Input shape of each dimension should be a \
                                     multiple of length plus 2 * padding and a multiple of 16.')
 
-            for x in range(length[0] + padding, shape[0] - padding + 1, length[0]):
-                for y in range(length[1] + padding, shape[1] - padding + 1, length[1]):
-                    for z in range(length[2] + padding, shape[2] - padding + 1, length[2]):
+            for x in range(0, (shape[0] - self.length[0]) + 1, self.stride[0]):
+                for y in range(0, (shape[1] - self.length[1]) + 1, self.stride[1]):
+                    for z in range(0, (shape[2] - self.length[2]) + 1, self.stride[2]):
                         self.indexes.append({
-                            'x_min': x - length[0] - padding,
-                            'x_max': x + padding,
-                            'y_min': y - length[1] - padding,
-                            'y_max': y + padding,
-                            'z_min': z - length[2] - padding,
-                            'z_max': z + padding,
+                            'x_min': x,
+                            'x_max': x + self.length[0],
+                            'y_min': y,
+                            'y_max': y + self.length[1],
+                            'z_min': z,
+                            'z_max': z + self.length[2],
                             'handler_index': i})
 
     def __len__(self):
@@ -517,8 +529,9 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
-        metadata_input = imed_loader_utils.clean_metadata(seg_pair['input_metadata'])
-        metadata_gt = imed_loader_utils.clean_metadata(seg_pair['gt_metadata'])
+        # Use copy to have different coordinates for reconstruction for a given handler
+        metadata_input = imed_loader_utils.clean_metadata(copy.deepcopy(seg_pair['input_metadata']))
+        metadata_gt = imed_loader_utils.clean_metadata(copy.deepcopy(seg_pair['gt_metadata']))
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=seg_pair['input'],
@@ -540,6 +553,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         shape_y = coord["y_max"] - coord["y_min"]
         shape_z = coord["z_max"] - coord["z_min"]
 
+        # add coordinates to metadata to reconstruct volume
+        for metadata in metadata_input:
+            metadata['coord'] = [coord["x_min"], coord["x_max"], coord["y_min"], coord["y_max"], coord["z_min"],
+                                 coord["z_max"]]
+
         subvolumes = {
             'input': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
             'gt': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
@@ -560,14 +578,13 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                    coord['y_min']:coord['y_max'],
                                    coord['z_min']:coord['z_max']]
 
-        subvolumes['gt'] = subvolumes['gt'].type(torch.BoolTensor)
         return subvolumes
 
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_suffix=None,
-                 multichannel=False):
+                 multichannel=False, object_detection_params=None):
         dataset = BidsDataset(root_dir,
                               subject_lst=subject_lst,
                               target_suffix=target_suffix,
@@ -576,16 +593,17 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               metadata_choice=metadata_choice,
                               slice_axis=slice_axis,
                               transform=transform,
-                              multichannel=multichannel)
+                              multichannel=multichannel,
+                              object_detection_params=object_detection_params)
 
-        super().__init__(dataset.filename_pairs, length=model_params["length_3D"], padding=model_params["padding_3D"],
+        super().__init__(dataset.filename_pairs, length=model_params["length_3D"], stride=model_params["stride_3D"],
                          transform=transform, slice_axis=slice_axis)
 
 
 class BidsDataset(MRI2DSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
-                 multichannel=False, task="segmentation"):
+                 multichannel=False, object_detection_params=None, task="segmentation"):
 
         self.bids_ds = bids.BIDS(root_dir)
 
@@ -619,6 +637,11 @@ class BidsDataset(MRI2DSegmentationDataset):
                                                "deriv_path": None,
                                                "roi_filename": None,
                                                "metadata": [None] * num_contrast} for subject in subject_lst}
+
+        bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
+                                                                self.bids_ds.get_subjects(),
+                                                                slice_axis,
+                                                                contrast_params["contrast_lst"])
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_params["contrast_lst"]:
@@ -654,6 +677,9 @@ class BidsDataset(MRI2DSegmentationDataset):
 
                 # add contrast to metadata
                 metadata['contrast'] = subject.record["modality"]
+                if len(bounding_box_dict):
+                    # Take only one bounding box for cropping
+                    metadata['bounding_box'] = bounding_box_dict[str(subject.record["absolute_path"])][0]
 
                 if metadata_choice == 'mri_params':
                     if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
