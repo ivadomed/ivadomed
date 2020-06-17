@@ -391,8 +391,11 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     if fname_roi is None and 'filter_empty_mask' in loader_params["slice_filter_params"]:
         print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
+        filename_pairs = [([fname_image], None, None, [{}])]
 
-    filename_pairs = [([fname_image], None, [fname_roi], [{}])]
+    else:
+        filename_pairs = [([fname_image], None, [fname_roi], [{}])]
+
     kernel_3D = bool('UNet3D' in context and context['UNet3D']['applied'])
     if kernel_3D:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
