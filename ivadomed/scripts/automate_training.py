@@ -153,17 +153,17 @@ def automate_training(fname_config, fname_param, fixed_split, all_combinations, 
     # Hyperparameters values to experiment
     with open(fname_param, "r") as fhandle:
         hyperparams = json.load(fhandle)
+    param_dict, names_dict = {}, {}
     for category in hyperparams.keys():
         assert category in initial_config
         base_item = initial_config[category]
         keys = hyperparams[category].keys()
         values = [hyperparams[category][k] for k in keys]
         new_parameters, names = make_category(base_item, keys, values, args.all_combin)
-
-    print(new_parameters, names)
+        param_dict[category] = new_parameters
+        names_dict[category] = names
 
     # Split dataset if not already done
-
     if fixed_split and (initial_config.get("split_path") is None):
         train_lst, valid_lst, test_lst = imed_loader_utils.split_dataset(path_folder=initial_config["bids_path"],
                                                                          center_test_lst=initial_config["center_test"],
@@ -177,9 +177,6 @@ def automate_training(fname_config, fname_param, fixed_split, all_combinations, 
         split_path = "./" + "common_split_datasets.joblib"
         joblib.dump(split_dct, split_path)
         initial_config["split_path"] = split_path
-
-    # Dict with key corresponding to name of the param in the config file
-    param_dict = {"training_parameters": training_parameters}
 
     config_list = []
     # Test all combinations (change multiple parameters for each test)
