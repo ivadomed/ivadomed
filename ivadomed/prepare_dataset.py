@@ -9,23 +9,22 @@ import ivadomed.utils as imed_utils
 import scipy
 
 
-# normalize Image
+# normalize between 0 and 1. 
 def normalize(arr):
     ma = arr.max()
     mi = arr.min()
-    return ((arr - mi) / (ma - mi))
+    return (arr - mi) / (ma - mi)
 
 
 def gaussian_kernel(kernlen=10):
     """
-    Returns a 2D Gaussian kernel.
+    Create a 2D gaussian kernel with user-defined size.
 
     Args:
         kernlen(int): size of kernel
 
     Returns:
         array: a 2D array of size (kernlen,kernlen)
-
     """
 
     x = np.linspace(-1, 1, kernlen + 1)
@@ -53,9 +52,7 @@ def heatmap_generation(image, kernel_size):
 
 def mask2label(path_label, aim='full'):
     """
-    Convert nifti image to an array of coordinates
-    :param path_label:
-    :return:
+    Retrieve points coordinates and value from a label file containing singl voxel label
     Args:
         path_label: path of nifti image
         aim: 'full' or 'c2' full will return all points with label between 3 and 30 , c2 will return only the coordinates of points label 3
@@ -68,11 +65,14 @@ def mask2label(path_label, aim='full'):
     image = nib.as_closest_canonical(image)
     arr = np.array(image.dataobj)
     list_label_image = []
+    # Arr non zero used since these are single voxel label
     for i in range(len(arr.nonzero()[0])):
         x = arr.nonzero()[0][i]
         y = arr.nonzero()[1][i]
         z = arr.nonzero()[2][i]
+        # need to check every points
         if aim == 'full':
+            # we don't want to account for pmj (label 49) nor C1/C2 which is hard to distinguish.
             if arr[x, y, z] < 30 and arr[x, y, z] != 1:
                 list_label_image.append([x, y, z, arr[x, y, z]])
         elif aim == 'c2':
@@ -107,7 +107,7 @@ def get_midslice_average(path_im, ind):
     return np.mean(arr[ind - numb_of_slice:ind + numb_of_slice, :, :], 0)
 
 
-def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim, ap_pad=128, is_pad=320):
+def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim="full"):
     """
      This function takes as input a path to a dataset  and generates two sets of images:
    (i) mid-sagittal image of common size (1,ap_pad,is_pad) and
@@ -117,11 +117,6 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
         bids_path (string): path to BIDS dataset form which images will be generated
         suffix (string): suffix of image that will be processed (e.g., T2w)
         aim(string): 'full' or 'c2'. If 'c2' retrieves only c2 label (value = 3) else create heatmap with all label.
-        ap_pad(int): desired output size of second dimension axis which will be
-                    achieved from padding small images and cropping bigger ones
-        is_pad(int): Desired output size of  3rd dimension axis.
-
-
     Returns:
         None. Images are saved in BIDS folder
     """
