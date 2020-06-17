@@ -35,7 +35,6 @@ compatible with ``ivadomed`` loader:
                 └── anat
                     └── sub-siteX01_T1w_seg.nii.gz
 
-Note: ``participants.tsv`` should, at least, include a column
-``participant_id``, which is used when loading the dataset.
+.. note:: ``participants.tsv`` should, at least, include a column ``participant_id``, which is used when loading the dataset.
 
 .. warning:: ``TODO: Update openneuro site to include derivatives``
