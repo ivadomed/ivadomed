@@ -3,7 +3,7 @@
 #
 # This script enables training and comparison of models on multiple GPUs.
 #
-# Usage: python scripts/automate_training.py -c path/to/config.json -n number_of_iterations --all-combin
+# Usage: python scripts/automate_training.py -c path/to/config.json -p path/to/hyperparams.json -n number_of_iterations --all-combin
 #
 ##############################################################
 
@@ -32,6 +32,8 @@ logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, help="Base config file path.")
+    parser.add_argument("-p", "--params", required=True, help="JSON file where hyperparameters to experiment are "
+                                                              "listed.")
     parser.add_argument("-n", "--n-iterations", dest="n_iterations",
                         type=int, help="Number of times to run each config.")
     parser.add_argument("--all-combin", dest='all_combin', action='store_true',
@@ -148,7 +150,7 @@ def automate_training(fname_config, fname_param, fixed_split, all_combinations, 
     with open(fname_config, "r") as fhandle:
         initial_config = json.load(fhandle)
 
-    # Hyperparameters values to test
+    # Hyperparameters values to experiment
     with open(fname_param, "r") as fhandle:
         hyperparams = json.load(fhandle)
     for category in hyperparams.keys():
