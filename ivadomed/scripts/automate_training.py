@@ -193,9 +193,7 @@ def automate_training(fname_config, fname_param, fixed_split, all_combinations, 
             for param in combination:
                 value = combination[param]
                 new_config[param] = value
-                name = names_dict[param]
-                new_config["log_directory"] = new_config["log_directory"] + "-" + param + "=" + name
-                print(new_config["log_directory"])
+                new_config["log_directory"] = new_config["log_directory"] + "-" + param + "=" + str(value)
 
             config_list.append(copy.deepcopy(new_config))
     # Change a single parameter for each test
