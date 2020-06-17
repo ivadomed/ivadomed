@@ -156,21 +156,12 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
         path_image = bids_path + t[i] + '/anat/' + t[i] + suffix + '.nii.gz'
         if os.path.isfile(path_image):
             path_label = bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix \
-                         + '_labels-disc-manual.nii.gz'
+                         + '_label-disc-manual.nii.gz'
             list_points = mask2label(path_label, aim=aim)
             image_ref = nib.load(path_image)
             nib_ref_can = nib.as_closest_canonical(image_ref)
             imsh = np.array(nib_ref_can.dataobj).shape
             mid = get_midslice_average(path_image, list_points[0][0])
-
-            if mid.shape[1] > is_pad:
-                mid = mid[:, mid.shape[1] - is_pad:]
-            elif mid.shape[1] < is_pad:
-                mid = add_zero_padding(mid, mid.shape[0], is_pad)[0]
-            if mid.shape[0] > ap_pad:
-                mid = mid[mid.shape[0] - ap_pad:, :]
-            elif mid.shape[0] < ap_pad:
-                mid = add_zero_padding(mid, ap_pad, mid.shape[1])[0]
             arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(mid[:, :], axis=0), 2, image_ref,
                                                            nib_ref_can).astype('float32')
             nib_pred = nib.Nifti1Image(arr_pred_ref_space, image_ref.affine)
@@ -183,15 +174,6 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
                 label_array[list_points[j][1], list_points[j][2]] = 1
 
             heatmap = heatmap_generation(label_array[:, :], 10)
-            if heatmap.shape[1] > is_pad:
-                heatmap = heatmap[:, heatmap.shape[1] - is_pad:]
-            elif heatmap.shape[1] < is_pad:
-                heatmap = add_zero_padding(heatmap, heatmap.shape[0], is_pad)[0]
-            if heatmap.shape[0] > ap_pad:
-                heatmap = heatmap[heatmap.shape[0] - ap_pad:, :]
-            elif heatmap.shape[0] < ap_pad:
-                heatmap = add_zero_padding(heatmap, ap_pad, heatmap.shape[1])[0]
-
             arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(heatmap[:, :], axis=0), 2, lab, nib_ref_can)
             nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
             nib.save(nib_pred,
