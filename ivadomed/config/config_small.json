@@ -4,7 +4,7 @@
     "log_directory": "spineGeneric_small",
     "debugging": false,
     "loader_parameters": {
-        "bids_path": "../duke/projects/ivado-medical-imaging/spineGeneric_201907041011/result/",
+        "bids_path": "../duke/projects/ivadomed/spineGeneric_201907041011/result/",
         "target_suffix": ["_seg-manual"],
         "roi_params": {
             "suffix": null,
@@ -91,7 +91,7 @@
             "size": [128, 128],
             "preprocessing": true
         },
-        "RandomTranslation": {
+        "RandomAffine": {
             "translate": [0.03, 0.03],
             "applied_to": ["im", "gt"],
             "dataset_type": ["training"]

@@ -1,10 +1,11 @@
 import json
 import os
 
-import onnxruntime
+import matplotlib
 import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
+import onnxruntime
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -17,7 +18,7 @@ from tqdm import tqdm
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loaded_utils, loader as imed_loader
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -61,24 +62,18 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
                 print("Shape element lst {}".format(arr.shape))
 
         # create data and stack on depth dimension
-        arr = np.stack(tmp_lst, axis=-1)
-
-        # If only one channel then return 3D arr
-        if arr.shape[0] == 1:
-            arr = arr[0, :]
-
-        # Reorient data
-        arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can).astype('float32')
+        arr_pred_ref_space = np.stack(tmp_lst, axis=-1)
 
     else:
         arr_pred_ref_space = data_lst[0]
-        n_channel = arr_pred_ref_space.shape[0]
-        oriented_volumes = []
-        if len(arr_pred_ref_space.shape) == 4:
-            for i in range(n_channel):
-                oriented_volumes.append(reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
-            # transpose to locate the channel dimension at the end to properly see image on viewer
-            arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
+
+    n_channel = arr_pred_ref_space.shape[0]
+    oriented_volumes = []
+    if len(arr_pred_ref_space.shape) == 4:
+        for i in range(n_channel):
+            oriented_volumes.append(reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
+        # transpose to locate the channel dimension at the end to properly see image on viewer
+        arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
 
     # If only one channel then return 3D arr
     if arr_pred_ref_space.shape[0] == 1:
@@ -340,7 +335,7 @@ def save_mixup_sample(ofolder, input_data, labeled_data, lambda_tensor):
     plt.close()
 
 
-def segment_volume(folder_model, fname_image, fname_roi=None):
+def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
     """Segment an image.
 
     Segment an image (fname_image) using a pre-trained model (folder_model). If provided, a region of interest (fname_roi)
@@ -350,17 +345,19 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
         folder_model (string): foldername which contains
             (1) the model ('folder_model/folder_model.pt') to use
             (2) its configuration file ('folder_model/folder_model.json') used for the training,
-                see https://github.com/neuropoly/ivado-medical-imaging/wiki/configuration-file
+                see https://github.com/neuropoly/ivadomed/wiki/configuration-file
         fname_image (string): image filename (e.g. .nii.gz) to segment.
         fname_roi (string): Binary image filename (e.g. .nii.gz) defining a region of interest,
             e.g. spinal cord centerline, used to crop the image prior to segment it if provided.
             The segmentation is not performed on the slices that are empty in this image.
+        gpu_number (int): Number representing gpu number if available.
     Returns:
         nibabelObject: Object containing the soft segmentation.
 
     """
     # Define device
-    device = torch.device("cpu")
+    cuda_available = torch.cuda.is_available()
+    device = torch.device("cpu") if not cuda_available else torch.device("cuda:" + str(gpu_number))
 
     # Check if model folder exists and get filenames
     fname_model, fname_model_metadata = imed_models.get_model_filenames(folder_model)
@@ -380,9 +377,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     # Compose transforms
     _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context["transformation"])
-    do_transforms = imed_transforms.Compose(transform_test_params, requires_undo=True)
-    # Undo Transforms
-    undo_transforms = imed_transforms.UndoCompose(do_transforms)
+
+    tranform_lst, undo_transforms = imed_transforms.preprare_transforms(transform_test_params)
 
     # LOADER
     loader_params = context["loader_parameters"]
@@ -399,20 +395,20 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     kernel_3D = bool('UNet3D' in context and context['UNet3D']['applied'])
     if kernel_3D:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
-                                                           transform=do_transforms,
+                                                           transform=tranform_lst,
                                                            length=context["UNet3D"]["length_3D"],
-                                                           padding=context["UNet3D"]["padding_3D"])
+                                                           stride=context["UNet3D"]["stride_3D"])
     else:
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
                                                   slice_axis=AXIS_DCT[loader_params['slice_axis']],
                                                   cache=True,
-                                                  transform=do_transforms,
+                                                  transform=tranform_lst,
                                                   slice_filter_fn=SliceFilter(**loader_params["slice_filter_params"]))
         ds.load_filenames()
 
     # If fname_roi provided, then remove slices without ROI
     if fname_roi is not None:
-        ds = imed_loaded_utils.filter_roi(ds, nb_nonzero_thr=loader_params["roi_params"]["slice_filter_roi"])
+        ds = imed_loader_utils.filter_roi(ds, nb_nonzero_thr=loader_params["roi_params"]["slice_filter_roi"])
 
     if kernel_3D:
         print("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
@@ -423,7 +419,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["training_parameters"]["batch_size"],
                              shuffle=False, pin_memory=True,
-                             collate_fn=imed_loaded_utils.imed_collate,
+                             collate_fn=imed_loader_utils.imed_collate,
                              num_workers=0)
 
     # MODEL
@@ -436,8 +432,9 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     preds_list, slice_idx_list = [], []
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
-            img = batch['input']
+            img = cuda(batch['input'], cuda_available=cuda_available)
             preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
+            preds = preds.cpu()
 
         # Set datatype to gt since prediction should be processed the same way as gt
         for modality in batch['input_metadata']:
@@ -578,7 +575,7 @@ class HookBasedFeatureExtractor(nn.Module):
 
 def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     # Orient image in RAS according to slice axis
-    arr_ras = imed_loaded_utils.orient_img_ras(arr, slice_axis)
+    arr_ras = imed_loader_utils.orient_img_ras(arr, slice_axis)
 
     # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
     ref_orientation = nib.orientations.io_orientation(nib_ref.affine)
@@ -755,7 +752,7 @@ def save_onnx_model(model, inputs, model_path):
 
 
 def onnx_inference(model_path, inputs):
-    inputs = np.array(inputs)
+    inputs = np.array(inputs.cpu())
     ort_session = onnxruntime.InferenceSession(model_path)
     ort_inputs = {ort_session.get_inputs()[0].name: inputs}
     ort_outs = ort_session.run(None, ort_inputs)
@@ -809,3 +806,39 @@ def display_selected_transfoms(params, dataset_type):
     print('\nSelected transformations for the {} dataset:'.format(dataset_type))
     for k in list(params.keys()):
         print('\t{}: {}'.format(k, params[k]))
+
+
+def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="jet"):
+    """Utils tool to plot sample before and after transform, for debugging.
+
+    Args:
+        before (np.array): sample before transform.
+        after (np.array): sample after transform.
+        list_title (list of strings): sub titles of before and after, resp.
+        fname_out (string): output filename where the plot is saved if provided.
+        cmap (string): Matplotlib colour map.
+
+    Returns:
+        None
+    """
+    if len(list_title) == 0:
+        list_title = ['Sample before transform', 'Sample after transform']
+
+    matplotlib.use('TkAgg')
+    plt.interactive(False)
+    plt.figure(figsize=(20, 10))
+
+    plt.subplot(1, 2, 1)
+    plt.axis("off")
+    plt.imshow(before, interpolation='nearest', cmap=cmap)
+    plt.title(list_title[0], fontsize=20)
+
+    plt.subplot(1, 2, 2)
+    plt.axis("off")
+    plt.imshow(after, interpolation='nearest', cmap=cmap)
+    plt.title(list_title[1], fontsize=20)
+
+    if fname_out:
+        plt.savefig(fname_out)
+    else:
+        plt.show()
