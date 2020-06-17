@@ -32,29 +32,29 @@
         "test_fraction": 0.2
     },
     "training_parameters": {
-        "batch_size": 5,
+        "batch_size": 2,
         "loss": {
             "name": "Loss_Combination",
-	    "losses_list":["L2loss","AdapWingLoss","DiceLoss"],
+	    "losses_list":["AdapWingLoss","L2loss","DiceLoss"],
 	    "params_list":[null,null,null]
         },
         "training_time": {
-            "num_epochs": 2,
-            "early_stopping_patience": 50,
+            "num_epochs": 200,
+            "early_stopping_patience": 20,
             "early_stopping_epsilon": 0.001
         },
         "scheduler": {
-            "initial_lr": 0.001,
+            "initial_lr":0.0005,
             "lr_scheduler": {
                 "name": "CosineAnnealingLR",
-                "base_lr": 1e-5,
-                "max_lr": 1e-2
+                "base_lr": 1e-6,
+                "max_lr": 1e-4
             }
         },
         "balance_samples": false,
         "mixup_alpha": null,
         "transfer_learning": {
-            "retrain_model": null,
+            "retrain_model": "labeling/best_model.pt",
             "retrain_fraction": 1.0
         }
     },
