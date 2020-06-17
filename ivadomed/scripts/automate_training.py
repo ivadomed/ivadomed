@@ -149,16 +149,16 @@ def automate_training(fname_config, fname_param, fixed_split, all_combinations, 
         initial_config = json.load(fhandle)
 
     # Hyperparameters values to test
+    with open(fname_param, "r") as fhandle:
+        hyperparams = json.load(fhandle)
+    for category in hyperparams.keys():
+        assert category in initial_config
+        base_item = initial_config[category]
+        keys = hyperparams[category].keys()
+        values = [hyperparams[category][k] for k in keys]
+        new_parameters, names = make_category(base_item, keys, values, args.all_combin)
 
-    ### Training parameters
-    category = "training_parameters"
-    base_item = initial_config[category]
-
-    keys = ["batch_size"]
-    values = [batch_sizes]
-    training_parameters, names = make_category(base_item, keys, values, args.all_combin)
-
-    # Add other steps here
+    print(new_parameters, names)
 
     # Split dataset if not already done
 
@@ -273,5 +273,5 @@ if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
     # Run automate training
-    automate_training(args.config, bool(args.fixed_split), bool(args.all_combin), int(args.n_iterations),
+    automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin), int(args.n_iterations),
                       bool(args.run_test))
