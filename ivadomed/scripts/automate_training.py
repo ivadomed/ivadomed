@@ -34,7 +34,7 @@ def get_parser():
     parser.add_argument("-c", "--config", required=True, help="Base config file path.")
     parser.add_argument("-p", "--params", required=True, help="JSON file where hyperparameters to experiment are "
                                                               "listed.")
-    parser.add_argument("-n", "--n-iterations", dest="n_iterations",
+    parser.add_argument("-n", "--n-iterations", dest="n_iterations", default=1,
                         type=int, help="Number of times to run each config.")
     parser.add_argument("--all-combin", dest='all_combin', action='store_true',
                         help="To run all combinations of config")
