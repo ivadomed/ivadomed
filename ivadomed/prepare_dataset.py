@@ -51,29 +51,6 @@ def heatmap_generation(image, kernel_size):
     return normalize(map)
 
 
-def add_zero_padding(img_list, x_val=512, y_val=512):
-    """
-    Add zero padding to each image in an array so they all have matching dimension.
-    Args:
-        img_list(list): list of input image to pad if a single element is inputed it will change it to a list of len 1
-        x_val(int): shape of output alongside x axis
-        y_val(int): shape of output alongside y axis
-
-    Returns:
-        list: list of padded images the same length as input list
-    """
-    if type(img_list) != list:
-        img_list = [img_list]
-    img_zero_padding_list = []
-    for i in range(len(img_list)):
-        img = img_list[i]
-        img_tmp = np.zeros((x_val, y_val), dtype=np.float64)
-        img_tmp[0:img.shape[0], 0:img.shape[1]] = img[:, :]
-        img_zero_padding_list.append(img_tmp)
-
-    return img_zero_padding_list
-
-
 def mask2label(path_label, aim='full'):
     """
     Convert nifti image to an array of coordinates
