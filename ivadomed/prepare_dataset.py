@@ -16,7 +16,7 @@ def normalize(arr):
     return ((arr - mi) / (ma - mi))
 
 
-def gkern(kernlen=10):
+def gaussian_kernel(kernlen=10):
     """
     Returns a 2D Gaussian kernel.
 
@@ -46,7 +46,7 @@ def heatmap_generation(image, kernel_size):
         array: 2D array heatmap matching the label.
 
     """
-    kernel = gkern(kernel_size)
+    kernel = gaussian_kernel(kernel_size)
     map = scipy.signal.convolve(image, kernel, mode='same')
     return normalize(map)
 
@@ -121,6 +121,7 @@ def get_midslice_average(path_im, ind):
     image = nib.as_closest_canonical(image)
     arr = np.array(image.dataobj)
     numb_of_slice = 3
+    # Avoid out of bound error by changing the number of slice taken if needed
     if ind + 3 > arr.shape[0]:
         numb_of_slice = arr.shape[0] - ind
     if ind - numb_of_slice < 0:
@@ -129,24 +130,9 @@ def get_midslice_average(path_im, ind):
     return np.mean(arr[ind - numb_of_slice:ind + numb_of_slice, :, :], 0)
 
 
-def images_normalization(img_list, std=True):
-    if type(img_list) != list:
-        img_list = [img_list]
-    img_norm_list = []
-    for i in range(len(img_list)):
-        # print('Normalizing ' + str(i + 1) + '/' + str(len(img_list)))
-        img = img_list[i] - np.mean(img_list[i])  # zero-center
-        if std:
-            img_std = np.std(img)  # normalize
-            epsilon = 1e-100
-            img = img / (img_std + epsilon)  # epsilon is used in order to avoid by zero division
-        img_norm_list.append(img)
-    return img_norm_list
-
-
 def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim, ap_pad=128, is_pad=320):
     """
-     This function takes as input a path to a dataset and generates two sets of images:
+     This function takes as input a path to a dataset  and generates two sets of images:
    (i) mid-sagittal image of common size (1,ap_pad,is_pad) and
    (ii) heatmap of disc labels associated with the mid-sagittal image.
 
@@ -154,9 +140,9 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
         bids_path (string): path to BIDS dataset form which images will be generated
         suffix (string): suffix of image that will be processed (e.g., T2w)
         aim(string): 'full' or 'c2'. If 'c2' retrieves only c2 label (value = 3) else create heatmap with all label.
-        ap_pad(int): desired output size of AP axis which will be
+        ap_pad(int): desired output size of second dimension axis which will be
                     achieved from padding small images and cropping bigger ones
-        is_pad(int): Desired output size of IS axis.
+        is_pad(int): Desired output size of  3rd dimension axis.
 
 
     Returns:
@@ -169,13 +155,14 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
         sub = t[i]
         path_image = bids_path + t[i] + '/anat/' + t[i] + suffix + '.nii.gz'
         if os.path.isfile(path_image):
-            path_label = bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[
-                i] + suffix + '_labels-disc-manual.nii.gz'
+            path_label = bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix \
+                         + '_labels-disc-manual.nii.gz'
             list_points = mask2label(path_label, aim=aim)
             image_ref = nib.load(path_image)
             nib_ref_can = nib.as_closest_canonical(image_ref)
             imsh = np.array(nib_ref_can.dataobj).shape
             mid = get_midslice_average(path_image, list_points[0][0])
+
             if mid.shape[1] > is_pad:
                 mid = mid[:, mid.shape[1] - is_pad:]
             elif mid.shape[1] < is_pad:
@@ -193,7 +180,7 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
             label_array = np.zeros(imsh[1:])
 
             for j in range(len(list_points)):
-                    label_array[list_points[j][1], list_points[j][2]] = 1
+                label_array[list_points[j][1], list_points[j][2]] = 1
 
             heatmap = heatmap_generation(label_array[:, :], 10)
             if heatmap.shape[1] > is_pad:
