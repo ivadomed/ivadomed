@@ -38,4 +38,4 @@ compatible with ``ivadomed`` loader:
 Note: ``participants.tsv`` should, at least, include a column
 ``participant_id``, which is used when loading the dataset.
 
-``warning:: TODO: Update openneuro site to include derivatives``
+.. warning:: ``TODO: Update openneuro site to include derivatives``

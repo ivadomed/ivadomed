@@ -1,4 +1,4 @@
 Tutorials
 =========
 
-``warning:: Will come soon.``
+.. warning:: ``Will come soon.``

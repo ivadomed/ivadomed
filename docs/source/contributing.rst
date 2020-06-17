@@ -40,7 +40,7 @@ Opening an issue
 
 Issues (bugs, feature requests, or others) can be submitted `on our
 project's issue
-page. <https://github.com/neuropoly/ivado-medical-imaging/issues>`__
+page. <https://github.com/neuropoly/ivadomed/issues>`__
 
 Before Submitting a New Issue
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -205,7 +205,7 @@ PR Title
 ~~~~~~~~
 
 The PR title is used to automatically generate the
-`Changelog <https://github.com/neuropoly/ivado-medical-imaging/blob/master/CHANGES.md>`__
+`Changelog <https://github.com/neuropoly/ivadomed/blob/master/CHANGES.md>`__
 for each new release, so please follow the following rules:
 
 -  Provide a concise and self-descriptive title (see :ref:`contributing:Issue Title`).
@@ -227,7 +227,7 @@ Continuous Integration
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The PR can't be merged if `Github Actions "Run
-tests" <https://github.com/neuropoly/ivado-medical-imaging/actions>`__
+tests" <https://github.com/neuropoly/ivadomed/actions>`__
 hasn't succeeded. If you are familiar with it, consult the test results
 to fix the problem.
 
