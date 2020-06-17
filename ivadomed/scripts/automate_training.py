@@ -154,59 +154,10 @@ def automate_training(fname_config, fixed_split, all_combinations, n_iterations=
     ### Training parameters
     category = "training_parameters"
     base_item = initial_config[category]
+
     keys = ["batch_size"]
-
-    batch_sizes = [2, 4]
-
-    """
-    initial_lrs = [1e-2, 1e-3, 1e-4, 1e-5]
-    lr_schedulers = [{"name": "CosineAnnealingLR"},
-                {"name": "CosineAnnealingWarmRestarts", "T_0": 10},
-                {"name": "CyclicLR", "base_lr" : 1e-3, "max_lr" : 1e-2}]
-    """
-
-    # Losses
-    ### Simple case (one config per loss type)
-    """
-    losses = [{"name": "DiceLoss"},
-        {"name": "GeneralizedDiceLoss"},
-        {"name": "FocalLoss", "params": {"gamma": 0.5, "alpha" : 0.2}}]
-    """
-    ### Complex case (nested combinations)
-
-    """
-    base_loss = {"name": "focal", "params": {"gamma": 0.5, "alpha" : 0.2}}
-    alphas = [0.2, 0.5, 0.75, 1]
-    gammas = [0.5, 1, 1.5, 2]
-
-    loss_params = make_category(initial_config["training_parameters"]["loss"]["params"], ["gamma","alpha"], 
-                                [alphas, gammas], args.all_combin)
-    losses = make_category(initial_config["training_parameters"]["loss"], ["params"], [loss_params], args.all_combin)
-    """
-
-    # MixUp
-    # mixup_alphas = [0.5, 1]
-
     values = [batch_sizes]
     training_parameters, names = make_category(base_item, keys, values, args.all_combin)
-
-    # Step 2 : FiLM
-    """
-    category = "FiLMedUnet"
-    base_item = initial_config[category]
-    keys = ["applied", "metadata", "film_layers"]
-
-    applied = ["true"]
-    metadata = ["contrasts"]
-
-    film_layers = [ [1, 0, 0, 0, 0, 0, 0, 0],
-                    [0, 0, 0, 0, 1, 0, 0, 0],
-                    [0, 0, 0, 0, 0, 0, 0, 1],
-                    [1, 1, 1, 1, 1, 1, 1, 1]]
-
-    values = [applied, metadata, film_layers]
-    film_parameters = make_category(base_item, keys, values)
-    """
 
     # Add other steps here
 
