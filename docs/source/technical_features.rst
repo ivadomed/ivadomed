@@ -5,7 +5,7 @@ Physics-informed network
 ------------------------
 
 CNNs can be modulated, at each layer, using the `Feature-wise Linear
-Modulation (FiLM) <https://arxiv.org/pdf/1709.07871.pdf>`__ technique.
+Modulation (FiLM) <https://arxiv.org/abs/1709.07871>`__ technique.
 FiLM permits to add priors during training/inference based on the
 imaging physics (e.g. acquisition parameters), thereby improving the
 performance of the output segmentations.
@@ -106,4 +106,3 @@ Loss functions
    additional feature compared to the published reference, is that the
    background volume can be weighted by the inverse of its area, which
    could be of interest in high class imbalance scenarios.
-
