@@ -55,7 +55,7 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
                           train_frac, test_frac, log_directory):
     """Randomly split dataset between training / validation / testing.
 
-    Randomly split dataset between training / validation / testing
+    Randomly split dataset between training / validation / testing\
         and save it in log_directory + "/split_datasets.joblib"
     Args:
         path_folder (string): Dataset folder

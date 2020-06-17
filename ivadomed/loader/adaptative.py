@@ -155,27 +155,24 @@ class Dataframe:
 
 class Bids_to_hdf5:
     """
-
     """
 
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, hdf5_name, contrast_balance=None,
                  slice_axis=2, metadata_choice=False, slice_filter_fn=None, roi_suffix=None, transform=None,
                  object_detection_params=None):
         """
-
-        :param root_dir: path of the bids
-        :param subject_lst: list of patients
-        :param target_suffix: suffix of the gt
-        :param roi_suffix: suffix of the roi
-        :param contrast_lst: list of the contrast
-        :param hdf5_name: path and name of the hdf5 file
-        :param contrast_balance:
-        :param slice_axis:
-        :param metadata_choice:
-        :param slice_filter_fn:
-        :param transform
-        :param object_detection_params
-
+            :param root_dir: path of the bids
+            :param subject_lst: list of patients
+            :param target_suffix: suffix of the gt
+            :param roi_suffix: suffix of the roi
+            :param contrast_lst: list of the contrast
+            :param hdf5_name: path and name of the hdf5 file
+            :param contrast_balance:
+            :param slice_axis:
+            :param metadata_choice:
+            :param slice_filter_fn:
+            :param transform:
+            :param object_detection_params:
         """
 
         print("Starting conversion")
