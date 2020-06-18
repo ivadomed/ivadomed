@@ -44,6 +44,10 @@ def remove_some_contrasts(folder, subject_list, good_contrast_list):
 def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_derivatives=True, seed=-1):
     """Extract small BIDS dataset from a larger BIDS dataset.
 
+    Example::
+
+        python extract_small_dataset.py -i path/to/BIDS/dataset -o path/of/small/BIDS/dataset -n 10 -c T1w,T2w -d 0 -s 1234
+
     Args:
         ifolder (string): Input BIDS folder.
         ofolder (string): Output folder.
