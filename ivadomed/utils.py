@@ -96,6 +96,17 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
 
 def run_uncertainty(ifolder):
+    """Compute uncertainty from model prediction.
+
+    This function loops across the model predictions (nifti masks) and estimates the uncertainty from the Monte Carlo
+    samples. Both voxel-wise and structure-wise uncertainty are estimates.
+
+    Args:
+        ifolder (str): Folder containing the Monte Carlo samples.
+
+    Returns:
+        None
+    """
     # list subj_acq prefixes
     subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(ifolder)
                     if f.endswith('.nii.gz') and '_pred' in f]
