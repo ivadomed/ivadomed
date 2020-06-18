@@ -33,10 +33,10 @@ The purpose of the ``ivadomed`` project is to:
 
 .. toctree::
    :maxdepth: 1
-   :numbered:
-   :caption: Test
+   :caption: Developer section
 
-    models.rst
+   contributing.rst
+   api_ref.rst
 
 .. toctree::
    :maxdepth: 1
