@@ -323,7 +323,7 @@ def mixup(data, targets, alpha, debugging=False, ofolder=None):
         targets (Tensor): Input masks.
         alpha (float): MixUp parameter.
         debugging (Bool): If True, then samples of mixup are saved as png files.
-        ofolder (str): If debugging, Output folder where "mixup" folder is created.
+        ofolder (str): If debugging, output folder where "mixup" folder is created and samples are saved.
 
     Returns:
         Tensor, Tensor: Mixed image, Mixed mask.
@@ -349,11 +349,13 @@ def save_mixup_sample(ofolder, input_data, labeled_data, lambda_tensor):
     """Save mixup samples as png files in a "mixup" folder.
 
     Args:
-        ofolder (string): Output folder where "mixup" folder is created.
-        input_data (Tensor):
-        labeled_data (Tensor):
+        ofolder (str): Output folder where "mixup" folder is created and samples are saved.
+        input_data (Tensor): Input image.
+        labeled_data (Tensor): Input masks.
         lambda_tensor (Tensor):
+
     Returns:
+        None
     """
     #Mixup folder
     mixup_folder = os.path.join(ofolder, 'mixup')
@@ -382,22 +384,22 @@ def save_mixup_sample(ofolder, input_data, labeled_data, lambda_tensor):
 def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
     """Segment an image.
 
-    Segment an image (fname_image) using a pre-trained model (folder_model). If provided, a region of interest (fname_roi)
-    is used to crop the image prior to segment it.
+    Segment an image (`fname_image`) using a pre-trained model (`folder_model`). If provided, a region of interest
+    (`fname_roi`) is used to crop the image prior to segment it.
 
     Args:
-        folder_model (string): foldername which contains
+        folder_model (str): foldername which contains
             (1) the model ('folder_model/folder_model.pt') to use
             (2) its configuration file ('folder_model/folder_model.json') used for the training,
                 see https://github.com/neuropoly/ivadomed/wiki/configuration-file
-        fname_image (string): image filename (e.g. .nii.gz) to segment.
-        fname_roi (string): Binary image filename (e.g. .nii.gz) defining a region of interest,
+        fname_image (str): image filename (e.g. .nii.gz) to segment.
+        fname_roi (str): Binary image filename (e.g. .nii.gz) defining a region of interest,
             e.g. spinal cord centerline, used to crop the image prior to segment it if provided.
             The segmentation is not performed on the slices that are empty in this image.
         gpu_number (int): Number representing gpu number if available.
+
     Returns:
         nibabelObject: Object containing the soft segmentation.
-
     """
     # Define device
     cuda_available = torch.cuda.is_available()
