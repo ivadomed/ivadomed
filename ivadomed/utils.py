@@ -148,8 +148,17 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
     """Combine predictions from Monte Carlo simulations.
 
     Combine predictions from Monte Carlo simulations and save the resulting as:
-        (1) `fname_prob`, a soft segmentation obtained
-        (2) then argmax operation (saved as fname_hard).
+        (1) `fname_prob`, a soft segmentation obtained by averaging the Monte Carlo samples.
+        (2) `fname_hard`, a hard segmentation obtained thresholding with `thr`.
+
+    Args:
+        fname_lst (list): List of the Monte Carlo samples.
+        fname_hard (str): Filename for the output hard segmentation.
+        fname_prob (str): Filename for the output soft segmentation.
+        thr (float): Between 0 and 1. Used to threshold the soft segmentation and generate the hard segmentation.
+
+    Returns:
+        None
     """
     # collect all MC simulations
     data_lst = []
