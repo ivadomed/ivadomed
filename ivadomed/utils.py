@@ -136,7 +136,7 @@ def run_uncertainty(ifolder):
         fname_unc_vox = os.path.join(ifolder, subj_acq + '_unc-vox.nii.gz')
         if not os.path.isfile(fname_unc_vox):
             # compute voxel-wise uncertainty map
-            voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
+            voxelwise_uncertainty(fname_pred_lst, fname_unc_vox)
 
         fname_unc_struct = os.path.join(ifolder, subj_acq + '_unc.nii.gz')
         if not os.path.isfile(os.path.join(ifolder, subj_acq + '_unc-cv.nii.gz')):
@@ -152,7 +152,7 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
         (2) `fname_hard`, a hard segmentation obtained thresholding with `thr`.
 
     Args:
-        fname_lst (list): List of the Monte Carlo samples.
+        fname_lst (list of str): List of the Monte Carlo samples.
         fname_hard (str): Filename for the output hard segmentation.
         fname_prob (str): Filename for the output soft segmentation.
         thr (float): Between 0 and 1. Used to threshold the soft segmentation and generate the hard segmentation.
@@ -180,10 +180,18 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
     nib.save(nib_hard, fname_hard)
 
 
-def voxelWise_uncertainty(fname_lst, fname_out, eps=1e-5):
-    """
-    Voxel-wise uncertainty is estimated as entropy over all
-    N MC probability maps, and saved in fname_out.
+def voxelwise_uncertainty(fname_lst, fname_out, eps=1e-5):
+    """Estimate voxel wise uncertainty.
+
+    Voxel-wise uncertainty is estimated as entropy over all N MC probability maps, and saved in fname_out.
+
+    Args:
+        fname_lst (list of str): List of the Monte Carlo samples.
+        fname_out (str): Output filename.
+        eps (float): Epsilon value to deal with np.log(0).
+
+    Returns:
+        None
     """
     # collect all MC simulations
     data_lst = []
