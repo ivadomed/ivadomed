@@ -44,4 +44,20 @@ We are highlighting here below some key parameters to perform a one-class 2D seg
 
 Run the training
 ----------------
-Once the configuration file is
+Once the configuration file is filled, you can run the training by launching::
+
+    ivadomed path/to/config/file.json
+
+# TODO: give terminal output and comment.
+
+Evaluate model performance on the testing sub-dataset
+-----------------------------------------------------
+In order to test the trained model on the testing sub-dataset and compute evaluation metrics, open your config file and set `command` to `eval`. Then run:
+
+    ivadomed path/to/config/file.json
+
+# TODO: give terminal output and comment.
+
+The resulting segmentation is saved for each image in the `log_directory/pred_masks` while a csv file, saved in XX, contains all the evaluation metrics.
+
+# TODO: illustrate
