@@ -17,13 +17,14 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
     """Evaluate predictions from inference step.
 
     Args:
-          bids_path (string): Folder where data is stored
-          log_directory (string): Folder where the output folder "results_eval" will be created.
-          path_preds (string): Folder where model predictions were saved
-          target_suffix (list): list of suffixes
+          bids_path (str): Folder where raw data is stored.
+          log_directory (str): Folder where the output folder "results_eval" is be created.
+          path_preds (str): Folder where model predictions were saved
+          target_suffix (list): list of suffixes that indicates the target mask(s).
           eval_params (dict):
+
     Returns:
-          pd.DataFrame: results for each prediction
+          pd.DataFrame: results for each image.
     """
     print('\nRun Evaluation on {}\n'.format(path_preds))
 
@@ -80,6 +81,36 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
 
 
 class Evaluation3DMetrics(object):
+    """Computes 3D evaluation metrics.
+
+    Args;
+        data_pred (np.array): Network prediction mask.
+        data_gt (np.array): Ground-truth mask.
+        dim_lst (list): resolution (mm) along each dimension.
+        params (dict):
+
+    Attributes:
+        data_pred (np.array): Network prediction mask.
+        data_gt (np.array): Ground-truth mask.
+        n_classes (int): Number of classes.
+        px (float): resolution (mm) along the first axis.
+        py (float): resolution (mm) along the second axis.
+        pz (float): resolution (mm) along the third axis.
+        bin_struct (np.array): Binary structure.
+        size_min (int): Minimum size of objects. Objects that are smaller than this limit can be removed if
+            "removeSmall" is in params.
+        overlap_vox (int): A prediction and ground-truth are considered as overlapping if they overlap for at least this
+            amount of voxels.
+        overlap_ratio (float): A prediction and ground-truth are considered as overlapping if they overlap for at least
+            this portion of their volumes.
+        data_pred_label (np.array): Network prediction mask that is labeled, ie each object is filled with a different
+            value.
+        data_gt_label (np.array): Ground-truth mask that is labeled, ie each object is filled with a different
+            value.
+        n_pred (int): number of objects in the network prediction mask.
+        n_gt (int): number of objects in the ground-truth mask.
+        data_painted (np.array): Mask where each predicted object is labeled depending on whether it is a TP or FP.
+    """
 
     def __init__(self, data_pred, data_gt, dim_lst, params={}):
 
