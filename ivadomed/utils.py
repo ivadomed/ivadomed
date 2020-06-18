@@ -25,23 +25,24 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
                 discard_noise=True):
-    """Convert the NN predictions as nibabel object.
+    """Save the network predictions as nibabel object.
 
-    Based on the header of fname_ref image, it creates a nibabel object from the NN predictions (data_lst),
-    given the slice indexes (z_lst) along slice_axis.
+    Based on the header of `fname_ref` image, it creates a nibabel object from the Network predictions (`data_lst`).
 
     Args:
         data_lst (list of np arrays): predictions, either 2D slices either 3D patches.
-        z_lst (list of ints): slice indexes to reconstruct a 3D volume.
-        fname_ref (string): Filename of the input image: its header is copied to the output nibabel object.
-        fname_out (string): If not None, then the generated nibabel object is saved with this filename.
+        z_lst (list of ints): slice indexes to reconstruct a 3D volume for 2D slices.
+        fname_ref (str): Filename of the input image: its header is copied to the output nibabel object.
+        fname_out (str): If not None, then the generated nibabel object is saved with this filename.
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
-        debug (bool): Display additional info used for debugging.
-        kernel_dim (string): Indicates the number of dimensions of the extracted patches. Choices: '2d', '3d'.
-        bin_thr (float): If positive, then the segmentation is binarised with this given threshold.
-    Returns:
-        NibabelObject: Object containing the NN prediction.
+        debug (bool): If True, extended verbosity and intermediate outputs.
+        kernel_dim (str): Indicates whether the predictions were done on 2D or 3D patches. Choices: '2d', '3d'.
+        bin_thr (float): If positive, then the segmentation is binarized with this given threshold. Otherwise, a soft
+            segmentation is output.
+        discard_noise (bool): If True, predictions that are lower than 0.01 are set to zero.
 
+    Returns:
+        NibabelObject: Object containing the Network prediction.
     """
     # Load reference nibabel object
     nib_ref = nib.load(fname_ref)
@@ -82,7 +83,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     if bin_thr >= 0:
         arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
     elif discard_noise:  # discard noise
-        arr_pred_ref_space[arr_pred_ref_space <= 1e-1] = 0
+        arr_pred_ref_space[arr_pred_ref_space <= 1e-2] = 0
 
     # create nibabel object
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
