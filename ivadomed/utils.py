@@ -513,9 +513,9 @@ def cuda(input_var, cuda_available=True, non_blocking=False):
     """Passes input_var to GPU.
 
     Args:
-        input_var (Tensor): either a tensor or a list of tensors
-        cuda_available (Bool): If false, then return identity
-        non_blocking (Bool):
+        input_var (Tensor): either a tensor or a list of tensors.
+        cuda_available (bool): If False, then return identity
+        non_blocking (bool):
 
     Returns:
         Tensor
@@ -530,9 +530,11 @@ def cuda(input_var, cuda_available=True, non_blocking=False):
 
 
 class HookBasedFeatureExtractor(nn.Module):
-    """
-    This function extracts feature maps from given layer.
+    """This function extracts feature maps from given layer.
+
     https://github.com/ozan-oktay/Attention-Gated-Networks/tree/a96edb72622274f6705097d70cfaa7f2bf818a5a
+
+    # TODO: @Andreanne: can you please help me here?
     """
 
     def __init__(self, submodule, layername, upscale=False):
@@ -602,6 +604,19 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
 
 
 def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_axis):
+    """Save model feature maps.
+
+    Args:
+        batch (dict):
+        layer_name (str):
+        log_directory (str): Output folder.
+        model (nn.Module): Network.
+        test_input (Tensor):
+        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
+
+    Returns:
+        None
+    """
     if not os.path.exists(os.path.join(log_directory, layer_name)):
         os.mkdir(os.path.join(log_directory, layer_name))
 
