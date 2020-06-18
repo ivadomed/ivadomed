@@ -24,6 +24,8 @@ import shlex
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../../'))
 sys.path.insert(0, os.path.abspath('../../ivadomed/'))
+
+
 # TODO: find a way to minimize the number of imports below (maybe by adding
 # "import *" in the __init__ files).
 import ivadomed
@@ -31,11 +33,14 @@ import ivadomed.main
 import ivadomed.losses
 import ivadomed.loader
 import ivadomed.loader.utils
-# import ivadomed.loader.loader
-from recommonmark.transform import AutoStructify
+import ivadomed.scripts
+import ivadomed.scripts.visualize_transforms
+import ivadomed.scripts.convert_to_onnx
+import ivadomed.scripts.automate_training
+import ivadomed.scripts.compare_models
 
 
-source_suffix = ['.rst', '.md']
+source_suffix = '.rst'
 
 # -- General configuration ------------------------------------------------
 
@@ -54,7 +59,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.inheritance_diagram',
     'sphinx.ext.intersphinx',
-    'recommonmark',
+    'sphinx.ext.autosectionlabel',
 ]
 
 autoclass_content = "both"
@@ -253,14 +258,3 @@ html_css_files = ['css/custom.css']
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'ivadomed-doc'
-
-# app setup hook
-def setup(app):
-    app.add_config_value('recommonmark_config', {
-        #'url_resolver': lambda url: github_doc_root + url,
-        'auto_toc_tree_section': 'Contents',
-        'enable_math': False,
-        'enable_inline_math': False,
-        'enable_eval_rst': True,
-    }, True)
-    app.add_transform(AutoStructify)

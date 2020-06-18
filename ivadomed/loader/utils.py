@@ -19,7 +19,7 @@ __numpy_type_map = {
     'uint8': torch.ByteTensor,
 }
 
-TRANSFORM_PARAMS = ['elastic', 'rotation', 'offset', 'crop_params', 'reverse', 'translation', 'gaussian_noise']
+TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 'reverse', 'translation', 'gaussian_noise']
 
 
 def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
@@ -55,7 +55,7 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
                           train_frac, test_frac, log_directory):
     """Randomly split dataset between training / validation / testing.
 
-    Randomly split dataset between training / validation / testing
+    Randomly split dataset between training / validation / testing\
         and save it in log_directory + "/split_datasets.joblib"
     Args:
         path_folder (string): Dataset folder
@@ -227,7 +227,7 @@ class SampleMetadata(object):
 
     def _update(self, ref, list_keys):
         for k in list_keys:
-            if k not in self.metadata.keys() and k in ref.metadata.keys():
+            if (k not in self.metadata.keys() or not bool(self.metadata[k])) and k in ref.metadata.keys():
                 self.metadata[k] = ref.metadata[k]
 
     def keys(self):
@@ -277,13 +277,14 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 def clean_metadata(metadata_lst):
     metadata_out = []
 
-    TRANSFORM_PARAMS.remove('crop_params')
-    for metadata_cur in metadata_lst:
-        for key_ in list(metadata_cur.keys()):
-            if key_ in TRANSFORM_PARAMS:
-                del metadata_cur.metadata[key_]
-        metadata_out.append(metadata_cur)
-    TRANSFORM_PARAMS.append('crop_params')
+    if metadata_lst is not None:
+        TRANSFORM_PARAMS.remove('crop_params')
+        for metadata_cur in metadata_lst:
+            for key_ in list(metadata_cur.keys()):
+                if key_ in TRANSFORM_PARAMS:
+                    del metadata_cur.metadata[key_]
+            metadata_out.append(metadata_cur)
+        TRANSFORM_PARAMS.append('crop_params')
     return metadata_out
 
 
