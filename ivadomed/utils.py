@@ -314,15 +314,19 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
 def mixup(data, targets, alpha, debugging=False, ofolder=None):
     """Compute the mixup data.
 
+    .. seealso::
+        Zhang, Hongyi, et al. "mixup: Beyond empirical risk minimization."
+        arXiv preprint arXiv:1710.09412 (2017).
+
     Args:
-        data (Tensor):
-        targets (Tensor):
-        alpha (float): MixUp parameter
-        debugging (Bool): If True, then samples of mixup are saved as png files
-        log_directory (string): If debugging, Output folder where "mixup" folder is created.
+        data (Tensor): Input images.
+        targets (Tensor): Input masks.
+        alpha (float): MixUp parameter.
+        debugging (Bool): If True, then samples of mixup are saved as png files.
+        ofolder (str): If debugging, Output folder where "mixup" folder is created.
 
     Returns:
-        Tensor, Tensor: Mixed data
+        Tensor, Tensor: Mixed image, Mixed mask.
     """
     indices = torch.randperm(data.size(0))
     data2 = data[indices]
