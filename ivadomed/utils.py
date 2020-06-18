@@ -141,7 +141,7 @@ def run_uncertainty(ifolder):
         fname_unc_struct = os.path.join(ifolder, subj_acq + '_unc.nii.gz')
         if not os.path.isfile(os.path.join(ifolder, subj_acq + '_unc-cv.nii.gz')):
             # compute structure-wise uncertainty
-            structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
+            structurewise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
 
 
 def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
@@ -183,7 +183,7 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
 def voxelwise_uncertainty(fname_lst, fname_out, eps=1e-5):
     """Estimate voxel wise uncertainty.
 
-    Voxel-wise uncertainty is estimated as entropy over all N MC probability maps, and saved in fname_out.
+    Voxel-wise uncertainty is estimated as entropy over all N MC probability maps, and saved in `fname_out`.
 
     Args:
         fname_lst (list of str): List of the Monte Carlo samples.
@@ -209,13 +209,24 @@ def voxelwise_uncertainty(fname_lst, fname_out, eps=1e-5):
     nib.save(nib_unc, fname_out)
 
 
-def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
-    """
-    Structure-wise uncertainty from N MC probability maps (fname_lst)
-    and saved in fname_out with the following suffixes:
+def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
+    """Estimate structure wise uncertainty.
+
+    Structure-wise uncertainty from N MC probability maps (`fname_lst`) and saved in `fname_out` with the following
+    suffixes:
        - '-cv.nii.gz': coefficient of variation
        - '-iou.nii.gz': intersection over union
        - '-avgUnc.nii.gz': average voxel-wise uncertainty within the structure.
+
+    Args:
+        fname_lst (list of str): List of the Monte Carlo samples.
+        fname_hard (str): Filename of the hard segmentation, which is used to compute the `avgUnc` by providing a mask
+            of the structures.
+        fname_unc_vox (str): Filename of the voxel-wise uncertainty, which is used to compute the `avgUnc`.
+        fname_out (str): Output filename.
+
+    Returns:
+        None
     """
     # load hard segmentation and label it
     nib_hard = nib.load(fname_hard)
