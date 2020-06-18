@@ -66,7 +66,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
 
     for i_monteCarlo in range(n_monteCarlo):
         preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, path_3Dpred,
-                                          cuda_available, i_monteCarlo, log_directory)
+                                          cuda_available, i_monteCarlo)
         metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
@@ -80,7 +80,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
 
 
 def run_inference(test_loader, model, model_params, testing_params, ofolder, cuda_available,
-                  i_monte_carlo=None, log_directory=None):
+                  i_monte_carlo=None):
     """Run inference on the test data and save results as nibabel files.
 
     Args:
@@ -130,7 +130,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             input_samples = batch['input'][0]
 
         if model_params["name"] == "UNet3D" and model_params["attention"]:
-            imed_utils.save_feature_map(batch, "attentionblock2", log_directory, model, input_samples,
+            imed_utils.save_feature_map(batch, "attentionblock2", os.path.dirname(ofolder), model, input_samples,
                                         slice_axis=test_loader.dataset.slice_axis)
 
         # PREDS TO CPU
