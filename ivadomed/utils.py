@@ -591,6 +591,19 @@ class HookBasedFeatureExtractor(nn.Module):
 
 
 def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
+    """Reorient an image to match a reference image orientation.
+
+    It reorients a array to a given orientation and convert it to a nibabel object using the reference nibabel header.
+
+    Args:
+        arr (np.array): Input array, array to re orient.
+        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
+        nib_ref (nibabel): Reference nibabel object, whose header is used.
+        nib_ref_canonical (nibabel): `nib_ref` that has been reoriented to canonical orientation (RAS).
+
+    Returns:
+        None
+    """
     # Orient image in RAS according to slice axis
     arr_ras = imed_loader_utils.orient_img_ras(arr, slice_axis)
 
