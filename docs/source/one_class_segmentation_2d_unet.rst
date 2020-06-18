@@ -1,4 +1,4 @@
-01. One-class segmentation with 2D U-Net
+One-class segmentation with 2D U-Net
 ========================================
 
 This tutorial illustrates the following features:
