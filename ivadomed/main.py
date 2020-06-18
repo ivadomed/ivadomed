@@ -20,6 +20,20 @@ MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'NAME_CLASSIFIER_1']
 
 
 def run_main(config=None):
+    """Run main command.
+
+    This function is central in the ivadomed project as training / testing / evaluation commands are run via this
+    function. All the process parameters are defined in the config.
+
+    Args:
+        config (dict): Dictionary containing all parameters that are needed for a given process. See
+            :doc:`configuration_file` for more details.
+
+    Returns:
+        If "train" command: Returns floats: best loss score for both training and validation.
+        If "test" command: Returns dict: of averaged metrics computed on the testing sub dataset.
+        If "eval" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing sub dataset.
+    """
     # Necessary when calling run_main through python code instead of command-line
     if config is None:
         if len(sys.argv) != 2:
