@@ -29,7 +29,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         dataset_val (imed_loader): Validation dataset.
         training_params (dict):
         log_directory (str): Folder where log files, best and final models are saved.
-        device (str): Indicate the CPU or GPU ID.
+        device (str): Indicates the CPU or GPU ID.
         cuda_available (bool): If True, CUDA is available.
         metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`
         debugging (bool): If True, extended verbosity and intermediate outputs.

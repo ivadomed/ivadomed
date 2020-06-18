@@ -22,13 +22,13 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
 
     Args:
         model_params (dict): Model's parameters.
-        dataset_test (imed_loader): Testing dataset
+        dataset_test (imed_loader): Testing dataset.
         testing_params (dict):
-        log_directory (string):
-        device (torch.device):
-        cuda_available (Bool):
-        metric_fns (list):
-        debugging (Bool):
+        log_directory (str): Folder where predictions are saved.
+        device (torch.device): Indicates the CPU or GPU ID.
+        cuda_available (bool): If True, CUDA is available.
+        metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
+
     Returns:
         dict: result metrics
     """
@@ -80,7 +80,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
 
 
 def run_inference(test_loader, model, model_params, testing_params, ofolder, cuda_available,
-                  i_monteCarlo=None, log_directory=None):
+                  i_monte_carlo=None, log_directory=None):
     """Run inference on the test data and save results as nibabel files.
 
     Args:
@@ -88,19 +88,19 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         model (nn.Module):
         model_params (dict):
         testing_params (dict):
-        ofolder (string): Where the nibabel files are saved
-        device (torch.device):
-        cuda_available (Bool):
-        i_monteCarlo (int): i_th Monte Carlo iteration
+        ofolder (str): Folder where predictions are saved.
+        cuda_available (bool): If True, CUDA is available.
+        i_monte_carlo (int): i_th Monte Carlo iteration
+
     Returns:
-        np.array, np.array: pred, gt of shape n_sample, n_label, h, w, d
+        np.array, np.array: Prediction, Ground-truth of shape n_sample, n_label, h, w, d
     """
     # INIT STORAGE VARIABLES
     preds_npy_list, gt_npy_list = [], []
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     # LOOP ACROSS DATASET
 
-    for i, batch in enumerate(tqdm(test_loader, desc="Inference - Iteration " + str(i_monteCarlo))):
+    for i, batch in enumerate(tqdm(test_loader, desc="Inference - Iteration " + str(i_monte_carlo))):
         with torch.no_grad():
             # GET SAMPLES
             # input_samples: list of batch_size tensors, whose size is n_channels X height X width X depth
@@ -163,7 +163,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
                     # If Uncertainty running, then we save each simulation result
                     if testing_params['uncertainty']['applied']:
-                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
+                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
 
                     output_nii = imed_utils.pred_to_nib(data_lst=pred_tmp_lst,
                                                         z_lst=z_tmp_lst,
@@ -223,7 +223,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
                     # If uncertainty running, then we save each simulation result
                     if testing_params['uncertainty']['applied']:
-                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
+                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
                     output_nii = imed_utils.pred_to_nib(data_lst=[pred_undo],
