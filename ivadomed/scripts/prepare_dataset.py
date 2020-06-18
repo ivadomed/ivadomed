@@ -9,7 +9,7 @@ import ivadomed.utils as imed_utils
 import scipy
 
 
-# normalize between 0 and 1. 
+# normalize between 0 and 1.
 def normalize(arr):
     ma = arr.max()
     mi = arr.min()
