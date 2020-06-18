@@ -134,10 +134,10 @@ def run_uncertainty(ifolder):
 
 
 def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
-    """
-    Combine predictions from Monte Carlo simulations
-    by applying:
-        (1) a mean (saved as fname_prob)
+    """Combine predictions from Monte Carlo simulations.
+
+    Combine predictions from Monte Carlo simulations and save the resulting as:
+        (1) `fname_prob`, a soft segmentation obtained
         (2) then argmax operation (saved as fname_hard).
     """
     # collect all MC simulations
