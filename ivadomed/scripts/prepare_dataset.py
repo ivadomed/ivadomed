@@ -1,12 +1,10 @@
+import argparse
+import ivadomed.utils as imed_utils
 import nibabel as nib
 import numpy as np
-import matplotlib.pyplot as plt
-import PIL
-import skimage
 import os
-import sys
-import ivadomed.utils as imed_utils
 import scipy
+import skimage
 
 
 # normalize between 0 and 1.
@@ -152,3 +150,22 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
                      bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + '_mid_heatmap.nii.gz')
         else:
             pass
+
+
+def get_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--path", dest="path", required=True, type=str, help="Path to bids folder with "/" at the end.")
+    parser.add_argument("-s", "--suffix", dest="suffix", required=True,
+                        type=str, help="suffix of image file")
+    parser.add_argument("-a", "--aim", dest="aim", default="full", type=str, help="If set to 'c2' only points with value 3 will be converted to heatmap")
+    return parser
+
+
+if __name__ == '__main__':
+    parser = get_parser()
+    args = parser.parse_args()
+    bids_path = args.path
+    suffix = args.suffix
+    aim = args.aim
+    # Run Script
+    extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim)
