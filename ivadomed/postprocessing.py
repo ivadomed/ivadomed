@@ -142,7 +142,7 @@ def mask_predictions(predictions, mask_binary):
 
 def coordinate_from_heatmap(nifti_image, thresh=0.3, slice_axis=0):
     """
-    Retrieve coordinate from a soft output in a 2D image
+    Retrieve coordinates of local maxima in a soft segmentation.
     Args:
         nifti_image (nibabel object): Single slice nifti image of the soft output.
         thresh (float):Relative threshold for local maxima.
@@ -162,7 +162,7 @@ def coordinate_from_heatmap(nifti_image, thresh=0.3, slice_axis=0):
 
 def label_file_from_coordinates(fname_image, coord_list, slice_axis):
     """
-    Creates a nifti object with single voxel label. All labels have a value of 1. The nifti object as the same
+    Creates a nifti object with single-voxel labels. Each label has a value of 1. The nifti object as the same
     orientation as the input.
     Args:
         fname_image (str): Path to the image that matches the labels.

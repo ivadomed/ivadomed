@@ -798,7 +798,7 @@ class UnetGridGatingSignal3(nn.Module):
 class ConvBlock(nn.Module):
     def __init__(self, in_chan, out_chan, ksize=3, stride=1, pad=0, activation=nn.LeakyReLU()):
         """
-        perform convolution, activation and  batch normalization and
+        perform convolution, activation and batch normalization.
         Args:
             in_chan(int): number of channels on input
             out_chan(int): number of channel on output
@@ -842,8 +842,8 @@ class SimpleBlock(nn.Module):
 
 
 class Countception(nn.Module):
-    """based on : https://arxiv.org/abs/1703.08710
-    modified from github https://github.com/roggirg/count-ception_mbm/
+    """Countception model, based on: https://arxiv.org/abs/1703.08710
+    modified from: https://github.com/roggirg/count-ception_mbm/
     """
 
     def __init__(self, in_channel=3, out_channel=1, use_logits=False, logits_per_output=12, name='CC'):

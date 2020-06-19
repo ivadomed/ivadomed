@@ -258,7 +258,7 @@ class FocalTverskyLoss(TverskyLoss):
 
 class L2loss(nn.Module):
     """
-    L2 loss between two images : inputs and target
+    L2 loss between inputs and target
     """
 
     def __init__(self):
@@ -270,7 +270,7 @@ class L2loss(nn.Module):
 
 class AdapWingLoss(nn.Module):
     """
-    adaptive Wing loss : https://arxiv.org/abs/1904.07399
+    adaptive Wing loss as in: https://arxiv.org/abs/1904.07399
     Used for heatmap ground truth.
 
     """
@@ -319,7 +319,7 @@ class AdapWingLoss(nn.Module):
 
 class Loss_Combination(nn.Module):
     """
-    Loss that sums different other implemented loss
+    Loss that sums other implemented losses.
     """
 
     def __init__(self, losses_list, params_list=None):
