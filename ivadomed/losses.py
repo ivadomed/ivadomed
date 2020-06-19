@@ -270,36 +270,50 @@ class L2loss(nn.Module):
 
 class AdapWingLoss(nn.Module):
     """
-    adaptive Wing loss as in: https://arxiv.org/abs/1904.07399
+    Adaptive Wing loss as in: https://arxiv.org/abs/1904.07399
     Used for heatmap ground truth.
 
     """
 
-    def __init__(self, theta=0.5):
+    def __init__(self, theta=0.5, alpha=2.1, omega=14, epsilon=1 ):
+        """
+
+        Args:
+            theta (float): Threshold between linear and non linear loss.
+            alpha (float): Used to adapt loss shape to input shape and make loss smooth at 0 (background).
+            It needs to be slightly above 2 to maintain ideal properties.
+            omega (float): Multiplicating factor for non linear part of the loss.
+            epsilon (float): factor to avoid gradient explosion. It must not be too small
+        """
         self.theta = theta
+        self.alpha = alpha
+        self.omega = omega
+        self.epsilon = epsilon
         super(AdapWingLoss, self).__init__()
 
     def forward(self, input, target):
-        alpha = 2.1
-        w = 14
-        e = 1
-        A = w * (1 / (1 + torch.pow(self.theta / e, alpha - target))) * (alpha - target) * torch.pow(self.theta / e,
-                                                                                              alpha - target - 1) * (1 / e)
-        C = (self.theta * A - w * torch.log(1 + torch.pow(self.theta / e, alpha - target)))
+        eps = self.epsilon
+        # Compute adaptative factor
+        A = self.omega * (1 / (1 + torch.pow(self.theta / eps,
+                                             self.alpha - target))) * \
+            (self.alpha - target) * torch.pow(self.theta / eps,
+                                              self.alpha - target - 1) * (1 / eps)
+
+        # Constant term to link linear and non linear part
+        C = (self.theta * A - self.omega * torch.log(1 + torch.pow(self.theta / eps, self.alpha - target)))
 
         batch_size = target.size()[0]
         hm_num = target.size()[1]
 
         mask = torch.zeros_like(target)
-        # W=10
         kernel = scipy.ndimage.morphology.generate_binary_structure(2, 2)
         for i in range(batch_size):
             img_list = list
             img_list.append(np.round(target[i].cpu().numpy() * 255))
             img_merge = np.concatenate(img_list)
             img_dilate = scipy.ndimage.morphology.binary_opening(img_merge, np.expand_dims(kernel, axis=0))
-            img_dilate[img_dilate < 51] = 1  # 0*W+1
-            img_dilate[img_dilate >= 51] = 11  # 1*W+1
+            img_dilate[img_dilate < 51] = 1   # 0*omega+1
+            img_dilate[img_dilate >= 51] = 1 + self.omega  # 1*omega+1
             img_dilate = np.array(img_dilate, dtype=np.int)
 
             mask[i] = torch.tensor(img_dilate)
@@ -307,7 +321,7 @@ class AdapWingLoss(nn.Module):
         diff_hm = torch.abs(target - input)
         AWingLoss = A * diff_hm - C
         idx = diff_hm < self.theta
-        AWingLoss[idx] = w * torch.log(1 + torch.pow(diff_hm / e, alpha - target))[idx]
+        AWingLoss[idx] = self.omega * torch.log(1 + torch.pow(diff_hm / eps, self.alpha - target))[idx]
 
         AWingLoss *= mask
         sum_loss = torch.sum(AWingLoss)
