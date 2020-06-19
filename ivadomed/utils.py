@@ -46,6 +46,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     # Load reference nibabel object
     nib_ref = nib.load(fname_ref)
     nib_ref_can = nib.as_closest_canonical(nib_ref)
+    single_slice = False
 
     if kernel_dim == '2d':
         # complete missing z with zeros
@@ -60,6 +61,10 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
             print("Len {}".format(len(tmp_lst)))
             for arr in tmp_lst:
                 print("Shape element lst {}".format(arr.shape))
+
+        if len(tmp_lst) == 1:
+            single_slice = True 
+            tmp_lst.append(np.zeros(data_lst[0].shape))
 
         # create data and stack on depth dimension
         arr_pred_ref_space = np.stack(tmp_lst, axis=-1)
@@ -83,6 +88,11 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
     elif discard_noise:  # discard noise
         arr_pred_ref_space[arr_pred_ref_space <= 1e-1] = 0
+
+    if single_slice:
+        slc = [slice(None)] * len(arr_pred_ref_space.shape)
+        slc[slice_axis] = slice(0, 1)
+        arr_pred_ref_space = arr_pred_ref_space[tuple(slc)]
 
     # create nibabel object
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
