@@ -6,7 +6,7 @@ import nibabel as nib
 from scipy.ndimage.measurements import label
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.feature import peak_local_max
-import ivadomed.utils as imed_utils
+from ivadomed.utils import reorient_image
 
 
 def nifti_capable(wrapped):
@@ -141,51 +141,47 @@ def mask_predictions(predictions, mask_binary):
     return predictions * mask_binary
 
 
-def coordinate_from_heatmap(nifti_image, thresh=0.3, slice_axis=0):
+def coordinate_from_heatmap(nifti_image, thresh=0.3):
     """
     Retrieve coordinates of local maxima in a soft segmentation.
     Args:
-        nifti_image (nibabel object): Single slice nifti image of the soft output.
+        nifti_image (nibabel object): nifti image of the soft output.
         thresh (float): Relative threshold for local maxima, i.e., after normalizing
         the min and max between 0 and 1, respectively.
 
     Returns:
-        list: A list of computed coordinates found by local maximum in RAS convention
+        list: A list of computed coordinates found by local maximum. each element will be a list composed of
+        [x, y, z]
     """
     image_ref = nib.load(nifti_image)
-    image_can = nib.as_closest_canonical(image_ref)
-    arr_can = np.array(image_can.dataobj)
-    slc = [slice(None)] * len(arr_can.shape)
-    slc[slice_axis] = 0
-    image = arr_can[tuple(slc)]
-    coordinates_tmp = peak_local_max(image[:, :], min_distance=5, threshold_rel=thresh)
+    image = np.array(image_ref.dataobj)
+    coordinates_tmp = peak_local_max(image, min_distance=5, threshold_rel=thresh)
     return coordinates_tmp
 
 
-def label_file_from_coordinates(fname_image, coord_list, slice_axis):
+def label_file_from_coordinates(fname_image, coord_list):
     """
     Creates a nifti object with single-voxel labels. Each label has a value of 1. The nifti object as the same
     orientation as the input.
     Args:
         fname_image (str): Path to the image which affine matrix will be used to generate a new image with labels.
-        coord_list (list): list of coordinates in RAS oriented space. Each element is [x, y].
-        slice_axis (int): axis of the original image where the label should be.
+        coord_list (list): list of coordinates. Each element is [x, y, z].
 
     Returns:
-        nib: A single slice nifti object containing the singe-voxel label of value 1 in fname_image ref space.
+        nib: A nifti object containing the singe-voxel label of value 1. The matrix will be the same size as
+        fname_image's.
 
     """
     lab = nib.load(fname_image)
     nib_ref_can = nib.as_closest_canonical(lab)
     imsh = list(np.array(nib_ref_can.dataobj).shape)
     # remove the size of slice axis to create a 2D object
-    del imsh[slice_axis]
     label_array = np.zeros(tuple(imsh))
 
     for j in range(len(coord_list)):
-        label_array[coord_list[j][0], coord_list[j][1]] = 1
+        label_array[coord_list[j][0], coord_list[j][1], coord_list[j][2]] = 1
 
-    arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(label_array[:, :], axis=slice_axis), 2, lab,
+    arr_pred_ref_space = reorient_image(label_array, 2, lab,
                                                    nib_ref_can)
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
 
