@@ -3,6 +3,7 @@ import torch.nn as nn
 import scipy
 import numpy as np
 
+
 class MultiClassDiceLoss(nn.Module):
     """ Multi-class Dice Loss.
 
@@ -46,6 +47,7 @@ class BinaryCrossEntropyLoss(nn.Module):
     """
     Binary Cross Entropy Loss, calls https://pytorch.org/docs/master/generated/torch.nn.BCELoss.html#bceloss
     """
+
     def __init__(self):
         super(BinaryCrossEntropyLoss, self).__init__()
         self.loss_fct = nn.BCELoss()
@@ -275,7 +277,7 @@ class AdapWingLoss(nn.Module):
 
     """
 
-    def __init__(self, theta=0.5, alpha=2.1, omega=14, epsilon=1 ):
+    def __init__(self, theta=0.5, alpha=2.1, omega=14, epsilon=1):
         """
 
         Args:
@@ -312,7 +314,7 @@ class AdapWingLoss(nn.Module):
             img_list.append(np.round(target[i].cpu().numpy() * 255))
             img_merge = np.concatenate(img_list)
             img_dilate = scipy.ndimage.morphology.binary_opening(img_merge, np.expand_dims(kernel, axis=0))
-            img_dilate[img_dilate < 51] = 1   # 0*omega+1
+            img_dilate[img_dilate < 51] = 1  # 0*omega+1
             img_dilate[img_dilate >= 51] = 1 + self.omega  # 1*omega+1
             img_dilate = np.array(img_dilate, dtype=np.int)
 
@@ -362,7 +364,7 @@ class Loss_Combination(nn.Module):
                 else:
                     loss_fct = loss_class()
                 output.append(loss_fct(input, target).unsqueeze(0))
-            else: 
+            else:
                 output.append(loss_class()(input, target).unsqueeze(0))
 
         return torch.sum(torch.cat(output))
