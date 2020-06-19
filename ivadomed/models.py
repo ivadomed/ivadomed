@@ -800,12 +800,12 @@ class ConvBlock(nn.Module):
         """
         perform convolution, activation and batch normalization.
         Args:
-            in_chan(int): number of channels on input
-            out_chan(int): number of channel on output
-            ksize(int): size of kernel for the 2d convolution
-            stride(int): strides for 2d convolution
-            pad(int): pad for nn.conv2d
-            activation(nn.layers): activation layer. default Leaky ReLu
+            in_chan (int): number of channels on input
+            out_chan (int): number of channel on output
+            ksize (int): size of kernel for the 2d convolution
+            stride (int): strides for 2d convolution
+            pad (int): pad for nn.conv2d
+            activation (nn.layers): activation layer. default Leaky ReLu
         """
         super(ConvBlock, self).__init__()
         self.conv1 = nn.Conv2d(in_chan, out_chan, kernel_size=ksize, stride=stride, padding=pad)
@@ -821,7 +821,7 @@ class SimpleBlock(nn.Module):
         """
         Inception module with 3 convolutions that are then concatenated. Max pooling performed on concatenation
         Args:
-            in_chan(int): number of channel of input
+            in_chan (int): number of channel of input
             out_chan_1x1 (int): number of channel after first convolution block
             out_chan_3x3 (int): numer of channel for the other convolution blocks
             activation (nn.layers): activation layer used in convolution block
