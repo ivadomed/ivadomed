@@ -62,6 +62,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
             for arr in tmp_lst:
                 print("Shape element lst {}".format(arr.shape))
 
+        # single slice can be mistaken with channel we add an empty slice in the volume
         if len(tmp_lst) == 1:
             single_slice = True 
             tmp_lst.append(np.zeros(data_lst[0].shape))
@@ -89,6 +90,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     elif discard_noise:  # discard noise
         arr_pred_ref_space[arr_pred_ref_space <= 1e-1] = 0
 
+    # remove the added single slice
     if single_slice:
         slc = [slice(None)] * len(arr_pred_ref_space.shape)
         slc[slice_axis] = slice(0, 1)
