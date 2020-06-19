@@ -145,7 +145,8 @@ def coordinate_from_heatmap(nifti_image, thresh=0.3, slice_axis=0):
     Retrieve coordinates of local maxima in a soft segmentation.
     Args:
         nifti_image (nibabel object): Single slice nifti image of the soft output.
-        thresh (float):Relative threshold for local maxima.
+        thresh (float): Relative threshold for local maxima, i.e., after normalizing
+        the min and max between 0 and 1, respectively.
 
     Returns:
         list: A list of computed coordinates found by local maximum in RAS convention
@@ -165,7 +166,7 @@ def label_file_from_coordinates(fname_image, coord_list, slice_axis):
     Creates a nifti object with single-voxel labels. Each label has a value of 1. The nifti object as the same
     orientation as the input.
     Args:
-        fname_image (str): Path to the image that matches the labels.
+        fname_image (str): Path to the image which affine matrix will be used to generate a new image with labels.
         coord_list (list): list of coordinates in RAS oriented space. Each element is [x, y].
         slice_axis (int): axis of the original image where the label should be.
 

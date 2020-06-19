@@ -823,7 +823,7 @@ class SimpleBlock(nn.Module):
         Args:
             in_chan (int): number of channel of input
             out_chan_1x1 (int): number of channel after first convolution block
-            out_chan_3x3 (int): numer of channel for the other convolution blocks
+            out_chan_3x3 (int): number of channel for the other convolution blocks
             activation (nn.layers): activation layer used in convolution block
         """
         super(SimpleBlock, self).__init__()
@@ -853,7 +853,8 @@ class Countception(nn.Module):
             in_channel (int): number of channel on input image
             out_channel (int): number of channels on output image
             use_logits (bool): boolean to change output
-            logits_per_output (int): number of outputs of final convolution which will mulitplied by the number of chanel
+            logits_per_output (int): number of outputs of final convolution which will multiplied by the number of
+            channels
         """
         super(Countception, self).__init__()
 
