@@ -3,14 +3,18 @@ import torch.nn as nn
 
 
 class MultiClassDiceLoss(nn.Module):
-    """ Multi-class Dice Loss.
+    """Multi-class Dice Loss.
 
     Inspired from https://arxiv.org/pdf/1802.10508.
-
-    :param classes_of_interest:  list containing the index of a class which dice will be added to the loss.
     """
 
     def __init__(self, classes_of_interest):
+        """
+
+        Args:
+            classes_of_interest (list): list containing the index of a class which its dice will be added to the loss.
+                                        If is None all classes are considered.
+        """
         super(MultiClassDiceLoss, self).__init__()
         self.classes_of_interest = classes_of_interest
         self.dice_loss = DiceLoss()
@@ -29,7 +33,15 @@ class MultiClassDiceLoss(nn.Module):
 
 
 class DiceLoss(nn.Module):
+    """DiceLoss.
+
+    Motivated by: https://arxiv.org/pdf/1606.04797.pdf
+    """
     def __init__(self, smooth=1.0):
+        """
+        Args:
+            smooth: value to avoid division by zero when images and predictions are empty.
+        """
         super(DiceLoss, self).__init__()
         self.smooth = smooth
 
@@ -42,8 +54,9 @@ class DiceLoss(nn.Module):
 
 
 class BinaryCrossEntropyLoss(nn.Module):
-    """
-    Binary Cross Entropy Loss, calls https://pytorch.org/docs/master/generated/torch.nn.BCELoss.html#bceloss
+    """BinaryCrossEntropyLoss.
+
+    Calls https://pytorch.org/docs/master/generated/torch.nn.BCELoss.html#bceloss
     """
     def __init__(self):
         super(BinaryCrossEntropyLoss, self).__init__()
@@ -54,7 +67,19 @@ class BinaryCrossEntropyLoss(nn.Module):
 
 
 class FocalLoss(nn.Module):
+    """FocalLoss.
+
+    Motivated by: http://openaccess.thecvf.com/content_ICCV_2017/papers/Lin_Focal_Loss_for_ICCV_2017_paper.pdf
+    """
     def __init__(self, gamma=2, alpha=0.25, eps=1e-7):
+        """
+        Args:
+            gamma (float): value from 0 to 5, Control between easy background and hard ROI
+                           training examples. If set to 0, equivalent to cross-entropy.
+            alpha (float): value from 0 to 1, usually corresponding to the inverse of class frequency to address class
+                           imbalance.
+            eps (float): epsilon to avoid division by zero
+        """
         super(FocalLoss, self).__init__()
         self.gamma = gamma
         self.alpha = alpha
@@ -77,14 +102,20 @@ class FocalLoss(nn.Module):
 
 
 class FocalDiceLoss(nn.Module):
-    """
+    """FocalDiceLoss.
+
     Motivated by https://arxiv.org/pdf/1809.00076.pdf
-    :param beta: to bring the dice and focal losses at similar scale.
-    :param gamma: gamma value used in the focal loss.
-    :param alpha: alpha value used in the focal loss.
     """
 
     def __init__(self, beta=1, gamma=2, alpha=0.25):
+        """
+        Args:
+            beta (float): value from 0 to 1, indicating the weight of the dice loss.
+            gamma (float): value from 0 to 5, Control between easy background and hard ROI
+                           training examples. If set to 0, equivalent to cross-entropy.
+            alpha (float): value from 0 to 1, usually corresponding to the inverse of class frequency to address class
+                           imbalance.
+        """
         super().__init__()
         self.beta = beta
         self.focal = FocalLoss(gamma, alpha)
@@ -108,14 +139,15 @@ class FocalDiceLoss(nn.Module):
 
 
 class GeneralizedDiceLoss(nn.Module):
-    """
-    Generalized Dice Loss: https://arxiv.org/pdf/1707.03237
+    """GeneralizedDiceLoss.
+
+    Motivated by: https://arxiv.org/pdf/1707.03237
     """
 
     def __init__(self, epsilon=1e-5, include_background=True):
         """
         Args:
-            epsilon (float):
+            epsilon (float): epsilon to avoid division by zero
             include_background (float): If True, then an extra channel is added, which represents the background class
         """
         super(GeneralizedDiceLoss, self).__init__()
