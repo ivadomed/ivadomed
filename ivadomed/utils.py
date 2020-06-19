@@ -667,6 +667,11 @@ def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_
 
 
 def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axis):
+    """
+
+    # TODO: @Andreanne: can you please help me here?
+
+    """
     rdict = {}
     n_class, h, w, d = gt_data.shape
     labels = range(n_class)
@@ -694,6 +699,11 @@ def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axi
 
 
 def convert_labels_to_RGB(grid_img):
+    """
+
+    # TODO: @Andreanne: can you please help me here?
+
+    """
     # Keep always the same color labels
     batch_size, n_class, h, w = grid_img.shape
     rgb_img = torch.zeros((batch_size, 3, h, w))
@@ -756,6 +766,18 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
 
 
 class SliceFilter(object):
+    """Filter 2D slices from dataset.
+
+    If a sample does not meet certain conditions, it is discarded from the dataset.
+
+    Args:
+        filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
+        filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
+
+    Attributes:
+        filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
+        filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
+    """
     def __init__(self, filter_empty_mask=True,
                  filter_empty_input=True):
         self.filter_empty_mask = filter_empty_mask
@@ -776,6 +798,14 @@ class SliceFilter(object):
 
 
 def unstack_tensors(sample):
+    """Unstack tensors.
+
+    Args:
+        sample (Tensor):
+
+    Returns:
+        list: list of Tensors.
+    """
     list_tensor = []
     for i in range(sample.shape[1]):
         list_tensor.append(sample[:, i, ].unsqueeze(1))
@@ -783,6 +813,16 @@ def unstack_tensors(sample):
 
 
 def save_onnx_model(model, inputs, model_path):
+    """Convert PyTorch model to ONNX model and save it as `model_path`.
+
+    Args:
+        model (nn.Module): PyTorch model.
+        inputs (Tensor): Tensor, used to inform shape and axes.
+        model_path (str): Output filename for the ONNX model.
+
+    Returns:
+        None
+    """
     model.eval()
     dynamic_axes = {0: 'batch', 1: 'num_channels', 2: 'height', 3: 'width', 4: 'depth'}
     if len(inputs.shape) == 4:
@@ -795,6 +835,15 @@ def save_onnx_model(model, inputs, model_path):
 
 
 def onnx_inference(model_path, inputs):
+    """Run ONNX inference
+
+    Args:
+        model_path (str): Path to the ONNX model.
+        inputs (Tensor): Batch of input image.
+
+    Returns:
+        Tensor: Network output.
+    """
     inputs = np.array(inputs.cpu())
     ort_session = onnxruntime.InferenceSession(model_path)
     ort_inputs = {ort_session.get_inputs()[0].name: inputs}
@@ -806,7 +855,7 @@ def define_device(gpu_id):
     """Define the device used for the process of interest.
 
     Args:
-        gpu_id (int): ID of the GPU
+        gpu_id (int): GPU ID
     Returns:
         Bool, device: True if cuda is available
     """
@@ -842,7 +891,7 @@ def display_selected_transfoms(params, dataset_type):
 
     Args:
         params (dict):
-        dataset_list (list): e.g. ['testing'] or ['training', 'validation']
+        dataset_type (list): e.g. ['testing'] or ['training', 'validation']
     Returns:
         None
     """
@@ -857,9 +906,9 @@ def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="je
     Args:
         before (np.array): sample before transform.
         after (np.array): sample after transform.
-        list_title (list of strings): sub titles of before and after, resp.
-        fname_out (string): output filename where the plot is saved if provided.
-        cmap (string): Matplotlib colour map.
+        list_title (list of str): sub titles of before and after, resp.
+        fname_out (str): output filename where the plot is saved if provided.
+        cmap (str): Matplotlib colour map.
 
     Returns:
         None
