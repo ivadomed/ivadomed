@@ -213,14 +213,11 @@ class SegmentationPair(object):
         if self.gt_handle is None:
             gt_data = None
         for gt in self.gt_handle:
-            if gt is not None and self.soft_input==False:
+            if gt is not None:
                 hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
                                                                 self.slice_axis)
-                gt_data.append(hwd_oriented.astype(np.uint8))
-            elif gt is not None and self.soft_input:
-                hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
-                                                                self.slice_axis)
-                gt_data.append(hwd_oriented.astype(np.float32))
+                data_type = np.float if self.soft_input else np.uint8
+                gt_data.append(hwd_oriented.astype(data_type))
             else:
                 gt_data.append(
                     np.zeros(imed_loader_utils.orient_shapes_hwd(self.input_handle[0].shape, self.slice_axis),
@@ -419,7 +416,7 @@ class MRI2DSegmentationDataset(Dataset):
                                                    metadata=metadata_gt,
                                                    data_type="gt")
             # Make sure stack_gt is binarized
-            if stack_gt is not None and self.soft_input==False:
+            if stack_gt is not None and not self.soft_input:
                 stack_gt = torch.as_tensor(
                     [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in
                      range(len(stack_gt))])

@@ -144,8 +144,8 @@ def coordinate_from_heatmap(nifti_image, thresh=0.3, slice_axis=0):
     """
     Retrieve coordinate from a soft output in a 2D image
     Args:
-        image(array): A 2D array representing the soft output
-        thresh(float):Relative threshold for local maxima
+        nifti_image(nibabel object): Single slice nifti image of the soft output.
+        thresh(float):Relative threshold for local maxima.
 
     Returns:
         list: A list of computed coordinates found by local maximum in RAS convention

@@ -292,13 +292,12 @@ class AdapWingLoss(nn.Module):
 
         mask = torch.zeros_like(target)
         # W=10
-        kernel = scipy.ndimage.morphology.generate_binary_structure(2,2)
+        kernel = scipy.ndimage.morphology.generate_binary_structure(2, 2)
         for i in range(batch_size):
-            img_list = []
-
+            img_list = list
             img_list.append(np.round(target[i].cpu().numpy() * 255))
             img_merge = np.concatenate(img_list)
-            img_dilate = scipy.ndimage.morphology.binary_opening(img_merge, np.expand_dims(kernel,axis=0))
+            img_dilate = scipy.ndimage.morphology.binary_opening(img_merge, np.expand_dims(kernel, axis=0))
             img_dilate[img_dilate < 51] = 1  # 0*W+1
             img_dilate[img_dilate >= 51] = 11  # 1*W+1
             img_dilate = np.array(img_dilate, dtype=np.int)
@@ -327,8 +326,8 @@ class Loss_Combination(nn.Module):
         """
 
         Args:
-            losses_list: list of losses that will be summed
-            params_list: list of params for the losses, contain None or dictionnary definition of params for the loss
+            losses_list(list): list of losses that will be summed. Elements should be string.
+            params_list(list): list of params for the losses, contain None or dictionnary definition of params for the loss
             at same index. If no params list is given all default parameter will be used.
             (e.g., losses_list = ["L2loss","DiceLoss"]
                    params_list = [None,{"param1:0.5"}])
