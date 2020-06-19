@@ -20,8 +20,7 @@ CLASSIFIER_LIST = ['NAME_CLASSIFIER_1']
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
                  dataset_type="training", requires_undo=False, metadata_type=None,
-                 object_detection_params=None, soft_input=False,**kwargs):
-
+                 object_detection_params=None, soft_input=False, **kwargs):
     """Get loader.
 
     Args:
@@ -107,7 +106,8 @@ class SegmentationPair(object):
     a pair of of two data volumes (the input data and the ground truth data).
     """
 
-    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None, soft_input=False):
+    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None,
+                 soft_input=False):
 
         """
         Args:
@@ -612,7 +612,6 @@ class BidsDataset(MRI2DSegmentationDataset):
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_input=False):
-
 
         self.bids_ds = bids.BIDS(root_dir)
         self.soft_input = soft_input

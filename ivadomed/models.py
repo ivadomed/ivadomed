@@ -821,10 +821,10 @@ class SimpleBlock(nn.Module):
         """
         Inception module with 3 convolutions that are then concatenated. Max pooling performed on concatenation
         Args:
-            in_chan:(int) number of channel of input
-            out_chan_1x1(int): number of channel after first convolution block
-            out_chan_3x3(int): numer of channel for the other convolution blocks
-            activation(nn.layers): activation layer used in convolution block
+            in_chan(int): number of channel of input
+            out_chan_1x1 (int): number of channel after first convolution block
+            out_chan_3x3 (int): numer of channel for the other convolution blocks
+            activation (nn.layers): activation layer used in convolution block
         """
         super(SimpleBlock, self).__init__()
         self.conv1 = ConvBlock(in_chan, out_chan_1x1, ksize=3, pad=0, activation=activation)
@@ -850,10 +850,10 @@ class Countception(nn.Module):
         """
 
         Args:
-            in_channel(int): number of channel on input image
-            out_channel(int): number of channels on output image
-            use_logits(bool): boolean to change output
-            logits_per_output(int): number of outputs of final convolution which will mulitplied by the number of chanel
+            in_channel (int): number of channel on input image
+            out_channel (int): number of channels on output image
+            use_logits (bool): boolean to change output
+            logits_per_output (int): number of outputs of final convolution which will mulitplied by the number of chanel
         """
         super(Countception, self).__init__()
 

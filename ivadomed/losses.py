@@ -81,9 +81,9 @@ class FocalDiceLoss(nn.Module):
     """
     Motivated by https://arxiv.org/pdf/1809.00076.pdf
     Args:
-            beta: to bring the dice and focal losses at similar scale.
-            gamma: gamma value used in the focal loss.
-            alpha: alpha value used in the focal loss.
+        beta: to bring the dice and focal losses at similar scale.
+        gamma: gamma value used in the focal loss.
+        alpha: alpha value used in the focal loss.
     """
 
     def __init__(self, beta=1, gamma=2, alpha=0.25):
@@ -275,17 +275,17 @@ class AdapWingLoss(nn.Module):
 
     """
 
-    def __init__(self):
+    def __init__(self, theta=0.5):
+        self.theta = theta
         super(AdapWingLoss, self).__init__()
 
-    def forward(self,input,target):
-        theta = 0.5
+    def forward(self, input, target):
         alpha = 2.1
         w = 14
         e = 1
-        A = w * (1 / (1 + torch.pow(theta / e, alpha - target))) * (alpha - target) * torch.pow(theta / e,
+        A = w * (1 / (1 + torch.pow(self.theta / e, alpha - target))) * (alpha - target) * torch.pow(self.theta / e,
                                                                                               alpha - target - 1) * (1 / e)
-        C = (theta * A - w * torch.log(1 + torch.pow(theta / e, alpha - target)))
+        C = (self.theta * A - w * torch.log(1 + torch.pow(self.theta / e, alpha - target)))
 
         batch_size = target.size()[0]
         hm_num = target.size()[1]
@@ -306,7 +306,7 @@ class AdapWingLoss(nn.Module):
 
         diff_hm = torch.abs(target - input)
         AWingLoss = A * diff_hm - C
-        idx = diff_hm < theta
+        idx = diff_hm < self.theta
         AWingLoss[idx] = w * torch.log(1 + torch.pow(diff_hm / e, alpha - target))[idx]
 
         AWingLoss *= mask
@@ -322,12 +322,12 @@ class Loss_Combination(nn.Module):
     Loss that sums different other implemented loss
     """
 
-    def __init__(self, losses_list,params_list=None):
+    def __init__(self, losses_list, params_list=None):
         """
 
         Args:
-            losses_list(list): list of losses that will be summed. Elements should be string.
-            params_list(list): list of params for the losses, contain None or dictionnary definition of params for the loss
+            losses_list (list): list of losses that will be summed. Elements should be string.
+            params_list (list): list of params for the losses, contain None or dictionnary definition of params for the loss
             at same index. If no params list is given all default parameter will be used.
             (e.g., losses_list = ["L2loss","DiceLoss"]
                    params_list = [None,{"param1:0.5"}])
@@ -340,15 +340,15 @@ class Loss_Combination(nn.Module):
 
     def forward(self, input, target):
         output = []
-        for i in range (len(self.losses_list)):
+        for i in range(len(self.losses_list)):
             loss_class = eval(self.losses_list[i])
             if self.params_list is not None:
                 if self.params_list[i] is not None:
                     loss_fct = loss_class(**self.params_list[i])
                 else:
                     loss_fct = loss_class()
-                output.append(loss_fct(input,target).unsqueeze(0))
+                output.append(loss_fct(input, target).unsqueeze(0))
             else: 
-                output.append(loss_class()(input,target).unsqueeze(0))
+                output.append(loss_class()(input, target).unsqueeze(0))
 
         return torch.sum(torch.cat(output))
