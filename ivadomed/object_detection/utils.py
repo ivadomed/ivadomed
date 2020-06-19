@@ -283,7 +283,7 @@ def compute_bb_statistics(bounding_box_path):
     """
     Measures min, max and average, height, width, depth and volume of bounding boxes from a json file
     Args:
-        bounding_box_path: path to json file
+        bounding_box_path (string): path to json file
     """
     with open(bounding_box_path, 'r') as fp:
         bounding_box_dict = json.load(fp)
