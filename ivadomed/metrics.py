@@ -6,7 +6,7 @@ import numpy as np
 
 class MetricManager(object):
     """
-    Computes specified metrics and store them in a dictionary
+    Computes specified metrics and stores them in a dictionary
     """
     def __init__(self, metric_fns):
         """
