@@ -89,7 +89,7 @@ def run_main(config=None):
     # METRICS
     metric_fns = [imed_metrics.dice_score,
                   imed_metrics.multi_class_dice_score,
-                  imed_metrics.hausdorff_3D_score,
+                  imed_metrics.hausdorff_score,
                   imed_metrics.precision_score,
                   imed_metrics.recall_score,
                   imed_metrics.specificity_score,
