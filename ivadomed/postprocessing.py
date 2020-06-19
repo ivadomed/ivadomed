@@ -5,7 +5,8 @@ import numpy as np
 import nibabel as nib
 from scipy.ndimage.measurements import label
 from scipy.ndimage.morphology import binary_fill_holes
-
+from skimage.feature import peak_local_max
+import ivadomed.utils as imed_utils
 
 def nifti_capable(wrapped):
     @functools.wraps(wrapped)
@@ -137,3 +138,52 @@ def mask_predictions(predictions, mask_binary):
     assert predictions.shape == mask_binary.shape
     assert np.array_equal(mask_binary, mask_binary.astype(bool))
     return predictions * mask_binary
+
+
+def coordinate_from_heatmap(nifti_image, thresh=0.3, slice_axis=0):
+    """
+    Retrieve coordinate from a soft output in a 2D image
+    Args:
+        image(array): A 2D array representing the soft output
+        thresh(float):Relative threshold for local maxima
+
+    Returns:
+        list: A list of computed coordinates found by local maximum in RAS convention
+    """
+    image_ref = nib.load(nifti_image)
+    image_can = nib.as_closest_canonical(image_ref)
+    arr_can = np.array(image_can.dataobj)
+    slc = [slice(None)] * len(arr_can.shape)
+    slc[slice_axis] = 0
+    image = arr_can[tuple(slc)]
+    coordinates_tmp = peak_local_max(image[:, :], min_distance=5, threshold_rel=thresh)
+    return coordinates_tmp
+
+
+def label_file_from_coordinates(fname_image, coord_list, slice_axis):
+    """
+    Creates a nifti object with single voxel label. All labels have a value of 1. The nifti object as the same
+    orientation as the input
+    Args:
+        fname_image(str): Path to the image that matches the labels.
+        coord_list(list): list of coordinates in RAS oriented space. Each element is [x, y].
+        slice_axis(int): axis of the original image where the label should be.
+
+    Returns:
+        nib: A single slice nifti object containing the singe-voxel label of value 1 in fname_image ref space.
+
+    """
+    lab = nib.load(fname_image)
+    nib_ref_can = nib.as_closest_canonical(lab)
+    imsh = list(np.array(nib_ref_can.dataobj).shape)
+    # remove the size of slice axis to create a 2D object
+    del imsh[slice_axis]
+    label_array = np.zeros(tuple(imsh))
+
+    for j in range(len(coord_list)):
+        label_array[coord_list[j][0], coord_list[j][1]] = 1
+
+    arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(label_array[:, :], axis=slice_axis), 2, lab, nib_ref_can)
+    nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
+
+    return nib_pred
