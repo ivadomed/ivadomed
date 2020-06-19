@@ -55,6 +55,7 @@ def two_dim_compatible(wrapped):
 
 
 class ImedTransform(object):
+    """Base class for transforamtions."""
 
     def __call__(self, sample, metadata=None):
         raise NotImplementedError("You need to implement the transform() method.")
@@ -73,10 +74,14 @@ class Compose(object):
         - values torchvision_transform.Compose objects.
 
     Attributes:
-        dict_transforms (dictionary): Dictionary where the keys are the transform names
+        dict_transforms (dict): Dictionary where the keys are the transform names
             and the value their parameters.
         requires_undo (bool): If True, does not include transforms which do not have an undo_transform
             implemented yet.
+
+    Args:
+        transform (dict): Keys are "im", "gt", "roi" and values are torchvision_transforms.Compose of the
+            transformations of interest.
     """
 
     def __init__(self, dict_transforms, requires_undo=False):
@@ -128,6 +133,16 @@ class Compose(object):
 
 
 class UndoCompose(object):
+    """Undo the Compose transformations.
+
+    Call the undo transformations in the inverse order than the "do transformations".
+
+    Attributes:
+        compose (torchvision_transforms.Compose):
+
+    Args:
+        transforms (torchvision_transforms.Compose):
+    """
     def __init__(self, compose):
         self.transforms = compose
 
@@ -142,6 +157,14 @@ class UndoCompose(object):
 
 
 class UndoTransform(object):
+    """Call undo transformation.
+
+    Attributes:
+        transform (ImedTransform):
+
+    Args:
+        transform (ImedTransform):
+    """
     def __init__(self, transform):
         self.transform = transform
 
