@@ -57,7 +57,7 @@ def mask2label(path_label, aim='full'):
         aim: 'full' or 'c2' full will return all points with label between 3 and 30 , c2 will return only the coordinates of points label 3
 
     Returns:
-        array: array containing the asked point in the format [x,y,z,value]
+        array: array containing the asked point in the format [x,y,z,value] in the RAS orientation.
 
     """
     image = nib.load(path_label)
@@ -117,7 +117,8 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
                 label_array[list_points[j][1], list_points[j][2]] = 1
 
             heatmap = heatmap_generation(label_array[:, :], 10)
-            nib_pred = nib.Nifti1Image(heatmap, lab.affine)
+            arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(heatmap[:, :], axis=0), 2, lab, nib_ref_can)
+            nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
             nib.save(nib_pred,
                      bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + '_mid_heatmap.nii.gz')
         else:
