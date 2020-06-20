@@ -279,9 +279,13 @@ def verify_metadata(metadata, has_bounding_box):
     return has_bounding_box
 
 
-def bounding_box_prior(fname_mask, metadata):
+def bounding_box_prior(fname_mask, metadata, slice_axis):
     nib_prior = nib.load(fname_mask)
-    bounding_box = get_bounding_boxes(nib_prior.get_fdata()[..., 0])
+    # orient image into HWD convention
+    nib_ras = nib.as_closest_canonical(nib_prior)
+    np_mask = nib_ras.get_fdata()[..., 0] if len(nib_ras.get_fdata().shape) == 4 else nib_ras.get_fdata()
+    np_mask = imed_loader_utils.orient_img_hwd(np_mask, slice_axis)
+    bounding_box = get_bounding_boxes(np_mask)
     metadata['bounding_box'] = bounding_box[0]
 
 
