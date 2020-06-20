@@ -158,6 +158,7 @@ class UndoCompose(object):
 
 class UndoTransform(object):
     """Call undo transformation.
+    """Call undo transformation.
 
     Attributes:
         transform (ImedTransform):

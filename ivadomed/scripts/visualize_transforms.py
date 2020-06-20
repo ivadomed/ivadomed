@@ -35,7 +35,7 @@ def get_data(fname_in, axis):
          axis int:
 
     Returns:
-        nibabel, np.array
+        nibabel, ndarray
     """
     # Load image
     input_img = nib.load(fname_in)

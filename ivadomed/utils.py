@@ -596,7 +596,7 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     It reorients a array to a given orientation and convert it to a nibabel object using the reference nibabel header.
 
     Args:
-        arr (np.array): Input array, array to re orient.
+        arr (ndarray): Input array, array to re orient.
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
         nib_ref (nibabel): Reference nibabel object, whose header is used.
         nib_ref_canonical (nibabel): `nib_ref` that has been reoriented to canonical orientation (RAS).
@@ -904,8 +904,8 @@ def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="je
     """Utils tool to plot sample before and after transform, for debugging.
 
     Args:
-        before (np.array): sample before transform.
-        after (np.array): sample after transform.
+        before (ndarray): sample before transform.
+        after (ndarray): sample after transform.
         list_title (list of str): sub titles of before and after, resp.
         fname_out (str): output filename where the plot is saved if provided.
         cmap (str): Matplotlib colour map.

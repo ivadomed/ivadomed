@@ -93,7 +93,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         i_monte_carlo (int): i_th Monte Carlo iteration
 
     Returns:
-        np.array, np.array: Prediction, Ground-truth of shape n_sample, n_label, h, w, d
+        ndarray, ndarray: Prediction, Ground-truth of shape n_sample, n_label, h, w, d
     """
     # INIT STORAGE VARIABLES
     preds_npy_list, gt_npy_list = [], []

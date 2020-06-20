@@ -84,32 +84,32 @@ class Evaluation3DMetrics(object):
     """Computes 3D evaluation metrics.
 
     Args:
-        data_pred (np.array): Network prediction mask.
-        data_gt (np.array): Ground-truth mask.
+        data_pred (ndarray): Network prediction mask.
+        data_gt (ndarray): Ground-truth mask.
         dim_lst (list): resolution (mm) along each dimension.
         params (dict):
 
     Attributes:
-        data_pred (np.array): Network prediction mask.
-        data_gt (np.array): Ground-truth mask.
+        data_pred (ndarray): Network prediction mask.
+        data_gt (ndarray): Ground-truth mask.
         n_classes (int): Number of classes.
         px (float): resolution (mm) along the first axis.
         py (float): resolution (mm) along the second axis.
         pz (float): resolution (mm) along the third axis.
-        bin_struct (np.array): Binary structure.
+        bin_struct (ndarray): Binary structure.
         size_min (int): Minimum size of objects. Objects that are smaller than this limit can be removed if
             "removeSmall" is in params.
         overlap_vox (int): A prediction and ground-truth are considered as overlapping if they overlap for at least this
             amount of voxels.
         overlap_ratio (float): A prediction and ground-truth are considered as overlapping if they overlap for at least
             this portion of their volumes.
-        data_pred_label (np.array): Network prediction mask that is labeled, ie each object is filled with a different
+        data_pred_label (ndarray): Network prediction mask that is labeled, ie each object is filled with a different
             value.
-        data_gt_label (np.array): Ground-truth mask that is labeled, ie each object is filled with a different
+        data_gt_label (ndarray): Ground-truth mask that is labeled, ie each object is filled with a different
             value.
         n_pred (int): number of objects in the network prediction mask.
         n_gt (int): number of objects in the ground-truth mask.
-        data_painted (np.array): Mask where each predicted object is labeled depending on whether it is a TP or FP.
+        data_painted (ndarray): Mask where each predicted object is labeled depending on whether it is a TP or FP.
     """
 
     def __init__(self, data_pred, data_gt, dim_lst, params={}):
