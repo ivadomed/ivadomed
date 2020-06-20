@@ -151,7 +151,7 @@ def resample_bounding_box(metadata, transform):
             for i in range(len(metadata['input_metadata'])):
                 metadata['input_metadata'][i]['bounding_box'] = coord
 
-            for i in range(len(metadata['input_metadata'])):
+            for i in range(len(metadata['gt_metadata'])):
                 metadata['gt_metadata'][i]['bounding_box'] = coord
             break
 
@@ -277,6 +277,12 @@ def verify_metadata(metadata, has_bounding_box):
 
     has_bounding_box &= index_has_bounding_box
     return has_bounding_box
+
+
+def bounding_box_prior(fname_mask, metadata):
+    nib_prior = nib.load(fname_mask)
+    bounding_box = get_bounding_boxes(nib_prior.get_fdata()[..., 0])
+    metadata['bounding_box'] = bounding_box[0]
 
 
 def compute_bb_statistics(bounding_box_path):
