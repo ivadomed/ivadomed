@@ -83,7 +83,7 @@ def mask2label(path_label, aim='full'):
 
 def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim="full"):
     """
-    This function takes as input a path to a dataset  and generates two sets of images:
+    This function takes as input a path to a dataset  and generates a set of images:
    (i) mid-sagittal image and
    (ii) heatmap of disc labels associated with the mid-sagittal image.
 
