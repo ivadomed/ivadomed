@@ -280,6 +280,17 @@ def verify_metadata(metadata, has_bounding_box):
 
 
 def bounding_box_prior(fname_mask, metadata, slice_axis):
+    """
+    Computes prior steps to a model requiring bounding box crop. This includes loading a mask of the ROI, orienting the
+    given mask into the following dimensions: (height, width, depth), extracting the bounding boxes and storing the
+    information in the metadata.
+
+    Args:
+        fname_mask (str): Filename containing the mask of the ROI
+        metadata (dict): Dictionary containing the image metadata
+        slice_axis (int): Slice axis (0: sagittal, 1: coronal, 2: axial)
+
+    """
     nib_prior = nib.load(fname_mask)
     # orient image into HWD convention
     nib_ras = nib.as_closest_canonical(nib_prior)
