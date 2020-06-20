@@ -19,6 +19,7 @@ from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed.object_detection import utils as imed_obj_detect
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -335,7 +336,7 @@ def save_mixup_sample(ofolder, input_data, labeled_data, lambda_tensor):
     plt.close()
 
 
-def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
+def segment_volume(folder_model, fname_image, fname_roi=None, fname_prior=None, gpu_number=0):
     """Segment an image.
 
     Segment an image (fname_image) using a pre-trained model (folder_model). If provided, a region of interest (fname_roi)
@@ -366,6 +367,12 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
     with open(fname_model_metadata, "r") as fhandle:
         context = json.load(fhandle)
 
+    metadata = {}
+    if fname_prior is not None:
+        if 'object_detection_params' in context and \
+           context['object_detection_params']['object_detection_path'] is not None:
+            imed_obj_detect.bounding_box_prior(fname_prior, metadata)
+
     # TRANSFORMATIONS
     # If ROI is not provided then force center cropping
     if fname_roi is None and 'ROICrop' in context["transformation"].keys():
@@ -388,7 +395,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None, gpu_number=0):
         print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
-    filename_pairs = [([fname_image], [None], fname_roi, [{}])]
+    filename_pairs = [([fname_image], [None], fname_roi, [metadata])]
     kernel_3D = bool('UNet3D' in context and context['UNet3D']['applied'])
     if kernel_3D:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
