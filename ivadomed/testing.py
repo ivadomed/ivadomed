@@ -98,8 +98,10 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     # INIT STORAGE VARIABLES
     preds_npy_list, gt_npy_list = [], []
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
-    # LOOP ACROSS DATASET
+    volume = None
+    weight_matrix = None
 
+    # LOOP ACROSS DATASET
     for i, batch in enumerate(tqdm(test_loader, desc="Inference - Iteration " + str(i_monteCarlo))):
         with torch.no_grad():
             # GET SAMPLES
@@ -195,26 +197,11 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 fname_tmp = fname_ref
 
             else:
-                x_min, x_max, y_min, y_max, z_min, z_max = batch['input_metadata'][smp_idx][0]['coord']
-                num_pred = preds_cpu[smp_idx].shape[0]
-
-                first_sample_bool = not any([x_min, y_min, z_min])
-                if first_sample_bool:
-                    x, y, z = batch['input_metadata'][smp_idx][0]['index_shape']
-                    volume = torch.zeros((num_pred, x, y, z))
-                    weight_matrix = torch.zeros((num_pred, x, y, z))
-
-                last_sample_bool = x_max == x and y_max == y and z_max == z
-
-                # Average predictions
-                volume[:, x_min:x_max, y_min:y_max, z_min:z_max] += preds_cpu[smp_idx]
-                weight_matrix[:, x_min:x_max, y_min:y_max, z_min:z_max] += 1
-                if last_sample_bool:
-                    volume /= weight_matrix
-
-                pred_undo, metadata = testing_params["undo_transforms"](volume,
-                                                                        batch['gt_metadata'][smp_idx],
-                                                                        data_type='gt')
+                pred_undo, metadata, last_sample_bool, volume, weight_matrix = \
+                    imed_utils.volume_reconstruction(batch,
+                                                     preds_cpu,
+                                                     testing_params,
+                                                     smp_idx, volume, weight_matrix)
                 fname_ref = metadata[0]['gt_filenames'][0]
                 # Indicator of last batch
                 if last_sample_bool:
@@ -239,7 +226,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         gt_lst.append(nib.load(gt).get_fdata())
                     gt_npy_list.append(np.array(gt_lst))
                     # Save merged labels with color
-                    if volume.shape[0] > 1:
+                    if pred_undo.shape[0] > 1:
                         imed_utils.save_color_labels(pred_undo,
                                                      testing_params['binarize_prediction'],
                                                      batch['input_metadata'][smp_idx][0]['input_filenames'],

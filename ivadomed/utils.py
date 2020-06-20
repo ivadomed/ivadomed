@@ -446,6 +446,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None, fname_prior=None, 
 
         # Reconstruct 3D object
         for i_slice in range(len(preds)):
+
+
             # undo transformations
             preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
                                                          batch["input_metadata"][i_slice],
@@ -818,3 +820,27 @@ def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="je
         plt.savefig(fname_out)
     else:
         plt.show()
+
+
+def volume_reconstruction(batch, pred, testing_params, smp_idx, volume=None, weight_matrix=None):
+    x_min, x_max, y_min, y_max, z_min, z_max = batch['input_metadata'][smp_idx][0]['coord']
+    num_pred = pred[smp_idx].shape[0]
+
+    first_sample_bool = not any([x_min, y_min, z_min])
+    x, y, z = batch['input_metadata'][smp_idx][0]['index_shape']
+    if first_sample_bool:
+        volume = torch.zeros((num_pred, x, y, z))
+        weight_matrix = torch.zeros((num_pred, x, y, z))
+
+    last_sample_bool = x_max == x and y_max == y and z_max == z
+
+    # Average predictions
+    volume[:, x_min:x_max, y_min:y_max, z_min:z_max] += pred[smp_idx]
+    weight_matrix[:, x_min:x_max, y_min:y_max, z_min:z_max] += 1
+    if last_sample_bool:
+        volume /= weight_matrix
+
+    pred_undo, metadata = testing_params["undo_transforms"](volume,
+                                                            batch['gt_metadata'][smp_idx],
+                                                            data_type='gt')
+    return pred_undo, metadata, last_sample_bool, volume, weight_matrix
