@@ -37,7 +37,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         metadata_type (string): None if no metadata
         dataset_type (string): training, validation or testing
         requires_undo (Bool): If True, the transformations without undo_transform will be discarded
-        soft_input(Bool): if True ground truth will be float32 non binarized images
+        soft_input (Bool): if True ground truth will be float32 non binarized images
         object_detection_params (dict):
     Returns:
         BidsDataset
