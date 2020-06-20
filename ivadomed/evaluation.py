@@ -17,14 +17,14 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
     """Evaluate predictions from inference step.
 
     Args:
-          bids_path (str): Folder where raw data is stored.
-          log_directory (str): Folder where the output folder "results_eval" is be created.
-          path_preds (str): Folder where model predictions were saved
-          target_suffix (list): list of suffixes that indicates the target mask(s).
-          eval_params (dict):
+        bids_path (str): Folder where raw data is stored.
+        log_directory (str): Folder where the output folder "results_eval" is be created.
+        path_preds (str): Folder where model predictions were saved
+        target_suffix (list): list of suffixes that indicates the target mask(s).
+        eval_params (dict):
 
     Returns:
-          pd.DataFrame: results for each image.
+        pd.DataFrame: results for each image.
     """
     print('\nRun Evaluation on {}\n'.format(path_preds))
 
