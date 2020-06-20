@@ -99,28 +99,28 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
 
     for i in range(len(t)):
         sub = t[i]
-        path_image = bids_path + t[i] + '/anat/' + t[i] + suffix + '.nii.gz'
+        path_image = os.path.join(bids_path, t[i], 'anat', t[i] + suffix + '.nii.gz')
         if os.path.isfile(path_image):
-            path_label = bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix \
-                         + '_label-disc-manual.nii.gz'
+            path_label = os.path.join(bids_path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
+                                      '_label-disc-manual.nii.gz')
             list_points = mask2label(path_label, aim=aim)
             image_ref = nib.load(path_image)
             nib_ref_can = nib.as_closest_canonical(image_ref)
             imsh = np.array(nib_ref_can.dataobj).shape
             mid_nifti = imed_preprocessing.get_midslice_average(path_image, list_points[0][0], slice_axis=0)
-            nib.save(mid_nifti, bids_path + t[i] + '/anat/' + t[i] + suffix + '_mid.nii.gz')
+            nib.save(mid_nifti, os.path.join(bids_path, t[i], 'anat', t[i] + suffix + '_mid.nii.gz'))
             lab = nib.load(path_label)
             nib_ref_can = nib.as_closest_canonical(lab)
             label_array = np.zeros(imsh[1:])
 
-            for j in range(len(list_points)):
+            for j in range (len(list_points)):
                 label_array[list_points[j][1], list_points[j][2]] = 1
 
             heatmap = heatmap_generation(label_array[:, :], 10)
             arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(heatmap[:, :], axis=0), 2, lab, nib_ref_can)
             nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
-            nib.save(nib_pred,
-                     bids_path + 'derivatives/labels/' + t[i] + '/anat/' + t[i] + suffix + '_mid_heatmap.nii.gz')
+            nib.save(nib_pred, os.path.join(bids_path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
+                                            '_mid_heatmap.nii.gz'))
         else:
             pass
 
