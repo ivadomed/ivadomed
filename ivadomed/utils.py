@@ -330,7 +330,7 @@ def save_mixup_sample(ofolder, input_data, labeled_data, lambda_tensor):
     plt.close()
 
 
-def segment_volume(folder_model, fname_image, fname_roi=None, fname_prior=None, gpu_number=0):
+def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
     """Segment an image.
 
     Segment an image (fname_image) using a pre-trained model (folder_model). If provided, a region of interest (fname_roi)
@@ -341,8 +341,9 @@ def segment_volume(folder_model, fname_image, fname_roi=None, fname_prior=None, 
             (1) the model ('folder_model/folder_model.pt') to use
             (2) its configuration file ('folder_model/folder_model.json') used for the training,
                 see https://github.com/neuropoly/ivadomed/wiki/configuration-file
-        fname_image (string): image filename (e.g. .nii.gz) to segment.
-        fname_roi (string): Binary image filename (e.g. .nii.gz) defining a region of interest,
+        fname_image (str): image filename (e.g. .nii.gz) to segment.
+        fname_prior (str): Image filename (e.g. .nii.gz) containing processing information (e.i. spinal cord
+            segmentation, spinal location or MS lesion classification)
             e.g. spinal cord centerline, used to crop the image prior to segment it if provided.
             The segmentation is not performed on the slices that are empty in this image.
         gpu_number (int): Number representing gpu number if available.
@@ -365,7 +366,10 @@ def segment_volume(folder_model, fname_image, fname_roi=None, fname_prior=None, 
     loader_params = context["loader_parameters"]
     slice_axis = AXIS_DCT[loader_params['slice_axis']]
     metadata = {}
+    fname_roi = None
     if fname_prior is not None:
+        if 'roi_params' in loader_params and loader_params['roi_params']['suffix'] is not None:
+            fname_roi = fname_prior
         if 'object_detection_params' in context and \
                 context['object_detection_params']['object_detection_path'] is not None:
             imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis)
@@ -446,11 +450,8 @@ def segment_volume(folder_model, fname_image, fname_roi=None, fname_prior=None, 
 
             if kernel_3D:
                 batch['gt_metadata'] = batch['input_metadata']
-                preds_undo, metadata, last_sample_bool, volume, weight_matrix = volume_reconstruction(batch,
-                                                                                                      preds,
-                                                                                                      undo_transforms,
-                                                                                                      i_slice, volume,
-                                                                                                      weight_matrix)
+                preds_undo, metadata, last_sample_bool, volume, weight_matrix = \
+                    volume_reconstruction(batch, preds, undo_transforms, i_slice, volume, weight_matrix)
                 preds_list = [np.array(preds_undo)]
             else:
                 # undo transformations
