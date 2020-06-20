@@ -200,7 +200,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 pred_undo, metadata, last_sample_bool, volume, weight_matrix = \
                     imed_utils.volume_reconstruction(batch,
                                                      preds_cpu,
-                                                     testing_params,
+                                                     testing_params['undo_transforms'],
                                                      smp_idx, volume, weight_matrix)
                 fname_ref = metadata[0]['gt_filenames'][0]
                 # Indicator of last batch
