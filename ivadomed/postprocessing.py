@@ -6,7 +6,6 @@ import nibabel as nib
 from scipy.ndimage.measurements import label
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.feature import peak_local_max
-from ivadomed.utils import reorient_image
 
 
 def nifti_capable(wrapped):
@@ -165,7 +164,7 @@ def label_file_from_coordinates(fname_image, coord_list):
     orientation as the input.
     Args:
         fname_image (str): Path to the image which affine matrix will be used to generate a new image with labels.
-        coord_list (list): list of coordinates. Each element is [x, y, z].
+        coord_list (list): list of coordinates. Each element is [x, y, z]. Orientation should be the same as the image
 
     Returns:
         nib: A nifti object containing the singe-voxel label of value 1. The matrix will be the same size as
@@ -173,16 +172,13 @@ def label_file_from_coordinates(fname_image, coord_list):
 
     """
     lab = nib.load(fname_image)
-    nib_ref_can = nib.as_closest_canonical(lab)
-    imsh = list(np.array(nib_ref_can.dataobj).shape)
+    imsh = list(np.array(lab.dataobj).shape)
     # remove the size of slice axis to create a 2D object
     label_array = np.zeros(tuple(imsh))
 
     for j in range(len(coord_list)):
         label_array[coord_list[j][0], coord_list[j][1], coord_list[j][2]] = 1
 
-    arr_pred_ref_space = reorient_image(label_array, 2, lab,
-                                                   nib_ref_can)
-    nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
+    nib_pred = nib.Nifti1Image(label_array, lab.affine)
 
     return nib_pred
