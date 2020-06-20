@@ -10,16 +10,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.utils as vutils
-from scipy.ndimage import label, generate_binary_structure
-from torch.autograd import Variable
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed.object_detection import utils as imed_obj_detect
+from scipy.ndimage import label, generate_binary_structure
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -70,15 +69,10 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
     n_channel = arr_pred_ref_space.shape[0]
     oriented_volumes = []
-    if len(arr_pred_ref_space.shape) == 4:
-        for i in range(n_channel):
-            oriented_volumes.append(reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
-        # transpose to locate the channel dimension at the end to properly see image on viewer
-        arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
-
-    # If only one channel then return 3D arr
-    if arr_pred_ref_space.shape[0] == 1:
-        arr_pred_ref_space = arr_pred_ref_space[0, :]
+    for i in range(n_channel):
+        oriented_volumes.append(reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
+    # transpose to locate the channel dimension at the end to properly see image on viewer
+    arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
 
     if bin_thr >= 0:
         arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
@@ -312,14 +306,14 @@ def save_mixup_sample(ofolder, input_data, labeled_data, lambda_tensor):
         lambda_tensor (Tensor):
     Returns:
     """
-    #Mixup folder
+    # Mixup folder
     mixup_folder = os.path.join(ofolder, 'mixup')
     if not os.path.isdir(mixup_folder):
         os.makedirs(mixup_folder)
     # Random sample
     random_idx = np.random.randint(0, input_data.size()[0])
     # Output fname
-    ofname =  str(lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png'
+    ofname = str(lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png'
     ofname = os.path.join(mixup_folder, ofname)
     # Tensor to Numpy
     x = input_data.data.numpy()[random_idx, 0, :, :]
@@ -367,11 +361,14 @@ def segment_volume(folder_model, fname_image, fname_roi=None, fname_prior=None, 
     with open(fname_model_metadata, "r") as fhandle:
         context = json.load(fhandle)
 
+    # LOADER
+    loader_params = context["loader_parameters"]
+    slice_axis = AXIS_DCT[loader_params['slice_axis']]
     metadata = {}
     if fname_prior is not None:
         if 'object_detection_params' in context and \
-           context['object_detection_params']['object_detection_path'] is not None:
-            imed_obj_detect.bounding_box_prior(fname_prior, metadata)
+                context['object_detection_params']['object_detection_path'] is not None:
+            imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis)
 
     # TRANSFORMATIONS
     # If ROI is not provided then force center cropping
@@ -379,16 +376,13 @@ def segment_volume(folder_model, fname_image, fname_roi=None, fname_prior=None, 
         print("\nWARNING: fname_roi has not been specified, then a cropping around the center of the image is performed"
               " instead of a cropping around a Region of Interest.")
         context["transformation"] = dict((key, value) if key != 'ROICrop'
-                                                    else ('CenterCrop', value)
-                                                    for (key, value) in context["transformation"].items())
+                                         else ('CenterCrop', value)
+                                         for (key, value) in context["transformation"].items())
 
     # Compose transforms
     _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context["transformation"])
 
     tranform_lst, undo_transforms = imed_transforms.preprare_transforms(transform_test_params)
-
-    # LOADER
-    loader_params = context["loader_parameters"]
 
     # Force filter_empty_mask to False if fname_roi = None
     if fname_roi is None and 'filter_empty_mask' in loader_params["slice_filter_params"]:
@@ -404,7 +398,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None, fname_prior=None, 
                                                            stride=context["UNet3D"]["stride_3D"])
     else:
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
-                                                  slice_axis=AXIS_DCT[loader_params['slice_axis']],
+                                                  slice_axis=slice_axis,
                                                   cache=True,
                                                   transform=tranform_lst,
                                                   slice_filter_fn=SliceFilter(**loader_params["slice_filter_params"]))
@@ -434,6 +428,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None, fname_prior=None, 
 
     # Loop across batches
     preds_list, slice_idx_list = [], []
+    last_sample_bool, volume, weight_matrix = False, None, None
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
             img = cuda(batch['input'], cuda_available=cuda_available)
@@ -446,25 +441,35 @@ def segment_volume(folder_model, fname_image, fname_roi=None, fname_prior=None, 
 
         # Reconstruct 3D object
         for i_slice in range(len(preds)):
+            if "bounding_box" in batch['input_metadata'][i_slice][0]:
+                imed_obj_detect.adjust_undo_transforms(undo_transforms.transforms, batch, i_slice)
 
+            if kernel_3D:
+                batch['gt_metadata'] = batch['input_metadata']
+                preds_undo, metadata, last_sample_bool, volume, weight_matrix = volume_reconstruction(batch,
+                                                                                                      preds,
+                                                                                                      undo_transforms,
+                                                                                                      i_slice, volume,
+                                                                                                      weight_matrix)
+                preds_list = [np.array(preds_undo)]
+            else:
+                # undo transformations
+                preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
+                                                             batch["input_metadata"][i_slice],
+                                                             data_type='gt')
 
-            # undo transformations
-            preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
-                                                         batch["input_metadata"][i_slice],
-                                                         data_type='gt')
-
-            # Add new segmented slice to preds_list
-            preds_list.append(np.array(preds_i_undo))
-            # Store the slice index of preds_i_undo in the original 3D image
-            slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
+                # Add new segmented slice to preds_list
+                preds_list.append(np.array(preds_i_undo))
+                # Store the slice index of preds_i_undo in the original 3D image
+                slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
 
             # If last batch and last sample of this batch, then reconstruct 3D object
-            if i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1:
+            if (i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1) or last_sample_bool:
                 pred_nib = pred_to_nib(data_lst=preds_list,
                                        fname_ref=fname_image,
                                        fname_out=None,
                                        z_lst=slice_idx_list,
-                                       slice_axis=AXIS_DCT[loader_params['slice_axis']],
+                                       slice_axis=slice_axis,
                                        kernel_dim='3d' if kernel_3D else '2d',
                                        debug=False,
                                        bin_thr=-1)
@@ -822,7 +827,7 @@ def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="je
         plt.show()
 
 
-def volume_reconstruction(batch, pred, testing_params, smp_idx, volume=None, weight_matrix=None):
+def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, weight_matrix=None):
     x_min, x_max, y_min, y_max, z_min, z_max = batch['input_metadata'][smp_idx][0]['coord']
     num_pred = pred[smp_idx].shape[0]
 
@@ -840,7 +845,7 @@ def volume_reconstruction(batch, pred, testing_params, smp_idx, volume=None, wei
     if last_sample_bool:
         volume /= weight_matrix
 
-    pred_undo, metadata = testing_params["undo_transforms"](volume,
-                                                            batch['gt_metadata'][smp_idx],
-                                                            data_type='gt')
+    pred_undo, metadata = undo_transforms(volume,
+                                          batch['gt_metadata'][smp_idx],
+                                          data_type='gt')
     return pred_undo, metadata, last_sample_bool, volume, weight_matrix
