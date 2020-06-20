@@ -158,7 +158,6 @@ class UndoCompose(object):
 
 class UndoTransform(object):
     """Call undo transformation.
-    """Call undo transformation.
 
     Attributes:
         transform (ImedTransform):
@@ -174,12 +173,14 @@ class UndoTransform(object):
 
 
 class NumpyToTensor(ImedTransform):
-    """Converts numpy array to tensor object."""
+    """Converts nd array to tensor object."""
 
     def undo_transform(self, sample, metadata=None):
+        """Converts Tensor to nd array."""
         return list(sample.numpy()), metadata
 
     def __call__(self, sample, metadata=None):
+        """Converts nd array to Tensor."""
         sample = np.array(sample)
         # Use np.ascontiguousarray to avoid axes permutations issues
         arr_contig = np.ascontiguousarray(sample, dtype=sample.dtype)
@@ -205,6 +206,7 @@ class Resample(ImedTransform):
     @multichannel_capable
     @two_dim_compatible
     def undo_transform(self, sample, metadata=None):
+        """Resample to original resolution."""
         assert "data_shape" in metadata
         is_2d = sample.shape[-1] == 1
 
@@ -228,6 +230,7 @@ class Resample(ImedTransform):
     @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata=None):
+        """Resample to a given resolution, in millimeters."""
         # Get params
         # Voxel dimension in mm
         is_2d = sample.shape[-1] == 1
@@ -254,9 +257,7 @@ class Resample(ImedTransform):
 
 
 class NormalizeInstance(ImedTransform):
-    """Normalize a tensor or an array image with mean and standard deviation estimated
-    from the sample itself.
-    """
+    """Normalize a tensor or an array image with mean and standard deviation estimated from the sample itself."""
 
     @multichannel_capable
     def __call__(self, sample, metadata=None):
@@ -265,7 +266,10 @@ class NormalizeInstance(ImedTransform):
 
 
 class CroppableArray(np.ndarray):
-    """Adapted From: https://stackoverflow.com/a/41155020/13306686"""
+    """Zero padding slice past end of array in numpy.
+
+    Adapted From: https://stackoverflow.com/a/41155020/13306686
+    """
 
     def __getitem__(self, item):
         all_in_slices = []
@@ -328,6 +332,14 @@ class CroppableArray(np.ndarray):
 
 
 class Crop(ImedTransform):
+    """Crop data.
+
+    Args:
+        size (tuple of int): Size of the output sample. Tuple of size 2 if dealing with 2D samples, 3 with 3D samples.
+
+    Attributes:
+        size (tuple of int): Size of the output sample. Tuple of size 3.
+    """
     def __init__(self, size):
         self.size = size if len(size) == 3 else size + [0]
 
@@ -422,7 +434,7 @@ class CenterCrop(Crop):
 
 
 class ROICrop(Crop):
-    """Make a crop of a specified size around a ROI."""
+    """Make a crop of a specified size around a Region of Interest (ROI)."""
 
     @multichannel_capable
     @two_dim_compatible
@@ -451,11 +463,17 @@ class ROICrop(Crop):
 
 
 class DilateGT(ImedTransform):
-    """Randomly dilate a tensor ground-truth.
-    :param dilation_factor: float, controls the number of dilation iterations.
-                            For each individual lesion, the number of dilation iterations is computed as follows:
-                                nb_it = int(round(dilation_factor * sqrt(lesion_area)))
-                            If dilation_factor <= 0, then no dilation will be perfomed.
+    """Randomly dilate a ground-truth tensor.
+
+    .. image:: ../../images/dilate-gt.png
+        :width: 600px
+        :align: center
+
+    Args:
+        dilation_factor (float): Controls the number of dilation iterations. For each individual lesion, the number of
+            dilation iterations is computed as follows:
+                nb_it = int(round(dilation_factor * sqrt(lesion_area)))
+            If dilation_factor <= 0, then no dilation will be performed.
     """
 
     def __init__(self, dilation_factor):
@@ -572,9 +590,7 @@ class DilateGT(ImedTransform):
 
 
 class BoundingBoxCrop(Crop):
-    """
-    Crops image according to given bounding box
-    """
+    """Crops image according to given bounding box."""
 
     @multichannel_capable
     @two_dim_compatible
@@ -589,6 +605,7 @@ class BoundingBoxCrop(Crop):
 
 
 class RandomAffine(ImedTransform):
+
     def __init__(self, degrees=0, translate=None, scale=None):
         # Rotation
         if isinstance(degrees, numbers.Number):
