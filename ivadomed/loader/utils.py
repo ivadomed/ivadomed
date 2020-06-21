@@ -23,8 +23,7 @@ TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 're
 
 
 def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
-    """
-    Splits list of subject into training, validation and testing datasets either according to their center or per
+    """Splits list of subject into training, validation and testing datasets either according to their center or per
     patient. In the 'per_center' option the centers associated the subjects are split according the train, test and
     validation fraction whereas in the 'per_patient', the patients are directly separated according to these fractions.
 
@@ -128,8 +127,7 @@ def get_subdatasets_subjects_list(split_params, bids_path, log_directory):
 
 
 def imed_collate(batch):
-    """
-    Collates data to create batches
+    """Collates data to create batches
 
     Args:
         batch (dict): Contains input and gt data with their corresponding metadata
@@ -200,8 +198,7 @@ def filter_roi(ds, nb_nonzero_thr):
 
 
 def orient_img_hwd(data, slice_axis):
-    """
-    Orient a given RAS image to height, width, depth according to slice axis.
+    """Orient a given RAS image to height, width, depth according to slice axis.
 
     Args:
         data (nd.array): RAS oriented data
@@ -220,8 +217,7 @@ def orient_img_hwd(data, slice_axis):
 
 
 def orient_img_ras(data, slice_axis):
-    """
-    Orient a given array with dimensions (height, width, depth) to RAS orientation.
+    """Orient a given array with dimensions (height, width, depth) to RAS orientation.
 
     Args:
         data (nd.array): Data with following dimensions (Height, Width, Depth)
@@ -240,8 +236,7 @@ def orient_img_ras(data, slice_axis):
 
 
 def orient_shapes_hwd(data, slice_axis):
-    """
-    Swap dimensions according to match the height, width, depth orientation
+    """Swap dimensions according to match the height, width, depth orientation
 
     Args:
         data (list or tuple): Shape or numbers associated with each image dimension (e.i. image resolution)
@@ -259,8 +254,7 @@ def orient_shapes_hwd(data, slice_axis):
 
 
 class SampleMetadata(object):
-    """
-    Metadata class to help update, get and set metadata values
+    """Metadata class to help update, get and set metadata values
 
     Args:
         d (dict): initial metadata
@@ -284,8 +278,7 @@ class SampleMetadata(object):
         return self.metadata.items()
 
     def _update(self, ref, list_keys):
-        """
-        Update metadata keys with a reference metadata. A given list of metadata keys will be changed and given the
+        """Update metadata keys with a reference metadata. A given list of metadata keys will be changed and given the
         values of the reference metadata.
 
         Args:
@@ -334,8 +327,7 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 
     @staticmethod
     def _get_label(dataset, idx):
-        """
-        Returns 1 if sample is not empty, 0 if it is empty (only zeros)
+        """Returns 1 if sample is not empty, 0 if it is empty (only zeros)
 
         Args:
             dataset (BidsDataset): Dataset containing input, gt and metadata
@@ -360,8 +352,7 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 
 
 def clean_metadata(metadata_lst):
-    """
-    Remove keys from metadata. The keys to be deleted are stored in a list.
+    """Remove keys from metadata. The keys to be deleted are stored in a list.
 
     Args:
         metadata_lst (list): List of SampleMetadata
@@ -383,8 +374,7 @@ def clean_metadata(metadata_lst):
 
 
 def update_metadata(metadata_src_lst, metadata_dest_lst):
-    """
-    Update metadata keys with a reference metadata. A given list of metadata keys will be changed and given the
+    """Update metadata keys with a reference metadata. A given list of metadata keys will be changed and given the
     values of the reference metadata.
 
     Args:

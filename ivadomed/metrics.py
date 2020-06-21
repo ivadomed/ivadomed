@@ -5,8 +5,7 @@ import numpy as np
 
 
 class MetricManager(object):
-    """
-    Computes specified metrics and stores them in a dictionary
+    """Computes specified metrics and stores them in a dictionary
 
     Args:
         metric_fns (list): List of metric functions
@@ -95,7 +94,7 @@ def dice_score(im1, im2, empty_score=np.nan):
 
 
 def mse(im1, im2):
-    """ Compute the Mean Squared Error.
+    """Compute the Mean Squared Error.
 
     Compute the Mean Squared Error between the two images, i.e. sum of the squared difference.
 
@@ -119,8 +118,7 @@ def mse(im1, im2):
 
 
 def hausdorff_score(prediction, groundtruth):
-    """
-    Compute the directed Hausdorff distance between two N-D arrays.
+    """Compute the directed Hausdorff distance between two N-D arrays.
 
     Args:
         prediction (nd.array): First array.
@@ -148,8 +146,7 @@ def hausdorff_score(prediction, groundtruth):
 
 
 def precision_score(prediction, groundtruth, err_value=0.0):
-    """
-    Positive predictive value (PPV)
+    """Positive predictive value (PPV)
 
     Args:
         prediction (nd.array): First array.
@@ -169,8 +166,7 @@ def precision_score(prediction, groundtruth, err_value=0.0):
 
 
 def recall_score(prediction, groundtruth, err_value=0.0):
-    """
-    True positive rate (TPR)
+    """True positive rate (TPR)
 
     Args:
         prediction (nd.array): First array.
@@ -188,8 +184,7 @@ def recall_score(prediction, groundtruth, err_value=0.0):
 
 
 def specificity_score(prediction, groundtruth, err_value=0.0):
-    """
-    True negative rate (TNR)
+    """True negative rate (TNR)
 
     Args:
         prediction (nd.array): First array.
@@ -207,8 +202,7 @@ def specificity_score(prediction, groundtruth, err_value=0.0):
 
 
 def intersection_over_union(prediction, groundtruth, err_value=0.0):
-    """
-    Intersection of two arrays over their union (IoU)
+    """Intersection of two arrays over their union (IoU)
 
     Args:
         prediction (nd.array): First array.
@@ -225,8 +219,7 @@ def intersection_over_union(prediction, groundtruth, err_value=0.0):
 
 
 def accuracy_score(prediction, groundtruth):
-    """
-    Accuracy
+    """Accuracy
 
     Args:
         prediction (nd.array): First array.
@@ -243,8 +236,7 @@ def accuracy_score(prediction, groundtruth):
 
 
 def multi_class_dice_score(im1, im2):
-    """
-    Dice score for multi-label images
+    """Dice score for multi-label images
 
     Args:
         im1 (nd.array): First array.

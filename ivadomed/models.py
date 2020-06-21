@@ -8,8 +8,7 @@ from torch.nn import init
 
 
 class DownConv(Module):
-    """
-    Two successive series of down convolution, batch normalization and drop out in 2D.
+    """Two successive series of down convolution, batch normalization and drop out in 2D.
     Used in U-Net's encoder.
 
     Args:
@@ -49,8 +48,7 @@ class DownConv(Module):
 
 
 class UpConv(Module):
-    """
-    2D down convolution.
+    """2D down convolution.
     Used in U-Net's decoder.
 
     Args:
@@ -75,8 +73,7 @@ class UpConv(Module):
 
 
 class Encoder(Module):
-    """
-    Encoding part of the U-Net model.
+    """Encoding part of the U-Net model.
             It returns the features map for the skip connections
             see also::
             Ronneberger, O., et al (2015). U-Net: Convolutional
@@ -148,8 +145,7 @@ class Encoder(Module):
 
 
 class Decoder(Module):
-    """
-    Decoding part of the U-Net model.
+    """Decoding part of the U-Net model.
             It returns the features map for the skip connections
             see also::
             Ronneberger, O., et al (2015). U-Net: Convolutional
@@ -235,8 +231,7 @@ class Decoder(Module):
 
 
 class Unet(Module):
-    """
-    A reference U-Net model.
+    """A reference U-Net model.
     seealso::
         Ronneberger, O., et al (2015). U-Net: Convolutional
         Networks for Biomedical Image Segmentation
@@ -272,8 +267,7 @@ class Unet(Module):
 
 
 class FiLMedUnet(Unet):
-    """
-    U-Net network containing FiLM modulated layers to condition the model
+    """U-Net network containing FiLM modulated layers to condition the model
 
     Args:
         n_channel (int): Number of channels in the input image
@@ -316,8 +310,7 @@ class FiLMedUnet(Unet):
 
 
 class FiLMgenerator(Module):
-    """
-    The FiLM generator processes the conditioning information
+    """The FiLM generator processes the conditioning information
     and produces parameters that describe how the target network should alter its computation.
 
     Here, the FiLM generator is a multi-layer perceptron.
@@ -357,8 +350,7 @@ class FiLMgenerator(Module):
 
 
 class FiLMlayer(Module):
-    """
-    Applies Feature-wise Linear Modulation to the incoming data as described
+    """Applies Feature-wise Linear Modulation to the incoming data as described
     in the paper `FiLM: Visual Reasoning with a General Conditioning Layer`:
         https://arxiv.org/abs/1709.07871
 
@@ -414,8 +406,7 @@ class FiLMlayer(Module):
 
 
 class HeMISUnet(Module):
-    """
-    A U-Net model inspired by HeMIS to deal with missing contrasts.
+    """A U-Net model inspired by HeMIS to deal with missing contrasts.
         1) It has as many encoders as contrasts but only one decoder.
         2) Skip connections are the concatenations of the means and var of all encoders skip connections
 
@@ -491,8 +482,7 @@ class HeMISUnet(Module):
 
 
 class UNet3D(nn.Module):
-    """
-    Code from the following repository:
+    """Code from the following repository:
     https://github.com/pykao/Modified-3D-UNet-Pytorch
     The main differences with the original UNet resides in the use of LeakyReLU instead of ReLU, InstanceNormalisation
     instead of BatchNorm due to small batch size in 3D and the addition of segmentation layers in the decoder.
@@ -810,8 +800,7 @@ class UNet3D(nn.Module):
 
 
 class GridAttentionBlockND(nn.Module):
-    """
-    Attention module to focus on important features passed through U-Net's decoder
+    """Attention module to focus on important features passed through U-Net's decoder
     Specific to Attention UNet
     Reference: https://arxiv.org/pdf/1804.03999.pdf
 
@@ -927,8 +916,7 @@ class GridAttentionBlockND(nn.Module):
 
 
 def weights_init_kaiming(m):
-    """
-    Initialize weights according to method describe here:
+    """Initialize weights according to method describe here:
     https://www.cv-foundation.org/openaccess/content_iccv_2015/papers/He_Delving_Deep_into_ICCV_2015_paper.pdf
     """
 
@@ -943,8 +931,7 @@ def weights_init_kaiming(m):
 
 
 class UnetGridGatingSignal3(nn.Module):
-    """
-    Operation to extract important features for a specific task using 1x1x1 convolution (Gating) which is used in the
+    """Operation to extract important features for a specific task using 1x1x1 convolution (Gating) which is used in the
     attention blocks.
 
     Args:
