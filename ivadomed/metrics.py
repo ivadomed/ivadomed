@@ -7,14 +7,18 @@ import numpy as np
 class MetricManager(object):
     """
     Computes specified metrics and stores them in a dictionary
+
+    Args:
+        metric_fns (list): List of metric functions
+
+    Attributes:
+        metric_fns (list): List of metric functions
+        result_dict (dict): Dictionary storing metrics
+        num_samples (int): Number of samples
     """
+    
     def __init__(self, metric_fns):
-        """
-        Args:
-            metric_fns (list): List of metric functions
-        """
         self.metric_fns = metric_fns
-        self.result_dict = defaultdict(float)
         self.num_samples = 0
         self.result_dict = defaultdict(list)
 
