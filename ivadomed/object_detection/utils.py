@@ -151,7 +151,7 @@ def resample_bounding_box(metadata, transform):
             for i in range(len(metadata['input_metadata'])):
                 metadata['input_metadata'][i]['bounding_box'] = coord
 
-            for i in range(len(metadata['input_metadata'])):
+            for i in range(len(metadata['gt_metadata'])):
                 metadata['gt_metadata'][i]['bounding_box'] = coord
             break
 
