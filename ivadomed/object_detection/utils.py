@@ -13,8 +13,7 @@ from ivadomed.loader import utils as imed_loader_utils
 
 
 def get_bounding_boxes(mask):
-    """
-    Generates a 3D bounding box around a given mask.
+    """Generates a 3D bounding box around a given mask.
     Args:
         mask (Numpy array): Mask of the ROI
 
@@ -40,8 +39,8 @@ def get_bounding_boxes(mask):
 
 
 def adjust_bb_size(bounding_box, factor, resample=False):
-    """
-    Modifies the bounding box dimensions according to a given factor
+    """Modifies the bounding box dimensions according to a given factor
+
     Args:
         bounding_box (list or tuple): coordinates of bounding box (x_min, x_max, y_min, y_max, z_min, z_max)
         factor (list or tuple): multiplicative factor for each dimension (list or tuple of length 3)
@@ -68,9 +67,9 @@ def adjust_bb_size(bounding_box, factor, resample=False):
 
 
 def resize_to_multiple(shape, multiple, length):
-    """
-    Modify a given shape so each dimension is a multiple of a given number. This is used to avoid dimension mismatch
+    """Modify a given shape so each dimension is a multiple of a given number. This is used to avoid dimension mismatch
     with patch training. The return shape is always larger then the initial shape (no cropping).
+
     Args:
         shape (tuple or list): Initial shape to be modified
         multiple (tuple or list): Multiple for each dimension
@@ -88,11 +87,11 @@ def resize_to_multiple(shape, multiple, length):
 
 def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, slice_axis=0, contrast_lst=None,
                                keep_largest_only=True, safety_factor=None):
-    """
-    Creates json file containing the bounding box dimension for each images. The file has the following format:
+    """Creates json file containing the bounding box dimension for each images. The file has the following format:
     {"path/to/img.nii.gz": [[x1_min, x1_max, y1_min, y1_max, z1_min, z1_max],
     [x2_min, x2_max, y2_min, y2_max, z2_min, z2_max]]}
     where each list represents the coordinates of an object on the image (2 instance of a given object in this example).
+
     Args:
         subject_list (list): List of all subjects in the BIDS directory
         model_path (string): Path to object detection model
@@ -133,8 +132,8 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
 
 
 def resample_bounding_box(metadata, transform):
-    """
-    Resample bounding box
+    """Resample bounding box
+
     Args:
         metadata (dict): dictionary containing the metadata to be modified with the resampled coordinates
         transform (Compose): transformations possibly containing the resample params
@@ -157,9 +156,10 @@ def resample_bounding_box(metadata, transform):
 
 
 def adjust_transforms(transforms, seg_pair, length=None, stride=None):
-    """
-    This function adapts the transforms by adding the BoundingBoxCrop transform according the specific parameters of an
-    image. The dimensions of the crop are also adapted to fit the length and stride parameters if the 3D loader is used.
+    """This function adapts the transforms by adding the BoundingBoxCrop transform according the specific parameters of
+    an image. The dimensions of the crop are also adapted to fit the length and stride parameters if the 3D loader is
+    used.
+
     Args:
         transforms (Compose):  prepreocessing transforms
         seg_pair (dict): segmentation pair (input, gt and metadata)
@@ -202,9 +202,9 @@ def adjust_transforms(transforms, seg_pair, length=None, stride=None):
 
 
 def adjust_undo_transforms(transforms, seg_pair, index=0):
-    """
-    This function adapts the undo transforms by adding the BoundingBoxCrop to undo transform according the specific
+    """This function adapts the undo transforms by adding the BoundingBoxCrop to undo transform according the specific
     parameters of an image.
+
     Args:
         transforms (Compose): transforms
         seg_pair (dict): segmentation pair (input, gt and metadata)
@@ -224,9 +224,9 @@ def adjust_undo_transforms(transforms, seg_pair, index=0):
 
 
 def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast_lst):
-    """
-    Verifies if bounding_box.json exists in the log directory, if so loads the data, else generates the file if a valid
+    """Verifies if bounding_box.json exists in the log directory, if so loads the data, else generates the file if a valid
     detection model path exists.
+
     Args:
         object_detection_params (dict): object detection parameters
         subjects (list): List of all subjects in the BIDS directory
@@ -260,8 +260,8 @@ def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast
 
 
 def verify_metadata(metadata, has_bounding_box):
-    """
-    Validates across all metadata that the 'bounding_box' param is present
+    """Validates across all metadata that the 'bounding_box' param is present
+
     Args:
         metadata (dict): image metadata
         has_bounding_box (bool): bool if 'bounding_box' is present across all metadata
@@ -280,8 +280,8 @@ def verify_metadata(metadata, has_bounding_box):
 
 
 def compute_bb_statistics(bounding_box_path):
-    """
-    Measures min, max and average, height, width, depth and volume of bounding boxes from a json file
+    """Measures min, max and average, height, width, depth and volume of bounding boxes from a json file
+
     Args:
         bounding_box_path (string): path to json file
     """

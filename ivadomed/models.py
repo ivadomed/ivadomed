@@ -8,19 +8,25 @@ from torch.nn import init
 
 
 class DownConv(Module):
-    """
-    Two successive series of down convolution, batch normalization and drop out in 2D.
+    """Two successive series of down convolution, batch normalization and drop out in 2D.
     Used in U-Net's encoder.
+
+    Args:
+        in_feat (int): Number of channels in the input image
+        out_feat (int): Number of channels in the output image
+        drop_rate (float): Probability of an element to be set to zero.
+        bn_momentum (float): Batch normalization momentum
+
+    Attributes:
+        conv1 (Conv2d): First 2D down convolution with kernel size 3 and padding of 1
+        conv1_bn (BatchNorm2d): First 2D batch normalization
+        conv1_drop (Dropout2d): First 2D dropout
+        conv2 (Conv2d): Second 2D down convolution with kernel size 3 and padding of 1
+        conv2_bn (BatchNorm2d): Second 2D batch normalization
+        conv2_drop (Dropout2d): Second 2D dropout
     """
 
     def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1):
-        """
-        Args:
-            in_feat (int): Number of channels in the input image
-            out_feat (int): Number of channels in the output image
-            drop_rate (float): Probability of an element to be set to zero.
-            bn_momentum (float): Batch normalization momentum
-        """
         super(DownConv, self).__init__()
         self.conv1 = nn.Conv2d(in_feat, out_feat, kernel_size=3, padding=1)
         self.conv1_bn = nn.BatchNorm2d(out_feat, momentum=bn_momentum)
@@ -42,20 +48,20 @@ class DownConv(Module):
 
 
 class UpConv(Module):
-    """
-    2D down convolution.
+    """2D down convolution.
     Used in U-Net's decoder.
+
+    Args:
+        in_feat (int): Number of channels in the input image
+        out_feat (int): Number of channels in the output image
+        drop_rate (float): Probability of an element to be set to zero.
+        bn_momentum (float): Batch normalization momentum
+
+    Attributes:
+        downconv (DownConv): Down convolution
     """
     
     def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1):
-        """
-
-        Args:
-            in_feat (int): Number of channels in the input image
-            out_feat (int): Number of channels in the output image
-            drop_rate (float): Probability of an element to be set to zero.
-            bn_momentum (float): Batch normalization momentum
-        """
         super(UpConv, self).__init__()
         self.downconv = DownConv(in_feat, out_feat, drop_rate, bn_momentum)
 
@@ -67,25 +73,29 @@ class UpConv(Module):
 
 
 class Encoder(Module):
-    """
-    Encoding part of the U-Net model.
+    """Encoding part of the U-Net model.
             It returns the features map for the skip connections
             see also::
             Ronneberger, O., et al (2015). U-Net: Convolutional
             Networks for Biomedical Image Segmentation
             ArXiv link: https://arxiv.org/abs/1505.04597
+
+    Args:
+        in_channel (int): Number of channels in the input image
+        depth (int): Number of down convolutions minus bottom down convolution
+        drop_rate (float): Probability of an element to be set to zero
+        bn_momentum (float): Batch normalization momentum
+        n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details
+        film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied
+
+    Attributes:
+        depth (int): Number of down convolutions minus bottom down convolution
+        down_path (ModuleList): List of module operations done during encoding
+        conv_bottom (DownConv): Bottom down convolution
+        film_bottom (FiLMlayer): FiLM layer applied to bottom convolution
     """
 
     def __init__(self, in_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, n_metadata=None, film_layers=None):
-        """
-        Args:
-            in_channel (int): Number of channels in the input image
-            depth (int): Number of down convolutions minus bottom down convolution
-            drop_rate (float): Probability of an element to be set to zero
-            bn_momentum (float): Batch normalization momentum
-            n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details
-            film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied
-        """
         super(Encoder, self).__init__()
         self.depth = depth
         self.down_path = nn.ModuleList()
@@ -135,27 +145,32 @@ class Encoder(Module):
 
 
 class Decoder(Module):
-    """
-    Decoding part of the U-Net model.
+    """Decoding part of the U-Net model.
             It returns the features map for the skip connections
             see also::
             Ronneberger, O., et al (2015). U-Net: Convolutional
             Networks for Biomedical Image Segmentation
             ArXiv link: https://arxiv.org/abs/1505.04597
+
+    Args:
+        out_channel (int): Number of channels in the output image
+        depth (int): Number of down convolutions minus bottom down convolution
+        drop_rate (float): Probability of an element to be set to zero
+        bn_momentum (float): Batch normalization momentum
+        n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details
+        film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied
+        hemis (bool): Boolean indicating if HeMIS is on or not
+
+    Attributes:
+        depth (int): Number of down convolutions minus bottom down convolution
+        out_channel (int): Number of channels in the output image
+        up_path (ModuleList): List of module operations done during decoding
+        last_conv (Conv2d): Last convolution
+        last_film (FiLMlayer): FiLM layer applied to last convolution
     """
 
     def __init__(self, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1,
                  n_metadata=None, film_layers=None, hemis=False):
-        """
-        Args:
-            out_channel (int): Number of channels in the output image
-            depth (int): Number of down convolutions minus bottom down convolution
-            drop_rate (float): Probability of an element to be set to zero
-            bn_momentum (float): Batch normalization momentum
-            n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details
-            film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied
-            hemis (bool): Boolean indicating if HeMIS is on or not
-        """
         super(Decoder, self).__init__()
         self.depth = depth
         self.out_channel = out_channel
@@ -216,24 +231,26 @@ class Decoder(Module):
 
 
 class Unet(Module):
-    """
-    A reference U-Net model.
+    """A reference U-Net model.
     seealso::
         Ronneberger, O., et al (2015). U-Net: Convolutional
         Networks for Biomedical Image Segmentation
         ArXiv link: https://arxiv.org/abs/1505.04597
+
+    Args:
+        in_channel (int): Number of channels in the input image
+        out_channel (int): Number of channels in the output image
+        depth (int): Number of down convolutions minus bottom down convolution
+        drop_rate (float): Probability of an element to be set to zero
+        bn_momentum (float): Batch normalization momentum
+        **kwargs:
+
+    Attributes:
+        encoder (Encoder): U-Net encoder
+        decoder (Decoder): U-net decoder
     """
 
     def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, **kwargs):
-        """
-        Args:
-            in_channel (int): Number of channels in the input image
-            out_channel (int): Number of channels in the output image
-            depth (int): Number of down convolutions minus bottom down convolution
-            drop_rate (float): Probability of an element to be set to zero
-            bn_momentum (float): Batch normalization momentum
-            **kwargs:
-        """
         super(Unet, self).__init__()
 
         # Encoder path
@@ -250,23 +267,25 @@ class Unet(Module):
 
 
 class FiLMedUnet(Unet):
-    """
-    U-Net network containing FiLM modulated layers to condition the model
+    """U-Net network containing FiLM modulated layers to condition the model
+
+    Args:
+        n_channel (int): Number of channels in the input image
+        out_channel (int): Number of channels in the output image
+        depth (int): Number of down convolutions minus bottom down convolution
+        drop_rate (float): Probability of an element to be set to zero
+        bn_momentum (float): Batch normalization momentum
+        n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details
+        film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied
+        **kwargs:
+
+    Attributes:
+        encoder (Encoder): U-Net encoder
+        decoder (Decoder): U-net decoder
     """
 
     def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4,
                  bn_momentum=0.1, n_metadata=None, film_layers=None, **kwargs):
-        """
-        Args:
-            n_channel (int): Number of channels in the input image
-            out_channel (int): Number of channels in the output image
-            depth (int): Number of down convolutions minus bottom down convolution
-            drop_rate (float): Probability of an element to be set to zero
-            bn_momentum (float): Batch normalization momentum
-            n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details
-            film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied
-            **kwargs:
-        """
         super().__init__(in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1)
 
         # Verify if the length of boolean FiLM layers corresponds to the depth
@@ -291,56 +310,65 @@ class FiLMedUnet(Unet):
 
 
 class FiLMgenerator(Module):
-    """
-    The FiLM generator processes the conditioning information
+    """The FiLM generator processes the conditioning information
     and produces parameters that describe how the target network should alter its computation.
 
     Here, the FiLM generator is a multi-layer perceptron.
+
+    Args:
+        n_features (int): Number of input channels
+        n_channels (int): Number of output channels
+        n_hid (int): Number of hidden units in layer
+
+    Attributes:
+        linear1 (Linear): Input linear layer
+        sig (Sigmoid): Sigmoid function
+        linear2 (Linear): Hidden linear layer
+        linear3 (Linear): Output linear layer
     """
 
     def __init__(self, n_features, n_channels, n_hid=64):
-        """
-        Args:
-            n_features (int): Number of input channels
-            n_channels (int): Number of output channels
-            n_hid (int): Number of hidden units in layer
-        """
         super(FiLMgenerator, self).__init__()
         self.linear1 = nn.Linear(n_features, n_hid)
-        self.sig1 = nn.Sigmoid()
+        self.sig = nn.Sigmoid()
         self.linear2 = nn.Linear(n_hid, n_hid // 4)
-        self.sig2 = nn.Sigmoid()
         self.linear3 = nn.Linear(n_hid // 4, n_channels * 2)
-        self.sig3 = nn.Sigmoid()
 
     def forward(self, x, shared_weights=None):
         x = self.linear1(x)
-        x = self.sig1(x)
+        x = self.sig(x)
 
         if shared_weights is not None:  # weight sharing
             self.linear2.weight = shared_weights
 
         x = self.linear2(x)
-        x = self.sig2(x)
+        x = self.sig(x)
         x = self.linear3(x)
 
-        out = self.sig3(x)
+        out = self.sig(x)
         return out, self.linear2.weight
 
 
 class FiLMlayer(Module):
-    """
-    Applies Feature-wise Linear Modulation to the incoming data as described
+    """Applies Feature-wise Linear Modulation to the incoming data as described
     in the paper `FiLM: Visual Reasoning with a General Conditioning Layer`:
         https://arxiv.org/abs/1709.07871
+
+    Args:
+        n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details
+        n_channels (int): Number of output channels
+
+    Attributes:
+        batch_size (int): Batch size
+        height (int): Image height
+        width (int): Image width
+        feature_size (int): Number of channels in the
+        generator (FiLMgenerator): Number of features in data
+        gammas (float): Multiplicative term of the FiLM linear modulation
+        betas (float): Additive term of the FiLM linear modulation
     """
 
     def __init__(self, n_metadata, n_channels):
-        """
-        Args:
-            n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details
-            n_channels (int): Number of output channels
-        """
         super(FiLMlayer, self).__init__()
 
         self.batch_size = None
@@ -378,8 +406,7 @@ class FiLMlayer(Module):
 
 
 class HeMISUnet(Module):
-    """
-    A U-Net model inspired by HeMIS to deal with missing contrasts.
+    """A U-Net model inspired by HeMIS to deal with missing contrasts.
         1) It has as many encoders as contrasts but only one decoder.
         2) Skip connections are the concatenations of the means and var of all encoders skip connections
 
@@ -394,18 +421,23 @@ class HeMISUnet(Module):
         Reuben Dorent and Samuel Joutard and Marc Modat and Sébastien Ourselin and Tom Vercauteren
         Hetero-Modal Variational Encoder-Decoder for Joint Modality Completion and Segmentation
         ArXiv link: https://arxiv.org/abs/1907.11150
+
+    Args:
+        contrasts (list): List of contrasts
+        out_channel (int): Number of output channels
+        depth (int): Number of down convolutions minus bottom down convolution
+        drop_rate (float): Probability of an element to be set to zero
+        bn_momentum (float): Batch normalization momentum
+        **kwargs:
+
+    Attributes:
+        depth (int): Number of down convolutions minus bottom down convolution
+        contrasts (list): List of contrasts
+        Encoder_mod (ModuleDict): Contains encoder for each modality
+        decoder (Decoder): U-Net decoder
     """
 
     def __init__(self, contrasts, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, **kwargs):
-        """
-        Args:
-            contrasts (list): List of contrasts
-            out_channel (int): Number of output channels
-            depth (int): Number of down convolutions minus bottom down convolution
-            drop_rate (float): Probability of an element to be set to zero
-            bn_momentum (float): Batch normalization momentum
-            **kwargs:
-        """
         super(HeMISUnet, self).__init__()
         self.depth = depth
         self.contrasts = contrasts
@@ -450,8 +482,7 @@ class HeMISUnet(Module):
 
 
 class UNet3D(nn.Module):
-    """
-    Code from the following repository:
+    """Code from the following repository:
     https://github.com/pykao/Modified-3D-UNet-Pytorch
     The main differences with the original UNet resides in the use of LeakyReLU instead of ReLU, InstanceNormalisation
     instead of BatchNorm due to small batch size in 3D and the addition of segmentation layers in the decoder.
@@ -459,21 +490,28 @@ class UNet3D(nn.Module):
     If attention=True, attention gates are added in the decoder to help focus attention on important features for a
     given task. Code related to the attentions gates is inspired from:
     https://github.com/ozan-oktay/Attention-Gated-Networks
+
+    Args:
+        in_channel (int): Number of channels in the input image
+        out_channel (int): Number of channels in the output image
+        n_filters (int): Number of base filters in the U-Net
+        attention (bool): Boolean indicating whether the attention module is on or not
+        drop_rate (float): Probability of an element to be set to zero
+        bn_momentum (float): Batch normalization momentum
+        **kwargs:
+
+    Attributes:
+        in_channels (int): Number of channels in the input image
+        n_classes (int): Number of channels in the output image
+        base_n_filter (int): Number of base filters in the U-Net
+        attention (bool): Boolean indicating whether the attention module is on or not
+        momentum (float): Batch normalization momentum
+
+    Note: All layers are defined as attributes and used in the forward method
     """
 
     def __init__(self, in_channel, out_channel, n_filters=16, attention=False, drop_rate=0.6, bn_momentum=0.1,
                  **kwargs):
-        """
-
-        Args:
-            in_channel (int): Number of channels in the input image
-            out_channel (int): Number of channels in the output image
-            n_filters (int): Number of base filters in the U-Net
-            attention (bool): Boolean indicating whether the attention module is on or not
-            drop_rate (float): Probability of an element to be set to zero
-            bn_momentum (float): Batch normalization momentum
-            **kwargs:
-        """
         super(UNet3D, self).__init__()
         self.in_channels = in_channel
         self.n_classes = out_channel
@@ -762,21 +800,32 @@ class UNet3D(nn.Module):
 
 
 class GridAttentionBlockND(nn.Module):
-    """
-    Attention module to focus on important features passed through U-Net's decoder
+    """Attention module to focus on important features passed through U-Net's decoder
     Specific to Attention UNet
     Reference: https://arxiv.org/pdf/1804.03999.pdf
+
+    Args:
+        in_channels (int): Number of channels in the input image
+        gating_channels (int): Number of channels in the gating stp
+        inter_channels (int): Number of channels in the intermediate gating step
+        dimension (int): Value of 2 or 3 to indicating whether it is used in a 2D or 3D model
+        sub_sample_factor (tuple or list): Convolution kernel size
+
+    Attributes:
+        in_channels (int): Number of channels in the input image
+        gating_channels (int): Number of channels in the gating stp
+        inter_channels (int): Number of channels in the intermediate gating step
+        dimension (int): Value of 2 or 3 to indicating whether it is used in a 2D or 3D model
+        sub_sample_factor (tuple or list): Convolution kernel size
+        upsample_mode (str): 'bilinear' or 'trilinear' related to the use of 2D or 3D models
+        W (Sequential): Sequence of convolution and batch normalization layers
+        theta (Conv2d or Conv3d): Convolution layer for gatting operation
+        phi (Conv2d or Conv3d): Convolution layer for gatting operation
+        psi (Conv2d or Conv3d): Convolution layer for gatting operation
+
     """
     def __init__(self, in_channels, gating_channels, inter_channels=None, dimension=3,
                  sub_sample_factor=(2, 2, 2)):
-        """
-        Args:
-            in_channels (int): Number of channels in the input image
-            gating_channels (int): Number of channels in the gating stp
-            inter_channels (int): Number of channels in the intermediate gating step
-            dimension (int): Value of 2 or 3 to indicating whether it is used in a 2D or 3D model
-            sub_sample_factor (tuple or list): Convolution kernel size
-        """
         super(GridAttentionBlockND, self).__init__()
 
         assert dimension in [2, 3]
@@ -867,8 +916,7 @@ class GridAttentionBlockND(nn.Module):
 
 
 def weights_init_kaiming(m):
-    """
-    Initialize weights according to method describe here:
+    """Initialize weights according to method describe here:
     https://www.cv-foundation.org/openaccess/content_iccv_2015/papers/He_Delving_Deep_into_ICCV_2015_paper.pdf
     """
 
@@ -883,19 +931,20 @@ def weights_init_kaiming(m):
 
 
 class UnetGridGatingSignal3(nn.Module):
-    """
-    Operation to extract important features for a specific task using 1x1x1 convolution (Gating) which is used in the
+    """Operation to extract important features for a specific task using 1x1x1 convolution (Gating) which is used in the
     attention blocks.
+
+    Args:
+        in_size (int): Number of channels in the input image
+        out_size (int): Number of channels in the output image
+        kernel_size (tuple): Convolution kernel size
+        is_batchnorm (bool): Boolean indicating whether to apply batch normalization or not
+
+    Attributes:
+        conv1 (Sequential): 3D convolution, batch normalization and ReLU activation
     """
 
     def __init__(self, in_size, out_size, kernel_size=(1, 1, 1), is_batchnorm=True):
-        """
-        Args:
-            in_size (int): Number of channels in the input image
-            out_size (int): Number of channels in the output image
-            kernel_size (tuple): Convolution kernel size
-            is_batchnorm (bool): Boolean indicating whether to apply batch normalization or not
-        """
         super(UnetGridGatingSignal3, self).__init__()
 
         if is_batchnorm:
@@ -923,10 +972,10 @@ def set_model_for_retrain(model_path, retrain_fraction, map_location):
     The first layers (defined by 1-retrain_fraction) are frozen (i.e. requires_grad=False).
     The weights of the last layers (defined by retrain_fraction) are reset.
     Args:
-        model_path (string): pretrained model path.
+        model_path (str): pretrained model path.
         retrain_fraction (float): Fraction of the model that will be retrained, between 0 and 1. If set to 0.3,
             then the 30% last fraction of the model will be re-initalised and retrained.
-        map_location (string): device
+        map_location (str): device
 
     Returns:
         torch module: model ready for retrain.
@@ -964,10 +1013,10 @@ def get_model_filenames(folder_model):
     Note: if the model exists as .onnx, then this function returns its onnx path instead of the .pt version.
 
     Args:
-        folder_name (string): path of the model folder
+        folder_name (str): path of the model folder
 
     Returns:
-        string, string: paths of the model (.onnx) and its configuration file (.json)
+        str, str: paths of the model (.onnx) and its configuration file (.json)
 
     """
     if os.path.isdir(folder_model):
