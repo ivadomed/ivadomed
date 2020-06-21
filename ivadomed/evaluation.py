@@ -83,7 +83,7 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
 class Evaluation3DMetrics(object):
     """Computes 3D evaluation metrics.
 
-    Args;
+    Args:
         data_pred (np.array): Network prediction mask.
         data_gt (np.array): Ground-truth mask.
         dim_lst (list): resolution (mm) along each dimension.
