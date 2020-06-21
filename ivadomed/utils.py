@@ -69,10 +69,11 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
     n_channel = arr_pred_ref_space.shape[0]
     oriented_volumes = []
-    for i in range(n_channel):
-        oriented_volumes.append(reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
-    # transpose to locate the channel dimension at the end to properly see image on viewer
-    arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
+    if len(arr_pred_ref_space.shape) == 4:
+        for i in range(n_channel):
+            oriented_volumes.append(reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
+        # transpose to locate the channel dimension at the end to properly see image on viewer
+        arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
 
     if bin_thr >= 0:
         arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
