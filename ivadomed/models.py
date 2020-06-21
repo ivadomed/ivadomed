@@ -844,18 +844,16 @@ class SimpleBlock(nn.Module):
 class Countception(nn.Module):
     """Countception model, based on: https://arxiv.org/abs/1703.08710
     modified from: https://github.com/roggirg/count-ception_mbm/
+
+    Args:
+        in_channel (int): number of channel on input image
+        out_channel (int): number of channels on output image
+        use_logits (bool): boolean to change output
+        logits_per_output (int): number of outputs of final convolution which will multiplied by the number of
+        channels
     """
 
     def __init__(self, in_channel=3, out_channel=1, use_logits=False, logits_per_output=12, name='CC'):
-        """
-
-        Args:
-            in_channel (int): number of channel on input image
-            out_channel (int): number of channels on output image
-            use_logits (bool): boolean to change output
-            logits_per_output (int): number of outputs of final convolution which will multiplied by the number of
-            channels
-        """
         super(Countception, self).__init__()
 
         # params

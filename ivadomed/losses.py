@@ -275,18 +275,17 @@ class AdapWingLoss(nn.Module):
     Adaptive Wing loss as in: https://arxiv.org/abs/1904.07399
     Used for heatmap ground truth.
 
+
+    Args:
+        theta (float): Threshold between linear and non linear loss.
+        alpha (float): Used to adapt loss shape to input shape and make loss smooth at 0 (background).
+        It needs to be slightly above 2 to maintain ideal properties.
+        omega (float): Multiplicating factor for non linear part of the loss.
+        epsilon (float): factor to avoid gradient explosion. It must not be too small
+
     """
 
     def __init__(self, theta=0.5, alpha=2.1, omega=14, epsilon=1):
-        """
-
-        Args:
-            theta (float): Threshold between linear and non linear loss.
-            alpha (float): Used to adapt loss shape to input shape and make loss smooth at 0 (background).
-            It needs to be slightly above 2 to maintain ideal properties.
-            omega (float): Multiplicating factor for non linear part of the loss.
-            epsilon (float): factor to avoid gradient explosion. It must not be too small
-        """
         self.theta = theta
         self.alpha = alpha
         self.omega = omega
@@ -336,23 +335,20 @@ class AdapWingLoss(nn.Module):
 class Loss_Combination(nn.Module):
     """
     Loss that sums other implemented losses.
+    Args:
+        losses_list (list): list of losses that will be summed. Elements should be string.
+        params_list (list): list of params for the losses, contain None or dictionnary definition of params for the loss
+        at same index. If no params list is given all default parameter will be used.
+        (e.g., losses_list = ["L2loss","DiceLoss"]
+               params_list = [None,{"param1:0.5"}])
+    returns:
+            tensor: sum of losses computed on (input,target) with the params
     """
 
     def __init__(self, losses_list, params_list=None):
-        """
-
-        Args:
-            losses_list (list): list of losses that will be summed. Elements should be string.
-            params_list (list): list of params for the losses, contain None or dictionnary definition of params for the loss
-            at same index. If no params list is given all default parameter will be used.
-            (e.g., losses_list = ["L2loss","DiceLoss"]
-                   params_list = [None,{"param1:0.5"}])
-        returns:
-            tensor: sum of losses computed on (input,target) with the params
-        """
-        super(Loss_Combination, self).__init__()
         self.losses_list = losses_list
         self.params_list = params_list
+        super(Loss_Combination, self).__init__()
 
     def forward(self, input, target):
         output = []
