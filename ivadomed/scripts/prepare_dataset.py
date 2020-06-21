@@ -8,13 +8,6 @@ import scipy
 import skimage
 
 
-# normalize between 0 and 1.
-def normalize(arr):
-    ma = arr.max()
-    mi = arr.min()
-    return (arr - mi) / (ma - mi)
-
-
 def gaussian_kernel(kernlen=10):
     """
     Create a 2D gaussian kernel with user-defined size.
@@ -29,7 +22,7 @@ def gaussian_kernel(kernlen=10):
     x = np.linspace(-1, 1, kernlen + 1)
     kern1d = np.diff(scipy.stats.norm.cdf(x))
     kern2d = np.outer(kern1d, kern1d)
-    return normalize(kern2d / kern2d.sum())
+    return kern2d / kern2d.sum()
 
 
 def heatmap_generation(image, kernel_size):
@@ -46,7 +39,7 @@ def heatmap_generation(image, kernel_size):
     """
     kernel = gaussian_kernel(kernel_size)
     map = scipy.signal.convolve(image, kernel, mode='same')
-    return normalize(map)
+    return map
 
 
 def mask2label(path_label, aim='full'):
