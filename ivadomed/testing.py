@@ -12,6 +12,7 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.training import get_metadata
+from ivadomed.postprocessing import threshold_predictions
 
 cudnn.benchmark = True
 
@@ -223,11 +224,17 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     preds_npy_list.append(output_nii.get_fdata().transpose(3, 0, 1, 2))
                     gt_lst = []
                     for gt in metadata[0]['gt_filenames']:
-                        gt_lst.append(nib.load(gt).get_fdata())
+                        # For multi-label, if all labels are not in every image
+                        if gt is not None:
+                            gt_lst.append(nib.load(gt).get_fdata())
+                        else:
+                            gt_lst.append(np.zeros(gt_lst[0].shape))
+
                     gt_npy_list.append(np.array(gt_lst))
                     # Save merged labels with color
+
                     if pred_undo.shape[0] > 1:
-                        imed_utils.save_color_labels(pred_undo,
+                        imed_utils.save_color_labels(threshold_predictions(pred_undo, thr=0.5),
                                                      testing_params['binarize_prediction'],
                                                      batch['input_metadata'][smp_idx][0]['input_filenames'],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',

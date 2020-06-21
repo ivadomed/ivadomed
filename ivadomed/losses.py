@@ -10,7 +10,7 @@ class MultiClassDiceLoss(nn.Module):
     :param classes_of_interest:  list containing the index of a class which dice will be added to the loss.
     """
 
-    def __init__(self, classes_of_interest):
+    def __init__(self, classes_of_interest=None):
         super(MultiClassDiceLoss, self).__init__()
         self.classes_of_interest = classes_of_interest
         self.dice_loss = DiceLoss()
