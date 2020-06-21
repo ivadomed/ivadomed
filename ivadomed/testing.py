@@ -179,7 +179,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     gt_npy_list.append(nib.load(fname_tmp).get_fdata())
 
                     output_nii_shape = output_nii.get_fdata().shape
-                    if len(output_nii_shape) == 4 and output_nii_shape[0] > 1:
+                    if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
                         imed_utils.save_color_labels(output_nii.get_fdata(),
                                                      testing_params["binarize_prediction"],
                                                      fname_tmp,
