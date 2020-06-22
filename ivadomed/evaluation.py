@@ -20,11 +20,11 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
         bids_path (str): Folder where raw data is stored.
         log_directory (str): Folder where the output folder "results_eval" is be created.
         path_preds (str): Folder where model predictions were saved
-        target_suffix (list): list of suffixes that indicates the target mask(s).
-        eval_params (dict):
+        target_suffix (list): List of suffixes that indicates the target mask(s).
+        eval_params (dict): Evaluation parameters.
 
     Returns:
-        pd.DataFrame: results for each image.
+        pd.Dataframe: results for each image.
     """
     print('\nRun Evaluation on {}\n'.format(path_preds))
 
@@ -86,33 +86,35 @@ class Evaluation3DMetrics(object):
     Args:
         data_pred (ndarray): Network prediction mask.
         data_gt (ndarray): Ground-truth mask.
-        dim_lst (list): resolution (mm) along each dimension.
-        params (dict):
+        dim_lst (list): Resolution (mm) along each dimension.
+        params (dict): Evaluation parameters.
 
     Attributes:
-        data_pred (ndarray): Network prediction mask.
-        data_gt (ndarray): Ground-truth mask.
+        data_pred (nd.array): Network prediction mask.
+        data_gt (nd.array): Ground-truth mask.
         n_classes (int): Number of classes.
-        px (float): resolution (mm) along the first axis.
-        py (float): resolution (mm) along the second axis.
-        pz (float): resolution (mm) along the third axis.
-        bin_struct (ndarray): Binary structure.
+        px (float): Resolution (mm) along the first axis.
+        py (float): Resolution (mm) along the second axis.
+        pz (float): Resolution (mm) along the third axis.
+        bin_struct (nd.array): Binary structure.
         size_min (int): Minimum size of objects. Objects that are smaller than this limit can be removed if
             "removeSmall" is in params.
         overlap_vox (int): A prediction and ground-truth are considered as overlapping if they overlap for at least this
             amount of voxels.
         overlap_ratio (float): A prediction and ground-truth are considered as overlapping if they overlap for at least
             this portion of their volumes.
-        data_pred_label (ndarray): Network prediction mask that is labeled, ie each object is filled with a different
+        data_pred_label (nd.array): Network prediction mask that is labeled, ie each object is filled with a different
             value.
-        data_gt_label (ndarray): Ground-truth mask that is labeled, ie each object is filled with a different
+        data_gt_label (nd.array): Ground-truth mask that is labeled, ie each object is filled with a different
             value.
-        n_pred (int): number of objects in the network prediction mask.
-        n_gt (int): number of objects in the ground-truth mask.
-        data_painted (ndarray): Mask where each predicted object is labeled depending on whether it is a TP or FP.
+        n_pred (int): Number of objects in the network prediction mask.
+        n_gt (int): Number of objects in the ground-truth mask.
+        data_painted (nd.array): Mask where each predicted object is labeled depending on whether it is a TP or FP.
     """
 
-    def __init__(self, data_pred, data_gt, dim_lst, params={}):
+    def __init__(self, data_pred, data_gt, dim_lst, params=None):
+        if params is None:
+            params = {}
 
         self.data_pred = data_pred
         if len(self.data_pred.shape) == 3:
@@ -189,6 +191,14 @@ class Evaluation3DMetrics(object):
             self.overlap_vox = 3
 
     def remove_small_objects(self, data):
+        """Removes all unconnected objects smaller than the minimum specified size.
+
+        Args:
+            data (nd.array): Input data.
+
+        Returns:
+            nd.array: Array with small objects.
+        """
         data_label, n = label(data,
                               structure=self.bin_struct)
 
@@ -202,6 +212,15 @@ class Evaluation3DMetrics(object):
         return data
 
     def _get_size_ranges(self, thr_lst, unit):
+        """Get size ranges of objects in image.
+
+        Args:
+            thr_lst (list): Bins ranging each size category.
+            unit (str): Choice between 'vox' for voxel of 'mm3'.
+
+        Returns:
+            list, list: range list, suffix related to range
+        """
         assert unit in ['vox', 'mm3']
 
         rng_lst, suffix_lst = [], []
@@ -232,6 +251,14 @@ class Evaluation3DMetrics(object):
         return rng_lst, suffix_lst
 
     def label_per_size(self, data):
+        """Get data with labels corresponding to label size.
+        
+        Args:
+            data (nd.array): Input data.
+
+        Returns:
+            nd.array
+        """
         data_label, n = label(data,
                               structure=self.bin_struct)
         data_out = np.zeros(data.shape)
@@ -247,6 +274,7 @@ class Evaluation3DMetrics(object):
         return data_out.astype(np.int)
 
     def get_vol(self, data):
+        """Get volume."""
         vol = np.sum(data)
         vol *= self.px * self.py * self.pz
         return vol
@@ -271,8 +299,12 @@ class Evaluation3DMetrics(object):
     def _get_ltp_lfn(self, label_size, class_idx=0):
         """Number of true positive and false negative lesion.
 
-            Note1: if two lesion_pred overlap with the current lesion_gt,
-                then only one detection is counted.
+        Args:
+            label_size (int): Size of label.
+            class_idx (int): Label index. If monolabel 0, else ranges from 0 to number of output channels - 1.
+
+        Note1: if two lesion_pred overlap with the current lesion_gt,
+            then only one detection is counted.
         """
         ltp, lfn, n_obj = 0, 0, 0
 
@@ -304,7 +336,12 @@ class Evaluation3DMetrics(object):
         return ltp, lfn, n_obj
 
     def _get_lfp(self, label_size, class_idx=0):
-        """Number of false positive lesion."""
+        """Number of false positive lesion.
+
+        Args:
+            label_size (int): Size of label.
+            class_idx (int): Label index. If monolabel 0, else ranges from 0 to number of output channels - 1.
+        """
         lfp = 0
         for idx in range(1, self.n_pred[class_idx] + 1):
             data_pred_idx = (self.data_pred_label[..., class_idx] == idx).astype(np.int)
@@ -336,7 +373,11 @@ class Evaluation3DMetrics(object):
     def get_ltpr(self, label_size=None, class_idx=0):
         """Lesion True Positive Rate / Recall / Sensitivity.
 
-            Note: computed only if n_obj >= 1.
+        Args:
+            label_size (int): Size of label.
+            class_idx (int): Label index. If monolabel 0, else ranges from 0 to number of output channels - 1.
+
+        Note: computed only if n_obj >= 1.
         """
         ltp, lfn, n_obj = self._get_ltp_lfn(label_size, class_idx)
 
@@ -349,7 +390,11 @@ class Evaluation3DMetrics(object):
     def get_lfdr(self, label_size=None, class_idx=0):
         """Lesion False Detection Rate / 1 - Precision.
 
-            Note: computed only if n_obj >= 1.
+        Args:
+            label_size (int): Size of label.
+            class_idx (int): Label index. If monolabel 0, else ranges from 0 to number of output channels - 1.
+
+        Note: computed only if n_obj >= 1.
         """
         ltp, _, n_obj = self._get_ltp_lfn(label_size, class_idx)
         lfp = self._get_lfp(label_size, class_idx)
@@ -361,6 +406,11 @@ class Evaluation3DMetrics(object):
         return lfp / denom
 
     def run_eval(self):
+        """Stores evaluation results in dictionary
+
+        Returns:
+            dict, nd.array: dictionary containing evaluation results, data with each object painted a different color
+        """
         dct = {}
 
         for n in range(self.n_classes):
