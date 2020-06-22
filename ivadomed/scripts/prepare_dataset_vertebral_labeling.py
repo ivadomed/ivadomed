@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+##############################################################
+#
+# This script enables training and comparison of models on multiple GPUs.
+#
+# Usage: python scripts/automate_training.py -p bids_path -s T2w -a -1
+#
+##############################################################
 import argparse
 import ivadomed.utils as imed_utils
 import ivadomed.preprocessing as imed_preprocessing
