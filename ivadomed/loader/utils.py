@@ -28,16 +28,16 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
     validation fraction whereas in the 'per_patient', the patients are directly separated according to these fractions.
 
     Args:
-        path_folder (str): Path to BIDS folder
-        center_test_lst (list): list of centers to include in the testing set
+        path_folder (str): Path to BIDS folder.
+        center_test_lst (list): list of centers to include in the testing set.
         split_method (str): Between 'per_center' or 'per_person'. If 'per_center' the separation fraction are
-                            applied to centers, if 'per_person' they are applied to the subject list.
-        random_seed (int): Random seed to insure reproducible splits
-        train_frac (float): Between 0 and 1. Represents the train set proportion
-        test_frac (float): Between 0 and 1. Represents the test set proportion
+            applied to centers, if 'per_person' they are applied to the subject list.
+        random_seed (int): Random seed to insure reproducible splits.
+        train_frac (float): Between 0 and 1. Represents the train set proportion.
+        test_frac (float): Between 0 and 1. Represents the test set proportion.
 
     Returns:
-        list, list, list: Train, validation and test subjects list
+        list, list, list: Train, validation and test subjects list.
     """
     # read participants.tsv as pandas dataframe
     df = bids.BIDS(path_folder).participants.content
@@ -72,19 +72,19 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
     """Randomly split dataset between training / validation / testing.
 
     Randomly split dataset between training / validation / testing\
-        and save it in log_directory + "/split_datasets.joblib"
+        and save it in log_directory + "/split_datasets.joblib".
 
     Args:
-        path_folder (string): Dataset folder
-        center_test (list): list of centers to include in the testing set
-        split_method (string): see imed_loader_utils.split_dataset
-        random_seed (int):
-        train_frac (float): between 0 and 1
-        test_frac (float): between 0 and 1
-        log_directory (string): output folder
+        path_folder (string): Dataset folder.
+        center_test (list): List of centers to include in the testing set.
+        split_method (string): See imed_loader_utils.split_dataset.
+        random_seed (int): Random seed.
+        train_frac (float): Training dataset proportion, between 0 and 1.
+        test_frac (float): Testing dataset proportionm between 0 and 1.
+        log_directory (string): Output folder.
 
     Returns:
-        list, list list: Training, validation and testing subjects lists
+        list, list list: Training, validation and testing subjects lists.
     """
     train_lst, valid_lst, test_lst = split_dataset(path_folder=path_folder,
                                                    center_test_lst=center_test,
@@ -105,11 +105,11 @@ def get_subdatasets_subjects_list(split_params, bids_path, log_directory):
 
     Args:
         split_params (dict):
-        bids_path (str): Path to the BIDS dataset
-        log_directory (str): output folder
+        bids_path (str): Path to the BIDS dataset.
+        log_directory (str): Output folder.
 
     Returns:
-        list, list list: Training, validation and testing subjects lists
+        list, list list: Training, validation and testing subjects lists.
     """
     if split_params["fname_split"]:
         # Load subjects lists
@@ -130,10 +130,10 @@ def imed_collate(batch):
     """Collates data to create batches
 
     Args:
-        batch (dict): Contains input and gt data with their corresponding metadata
+        batch (dict): Contains input and gt data with their corresponding metadata.
 
     Returns:
-        list or dict or str or tensor: collated data
+        list or dict or str or tensor: Collated data.
     """
     error_msg = "batch must contain tensors, numbers, dicts or lists; found {}"
     elem_type = type(batch[0])
@@ -201,11 +201,11 @@ def orient_img_hwd(data, slice_axis):
     """Orient a given RAS image to height, width, depth according to slice axis.
 
     Args:
-        data (nd.array): RAS oriented data
+        data (nd.array): RAS oriented data.
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
 
     Returns:
-        nd.array: array oriented with the following dimensions: (height, width, depth)
+        nd.array: Array oriented with the following dimensions: (height, width, depth).
 
     """
     if slice_axis == 0:
@@ -220,11 +220,11 @@ def orient_img_ras(data, slice_axis):
     """Orient a given array with dimensions (height, width, depth) to RAS orientation.
 
     Args:
-        data (nd.array): Data with following dimensions (Height, Width, Depth)
+        data (nd.array): Data with following dimensions (Height, Width, Depth).
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
 
     Returns:
-        nd.array: array oriented in RAS
+        nd.array: Array oriented in RAS.
     """
 
     if slice_axis == 0:
@@ -236,14 +236,14 @@ def orient_img_ras(data, slice_axis):
 
 
 def orient_shapes_hwd(data, slice_axis):
-    """Swap dimensions according to match the height, width, depth orientation
+    """Swap dimensions according to match the height, width, depth orientation.
 
     Args:
-        data (list or tuple): Shape or numbers associated with each image dimension (e.i. image resolution)
+        data (list or tuple): Shape or numbers associated with each image dimension (e.i. image resolution).
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
 
     Returns:
-        nd.array: reoriented vector
+        nd.array: Reoriented vector.
     """
     if slice_axis == 0:
         return np.array(data)[[2, 1, 0]]
@@ -254,13 +254,13 @@ def orient_shapes_hwd(data, slice_axis):
 
 
 class SampleMetadata(object):
-    """Metadata class to help update, get and set metadata values
+    """Metadata class to help update, get and set metadata values.
 
     Args:
-        d (dict): initial metadata
+        d (dict): Initial metadata.
 
     Attributes:
-        metadata (dict): image metadata
+        metadata (dict): Image metadata.
     """
     def __init__(self, d=None):
         self.metadata = {} or d
@@ -282,8 +282,8 @@ class SampleMetadata(object):
         values of the reference metadata.
 
         Args:
-            ref (SampleMetadata): reference metadata object
-            list_keys (list): list of keys that need to be updated
+            ref (SampleMetadata): Reference metadata object.
+            list_keys (list): List of keys that need to be updated.
         """
         for k in list_keys:
             if (k not in self.metadata.keys() or not bool(self.metadata[k])) and k in ref.metadata.keys():
@@ -298,13 +298,13 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
     class distributions from an imbalanced dataset.
 
     Args:
-        dataset (BidsDataset): Dataset containing input, gt and metadata
+        dataset (BidsDataset): Dataset containing input, gt and metadata.
 
     Attributes:
-        indices (list): list from 0 to length of dataset (number of elements in the dataset)
-        nb_samples (int): Number of elements in the dataset
+        indices (list): List from 0 to length of dataset (number of elements in the dataset).
+        nb_samples (int): Number of elements in the dataset.
         weights (tensor): Weight of each dataset element equal to 1 over the frequency of a given label (inverse of the
-                          frequency)
+                          frequency).
     """
 
     def __init__(self, dataset):
@@ -327,14 +327,14 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 
     @staticmethod
     def _get_label(dataset, idx):
-        """Returns 1 if sample is not empty, 0 if it is empty (only zeros)
+        """Returns 1 if sample is not empty, 0 if it is empty (only zeros).
 
         Args:
-            dataset (BidsDataset): Dataset containing input, gt and metadata
-            idx (int): Element index
+            dataset (BidsDataset): Dataset containing input, gt and metadata.
+            idx (int): Element index.
 
         Returns:
-            int: 0 or 1
+            int: 0 or 1.
         """
         # For now, only supported with single label
         sample_gt = np.array(dataset[idx]['gt'][0])
@@ -355,10 +355,10 @@ def clean_metadata(metadata_lst):
     """Remove keys from metadata. The keys to be deleted are stored in a list.
 
     Args:
-        metadata_lst (list): List of SampleMetadata
+        metadata_lst (list): List of SampleMetadata.
 
     Returns:
-        list: List of SampleMetadata with removed keys
+        list: List of SampleMetadata with removed keys.
     """
     metadata_out = []
 
@@ -378,11 +378,11 @@ def update_metadata(metadata_src_lst, metadata_dest_lst):
     values of the reference metadata.
 
     Args:
-        metadata_src_lst (list): List of source metadata used as reference for the destination metadata
-        metadata_dest_lst (list): List of metadate that needs to be updated
+        metadata_src_lst (list): List of source metadata used as reference for the destination metadata.
+        metadata_dest_lst (list): List of metadate that needs to be updated.
 
     Returns:
-        list: updated metadata list
+        list: updated metadata list.
     """
     if metadata_src_lst and metadata_dest_lst:
         if len(metadata_src_lst) > len(metadata_dest_lst):
