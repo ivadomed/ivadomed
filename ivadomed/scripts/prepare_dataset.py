@@ -126,7 +126,8 @@ def get_parser():
     parser.add_argument("-s", "--suffix", dest="suffix", required=True,
                         type=str, help="Suffix of the input file. E.g., sub-xxx_SUFFIX.nii.gz")
     parser.add_argument("-a", "--aim", dest="aim", default=-1, type=int,
-                        help="If set to any int beside -1, only points with this label will be taken into account ")
+                        help="-1 or positive int. If set to any positive int,"
+                             " only label with this value will be taken into account ")
     return parser
 
 
