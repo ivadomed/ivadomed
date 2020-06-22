@@ -5,15 +5,15 @@ import numpy as np
 
 
 class MetricManager(object):
-    """Computes specified metrics and stores them in a dictionary
+    """Computes specified metrics and stores them in a dictionary.
 
     Args:
-        metric_fns (list): List of metric functions
+        metric_fns (list): List of metric functions.
 
     Attributes:
-        metric_fns (list): List of metric functions
-        result_dict (dict): Dictionary storing metrics
-        num_samples (int): Number of samples
+        metric_fns (list): List of metric functions.
+        result_dict (dict): Dictionary storing metrics.
+        num_samples (int): Number of samples.
     """
     
     def __init__(self, metric_fns):
@@ -52,8 +52,8 @@ def numeric_score(prediction, groundtruth):
     * TN = True Negatives
 
     Args:
-        prediction (nd.array): binary prediction
-        groundtruth (nd.array): binary groundtruth
+        prediction (nd.array): Binary prediction.
+        groundtruth (nd.array): Binary groundtruth.
 
     Returns:
         float, float, float, float: FP, FN, TP, TN
@@ -122,10 +122,10 @@ def hausdorff_score(prediction, groundtruth):
 
     Args:
         prediction (nd.array): First array.
-        groundtruth (nd.array): Second array
+        groundtruth (nd.array): Second array.
 
     Returns:
-        float: hausdorff distance
+        float: Hausdorff distance.
     """
     if len(prediction.shape) == 4:
         n_classes, height, depth, width = prediction.shape
@@ -146,15 +146,15 @@ def hausdorff_score(prediction, groundtruth):
 
 
 def precision_score(prediction, groundtruth, err_value=0.0):
-    """Positive predictive value (PPV)
+    """Positive predictive value (PPV).
 
     Args:
         prediction (nd.array): First array.
         groundtruth (nd.array): Second array.
-        err_value (float): value returned in case of error
+        err_value (float): Value returned in case of error.
 
     Returns:
-        float: precision score
+        float: Precision score.
 
     """
     FP, FN, TP, TN = numeric_score(prediction, groundtruth)
@@ -166,15 +166,15 @@ def precision_score(prediction, groundtruth, err_value=0.0):
 
 
 def recall_score(prediction, groundtruth, err_value=0.0):
-    """True positive rate (TPR)
+    """True positive rate (TPR).
 
     Args:
         prediction (nd.array): First array.
         groundtruth (nd.array): Second array.
-        err_value (float): value returned in case of error
+        err_value (float): Value returned in case of error.
 
     Returns:
-        float: recall score
+        float: Recall score.
     """
     FP, FN, TP, TN = numeric_score(prediction, groundtruth)
     if (TP + FN) <= 0.0:
@@ -184,15 +184,15 @@ def recall_score(prediction, groundtruth, err_value=0.0):
 
 
 def specificity_score(prediction, groundtruth, err_value=0.0):
-    """True negative rate (TNR)
+    """True negative rate (TNR).
 
     Args:
         prediction (nd.array): First array.
         groundtruth (nd.array): Second array.
-        err_value (float): value returned in case of error
+        err_value (float): Value returned in case of error.
 
     Returns:
-        float: specificity score
+        float: Specificity score.
     """
     FP, FN, TP, TN = numeric_score(prediction, groundtruth)
     if (TN + FP) <= 0.0:
@@ -202,15 +202,15 @@ def specificity_score(prediction, groundtruth, err_value=0.0):
 
 
 def intersection_over_union(prediction, groundtruth, err_value=0.0):
-    """Intersection of two arrays over their union (IoU)
+    """Intersection of two arrays over their union (IoU).
 
     Args:
         prediction (nd.array): First array.
         groundtruth (nd.array): Second array.
-        err_value (float): value returned in case of error
+        err_value (float): Value returned in case of error.
 
     Returns:
-        float: IoU
+        float: IoU.
     """
     FP, FN, TP, TN = numeric_score(prediction, groundtruth)
     if (TP + FP + FN) <= 0.0:
@@ -219,14 +219,14 @@ def intersection_over_union(prediction, groundtruth, err_value=0.0):
 
 
 def accuracy_score(prediction, groundtruth):
-    """Accuracy
+    """Accuracy.
 
     Args:
         prediction (nd.array): First array.
         groundtruth (nd.array): Second array.
 
     Returns:
-        float: accuracy
+        float: Accuracy.
 
     """
     FP, FN, TP, TN = numeric_score(prediction, groundtruth)
@@ -236,14 +236,14 @@ def accuracy_score(prediction, groundtruth):
 
 
 def multi_class_dice_score(im1, im2):
-    """Dice score for multi-label images
+    """Dice score for multi-label images.
 
     Args:
         im1 (nd.array): First array.
         im2 (nd.array): Second array.
 
     Returns:
-        float: multi-class dice
+        float: Multi-class dice.
     """
     dice_per_class = 0
     n_classes = im1.shape[0]
