@@ -20,7 +20,8 @@
             "filter_empty_input": true
         },
         "slice_axis": "axial",
-        "multichannel": false
+        "multichannel": false,
+        "soft_input": false
     },
     "split_dataset": {
         "fname_split": null,

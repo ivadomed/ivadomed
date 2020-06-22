@@ -21,7 +21,7 @@
         },
         "slice_axis": "sagittal",
         "multichannel": false,
-	"soft_input": true
+	    "soft_gt": true
     },
     "split_dataset": {
         "fname_split": null,
