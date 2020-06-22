@@ -15,10 +15,10 @@ from ivadomed.loader import utils as imed_loader_utils
 def get_bounding_boxes(mask):
     """Generates a 3D bounding box around a given mask.
     Args:
-        mask (Numpy array): Mask of the ROI
+        mask (Numpy array): Mask of the ROI.
 
     Returns:
-        list: bounding box coordinate (x_min, x_max, y_min, y_max, z_min, z_max)
+        list: Bounding box coordinate (x_min, x_max, y_min, y_max, z_min, z_max).
 
     """
 
@@ -39,15 +39,15 @@ def get_bounding_boxes(mask):
 
 
 def adjust_bb_size(bounding_box, factor, resample=False):
-    """Modifies the bounding box dimensions according to a given factor
+    """Modifies the bounding box dimensions according to a given factor.
 
     Args:
-        bounding_box (list or tuple): coordinates of bounding box (x_min, x_max, y_min, y_max, z_min, z_max)
-        factor (list or tuple): multiplicative factor for each dimension (list or tuple of length 3)
-        resample (bool):  Boolean indicating if this resize is for resampling
+        bounding_box (list or tuple): Coordinates of bounding box (x_min, x_max, y_min, y_max, z_min, z_max).
+        factor (list or tuple): Multiplicative factor for each dimension (list or tuple of length 3).
+        resample (bool):  Boolean indicating if this resize is for resampling.
 
     Returns:
-        list: new coordinates (x_min, x_max, y_min, y_max, z_min, z_max)
+        list: New coordinates (x_min, x_max, y_min, y_max, z_min, z_max).
     """
     coord = []
     for i in range(len(bounding_box) // 2):
@@ -71,12 +71,12 @@ def resize_to_multiple(shape, multiple, length):
     with patch training. The return shape is always larger then the initial shape (no cropping).
 
     Args:
-        shape (tuple or list): Initial shape to be modified
-        multiple (tuple or list): Multiple for each dimension
-        length (tuple or list): Patch length
+        shape (tuple or list): Initial shape to be modified.
+        multiple (tuple or list): Multiple for each dimension.
+        length (tuple or list): Patch length.
 
     Returns:
-        list: new dimensions
+        list: New dimensions.
     """
     new_dim = []
     for dim_len, m, l in zip(shape, multiple, length):
@@ -93,17 +93,17 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
     where each list represents the coordinates of an object on the image (2 instance of a given object in this example).
 
     Args:
-        subject_list (list): List of all subjects in the BIDS directory
-        model_path (string): Path to object detection model
-        log_dir (string): Log directory
-        gpu_number (int): If available, GPU number
-        slice_axis (int): Slice axis (0: sagittal, 1: coronal, 2: axial)
-        contrast_lst (list): Contrasts
-        keep_largest_only (bool): Boolean representing if only the largest object of the prediction is kept
+        subject_list (list): List of all subjects in the BIDS directory.
+        model_path (string): Path to object detection model.
+        log_dir (string): Log directory.
+        gpu_number (int): If available, GPU number.
+        slice_axis (int): Slice axis (0: sagittal, 1: coronal, 2: axial).
+        contrast_lst (list): Contrasts.
+        keep_largest_only (bool): Boolean representing if only the largest object of the prediction is kept.
         safety_factor (list or tuple): Factors to multiply each dimension of the bounding box.
 
     Returns:
-        dict: dictionary containing bounding boxes related to their image
+        dict: Dictionary containing bounding boxes related to their image.
 
     """
     bounding_box_dict = {}
@@ -132,11 +132,11 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
 
 
 def resample_bounding_box(metadata, transform):
-    """Resample bounding box
+    """Resample bounding box.
 
     Args:
-        metadata (dict): dictionary containing the metadata to be modified with the resampled coordinates
-        transform (Compose): transformations possibly containing the resample params
+        metadata (dict): Dictionary containing the metadata to be modified with the resampled coordinates.
+        transform (Compose): Transformations possibly containing the resample params.
     """
     for idx, transfo in enumerate(transform.transform["im"].transforms):
         if "Resample" == transfo.__class__.__name__:
@@ -161,13 +161,13 @@ def adjust_transforms(transforms, seg_pair, length=None, stride=None):
     used.
 
     Args:
-        transforms (Compose):  prepreocessing transforms
-        seg_pair (dict): segmentation pair (input, gt and metadata)
-        length (list or tuple): patch size of the 3D loader
-        stride (list or tuple): stride value of the 3D loader
+        transforms (Compose): Prepreocessing transforms.
+        seg_pair (dict): Segmentation pair (input, gt and metadata).
+        length (list or tuple): Patch size of the 3D loader.
+        stride (list or tuple): Stride value of the 3D loader.
 
     Returns:
-        Compose: modified transforms
+        Compose: Modified transforms.
     """
     resample_idx = [-1, -1, -1]
     if transforms is None:
@@ -206,9 +206,9 @@ def adjust_undo_transforms(transforms, seg_pair, index=0):
     parameters of an image.
 
     Args:
-        transforms (Compose): transforms
-        seg_pair (dict): segmentation pair (input, gt and metadata)
-        index (int): batch index of the seg_pair
+        transforms (Compose): Transforms.
+        seg_pair (dict): Segmentation pair (input, gt and metadata).
+        index (int): Batch index of the seg_pair.
     """
     for img_type in transforms.transform:
         resample_idx = -1
@@ -224,14 +224,14 @@ def adjust_undo_transforms(transforms, seg_pair, index=0):
 
 
 def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast_lst):
-    """Verifies if bounding_box.json exists in the log directory, if so loads the data, else generates the file if a valid
-    detection model path exists.
+    """Verifies if bounding_box.json exists in the log directory, if so loads the data, else generates the file if a
+    valid detection model path exists.
 
     Args:
-        object_detection_params (dict): object detection parameters
-        subjects (list): List of all subjects in the BIDS directory
-        slice_axis (int): Slice axis (0: sagittal, 1: coronal, 2: axial)
-        constrast_lst (list): Contrasts
+        object_detection_params (dict): Object detection parameters.
+        subjects (list): List of all subjects in the BIDS directory.
+        slice_axis (int): Slice axis (0: sagittal, 1: coronal, 2: axial).
+        constrast_lst (list): Contrasts.
 
     Returns:
         dict: bounding boxes for every subject in BIDS directory
@@ -260,14 +260,14 @@ def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast
 
 
 def verify_metadata(metadata, has_bounding_box):
-    """Validates across all metadata that the 'bounding_box' param is present
+    """Validates across all metadata that the 'bounding_box' param is present.
 
     Args:
-        metadata (dict): image metadata
-        has_bounding_box (bool): bool if 'bounding_box' is present across all metadata
+        metadata (dict): Image metadata.
+        has_bounding_box (bool): If 'bounding_box' is present across all metadata, True, else False.
 
     Returns:
-        bool: Boolean indicating if 'bounding_box' is present across all metadata
+        bool: Boolean indicating if 'bounding_box' is present across all metadata.
     """
     index_has_bounding_box = all(['bounding_box' in metadata['input_metadata'][i]
                                   for i in range(len(metadata['input_metadata']))])
@@ -283,7 +283,7 @@ def compute_bb_statistics(bounding_box_path):
     """Measures min, max and average, height, width, depth and volume of bounding boxes from a json file
 
     Args:
-        bounding_box_path (string): path to json file
+        bounding_box_path (string): Path to json file.
     """
     with open(bounding_box_path, 'r') as fp:
         bounding_box_dict = json.load(fp)
