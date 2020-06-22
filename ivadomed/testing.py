@@ -142,6 +142,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         # RECONSTRUCT 3D IMAGE
         last_batch_bool = (i == len(test_loader) - 1)
 
+        slice_axis = imed_utils.AXIS_DCT[testing_params['slice_axis']]
+
         # LOOP ACROSS SAMPLES
         for smp_idx in range(len(preds_cpu)):
             if "bounding_box" in batch['input_metadata'][smp_idx][0]:
@@ -172,7 +174,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         z_lst=z_tmp_lst,
                                                         fname_ref=fname_tmp,
                                                         fname_out=fname_pred,
-                                                        slice_axis=imed_utils.AXIS_DCT[testing_params['slice_axis']],
+                                                        slice_axis=slice_axis,
                                                         kernel_dim='2d',
                                                         bin_thr=0.9 if testing_params["binarize_prediction"] else -1)
                     # TODO: Adapt to multilabel
@@ -218,7 +220,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         z_lst=[],
                                                         fname_ref=fname_ref,
                                                         fname_out=fname_pred,
-                                                        slice_axis=imed_utils.AXIS_DCT[testing_params['slice_axis']],
+                                                        slice_axis=slice_axis,
                                                         kernel_dim='3d',
                                                         bin_thr=0.5 if testing_params["binarize_prediction"] else -1)
                     preds_npy_list.append(output_nii.get_fdata().transpose(3, 0, 1, 2))
@@ -238,6 +240,6 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                      testing_params['binarize_prediction'],
                                                      batch['input_metadata'][smp_idx][0]['input_filenames'],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                     imed_utils.AXIS_DCT[testing_params['slice_axis']])
+                                                     slice_axis)
 
     return preds_npy_list, gt_npy_list
