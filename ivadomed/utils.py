@@ -373,18 +373,19 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
     if fname_prior is not None:
         if 'roi_params' in loader_params and loader_params['roi_params']['suffix'] is not None:
             fname_roi = fname_prior
+        # TRANSFORMATIONS
+        # If ROI is not provided then force center cropping
+        if fname_roi is None and 'ROICrop' in context["transformation"].keys():
+            print(
+                "\nWARNING: fname_roi has not been specified, then a cropping around the center of the image is performed"
+                " instead of a cropping around a Region of Interest.")
+            context["transformation"] = dict((key, value) if key != 'ROICrop'
+                                             else ('CenterCrop', value)
+                                             for (key, value) in context["transformation"].items())
+            
         if 'object_detection_params' in context and \
                 context['object_detection_params']['object_detection_path'] is not None:
             imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis)
-
-    # TRANSFORMATIONS
-    # If ROI is not provided then force center cropping
-    if fname_roi is None and 'ROICrop' in context["transformation"].keys():
-        print("\nWARNING: fname_roi has not been specified, then a cropping around the center of the image is performed"
-              " instead of a cropping around a Region of Interest.")
-        context["transformation"] = dict((key, value) if key != 'ROICrop'
-                                         else ('CenterCrop', value)
-                                         for (key, value) in context["transformation"].items())
 
     # Compose transforms
     _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context["transformation"])
