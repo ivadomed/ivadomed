@@ -530,11 +530,23 @@ def cuda(input_var, cuda_available=True, non_blocking=False):
 
 
 class HookBasedFeatureExtractor(nn.Module):
-    """This function extracts feature maps from given layer.
+    """This function extracts feature maps from given layer. Helpful to observe where the attention of the network is
+    focused.
 
     https://github.com/ozan-oktay/Attention-Gated-Networks/tree/a96edb72622274f6705097d70cfaa7f2bf818a5a
 
-    # TODO: @Andreanne: can you please help me here?
+    Args:
+        submodule (nn.Module): Trained model.
+        layername (str): Name of the layer where features need to be extracted (layer of interest).
+        upscale (bool): If True output is rescaled to initial size.
+
+    Attributes:
+        submodule (nn.Module): Trained model.
+        layername (str):  Name of the layer where features need to be extracted (layer of interest).
+        outputs_size (list): List of output sizes.
+        outputs (list): List of outputs containing the features of the given layer.
+        inputs (list): List of inputs.
+        inputs_size (list): List of input sizes.
     """
 
     def __init__(self, submodule, layername, upscale=False):
@@ -549,7 +561,7 @@ class HookBasedFeatureExtractor(nn.Module):
         self.inputs_size = None
         self.upscale = upscale
 
-    def get_input_array(self, m, i, o):
+    def get_input_array(self, i):
         if isinstance(i, tuple):
             self.inputs = [i[index].data.clone() for index in range(len(i))]
             self.inputs_size = [input.size() for input in self.inputs]
@@ -558,7 +570,7 @@ class HookBasedFeatureExtractor(nn.Module):
             self.inputs_size = self.input.size()
         print('Input Array Size: ', self.inputs_size)
 
-    def get_output_array(self, m, i, o):
+    def get_output_array(self, o):
         if isinstance(o, tuple):
             self.outputs = [o[index].data.clone() for index in range(len(o))]
             self.outputs_size = [output.size() for output in self.outputs]
@@ -667,10 +679,17 @@ def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_
 
 
 def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axis):
-    """
+    """Saves labels encoded in RGB in specified output file.
 
-    # TODO: @Andreanne: can you please help me here?
+    Args:
+        gt_data (nd.array): Input image with dimensions (Number of classes, height, width, depth).
+        binarize (bool): If True binarizes gt_data to 0 and 1 values, else soft values are kept.
+        gt_filename (str): GT path and filename.
+        output_filename (str): Name of the output file where the colored labels are saved.
+        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
 
+    Returns:
+        nd.array: RGB labels.
     """
     rdict = {}
     n_class, h, w, d = gt_data.shape
@@ -699,10 +718,13 @@ def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axi
 
 
 def convert_labels_to_RGB(grid_img):
-    """
+    """Converts 2D images to RGB encoded images for display in tensorboard.
 
-    # TODO: @Andreanne: can you please help me here?
+    Args:
+        grid_img (tensor): GT or prediction tensor with dimensions (batch size, number of classes, height, width).
 
+    Returns:
+        tensor: RGB image with shape (height, width, 3).
     """
     # Keep always the same color labels
     batch_size, n_class, h, w = grid_img.shape
@@ -720,6 +742,20 @@ def convert_labels_to_RGB(grid_img):
 
 
 def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, is_three_dim=False):
+    """Saves input images, gt and predictions in tensorboard.
+
+    Args:
+        writer:
+        epoch (int): Epoch number.
+        dataset_type (str): Choice between Training or Validation.
+        input_samples (tensor): Input images with shape (batch size, number of channel, height, width, depth) if 3D else
+            (batch size, number of channel, height, width)
+        gt_samples (tensor): GT images with shape (batch size, number of channel, height, width, depth) if 3D else
+            (batch size, number of channel, height, width)
+        preds (tensor): Model's prediction with shape (batch size, number of channel, height, width, depth) if 3D else
+            (batch size, number of channel, height, width)
+        is_three_dim (bool): True if 3D input, else False.
+    """
     if is_three_dim:
         # Take all images stacked on depth dimension
         num_2d_img = input_samples.shape[-1]
