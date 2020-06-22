@@ -8,14 +8,13 @@ class MultiClassDiceLoss(nn.Module):
     Inspired from https://arxiv.org/pdf/1802.10508.
 
     Args:
-        classes_of_interest (list): list containing the index of a class which its dice will be added to the loss.
+        classes_of_interest (list): List containing the index of a class which its dice will be added to the loss.
                                     If is None all classes are considered.
 
     Attributes:
-        classes_of_interest (list): list containing the index of a class which its dice will be added to the loss.
+        classes_of_interest (list): List containing the index of a class which its dice will be added to the loss.
                                     If is None all classes are considered.
-        dice_loss (DiceLoss): Class computing the Dice los
-
+        dice_loss (DiceLoss): Class computing the Dice loss.
     """
 
     def __init__(self, classes_of_interest):
@@ -42,11 +41,10 @@ class DiceLoss(nn.Module):
     Motivated by: https://arxiv.org/pdf/1606.04797.pdf
 
     Args:
-        smooth (float): value to avoid division by zero when images and predictions are empty.
+        smooth (float): Value to avoid division by zero when images and predictions are empty.
 
     Attributes:
-        smooth (float): value to avoid division by zero when images and predictions are empty.
-
+        smooth (float): Value to avoid division by zero when images and predictions are empty.
     """
     def __init__(self, smooth=1.0):
         super(DiceLoss, self).__init__()
@@ -66,7 +64,7 @@ class BinaryCrossEntropyLoss(nn.Module):
     Calls https://pytorch.org/docs/master/generated/torch.nn.BCELoss.html#bceloss
 
     Attributes:
-        loss_fct (BCELoss): binary cross entropy loss function from torch library
+        loss_fct (BCELoss): Binary cross entropy loss function from torch library.
     """
     def __init__(self):
         super(BinaryCrossEntropyLoss, self).__init__()
@@ -82,18 +80,18 @@ class FocalLoss(nn.Module):
     Motivated by: http://openaccess.thecvf.com/content_ICCV_2017/papers/Lin_Focal_Loss_for_ICCV_2017_paper.pdf
 
     Args:
-        gamma (float): value from 0 to 5, Control between easy background and hard ROI
+        gamma (float): Value from 0 to 5, Control between easy background and hard ROI
                        training examples. If set to 0, equivalent to cross-entropy.
-        alpha (float): value from 0 to 1, usually corresponding to the inverse of class frequency to address class
+        alpha (float): Value from 0 to 1, usually corresponding to the inverse of class frequency to address class
                        imbalance.
-        eps (float): epsilon to avoid division by zero
+        eps (float): Epsilon to avoid division by zero.
 
     Attributes:
-        gamma (float): value from 0 to 5, Control between easy background and hard ROI
+        gamma (float): Value from 0 to 5, Control between easy background and hard ROI
                        training examples. If set to 0, equivalent to cross-entropy.
-        alpha (float): value from 0 to 1, usually corresponding to the inverse of class frequency to address class
+        alpha (float): Value from 0 to 1, usually corresponding to the inverse of class frequency to address class
                        imbalance.
-        eps (float): epsilon to avoid division by zero
+        eps (float): Epsilon to avoid division by zero.
     """
     def __init__(self, gamma=2, alpha=0.25, eps=1e-7):
         super(FocalLoss, self).__init__()
@@ -123,17 +121,17 @@ class FocalDiceLoss(nn.Module):
     Motivated by https://arxiv.org/pdf/1809.00076.pdf
 
     Args:
-        beta (float): value from 0 to 1, indicating the weight of the dice loss.
-        gamma (float): value from 0 to 5, Control between easy background and hard ROI
+        beta (float): Value from 0 to 1, indicating the weight of the dice loss.
+        gamma (float): Value from 0 to 5, Control between easy background and hard ROI
                        training examples. If set to 0, equivalent to cross-entropy.
-        alpha (float): value from 0 to 1, usually corresponding to the inverse of class frequency to address class
+        alpha (float): Value from 0 to 1, usually corresponding to the inverse of class frequency to address class
                        imbalance.
 
     Attributes:
-        beta (float): value from 0 to 1, indicating the weight of the dice loss.
-        gamma (float): value from 0 to 5, Control between easy background and hard ROI
+        beta (float): Value from 0 to 1, indicating the weight of the dice loss.
+        gamma (float): Value from 0 to 5, Control between easy background and hard ROI
                        training examples. If set to 0, equivalent to cross-entropy.
-        alpha (float): value from 0 to 1, usually corresponding to the inverse of class frequency to address class
+        alpha (float): Value from 0 to 1, usually corresponding to the inverse of class frequency to address class
                        imbalance.
     """
 
@@ -166,12 +164,12 @@ class GeneralizedDiceLoss(nn.Module):
     Motivated by: https://arxiv.org/pdf/1707.03237
 
     Args:
-        epsilon (float): epsilon to avoid division by zero
-        include_background (float): If True, then an extra channel is added, which represents the background class
+        epsilon (float): Epsilon to avoid division by zero.
+        include_background (float): If True, then an extra channel is added, which represents the background class.
 
     Attributes:
-        epsilon (float): epsilon to avoid division by zero
-        include_background (float): If True, then an extra channel is added, which represents the background class
+        epsilon (float): Epsilon to avoid division by zero.
+        include_background (float): If True, then an extra channel is added, which represents the background class.
     """
     
     def __init__(self, epsilon=1e-5, include_background=True):
@@ -213,21 +211,21 @@ class TverskyLoss(nn.Module):
     """Tversky Loss.
 
     Compute the Tversky loss defined in:
-        Sadegh et al. (2017) Tversky loss function for image segmentation using 3D fully convolutional deep networks
+        Sadegh et al. (2017) Tversky loss function for image segmentation using 3D fully convolutional deep networks.
 
     Args:
-        alpha (float): weight of false positive voxels
-        beta  (float): weight of false negative voxels
-        smooth (float): epsilon to avoid division by zero, when both Numerator and Denominator of Tversky are zeros
+        alpha (float): Weight of false positive voxels.
+        beta  (float): Weight of false negative voxels.
+        smooth (float): Epsilon to avoid division by zero, when both Numerator and Denominator of Tversky are zeros.
 
     Attributes:
-        alpha (float): weight of false positive voxels
-        beta  (float): weight of false negative voxels
-        smooth (float): epsilon to avoid division by zero, when both Numerator and Denominator of Tversky are zeros
+        alpha (float): Weight of false positive voxels.
+        beta  (float): Weight of false negative voxels.
+        smooth (float): Epsilon to avoid division by zero, when both Numerator and Denominator of Tversky are zeros.
 
     Notes:
-        - setting alpha=beta=0.5: equivalent to DiceLoss
-        - default parameters were suggested by https://arxiv.org/pdf/1706.05721.pdf
+        - setting alpha=beta=0.5: Equivalent to DiceLoss.
+        - default parameters were suggested by https://arxiv.org/pdf/1706.05721.pdf .
     """
 
     def __init__(self, alpha=0.7, beta=0.3, smooth=1.0):
@@ -237,14 +235,14 @@ class TverskyLoss(nn.Module):
         self.smooth = smooth
 
     def tversky_index(self, y_pred, y_true):
-        """Compute Tversky index
+        """Compute Tversky index.
 
         Args:
-            y_pred (torch Tensor): prediction
-            y_true (torch Tensor): target
+            y_pred (torch Tensor): Prediction.
+            y_true (torch Tensor): Target.
 
         Returns:
-            float: Tversky index
+            float: Tversky index.
         """
         # Compute TP
         y_true = y_true.float()
@@ -280,17 +278,17 @@ class FocalTverskyLoss(TverskyLoss):
         Abraham et al. (2018) A Novel Focal Tversky loss function with improved Attention U-Net for lesion segmentation
 
     Args:
-        alpha (float): weight of false positive voxels
-        beta  (float): weight of false negative voxels
-        gamma (float): typically between 1 and 3. Control between easy background and hard ROI training examples.
-        smooth (float): epsilon to avoid division by zero, when both Numerator and Denominator of Tversky are zeros
+        alpha (float): Weight of false positive voxels.
+        beta  (float): Weight of false negative voxels.
+        gamma (float): Typically between 1 and 3. Control between easy background and hard ROI training examples.
+        smooth (float): Epsilon to avoid division by zero, when both Numerator and Denominator of Tversky are zeros.
 
     Attributes:
-        gamma (float): typically between 1 and 3. Control between easy background and hard ROI training examples.
+        gamma (float): Typically between 1 and 3. Control between easy background and hard ROI training examples.
 
     Notes:
-        - setting alpha=beta=0.5 and gamma=1: equivalent to DiceLoss
-        - default parameters were suggested by https://arxiv.org/pdf/1810.07842.pdf
+        - setting alpha=beta=0.5 and gamma=1: Equivalent to DiceLoss.
+        - default parameters were suggested by https://arxiv.org/pdf/1810.07842.pdf .
     """
 
     def __init__(self, alpha=0.7, beta=0.3, gamma=1.33, smooth=1.0):
