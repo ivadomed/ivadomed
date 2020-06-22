@@ -94,8 +94,7 @@ Network architectures
 -  FiLMed-UNet, based on `FiLM <https://arxiv.org/abs/1709.07871>`__
    strategy adapted to the `segmentation
    task <#physic-informed-network>`__.
-- Countception: modified implementation of 
- `Countception <https://arxiv.org/abs/1703.08710>`__ for keypoints detection.
+- Countception: modified implementation of `Countception <https://arxiv.org/abs/1703.08710>`__ for keypoints detection.
 
 Loss functions
 --------------
@@ -108,6 +107,5 @@ Loss functions
    additional feature compared to the published reference, is that the
    background volume can be weighted by the inverse of its area, which
    could be of interest in high class imbalance scenarios.
-- `Adaptive wing loss <https://arxiv.org/abs/1904.07399>`__. Loss function
-   used to detect key points with Gaussian representation of the target.
-- Loss Combination: Linear combination of any other implemented lost. 
+-  `Adaptive wing loss <https://arxiv.org/abs/1904.07399>`__. Loss function used to detect key points with Gaussian representation of the target.
+-  Loss Combination: Linear combination of any other implemented lost. 
