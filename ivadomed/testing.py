@@ -23,14 +23,14 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
     Args:
         model_params (dict): Model's parameters.
         dataset_test (imed_loader): Testing dataset.
-        testing_params (dict):
+        testing_params (dict): Testing parameters.
         log_directory (str): Folder where predictions are saved.
         device (torch.device): Indicates the CPU or GPU ID.
         cuda_available (bool): If True, CUDA is available.
         metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
 
     Returns:
-        dict: result metrics
+        dict: result metrics.
     """
     # DATA LOADER
     test_loader = DataLoader(dataset_test, batch_size=testing_params["batch_size"],
@@ -90,10 +90,10 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         testing_params (dict):
         ofolder (str): Folder where predictions are saved.
         cuda_available (bool): If True, CUDA is available.
-        i_monte_carlo (int): i_th Monte Carlo iteration
+        i_monte_carlo (int): i_th Monte Carlo iteration.
 
     Returns:
-        ndarray, ndarray: Prediction, Ground-truth of shape n_sample, n_label, h, w, d
+        ndarray, ndarray: Prediction, Ground-truth of shape n_sample, n_label, h, w, d.
     """
     # INIT STORAGE VARIABLES
     preds_npy_list, gt_npy_list = [], []
