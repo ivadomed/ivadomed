@@ -9,11 +9,11 @@ class MultiClassDiceLoss(nn.Module):
 
     Args:
         classes_of_interest (list): List containing the index of a class which its dice will be added to the loss.
-                                    If is None all classes are considered.
+            If is None all classes are considered.
 
     Attributes:
         classes_of_interest (list): List containing the index of a class which its dice will be added to the loss.
-                                    If is None all classes are considered.
+            If is None all classes are considered.
         dice_loss (DiceLoss): Class computing the Dice loss.
     """
 
@@ -81,16 +81,16 @@ class FocalLoss(nn.Module):
 
     Args:
         gamma (float): Value from 0 to 5, Control between easy background and hard ROI
-                       training examples. If set to 0, equivalent to cross-entropy.
+            training examples. If set to 0, equivalent to cross-entropy.
         alpha (float): Value from 0 to 1, usually corresponding to the inverse of class frequency to address class
-                       imbalance.
+            imbalance.
         eps (float): Epsilon to avoid division by zero.
 
     Attributes:
         gamma (float): Value from 0 to 5, Control between easy background and hard ROI
-                       training examples. If set to 0, equivalent to cross-entropy.
+            training examples. If set to 0, equivalent to cross-entropy.
         alpha (float): Value from 0 to 1, usually corresponding to the inverse of class frequency to address class
-                       imbalance.
+            imbalance.
         eps (float): Epsilon to avoid division by zero.
     """
     def __init__(self, gamma=2, alpha=0.25, eps=1e-7):
@@ -123,16 +123,16 @@ class FocalDiceLoss(nn.Module):
     Args:
         beta (float): Value from 0 to 1, indicating the weight of the dice loss.
         gamma (float): Value from 0 to 5, Control between easy background and hard ROI
-                       training examples. If set to 0, equivalent to cross-entropy.
+            training examples. If set to 0, equivalent to cross-entropy.
         alpha (float): Value from 0 to 1, usually corresponding to the inverse of class frequency to address class
-                       imbalance.
+            imbalance.
 
     Attributes:
         beta (float): Value from 0 to 1, indicating the weight of the dice loss.
         gamma (float): Value from 0 to 5, Control between easy background and hard ROI
-                       training examples. If set to 0, equivalent to cross-entropy.
+            training examples. If set to 0, equivalent to cross-entropy.
         alpha (float): Value from 0 to 1, usually corresponding to the inverse of class frequency to address class
-                       imbalance.
+            imbalance.
     """
 
     def __init__(self, beta=1, gamma=2, alpha=0.25):
