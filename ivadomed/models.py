@@ -1016,8 +1016,7 @@ def get_model_filenames(folder_model):
         folder_name (str): Path of the model folder.
 
     Returns:
-        str, str: Paths of the model (.onnx) and its configuration file (.json),
-
+        str, str: Paths of the model (.onnx) and its configuration file (.json).
     """
     if os.path.isdir(folder_model):
         prefix_model = os.path.basename(folder_model)

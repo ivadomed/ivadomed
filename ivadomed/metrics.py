@@ -75,9 +75,9 @@ def dice_score(im1, im2, empty_score=np.nan):
         im1 (ndarray): First array.
         im2 (ndarray): Second array.
         empty_score (float): Returned value if both input array are empty.
+
     Returns:
         float: Dice coefficient.
-
     """
     im1 = np.asarray(im1)
     im2 = np.asarray(im2)
@@ -101,9 +101,9 @@ def mse(im1, im2):
     Args:
         im1 (ndarray): First array.
         im2 (ndarray): Second array.
+
     Returns:
         float: Mean Squared Error.
-
     """
     im1 = np.asarray(im1)
     im2 = np.asarray(im2)
@@ -155,7 +155,6 @@ def precision_score(prediction, groundtruth, err_value=0.0):
 
     Returns:
         float: Precision score.
-
     """
     FP, FN, TP, TN = numeric_score(prediction, groundtruth)
     if (TP + FP) <= 0.0:
@@ -227,7 +226,6 @@ def accuracy_score(prediction, groundtruth):
 
     Returns:
         float: Accuracy.
-
     """
     FP, FN, TP, TN = numeric_score(prediction, groundtruth)
     N = FP + FN + TP + TN

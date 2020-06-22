@@ -41,9 +41,6 @@ def compute_statistics(dataframe, n_iterations, run_test=True):
         n_iterations (int): Indicates the number of time that each experiment (ie set of parameter) was run.
         run_test (int): Indicates if the comparison is done on the performances on either the testing subdataset (True)
             either on the training/validation subdatasets.
-
-    Returns:
-        None
     """
     avg = dataframe.groupby(['log_directory']).mean()
     std = dataframe.groupby(['log_directory']).std()

@@ -27,9 +27,6 @@ def convert_pytorch_to_onnx(fname_model, dimension, gpu=0):
         fname_model (string): Model filename.
         dimension (int): Indicates whether the model is 2D or 3D. Choice between 2 or 3.
         gpu (string): GPU ID, if available
-
-    Returns:
-        None
     """
     if torch.cuda.is_available():
         device = "cuda:" + str(gpu)

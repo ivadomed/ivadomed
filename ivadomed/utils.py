@@ -103,9 +103,6 @@ def run_uncertainty(ifolder):
 
     Args:
         ifolder (str): Folder containing the Monte Carlo samples.
-
-    Returns:
-        None
     """
     # list subj_acq prefixes
     subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(ifolder)
@@ -156,9 +153,6 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
         fname_hard (str): Filename for the output hard segmentation.
         fname_prob (str): Filename for the output soft segmentation.
         thr (float): Between 0 and 1. Used to threshold the soft segmentation and generate the hard segmentation.
-
-    Returns:
-        None
     """
     # collect all MC simulations
     data_lst = []
@@ -189,9 +183,6 @@ def voxelwise_uncertainty(fname_lst, fname_out, eps=1e-5):
         fname_lst (list of str): List of the Monte Carlo samples.
         fname_out (str): Output filename.
         eps (float): Epsilon value to deal with np.log(0).
-
-    Returns:
-        None
     """
     # collect all MC simulations
     data_lst = []
@@ -224,9 +215,6 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
             of the structures.
         fname_unc_vox (str): Filename of the voxel-wise uncertainty, which is used to compute the `avgUnc`.
         fname_out (str): Output filename.
-
-    Returns:
-        None
     """
     # load hard segmentation and label it
     nib_hard = nib.load(fname_hard)
@@ -353,9 +341,6 @@ def save_mixup_sample(ofolder, input_data, labeled_data, lambda_tensor):
         input_data (Tensor): Input image.
         labeled_data (Tensor): Input masks.
         lambda_tensor (Tensor):
-
-    Returns:
-        None
     """
     #Mixup folder
     mixup_folder = os.path.join(ofolder, 'mixup')
@@ -612,9 +597,6 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
         nib_ref (nibabel): Reference nibabel object, whose header is used.
         nib_ref_canonical (nibabel): `nib_ref` that has been reoriented to canonical orientation (RAS).
-
-    Returns:
-        None
     """
     # Orient image in RAS according to slice axis
     arr_ras = imed_loader_utils.orient_img_ras(arr, slice_axis)
@@ -638,9 +620,6 @@ def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_
         model (nn.Module): Network.
         test_input (Tensor):
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
-
-    Returns:
-        None
     """
     if not os.path.exists(os.path.join(log_directory, layer_name)):
         os.mkdir(os.path.join(log_directory, layer_name))
@@ -855,9 +834,6 @@ def save_onnx_model(model, inputs, model_path):
         model (nn.Module): PyTorch model.
         inputs (Tensor): Tensor, used to inform shape and axes.
         model_path (str): Output filename for the ONNX model.
-
-    Returns:
-        None
     """
     model.eval()
     dynamic_axes = {0: 'batch', 1: 'num_channels', 2: 'height', 3: 'width', 4: 'depth'}
@@ -892,6 +868,7 @@ def define_device(gpu_id):
 
     Args:
         gpu_id (int): GPU ID
+
     Returns:
         Bool, device: True if cuda is available
     """
@@ -913,8 +890,6 @@ def display_selected_model_spec(params):
 
     Args:
         params (dict): keys are param names and values are param values
-    Returns:
-        None
     """
     print('\nSelected architecture: {}, with the following parameters:'.format(params["name"]))
     for k in list(params.keys()):
@@ -928,8 +903,6 @@ def display_selected_transfoms(params, dataset_type):
     Args:
         params (dict):
         dataset_type (list): e.g. ['testing'] or ['training', 'validation']
-    Returns:
-        None
     """
     print('\nSelected transformations for the {} dataset:'.format(dataset_type))
     for k in list(params.keys()):
@@ -945,9 +918,6 @@ def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="je
         list_title (list of str): sub titles of before and after, resp.
         fname_out (str): output filename where the plot is saved if provided.
         cmap (str): Matplotlib colour map.
-
-    Returns:
-        None
     """
     if len(list_title) == 0:
         list_title = ['Sample before transform', 'Sample after transform']
