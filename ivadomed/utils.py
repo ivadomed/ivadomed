@@ -612,7 +612,6 @@ def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_
 
 
 def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axis):
-    rdict = {}
     n_class, h, w, d = gt_data.shape
     labels = range(n_class)
     # Generate color labels
