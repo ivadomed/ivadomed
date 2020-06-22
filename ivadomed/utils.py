@@ -682,14 +682,14 @@ def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axi
     """Saves labels encoded in RGB in specified output file.
 
     Args:
-        gt_data (nd.array): Input image with dimensions (Number of classes, height, width, depth).
+        gt_data (ndarray): Input image with dimensions (Number of classes, height, width, depth).
         binarize (bool): If True binarizes gt_data to 0 and 1 values, else soft values are kept.
         gt_filename (str): GT path and filename.
         output_filename (str): Name of the output file where the colored labels are saved.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
 
     Returns:
-        nd.array: RGB labels.
+        ndarray: RGB labels.
     """
     rdict = {}
     n_class, h, w, d = gt_data.shape

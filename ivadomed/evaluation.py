@@ -90,26 +90,26 @@ class Evaluation3DMetrics(object):
         params (dict): Evaluation parameters.
 
     Attributes:
-        data_pred (nd.array): Network prediction mask.
-        data_gt (nd.array): Ground-truth mask.
+        data_pred (ndarray): Network prediction mask.
+        data_gt (ndarray): Ground-truth mask.
         n_classes (int): Number of classes.
         px (float): Resolution (mm) along the first axis.
         py (float): Resolution (mm) along the second axis.
         pz (float): Resolution (mm) along the third axis.
-        bin_struct (nd.array): Binary structure.
+        bin_struct (ndarray): Binary structure.
         size_min (int): Minimum size of objects. Objects that are smaller than this limit can be removed if
             "removeSmall" is in params.
         overlap_vox (int): A prediction and ground-truth are considered as overlapping if they overlap for at least this
             amount of voxels.
         overlap_ratio (float): A prediction and ground-truth are considered as overlapping if they overlap for at least
             this portion of their volumes.
-        data_pred_label (nd.array): Network prediction mask that is labeled, ie each object is filled with a different
+        data_pred_label (ndarray): Network prediction mask that is labeled, ie each object is filled with a different
             value.
-        data_gt_label (nd.array): Ground-truth mask that is labeled, ie each object is filled with a different
+        data_gt_label (ndarray): Ground-truth mask that is labeled, ie each object is filled with a different
             value.
         n_pred (int): Number of objects in the network prediction mask.
         n_gt (int): Number of objects in the ground-truth mask.
-        data_painted (nd.array): Mask where each predicted object is labeled depending on whether it is a TP or FP.
+        data_painted (ndarray): Mask where each predicted object is labeled depending on whether it is a TP or FP.
     """
 
     def __init__(self, data_pred, data_gt, dim_lst, params=None):
@@ -194,10 +194,10 @@ class Evaluation3DMetrics(object):
         """Removes all unconnected objects smaller than the minimum specified size.
 
         Args:
-            data (nd.array): Input data.
+            data (ndarray): Input data.
 
         Returns:
-            nd.array: Array with small objects.
+            ndarray: Array with small objects.
         """
         data_label, n = label(data,
                               structure=self.bin_struct)
@@ -252,12 +252,12 @@ class Evaluation3DMetrics(object):
 
     def label_per_size(self, data):
         """Get data with labels corresponding to label size.
-        
+
         Args:
-            data (nd.array): Input data.
+            data (ndarray): Input data.
 
         Returns:
-            nd.array
+            ndarray
         """
         data_label, n = label(data,
                               structure=self.bin_struct)
@@ -409,7 +409,7 @@ class Evaluation3DMetrics(object):
         """Stores evaluation results in dictionary
 
         Returns:
-            dict, nd.array: dictionary containing evaluation results, data with each object painted a different color
+            dict, ndarray: dictionary containing evaluation results, data with each object painted a different color
         """
         dct = {}
 

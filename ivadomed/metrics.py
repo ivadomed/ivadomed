@@ -52,8 +52,8 @@ def numeric_score(prediction, groundtruth):
     * TN = True Negatives
 
     Args:
-        prediction (nd.array): Binary prediction.
-        groundtruth (nd.array): Binary groundtruth.
+        prediction (ndarray): Binary prediction.
+        groundtruth (ndarray): Binary groundtruth.
 
     Returns:
         float, float, float, float: FP, FN, TP, TN
@@ -72,8 +72,8 @@ def dice_score(im1, im2, empty_score=np.nan):
     If both images are empty, then it returns empty_score.
 
     Args:
-        im1 (nd.array): First array.
-        im2 (nd.array): Second array.
+        im1 (ndarray): First array.
+        im2 (ndarray): Second array.
         empty_score (float): Returned value if both input array are empty.
     Returns:
         float: Dice coefficient.
@@ -99,8 +99,8 @@ def mse(im1, im2):
     Compute the Mean Squared Error between the two images, i.e. sum of the squared difference.
 
     Args:
-        im1 (nd.array): First array.
-        im2 (nd.array): Second array.
+        im1 (ndarray): First array.
+        im2 (ndarray): Second array.
     Returns:
         float: Mean Squared Error.
 
@@ -121,8 +121,8 @@ def hausdorff_score(prediction, groundtruth):
     """Compute the directed Hausdorff distance between two N-D arrays.
 
     Args:
-        prediction (nd.array): First array.
-        groundtruth (nd.array): Second array.
+        prediction (ndarray): First array.
+        groundtruth (ndarray): Second array.
 
     Returns:
         float: Hausdorff distance.
@@ -149,8 +149,8 @@ def precision_score(prediction, groundtruth, err_value=0.0):
     """Positive predictive value (PPV).
 
     Args:
-        prediction (nd.array): First array.
-        groundtruth (nd.array): Second array.
+        prediction (ndarray): First array.
+        groundtruth (ndarray): Second array.
         err_value (float): Value returned in case of error.
 
     Returns:
@@ -169,8 +169,8 @@ def recall_score(prediction, groundtruth, err_value=0.0):
     """True positive rate (TPR).
 
     Args:
-        prediction (nd.array): First array.
-        groundtruth (nd.array): Second array.
+        prediction (ndarray): First array.
+        groundtruth (ndarray): Second array.
         err_value (float): Value returned in case of error.
 
     Returns:
@@ -187,8 +187,8 @@ def specificity_score(prediction, groundtruth, err_value=0.0):
     """True negative rate (TNR).
 
     Args:
-        prediction (nd.array): First array.
-        groundtruth (nd.array): Second array.
+        prediction (ndarray): First array.
+        groundtruth (ndarray): Second array.
         err_value (float): Value returned in case of error.
 
     Returns:
@@ -205,8 +205,8 @@ def intersection_over_union(prediction, groundtruth, err_value=0.0):
     """Intersection of two arrays over their union (IoU).
 
     Args:
-        prediction (nd.array): First array.
-        groundtruth (nd.array): Second array.
+        prediction (ndarray): First array.
+        groundtruth (ndarray): Second array.
         err_value (float): Value returned in case of error.
 
     Returns:
@@ -222,8 +222,8 @@ def accuracy_score(prediction, groundtruth):
     """Accuracy.
 
     Args:
-        prediction (nd.array): First array.
-        groundtruth (nd.array): Second array.
+        prediction (ndarray): First array.
+        groundtruth (ndarray): Second array.
 
     Returns:
         float: Accuracy.
@@ -239,8 +239,8 @@ def multi_class_dice_score(im1, im2):
     """Dice score for multi-label images.
 
     Args:
-        im1 (nd.array): First array.
-        im2 (nd.array): Second array.
+        im1 (ndarray): First array.
+        im2 (ndarray): Second array.
 
     Returns:
         float: Multi-class dice.

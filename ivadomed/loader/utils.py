@@ -201,11 +201,11 @@ def orient_img_hwd(data, slice_axis):
     """Orient a given RAS image to height, width, depth according to slice axis.
 
     Args:
-        data (nd.array): RAS oriented data.
+        data (ndarray): RAS oriented data.
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
 
     Returns:
-        nd.array: Array oriented with the following dimensions: (height, width, depth).
+        ndarray: Array oriented with the following dimensions: (height, width, depth).
 
     """
     if slice_axis == 0:
@@ -220,11 +220,11 @@ def orient_img_ras(data, slice_axis):
     """Orient a given array with dimensions (height, width, depth) to RAS orientation.
 
     Args:
-        data (nd.array): Data with following dimensions (Height, Width, Depth).
+        data (ndarray): Data with following dimensions (Height, Width, Depth).
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
 
     Returns:
-        nd.array: Array oriented in RAS.
+        ndarray: Array oriented in RAS.
     """
 
     if slice_axis == 0:
@@ -243,7 +243,7 @@ def orient_shapes_hwd(data, slice_axis):
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
 
     Returns:
-        nd.array: Reoriented vector.
+        ndarray: Reoriented vector.
     """
     if slice_axis == 0:
         return np.array(data)[[2, 1, 0]]
