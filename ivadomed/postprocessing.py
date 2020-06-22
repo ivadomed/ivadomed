@@ -26,7 +26,7 @@ def nifti_capable(wrapped):
 
 
 def binarize_with_low_threshold(wrapped):
-    """Decorator to binarize images with a low threshold of 0.001.
+    """Decorator to set low values (< 0.001) to 0.
 
     Args:
         wrapped: Given function.
