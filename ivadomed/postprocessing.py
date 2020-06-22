@@ -152,18 +152,19 @@ def coordinate_from_heatmap(nifti_image, thresh=0.3):
         list: A list of computed coordinates found by local maximum. each element will be a list composed of
         [x, y, z]
     """
-    image_ref = nib.load(nifti_image)
-    image = np.array(image_ref.dataobj)
+
+    image = np.array(nifti_image.dataobj)
     coordinates_tmp = peak_local_max(image, min_distance=5, threshold_rel=thresh)
     return coordinates_tmp
 
 
-def label_file_from_coordinates(fname_image, coord_list):
+def label_file_from_coordinates(nifti_image, coord_list):
     """
     Creates a nifti object with single-voxel labels. Each label has a value of 1. The nifti object as the same
     orientation as the input.
     Args:
-        fname_image (str): Path to the image which affine matrix will be used to generate a new image with labels.
+        nifti_image (nibabel object): Path to the image which affine matrix will be used to generate a new image with
+        labels.
         coord_list (list): list of coordinates. Each element is [x, y, z]. Orientation should be the same as the image
 
     Returns:
@@ -171,14 +172,14 @@ def label_file_from_coordinates(fname_image, coord_list):
         fname_image's.
 
     """
-    lab = nib.load(fname_image)
-    imsh = list(np.array(lab.dataobj).shape)
-    # remove the size of slice axis to create a 2D object
+
+    imsh = list(np.array(nifti_image.dataobj).shape)
+    # create an empty 3d object.
     label_array = np.zeros(tuple(imsh))
 
     for j in range(len(coord_list)):
         label_array[coord_list[j][0], coord_list[j][1], coord_list[j][2]] = 1
 
-    nib_pred = nib.Nifti1Image(label_array, lab.affine)
+    nib_pred = nib.Nifti1Image(label_array, nifti_image.affine)
 
     return nib_pred
