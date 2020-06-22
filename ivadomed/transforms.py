@@ -18,6 +18,14 @@ from ivadomed.loader import utils as imed_loader_utils
 
 
 def multichannel_capable(wrapped):
+    """Decorator to make a given function compatible multichannel images.
+
+    Args:
+        wrapped: Given function.
+
+    Returns:
+        Functions' return.
+    """
     @functools.wraps(wrapped)
     def wrapper(self, sample, metadata):
         if isinstance(sample, list):
@@ -38,6 +46,14 @@ def multichannel_capable(wrapped):
 
 
 def two_dim_compatible(wrapped):
+    """Decorator to make a given function compatible 2D or 3D images.
+
+    Args:
+        wrapped: Given function.
+
+    Returns:
+        Functions' return.
+    """
     @functools.wraps(wrapped)
     def wrapper(self, sample, metadata):
         # Check if sample is 2D
@@ -609,12 +625,12 @@ class RandomAffine(ImedTransform):
 
     Args:
         degrees (float): Positive float or list (or tuple) of length two. Angles in degrees. If only a float is
-        provided, then rotation angle is selected within the range [-degrees, degrees]. Otherwise, the list / tuple
-        defines this range.
+            provided, then rotation angle is selected within the range [-degrees, degrees]. Otherwise, the list / tuple
+            defines this range.
         translate (list of float): List of floats between 0 and 1, of length 2 or 3 depending on the sample shape (2D
-        or 3D). These floats defines the maximum range of translation along each axis.
+            or 3D). These floats defines the maximum range of translation along each axis.
         scale (list of float): List of floats between 0 and 1, of length 2 or 3 depending on the sample shape (2D
-        or 3D). These floats defines the maximum range of scaling along each axis.
+            or 3D). These floats defines the maximum range of scaling along each axis.
 
     Attributes:
         degrees (tuple of floats):
@@ -777,7 +793,7 @@ class RandomShiftIntensity(ImedTransform):
 
     Args:
         shift_range (tuple of floats): Tuple of length two. Specifies the range where the offset that is applied is
-        randomly selected from.
+            randomly selected from.
         prob (float): Between 0 and 1. Probability of occurence of this transformation.
     """
     def __init__(self, shift_range, prob=0.1):
@@ -1005,14 +1021,13 @@ def get_subdatasets_transforms(transform_params):
 
 
 def get_preprocessing_transforms(transforms):
-    """
-    Checks the transformations parameters and selects the transformations which are done during preprocessing only.
+    """Checks the transformations parameters and selects the transformations which are done during preprocessing only.
 
     Args:
-        transforms (dict): transformation dict
+        transforms (dict): Transformation dictionary.
 
     Returns:
-        dict: preprocessing transforms
+        dict: Preprocessing transforms.
     """
     original_transforms = copy.deepcopy(transforms)
     preprocessing_transforms = copy.deepcopy(transforms)
@@ -1030,12 +1045,12 @@ def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
     Applies preprocessing transforms to segmentation pair (input, gt and metadata).
 
     Args:
-        transforms (Compose): preprocessing transforms
-        seg_pair (dict): segmentation pair containing input and gt
-        roi_pair (dict): segementation pair containing input and roi
+        transforms (Compose): Preprocessing transforms.
+        seg_pair (dict): Segmentation pair containing input and gt.
+        roi_pair (dict): Segementation pair containing input and roi.
 
     Returns:
-        tuple: segmentation pair and roi pair
+        tuple: Segmentation pair and roi pair.
     """
     if transforms is None:
         return (seg_pair, roi_pair)
@@ -1078,12 +1093,12 @@ def preprare_transforms(transform_dict, requires_undo=True):
     This function separates the preprocessing transforms from the others and generates the undo transforms related.
 
     Args:
-        transform_dict (dict): Dictionary containing the transforms and there parameters
-        requires_undo (bool): Boolean indicating if transforms can be undone
+        transform_dict (dict): Dictionary containing the transforms and there parameters.
+        requires_undo (bool): Boolean indicating if transforms can be undone.
 
     Returns:
         list, UndoCompose: transform lst containing the preprocessing transforms and regular transforms, UndoCompose
-        object containing the transform to undo
+            object containing the transform to undo.
     """
     training_undo_transform = None
     if requires_undo:
