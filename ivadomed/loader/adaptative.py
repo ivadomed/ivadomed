@@ -21,26 +21,23 @@ class Dataframe:
     It works on RAM or on the fly and can be saved for later.
 
     Args:
-        hdf5 (hdf5):
+        hdf5 (hdf5): hdf5 file containing dataset information
         contrasts (list of str): List of the contrasts of interest.
         path (str): Dataframe path.
         target_suffix (list of str): List of suffix of targetted structures.
         roi_suffix (str): List of suffix of ROI masks.
-        filter_slices:
+        filter_slices (SliceFilter): Object that filters slices according to their content.
         dim (int): Choice 2 or 3, for 2D or 3D data respectively.
 
     Attributes:
         dim (int): Choice 2 or 3, for 2D or 3D data respectively.
         contrasts (list of str): List of the contrasts of interest.
-        filter_slices:
-        df (pandas dataframe):
+        filter_slices: Object that filters slices according to their content.
+        df (pd.Dataframe): Dataframe containing dataset information
     """
 
     def __init__(self, hdf5, contrasts, path, target_suffix=None, roi_suffix=None,
                  filter_slices=False, dim=2):
-        """
-        Initialize the Dataframe
-        """
         # Number of dimension
         self.dim = dim
         # List of all contrasts
@@ -68,12 +65,14 @@ class Dataframe:
             self.create_df(hdf5)
 
     def shuffle(self):
-        """Shuffle the whole data frame"""
+        """Shuffle the whole data frame."""
         self.df = self.df.sample(frac=1)
 
     def load_dataframe(self, path):
-        """
-        Load the dataframe from a csv file.
+        """Load the dataframe from a csv file.
+
+        Args:
+            path (str): Path to hdf5 file.
         """
         try:
             self.df = pd.read_csv(path)
@@ -82,8 +81,10 @@ class Dataframe:
             print("No csv file found")
 
     def save(self, path):
-        """
-        Save the dataframe into a csv file.
+        """Save the dataframe into a csv file.
+
+        Args:
+            path (str): Path to hdf5 file.
         """
         try:
             self.df.to_csv(path, index=False)
@@ -92,8 +93,10 @@ class Dataframe:
             print("Wrong path.")
 
     def create_df(self, hdf5):
-        """
-        Generate the Data frame using the hdf5 file
+        """Generate the Data frame using the hdf5 file.
+
+        Args:
+            hdf5 (hdf5): File containing dataset information
         """
         # Template of a line
         empty_line = {col: 'None' for col in self.contrasts}
@@ -157,13 +160,10 @@ class Dataframe:
         self.df = df
 
     def clean(self, contrasts):
-        """
-        Aims to remove lines where one of the contrasts in not available.
+        """Aims to remove lines where one of the contrasts in not available.
+
         Agrs:
             contrasts (list of str): List of contrasts.
-
-        Returns:
-            None
         """
         # Replacing 'None' values by np.nan
         self.df[contrasts] = self.df[contrasts].replace(to_replace='None', value=np.nan)
@@ -175,18 +175,31 @@ class Bids_to_hdf5:
     """Converts a BIDS dataset to a HDF5 file.
 
     Args:
-        root_dir (str): Path of the BIDS.
-        subject_lst (list): List of patients.
-        target_suffix (list): suffix of the gt
-        roi_suffix (str): suffix of the roi
-        contrast_lst (list): list of the contrast
-        hdf5_name (str): path and name of the hdf5 file
+        root_dir (str): Path to the BIDS dataset.
+        subject_lst (list): Subject names list.
+        target_suffix (list): List of suffixes for target masks.
+        roi_suffix (str): List of suffixes for ROI masks.
+        contrast_lst (list): List of the contrasts.
+        hdf5_name (str): Path and name of the hdf5 file.
         contrast_balance (dict): Dictionary controlling image contrasts balance.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
-        metadata_choice (str):
-        slice_filter_fn (SliceFilter):
+        metadata_choice (str): Choice between "mri_params", "contrasts", None or False, related to FiLM.
+        slice_filter_fn (SliceFilter): Class that filters slices according to their content.
         transform (Compose): Transformations.
         object_detection_params (dict): Object detection parameters.
+
+    Attributes:
+        bids_ds (BIDS): BIDS dataset.
+        dt (dtype): hdf5 special dtype.
+        hdf5_file (hdf5): hdf5 file containing dataset information.
+        filename_pairs (list): A list of tuples in the format (input filename list containing all modalities,ground \
+            truth filename, ROI filename, metadata).
+        metadata (dict): Dictionary containing metadata of input and gt.
+        prepro_transforms (Compose): Transforms to be applied before training.
+        transform (Compose): Transforms to be applied during training.
+        has_bounding_box (bool): True if all metadata contains bounding box coordinates, else False.
+        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        slice_filter_fn (SliceFilter): Object that filters slices according to their content.
     """
 
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, hdf5_name, contrast_balance=None,
@@ -294,7 +307,7 @@ class Bids_to_hdf5:
         print("Files loaded.")
 
     def _load_filenames(self):
-
+        """Load preprocessed pair data (input and gt) in handler."""
         for subject_id, input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
             # Creating/ getting the subject group
             if str(subject_id) in self.hdf5_file.keys():
@@ -455,13 +468,26 @@ class HDF5Dataset:
         subject_lst (list of str): List of subjects.
         model_params (dict): Dictionary containing model parameters.
         target_suffix (list of str): List of suffixes of the target structures.
-        roi_suffix (str): Suffix of the ROI mask.
         contrast_params (dict): Dictionary containing contrast parameters.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
-        transform (Compose): Transformations
+        transform (Compose): Transformations.
+        metadata_choice (str): Choice between "mri_params", "contrasts", None or False, related to FiLM.
         dim (int): Choice 2 or 3, for 2D or 3D data respectively.
-        metadata_choice (str):
+        complet (bool): If True removes lines where contrasts is not available.
+        slice_filter_fn (SliceFilter): Object that filters slices according to their content.
+        roi_suffix (str): Suffix of the ROI mask.
         object_detection_params (dict): Object detection parameters.
+
+    Attributes:
+        cst_lst (list): Contrast list.
+        gt_lst (list): Contrast label used for ground truth.
+        roi_lst (list): Contrast label used for ROI cropping.
+        dim (int): Choice 2 or 3, for 2D or 3D data respectively.
+        filter_slices (SliceFilter): Object that filters slices according to their content.
+        prepro_transforms (Compose): Transforms to be applied before training.
+        transform (Compose): Transforms to be applied during training.
+        df_object (pd.Dataframe): Dataframe containing dataset information.
+
     """
 
     def __init__(self, root_dir, subject_lst, model_params, target_suffix, contrast_params,
@@ -520,9 +546,6 @@ class HDF5Dataset:
 
         Args:
             contrast_lst (list of str): List of contrasts of interest.
-
-        Returns:
-            None
         """
         keys = self.status.keys()
         for ct in contrast_lst:

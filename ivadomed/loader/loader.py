@@ -631,7 +631,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         cache (bool): If the data should be cached in memory or not.
         transform (list): Transformation list (length 2) composed of preprocessing transforms (Compose) and transforms
             to apply during training (Compose).
-        metadata_choice: Choice between "mri_params", "contrasts", None or False.
+        metadata_choice: Choice between "mri_params", "contrasts", None or False, related to FiLM.
         roi_suffix (list): List of suffixes for ROI masks.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
@@ -667,7 +667,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         cache (bool): If the data should be cached in memory or not.
         transform (list): Transformation list (length 2) composed of preprocessing transforms (Compose) and transforms
             to apply during training (Compose).
-        metadata_choice (str): Choice between "mri_params", "contrasts", None or False.
+        metadata_choice (str): Choice between "mri_params", "contrasts", None or False, relatec to FiLM.
         slice_filter_fn (SliceFilter): Class that filters slices according to their content.
         roi_suffix (list): List of suffixes for ROI masks.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
