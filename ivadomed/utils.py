@@ -700,7 +700,7 @@ def convert_labels_to_RGB(grid_img):
     """Converts 2D images to RGB encoded images for display in tensorboard.
 
     Args:
-        grid_img (tensor): GT or prediction tensor with dimensions (batch size, number of classes, height, width).
+        grid_img (Tensor): GT or prediction tensor with dimensions (batch size, number of classes, height, width).
 
     Returns:
         tensor: RGB image with shape (height, width, 3).
@@ -727,11 +727,11 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
         writer:
         epoch (int): Epoch number.
         dataset_type (str): Choice between Training or Validation.
-        input_samples (tensor): Input images with shape (batch size, number of channel, height, width, depth) if 3D else
+        input_samples (Tensor): Input images with shape (batch size, number of channel, height, width, depth) if 3D else
             (batch size, number of channel, height, width)
-        gt_samples (tensor): GT images with shape (batch size, number of channel, height, width, depth) if 3D else
+        gt_samples (Tensor): GT images with shape (batch size, number of channel, height, width, depth) if 3D else
             (batch size, number of channel, height, width)
-        preds (tensor): Model's prediction with shape (batch size, number of channel, height, width, depth) if 3D else
+        preds (Tensor): Model's prediction with shape (batch size, number of channel, height, width, depth) if 3D else
             (batch size, number of channel, height, width)
         is_three_dim (bool): True if 3D input, else False.
     """

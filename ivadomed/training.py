@@ -31,11 +31,11 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         log_directory (str): Folder where log files, best and final models are saved.
         device (str): Indicates the CPU or GPU ID.
         cuda_available (bool): If True, CUDA is available.
-        metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`
+        metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
         debugging (bool): If True, extended verbosity and intermediate outputs.
 
     Returns:
-        float, float, float, float: best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
+        float, float, float, float: best_training_dice, best_training_loss, best_validation_dice, best_validation_loss.
     """
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=log_directory)

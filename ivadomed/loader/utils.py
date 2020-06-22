@@ -303,7 +303,7 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
     Attributes:
         indices (list): List from 0 to length of dataset (number of elements in the dataset).
         nb_samples (int): Number of elements in the dataset.
-        weights (tensor): Weight of each dataset element equal to 1 over the frequency of a given label (inverse of the
+        weights (Tensor): Weight of each dataset element equal to 1 over the frequency of a given label (inverse of the
                           frequency).
     """
 
