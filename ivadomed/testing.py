@@ -181,7 +181,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
                     output_nii_shape = output_nii.get_fdata().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
-                        imed_utils.save_color_labels(output_nii.get_fdata(),
+                        imed_utils.save_color_labels(np.stack(pred_tmp_lst, -1),
                                                      testing_params["binarize_prediction"],
                                                      fname_tmp,
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
@@ -234,7 +234,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     # Save merged labels with color
 
                     if pred_undo.shape[0] > 1:
-                        imed_utils.save_color_labels(threshold_predictions(pred_undo, thr=0.5),
+                        imed_utils.save_color_labels(pred_undo,
                                                      testing_params['binarize_prediction'],
                                                      batch['input_metadata'][smp_idx][0]['input_filenames'],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',

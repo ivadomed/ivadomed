@@ -617,7 +617,7 @@ def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axi
     # Generate color labels
     multi_labeled_pred = np.zeros((h, w, d, 3))
     if binarize:
-        rdict['gt'] = imed_postpro.threshold_predictions(gt_data)
+        gt_data = imed_postpro.threshold_predictions(gt_data)
 
     # Keep always the same color labels
     np.random.seed(6)
