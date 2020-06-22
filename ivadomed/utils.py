@@ -30,8 +30,8 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     Based on the header of `fname_ref` image, it creates a nibabel object from the Network predictions (`data_lst`).
 
     Args:
-        data_lst (list of np arrays): predictions, either 2D slices either 3D patches.
-        z_lst (list of ints): slice indexes to reconstruct a 3D volume for 2D slices.
+        data_lst (list of np arrays): Predictions, either 2D slices either 3D patches.
+        z_lst (list of ints): Slice indexes to reconstruct a 3D volume for 2D slices.
         fname_ref (str): Filename of the input image: its header is copied to the output nibabel object.
         fname_out (str): If not None, then the generated nibabel object is saved with this filename.
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
@@ -724,7 +724,7 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
     """Saves input images, gt and predictions in tensorboard.
 
     Args:
-        writer:
+        writer (SummaryWriter): Tensorboard's summary writer.
         epoch (int): Epoch number.
         dataset_type (str): Choice between Training or Validation.
         input_samples (Tensor): Input images with shape (batch size, number of channel, height, width, depth) if 3D else
@@ -867,10 +867,10 @@ def define_device(gpu_id):
     """Define the device used for the process of interest.
 
     Args:
-        gpu_id (int): GPU ID
+        gpu_id (int): GPU ID.
 
     Returns:
-        Bool, device: True if cuda is available
+        Bool, device: True if cuda is available.
     """
     device = torch.device("cuda:" + str(gpu_id) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
@@ -889,7 +889,7 @@ def display_selected_model_spec(params):
     """Display in terminal the selected model and its parameters.
 
     Args:
-        params (dict): keys are param names and values are param values
+        params (dict): Keys are param names and values are param values.
     """
     print('\nSelected architecture: {}, with the following parameters:'.format(params["name"]))
     for k in list(params.keys()):
@@ -913,10 +913,10 @@ def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="je
     """Utils tool to plot sample before and after transform, for debugging.
 
     Args:
-        before (ndarray): sample before transform.
-        after (ndarray): sample after transform.
-        list_title (list of str): sub titles of before and after, resp.
-        fname_out (str): output filename where the plot is saved if provided.
+        before (ndarray): Sample before transform.
+        after (ndarray): Sample after transform.
+        list_title (list of str): Sub titles of before and after, resp.
+        fname_out (str): Output filename where the plot is saved if provided.
         cmap (str): Matplotlib colour map.
     """
     if len(list_title) == 0:
