@@ -5,7 +5,6 @@ import nibabel as nib
 import numpy as np
 import os
 import scipy
-import skimage
 
 
 def gaussian_kernel(kernlen=10):
