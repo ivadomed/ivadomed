@@ -25,6 +25,6 @@ the training of models.
 .. automethod:: ivadomed.scripts.compare_models.compute_statistics
 
 :mod:`prepare_dataset_vertebral_labeling`
----------------------
+----------------------------------------
 
 .. automethod:: ivadomed.scripts.prepare_dataset_vertebral_labeling.extract_mid_slice_and_convert_coordinates_to_heatmaps
