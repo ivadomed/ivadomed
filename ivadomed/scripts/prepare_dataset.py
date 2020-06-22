@@ -12,10 +12,10 @@ def gaussian_kernel(kernlen=10):
     Create a 2D gaussian kernel with user-defined size.
 
     Args:
-        kernlen(int): size of kernel
+        kernlen (int): size of kernel
 
     Returns:
-        array: a 2D array of size (kernlen,kernlen)
+        ndarray: a 2D array of size (kernlen,kernlen)
     """
 
     x = np.linspace(-1, 1, kernlen + 1)
@@ -29,11 +29,11 @@ def heatmap_generation(image, kernel_size):
     Generate heatmap from image containing sing voxel label using
     convolution with gaussian kernel
     Args:
-        image: 2D array containing single voxel label
-        kernel_size: size of gaussian kernel
+        image (ndarray): 2D array containing single voxel label
+        kernel_size (int): size of gaussian kernel
 
     Returns:
-        array: 2D array heatmap matching the label.
+        ndarray: 2D array heatmap matching the label.
 
     """
     kernel = gaussian_kernel(kernel_size)
@@ -45,11 +45,12 @@ def mask2label(path_label, aim='full'):
     """
     Retrieve points coordinates and value from a label file containing singl voxel label
     Args:
-        path_label: path of nifti image
-        aim: 'full' or 'c2' full will return all points with label between 3 and 30 , c2 will return only the coordinates of points label 3
+        path_label (str): path of nifti image
+        aim (int): -1 will return all points with label between 3 and 30 , any other int > 0  will return
+        only the coordinates of points with label defined by aim.
 
     Returns:
-        array: array containing the asked point in the format [x,y,z,value] in the RAS orientation.
+        ndarray: array containing the asked point in the format [x,y,z,value] in the RAS orientation.
 
     """
     image = nib.load(path_label)
@@ -62,18 +63,18 @@ def mask2label(path_label, aim='full'):
         y = arr.nonzero()[1][i]
         z = arr.nonzero()[2][i]
         # need to check every points
-        if aim == 'full':
+        if aim == -1:
             # we don't want to account for pmj (label 49) nor C1/C2 which is hard to distinguish.
             if arr[x, y, z] < 30 and arr[x, y, z] != 1:
                 list_label_image.append([x, y, z, arr[x, y, z]])
-        elif aim == 'c2':
-            if arr[x, y, z] == 3:
+        elif aim > 0:
+            if arr[x, y, z] == aim:
                 list_label_image.append([x, y, z, arr[x, y, z]])
     list_label_image.sort(key=lambda x: x[3])
     return list_label_image
 
 
-def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim="full"):
+def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim=-1):
     """
     This function takes as input a path to a dataset  and generates a set of images:
    (i) mid-sagittal image and
@@ -82,7 +83,8 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
     Args:
         bids_path (string): path to BIDS dataset form which images will be generated
         suffix (string): suffix of image that will be processed (e.g., T2w)
-        aim (string): 'full' or 'c2'. If 'c2' retrieves only c2 label (value = 3) else create heatmap with all label.
+        aim (int): If aim is not -1, retrieves only label with value = aim, else create heatmap with all label.
+
     Returns:
         None. Images are saved in BIDS folder
     """
@@ -120,11 +122,11 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", dest="path", required=True, type=str,
-                        help="Path to bids folder with " / " at the end.")
+                        help="Path to bids folder")
     parser.add_argument("-s", "--suffix", dest="suffix", required=True,
-                        type=str, help="suffix of image file")
-    parser.add_argument("-a", "--aim", dest="aim", default="full", type=str,
-                        help="If set to 'c2' only points with value 3 will be converted to heatmap")
+                        type=str, help="Suffix of the input file. E.g., sub-xxx_SUFFIX.nii.gz")
+    parser.add_argument("-a", "--aim", dest="aim", default=-1, type=int,
+                        help="If set to any int beside -1, only points with this label will be taken into account ")
     return parser
 
 
