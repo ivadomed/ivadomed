@@ -382,7 +382,7 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
             context["transformation"] = dict((key, value) if key != 'ROICrop'
                                              else ('CenterCrop', value)
                                              for (key, value) in context["transformation"].items())
-            
+
         if 'object_detection_params' in context and \
                 context['object_detection_params']['object_detection_path'] is not None:
             imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis)
@@ -833,6 +833,20 @@ def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="je
 
 
 def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, weight_matrix=None):
+    """
+    Reconstructs volume prediction from subvolumes used during training
+    Args:
+        batch (dict): Dictionary containing input, gt and metadata
+        pred (tensor): Subvolume prediction
+        undo_transforms (UndoCompose): Undo transforms so prediction match original image resolution and shap
+        smp_idx (int): Batch index
+        volume (tensor): Reconstructed volume
+        weight_matrix (tensor): Weights containing the number of predictions for each voxel
+
+    Returns:
+        tensor, dict, bool, tensor, tensor: undone subvolume, metadata, boolean representing if its the last sample to
+        process, reconstructed volume, weight matrix
+    """
     x_min, x_max, y_min, y_max, z_min, z_max = batch['input_metadata'][smp_idx][0]['coord']
     num_pred = pred[smp_idx].shape[0]
 
