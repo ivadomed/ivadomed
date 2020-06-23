@@ -14,7 +14,7 @@ class DownConv(Module):
     Args:
         in_feat (int): Number of channels in the input image.
         out_feat (int): Number of channels in the output image.
-        drop_rate (float): Probability of an element to be set to zero.
+        drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
 
     Attributes:
@@ -54,7 +54,7 @@ class UpConv(Module):
     Args:
         in_feat (int): Number of channels in the input image.
         out_feat (int): Number of channels in the output image.
-        drop_rate (float): Probability of an element to be set to zero.
+        drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
 
     Attributes:
@@ -74,16 +74,12 @@ class UpConv(Module):
 
 class Encoder(Module):
     """Encoding part of the U-Net model.
-            It returns the features map for the skip connections
-            see also::
-            Ronneberger, O., et al (2015). U-Net: Convolutional
-            Networks for Biomedical Image Segmentation
-            ArXiv link: https://arxiv.org/abs/1505.04597
+    It returns the features map for the skip connections
 
     Args:
         in_channel (int): Number of channels in the input image.
         depth (int): Number of down convolutions minus bottom down convolution.
-        drop_rate (float): Probability of an element to be set to zero.
+        drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
         n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details.
         film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied.
@@ -146,16 +142,11 @@ class Encoder(Module):
 
 class Decoder(Module):
     """Decoding part of the U-Net model.
-            It returns the features map for the skip connections
-            see also::
-            Ronneberger, O., et al (2015). U-Net: Convolutional
-            Networks for Biomedical Image Segmentation
-            ArXiv link: https://arxiv.org/abs/1505.04597
 
     Args:
         out_channel (int): Number of channels in the output image.
         depth (int): Number of down convolutions minus bottom down convolution.
-        drop_rate (float): Probability of an element to be set to zero.
+        drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
         n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details.
         film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied.
@@ -232,7 +223,7 @@ class Decoder(Module):
 
 class Unet(Module):
     """A reference U-Net model.
-    seealso::
+    .. seealso::
         Ronneberger, O., et al (2015). U-Net: Convolutional
         Networks for Biomedical Image Segmentation
         ArXiv link: https://arxiv.org/abs/1505.04597
@@ -241,7 +232,7 @@ class Unet(Module):
         in_channel (int): Number of channels in the input image.
         out_channel (int): Number of channels in the output image.
         depth (int): Number of down convolutions minus bottom down convolution.
-        drop_rate (float): Probability of an element to be set to zero.
+        drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
         **kwargs:
 
@@ -267,13 +258,13 @@ class Unet(Module):
 
 
 class FiLMedUnet(Unet):
-    """U-Net network containing FiLM modulated layers to condition the model
+    """U-Net network containing FiLM layers to condition the model with another data type (i.e. not an image).
 
     Args:
         n_channel (int): Number of channels in the input image.
         out_channel (int): Number of channels in the output image.
         depth (int): Number of down convolutions minus bottom down convolution.
-        drop_rate (float): Probability of an element to be set to zero.
+        drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
         n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details.
         film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied.
@@ -350,9 +341,10 @@ class FiLMgenerator(Module):
 
 
 class FiLMlayer(Module):
-    """Applies Feature-wise Linear Modulation to the incoming data as described
-    in the paper `FiLM: Visual Reasoning with a General Conditioning Layer`:
-        https://arxiv.org/abs/1709.07871
+    """Applies Feature-wise Linear Modulation to the incoming data
+    .. seealso::
+        Perez, Ethan, et al. "Film: Visual reasoning with a general conditioning layer."
+        Thirty-Second AAAI Conference on Artificial Intelligence. 2018.
 
     Args:
         n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details.
@@ -413,7 +405,7 @@ class HeMISUnet(Module):
         Param:
         contrasts: list of all the possible contrasts. ['T1', 'T2', 'T2S', 'F']
 
-        see also::
+    see also::
         Havaei, M., Guizard, N., Chapados, N., Bengio, Y.:
         Hemis: Hetero-modal image segmentation.
         ArXiv link: https://arxiv.org/abs/1607.05194
@@ -426,7 +418,7 @@ class HeMISUnet(Module):
         contrasts (list): List of contrasts.
         out_channel (int): Number of output channels.
         depth (int): Number of down convolutions minus bottom down convolution.
-        drop_rate (float): Probability of an element to be set to zero.
+        drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
         **kwargs:
 
@@ -496,7 +488,7 @@ class UNet3D(nn.Module):
         out_channel (int): Number of channels in the output image.
         n_filters (int): Number of base filters in the U-Net.
         attention (bool): Boolean indicating whether the attention module is on or not.
-        drop_rate (float): Probability of an element to be set to zero.
+        drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
         **kwargs:
 
@@ -802,7 +794,10 @@ class UNet3D(nn.Module):
 class GridAttentionBlockND(nn.Module):
     """Attention module to focus on important features passed through U-Net's decoder
     Specific to Attention UNet
-    Reference: https://arxiv.org/pdf/1804.03999.pdf
+
+    .. seealso::
+        Oktay, Ozan, et al. "Attention u-net: Learning where to look for the pancreas."
+        arXiv preprint arXiv:1804.03999 (2018).
 
     Args:
         in_channels (int): Number of channels in the input image.
@@ -971,6 +966,7 @@ def set_model_for_retrain(model_path, retrain_fraction, map_location):
 
     The first layers (defined by 1-retrain_fraction) are frozen (i.e. requires_grad=False).
     The weights of the last layers (defined by retrain_fraction) are reset.
+
     Args:
         model_path (str): Pretrained model path.
         retrain_fraction (float): Fraction of the model that will be retrained, between 0 and 1. If set to 0.3,
