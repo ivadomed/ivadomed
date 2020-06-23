@@ -49,17 +49,14 @@ def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_de
         python extract_small_dataset.py -i path/to/BIDS/dataset -o path/of/small/BIDS/dataset -n 10 -c T1w,T2w -d 0 -s 1234
 
     Args:
-        ifolder (string): Input BIDS folder.
-        ofolder (string): Output folder.
+        ifolder (str): Input BIDS folder.
+        ofolder (str): Output folder.
         n (int): Number of subjects in the output folder.
         contrast_list (list): List of image contrasts to include. If set to None, then all available contrasts are
             included.
         include_derivatives (bool): If True, derivatives/labels/ content is also copied, only the raw images otherwise.
         seed (int): Set np.random.RandomState to ensure reproducibility: the same subjects will be selected if the
             function is run several times on the same dataset. If set to -1, each function run is independent.
-
-    Returns:
-        None
     """
     # Create o folders
     if not os.path.isdir(ofolder):
