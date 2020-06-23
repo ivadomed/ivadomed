@@ -135,7 +135,7 @@ def get_parser():
     parser.add_argument("-p", "--path", dest="path", required=True, type=str,
                         help="Path to bids folder")
     parser.add_argument("-s", "--suffix", dest="suffix", required=True,
-                        type=str, help="Suffix of the input file. E.g., sub-xxx_SUFFIX.nii.gz")
+                        type=str, help="Suffix of the input file as in sub-xxxSUFFIX.nii.gz (E.g., _T2w)")
     parser.add_argument("-a", "--aim", dest="aim", default=-1, type=int,
                         help="-1 or positive int. If set to any positive int,"
                              " only label with this value will be taken into account ")
