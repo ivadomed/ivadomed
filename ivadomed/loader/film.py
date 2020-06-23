@@ -130,9 +130,13 @@ class Kde_model():
 def clustering_fit(dataset, key_lst):
     """This function creates clustering models for each metadata type,
     using Kernel Density Estimation algorithm.
-    :param datasets (list): data
-    :param key_lst (list of strings): names of metadata to cluster
-    :return: clustering model for each metadata type
+
+    Args:
+        datasets (list): data
+        key_lst (list of str): names of metadata to cluster
+
+    Returns:
+        dict: Clustering model for each metadata type in a dictionary where the keys are the metadata names.
     """
     KDE_PARAM = {'FlipAngle': {'range': np.linspace(0, 360, 1000), 'gridsearch': np.logspace(-4, 1, 50)},
                  'RepetitionTime': {'range': np.logspace(-1, 1, 1000), 'gridsearch': np.logspace(-4, 1, 50)},
