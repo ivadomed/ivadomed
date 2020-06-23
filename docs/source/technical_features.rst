@@ -108,4 +108,4 @@ Loss functions
    background volume can be weighted by the inverse of its area, which
    could be of interest in high class imbalance scenarios.
 -  `Adaptive wing loss <https://arxiv.org/abs/1904.07399>`__. Loss function used to detect key points with Gaussian representation of the target.
--  Loss Combination: Linear combination of any other implemented lost. 
+-  Loss Combination: Linear combination of any other implemented losses. 
