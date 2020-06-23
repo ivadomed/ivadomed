@@ -62,7 +62,6 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
             for arr in tmp_lst:
                 print("Shape element lst {}".format(arr.shape))
 
-
         # create data and stack on depth dimension
         arr_pred_ref_space = np.stack(tmp_lst, axis=-1)
 
@@ -83,7 +82,6 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
     elif discard_noise:  # discard noise
         arr_pred_ref_space[arr_pred_ref_space <= 1e-2] = 0
-
 
     # create nibabel object
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
