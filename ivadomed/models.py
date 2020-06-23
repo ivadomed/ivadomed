@@ -964,7 +964,7 @@ class UnetGridGatingSignal3(nn.Module):
 class ConvBlock(nn.Module):
     def __init__(self, in_chan, out_chan, ksize=3, stride=1, pad=0, activation=nn.LeakyReLU()):
         """
-        perform convolution, activation and batch normalization.
+        Perform convolution, activation and batch normalization.
         Args:
             in_chan (int): number of channels on input
             out_chan (int): number of channel on output
@@ -985,7 +985,8 @@ class ConvBlock(nn.Module):
 class SimpleBlock(nn.Module):
     def __init__(self, in_chan, out_chan_1x1, out_chan_3x3, activation=nn.LeakyReLU()):
         """
-        Inception module with 3 convolutions that are then concatenated. Max pooling performed on concatenation
+        Inception module with 3 convolutions with different kernel size with separate activation.
+        The 3 outputs are then concatenated. Max pooling performed on concatenation.
         Args:
             in_chan (int): number of channel of input
             out_chan_1x1 (int): number of channel after first convolution block
@@ -1008,8 +1009,11 @@ class SimpleBlock(nn.Module):
 
 
 class Countception(nn.Module):
-    """Countception model, based on: https://arxiv.org/abs/1703.08710
-    modified from: https://github.com/roggirg/count-ception_mbm/
+    """Countception model
+
+    ..seealso::
+        Paul Cohen, Joseph, et al. "Count-ception: Counting by fully convolutional redundant counting."
+        Proceedings of the IEEE International Conference on Computer Vision Workshops. 2017.
 
     Args:
         in_channel (int): number of channel on input image
