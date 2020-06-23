@@ -27,10 +27,15 @@ The purpose of the ``ivadomed`` project is to:
    installation.rst
    getting_started.rst
    configuration_file.rst
-   tutorials.rst
    data.rst
    models.rst
    scripts.rst
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Tutorials
+
+    01_one_class_segmentation_2d_unet.rst
 
 .. toctree::
    :maxdepth: 1

@@ -149,8 +149,6 @@ def automate_training(fname_config, fname_param, fixed_split, all_combinations, 
         all_combinations (bool): If True, all parameters combinations are run.
         n_iterations (int): Controls the number of time that each experiment (ie set of parameter) are run.
         run_test (bool): If True, the trained model is also run on the testing subdataset.
-    Returns:
-        None
     """
     # Load initial config
     with open(fname_config, "r") as fhandle:

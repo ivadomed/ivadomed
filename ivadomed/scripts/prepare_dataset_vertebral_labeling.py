@@ -90,11 +90,11 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
     This function takes as input a path to a dataset  and generates a set of images:
     (i) mid-sagittal image and
     (ii) heatmap of disc labels associated with the mid-sagittal image.
-
+    
     Args:
         bids_path (string): path to BIDS dataset form which images will be generated
         suffix (string): suffix of image that will be processed (e.g., T2w)
-        aim (int): If aim is not -1, retrieves only label with value = aim, else create heatmap with all label.
+        aim (int): If aim is not -1, retrieves only labels with value = aim, else create heatmap with all labels.
 
     Returns:
         None. Images are saved in BIDS folder
