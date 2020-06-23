@@ -155,6 +155,17 @@ def clustering_fit(dataset, key_lst):
 
 
 def check_isMRIparam(mri_param_type, mri_param, subject, metadata):
+    """Check if a given metadata belongs to the MRI parameters.
+
+    Args:
+        mri_param_type (str): Metadata type name.
+        mri_param (list): List of MRI params names.
+        subject (str): Current subject name.
+        metadata (dict): Metadata.
+
+    Returns:
+        bool: True if `mri_param_type` is part of `mri_param`.
+    """
     if mri_param_type not in mri_param:
         print("{} without {}, skipping.".format(subject, mri_param_type))
         return False
