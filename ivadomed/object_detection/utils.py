@@ -150,7 +150,7 @@ def resample_bounding_box(metadata, transform):
             for i in range(len(metadata['input_metadata'])):
                 metadata['input_metadata'][i]['bounding_box'] = coord
 
-            for i in range(len(metadata['input_metadata'])):
+            for i in range(len(metadata['gt_metadata'])):
                 metadata['gt_metadata'][i]['bounding_box'] = coord
             break
 
@@ -277,6 +277,27 @@ def verify_metadata(metadata, has_bounding_box):
 
     has_bounding_box &= index_has_bounding_box
     return has_bounding_box
+
+
+def bounding_box_prior(fname_mask, metadata, slice_axis):
+    """
+    Computes prior steps to a model requiring bounding box crop. This includes loading a mask of the ROI, orienting the
+    given mask into the following dimensions: (height, width, depth), extracting the bounding boxes and storing the
+    information in the metadata.
+
+    Args:
+        fname_mask (str): Filename containing the mask of the ROI
+        metadata (dict): Dictionary containing the image metadata
+        slice_axis (int): Slice axis (0: sagittal, 1: coronal, 2: axial)
+
+    """
+    nib_prior = nib.load(fname_mask)
+    # orient image into HWD convention
+    nib_ras = nib.as_closest_canonical(nib_prior)
+    np_mask = nib_ras.get_fdata()[..., 0] if len(nib_ras.get_fdata().shape) == 4 else nib_ras.get_fdata()
+    np_mask = imed_loader_utils.orient_img_hwd(np_mask, slice_axis)
+    bounding_box = get_bounding_boxes(np_mask)
+    metadata['bounding_box'] = bounding_box[0]
 
 
 def compute_bb_statistics(bounding_box_path):

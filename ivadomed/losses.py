@@ -17,7 +17,7 @@ class MultiClassDiceLoss(nn.Module):
         dice_loss (DiceLoss): Class computing the Dice loss.
     """
 
-    def __init__(self, classes_of_interest):
+    def __init__(self, classes_of_interest=None):
         super(MultiClassDiceLoss, self).__init__()
         self.classes_of_interest = classes_of_interest
         self.dice_loss = DiceLoss()

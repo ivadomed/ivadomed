@@ -12,6 +12,7 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.training import get_metadata
+from ivadomed.postprocessing import threshold_predictions
 
 cudnn.benchmark = True
 
@@ -98,7 +99,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     # INIT STORAGE VARIABLES
     preds_npy_list, gt_npy_list = [], []
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
-    # LOOP ACROSS DATASET
+    volume = None
+    weight_matrix = None
 
     for i, batch in enumerate(tqdm(test_loader, desc="Inference - Iteration " + str(i_monte_carlo))):
         with torch.no_grad():
@@ -139,6 +141,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         # RECONSTRUCT 3D IMAGE
         last_batch_bool = (i == len(test_loader) - 1)
 
+        slice_axis = imed_utils.AXIS_DCT[testing_params['slice_axis']]
+
         # LOOP ACROSS SAMPLES
         for smp_idx in range(len(preds_cpu)):
             if "bounding_box" in batch['input_metadata'][smp_idx][0]:
@@ -169,7 +173,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         z_lst=z_tmp_lst,
                                                         fname_ref=fname_tmp,
                                                         fname_out=fname_pred,
-                                                        slice_axis=imed_utils.AXIS_DCT[testing_params['slice_axis']],
+                                                        slice_axis=slice_axis,
                                                         kernel_dim='2d',
                                                         bin_thr=0.9 if testing_params["binarize_prediction"] else -1)
                     # TODO: Adapt to multilabel
@@ -177,8 +181,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     gt_npy_list.append(nib.load(fname_tmp).get_fdata())
 
                     output_nii_shape = output_nii.get_fdata().shape
-                    if len(output_nii_shape) == 4 and output_nii_shape[0] > 1:
-                        imed_utils.save_color_labels(output_nii.get_fdata(),
+                    if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
+                        imed_utils.save_color_labels(np.stack(pred_tmp_lst, -1),
                                                      testing_params["binarize_prediction"],
                                                      fname_tmp,
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
@@ -195,26 +199,11 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 fname_tmp = fname_ref
 
             else:
-                x_min, x_max, y_min, y_max, z_min, z_max = batch['input_metadata'][smp_idx][0]['coord']
-                num_pred = preds_cpu[smp_idx].shape[0]
-
-                first_sample_bool = not any([x_min, y_min, z_min])
-                if first_sample_bool:
-                    x, y, z = batch['input_metadata'][smp_idx][0]['index_shape']
-                    volume = torch.zeros((num_pred, x, y, z))
-                    weight_matrix = torch.zeros((num_pred, x, y, z))
-
-                last_sample_bool = x_max == x and y_max == y and z_max == z
-
-                # Average predictions
-                volume[:, x_min:x_max, y_min:y_max, z_min:z_max] += preds_cpu[smp_idx]
-                weight_matrix[:, x_min:x_max, y_min:y_max, z_min:z_max] += 1
-                if last_sample_bool:
-                    volume /= weight_matrix
-
-                pred_undo, metadata = testing_params["undo_transforms"](volume,
-                                                                        batch['gt_metadata'][smp_idx],
-                                                                        data_type='gt')
+                pred_undo, metadata, last_sample_bool, volume, weight_matrix = \
+                    imed_utils.volume_reconstruction(batch,
+                                                     preds_cpu,
+                                                     testing_params['undo_transforms'],
+                                                     smp_idx, volume, weight_matrix)
                 fname_ref = metadata[0]['gt_filenames'][0]
                 # Indicator of last batch
                 if last_sample_bool:
@@ -230,20 +219,26 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         z_lst=[],
                                                         fname_ref=fname_ref,
                                                         fname_out=fname_pred,
-                                                        slice_axis=imed_utils.AXIS_DCT[testing_params['slice_axis']],
+                                                        slice_axis=slice_axis,
                                                         kernel_dim='3d',
                                                         bin_thr=0.5 if testing_params["binarize_prediction"] else -1)
                     preds_npy_list.append(output_nii.get_fdata().transpose(3, 0, 1, 2))
                     gt_lst = []
                     for gt in metadata[0]['gt_filenames']:
-                        gt_lst.append(nib.load(gt).get_fdata())
+                        # For multi-label, if all labels are not in every image
+                        if gt is not None:
+                            gt_lst.append(nib.load(gt).get_fdata())
+                        else:
+                            gt_lst.append(np.zeros(gt_lst[0].shape))
+
                     gt_npy_list.append(np.array(gt_lst))
                     # Save merged labels with color
-                    if volume.shape[0] > 1:
+
+                    if pred_undo.shape[0] > 1:
                         imed_utils.save_color_labels(pred_undo,
                                                      testing_params['binarize_prediction'],
                                                      batch['input_metadata'][smp_idx][0]['input_filenames'],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                     imed_utils.AXIS_DCT[testing_params['slice_axis']])
+                                                     slice_axis)
 
     return preds_npy_list, gt_npy_list
