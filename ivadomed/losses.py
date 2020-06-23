@@ -339,8 +339,12 @@ class L2loss(nn.Module):
 
 class AdapWingLoss(nn.Module):
     """
-    Adaptive Wing loss as in: https://arxiv.org/abs/1904.07399
+    Adaptive Wing loss as in
     Used for heatmap ground truth.
+
+    ..seealso::
+        Wang, Xinyao, Liefeng Bo, and Li Fuxin. 2019. “Adaptive Wing Loss
+        for Robust Face Alignment via Heatmap Regression.” ArXiv:1904.07399.
 
 
     Args:
