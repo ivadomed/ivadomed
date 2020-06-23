@@ -89,8 +89,6 @@ extensions = [
     'sphinx.ext.autosectionlabel',
 ]
 
-# Improve Attributes display
-# napoleon_use_ivar = True
 autoclass_content = "both"
 add_module_names = True
 autosectionlabel_prefix_document = True
