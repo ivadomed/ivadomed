@@ -25,16 +25,17 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     Args:
         model_params (dict): Model's parameters.
-        dataset_train (imed_loader): Training dataset
-        dataset_val (imed_loader): Validation dataset
+        dataset_train (imed_loader): Training dataset.
+        dataset_val (imed_loader): Validation dataset.
         training_params (dict):
-        log_directory (string):
-        device (string):
-        cuda_available (Bool):
-        metric_fns (list):
-        debugging (Bool):
+        log_directory (str): Folder where log files, best and final models are saved.
+        device (str): Indicates the CPU or GPU ID.
+        cuda_available (bool): If True, CUDA is available.
+        metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
+        debugging (bool): If True, extended verbosity and intermediate outputs.
+
     Returns:
-        float, float, float, float: best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
+        float, float, float, float: best_training_dice, best_training_loss, best_validation_dice, best_validation_loss.
     """
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=log_directory)
@@ -261,10 +262,12 @@ def get_sampler(ds, balance_bool):
     """Get sampler.
 
     Args:
-        ds (BidsDataset):
-        balance_bool (Bool):
+        ds (BidsDataset): BidsDataset object.
+        balance_bool (bool): If True, a sampler is generated that balance positive and negative samples.
+
     Returns:
-        Sampler, Bool: Sampler and boolean for shuffling
+        If balance_bool is True: Returns BalancedSampler, Bool: Sampler and boolean for shuffling (set to False).
+        Otherwise: Returns None and True.
     """
     if balance_bool:
         return imed_loader_utils.BalancedSampler(ds), False
@@ -276,11 +279,12 @@ def get_scheduler(params, optimizer, num_epochs=0):
     """Get scheduler.
 
     Args:
-        params (dict):
+        params (dict): scheduler parameters, see `PyTorch documentation <https://pytorch.org/docs/stable/optim.html>`__
         optimizer (torch optim):
-        num_epochs (int):
+        num_epochs (int): number of epochs.
+
     Returns:
-        torch.optim, Bool:
+        torch.optim, bool, which indicates if the scheduler is updated for each batch (True), or for each epoch (False).
     """
     step_scheduler_batch = False
     scheduler_name = params["name"]
@@ -304,9 +308,10 @@ def get_loss_function(params):
     """Get Loss function.
 
     Args:
-        params (dict):
+        params (dict): See :mod:`ivadomed.losses`.
+
     Returns:
-        imed_losses:
+        imed_losses object.
     """
     # Loss function name
     loss_name = params["name"]
@@ -330,8 +335,10 @@ def get_metadata(metadata, model_params):
     Args:
         metadata (batch):
         model_params (dict):
+
     Returns:
-        list:
+        If FiLMedUnet, Returns a list of metadata, that have been transformed by the One Hot Encoder.
+        If HeMISUnet, Returns a numpy array where each row represents a sample and each column represents a contrast.
     """
     if model_params["name"] == "HeMISUnet":
         return np.array([m[0]["missing_mod"] for m in metadata])
@@ -351,6 +358,7 @@ def store_film_params(gammas, betas, contrasts, metadata, model, film_layers, de
         model (nn.Module):
         film_layers (list):
         depth (int):
+
     Returns:
         dict, dict: gammas, betas
     """
@@ -375,15 +383,15 @@ def store_film_params(gammas, betas, contrasts, metadata, model, film_layers, de
 def save_film_params(gammas, betas, contrasts, depth, ofolder):
     """Save FiLM params as npy files.
 
-    Further used for visualisation purposes.
+    These parameters can be further used for visualisation purposes. They are saved in the `ofolder` with `.npy` format.
 
     Args:
         gammas (dict):
         betas (dict):
         contrasts (list): list of the batch sample's contrasts (eg T2w, T1w)
         depth (int):
-        ofolder (string)
-    Returns:
+        ofolder (str):
+
     """
     # Convert list of gammas/betas into numpy arrays
     gammas_dict = {i: np.array(gammas[i]) for i in range(1, 2 * depth + 3)}

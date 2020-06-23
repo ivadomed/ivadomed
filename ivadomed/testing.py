@@ -23,15 +23,15 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
 
     Args:
         model_params (dict): Model's parameters.
-        dataset_test (imed_loader): Testing dataset
-        testing_params (dict):
-        log_directory (string):
-        device (torch.device):
-        cuda_available (Bool):
-        metric_fns (list):
-        debugging (Bool):
+        dataset_test (imed_loader): Testing dataset.
+        testing_params (dict): Testing parameters.
+        log_directory (str): Folder where predictions are saved.
+        device (torch.device): Indicates the CPU or GPU ID.
+        cuda_available (bool): If True, CUDA is available.
+        metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
+
     Returns:
-        dict: result metrics
+        dict: result metrics.
     """
     # DATA LOADER
     test_loader = DataLoader(dataset_test, batch_size=testing_params["batch_size"],
@@ -67,7 +67,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
 
     for i_monteCarlo in range(n_monteCarlo):
         preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, path_3Dpred,
-                                          cuda_available, i_monteCarlo, log_directory)
+                                          cuda_available, i_monteCarlo)
         metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
@@ -81,7 +81,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
 
 
 def run_inference(test_loader, model, model_params, testing_params, ofolder, cuda_available,
-                  i_monteCarlo=None, log_directory=None):
+                  i_monte_carlo=None):
     """Run inference on the test data and save results as nibabel files.
 
     Args:
@@ -89,12 +89,12 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         model (nn.Module):
         model_params (dict):
         testing_params (dict):
-        ofolder (string): Where the nibabel files are saved
-        device (torch.device):
-        cuda_available (Bool):
-        i_monteCarlo (int): i_th Monte Carlo iteration
+        ofolder (str): Folder where predictions are saved.
+        cuda_available (bool): If True, CUDA is available.
+        i_monte_carlo (int): i_th Monte Carlo iteration.
+
     Returns:
-        np.array, np.array: pred, gt of shape n_sample, n_label, h, w, d
+        ndarray, ndarray: Prediction, Ground-truth of shape n_sample, n_label, h, w, d.
     """
     # INIT STORAGE VARIABLES
     preds_npy_list, gt_npy_list = [], []
@@ -102,8 +102,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     volume = None
     weight_matrix = None
 
-    # LOOP ACROSS DATASET
-    for i, batch in enumerate(tqdm(test_loader, desc="Inference - Iteration " + str(i_monteCarlo))):
+    for i, batch in enumerate(tqdm(test_loader, desc="Inference - Iteration " + str(i_monte_carlo))):
         with torch.no_grad():
             # GET SAMPLES
             # input_samples: list of batch_size tensors, whose size is n_channels X height X width X depth
@@ -133,7 +132,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             input_samples = batch['input'][0]
 
         if model_params["name"] == "UNet3D" and model_params["attention"]:
-            imed_utils.save_feature_map(batch, "attentionblock2", log_directory, model, input_samples,
+            imed_utils.save_feature_map(batch, "attentionblock2", os.path.dirname(ofolder), model, input_samples,
                                         slice_axis=test_loader.dataset.slice_axis)
 
         # PREDS TO CPU
@@ -168,7 +167,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
                     # If Uncertainty running, then we save each simulation result
                     if testing_params['uncertainty']['applied']:
-                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
+                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
 
                     output_nii = imed_utils.pred_to_nib(data_lst=pred_tmp_lst,
                                                         z_lst=z_tmp_lst,
@@ -213,7 +212,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
                     # If uncertainty running, then we save each simulation result
                     if testing_params['uncertainty']['applied']:
-                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monteCarlo).zfill(2) + '.nii.gz'
+                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
 
                     # Choose only one modality
                     output_nii = imed_utils.pred_to_nib(data_lst=[pred_undo],

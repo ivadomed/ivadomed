@@ -35,7 +35,7 @@ def get_data(fname_in, axis):
          axis int:
 
     Returns:
-        nibabel, np.array
+        nibabel, ndarray
     """
     # Load image
     input_img = nib.load(fname_in)
@@ -85,9 +85,6 @@ def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_
          n_slices (int): Number of slices randomly extracted.
          folder_output (string): Folder path where the results are saved.
          fname_roi (string): Filename of the region of interest. Only needed if ROICrop is part of the transformations.
-
-    Returns:
-        None
     """
     # Load context
     with open(fname_config, "r") as fhandle:
