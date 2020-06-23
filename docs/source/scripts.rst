@@ -23,3 +23,8 @@ the training of models.
 ---------------------
 
 .. automethod:: ivadomed.scripts.compare_models.compute_statistics
+
+:mod:`extract_small_dataset`
+---------------------------
+
+.. automethod:: ivadomed.scripts.extract_small_dataset.extract_small_dataset
