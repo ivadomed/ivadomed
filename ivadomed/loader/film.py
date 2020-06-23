@@ -18,6 +18,20 @@ CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,
 
 
 def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train_set=False):
+    """Categorize each metadata value using a KDE clustering method, then apply a one-hot-encoding.
+
+    Args:
+         ds_in (BidsDataset): Dataset with metadata.
+         clustering_models: Pre-trained clustering model that has been trained on metadata of the training set.
+         debugging (bool): If True, extended verbosity and intermediate outputs.
+         metadata_type (str): Choice between 'mri_params' and 'constrasts'.
+         train_set (bool): Indicates if the input dataset is the training dataset (True) or the validation or testing
+            dataset (False).
+
+    Returns:
+        BidsDataset: Dataset with normalized metadata. If train_set is True, then the one-hot-encoder model is also
+            returned.
+    """
     if train_set:
         # Initialise One Hot Encoder
         ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
@@ -73,6 +87,15 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
 
 
 class Kde_model():
+    """Kernel Density Estimation.
+
+    Apply this clustering method to metadata values, using (`sklearn implementation.
+    <https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KernelDensity.html#sklearn.neighbors.KernelDensity>`__)
+
+    Attributes:
+        kde (sklearn.neighbors.KernelDensity):
+        minima (float): Local minima.
+    """
     def __init__(self):
         self.kde = KernelDensity()
         self.minima = None
@@ -107,9 +130,13 @@ class Kde_model():
 def clustering_fit(dataset, key_lst):
     """This function creates clustering models for each metadata type,
     using Kernel Density Estimation algorithm.
-    :param datasets (list): data
-    :param key_lst (list of strings): names of metadata to cluster
-    :return: clustering model for each metadata type
+
+    Args:
+        datasets (list): data
+        key_lst (list of str): names of metadata to cluster
+
+    Returns:
+        dict: Clustering model for each metadata type in a dictionary where the keys are the metadata names.
     """
     KDE_PARAM = {'FlipAngle': {'range': np.linspace(0, 360, 1000), 'gridsearch': np.logspace(-4, 1, 50)},
                  'RepetitionTime': {'range': np.logspace(-1, 1, 1000), 'gridsearch': np.logspace(-4, 1, 50)},
@@ -128,6 +155,17 @@ def clustering_fit(dataset, key_lst):
 
 
 def check_isMRIparam(mri_param_type, mri_param, subject, metadata):
+    """Check if a given metadata belongs to the MRI parameters.
+
+    Args:
+        mri_param_type (str): Metadata type name.
+        mri_param (list): List of MRI params names.
+        subject (str): Current subject name.
+        metadata (dict): Metadata.
+
+    Returns:
+        bool: True if `mri_param_type` is part of `mri_param`.
+    """
     if mri_param_type not in mri_param:
         print("{} without {}, skipping.".format(subject, mri_param_type))
         return False

@@ -93,7 +93,7 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_pa
     model.eval()
 
     metric_fns = [imed_metrics.dice_score,
-                  imed_metrics.hausdorff_3D_score,
+                  imed_metrics.hausdorff_score,
                   imed_metrics.precision_score,
                   imed_metrics.recall_score,
                   imed_metrics.specificity_score,
