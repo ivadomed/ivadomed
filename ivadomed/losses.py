@@ -38,7 +38,9 @@ class MultiClassDiceLoss(nn.Module):
 class DiceLoss(nn.Module):
     """DiceLoss.
 
-    Motivated by: https://arxiv.org/pdf/1606.04797.pdf
+    .. seealso::
+        Milletari, Fausto, Nassir Navab, and Seyed-Ahmad Ahmadi. "V-net: Fully convolutional neural networks for
+        volumetric medical image segmentation." 2016 fourth international conference on 3D vision (3DV). IEEE, 2016.
 
     Args:
         smooth (float): Value to avoid division by zero when images and predictions are empty.
@@ -59,9 +61,7 @@ class DiceLoss(nn.Module):
 
 
 class BinaryCrossEntropyLoss(nn.Module):
-    """BinaryCrossEntropyLoss.
-
-    Calls https://pytorch.org/docs/master/generated/torch.nn.BCELoss.html#bceloss
+    """(`BinaryCrossEntropyLoss <https://pytorch.org/docs/master/generated/torch.nn.BCELoss.html#bceloss>`__).
 
     Attributes:
         loss_fct (BCELoss): Binary cross entropy loss function from torch library.
@@ -77,7 +77,9 @@ class BinaryCrossEntropyLoss(nn.Module):
 class FocalLoss(nn.Module):
     """FocalLoss.
 
-    Motivated by: http://openaccess.thecvf.com/content_ICCV_2017/papers/Lin_Focal_Loss_for_ICCV_2017_paper.pdf
+    .. seealso::
+        Lin, Tsung-Yi, et al. "Focal loss for dense object detection."
+        Proceedings of the IEEE international conference on computer vision. 2017.
 
     Args:
         gamma (float): Value from 0 to 5, Control between easy background and hard ROI
@@ -118,7 +120,9 @@ class FocalLoss(nn.Module):
 class FocalDiceLoss(nn.Module):
     """FocalDiceLoss.
 
-    Motivated by https://arxiv.org/pdf/1809.00076.pdf
+    .. seealso::
+        Wong, Ken CL, et al. "3D segmentation with exponential logarithmic loss for highly unbalanced object sizes."
+        International Conference on Medical Image Computing and Computer-Assisted Intervention. Springer, Cham, 2018.
 
     Args:
         beta (float): Value from 0 to 1, indicating the weight of the dice loss.
@@ -161,7 +165,10 @@ class FocalDiceLoss(nn.Module):
 class GeneralizedDiceLoss(nn.Module):
     """GeneralizedDiceLoss.
 
-    Motivated by: https://arxiv.org/pdf/1707.03237
+    .. seealso::
+        Sudre, Carole H., et al. "Generalised dice overlap as a deep learning loss function for highly unbalanced
+        segmentations." Deep learning in medical image analysis and multimodal learning for clinical decision support.
+        Springer, Cham, 2017. 240-248.
 
     Args:
         epsilon (float): Epsilon to avoid division by zero.
@@ -210,8 +217,10 @@ class GeneralizedDiceLoss(nn.Module):
 class TverskyLoss(nn.Module):
     """Tversky Loss.
 
-    Compute the Tversky loss defined in:
-        Sadegh et al. (2017) Tversky loss function for image segmentation using 3D fully convolutional deep networks.
+    .. seealso::
+        Salehi, Seyed Sadegh Mohseni, Deniz Erdogmus, and Ali Gholipour. "Tversky loss function for image segmentation
+        using 3D fully convolutional deep networks." International Workshop on Machine Learning in Medical Imaging.
+        Springer, Cham, 2017.
 
     Args:
         alpha (float): Weight of false positive voxels.
@@ -274,8 +283,9 @@ class TverskyLoss(nn.Module):
 class FocalTverskyLoss(TverskyLoss):
     """Focal Tversky Loss.
 
-    Compute the Focal Tversky loss defined in:
-        Abraham et al. (2018) A Novel Focal Tversky loss function with improved Attention U-Net for lesion segmentation
+    .. seealso::
+        Abraham, Nabila, and Naimul Mefraz Khan. "A novel focal tversky loss function with improved attention u-net for
+        lesion segmentation." 2019 IEEE 16th International Symposium on Biomedical Imaging (ISBI 2019). IEEE, 2019.
 
     Args:
         alpha (float): Weight of false positive voxels.
@@ -309,5 +319,4 @@ class FocalTverskyLoss(TverskyLoss):
             # Compute Focal Tversky loss, Equation 4 in the original paper
             focal_tversky_sum += torch.pow(1 - tversky_index, exponent=1 / self.gamma)
 
-        # TODO: Take the opposite?
         return focal_tversky_sum / n_classes

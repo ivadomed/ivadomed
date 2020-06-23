@@ -47,8 +47,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         BidsDataset
 
     Note: For more details on the parameters transform_params, target_suffix, roi_params, contrast_params,
-    slice_filter_params and object_detection_params see our file config documentation:
-    https://ivadomed.org/en/latest/configuration_file.html
+    slice_filter_params and object_detection_params see :doc:`configuration_file`.
     """
     # Compose transforms
     tranform_lst, _ = imed_transforms.preprare_transforms(transforms_params, requires_undo)

@@ -32,7 +32,7 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
         center_test_lst (list): list of centers to include in the testing set.
         split_method (str): Between 'per_center' or 'per_person'. If 'per_center' the separation fraction are
             applied to centers, if 'per_person' they are applied to the subject list.
-        random_seed (int): Random seed to insure reproducible splits.
+        random_seed (int): Random seed to ensure reproducible splits.
         train_frac (float): Between 0 and 1. Represents the train set proportion.
         test_frac (float): Between 0 and 1. Represents the test set proportion.
 
@@ -104,7 +104,7 @@ def get_subdatasets_subjects_list(split_params, bids_path, log_directory):
     """Get lists of subjects for each sub-dataset between training / validation / testing.
 
     Args:
-        split_params (dict):
+        split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
         bids_path (str): Path to the BIDS dataset.
         log_directory (str): Output folder.
 
@@ -178,7 +178,6 @@ def filter_roi(ds, nb_nonzero_thr):
 
     Returns:
         mt_datasets.MRI2DSegmentationDataset: Dataset without filtered slices.
-
     """
     filter_indexes = []
     for segpair, slice_roi_pair in ds.indexes:
@@ -206,7 +205,6 @@ def orient_img_hwd(data, slice_axis):
 
     Returns:
         ndarray: Array oriented with the following dimensions: (height, width, depth).
-
     """
     if slice_axis == 0:
         return data.transpose(2, 1, 0)
