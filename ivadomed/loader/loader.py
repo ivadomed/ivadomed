@@ -616,6 +616,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         self.bids_ds = bids.BIDS(root_dir)
         self.soft_gt = soft_gt
         self.filename_pairs = []
+        self.slice_axis = slice_axis
         if metadata_choice == 'mri_params':
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
