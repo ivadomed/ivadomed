@@ -18,6 +18,20 @@ CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,
 
 
 def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train_set=False):
+    """Categorize each metadata value using a KDE clustering method, then apply a one-hot-encoding.
+
+    Args:
+         ds_in (BidsDataset): Dataset with metadata.
+         clustering_models: Pre-trained clustering model that has been trained on metadata of the training set.
+         debugging (bool): If True, extended verbosity and intermediate outputs.
+         metadata_type (str): Choice between 'mri_params' and 'constrasts'.
+         train_set (bool): Indicates if the input dataset is the training dataset (True) or the validation or testing
+            dataset (False).
+
+    Returns:
+        BidsDataset: Dataset with normalized metadata. If train_set is True, then the one-hot-encoder model is also
+            returned.
+    """
     if train_set:
         # Initialise One Hot Encoder
         ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
