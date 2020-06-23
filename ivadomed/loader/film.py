@@ -87,6 +87,15 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
 
 
 class Kde_model():
+    """Kernel Density Estimation.
+
+    Apply this clustering method to metadata values, using (`sklearn implementation.
+    <https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KernelDensity.html#sklearn.neighbors.KernelDensity>`__)
+
+    Attributes:
+        kde (sklearn.neighbors.KernelDensity):
+        minima (float): Local minima.
+    """
     def __init__(self):
         self.kde = KernelDensity()
         self.minima = None
