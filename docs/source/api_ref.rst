@@ -27,7 +27,65 @@ loader.utils
 .. automodule:: ivadomed.loader.utils
 
 
+Object Detection API
+++++++++++++++++++++
+
+object_detection.utils
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: ivadomed.object_detection.utils
+
+
+Evaluation API
+++++++++++++++++++++
+
+.. automodule:: ivadomed.evaluation
+
+
 Losses API
 ++++++++++
 
 .. automodule:: ivadomed.losses
+
+
+Main API
+++++++++++
+
+.. automodule:: ivadomed.main
+
+
+Metrics API
+++++++++++
+
+.. automodule:: ivadomed.metrics
+
+
+Postprocessing API
+++++++++++++++++++++
+
+.. automodule:: ivadomed.postprocessing
+
+
+Testing API
++++++++++++++
+
+.. automodule:: ivadomed.testing
+
+
+Training API
++++++++++++++
+
+.. automodule:: ivadomed.training
+
+
+Transformations API
+++++++++++++++++++++
+
+.. automodule:: ivadomed.transforms
+
+
+Utils API
+++++++++++++++++++++
+
+.. automodule:: ivadomed.utils
+
