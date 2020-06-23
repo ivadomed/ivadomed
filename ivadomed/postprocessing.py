@@ -8,6 +8,14 @@ from scipy.ndimage.morphology import binary_fill_holes
 
 
 def nifti_capable(wrapped):
+    """Decorator to make a given function compatible with input being Nifti objects.
+
+    Args:
+        wrapped: Given function.
+
+    Returns:
+        Functions' return.
+    """
     @functools.wraps(wrapped)
     def wrapper(data, *args, **kwargs):
         if isinstance(data, nib.Nifti1Image):
@@ -18,6 +26,14 @@ def nifti_capable(wrapped):
 
 
 def binarize_with_low_threshold(wrapped):
+    """Decorator to set low values (< 0.001) to 0.
+
+    Args:
+        wrapped: Given function.
+
+    Returns:
+        Functions' return.
+    """
     @functools.wraps(wrapped)
     def wrapper(data, *args, **kwargs):
         if not np.array_equal(data, data.astype(bool)):
@@ -28,6 +44,14 @@ def binarize_with_low_threshold(wrapped):
 
 
 def multilabel_capable(wrapped):
+    """Decorator to make a given function compatible multilabel images.
+
+    Args:
+        wrapped: Given function.
+
+    Returns:
+        Functions' return.
+    """
     @functools.wraps(wrapped)
     def wrapper(data, *args, **kwargs):
         if len(data.shape) == 4:
@@ -43,16 +67,16 @@ def multilabel_capable(wrapped):
 
 @nifti_capable
 def threshold_predictions(predictions, thr=0.5):
-    """
-    Threshold a soft (ie not binary) array of predictions given a threshold value, and returns
+    """Threshold a soft (i.e. not binary) array of predictions given a threshold value, and returns
     a binary array.
 
     Args:
-        predictions (array or nibabel object): Image to binarize.
+        predictions (ndarray or nibabel object): Image to binarize.
         thr (float): Threshold value: voxels with a value < to thr are assigned 0 as value, 1
             otherwise.
+
     Returns:
-        array: Array or nibabel (same object as the input) containing only zeros or ones. Output type is int.
+        ndarray: ndarray or nibabel (same object as the input) containing only zeros or ones. Output type is int.
     """
     thresholded_preds = np.copy(predictions)[:]
     low_values_indices = thresholded_preds < thr
@@ -65,13 +89,13 @@ def threshold_predictions(predictions, thr=0.5):
 @nifti_capable
 @binarize_with_low_threshold
 def keep_largest_object(predictions):
-    """
-    Keep the largest connected object from the input array (2D or 3D).
+    """Keep the largest connected object from the input array (2D or 3D).
 
     Args:
-        predictions (array or nibabel object): Input segmentation. Image could be 2D or 3D.
+        predictions (ndarray or nibabel object): Input segmentation. Image could be 2D or 3D.
+
     Returns:
-        Array or nibabel (same object as the input).
+        ndarray or nibabel (same object as the input).
     """
     # Find number of closed objects using skimage "label"
     labeled_obj, num_obj = label(np.copy(predictions))
@@ -84,14 +108,14 @@ def keep_largest_object(predictions):
 
 @nifti_capable
 def keep_largest_object_per_slice(predictions, axis=2):
-    """
-    Keep the largest connected object for each 2D slice, along a specified axis.
+    """Keep the largest connected object for each 2D slice, along a specified axis.
 
     Args:
-        predictions (array or nibabel object): Input segmentation. Image could be 2D or 3D.
+        predictions (ndarray or nibabel object): Input segmentation. Image could be 2D or 3D.
         axis (int): 2D slices are extracted along this axis.
+
     Returns:
-        Array or nibabel (same object as the input).
+        ndarray or nibabel (same object as the input).
     """
     # Split the 3D input array as a list of slice along axis
     list_preds_in = np.split(predictions, predictions.shape[axis], axis=axis)
@@ -107,16 +131,16 @@ def keep_largest_object_per_slice(predictions, axis=2):
 @nifti_capable
 @multilabel_capable
 def fill_holes(predictions, structure=(3, 3, 3)):
-    """
-    Fill holes in the predictions using a given structuring element.
+    """Fill holes in the predictions using a given structuring element.
     Note: This function only works for binary segmentation.
 
     Args:
-        predictions (array or nibabel object): Input binary segmentation. Image could be 2D or 3D.
+        predictions (ndarray or nibabel object): Input binary segmentation. Image could be 2D or 3D.
         structure (tuple of integers): Structuring element, number of ints equals
             number of dimensions in the input array.
+
     Returns:
-        Array or nibabel (same object as the input). Output type is int.
+        ndrray or nibabel (same object as the input). Output type is int.
     """
     assert np.array_equal(predictions, predictions.astype(bool))
     assert len(structure) == len(predictions.shape)
@@ -125,14 +149,14 @@ def fill_holes(predictions, structure=(3, 3, 3)):
 
 @nifti_capable
 def mask_predictions(predictions, mask_binary):
-    """
-    Mask predictions using a binary mask: sets everything outside the mask to zero.
+    """Mask predictions using a binary mask: sets everything outside the mask to zero.
 
     Args:
-        predictions (array or nibabel object): Input binary segmentation. Image could be 2D or 3D.
-        mask_binary (array): array with the same shape as predictions, containing only zeros or ones.
+        predictions (ndarray or nibabel object): Input binary segmentation. Image could be 2D or 3D.
+        mask_binary (ndarray): Numpy array with the same shape as predictions, containing only zeros or ones.
+
     Returns:
-        Array or nibabel (same object as the input).
+        ndarray or nibabel (same object as the input).
     """
     assert predictions.shape == mask_binary.shape
     assert np.array_equal(mask_binary, mask_binary.astype(bool))
