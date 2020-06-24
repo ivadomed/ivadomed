@@ -42,8 +42,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         dataset_type (str): Choice between "training", "validation" or "testing".
         requires_undo (bool): If True, the transformations without undo_transform will be discarded.
         object_detection_params (dict): Object dection parameters.
-        soft_gt (bool): If True, ground truth will be non-binarized images encoded in float32.
-
+        soft_gt (bool): if True, ground truth will be non binarized images encoded in float32. The float32 type is
+            expected as models use float32 tensor.
     Returns:
         BidsDataset
 
@@ -122,7 +122,8 @@ class SegmentationPair(object):
         cache (bool): If the data should be cached in memory or not.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
         prepro_transforms (dict): Output of get_preprocessing_transforms.
-        soft_gt (bool): If the ground truth is soft (float32, non-binary values) 
+        soft_gt (bool): if True, ground truth will be non binarized images encoded in float32. The float32 type is
+            expected as models use float32 tensor.
 
     Attributes:
         input_filenames (list): List of input filenames.
@@ -365,7 +366,8 @@ class MRI2DSegmentationDataset(Dataset):
         has_bounding_box (bool): True if bounding box in all metadata, else False.
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
-        soft_gt (bool): if True, ground truth will be non binarized images encoded in float32.  
+        soft_gt (bool): if True, ground truth will be non binarized images encoded in float32. The float32 type is
+            expected as models use float32 tensor.
 
     """
 
@@ -684,6 +686,8 @@ class BidsDataset(MRI2DSegmentationDataset):
         object_detection_params (dict): Object dection parameters.
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
+        soft_gt (bool): If True, ground truth will be non-binarized images encoded in float32. The float32 type is
+            expected as models use float32 tensor.
 
     Attributes:
         bids_ds (BIDS): BIDS dataset.

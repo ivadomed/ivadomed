@@ -1010,7 +1010,8 @@ class SimpleBlock(nn.Module):
 
 
 class Countception(nn.Module):
-    """Countception model
+    """Countception model.
+    Fully convolutional model using inception module used for keypoints detection.
 
     .. seealso::
         Cohen JP et al. "Count-ception: Counting by fully convolutional redundant counting."
