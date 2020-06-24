@@ -223,6 +223,7 @@ class Decoder(Module):
 
 class Unet(Module):
     """A reference U-Net model.
+
     .. seealso::
         Ronneberger, O., et al (2015). U-Net: Convolutional
         Networks for Biomedical Image Segmentation
@@ -405,11 +406,11 @@ class HeMISUnet(Module):
         Param:
         contrasts: list of all the possible contrasts. ['T1', 'T2', 'T2S', 'F']
 
-    see also::
+    .. seealso::
         Havaei, M., Guizard, N., Chapados, N., Bengio, Y.:
         Hemis: Hetero-modal image segmentation.
         ArXiv link: https://arxiv.org/abs/1607.05194
-        ---
+        
         Reuben Dorent and Samuel Joutard and Marc Modat and Sébastien Ourselin and Tom Vercauteren
         Hetero-Modal Variational Encoder-Decoder for Joint Modality Completion and Segmentation
         ArXiv link: https://arxiv.org/abs/1907.11150
