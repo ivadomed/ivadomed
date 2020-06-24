@@ -353,7 +353,6 @@ class AdapWingLoss(nn.Module):
         It needs to be slightly above 2 to maintain ideal properties.
         omega (float): Multiplicating factor for non linear part of the loss.
         epsilon (float): factor to avoid gradient explosion. It must not be too small
-
     """
 
     def __init__(self, theta=0.5, alpha=2.1, omega=14, epsilon=1):

@@ -168,7 +168,7 @@ def coordinate_from_heatmap(nifti_image, thresh=0.3):
     """
     Retrieve coordinates of local maxima in a soft segmentation.
     Args:
-        nifti_image (nibabel object): nifti image of the soft output.
+        nifti_image (nibabel object): nifti image of the soft segmentation.
         thresh (float): Relative threshold for local maxima, i.e., after normalizing
         the min and max between 0 and 1, respectively.
 
@@ -192,8 +192,8 @@ def label_file_from_coordinates(nifti_image, coord_list):
         coord_list (list): list of coordinates. Each element is [x, y, z]. Orientation should be the same as the image
 
     Returns:
-        nib: A nifti object containing the singe-voxel label of value 1. The matrix will be the same size as
-        fname_image's.
+        nib_pred: A nifti object containing the singe-voxel label of value 1. The matrix will be the same size as
+        `nifti_image`.
 
     """
 

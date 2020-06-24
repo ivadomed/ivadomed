@@ -1013,11 +1013,11 @@ class Countception(nn.Module):
     """Countception model
 
     .. seealso::
-        Paul Cohen, Joseph, et al. "Count-ception: Counting by fully convolutional redundant counting."
+        Cohen JP et al. "Count-ception: Counting by fully convolutional redundant counting."
         Proceedings of the IEEE International Conference on Computer Vision Workshops. 2017.
 
     Args:
-        in_channel (int): number of channel on input image
+        in_channel (int): number of channels on input image
         out_channel (int): number of channels on output image
         use_logits (bool): boolean to change output
         logits_per_output (int): number of outputs of final convolution which will multiplied by the number of channels
