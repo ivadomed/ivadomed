@@ -92,6 +92,7 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
     (ii) heatmap of disc labels associated with the mid-sagittal image.
 
     Example::
+
         python scripts/prepare_dataset_vertebral_labeling -p path/to/bids -s _T2w -a 0
     
     Args:
