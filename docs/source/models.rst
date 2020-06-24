@@ -4,19 +4,19 @@ Models
 :mod:`Unet`
 ---------------------------
 
-.. class:: ivadomed.models.Unet
+.. autoclass:: ivadomed.models.Unet
 
 
 :mod:`FiLMedUnet`
 ---------------------------
 
-.. class:: ivadomed.models.FiLMedUnet
+.. autoclass:: ivadomed.models.FiLMedUnet
 
 
 :mod:`HeMISUnet`
 ---------------------------
 
-.. class:: ivadomed.models.HeMISUnet
+.. autoclass:: ivadomed.models.HeMISUnet
 
 
 :mod:`UNet3D`
@@ -29,3 +29,4 @@ Models
 ---------------------------
 
 .. class:: ivadomed.models.Countception
+
