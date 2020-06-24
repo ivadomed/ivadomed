@@ -32,7 +32,7 @@ class Dataframe:
     Attributes:
         dim (int): Choice 2 or 3, for 2D or 3D data respectively.
         contrasts (list of str): List of the contrasts of interest.
-        filter_slices: Object that filters slices according to their content.
+        filter_slices (SliceFilter): Object that filters slices according to their content.
         df (pd.Dataframe): Dataframe containing dataset information
     """
 
