@@ -22,11 +22,11 @@ Models
 :mod:`UNet3D`
 ---------------------------
 
-.. class:: ivadomed.models.UNet3D
+.. autoclass:: ivadomed.models.UNet3D
 
 
 :mod:`Countception`
 ---------------------------
 
-.. class:: ivadomed.models.Countception
+.. autoclass:: ivadomed.models.Countception
 
