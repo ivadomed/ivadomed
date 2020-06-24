@@ -4,11 +4,11 @@ Contributing to ivadomed
 Introduction
 ------------
 
-First off, thanks for taking the time to contribute!
+First off, thanks for taking the time to contribute! 🎉 
 
 When contributing to this repository, please first discuss the change
 you wish to make by opening a new `Github
-issue <https://github.com/neuropoly/ivadomed/issues>`__.
+issue <https://github.com/ivadomed/ivadomed/issues>`__.
 
 Contributions relating to content of the Github repository can be
 submitted through Github pull requests (PR).
@@ -40,7 +40,7 @@ Opening an issue
 
 Issues (bugs, feature requests, or others) can be submitted `on our
 project's issue
-page. <https://github.com/neuropoly/ivadomed/issues>`__
+page. <https://github.com/ivadomed/ivadomed/issues>`__
 
 Before Submitting a New Issue
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -205,7 +205,7 @@ PR Title
 ~~~~~~~~
 
 The PR title is used to automatically generate the
-`Changelog <https://github.com/neuropoly/ivadomed/blob/master/CHANGES.md>`__
+`Changelog <https://github.com/ivadomed/ivadomed/blob/master/CHANGES.md>`__
 for each new release, so please follow the following rules:
 
 -  Provide a concise and self-descriptive title (see :ref:`contributing:Issue Title`).
@@ -223,11 +223,21 @@ If the PR fixes issue(s), indicate it after your introduction:
 ``Fixes #XXXX, Fixes #YYYY``. Note: it is important to respect the
 syntax above so that the issue(s) will be closed upon merging the PR.
 
+Work in progress 
+~~~~~~~~~~~~~~~~
+
+If your PR is not ready for review yet, you can convert it to a "Draft", so the team is informed.
+
+A draft pull request is styled differently to clearly indicate that it’s in a draft state. 
+Merging is blocked in draft pull requests. Change the status to “Ready for review” near the 
+bottom of your pull request to remove the draft state and allow merging according to your 
+project’s settings. 
+
 Continuous Integration
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The PR can't be merged if `Github Actions "Run
-tests" <https://github.com/neuropoly/ivadomed/actions>`__
+tests" <https://github.com/ivadomed/ivadomed/actions>`__
 hasn't succeeded. If you are familiar with it, consult the test results
 to fix the problem.
 
