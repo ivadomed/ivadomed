@@ -1011,7 +1011,9 @@ class SimpleBlock(nn.Module):
 
 class Countception(Module):
     """Countception model.
-    Fully convolutional model using inception module used for keypoints detection.
+    Fully convolutional model using inception module and used for keypoints detection.
+    It extracts several patches within each image, every pixel is therefore processed by the network several times
+    allowing to average over the error and avoid false negatives.
 
     .. seealso::
         Cohen JP et al. "Count-ception: Counting by fully convolutional redundant counting."
