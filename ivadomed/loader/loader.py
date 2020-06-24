@@ -237,7 +237,7 @@ class SegmentationPair(object):
             if gt is not None:
                 hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
                                                                 self.slice_axis)
-                data_type = np.float if self.soft_gt else np.uint8
+                data_type = np.float32 if self.soft_gt else np.uint8
                 gt_data.append(hwd_oriented.astype(data_type))
             else:
                 gt_data.append(
