@@ -327,7 +327,7 @@ class FocalTverskyLoss(TverskyLoss):
 
 class L2loss(nn.Module):
     """
-    L2 loss between inputs and target
+    Euclidean loss also known as L2 loss. Compute the sum of the squared difference between the two images.
     """
 
     def __init__(self):
@@ -339,13 +339,12 @@ class L2loss(nn.Module):
 
 class AdapWingLoss(nn.Module):
     """
-    Adaptive Wing loss as in
+    Adaptive Wing loss
     Used for heatmap ground truth.
 
     ..seealso::
         Wang, Xinyao, Liefeng Bo, and Li Fuxin. "Adaptive wing loss for robust face alignment via heatmap regression."
         Proceedings of the IEEE International Conference on Computer Vision. 2019.
-
 
     Args:
         theta (float): Threshold between linear and non linear loss.
@@ -405,12 +404,14 @@ class AdapWingLoss(nn.Module):
 class Loss_Combination(nn.Module):
     """
     Loss that sums other implemented losses.
+
     Args:
         losses_list (list): list of losses that will be summed. Elements should be string.
         params_list (list): list of params for the losses, contain None or dictionnary definition of params for the loss
         at same index. If no params list is given all default parameter will be used.
         (e.g., losses_list = ["L2loss","DiceLoss"]
                params_list = [None,{"param1:0.5"}])
+
     returns:
             tensor: sum of losses computed on (input,target) with the params
     """

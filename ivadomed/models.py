@@ -1009,7 +1009,7 @@ class SimpleBlock(nn.Module):
         return output
 
 
-class Countception(nn.Module):
+class Countception(Module):
     """Countception model.
     Fully convolutional model using inception module used for keypoints detection.
 
@@ -1022,6 +1022,7 @@ class Countception(nn.Module):
         out_channel (int): number of channels on output image
         use_logits (bool): boolean to change output
         logits_per_output (int): number of outputs of final convolution which will multiplied by the number of channels
+        name (str): model's name used for call in configuration file.
     """
 
     def __init__(self, in_channel=3, out_channel=1, use_logits=False, logits_per_output=12, name='CC'):
