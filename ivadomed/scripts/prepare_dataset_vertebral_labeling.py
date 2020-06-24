@@ -52,7 +52,7 @@ def heatmap_generation(image, kernel_size):
     return map
 
 
-def mask2label(path_label, aim='full'):
+def mask2label(path_label, aim=0):
     """
     Retrieve points coordinates and value from a label file containing singl voxel label
     Args:
@@ -74,7 +74,7 @@ def mask2label(path_label, aim='full'):
         y = arr.nonzero()[1][i]
         z = arr.nonzero()[2][i]
         # need to check every points
-        if aim == -1:
+        if aim == 0:
             # we don't want to account for pmj (label 49) nor C1/C2 which is hard to distinguish.
             if arr[x, y, z] < 30 and arr[x, y, z] != 1:
                 list_label_image.append([x, y, z, arr[x, y, z]])
@@ -90,11 +90,14 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
     This function takes as input a path to a dataset  and generates a set of images:
     (i) mid-sagittal image and
     (ii) heatmap of disc labels associated with the mid-sagittal image.
+
+    Example::
+        python scripts/prepare_dataset_vertebral_labeling -p path/to/bids -s _T2w -a 0
     
     Args:
         bids_path (string): path to BIDS dataset form which images will be generated
         suffix (string): suffix of image that will be processed (e.g., T2w)
-        aim (int): If aim is not -1, retrieves only labels with value = aim, else create heatmap with all labels.
+        aim (int): If aim is not 0, retrieves only labels with value = aim, else create heatmap with all labels.
 
     Returns:
         None. Images are saved in BIDS folder
