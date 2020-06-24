@@ -23,3 +23,9 @@ Models
 ---------------------------
 
 .. class:: ivadomed.models.UNet3D
+
+
+:mod:`Countception`
+---------------------------
+
+.. class:: ivadomed.models.Countception

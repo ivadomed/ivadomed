@@ -33,3 +33,5 @@ the training of models.
 ---------------------------
 
 .. automethod:: ivadomed.scripts.extract_small_dataset.extract_small_dataset
+
+
