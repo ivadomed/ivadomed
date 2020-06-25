@@ -229,6 +229,8 @@ def accuracy_score(prediction, groundtruth):
     """
     FP, FN, TP, TN = numeric_score(prediction, groundtruth)
     N = FP + FN + TP + TN
+    if N <= 0.0:
+        return err_value
     accuracy = np.divide(TP + TN, N)
     return accuracy
 

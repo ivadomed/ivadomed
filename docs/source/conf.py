@@ -38,6 +38,7 @@ import ivadomed.scripts.visualize_transforms
 import ivadomed.scripts.convert_to_onnx
 import ivadomed.scripts.automate_training
 import ivadomed.scripts.compare_models
+import ivadomed.scripts.prepare_dataset_vertebral_labeling
 import ivadomed.scripts.extract_small_dataset
 
 

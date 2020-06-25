@@ -223,6 +223,7 @@ class Decoder(Module):
 
 class Unet(Module):
     """A reference U-Net model.
+
     .. seealso::
         Ronneberger, O., et al (2015). U-Net: Convolutional
         Networks for Biomedical Image Segmentation
@@ -405,11 +406,11 @@ class HeMISUnet(Module):
         Param:
         contrasts: list of all the possible contrasts. ['T1', 'T2', 'T2S', 'F']
 
-    see also::
+    .. seealso::
         Havaei, M., Guizard, N., Chapados, N., Bengio, Y.:
         Hemis: Hetero-modal image segmentation.
         ArXiv link: https://arxiv.org/abs/1607.05194
-        ---
+        
         Reuben Dorent and Samuel Joutard and Marc Modat and Sébastien Ourselin and Tom Vercauteren
         Hetero-Modal Variational Encoder-Decoder for Joint Modality Completion and Segmentation
         ArXiv link: https://arxiv.org/abs/1907.11150
@@ -959,6 +960,133 @@ class UnetGridGatingSignal3(nn.Module):
     def forward(self, inputs):
         outputs = self.conv1(inputs)
         return outputs
+
+
+class ConvBlock(nn.Module):
+    def __init__(self, in_chan, out_chan, ksize=3, stride=1, pad=0, activation=nn.LeakyReLU()):
+        """
+        Perform convolution, activation and batch normalization.
+        Args:
+            in_chan (int): number of channels on input
+            out_chan (int): number of channel on output
+            ksize (int): size of kernel for the 2d convolution
+            stride (int): strides for 2d convolution
+            pad (int): pad for nn.conv2d
+            activation (nn.layers): activation layer. default Leaky ReLu
+        """
+        super(ConvBlock, self).__init__()
+        self.conv1 = nn.Conv2d(in_chan, out_chan, kernel_size=ksize, stride=stride, padding=pad)
+        self.activation = activation
+        self.batch_norm = nn.BatchNorm2d(out_chan)
+
+    def forward(self, x):
+        return self.activation(self.batch_norm(self.conv1(x)))
+
+
+class SimpleBlock(nn.Module):
+    def __init__(self, in_chan, out_chan_1x1, out_chan_3x3, activation=nn.LeakyReLU()):
+        """
+        Inception module with 3 convolutions with different kernel size with separate activation.
+        The 3 outputs are then concatenated. Max pooling performed on concatenation.
+        Args:
+            in_chan (int): number of channel of input
+            out_chan_1x1 (int): number of channel after first convolution block
+            out_chan_3x3 (int): number of channel for the other convolution blocks
+            activation (nn.layers): activation layer used in convolution block
+        """
+        super(SimpleBlock, self).__init__()
+        self.conv1 = ConvBlock(in_chan, out_chan_1x1, ksize=3, pad=0, activation=activation)
+        self.conv2 = ConvBlock(in_chan, out_chan_3x3, ksize=5, pad=1, activation=activation)
+        self.conv3 = ConvBlock(in_chan, out_chan_3x3, ksize=9, pad=3, activation=activation)
+        self.MP = nn.MaxPool2d(1)
+
+    def forward(self, x):
+        conv1_out = self.conv1(x)
+        conv2_out = self.conv2(x)
+        conv3_out = self.conv3(x)
+        output = torch.cat([conv1_out, conv2_out, conv3_out], 1)
+        output = self.MP(output)
+        return output
+
+
+class Countception(Module):
+    """Countception model.
+    Fully convolutional model using inception module and used for keypoints detection.
+    The inception model extracts several patches within each image. Every pixel is therefore processed by the 
+    network several times, allowing to average multiple predictions and minimize false negatives.
+
+    .. seealso::
+        Cohen JP et al. "Count-ception: Counting by fully convolutional redundant counting."
+        Proceedings of the IEEE International Conference on Computer Vision Workshops. 2017.
+
+    Args:
+        in_channel (int): number of channels on input image
+        out_channel (int): number of channels on output image
+        use_logits (bool): boolean to change output
+        logits_per_output (int): number of outputs of final convolution which will multiplied by the number of channels
+        name (str): model's name used for call in configuration file.
+    """
+
+    def __init__(self, in_channel=3, out_channel=1, use_logits=False, logits_per_output=12, name='CC'):
+        super(Countception, self).__init__()
+
+        # params
+        self.in_channel = in_channel
+        self.out_channel = out_channel
+        self.activation = nn.LeakyReLU(0.01)
+        self.final_activation = nn.LeakyReLU(0.3)
+        self.patch_size = 40
+        self.use_logits = use_logits
+        self.logits_per_output = logits_per_output
+
+        torch.LongTensor()
+
+        self.conv1 = ConvBlock(self.in_channel, 64, ksize=3, pad=self.patch_size, activation=self.activation)
+        self.simple1 = SimpleBlock(64, 16, 16, activation=self.activation)
+        self.simple2 = SimpleBlock(48, 16, 32, activation=self.activation)
+        self.conv2 = ConvBlock(80, 16, ksize=14, activation=self.activation)
+        self.simple3 = SimpleBlock(16, 112, 48, activation=self.activation)
+        self.simple4 = SimpleBlock(208, 64, 32, activation=self.activation)
+        self.simple5 = SimpleBlock(128, 40, 40, activation=self.activation)
+        self.simple6 = SimpleBlock(120, 32, 96, activation=self.activation)
+        self.conv3 = ConvBlock(224, 32, ksize=20, activation=self.activation)
+        self.conv4 = ConvBlock(32, 64, ksize=10, activation=self.activation)
+        self.conv5 = ConvBlock(64, 32, ksize=9, activation=self.activation)
+
+        if use_logits:
+            self.conv6 = nn.ModuleList([ConvBlock(
+                64, logits_per_output, ksize=1, activation=self.final_activation) for _ in range(out_channel)])
+        else:
+            self.conv6 = ConvBlock(32, self.out_channel, ksize=20, pad=1, activation=self.final_activation)
+
+        # Weight initialization
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+                init.xavier_uniform_(m.weight, gain=init.calculate_gain('leaky_relu', param=0.01))
+            elif isinstance(m, nn.BatchNorm2d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+
+    def forward(self, x):
+        net = self.conv1(x)  # 32
+        net = self.simple1(net)
+        net = self.simple2(net)
+        net = self.conv2(net)
+        net = self.simple3(net)
+        net = self.simple4(net)
+        net = self.simple5(net)
+        net = self.simple6(net)
+        net = self.conv3(net)
+        net = self.conv4(net)
+        net = self.conv5(net)
+
+        if self.use_logits:
+            net = [c(net) for c in self.conv6]
+            [self._print(n) for n in net]
+        else:
+            net = self.conv6(net)
+
+        return net
 
 
 def set_model_for_retrain(model_path, retrain_fraction, map_location):

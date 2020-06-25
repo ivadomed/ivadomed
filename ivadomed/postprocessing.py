@@ -5,6 +5,7 @@ import numpy as np
 import nibabel as nib
 from scipy.ndimage.measurements import label
 from scipy.ndimage.morphology import binary_fill_holes
+from skimage.feature import peak_local_max
 
 
 def nifti_capable(wrapped):
@@ -161,3 +162,48 @@ def mask_predictions(predictions, mask_binary):
     assert predictions.shape == mask_binary.shape
     assert np.array_equal(mask_binary, mask_binary.astype(bool))
     return predictions * mask_binary
+
+
+def coordinate_from_heatmap(nifti_image, thresh=0.3):
+    """
+    Retrieve coordinates of local maxima in a soft segmentation.
+    Args:
+        nifti_image (nibabel object): nifti image of the soft segmentation.
+        thresh (float): Relative threshold for local maxima, i.e., after normalizing
+        the min and max between 0 and 1, respectively.
+
+    Returns:
+        list: A list of computed coordinates found by local maximum. each element will be a list composed of
+        [x, y, z]
+    """
+
+    image = np.array(nifti_image.dataobj)
+    coordinates_tmp = peak_local_max(image, min_distance=5, threshold_rel=thresh)
+    return coordinates_tmp
+
+
+def label_file_from_coordinates(nifti_image, coord_list):
+    """
+    Creates a nifti object with single-voxel labels. Each label has a value of 1. The nifti object as the same
+    orientation as the input.
+    Args:
+        nifti_image (nibabel object): Path to the image which affine matrix will be used to generate a new image with
+        labels.
+        coord_list (list): list of coordinates. Each element is [x, y, z]. Orientation should be the same as the image
+
+    Returns:
+        nib_pred: A nifti object containing the singe-voxel label of value 1. The matrix will be the same size as
+        `nifti_image`.
+
+    """
+
+    imsh = list(np.array(nifti_image.dataobj).shape)
+    # create an empty 3d object.
+    label_array = np.zeros(tuple(imsh))
+
+    for j in range(len(coord_list)):
+        label_array[coord_list[j][0], coord_list[j][1], coord_list[j][2]] = 1
+
+    nib_pred = nib.Nifti1Image(label_array, nifti_image.affine)
+
+    return nib_pred

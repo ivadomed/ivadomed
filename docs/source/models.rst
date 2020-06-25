@@ -23,3 +23,10 @@ Models
 ---------------------------
 
 .. autoclass:: ivadomed.models.UNet3D
+
+
+:mod:`Countception`
+---------------------------
+
+.. autoclass:: ivadomed.models.Countception
+

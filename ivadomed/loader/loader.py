@@ -20,7 +20,7 @@ CLASSIFIER_LIST = ['NAME_CLASSIFIER_1']
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
                  dataset_type="training", requires_undo=False, metadata_type=None,
-                 object_detection_params=None, **kwargs):
+                 object_detection_params=None, soft_gt=False, **kwargs):
     """Get loader appropriate loader according to model type. Available loaders are Bids3DDataset for 3D data,
     BidsDataset for 2D data and HDF5Dataset for HeMIS.
 
@@ -42,7 +42,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         dataset_type (str): Choice between "training", "validation" or "testing".
         requires_undo (bool): If True, the transformations without undo_transform will be discarded.
         object_detection_params (dict): Object dection parameters.
-
+        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
+            (to save memory).
     Returns:
         BidsDataset
 
@@ -91,6 +92,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               transform=tranform_lst,
                               multichannel=multichannel,
                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
+                              soft_gt=soft_gt,
                               object_detection_params=object_detection_params,
                               task=task)
         dataset.load_filenames()
@@ -120,6 +122,8 @@ class SegmentationPair(object):
         cache (bool): If the data should be cached in memory or not.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
         prepro_transforms (dict): Output of get_preprocessing_transforms.
+        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
+             (to save memory).
 
     Attributes:
         input_filenames (list): List of input filenames.
@@ -132,12 +136,15 @@ class SegmentationPair(object):
         gt_handle (list): List of gt nifty data.
     """
 
-    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None):
+    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None,
+                 soft_gt=False):
+
         self.input_filenames = input_filenames
         self.gt_filenames = gt_filenames
         self.metadata = metadata
         self.cache = cache
         self.slice_axis = slice_axis
+        self.soft_gt = soft_gt
         self.prepro_transforms = prepro_transforms
 
         # list of the images
@@ -228,7 +235,8 @@ class SegmentationPair(object):
             if gt is not None:
                 hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
                                                                 self.slice_axis)
-                gt_data.append(hwd_oriented.astype(np.uint8))
+                data_type = np.float32 if self.soft_gt else np.uint8
+                gt_data.append(hwd_oriented.astype(data_type))
             else:
                 gt_data.append(
                     np.zeros(imed_loader_utils.orient_shapes_hwd(self.input_handle[0].shape, self.slice_axis),
@@ -358,11 +366,14 @@ class MRI2DSegmentationDataset(Dataset):
         has_bounding_box (bool): True if bounding box in all metadata, else False.
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
+        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
+            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
+            space.
 
     """
 
     def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None,
-                 task="segmentation"):
+                 task="segmentation", soft_gt=False):
         self.indexes = []
         self.filename_pairs = filename_pairs
         self.prepro_transforms, self.transform = transform
@@ -370,6 +381,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
+        self.soft_gt = soft_gt
         self.has_bounding_box = True
         self.task = task
 
@@ -380,7 +392,8 @@ class MRI2DSegmentationDataset(Dataset):
                                         cache=self.cache, prepro_transforms=self.prepro_transforms)
 
             seg_pair = SegmentationPair(input_filenames, gt_filenames, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache, prepro_transforms=self.prepro_transforms)
+                                        cache=self.cache, prepro_transforms=self.prepro_transforms,
+                                        soft_gt=self.soft_gt)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
@@ -445,7 +458,7 @@ class MRI2DSegmentationDataset(Dataset):
                                                    metadata=metadata_gt,
                                                    data_type="gt")
             # Make sure stack_gt is binarized
-            if stack_gt is not None:
+            if stack_gt is not None and not self.soft_gt:
                 stack_gt = torch.as_tensor(
                     [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in
                      range(len(stack_gt))])
@@ -674,6 +687,8 @@ class BidsDataset(MRI2DSegmentationDataset):
         object_detection_params (dict): Object dection parameters.
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
+        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
+            (to save memory).
 
     Attributes:
         bids_ds (BIDS): BIDS dataset.
@@ -684,10 +699,10 @@ class BidsDataset(MRI2DSegmentationDataset):
     """
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
-                 multichannel=False, object_detection_params=None, task="segmentation"):
+                 multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 
         self.bids_ds = bids.BIDS(root_dir)
-
+        self.soft_gt = soft_gt
         self.filename_pairs = []
         if metadata_choice == 'mri_params':
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
@@ -787,4 +802,4 @@ class BidsDataset(MRI2DSegmentationDataset):
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
 
-        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task)
+        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task, self.soft_gt)

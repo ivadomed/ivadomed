@@ -95,6 +95,12 @@ noisy labels, e.g., if a slice contains only 2-3 labeled voxels, we do
 not want to use these labels to crop the image. This parameter is only
 considered when using ``"ROICrop"``.
 
+soft_gt
+^^^^^^^^^^
+
+Bool. Indicated if usage of soft mask. Ground truth will be non-binarized 
+images with float32 encoding.  
+
 Split dataset
 -------------
 

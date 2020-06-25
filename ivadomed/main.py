@@ -16,7 +16,9 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 cudnn.benchmark = True
 
 # List of not-default available models i.e. different from Unet
-MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'NAME_CLASSIFIER_1']
+
+MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'NAME_CLASSIFIER_1', 'Countception']
+
 
 
 def run_main(config=None):
