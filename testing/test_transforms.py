@@ -96,7 +96,7 @@ def test_HistogramClipping(im_seg):
     # Transform
     transform = HistogramClipping()
     # Apply Transform
-    metadata = [SampleMetadata({}) for _ in im] if isinstance(im, list) else {}
+    metadata = [SampleMetadata({}) for _ in im] if isinstance(im, list) else SampleMetadata({})
     do_im, _ = transform(sample=im, metadata=metadata)
     # Check result has the same number of contrasts
     assert len(do_im) == len(im)
@@ -116,7 +116,7 @@ def test_RandomShiftIntensity(im_seg):
     transform = RandomShiftIntensity(shift_range=[0., 10.], prob=0.9)
 
     # Apply Do Transform
-    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else {}
+    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else SampleMetadata({})
     do_im, do_metadata = transform(sample=im, metadata=metadata_in)
     # Check result has the same number of contrasts
     assert len(do_im) == len(im)
@@ -139,7 +139,7 @@ def test_RandomShiftIntensity(im_seg):
                                     create_test_image(100, 100, 0, 2)])
 def test_NumpyToTensor(im_seg):
     im, seg = im_seg
-    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else {}
+    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else SampleMetadata({})
 
     # Transform
     transform = NumpyToTensor()
@@ -164,7 +164,7 @@ def _test_Resample(im_seg, resample_transform, native_resolution, is_2D=False):
                                 'data_shape': im[0].shape if len(im[0].shape) == 3 else list(im[0].shape) + [1],
                                 'data_type': 'im'
                                 })
-    metadata_in = [metadata_ for _ in im] if isinstance(im, list) else {}
+    metadata_in = [metadata_ for _ in im] if isinstance(im, list) else SampleMetadata({})
 
     # Resample input data
     do_im, do_metadata = resample_transform(sample=im, metadata=metadata_in)
@@ -177,7 +177,7 @@ def _test_Resample(im_seg, resample_transform, native_resolution, is_2D=False):
                                 'data_shape': seg[0].shape if len(seg[0].shape) == 3 else list(seg[0].shape) + [1],
                                 'data_type': 'gt'
                                 })
-    metadata_in = [metadata_ for _ in seg] if isinstance(seg, list) else {}
+    metadata_in = [metadata_ for _ in seg] if isinstance(seg, list) else SampleMetadata({})
     # Resample label data
     do_seg, do_metadata = resample_transform(sample=seg, metadata=metadata_in)
     # Undo Resample on label data
@@ -221,7 +221,7 @@ def test_Resample_3D(im_seg, resample_transform, native_resolution):
                                     create_test_image(100, 100, 0, 2)])
 def test_NormalizeInstance(im_seg):
     im, seg = im_seg
-    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else {}
+    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else SampleMetadata({})
 
     # Transform on Numpy
     transform = NormalizeInstance()
@@ -320,7 +320,7 @@ def test_Crop_3D(im_seg, crop_transform):
                                                     degrees=5)])
 def test_RandomAffine(im_seg, transform):
     im, seg = im_seg
-    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else {}
+    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else SampleMetadata({})
 
     # Transform on Numpy
     do_im, metadata_do = transform(im.copy(), metadata_in)
@@ -357,7 +357,7 @@ def test_RandomAffine(im_seg, transform):
                                                                 sigma_range=[100 * 0.06, 100 * 0.09])])
 def test_ElasticTransform(im_seg, elastic_transform):
     im, seg = im_seg
-    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else {}
+    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else SampleMetadata({})
 
     # Transform on Numpy
     do_im, metadata_do = elastic_transform(im.copy(), metadata_in)
@@ -378,7 +378,7 @@ def test_ElasticTransform(im_seg, elastic_transform):
 @pytest.mark.parametrize('dilate_transform', [DilateGT(dilation_factor=0.3)])
 def test_DilateGT(im_seg, dilate_transform):
     im, seg = im_seg
-    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else {}
+    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else SampleMetadata({})
 
     # Transform on Numpy
     do_seg, metadata_do = dilate_transform(seg.copy(), metadata_in)
@@ -402,7 +402,7 @@ def test_DilateGT(im_seg, dilate_transform):
 @pytest.mark.parametrize('reverse_transform', [RandomReverse()])
 def test_RandomReverse(im_seg, reverse_transform):
     im, seg = im_seg
-    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else {}
+    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else SampleMetadata({})
 
     # Transform on Numpy
     do_im, metadata_do = reverse_transform(im.copy(), metadata_in)
@@ -427,7 +427,7 @@ def test_RandomReverse(im_seg, reverse_transform):
 @pytest.mark.parametrize('noise_transform', [AdditiveGaussianNoise(mean=1., std=0.01)])
 def test_AdditiveGaussianNoise(im_seg, noise_transform):
     im, seg = im_seg
-    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else {}
+    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else SampleMetadata({})
 
     # Transform on Numpy
     do_im, metadata_do = noise_transform(im.copy(), metadata_in)
@@ -443,7 +443,7 @@ def test_AdditiveGaussianNoise(im_seg, noise_transform):
 @pytest.mark.parametrize('clahe', [Clahe(kernel_size=(8, 8))])
 def test_Clahe(im_seg, clahe):
     im, seg = im_seg
-    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else {}
+    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else SampleMetadata({})
 
     # Transform on Numpy
     do_im, metadata_do = clahe(im.copy(), metadata_in)
