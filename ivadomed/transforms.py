@@ -31,7 +31,7 @@ def multichannel_capable(wrapped):
         if isinstance(sample, list):
             list_data, list_metadata = [], []
             for s_cur, m_cur in zip(sample, metadata):
-                if len(list_metadata):
+                if len(list_metadata) > 0:
                     imed_loader_utils.update_metadata([list_metadata[-1]], [m_cur])
                 # Run function for each sample of the list
                 data_cur, metadata_cur = wrapped(self, s_cur, m_cur)
