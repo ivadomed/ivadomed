@@ -387,5 +387,6 @@ def update_metadata(metadata_src_lst, metadata_dest_lst):
             metadata_dest_lst = metadata_dest_lst + [SampleMetadata({})] * \
                                 (len(metadata_src_lst) - len(metadata_dest_lst))
         for idx in range(len(metadata_src_lst)):
-            metadata_dest_lst[idx]._update(metadata_src_lst[idx], TRANSFORM_PARAMS)
+            for i_dest in range(len(metadata_dest_lst)):
+                metadata_dest_lst[i_dest]._update(metadata_src_lst[idx], TRANSFORM_PARAMS)
     return metadata_dest_lst
