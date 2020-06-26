@@ -4,41 +4,7 @@ import ivadomed.preprocessing as imed_preprocessing
 import nibabel as nib
 import numpy as np
 import os
-import scipy
-
-
-def gaussian_kernel(kernlen=10):
-    """
-    Create a 2D gaussian kernel with user-defined size.
-
-    Args:
-        kernlen (int): size of kernel
-
-    Returns:
-        ndarray: a 2D array of size (kernlen,kernlen)
-    """
-
-    x = np.linspace(-1, 1, kernlen + 1)
-    kern1d = np.diff(scipy.stats.norm.cdf(x))
-    kern2d = np.outer(kern1d, kern1d)
-    return kern2d / kern2d.sum()
-
-
-def heatmap_generation(image, kernel_size):
-    """
-    Generate heatmap from image containing sing voxel label using
-    convolution with gaussian kernel
-    Args:
-        image (ndarray): 2D array containing single voxel label
-        kernel_size (int): size of gaussian kernel
-
-    Returns:
-        ndarray: 2D array heatmap matching the label.
-
-    """
-    kernel = gaussian_kernel(kernel_size)
-    map = scipy.signal.convolve(image, kernel, mode='same')
-    return map
+import ivadomed.maths as imed_maths
 
 
 def mask2label(path_label, aim=0):
@@ -114,7 +80,7 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
             for j in range (len(list_points)):
                 label_array[list_points[j][1], list_points[j][2]] = 1
 
-            heatmap = heatmap_generation(label_array[:, :], 10)
+            heatmap = imed_maths.heatmap_generation(label_array[:, :], 10)
             arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(heatmap[:, :], axis=0), 2, lab, nib_ref_can)
             nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
             nib.save(nib_pred, os.path.join(bids_path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
