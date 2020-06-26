@@ -61,7 +61,7 @@ def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_
 
     For example::
 
-        python visualize_transforms.py -i t2s.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
+        visualize_transforms -i t2s.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
 
     Provides a visualization of a series of three transformation on a randomly selected slice:
 
@@ -71,7 +71,7 @@ def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_
 
     And on a binary mask::
 
-        python visualize_transforms.py -i t2s_gmseg.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
+        visualize_transforms -i t2s_gmseg.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
 
     Gives:
 
@@ -169,7 +169,7 @@ def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_
                                                cmap="jet" if is_mask else "gray")
 
 
-if __name__ == '__main__':
+def main():
     parser = get_parser()
     args = parser.parse_args()
     fname_input = args.input
@@ -179,3 +179,7 @@ if __name__ == '__main__':
     fname_roi = args.roi
     # Run script
     run_visualization(fname_input, fname_config, n_slices, folder_output, fname_roi)
+
+
+if __name__ == '__main__':
+    main()

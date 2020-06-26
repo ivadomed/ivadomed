@@ -270,9 +270,13 @@ def automate_training(fname_config, fname_param, fixed_split, all_combinations, 
         compute_statistics(results_df, n_iterations, run_test)
 
 
-if __name__ == '__main__':
+def main():
     parser = get_parser()
     args = parser.parse_args()
     # Run automate training
     automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin), int(args.n_iterations),
                       bool(args.run_test))
+
+
+if __name__ == '__main__':
+    main()

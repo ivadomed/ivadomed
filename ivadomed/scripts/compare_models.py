@@ -70,9 +70,13 @@ def compute_statistics(dataframe, n_iterations, run_test=True):
     print(p_df)
 
 
-if __name__ == '__main__':
+def main():
     parser = get_parser()
     args = parser.parse_args()
     df = pd.read_csv(args.dataframe)
     # Compute statistics
     compute_statistics(df, int(args.n_iterations), bool(args.run_test))
+
+
+if __name__ == '__main__':
+    main()

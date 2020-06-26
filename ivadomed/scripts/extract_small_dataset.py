@@ -46,7 +46,7 @@ def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_de
 
     Example::
 
-        python extract_small_dataset.py -i path/to/BIDS/dataset -o path/of/small/BIDS/dataset -n 10 -c T1w,T2w -d 0 -s 1234
+         extract_small_dataset -i path/to/BIDS/dataset -o path/of/small/BIDS/dataset -n 10 -c T1w,T2w -d 0 -s 1234
 
     Args:
         ifolder (str): Input BIDS folder.
@@ -126,9 +126,13 @@ def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_de
     df.to_csv(oparticipantstsv, sep='\t', index=False)
 
 
-if __name__ == '__main__':
+def main():
     parser = get_parser()
     args = parser.parse_args()
     # Run script
     extract_small_dataset(args.input, args.output, int(args.number), args.contrasts.split(","),
                           bool(int(args.derivatives)), int(args.seed))
+
+
+if __name__ == '__main__':
+    main()

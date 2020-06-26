@@ -5,6 +5,7 @@ import nibabel as nib
 import numpy as np
 import os
 import scipy
+from ivadomed.transforms import rescale_values_array
 
 
 def gaussian_kernel(kernlen=10):
@@ -38,7 +39,7 @@ def heatmap_generation(image, kernel_size):
     """
     kernel = gaussian_kernel(kernel_size)
     map = scipy.signal.convolve(image, kernel, mode='same')
-    return map
+    return rescale_values_array(map)
 
 
 def mask2label(path_label, aim=0):
@@ -100,7 +101,7 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
         path_image = os.path.join(bids_path, t[i], 'anat', t[i] + suffix + '.nii.gz')
         if os.path.isfile(path_image):
             path_label = os.path.join(bids_path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
-                                      '_label-disc-manual.nii.gz')
+                    '_label-disc-manual.nii.gz')
             list_points = mask2label(path_label, aim=aim)
             image_ref = nib.load(path_image)
             nib_ref_can = nib.as_closest_canonical(image_ref)
@@ -135,7 +136,7 @@ def get_parser():
     return parser
 
 
-if __name__ == '__main__':
+def main():
     parser = get_parser()
     args = parser.parse_args()
     bids_path = args.path
@@ -143,3 +144,6 @@ if __name__ == '__main__':
     aim = args.aim
     # Run Script
     extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim)
+
+if __name__=='__main__':
+    main()

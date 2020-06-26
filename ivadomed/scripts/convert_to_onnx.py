@@ -39,7 +39,7 @@ def convert_pytorch_to_onnx(fname_model, dimension, gpu=0):
     imed_utils.save_onnx_model(model, dummy_input, fname_model.replace("pt", "onnx"))
 
 
-if __name__ == '__main__':
+def main():
     parser = get_parser()
     args = parser.parse_args()
     fname_model = args.model
@@ -47,3 +47,7 @@ if __name__ == '__main__':
     gpu = str(args.gpu)
     # Run Script
     convert_pytorch_to_onnx(fname_model, dimension, gpu)
+
+
+if __name__ == '__main__':
+    main()
