@@ -1,4 +1,5 @@
 ![ivadomed Logo](https://github.com/ivadomed/ivadomed/raw/master/images/ivadomed_logo.png)
+
 Integrated framework for medical image analysis with deep learning.
 
 [![Coverage Status](https://coveralls.io/repos/github/neuropoly/ivadomed/badge.svg?branch=master)](https://coveralls.io/github/neuropoly/ivadomed?branch=master)
