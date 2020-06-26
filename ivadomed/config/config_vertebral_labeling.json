@@ -34,7 +34,7 @@
     "training_parameters": {
         "batch_size": 2,
         "loss": {
-            "name": "Loss_Combination",
+            "name": "LossCombination",
 	    "losses_list":["AdapWingLoss","L2loss","DiceLoss"],
 	    "params_list":[null,null,null]
         },
