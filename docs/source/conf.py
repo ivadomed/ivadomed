@@ -168,6 +168,7 @@ pygments_style = 'sphinx'
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
 
+# If false. removes the module names for functions (e.g., ivadomed.module.function becomes function)
 add_module_names = False
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
