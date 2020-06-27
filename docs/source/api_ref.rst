@@ -89,3 +89,9 @@ Utils API
 
 .. automodule:: ivadomed.utils
 
+
+Maths API
+++++++++++++++++++++
+
+.. automodule:: ivadomed.maths
+
