@@ -35,11 +35,11 @@ setup(
     entry_points={
         'console_scripts': [
             'ivadomed=ivadomed.main:run_main',
-            'imed_prepare_dataset_vertebral_labeling=ivadomed.scripts.prepare_dataset_vertebral_labeling:main',
-            'imed_automate_training=ivadomed.scripts.automate_training:main',
-            'imed_compare_models=ivadomed.scripts.compare_models:main',
-            'imed_visualize_transforms=ivadomed.scripts.visualize_transforms:main',
-            'imed_convert_to_onnx=ivadomed.scripts.convert_to_onnx:main',
+            'ivadomed_prepare_dataset_vertebral_labeling=ivadomed.scripts.prepare_dataset_vertebral_labeling:main',
+            'ivadomed_automate_training=ivadomed.scripts.automate_training:main',
+            'ivadomed_compare_models=ivadomed.scripts.compare_models:main',
+            'ivadomed_visualize_transforms=ivadomed.scripts.visualize_transforms:main',
+            'ivadomed_convert_to_onnx=ivadomed.scripts.convert_to_onnx:main',
         ],
     },
 )
