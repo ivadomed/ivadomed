@@ -46,7 +46,7 @@ def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_de
 
     Example::
 
-         extract_small_dataset -i path/to/BIDS/dataset -o path/of/small/BIDS/dataset -n 10 -c T1w,T2w -d 0 -s 1234
+         ivadomed_extract_small_dataset -i path/to/BIDS/dataset -o path/of/small/BIDS/dataset -n 10 -c T1w,T2w -d 0 -s 1234
 
     Args:
         ifolder (str): Input BIDS folder.

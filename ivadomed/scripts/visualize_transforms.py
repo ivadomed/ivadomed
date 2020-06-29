@@ -61,7 +61,7 @@ def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_
 
     For example::
 
-        visualize_transforms -i t2s.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
+        ivadomed_visualize_transforms -i t2s.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
 
     Provides a visualization of a series of three transformation on a randomly selected slice:
 
@@ -71,7 +71,7 @@ def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_
 
     And on a binary mask::
 
-        visualize_transforms -i t2s_gmseg.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
+        ivadomed_visualize_transforms -i t2s_gmseg.nii.gz -n 1 -c config.json -r t2s_seg.nii.gz
 
     Gives:
 
