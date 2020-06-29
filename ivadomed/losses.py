@@ -401,7 +401,7 @@ class AdapWingLoss(nn.Module):
         return mean_loss
 
 
-class Loss_Combination(nn.Module):
+class LossCombination(nn.Module):
     """
     Loss that sums other implemented losses.
 
@@ -419,7 +419,7 @@ class Loss_Combination(nn.Module):
     def __init__(self, losses_list, params_list=None):
         self.losses_list = losses_list
         self.params_list = params_list
-        super(Loss_Combination, self).__init__()
+        super(LossCombination, self).__init__()
 
     def forward(self, input, target):
         output = []
