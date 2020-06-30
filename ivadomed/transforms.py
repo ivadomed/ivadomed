@@ -974,28 +974,6 @@ class HistogramClipping(ImedTransform):
         return data, metadata
 
 
-def rescale_values_array(arr, minv=0.0, maxv=1.0, dtype=np.float32):
-    """Rescale the values of numpy array `arr` to be from `minv` to `maxv`.
-
-    Args:
-        arr (ndarry): Array whose values will be rescaled.
-        minv (float): Minimum value of the output array.
-        maxv (float): Maximum value of the output array.
-        dtype (type): Cast array to this type before performing the rescaling.
-    """
-    if dtype is not None:
-        arr = arr.astype(dtype)
-
-    mina = np.min(arr)
-    maxa = np.max(arr)
-
-    if mina == maxa:
-        return arr * minv
-
-    norm = (arr - mina) / (maxa - mina)  # normalize the array first
-    return (norm * (maxv - minv)) + minv  # rescale by minv and maxv, which is the normalized array by default
-
-
 def get_subdatasets_transforms(transform_params):
     """Get transformation parameters for each subdataset: training, validation and testing.
 
