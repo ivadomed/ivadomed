@@ -13,7 +13,7 @@ def get_parser():
     return parser
 
 
-def convert_pytorch_to_onnx(fname_model, dimension, gpu=0):
+def convert_pytorch_to_onnx(model, dimension, gpu=0):
     """Convert PyTorch model to ONNX.
 
     The integration of Deep Learning models into the clinical routine requires cpu optimized models. To export the
@@ -24,7 +24,7 @@ def convert_pytorch_to_onnx(fname_model, dimension, gpu=0):
     (``-d``).
 
     Args:
-        fname_model (string): Model filename.
+        model (string): Model filename.
         dimension (int): Indicates whether the model is 2D or 3D. Choice between 2 or 3.
         gpu (string): GPU ID, if available
     """
@@ -33,10 +33,10 @@ def convert_pytorch_to_onnx(fname_model, dimension, gpu=0):
     else:
         device = "cpu"
 
-    model = torch.load(fname_model, map_location=device)
+    model_net = torch.load(model, map_location=device)
     dummy_input = torch.randn(1, 1, 96, 96, device=device) if dimension == 2 \
                   else torch.randn(1, 1, 96, 96, 96, device=device)
-    imed_utils.save_onnx_model(model, dummy_input, fname_model.replace("pt", "onnx"))
+    imed_utils.save_onnx_model(model_net, dummy_input, model.replace("pt", "onnx"))
 
 
 def main():

@@ -48,7 +48,7 @@ def get_data(fname_in, axis):
     return input_img, input_data
 
 
-def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_roi):
+def run_visualization(input, config, number, ofolder, roi):
     """Utility function to visualize Data Augmentation transformations.
 
     Data augmentation is a key part of the Deep Learning training scheme. This script aims at facilitating the
@@ -80,36 +80,36 @@ def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_
         :align: center
 
     Args:
-         fname_input (string): Image filename.
-         fname_config (string): Configuration file filename.
-         n_slices (int): Number of slices randomly extracted.
-         folder_output (string): Folder path where the results are saved.
-         fname_roi (string): Filename of the region of interest. Only needed if ROICrop is part of the transformations.
+         input (string): Image filename.
+         config (string): Configuration file filename.
+         number (int): Number of slices randomly extracted.
+         ofolder (string): Folder path where the results are saved.
+         roi (string): Filename of the region of interest. Only needed if ROICrop is part of the transformations.
     """
     # Load context
-    with open(fname_config, "r") as fhandle:
+    with open(config, "r") as fhandle:
         context = json.load(fhandle)
     # Create output folder
-    if not os.path.isdir(folder_output):
-        os.makedirs(folder_output)
+    if not os.path.isdir(ofolder):
+        os.makedirs(ofolder)
 
     # Slice extracted according to below axis
     axis = imed_utils.AXIS_DCT[context["loader_parameters"]["slice_axis"]]
     # Get data
-    input_img, input_data = get_data(fname_input, axis)
+    input_img, input_data = get_data(input, axis)
     # Image or Mask
     is_mask = np.array_equal(input_data, input_data.astype(bool))
     # Get zooms
     zooms = imed_loader_utils.orient_shapes_hwd(input_img.header.get_zooms(), slice_axis=axis)
     # Get indexes
-    indexes = random.sample(range(0, input_data.shape[2]), n_slices)
+    indexes = random.sample(range(0, input_data.shape[2]), number)
 
     # Get training transforms
     training_transforms, _, _ = imed_transforms.get_subdatasets_transforms(context["transformation"])
 
     if "ROICrop" in training_transforms:
-        if fname_roi and os.path.isfile(fname_roi):
-            roi_img, roi_data = get_data(fname_roi, axis)
+        if roi and os.path.isfile(roi):
+            roi_img, roi_data = get_data(roi, axis)
         else:
             print("\nPlease provide ROI image (-r) in order to apply ROICrop transformation.")
             exit()
@@ -136,22 +136,22 @@ def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_
             metadata = imed_loader_utils.SampleMetadata({"zooms": zooms, "data_type": "gt" if is_mask else "im"})
 
             # Apply transformations to ROI
-            if "ROICrop" in training_transforms and os.path.isfile(fname_roi):
+            if "ROICrop" in training_transforms and os.path.isfile(roi):
                 roi = [roi_data[:, :, i]]
                 metadata.__setitem__('data_type', 'roi')
                 _, metadata = composed_transforms(sample=roi,
-                                                  metadata=[metadata for _ in range(n_slices)],
+                                                  metadata=[metadata for _ in range(number)],
                                                   data_type="roi")
                 metadata = metadata[0]
                 metadata.__setitem__('data_type', 'im')
 
             # Apply transformations to image
             stack_im, _ = composed_transforms(sample=data,
-                                              metadata=[metadata for _ in range(n_slices)],
+                                              metadata=[metadata for _ in range(number)],
                                               data_type="im")
 
             # Plot before / after transformation
-            fname_out = os.path.join(folder_output, stg_transforms+"slice"+str(i)+".png")
+            fname_out = os.path.join(ofolder, stg_transforms+"slice"+str(i)+".png")
             print("Fname out: {}.".format(fname_out))
             print("\t{}".format(dict(metadata)))
             # rescale intensities
@@ -172,13 +172,13 @@ def run_visualization(fname_input, fname_config, n_slices, folder_output, fname_
 def main():
     parser = get_parser()
     args = parser.parse_args()
-    fname_input = args.input
-    fname_config = args.config
-    n_slices = int(args.number)
-    folder_output = args.ofolder
-    fname_roi = args.roi
+    input = args.input
+    config = args.config
+    number = int(args.number)
+    ofolder = args.ofolder
+    roi = args.roi
     # Run script
-    run_visualization(fname_input, fname_config, n_slices, folder_output, fname_roi)
+    run_visualization(input, config, number, ofolder, roi)
 
 
 if __name__ == '__main__':

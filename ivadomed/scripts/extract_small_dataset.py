@@ -41,7 +41,7 @@ def remove_some_contrasts(folder, subject_list, good_contrast_list):
         os.remove(ff)
 
 
-def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_derivatives=True, seed=-1):
+def extract_small_dataset(input, output, n=10, contrast_list=None, include_derivatives=True, seed=-1):
     """Extract small BIDS dataset from a larger BIDS dataset.
 
     Example::
@@ -49,8 +49,8 @@ def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_de
          ivadomed_extract_small_dataset -i path/to/BIDS/dataset -o path/of/small/BIDS/dataset -n 10 -c T1w,T2w -d 0 -s 1234
 
     Args:
-        ifolder (str): Input BIDS folder.
-        ofolder (str): Output folder.
+        input (str): Input BIDS folder.
+        output (str): Output folder.
         n (int): Number of subjects in the output folder.
         contrast_list (list): List of image contrasts to include. If set to None, then all available contrasts are
             included.
@@ -59,20 +59,20 @@ def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_de
             function is run several times on the same dataset. If set to -1, each function run is independent.
     """
     # Create o folders
-    if not os.path.isdir(ofolder):
-        os.makedirs(ofolder)
+    if not os.path.isdir(output):
+        os.makedirs(output)
     if include_derivatives:
-        oderivatives = os.path.join(ofolder, "derivatives")
+        oderivatives = os.path.join(output, "derivatives")
         if not os.path.isdir(oderivatives):
             os.makedirs(oderivatives)
         oderivatives = os.path.join(oderivatives, "labels")
         if not os.path.isdir(oderivatives):
             os.makedirs(oderivatives)
-        iderivatives = os.path.join(ifolder, "derivatives", "labels")
+        iderivatives = os.path.join(input, "derivatives", "labels")
 
     # Get subject list
-    subject_list = [s for s in os.listdir(ifolder)
-                    if s.startswith("sub-") and os.path.isdir(os.path.join(ifolder, s)) and not s in EXCLUDED_SUBJECT]
+    subject_list = [s for s in os.listdir(input)
+                    if s.startswith("sub-") and os.path.isdir(os.path.join(input, s)) and not s in EXCLUDED_SUBJECT]
     # Randomly select subjects
     if seed != -1:
         # Reproducibility
@@ -85,14 +85,14 @@ def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_de
     for subject in subject_random_list:
         print("\nSubject: {}".format(subject))
         # Copy images
-        isubjfolder = os.path.join(ifolder, subject)
-        osubjfolder = os.path.join(ofolder, subject)
+        isubjfolder = os.path.join(input, subject)
+        osubjfolder = os.path.join(output, subject)
         assert os.path.isdir(isubjfolder)
         print("\tCopying {} to {}.".format(isubjfolder, osubjfolder))
         shutil.copytree(isubjfolder, osubjfolder)
         # Remove dwi data
-        if os.path.isdir(os.path.join(ofolder, subject, "dwi")):
-            shutil.rmtree(os.path.join(ofolder, subject, "dwi"))
+        if os.path.isdir(os.path.join(output, subject, "dwi")):
+            shutil.rmtree(os.path.join(output, subject, "dwi"))
         # Copy labels
         if include_derivatives:
             isubjderivatives = os.path.join(iderivatives, subject)
@@ -105,21 +105,21 @@ def extract_small_dataset(ifolder, ofolder, n=10, contrast_list=None, include_de
                 shutil.rmtree(os.path.join(osubjderivatives, subject, "dwi"))
 
     if contrast_list:
-        remove_some_contrasts(ofolder, subject_random_list, contrast_list)
+        remove_some_contrasts(output, subject_random_list, contrast_list)
         if include_derivatives:
-            remove_some_contrasts(os.path.join(ofolder, "derivatives", "labels"), subject_random_list, contrast_list)
+            remove_some_contrasts(os.path.join(output, "derivatives", "labels"), subject_random_list, contrast_list)
 
     # Copy dataset_description.json
-    idatasetjson = os.path.join(ifolder, "dataset_description.json")
-    odatasetjson = os.path.join(ofolder, "dataset_description.json")
+    idatasetjson = os.path.join(input, "dataset_description.json")
+    odatasetjson = os.path.join(output, "dataset_description.json")
     shutil.copyfile(idatasetjson, odatasetjson)
     # Copy participants.json
-    iparticipantsjson = os.path.join(ifolder, "participants.json")
-    oparticipantsjson = os.path.join(ofolder, "participants.json")
+    iparticipantsjson = os.path.join(input, "participants.json")
+    oparticipantsjson = os.path.join(output, "participants.json")
     shutil.copyfile(iparticipantsjson, oparticipantsjson)
     # Copy participants.tsv
-    iparticipantstsv = os.path.join(ifolder, "participants.tsv")
-    oparticipantstsv = os.path.join(ofolder, "participants.tsv")
+    iparticipantstsv = os.path.join(input, "participants.tsv")
+    oparticipantstsv = os.path.join(output, "participants.tsv")
     df = pd.read_csv(iparticipantstsv, sep='\t')
     # Drop subjects
     df = df[df.participant_id.isin(subject_random_list)]
