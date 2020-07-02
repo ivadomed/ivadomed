@@ -81,11 +81,12 @@ def run_visualization(input, config, number, ofolder, roi):
         :align: center
 
     Args:
-         input (string): Image filename.
-         config (string): Configuration file filename.
-         number (int): Number of slices randomly extracted.
-         ofolder (string): Folder path where the results are saved.
+         input (string): Image filename. Flag: --input, -i
+         config (string): Configuration file filename. Flag: --config, -c
+         number (int): Number of slices randomly extracted. Flag: --number, -n
+         ofolder (string): Folder path where the results are saved. Flag: --ofolder, -o
          roi (string): Filename of the region of interest. Only needed if ROICrop is part of the transformations.
+                       Flag: -roi, -r
     """
     # Load context
     with open(config, "r") as fhandle:
