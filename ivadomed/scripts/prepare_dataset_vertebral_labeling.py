@@ -86,7 +86,7 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
         ivadomed_prepare_dataset_vertebral_labeling -p path/to/bids -s _T2w -a 0
     
     Args:
-        bids_path (string): path to BIDS dataset form which images will be generated
+        path (string): path to BIDS dataset form which images will be generated
         suffix (string): suffix of image that will be processed (e.g., T2w)
         aim (int): If aim is not 0, retrieves only labels with value = aim, else create heatmap with all labels.
 
