@@ -10,6 +10,7 @@ import json
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
+from ivadomed import maths as imed_maths
 
 
 def get_parser():
@@ -156,10 +157,10 @@ def run_visualization(input, config, number, ofolder, roi):
             print("\t{}".format(dict(metadata)))
             # rescale intensities
             if len(stg_transforms[:-1].split("_")) == 1:
-                before = np.rot90(imed_transforms.rescale_values_array(data[0], 0.0, 1.0))
+                before = np.rot90(imed_maths.rescale_values_array(data[0], 0.0, 1.0))
             else:
                 before = after
-            after = np.rot90(imed_transforms.rescale_values_array(stack_im[0], 0.0, 1.0))
+            after = np.rot90(imed_maths.rescale_values_array(stack_im[0], 0.0, 1.0))
             # Plot
             imed_utils.plot_transformed_sample(before,
                                                after,

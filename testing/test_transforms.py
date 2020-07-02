@@ -10,12 +10,13 @@ import pytest
 import torch
 from scipy.ndimage.measurements import center_of_mass
 from scipy.ndimage.measurements import label
+from ivadomed import maths as imed_maths
 
 from ivadomed.loader.utils import SampleMetadata
 from ivadomed.metrics import dice_score
 from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomAffine, RandomReverse, DilateGT, \
     ElasticTransform, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, \
-    Resample, rescale_values_array
+    Resample
 
 DEBUGGING = False
 if DEBUGGING:
@@ -78,7 +79,7 @@ def create_test_image(width, height, depth=0, num_contrasts=1, noise_max=10.0, n
     list_im, list_seg = [], []
     for _ in range(num_contrasts):
         norm = np.random.uniform(0, num_seg_classes * noise_max, size=image.shape)
-        noisy_image = rescale_values_array(np.maximum(image, norm))
+        noisy_image = imed_maths.rescale_values_array(np.maximum(image, norm))
 
         if depth == 0:
             noisy_image = noisy_image[:, :, z_slice]
