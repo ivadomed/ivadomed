@@ -126,7 +126,7 @@ def make_category(base_item, keys, values, is_all_combin=False):
     return items, names
 
 
-def automate_training(fname_config, fname_param, fixed_split, all_combinations, n_iterations=1, run_test=False):
+def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False):
     """Automate multiple training processes on multiple GPUs.
 
     Hyperparameter optimization of models is tedious and time-consuming. This function automatizes this optimization
@@ -138,24 +138,24 @@ def automate_training(fname_config, fname_param, fixed_split, all_combinations, 
     # TODO: add example of DF
 
     Args:
-        fname_config (string): Configuration filename, which is used as skeleton to configure the training. Some of its
-            parameters (defined in `fname_param` file) are modified across experiments.
-        fname_param (string): json file containing parameters configurations to compare. Parameter "keys" of this file
-            need to match the parameter "keys" of `fname_config` file. Parameter "values" are in a list. Example::
+        config (string): Configuration filename, which is used as skeleton to configure the training. Some of its
+            parameters (defined in `param` file) are modified across experiments.
+        param (string): json file containing parameters configurations to compare. Parameter "keys" of this file
+            need to match the parameter "keys" of `config` file. Parameter "values" are in a list. Example::
 
                 "default_model": {"depth": [2, 3, 4]}
 
         fixed_split (bool): If True, all the experiments are run on the same training/validation/testing subdatasets.
-        all_combinations (bool): If True, all parameters combinations are run.
+        all_combin (bool): If True, all parameters combinations are run.
         n_iterations (int): Controls the number of time that each experiment (ie set of parameter) are run.
         run_test (bool): If True, the trained model is also run on the testing subdataset.
     """
     # Load initial config
-    with open(fname_config, "r") as fhandle:
+    with open(config, "r") as fhandle:
         initial_config = json.load(fhandle)
 
     # Hyperparameters values to experiment
-    with open(fname_param, "r") as fhandle:
+    with open(param, "r") as fhandle:
         hyperparams = json.load(fhandle)
     param_dict, names_dict = {}, {}
     for category in hyperparams.keys():
@@ -184,7 +184,7 @@ def automate_training(fname_config, fname_param, fixed_split, all_combinations, 
 
     config_list = []
     # Test all combinations (change multiple parameters for each test)
-    if all_combinations:
+    if all_combin:
 
         # Cartesian product (all combinations)
         combinations = (dict(zip(param_dict.keys(), values))
