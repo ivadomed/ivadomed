@@ -67,7 +67,7 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
         path_image = os.path.join(path, t[i], 'anat', t[i] + suffix + '.nii.gz')
         if os.path.isfile(path_image):
             path_label = os.path.join(path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
-                    '_label-disc-manual.nii.gz')
+                    '_labels-disc-manual.nii.gz')
             list_points = mask2label(path_label, aim=aim)
             image_ref = nib.load(path_image)
             nib_ref_can = nib.as_closest_canonical(image_ref)
