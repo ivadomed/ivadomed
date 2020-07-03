@@ -36,7 +36,7 @@ jobs:
         ivadomed_convert_to_onnx -m testing_data/model_unet_test.pt -d 2
     - name: run extract small dataset
       run: |
-        ivadomed_extract_small_dataset -i testing_data/ -o small_dataset -n 10 -c T1w,T2w -d 0
+        ivadomed_extract_small_dataset -i testing_data/ -o small_dataset/test_script/ -n 10 -c T1w,T2w -d 0
     - name: Test with pytest
       run: |
         pytest
