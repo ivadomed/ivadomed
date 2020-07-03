@@ -39,10 +39,10 @@ jobs:
         ivadomed_prepare_dataset_vertebral_labeling -p testing_data/ -s _T2w -a 3
     - name: run visualize_training
       run: |
-        ivadomed_visualize_transforms -i testing_data/sub-test001/anat/sub-test001_T1w.nii.gz -n 1 -c testing_data/model_config.json -r testing_data/derivatives/labels/sub-test001/anat/sub-test001_T1w_seg-manual.nii.gz
+        ivadomed_visualize_transforms -i testing_data/sub-test001/anat/sub-test001_T1w.nii.gz -n 2 -c testing_data/model_config.json -r testing_data/derivatives/labels/sub-test001/anat/sub-test001_T1w_seg-manual.nii.gz -o ./
     - name: run extract small dataset
       run: |
-          ivadomed_extract_small_dataset -i testing_data/ -o small_dataset/test_script/ -n 10 -c T2w -d 0
+          ivadomed_extract_small_dataset -i testing_data/ -o small_dataset/test_script/ -n 1 -c T2w,T1w -d 0
     - name: Test with pytest
       run: |
         pytest
