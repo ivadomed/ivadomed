@@ -115,10 +115,11 @@ def extract_small_dataset(input, output, n=10, contrast_list=None, include_deriv
     idatasetjson = os.path.join(input, "dataset_description.json")
     odatasetjson = os.path.join(output, "dataset_description.json")
     shutil.copyfile(idatasetjson, odatasetjson)
-    # Copy participants.json
-    iparticipantsjson = os.path.join(input, "participants.json")
-    oparticipantsjson = os.path.join(output, "participants.json")
-    shutil.copyfile(iparticipantsjson, oparticipantsjson)
+    # Copy participants.json if it exist
+    if os.path.isfile(os.path.join(input, "participants.json")):
+        iparticipantsjson = os.path.join(input, "participants.json")
+        oparticipantsjson = os.path.join(output, "participants.json")
+        shutil.copyfile(iparticipantsjson, oparticipantsjson)
     # Copy participants.tsv
     iparticipantstsv = os.path.join(input, "participants.tsv")
     oparticipantstsv = os.path.join(output, "participants.tsv")
