@@ -31,18 +31,6 @@ jobs:
         #flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Run onnx convert
-      run: |
-        ivadomed_convert_to_onnx -m testing_data/model_unet_test.pt -d 2
-    - name: run prepare_dataset
-      run: |
-        ivadomed_prepare_dataset_vertebral_labeling -p testing_data/ -s _T2w -a 3
-    - name: run visualize_training
-      run: |
-        ivadomed_visualize_transforms -i testing_data/sub-test001/anat/sub-test001_T1w.nii.gz -n 2 -c testing_data/model_config.json -r testing_data/derivatives/labels/sub-test001/anat/sub-test001_T1w_seg-manual.nii.gz -o ./
-    - name: run extract small dataset
-      run: |
-          ivadomed_extract_small_dataset -i testing_data/ -o small_dataset/test_script/ -n 1 -c T2w,T1w -d 0
     - name: Test with pytest
       run: |
         pytest
