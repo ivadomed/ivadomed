@@ -114,21 +114,8 @@
         "metadata": "contrasts",
         "film_layers": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
     },
-    "testing_parameters": {
-        "binarize_prediction": true,
-        "uncertainty": {
-            "epistemic": false,
-            "aleatoric": false,
-            "n_it": 0
-        }
-    },
-	"evaluation_parameters": {
-        "targetSize": {"unit": "vox", "thr": [20, 100]},
-        "removeSmall": {"unit": "vox", "thr": 3},
-        "overlap": {"unit": "vox", "thr": 3}
-    },
 
-        "missing_modality": false,
+	"missing_modality": false,
 	"attention_unet": false,
 	"mixup_bool": false,
 
@@ -160,35 +147,9 @@
 		"RandomAffine": {
 			"degrees": 4.6,
 			"translate": [0.03, 0.03],
-			"scale": [0.98, 1.02]
+			"scale": [0.98, 1]
 			},
 		"NumpyToTensor": {},
 		"NormalizeInstance": {"applied_to": ["im"]}
-		},
-	"transformation_validation": {
-		"Resample": {
-			"wspace": 0.75,
-			"hspace": 0.75
-			},
-		"ROICrop": {
-			"size": [48, 48]
-			},
-		"NumpyToTensor": {},
-		"NormalizeInstance": {"applied_to": ["im"]}
-		},
-        "transformation_testing": {
-                "Resample": {
-                        "wspace": 0.75,
-                        "hspace": 0.75
-                        },
-                "ROICrop": {
-                        "size": [48, 48]
-                        },
-                "RandomRotation": {
-                        "degrees": 30
-                        },
-                "NumpyToTensor": {},
-                "NormalizeInstance": {"applied_to": ["im"]}
-                },
-        "debugging": false
+		}
 }
