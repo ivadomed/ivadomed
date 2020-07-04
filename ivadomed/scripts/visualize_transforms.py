@@ -21,7 +21,7 @@ def get_parser():
                         help="Config filename.")
     parser.add_argument("-n", "--number", required=False, default=1,
                         help="Number of random slices to visualize.")
-    parser.add_argument("-o", "--ofolder", required=False, default="./",
+    parser.add_argument("-o", "--output", required=False, default="./",
                         help="Output folder.")
     parser.add_argument("-r", "--roi", required=False,
                         help="ROI filename. Only required if ROICrop is part of the transformations.")
@@ -49,7 +49,7 @@ def get_data(fname_in, axis):
     return input_img, input_data
 
 
-def run_visualization(input, config, number, ofolder, roi):
+def run_visualization(input, config, number, output, roi):
     """Utility function to visualize Data Augmentation transformations.
 
     Data augmentation is a key part of the Deep Learning training scheme. This script aims at facilitating the
@@ -84,7 +84,7 @@ def run_visualization(input, config, number, ofolder, roi):
          input (string): Image filename. Flag: --input, -i
          config (string): Configuration file filename. Flag: --config, -c
          number (int): Number of slices randomly extracted. Flag: --number, -n
-         ofolder (string): Folder path where the results are saved. Flag: --ofolder, -o
+         output (string): Folder path where the results are saved. Flag: --ofolder, -o
          roi (string): Filename of the region of interest. Only needed if ROICrop is part of the transformations.
                        Flag: -roi, -r
     """
@@ -92,8 +92,8 @@ def run_visualization(input, config, number, ofolder, roi):
     with open(config, "r") as fhandle:
         context = json.load(fhandle)
     # Create output folder
-    if not os.path.isdir(ofolder):
-        os.makedirs(ofolder)
+    if not os.path.isdir(output):
+        os.makedirs(output)
 
     # Slice extracted according to below axis
     axis = imed_utils.AXIS_DCT[context["loader_parameters"]["slice_axis"]]
@@ -153,7 +153,7 @@ def run_visualization(input, config, number, ofolder, roi):
                                               data_type="im")
 
             # Plot before / after transformation
-            fname_out = os.path.join(ofolder, stg_transforms+"slice"+str(i)+".png")
+            fname_out = os.path.join(output, stg_transforms+"slice"+str(i)+".png")
             print("Fname out: {}.".format(fname_out))
             print("\t{}".format(dict(metadata)))
             # rescale intensities
@@ -177,10 +177,10 @@ def main():
     input = args.input
     config = args.config
     number = int(args.number)
-    ofolder = args.ofolder
+    output = args.output
     roi = args.roi
     # Run script
-    run_visualization(input, config, number, ofolder, roi)
+    run_visualization(input, config, number, output, roi)
 
 
 if __name__ == '__main__':
