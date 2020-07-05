@@ -21,6 +21,14 @@ log\_directory
 Folder name that will contain the output files (e.g., trained model,
 predictions, results).
 
+model\_name
+^^^^^^^^^^^^^^
+
+Folder name containing the trained model (ONNX format) and its configuration
+file, located within ``"log_directory/"``, eg
+``"log_directory/seg_gm_t2star/seg_gm_t2star.onnx"`` and
+``"log_directory/seg_gm_t2star/seg_gm_t2star.json"``, respectively.
+
 debugging
 ^^^^^^^^^
 
