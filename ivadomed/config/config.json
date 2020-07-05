@@ -2,6 +2,7 @@
     "command": "train",
     "gpu": 7,
     "log_directory": "spineGeneric",
+    "model_directory": "seg_sc_t1_t2_t2s_mt",
     "debugging": false,
     "object_detection_params": {
         "object_detection_path": null

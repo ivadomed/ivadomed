@@ -2,6 +2,7 @@
     "command": "train",
     "gpu": 7,
     "log_directory": "labeling_t1",
+    "model_directory": "find_disc_t1",
     "debugging": true,
     "loader_parameters": {
         "bids_path": "/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/deep_VL_2019/straight/",
