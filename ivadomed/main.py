@@ -188,7 +188,7 @@ def run_main(config=None):
         shutil.copyfile(os.path.join(log_directory, "best_model.pt"),
                         os.path.join(path_model, context["model_name"] + ".pt"))
         convert_pytorch_to_onnx(fname_model=os.path.join(path_model, context["model_name"] + ".pt"),
-                                dimension=,
+                                dimension=3 if "3D" in model_params["name"] else 2,
                                 gpu=context['gpu'])
         os.remove(os.path.join(path_model, context["model_name"] + ".pt"))
 
