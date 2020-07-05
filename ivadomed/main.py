@@ -172,6 +172,18 @@ def run_main(config=None):
         with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
             json.dump(context, fp, indent=4)
 
+        # Model directory
+        path_model = os.path.join(log_directory, context["model_name"])
+        if not os.path.isdir(path_model):
+            print('Creating model directory: {}'.format(path_model))
+            os.makedirs(path_model)
+        else:
+            print('Model directory already exists: {}'.format(path_model))
+        shutil.copyfile(os.path.join(log_directory, "config_file.json"),
+                        os.path.join(path_model, context["model_name"]+".json"))
+        shutil.copyfile(os.path.join(log_directory, "best_model.pt"),
+                        os.path.join(path_model, context["model_name"] + ".pt"))
+
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
     elif command == 'test':
