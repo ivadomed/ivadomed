@@ -2,7 +2,7 @@
     "command": "test",
     "gpu": 2,
     "log_directory": "spineGeneric_small",
-    "model_directory": "seg_sc_t2star",
+    "model_name": "seg_sc_t2star",
     "debugging": false,
     "loader_parameters": {
         "bids_path": "../duke/projects/ivadomed/spineGeneric_201907041011/result/",
