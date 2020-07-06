@@ -158,6 +158,14 @@ def run_main(config=None):
             joblib.dump(metadata_clustering_models, "./" + log_directory + "/clustering_models.joblib")
             joblib.dump(train_onehotencoder, "./" + log_directory + "/one_hot_encoder.joblib")
 
+        # Model directory
+        path_model = os.path.join(log_directory, context["model_name"])
+        if not os.path.isdir(path_model):
+            print('Creating model directory: {}'.format(path_model))
+            os.makedirs(path_model)
+        else:
+            print('Model directory already exists: {}'.format(path_model))
+
         # RUN TRAINING
         best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
             model_params=model_params,
@@ -173,24 +181,9 @@ def run_main(config=None):
         # Save config file within log_directory
         with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
             json.dump(context, fp, indent=4)
-
-        # Model directory
-        path_model = os.path.join(log_directory, context["model_name"])
-        if not os.path.isdir(path_model):
-            print('Creating model directory: {}'.format(path_model))
-            os.makedirs(path_model)
-        else:
-            print('Model directory already exists: {}'.format(path_model))
         # Copy model metadata
         shutil.copyfile(os.path.join(log_directory, "config_file.json"),
                         os.path.join(path_model, context["model_name"]+".json"))
-        # Copy model and convert it to ONNX format
-        shutil.copyfile(os.path.join(log_directory, "best_model.pt"),
-                        os.path.join(path_model, context["model_name"] + ".pt"))
-        convert_pytorch_to_onnx(fname_model=os.path.join(path_model, context["model_name"] + ".pt"),
-                                dimension=3 if "3D" in model_params["name"] else 2,
-                                gpu=context['gpu'])
-        os.remove(os.path.join(path_model, context["model_name"] + ".pt"))
 
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
