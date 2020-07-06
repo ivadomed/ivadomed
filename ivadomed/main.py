@@ -1,7 +1,6 @@
 import json
 import os
 import sys
-import shutil
 
 import joblib
 import torch.backends.cudnn as cudnn
@@ -13,7 +12,6 @@ from ivadomed import training as imed_training
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
-from ivadomed.scripts.convert_to_onnx import convert_pytorch_to_onnx
 
 cudnn.benchmark = True
 
