@@ -239,6 +239,10 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 model_path = os.path.join(log_directory, "best_model.pt")
                 torch.save(model, model_path)
 
+                # Copy model to model directory
+                # TODO: use model name dir
+                imed_utils.save_onnx_model(model, input_samples, model_path.replace('pt', 'onnx'))
+
             # EARLY STOPPING
             if epoch > 1:
                 val_diff = (val_loss_total_avg_old - val_loss_total_avg) * 100 / abs(val_loss_total_avg)
