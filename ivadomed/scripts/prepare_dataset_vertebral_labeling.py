@@ -40,7 +40,7 @@ def mask2label(path_label, aim=0):
     return list_label_image
 
 
-def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim=-1):
+def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
     """
     This function takes as input a path to a dataset  and generates a set of images:
     (i) mid-sagittal image and
@@ -48,31 +48,32 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
 
     Example::
 
-        python scripts/prepare_dataset_vertebral_labeling -p path/to/bids -s _T2w -a 0
+        ivadomed_prepare_dataset_vertebral_labeling -p path/to/bids -s _T2w -a 0
     
     Args:
-        bids_path (string): path to BIDS dataset form which images will be generated
-        suffix (string): suffix of image that will be processed (e.g., T2w)
+        path (string): path to BIDS dataset form which images will be generated. Flag: --path, -p
+        suffix (string): suffix of image that will be processed (e.g., T2w). Flag: --suffix, -s
         aim (int): If aim is not 0, retrieves only labels with value = aim, else create heatmap with all labels.
+                  Flag: --aim, -a
 
     Returns:
         None. Images are saved in BIDS folder
     """
-    t = os.listdir(bids_path)
+    t = os.listdir(path)
     t.remove('derivatives')
 
     for i in range(len(t)):
         sub = t[i]
-        path_image = os.path.join(bids_path, t[i], 'anat', t[i] + suffix + '.nii.gz')
+        path_image = os.path.join(path, t[i], 'anat', t[i] + suffix + '.nii.gz')
         if os.path.isfile(path_image):
-            path_label = os.path.join(bids_path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
-                                      '_label-disc-manual.nii.gz')
+            path_label = os.path.join(path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
+                    '_labels-disc-manual.nii.gz')
             list_points = mask2label(path_label, aim=aim)
             image_ref = nib.load(path_image)
             nib_ref_can = nib.as_closest_canonical(image_ref)
             imsh = np.array(nib_ref_can.dataobj).shape
             mid_nifti = imed_preprocessing.get_midslice_average(path_image, list_points[0][0], slice_axis=0)
-            nib.save(mid_nifti, os.path.join(bids_path, t[i], 'anat', t[i] + suffix + '_mid.nii.gz'))
+            nib.save(mid_nifti, os.path.join(path, t[i], 'anat', t[i] + suffix + '_mid.nii.gz'))
             lab = nib.load(path_label)
             nib_ref_can = nib.as_closest_canonical(lab)
             label_array = np.zeros(imsh[1:])
@@ -83,7 +84,7 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim
             heatmap = imed_maths.heatmap_generation(label_array[:, :], 10)
             arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(heatmap[:, :], axis=0), 2, lab, nib_ref_can)
             nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
-            nib.save(nib_pred, os.path.join(bids_path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
+            nib.save(nib_pred, os.path.join(path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
                                             '_mid_heatmap' + str(aim) + '.nii.gz'))
         else:
             pass
@@ -101,7 +102,7 @@ def get_parser():
     return parser
 
 
-if __name__ == '__main__':
+def main():
     parser = get_parser()
     args = parser.parse_args()
     bids_path = args.path
@@ -109,3 +110,6 @@ if __name__ == '__main__':
     aim = args.aim
     # Run Script
     extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim)
+
+if __name__=='__main__':
+    main()

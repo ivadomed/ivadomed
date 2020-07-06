@@ -38,7 +38,7 @@ import ivadomed.scripts.visualize_transforms
 import ivadomed.scripts.convert_to_onnx
 import ivadomed.scripts.automate_training
 import ivadomed.scripts.compare_models
-import ivadomed.scripts.prepare_dataset_vertebral_labeling
+import ivadomed.scripts.prepare_dataset_vertebral_labeling as prepare_dataset_vertebral_labeling
 import ivadomed.scripts.extract_small_dataset
 
 
@@ -167,6 +167,9 @@ pygments_style = 'sphinx'
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
+
+# If false. removes the module names for functions (e.g., ivadomed.module.function becomes function)
+add_module_names = False
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
