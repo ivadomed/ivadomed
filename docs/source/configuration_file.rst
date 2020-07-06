@@ -27,7 +27,9 @@ model\_name
 Folder name containing the trained model (ONNX format) and its configuration
 file, located within ``"log_directory/"``, eg
 ``"log_directory/seg_gm_t2star/seg_gm_t2star.onnx"`` and
-``"log_directory/seg_gm_t2star/seg_gm_t2star.json"``, respectively.
+``"log_directory/seg_gm_t2star/seg_gm_t2star.json"``, respectively. When
+possible, the folder name will follow the following convention:
+``task_(animal)_region_(contrast)``.
 
 debugging
 ^^^^^^^^^
