@@ -316,7 +316,11 @@ Cascaded Architecture Features
 object\_detection\_params (Optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
--  ``object_detection_path``: String. Path to object detection model.
+-  ``object_detection_path``: String. Path to object detection model and 
+   the configuration file. The folder, configuration file, and model need 
+   to have the same name (e.g. ``findcord_tumor/``, 
+   ``findcord_tumor/findcord_tumor.json``, and 
+   ``findcord_tumor/findcord_tumor.onnx``, respectively).
    The model's prediction will be used to generate bounding boxes.
 -  ``safety_factor``: List. List of length 3 containing the factors to
    multiply each dimension of the bounding box. Ex: If the original
