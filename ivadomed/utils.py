@@ -942,7 +942,6 @@ def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="je
     if len(list_title) == 0:
         list_title = ['Sample before transform', 'Sample after transform']
 
-    matplotlib.use('TkAgg')
     plt.interactive(False)
     plt.figure(figsize=(20, 10))
 
@@ -959,6 +958,7 @@ def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="je
     if fname_out:
         plt.savefig(fname_out)
     else:
+        matplotlib.use('TkAgg')
         plt.show()
 
 
