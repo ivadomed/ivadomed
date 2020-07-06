@@ -239,10 +239,6 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 model_path = os.path.join(log_directory, "best_model.pt")
                 torch.save(model, model_path)
 
-                # Copy model to model directory
-                # TODO: use model name dir
-                imed_utils.save_onnx_model(model, input_samples, model_path.replace('pt', 'onnx'))
-
             # EARLY STOPPING
             if epoch > 1:
                 val_diff = (val_loss_total_avg_old - val_loss_total_avg) * 100 / abs(val_loss_total_avg)
@@ -257,6 +253,10 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     torch.save(model, final_model_path)
     if model_params["name"] == "FiLMedUnet" and debugging:
         save_film_params(gammas_dict, betas_dict, contrast_list, model_params["depth"], log_directory)
+
+    # Convert best model to ONNX and save it in model directory
+    best_model_path = os.path.join(log_directory, model_params["folder_name"], model_params["folder_name"]+".onnx")
+    imed_utils.save_onnx_model(torch.load(model_path), input_samples, best_model_path)
 
     writer.close()
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
