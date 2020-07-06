@@ -100,6 +100,7 @@ def run_main(config=None):
 
     # MODEL PARAMETERS
     model_params = context["default_model"]
+    model_params["folder_name"] = context["model_name"]
     model_context_list = [model_name for model_name in MODEL_LIST
                           if model_name in context and context[model_name]["applied"]]
     if len(model_context_list) == 1:
