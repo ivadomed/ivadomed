@@ -20,7 +20,6 @@ cudnn.benchmark = True
 MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'NAME_CLASSIFIER_1', 'Countception']
 
 
-
 def run_main(config=None):
     """Run main command.
 
@@ -180,7 +179,7 @@ def run_main(config=None):
         # Save config file within log_directory and log_directory/model_name
         with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
             json.dump(context, fp, indent=4)
-        with open(os.path.join(log_directory, context["model_name"], context["model_name"]+".json"), 'w') as fp:
+        with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
             json.dump(context, fp, indent=4)
 
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
