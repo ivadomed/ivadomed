@@ -98,8 +98,10 @@ considered when using ``"ROICrop"``.
 soft_gt
 ^^^^^^^^^^
 
-Bool. Indicated if usage of soft mask. Ground truth will be non-binarized 
-images with float32 encoding.  
+Bool. Indicates if a soft mask will be used as ground-truth to train
+and / or evaluate a model. In particular, the masks are not binarized
+after interpolations implied by preprocessing or data-augmentation operations.
+
 
 Split dataset
 -------------
