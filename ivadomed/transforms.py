@@ -983,6 +983,7 @@ def get_subdatasets_transforms(transform_params):
     Returns:
         dict, dict, dict: Training, Validation and Testing transformations.
     """
+    transform_params = copy.deepcopy(transform_params)
     train, valid, test = {}, {}, {}
     subdataset_default = ["training", "validation", "testing"]
     # Loop across transformations
