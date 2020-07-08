@@ -189,9 +189,9 @@ def run_main(config=None):
         # Aleatoric uncertainty
         if context['testing_parameters']['uncertainty']['aleatoric'] and \
                 context['testing_parameters']['uncertainty']['n_it'] > 0:
-            transformation_dict = transform_test_params
-        else:
             transformation_dict = transform_valid_params
+        else:
+            transformation_dict = transform_test_params
 
         # UNDO TRANSFORMS
         undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))

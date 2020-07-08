@@ -1027,7 +1027,7 @@ class Countception(Module):
         name (str): model's name used for call in configuration file.
     """
 
-    def __init__(self, in_channel=3, out_channel=1, use_logits=False, logits_per_output=12, name='CC'):
+    def __init__(self, in_channel=3, out_channel=1, use_logits=False, logits_per_output=12, name='CC', **kwargs):
         super(Countception, self).__init__()
 
         # params
