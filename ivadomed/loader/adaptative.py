@@ -204,12 +204,12 @@ class Bids_to_hdf5:
 
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, hdf5_name, contrast_balance=None,
                  slice_axis=2, metadata_choice=False, slice_filter_fn=None, roi_suffix=None, transform=None,
-                 object_detection_params=None):
+                 object_detection_params=None, soft_gt=False):
         print("Starting conversion")
         # Getting all patients id
         self.bids_ds = bids.BIDS(root_dir)
         bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
-
+        self.soft_gt = soft_gt
         self.dt = h5py.special_dtype(vlen=str)
         # opening an hdf5 file with write access and writing metadata
         self.hdf5_file = h5py.File(hdf5_name, "w")
@@ -316,10 +316,10 @@ class Bids_to_hdf5:
                 grp = self.hdf5_file.create_group(str(subject_id))
 
             roi_pair = imed_loader.SegmentationPair(input_filename, roi_filename, metadata=metadata,
-                                                    slice_axis=self.slice_axis, cache=False)
+                                                    slice_axis=self.slice_axis, cache=False, soft_gt=self.soft_gt)
 
             seg_pair = imed_loader.SegmentationPair(input_filename, gt_filename, metadata=metadata,
-                                                    slice_axis=self.slice_axis, cache=False)
+                                                    slice_axis=self.slice_axis, cache=False, soft_gt=self.soft_gt)
             print("gt filename", gt_filename)
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
@@ -492,7 +492,7 @@ class HDF5Dataset:
 
     def __init__(self, root_dir, subject_lst, model_params, target_suffix, contrast_params,
                  slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
-                 slice_filter_fn=None, roi_suffix=None, object_detection_params=None):
+                 slice_filter_fn=None, roi_suffix=None, object_detection_params=None, soft_gt=False):
         self.cst_lst = copy.deepcopy(contrast_params["contrast_lst"])
         self.gt_lst = copy.deepcopy(model_params["target_lst"] if "target_lst" in model_params else None)
         self.roi_lst = copy.deepcopy(model_params["roi_lst"] if "roi_lst" in model_params else None)
@@ -515,7 +515,8 @@ class HDF5Dataset:
                                      slice_axis=slice_axis,
                                      slice_filter_fn=slice_filter_fn,
                                      transform=transform,
-                                     object_detection_params=object_detection_params)
+                                     object_detection_params=object_detection_params,
+                                     soft_gt=soft_gt)
             self.hdf5_file = hdf5_file.hdf5_file
         else:
             self.hdf5_file = h5py.File(model_params["hdf5_path"], "r")
