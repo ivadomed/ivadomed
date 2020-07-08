@@ -64,7 +64,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                 transform=tranform_lst,
                                 multichannel=multichannel,
                                 model_params=model_params,
-                                object_detection_params=object_detection_params)
+                                object_detection_params=object_detection_params,
+                                soft_gt=soft_gt)
 
     elif model_params["name"] == "HeMISUnet":
         dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
@@ -77,7 +78,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               metadata_choice=metadata_type,
                                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
                                               roi_suffix=roi_params["suffix"],
-                                              object_detection_params=object_detection_params)
+                                              object_detection_params=object_detection_params,
+                                              soft_gt=soft_gt)
     else:
         # Task selection
         task = "classification" if model_params["name"] in CLASSIFIER_LIST else "segmentation"
@@ -497,7 +499,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
     """
 
-    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0):
+    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
+                 soft_gt=False):
         self.filename_pairs = filename_pairs
         self.handlers = []
         self.indexes = []
@@ -506,6 +509,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         self.prepro_transforms, self.transform = transform
         self.slice_axis = slice_axis
         self.has_bounding_box = True
+        self.soft_gt = soft_gt
 
         self._load_filenames()
         self._prepare_indices()
@@ -513,7 +517,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
     def _load_filenames(self):
         """Load preprocessed pair data (input and gt) in handler."""
         for input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
-            segpair = SegmentationPair(input_filename, gt_filename, metadata=metadata, slice_axis=self.slice_axis)
+            segpair = SegmentationPair(input_filename, gt_filename, metadata=metadata, slice_axis=self.slice_axis,
+                                       soft_gt=self.soft_gt)
             input_data, gt_data = segpair.get_pair_data()
             metadata = segpair.get_pair_metadata()
             seg_pair = {
@@ -594,7 +599,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                                metadata=metadata_gt,
                                                data_type="gt")
         # Make sure stack_gt is binarized
-        if stack_gt is not None:
+        if stack_gt is not None and not self.soft_gt:
             stack_gt = torch.as_tensor(
                 [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in range(len(stack_gt))])
 
@@ -651,7 +656,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
     """
     def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_suffix=None,
-                 multichannel=False, object_detection_params=None):
+                 multichannel=False, object_detection_params=None, soft_gt=False):
         dataset = BidsDataset(root_dir,
                               subject_lst=subject_lst,
                               target_suffix=target_suffix,
@@ -664,7 +669,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               object_detection_params=object_detection_params)
 
         super().__init__(dataset.filename_pairs, length=model_params["length_3D"], stride=model_params["stride_3D"],
-                         transform=transform, slice_axis=slice_axis)
+                         transform=transform, slice_axis=slice_axis, soft_gt=soft_gt)
 
 
 class BidsDataset(MRI2DSegmentationDataset):

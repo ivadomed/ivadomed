@@ -238,7 +238,7 @@ class Resample(ImedTransform):
         # Undo resampling
         data_out = zoom(sample,
                         zoom=params_undo,
-                        order=0 if metadata['data_type'] == 'gt' else 2)
+                        order=1 if metadata['data_type'] == 'gt' else 2)
 
         # Data type
         data_out = data_out.astype(sample.dtype)
@@ -266,7 +266,7 @@ class Resample(ImedTransform):
         # Run resampling
         data_out = zoom(sample,
                         zoom=params_resample,
-                        order=0 if metadata['data_type'] == 'gt' else 2)
+                        order=1 if metadata['data_type'] == 'gt' else 2)
 
         # Data type
         data_out = data_out.astype(sample.dtype)
