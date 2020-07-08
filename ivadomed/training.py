@@ -254,6 +254,10 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     if model_params["name"] == "FiLMedUnet" and debugging:
         save_film_params(gammas_dict, betas_dict, contrast_list, model_params["depth"], log_directory)
 
+    # Convert best model to ONNX and save it in model directory
+    best_model_path = os.path.join(log_directory, model_params["folder_name"], model_params["folder_name"] + ".onnx")
+    imed_utils.save_onnx_model(torch.load(model_path), input_samples, best_model_path)
+
     writer.close()
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 

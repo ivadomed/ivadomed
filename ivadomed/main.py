@@ -20,7 +20,6 @@ cudnn.benchmark = True
 MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'NAME_CLASSIFIER_1', 'Countception']
 
 
-
 def run_main(config=None):
     """Run main command.
 
@@ -100,6 +99,7 @@ def run_main(config=None):
 
     # MODEL PARAMETERS
     model_params = context["default_model"]
+    model_params["folder_name"] = context["model_name"]
     model_context_list = [model_name for model_name in MODEL_LIST
                           if model_name in context and context[model_name]["applied"]]
     if len(model_context_list) == 1:
@@ -156,6 +156,14 @@ def run_main(config=None):
             joblib.dump(metadata_clustering_models, "./" + log_directory + "/clustering_models.joblib")
             joblib.dump(train_onehotencoder, "./" + log_directory + "/one_hot_encoder.joblib")
 
+        # Model directory
+        path_model = os.path.join(log_directory, context["model_name"])
+        if not os.path.isdir(path_model):
+            print('Creating model directory: {}'.format(path_model))
+            os.makedirs(path_model)
+        else:
+            print('Model directory already exists: {}'.format(path_model))
+
         # RUN TRAINING
         best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
             model_params=model_params,
@@ -168,8 +176,10 @@ def run_main(config=None):
             metric_fns=metric_fns,
             debugging=context["debugging"])
 
-        # Save config file within log_directory
+        # Save config file within log_directory and log_directory/model_name
         with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
+            json.dump(context, fp, indent=4)
+        with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
             json.dump(context, fp, indent=4)
 
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
@@ -179,9 +189,9 @@ def run_main(config=None):
         # Aleatoric uncertainty
         if context['testing_parameters']['uncertainty']['aleatoric'] and \
                 context['testing_parameters']['uncertainty']['n_it'] > 0:
-            transformation_dict = transform_test_params
-        else:
             transformation_dict = transform_valid_params
+        else:
+            transformation_dict = transform_test_params
 
         # UNDO TRANSFORMS
         undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))

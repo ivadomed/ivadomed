@@ -322,6 +322,7 @@ def mixup(data, targets, alpha, debugging=False, ofolder=None):
     lambda_ = max(lambda_, 1 - lambda_)  # ensure lambda_ >= 0.5
     lambda_tensor = torch.FloatTensor([lambda_])
 
+
     data = data * lambda_tensor + data2 * (1 - lambda_tensor)
     targets = targets * lambda_tensor + targets2 * (1 - lambda_tensor)
 
