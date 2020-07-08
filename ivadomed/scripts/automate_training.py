@@ -166,7 +166,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
         base_item = initial_config[category]
         keys = list(hyperparams[category].keys())
         values = [hyperparams[category][k] for k in keys]
-        new_parameters, names = make_category(base_item, keys, values, args.all_combin)
+        new_parameters, names = make_category(base_item, keys, values, all_combin)
         param_dict[category] = new_parameters
         names_dict[category] = names
 
