@@ -599,7 +599,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                                metadata=metadata_gt,
                                                data_type="gt")
         # Make sure stack_gt is binarized
-        if stack_gt is not None:
+        if stack_gt is not None and not self.soft_gt:
             stack_gt = torch.as_tensor(
                 [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in range(len(stack_gt))])
 
@@ -669,7 +669,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               object_detection_params=object_detection_params)
 
         super().__init__(dataset.filename_pairs, length=model_params["length_3D"], stride=model_params["stride_3D"],
-                         transform=transform, slice_axis=slice_axis, soft_gt=sof_gt)
+                         transform=transform, slice_axis=slice_axis, soft_gt=soft_gt)
 
 
 class BidsDataset(MRI2DSegmentationDataset):
