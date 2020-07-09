@@ -69,7 +69,48 @@ In order to test the trained model on the testing sub-dataset and compute evalua
 
     ivadomed path/to/config/file.json
 
-# TODO: give terminal output and comment.
+The main parameters of the model will appear, followed by the loss value on training and validation sets at every epoch.
+
+.. code-block:: console
+
+    Creating log directory: spineGeneric
+    Using GPU number 0
+
+    Selected transformations for the training dataset:
+	Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1, 'preprocessing': True}
+	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+	RandomAffine: {'degrees': 5, 'scale': [0.1, 0.1], 'translate': [0.03, 0.03], 'applied_to': ['im', 'gt']}
+	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1, 'applied_to': ['im', 'gt']}
+	NumpyToTensor: {}
+	NormalizeInstance: {'applied_to': ['im']}
+
+    Selected transformations for the validation dataset:
+	Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1, 'preprocessing': True}
+	CenterCrop: {'size': [128, 128], 'preprocessing': True}
+	NumpyToTensor: {}
+	NormalizeInstance: {'applied_to': ['im']}
+
+    Selected architecture: Unet, with the following parameters:
+	dropout_rate: 0.3
+	bn_momentum: 0.9
+	depth: 4
+	folder_name: seg_sc_t1_t2_t2s_mt
+	in_channel: 1
+	out_channel: 1
+    Loading dataset: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 6/6 [00:00<00:00, 1854.79it/s]
+    Loaded 93 axial slices for the validation set.
+    Loading dataset: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 18/18 [00:00<00:00, 1815.06it/s]
+    Loaded 291 axial slices for the training set.
+    Creating model directory: spineGeneric/seg_sc_t1_t2_t2s_mt
+
+    Initialising model's weights from scratch.
+
+    Scheduler parameters: {'base_lr': 1e-05, 'max_lr': 0.01}
+
+    Selected Loss: DiceLoss
+	with the parameters: []
+    Epoch 1 training loss: -0.0420.                                                                                                                                                                             
+    Epoch 1 validation loss: -0.0507.  
 
 The resulting segmentation is saved for each image in the `log_directory/pred_masks` while a csv file, saved in XX, contains all the evaluation metrics.
 
