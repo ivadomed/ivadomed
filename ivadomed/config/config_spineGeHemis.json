@@ -2,6 +2,7 @@
     "command": "train",
     "gpu": 0,
     "log_directory": "HeMIS",
+    "model_name": "seg_tumor_t2_t1",
     "debugging": false,
     "loader_parameters": {
         "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
@@ -20,7 +21,8 @@
             "filter_empty_input": true
         },
         "slice_axis": "sagittal",
-        "multichannel": false
+        "multichannel": false,
+        "soft_gt": false
     },
     "split_dataset": {
         "fname_split": null,

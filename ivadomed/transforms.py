@@ -18,11 +18,21 @@ from ivadomed.loader import utils as imed_loader_utils
 
 
 def multichannel_capable(wrapped):
+    """Decorator to make a given function compatible multichannel images.
+
+    Args:
+        wrapped: Given function.
+
+    Returns:
+        Functions' return.
+    """
     @functools.wraps(wrapped)
     def wrapper(self, sample, metadata):
         if isinstance(sample, list):
             list_data, list_metadata = [], []
             for s_cur, m_cur in zip(sample, metadata):
+                if len(list_metadata) > 0:
+                    imed_loader_utils.update_metadata([list_metadata[-1]], [m_cur])
                 # Run function for each sample of the list
                 data_cur, metadata_cur = wrapped(self, s_cur, m_cur)
                 list_data.append(data_cur)
@@ -38,6 +48,14 @@ def multichannel_capable(wrapped):
 
 
 def two_dim_compatible(wrapped):
+    """Decorator to make a given function compatible 2D or 3D images.
+
+    Args:
+        wrapped: Given function.
+
+    Returns:
+        Functions' return.
+    """
     @functools.wraps(wrapped)
     def wrapper(self, sample, metadata):
         # Check if sample is 2D
@@ -55,6 +73,7 @@ def two_dim_compatible(wrapped):
 
 
 class ImedTransform(object):
+    """Base class for transforamtions."""
 
     def __call__(self, sample, metadata=None):
         raise NotImplementedError("You need to implement the transform() method.")
@@ -73,10 +92,14 @@ class Compose(object):
         - values torchvision_transform.Compose objects.
 
     Attributes:
-        dict_transforms (dictionary): Dictionary where the keys are the transform names
+        dict_transforms (dict): Dictionary where the keys are the transform names
             and the value their parameters.
         requires_undo (bool): If True, does not include transforms which do not have an undo_transform
             implemented yet.
+
+    Args:
+        transform (dict): Keys are "im", "gt", "roi" and values are torchvision_transforms.Compose of the
+            transformations of interest.
     """
 
     def __init__(self, dict_transforms, requires_undo=False):
@@ -128,6 +151,16 @@ class Compose(object):
 
 
 class UndoCompose(object):
+    """Undo the Compose transformations.
+
+    Call the undo transformations in the inverse order than the "do transformations".
+
+    Attributes:
+        compose (torchvision_transforms.Compose):
+
+    Args:
+        transforms (torchvision_transforms.Compose):
+    """
     def __init__(self, compose):
         self.transforms = compose
 
@@ -142,6 +175,14 @@ class UndoCompose(object):
 
 
 class UndoTransform(object):
+    """Call undo transformation.
+
+    Attributes:
+        transform (ImedTransform):
+
+    Args:
+        transform (ImedTransform):
+    """
     def __init__(self, transform):
         self.transform = transform
 
@@ -150,12 +191,14 @@ class UndoTransform(object):
 
 
 class NumpyToTensor(ImedTransform):
-    """Converts numpy array to tensor object."""
+    """Converts nd array to tensor object."""
 
     def undo_transform(self, sample, metadata=None):
+        """Converts Tensor to nd array."""
         return list(sample.numpy()), metadata
 
     def __call__(self, sample, metadata=None):
+        """Converts nd array to Tensor."""
         sample = np.array(sample)
         # Use np.ascontiguousarray to avoid axes permutations issues
         arr_contig = np.ascontiguousarray(sample, dtype=sample.dtype)
@@ -181,6 +224,7 @@ class Resample(ImedTransform):
     @multichannel_capable
     @two_dim_compatible
     def undo_transform(self, sample, metadata=None):
+        """Resample to original resolution."""
         assert "data_shape" in metadata
         is_2d = sample.shape[-1] == 1
 
@@ -194,7 +238,7 @@ class Resample(ImedTransform):
         # Undo resampling
         data_out = zoom(sample,
                         zoom=params_undo,
-                        order=0 if metadata['data_type'] == 'gt' else 2)
+                        order=1 if metadata['data_type'] == 'gt' else 2)
 
         # Data type
         data_out = data_out.astype(sample.dtype)
@@ -204,6 +248,7 @@ class Resample(ImedTransform):
     @multichannel_capable
     @two_dim_compatible
     def __call__(self, sample, metadata=None):
+        """Resample to a given resolution, in millimeters."""
         # Get params
         # Voxel dimension in mm
         is_2d = sample.shape[-1] == 1
@@ -221,7 +266,7 @@ class Resample(ImedTransform):
         # Run resampling
         data_out = zoom(sample,
                         zoom=params_resample,
-                        order=0 if metadata['data_type'] == 'gt' else 2)
+                        order=1 if metadata['data_type'] == 'gt' else 2)
 
         # Data type
         data_out = data_out.astype(sample.dtype)
@@ -230,9 +275,7 @@ class Resample(ImedTransform):
 
 
 class NormalizeInstance(ImedTransform):
-    """Normalize a tensor or an array image with mean and standard deviation estimated
-    from the sample itself.
-    """
+    """Normalize a tensor or an array image with mean and standard deviation estimated from the sample itself."""
 
     @multichannel_capable
     def __call__(self, sample, metadata=None):
@@ -241,7 +284,10 @@ class NormalizeInstance(ImedTransform):
 
 
 class CroppableArray(np.ndarray):
-    """Adapted From: https://stackoverflow.com/a/41155020/13306686"""
+    """Zero padding slice past end of array in numpy.
+
+    Adapted From: https://stackoverflow.com/a/41155020/13306686
+    """
 
     def __getitem__(self, item):
         all_in_slices = []
@@ -304,6 +350,14 @@ class CroppableArray(np.ndarray):
 
 
 class Crop(ImedTransform):
+    """Crop data.
+
+    Args:
+        size (tuple of int): Size of the output sample. Tuple of size 2 if dealing with 2D samples, 3 with 3D samples.
+
+    Attributes:
+        size (tuple of int): Size of the output sample. Tuple of size 3.
+    """
     def __init__(self, size):
         self.size = size if len(size) == 3 else size + [0]
 
@@ -398,7 +452,7 @@ class CenterCrop(Crop):
 
 
 class ROICrop(Crop):
-    """Make a crop of a specified size around a ROI."""
+    """Make a crop of a specified size around a Region of Interest (ROI)."""
 
     @multichannel_capable
     @two_dim_compatible
@@ -427,11 +481,17 @@ class ROICrop(Crop):
 
 
 class DilateGT(ImedTransform):
-    """Randomly dilate a tensor ground-truth.
-    :param dilation_factor: float, controls the number of dilation iterations.
-                            For each individual lesion, the number of dilation iterations is computed as follows:
-                                nb_it = int(round(dilation_factor * sqrt(lesion_area)))
-                            If dilation_factor <= 0, then no dilation will be perfomed.
+    """Randomly dilate a ground-truth tensor.
+
+    .. image:: ../../images/dilate-gt.png
+        :width: 600px
+        :align: center
+
+    Args:
+        dilation_factor (float): Controls the number of dilation iterations. For each individual lesion, the number of
+            dilation iterations is computed as follows:
+                nb_it = int(round(dilation_factor * sqrt(lesion_area)))
+            If dilation_factor <= 0, then no dilation will be performed.
     """
 
     def __init__(self, dilation_factor):
@@ -548,9 +608,7 @@ class DilateGT(ImedTransform):
 
 
 class BoundingBoxCrop(Crop):
-    """
-    Crops image according to given bounding box
-    """
+    """Crops image according to given bounding box."""
 
     @multichannel_capable
     @two_dim_compatible
@@ -565,6 +623,22 @@ class BoundingBoxCrop(Crop):
 
 
 class RandomAffine(ImedTransform):
+    """Apply Random Affine transformation.
+
+    Args:
+        degrees (float): Positive float or list (or tuple) of length two. Angles in degrees. If only a float is
+            provided, then rotation angle is selected within the range [-degrees, degrees]. Otherwise, the list / tuple
+            defines this range.
+        translate (list of float): List of floats between 0 and 1, of length 2 or 3 depending on the sample shape (2D
+            or 3D). These floats defines the maximum range of translation along each axis.
+        scale (list of float): List of floats between 0 and 1, of length 2 or 3 depending on the sample shape (2D
+            or 3D). These floats defines the maximum range of scaling along each axis.
+
+    Attributes:
+        degrees (tuple of floats):
+        translate (list of float):
+        scale (list of float):
+    """
     def __init__(self, degrees=0, translate=None, scale=None):
         # Rotation
         if isinstance(degrees, numbers.Number):
@@ -717,6 +791,13 @@ class RandomReverse(ImedTransform):
 
 
 class RandomShiftIntensity(ImedTransform):
+    """Add a random intensity offset.
+
+    Args:
+        shift_range (tuple of floats): Tuple of length two. Specifies the range where the offset that is applied is
+            randomly selected from.
+        prob (float): Between 0 and 1. Probability of occurence of this transformation.
+    """
     def __init__(self, shift_range, prob=0.1):
         self.shift_range = shift_range
         self.prob = prob
@@ -746,7 +827,16 @@ class RandomShiftIntensity(ImedTransform):
 
 
 class ElasticTransform(ImedTransform):
-    """Elastic transform for 2D and 3D inputs."""
+    """Applies elastic transformation.
+
+    .. seealso::
+        Simard, Patrice Y., David Steinkraus, and John C. Platt. "Best practices for convolutional neural networks
+        applied to visual document analysis." Icdar. Vol. 3. No. 2003. 2003.
+
+    Args:
+        alpha_range (tuple of floats): Deformation coefficient. Length equals 2.
+        sigma_range (tuple of floats): Standard deviation. Length equals 2.
+    """
 
     def __init__(self, alpha_range, sigma_range, p=0.1):
         self.alpha_range = alpha_range
@@ -805,6 +895,12 @@ class ElasticTransform(ImedTransform):
 
 
 class AdditiveGaussianNoise(ImedTransform):
+    """Adds Gaussian Noise to images.
+
+    Args:
+        mean (float): Gaussian noise mean.
+        std (float): Gaussian noise standard deviation.
+    """
 
     def __init__(self, mean=0.0, std=0.01):
         self.mean = mean
@@ -826,16 +922,27 @@ class AdditiveGaussianNoise(ImedTransform):
 
 
 class Clahe(ImedTransform):
-    # TODO: Adapt to 3D
+    """ Applies Contrast Limited Adaptive Histogram Equalization for enhancing the local image contrast.
+
+    .. seealso::
+        Zuiderveld, Karel. "Contrast limited adaptive histogram equalization." Graphics gems (1994): 474-485.
+
+    Default values are based on::
+    .. seealso::
+        Zheng, Qiao, et al. "3-D consistent and robust segmentation of cardiac images by deep learning with spatial
+        propagation." IEEE transactions on medical imaging 37.9 (2018): 2137-2148.
+
+    Args:
+        clip_limit (float): Clipping limit, normalized between 0 and 1.
+        kernel_size (tuple of int): Defines the shape of contextual regions used in the algorithm. Length equals image
+        dimension (ie 2 or 3 for 2D or 3D, respectively).
+    """
     def __init__(self, clip_limit=3.0, kernel_size=(8, 8)):
-        # Default values are based upon the following paper:
-        # https://arxiv.org/abs/1804.09400 (3D Consistent Cardiac Segmentation)
         self.clip_limit = clip_limit
         self.kernel_size = kernel_size
 
     @multichannel_capable
     def __call__(self, sample, metadata=None):
-        assert len(sample.shape) == 2
         assert len(self.kernel_size) == len(sample.shape)
         # Run equalization
         data_out = equalize_adapthist(sample,
@@ -846,7 +953,12 @@ class Clahe(ImedTransform):
 
 
 class HistogramClipping(ImedTransform):
+    """Performs intensity clipping based on percentiles.
 
+    Args:
+        min_percentile (float): Between 0 and 100. Lower clipping limit.
+        max_percentile (float): Between 0 and 100. Higher clipping limit.
+    """
     def __init__(self, min_percentile=5.0, max_percentile=95.0):
         self.min_percentile = min_percentile
         self.max_percentile = max_percentile
@@ -862,29 +974,16 @@ class HistogramClipping(ImedTransform):
         return data, metadata
 
 
-def rescale_values_array(arr, minv=0.0, maxv=1.0, dtype=np.float32):
-    """Rescale the values of numpy array `arr` to be from `minv` to `maxv`."""
-    if dtype is not None:
-        arr = arr.astype(dtype)
-
-    mina = np.min(arr)
-    maxa = np.max(arr)
-
-    if mina == maxa:
-        return arr * minv
-
-    norm = (arr - mina) / (maxa - mina)  # normalize the array first
-    return (norm * (maxv - minv)) + minv  # rescale by minv and maxv, which is the normalized array by default
-
-
 def get_subdatasets_transforms(transform_params):
     """Get transformation parameters for each subdataset: training, validation and testing.
 
     Args:
         transform_params (dict):
+
     Returns:
-        dict, dict, dict
+        dict, dict, dict: Training, Validation and Testing transformations.
     """
+    transform_params = copy.deepcopy(transform_params)
     train, valid, test = {}, {}, {}
     subdataset_default = ["training", "validation", "testing"]
     # Loop across transformations
@@ -903,13 +1002,13 @@ def get_subdatasets_transforms(transform_params):
 
 
 def get_preprocessing_transforms(transforms):
-    """
-    Checks the transformations parameters and selects the transformations which are done during preprocessing only.
+    """Checks the transformations parameters and selects the transformations which are done during preprocessing only.
+
     Args:
-        transforms (dict): transformation dict
+        transforms (dict): Transformation dictionary.
 
     Returns:
-        dict: preprocessing transforms
+        dict: Preprocessing transforms.
     """
     original_transforms = copy.deepcopy(transforms)
     preprocessing_transforms = copy.deepcopy(transforms)
@@ -925,14 +1024,14 @@ def get_preprocessing_transforms(transforms):
 def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
     """
     Applies preprocessing transforms to segmentation pair (input, gt and metadata).
+
     Args:
-        transforms (Compose): preprocessing transforms
-        seg_pair (dict): segmentation pair containing input and gt
-        roi_pair (dict): segementation pair containing input and roi
+        transforms (Compose): Preprocessing transforms.
+        seg_pair (dict): Segmentation pair containing input and gt.
+        roi_pair (dict): Segementation pair containing input and roi.
 
     Returns:
-        tuple: segmentation pair and roi pair
-
+        tuple: Segmentation pair and roi pair.
     """
     if transforms is None:
         return (seg_pair, roi_pair)
@@ -972,14 +1071,15 @@ def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
 
 def preprare_transforms(transform_dict, requires_undo=True):
     """
-    This function seperates the preprocessing transforms from the others and generates the undo transforms related.
+    This function separates the preprocessing transforms from the others and generates the undo transforms related.
+
     Args:
-        transform_dict (dict): Dictionary containing the transforms and there parameters
-        requires_undo (bool): Boolean indicating if transforms can be undone
+        transform_dict (dict): Dictionary containing the transforms and there parameters.
+        requires_undo (bool): Boolean indicating if transforms can be undone.
 
     Returns:
         list, UndoCompose: transform lst containing the preprocessing transforms and regular transforms, UndoCompose
-        object containing the transform to undo
+            object containing the transform to undo.
     """
     training_undo_transform = None
     if requires_undo:

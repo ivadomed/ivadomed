@@ -20,26 +20,35 @@ CLASSIFIER_LIST = ['NAME_CLASSIFIER_1']
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
                  dataset_type="training", requires_undo=False, metadata_type=None,
-                 object_detection_params=None, **kwargs):
-    """Get loader.
+                 object_detection_params=None, soft_gt=False, **kwargs):
+    """Get loader appropriate loader according to model type. Available loaders are Bids3DDataset for 3D data,
+    BidsDataset for 2D data and HDF5Dataset for HeMIS.
 
     Args:
-        data_list (list):
-        bids_path (string):
-        transforms_params (dict):
-        model_name (string):
-        target_suffix (list):
-        roi_params (dict):
-        contrast_params (dict):
-        slice_filter_params (dict):
-        slice_axis (string):
-        multichannel (bool):
-        metadata_type (string): None if no metadata
-        dataset_type (string): training, validation or testing
-        requires_undo (Bool): If True, the transformations without undo_transform will be discarded
-        object_detection_params (dict):
+        data_list (list): Subject names list.
+        bids_path (str): Path to the BIDS dataset.
+        transforms_params (dict): Dictionary containing transformations for "training", "validation", "testing" (keys),
+            eg output of imed_transforms.get_subdatasets_transforms.
+        model_params (dict): Dictionary containing model parameters.
+        target_suffix (list of str): List of suffixes for target masks.
+        roi_params (dict): Contains ROI related parameters.
+        contrast_params (dict): Contains image contrasts related parameters.
+        slice_filter_params (dict): Contains slice_filter parameters, see :doc:`configuration_file` for more details.
+        slice_axis (string): Choice between "axial", "sagittal", "coronal" ; controls the axis used to extract the 2D
+            data.
+        multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
+            contrast is processed individually (ie different sample / tensor).
+        metadata_type (str): Choice between None, "mri_params", "contrasts".
+        dataset_type (str): Choice between "training", "validation" or "testing".
+        requires_undo (bool): If True, the transformations without undo_transform will be discarded.
+        object_detection_params (dict): Object dection parameters.
+        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
+            (to save memory).
     Returns:
         BidsDataset
+
+    Note: For more details on the parameters transform_params, target_suffix, roi_params, contrast_params,
+    slice_filter_params and object_detection_params see :doc:`configuration_file`.
     """
     # Compose transforms
     tranform_lst, _ = imed_transforms.preprare_transforms(transforms_params, requires_undo)
@@ -55,7 +64,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                 transform=tranform_lst,
                                 multichannel=multichannel,
                                 model_params=model_params,
-                                object_detection_params=object_detection_params)
+                                object_detection_params=object_detection_params,
+                                soft_gt=soft_gt)
 
     elif model_params["name"] == "HeMISUnet":
         dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
@@ -68,7 +78,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               metadata_choice=metadata_type,
                                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
                                               roi_suffix=roi_params["suffix"],
-                                              object_detection_params=object_detection_params)
+                                              object_detection_params=object_detection_params,
+                                              soft_gt=soft_gt)
     else:
         # Task selection
         task = "classification" if model_params["name"] in CLASSIFIER_LIST else "segmentation"
@@ -83,6 +94,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               transform=tranform_lst,
                               multichannel=multichannel,
                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
+                              soft_gt=soft_gt,
                               object_detection_params=object_detection_params,
                               task=task)
         dataset.load_filenames()
@@ -102,23 +114,39 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
 class SegmentationPair(object):
     """This class is used to build segmentation datasets. It represents
     a pair of of two data volumes (the input data and the ground truth data).
+
+    Args:
+        input_filenames (list of str): The input filename list (supported by nibabel). For single channel, the list will
+            contain 1 input filename.
+        gt_filenames (list of str): The ground-truth filenames list.
+        metadata (list): Metadata list with each item corresponding to an image (contrast) in input_filenames.
+            For single channel, the list will contain metadata related to one image.
+        cache (bool): If the data should be cached in memory or not.
+        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        prepro_transforms (dict): Output of get_preprocessing_transforms.
+        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
+             (to save memory).
+
+    Attributes:
+        input_filenames (list): List of input filenames.
+        gt_filenames (list): List of ground truth filenames.
+        metadata (dict): Dictionary containing metadata of input and gt.
+        cache (bool): If the data should be cached in memory or not.
+        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        prepro_transforms (dict): Transforms to be applied before training.
+        input_handle (list): List of input nifty data.
+        gt_handle (list): List of gt nifty data.
     """
 
-    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None):
-        """
-        Args:
-            input_filenames (list): the input filename list (supported by nibabel). For single channel, the list will
-                contain 1 input filename.
-            gt_filenames (list): the ground-truth filenames list.
-            metadata (list): metadata list with each item corresponding to an image (modality) in input_filenames.
-                For single channel, the list will contain metadata related to one image.
-            cache (bool): if the data should be cached in memory or not.
-        """
+    def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None,
+                 soft_gt=False):
+
         self.input_filenames = input_filenames
         self.gt_filenames = gt_filenames
         self.metadata = metadata
         self.cache = cache
         self.slice_axis = slice_axis
+        self.soft_gt = soft_gt
         self.prepro_transforms = prepro_transforms
 
         # list of the images
@@ -170,8 +198,7 @@ class SegmentationPair(object):
                 self.metadata.append(data)
 
     def get_pair_shapes(self):
-        """Return the tuple (input, ground truth) representing both the input
-        and ground truth shapes."""
+        """Return the tuple (input, ground truth) representing both the input and ground truth shapes."""
         input_shape = []
         for handle in self.input_handle:
             shape = imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis)
@@ -193,8 +220,7 @@ class SegmentationPair(object):
         return input_shape[0], gt_shape[0] if len(gt_shape) else None
 
     def get_pair_data(self):
-        """Return the tuble (input, ground truth) with the data content in
-        numpy array."""
+        """Return the tuple (input, ground truth) with the data content in numpy array."""
         cache_mode = 'fill' if self.cache else 'unchanged'
 
         input_data = []
@@ -211,7 +237,8 @@ class SegmentationPair(object):
             if gt is not None:
                 hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
                                                                 self.slice_axis)
-                gt_data.append(hwd_oriented.astype(np.uint8))
+                data_type = np.float32 if self.soft_gt else np.uint8
+                gt_data.append(hwd_oriented.astype(data_type))
             else:
                 gt_data.append(
                     np.zeros(imed_loader_utils.orient_shapes_hwd(self.input_handle[0].shape, self.slice_axis),
@@ -220,6 +247,15 @@ class SegmentationPair(object):
         return input_data, gt_data
 
     def get_pair_metadata(self, slice_index=0, coord=None):
+        """Return dictionary containing input and gt metadata.
+
+        Args:
+            slice_index (int): Index of 2D slice if 2D model is used, else 0.
+            coord (tuple or list): Coordinates of subvolume in volume if 3D model is used, else None.
+
+        Returns:
+            dict: Input and gt metadata.
+        """
         gt_meta_dict = []
         for gt in self.gt_handle:
             if gt is not None:
@@ -261,8 +297,8 @@ class SegmentationPair(object):
         """Return the specified slice from (input, ground truth).
 
         Args:
-            slice_index (int): the slice number
-            gt_type (string): choice between segmentation or classification, returns mask (array) or label (int) resp.
+            slice_index (int): Slice number.
+            gt_type (str): Choice between segmentation or classification, returns mask (array) or label (int) resp.
                 for the ground truth.
         """
 
@@ -307,21 +343,39 @@ class SegmentationPair(object):
 
 
 class MRI2DSegmentationDataset(Dataset):
-    """This is a generic class for 2D (slice-wise) segmentation datasets."""
+    """Generic class for 2D (slice-wise) segmentation dataset.
+
+    Args:
+        filename_pairs (list): a list of tuples in the format (input filename list containing all modalities,ground \
+            truth filename, ROI filename, metadata).
+        slice_axis (int): axis to make the slicing (default axial).
+        cache (bool): if the data should be cached in memory or not.
+        transform (torchvision.Compose): transformations to apply.
+        slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
+        task (str): choice between segmentation or classification. If classification: GT is discrete values, \
+            If segmentation: GT is binary mask.
+
+    Attributes:
+        indexes (list): List of indices corresponding to each slice or subvolume in the dataset.
+        filename_pairs (list): List of tuples in the format (input filename list containing all modalities,ground \
+            truth filename, ROI filename, metadata).
+        prepro_transforms (Compose): Transformations to apply before training.
+        transform (Compose): Transformations to apply during training.
+        cache (bool): Tf the data should be cached in memory or not.
+        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
+        n_contrasts (int): Number of input contrasts.
+        has_bounding_box (bool): True if bounding box in all metadata, else False.
+        task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
+            If segmentation: GT is binary mask.
+        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
+            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
+            space.
+
+    """
 
     def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None,
-                 task="segmentation"):
-        """
-        Args:
-            filename_pairs (list): a list of tuples in the format (input filename list containing all modalities,ground \
-                truth filename, ROI filename, metadata).
-            slice_axis (int): axis to make the slicing (default axial).
-            cache (bool): if the data should be cached in memory or not.
-            transform (torchvision.Compose): transformations to apply.
-            slice_filter_fn ():
-            task (string): choice between segmentation or classification. If classification: GT is discrete values, \
-                If segmentation: GT is binary mask.
-        """
+                 task="segmentation", soft_gt=False):
         self.indexes = []
         self.filename_pairs = filename_pairs
         self.prepro_transforms, self.transform = transform
@@ -329,16 +383,19 @@ class MRI2DSegmentationDataset(Dataset):
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
+        self.soft_gt = soft_gt
         self.has_bounding_box = True
         self.task = task
 
     def load_filenames(self):
+        """Load preprocessed pair data (input and gt) in handler."""
         for input_filenames, gt_filenames, roi_filename, metadata in self.filename_pairs:
             roi_pair = SegmentationPair(input_filenames, roi_filename, metadata=metadata, slice_axis=self.slice_axis,
                                         cache=self.cache, prepro_transforms=self.prepro_transforms)
 
             seg_pair = SegmentationPair(input_filenames, gt_filenames, metadata=metadata, slice_axis=self.slice_axis,
-                                        cache=self.cache, prepro_transforms=self.prepro_transforms)
+                                        cache=self.cache, prepro_transforms=self.prepro_transforms,
+                                        soft_gt=self.soft_gt)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
@@ -362,21 +419,16 @@ class MRI2DSegmentationDataset(Dataset):
                 self.indexes.append(item)
 
     def set_transform(self, transform):
-        """ This method will replace the current transformation for the
-        dataset.
-
-        :param transform: the new transformation
-        """
         self.transform = transform
 
     def __len__(self):
-        """Return the dataset size."""
         return len(self.indexes)
 
     def __getitem__(self, index):
-        """Return the specific index (input, ground truth, roi and metadatas).
+        """Return the specific processed data corresponding to index (input, ground truth, roi and metadata).
 
-        :param index: slice index.
+        Args:
+            index (int): Slice index.
         """
         seg_pair_slice, roi_pair_slice = self.indexes[index]
 
@@ -408,7 +460,7 @@ class MRI2DSegmentationDataset(Dataset):
                                                    metadata=metadata_gt,
                                                    data_type="gt")
             # Make sure stack_gt is binarized
-            if stack_gt is not None:
+            if stack_gt is not None and not self.soft_gt:
                 stack_gt = torch.as_tensor(
                     [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in
                      range(len(stack_gt))])
@@ -430,28 +482,25 @@ class MRI2DSegmentationDataset(Dataset):
 
 
 class MRI3DSubVolumeSegmentationDataset(Dataset):
-    """This is a generic class for 3D segmentation datasets. This class overload
-    MRI3DSegmentationDataset by splitting the initials volumes in several
+    """This is a class for 3D segmentation dataset. This class splits the initials volumes in several
     subvolumes. Each subvolumes will be of the sizes of the length parameter.
 
-    This class also implement a padding parameter, which overlap the borders of
-    the different (the borders of the upper-volume aren't superposed). For
-    example if you have a length of (32,32,32) and a padding of 16, your final
-    subvolumes will have a total lengths of (64,64,64) with the voxels contained
-    outside the core volume and which are shared with the other subvolumes.
+    This class also implement a stride parameter corresponding to the amount of voxels subvolumes are translated in
+    each dimension at every iteration.
 
     Be careful, the input's dimensions should be compatible with the given
-    lengths and paddings. This class doesn't handle missing dimensions.
+    lengths and strides. This class doesn't handle missing dimensions.
 
-    :param filename_pairs: a list of tuples in the format (input filename,
-                           ground truth filename).
-    :param cache: if the data should be cached in memory or not.
-    :param transform: transformations to apply.
-    :param length: size of each dimensions of the subvolumes
-    :param padding: size of the overlapping per subvolume and dimensions
+    Args:
+        filename_pairs (list): A list of tuples in the format (input filename, ground truth filename).
+        transform (Compose): Transformations to apply.
+        length (tuple): Size of each dimensions of the subvolumes, length equals 3.
+        stride (tuple): Size of the overlapping per subvolume and dimensions, length equals 3.
+        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
     """
 
-    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0):
+    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
+                 soft_gt=False):
         self.filename_pairs = filename_pairs
         self.handlers = []
         self.indexes = []
@@ -460,13 +509,16 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         self.prepro_transforms, self.transform = transform
         self.slice_axis = slice_axis
         self.has_bounding_box = True
+        self.soft_gt = soft_gt
 
         self._load_filenames()
         self._prepare_indices()
 
     def _load_filenames(self):
+        """Load preprocessed pair data (input and gt) in handler."""
         for input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
-            segpair = SegmentationPair(input_filename, gt_filename, metadata=metadata, slice_axis=self.slice_axis)
+            segpair = SegmentationPair(input_filename, gt_filename, metadata=metadata, slice_axis=self.slice_axis,
+                                       soft_gt=self.soft_gt)
             input_data, gt_data = segpair.get_pair_data()
             metadata = segpair.get_pair_metadata()
             seg_pair = {
@@ -489,6 +541,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             self.handlers.append((seg_pair, roi_pair))
 
     def _prepare_indices(self):
+        """Stores coordinates of subvolumes for training."""
         for i in range(0, len(self.handlers)):
             segpair, _ = self.handlers[i]
             input_img = self.handlers[i][0]['input']
@@ -522,7 +575,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
     def __getitem__(self, index):
         """Return the specific index pair subvolume (input, ground truth).
 
-        :param index: subvolume index.
+        Args:
+            index (int): Subvolume index.
         """
         coord = self.indexes[index]
         seg_pair, _ = self.handlers[coord['handler_index']]
@@ -545,7 +599,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                                metadata=metadata_gt,
                                                data_type="gt")
         # Make sure stack_gt is binarized
-        if stack_gt is not None:
+        if stack_gt is not None and not self.soft_gt:
             stack_gt = torch.as_tensor(
                 [imed_postpro.threshold_predictions(stack_gt[i_label, :], thr=0.1) for i_label in range(len(stack_gt))])
 
@@ -582,9 +636,27 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
+    """ BIDS specific dataset loader for 3D dataset.
+
+    Args:
+        root_dir (str): Path to the BIDS dataset.
+        subject_lst (list): Subject names list.
+        target_suffix (list): List of suffixes for target masks.
+        model_params (dict): Dictionary containing model parameters.
+        contrast_params (dict): Contains image contrasts related parameters.
+        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        cache (bool): If the data should be cached in memory or not.
+        transform (list): Transformation list (length 2) composed of preprocessing transforms (Compose) and transforms
+            to apply during training (Compose).
+        metadata_choice: Choice between "mri_params", "contrasts", None or False, related to FiLM.
+        roi_suffix (list): List of suffixes for ROI masks.
+        multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
+            contrast is processed individually (ie different sample / tensor).
+        object_detection_params (dict): Object dection parameters.
+    """
     def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_suffix=None,
-                 multichannel=False, object_detection_params=None):
+                 multichannel=False, object_detection_params=None, soft_gt=False):
         dataset = BidsDataset(root_dir,
                               subject_lst=subject_lst,
                               target_suffix=target_suffix,
@@ -597,16 +669,45 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               object_detection_params=object_detection_params)
 
         super().__init__(dataset.filename_pairs, length=model_params["length_3D"], stride=model_params["stride_3D"],
-                         transform=transform, slice_axis=slice_axis)
+                         transform=transform, slice_axis=slice_axis, soft_gt=soft_gt)
 
 
 class BidsDataset(MRI2DSegmentationDataset):
+    """ BIDS specific dataset loader.
+
+    Args:
+        root_dir (str): Path to the BIDS dataset.
+        subject_lst (list): Subject names list.
+        target_suffix (list): List of suffixes for target masks.
+        contrast_params (dict): Contains image contrasts related parameters.
+        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        cache (bool): If the data should be cached in memory or not.
+        transform (list): Transformation list (length 2) composed of preprocessing transforms (Compose) and transforms
+            to apply during training (Compose).
+        metadata_choice (str): Choice between "mri_params", "contrasts", None or False, relatec to FiLM.
+        slice_filter_fn (SliceFilter): Class that filters slices according to their content.
+        roi_suffix (list): List of suffixes for ROI masks.
+        multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
+            contrast is processed individually (ie different sample / tensor).
+        object_detection_params (dict): Object dection parameters.
+        task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
+            If segmentation: GT is binary mask.
+        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
+            (to save memory).
+
+    Attributes:
+        bids_ds (BIDS): BIDS dataset.
+        filename_pairs (list): A list of tuples in the format (input filename list containing all modalities,ground \
+            truth filename, ROI filename, metadata).
+        metadata (dict): Dictionary containing FiLM metadata.
+
+    """
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
-                 multichannel=False, object_detection_params=None, task="segmentation"):
+                 multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 
         self.bids_ds = bids.BIDS(root_dir)
-
+        self.soft_gt = soft_gt
         self.filename_pairs = []
         if metadata_choice == 'mri_params':
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
@@ -706,4 +807,4 @@ class BidsDataset(MRI2DSegmentationDataset):
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
 
-        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task)
+        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task, self.soft_gt)

@@ -38,6 +38,8 @@ import ivadomed.scripts.visualize_transforms
 import ivadomed.scripts.convert_to_onnx
 import ivadomed.scripts.automate_training
 import ivadomed.scripts.compare_models
+import ivadomed.scripts.prepare_dataset_vertebral_labeling as prepare_dataset_vertebral_labeling
+import ivadomed.scripts.extract_small_dataset
 
 
 source_suffix = '.rst'
@@ -46,6 +48,33 @@ source_suffix = '.rst'
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'
+
+# -- Extensions to the  Napoleon GoogleDocstring class ---------------------
+
+from sphinx.ext.napoleon.docstring import GoogleDocstring
+
+# first, we define new methods for any new sections and add them to the class
+def parse_keys_section(self, section):
+    return self._format_fields('Keys', self._consume_fields())
+GoogleDocstring._parse_keys_section = parse_keys_section
+
+def parse_attributes_section(self, section):
+    return self._format_fields('Attributes', self._consume_fields())
+GoogleDocstring._parse_attributes_section = parse_attributes_section
+
+def parse_class_attributes_section(self, section):
+    return self._format_fields('Class Attributes', self._consume_fields())
+GoogleDocstring._parse_class_attributes_section = parse_class_attributes_section
+
+# we now patch the parse method to guarantee that the the above methods are
+# assigned to the _section dict
+def patched_parse(self):
+    self._sections['keys'] = self._parse_keys_section
+    self._sections['class attributes'] = self._parse_class_attributes_section
+    self._unpatched_parse()
+GoogleDocstring._unpatched_parse = GoogleDocstring._parse
+GoogleDocstring._parse = patched_parse
+
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -138,6 +167,9 @@ pygments_style = 'sphinx'
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
+
+# If false. removes the module names for functions (e.g., ivadomed.module.function becomes function)
+add_module_names = False
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -258,3 +290,4 @@ html_css_files = ['css/custom.css']
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'ivadomed-doc'
+

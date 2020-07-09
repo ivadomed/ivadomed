@@ -21,6 +21,16 @@ log\_directory
 Folder name that will contain the output files (e.g., trained model,
 predictions, results).
 
+model\_name
+^^^^^^^^^^^^^^
+
+Folder name containing the trained model (ONNX format) and its configuration
+file, located within ``"log_directory/"``, eg
+``"log_directory/seg_gm_t2star/seg_gm_t2star.onnx"`` and
+``"log_directory/seg_gm_t2star/seg_gm_t2star.json"``, respectively. When
+possible, the folder name will follow the following convention:
+``task_(animal)_region_(contrast)``.
+
 debugging
 ^^^^^^^^^
 
@@ -94,6 +104,14 @@ the slice will be discarded from the dataset. This feature helps with
 noisy labels, e.g., if a slice contains only 2-3 labeled voxels, we do
 not want to use these labels to crop the image. This parameter is only
 considered when using ``"ROICrop"``.
+
+soft_gt
+^^^^^^^^^^
+
+Bool. Indicates if a soft mask will be used as ground-truth to train
+and / or evaluate a model. In particular, the masks are not binarized
+after interpolations implied by preprocessing or data-augmentation operations.
+
 
 Split dataset
 -------------
@@ -300,7 +318,11 @@ Cascaded Architecture Features
 object\_detection\_params (Optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
--  ``object_detection_path``: String. Path to object detection model.
+-  ``object_detection_path``: String. Path to object detection model and 
+   the configuration file. The folder, configuration file, and model need 
+   to have the same name (e.g. ``findcord_tumor/``, 
+   ``findcord_tumor/findcord_tumor.json``, and 
+   ``findcord_tumor/findcord_tumor.onnx``, respectively).
    The model's prediction will be used to generate bounding boxes.
 -  ``safety_factor``: List. List of length 3 containing the factors to
    multiply each dimension of the bounding box. Ex: If the original
