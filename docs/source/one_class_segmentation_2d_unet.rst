@@ -7,7 +7,14 @@ This tutorial illustrates the following features:
 Download dataset
 -----------------
 
-# TODO
+A sample dataset of spinal cord segmentation is available on `GitHub <https://github.com/ivadomed/data_spinegeneric_registered>`_. Three contrasts are available for each patient: T1w, T2w and T2star.
+
+To download the dataset, perform these command lines in your terminal::
+
+    curl -o ivadomed_spinegeneric_registered.zip -L https://github.com/ivadomed/data_spinegeneric_registered/archive/master.zip
+
+    unzip ivadomed_spinegeneric_registered.zip
+
 
 Create and fill your configuration file
 ----------------------------------------
@@ -15,6 +22,7 @@ Examples of configuration files are available in the `ivadomed/config/` folder a
 available in :doc:`configuration_file`.
 
 We are highlighting here below some key parameters to perform a one-class 2D segmentation training:
+
 - To run a training, use the parameter `command`::
 
     "command": "train"
