@@ -4,7 +4,7 @@ Scripts
 This section contains a collection of useful scripts for quality control during
 the training of models.
 
-visualize_transforms
+Visualize_transforms
 """"""""""""""""""""
 
 .. autofunction:: ivadomed.scripts.visualize_transforms.run_visualization
