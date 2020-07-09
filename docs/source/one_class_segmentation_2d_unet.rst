@@ -7,7 +7,7 @@ This tutorial illustrates the following features:
 Download dataset
 -----------------
 
-A sample dataset of spinal cord segmentation is available on `GitHub <https://github.com/ivadomed/data_spinegeneric_registered>`_. Three contrasts are available for each patient: T1w, T2w and T2star.
+A sample dataset of spinal cord segmentation is available on `GitHub <https://github.com/ivadomed/data_spinegeneric_registered>`_. Three contrasts are available for each patient: T1w, T2w and T2star. All images are registered.
 
 To download the dataset, perform these command lines in your terminal::
 
@@ -27,7 +27,7 @@ We are highlighting here below some key parameters to perform a one-class 2D seg
 
     "command": "train"
 
-- Indicate the location of your BIDS dataset with `bids_path`::
+- Indicate the location of your BIDS dataset with `bids_path`. If you downloaded the sample dataset using the lines mentioned above, the bids path should finish by "data_spinegeneric_registered-master"::
 
     "bids_path": "path/to/bids/dataset"
 
@@ -38,8 +38,8 @@ We are highlighting here below some key parameters to perform a one-class 2D seg
 - Specify the contrast(s) of interest::
 
     "contrast_params": {
-        "training_validation": ["T1w", "T2w"],
-        "testing": ["T1w", "T2w"],
+        "training_validation": ["T1w", "T2w", "T2star"],
+        "testing": ["T1w", "T2w", "T2star"],
         "balance": {}
     }
 - Indicate the 2D slice orientation::
