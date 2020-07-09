@@ -152,7 +152,6 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
         n_iterations (int): Controls the number of time that each experiment (ie set of parameter) are run.
                             Flag: --n_iteration, -n
         run_test (bool): If True, the trained model is also run on the testing subdataset. flag: --run_test
-
     """
     # Load initial config
     with open(config, "r") as fhandle:
