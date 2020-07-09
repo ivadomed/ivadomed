@@ -51,7 +51,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
     slice_filter_params and object_detection_params see :doc:`configuration_file`.
     """
     # Compose transforms
-    tranform_lst, _ = imed_transforms.preprare_transforms(transforms_params, requires_undo)
+    tranform_lst, _ = imed_transforms.preprare_transforms(copy.deepcopy(transforms_params), requires_undo)
 
     if model_params["name"] == "UNet3D":
         dataset = Bids3DDataset(bids_path,
@@ -102,6 +102,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
     # if ROICrop in transform, then apply SliceFilter to ROI slices
     if 'ROICrop' in transforms_params:
         dataset = imed_loader_utils.filter_roi(dataset, nb_nonzero_thr=roi_params["slice_filter_roi"])
+
+    dataset.apply_preprocessing()
 
     if model_params["name"] != "UNet3D":
         print("Loaded {} {} slices for the {} set.".format(len(dataset), slice_axis, dataset_type))
@@ -413,10 +415,19 @@ class MRI2DSegmentationDataset(Dataset):
                 # Note: we force here gt_type=segmentation since ROI slice is needed to Crop the image
                 slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice, gt_type="segmentation")
 
-                item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
-                                                                      slice_seg_pair,
-                                                                      slice_roi_pair)
+        #        item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+        #                                                              slice_seg_pair,
+        #                                                              slice_roi_pair)
+                item = (slice_seg_pair, slice_roi_pair)
                 self.indexes.append(item)
+
+    def apply_preprocessing(self):
+        for idx, item in enumerate(self.indexes):
+            seg_pair_slice, roi_pair_slice = item
+            item_preprocessed = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                                                                              seg_pair_slice,
+                                                                              roi_pair_slice)
+            self.indexes[idx] = item_preprocessed
 
     def set_transform(self, transform):
         self.transform = transform
