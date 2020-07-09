@@ -2,7 +2,12 @@ One-class segmentation with 2D U-Net
 ========================================
 
 This tutorial illustrates the following features:
-- XX, XX, XX
+
+- Training of a segmentation model (U-Net 2D) with a single label on multiple contrasts.
+
+- Testing of a trained model.
+
+- Visualization of the outputs of a trained model.
 
 Download dataset
 -----------------
