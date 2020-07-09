@@ -149,4 +149,8 @@ The test image segmentations are store in `<log_directory>/pred_masks` and have 
 
     fsleyes path/to/input/image.nii.gz path/to/pred_masks/subject_id_contrast_pred.nii.gz
 
+After the training for 100 epochs, the segmentations should be similar to the one presented in the following image. The output and ground truth segmentations of the spinal cord are presented in red (subject `sub-hamburg01` with contrast T2w):
+
+.. image:: ../../images/sc_prediction.png
+
 
