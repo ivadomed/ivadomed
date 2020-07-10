@@ -26,7 +26,7 @@ Create and fill your configuration file
 Examples of configuration files are available in the `ivadomed/config/` folder and the parameter documentation is
 available in :doc:`configuration_file`.
 
-We are highlighting here below some key parameters to perform a one-class 2D segmentation training. The file located in `ivadomed/config/config.json` is a good starting point for this tutorial.
+We are highlighting here below some key parameters to perform a one-class 2D segmentation training. In this tutorial, we will use the configuration file: `ivadomed/config/config.json`.
 
 - To run a training, use the parameter `command`::
 
@@ -61,7 +61,7 @@ Once the configuration file is filled, you can run the training by launching::
 
     ivadomed path/to/config/file.json
 
-The main parameters of the model will be displayed in the  terminal, followed by the loss value on training and validation sets at every epoch. To know more about the meaning of each parameter, go to :doc:`configuration_file`. The value of the loss should decrease during the training.
+The main parameters of the training scheme and model will be displayed in the  terminal, followed by the loss value on training and validation sets at every epoch. To know more about the meaning of each parameter, go to :doc:`configuration_file`. The value of the loss should decrease during the training.
 
 .. code-block:: console
 
@@ -104,7 +104,7 @@ The main parameters of the model will be displayed in the  terminal, followed by
     Epoch 1 training loss: -0.0420.                                                                                                                                                                             
     Epoch 1 validation loss: -0.0507.  
 
-After 100 epochs on the spinal cord segmentation dataset provided, the dice score on the validation set should be ~90%. It is recommended to do the training on GPU, but if no GPUs are available, the training will be run on CPU.
+After 100 epochs (see `num_epochs` in the configuration file) on the provided spinal cord segmentation dataset, the dice score on the validation set should be ~90%. It is recommended to do the training on GPU, but if no GPUs are available, the training will be run on CPU.
 
 Evaluate model performance on the testing sub-dataset
 -----------------------------------------------------
