@@ -8,7 +8,7 @@
         "object_detection_path": null
     },
     "loader_parameters": {
-        "bids_path": "../dataset/data_spinegeneric_registered-master",
+        "bids_path": "../data_spinegeneric_registered-master",
         "target_suffix": ["_seg-manual"],
         "roi_params": {
             "suffix": null,
