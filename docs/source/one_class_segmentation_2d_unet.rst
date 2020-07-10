@@ -23,20 +23,20 @@ To download the dataset, please run the following command lines in your terminal
 
 Create and fill your configuration file
 ----------------------------------------
-Examples of configuration files are available in the `ivadomed/config/` folder and the parameter documentation is
+Examples of configuration files are available in the ``ivadomed/config/`` folder and the parameter documentation is
 available in :doc:`configuration_file`.
 
-We are highlighting here below some key parameters to perform a one-class 2D segmentation training. In this tutorial, we will use the configuration file: `ivadomed/config/config.json`.
+We are highlighting here below some key parameters to perform a one-class 2D segmentation training. In this tutorial, we will use the configuration file: ``ivadomed/config/config.json``.
 
-- To run a training, use the parameter `command`::
+- To run a training, use the parameter ``"command"``::
 
     "command": "train"
 
-- Indicate the location of your BIDS dataset with `bids_path`. If you downloaded the sample dataset using the lines mentioned above, the bids path should finish by "data_spinegeneric_registered-master"::
+- Indicate the location of your BIDS dataset with ``"bids_path"``. If you downloaded the sample dataset using the lines mentioned above, the `bids_path` should lead towards this folder, e.g. ``"../data_spinegeneric_registered-master"`` if you download the data in the ``ivadomed`` folder::
 
     "bids_path": "path/to/bids/dataset"
 
-- List the target structure by indicating the suffix of its mask in the `derivatives/labels` folder. For a one-class segmentation with our example dataset::
+- List the target structure by indicating the suffix of its mask in the ``"derivatives/labels"`` folder. For a one-class segmentation with our example dataset::
 
     "target_suffix": ["_seg-manual"]
 
@@ -51,7 +51,7 @@ We are highlighting here below some key parameters to perform a one-class 2D seg
 
     "slice_axis": "axial"
 
-- To perform a multi-channel training (i.e. each sample has several channels, where each channel is an image contrast), then set `multichannel` to `true`. Otherwise, only one image contrast is used per sample. Note: the multichannel approach requires the different image contrasts to be registered together. In this tutorial, only one channel will be used::
+- To perform a multi-channel training (i.e. each sample has several channels, where each channel is an image contrast), then set ``"multichannel"`` to ``true``. Otherwise, only one image contrast is used per sample. Note: the multichannel approach requires the different image contrasts to be registered together. In this tutorial, only one channel will be used::
 
     "multichannel": false
 
@@ -104,11 +104,11 @@ The main parameters of the training scheme and model will be displayed in the  t
     Epoch 1 training loss: -0.0420.                                                                                                                                                                             
     Epoch 1 validation loss: -0.0507.  
 
-After 100 epochs (see `num_epochs` in the configuration file) on the provided spinal cord segmentation dataset, the dice score on the validation set should be ~90%. It is recommended to do the training on GPU, but if no GPUs are available, the training will be run on CPU.
+After 100 epochs (see ``"num_epochs"`` in the configuration file) on the provided spinal cord segmentation dataset, the dice score on the validation set should be ~90%. It is recommended to do the training on GPU, but if no GPUs are available, the training will be run on CPU.
 
 Evaluate model performance on the testing sub-dataset
 -----------------------------------------------------
-In order to test the trained model on the testing sub-dataset and compute evaluation metrics, open your config file and set `command` to `eval`::
+In order to test the trained model on the testing sub-dataset and compute evaluation metrics, open your config file and set ``"command"`` to ``"eval"``::
 
     "command": "eval"
 
@@ -145,12 +145,10 @@ The model's parameters will be displayed in the terminal, followed by a preview 
     [5 rows x 16 columns]
 
 
-The test image segmentations are store in `<log_directory>/pred_masks` and have the same name as the input image with the suffix `_pred`. To visualize the segmentation of a given subject, you can use any Nifti image viewer. For FSLeyes user, this command-line will open the input image with its segmentation overlayed::
+The test image segmentations are store in ``"<log_directory>/pred_masks"`` and have the same name as the input image with the suffix `_pred`. To visualize the segmentation of a given subject, you can use any Nifti image viewer. For FSLeyes user, this command-line will open the input image with its segmentation overlayed::
 
     fsleyes path/to/input/image.nii.gz path/to/pred_masks/subject_id_contrast_pred.nii.gz -cm red -a 0.5
 
 After the training for 100 epochs, the segmentations should be similar to the one presented in the following image. The output and ground truth segmentations of the spinal cord are presented in red (subject `sub-hamburg01` with contrast T2w):
 
 .. image:: ../../images/sc_prediction.png
-
-
