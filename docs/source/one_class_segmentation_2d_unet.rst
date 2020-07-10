@@ -5,7 +5,7 @@ This tutorial illustrates the following features:
 
 - Training of a segmentation model (U-Net 2D) with a single label on multiple contrasts.
 
-- Testing of a trained model.
+- Testing of a trained model and computation of 3D evaluation metrics.
 
 - Visualization of the outputs of a trained model.
 
