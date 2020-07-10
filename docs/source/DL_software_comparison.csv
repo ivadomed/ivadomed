@@ -1,0 +1,9 @@
+**Name**,**Repository**,**BIDS**,**DL base library**,"**Task (segmentation, detection, classification)**",**Data dimension**,**Multichannel / Multilabel**,**Uncertainty**,**Transfer Learning**,**Pre-processing tools**,**Post-processing tools**,**User case examples**,**Multi-GPU data parallelism**,**Perfomance report**,**Input region of interest**,**Missing modality**,**Model performance comparison**,**Automatic hyperparameter optimisation**,"""name"" (paper or repo) ",Packaged multi-center models 
+ivadomed,https://github.com/neuropoly/ivado-medical-imaging,Y,PyTorch,"Segmentation, detection","2D, 3D",Y,Y,Y,Y,Y,N,N,Y,Y,Y,Y,Y,,Y
+monai,https://github.com/Project-MONAI/MONAI,N,PyTorch,"Segmentation, Classification","2D,3D",Y,,N,Y,N,Y,Y,,,,,,Medical Open Network for AI,
+delira,https://github.com/justusschock/delira,N,PyTorch and TensorFlow,,More about backend/not relevant,N,N,Gives Dataset ?,N,N,Y,Y,,,,,,Delira: A High-Level Framework for Deep Learning in Medical Image Analysis,
+MIC-DKFZ,https://github.com/MIC-DKFZ/medicaldetectiontoolkit,N,Torch,Detection,"2D,3D",N,N,N,N,N,N,N,,,,,,,
+ANTsPyNet,https://github.com/ANTsX/ANTsPyNet,,Kears (backend TF),"Classification, segmentation,clustering, GAN, registration, super-resolution, autoencoder","2D,3D",,N,N,N,N,Y (not really clear though),N,,,,,,,
+DLTK,https://github.com/DLTK/DLTK,,Tensorflow,"Classification, segmentation, GAN, registration, super-resolution, autoencoder",3D,Multilabel,N,Y,N,,Y,,,,,,,,
+MIScnn,https://github.com/frankkramer-lab/MIScnn,,Tensorflow/Keras,Segmentation,"2D,3D",Multilabel,N,,Y,Y,N,,,,,,,,
+niftytorch,https://niftytorch.github.io/doc/,,Torch,Classificication /segmentation ,2D,,,,,,Y,,,,,,Y,,

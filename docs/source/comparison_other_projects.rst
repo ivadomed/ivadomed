@@ -5,3 +5,6 @@ We acknowledge the existence of similar projects. The specificity of
 ``ivadomed`` is highlighted in the table below:
 
 .. note:: ``TODO: Add comparative table``
+
+.. csv-table:: comparison
+   :file: DL_software_comparison.csv
