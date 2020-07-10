@@ -147,7 +147,7 @@ The model's parameters will be displayed in the terminal, followed by a preview 
 
 The test image segmentations are store in `<log_directory>/pred_masks` and have the same name as the input image with the suffix `_pred`. To visualize the segmentation of a given subject, you can use any Nifti image viewer. For FSLeyes user, this command-line will open the input image with its segmentation overlayed::
 
-    fsleyes path/to/input/image.nii.gz path/to/pred_masks/subject_id_contrast_pred.nii.gz
+    fsleyes path/to/input/image.nii.gz path/to/pred_masks/subject_id_contrast_pred.nii.gz -cm red -a 0.5
 
 After the training for 100 epochs, the segmentations should be similar to the one presented in the following image. The output and ground truth segmentations of the spinal cord are presented in red (subject `sub-hamburg01` with contrast T2w):
 
