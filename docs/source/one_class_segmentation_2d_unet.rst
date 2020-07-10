@@ -12,9 +12,9 @@ This tutorial illustrates the following features:
 Download dataset
 -----------------
 
-A sample dataset of spinal cord segmentation is available on `GitHub <https://github.com/ivadomed/data_spinegeneric_registered>`_. Three contrasts are available for each patient: T1w, T2w and T2star. All images are registered.
+A small dataset dedicated to spinal cord segmentation on MRI data is available on `GitHub <https://github.com/ivadomed/data_spinegeneric_registered>`_. Six contrasts are available for each subject. All images were registered on the GRE-T1w contrast.
 
-To download the dataset, perform these command lines in your terminal::
+To download the dataset, please run the following command lines in your terminal::
 
     curl -o ivadomed_spinegeneric_registered.zip -L https://github.com/ivadomed/data_spinegeneric_registered/archive/master.zip
 
