@@ -1,28 +1,34 @@
 One-class segmentation with 2D U-Net
-========================================
+====================================
 
-This tutorial illustrates the following features:
+In this tutorial we will learn the following features:
 
-- Training of a segmentation model (U-Net 2D) with a single label on multiple contrasts.
+- Training of a segmentation model (U-Net 2D) with a single label on multiple contrasts,
 
 - Testing of a trained model and computation of 3D evaluation metrics.
 
 - Visualization of the outputs of a trained model.
 
+
 Download dataset
------------------
+----------------
 
-A small dataset dedicated to spinal cord segmentation on MRI data is available on `GitHub <https://github.com/ivadomed/data_spinegeneric_registered>`_. Six contrasts are available for each subject. All images were registered on the GRE-T1w contrast.
+We will use a publicly-available dataset consisting of MRI data of the spinal cord. This dataset is a subset of the
+`spine-generic multi-center dataset <https://github.com/spine-generic/data-multi-subject>`_ and has been pre-processed
+to facilitate training/testing of a new model. Namely, for each subject, all six contrasts were co-registered together,
+and semi-manual cord segmentation label was created. More details
+`here <https://github.com/ivadomed/ivadomed/blob/master/dev/prepare_data/README.md>`_.
 
-To download the dataset, please run the following command lines in your terminal::
+To download the dataset (~450MB), run the following commands in your terminal:
 
-    curl -o ivadomed_spinegeneric_registered.zip -L https://github.com/ivadomed/data_spinegeneric_registered/archive/master.zip
+.. code-block:: bash
 
-    unzip ivadomed_spinegeneric_registered.zip
+   curl -o ivadomed_spinegeneric_registered.zip -L https://github.com/ivadomed/data_spinegeneric_registered/archive/master.zip
+   unzip ivadomed_spinegeneric_registered.zip
 
 
 Create and fill your configuration file
-----------------------------------------
+---------------------------------------
 Examples of configuration files are available in the ``ivadomed/config/`` folder and the parameter documentation is
 available in :doc:`../configuration_file`.
 
