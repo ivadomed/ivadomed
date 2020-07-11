@@ -23,7 +23,7 @@ To download the dataset (~450MB), run the following commands in your terminal:
 
 .. code-block:: bash
 
-   curl -o ivadomed_spinegeneric_registered.zip -L https://github.com/ivadomed/data_spinegeneric_registered/archive/master.zip
+   curl -o ivadomed_spinegeneric_registered.zip -L https://github.com/ivadomed/data_spinegeneric_registered/releases/download/r20200907/data_spinegeneric_registered-r20200907.zip
    unzip ivadomed_spinegeneric_registered.zip
 
 
