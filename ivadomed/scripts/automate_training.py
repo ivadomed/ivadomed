@@ -142,7 +142,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             parameters (defined in `param` file) are modified across experiments. Flag: --config, -c
         param (string): json file containing parameters configurations to compare. Parameter "keys" of this file
             need to match the parameter "keys" of `config` file. Parameter "values" are in a list. Flag: --param, -p
-             Example::
+            Example::
 
                 "default_model": {"depth": [2, 3, 4]}
 

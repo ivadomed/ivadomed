@@ -489,9 +489,9 @@ class DilateGT(ImedTransform):
 
     Args:
         dilation_factor (float): Controls the number of dilation iterations. For each individual lesion, the number of
-            dilation iterations is computed as follows:
-                nb_it = int(round(dilation_factor * sqrt(lesion_area)))
-            If dilation_factor <= 0, then no dilation will be performed.
+        dilation iterations is computed as follows:
+            nb_it = int(round(dilation_factor * sqrt(lesion_area)))
+        If dilation_factor <= 0, then no dilation will be performed.
     """
 
     def __init__(self, dilation_factor):
@@ -925,12 +925,13 @@ class Clahe(ImedTransform):
     """ Applies Contrast Limited Adaptive Histogram Equalization for enhancing the local image contrast.
 
     .. seealso::
-        Zuiderveld, Karel. "Contrast limited adaptive histogram equalization." Graphics gems (1994): 474-485.
+       Zuiderveld, Karel. "Contrast limited adaptive histogram equalization." Graphics gems (1994): 474-485.
 
-    Default values are based on::
+    Default values are based on:
+
     .. seealso::
-        Zheng, Qiao, et al. "3-D consistent and robust segmentation of cardiac images by deep learning with spatial
-        propagation." IEEE transactions on medical imaging 37.9 (2018): 2137-2148.
+       Zheng, Qiao, et al. "3-D consistent and robust segmentation of cardiac images by deep learning with spatial
+       propagation." IEEE transactions on medical imaging 37.9 (2018): 2137-2148.
 
     Args:
         clip_limit (float): Clipping limit, normalized between 0 and 1.
