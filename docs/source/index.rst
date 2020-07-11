@@ -35,7 +35,8 @@ The purpose of the ``ivadomed`` project is to:
    :maxdepth: 1
    :caption: Tutorials
 
-    01_one_class_segmentation_2d_unet.rst
+   01_one_class_segmentation_2d_unet.rst
+   tutorials.rst
 
 .. toctree::
    :maxdepth: 1

@@ -203,9 +203,10 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
 
     Structure-wise uncertainty from N MC probability maps (`fname_lst`) and saved in `fname_out` with the following
     suffixes:
-       - '-cv.nii.gz': coefficient of variation
-       - '-iou.nii.gz': intersection over union
-       - '-avgUnc.nii.gz': average voxel-wise uncertainty within the structure.
+
+        * '-cv.nii.gz': coefficient of variation
+        * '-iou.nii.gz': intersection over union
+        * '-avgUnc.nii.gz': average voxel-wise uncertainty within the structure.
 
     Args:
         fname_lst (list of str): List of the Monte Carlo samples.
@@ -375,7 +376,7 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
         folder_model (str): foldername which contains
             (1) the model ('folder_model/folder_model.pt') to use
             (2) its configuration file ('folder_model/folder_model.json') used for the training,
-                see https://github.com/neuropoly/ivadomed/wiki/configuration-file
+            see https://github.com/neuropoly/ivadomed/wiki/configuration-file
         fname_image (str): image filename (e.g. .nii.gz) to segment.
         fname_prior (str): Image filename (e.g. .nii.gz) containing processing information (e.i. spinal cord
             segmentation, spinal location or MS lesion classification)
