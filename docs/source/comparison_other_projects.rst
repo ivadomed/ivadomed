@@ -8,3 +8,5 @@ inconsistencies, please let us know by `opening an issue <https://github.com/iva
 
 .. csv-table:: comparison
    :file: comparison_other_projects_table.csv
+
+(*): `Brain Imaging Data Structure <https://bids.neuroimaging.io/>`_
