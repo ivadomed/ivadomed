@@ -24,7 +24,7 @@ To download the dataset, please run the following command lines in your terminal
 Create and fill your configuration file
 ----------------------------------------
 Examples of configuration files are available in the ``ivadomed/config/`` folder and the parameter documentation is
-available in :doc:`configuration_file`.
+available in :doc:`../configuration_file`.
 
 We are highlighting here below some key parameters to perform a one-class 2D segmentation training. In this tutorial, we will use the configuration file: ``ivadomed/config/config.json``.
 
@@ -61,7 +61,9 @@ Once the configuration file is filled, you can run the training by launching::
 
     ivadomed path/to/config/file.json
 
-The main parameters of the training scheme and model will be displayed in the  terminal, followed by the loss value on training and validation sets at every epoch. To know more about the meaning of each parameter, go to :doc:`configuration_file`. The value of the loss should decrease during the training.
+The main parameters of the training scheme and model will be displayed in the  terminal, followed by the loss value
+on training and validation sets at every epoch. To know more about the meaning of each parameter, go to
+:doc:`../configuration_file`. The value of the loss should decrease during the training.
 
 .. code-block:: console
 
@@ -151,4 +153,4 @@ The test image segmentations are store in ``"<log_directory>/pred_masks"`` and h
 
 After the training for 100 epochs, the segmentations should be similar to the one presented in the following image. The output and ground truth segmentations of the spinal cord are presented in red (subject `sub-hamburg01` with contrast T2w):
 
-.. image:: ../../images/sc_prediction.png
+.. image:: ../../../images/sc_prediction.png
