@@ -23,26 +23,46 @@ To download the dataset (~450MB), run the following commands in your terminal:
 
 .. code-block:: bash
 
-   curl -o ivadomed_spinegeneric_registered.zip -L https://github.com/ivadomed/data_spinegeneric_registered/releases/download/r20200907/data_spinegeneric_registered-r20200907.zip
-   unzip ivadomed_spinegeneric_registered.zip
+  # Download data
+  curl -o ivadomed_spinegeneric_registered.zip -L https://github.com/ivadomed/data_spinegeneric_registered/releases/download/r20200907/data_spinegeneric_registered-r20200907.zip
+  unzip ivadomed_spinegeneric_registered.zip
+  # Rename folder
+  mv ivadomed-data_spinegeneric_registered* data_spinegeneric_registered
 
 
 Create and fill your configuration file
 ---------------------------------------
-Examples of configuration files are available in the ``ivadomed/config/`` folder and the parameter documentation is
-available in :doc:`../configuration_file`.
 
-We are highlighting here below some key parameters to perform a one-class 2D segmentation training. In this tutorial, we will use the configuration file: ``ivadomed/config/config.json``.
+In ``ivadomed``, training is orchestrated by a configuration file. Examples of configuration files are available in
+the ``ivadomed/config/`` and the documentation is available in :doc:`../configuration_file`.
 
-- To run a training, use the parameter ``"command"``::
+In this tutorial we will use the configuration file: ``ivadomed/config/config.json``.
+First off, copy this configuration file in your local directory (to avoid modifying the source file):
+
+.. code-block:: bash
+
+  cp <PATH_TO_IVADOMED>/ivadomed/config/config.json .
+
+Then, open it with a text editor. Below we will discuss some of the key parameters to perform a one-class 2D
+segmentation training.
+
+- ``command`` indicates the action. Here, we want to train a model, so we set the fiels as follows:
+
+  .. code-block:: xml
 
     "command": "train"
 
-- Indicate the location of your BIDS dataset with ``"bids_path"``. If you downloaded the sample dataset using the lines mentioned above, the `bids_path` should lead towards this folder, e.g. ``"../data_spinegeneric_registered-master"`` if you download the data in the ``ivadomed`` folder::
+- ``loader_parameters:bids_path`` sets the location of the dataset. As discussed in :doc:`../data`, the dataset
+  should conform to the BIDS standard.
 
-    "bids_path": "path/to/bids/dataset"
+  .. code-block:: xml
 
-- List the target structure by indicating the suffix of its mask in the ``"derivatives/labels"`` folder. For a one-class segmentation with our example dataset::
+    "bids_path": "data_spinegeneric_registered",
+
+- ``loader_parameters:target_suffix`` sets the suffix of the ground truth segmentation. The ground truth is located
+  under the ``DATASET/derivatives/labels`` folder. In our case, the suffix is ``_seg-manual``:
+
+  .. code-block:: xml
 
     "target_suffix": ["_seg-manual"]
 
