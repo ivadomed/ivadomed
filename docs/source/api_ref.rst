@@ -37,7 +37,7 @@ object_detection.utils
 
 
 Evaluation API
-++++++++++++++++++++
+++++++++++++++
 
 .. automodule:: ivadomed.evaluation
 
@@ -49,43 +49,43 @@ Losses API
 
 
 Main API
-++++++++++
+++++++++
 
 .. automodule:: ivadomed.main
 
 
 Metrics API
-++++++++++
++++++++++++
 
 .. automodule:: ivadomed.metrics
 
 
 Postprocessing API
-++++++++++++++++++++
+++++++++++++++++++
 
 .. automodule:: ivadomed.postprocessing
 
 
 Testing API
-+++++++++++++
++++++++++++
 
 .. automodule:: ivadomed.testing
 
 
 Training API
-+++++++++++++
+++++++++++++
 
 .. automodule:: ivadomed.training
 
 
 Transformations API
-++++++++++++++++++++
++++++++++++++++++++
 
 .. automodule:: ivadomed.transforms
 
 
 Utils API
-++++++++++++++++++++
++++++++++
 
 .. automodule:: ivadomed.utils
 
