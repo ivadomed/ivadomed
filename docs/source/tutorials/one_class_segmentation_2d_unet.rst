@@ -23,15 +23,15 @@ To download the dataset (~450MB), run the following commands in your terminal:
 
 .. code-block:: bash
 
-  # Download data
-  curl -o ivadomed_spinegeneric_registered.zip -L https://github.com/ivadomed/data_spinegeneric_registered/releases/download/r20200907/data_spinegeneric_registered-r20200907.zip
-  unzip ivadomed_spinegeneric_registered.zip
-  # Rename folder
-  mv ivadomed-data_spinegeneric_registered* data_spinegeneric_registered
+   # Download data
+   curl -o ivadomed_spinegeneric_registered.zip -L https://github.com/ivadomed/data_spinegeneric_registered/releases/download/r20200907/data_spinegeneric_registered-r20200907.zip
+   unzip ivadomed_spinegeneric_registered.zip
+   # Rename folder
+   mv ivadomed-data_spinegeneric_registered* data_spinegeneric_registered
 
 
-Create and fill your configuration file
----------------------------------------
+Configuration file
+------------------
 
 In ``ivadomed``, training is orchestrated by a configuration file. Examples of configuration files are available in
 the ``ivadomed/config/`` and the documentation is available in :doc:`../configuration_file`.
@@ -41,45 +41,60 @@ First off, copy this configuration file in your local directory (to avoid modify
 
 .. code-block:: bash
 
-  cp <PATH_TO_IVADOMED>/ivadomed/config/config.json .
+   cp <PATH_TO_IVADOMED>/ivadomed/config/config.json .
 
 Then, open it with a text editor. Below we will discuss some of the key parameters to perform a one-class 2D
 segmentation training.
 
-- ``command`` indicates the action. Here, we want to train a model, so we set the fiels as follows:
+- ``command``: Action to perform. Here, we want to train a model, so we set the fields as follows:
 
   .. code-block:: xml
 
-    "command": "train"
+     "command": "train"
 
-- ``loader_parameters:bids_path`` sets the location of the dataset. As discussed in :doc:`../data`, the dataset
+- ``loader_parameters:bids_path``: Location of the dataset. As discussed in :doc:`../data`, the dataset
   should conform to the BIDS standard.
 
   .. code-block:: xml
 
-    "bids_path": "data_spinegeneric_registered",
+     "bids_path": "data_spinegeneric_registered",
 
-- ``loader_parameters:target_suffix`` sets the suffix of the ground truth segmentation. The ground truth is located
+- ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth is located
   under the ``DATASET/derivatives/labels`` folder. In our case, the suffix is ``_seg-manual``:
 
   .. code-block:: xml
 
-    "target_suffix": ["_seg-manual"]
+     "target_suffix": ["_seg-manual"]
 
-- Specify the contrast(s) of interest::
+- ``loader_parameters:contrast_params``: Contrast(s) of interest
 
-    "contrast_params": {
-        "training_validation": ["T1w", "T2w", "T2star"],
-        "testing": ["T1w", "T2w", "T2star"],
-        "balance": {}
-    }
-- Indicate the 2D slice orientation::
+  .. code-block:: xml
 
-    "slice_axis": "axial"
+     "contrast_params": {
+         "training_validation": ["T1w", "T2w", "T2star"],
+         "testing": ["T1w", "T2w", "T2star"],
+         "balance": {}
+     }
 
-- To perform a multi-channel training (i.e. each sample has several channels, where each channel is an image contrast), then set ``"multichannel"`` to ``true``. Otherwise, only one image contrast is used per sample. Note: the multichannel approach requires the different image contrasts to be registered together. In this tutorial, only one channel will be used::
+- ``loader_parameters:slice_axis``: Orientation of the 2D slice to use with the model.
 
-    "multichannel": false
+  .. code-block:: xml
+
+     "slice_axis": "axial"
+
+- ``loader_parameters:multichannel``: Turn on/off multi-channel training. If ``true``, each sample has several
+  channels, where each channel is an image contrast. If ``false``, only one image contrast is used per sample.
+
+  .. code-block:: xml
+
+     "multichannel": false
+
+  .. note::
+
+     The multichannel approach requires that for each subject, the image contrasts are co-registered. This implies that
+     a ground truth segmentation is aligned with all contrasts, for a given subject. In this tutorial, only one channel
+     will be used.
+
 
 Run the training
 ----------------
