@@ -175,8 +175,8 @@ Then run:
    ivadomed config.json
 
 The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
-The resulting segmentation is saved for each image in the `<log_directory>/pred_masks` while a csv file,
-saved in `log_directory/results/eval/evaluation_3Dmetrics.csv`, contains all the evaluation metrics. For more details
+The resulting segmentation is saved for each image in the ``<log_directory>/pred_masks`` while a csv file,
+saved in ``log_directory/results/eval/evaluation_3Dmetrics.csv``, contains all the evaluation metrics. For more details
 on the evaluation metrics, see :mod:`ivadomed.metrics`.
 
 .. code-block:: console
@@ -206,8 +206,8 @@ on the evaluation metrics, see :mod:`ivadomed.metrics`.
    [5 rows x 16 columns]
 
 
-The test image segmentations are stored in ``<log_directory>/pred_masks`` and have the same name as the input image
-with the suffix `_pred`. To visualize the segmentation of a given subject, you can use any Nifti image viewer.
+The test image segmentations are stored in ``<log_directory>/pred_masks/`` and have the same name as the input image
+with the suffix ``_pred``. To visualize the segmentation of a given subject, you can use any Nifti image viewer.
 For `FSLeyes <https://users.fmrib.ox.ac.uk/~paulmc/fsleyes/userdoc/latest/>`_ user, this command will open the
 input image with the overlaid prediction (segmentation):
 
