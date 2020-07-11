@@ -96,8 +96,8 @@ segmentation training.
      will be used.
 
 
-Run the training
-----------------
+Train model
+-----------
 
 Once the configuration file is ready, run the training:
 
@@ -158,50 +158,65 @@ on training and validation sets at every epoch. To know more about the meaning o
 After 100 epochs (see ``"num_epochs"`` in the configuration file), the Dice score on the validation set should
 be ~90%.
 
-Evaluate model performance on the testing sub-dataset
------------------------------------------------------
+Evaluate model
+--------------
 
-In order to test the trained model on the testing sub-dataset and compute evaluation metrics, open your config file and set ``"command"`` to ``"eval"``::
+To test the trained model on the testing sub-dataset and compute evaluation metrics, open your config file and
+set ``command`` to ``eval``:
 
-    "command": "eval"
+.. code-block:: bash
 
-Then run::
+   "command": "eval"
 
-    ivadomed path/to/config/file.json
+Then run:
 
-The model's parameters will be displayed in the terminal, followed by a preview of the results for each image. The resulting segmentation is saved for each image in the `<log_directory>/pred_masks` while a csv file, saved in `log_directory/results/eval/evaluation_3Dmetrics.csv`, contains all the evaluation metrics (implemented in :mod:`ivadomed.metrics`).
+.. code-block:: bash
+
+   ivadomed config.json
+
+The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
+The resulting segmentation is saved for each image in the `<log_directory>/pred_masks` while a csv file,
+saved in `log_directory/results/eval/evaluation_3Dmetrics.csv`, contains all the evaluation metrics. For more details
+on the evaluation metrics, see :mod:`ivadomed.metrics`.
 
 .. code-block:: console
 
-    Log directory already exists: spineGeneric
-    Using GPU number 0
+   Log directory already exists: spineGeneric
+   Using GPU number 0
 
-    Selected architecture: Unet, with the following parameters:
-	dropout_rate: 0.3
-	bn_momentum: 0.9
-	depth: 4
-	folder_name: seg_sc_t1_t2_t2s_mt
-	in_channel: 1
-	out_channel: 1
+   Selected architecture: Unet, with the following parameters:
+   dropout_rate: 0.3
+   bn_momentum: 0.9
+   depth: 4
+   folder_name: seg_sc_t1_t2_t2s_mt
+   in_channel: 1
+   out_channel: 1
 
-    Run Evaluation on spineGeneric/pred_masks
+   Run Evaluation on spineGeneric/pred_masks
 
-    Evaluation: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5/5 [00:06<00:00,  1.33s/it]
+   Evaluation: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5/5 [00:06<00:00,  1.33s/it]
                              avd_class0  dice_class0  lfdr_101-INFvox_class0  lfdr_class0          ...            specificity_class0  vol_gt_class0  vol_pred_class0  lfdr_21-100vox_class0
-    image_id                                                                                       ...                                                                                     
-    sub-strasbourg04_T2w       0.047510     0.921796                     0.0          0.0          ...                      0.999939         4920.0          4686.25                    NaN
-    sub-hamburg01_T2w          0.013496     0.943535                     0.0          0.0          ...                      0.999934         5650.0          5573.75                    NaN
-    sub-hamburg01_T1w          0.103540     0.902706                     0.0          0.0          ...                      0.999946         5650.0          5065.00                    NaN
-    sub-strasbourg04_T2star    0.082561     0.917791                     0.0          0.0          ...                      0.999852         4315.0          4671.25                    NaN
-    sub-strasbourg04_T1w       0.437246     0.697122                     0.5          0.5          ...                      0.999979         4920.0          2768.75                    NaN
+   image_id                                                                                       ...
+   sub-strasbourg04_T2w       0.047510     0.921796                     0.0          0.0          ...                      0.999939         4920.0          4686.25                    NaN
+   sub-hamburg01_T2w          0.013496     0.943535                     0.0          0.0          ...                      0.999934         5650.0          5573.75                    NaN
+   sub-hamburg01_T1w          0.103540     0.902706                     0.0          0.0          ...                      0.999946         5650.0          5065.00                    NaN
+   sub-strasbourg04_T2star    0.082561     0.917791                     0.0          0.0          ...                      0.999852         4315.0          4671.25                    NaN
+   sub-strasbourg04_T1w       0.437246     0.697122                     0.5          0.5          ...                      0.999979         4920.0          2768.75                    NaN
 
-    [5 rows x 16 columns]
+   [5 rows x 16 columns]
 
 
-The test image segmentations are store in ``"<log_directory>/pred_masks"`` and have the same name as the input image with the suffix `_pred`. To visualize the segmentation of a given subject, you can use any Nifti image viewer. For FSLeyes user, this command-line will open the input image with its segmentation overlayed::
+The test image segmentations are stored in ``<log_directory>/pred_masks`` and have the same name as the input image
+with the suffix `_pred`. To visualize the segmentation of a given subject, you can use any Nifti image viewer.
+For `FSLeyes <https://users.fmrib.ox.ac.uk/~paulmc/fsleyes/userdoc/latest/>`_ user, this command will open the
+input image with the overlaid prediction (segmentation):
 
-    fsleyes path/to/input/image.nii.gz path/to/pred_masks/subject_id_contrast_pred.nii.gz -cm red -a 0.5
+.. code-block:: bash
 
-After the training for 100 epochs, the segmentations should be similar to the one presented in the following image. The output and ground truth segmentations of the spinal cord are presented in red (subject `sub-hamburg01` with contrast T2w):
+   fsleyes path/to/input/image.nii.gz path/to/pred_masks/subject_id_contrast_pred.nii.gz -cm red -a 0.5
+
+After the training for 100 epochs, the segmentations should be similar to the one presented in the following image.
+The output and ground truth segmentations of the spinal cord are presented in red (subject `sub-hamburg01` with
+contrast T2w):
 
 .. image:: ../../../images/sc_prediction.png
