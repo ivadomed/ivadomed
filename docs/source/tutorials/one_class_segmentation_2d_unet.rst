@@ -220,3 +220,4 @@ The output and ground truth segmentations of the spinal cord are presented in re
 contrast T2w):
 
 .. image:: ../../../images/sc_prediction.png
+   :align: center
