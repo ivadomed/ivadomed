@@ -178,7 +178,7 @@ class Bids_to_hdf5:
         root_dir (str): Path to the BIDS dataset.
         subject_lst (list): Subject names list.
         target_suffix (list): List of suffixes for target masks.
-        roi_suffix (str): List of suffixes for ROI masks.
+        roi_params (dict): Dictionary containing parameters related to ROI image processing.
         contrast_lst (list): List of the contrasts.
         hdf5_name (str): Path and name of the hdf5 file.
         contrast_balance (dict): Dictionary controlling image contrasts balance.
@@ -203,7 +203,7 @@ class Bids_to_hdf5:
     """
 
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, hdf5_name, contrast_balance=None,
-                 slice_axis=2, metadata_choice=False, slice_filter_fn=None, roi_suffix=None, transform=None,
+                 slice_axis=2, metadata_choice=False, slice_filter_fn=None, roi_params=None, transform=None,
                  object_detection_params=None, soft_gt=False):
         print("Starting conversion")
         # Getting all patients id
@@ -264,11 +264,11 @@ class Bids_to_hdf5:
                         if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
                             target_filename[idx] = deriv
 
-                    if not (roi_suffix is None) and \
-                            deriv.endswith(subject.record["modality"] + roi_suffix + ".nii.gz"):
+                    if not (roi_params["suffix"] is None) and \
+                            deriv.endswith(subject.record["modality"] + roi_params["suffix"] + ".nii.gz"):
                         roi_filename = [deriv]
 
-                if (not any(target_filename)) or (not (roi_suffix is None) and (roi_filename is None)):
+                if (not any(target_filename)) or (not (roi_params["suffix"] is None) and (roi_filename is None)):
                     continue
 
                 if not subject.has_metadata():
@@ -475,7 +475,7 @@ class HDF5Dataset:
         dim (int): Choice 2 or 3, for 2D or 3D data respectively.
         complet (bool): If True removes lines where contrasts is not available.
         slice_filter_fn (SliceFilter): Object that filters slices according to their content.
-        roi_suffix (str): Suffix of the ROI mask.
+        roi_params (dict): Dictionary containing parameters related to ROI image processing.
         object_detection_params (dict): Object detection parameters.
 
     Attributes:
@@ -492,7 +492,7 @@ class HDF5Dataset:
 
     def __init__(self, root_dir, subject_lst, model_params, target_suffix, contrast_params,
                  slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
-                 slice_filter_fn=None, roi_suffix=None, object_detection_params=None, soft_gt=False):
+                 slice_filter_fn=None, roi_params=None, object_detection_params=None, soft_gt=False):
         self.cst_lst = copy.deepcopy(contrast_params["contrast_lst"])
         self.gt_lst = copy.deepcopy(model_params["target_lst"] if "target_lst" in model_params else None)
         self.roi_lst = copy.deepcopy(model_params["roi_lst"] if "roi_lst" in model_params else None)
@@ -508,7 +508,7 @@ class HDF5Dataset:
                                      subject_lst=subject_lst,
                                      hdf5_name=model_params["hdf5_path"],
                                      target_suffix=target_suffix,
-                                     roi_suffix=roi_suffix,
+                                     roi_params=roi_params,
                                      contrast_lst=self.cst_lst,
                                      metadata_choice=metadata_choice,
                                      contrast_balance=contrast_params["balance"],
