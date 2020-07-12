@@ -371,6 +371,9 @@ class MRI2DSegmentationDataset(Dataset):
         soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
             fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
             space.
+        slice_filter_roi (bool): Indicates whether a slice filtering is done based on ROI data.
+        roi_thr (int): If the ROI mask contains less than this number of non-zero voxels, the slice will be discarded
+            from the dataset.
 
     """
 
@@ -383,7 +386,11 @@ class MRI2DSegmentationDataset(Dataset):
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
-        self.roi_params = roi_params
+        self.roi_thr = roi_params["slice_filter_roi"]
+        if roi_params["suffix"] is not None and isinstance(self.roi_thr, int):
+            self.slice_filter_roi = True
+        else:
+            self.slice_filter_roi = False
         self.soft_gt = soft_gt
         self.has_bounding_box = True
         self.task = task
