@@ -46,6 +46,8 @@ def test_HeMIS(p=0.0001):
 
     transform_lst, _ = imed_transforms.preprare_transforms(training_transform_dict)
 
+    roi_params = {"suffix": "_seg-manual", "slice_filter_roi": None}
+
     train_lst = ['sub-test001']
     contrasts = ['T1w', 'T2w', 'T2star']
 
@@ -81,7 +83,7 @@ def test_HeMIS(p=0.0001):
                                           dim=2,
                                           slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
                                                                                  filter_empty_mask=True),
-                                          roi_suffix="_seg-manual")
+                                          roi_params=roi_params)
 
     dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
     print("[INFO]: Dataset RAM status:")
