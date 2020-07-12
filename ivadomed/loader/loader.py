@@ -414,19 +414,10 @@ class MRI2DSegmentationDataset(Dataset):
                 # Note: we force here gt_type=segmentation since ROI slice is needed to Crop the image
                 slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice, gt_type="segmentation")
 
-        #        item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
-        #                                                              slice_seg_pair,
-        #                                                              slice_roi_pair)
-                item = (slice_seg_pair, slice_roi_pair)
+                item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                                                                      slice_seg_pair,
+                                                                      slice_roi_pair)
                 self.indexes.append(item)
-
-    def apply_preprocessing(self):
-        for idx, item in enumerate(self.indexes):
-            seg_pair_slice, roi_pair_slice = item
-            item_preprocessed = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
-                                                                              seg_pair_slice,
-                                                                              roi_pair_slice)
-            self.indexes[idx] = item_preprocessed
 
     def set_transform(self, transform):
         self.transform = transform
