@@ -99,12 +99,6 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               task=task)
         dataset.load_filenames()
 
-    # if ROICrop in transform, then apply SliceFilter to ROI slices
-    if 'ROICrop' in transforms_params:
-        dataset = imed_loader_utils.filter_roi(dataset, nb_nonzero_thr=roi_params["slice_filter_roi"])
-
-    dataset.apply_preprocessing()
-
     if model_params["name"] != "UNet3D":
         print("Loaded {} {} slices for the {} set.".format(len(dataset), slice_axis, dataset_type))
     else:
