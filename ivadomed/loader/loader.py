@@ -57,7 +57,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         dataset = Bids3DDataset(bids_path,
                                 subject_lst=data_list,
                                 target_suffix=target_suffix,
-                                roi_suffix=roi_params["suffix"],
+                                roi_params=roi_params,
                                 contrast_params=contrast_params,
                                 metadata_choice=metadata_type,
                                 slice_axis=imed_utils.AXIS_DCT[slice_axis],
@@ -77,7 +77,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               transform=tranform_lst,
                                               metadata_choice=metadata_type,
                                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
-                                              roi_suffix=roi_params["suffix"],
+                                              roi_params=roi_params,
                                               object_detection_params=object_detection_params,
                                               soft_gt=soft_gt)
     else:
@@ -87,7 +87,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         dataset = BidsDataset(bids_path,
                               subject_lst=data_list,
                               target_suffix=target_suffix,
-                              roi_suffix=roi_params["suffix"],
+                              roi_params=roi_params,
                               contrast_params=contrast_params,
                               metadata_choice=metadata_type,
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
