@@ -727,6 +727,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 
         self.bids_ds = bids.BIDS(root_dir)
+        self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
         self.soft_gt = soft_gt
         self.filename_pairs = []
         if metadata_choice == 'mri_params':
@@ -784,11 +785,11 @@ class BidsDataset(MRI2DSegmentationDataset):
                         if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
                             target_filename[idx] = deriv
 
-                    if not (roi_params["suffix"] is None) and \
-                            deriv.endswith(subject.record["modality"] + roi_params["suffix"] + ".nii.gz"):
+                    if not (self.roi_params["suffix"] is None) and \
+                            deriv.endswith(subject.record["modality"] + self.roi_params["suffix"] + ".nii.gz"):
                         roi_filename = [deriv]
 
-                if (not any(target_filename)) or (not (roi_params["suffix"] is None) and (roi_filename is None)):
+                if (not any(target_filename)) or (not (self.roi_params["suffix"] is None) and (roi_filename is None)):
                     continue
 
                 if not subject.has_metadata():
@@ -827,5 +828,5 @@ class BidsDataset(MRI2DSegmentationDataset):
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
 
-        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task, roi_params,
+        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
                          self.soft_gt)

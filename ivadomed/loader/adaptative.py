@@ -497,6 +497,7 @@ class HDF5Dataset:
         self.gt_lst = copy.deepcopy(model_params["target_lst"] if "target_lst" in model_params else None)
         self.roi_lst = copy.deepcopy(model_params["roi_lst"] if "roi_lst" in model_params else None)
         self.dim = dim
+        self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
         self.filter_slices = slice_filter_fn
         self.prepro_transforms, self.transform = transform
 
@@ -508,7 +509,7 @@ class HDF5Dataset:
                                      subject_lst=subject_lst,
                                      hdf5_name=model_params["hdf5_path"],
                                      target_suffix=target_suffix,
-                                     roi_params=roi_params,
+                                     roi_params=self.roi_params,
                                      contrast_lst=self.cst_lst,
                                      metadata_choice=metadata_choice,
                                      contrast_balance=contrast_params["balance"],
