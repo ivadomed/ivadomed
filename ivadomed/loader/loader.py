@@ -654,18 +654,18 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         transform (list): Transformation list (length 2) composed of preprocessing transforms (Compose) and transforms
             to apply during training (Compose).
         metadata_choice: Choice between "mri_params", "contrasts", None or False, related to FiLM.
-        roi_suffix (list): List of suffixes for ROI masks.
+        roi_params (dict): Dictionary containing parameters related to ROI image processing.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
         object_detection_params (dict): Object dection parameters.
     """
     def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
-                 cache=True, transform=None, metadata_choice=False, roi_suffix=None,
+                 cache=True, transform=None, metadata_choice=False, roi_params=None,
                  multichannel=False, object_detection_params=None, soft_gt=False):
         dataset = BidsDataset(root_dir,
                               subject_lst=subject_lst,
                               target_suffix=target_suffix,
-                              roi_suffix=roi_suffix,
+                              roi_params=roi_params,
                               contrast_params=contrast_params,
                               metadata_choice=metadata_choice,
                               slice_axis=slice_axis,
