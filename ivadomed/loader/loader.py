@@ -691,7 +691,7 @@ class BidsDataset(MRI2DSegmentationDataset):
             to apply during training (Compose).
         metadata_choice (str): Choice between "mri_params", "contrasts", None or False, relatec to FiLM.
         slice_filter_fn (SliceFilter): Class that filters slices according to their content.
-        roi_suffix (list): List of suffixes for ROI masks.
+        roi_params (dict): Dictionary containing parameters related to ROI image processing.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
         object_detection_params (dict): Object dection parameters.
@@ -708,7 +708,7 @@ class BidsDataset(MRI2DSegmentationDataset):
 
     """
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
-                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
+                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 
         self.bids_ds = bids.BIDS(root_dir)
@@ -769,11 +769,11 @@ class BidsDataset(MRI2DSegmentationDataset):
                         if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
                             target_filename[idx] = deriv
 
-                    if not (roi_suffix is None) and \
-                            deriv.endswith(subject.record["modality"] + roi_suffix + ".nii.gz"):
+                    if not (roi_params["suffix"] is None) and \
+                            deriv.endswith(subject.record["modality"] + roi_params["suffix"] + ".nii.gz"):
                         roi_filename = [deriv]
 
-                if (not any(target_filename)) or (not (roi_suffix is None) and (roi_filename is None)):
+                if (not any(target_filename)) or (not (roi_params["suffix"] is None) and (roi_filename is None)):
                     continue
 
                 if not subject.has_metadata():
@@ -812,4 +812,5 @@ class BidsDataset(MRI2DSegmentationDataset):
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
 
-        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task, self.soft_gt)
+        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task, roi_params,
+                         self.soft_gt)
