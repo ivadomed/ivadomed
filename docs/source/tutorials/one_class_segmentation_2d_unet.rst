@@ -107,7 +107,7 @@ Once the configuration file is ready, run the training:
 
 .. note::
 
-   If a compatible GPU is available, it will be used by default. Otherwise, training will use the CPU, which will take
+   If a `compatible GPU <https://pytorch.org/get-started/locally/>`_ is available, it will be used by default. Otherwise, training will use the CPU, which will take
    a prohibitively long computational time (several hours).
 
 The main parameters of the training scheme and model will be displayed on the terminal, followed by the loss value
