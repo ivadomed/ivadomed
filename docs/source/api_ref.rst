@@ -55,7 +55,7 @@ Main API
 
 
 Metrics API
-++++++++++
++++++++++++
 
 .. automodule:: ivadomed.metrics
 

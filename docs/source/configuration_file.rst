@@ -29,7 +29,14 @@ file, located within ``"log_directory/"``, eg
 ``"log_directory/seg_gm_t2star/seg_gm_t2star.onnx"`` and
 ``"log_directory/seg_gm_t2star/seg_gm_t2star.json"``, respectively. When
 possible, the folder name will follow the following convention:
-``task_(animal)_region_(contrast)``.
+``task_(animal)_region_(contrast)`` with
+
+.. code-block:: sh
+
+   task = {seg, label, find}
+   animal = {human, dog, cat, rat, mouse, ...}
+   region = {sc, gm, csf, brainstem, ...}
+   contrast = {t1, t2, t2star, dwi, ...}
 
 debugging
 ^^^^^^^^^
