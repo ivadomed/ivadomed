@@ -447,10 +447,6 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
                                                   slice_filter_fn=SliceFilter(**loader_params["slice_filter_params"]))
         ds.load_filenames()
 
-    # If fname_roi provided, then remove slices without ROI
-    if fname_roi is not None:
-        ds = imed_loader_utils.filter_roi(ds, nb_nonzero_thr=loader_params["roi_params"]["slice_filter_roi"])
-
     if kernel_3D:
         print("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
                                                            context['UNet3D']['length_3D']))
