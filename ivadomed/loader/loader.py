@@ -350,6 +350,10 @@ class MRI2DSegmentationDataset(Dataset):
         slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
         task (str): choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
+        roi_params (dict): Dictionary containing parameters related to ROI image processing.
+        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
+            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
+            space.
 
     Attributes:
         indexes (list): List of indices corresponding to each slice or subvolume in the dataset.
@@ -371,7 +375,7 @@ class MRI2DSegmentationDataset(Dataset):
     """
 
     def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None,
-                 task="segmentation", soft_gt=False):
+                 task="segmentation", roi_params=None, soft_gt=False):
         self.indexes = []
         self.filename_pairs = filename_pairs
         self.prepro_transforms, self.transform = transform
@@ -379,6 +383,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
+        self.roi_params = roi_params
         self.soft_gt = soft_gt
         self.has_bounding_box = True
         self.task = task
@@ -502,6 +507,9 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         length (tuple): Size of each dimensions of the subvolumes, length equals 3.
         stride (tuple): Size of the overlapping per subvolume and dimensions, length equals 3.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
+            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
+            space.
     """
 
     def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
