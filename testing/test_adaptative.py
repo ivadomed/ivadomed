@@ -36,11 +36,13 @@ def test_hdf5():
     }
     transform_lst, _ = imed_transforms.preprare_transforms(training_transform_dict)
 
+    roi_params = {"suffix": "_seg-manual", "slice_filter_roi": None}
+
     hdf5_file = imed_adaptative.Bids_to_hdf5(PATH_BIDS,
                                              subject_lst=train_lst,
                                              hdf5_name='testing_data/mytestfile.hdf5',
                                              target_suffix=["_lesion-manual"],
-                                             roi_suffix="_seg-manual",
+                                             roi_params=roi_params,
                                              contrast_lst=['T1w', 'T2w', 'T2star'],
                                              metadata_choice="contrast",
                                              transform=transform_lst,
@@ -107,7 +109,7 @@ def test_hdf5():
                                           dim=2,
                                           slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
                                                                                  filter_empty_mask=True),
-                                          roi_suffix="_seg-manual")
+                                          roi_params=roi_params)
 
     dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
     print("Dataset RAM status:")
