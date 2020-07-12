@@ -114,7 +114,7 @@ def test_HistogramClipping(im_seg):
 def test_RandomShiftIntensity(im_seg):
     im, _ = im_seg
     # Transform
-    transform = RandomShiftIntensity(shift_range=[0., 10.], prob=0.9)
+    transform = RandomShiftIntensity(shift_range=[0., 10.], prob=1.0)
 
     # Apply Do Transform
     metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else SampleMetadata({})
