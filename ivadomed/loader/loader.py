@@ -53,6 +53,10 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
     # Compose transforms
     tranform_lst, _ = imed_transforms.preprare_transforms(copy.deepcopy(transforms_params), requires_undo)
 
+    # If ROICrop is not part of the transforms, then enforce no slice filtering based on ROI data.
+    if 'ROICrop' not in transforms_params:
+        roi_params["slice_filter_roi"] = None
+
     if model_params["name"] == "UNet3D":
         dataset = Bids3DDataset(bids_path,
                                 subject_lst=data_list,
