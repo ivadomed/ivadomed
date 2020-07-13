@@ -300,7 +300,12 @@ class Evaluation3DMetrics(object):
         return rvd
 
     def get_avd(self):
-        """Absolute volume difference."""
+        """Absolute volume difference.
+
+        The volume is here defined by the physical volume, in mm3, of the non-zero voxels of a given mask.
+        Absolute volume difference equals the absolute value of the Relative Volume Difference.
+        Optimal value is zero.
+        """
         return abs(self.get_rvd())
 
     def _get_ltp_lfn(self, label_size, class_idx=0):
