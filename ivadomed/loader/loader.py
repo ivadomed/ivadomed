@@ -393,10 +393,7 @@ class MRI2DSegmentationDataset(Dataset):
         if roi_params is None:
             roi_params = {"suffix": None, "slice_filter_roi": None}
         self.roi_thr = roi_params["slice_filter_roi"]
-        if roi_params["suffix"] is not None and isinstance(self.roi_thr, int):
-            self.slice_filter_roi = True
-        else:
-            self.slice_filter_roi = False
+        self.slice_filter_roi = roi_params["suffix"] is not None and isinstance(self.roi_thr, int)
         self.soft_gt = soft_gt
         self.has_bounding_box = True
         self.task = task
