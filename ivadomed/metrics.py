@@ -170,6 +170,8 @@ def precision_score(prediction, groundtruth, err_value=0.0):
 def recall_score(prediction, groundtruth, err_value=0.0):
     """True positive rate (TPR).
 
+    Recall equals the number of true positive voxels divided by the sum of true positive and false negative voxels.
+
     Args:
         prediction (ndarray): First array.
         groundtruth (ndarray): Second array.
