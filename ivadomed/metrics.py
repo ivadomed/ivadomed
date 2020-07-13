@@ -247,6 +247,9 @@ def accuracy_score(prediction, groundtruth, err_value=0.0):
 def multi_class_dice_score(im1, im2):
     """Dice score for multi-label images.
 
+    Multi-class Dice score equals the average of the Dice score for each class.
+    The first dimension of the input arrays is assumed to represent the classes.
+
     Args:
         im1 (ndarray): First array.
         im2 (ndarray): Second array.
