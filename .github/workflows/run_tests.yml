@@ -36,9 +36,9 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
          coverage run -m pytest
-         coverage report -m > lcov.info
+         coverage json
     - name: Coverall
       uses: coverallsapp/github-action@master
       with:
          github-token: ${{ secrets.github_token }}
-         path-to-lcov: .coverage
+         path-to-lcov: coverage.json
