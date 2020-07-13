@@ -190,6 +190,8 @@ def recall_score(prediction, groundtruth, err_value=0.0):
 def specificity_score(prediction, groundtruth, err_value=0.0):
     """True negative rate (TNR).
 
+    Specificity equals the number of true negative voxels divided by the sum of true negative and false positive voxels.
+
     Args:
         prediction (ndarray): First array.
         groundtruth (ndarray): Second array.
