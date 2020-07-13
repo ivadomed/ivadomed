@@ -393,10 +393,7 @@ class MRI2DSegmentationDataset(Dataset):
         if roi_params is None:
             roi_params = {"suffix": None, "slice_filter_roi": None}
         self.roi_thr = roi_params["slice_filter_roi"]
-        if roi_params["suffix"] is not None and isinstance(self.roi_thr, int):
-            self.slice_filter_roi = True
-        else:
-            self.slice_filter_roi = False
+        self.slice_filter_roi = roi_params["suffix"] is not None and isinstance(self.roi_thr, int)
         self.soft_gt = soft_gt
         self.has_bounding_box = True
         self.task = task
@@ -425,10 +422,8 @@ class MRI2DSegmentationDataset(Dataset):
                 # Note: we force here gt_type=segmentation since ROI slice is needed to Crop the image
                 slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice, gt_type="segmentation")
 
-                if self.slice_filter_roi:
-                    filter_roi = imed_loader_utils.filter_roi(slice_roi_pair['gt'], self.roi_thr)
-                    if filter_roi:
-                        continue
+                if self.slice_filter_roi and imed_loader_utils.filter_roi(slice_roi_pair['gt'], self.roi_thr):
+                    continue
 
                 item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                       slice_seg_pair,
