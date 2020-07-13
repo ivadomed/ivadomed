@@ -149,6 +149,8 @@ def hausdorff_score(prediction, groundtruth):
 def precision_score(prediction, groundtruth, err_value=0.0):
     """Positive predictive value (PPV).
 
+    Precision equals the number of true positive voxels divided by the sum of true and false positive voxels.
+
     Args:
         prediction (ndarray): First array.
         groundtruth (ndarray): Second array.
