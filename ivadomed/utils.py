@@ -424,7 +424,7 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
     # Compose transforms
     _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context["transformation"])
 
-    tranform_lst, undo_transforms = imed_transforms.preprare_transforms(transform_test_params)
+    tranform_lst, undo_transforms = imed_transforms.prepare_transforms(transform_test_params)
 
     # Force filter_empty_mask to False if fname_roi = None
     if fname_roi is None and 'filter_empty_mask' in loader_params["slice_filter_params"]:
@@ -446,10 +446,6 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
                                                   transform=tranform_lst,
                                                   slice_filter_fn=SliceFilter(**loader_params["slice_filter_params"]))
         ds.load_filenames()
-
-    # If fname_roi provided, then remove slices without ROI
-    if fname_roi is not None:
-        ds = imed_loader_utils.filter_roi(ds, nb_nonzero_thr=loader_params["roi_params"]["slice_filter_roi"])
 
     if kernel_3D:
         print("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
