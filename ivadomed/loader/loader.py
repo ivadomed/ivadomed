@@ -419,9 +419,7 @@ class MRI2DSegmentationDataset(Dataset):
                 if self.has_bounding_box:
                     self.prepro_transforms = imed_obj_detect.adjust_transforms(self.prepro_transforms, slice_seg_pair)
 
-                if self.slice_filter_fn:
-                    filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
-                if self.slice_filter_fn and not filter_fn_ret_seg:
+                if self.slice_filter_fn and not self.slice_filter_fn(slice_seg_pair):
                     continue
 
                 # Note: we force here gt_type=segmentation since ROI slice is needed to Crop the image
