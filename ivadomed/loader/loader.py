@@ -390,6 +390,8 @@ class MRI2DSegmentationDataset(Dataset):
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
+        if roi_params is None:
+            roi_params = {"suffix": None, "slice_filter_roi": None}
         self.roi_thr = roi_params["slice_filter_roi"]
         if roi_params["suffix"] is not None and isinstance(self.roi_thr, int):
             self.slice_filter_roi = True
