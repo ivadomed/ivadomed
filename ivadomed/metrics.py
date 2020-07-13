@@ -68,7 +68,8 @@ def numeric_score(prediction, groundtruth):
 def dice_score(im1, im2, empty_score=np.nan):
     """Computes the Dice coefficient between im1 and im2.
 
-    Compute a soft Dice coefficient between im1 and im2.
+    Compute a soft Dice coefficient between im1 and im2, ie equals twice the sum of the two masks product, divided by
+    the sum of each mask sum.
     If both images are empty, then it returns empty_score.
 
     Args:
