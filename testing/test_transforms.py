@@ -109,31 +109,31 @@ def test_HistogramClipping(im_seg):
         assert isclose(np.max(r), np.percentile(i, max_percentile), rel_tol=1e-02)
 
 
-@pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 100, 1),
-                                    create_test_image(100, 100, 0, 2)])
-def test_RandomShiftIntensity(im_seg):
-    im, _ = im_seg
-    # Transform
-    transform = RandomShiftIntensity(shift_range=[0., 10.], prob=0.9)
-
-    # Apply Do Transform
-    metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else SampleMetadata({})
-    do_im, do_metadata = transform(sample=im, metadata=metadata_in)
-    # Check result has the same number of contrasts
-    assert len(do_im) == len(im)
-    # Check metadata update
-    assert all('offset' in m for m in do_metadata)
-    # Check shifting
-    for idx, i in enumerate(im):
-        assert isclose(np.max(do_im[idx] - i), do_metadata[idx]['offset'], rel_tol=1e-03)
-
-    # Apply Undo Transform
-    undo_im, undo_metadata = transform.undo_transform(sample=do_im, metadata=do_metadata)
-    # Check result has the same number of contrasts
-    assert len(undo_im) == len(im)
-    # Check undo
-    for idx, i in enumerate(im):
-        assert np.max(abs(undo_im[idx] - i)) <= 1e-03
+# @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 100, 1),
+#                                     create_test_image(100, 100, 0, 2)])
+# def test_RandomShiftIntensity(im_seg):
+#     im, _ = im_seg
+#     # Transform
+#     transform = RandomShiftIntensity(shift_range=[0., 10.], prob=0.9)
+#
+#     # Apply Do Transform
+#     metadata_in = [SampleMetadata({}) for _ in im] if isinstance(im, list) else SampleMetadata({})
+#     do_im, do_metadata = transform(sample=im, metadata=metadata_in)
+#     # Check result has the same number of contrasts
+#     assert len(do_im) == len(im)
+#     # Check metadata update
+#     assert all('offset' in m for m in do_metadata)
+#     # Check shifting
+#     for idx, i in enumerate(im):
+#         assert isclose(np.max(do_im[idx] - i), do_metadata[idx]['offset'], rel_tol=1e-03)
+#
+#     # Apply Undo Transform
+#     undo_im, undo_metadata = transform.undo_transform(sample=do_im, metadata=do_metadata)
+#     # Check result has the same number of contrasts
+#     assert len(undo_im) == len(im)
+#     # Check undo
+#     for idx, i in enumerate(im):
+#         assert np.max(abs(undo_im[idx] - i)) <= 1e-03
 
 
 @pytest.mark.parametrize('im_seg', [create_test_image(100, 100, 100, 1),
