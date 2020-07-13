@@ -224,8 +224,10 @@ def intersection_over_union(prediction, groundtruth, err_value=0.0):
     return TP / (TP + FP + FN)
 
 
-def accuracy_score(prediction, groundtruth):
+def accuracy_score(prediction, groundtruth, err_value=0.0):
     """Accuracy.
+
+    Accuracy equals the number of true positive and true negative voxels divided by the total number of voxels.
 
     Args:
         prediction (ndarray): First array.
