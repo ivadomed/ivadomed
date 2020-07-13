@@ -39,7 +39,7 @@ def test_image_orientation():
         "NormalizeInstance": {"applied_to": ['im']}
     }
 
-    tranform_lst, training_undo_transform = imed_transforms.preprare_transforms(training_transform_dict)
+    tranform_lst, training_undo_transform = imed_transforms.prepare_transforms(training_transform_dict)
 
     model_params = {
             "name": "UNet3D",
