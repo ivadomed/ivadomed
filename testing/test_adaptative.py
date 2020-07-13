@@ -34,7 +34,7 @@ def test_hdf5():
             },
         "NumpyToTensor": {}
     }
-    transform_lst, _ = imed_transforms.preprare_transforms(training_transform_dict)
+    transform_lst, _ = imed_transforms.prepare_transforms(training_transform_dict)
 
     roi_params = {"suffix": "_seg-manual", "slice_filter_roi": None}
 

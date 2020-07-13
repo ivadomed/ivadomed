@@ -51,7 +51,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
     slice_filter_params and object_detection_params see :doc:`configuration_file`.
     """
     # Compose transforms
-    tranform_lst, _ = imed_transforms.preprare_transforms(copy.deepcopy(transforms_params), requires_undo)
+    tranform_lst, _ = imed_transforms.prepare_transforms(copy.deepcopy(transforms_params), requires_undo)
 
     # If ROICrop is not part of the transforms, then enforce no slice filtering based on ROI data.
     if 'ROICrop' not in transforms_params:
