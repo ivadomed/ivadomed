@@ -8,7 +8,7 @@ import pytest
 import torch
 
 from ivadomed.losses import GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss, FocalTverskyLoss, DiceLoss\
-    , AdapWingLoss, L2loss
+    , AdapWingLoss, L2loss, LossCombination
 
 
 @pytest.mark.parametrize('params', [
@@ -278,3 +278,34 @@ def test_adapwingloss(params):
     input, target, expected_value, loss_fct = params
     loss = loss_fct.forward(input, target)
     assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-2)
+
+
+@pytest.mark.parametrize('params', [
+    (torch.tensor([[[[1.0, 1.0], [0.0, 0.0]]]]),
+     torch.tensor([[[[1.0, 1.0], [0.0, 0.0]]]]),
+     -1.0,
+     LossCombination(["DiceLoss", "L2loss"], [None, None])),
+
+    (torch.tensor([[[[1.0, 1.0], [0.0, 0.0]]]]),
+     torch.tensor([[[[1.0, 0.0], [1.0, 1.0]]]]),
+     1.0,
+     LossCombination(["DiceLoss", "L2loss"], [None, None])),
+
+    (torch.tensor([[[[0.5, 0.5], [0.5, 0.5]]]]),
+     torch.tensor([[[[0.5, 1.0], [1.0, 1.0]]]]),
+     -0.3173,
+     LossCombination(["DiceLoss", "L2loss"], [None, None])),
+])
+def test_losscombination(params):
+    """
+    test LossCombination
+
+    Args:
+        params (tuple): containing input tensor, target tensor, expected value, loss function
+
+    """
+
+    input, target, expected_value, loss_fct = params
+    loss = loss_fct.forward(input, target)
+    assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-2)
+
