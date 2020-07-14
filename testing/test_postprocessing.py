@@ -149,3 +149,15 @@ def test_mask_predictions(nii_seg):
     nii_seg_proc = imed_postpro.mask_predictions(nii_seg, nii_seg_mask.dataobj)
     assert isinstance(nii_seg_proc, nib.nifti1.Nifti1Image)
     assert nii_seg_proc.dataobj[coord] == 0
+
+
+def test_label_file_from_coordinates():
+    # create fake coordinate
+    coord = [[0, 0, 0]]
+    # load test image
+    nifti = nib.load('../testing_data/sub-test001/anat/sub-test001_T1w.nii.gz')
+    # create fake label
+    label = imed_postpro.label_file_from_coordinates(nifti, coord)
+    # check if it worked
+    assert label.dataobj[coord[0]] == 1
+    assert isinstance(label, nib.nifti1.Nifti1Image)
