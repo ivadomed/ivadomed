@@ -7,7 +7,8 @@ from math import isclose
 import pytest
 import torch
 
-from ivadomed.losses import GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss, FocalTverskyLoss, DiceLoss
+from ivadomed.losses import GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss, FocalTverskyLoss, DiceLoss\
+    , AdapWingLoss, L2loss
 
 
 @pytest.mark.parametrize('params', [
@@ -204,6 +205,41 @@ def test_focaltverskyloss(params):
     Args:
         params (tuple): containing input tensor, target tensor, expected value, loss function
     """
+    input, target, expected_value, loss_fct = params
+    loss = loss_fct.forward(input, target)
+    assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-2)
+
+
+@pytest.mark.parametrize('params', [
+    (torch.tensor([[[[[0.0, 1.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 0.0]]]]]),
+     torch.tensor([[[[[0.0, 1.0], [0.0, 0.0]], [[0.0, 1.0], [0.0, 0.0]]]]]),
+     0.,
+     L2loss()),
+
+    (torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
+     torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
+     0.,
+     L2loss()),
+
+    (torch.tensor([[[[0.0, 0.0], [0.0, 0.0]]]]),
+     torch.tensor([[[[1.0, 0.0], [0.0, 1.0]]]]),
+     1.0,
+     L2loss()),
+
+    (torch.tensor([[[[0.5, 0.5], [0.5, 0.5]]]]),
+     torch.tensor([[[[0.5, 1.0], [1.0, 1.0]]]]),
+     0.375,
+     L2loss()),
+])
+def test_L2loss(params):
+    """
+    test L2 loss
+
+    Args:
+        params (tuple): containing input tensor, target tensor, expected value, loss function
+
+    """
+
     input, target, expected_value, loss_fct = params
     loss = loss_fct.forward(input, target)
     assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-2)
