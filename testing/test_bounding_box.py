@@ -23,7 +23,8 @@ LOG_DIR = "log"
             "safety_factor": [1.0, 1.0, 1.0],
             "log_directory": LOG_DIR
         },
-        "transforms_params": {"resample": {1, 1, 1},
+        "transforms_params": {
+            "Resample": {"wspace": 0.75, "hspace": 0.75},
             "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
@@ -96,3 +97,10 @@ def test_bounding_box(train_lst, target_lst, config):
             assert seg_pair['input'][0].shape[-2:] == (mx2 - mx1, my2 - my1)
 
     shutil.rmtree(LOG_DIR)
+
+
+# testing adjust bb size
+def test_adjust_bb_size():
+    test_coord = (0, 10, 0, 10, 0, 10)
+    imed_obj_detect.adjust_bb_size(test_coord, (2, 2, 2), True)
+
