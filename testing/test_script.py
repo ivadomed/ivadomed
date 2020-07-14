@@ -26,10 +26,10 @@ def append_list_as_row(file_name, list_of_elem):
 
 def test_more():
     # Add new file as needed (no empty test/validation)
-    os.mkdirs("testing_data/sub-test002/anat/")
-    os.mkdirs("testing_data/sub-test003/anat/")
-    os.mkdirs("testing_data/derivatives/labels/sub-test002/anat/")
-    os.mkdirs("testing_data/derivatives/labels/sub-test003/anat/")
+    os.makedirs("testing_data/sub-test002/anat/")
+    os.makedirs("testing_data/sub-test003/anat/")
+    os.makedirs("testing_data/derivatives/labels/sub-test002/anat/")
+    os.makedirs("testing_data/derivatives/labels/sub-test003/anat/")
 
     command = "cp testing_data/sub-test001/anat/sub-test001_T1w.nii.gz testing_data/sub-test002/anat/sub-test002"+ \
               "_T1w.nii.gz"
