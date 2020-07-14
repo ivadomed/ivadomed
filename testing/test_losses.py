@@ -7,8 +7,8 @@ from math import isclose
 import pytest
 import torch
 
-from ivadomed.losses import GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss, FocalTverskyLoss, DiceLoss\
-    , AdapWingLoss, L2loss, LossCombination
+from ivadomed.losses import GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss, FocalTverskyLoss, DiceLoss,\
+    AdapWingLoss, L2loss, LossCombination
 
 
 @pytest.mark.parametrize('params', [
