@@ -23,7 +23,8 @@ LOG_DIR = "log"
             "safety_factor": [1.0, 1.0, 1.0],
             "log_directory": LOG_DIR
         },
-        "transforms_params": {"NumpyToTensor": {}},
+        "transforms_params": {"resample": {1, 1, 1},
+            "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
         "multichannel": False,
