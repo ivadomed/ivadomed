@@ -159,5 +159,4 @@ def test_label_file_from_coordinates():
     # create fake label
     label = imed_postpro.label_file_from_coordinates(nifti, coord)
     # check if it worked
-    assert label.dataobj[coord[0]] == 1
     assert isinstance(label, nib.nifti1.Nifti1Image)
