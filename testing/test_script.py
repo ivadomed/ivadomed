@@ -2,6 +2,7 @@ import os
 from csv import writer
 from csv import reader
 
+
 def test_script():
     os.system("ivadomed_convert_to_onnx -m testing_data/model_unet_test.pt -d 2")
 
@@ -14,24 +15,13 @@ def test_script():
 
     os.system("ivadomed_extract_small_dataset -i testing_data/ -o small_dataset/test_script/ -n 1 -c T2w,T1w -d 1")
 
-
-def append_list_as_row(file_name, list_of_elem):
-    # Open file in append mode
-    with open(file_name, 'a+', newline='') as write_obj:
-        # Create a writer object from csv module
-        csv_writer = writer(write_obj)
-        # Add contents of list as last row in the csv file
-        csv_writer.writerow(list_of_elem)
-
-
-def test_more():
     # Add new file as needed (no empty test/validation)
     os.makedirs("testing_data/sub-test002/anat/")
     os.makedirs("testing_data/sub-test003/anat/")
     os.makedirs("testing_data/derivatives/labels/sub-test002/anat/")
     os.makedirs("testing_data/derivatives/labels/sub-test003/anat/")
 
-    command = "cp testing_data/sub-test001/anat/sub-test001_T1w.nii.gz testing_data/sub-test002/anat/sub-test002"+ \
+    command = "cp testing_data/sub-test001/anat/sub-test001_T1w.nii.gz testing_data/sub-test002/anat/sub-test002" + \
               "_T1w.nii.gz"
     os.system(command)
 
@@ -44,7 +34,7 @@ def test_more():
               derivatives + "sub-test002/anat/sub-test002" + \
               "_T1w_lesion_manual.nii.gz"
     os.system(command)
-    command = "cp" + derivatives + "sub-test001/anat/sub-test001_T1w_lesion_manual.nii.gz"+ \
+    command = "cp" + derivatives + "sub-test001/anat/sub-test001_T1w_lesion_manual.nii.gz" + \
               derivatives + "sub-test003/anat/sub-test003" + \
               "_T1w_lesion_manual.nii.gz"
     os.system(command)
@@ -57,4 +47,17 @@ def test_more():
 
     command = "ivadomed testing_data/model_config.json"
     os.system(command)
+
+
+def append_list_as_row(file_name, list_of_elem):
+    # Open file in append mode
+    with open(file_name, 'a+', newline='') as write_obj:
+        # Create a writer object from csv module
+        csv_writer = writer(write_obj)
+        # Add contents of list as last row in the csv file
+        csv_writer.writerow(list_of_elem)
+
+
+
+
 
