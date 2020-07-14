@@ -179,12 +179,7 @@ def filter_roi(roi_data, nb_nonzero_thr):
         bool: True if the slice needs to be filtered, False otherwise.
     """
     # Discard slices with less nonzero voxels than nb_nonzero_thr
-    if not np.any(roi_data):
-        return True
-    if np.count_nonzero(roi_data) <= nb_nonzero_thr:
-        return True
-
-    return False
+    return not np.any(roi_data) or np.count_nonzero(roi_data) <= nb_nonzero_thr
 
 
 def orient_img_hwd(data, slice_axis):
