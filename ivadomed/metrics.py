@@ -46,10 +46,17 @@ class MetricManager(object):
 def numeric_score(prediction, groundtruth):
     """Computation of statistical numerical scores:
 
-    * FP = False Positives
-    * FN = False Negatives
-    * TP = True Positives
-    * TN = True Negatives
+    * FP = Soft False Positives
+    * FN = Soft False Negatives
+    * TP = Soft True Positives
+    * TN = Soft True Negatives
+
+    Robust to hard or soft input masks. For example::
+        prediction=np.asarray([0, 0.5, 1])
+        groundtruth=np.asarray([0, 1, 1])
+        Leads to FP = 1.5
+
+    Note: It assumes input values are between 0 and 1.
 
     Args:
         prediction (ndarray): Binary prediction.
@@ -58,17 +65,18 @@ def numeric_score(prediction, groundtruth):
     Returns:
         float, float, float, float: FP, FN, TP, TN
     """
-    FP = np.float(np.sum((prediction == 1) & (groundtruth == 0)))
-    FN = np.float(np.sum((prediction == 0) & (groundtruth == 1)))
-    TP = np.float(np.sum((prediction == 1) & (groundtruth == 1)))
-    TN = np.float(np.sum((prediction == 0) & (groundtruth == 0)))
+    FP = np.float(np.sum(prediction * (1.0 - groundtruth)))
+    FN = np.float(np.sum((1.0 - prediction) * groundtruth))
+    TP = np.float(np.sum(prediction * groundtruth))
+    TN = np.float(np.sum((1.0 - prediction) * (1.0 - groundtruth)))
     return FP, FN, TP, TN
 
 
 def dice_score(im1, im2, empty_score=np.nan):
     """Computes the Dice coefficient between im1 and im2.
 
-    Compute a soft Dice coefficient between im1 and im2.
+    Compute a soft Dice coefficient between im1 and im2, ie equals twice the sum of the two masks product, divided by
+    the sum of each mask sum.
     If both images are empty, then it returns empty_score.
 
     Args:
@@ -148,6 +156,9 @@ def hausdorff_score(prediction, groundtruth):
 def precision_score(prediction, groundtruth, err_value=0.0):
     """Positive predictive value (PPV).
 
+    Precision equals the number of true positive voxels divided by the sum of true and false positive voxels.
+    True and false positives are computed on soft masks, see ``"numeric_score"``.
+
     Args:
         prediction (ndarray): First array.
         groundtruth (ndarray): Second array.
@@ -167,6 +178,9 @@ def precision_score(prediction, groundtruth, err_value=0.0):
 def recall_score(prediction, groundtruth, err_value=0.0):
     """True positive rate (TPR).
 
+    Recall equals the number of true positive voxels divided by the sum of true positive and false negative voxels.
+    True positive and false negative values are computed on soft masks, see ``"numeric_score"``.
+
     Args:
         prediction (ndarray): First array.
         groundtruth (ndarray): Second array.
@@ -185,6 +199,9 @@ def recall_score(prediction, groundtruth, err_value=0.0):
 def specificity_score(prediction, groundtruth, err_value=0.0):
     """True negative rate (TNR).
 
+    Specificity equals the number of true negative voxels divided by the sum of true negative and false positive voxels.
+    True negative and false positive values are computed on soft masks, see ``"numeric_score"``.
+
     Args:
         prediction (ndarray): First array.
         groundtruth (ndarray): Second array.
@@ -201,7 +218,7 @@ def specificity_score(prediction, groundtruth, err_value=0.0):
 
 
 def intersection_over_union(prediction, groundtruth, err_value=0.0):
-    """Intersection of two arrays over their union (IoU).
+    """Intersection of two (soft) arrays over their union (IoU).
 
     Args:
         prediction (ndarray): First array.
@@ -217,8 +234,11 @@ def intersection_over_union(prediction, groundtruth, err_value=0.0):
     return TP / (TP + FP + FN)
 
 
-def accuracy_score(prediction, groundtruth):
+def accuracy_score(prediction, groundtruth, err_value=0.0):
     """Accuracy.
+
+    Accuracy equals the number of true positive and true negative voxels divided by the total number of voxels.
+    True positive/negative and false positive/negative values are computed on soft masks, see ``"numeric_score"``.
 
     Args:
         prediction (ndarray): First array.
@@ -237,6 +257,9 @@ def accuracy_score(prediction, groundtruth):
 
 def multi_class_dice_score(im1, im2):
     """Dice score for multi-label images.
+
+    Multi-class Dice score equals the average of the Dice score for each class.
+    The first dimension of the input arrays is assumed to represent the classes.
 
     Args:
         im1 (ndarray): First array.
