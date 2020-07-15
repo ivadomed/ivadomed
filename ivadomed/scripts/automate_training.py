@@ -42,7 +42,8 @@ def get_parser():
                         help="Evaluate the trained model on the testing sub-set.")
     parser.add_argument("--fixed-split", dest='fixed_split', action='store_true',
                         help="Keep a constant dataset split for all configs and iterations")
-    parser.set_defaults(all_combin=False)
+    parser.add_argument("-l", "--all_logs", dest="all_logs", action='store_true',
+                        help="Keep all log directories for each iteration.")
 
     return parser
 
@@ -126,7 +127,7 @@ def make_category(base_item, keys, values, is_all_combin=False):
     return items, names
 
 
-def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False):
+def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False, all_logs=False):
     """Automate multiple training processes on multiple GPUs.
 
     Hyperparameter optimization of models is tedious and time-consuming. This function automatizes this optimization
@@ -226,7 +227,11 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             seed = random.randint(1, 10001)
             for config in config_list:
                 config["random_seed"] = seed
-
+                if all_logs:
+                    if i:
+                        config["log_directory"] = config["log_directory"].replace("_n=" + str(i - 1), "_n=" + str(i))
+                    else:
+                        config["log_directory"] += "_n=" + str(i)
         validation_scores = pool.map(train_worker, config_list)
         val_df = pd.DataFrame(validation_scores, columns=[
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
@@ -278,7 +283,7 @@ def main():
     args = parser.parse_args()
     # Run automate training
     automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin), int(args.n_iterations),
-                      bool(args.run_test))
+                      bool(args.run_test), args.all_logs)
 
 
 if __name__ == '__main__':
