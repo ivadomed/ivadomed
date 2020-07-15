@@ -1,15 +1,16 @@
 {
-  "command": "eval",
-  "gpu": 1,
+  "command": "train",
+  "gpu": 0,
   "log_directory": "testing_script",
   "debugging": false,
+  "model_name": "unit_test",
   "object_detection_params": {
     "object_detection_path": null
   },
   "loader_parameters": {
-    "target_suffix": "_lesion-manual",
-    "roi_suffix": "_seg-manual",
-    "bids_path": "../duke/sct_testing/large/",
+    "target_suffix": ["_lesion-manual"],
+    "roi_suffix": null,
+    "bids_path": "testing_data/",
     "roi_params": {
       "suffix": null,
       "slice_filter_roi": null
@@ -17,14 +18,10 @@
     "contrast_params": {
       "random_seed": 1313,
       "training_validation": [
-        "T2star",
-        "T2w",
         "T1w"
       ],
       "balance": {},
       "testing": [
-        "T2star",
-        "T2w",
         "T1w"
       ],
       "center_test": []
@@ -42,8 +39,9 @@
     "fname_split": null,
     "random_seed": 1313,
     "method": "per_patient",
-    "train_fraction": 0.6,
-    "test_fraction": 0.2
+    "train_fraction": 0.66,
+    "test_fraction": 0.33,
+    "center_test": []
   },
   "training_parameters": {
     "batch_size": 32,
@@ -64,9 +62,9 @@
       }
     },
     "balance_samples": false,
-    "mixup_alpha": 2,
+    "mixup_alpha": null,
     "transfer_learning": {
-      "retrain_model": "log_lesionAx/best_model.pt",
+      "retrain_model": null,
       "retrain_fraction": 1.0
     }
   },

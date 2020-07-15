@@ -16,10 +16,10 @@ def test_script():
     os.system("ivadomed_extract_small_dataset -i testing_data/ -o small_dataset/test_script/ -n 1 -c T2w,T1w -d 1")
 
     # Add new file as needed (no empty test/validation)
-    os.makedirs("testing_data/sub-test002/anat/")
-    os.makedirs("testing_data/sub-test003/anat/")
-    os.makedirs("testing_data/derivatives/labels/sub-test002/anat/")
-    os.makedirs("testing_data/derivatives/labels/sub-test003/anat/")
+    os.makedirs("testing_data/sub-test002/anat/",exist_ok=True)
+    os.makedirs("testing_data/sub-test003/anat/",exist_ok=True)
+    os.makedirs("testing_data/derivatives/labels/sub-test002/anat/",exist_ok=True)
+    os.makedirs("testing_data/derivatives/labels/sub-test003/anat/",exist_ok=True)
 
     command = "cp testing_data/sub-test001/anat/sub-test001_T1w.nii.gz testing_data/sub-test002/anat/sub-test002" + \
               "_T1w.nii.gz"
@@ -42,10 +42,12 @@ def test_script():
     list1 = ["sub-test002"]
     list2 = ["sub-test003"]
 
-    append_list_as_row("testing_data/participant.tsv", list1)
-    append_list_as_row("testing_data/participant.tsv", list2)
+    append_list_as_row("testing_data/participants.tsv", list1)
+    append_list_as_row("testing_data/participants.tsv", list2)
 
     command = "ivadomed testing_data/model_config.json"
+    print(command)
+    print(os.getcwd())
     os.system(command)
 
 
