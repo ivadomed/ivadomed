@@ -233,9 +233,10 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                 config["random_seed"] = seed
                 if all_logs:
                     if i:
-                        config["log_directory"] = config["log_directory"].replace("_n=" + str(i - 1), "_n=" + str(i))
+                        config["log_directory"] = config["log_directory"].replace("_n=" + str(i - 1).zfill(2),
+                                                                                  "_n=" + str(i).zfill(2))
                     else:
-                        config["log_directory"] += "_n=" + str(i)
+                        config["log_directory"] += "_n=" + str(i).zfill(2)
         validation_scores = pool.map(train_worker, config_list)
         val_df = pd.DataFrame(validation_scores, columns=[
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
