@@ -1,6 +1,6 @@
 {
   "command": "train",
-  "gpu": 0,
+  "gpu": 7,
   "log_directory": "testing_script",
   "debugging": false,
   "model_name": "unit_test",
