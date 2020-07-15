@@ -30,7 +30,7 @@
       "filter_empty_mask": false,
       "filter_empty_input": true
     },
-    "slice_axis": "axial",
+    "slice_axis": "sagittal",
     "split_method": "per_patient",
     "multichannel": false,
     "soft_input": false

@@ -27,21 +27,21 @@ def test_script():
 
     command = "cp testing_data/sub-test001/anat/sub-test001_T1w.nii.gz testing_data/sub-test002/anat/sub-test002" + \
               "_T1w.nii.gz"
-    subprocess.check_output(command, shell=True)
-
+    subprocess.call(command.split(), shell=True)
+    subprocess.check_output("pwd",shell=True)
     command = "cp testing_data/sub-test001/anat/sub-test001_T1w.nii.gz testing_data/sub-test003/anat/sub-test003" + \
               "_T1w.nii.gz"
-    os.system(command)
+    subprocess.check_output(command, shell=True)
 
     derivatives = "testing_data/derivatives/labels/"
-    command = "cp" + derivatives + "sub-test001/anat/sub-test001_T1w_lesion_manual.nii.gz" + \
+    command = "cp " + derivatives + "sub-test001/anat/sub-test001_T1w_lesion-manual.nii.gz " + \
               derivatives + "sub-test002/anat/sub-test002" + \
-              "_T1w_lesion_manual.nii.gz"
-    os.system(command)
-    command = "cp" + derivatives + "sub-test001/anat/sub-test001_T1w_lesion_manual.nii.gz" + \
+              "_T1w_lesion-manual.nii.gz"
+    subprocess.check_output(command,shell=True)
+    command = "cp " + derivatives + "sub-test001/anat/sub-test001_T1w_lesion-manual.nii.gz " + \
               derivatives + "sub-test003/anat/sub-test003" + \
-              "_T1w_lesion_manual.nii.gz"
-    os.system(command)
+              "_T1w_lesion-manual.nii.gz"
+    subprocess.check_output(command, shell=True)
 
     list1 = ["sub-test002"]
     list2 = ["sub-test003"]
