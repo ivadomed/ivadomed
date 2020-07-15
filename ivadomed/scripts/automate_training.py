@@ -151,11 +151,12 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                 "default_model": {"depth": [2, 3, 4]}
 
         fixed_split (bool): If True, all the experiments are run on the same training/validation/testing subdatasets.
-                            Flag: --fixed_split
+                            Flag: --fixed-split
         all_combin (bool): If True, all parameters combinations are run. Flag: --all-combin
         n_iterations (int): Controls the number of time that each experiment (ie set of parameter) are run.
-                            Flag: --n_iteration, -n
-        run_test (bool): If True, the trained model is also run on the testing subdataset. flag: --run_test
+                            Flag: --n-iteration, -n
+        run_test (bool): If True, the trained model is also run on the testing subdataset. flag: --run-test
+        all_logs (bool): If True, all the log directories are kept for every iteration. Flag: --all-logs, -l
     """
     # Load initial config
     with open(config, "r") as fhandle:
