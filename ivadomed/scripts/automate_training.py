@@ -89,6 +89,9 @@ def test_worker(config):
         test_dict = ivado.run_main(config)
         test_dice = test_dict['dice_score']
 
+        config["command"] = "eval"
+        df_results = ivado.run_main(config)
+
         # Uncomment to use 3D dice
         # test_dice = eval_df["dice"].mean()
 
@@ -97,7 +100,7 @@ def test_worker(config):
         print("Unexpected error:", sys.exc_info()[0])
         raise
 
-    return config["log_directory"], test_dice
+    return config["log_directory"], test_dice, df_results
 
 
 def make_category(base_item, keys, values, is_all_combin=False):
@@ -221,6 +224,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     pool = mp.Pool(processes=len(initial_config["gpu"]))
 
     results_df = pd.DataFrame()
+    eval_df = pd.DataFrame
     for i in range(n_iterations):
         if not fixed_split:
             # Set seed for iteration
@@ -247,10 +251,27 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                     except OSError as e:
                         print("Error: %s - %s." % (e.filename, e.strerror))
 
-            test_scores = pool.map(test_worker, config_list)
-            test_df = pd.DataFrame(test_scores, columns=['log_directory', 'test_dice'])
-            combined_df = val_df.set_index('log_directory').join(
-                test_df.set_index('log_directory'))
+            test_results = pool.map(test_worker, config_list)
+
+            df_lst = []
+            # Merge all eval df together to have a single excel file
+            for j, result in enumerate(test_results):
+                df = list(result).pop()
+                id = result[0].split("_n=")[0]
+                rows = df.index.values
+                for idx, row in enumerate(rows):
+                    df.rename({row: id + "_" + row}, axis='index', inplace=True)
+                df_lst.append(df)
+                test_results[j] = result[:2]
+
+            # Init or add eval results to dataframe
+            if i != 0:
+                eval_df += eval_df + pd.concat(df_lst, sort=False)
+            else:
+                eval_df = pd.concat(df_lst, sort=False)
+
+            test_df = pd.DataFrame(test_results, columns=['log_directory', 'test_dice'])
+            combined_df = val_df.set_index('log_directory').join(test_df.set_index('log_directory'))
             combined_df = combined_df.reset_index()
 
         else:
@@ -258,6 +279,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
         results_df = pd.concat([results_df, combined_df])
         results_df.to_csv("temporary_results.csv")
+        eval_df /= n_iterations
+        eval_df.to_csv("average_eval.csv")
     # Merge config and results in a df
     config_df = pd.DataFrame.from_dict(config_list)
     keep = list(param_dict.keys())
