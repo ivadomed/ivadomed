@@ -42,7 +42,7 @@ def get_parser():
                         help="Evaluate the trained model on the testing sub-set.")
     parser.add_argument("--fixed-split", dest='fixed_split', action='store_true',
                         help="Keep a constant dataset split for all configs and iterations")
-    parser.add_argument("-l", "--all_logs", dest="all_logs", action='store_true',
+    parser.add_argument("-l", "--all-logs", dest="all_logs", action='store_true',
                         help="Keep all log directories for each iteration.")
 
     return parser
