@@ -48,7 +48,7 @@ def test_script():
     command = "ivadomed testing_data/model_config.json"
     os.system(command)
 
-    command = "ivadomed_automate_training -c testing_data/model_config.json -p hyperparameter_opt.json -n 1 --run-test"
+    command = "ivadomed_automate_training -c testing_data/model_config.json -p hyperparameter_opt.json -n 1 "
     os.system(command)
 
 

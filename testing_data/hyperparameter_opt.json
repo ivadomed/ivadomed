@@ -1,8 +1,5 @@
 {
   "training_parameters": {
-    "loss": [
-      {"name": "DiceLoss"},
-      {"name": "FocalLoss", "params": {"gamma": 0.5, "alpha" : 0.2}},
-    ]
+    "batch_size": [2, 4]
   }
 }
