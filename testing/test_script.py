@@ -16,10 +16,10 @@ def test_script():
     os.system("ivadomed_extract_small_dataset -i testing_data/ -o small_dataset/test_script/ -n 1 -c T2w,T1w -d 1")
 
     # Add new file as needed (no empty test/validation)
-    os.makedirs("testing_data/sub-test002/anat/",exist_ok=True)
-    os.makedirs("testing_data/sub-test003/anat/",exist_ok=True)
-    os.makedirs("testing_data/derivatives/labels/sub-test002/anat/",exist_ok=True)
-    os.makedirs("testing_data/derivatives/labels/sub-test003/anat/",exist_ok=True)
+    os.makedirs("testing_data/sub-test002/anat/", exist_ok=True)
+    os.makedirs("testing_data/sub-test003/anat/", exist_ok=True)
+    os.makedirs("testing_data/derivatives/labels/sub-test002/anat/", exist_ok=True)
+    os.makedirs("testing_data/derivatives/labels/sub-test003/anat/", exist_ok=True)
 
     command = "cp testing_data/sub-test001/anat/sub-test001_T1w.nii.gz testing_data/sub-test002/anat/sub-test002" + \
               "_T1w.nii.gz"
@@ -46,8 +46,9 @@ def test_script():
     append_list_as_row("testing_data/participants.tsv", list2)
 
     command = "ivadomed testing_data/model_config.json"
-    print(command)
-    print(os.getcwd())
+    os.system(command)
+
+    command = "ivadomed_automate_training -c testing_data/model_config.json -p hyperparameter_opt.json -n 1 --run-test"
     os.system(command)
 
 
@@ -58,8 +59,3 @@ def append_list_as_row(file_name, list_of_elem):
         csv_writer = writer(write_obj)
         # Add contents of list as last row in the csv file
         csv_writer.writerow(list_of_elem)
-
-
-
-
-
