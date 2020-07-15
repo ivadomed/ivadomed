@@ -42,7 +42,8 @@ def get_parser():
                         help="Evaluate the trained model on the testing sub-set.")
     parser.add_argument("--fixed-split", dest='fixed_split', action='store_true',
                         help="Keep a constant dataset split for all configs and iterations")
-    parser.set_defaults(all_combin=False)
+    parser.add_argument("-l", "--all-logs", dest="all_logs", action='store_true',
+                        help="Keep all log directories for each iteration.")
 
     return parser
 
@@ -88,6 +89,9 @@ def test_worker(config):
         test_dict = ivado.run_main(config)
         test_dice = test_dict['dice_score']
 
+        config["command"] = "eval"
+        df_results = ivado.run_main(config)
+
         # Uncomment to use 3D dice
         # test_dice = eval_df["dice"].mean()
 
@@ -96,7 +100,7 @@ def test_worker(config):
         print("Unexpected error:", sys.exc_info()[0])
         raise
 
-    return config["log_directory"], test_dice
+    return config["log_directory"], test_dice, df_results
 
 
 def make_category(base_item, keys, values, is_all_combin=False):
@@ -126,7 +130,7 @@ def make_category(base_item, keys, values, is_all_combin=False):
     return items, names
 
 
-def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False):
+def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False, all_logs=False):
     """Automate multiple training processes on multiple GPUs.
 
     Hyperparameter optimization of models is tedious and time-consuming. This function automatizes this optimization
@@ -147,11 +151,12 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                 "default_model": {"depth": [2, 3, 4]}
 
         fixed_split (bool): If True, all the experiments are run on the same training/validation/testing subdatasets.
-                            Flag: --fixed_split
+                            Flag: --fixed-split
         all_combin (bool): If True, all parameters combinations are run. Flag: --all-combin
         n_iterations (int): Controls the number of time that each experiment (ie set of parameter) are run.
-                            Flag: --n_iteration, -n
-        run_test (bool): If True, the trained model is also run on the testing subdataset. flag: --run_test
+                            Flag: --n-iteration, -n
+        run_test (bool): If True, the trained model is also run on the testing subdataset. flag: --run-test
+        all_logs (bool): If True, all the log directories are kept for every iteration. Flag: --all-logs, -l
     """
     # Load initial config
     with open(config, "r") as fhandle:
@@ -220,13 +225,19 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     pool = mp.Pool(processes=len(initial_config["gpu"]))
 
     results_df = pd.DataFrame()
+    eval_df = pd.DataFrame
     for i in range(n_iterations):
         if not fixed_split:
             # Set seed for iteration
             seed = random.randint(1, 10001)
             for config in config_list:
                 config["random_seed"] = seed
-
+                if all_logs:
+                    if i:
+                        config["log_directory"] = config["log_directory"].replace("_n=" + str(i - 1).zfill(2),
+                                                                                  "_n=" + str(i).zfill(2))
+                    else:
+                        config["log_directory"] += "_n=" + str(i).zfill(2)
         validation_scores = pool.map(train_worker, config_list)
         val_df = pd.DataFrame(validation_scores, columns=[
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
@@ -242,10 +253,27 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                     except OSError as e:
                         print("Error: %s - %s." % (e.filename, e.strerror))
 
-            test_scores = pool.map(test_worker, config_list)
-            test_df = pd.DataFrame(test_scores, columns=['log_directory', 'test_dice'])
-            combined_df = val_df.set_index('log_directory').join(
-                test_df.set_index('log_directory'))
+            test_results = pool.map(test_worker, config_list)
+
+            df_lst = []
+            # Merge all eval df together to have a single excel file
+            for j, result in enumerate(test_results):
+                df = list(result).pop()
+                id = result[0].split("_n=")[0]
+                rows = df.index.values
+                for idx, row in enumerate(rows):
+                    df.rename({row: id + "_" + row}, axis='index', inplace=True)
+                df_lst.append(df)
+                test_results[j] = result[:2]
+
+            # Init or add eval results to dataframe
+            if i != 0:
+                eval_df += eval_df + pd.concat(df_lst, sort=False)
+            else:
+                eval_df = pd.concat(df_lst, sort=False)
+
+            test_df = pd.DataFrame(test_results, columns=['log_directory', 'test_dice'])
+            combined_df = val_df.set_index('log_directory').join(test_df.set_index('log_directory'))
             combined_df = combined_df.reset_index()
 
         else:
@@ -253,6 +281,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
         results_df = pd.concat([results_df, combined_df])
         results_df.to_csv("temporary_results.csv")
+        eval_df /= n_iterations
+        eval_df.to_csv("average_eval.csv")
     # Merge config and results in a df
     config_df = pd.DataFrame.from_dict(config_list)
     keep = list(param_dict.keys())
@@ -278,7 +308,7 @@ def main():
     args = parser.parse_args()
     # Run automate training
     automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin), int(args.n_iterations),
-                      bool(args.run_test))
+                      bool(args.run_test), args.all_logs)
 
 
 if __name__ == '__main__':
