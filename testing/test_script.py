@@ -6,7 +6,7 @@ from csv import reader
 
 
 def test_script():
-    subprocess.check_output("ivadomed_convert_to_onnx -m testing_data/model_unet_test.pt -d 2", shell=True)
+    #subprocess.check_output("ivadomed_convert_to_onnx -m testing_data/model_unet_test.pt -d 2", shell=True)
 
     subprocess.check_output("ivadomed_prepare_dataset_vertebral_labeling -p testing_data/ -s _T2w -a 3",shell=True)
 
@@ -27,8 +27,8 @@ def test_script():
 
     command = "cp testing_data/sub-test001/anat/sub-test001_T1w.nii.gz testing_data/sub-test002/anat/sub-test002" + \
               "_T1w.nii.gz"
-    subprocess.call(command.split(), shell=True)
-    subprocess.check_output("pwd",shell=True)
+    subprocess.check_output(command, shell=True)
+
     command = "cp testing_data/sub-test001/anat/sub-test001_T1w.nii.gz testing_data/sub-test003/anat/sub-test003" + \
               "_T1w.nii.gz"
     subprocess.check_output(command, shell=True)
@@ -38,6 +38,7 @@ def test_script():
               derivatives + "sub-test002/anat/sub-test002" + \
               "_T1w_lesion-manual.nii.gz"
     subprocess.check_output(command,shell=True)
+
     command = "cp " + derivatives + "sub-test001/anat/sub-test001_T1w_lesion-manual.nii.gz " + \
               derivatives + "sub-test003/anat/sub-test003" + \
               "_T1w_lesion-manual.nii.gz"
