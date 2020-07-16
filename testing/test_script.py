@@ -19,6 +19,7 @@ def test_script():
 
     subprocess.check_output("ivadomed_extract_small_dataset -i testing_data/ -o small_dataset/test_script/ -n 1 -c T2w,T1w -d 1",shell=True)
 
+def test_training():
     # Add new file as needed (no empty test/validation)
     os.makedirs("testing_data/sub-test002/anat/", exist_ok=True)
     os.makedirs("testing_data/sub-test003/anat/", exist_ok=True)
@@ -51,7 +52,7 @@ def test_script():
     append_list_as_row("testing_data/participants.tsv", list2)
 
     print("training about to begin")
-    subprocess.call(["ivadomed","testing_data/model_config.json"])
+    subprocess.call(["ivadomed", "testing_data/model_config.json"])
     print("training_done")
 
     command = "ivadomed_automate_training -c testing_data/model_config.json -p hyperparameter_opt.json -n 1 "
