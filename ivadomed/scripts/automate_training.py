@@ -281,8 +281,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
         results_df = pd.concat([results_df, combined_df])
         results_df.to_csv("temporary_results.csv")
-        eval_df /= n_iterations
-        eval_df.to_csv("average_eval.csv")
+    eval_df /= n_iterations
+    eval_df.to_csv("average_eval.csv")
     # Merge config and results in a df
     config_df = pd.DataFrame.from_dict(config_list)
     keep = list(param_dict.keys())
