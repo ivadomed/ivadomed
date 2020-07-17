@@ -51,13 +51,17 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
     slice_filter_params and object_detection_params see :doc:`configuration_file`.
     """
     # Compose transforms
-    tranform_lst, _ = imed_transforms.preprare_transforms(transforms_params, requires_undo)
+    tranform_lst, _ = imed_transforms.prepare_transforms(copy.deepcopy(transforms_params), requires_undo)
+
+    # If ROICrop is not part of the transforms, then enforce no slice filtering based on ROI data.
+    if 'ROICrop' not in transforms_params:
+        roi_params["slice_filter_roi"] = None
 
     if model_params["name"] == "UNet3D":
         dataset = Bids3DDataset(bids_path,
                                 subject_lst=data_list,
                                 target_suffix=target_suffix,
-                                roi_suffix=roi_params["suffix"],
+                                roi_params=roi_params,
                                 contrast_params=contrast_params,
                                 metadata_choice=metadata_type,
                                 slice_axis=imed_utils.AXIS_DCT[slice_axis],
@@ -77,7 +81,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               transform=tranform_lst,
                                               metadata_choice=metadata_type,
                                               slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
-                                              roi_suffix=roi_params["suffix"],
+                                              roi_params=roi_params,
                                               object_detection_params=object_detection_params,
                                               soft_gt=soft_gt)
     else:
@@ -87,7 +91,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         dataset = BidsDataset(bids_path,
                               subject_lst=data_list,
                               target_suffix=target_suffix,
-                              roi_suffix=roi_params["suffix"],
+                              roi_params=roi_params,
                               contrast_params=contrast_params,
                               metadata_choice=metadata_type,
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
@@ -98,10 +102,6 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               object_detection_params=object_detection_params,
                               task=task)
         dataset.load_filenames()
-
-    # if ROICrop in transform, then apply SliceFilter to ROI slices
-    if 'ROICrop' in transforms_params:
-        dataset = imed_loader_utils.filter_roi(dataset, nb_nonzero_thr=roi_params["slice_filter_roi"])
 
     if model_params["name"] != "UNet3D":
         print("Loaded {} {} slices for the {} set.".format(len(dataset), slice_axis, dataset_type))
@@ -354,6 +354,10 @@ class MRI2DSegmentationDataset(Dataset):
         slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
         task (str): choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
+        roi_params (dict): Dictionary containing parameters related to ROI image processing.
+        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
+            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
+            space.
 
     Attributes:
         indexes (list): List of indices corresponding to each slice or subvolume in the dataset.
@@ -371,11 +375,14 @@ class MRI2DSegmentationDataset(Dataset):
         soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
             fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
             space.
+        slice_filter_roi (bool): Indicates whether a slice filtering is done based on ROI data.
+        roi_thr (int): If the ROI mask contains less than this number of non-zero voxels, the slice will be discarded
+            from the dataset.
 
     """
 
     def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None,
-                 task="segmentation", soft_gt=False):
+                 task="segmentation", roi_params=None, soft_gt=False):
         self.indexes = []
         self.filename_pairs = filename_pairs
         self.prepro_transforms, self.transform = transform
@@ -383,6 +390,10 @@ class MRI2DSegmentationDataset(Dataset):
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
         self.n_contrasts = len(self.filename_pairs[0][0])
+        if roi_params is None:
+            roi_params = {"suffix": None, "slice_filter_roi": None}
+        self.roi_thr = roi_params["slice_filter_roi"]
+        self.slice_filter_roi = roi_params["suffix"] is not None and isinstance(self.roi_thr, int)
         self.soft_gt = soft_gt
         self.has_bounding_box = True
         self.task = task
@@ -405,13 +416,14 @@ class MRI2DSegmentationDataset(Dataset):
                 if self.has_bounding_box:
                     self.prepro_transforms = imed_obj_detect.adjust_transforms(self.prepro_transforms, slice_seg_pair)
 
-                if self.slice_filter_fn:
-                    filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
-                if self.slice_filter_fn and not filter_fn_ret_seg:
+                if self.slice_filter_fn and not self.slice_filter_fn(slice_seg_pair):
                     continue
 
                 # Note: we force here gt_type=segmentation since ROI slice is needed to Crop the image
                 slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice, gt_type="segmentation")
+
+                if self.slice_filter_roi and imed_loader_utils.filter_roi(slice_roi_pair['gt'], self.roi_thr):
+                    continue
 
                 item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                       slice_seg_pair,
@@ -497,6 +509,9 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         length (tuple): Size of each dimensions of the subvolumes, length equals 3.
         stride (tuple): Size of the overlapping per subvolume and dimensions, length equals 3.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
+            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
+            space.
     """
 
     def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
@@ -649,18 +664,18 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         transform (list): Transformation list (length 2) composed of preprocessing transforms (Compose) and transforms
             to apply during training (Compose).
         metadata_choice: Choice between "mri_params", "contrasts", None or False, related to FiLM.
-        roi_suffix (list): List of suffixes for ROI masks.
+        roi_params (dict): Dictionary containing parameters related to ROI image processing.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
         object_detection_params (dict): Object dection parameters.
     """
     def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
-                 cache=True, transform=None, metadata_choice=False, roi_suffix=None,
+                 cache=True, transform=None, metadata_choice=False, roi_params=None,
                  multichannel=False, object_detection_params=None, soft_gt=False):
         dataset = BidsDataset(root_dir,
                               subject_lst=subject_lst,
                               target_suffix=target_suffix,
-                              roi_suffix=roi_suffix,
+                              roi_params=roi_params,
                               contrast_params=contrast_params,
                               metadata_choice=metadata_choice,
                               slice_axis=slice_axis,
@@ -686,7 +701,7 @@ class BidsDataset(MRI2DSegmentationDataset):
             to apply during training (Compose).
         metadata_choice (str): Choice between "mri_params", "contrasts", None or False, relatec to FiLM.
         slice_filter_fn (SliceFilter): Class that filters slices according to their content.
-        roi_suffix (list): List of suffixes for ROI masks.
+        roi_params (dict): Dictionary containing parameters related to ROI image processing.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
         object_detection_params (dict): Object dection parameters.
@@ -703,10 +718,11 @@ class BidsDataset(MRI2DSegmentationDataset):
 
     """
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
-                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_suffix=None,
+                 cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 
         self.bids_ds = bids.BIDS(root_dir)
+        self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
         self.soft_gt = soft_gt
         self.filename_pairs = []
         if metadata_choice == 'mri_params':
@@ -764,11 +780,11 @@ class BidsDataset(MRI2DSegmentationDataset):
                         if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
                             target_filename[idx] = deriv
 
-                    if not (roi_suffix is None) and \
-                            deriv.endswith(subject.record["modality"] + roi_suffix + ".nii.gz"):
+                    if not (self.roi_params["suffix"] is None) and \
+                            deriv.endswith(subject.record["modality"] + self.roi_params["suffix"] + ".nii.gz"):
                         roi_filename = [deriv]
 
-                if (not any(target_filename)) or (not (roi_suffix is None) and (roi_filename is None)):
+                if (not any(target_filename)) or (not (self.roi_params["suffix"] is None) and (roi_filename is None)):
                     continue
 
                 if not subject.has_metadata():
@@ -807,4 +823,5 @@ class BidsDataset(MRI2DSegmentationDataset):
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
 
-        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task, self.soft_gt)
+        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
+                         self.soft_gt)

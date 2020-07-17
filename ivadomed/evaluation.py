@@ -280,7 +280,14 @@ class Evaluation3DMetrics(object):
         return vol
 
     def get_rvd(self):
-        """Relative volume difference."""
+        """Relative volume difference.
+
+        The volume is here defined by the physical volume, in mm3, of the non-zero voxels of a given mask.
+        Relative volume difference equals the difference between the ground-truth and prediction volumes, divided by the
+        ground-truth volume.
+        Optimal value is zero. Negative value indicates over-segmentation, while positive value indicates
+        under-segmentation.
+        """
         vol_gt = self.get_vol(self.data_gt)
         vol_pred = self.get_vol(self.data_pred)
 
@@ -293,7 +300,12 @@ class Evaluation3DMetrics(object):
         return rvd
 
     def get_avd(self):
-        """Absolute volume difference."""
+        """Absolute volume difference.
+
+        The volume is here defined by the physical volume, in mm3, of the non-zero voxels of a given mask.
+        Absolute volume difference equals the absolute value of the Relative Volume Difference.
+        Optimal value is zero.
+        """
         return abs(self.get_rvd())
 
     def _get_ltp_lfn(self, label_size, class_idx=0):
