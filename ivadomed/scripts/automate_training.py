@@ -231,7 +231,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             # Set seed for iteration
             seed = random.randint(1, 10001)
             for config in config_list:
-                config["random_seed"] = seed
+                config["split_dataset"]["random_seed"] = seed
                 if all_logs:
                     if i:
                         config["log_directory"] = config["log_directory"].replace("_n=" + str(i - 1).zfill(2),
