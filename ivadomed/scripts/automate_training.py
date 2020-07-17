@@ -273,9 +273,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
             # Init or add eval results to dataframe
             if i != 0:
-                eval_df = (eval_df * n_iterations + pd.concat(df_lst, sort=False, axis=1)) / (n_iterations + 1)
+                eval_df = (eval_df * i + pd.concat(df_lst, sort=False, axis=1)) / (i + 1)
             else:
-
                 eval_df = pd.concat(df_lst, sort=False, axis=1)
 
             test_df = pd.DataFrame(test_results, columns=['log_directory', 'test_dice'])
