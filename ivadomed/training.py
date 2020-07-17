@@ -15,6 +15,7 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils
+import datetime
 
 cudnn.benchmark = True
 
@@ -101,6 +102,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     best_training_dice, best_training_loss = float("inf"), float("inf")
     best_validation_loss, best_validation_dice = float("inf"), float("inf")
     patience_count = 0
+    begin_time = time.time()
 
     # EPOCH LOOP
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
@@ -259,6 +261,12 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     imed_utils.save_onnx_model(torch.load(model_path), input_samples, best_model_path)
 
     writer.close()
+    final_time = time.time()
+    duration_time = final_time - begin_time
+    print('begin ' + time.strftime('%H:%M:%S', time.localtime(begin_time)) + "| End " +
+          time.strftime('%H:%M:%S', time.localtime(final_time)) +
+          "| duration " + str(datetime.timedelta(seconds=duration_time)))
+
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
 
