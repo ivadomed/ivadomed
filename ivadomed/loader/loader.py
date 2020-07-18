@@ -473,7 +473,7 @@ class MRI2DSegmentationDataset(Dataset):
                                                    data_type="gt")
             # Make sure stack_gt is binarized
             if stack_gt is not None and not self.soft_gt:
-                stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.1)
+                stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5)
 
         else:
             # Force no transformation on labels for classification task
@@ -614,7 +614,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                                data_type="gt")
         # Make sure stack_gt is binarized
         if stack_gt is not None and not self.soft_gt:
-            stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.1)
+            stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5)
 
         shape_x = coord["x_max"] - coord["x_min"]
         shape_y = coord["y_max"] - coord["y_min"]
