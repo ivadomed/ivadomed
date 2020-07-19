@@ -231,7 +231,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             # Set seed for iteration
             seed = random.randint(1, 10001)
             for config in config_list:
-                config["random_seed"] = seed
+                config["split_dataset"]["random_seed"] = seed
                 if all_logs:
                     if i:
                         config["log_directory"] = config["log_directory"].replace("_n=" + str(i - 1).zfill(2),
@@ -258,19 +258,24 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             df_lst = []
             # Merge all eval df together to have a single excel file
             for j, result in enumerate(test_results):
-                df = list(result).pop()
+                df = result[-1]
+                mean_metrics = df.mean(axis=0)
+                std_metrics = df.std(axis=0)
+                metrics = pd.concat([mean_metrics, std_metrics], sort=False, axis=1)
+                metrics.rename({0: "mean"}, axis=1, inplace=True)
+                metrics.rename({1: "std"}, axis=1, inplace=True)
                 id = result[0].split("_n=")[0]
-                rows = df.index.values
-                for idx, row in enumerate(rows):
-                    df.rename({row: id + "_" + row}, axis='index', inplace=True)
-                df_lst.append(df)
+                cols = metrics.columns.values
+                for idx, col in enumerate(cols):
+                    metrics.rename({col: col + "_" + id}, axis=1, inplace=True)
+                df_lst.append(metrics)
                 test_results[j] = result[:2]
 
             # Init or add eval results to dataframe
             if i != 0:
-                eval_df += eval_df + pd.concat(df_lst, sort=False)
+                eval_df = (eval_df * i + pd.concat(df_lst, sort=False, axis=1)) / (i + 1)
             else:
-                eval_df = pd.concat(df_lst, sort=False)
+                eval_df = pd.concat(df_lst, sort=False, axis=1)
 
             test_df = pd.DataFrame(test_results, columns=['log_directory', 'test_dice'])
             combined_df = val_df.set_index('log_directory').join(test_df.set_index('log_directory'))
@@ -281,8 +286,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
         results_df = pd.concat([results_df, combined_df])
         results_df.to_csv("temporary_results.csv")
-        eval_df /= n_iterations
         eval_df.to_csv("average_eval.csv")
+
     # Merge config and results in a df
     config_df = pd.DataFrame.from_dict(config_list)
     keep = list(param_dict.keys())
