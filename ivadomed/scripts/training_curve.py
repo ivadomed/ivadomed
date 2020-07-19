@@ -54,6 +54,10 @@ def get_data(event_dict):
     return metrics_df
 
 
+def plot_curve(data, fname_out):
+    pass
+
+
 def run_plot_training_curves(input_folder):
     """Utility function to XX.
 
@@ -78,10 +82,17 @@ def run_plot_training_curves(input_folder):
     # Get data as dataframe
     events_vals_df = get_data(events_dict)
 
-    # Plot each loss or validation metric separetely
+    # Plot train and valid losses together
+    #fname_out = os.path.join(input_folder, tag, "losses.png")
+    loss_keys = [k for k in events_vals_df.keys() if k.startswith("losses")]
+    print(events_vals_df[loss_keys].head())
+    #plot_curve(events_vals_df[loss_keys], fname_out)
+
+    # Plot each validation metric separetly
     for tag in events_vals_df.keys():
-        fname_out = os.path.join(input_folder, tag, "plot.png")
-        plot_curve(events_vals_df[tag], fname_out)
+        if not tag.startswith("losses"):
+            fname_out = os.path.join(input_folder, tag, "plot.png")
+            plot_curve(events_vals_df[tag], fname_out)
 
 
 def main():
