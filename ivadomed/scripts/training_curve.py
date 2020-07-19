@@ -7,6 +7,13 @@ from collections import defaultdict
 import tensorflow as tf
 from tensorflow.python.summary.summary_iterator import summary_iterator
 import pandas as pd
+import matplotlib.pyplot as plt
+
+DEBUGGING = True
+
+if DEBUGGING:
+    import matplotlib
+    matplotlib.use('TkAgg')
 
 
 def get_parser():
@@ -77,12 +84,17 @@ def plot_curve(data, y_label, fname_out):
     epoch_count = range(1, len(data) + 1)
 
     for k in data.keys():
-        plt.plot(epoch_count, data[k], 'r--')
+        print(k)
+        plt.plot(epoch_count, data[k].tolist())
 
-    plt.legend(data.keys())
+    plt.legend(data.keys(), loc="best")
+    plt.grid(linestyle='dotted')
     plt.xlabel('Epoch')
     plt.ylabel(y_label)
-    plt.show()
+    plt.xlim([1, len(data)])
+    if DEBUGGING:
+        plt.show()
+    plt.savefig(fname_out)
 
 
 def run_plot_training_curves(input_folder, output_folder):
@@ -116,6 +128,7 @@ def run_plot_training_curves(input_folder, output_folder):
         print("Output folder already exists: {}.".format(output_folder))
     else:
         print("Creating output folder: {}.".format(output_folder))
+        os.makedirs(output_folder)
 
     # Plot train and valid losses together
     fname_out = os.path.join(output_folder, "losses.png")
