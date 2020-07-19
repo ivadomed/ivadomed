@@ -53,13 +53,36 @@ def get_data(event_dict):
         for e in summary_iterator(event_dict[tf_tag]):
             for v in e.summary.value:
                 if isinstance(v.simple_value, float):
-                    metrics[tf_tag].append(v.simple_value)
+                    if tf_tag.startswith("Validation_Metrics_"):
+                        tag = tf_tag.split("Validation_Metrics_")[1]
+                    elif tf_tag.startswith("losses_"):
+                        tag = tf_tag.split("losses_")[1]
+                    else:
+                        print("Unknown TF tag: {}.".format(tf_tag))
+                        exit()
+                    metrics[tag].append(v.simple_value)
     metrics_df = pd.DataFrame.from_dict(metrics)
     return metrics_df
 
 
-def plot_curve(data, fname_out):
-    pass
+def plot_curve(data, y_label, fname_out):
+    """Plot curve of metrics or losses for each epoch.
+
+    Args:
+        data (pd.DataFrame):
+        y_label (str): Label for the y-axis.
+        fname_out (str): Save plot with this filename.
+    """
+    # Create count of the number of epochs
+    epoch_count = range(1, len(data) + 1)
+
+    for k in data.keys():
+        plt.plot(epoch_count, data[k], 'r--')
+
+    plt.legend(data.keys())
+    plt.xlabel('Epoch')
+    plt.ylabel(y_label)
+    plt.show()
 
 
 def run_plot_training_curves(input_folder, output_folder):
@@ -96,14 +119,14 @@ def run_plot_training_curves(input_folder, output_folder):
 
     # Plot train and valid losses together
     fname_out = os.path.join(output_folder, "losses.png")
-    loss_keys = [k for k in events_vals_df.keys() if k.startswith("losses")]
-    plot_curve(events_vals_df[loss_keys], fname_out)
+    loss_keys = [k for k in events_vals_df.keys() if k.endswith("loss")]
+    plot_curve(events_vals_df[loss_keys], "loss", fname_out)
 
     # Plot each validation metric separetly
     for tag in events_vals_df.keys():
-        if not tag.startswith("losses"):
+        if not tag.endswith("loss"):
             fname_out = os.path.join(output_folder, tag+".png")
-            plot_curve(events_vals_df[tag], fname_out)
+            plot_curve(events_vals_df[tag], tag, fname_out)
 
 
 def main():
