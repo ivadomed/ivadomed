@@ -15,19 +15,6 @@ def get_parser():
     return parser
 
 
-def parse_events_file(path: str) -> pd.DataFrame:
-    metrics = defaultdict(list)
-    for e in tf.train.summary_iterator(path):
-        for v in e.summary.value:
-
-            if isinstance(v.simple_value, float) and is_interesting_tag(v.tag):
-                metrics[v.tag].append(v.simple_value)
-            if v.tag == 'loss' or v.tag == 'accuracy':
-                print(v.simple_value)
-    metrics_df = pd.DataFrame({k: v for k, v in metrics.items() if len(v) > 1})
-    return metrics_df
-
-
 def find_events(input_folder):
     """Get TF events path from input_folder.
 
@@ -90,14 +77,11 @@ def run_plot_training_curves(input_folder):
 
     # Get data as dataframe
     events_vals_df = get_data(events_dict)
-    # Iterate through the events
-    #for event in events_dict:
-    #    fname_out = os.path.join(input_folder, event, "plot.png")
-    #    print(event)
-    #    plot_curve(event, events_dict[event], fname_out)
-    #    exit()
 
-
+    # Plot each loss or validation metric separetely
+    for tag in events_vals_df.keys():
+        fname_out = os.path.join(input_folder, tag, "plot.png")
+        plot_curve(events_vals_df[tag], fname_out)
 
 
 def main():
