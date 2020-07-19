@@ -2,14 +2,12 @@
 
 import os
 import argparse
-import numpy as np
 from collections import defaultdict
-import tensorflow as tf
 from tensorflow.python.summary.summary_iterator import summary_iterator
 import pandas as pd
 import matplotlib.pyplot as plt
 
-DEBUGGING = True
+DEBUGGING = False
 
 if DEBUGGING:
     import matplotlib
@@ -83,8 +81,9 @@ def plot_curve(data, y_label, fname_out):
     # Create count of the number of epochs
     epoch_count = range(1, len(data) + 1)
 
+    plt.figure(figsize=(10, 5))
+
     for k in data.keys():
-        print(k)
         plt.plot(epoch_count, data[k].tolist())
 
     plt.legend(data.keys(), loc="best")
@@ -92,9 +91,12 @@ def plot_curve(data, y_label, fname_out):
     plt.xlabel('Epoch')
     plt.ylabel(y_label)
     plt.xlim([1, len(data)])
+
     if DEBUGGING:
         plt.show()
-    plt.savefig(fname_out)
+        exit()
+    else:
+        plt.savefig(fname_out)
 
 
 def run_plot_training_curves(input_folder, output_folder):
@@ -139,7 +141,7 @@ def run_plot_training_curves(input_folder, output_folder):
     for tag in events_vals_df.keys():
         if not tag.endswith("loss"):
             fname_out = os.path.join(output_folder, tag+".png")
-            plot_curve(events_vals_df[tag], tag, fname_out)
+            plot_curve(events_vals_df[[tag]], tag, fname_out)
 
 
 def main():
