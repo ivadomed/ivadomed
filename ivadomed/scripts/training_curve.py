@@ -3,6 +3,7 @@
 import os
 import argparse
 import numpy as np
+from collections import defaultdict
 import tensorflow as tf
 from tensorflow.python.summary.summary_iterator import summary_iterator
 import pandas as pd
@@ -13,13 +14,6 @@ def get_parser():
                         help="Input log directory.")
     return parser
 
-
-
-def is_interesting_tag(tag):
-    if 'val' in tag or 'train' in tag:
-        return True
-    else:
-        return False
 
 def parse_events_file(path: str) -> pd.DataFrame:
     metrics = defaultdict(list)
@@ -55,22 +49,23 @@ def find_events(input_folder):
     return dict
 
 
-def plot_curve(event_folder, event_path, fname_out):
-    """Plot event curve.
+def get_data(event_dict):
+    """Get data as Pandas dataframe.
 
     Args:
-        event_folder (str): Event folder name.
-        event_path (str): Event path.
-        fname_out (str): Filename for the plot.
+        event_dict (dict): Dictionary containing the TF event names and their paths.
+    Returns:
+        Pandas Dataframe: where the columns are the metrics or losses and the rows represent the epochs.
     """
-    for e in summary_iterator(event_path):
-        for v in e.summary.value:
-            print(v.tag)
+    metrics = defaultdict(list)
+    for tf_tag in event_dict:
+        for e in summary_iterator(event_dict[tf_tag]):
+            for v in e.summary.value:
+                if isinstance(v.simple_value, float):
+                    metrics[tf_tag].append(v.simple_value)
+    metrics_df = pd.DataFrame.from_dict(metrics)
+    return metrics_df
 
-            #if isinstance(v.simple_value, float) and is_interesting_tag(v.tag):
-            #    metrics[v.tag].append(v.simple_value)
-            #if v.tag == 'loss' or v.tag == 'accuracy':
-            #    print(v.simple_value)
 
 def run_plot_training_curves(input_folder):
     """Utility function to XX.
@@ -93,10 +88,14 @@ def run_plot_training_curves(input_folder):
     # Find tf folders
     events_dict = find_events(input_folder)
 
+    # Get data as dataframe
+    events_vals_df = get_data(events_dict)
     # Iterate through the events
-    for event in events_dict:
-        fname_out = os.path.join(input_folder, event, "plot.png")
-        plot_curve(event, events_dict[event], fname_out)
+    #for event in events_dict:
+    #    fname_out = os.path.join(input_folder, event, "plot.png")
+    #    print(event)
+    #    plot_curve(event, events_dict[event], fname_out)
+    #    exit()
 
 
 
