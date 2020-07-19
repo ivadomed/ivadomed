@@ -8,10 +8,14 @@ import tensorflow as tf
 from tensorflow.python.summary.summary_iterator import summary_iterator
 import pandas as pd
 
+
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True,
                         help="Input log directory.")
+    parser.add_argument("-o", "--output", required=False,
+                        help="Output folder. If not specified, results are saved under "
+                             "input_folder/plot_training_curves.")
     return parser
 
 
@@ -58,7 +62,7 @@ def plot_curve(data, fname_out):
     pass
 
 
-def run_plot_training_curves(input_folder):
+def run_plot_training_curves(input_folder, output_folder):
     """Utility function to XX.
 
     XX
@@ -82,16 +86,23 @@ def run_plot_training_curves(input_folder):
     # Get data as dataframe
     events_vals_df = get_data(events_dict)
 
+    # Create output folder
+    if output_folder is None:
+        output_folder = os.path.join(input_folder, "plot_training_curves")
+    if os.path.isdir(output_folder):
+        print("Output folder already exists: {}.".format(output_folder))
+    else:
+        print("Creating output folder: {}.".format(output_folder))
+
     # Plot train and valid losses together
-    #fname_out = os.path.join(input_folder, tag, "losses.png")
+    fname_out = os.path.join(output_folder, "losses.png")
     loss_keys = [k for k in events_vals_df.keys() if k.startswith("losses")]
-    print(events_vals_df[loss_keys].head())
-    #plot_curve(events_vals_df[loss_keys], fname_out)
+    plot_curve(events_vals_df[loss_keys], fname_out)
 
     # Plot each validation metric separetly
     for tag in events_vals_df.keys():
         if not tag.startswith("losses"):
-            fname_out = os.path.join(input_folder, tag, "plot.png")
+            fname_out = os.path.join(output_folder, tag+".png")
             plot_curve(events_vals_df[tag], fname_out)
 
 
@@ -99,8 +110,9 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     input_folder = args.input
+    output_folder = args.output
     # Run script
-    run_plot_training_curves(input_folder)
+    run_plot_training_curves(input_folder, output_folder)
 
 
 if __name__ == '__main__':
