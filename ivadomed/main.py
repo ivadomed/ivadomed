@@ -21,9 +21,20 @@ MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'NAME_CLASSIFIER_1', 'Countce
 
 
 def get_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config", required=True, type=str,
-                        help="Path to configuration file.")
+    parser = argparse.ArgumentParser(add_help=False)
+
+    # MANDATORY ARGUMENTS
+    mandatory_args = parser.add_argument_group('MANDATORY ARGUMENTS')
+    mandatory_args.add_argument("-c", "--config", required=True, type=str,
+                                help="Path to configuration file.")
+
+    # OPTIONAL ARGUMENTS
+    optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
+    optional_args.add_argument('-d', '--dada',
+                               help='Show function documentation.')
+    optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
+                               help='Show function documentation.')
+
     return parser
 
 
