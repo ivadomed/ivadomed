@@ -120,11 +120,24 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
     Args:
          input_folder (string): Log directory name. Flag: --input, -i
     """
-    # Find tf folders
-    events_dict = find_events(input_folder)
+    # Find training folders:
+    if multiple_training:
+        prefix = input_folder.split('/')[-1]
+        input_folder = '/'.join(input_folder.split('/')[:-1])
+        input_folder_list = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if f.startswith(prefix)]
+    else:
+        input_folder_list = [input_folder]
 
-    # Get data as dataframe
-    events_vals_df = get_data(events_dict)
+    events_df_list = []
+    for log_directory in input_folder_list:
+        # Find tf folders
+        events_dict = find_events(log_directory)
+
+        # Get data as dataframe
+        events_vals_df = get_data(events_dict)
+
+        # Store data
+        events_df_list.append(events_vals_df)
 
     # Create output folder
     if output_folder is None:
