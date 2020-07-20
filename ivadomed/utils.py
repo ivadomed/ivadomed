@@ -1000,7 +1000,18 @@ def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, we
 
 
 class AnimatedGif:
-    def __init__(self, size=(640, 480)):
+    """Generates GIF.
+
+    Args:
+        size (tuple): Size of frames.
+
+    Attributes:
+        fig (plt):
+        size_x (int):
+        size_y (int):
+        images (list): List of frames.
+    """
+    def __init__(self, size):
         self.fig = plt.figure()
         self.fig.set_size_inches(size[0] / 100, size[1] / 100)
         self.size_x = size[0]
