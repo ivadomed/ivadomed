@@ -172,6 +172,13 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             model_params["missing_probability"] **= model_params["missing_probability_growth"]
             dataset_train.update(p=model_params["missing_probability"])
 
+        # Init GIF
+        if epoch == 0:
+            gif_dict = {"image_path": [], "slice_id": [], "gif": []}
+            for i_gif in range(n_gif):
+                # TODO
+                gif_dict["gif"] = imed_utils.AnimatedGif(size=gt_samples.cpu().shape[2:4])
+
         # Validation loop -----------------------------------------------------
         model.eval()
         val_loss_total, val_dice_loss_total = 0.0, 0.0
@@ -198,6 +205,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                     loss = loss_fct(preds, gt_samples)
                     val_loss_total += loss.item()
                     val_dice_loss_total += loss_dice_fct(preds, gt_samples).item()
+
+                    # Add frame to GIF
+                    # TODO
 
                 num_steps += 1
 
@@ -262,6 +272,17 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     # Convert best model to ONNX and save it in model directory
     best_model_path = os.path.join(log_directory, model_params["folder_name"], model_params["folder_name"] + ".onnx")
     imed_utils.save_onnx_model(torch.load(model_path), input_samples, best_model_path)
+
+    # Save GIFs
+    gif_folder = os.path.join(log_directory, "gifs")
+    if n_gif > 0 and not os.path.isdir(gif_folder):
+        os.makedirs(gif_folder)
+    for i_gif in range(n_gif):
+        fname_out = gif_dict["image_path"][i_gif].split('/')[-3] + "__"
+        fname_out += gif_dict["image_path"][i_gif].split('/')[-1].split(".nii.gz")[0] + "__"
+        fname_out += str(gif_dict["slice"][i_gif]) + ".mp4"
+        path_gif_out = os.path.join(gif_folder, fname_out)
+        gif_dict["gif"][i_gif].save(path_gif_out)
 
     writer.close()
     final_time = time.time()
