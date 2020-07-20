@@ -1,6 +1,6 @@
 import json
 import os
-import sys
+import argparse
 
 import joblib
 import torch.backends.cudnn as cudnn
@@ -18,6 +18,13 @@ cudnn.benchmark = True
 # List of not-default available models i.e. different from Unet
 
 MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'NAME_CLASSIFIER_1', 'Countception']
+
+
+def get_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--config", required=True, type=str,
+                        help="Path to configuration file.")
+    return parser
 
 
 def run_command(context):
@@ -227,7 +234,7 @@ def run_command(context):
         return df_results
 
 
-def run_main(config=None):
+def run_main():
     parser = get_parser()
     args = parser.parse_args()
 
