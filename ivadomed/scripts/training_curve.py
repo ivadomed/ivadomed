@@ -17,7 +17,7 @@ if DEBUGGING:
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True, type=str,
-                        help="Input log directory. If using -m True, this parameter indicate the suffix path of all "
+                        help="Input log directory. If using -m True, this parameter indicates the suffix path of all "
                              "log directories of interest.")
     parser.add_argument("-m", "--multiple", required=False, default=False, type=bool,
                         help="If True, then multiple log directories are considered: all available folders with -i as "
@@ -127,7 +127,13 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         :align: center
 
     Args:
-         input_folder (str): Log directory name. Flag: --input, -i
+        input_folder (str): Log directory name. Flag: --input, -i. If using ``-m True``, this parameter indicates the
+            suffix path of all log directories of interest.
+        output_folder (str): Output folder. Flag: --output, -o. If not specified, results are saved under
+            ``input_folder/plot_training_curves``.
+        multiple_training (bool): Indicates if multiple log directories are considered (``True``) or not (``False``).
+            Flag: --multiple, -m. If ``True``, all available folders with ``-i`` as prefix. The plot represents the mean
+            value (hard line) surrounded by the standard deviation (envelope).
     """
     # Find training folders:
     if multiple_training:
