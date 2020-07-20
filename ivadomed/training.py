@@ -21,7 +21,7 @@ cudnn.benchmark = True
 
 
 def train(model_params, dataset_train, dataset_val, training_params, log_directory, device,
-          cuda_available=True, metric_fns=None, debugging=False):
+          cuda_available=True, metric_fns=None, n_gif=0, debugging=False):
     """Main command to train the network.
 
     Args:
@@ -33,6 +33,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         device (str): Indicates the CPU or GPU ID.
         cuda_available (bool): If True, CUDA is available.
         metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
+        n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
+            parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. They are saved within
+            the log directory.
         debugging (bool): If True, extended verbosity and intermediate outputs.
 
     Returns:

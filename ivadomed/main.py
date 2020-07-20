@@ -180,6 +180,7 @@ def run_command(context, n_gif=0):
             device=device,
             cuda_available=cuda_available,
             metric_fns=metric_fns,
+            n_gif=n_gif,
             debugging=context["debugging"])
 
         # Save config file within log_directory and log_directory/model_name
