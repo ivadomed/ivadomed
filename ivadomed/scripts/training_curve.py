@@ -17,10 +17,12 @@ if DEBUGGING:
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True, type=str,
-                        help="Input log directory.")
+                        help="Input log directory. If using -m True, this parameter indicate the suffix path of all "
+                             "log directories of interest.")
     parser.add_argument("-m", "--multiple", required=False, default=False, type=bool,
                         help="If True, then multiple log directories are considered: all available folders with -i as "
-                             "prefix.")
+                             "prefix. The plot represents the mean value (hard line) surrounded by the standard "
+                             "deviation envelope.")
     parser.add_argument("-o", "--output", required=False, type=str,
                         help="Output folder. If not specified, results are saved under "
                              "input_folder/plot_training_curves.")
@@ -73,27 +75,34 @@ def get_data(event_dict):
     return metrics_df
 
 
-def plot_curve(data, y_label, fname_out):
+def plot_curve(data_list, y_label, fname_out):
     """Plot curve of metrics or losses for each epoch.
 
     Args:
-        data (pd.DataFrame):
+        data_list (list): list of pd.DataFrame, one for each log_directory
         y_label (str): Label for the y-axis.
         fname_out (str): Save plot with this filename.
     """
     # Create count of the number of epochs
-    epoch_count = range(1, len(data) + 1)
+    max_nb_epoch = max([len(data_list[i]) for i in range(len(data_list))])
+    epoch_count = range(1, max_nb_epoch + 1)
 
     plt.figure(figsize=(10, 5))
+    for k in data_list[0].keys():
+        data_k = pd.concat([data_list[i][k] for i in range(len(data_list))], axis=1)
+        mean_data_k = data_k.mean(axis=1, skipna=True)
+        std_data_k = data_k.std(axis=1, skipna=True)
+        std_minus_data_k = (mean_data_k - std_data_k).tolist()
+        std_plus_data_k = (mean_data_k + std_data_k).tolist()
+        mean_data_k = mean_data_k.tolist()
+        plt.plot(epoch_count, mean_data_k)
+        plt.fill_between(epoch_count, std_minus_data_k, std_plus_data_k, alpha=0.3)
 
-    for k in data.keys():
-        plt.plot(epoch_count, data[k].tolist())
-
-    plt.legend(data.keys(), loc="best")
+    plt.legend(data_list[0].keys(), loc="best")
     plt.grid(linestyle='dotted')
     plt.xlabel('Epoch')
     plt.ylabel(y_label)
-    plt.xlim([1, len(data)])
+    plt.xlim([1, max_nb_epoch])
 
     if DEBUGGING:
         plt.show()
@@ -118,7 +127,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         :align: center
 
     Args:
-         input_folder (string): Log directory name. Flag: --input, -i
+         input_folder (str): Log directory name. Flag: --input, -i
     """
     # Find training folders:
     if multiple_training:
