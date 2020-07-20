@@ -223,7 +223,7 @@ def run_command(context):
         if not os.path.isdir(path_preds):
             print('\nRun Inference\n')
             context["command"] = "test"
-            run_main(context)
+            run_command(context)
 
         # RUN EVALUATION
         df_results = imed_evaluation.evaluate(bids_path=loader_params['bids_path'],
