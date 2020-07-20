@@ -3,6 +3,7 @@ import os
 
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.animation as anim
 import nibabel as nib
 import numpy as np
 import onnxruntime
@@ -996,3 +997,24 @@ def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, we
                                           batch['gt_metadata'][smp_idx],
                                           data_type='gt')
     return pred_undo, metadata, last_sample_bool, volume, weight_matrix
+
+
+class AnimatedGif:
+    def __init__(self, size=(640, 480)):
+        self.fig = plt.figure()
+        self.fig.set_size_inches(size[0] / 100, size[1] / 100)
+        self.size_x = size[0]
+        self.size_y = size[1]
+        ax = self.fig.add_axes([0, 0, 1, 1], frameon=False, aspect=1)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        self.images = []
+
+    def add(self, image, label=''):
+        plt_im = plt.imshow(image, cmap='Greys', vmin=0, vmax=1, animated=True)
+        plt_txt = plt.text(self.size_x * 3 // 4, self.size_y - 10, label, color='red')
+        self.images.append([plt_im, plt_txt])
+
+    def save(self, filename):
+        animation = anim.ArtistAnimation(self.fig, self.images)
+        animation.save(filename, writer='imagemagick', fps=10)
