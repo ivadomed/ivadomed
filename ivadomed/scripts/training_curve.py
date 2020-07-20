@@ -150,14 +150,14 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
 
     # Plot train and valid losses together
     fname_out = os.path.join(output_folder, "losses.png")
-    loss_keys = [k for k in events_vals_df.keys() if k.endswith("loss")]
-    plot_curve(events_vals_df[loss_keys], "loss", fname_out)
+    loss_keys = [k for k in events_df_list[0].keys() if k.endswith("loss")]
+    plot_curve([df[loss_keys] for df in events_df_list], "loss", fname_out)
 
     # Plot each validation metric separetly
-    for tag in events_vals_df.keys():
+    for tag in events_df_list[0].keys():
         if not tag.endswith("loss"):
             fname_out = os.path.join(output_folder, tag+".png")
-            plot_curve(events_vals_df[[tag]], tag, fname_out)
+            plot_curve([df[[tag]] for df in events_df_list], tag, fname_out)
 
 
 def main():
