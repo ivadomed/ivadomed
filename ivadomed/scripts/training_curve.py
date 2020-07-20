@@ -112,17 +112,20 @@ def plot_curve(data_list, y_label, fname_out):
 
 
 def run_plot_training_curves(input_folder, output_folder, multiple_training=False):
-    """Utility function to XX.
+    """Utility function to plot the training curves.
 
-    XX
+    This function uses the TensorFlow summary that is generated during a training to plot for each epoch:
+        - the training against the validation loss
+        - the metrics computed on the validation sub-dataset.
 
-    For example::
+    It could consider one log directory at a time, for example::
+    .. image:: ../../images/plot_loss_single.png
+        :width: 600px
+        :align: center
 
-        ivadomed_XX
-
-    XX
-
-    .. image:: ../../images/XX
+    ... or multiple (using ``multiple_training=True``). In that case, the hard line represent the mean value across the
+    trainings whereas the envelope represents the standard deviation::
+    .. image:: ../../images/plot_loss_multiple.png
         :width: 600px
         :align: center
 
