@@ -325,9 +325,9 @@ def test_losscombination(params):
      -1.1619,
      FocalDiceLoss()),
 ])
-def test_losscombination(params):
+def test_focaldiceloss(params):
     """
-    test LossCombination
+    test focaldiceloss
 
     Args:
         params (tuple): containing input tensor, target tensor, expected value, loss function
