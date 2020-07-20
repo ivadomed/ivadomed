@@ -65,10 +65,10 @@ def run_command(context):
     transform_train_params, transform_valid_params, transform_test_params = \
         imed_transforms.get_subdatasets_transforms(context["transformation"])
     if command == "train":
-        imed_utils.display_selected_transfoms(transform_train_params, dataset_type="training")
-        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type="validation")
+        imed_utils.display_selected_transfoms(transform_train_params, dataset_type=["training"])
+        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=["validation"])
     elif command == "test":
-        imed_utils.display_selected_transfoms(transform_test_params, dataset_type="testing")
+        imed_utils.display_selected_transfoms(transform_test_params, dataset_type=["testing"])
 
     # METRICS
     metric_fns = [imed_metrics.dice_score,
