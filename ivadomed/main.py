@@ -20,14 +20,14 @@ cudnn.benchmark = True
 MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'NAME_CLASSIFIER_1', 'Countception']
 
 
-def run_main(config=None):
+def run_command(context):
     """Run main command.
 
     This function is central in the ivadomed project as training / testing / evaluation commands are run via this
     function. All the process parameters are defined in the config.
 
     Args:
-        config (dict): Dictionary containing all parameters that are needed for a given process. See
+        context (dict): Dictionary containing all parameters that are needed for a given process. See
             :doc:`configuration_file` for more details.
 
     Returns:
@@ -35,23 +35,6 @@ def run_main(config=None):
         If "test" command: Returns dict: of averaged metrics computed on the testing sub dataset.
         If "eval" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing sub dataset.
     """
-    # Necessary when calling run_main through python code instead of command-line
-    if config is None:
-        if len(sys.argv) != 2:
-            print("\nERROR: Please indicate the path of your configuration file, "
-                  "e.g. ivadomed ivadomed/config/config.json\n")
-            return
-
-        path_config_file = sys.argv[1]
-        if not os.path.isfile(path_config_file) or not path_config_file.endswith('.json'):
-            print("\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(path_config_file))
-            return
-
-        with open(path_config_file, "r") as fhandle:
-            context = json.load(fhandle)
-    else:
-        context = config
-
     command = context["command"]
     log_directory = context["log_directory"]
     if not os.path.isdir(log_directory):
@@ -242,6 +225,22 @@ def run_main(config=None):
                                               target_suffix=loader_params["target_suffix"],
                                               eval_params=context["evaluation_parameters"])
         return df_results
+
+
+def run_main(config=None):
+    parser = get_parser()
+    args = parser.parse_args()
+
+    # Get context from configuration file
+    path_config_file = args.c
+    if not os.path.isfile(path_config_file) or not path_config_file.endswith('.json'):
+        print("\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(path_config_file))
+        return
+    with open(path_config_file, "r") as fhandle:
+        context = json.load(fhandle)
+
+    # Run command
+    run_command(context)
 
 
 if __name__ == "__main__":
