@@ -26,23 +26,23 @@ def test_training():
     os.makedirs("testing_data/derivatives/labels/sub-test002/anat/", exist_ok=True)
     os.makedirs("testing_data/derivatives/labels/sub-test003/anat/", exist_ok=True)
 
-    command = "cp testing_data/sub-test001/anat/sub-test001_T1w.nii.gz testing_data/sub-test002/anat/sub-test002" + \
-              "_T1w.nii.gz"
+    command = "cp testing_data/sub-test001/anat/sub-test001_T2w_mid.nii.gz testing_data/sub-test002/anat/sub-test002" + \
+              "_T2w_mid.nii.gz"
     subprocess.check_output(command, shell=True)
 
-    command = "cp testing_data/sub-test001/anat/sub-test001_T1w.nii.gz testing_data/sub-test003/anat/sub-test003" + \
-              "_T1w.nii.gz"
+    command = "cp testing_data/sub-test001/anat/sub-test001_T2w_mid.nii.gz testing_data/sub-test003/anat/sub-test003" + \
+              "_T2w_mid.nii.gz"
     subprocess.check_output(command, shell=True)
 
     derivatives = "testing_data/derivatives/labels/"
-    command = "cp " + derivatives + "sub-test001/anat/sub-test001_T1w_lesion-manual.nii.gz " + \
+    command = "cp " + derivatives + "sub-test001/anat/sub-test001_T2w_mid_heatmap3.nii.gz " + \
               derivatives + "sub-test002/anat/sub-test002" + \
-              "_T1w_lesion-manual.nii.gz"
+              "_T2w_mid_heatmap3.nii.gz"
     subprocess.check_output(command,shell=True)
 
-    command = "cp " + derivatives + "sub-test001/anat/sub-test001_T1w_lesion-manual.nii.gz " + \
+    command = "cp " + derivatives + "sub-test001/anat/sub-test001_T2w_mid_heatmap3.nii.gz " + \
               derivatives + "sub-test003/anat/sub-test003" + \
-              "_T1w_lesion-manual.nii.gz"
+              "_T2w_mid_heatmap3.nii.gz"
     subprocess.check_output(command, shell=True)
 
     list1 = ["sub-test002"]
@@ -52,7 +52,7 @@ def test_training():
     append_list_as_row("testing_data/participants.tsv", list2)
 
     print("training about to begin")
-    subprocess.call(["ivadomed", "testing_data/model_config.json"])
+    subprocess.call(["ivadomed", "testing_data/model_config_test.json"])
     print("training_done")
 
     command = "ivadomed_automate_training -c testing_data/model_config.json -p hyperparameter_opt.json -n 1 "
