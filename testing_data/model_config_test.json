@@ -1,5 +1,5 @@
 {
-  "command": "train",
+  "command": "test",
   "gpu": 7,
   "log_directory": "testing_script",
   "debugging": false,
