@@ -16,9 +16,12 @@ if DEBUGGING:
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input", required=True,
+    parser.add_argument("-i", "--input", required=True, type=str,
                         help="Input log directory.")
-    parser.add_argument("-o", "--output", required=False,
+    parser.add_argument("-m", "--multiple", required=False, default=False, type=bool,
+                        help="If True, then multiple log directories are considered: all available folders with -i as "
+                             "prefix.")
+    parser.add_argument("-o", "--output", required=False, type=str,
                         help="Output folder. If not specified, results are saved under "
                              "input_folder/plot_training_curves.")
     return parser
@@ -99,7 +102,7 @@ def plot_curve(data, y_label, fname_out):
         plt.savefig(fname_out)
 
 
-def run_plot_training_curves(input_folder, output_folder):
+def run_plot_training_curves(input_folder, output_folder, multiple_training=False):
     """Utility function to XX.
 
     XX
@@ -148,9 +151,10 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
     input_folder = args.input
+    multiple = args.multiple
     output_folder = args.output
     # Run script
-    run_plot_training_curves(input_folder, output_folder)
+    run_plot_training_curves(input_folder, output_folder, multiple)
 
 
 if __name__ == '__main__':
