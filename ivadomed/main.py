@@ -40,7 +40,7 @@ def get_parser():
     return parser
 
 
-def run_command(context):
+def run_command(context, n_gif=0):
     """Run main command.
 
     This function is central in the ivadomed project as training / testing / evaluation commands are run via this
@@ -49,6 +49,9 @@ def run_command(context):
     Args:
         context (dict): Dictionary containing all parameters that are needed for a given process. See
             :doc:`configuration_file` for more details.
+        n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
+            parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. They are saved within
+            the log directory.
 
     Returns:
         If "train" command: Returns floats: best loss score for both training and validation.
@@ -252,7 +255,7 @@ def run_main():
     args = parser.parse_args()
 
     # Get context from configuration file
-    path_config_file = args.c
+    path_config_file = args.config
     if not os.path.isfile(path_config_file) or not path_config_file.endswith('.json'):
         print("\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(path_config_file))
         return
@@ -260,7 +263,7 @@ def run_main():
         context = json.load(fhandle)
 
     # Run command
-    run_command(context)
+    run_command(context=context, n_gif=args.gif)
 
 
 if __name__ == "__main__":
