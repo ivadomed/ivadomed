@@ -30,10 +30,12 @@ def get_parser():
 
     # OPTIONAL ARGUMENTS
     optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
-    optional_args.add_argument('-d', '--dada',
-                               help='Show function documentation.')
+    optional_args.add_argument('-g', '--gif', required=False, type=int, default=0,
+                               help='Generates a GIF during training, one frame per epoch for a given slice.'
+                                    ' The parameter indicates the number of 2D slices used to generate GIFs, one GIF '
+                                    'per slice. They are saved within the log directory.')
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
-                               help='Show function documentation.')
+                               help='Shows function documentation.')
 
     return parser
 
