@@ -34,8 +34,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         cuda_available (bool): If True, CUDA is available.
         metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
         n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
-            parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. They are saved within
-            the log directory.
+            parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
+            predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
         debugging (bool): If True, extended verbosity and intermediate outputs.
 
     Returns:

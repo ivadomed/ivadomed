@@ -31,9 +31,10 @@ def get_parser():
     # OPTIONAL ARGUMENTS
     optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
     optional_args.add_argument('-g', '--gif', required=False, type=int, default=0,
-                               help='Generates a GIF during training, one frame per epoch for a given slice.'
+                               help='Generates a GIF of during training, one frame per epoch for a given slice.'
                                     ' The parameter indicates the number of 2D slices used to generate GIFs, one GIF '
-                                    'per slice. They are saved within the log directory.')
+                                    'per slice. A GIF shows predictions of a given slice from the validation '
+                                    'sub-dataset. They are saved within the log directory.')
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                                help='Shows function documentation.')
 
@@ -50,8 +51,8 @@ def run_command(context, n_gif=0):
         context (dict): Dictionary containing all parameters that are needed for a given process. See
             :doc:`configuration_file` for more details.
         n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
-            parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. They are saved within
-            the log directory.
+            parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
+            predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
 
     Returns:
         If "train" command: Returns floats: best loss score for both training and validation.
