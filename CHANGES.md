@@ -8,7 +8,6 @@
  - Apply preprocessing after filter ROI.  [View pull request](https://github.com/ivadomed/ivadomed/pull/342)
  - Fix bug in automate training.  [View pull request](https://github.com/ivadomed/ivadomed/pull/339)
  - Transformations at test time: minor fixes.  [View pull request](https://github.com/ivadomed/ivadomed/pull/335)
- - Soft training: minor fixes.  [View pull request](https://github.com/ivadomed/ivadomed/pull/334)
 
 **DOCUMENTATION**
 
@@ -19,10 +18,8 @@
 **ENHANCEMENT**
 
  - Split dataset with no test center specified.  [View pull request](https://github.com/ivadomed/ivadomed/pull/370)
- - Automate training seed.  [View pull request](https://github.com/ivadomed/ivadomed/pull/366)
  - showing time after training (begin/end/duration).  [View pull request](https://github.com/ivadomed/ivadomed/pull/365)
  - Optimize binarization.  [View pull request](https://github.com/ivadomed/ivadomed/pull/364)
  - Automate training improvement.  [View pull request](https://github.com/ivadomed/ivadomed/pull/362)
  - Complement to PR 342.  [View pull request](https://github.com/ivadomed/ivadomed/pull/361)
- - Documentation: metric more formal defintion.  [View pull request](https://github.com/ivadomed/ivadomed/pull/357)
  - Scripts: Add entry points, modify doc display, and started to add github action testing.  [View pull request](https://github.com/ivadomed/ivadomed/pull/328)
