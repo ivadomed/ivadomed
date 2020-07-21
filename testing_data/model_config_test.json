@@ -1,14 +1,14 @@
 {
   "command": "test",
-  "gpu": 7,
+  "gpu": 0,
   "log_directory": "testing_script",
   "debugging": false,
-  "model_name": "unit_test",
+  "model_name": "model_unet_test",
   "object_detection_params": {
     "object_detection_path": null
   },
   "loader_parameters": {
-    "target_suffix": ["_heatmap3"],
+    "target_suffix": ["_lesion-manual"],
     "roi_suffix": null,
     "bids_path": "testing_data/",
     "roi_params": {
@@ -18,11 +18,11 @@
     "contrast_params": {
       "random_seed": 1313,
       "training_validation": [
-        "T1w_mid"
+        "T1w"
       ],
       "balance": {},
       "testing": [
-        "T1w_mid"
+        "T1w"
       ],
       "center_test": []
     },
@@ -30,7 +30,7 @@
       "filter_empty_mask": false,
       "filter_empty_input": true
     },
-    "slice_axis": "sagittal",
+    "slice_axis": "axial",
     "split_method": "per_patient",
     "multichannel": false,
     "soft_input": false
@@ -85,7 +85,7 @@
   "mixup_bool": false,
   "metadata": null,
   "testing_parameters": {
-    "binarize_prediction": false,
+    "binarize_prediction": true,
     "uncertainty": {
       "epistemic": true,
       "aleatoric": true,
@@ -113,16 +113,6 @@
     "Resample": {
       "wspace": 0.75,
       "hspace": 0.75
-    },
-    "ElasticTransform": {
-      "alpha_range": [28.0, 30.0],
-      "sigma_range": [3.5, 4.5],
-      "p": 0.1
-    },
-    "RandomAffine": {
-      "degrees": 4.6,
-      "translate": [0.03, 0.03],
-      "scale": [0.98, 1]
     },
     "NumpyToTensor": {},
     "NormalizeInstance": {
