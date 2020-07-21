@@ -235,8 +235,11 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         nib_im = nib.load(fname)
         data_im = nib_im.get_fdata()
         data_lst.append(data_im)
-        data_im_l, _ = label(data_im, structure=bin_struct)
-        data_l_lst.append(data_im_l)
+        channel_im = []
+        for i in range(data_im.shape[3]):
+            data_im_l, _ = label(data_im[:, :, :, i], structure=bin_struct)
+            channel_im.append(data_im_l)
+        data_l_lst.append(channel_im)
         del nib_im
 
     # loop across all structures of data_hard_l
