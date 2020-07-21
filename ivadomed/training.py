@@ -287,8 +287,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         os.makedirs(gif_folder)
     for i_gif in range(n_gif):
         fname_out = gif_dict["image_path"][i_gif].split('/')[-3] + "__"
-        fname_out += gif_dict["image_path"][i_gif].split('/')[-1].split(".nii.gz")[0] + "__"
-        fname_out += str(gif_dict["slice"][i_gif]) + ".mp4"
+        fname_out += gif_dict["image_path"][i_gif].split('/')[-1].split(".nii.gz")[0].split(gif_dict["image_path"][i_gif].split('/')[-3]+"_")[1] + "__"
+        fname_out += str(gif_dict["slice_id"][i_gif]) + ".mp4"
         path_gif_out = os.path.join(gif_folder, fname_out)
         gif_dict["gif"][i_gif].save(path_gif_out)
 
