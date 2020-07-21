@@ -218,7 +218,11 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     # load hard segmentation and label it
     nib_hard = nib.load(fname_hard)
     data_hard = nib_hard.get_fdata()
-    bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
+    data_hard_l = []
+    for i in range(data_hard.shape[3]):
+        bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
+        data_hard_tmp, n_l = label(data_hard[:, :, :, i], structure=np.array(bin_struct))
+        data_hard_l.append(data_hard_tmp)
     data_hard_l, n_l = label(data_hard, structure=bin_struct)
 
     # load uncertainty map
@@ -235,17 +239,23 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         nib_im = nib.load(fname)
         data_im = nib_im.get_fdata()
         data_lst.append(data_im)
-        channel_im = []
+        data_im_l = []
         for i in range(data_im.shape[3]):
-            data_im_l, _ = label(data_im[:, :, :, i], structure=bin_struct)
-            channel_im.append(data_im_l)
-        data_l_lst.append(channel_im)
+            data_im_tmp, _ = label(data_im[:, :, :, i], structure=bin_struct)
+            data_im_l.append(data_im_tmp)
+        data_l_lst.append(data_im_l)
         del nib_im
+    data_l_lst = np.array(data_l_lst)
+    # channel went first due to the 'append' function
+    data_l_lst = np.reshape(data_l_lst, (data_l_lst.shape[0], data_l_lst.shape[2], data_l_lst.shape[3],
+                                         data_l_lst.shape[4], data_l_lst.shape[1]))
 
     # loop across all structures of data_hard_l
     for i_l in range(1, n_l + 1):
         # select the current structure, remaining voxels are set to zero
-        data_i_l = (data_hard_l == i_l).astype(np.int)
+        data_i_l = (np.array(data_hard_l) == i_l).astype(np.int)
+        # channel went first with 'append' function for data_hard_l so we reshape this array
+        data_i_l = np.reshape(data_i_l, (data_i_l.shape[1], data_i_l.shape[2], data_i_l.shape[3], data_i_l.shape[0]))
 
         # select the current structure in each MC sample
         # and store it in data_mc_i_l_lst
