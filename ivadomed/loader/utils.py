@@ -48,6 +48,7 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
         # make sure that subjects coming from some centers are unseen during training
         if len(center_test_lst) == 0:
             centers = list(df['institution_id'])
+            test_frac = test_frac if test_frac >= 1 / len(centers) else 1 / len(centers)
             center_test_lst, _ = train_test_split(centers, train_size=test_frac, random_state=random_seed)
 
         X_test = df[df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
