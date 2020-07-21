@@ -1,6 +1,6 @@
 {
     "command": "train",
-    "gpu": 7,
+    "gpu": 0,
     "log_directory": "spineGeneric",
     "model_name": "seg_sc_t1_t2_t2s_mt",
     "debugging": false,
@@ -8,15 +8,15 @@
         "object_detection_path": null
     },
     "loader_parameters": {
-        "bids_path": "../duke/projects/ivadomed/spineGeneric_201907041011/result/",
+        "bids_path": "data_spinegeneric_registered",
         "target_suffix": ["_seg-manual"],
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
         },
         "contrast_params": {
-            "training_validation": ["T1w", "T2w", "T2star", "acq-MToff_MTS", "acq-MTon_MTS", "acq-T1w_MTS"],
-            "testing": ["T1w", "T2w", "T2star", "acq-MToff_MTS", "acq-MTon_MTS", "acq-T1w_MTS"],
+            "training_validation": ["T1w", "T2w", "T2star"],
+            "testing": ["T1w", "T2w", "T2star"],
             "balance": {}
         },
         "slice_filter_params": {
@@ -30,8 +30,8 @@
     "split_dataset": {
         "fname_split": null,
         "random_seed": 6,
-        "center_test": ["stanford", "amu", "queensland", "cardiff"],
-        "method": "per_center",
+        "center_test": [],
+        "method": "per_patient",
         "train_fraction": 0.6,
         "test_fraction": 0.2
     },
@@ -67,7 +67,7 @@
         "depth": 4
     },
     "FiLMedUnet": {
-        "applied": true,
+        "applied": false,
         "metadata": "contrasts",
         "film_layers": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
     },
@@ -96,7 +96,9 @@
             "size": [128, 128],
             "preprocessing": true
         },
-        "RandomTranslation": {
+        "RandomAffine": {
+            "degrees": 5,
+            "scale": [0.1, 0.1],
             "translate": [0.03, 0.03],
             "applied_to": ["im", "gt"],
             "dataset_type": ["training"]
