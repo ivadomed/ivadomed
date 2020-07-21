@@ -999,6 +999,17 @@ def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, we
     return pred_undo, metadata, last_sample_bool, volume, weight_matrix
 
 
+def overlap_im_seg(img, seg):
+    """Overlap image (background, greyscale) and segmentation (foreground, jet)."""
+    seg_zero, seg_nonzero = np.where(seg==0.0), np.nonzero(seg)
+    seg_jet = plt.cm.jet(plt.Normalize(vmin=0, vmax=1.)(seg))
+    seg_jet[seg_zero] = 0.0
+    img_grey = plt.cm.binary_r(plt.Normalize(vmin=np.amin(img), vmax=np.amax(img))(img))
+    img_out = np.copy(img_grey)
+    img_out[seg_nonzero] = seg_jet[seg_nonzero]
+    return img_out
+
+
 class AnimatedGif:
     """Generates GIF.
 
