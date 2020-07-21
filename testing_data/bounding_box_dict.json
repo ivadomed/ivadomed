@@ -1,0 +1,21 @@
+{
+  "testing_data/sub-test001/anat/sub-test001_T1w.nii.gz":
+    [
+      7,
+      386,
+      113,
+      231,
+      1,
+      16
+    ],
+
+  "testing_data/sub-test001/anat/sub-test001_T2w.nii.gz":
+    [
+      7,
+      386,
+      113,
+      231,
+      1,
+      16
+    ]
+}
