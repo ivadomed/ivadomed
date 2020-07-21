@@ -1,5 +1,5 @@
 {
-  "/home/GRAMES.POLYMTL.CA/anlemj/duke/temp/andreanne/astr/data/sub-Astr145/anat/sub-Astr145_T1w.nii.gz": [
+  "testing_data/sub-test001/anat/sub-test001_T1w.nii.gz":
     [
       7,
       386,
@@ -8,5 +8,4 @@
       1,
       16
     ]
-  ]
 }
