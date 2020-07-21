@@ -181,13 +181,6 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             model_params["missing_probability"] **= model_params["missing_probability_growth"]
             dataset_train.update(p=model_params["missing_probability"])
 
-        # Init GIF
-        if epoch == 1:
-            gif_dict = {"image_path": [], "slice_id": [], "gif": []}
-            for i_gif in range(n_gif):
-                # TODO
-                gif_dict["gif"] = imed_utils.AnimatedGif(size=gt_samples.cpu().shape[2:4])
-
         # Validation loop -----------------------------------------------------
         model.eval()
         val_loss_total, val_dice_loss_total = 0.0, 0.0
