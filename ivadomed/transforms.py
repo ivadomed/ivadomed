@@ -1067,7 +1067,7 @@ def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
     return (seg_pair, roi_pair)
 
 
-def preprare_transforms(transform_dict, requires_undo=True):
+def prepare_transforms(transform_dict, requires_undo=True):
     """
     This function separates the preprocessing transforms from the others and generates the undo transforms related.
 

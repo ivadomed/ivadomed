@@ -46,6 +46,11 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
     X_val = []
     if split_method == 'per_center':
         # make sure that subjects coming from some centers are unseen during training
+        if len(center_test_lst) == 0:
+            centers = list(df['institution_id'])
+            test_frac = test_frac if test_frac >= 1 / len(centers) else 1 / len(centers)
+            center_test_lst, _ = train_test_split(centers, train_size=test_frac, random_state=random_seed)
+
         X_test = df[df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
         X_remain = df[~df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
 
@@ -55,6 +60,7 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
             X_val = X_tmp
         else:  # X_test contains data from centers seen during the training, eg gm_challenge
             X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
+
     elif split_method == 'per_patient':
         # Separate dataset in test, train and validation using sklearn function
         X_train, X_remain = train_test_split(df['participant_id'].tolist(), train_size=train_frac,
@@ -165,35 +171,21 @@ def imed_collate(batch):
     return batch
 
 
-def filter_roi(ds, nb_nonzero_thr):
+def filter_roi(roi_data, nb_nonzero_thr):
     """Filter slices from dataset using ROI data.
 
-    This function loops across the dataset (ds) and discards slices where the number of
-    non-zero voxels within the ROI slice (e.g. centerline, SC segmentation) is inferior or
-    equal to a given threshold (nb_nonzero_thr).
+    This function filters slices (roi_data) where the number of non-zero voxels within the ROI slice (e.g. centerline,
+    SC segmentation) is inferior or equal to a given threshold (nb_nonzero_thr).
 
     Args:
-        ds (mt_datasets.MRI2DSegmentationDataset): Dataset.
+        roi_data (nd.array): ROI slice.
         nb_nonzero_thr (int): Threshold.
 
     Returns:
-        mt_datasets.MRI2DSegmentationDataset: Dataset without filtered slices.
+        bool: True if the slice needs to be filtered, False otherwise.
     """
-    filter_indexes = []
-    for segpair, slice_roi_pair in ds.indexes:
-        roi_data = slice_roi_pair['gt']
-
-        # Discard slices with less nonzero voxels than nb_nonzero_thr
-        if not np.any(roi_data):
-            continue
-        if np.count_nonzero(roi_data) <= nb_nonzero_thr:
-            continue
-
-        filter_indexes.append((segpair, slice_roi_pair))
-
-    # Update dataset
-    ds.indexes = filter_indexes
-    return ds
+    # Discard slices with less nonzero voxels than nb_nonzero_thr
+    return not np.any(roi_data) or np.count_nonzero(roi_data) <= nb_nonzero_thr
 
 
 def orient_img_hwd(data, slice_axis):
