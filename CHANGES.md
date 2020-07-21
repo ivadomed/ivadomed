@@ -22,5 +22,5 @@
  - showing time after training (begin/end/duration).  [View pull request](https://github.com/ivadomed/ivadomed/pull/365)
  - Optimize binarization.  [View pull request](https://github.com/ivadomed/ivadomed/pull/364)
  - Automate training improvement.  [View pull request](https://github.com/ivadomed/ivadomed/pull/362)
- - Complement to PR 342.  [View pull request](https://github.com/ivadomed/ivadomed/pull/361)
+ - Simplify code when filtering ROI.  [View pull request](https://github.com/ivadomed/ivadomed/pull/361)
  - Scripts: Add entry points, modify doc display, and started to add github action testing.  [View pull request](https://github.com/ivadomed/ivadomed/pull/328)
