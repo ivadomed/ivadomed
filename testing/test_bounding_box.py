@@ -104,3 +104,8 @@ def test_adjust_bb_size():
     test_coord = (0, 10, 0, 10, 0, 10)
     imed_obj_detect.adjust_bb_size(test_coord, (2, 2, 2), True)
 
+
+# testing bb statistic
+def test_compute_bb_statistics():
+    imed_obj_detect.compute_bb_statistics("testing_data/bounding_box_dict.json")
+
