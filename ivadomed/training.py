@@ -212,7 +212,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                     for i_ in range(len(input_samples)):
                         im, pr, met = input_samples[i_].cpu().numpy()[0], preds[i_].cpu().numpy()[0], batch["input_metadata"][i_][0]
                         for i_gif in range(n_gif):
-                            if gif_dict["image_path"][i_gif] == met.__getitem__('input_filenames') and gif_dict["slice_id"][i_gif] == met.__ge$
+                            if gif_dict["image_path"][i_gif] == met.__getitem__('input_filenames') and \
+                                    gif_dict["slice_id"][i_gif] == met.__getitem__('slice_index'):
                                 overlap = imed_utils.overlap_im_seg(im, pr)
                                 gif_dict["gif"][i_gif].add(overlap, label=str(epoch))
 
