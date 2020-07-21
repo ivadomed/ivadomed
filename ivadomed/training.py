@@ -1,7 +1,7 @@
 import copy
 import os
 import time
-
+import random
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
@@ -60,6 +60,15 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                                 shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
                                 collate_fn=imed_loader_utils.imed_collate,
                                 num_workers=0)
+
+        # Init GIF
+        gif_dict = {"image_path": [], "slice_id": [], "gif": []}
+        indexes_gif = random.sample(range(len(dataset_val)), n_gif)
+        for i_gif in range(n_gif):
+            random_metadata = dict(dataset_val[indexes_gif[i_gif]]["input_metadata"][0])
+            gif_dict["image_path"].append(random_metadata['input_filenames'])
+            gif_dict["slice_id"].append(random_metadata['slice_index'])
+            gif_dict["gif"].append(imed_utils.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].size()))
 
     # GET MODEL
     if training_params["transfer_learning"]["retrain_model"]:
@@ -173,7 +182,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             dataset_train.update(p=model_params["missing_probability"])
 
         # Init GIF
-        if epoch == 0:
+        if epoch == 1:
             gif_dict = {"image_path": [], "slice_id": [], "gif": []}
             for i_gif in range(n_gif):
                 # TODO
