@@ -8,12 +8,6 @@ from tensorflow.python.summary.summary_iterator import summary_iterator
 import pandas as pd
 import matplotlib.pyplot as plt
 
-DEBUGGING = False
-
-if DEBUGGING:
-    import matplotlib
-    matplotlib.use('TkAgg')
-
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -131,7 +125,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
             value (hard line) surrounded by the standard deviation (envelope).
     """
     group_list = input_folder.split(",")
-    plt_dict = {"fig": [], "fname_out": []}
+    plt_dict = {}
 
     # Create output folder
     if os.path.isdir(output_folder):
