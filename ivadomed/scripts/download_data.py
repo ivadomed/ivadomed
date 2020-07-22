@@ -11,7 +11,7 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
 import sys
 import json
-
+import argparse
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -212,11 +212,13 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse_args()
     data_name = arguments.d
-    dest_folder = arguments.get('-o', os.path.join(os.path.abspath(os.curdir), data_name))
+    if arguments.o is None:
+        dest_folder = os.path.join(os.path.abspath(os.curdir), data_name)
+    else:
+        dest_folder = arguments.o
 
     url = dict_url[data_name]
     install_data(url, dest_folder, keep=arguments("-k", False))
-
     return 0
 
 
