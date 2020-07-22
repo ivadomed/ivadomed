@@ -75,6 +75,12 @@ def get_data(event_dict):
     return metrics_df
 
 
+def init_subplot():
+    n_cols = 2
+    n_rows = int(np.ceil(n_cols / float(n_cols)))
+    return plt.figure(figsize=(10 * n_cols, 5 * n_rows))
+
+
 def plot_curve(data_list, y_label, fname_out):
     """Plot curve of metrics or losses for each epoch.
 
@@ -131,8 +137,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
     Args:
         input_folder (str): Log directory name. Flag: --input, -i. If using ``-m True``, this parameter indicates the
             suffix path of all log directories of interest.
-        output_folder (str): Output folder. Flag: --output, -o. If not specified, results are saved under
-            ``input_folder/plot_training_curves``.
+        output_folder (str): Output folder. Flag: --output, -o.
         multiple_training (bool): Indicates if multiple log directories are considered (``True``) or not (``False``).
             Flag: --multiple, -m. If ``True``, all available folders with ``-i`` as prefix. The plot represents the mean
             value (hard line) surrounded by the standard deviation (envelope).
@@ -168,21 +173,23 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
             events_df_list.append(events_vals_df)
 
         # Plot train and valid losses together
-        fname_out = os.path.join(output_folder, "losses.png")
         loss_keys = [k for k in events_df_list[0].keys() if k.endswith("loss")]
-
-        # Init plot
-        n_cols = 2
-        n_rows = int(np.ceil(n_cols / float(n_cols)))
-        plt.figure(figsize=(10 * n_cols, 5 * n_rows))
-
-        plot_curve([df[loss_keys] for df in events_df_list], "loss", fname_out)
+        if i_subplot == 0:  # Init plot
+            plt_dict[os.path.join(output_folder, "losses.png")] = init_subplot()
+        plot_curve([df[loss_keys] for df in events_df_list],
+                   "loss",
+                   plt_dict[os.path.join(output_folder, "losses.png")],
+                   i_subplot)
 
         # Plot each validation metric separetly
         for tag in events_df_list[0].keys():
             if not tag.endswith("loss"):
-                fname_out = os.path.join(output_folder, tag+".png")
-                plot_curve([df[[tag]] for df in events_df_list], tag, fname_out)
+                if i_subplot == 0:  # Init plot
+                    plt_dict[os.path.join(output_folder, tag+".png")] = init_subplot()
+                plot_curve([df[[tag]] for df in events_df_list],
+                           tag,
+                           plt_dict[os.path.join(output_folder, tag+".png")],
+                           i_subplot)
 
 
 def main():
