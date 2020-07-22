@@ -438,6 +438,7 @@ class Evaluation3DMetrics(object):
             dct['n_pred_class' + str(n)], dct['n_gt_class' + str(n)] = self.n_pred[n], self.n_gt[n]
             dct['ltpr_class' + str(n)], _ = self.get_ltpr()
             dct['lfdr_class' + str(n)] = self.get_lfdr()
+            dct['mse_class' + str(n)] = imed_metrics.mse(self.data_gt[..., n], self.data_pred[..., n])
 
             for lb_size, gt_pred in zip(self.label_size_lst[n][0], self.label_size_lst[n][1]):
                 suffix = self.size_suffix_lst[int(lb_size) - 1]
