@@ -12,8 +12,10 @@ import matplotlib.pyplot as plt
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True, type=str,
-                        help="Input log directory. If using -m True, this parameter indicates the suffix path of all "
-                             "log directories of interest.")
+                        help="Input log directory. If using --multiple, this parameter indicates the suffix path of all"
+                             " log directories of interest. To compare trainings or set of trainings (using "
+                             "``--multiple``) with subplots, please list the paths by separating them with commas, eg "
+                             "path_log_dir1,path_logdir2.")
     parser.add_argument("--multiple", required=False, dest="multiple", action='store_true',
                         help="Multiple log directories are considered: all available folders with -i as "
                              "prefix. The plot represents the mean value (hard line) surrounded by the standard "
@@ -118,12 +120,20 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         :width: 600px
         :align: center
 
+    It is also possible to compare multiple trainings (or set of trainings) by listing them in ``-i``, separeted by
+    commas::
+        .. image:: ../../images/plot_loss_mosaic.png
+        :width: 600px
+        :align: center
+
     Args:
-        input_folder (str): Log directory name. Flag: --input, -i. If using ``-m True``, this parameter indicates the
-            suffix path of all log directories of interest.
+        input_folder (str): Log directory name. Flag: --input, -i. If using ``--multiple``, this parameter indicates the
+            suffix path of all log directories of interest. To compare trainings or set of trainings (using
+            ``--multiple``) with subplots, please list the paths by separating them with commas, eg
+            path_log_dir1,path_logdir2
         output_folder (str): Output folder. Flag: --output, -o.
         multiple_training (bool): Indicates if multiple log directories are considered (``True``) or not (``False``).
-            Flag: --multiple, -m. If ``True``, all available folders with ``-i`` as prefix. The plot represents the mean
+            Flag: --multiple. All available folders with ``-i`` as prefix are considered. The plot represents the mean
             value (hard line) surrounded by the standard deviation (envelope).
     """
     group_list = input_folder.split(",")
@@ -144,9 +154,9 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         n_cols, n_rows = 1, 1
 
     for i_subplot, input_folder in enumerate(group_list):
+        input_folder = os.path.expanduser(input_folder)
         # Find training folders:
         if multiple_training:
-            input_folder = os.path.expanduser(input_folder)
             prefix = input_folder.split('/')[-1]
             input_folder = '/'.join(input_folder.split('/')[:-1])
             input_folder_list = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if f.startswith(prefix)]
