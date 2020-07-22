@@ -40,7 +40,8 @@ setup(
             'ivadomed_compare_models=ivadomed.scripts.compare_models:main',
             'ivadomed_visualize_transforms=ivadomed.scripts.visualize_transforms:main',
             'ivadomed_convert_to_onnx=ivadomed.scripts.convert_to_onnx:main',
-            'ivadomed_extract_small_dataset=ivadomed.scripts.extract_small_dataset:main'
+            'ivadomed_extract_small_dataset=ivadomed.scripts.extract_small_dataset:main',
+            'ivadomed_download_data=ivadomed.scripts.download_data:main'
         ],
     },
 )
