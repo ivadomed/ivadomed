@@ -19,8 +19,8 @@ def get_parser():
     parser.add_argument("-i", "--input", required=True, type=str,
                         help="Input log directory. If using -m True, this parameter indicates the suffix path of all "
                              "log directories of interest.")
-    parser.add_argument("-m", "--multiple", required=False, default=False, type=bool,
-                        help="If True, then multiple log directories are considered: all available folders with -i as "
+    parser.add_argument("--multiple", required=False, dest="multiple", action='store_true',
+                        help="Multiple log directories are considered: all available folders with -i as "
                              "prefix. The plot represents the mean value (hard line) surrounded by the standard "
                              "deviation envelope.")
     parser.add_argument("-o", "--output", required=False, type=str,
