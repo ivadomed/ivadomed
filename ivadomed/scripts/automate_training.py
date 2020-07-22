@@ -113,7 +113,7 @@ def make_category(base_item, keys, values, is_all_combin=False):
             name_str = ""
             for i in range(len(keys)):
                 new_item[keys[i]] = combination[i]
-                name_str += "-" + str(keys[i]) + "=" + str(combination[i])
+                name_str += "-" + str(keys[i]) + "=" + str(combination[i]).replace("/", "_")
 
             items.append(new_item)
             names.append(name_str)
@@ -197,15 +197,16 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
         # Cartesian product (all combinations)
         combinations = (dict(zip(param_dict.keys(), values))
                         for values in product(*param_dict.values()))
+        names = list(product(*names_dict.values()))
 
-        for combination in combinations:
+        for idx, combination in enumerate(combinations):
 
             new_config = copy.deepcopy(initial_config)
 
-            for param in combination:
+            for i, param in enumerate(combination):
                 value = combination[param]
                 new_config[param] = value
-                new_config["log_directory"] = new_config["log_directory"] + "-" + param + "=" + str(value)
+                new_config["log_directory"] = new_config["log_directory"] + names[idx][i]
 
             config_list.append(copy.deepcopy(new_config))
     # Change a single parameter for each test
