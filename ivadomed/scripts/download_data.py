@@ -13,6 +13,7 @@ import sys
 import json
 import argparse
 
+
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", required=True,
@@ -198,13 +199,20 @@ def install_data(url, dest_folder, keep=False):
 
 
 def main(args=None):
-
     # Dictionary containing list of URLs for data names.
     # Mirror servers are listed in order of decreasing priority.
     # If exists, favour release artifact straight from github
 
-    with open("URL_list.json", "r") as fhandle:
-        dict_url = json.load(fhandle)
+    dict_url = {
+        "data_example_spinegeneric": ["https://github.com/ivadomed/data_example_spinegeneric/archive/master.zip"],
+        "data_microscopy_SEM_example": ["https://github.com/ivadomed/data_microscopy_SEM_example/archive/master.zip"],
+        "data-testing": ["https://github.com/ivadomed/data-testing/archive/master.zip"],
+        "t2_tumor": ["https://github.com/ivadomed/t2_tumor/archive/master.zip"],
+        "t2star_sc": ["https://github.com/ivadomed/t2star_sc/archive/master.zip"],
+        "mice_uqueensland_gm": ["https://github.com/ivadomed/mice_uqueensland_gm/archive/master.zip"],
+        "mice_uqueensland_sc": ["https://github.com/ivadomed/mice_uqueensland_sc/archive/master.zip"],
+        "findcord_tumor": ["https://github.com/ivadomed/findcord_tumor/archive/master.zip"]
+    }
 
     if args is None:
         args = sys.argv[1:]
@@ -225,4 +233,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
