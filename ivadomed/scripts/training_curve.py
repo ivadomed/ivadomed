@@ -145,7 +145,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
     n_rows = int(np.ceil(n_cols / float(n_cols)))
     plt.figure(figsize=(10 * n_cols, 5 * n_rows))
 
-    for input_folder in group_list:
+    for i_subplot, input_folder in enumerate(group_list):
         # Find training folders:
         if multiple_training:
             prefix = input_folder.split('/')[-1]
