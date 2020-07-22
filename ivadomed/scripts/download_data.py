@@ -1,6 +1,5 @@
 import os
 import shutil
-import distutils.dir_util
 import logging
 import cgi
 import tempfile
@@ -10,6 +9,19 @@ import zipfile
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
+import sys
+import json
+
+
+def get_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", required=True,
+                        help="Data to download")
+    parser.add_argument("-k", "--keep", required=False, default=False,
+                        help="Keep existing data in destination directory")
+    parser.add_argument("-o", "--output", required=False,
+                        help="Output Folder.")
+    return parser
 
 
 logger = logging.getLogger(__name__)
@@ -182,3 +194,32 @@ def install_data(url, dest_folder, keep=False):
     logger.info("Removing temporary folders...")
     shutil.rmtree(os.path.dirname(tmp_file))
     shutil.rmtree(extraction_folder)
+
+
+def main(args=None):
+
+    # Dictionary containing list of URLs for data names.
+    # Mirror servers are listed in order of decreasing priority.
+    # If exists, favour release artifact straight from github
+
+    with open("URL_list.json", "r") as fhandle:
+        dict_url = json.load(fhandle)
+
+    if args is None:
+        args = sys.argv[1:]
+
+    # Get parser info
+    parser = get_parser()
+    arguments = parser.parse_args()
+    data_name = arguments.d
+    dest_folder = arguments.get('-o', os.path.join(os.path.abspath(os.curdir), data_name))
+
+    url = dict_url[data_name]
+    install_data(url, dest_folder, keep=arguments("-k", False))
+
+    return 0
+
+
+if __name__ == '__main__':
+    main()
+
