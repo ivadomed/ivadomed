@@ -138,44 +138,46 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
             Flag: --multiple, -m. If ``True``, all available folders with ``-i`` as prefix. The plot represents the mean
             value (hard line) surrounded by the standard deviation (envelope).
     """
-    # Find training folders:
-    if multiple_training:
-        prefix = input_folder.split('/')[-1]
-        input_folder = '/'.join(input_folder.split('/')[:-1])
-        input_folder_list = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if f.startswith(prefix)]
-    else:
-        input_folder_list = [input_folder]
+    group_list = input_folder.split(",")
+    for input_folder in group_list:
+        # Find training folders:
+        if multiple_training:
+            prefix = input_folder.split('/')[-1]
+            input_folder = '/'.join(input_folder.split('/')[:-1])
+            input_folder_list = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if f.startswith(prefix)]
+        else:
+            input_folder_list = [input_folder]
 
-    events_df_list = []
-    for log_directory in input_folder_list:
-        # Find tf folders
-        events_dict = find_events(log_directory)
+        events_df_list = []
+        for log_directory in input_folder_list:
+            # Find tf folders
+            events_dict = find_events(log_directory)
 
-        # Get data as dataframe
-        events_vals_df = get_data(events_dict)
+            # Get data as dataframe
+            events_vals_df = get_data(events_dict)
 
-        # Store data
-        events_df_list.append(events_vals_df)
+            # Store data
+            events_df_list.append(events_vals_df)
 
-    # Create output folder
-    if output_folder is None:
-        output_folder = os.path.join(input_folder, "plot_training_curves")
-    if os.path.isdir(output_folder):
-        print("Output folder already exists: {}.".format(output_folder))
-    else:
-        print("Creating output folder: {}.".format(output_folder))
-        os.makedirs(output_folder)
+        # Create output folder
+        if output_folder is None:
+            output_folder = os.path.join(input_folder, "plot_training_curves")
+        if os.path.isdir(output_folder):
+            print("Output folder already exists: {}.".format(output_folder))
+        else:
+            print("Creating output folder: {}.".format(output_folder))
+            os.makedirs(output_folder)
 
-    # Plot train and valid losses together
-    fname_out = os.path.join(output_folder, "losses.png")
-    loss_keys = [k for k in events_df_list[0].keys() if k.endswith("loss")]
-    plot_curve([df[loss_keys] for df in events_df_list], "loss", fname_out)
+        # Plot train and valid losses together
+        fname_out = os.path.join(output_folder, "losses.png")
+        loss_keys = [k for k in events_df_list[0].keys() if k.endswith("loss")]
+        plot_curve([df[loss_keys] for df in events_df_list], "loss", fname_out)
 
-    # Plot each validation metric separetly
-    for tag in events_df_list[0].keys():
-        if not tag.endswith("loss"):
-            fname_out = os.path.join(output_folder, tag+".png")
-            plot_curve([df[[tag]] for df in events_df_list], tag, fname_out)
+        # Plot each validation metric separetly
+        for tag in events_df_list[0].keys():
+            if not tag.endswith("loss"):
+                fname_out = os.path.join(output_folder, tag+".png")
+                plot_curve([df[[tag]] for df in events_df_list], tag, fname_out)
 
 
 def main():
