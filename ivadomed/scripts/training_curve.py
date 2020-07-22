@@ -135,8 +135,11 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         os.makedirs(output_folder)
 
     # Config subplots
-    n_cols = 2
-    n_rows = int(np.ceil(len(group_list) / float(n_cols)))
+    if len(group_list) > 1:
+        n_cols = 2
+        n_rows = int(np.ceil(len(group_list) / float(n_cols)))
+    else:
+        n_cols, n_rows = 1, 1
 
     for i_subplot, input_folder in enumerate(group_list):
         # Find training folders:
