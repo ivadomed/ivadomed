@@ -183,6 +183,8 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
                            tag,
                            ax)
 
+    for fname_out in plt_dict:
+        plt_dict[fname_out].savefig(fname_out)
 
 
 def main():
