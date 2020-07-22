@@ -69,13 +69,14 @@ def get_data(event_dict):
     return metrics_df
 
 
-def plot_curve(data_list, y_label, fig_ax):
+def plot_curve(data_list, y_label, fig_ax, subplot_title):
     """Plot curve of metrics or losses for each epoch.
 
     Args:
         data_list (list): list of pd.DataFrame, one for each log_directory
         y_label (str): Label for the y-axis.
         fig_ax (plt.subplot):
+        subplot_title (str): Title of the subplot
     """
     # Create count of the number of epochs
     max_nb_epoch = max([len(data_list[i]) for i in range(len(data_list))])
@@ -88,14 +89,15 @@ def plot_curve(data_list, y_label, fig_ax):
         std_minus_data_k = (mean_data_k - std_data_k).tolist()
         std_plus_data_k = (mean_data_k + std_data_k).tolist()
         mean_data_k = mean_data_k.tolist()
-        plt.plot(epoch_count, mean_data_k)
-        plt.fill_between(epoch_count, std_minus_data_k, std_plus_data_k, alpha=0.3)
+        fig_ax.plot(epoch_count, mean_data_k, )
+        fig_ax.fill_between(epoch_count, std_minus_data_k, std_plus_data_k, alpha=0.3)
 
-    plt.legend(data_list[0].keys(), loc="best")
-    plt.grid(linestyle='dotted')
-    plt.xlabel('Epoch')
-    plt.ylabel(y_label)
-    plt.xlim([1, max_nb_epoch])
+    fig_ax.legend(data_list[0].keys(), loc="best")
+    fig_ax.grid(linestyle='dotted')
+    fig_ax.set_xlabel('Epoch')
+    fig_ax.set_ylabel(y_label)
+    fig_ax.set_xlim([1, max_nb_epoch])
+    fig_ax.title.set_text(subplot_title)
 
 
 def run_plot_training_curves(input_folder, output_folder, multiple_training=False):
@@ -149,6 +151,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
             input_folder = '/'.join(input_folder.split('/')[:-1])
             input_folder_list = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if f.startswith(prefix)]
         else:
+            prefix = input_folder.split('/')[-1]
             input_folder_list = [input_folder]
 
         events_df_list = []
@@ -166,20 +169,22 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         loss_keys = [k for k in events_df_list[0].keys() if k.endswith("loss")]
         if i_subplot == 0:  # Init plot
             plt_dict[os.path.join(output_folder, "losses.png")] = plt.figure(figsize=(10 * n_cols, 5 * n_rows))
-        ax = plt_dict[os.path.join(output_folder, "losses.png")].add_subplot(n_cols, n_rows, i_subplot + 1)
+        ax = plt_dict[os.path.join(output_folder, "losses.png")].add_subplot(n_rows, n_cols, i_subplot + 1)
         plot_curve([df[loss_keys] for df in events_df_list],
                    "loss",
-                   ax)
+                   ax,
+                   prefix)
 
         # Plot each validation metric separetly
         for tag in events_df_list[0].keys():
             if not tag.endswith("loss"):
                 if i_subplot == 0:  # Init plot
                     plt_dict[os.path.join(output_folder, tag+".png")] = plt.figure(figsize=(10 * n_cols, 5 * n_rows))
-                ax = plt_dict[os.path.join(output_folder, tag+".png")].add_subplot(n_cols, n_rows, i_subplot+1)
+                ax = plt_dict[os.path.join(output_folder, tag+".png")].add_subplot(n_rows, n_cols, i_subplot+1)
                 plot_curve([df[[tag]] for df in events_df_list],
                            tag,
-                           ax)
+                           ax,
+                           prefix)
 
     for fname_out in plt_dict:
         plt_dict[fname_out].savefig(fname_out)
