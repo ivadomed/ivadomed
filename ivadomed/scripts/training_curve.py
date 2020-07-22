@@ -2,6 +2,7 @@
 
 import os
 import argparse
+import numpy as np
 from collections import defaultdict
 from tensorflow.python.summary.summary_iterator import summary_iterator
 import pandas as pd
@@ -87,7 +88,6 @@ def plot_curve(data_list, y_label, fname_out):
     max_nb_epoch = max([len(data_list[i]) for i in range(len(data_list))])
     epoch_count = range(1, max_nb_epoch + 1)
 
-    plt.figure(figsize=(10, 5))
     for k in data_list[0].keys():
         data_k = pd.concat([data_list[i][k] for i in range(len(data_list))], axis=1)
         mean_data_k = data_k.mean(axis=1, skipna=True)
@@ -139,6 +139,12 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
             value (hard line) surrounded by the standard deviation (envelope).
     """
     group_list = input_folder.split(",")
+
+    # Init plot
+    n_cols = 2
+    n_rows = int(np.ceil(n_cols / float(n_cols)))
+    plt.figure(figsize=(10 * n_cols, 5 * n_rows))
+
     for input_folder in group_list:
         # Find training folders:
         if multiple_training:
