@@ -24,9 +24,8 @@ def get_parser():
                         help="Multiple log directories are considered: all available folders with -i as "
                              "prefix. The plot represents the mean value (hard line) surrounded by the standard "
                              "deviation envelope.")
-    parser.add_argument("-o", "--output", required=False, type=str,
-                        help="Output folder. If not specified, results are saved under "
-                             "input_folder/plot_training_curves.")
+    parser.add_argument("-o", "--output", required=True, type=str,
+                        help="Output folder.")
     return parser
 
 
@@ -139,11 +138,14 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
             value (hard line) surrounded by the standard deviation (envelope).
     """
     group_list = input_folder.split(",")
+    plt_dict = {"fig": [], "fname_out": []}
 
-    # Init plot
-    n_cols = 2
-    n_rows = int(np.ceil(n_cols / float(n_cols)))
-    plt.figure(figsize=(10 * n_cols, 5 * n_rows))
+    # Create output folder
+    if os.path.isdir(output_folder):
+        print("Output folder already exists: {}.".format(output_folder))
+    else:
+        print("Creating output folder: {}.".format(output_folder))
+        os.makedirs(output_folder)
 
     for i_subplot, input_folder in enumerate(group_list):
         # Find training folders:
@@ -165,18 +167,15 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
             # Store data
             events_df_list.append(events_vals_df)
 
-        # Create output folder
-        if output_folder is None:
-            output_folder = os.path.join(input_folder, "plot_training_curves")
-        if os.path.isdir(output_folder):
-            print("Output folder already exists: {}.".format(output_folder))
-        else:
-            print("Creating output folder: {}.".format(output_folder))
-            os.makedirs(output_folder)
-
         # Plot train and valid losses together
         fname_out = os.path.join(output_folder, "losses.png")
         loss_keys = [k for k in events_df_list[0].keys() if k.endswith("loss")]
+
+        # Init plot
+        n_cols = 2
+        n_rows = int(np.ceil(n_cols / float(n_cols)))
+        plt.figure(figsize=(10 * n_cols, 5 * n_rows))
+
         plot_curve([df[loss_keys] for df in events_df_list], "loss", fname_out)
 
         # Plot each validation metric separetly
