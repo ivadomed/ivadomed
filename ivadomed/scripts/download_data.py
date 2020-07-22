@@ -212,13 +212,13 @@ def main(args=None):
     parser = get_parser()
     arguments = parser.parse_args()
     data_name = arguments.d
-    if arguments.o is None:
+    if arguments.output is None:
         dest_folder = os.path.join(os.path.abspath(os.curdir), data_name)
     else:
-        dest_folder = arguments.o
+        dest_folder = arguments.output
 
     url = dict_url[data_name]
-    install_data(url, dest_folder, keep=arguments("-k", False))
+    install_data(url, dest_folder, keep=arguments.keep)
     return 0
 
 
