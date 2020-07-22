@@ -24,6 +24,7 @@ def get_parser():
     return parser
 
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
