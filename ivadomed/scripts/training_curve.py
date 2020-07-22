@@ -144,6 +144,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
     for i_subplot, input_folder in enumerate(group_list):
         # Find training folders:
         if multiple_training:
+            input_folder = os.path.expanduser(input_folder)
             prefix = input_folder.split('/')[-1]
             input_folder = '/'.join(input_folder.split('/')[:-1])
             input_folder_list = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if f.startswith(prefix)]
