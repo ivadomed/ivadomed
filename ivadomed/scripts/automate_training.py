@@ -113,7 +113,7 @@ def make_category(base_item, keys, values, is_all_combin=False):
             name_str = ""
             for i in range(len(keys)):
                 new_item[keys[i]] = combination[i]
-                name_str += "-" + str(keys[i]) + "=" + str(combination[i])
+                name_str += "-" + str(keys[i]) + "=" + str(combination[i]).replace("/", "_")
 
             items.append(new_item)
             names.append(name_str)
@@ -197,15 +197,16 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
         # Cartesian product (all combinations)
         combinations = (dict(zip(param_dict.keys(), values))
                         for values in product(*param_dict.values()))
+        names = list(product(*names_dict.values()))
 
-        for combination in combinations:
+        for idx, combination in enumerate(combinations):
 
             new_config = copy.deepcopy(initial_config)
 
-            for param in combination:
+            for i, param in enumerate(combination):
                 value = combination[param]
                 new_config[param] = value
-                new_config["log_directory"] = new_config["log_directory"] + "-" + param + "=" + str(value)
+                new_config["log_directory"] = new_config["log_directory"] + names[idx][i]
 
             config_list.append(copy.deepcopy(new_config))
     # Change a single parameter for each test
@@ -225,7 +226,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     pool = mp.Pool(processes=len(initial_config["gpu"]))
 
     results_df = pd.DataFrame()
-    eval_df = pd.DataFrame
+    eval_df = pd.DataFrame()
+    all_mean = pd.DataFrame()
     for i in range(n_iterations):
         if not fixed_split:
             # Set seed for iteration
@@ -259,9 +261,17 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             # Merge all eval df together to have a single excel file
             for j, result in enumerate(test_results):
                 df = result[-1]
-                mean_metrics = df.mean(axis=0)
-                std_metrics = df.std(axis=0)
-                metrics = pd.concat([mean_metrics, std_metrics], sort=False, axis=1)
+
+                if i == 0:
+                    all_mean = df.mean(axis=0)
+                    std_metrics = df.std(axis=0)
+                    metrics = pd.concat([all_mean, std_metrics], sort=False, axis=1)
+                else:
+                    all_mean = pd.concat([all_mean, df.mean(axis=0)], sort=False, axis=1)
+                    mean_metrics = all_mean.mean(axis=1)
+                    std_metrics = all_mean.std(axis=1)
+                    metrics = pd.concat([mean_metrics, std_metrics], sort=False, axis=1)
+
                 metrics.rename({0: "mean"}, axis=1, inplace=True)
                 metrics.rename({1: "std"}, axis=1, inplace=True)
                 id = result[0].split("_n=")[0]
@@ -272,10 +282,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                 test_results[j] = result[:2]
 
             # Init or add eval results to dataframe
-            if i != 0:
-                eval_df = (eval_df * i + pd.concat(df_lst, sort=False, axis=1)) / (i + 1)
-            else:
-                eval_df = pd.concat(df_lst, sort=False, axis=1)
+            eval_df = pd.concat(df_lst, sort=False, axis=1)
 
             test_df = pd.DataFrame(test_results, columns=['log_directory', 'test_dice'])
             combined_df = val_df.set_index('log_directory').join(test_df.set_index('log_directory'))
