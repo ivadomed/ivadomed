@@ -24,10 +24,10 @@ To download the dataset (~450MB), run the following commands in your terminal:
 .. code-block:: bash
 
    # Download data
-   curl -o ivadomed_spinegeneric_registered.zip -L https://github.com/ivadomed/data_spinegeneric_registered/releases/download/r20200907/data_spinegeneric_registered-r20200907.zip
-   unzip ivadomed_spinegeneric_registered.zip
+   curl -o ivadomed_example_spinegeneric.zip -L https://github.com/ivadomed/data_example_spinegeneric/releases/download/r20200907/data_spinegeneric_registered-r20200907.zip
+   unzip ivadomed_example_spinegeneric.zip
    # Rename folder
-   mv ivadomed-data_spinegeneric_registered* data_spinegeneric_registered
+   mv ivadomed-data_example_spinegeneric* data_example_spinegeneric
 
 
 Configuration file
@@ -57,7 +57,7 @@ segmentation training.
 
   .. code-block:: xml
 
-     "bids_path": "data_spinegeneric_registered",
+     "bids_path": "data_example_spinegeneric",
 
 - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth is located
   under the ``DATASET/derivatives/labels`` folder. In our case, the suffix is ``_seg-manual``:
