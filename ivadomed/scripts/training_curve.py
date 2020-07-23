@@ -98,6 +98,8 @@ def plot_curve(data_list, y_label, fig_ax, subplot_title):
     fig_ax.grid(linestyle='dotted')
     fig_ax.set_xlabel('Epoch')
     fig_ax.set_ylabel(y_label)
+    if y_label != "loss":
+        fig_ax.set_ylim([0, 1])
     fig_ax.set_xlim([1, max_nb_epoch])
     fig_ax.title.set_text(subplot_title)
 
