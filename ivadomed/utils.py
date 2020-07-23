@@ -1010,6 +1010,13 @@ def overlap_im_seg(img, seg):
     return img_out
 
 
+class LoopingPillowWriter(anim.PillowWriter):
+    def finish(self):
+        self._frames[0].save(
+            self._outfile, save_all=True, append_images=self._frames[1:],
+            duration=int(1000 / self.fps), loop=0)
+
+
 class AnimatedGif:
     """Generates GIF.
 
@@ -1038,5 +1045,6 @@ class AnimatedGif:
         self.images.append([plt_im, plt_txt])
 
     def save(self, filename):
-        animation = anim.ArtistAnimation(self.fig, self.images)
-        animation.save(filename, writer='imagemagick', fps=10)
+        animation = anim.ArtistAnimation(self.fig, self.images, interval=50, blit=True,
+                            repeat_delay=500)
+        animation.save(filename, writer=LoopingPillowWriter(fps=20))
