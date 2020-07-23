@@ -68,7 +68,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             random_metadata = dict(dataset_val[indexes_gif[i_gif]]["input_metadata"][0])
             gif_dict["image_path"].append(random_metadata['input_filenames'])
             gif_dict["slice_id"].append(random_metadata['slice_index'])
-            gif_dict["gif"].append(imed_utils.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].size()))
+            gif_obj = imed_utils.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].numpy()[0].shape)
+            gif_dict["gif"].append(copy.copy(gif_obj))
 
     # GET MODEL
     if training_params["transfer_learning"]["retrain_model"]:
@@ -288,7 +289,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     for i_gif in range(n_gif):
         fname_out = gif_dict["image_path"][i_gif].split('/')[-3] + "__"
         fname_out += gif_dict["image_path"][i_gif].split('/')[-1].split(".nii.gz")[0].split(gif_dict["image_path"][i_gif].split('/')[-3]+"_")[1] + "__"
-        fname_out += str(gif_dict["slice_id"][i_gif]) + ".mp4"
+        fname_out += str(gif_dict["slice_id"][i_gif]) + ".gif"
         path_gif_out = os.path.join(gif_folder, fname_out)
         gif_dict["gif"][i_gif].save(path_gif_out)
 
