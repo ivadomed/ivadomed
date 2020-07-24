@@ -21,7 +21,7 @@ cudnn.benchmark = True
 
 
 def train(model_params, dataset_train, dataset_val, training_params, log_directory, device,
-          cuda_available=True, metric_fns=None, n_gif=0, debugging=False):
+          cuda_available=True, metric_fns=None, n_gif=0, roc_increment=None, debugging=False):
     """Main command to train the network.
 
     Args:
@@ -36,6 +36,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
             parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
             predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
+        roc_increment (float): A ROC analysis is performed at the end of the training using the trained model and the
+            validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
+            increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
         debugging (bool): If True, extended verbosity and intermediate outputs.
 
     Returns:
@@ -299,6 +302,12 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     print('begin ' + time.strftime('%H:%M:%S', time.localtime(begin_time)) + "| End " +
           time.strftime('%H:%M:%S', time.localtime(final_time)) +
           "| duration " + str(datetime.timedelta(seconds=duration_time)))
+
+    optimal_thr = None
+    if roc_increment:
+        optimal_thr = run_roc_analysis(model=model,
+                                       val_loader=val_loader,
+                                       increment=roc_increment)
 
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 

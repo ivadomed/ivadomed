@@ -190,9 +190,8 @@ def run_command(context, n_gif=0, roc_increment=None):
             cuda_available=cuda_available,
             metric_fns=metric_fns,
             n_gif=n_gif,
+            roc_increment=roc_increment,
             debugging=context["debugging"])
-
-        # ROC HERE
 
         # Save config file within log_directory and log_directory/model_name
         with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
