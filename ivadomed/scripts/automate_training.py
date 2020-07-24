@@ -246,6 +246,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             'best_validation_loss'])
 
         if run_test:
+            new_config_list = []
             for config in config_list:
                 # Delete path_pred
                 path_pred = os.path.join(config['log_directory'], 'pred_masks')
@@ -254,8 +255,10 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                         shutil.rmtree(path_pred)
                     except OSError as e:
                         print("Error: %s - %s." % (e.filename, e.strerror))
+                # Take the config file within the log_directory because binarize_predictions may have been updated
+                new_config_list.append(os.path.join(config['log_directory'], 'config_file.jon'))
 
-            test_results = pool.map(test_worker, config_list)
+            test_results = pool.map(test_worker, new_config_list)
 
             df_lst = []
             # Merge all eval df together to have a single excel file
