@@ -307,7 +307,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     if roc_increment:
         optimal_thr = roc_analysis(model=model,
                                    val_loader=val_loader,
-                                   increment=roc_increment)
+                                   model_params=model_params,
+                                   increment=roc_increment,
+                                   cuda_available=cuda_available)
 
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
@@ -465,13 +467,16 @@ def save_film_params(gammas, betas, contrasts, depth, ofolder):
     np.save(contrast_path, contrast_images)
 
 
-def roc_analysis(model, val_loader, increment=0.1):
+def roc_analysis(model, val_loader, model_params, increment=0.1, cuda_available=True):
     """Run a ROC analysis to find the optimal threshold on the validation sub-dataset.
 
     Args:
         model (nn.Module): Trained model.
         val_laoder (torch.utils.data.DataLoader): Validation data loader.
+        model_params (dict): Model's parameters.
         increment (float): Increment between tested thresholds.
+        cuda_available (bool): If True, CUDA is available.
+
     Returns:
         float: optimal threshold.
     """
@@ -485,8 +490,12 @@ def roc_analysis(model, val_loader, increment=0.1):
     # List of thresholds
     thr_list = list(np.arange(0.0, 1.0, increment))+[1.0]
 
+    # Init mean sensitivity and mean specificity lists
+    sensitivity_list, specificity_list = [], []
+    # Init metric manager for each thr
+    metric_dict = {thr: imed_metrics.MetricManager(metric_fns) for thr in thr_list}
 
-    metric_mgr = imed_metrics.MetricManager(metric_fns)
+    # Go through val dataset
     for i, batch in enumerate(val_loader):
         with torch.no_grad():
             # GET SAMPLES
@@ -502,6 +511,7 @@ def roc_analysis(model, val_loader, increment=0.1):
                 preds = model(input_samples, metadata)
             else:
                 preds = model(input_samples)
+
 
             gt_npy = gt_samples.cpu().numpy().astype(np.uint8)
             preds_npy = preds.data.cpu().numpy()
