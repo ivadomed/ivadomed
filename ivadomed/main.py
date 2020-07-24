@@ -35,7 +35,7 @@ def get_parser():
                                     ' The parameter indicates the number of 2D slices used to generate GIFs, one GIF '
                                     'per slice. A GIF shows predictions of a given slice from the validation '
                                     'sub-dataset. They are saved within the log directory.')
-    optional_args.add_argument('-t', '--thr_roc', required=False, type=float,
+    optional_args.add_argument('-r', '--roc_increment', required=False, type=float,
                                help='A ROC analysis is performed at the end of the training using the trained model'
                                     ' and the validation sub-dataset to find the optimal binarisation threshold. The '
                                     'specified value indicates the increment between 0 and 1 used during the ROC '
@@ -269,10 +269,12 @@ def run_main():
         return
     with open(path_config_file, "r") as fhandle:
         context = json.load(fhandle)
-    print(args)
-    exit()
+
+    # Get ROC increment if available
+    roc_increment = args.roc_increment if args.roc_increment else None
+
     # Run command
-    run_command(context=context, n_gif=args.gif)
+    run_command(context=context, n_gif=args.gif, roc_increment=roc_increment)
 
 
 if __name__ == "__main__":
