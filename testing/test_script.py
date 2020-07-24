@@ -11,9 +11,9 @@ def test_script():
 
     subprocess.check_output("ivadomed_prepare_dataset_vertebral_labeling -p testing_data/ -s _T2w -a 3",shell=True)
 
-    command = "ivadomed_visualize_transforms -i testing_data/sub-test001/anat/sub-test001_T1w.nii.gz -n " +\
+    command = "ivadomed_visualize_transforms -i testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz -n " +\
               "2 -c testing_data/model_config.json " +\
-              "-r testing_data/derivatives/labels/sub-test001/anat/sub-test001_T1w_seg-manual.nii.gz -o visuzalize_test"
+              "-r testing_data/derivatives/labels/sub-test001/anat/sub-unf01_T1w_seg-manual.nii.gz -o visuzalize_test"
     subprocess.check_output(command,shell=True)
 
 
@@ -26,25 +26,30 @@ def test_training():
     os.makedirs("testing_data/sub-test003/anat/", exist_ok=True)
     os.makedirs("testing_data/derivatives/labels/sub-test002/anat/", exist_ok=True)
     os.makedirs("testing_data/derivatives/labels/sub-test003/anat/", exist_ok=True)
+    os.makedirs("testing_script", exist_ok=True)
 
-    command = "cp testing_data/sub-test001/anat/sub-test001_T2w_mid.nii.gz testing_data/sub-test002/anat/sub-test002" + \
-              "_T2w_mid.nii.gz"
+    command = "cp testing_data/sub-unf01/anat/sub-unf01_T2w.nii.gz testing_data/sub-test002/anat/sub-test002" + \
+              "_T2w.nii.gz"
     subprocess.check_output(command, shell=True)
 
-    command = "cp testing_data/sub-test001/anat/sub-test001_T2w_mid.nii.gz testing_data/sub-test003/anat/sub-test003" + \
-              "_T2w_mid.nii.gz"
+    command = "cp testing_data/sub-unf01/anat/sub-unf01_T2w.nii.gz testing_data/sub-test003/anat/sub-test003" + \
+              "_T2w.nii.gz"
     subprocess.check_output(command, shell=True)
 
     derivatives = "testing_data/derivatives/labels/"
-    command = "cp " + derivatives + "sub-test001/anat/sub-test001_T2w_mid_heatmap3.nii.gz " + \
+    command = "cp " + derivatives + "sub-unf01/anat/sub-unf01_T2w_seg-manual.nii.gz " + \
               derivatives + "sub-test002/anat/sub-test002" + \
-              "_T2w_mid_heatmap3.nii.gz"
+              "_T2w_seg-manual.nii.gz"
     subprocess.check_output(command,shell=True)
 
-    command = "cp " + derivatives + "sub-test001/anat/sub-test001_T2w_mid_heatmap3.nii.gz " + \
+    command = "cp " + derivatives + "sub-unf01/anat/sub-unf01_T2w_seg-manual.nii.gz " + \
               derivatives + "sub-test003/anat/sub-test003" + \
-              "_T2w_mid_heatmap3.nii.gz"
+              "_T2w_seg-manual.nii.gz"
     subprocess.check_output(command, shell=True)
+
+    command = "cp testing_data/model_unet_test.pt testing_script/best_model.pt"
+    subprocess.check_output(command, shell=True)
+
 
     list1 = ["sub-test002"]
     list2 = ["sub-test003"]
@@ -57,8 +62,6 @@ def test_training():
     print(a)
     subprocess.check_output(["ivadomed", "testing_data/model_config.json"],shell=True)
     print("training_done")
-
-    command = "ivadomed_automate_training -c testing_data/model_config.json -p hyperparameter_opt.json -n 1 "
     
 
 

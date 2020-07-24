@@ -155,7 +155,7 @@ def test_label_file_from_coordinates():
     # create fake coordinate
     coord = [[0, 0, 0]]
     # load test image
-    nifti = nib.load('testing_data/sub-test001/anat/sub-test001_T1w.nii.gz')
+    nifti = nib.load('testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz')
     # create fake label
     label = imed_postpro.label_file_from_coordinates(nifti, coord)
     # check if it worked

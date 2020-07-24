@@ -4,6 +4,7 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 
 from ivadomed import utils as imed_utils
+import time
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
@@ -44,7 +45,7 @@ def _cmpt_label(ds_loader):
         },
     "NumpyToTensor": {}
 }])
-@pytest.mark.parametrize('train_lst', [['sub-test001']])
+@pytest.mark.parametrize('train_lst', [['sub-unf01']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
 def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
@@ -84,5 +85,6 @@ def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
                                        shuffle=False, pin_memory=True,
                                        collate_fn=imed_loader_utils.imed_collate,
                                        num_workers=0)
+    time.sleep(10)
     neg_percent, pos_percent = _cmpt_label(train_loader_balanced)
     assert abs(neg_percent - pos_percent) <= 20.

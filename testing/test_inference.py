@@ -34,7 +34,7 @@ PATH_OUT = 'tmp'
         "NumpyToTensor": {},
         "NormalizeInstance": {"applied_to": ["im"]}
     }])
-@pytest.mark.parametrize('test_lst', [['sub-test001']])
+@pytest.mark.parametrize('test_lst', [['sub-unf01']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"], ["_seg-manual"]])
 @pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
 @pytest.mark.parametrize('testing_params', [{
@@ -54,7 +54,7 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_pa
         "data_list": test_lst,
         "dataset_type": "testing",
         "requires_undo": True,
-        "contrast_params": {"contrast_lst": ['T2w', 'T2star'], "balance": {}},
+        "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
         "bids_path": PATH_BIDS,
         "target_suffix": target_lst,
         "roi_params": roi_params,

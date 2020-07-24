@@ -23,7 +23,7 @@ DROPOUT = 0.4
 BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01
-PATH_BIDS = 'testing_data'
+PATH_BIDS = 'testing_data/'
 p = 0.0001
 
 
@@ -48,7 +48,7 @@ def test_HeMIS(p=0.0001):
 
     roi_params = {"suffix": "_seg-manual", "slice_filter_roi": None}
 
-    train_lst = ['sub-test001']
+    train_lst = ['sub-unf01']
     contrasts = ['T1w', 'T2w', 'T2star']
 
     print('[INFO]: Creating dataset ...\n')
@@ -84,7 +84,7 @@ def test_HeMIS(p=0.0001):
                                           slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
                                                                                  filter_empty_mask=True),
                                           roi_params=roi_params)
-
+    print(train_lst)
     dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
     print("[INFO]: Dataset RAM status:")
     print(dataset.status)
