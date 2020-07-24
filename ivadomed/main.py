@@ -1,6 +1,6 @@
 import json
 import os
-import sys
+import argparse
 
 import joblib
 import torch.backends.cudnn as cudnn
@@ -20,38 +20,45 @@ cudnn.benchmark = True
 MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'NAME_CLASSIFIER_1', 'Countception']
 
 
-def run_main(config=None):
+def get_parser():
+    parser = argparse.ArgumentParser(add_help=False)
+
+    # MANDATORY ARGUMENTS
+    mandatory_args = parser.add_argument_group('MANDATORY ARGUMENTS')
+    mandatory_args.add_argument("-c", "--config", required=True, type=str,
+                                help="Path to configuration file.")
+
+    # OPTIONAL ARGUMENTS
+    optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
+    optional_args.add_argument('-g', '--gif', required=False, type=int, default=0,
+                               help='Generates a GIF of during training, one frame per epoch for a given slice.'
+                                    ' The parameter indicates the number of 2D slices used to generate GIFs, one GIF '
+                                    'per slice. A GIF shows predictions of a given slice from the validation '
+                                    'sub-dataset. They are saved within the log directory.')
+    optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
+                               help='Shows function documentation.')
+
+    return parser
+
+
+def run_command(context, n_gif=0):
     """Run main command.
 
     This function is central in the ivadomed project as training / testing / evaluation commands are run via this
     function. All the process parameters are defined in the config.
 
     Args:
-        config (dict): Dictionary containing all parameters that are needed for a given process. See
+        context (dict): Dictionary containing all parameters that are needed for a given process. See
             :doc:`configuration_file` for more details.
+        n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
+            parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
+            predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
 
     Returns:
         If "train" command: Returns floats: best loss score for both training and validation.
         If "test" command: Returns dict: of averaged metrics computed on the testing sub dataset.
         If "eval" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing sub dataset.
     """
-    # Necessary when calling run_main through python code instead of command-line
-    if config is None:
-        if len(sys.argv) != 2:
-            print("\nERROR: Please indicate the path of your configuration file, "
-                  "e.g. ivadomed ivadomed/config/config.json\n")
-            return
-
-        path_config_file = sys.argv[1]
-        if not os.path.isfile(path_config_file) or not path_config_file.endswith('.json'):
-            print("\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(path_config_file))
-            return
-
-        with open(path_config_file, "r") as fhandle:
-            context = json.load(fhandle)
-    else:
-        context = config
-
     command = context["command"]
     log_directory = context["log_directory"]
     if not os.path.isdir(log_directory):
@@ -82,10 +89,10 @@ def run_main(config=None):
     transform_train_params, transform_valid_params, transform_test_params = \
         imed_transforms.get_subdatasets_transforms(context["transformation"])
     if command == "train":
-        imed_utils.display_selected_transfoms(transform_train_params, dataset_type="training")
-        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type="validation")
+        imed_utils.display_selected_transfoms(transform_train_params, dataset_type=["training"])
+        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=["validation"])
     elif command == "test":
-        imed_utils.display_selected_transfoms(transform_test_params, dataset_type="testing")
+        imed_utils.display_selected_transfoms(transform_test_params, dataset_type=["testing"])
 
     # METRICS
     metric_fns = [imed_metrics.dice_score,
@@ -174,6 +181,7 @@ def run_main(config=None):
             device=device,
             cuda_available=cuda_available,
             metric_fns=metric_fns,
+            n_gif=n_gif,
             debugging=context["debugging"])
 
         # Save config file within log_directory and log_directory/model_name
@@ -233,7 +241,7 @@ def run_main(config=None):
         if not os.path.isdir(path_preds):
             print('\nRun Inference\n')
             context["command"] = "test"
-            run_main(context)
+            run_command(context)
 
         # RUN EVALUATION
         df_results = imed_evaluation.evaluate(bids_path=loader_params['bids_path'],
@@ -242,6 +250,22 @@ def run_main(config=None):
                                               target_suffix=loader_params["target_suffix"],
                                               eval_params=context["evaluation_parameters"])
         return df_results
+
+
+def run_main():
+    parser = get_parser()
+    args = parser.parse_args()
+
+    # Get context from configuration file
+    path_config_file = args.config
+    if not os.path.isfile(path_config_file) or not path_config_file.endswith('.json'):
+        print("\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(path_config_file))
+        return
+    with open(path_config_file, "r") as fhandle:
+        context = json.load(fhandle)
+
+    # Run command
+    run_command(context=context, n_gif=args.gif)
 
 
 if __name__ == "__main__":

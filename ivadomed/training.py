@@ -1,7 +1,7 @@
 import copy
 import os
 import time
-
+import random
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
@@ -21,7 +21,7 @@ cudnn.benchmark = True
 
 
 def train(model_params, dataset_train, dataset_val, training_params, log_directory, device,
-          cuda_available=True, metric_fns=None, debugging=False):
+          cuda_available=True, metric_fns=None, n_gif=0, debugging=False):
     """Main command to train the network.
 
     Args:
@@ -33,6 +33,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         device (str): Indicates the CPU or GPU ID.
         cuda_available (bool): If True, CUDA is available.
         metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
+        n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
+            parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
+            predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
         debugging (bool): If True, extended verbosity and intermediate outputs.
 
     Returns:
@@ -58,6 +61,16 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                                 collate_fn=imed_loader_utils.imed_collate,
                                 num_workers=0)
 
+        # Init GIF
+        gif_dict = {"image_path": [], "slice_id": [], "gif": []}
+        indexes_gif = random.sample(range(len(dataset_val)), n_gif)
+        for i_gif in range(n_gif):
+            random_metadata = dict(dataset_val[indexes_gif[i_gif]]["input_metadata"][0])
+            gif_dict["image_path"].append(random_metadata['input_filenames'])
+            gif_dict["slice_id"].append(random_metadata['slice_index'])
+            gif_obj = imed_utils.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].numpy()[0].shape)
+            gif_dict["gif"].append(copy.copy(gif_obj))
+
     # GET MODEL
     if training_params["transfer_learning"]["retrain_model"]:
         print("\nLoading pretrained model's weights: {}.")
@@ -82,7 +95,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
     # Using Adam
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
-    scheduler, step_scheduler_batch = get_scheduler(training_params["scheduler"]["lr_scheduler"], optimizer, num_epochs)
+    scheduler, step_scheduler_batch = get_scheduler(copy.copy(training_params["scheduler"]["lr_scheduler"]), optimizer, num_epochs)
     print("\nScheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
 
     # Create dict containing gammas and betas after each FiLM layer.
@@ -196,6 +209,15 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                     val_loss_total += loss.item()
                     val_dice_loss_total += loss_dice_fct(preds, gt_samples).item()
 
+                    # Add frame to GIF
+                    for i_ in range(len(input_samples)):
+                        im, pr, met = input_samples[i_].cpu().numpy()[0], preds[i_].cpu().numpy()[0], batch["input_metadata"][i_][0]
+                        for i_gif in range(n_gif):
+                            if gif_dict["image_path"][i_gif] == met.__getitem__('input_filenames') and \
+                                    gif_dict["slice_id"][i_gif] == met.__getitem__('slice_index'):
+                                overlap = imed_utils.overlap_im_seg(im, pr)
+                                gif_dict["gif"][i_gif].add(overlap, label=str(epoch))
+
                 num_steps += 1
 
                 # METRICS COMPUTATION
@@ -259,6 +281,17 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     # Convert best model to ONNX and save it in model directory
     best_model_path = os.path.join(log_directory, model_params["folder_name"], model_params["folder_name"] + ".onnx")
     imed_utils.save_onnx_model(torch.load(model_path), input_samples, best_model_path)
+
+    # Save GIFs
+    gif_folder = os.path.join(log_directory, "gifs")
+    if n_gif > 0 and not os.path.isdir(gif_folder):
+        os.makedirs(gif_folder)
+    for i_gif in range(n_gif):
+        fname_out = gif_dict["image_path"][i_gif].split('/')[-3] + "__"
+        fname_out += gif_dict["image_path"][i_gif].split('/')[-1].split(".nii.gz")[0].split(gif_dict["image_path"][i_gif].split('/')[-3]+"_")[1] + "__"
+        fname_out += str(gif_dict["slice_id"][i_gif]) + ".gif"
+        path_gif_out = os.path.join(gif_folder, fname_out)
+        gif_dict["gif"][i_gif].save(path_gif_out)
 
     writer.close()
     final_time = time.time()
