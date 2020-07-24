@@ -35,12 +35,12 @@ def get_parser():
                                     ' The parameter indicates the number of 2D slices used to generate GIFs, one GIF '
                                     'per slice. A GIF shows predictions of a given slice from the validation '
                                     'sub-dataset. They are saved within the log directory.')
-    optional_args.add_argument('-t', '--thr_roc', required=False, type=float, default=0.1,
+    optional_args.add_argument('-t', '--thr_roc', required=False, type=float,
                                help='A ROC analysis is performed at the end of the training using the trained model'
                                     ' and the validation sub-dataset to find the optimal binarisation threshold. The '
                                     'specified value indicates the increment between 0 and 1 used during the ROC '
-                                    'analysis. ROC plot is saved under "log_directory/roc" and the optimal threshold'
-                                    ' in "log_directory/config_file.json as "binarize_prediction" parameter.')
+                                    'analysis (e.g. 0.1). ROC plot is saved under "log_directory/roc" and the optimal '
+                                    'threshold in "log_directory/config_file.json as "binarize_prediction" parameter.')
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                                help='Shows function documentation.')
 
