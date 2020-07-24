@@ -2,6 +2,7 @@ from collections import defaultdict
 
 from scipy import spatial
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class MetricManager(object):
@@ -275,3 +276,24 @@ def multi_class_dice_score(im1, im2):
         dice_per_class += dice_score(im1[i,], im2[i,], empty_score=1.0)
 
     return dice_per_class / n_classes
+
+
+def plot_roc_curve(tpr, fpr, fname_out):
+    """Plot ROC curve.
+
+    Args:
+        tpr (list): True positive rates.
+        fpr (list): False positive rates.
+        fname_out (str): Output filename.
+    """
+    plt.figure()
+    lw = 2
+    plt.plot(fpr, tpr, color='darkorange', lw=lw, marker='o')
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC curve')
+    plt.legend(loc="lower right")
+    plt.savefig(fname_out)
