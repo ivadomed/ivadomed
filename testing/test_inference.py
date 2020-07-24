@@ -9,6 +9,7 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed import testing as imed_testing
+from ivadomed import models as imed_models
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
@@ -86,8 +87,7 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_pa
     })
 
     # Model
-    model_path = os.path.join(PATH_BIDS, "model_unet_test.pt")
-    model = torch.load(model_path, map_location=device)
+    model = imed_models.Unet()
 
     if cuda_available:
         model.cuda()
