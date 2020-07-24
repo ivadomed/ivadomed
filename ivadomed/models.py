@@ -239,6 +239,7 @@ class Unet(Module):
         depth (int): Number of down convolutions minus bottom down convolution.
         drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
+        relu (bool): If True, sets final activation to normalized ReLU (ReLU between 0 and 1).
         **kwargs:
 
     Attributes:
@@ -250,8 +251,7 @@ class Unet(Module):
         super(Unet, self).__init__()
 
         # Encoder path
-        self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
-                               relu=relu)
+        self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum)
 
         # Decoder path
         self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
@@ -497,6 +497,7 @@ class UNet3D(nn.Module):
         attention (bool): Boolean indicating whether the attention module is on or not.
         drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
+        relu (bool): If True, sets final activation to normalized ReLU (relu between 0 and 1).
         **kwargs:
 
     Attributes:
@@ -505,6 +506,7 @@ class UNet3D(nn.Module):
         base_n_filter (int): Number of base filters in the U-Net.
         attention (bool): Boolean indicating whether the attention module is on or not.
         momentum (float): Batch normalization momentum.
+        relu_activation (bool): If True, sets final activation to normalized ReLU (ReLU between 0 and 1).
 
     Note: All layers are defined as attributes and used in the forward method.
     """
