@@ -40,7 +40,7 @@ def get_parser():
                                     ' and the validation sub-dataset to find the optimal binarization threshold. The '
                                     'specified value indicates the increment between 0 and 1 used during the ROC '
                                     'analysis (e.g. 0.1). ROC plot is saved under "log_directory/roc" and the optimal '
-                                    'threshold in "log_directory/config_file.json as "binarize_prediction" parameter.')
+                                    'threshold in "log_directory/config_file.json as "binarize_predictions" parameter.')
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                                help='Shows function documentation.')
 
@@ -195,7 +195,7 @@ def run_command(context, n_gif=0, roc_increment=None):
 
         # Update threshold in config file
         if roc_increment:
-            context["testing_parameters"]["binarize_prediction"] = thr
+            context["testing_parameters"]["binarize_predictions"] = thr
 
         # Save config file within log_directory and log_directory/model_name
         with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
