@@ -305,9 +305,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     optimal_thr = None
     if roc_increment:
-        optimal_thr = run_roc_analysis(model=model,
-                                       val_loader=val_loader,
-                                       increment=roc_increment)
+        optimal_thr = roc_analysis(model=model,
+                                   val_loader=val_loader,
+                                   increment=roc_increment)
 
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
@@ -463,3 +463,16 @@ def save_film_params(gammas, betas, contrasts, depth, ofolder):
     contrast_images = np.array(contrasts)
     contrast_path = os.path.join(ofolder, "contrast_image.npy")
     np.save(contrast_path, contrast_images)
+
+
+def roc_analysis(model, val_loader, increment=0.1):
+    """Run a ROC analysis to find the optimal threshold on the validation sub-dataset.
+
+    Args:
+        model (nn.Module): Trained model.
+        val_laoder (torch.utils.data.DataLoader): Validation data loader.
+        increment (float): Increment between tested thresholds.
+    Returns:
+        float: optimal threshold.
+    """
+    pass
