@@ -533,6 +533,6 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, fname_out="roc.
 
     # Save plot
     print('\tSaving plot: {}'.format(fname_out))
-    imed_metrics.plot_roc_curve(tpr_list, fpr_list, fname_out)
+    imed_metrics.plot_roc_curve(tpr_list, fpr_list, optimal_idx, fname_out)
 
     return optimal_threshold

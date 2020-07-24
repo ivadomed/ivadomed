@@ -278,17 +278,19 @@ def multi_class_dice_score(im1, im2):
     return dice_per_class / n_classes
 
 
-def plot_roc_curve(tpr, fpr, fname_out):
+def plot_roc_curve(tpr, fpr, opt_thr_idx, fname_out):
     """Plot ROC curve.
 
     Args:
         tpr (list): True positive rates.
         fpr (list): False positive rates.
+        opt_thr_idx (int): Index of the optimal threshold.
         fname_out (str): Output filename.
     """
     plt.figure()
     lw = 2
     plt.plot(fpr, tpr, color='darkorange', lw=lw, marker='o')
+    plt.plot([fpr[opt_thr_idx]], [tpr[opt_thr_idx]], marker='go', markersize=6)
     plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
