@@ -290,7 +290,7 @@ def plot_roc_curve(tpr, fpr, opt_thr_idx, fname_out):
     plt.figure()
     lw = 2
     plt.plot(fpr, tpr, color='darkorange', lw=lw, marker='o')
-    plt.plot([fpr[opt_thr_idx]], [tpr[opt_thr_idx]], marker='go', markersize=6)
+    plt.plot([fpr[opt_thr_idx]], [tpr[opt_thr_idx]], color="darkgreen", marker="o", linestyle="None")
     plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
