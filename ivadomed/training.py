@@ -43,7 +43,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         debugging (bool): If True, extended verbosity and intermediate outputs.
 
     Returns:
-        float, float, float, float: best_training_dice, best_training_loss, best_validation_dice, best_validation_loss.
+        float, float, float, float, float: best_training_dice, best_training_loss, best_validation_dice,
+            best_validation_loss, optimal_threshold.
     """
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=log_directory)
@@ -313,7 +314,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                                    increment=roc_increment,
                                    cuda_available=cuda_available)
 
-    return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
+    return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss, optimal_thr
 
 
 def get_sampler(ds, balance_bool):

@@ -180,7 +180,7 @@ def run_command(context, n_gif=0, roc_increment=None):
             print('Model directory already exists: {}'.format(path_model))
 
         # RUN TRAINING
-        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
+        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss, thr = imed_training.train(
             model_params=model_params,
             dataset_train=ds_train,
             dataset_val=ds_valid,
@@ -192,6 +192,10 @@ def run_command(context, n_gif=0, roc_increment=None):
             n_gif=n_gif,
             roc_increment=roc_increment,
             debugging=context["debugging"])
+
+        # Update threshold in config file
+        if roc_increment:
+            context["testing_parameters"]["binarize_prediction"] = thr
 
         # Save config file within log_directory and log_directory/model_name
         with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
