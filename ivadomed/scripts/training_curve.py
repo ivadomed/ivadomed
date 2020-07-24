@@ -7,6 +7,7 @@ from collections import defaultdict
 from tensorflow.python.summary.summary_iterator import summary_iterator
 import pandas as pd
 import matplotlib.pyplot as plt
+from textwrap import wrap
 
 
 def get_parser():
@@ -101,7 +102,7 @@ def plot_curve(data_list, y_label, fig_ax, subplot_title):
     if y_label != "loss":
         fig_ax.set_ylim([0, 1])
     fig_ax.set_xlim([1, max_nb_epoch])
-    fig_ax.title.set_text(subplot_title)
+    fig_ax.title.set_text('\n'.join(wrap(subplot_title, 60)))
 
 
 def run_plot_training_curves(input_folder, output_folder, multiple_training=False):
