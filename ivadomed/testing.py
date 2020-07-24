@@ -12,6 +12,7 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.training import get_metadata
+from ivadomed.postprocessing import threshold_predictions
 
 cudnn.benchmark = True
 
@@ -100,6 +101,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     volume = None
     weight_matrix = None
+    # Threshold used to binarize (or not) data before saving it as niftis
+    bin_thr = testing_params["binarize_predictions"] if testing_params["binarize_niftis"] else -1
 
     for i, batch in enumerate(tqdm(test_loader, desc="Inference - Iteration " + str(i_monte_carlo))):
         with torch.no_grad():
@@ -174,15 +177,19 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         fname_out=fname_pred,
                                                         slice_axis=slice_axis,
                                                         kernel_dim='2d',
-                                                        bin_thr=0.9 if testing_params["binarize_prediction"] else -1)
+                                                        bin_thr=bin_thr)
                     # TODO: Adapt to multilabel
-                    preds_npy_list.append(output_nii.get_fdata()[:, :, :, 0])
+                    output_data = output_nii.get_fdata()[:, :, :, 0]
+                    if testing_params["binarize_niftis"] >= 0:
+                        output_data = threshold_predictions(output_data, thr=testing_params["binarize_niftis"])
+                    preds_npy_list.append(output_data)
+
                     gt_npy_list.append(nib.load(fname_tmp).get_fdata())
 
                     output_nii_shape = output_nii.get_fdata().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
                         imed_utils.save_color_labels(np.stack(pred_tmp_lst, -1),
-                                                     testing_params["binarize_prediction"],
+                                                     testing_params["binarize_niftis"],
                                                      fname_tmp,
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                      imed_utils.AXIS_DCT[testing_params['slice_axis']])
@@ -220,8 +227,12 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         fname_out=fname_pred,
                                                         slice_axis=slice_axis,
                                                         kernel_dim='3d',
-                                                        bin_thr=0.5 if testing_params["binarize_prediction"] else -1)
-                    preds_npy_list.append(output_nii.get_fdata().transpose(3, 0, 1, 2))
+                                                        bin_thr=bin_thr)
+                    output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
+                    if testing_params["binarize_niftis"] >= 0:
+                        output_data = threshold_predictions(output_data, thr=testing_params["binarize_niftis"])
+                    preds_npy_list.append(output_data)
+
                     gt_lst = []
                     for gt in metadata[0]['gt_filenames']:
                         # For multi-label, if all labels are not in every image
@@ -235,7 +246,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
                     if pred_undo.shape[0] > 1:
                         imed_utils.save_color_labels(pred_undo,
-                                                     testing_params['binarize_prediction'],
+                                                     testing_params['binarize_niftis'],
                                                      batch['input_metadata'][smp_idx][0]['input_filenames'],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                      slice_axis)
