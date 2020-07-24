@@ -219,7 +219,7 @@ class Decoder(Module):
             preds = preds[:, 1:, ]
         else:
             if self.relu_activation:
-                preds = nn.ReLU()(x) / nn.ReLU()(x).max()
+                preds = nn.ReLU()(x) / nn.ReLU()(x).max() if bool(nn.ReLU()(x).max()) else nn.ReLU()(x)
             else:
                 preds = torch.sigmoid(x)
         return preds
@@ -798,7 +798,7 @@ class UNet3D(nn.Module):
             out = out[:, 1:, ]
         else:
             if self.relu_activation:
-                out = nn.ReLU()(seg_layer) / nn.ReLU()(seg_layer).max()
+                out = nn.ReLU()(x) / nn.ReLU()(x).max() if bool(nn.ReLU()(x).max()) else nn.ReLU()(x)
             else:
                 out = torch.sigmoid(seg_layer)
         return out
