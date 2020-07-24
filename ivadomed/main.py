@@ -269,7 +269,8 @@ def run_main():
         return
     with open(path_config_file, "r") as fhandle:
         context = json.load(fhandle)
-
+    print(args)
+    exit()
     # Run command
     run_command(context=context, n_gif=args.gif)
 
