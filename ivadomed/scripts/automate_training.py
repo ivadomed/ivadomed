@@ -59,7 +59,7 @@ def train_worker(config):
     # Call ivado cmd_train
     try:
         # Save best validation score
-        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = ivado.run_main(config)
+        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = ivado.run_command(config)
 
     except:
         logging.exception('Got exception on main handler')
@@ -86,11 +86,11 @@ def test_worker(config):
         # Save best test score
 
         config["command"] = "test"
-        test_dict = ivado.run_main(config)
+        test_dict = ivado.run_command(config)
         test_dice = test_dict['dice_score']
 
         config["command"] = "eval"
-        df_results = ivado.run_main(config)
+        df_results = ivado.run_command(config)
 
         # Uncomment to use 3D dice
         # test_dice = eval_df["dice"].mean()
