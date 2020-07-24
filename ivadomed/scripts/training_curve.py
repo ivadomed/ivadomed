@@ -143,6 +143,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         multiple_training (bool): Indicates if multiple log directories are considered (``True``) or not (``False``).
             Flag: --multiple. All available folders with ``-i`` as prefix are considered. The plot represents the mean
             value (hard line) surrounded by the standard deviation (envelope).
+        y_lim_loss (list): List of the lower and upper limits of the y-axis of the loss plot.
     """
     group_list = input_folder.split(",")
     plt_dict = {}
