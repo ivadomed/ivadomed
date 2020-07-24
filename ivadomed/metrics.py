@@ -295,5 +295,4 @@ def plot_roc_curve(tpr, fpr, fname_out):
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
     plt.title('ROC curve')
-    plt.legend(loc="lower right")
     plt.savefig(fname_out)

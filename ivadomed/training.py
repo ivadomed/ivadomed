@@ -513,7 +513,7 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, fname_out="roc.
             else:
                 preds = model(input_samples)
 
-            gt_npy = threshold_predictions(gt_samples.cpu(), thr=0.5)
+            gt_npy = threshold_predictions(gt_samples.cpu().numpy(), thr=0.5)
             preds_npy = preds.data.cpu().numpy()
             for thr in thr_list:
                 preds_thr = threshold_predictions(copy.copy(preds_npy), thr=thr)
