@@ -107,7 +107,7 @@ def plot_curve(data_list, y_label, fig_ax, subplot_title, y_lim=None):
     if y_lim is not None:
         fig_ax.set_ylim(y_lim)
     fig_ax.set_xlim([1, max_nb_epoch])
-    fig_ax.title.set_text('\n'.join(wrap(subplot_title, 60)))
+    fig_ax.title.set_text('\n'.join(wrap(subplot_title, 80)))
 
 
 def run_plot_training_curves(input_folder, output_folder, multiple_training=False, y_lim_loss=None):
@@ -217,7 +217,8 @@ def main():
     input_folder = args.input
     multiple = args.multiple
     output_folder = args.output
-    y_lim_loss = [int(y) for y in args.y_lim_loss.split(',')] if args.y_lim_loss else None
+    y_lim_loss = [int(y) for y in args.ylim_loss.split(',')] if args.ylim_loss else None
+
     # Run script
     run_plot_training_curves(input_folder, output_folder, multiple, y_lim_loss)
 
