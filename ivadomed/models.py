@@ -508,13 +508,14 @@ class UNet3D(nn.Module):
     """
 
     def __init__(self, in_channel, out_channel, n_filters=16, attention=False, drop_rate=0.6, bn_momentum=0.1,
-                 **kwargs):
+                 relu=False, **kwargs):
         super(UNet3D, self).__init__()
         self.in_channels = in_channel
         self.n_classes = out_channel
         self.base_n_filter = n_filters
         self.attention = attention
         self.momentum = bn_momentum
+        self.relu_activation = relu
 
         self.lrelu = nn.LeakyReLU()
         self.dropout3d = nn.Dropout3d(p=drop_rate)
@@ -792,7 +793,10 @@ class UNet3D(nn.Module):
             # Remove background class
             out = out[:, 1:, ]
         else:
-            out = torch.sigmoid(seg_layer)
+            if self.relu_activation:
+                out = nn.ReLU()(seg_layer) / nn.ReLU()(seg_layer).max()
+            else:
+                out = torch.sigmoid(seg_layer)
         return out
 
 
