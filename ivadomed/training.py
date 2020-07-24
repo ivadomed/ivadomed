@@ -521,7 +521,7 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, cuda_available=
     tpr_list, fpr_list = [], []
     for thr in thr_list:
         result_thr = metric_dict[thr].get_results()
-        tpr_list.append(result_thr["recall"])
+        tpr_list.append(result_thr["recall_score"])
         fpr_list.append(1 - result_thr["specificity_score"])
 
     # Get optimal threshold
