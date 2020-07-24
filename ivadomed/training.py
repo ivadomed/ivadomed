@@ -475,4 +475,21 @@ def roc_analysis(model, val_loader, increment=0.1):
     Returns:
         float: optimal threshold.
     """
-    pass
+    # Eval mode
+    model.eval()
+
+    for i, batch in enumerate(val_loader):
+        with torch.no_grad():
+            # GET SAMPLES
+            if model_params["name"] == "HeMISUnet":
+                input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
+            else:
+                input_samples = imed_utils.cuda(batch["input"], cuda_available)
+            gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
+
+            # RUN MODEL
+            if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
+                metadata = get_metadata(batch["input_metadata"], model_params)
+                preds = model(input_samples, metadata)
+            else:
+                preds = model(input_samples)
