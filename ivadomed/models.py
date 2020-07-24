@@ -161,10 +161,11 @@ class Decoder(Module):
     """
 
     def __init__(self, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1,
-                 n_metadata=None, film_layers=None, hemis=False):
+                 n_metadata=None, film_layers=None, hemis=False, relu=False):
         super(Decoder, self).__init__()
         self.depth = depth
         self.out_channel = out_channel
+        self.relu = relu
         # Up-Sampling path
         self.up_path = nn.ModuleList()
         if hemis:
@@ -217,7 +218,10 @@ class Decoder(Module):
             # Remove background class
             preds = preds[:, 1:, ]
         else:
-            preds = torch.sigmoid(x)
+            if self.relu:
+                preds = nn.ReLU()(x) / nn.ReLU()(x).max()
+            else:
+                preds = torch.sigmoid(x)
         return preds
 
 
