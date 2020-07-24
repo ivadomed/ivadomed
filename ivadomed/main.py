@@ -37,7 +37,7 @@ def get_parser():
                                     'sub-dataset. They are saved within the log directory.')
     optional_args.add_argument('-r', '--roc_increment', required=False, type=float,
                                help='A ROC analysis is performed at the end of the training using the trained model'
-                                    ' and the validation sub-dataset to find the optimal binarisation threshold. The '
+                                    ' and the validation sub-dataset to find the optimal binarization threshold. The '
                                     'specified value indicates the increment between 0 and 1 used during the ROC '
                                     'analysis (e.g. 0.1). ROC plot is saved under "log_directory/roc" and the optimal '
                                     'threshold in "log_directory/config_file.json as "binarize_prediction" parameter.')
@@ -47,7 +47,7 @@ def get_parser():
     return parser
 
 
-def run_command(context, n_gif=0):
+def run_command(context, n_gif=0, roc_increment=None):
     """Run main command.
 
     This function is central in the ivadomed project as training / testing / evaluation commands are run via this
@@ -59,7 +59,9 @@ def run_command(context, n_gif=0):
         n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
             parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
             predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
-
+        roc_increment (float): A ROC analysis is performed at the end of the training using the trained model and the
+            validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
+            increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
     Returns:
         If "train" command: Returns floats: best loss score for both training and validation.
         If "test" command: Returns dict: of averaged metrics computed on the testing sub dataset.
@@ -189,6 +191,8 @@ def run_command(context, n_gif=0):
             metric_fns=metric_fns,
             n_gif=n_gif,
             debugging=context["debugging"])
+
+        # ROC HERE
 
         # Save config file within log_directory and log_directory/model_name
         with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
