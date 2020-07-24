@@ -165,7 +165,7 @@ class Decoder(Module):
         super(Decoder, self).__init__()
         self.depth = depth
         self.out_channel = out_channel
-        self.relu = relu
+        self.relu_activation = relu
         # Up-Sampling path
         self.up_path = nn.ModuleList()
         if hemis:
@@ -218,7 +218,7 @@ class Decoder(Module):
             # Remove background class
             preds = preds[:, 1:, ]
         else:
-            if self.relu:
+            if self.relu_activation:
                 preds = nn.ReLU()(x) / nn.ReLU()(x).max()
             else:
                 preds = torch.sigmoid(x)
@@ -246,14 +246,16 @@ class Unet(Module):
         decoder (Decoder): U-net decoder.
     """
 
-    def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, **kwargs):
+    def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, relu=False, **kwargs):
         super(Unet, self).__init__()
 
         # Encoder path
-        self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum)
+        self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
+                               relu=relu)
 
         # Decoder path
-        self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum)
+        self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
+                               relu=relu)
 
     def forward(self, x):
         features, _ = self.encoder(x)
