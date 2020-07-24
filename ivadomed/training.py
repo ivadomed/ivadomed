@@ -306,6 +306,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     optimal_thr = None
     if roc_increment:
+        print('\nRunning ROC analysis to find optimal threshold')
         optimal_thr = roc_analysis(model=model,
                                    val_loader=val_loader,
                                    model_params=model_params,
@@ -525,5 +526,6 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, cuda_available=
     # Get optimal threshold
     optimal_idx = np.argmax([tpr - fpr for tpr, fpr in zip(tpr_list, fpr_list)])
     optimal_threshold = thr_list[optimal_idx]
+    print('\tOptimal threshold: {}'.format(optimal_threshold))
 
     return optimal_threshold
