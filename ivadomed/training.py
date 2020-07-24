@@ -478,6 +478,15 @@ def roc_analysis(model, val_loader, increment=0.1):
     # Eval mode
     model.eval()
 
+    # ROC metrics
+    metric_fns = [imed_metrics.recall_score,
+                  imed_metrics.specificity_score]
+
+    # List of thresholds
+    thr_list = list(np.arange(0.0, 1.0, increment))+[1.0]
+
+
+    metric_mgr = imed_metrics.MetricManager(metric_fns)
     for i, batch in enumerate(val_loader):
         with torch.no_grad():
             # GET SAMPLES
@@ -493,3 +502,10 @@ def roc_analysis(model, val_loader, increment=0.1):
                 preds = model(input_samples, metadata)
             else:
                 preds = model(input_samples)
+
+            gt_npy = gt_samples.cpu().numpy().astype(np.uint8)
+            preds_npy = preds.data.cpu().numpy()
+            metric_mgr(preds_npy.astype(np.uint8), gt_npy)
+
+        metrics_dict = metric_mgr.get_results()
+        metric_mgr.reset()
