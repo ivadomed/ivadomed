@@ -39,8 +39,9 @@ def get_parser():
                                help='A ROC analysis is performed at the end of the training using the trained model'
                                     ' and the validation sub-dataset to find the optimal binarization threshold. The '
                                     'specified value indicates the increment between 0 and 1 used during the ROC '
-                                    'analysis (e.g. 0.1). ROC plot is saved under "log_directory/roc" and the optimal '
-                                    'threshold in "log_directory/config_file.json as "binarize_predictions" parameter.')
+                                    'analysis (e.g. 0.1). ROC plot is saved under "log_directory/roc.png" and the '
+                                    'optimal threshold in "log_directory/config_file.json as "binarize_predictions" '
+                                    'parameter.')
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                                help='Shows function documentation.')
 

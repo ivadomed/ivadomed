@@ -312,6 +312,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                                    val_loader=val_loader,
                                    model_params=model_params,
                                    increment=roc_increment,
+                                   fname_out=os.path.join(log_directory, "roc.png"),
                                    cuda_available=cuda_available)
 
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss, optimal_thr
@@ -470,7 +471,7 @@ def save_film_params(gammas, betas, contrasts, depth, ofolder):
     np.save(contrast_path, contrast_images)
 
 
-def roc_analysis(model, val_loader, model_params, increment=0.1, cuda_available=True):
+def roc_analysis(model, val_loader, model_params, increment=0.1, fname_out="roc.png", cuda_available=True):
     """Run a ROC analysis to find the optimal threshold on the validation sub-dataset.
 
     Args:
@@ -478,6 +479,7 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, cuda_available=
         val_laoder (torch.utils.data.DataLoader): Validation data loader.
         model_params (dict): Model's parameters.
         increment (float): Increment between tested thresholds.
+        fname_out (str): Plot output filename.
         cuda_available (bool): If True, CUDA is available.
 
     Returns:
@@ -528,5 +530,9 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, cuda_available=
     optimal_idx = np.argmax([tpr - fpr for tpr, fpr in zip(tpr_list, fpr_list)])
     optimal_threshold = thr_list[optimal_idx]
     print('\tOptimal threshold: {}'.format(optimal_threshold))
+
+    # Save plot
+    print('\tSaving plot: {}'.format(fname_out))
+    imed_metrics.plot_roc_curve(tpr_list, fpr_list, fname_out)
 
     return optimal_threshold
