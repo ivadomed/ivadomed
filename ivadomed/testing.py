@@ -12,7 +12,6 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.training import get_metadata
-from ivadomed.postprocessing import threshold_predictions
 
 cudnn.benchmark = True
 

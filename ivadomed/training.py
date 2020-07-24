@@ -15,6 +15,7 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.postprocessing import threshold_predictions
 import datetime
 
 cudnn.benchmark = True
@@ -483,16 +484,12 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, cuda_available=
     # Eval mode
     model.eval()
 
-    # ROC metrics
-    metric_fns = [imed_metrics.recall_score,
-                  imed_metrics.specificity_score]
-
     # List of thresholds
     thr_list = list(np.arange(0.0, 1.0, increment))+[1.0]
 
-    # Init mean sensitivity and mean specificity lists
-    sensitivity_list, specificity_list = [], []
     # Init metric manager for each thr
+    metric_fns = [imed_metrics.recall_score,
+                  imed_metrics.specificity_score]
     metric_dict = {thr: imed_metrics.MetricManager(metric_fns) for thr in thr_list}
 
     # Go through val dataset
@@ -512,10 +509,21 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, cuda_available=
             else:
                 preds = model(input_samples)
 
-
-            gt_npy = gt_samples.cpu().numpy().astype(np.uint8)
+            gt_npy = threshold_predictions(gt_samples.cpu(), thr=0.5)
             preds_npy = preds.data.cpu().numpy()
-            metric_mgr(preds_npy.astype(np.uint8), gt_npy)
+            for thr in thr_list:
+                preds_thr = threshold_predictions(copy.copy(preds_npy), thr=thr)
+                metric_dict[thr](preds_thr, gt_npy)
 
-        metrics_dict = metric_mgr.get_results()
-        metric_mgr.reset()
+    # Get results
+    tpr_list, fpr_list = [], []
+    for thr in thr_list:
+        result_thr = metric_dict[thr].get_results()
+        tpr_list.append(result_thr["recall"])
+        fpr_list.append(1 - result_thr["specificity_score"])
+
+    # Get optimal threshold
+    optimal_idx = np.argmax([tpr - fpr for tpr, fpr in zip(tpr_list, fpr_list)])
+    optimal_threshold = thr_list[optimal_idx]
+
+    return optimal_threshold
