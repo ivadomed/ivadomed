@@ -226,9 +226,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 num_steps += 1
 
                 # METRICS COMPUTATION
-                gt_npy = gt_samples.cpu().numpy().astype(np.uint8)
+                gt_npy = gt_samples.cpu().numpy()
                 preds_npy = preds.data.cpu().numpy()
-                metric_mgr(preds_npy.astype(np.uint8), gt_npy)
+                metric_mgr(preds_npy, gt_npy)
 
                 if i == 0 and debugging:
                     imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
