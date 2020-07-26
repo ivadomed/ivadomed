@@ -180,8 +180,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         bin_thr=bin_thr)
                     # TODO: Adapt to multilabel
                     output_data = output_nii.get_fdata()[:, :, :, 0]
-                    if testing_params["binarize_niftis"] >= 0:
-                        output_data = threshold_predictions(output_data, thr=testing_params["binarize_niftis"])
+                    if testing_params["binarize_predictions"] >= 0:
+                        output_data = threshold_predictions(output_data, thr=testing_params["binarize_predictions"])
                     preds_npy_list.append(output_data)
 
                     gt_npy_list.append(nib.load(fname_tmp).get_fdata())
@@ -229,8 +229,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         kernel_dim='3d',
                                                         bin_thr=bin_thr)
                     output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
-                    if testing_params["binarize_niftis"] >= 0:
-                        output_data = threshold_predictions(output_data, thr=testing_params["binarize_niftis"])
+                    if testing_params["binarize_predictions"] >= 0:
+                        output_data = threshold_predictions(output_data, thr=testing_params["binarize_predictions"])
                     preds_npy_list.append(output_data)
 
                     gt_lst = []
