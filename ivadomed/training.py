@@ -471,13 +471,16 @@ def save_film_params(gammas, betas, contrasts, depth, ofolder):
     np.save(contrast_path, contrast_images)
 
 
-def roc_analysis(model, val_loader, model_params, increment=0.1, fname_out="roc.png", cuda_available=True):
-    """Run a ROC analysis to find the optimal threshold on the validation sub-dataset.
+def threshold_analysis(model, val_loader, model_params, metric="dice", increment=0.1, fname_out="thr.png",
+                       cuda_available=True):
+    """Run a threshold analysis to find the optimal threshold on the validation sub-dataset.
 
     Args:
         model (nn.Module): Trained model.
         val_laoder (torch.utils.data.DataLoader): Validation data loader.
         model_params (dict): Model's parameters.
+        metric (str): Choice between "dice" and "recall_specificity". If "recall_specificity", then a ROC analysis
+            is performed.
         increment (float): Increment between tested thresholds.
         fname_out (str): Plot output filename.
         cuda_available (bool): If True, CUDA is available.
@@ -485,6 +488,10 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, fname_out="roc.
     Returns:
         float: optimal threshold.
     """
+    if metric not in ["dice", "recall_specificity"]:
+        print('\nChoice of metric for threshold analysis: dice, recall_specificity.')
+        exit()
+
     # Eval mode
     model.eval()
 
@@ -493,6 +500,7 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, fname_out="roc.
 
     # Init metric manager for each thr
     metric_fns = [imed_metrics.recall_score,
+                  imed_metrics.dice_score,
                   imed_metrics.specificity_score]
     metric_dict = {thr: imed_metrics.MetricManager(metric_fns) for thr in thr_list}
 
@@ -520,25 +528,33 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, fname_out="roc.
                 metric_dict[thr](preds_thr, gt_npy)
 
     # Get results
-    tpr_list, fpr_list = [], []
+    tpr_list, fpr_list, dice_list = [], [], []
     for thr in thr_list:
         result_thr = metric_dict[thr].get_results()
         tpr_list.append(result_thr["recall_score"])
         fpr_list.append(1 - result_thr["specificity_score"])
+        dice_list.append(result_thr["dice_score"])
 
     # Get optimal threshold
-    diff_list = [tpr - fpr for tpr, fpr in zip(tpr_list, fpr_list)]
+    if metric == "dice":
+        diff_list = dice_list
+    else:
+        diff_list = [tpr - fpr for tpr, fpr in zip(tpr_list, fpr_list)]
     optimal_idx = np.max(np.where(diff_list == np.max(diff_list)))
     optimal_threshold = thr_list[optimal_idx]
     print('\tOptimal threshold: {}'.format(optimal_threshold))
 
     # Save plot
     print('\tSaving plot: {}'.format(fname_out))
-    # Add 0 and 1 as extrema
-    tpr_list = [0.0] + tpr_list + [1.0]
-    fpr_list = [0.0] + fpr_list + [1.0]
-    optimal_idx += 1
-    # Run plot
-    imed_metrics.plot_roc_curve(tpr_list, fpr_list, optimal_idx, fname_out)
+    if metric == "dice":
+        # Run plot
+        imed_metrics.plot_dice_thr(dice_list, optimal_idx, fname_out)
+    else:
+        # Add 0 and 1 as extrema
+        tpr_list = [0.0] + tpr_list + [1.0]
+        fpr_list = [0.0] + fpr_list + [1.0]
+        optimal_idx += 1
+        # Run plot
+        imed_metrics.plot_roc_curve(tpr_list, fpr_list, optimal_idx, fname_out)
 
     return optimal_threshold
