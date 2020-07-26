@@ -548,7 +548,7 @@ def threshold_analysis(model, val_loader, model_params, metric="dice", increment
     print('\tSaving plot: {}'.format(fname_out))
     if metric == "dice":
         # Run plot
-        imed_metrics.plot_dice_thr(dice_list, optimal_idx, fname_out)
+        imed_metrics.plot_dice_thr(thr_list, dice_list, optimal_idx, fname_out)
     else:
         # Add 0 and 1 as extrema
         tpr_list = [0.0] + tpr_list + [1.0]
