@@ -527,7 +527,8 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, fname_out="roc.
         fpr_list.append(1 - result_thr["specificity_score"])
 
     # Get optimal threshold
-    optimal_idx = np.argmax([tpr - fpr for tpr, fpr in zip(tpr_list, fpr_list)])
+    diff_list = [tpr - fpr for tpr, fpr in zip(tpr_list, fpr_list)]
+    optimal_idx = np.max(np.where(diff_list == np.max(diff_list)))
     optimal_threshold = thr_list[optimal_idx]
     print('\tOptimal threshold: {}'.format(optimal_threshold))
 
