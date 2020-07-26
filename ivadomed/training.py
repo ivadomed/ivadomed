@@ -534,9 +534,10 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, fname_out="roc.
 
     # Save plot
     print('\tSaving plot: {}'.format(fname_out))
-    # Add 0 and 1
-    tpr_list = tpr_list + [0.0, 1.0]
-    fpr_list = fpr_list + [0.0, 1.0]
+    # Add 0 and 1 as extrema
+    tpr_list = [0.0] + tpr_list + [1.0]
+    fpr_list = [0.0] + fpr_list + [1.0]
+    optimal_idx += 1
     # Run plot
     imed_metrics.plot_roc_curve(tpr_list, fpr_list, optimal_idx, fname_out)
 
