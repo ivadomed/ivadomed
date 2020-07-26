@@ -44,11 +44,15 @@ def get_parser():
                         help="Keep a constant dataset split for all configs and iterations")
     parser.add_argument("-l", "--all-logs", dest="all_logs", action='store_true',
                         help="Keep all log directories for each iteration.")
+    parser.add_argument('-t', '--thr_increment', required=False, type=float,
+                        help="A threshold analysis is performed at the end of the training using the trained model and "
+                             "the validation sub-dataset to find the optimal binarization threshold. The specified "
+                             "value indicates the increment between 0 and 1 used during the analysis (e.g. 0.1).")
 
     return parser
 
 
-def train_worker(config):
+def train_worker(config, thr_incr):
     current = mp.current_process()
     # ID of process used to assign a GPU
     ID = int(current.name[-1]) - 1
@@ -59,7 +63,8 @@ def train_worker(config):
     # Call ivado cmd_train
     try:
         # Save best validation score
-        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = ivado.run_command(config)
+        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = ivado.run_command(config,
+                                                                                                               thr_incr)
 
     except:
         logging.exception('Got exception on main handler')
@@ -130,7 +135,8 @@ def make_category(base_item, keys, values, is_all_combin=False):
     return items, names
 
 
-def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False, all_logs=False):
+def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False, all_logs=False,
+                      thr_increment=None):
     """Automate multiple training processes on multiple GPUs.
 
     Hyperparameter optimization of models is tedious and time-consuming. This function automatizes this optimization
@@ -157,6 +163,9 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                             Flag: --n-iteration, -n
         run_test (bool): If True, the trained model is also run on the testing subdataset. flag: --run-test
         all_logs (bool): If True, all the log directories are kept for every iteration. Flag: --all-logs, -l
+        thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
+            the validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
+            increment between 0 and 1 used during the ROC analysis (e.g. 0.1). Flag: -t, --thr_increment
     """
     # Load initial config
     with open(config, "r") as fhandle:
@@ -240,7 +249,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                                                                                   "_n=" + str(i).zfill(2))
                     else:
                         config["log_directory"] += "_n=" + str(i).zfill(2)
-        validation_scores = pool.map(train_worker, config_list)
+        validation_scores = pool.map(train_worker, config_list, [thr_increment] * len(config_list))
         val_df = pd.DataFrame(validation_scores, columns=[
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
             'best_validation_loss'])
@@ -321,9 +330,13 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 def main():
     parser = get_parser()
     args = parser.parse_args()
+
+    # Get thr increment if available
+    thr_increment = args.thr_increment if args.thr_increment else None
+
     # Run automate training
     automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin), int(args.n_iterations),
-                      bool(args.run_test), args.all_logs)
+                      bool(args.run_test), args.all_logs, thr_increment)
 
 
 if __name__ == '__main__':

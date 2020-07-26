@@ -313,9 +313,8 @@ def plot_dice_thr(thr_list, dice_list, opt_thr_idx, fname_out):
     lw = 2
     plt.plot(thr_list, dice_list, color='darkorange', lw=lw, marker='o')
     plt.plot([thr_list[opt_thr_idx]], [dice_list[opt_thr_idx]], color="darkgreen", marker="o", linestyle="None")
-    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
     plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
+    plt.ylim([min(dice_list)-0.02, max(dice_list)+0.02])
     plt.xlabel('Thresholds')
     plt.ylabel('Dice')
     plt.title('Threshold analysis')
