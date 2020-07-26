@@ -489,7 +489,7 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, fname_out="roc.
     model.eval()
 
     # List of thresholds
-    thr_list = list(np.arange(0.0, 1.0, increment))+[1.0]
+    thr_list = list(np.arange(0.0, 1.0, increment))[1:]
 
     # Init metric manager for each thr
     metric_fns = [imed_metrics.recall_score,
@@ -533,6 +533,10 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, fname_out="roc.
 
     # Save plot
     print('\tSaving plot: {}'.format(fname_out))
+    # Add 0 and 1
+    tpr_list = tpr_list + [0.0, 1.0]
+    fpr_list = fpr_list + [1.0, 0.0]
+    # Run plot
     imed_metrics.plot_roc_curve(tpr_list, fpr_list, optimal_idx, fname_out)
 
     return optimal_threshold
