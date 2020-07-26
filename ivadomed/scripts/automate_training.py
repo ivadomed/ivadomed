@@ -9,6 +9,7 @@
 
 import argparse
 import copy
+from functools import partial
 import json
 import logging
 import os
@@ -249,7 +250,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                                                                                   "_n=" + str(i).zfill(2))
                     else:
                         config["log_directory"] += "_n=" + str(i).zfill(2)
-        validation_scores = pool.map(train_worker, config_list, [thr_increment] * len(config_list))
+        validation_scores = pool.map(partial(train_worker, thr_incr=thr_increment), config_list)
         val_df = pd.DataFrame(validation_scores, columns=[
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
             'best_validation_loss'])
