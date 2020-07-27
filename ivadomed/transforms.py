@@ -758,8 +758,12 @@ class RandomAffine(ImedTransform):
         translation = - np.array(metadata['translation'])
 
         # Undo rotation
-        dict_params = {"rotation": [angle, axes], "scale": scale, "translation": translation}
+        dict_params = {"rotation": [angle, axes], "scale": scale, "translation": [0, 0, 0]}
+
         data_out, _ = self.__call__(sample, dict_params)
+
+        data_out = affine_transform(data_out, np.identity(3), order=1, offset=translation,
+                                    output_shape=sample.shape).astype(sample.dtype)
 
         return data_out, metadata
 
