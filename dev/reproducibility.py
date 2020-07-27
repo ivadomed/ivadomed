@@ -27,7 +27,7 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    for i in range(args.iterations):
+    for i in range(int(args.iterations)):
         df = reproducibility_pipeline(args.config)
         if i == 0:
             all_mean = df.mean(axis=0)
