@@ -80,13 +80,6 @@ def train_worker(config, thr_incr):
 
 
 def test_worker(config):
-    current = mp.current_process()
-    # ID of process used to assign a GPU
-    ID = int(current.name[-1]) - 1
-
-    # Use GPU i from the array specified in the config file
-    config["gpu"] = config["gpu"][ID]
-
     # Call ivado cmd_eval
     try:
         # Save best test score
@@ -265,8 +258,12 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                         shutil.rmtree(path_pred)
                     except OSError as e:
                         print("Error: %s - %s." % (e.filename, e.strerror))
+
                 # Take the config file within the log_directory because binarize_predictions may have been updated
-                new_config_list.append(os.path.join(config['log_directory'], 'config_file.jon'))
+                json_path = os.path.join(config['log_directory'], 'config_file.json')
+                with open(json_path) as f:
+                    config = json.load(f)
+                new_config_list.append(config)
 
             test_results = pool.map(test_worker, new_config_list)
 
