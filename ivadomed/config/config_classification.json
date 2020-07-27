@@ -67,7 +67,8 @@
         "applied": true
     },
     "testing_parameters": {
-        "binarize_prediction": true,
+        "binarize_predictions": -1,
+        "binarize_niftis": true,
         "uncertainty": {
             "epistemic": false,
             "aleatoric": false,
