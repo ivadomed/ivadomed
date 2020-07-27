@@ -6,6 +6,7 @@ from tqdm import tqdm
 from scipy.ndimage import label, generate_binary_structure
 
 from ivadomed import metrics as imed_metrics
+from ivadomed.postprocessing import threshold_predictions
 
 # labels of paint_objects method
 TP_COLOUR = 1
@@ -13,7 +14,7 @@ FP_COLOUR = 2
 FN_COLOUR = 3
 
 
-def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
+def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params, testing_params):
     """Evaluate predictions from inference step.
 
     Args:
@@ -50,6 +51,9 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
         # 3D evaluation
         nib_pred = nib.load(fname_pred)
         data_pred = nib_pred.get_fdata()
+        if testing_params['binarize_predictions'] >= 0:
+            data_pred = threshold_predictions(data_pred, thr=testing_params["binarize_predictions"])
+
         h, w, d = data_pred.shape[:3]
         n_classes = len(fname_gt)
         data_gt = np.zeros((h, w, d, n_classes))
