@@ -262,7 +262,8 @@ def run_command(context, n_gif=0, thr_increment=None):
                                               log_directory=log_directory,
                                               path_preds=path_preds,
                                               target_suffix=loader_params["target_suffix"],
-                                              eval_params=context["evaluation_parameters"])
+                                              eval_params=context["evaluation_parameters"],
+                                              testing_params=context["testing_parameters"])
         return df_results
 
 
