@@ -10,8 +10,9 @@ from ivadomed import main as ivado
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, help="Base config file path.")
-    parser.add_argument("-n", "--iterations", required=True, help="Number of Monte Carlo iterations.")
-    parser.add_argument("-o", "--output-path", required=True, help="Output directory to save final csv file.")
+    parser.add_argument("-n", "--iterations", default=10, type=int, help="Number of Monte Carlo iterations.")
+    parser.add_argument("-o", "--output-path", default="output_reproducibility.csv", type=str,
+                        help="Output directory to save final csv file.")
     return parser
 
 
