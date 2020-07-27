@@ -247,15 +247,20 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         del nib_im
     data_l_lst = np.array(data_l_lst)
     # channel went first due to the 'append' function
-    data_l_lst = np.reshape(data_l_lst, (data_l_lst.shape[0], data_l_lst.shape[2], data_l_lst.shape[3],
-                                         data_l_lst.shape[4], data_l_lst.shape[1]))
+    if len(data_l_lst.shape) == 4:
+        data_l_lst = np.transpose(data_l_lst, (0,2,3,4,1))
+    elif len(data_l_lst.shape) == 3: 
+        data_l_lst = np.transpose(data_l_lst, (0,2,3,1))
 
     # loop across all structures of data_hard_l
     for i_l in range(1, n_l + 1):
         # select the current structure, remaining voxels are set to zero
         data_i_l = (np.array(data_hard_l) == i_l).astype(np.int)
         # channel went first with 'append' function for data_hard_l so we reshape this array
-        data_i_l = np.reshape(data_i_l, (data_i_l.shape[1], data_i_l.shape[2], data_i_l.shape[3], data_i_l.shape[0]))
+        if len(data_i_l.shape) == 4:
+            data_i_l = np.transpose(data_i_l, (1,2,3,0))
+        elif len(data_i_l.shape) == 3: 
+            data_i_l = np.transpose(data_i_l, (1,2,0))
 
         # select the current structure in each MC sample
         # and store it in data_mc_i_l_lst
