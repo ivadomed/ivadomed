@@ -35,7 +35,7 @@ def get_parser():
                                     ' The parameter indicates the number of 2D slices used to generate GIFs, one GIF '
                                     'per slice. A GIF shows predictions of a given slice from the validation '
                                     'sub-dataset. They are saved within the log directory.')
-    optional_args.add_argument('-t', '--thr_increment', required=False, type=float,
+    optional_args.add_argument('-t', '--thr-increment', dest="thr_increment", required=False, type=float,
                                help='A threshold analysis is performed at the end of the training using the trained '
                                     'model and the validation sub-dataset to find the optimal binarization threshold. '
                                     'The specified value indicates the increment between 0 and 1 used during the '
