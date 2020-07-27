@@ -1,6 +1,8 @@
 import argparse
 import json
+import shutil
 import pandas as pd
+import os
 
 from ivadomed import main as ivado
 
@@ -18,6 +20,7 @@ def reproducibility_pipeline(config):
         context = json.load(fhandle)
 
     context["command"] = "eval"
+    shutil.rmtree(os.path.join(context["log_directory"], "pred_masks"))
     # RandomAffine will be applied during testing
     del context["transformation"]["RandomAffine"]["dataset_type"]
     return ivado.run_command(context)
@@ -38,7 +41,7 @@ def main():
     mean_metrics = all_mean.mean(axis=1)
     std_metrics = all_mean.std(axis=1)
     mean_std_results = pd.concat([mean_metrics, std_metrics], sort=False, axis=1)
-    mean_std_results.to_csv()
+    mean_std_results.to_csv(args.output_path)
 
 
 if __name__ == '__main__':
