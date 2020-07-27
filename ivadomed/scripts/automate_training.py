@@ -64,8 +64,8 @@ def train_worker(config, thr_incr):
     # Call ivado cmd_train
     try:
         # Save best validation score
-        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = ivado.run_command(config,
-                                                                                                               thr_incr)
+        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = \
+            ivado.run_command(config, thr_increment=thr_incr)
 
     except:
         logging.exception('Got exception on main handler')

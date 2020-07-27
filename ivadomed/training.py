@@ -68,7 +68,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
         # Init GIF
         gif_dict = {"image_path": [], "slice_id": [], "gif": []}
-        indexes_gif = random.sample(range(len(dataset_val)), n_gif)
+        if n_gif > 0:
+            indexes_gif = random.sample(range(len(dataset_val)), n_gif)
         for i_gif in range(n_gif):
             random_metadata = dict(dataset_val[indexes_gif[i_gif]]["input_metadata"][0])
             gif_dict["image_path"].append(random_metadata['input_filenames'])
