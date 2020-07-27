@@ -67,9 +67,8 @@ def test_training():
     append_list_as_row("testing_data/participants.tsv", list1)
     append_list_as_row("testing_data/participants.tsv", list2)
 
-    subprocess.call(["ivadomed", "testing_data/model_config_test.json"])
-    subprocess.check_output(["ivadomed", "testing_data/model_config.json"],shell=True)
-    print("training_done")
+    subprocess.check_output(["ivadomed -c testing_data/model_config_test.json"], shell=True)
+    subprocess.check_output(["ivadomed -c testing_data/model_config.json"],shell=True)
     
 
 
