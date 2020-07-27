@@ -220,11 +220,10 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     nib_hard = nib.load(fname_hard)
     data_hard = nib_hard.get_fdata()
     data_hard_l = []
-    for i in range(data_hard.shape[3]):
-        bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
-        data_hard_tmp, n_l = label(data_hard[:, :, :, i], structure=np.array(bin_struct))
+    bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
+    for i in range(data_hard.shape[-1]):
+        data_hard_tmp, n_l = label(data_hard[..., i], structure=np.array(bin_struct))
         data_hard_l.append(data_hard_tmp)
-    data_hard_l, n_l = label(data_hard, structure=bin_struct)
 
     # load uncertainty map
     nib_uncVox = nib.load(fname_unc_vox)
@@ -241,8 +240,8 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         data_im = nib_im.get_fdata()
         data_lst.append(data_im)
         data_im_l = []
-        for i in range(data_im.shape[3]):
-            data_im_tmp, _ = label(data_im[:, :, :, i], structure=bin_struct)
+        for i in range(data_im.shape[-1]):
+            data_im_tmp, _ = label(data_im[..., i], structure=bin_struct)
             data_im_l.append(data_im_tmp)
         data_l_lst.append(data_im_l)
         del nib_im
