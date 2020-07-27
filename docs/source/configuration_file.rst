@@ -299,7 +299,6 @@ UNet3D (Optional)
    the whole input matrix is covered.
 -  ``attention_unet`` (optional): Bool. Use attention gates in the Unet's decoder.
 - ``n_filters`` (optional): Int. Number of filters in the first convolution of the UNet. This number of filters will be doubled at each convolution.
-- ``relu`` (optional): Bool. Sets final activation to normalized ReLU (relu between 0 and 1).
 
 Testing parameters
 ------------------
