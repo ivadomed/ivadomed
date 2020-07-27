@@ -1,13 +1,15 @@
 import argparse
 import json
+import pandas as pd
 
-from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils
+from ivadomed import main as ivado
 
 
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, help="Base config file path.")
+    parser.add_argument("-n", "--iterations", required=True, help="Number of Monte Carlo iterations.")
+    parser.add_argument("-o", "--output-path", required=True, help="Output directory to save final csv file.")
     return parser
 
 
@@ -15,19 +17,28 @@ def reproducibility_pipeline(config):
     with open(config, "r") as fhandle:
         context = json.load(fhandle)
 
-    train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
-                                                                                     context['loader_parameters']
-                                                                                     ['bids_path'],
-                                                                                     context["log_directory"])
-    imed_transforms.RandomAffine(degrees=5, scale=[0.1, 0.1], translate=[0.03, 0.03])
+    context["command"] = "eval"
+    # RandomAffine will be applied during testing
+    del context["transformation"]["RandomAffine"]["dataset_type"]
+    return ivado.run_command(context)
 
 
 def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    # Run automate training
-    reproducibility_pipeline(args.config)
+    for i in range(args.iterations):
+        df = reproducibility_pipeline(args.config)
+        if i == 0:
+            all_mean = df.mean(axis=0)
+
+        else:
+            all_mean = pd.concat([all_mean, df.mean(axis=0)], sort=False, axis=1)
+
+    mean_metrics = all_mean.mean(axis=1)
+    std_metrics = all_mean.std(axis=1)
+    mean_std_results = pd.concat([mean_metrics, std_metrics], sort=False, axis=1)
+    mean_std_results.to_csv()
 
 
 if __name__ == '__main__':
