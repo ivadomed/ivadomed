@@ -278,11 +278,10 @@ def run_main():
     with open(path_config_file, "r") as fhandle:
         context = json.load(fhandle)
 
-    # Get thr increment if available
-    thr_increment = args.thr_increment if args.thr_increment else None
-
     # Run command
-    run_command(context=context, n_gif=args.gif, thr_increment=thr_increment)
+    run_command(context=context,
+                n_gif=args.gif if args.gif is not None else 0,
+                thr_increment=args.thr_increment if args.thr_increment else None)
 
 
 if __name__ == "__main__":
