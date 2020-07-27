@@ -20,7 +20,9 @@ def reproducibility_pipeline(config):
         context = json.load(fhandle)
 
     context["command"] = "eval"
-    shutil.rmtree(os.path.join(context["log_directory"], "pred_masks"))
+    pred_mask_path = os.path.join(context["log_directory"], "pred_masks")
+    if os.path.exists(pred_mask_path):
+        shutil.rmtree(pred_mask_path)
     # RandomAffine will be applied during testing
     del context["transformation"]["RandomAffine"]["dataset_type"]
     return ivado.run_command(context)
