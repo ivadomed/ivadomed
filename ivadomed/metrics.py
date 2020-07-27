@@ -298,3 +298,24 @@ def plot_roc_curve(tpr, fpr, opt_thr_idx, fname_out):
     plt.ylabel('True Positive Rate')
     plt.title('ROC curve')
     plt.savefig(fname_out)
+
+
+def plot_dice_thr(thr_list, dice_list, opt_thr_idx, fname_out):
+    """Plot Dice results against thresholds.
+
+    Args:
+        thr_list (list): Thresholds list.
+        dice_list (list): Dice results.
+        opt_thr_idx (int): Index of the optimal threshold.
+        fname_out (str): Output filename.
+    """
+    plt.figure()
+    lw = 2
+    plt.plot(thr_list, dice_list, color='darkorange', lw=lw, marker='o')
+    plt.plot([thr_list[opt_thr_idx]], [dice_list[opt_thr_idx]], color="darkgreen", marker="o", linestyle="None")
+    plt.xlim([0.0, 1.0])
+    plt.ylim([min(dice_list)-0.02, max(dice_list)+0.02])
+    plt.xlabel('Thresholds')
+    plt.ylabel('Dice')
+    plt.title('Threshold analysis')
+    plt.savefig(fname_out)

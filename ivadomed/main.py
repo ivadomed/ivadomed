@@ -35,11 +35,11 @@ def get_parser():
                                     ' The parameter indicates the number of 2D slices used to generate GIFs, one GIF '
                                     'per slice. A GIF shows predictions of a given slice from the validation '
                                     'sub-dataset. They are saved within the log directory.')
-    optional_args.add_argument('-r', '--roc_increment', required=False, type=float,
-                               help='A ROC analysis is performed at the end of the training using the trained model'
-                                    ' and the validation sub-dataset to find the optimal binarization threshold. The '
-                                    'specified value indicates the increment between 0 and 1 used during the ROC '
-                                    'analysis (e.g. 0.1). ROC plot is saved under "log_directory/roc.png" and the '
+    optional_args.add_argument('-t', '--thr_increment', required=False, type=float,
+                               help='A threshold analysis is performed at the end of the training using the trained '
+                                    'model and the validation sub-dataset to find the optimal binarization threshold. '
+                                    'The specified value indicates the increment between 0 and 1 used during the '
+                                    'analysis (e.g. 0.1). Plot is saved under "log_directory/thr.png" and the '
                                     'optimal threshold in "log_directory/config_file.json as "binarize_predictions" '
                                     'parameter.')
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
@@ -48,7 +48,7 @@ def get_parser():
     return parser
 
 
-def run_command(context, n_gif=0, roc_increment=None):
+def run_command(context, n_gif=0, thr_increment=None):
     """Run main command.
 
     This function is central in the ivadomed project as training / testing / evaluation commands are run via this
@@ -60,8 +60,8 @@ def run_command(context, n_gif=0, roc_increment=None):
         n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
             parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
             predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
-        roc_increment (float): A ROC analysis is performed at the end of the training using the trained model and the
-            validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
+        thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
+            the validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
             increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
     Returns:
         If "train" command: Returns floats: best loss score for both training and validation.
@@ -191,11 +191,11 @@ def run_command(context, n_gif=0, roc_increment=None):
             cuda_available=cuda_available,
             metric_fns=metric_fns,
             n_gif=n_gif,
-            roc_increment=roc_increment,
+            thr_increment=thr_increment,
             debugging=context["debugging"])
 
         # Update threshold in config file
-        if roc_increment:
+        if thr_increment:
             context["testing_parameters"]["binarize_predictions"] = thr
 
         # Save config file within log_directory and log_directory/model_name
@@ -278,11 +278,10 @@ def run_main():
     with open(path_config_file, "r") as fhandle:
         context = json.load(fhandle)
 
-    # Get ROC increment if available
-    roc_increment = args.roc_increment if args.roc_increment else None
-
     # Run command
-    run_command(context=context, n_gif=args.gif, roc_increment=roc_increment)
+    run_command(context=context,
+                n_gif=args.gif if args.gif is not None else 0,
+                thr_increment=args.thr_increment if args.thr_increment else None)
 
 
 if __name__ == "__main__":

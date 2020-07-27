@@ -22,7 +22,7 @@ cudnn.benchmark = True
 
 
 def train(model_params, dataset_train, dataset_val, training_params, log_directory, device,
-          cuda_available=True, metric_fns=None, n_gif=0, roc_increment=None, debugging=False):
+          cuda_available=True, metric_fns=None, n_gif=0, thr_increment=None, debugging=False):
     """Main command to train the network.
 
     Args:
@@ -37,8 +37,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
             parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
             predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
-        roc_increment (float): A ROC analysis is performed at the end of the training using the trained model and the
-            validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
+        thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
+            the validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
             increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
         debugging (bool): If True, extended verbosity and intermediate outputs.
 
@@ -68,7 +68,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
         # Init GIF
         gif_dict = {"image_path": [], "slice_id": [], "gif": []}
-        indexes_gif = random.sample(range(len(dataset_val)), n_gif)
+        if n_gif > 0:
+            indexes_gif = random.sample(range(len(dataset_val)), n_gif)
         for i_gif in range(n_gif):
             random_metadata = dict(dataset_val[indexes_gif[i_gif]]["input_metadata"][0])
             gif_dict["image_path"].append(random_metadata['input_filenames'])
@@ -226,9 +227,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 num_steps += 1
 
                 # METRICS COMPUTATION
-                gt_npy = gt_samples.cpu().numpy().astype(np.uint8)
+                gt_npy = gt_samples.cpu().numpy()
                 preds_npy = preds.data.cpu().numpy()
-                metric_mgr(preds_npy.astype(np.uint8), gt_npy)
+                metric_mgr(preds_npy, gt_npy)
 
                 if i == 0 and debugging:
                     imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
@@ -306,14 +307,15 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
           "| duration " + str(datetime.timedelta(seconds=duration_time)))
 
     optimal_thr = None
-    if roc_increment:
-        print('\nRunning ROC analysis to find optimal threshold')
-        optimal_thr = roc_analysis(model=model,
-                                   val_loader=val_loader,
-                                   model_params=model_params,
-                                   increment=roc_increment,
-                                   fname_out=os.path.join(log_directory, "roc.png"),
-                                   cuda_available=cuda_available)
+    if thr_increment:
+        print('\nRunning threshold analysis to find optimal threshold')
+        optimal_thr = threshold_analysis(model=model,
+                                         val_loader=val_loader,
+                                         model_params=model_params,
+                                         metric="dice",
+                                         increment=thr_increment,
+                                         fname_out=os.path.join(log_directory, "roc.png"),
+                                         cuda_available=cuda_available)
 
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss, optimal_thr
 
@@ -471,13 +473,16 @@ def save_film_params(gammas, betas, contrasts, depth, ofolder):
     np.save(contrast_path, contrast_images)
 
 
-def roc_analysis(model, val_loader, model_params, increment=0.1, fname_out="roc.png", cuda_available=True):
-    """Run a ROC analysis to find the optimal threshold on the validation sub-dataset.
+def threshold_analysis(model, val_loader, model_params, metric="dice", increment=0.1, fname_out="thr.png",
+                       cuda_available=True):
+    """Run a threshold analysis to find the optimal threshold on the validation sub-dataset.
 
     Args:
         model (nn.Module): Trained model.
         val_laoder (torch.utils.data.DataLoader): Validation data loader.
         model_params (dict): Model's parameters.
+        metric (str): Choice between "dice" and "recall_specificity". If "recall_specificity", then a ROC analysis
+            is performed.
         increment (float): Increment between tested thresholds.
         fname_out (str): Plot output filename.
         cuda_available (bool): If True, CUDA is available.
@@ -485,14 +490,19 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, fname_out="roc.
     Returns:
         float: optimal threshold.
     """
+    if metric not in ["dice", "recall_specificity"]:
+        print('\nChoice of metric for threshold analysis: dice, recall_specificity.')
+        exit()
+
     # Eval mode
     model.eval()
 
     # List of thresholds
-    thr_list = list(np.arange(0.0, 1.0, increment))+[1.0]
+    thr_list = list(np.arange(0.0, 1.0, increment))[1:]
 
     # Init metric manager for each thr
     metric_fns = [imed_metrics.recall_score,
+                  imed_metrics.dice_score,
                   imed_metrics.specificity_score]
     metric_dict = {thr: imed_metrics.MetricManager(metric_fns) for thr in thr_list}
 
@@ -520,19 +530,33 @@ def roc_analysis(model, val_loader, model_params, increment=0.1, fname_out="roc.
                 metric_dict[thr](preds_thr, gt_npy)
 
     # Get results
-    tpr_list, fpr_list = [], []
+    tpr_list, fpr_list, dice_list = [], [], []
     for thr in thr_list:
         result_thr = metric_dict[thr].get_results()
         tpr_list.append(result_thr["recall_score"])
         fpr_list.append(1 - result_thr["specificity_score"])
+        dice_list.append(result_thr["dice_score"])
 
     # Get optimal threshold
-    optimal_idx = np.argmax([tpr - fpr for tpr, fpr in zip(tpr_list, fpr_list)])
+    if metric == "dice":
+        diff_list = dice_list
+    else:
+        diff_list = [tpr - fpr for tpr, fpr in zip(tpr_list, fpr_list)]
+    optimal_idx = np.max(np.where(diff_list == np.max(diff_list)))
     optimal_threshold = thr_list[optimal_idx]
     print('\tOptimal threshold: {}'.format(optimal_threshold))
 
     # Save plot
     print('\tSaving plot: {}'.format(fname_out))
-    imed_metrics.plot_roc_curve(tpr_list, fpr_list, optimal_idx, fname_out)
+    if metric == "dice":
+        # Run plot
+        imed_metrics.plot_dice_thr(thr_list, dice_list, optimal_idx, fname_out)
+    else:
+        # Add 0 and 1 as extrema
+        tpr_list = [0.0] + tpr_list + [1.0]
+        fpr_list = [0.0] + fpr_list + [1.0]
+        optimal_idx += 1
+        # Run plot
+        imed_metrics.plot_roc_curve(tpr_list, fpr_list, optimal_idx, fname_out)
 
     return optimal_threshold
