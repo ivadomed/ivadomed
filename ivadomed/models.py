@@ -219,10 +219,8 @@ class Decoder(Module):
             preds = preds[:, 1:, ]
         else:
             if self.relu_activation:
-                print('RELU')
                 preds = nn.ReLU()(x) / nn.ReLU()(x).max() if bool(nn.ReLU()(x).max()) else nn.ReLU()(x)
             else:
-                print('SIGMOID')
                 preds = torch.sigmoid(x)
         return preds
 
