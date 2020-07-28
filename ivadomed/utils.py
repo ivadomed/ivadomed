@@ -248,9 +248,9 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     data_l_lst = np.array(data_l_lst)
     # channel went first due to the 'append' function
     if len(data_l_lst.shape) == 4:
-        data_l_lst = np.transpose(data_l_lst, (0,2,3,4,1))
-    elif len(data_l_lst.shape) == 3: 
-        data_l_lst = np.transpose(data_l_lst, (0,2,3,1))
+        data_l_lst = np.transpose(data_l_lst, (0, 2, 3, 4, 1))
+    elif len(data_l_lst.shape) == 3:
+        data_l_lst = np.transpose(data_l_lst, (0, 2, 3, 1))
 
     # loop across all structures of data_hard_l
     for i_l in range(1, n_l + 1):
@@ -258,9 +258,9 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         data_i_l = (np.array(data_hard_l) == i_l).astype(np.int)
         # channel went first with 'append' function for data_hard_l so we reshape this array
         if len(data_i_l.shape) == 4:
-            data_i_l = np.transpose(data_i_l, (1,2,3,0))
-        elif len(data_i_l.shape) == 3: 
-            data_i_l = np.transpose(data_i_l, (1,2,0))
+            data_i_l = np.transpose(data_i_l, (1, 2, 3, 0))
+        elif len(data_i_l.shape) == 3:
+            data_i_l = np.transpose(data_i_l, (1, 2, 0))
 
         # select the current structure in each MC sample
         # and store it in data_mc_i_l_lst
@@ -340,7 +340,6 @@ def mixup(data, targets, alpha, debugging=False, ofolder=None):
     lambda_ = np.random.beta(alpha, alpha)
     lambda_ = max(lambda_, 1 - lambda_)  # ensure lambda_ >= 0.5
     lambda_tensor = torch.FloatTensor([lambda_])
-
 
     data = data * lambda_tensor + data2 * (1 - lambda_tensor)
     targets = targets * lambda_tensor + targets2 * (1 - lambda_tensor)
@@ -829,6 +828,7 @@ class SliceFilter(object):
         filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
         filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
     """
+
     def __init__(self, filter_empty_mask=True,
                  filter_empty_input=True):
         self.filter_empty_mask = filter_empty_mask
@@ -1018,7 +1018,7 @@ def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, we
 
 def overlap_im_seg(img, seg):
     """Overlap image (background, greyscale) and segmentation (foreground, jet)."""
-    seg_zero, seg_nonzero = np.where(seg<=0.1), np.where(seg>0.1)
+    seg_zero, seg_nonzero = np.where(seg <= 0.1), np.where(seg > 0.1)
     seg_jet = plt.cm.jet(plt.Normalize(vmin=0, vmax=1.)(seg))
     seg_jet[seg_zero] = 0.0
     img_grey = plt.cm.binary_r(plt.Normalize(vmin=np.amin(img), vmax=np.amax(img))(img))
@@ -1046,6 +1046,7 @@ class AnimatedGif:
         size_y (int):
         images (list): List of frames.
     """
+
     def __init__(self, size):
         self.fig = plt.figure()
         self.fig.set_size_inches(size[0] / 50, size[1] / 50)
@@ -1063,5 +1064,5 @@ class AnimatedGif:
 
     def save(self, filename):
         animation = anim.ArtistAnimation(self.fig, self.images, interval=50, blit=True,
-                            repeat_delay=500)
+                                         repeat_delay=500)
         animation.save(filename, writer=LoopingPillowWriter(fps=1))
