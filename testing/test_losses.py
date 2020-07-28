@@ -7,7 +7,7 @@ from math import isclose
 import pytest
 import torch
 
-from ivadomed.losses import GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss, FocalTverskyLoss, DiceLoss,\
+from ivadomed.losses import GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss, FocalTverskyLoss, DiceLoss, \
     AdapWingLoss, L2loss, LossCombination, FocalDiceLoss
 
 
@@ -308,6 +308,7 @@ def test_losscombination(params):
     input, target, expected_value, loss_fct = params
     loss = loss_fct.forward(input, target)
     assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-2)
+
 
 @pytest.mark.parametrize('params', [
     (torch.tensor([[[[1.0, 1.0], [0.0, 0.0]]]]),
