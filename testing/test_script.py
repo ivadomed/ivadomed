@@ -17,14 +17,14 @@ def test_script():
     command = "ivadomed_visualize_transforms -i testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz -n " +\
               "2 -c testing_data/model_config.json " +\
               "-r testing_data/derivatives/labels/sub-test001/anat/sub-unf01_T1w_seg-manual.nii.gz -o visuzalize_test"
-    subprocess.check_output(command,shell=True)
+    subprocess.check_output(command, shell=True)
 
     # testing extract_small_dataset
     subprocess.check_output("ivadomed_extract_small_dataset -i testing_data/ -o small_dataset/test_script/ -n 1 -c T2w,T1w -d 1",shell=True)
 
     # testing compare_model
     command = "ivadomed_compare_models -df temporary_results.csv -n 2"
-    subprocess.check_output(command,shell=True)
+    subprocess.check_output(command, shell=True)
 
 
 def test_training():
@@ -45,20 +45,32 @@ def test_training():
               "_T2w.nii.gz"
     subprocess.check_output(command, shell=True)
 
+    # populate derivatives for sub-test002
     derivatives = "testing_data/derivatives/labels/"
     command = "cp " + derivatives + "sub-unf01/anat/sub-unf01_T2w_seg-manual.nii.gz " + \
               derivatives + "sub-test002/anat/sub-test002" + \
               "_T2w_seg-manual.nii.gz"
-    subprocess.check_output(command,shell=True)
+    subprocess.check_output(command, shell=True)
 
+    command = "cp " + derivatives + "sub-unf01/anat/sub-unf01_T2w_lesion-manual.nii.gz " + \
+              derivatives + "sub-test002/anat/sub-test002" + \
+              "_T2w_lesion-manual.nii.gz"
+    subprocess.check_output(command, shell=True)
+
+    # populate derivatives for sub-test003
     command = "cp " + derivatives + "sub-unf01/anat/sub-unf01_T2w_seg-manual.nii.gz " + \
               derivatives + "sub-test003/anat/sub-test003" + \
               "_T2w_seg-manual.nii.gz"
     subprocess.check_output(command, shell=True)
 
-    command = "cp testing_data/model_unet_test.pt testing_script/best_model.pt"
+    command = "cp " + derivatives + "sub-unf01/anat/sub-unf01_T2w_lesion-manual.nii.gz " + \
+              derivatives + "sub-test003/anat/sub-test003" + \
+              "_T2w_lesion-manual.nii.gz"
     subprocess.check_output(command, shell=True)
 
+    # Model needs to be inside the log_directory since we use a config file.
+    command = "cp testing_data/model_unet_test.pt testing_script/best_model.pt"
+    subprocess.check_output(command, shell=True)
 
     list1 = ["sub-test002"]
     list2 = ["sub-test003"]
@@ -67,9 +79,10 @@ def test_training():
     append_list_as_row("testing_data/participants.tsv", list1)
     append_list_as_row("testing_data/participants.tsv", list2)
 
+    # Test config. Uses Uncertainty
     subprocess.check_output(["ivadomed -c testing_data/model_config_test.json"], shell=True)
-    subprocess.check_output(["ivadomed -c testing_data/model_config.json"],shell=True)
-    
+    # Train config 
+    subprocess.check_output(["ivadomed -c testing_data/model_config.json"], shell=True)
 
 
 def append_list_as_row(file_name, list_of_elem):
