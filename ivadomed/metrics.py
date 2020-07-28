@@ -1,8 +1,8 @@
 from collections import defaultdict
 
-from scipy import spatial
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy import spatial
 
 
 class MetricManager(object):
@@ -16,7 +16,7 @@ class MetricManager(object):
         result_dict (dict): Dictionary storing metrics.
         num_samples (int): Number of samples.
     """
-    
+
     def __init__(self, metric_fns):
         self.metric_fns = metric_fns
         self.num_samples = 0
@@ -314,7 +314,7 @@ def plot_dice_thr(thr_list, dice_list, opt_thr_idx, fname_out):
     plt.plot(thr_list, dice_list, color='darkorange', lw=lw, marker='o')
     plt.plot([thr_list[opt_thr_idx]], [dice_list[opt_thr_idx]], color="darkgreen", marker="o", linestyle="None")
     plt.xlim([0.0, 1.0])
-    plt.ylim([min(dice_list)-0.02, max(dice_list)+0.02])
+    plt.ylim([min(dice_list) - 0.02, max(dice_list) + 0.02])
     plt.xlabel('Thresholds')
     plt.ylabel('Dice')
     plt.title('Threshold analysis')
