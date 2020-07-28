@@ -15,7 +15,8 @@ def get_parser():
     parser.add_argument("-c", "--config", required=True, nargs="+", help="Base config file path.")
     parser.add_argument("-n", "--iterations", default=10, type=int, help="Number of Monte Carlo iterations.")
     parser.add_argument("-o", "--output-path", nargs="+", dest="output_path", required=True,
-                        type=str, help="Output directory name without extention to save final csv file.")
+                        type=str, help="Output directory name without extention to save final csv file. There should "
+                                       "be the same number of output files parameters as the number of config files.")
     return parser
 
 
