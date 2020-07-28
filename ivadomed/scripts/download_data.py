@@ -41,8 +41,8 @@ def download_data(urls):
     if isinstance(urls, str):
         urls = [urls]
 
-        # loop through URLs
     exceptions = []
+    # loop through URLs
     for url in urls:
         try:
             logger.info('Trying URL: %s' % url)
