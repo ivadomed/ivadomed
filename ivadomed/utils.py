@@ -247,8 +247,8 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         del nib_im
     data_l_lst = np.array(data_l_lst)
     # channel went first due to the 'append' function
-    # Befor transpose we have MC_simulation X Channel X Height X Width X Depth
-    # After transpose we have MC_simulation X Height X Width X Depth X Channel
+    # Befor transpose we are supposed to have MC_simulation X Channel X Height X Width X Depth
+    # After transpose we expect to have MC_simulation X Height X Width X Depth X Channel
     # this is wanted because the network output has a shape of Height X Width X Depth X Channel
     # So the rest of the code is designed to use something like this
     if len(data_l_lst.shape) == 4:
@@ -261,8 +261,8 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         # select the current structure, remaining voxels are set to zero
         data_i_l = (np.array(data_hard_l) == i_l).astype(np.int)
         # channel went first with 'append' function for data_hard_l in line 225/226 (because we looped over channels)
-        # before transpose shape is Channel X Height X Width X depth
-        # After transpose shape is  Height X Width X Depth X Channel
+        # before transpose shape is supposed to be Channel X Height X Width X depth
+        # After transpose shape is expected to be  Height X Width X Depth X Channel
         if len(data_i_l.shape) == 4:
             data_i_l = np.transpose(data_i_l, (1, 2, 3, 0))
         elif len(data_i_l.shape) == 3:
