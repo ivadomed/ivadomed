@@ -84,7 +84,7 @@ def test_HeMIS(p=0.0001):
                                           slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
                                                                                  filter_empty_mask=True),
                                           roi_params=roi_params)
-    print(train_lst)
+
     dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
     print("[INFO]: Dataset RAM status:")
     print(dataset.status)
