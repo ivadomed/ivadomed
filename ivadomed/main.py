@@ -35,12 +35,12 @@ def get_parser():
                                     ' The parameter indicates the number of 2D slices used to generate GIFs, one GIF '
                                     'per slice. A GIF shows predictions of a given slice from the validation '
                                     'sub-dataset. They are saved within the log directory.')
-    optional_args.add_argument('-t', '--thr_increment', required=False, type=float,
+    optional_args.add_argument('-t', '--thr-increment', dest="thr_increment", required=False, type=float,
                                help='A threshold analysis is performed at the end of the training using the trained '
                                     'model and the validation sub-dataset to find the optimal binarization threshold. '
                                     'The specified value indicates the increment between 0 and 1 used during the '
                                     'analysis (e.g. 0.1). Plot is saved under "log_directory/thr.png" and the '
-                                    'optimal threshold in "log_directory/config_file.json as "binarize_predictions" '
+                                    'optimal threshold in "log_directory/config_file.json as "binarize_prediction" '
                                     'parameter.')
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                                help='Shows function documentation.')
@@ -196,7 +196,7 @@ def run_command(context, n_gif=0, thr_increment=None):
 
         # Update threshold in config file
         if thr_increment:
-            context["testing_parameters"]["binarize_predictions"] = thr
+            context["testing_parameters"]["binarize_prediction"] = thr
 
         # Save config file within log_directory and log_directory/model_name
         with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
@@ -262,8 +262,7 @@ def run_command(context, n_gif=0, thr_increment=None):
                                               log_directory=log_directory,
                                               path_preds=path_preds,
                                               target_suffix=loader_params["target_suffix"],
-                                              eval_params=context["evaluation_parameters"],
-                                              testing_params=context["testing_parameters"])
+                                              eval_params=context["evaluation_parameters"])
         return df_results
 
 
