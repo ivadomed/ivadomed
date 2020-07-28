@@ -24,7 +24,7 @@ def test_script():
     subprocess.check_output("ivadomed_extract_small_dataset -i testing_data/ -o small_dataset/test_script/ -n 1 -c T2w,T1w -d 1",shell=True)
 
     # testing compare_model
-    command = "ivadomed_compare_models -df temporary_results.csv -n 2"
+    command = "ivadomed_compare_models -df testing_data/temporary_results.csv -n 2"
     subprocess.check_output(command, shell=True)
 
 
