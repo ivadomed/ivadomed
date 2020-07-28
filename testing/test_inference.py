@@ -39,7 +39,7 @@ PATH_OUT = 'tmp'
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"], ["_seg-manual"]])
 @pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
 @pytest.mark.parametrize('testing_params', [{
-    "binarize_prediction": True,
+    "binarize_prediction": 0.5,
     "uncertainty": {
         "applied": False,
         "epistemic": False,

@@ -1,7 +1,8 @@
 from collections import defaultdict
 
-from scipy import spatial
+import matplotlib.pyplot as plt
 import numpy as np
+from scipy import spatial
 
 
 class MetricManager(object):
@@ -15,7 +16,7 @@ class MetricManager(object):
         result_dict (dict): Dictionary storing metrics.
         num_samples (int): Number of samples.
     """
-    
+
     def __init__(self, metric_fns):
         self.metric_fns = metric_fns
         self.num_samples = 0
@@ -275,3 +276,46 @@ def multi_class_dice_score(im1, im2):
         dice_per_class += dice_score(im1[i,], im2[i,], empty_score=1.0)
 
     return dice_per_class / n_classes
+
+
+def plot_roc_curve(tpr, fpr, opt_thr_idx, fname_out):
+    """Plot ROC curve.
+
+    Args:
+        tpr (list): True positive rates.
+        fpr (list): False positive rates.
+        opt_thr_idx (int): Index of the optimal threshold.
+        fname_out (str): Output filename.
+    """
+    plt.figure()
+    lw = 2
+    plt.plot(fpr, tpr, color='darkorange', lw=lw, marker='o')
+    plt.plot([fpr[opt_thr_idx]], [tpr[opt_thr_idx]], color="darkgreen", marker="o", linestyle="None")
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('ROC curve')
+    plt.savefig(fname_out)
+
+
+def plot_dice_thr(thr_list, dice_list, opt_thr_idx, fname_out):
+    """Plot Dice results against thresholds.
+
+    Args:
+        thr_list (list): Thresholds list.
+        dice_list (list): Dice results.
+        opt_thr_idx (int): Index of the optimal threshold.
+        fname_out (str): Output filename.
+    """
+    plt.figure()
+    lw = 2
+    plt.plot(thr_list, dice_list, color='darkorange', lw=lw, marker='o')
+    plt.plot([thr_list[opt_thr_idx]], [dice_list[opt_thr_idx]], color="darkgreen", marker="o", linestyle="None")
+    plt.xlim([0.0, 1.0])
+    plt.ylim([min(dice_list) - 0.02, max(dice_list) + 0.02])
+    plt.xlabel('Thresholds')
+    plt.ylabel('Dice')
+    plt.title('Threshold analysis')
+    plt.savefig(fname_out)
