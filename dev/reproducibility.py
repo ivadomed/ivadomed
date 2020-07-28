@@ -62,8 +62,8 @@ def compute_csa(config, df_results):
         # Populate df with csa stats
         df_results.at[subject, 'csa_pred'] = csa_pred
         df_results.at[subject, 'csa_gt'] = csa_gt
-        df_results.at[subject, 'absolute_csa_diff'] = abs(csa_gt - csa_pred)
-        df_results.at[subject, 'relative_csa_diff'] = csa_gt - csa_pred
+        df_results.at[subject, 'absolute_csa_diff'] = abs(csa_gt - csa_pred) / csa_gt
+        df_results.at[subject, 'relative_csa_diff'] = (csa_gt - csa_pred) / csa_gt
 
     return df_results
 
