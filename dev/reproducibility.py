@@ -12,10 +12,10 @@ from ivadomed import main as ivado
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config", required=True, help="Base config file path.")
+    parser.add_argument("-c", "--config", required=True, nargs="+", help="Base config file path.")
     parser.add_argument("-n", "--iterations", default=10, type=int, help="Number of Monte Carlo iterations.")
-    parser.add_argument("-o", "--output-path", dest="output_path", default="output_reproducibility.csv", type=str,
-                        help="Output directory to save final csv file.")
+    parser.add_argument("-o", "--output-path", nargs="+", dest="output_path", required=True,
+                        type=str, help="Output directory name without extention to save final csv file.")
     return parser
 
 
@@ -71,21 +71,23 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    with open(args.config, "r") as fhandle:
-        context = json.load(fhandle)
+    for config, output_path in zip(args.config, args.output_path):
+        with open(config, "r") as fhandle:
+            context = json.load(fhandle)
 
-    df_list = []
-    metrics = []
-    for i in range(int(args.iterations)):
-        df = get_results(context)
-        df = compute_csa(context, df)
-        metrics = list(df.columns)
-        df_list.append(np.array(df))
+        df_list = []
+        metrics = []
+        for i in range(int(args.iterations)):
+            df = get_results(context)
+            df = compute_csa(context, df)
+            metrics = list(df.columns)
+            df_list.append(np.array(df))
 
-    # Get average and std for each subject (intra subject), then average on all subjects
-    average = np.average(np.average(np.array(df_list), axis=0), axis=0)
-    std = np.average(np.std(np.array(df_list, dtype=np.float), axis=0), axis=0)
-    pd.DataFrame(np.stack([average, std], axis=1), index=metrics, columns=["mean", "std"]).to_csv(args.output_path)
+        # Get average and std for each subject (intra subject), then average on all subjects
+        average = np.average(np.average(np.array(df_list), axis=0), axis=0)
+        std = np.average(np.std(np.array(df_list, dtype=np.float), axis=0), axis=0)
+        pd.DataFrame(np.stack([average, std], axis=1), index=metrics, columns=["mean", "std"]).to_csv(output_path +
+                                                                                                      ".csv")
 
 
 if __name__ == '__main__':
