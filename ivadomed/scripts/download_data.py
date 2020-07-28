@@ -204,14 +204,13 @@ def main(args=None):
     # If exists, favour release artifact straight from github
 
     dict_url = {
-        "data_example_spinegeneric": ["https://github.com/ivadomed/data_example_spinegeneric/archive/master.zip"],
-        "data_microscopy_SEM_example": ["https://github.com/ivadomed/data_microscopy_SEM_example/archive/master.zip"],
+        "data_example_spinegeneric": ["https://github.com/ivadomed/data_example_spinegeneric/releases/tag/r20200907"],
         "data-testing": ["https://github.com/ivadomed/data-testing/archive/master.zip"],
-        "t2_tumor": ["https://github.com/ivadomed/t2_tumor/archive/master.zip"],
-        "t2star_sc": ["https://github.com/ivadomed/t2star_sc/archive/master.zip"],
-        "mice_uqueensland_gm": ["https://github.com/ivadomed/mice_uqueensland_gm/archive/master.zip"],
-        "mice_uqueensland_sc": ["https://github.com/ivadomed/mice_uqueensland_sc/archive/master.zip"],
-        "findcord_tumor": ["https://github.com/ivadomed/findcord_tumor/archive/master.zip"]
+        "t2_tumor": ["https://github.com/ivadomed/t2_tumor/releases/tag/r20200621"],
+        "t2star_sc": ["https://github.com/ivadomed/t2star_sc/releases/tag/r20200622"],
+        "mice_uqueensland_gm": ["https://github.com/ivadomed/mice_uqueensland_gm/releases/tag/r20200622 "],
+        "mice_uqueensland_sc": ["https://github.com/ivadomed/mice_uqueensland_sc/releases/tag/r20200622"],
+        "findcord_tumor": ["https://github.com/ivadomed/findcord_tumor/releases/tag/r20200621"]
     }
 
     if args is None:
