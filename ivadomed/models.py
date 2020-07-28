@@ -161,10 +161,11 @@ class Decoder(Module):
     """
 
     def __init__(self, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1,
-                 n_metadata=None, film_layers=None, hemis=False):
+                 n_metadata=None, film_layers=None, hemis=False, relu=False):
         super(Decoder, self).__init__()
         self.depth = depth
         self.out_channel = out_channel
+        self.relu_activation = relu
         # Up-Sampling path
         self.up_path = nn.ModuleList()
         if hemis:
@@ -217,7 +218,10 @@ class Decoder(Module):
             # Remove background class
             preds = preds[:, 1:, ]
         else:
-            preds = torch.sigmoid(x)
+            if self.relu_activation:
+                preds = nn.ReLU()(x) / nn.ReLU()(x).max() if bool(nn.ReLU()(x).max()) else nn.ReLU()(x)
+            else:
+                preds = torch.sigmoid(x)
         return preds
 
 
@@ -235,6 +239,7 @@ class Unet(Module):
         depth (int): Number of down convolutions minus bottom down convolution.
         drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
+        relu (bool): If True, sets final activation to normalized ReLU (ReLU between 0 and 1).
         **kwargs:
 
     Attributes:
@@ -242,14 +247,15 @@ class Unet(Module):
         decoder (Decoder): U-net decoder.
     """
 
-    def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, **kwargs):
+    def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, relu=False, **kwargs):
         super(Unet, self).__init__()
 
         # Encoder path
         self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum)
 
         # Decoder path
-        self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum)
+        self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
+                               relu=relu)
 
     def forward(self, x):
         features, _ = self.encoder(x)
@@ -491,6 +497,7 @@ class UNet3D(nn.Module):
         attention (bool): Boolean indicating whether the attention module is on or not.
         drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
+        relu (bool): If True, sets final activation to normalized ReLU (relu between 0 and 1).
         **kwargs:
 
     Attributes:
@@ -499,18 +506,20 @@ class UNet3D(nn.Module):
         base_n_filter (int): Number of base filters in the U-Net.
         attention (bool): Boolean indicating whether the attention module is on or not.
         momentum (float): Batch normalization momentum.
+        relu_activation (bool): If True, sets final activation to normalized ReLU (ReLU between 0 and 1).
 
     Note: All layers are defined as attributes and used in the forward method.
     """
 
     def __init__(self, in_channel, out_channel, n_filters=16, attention=False, drop_rate=0.6, bn_momentum=0.1,
-                 **kwargs):
+                 relu=False, **kwargs):
         super(UNet3D, self).__init__()
         self.in_channels = in_channel
         self.n_classes = out_channel
         self.base_n_filter = n_filters
         self.attention = attention
         self.momentum = bn_momentum
+        self.relu_activation = relu
 
         self.lrelu = nn.LeakyReLU()
         self.dropout3d = nn.Dropout3d(p=drop_rate)
@@ -788,7 +797,10 @@ class UNet3D(nn.Module):
             # Remove background class
             out = out[:, 1:, ]
         else:
-            out = torch.sigmoid(seg_layer)
+            if self.relu_activation:
+                out = nn.ReLU()(x) / nn.ReLU()(x).max() if bool(nn.ReLU()(x).max()) else nn.ReLU()(x)
+            else:
+                out = torch.sigmoid(seg_layer)
         return out
 
 

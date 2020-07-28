@@ -7,6 +7,7 @@ import logging
 
 
 def test_script():
+
     # testing convert to onnx
     subprocess.check_output("ivadomed_convert_to_onnx -m testing_data/model_unet_test.pt -d 2", shell=True)
     

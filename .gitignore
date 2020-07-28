@@ -10,3 +10,7 @@ dev/.bin/
 dev/__pycache__/
 testing/__pycache__/
 docs/build
+
+# Pycharm stuff
+.idea
+
