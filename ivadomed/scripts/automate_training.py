@@ -45,7 +45,7 @@ def get_parser():
                         help="Keep a constant dataset split for all configs and iterations")
     parser.add_argument("-l", "--all-logs", dest="all_logs", action='store_true',
                         help="Keep all log directories for each iteration.")
-    parser.add_argument('-t', '--thr_increment', required=False, type=float,
+    parser.add_argument('-t', '--thr-increment', dest="thr_increment", required=False, type=float,
                         help="A threshold analysis is performed at the end of the training using the trained model and "
                              "the validation sub-dataset to find the optimal binarization threshold. The specified "
                              "value indicates the increment between 0 and 1 used during the analysis (e.g. 0.1).")
@@ -159,7 +159,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
         all_logs (bool): If True, all the log directories are kept for every iteration. Flag: --all-logs, -l
         thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
             the validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
-            increment between 0 and 1 used during the ROC analysis (e.g. 0.1). Flag: -t, --thr_increment
+            increment between 0 and 1 used during the ROC analysis (e.g. 0.1). Flag: -t, --thr-increment
     """
     # Load initial config
     with open(config, "r") as fhandle:
@@ -259,7 +259,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                     except OSError as e:
                         print("Error: %s - %s." % (e.filename, e.strerror))
 
-                # Take the config file within the log_directory because binarize_predictions may have been updated
+                # Take the config file within the log_directory because binarize_prediction may have been updated
                 json_path = os.path.join(config['log_directory'], 'config_file.json')
                 with open(json_path) as f:
                     config = json.load(f)
