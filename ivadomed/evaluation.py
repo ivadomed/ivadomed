@@ -50,6 +50,7 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
         # 3D evaluation
         nib_pred = nib.load(fname_pred)
         data_pred = nib_pred.get_fdata()
+
         h, w, d = data_pred.shape[:3]
         n_classes = len(fname_gt)
         data_gt = np.zeros((h, w, d, n_classes))

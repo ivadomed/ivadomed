@@ -262,7 +262,7 @@ the default parameters are merged with the parameters that are specific
 to the tailored model. - ``name``: ``Unet`` (default) -
 ``dropout_rate``: Float (e.g. 0.4). - ``batch_norm_momentum``: Float
 (e.g. 0.1). - ``depth``: Strictly positive integer. Number of
-down-sampling operations.
+down-sampling operations. - ``relu`` (optional): Bool. Sets final activation to normalized ReLU (relu between 0 and 1).
 
 FiLMedUnet (Optional)
 ^^^^^^^^^^^^^^^^^^^^^
@@ -297,14 +297,15 @@ UNet3D (Optional)
    translation of 1 voxel in the 1st dimension, 2 voxels in the 2nd
    dimension and 3 voxels in the 3rd dimension at every iteration until
    the whole input matrix is covered.
--  ``attention_unet``: Bool. Use attention gates in the Unet's decoder.
+-  ``attention_unet`` (optional): Bool. Use attention gates in the Unet's decoder.
+-  ``n_filters`` (optional): Int. Number of filters in the first convolution of the UNet. This number of filters will be doubled at each convolution.
 
 Testing parameters
 ------------------
 
--  ``binarize_prediction``: Bool. Binarize output predictions using a
-   threshold of 0.5. If ``false``, output predictions are float between
-   0 and 1.
+- ``binarize_prediction``: Float. Threshold (between 0 and 1) used to binarize
+    the predictions before computing the validation metrics. To use soft predictions
+    (i.e. no binarisation, float between 0 and 1) for metric computation, indicate -1.
 
 uncertainty
 ^^^^^^^^^^^
