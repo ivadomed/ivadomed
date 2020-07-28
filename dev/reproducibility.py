@@ -1,9 +1,10 @@
 import argparse
 import json
-import shutil
-import pandas as pd
-import numpy as np
 import os
+import shutil
+
+import numpy as np
+import pandas as pd
 
 from ivadomed import main as ivado
 
@@ -30,15 +31,46 @@ def get_results(config):
     return ivado.run_command(context)
 
 
+def compute_csa(config, df_results):
+    subject_list = list(df_results.index)
+    df_results = df_results.assign(csa_pred="", csa_gt="", absolute_csa_diff="", relative_csa_diff="")
+    for subject in subject_list:
+        # Get GT csa
+        gt_path = os.path.join(config["loader_parameters"]["bids_path"], "derivatives", "labels", subject, "anat",
+                               subject + config["loader_parameters"]["target_suffix"][0] + "nii.gz")
+        os.system(f"sct_process_segmentation  -i {gt_path} -append 1 -perslice 0 -o csa.csv")
+        df = pd.read_csv("csa.csv")
+        csa_gt = df["MEAN(area)"]
+
+        # Get prediction csa
+        pred_path = os.path.join(config["log_directory"], "pred_masks", subject + "_pred.nii.gz")
+        os.system(f"sct_process_segmentation  -i {pred_path} -append 1 -perslice 0 -o csa.csv")
+        df = pd.read_csv("csa.csv")
+        csa_pred = df["MEAN(area)"]
+
+        # Remove file
+        os.system("rm csa.csv")
+
+        # Populate df with csa stats
+        df_results['csa_pred'][subject] = csa_pred
+        df_results['csa_gt'][subject] = csa_gt
+        df_results['absolute_csa_diff'][subject] = abs(csa_gt - csa_pred)
+        df_results['relative_csa_diff'][subject] = csa_gt - csa_pred
+
+    return df_results
+
+
 def main():
     parser = get_parser()
     args = parser.parse_args()
 
     df_list = []
+    subject_list = []
     metrics = []
     for i in range(int(args.iterations)):
         df = get_results(args.config)
         metrics = list(df.columns)
+        compute_csa(args.config, df)
         df_list.append(np.array(df))
 
     # Get average and std for each subject (intra subject), then average on all subjects
