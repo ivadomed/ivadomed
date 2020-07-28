@@ -259,7 +259,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                     except OSError as e:
                         print("Error: %s - %s." % (e.filename, e.strerror))
 
-                # Take the config file within the log_directory because binarize_predictions may have been updated
+                # Take the config file within the log_directory because binarize_prediction may have been updated
                 json_path = os.path.join(config['log_directory'], 'config_file.json')
                 with open(json_path) as f:
                     config = json.load(f)

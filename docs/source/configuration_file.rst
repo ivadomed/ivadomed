@@ -303,12 +303,9 @@ UNet3D (Optional)
 Testing parameters
 ------------------
 
-- ``binarize_predictions``: Float. Threshold (between 0 and 1) used to binarize
+- ``binarize_prediction``: Float. Threshold (between 0 and 1) used to binarize
     the predictions before computing the validation metrics. To use soft predictions
     (i.e. no binarisation, float between 0 and 1) for metric computation, indicate -1.
--  ``binarize_niftis``: Bool. Binarize output predictions using ``binarize_predictions``
-    as threshold before saving them as nifti files. If ``false``, output data (nifti) are
-    float between 0 and 1.
 
 uncertainty
 ^^^^^^^^^^^
