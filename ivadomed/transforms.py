@@ -738,7 +738,11 @@ class RandomAffine(ImedTransform):
             raise ValueError("Unknown axes value")
 
         scale = np.array([[1 / scale_x, 0, 0], [0, 1 / scale_y, 0], [0, 0, 1 / scale_z]])
-        transforms = rotate.dot(scale)
+        if "undo" in metadata and metadata["undo"]:
+            transforms = scale.dot(rotate)
+        else:
+            transforms = rotate.dot(scale)
+
         offset = shape - shape.dot(transforms) + translations
 
         data_out = affine_transform(sample, transforms.T, order=1, offset=offset,
@@ -758,7 +762,7 @@ class RandomAffine(ImedTransform):
         translation = - np.array(metadata['translation'])
 
         # Undo rotation
-        dict_params = {"rotation": [angle, axes], "scale": scale, "translation": [0, 0, 0]}
+        dict_params = {"rotation": [angle, axes], "scale": scale, "translation": [0, 0, 0], "undo": True}
 
         data_out, _ = self.__call__(sample, dict_params)
 
