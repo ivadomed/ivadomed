@@ -20,6 +20,7 @@ from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+import logging
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -260,8 +261,7 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     elif len(data_l_lst.shape) == 3:
         data_l_lst = np.transpose(data_l_lst, (0, 2, 3, 1))
     else:
-        print("object does not appear to be 2D or 3D, please check the network output")
-        exit(1)
+        raise Exception("object does not appear to be 2D or 3D, please check input")
 
     # loop across all structures of data_hard_l
 
@@ -276,8 +276,7 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         elif len(data_i_l.shape) == 3:
             data_i_l = np.transpose(data_i_l, (1, 2, 0))
         else:
-            print("object does not appear to be 2D or 3D, please check the network output")
-            exit(1)
+            raise Exception("object does not appear to be 2D or 3D, please check input")
 
         # select the current structure in each MC sample
         # and store it in data_mc_i_l_lst
