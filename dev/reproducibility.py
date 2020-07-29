@@ -14,7 +14,8 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--log-directory", dest="logdir", required=True, nargs="+",
                         help="Log directory of trained model.")
-    parser.add_argument("-b", "--bids-path", required=True, type=str, help="Bids path where are located the GT.")
+    parser.add_argument("-b", "--bids-path", dest="bids",
+                        required=True, type=str, help="Bids path where are located the GT.")
     parser.add_argument("-n", "--iterations", default=10, type=int, help="Number of Monte Carlo iterations.")
     parser.add_argument("-o", "--output-path", nargs="+", dest="output_path", required=True,
                         type=str, help="Output directory name without extention to save final csv file. There should "
@@ -34,12 +35,13 @@ def get_results(context):
     return ivado.run_command(context)
 
 
-def compute_csa(config, df_results, logdir):
+def compute_csa(config, df_results, logdir, bids):
     subject_list = list(df_results.index)
+    # Create empty columns
     df_results = df_results.assign(csa_pred="", csa_gt="", absolute_csa_diff="", relative_csa_diff="")
     for subject in subject_list:
         # Get GT csa
-        gt_path = os.path.join(config["loader_parameters"]["bids_path"], "derivatives", "labels", subject.split("_")[0],
+        gt_path = os.path.join(bids, "derivatives", "labels", subject.split("_")[0],
                                "anat", subject + config["loader_parameters"]["target_suffix"][0] + ".nii.gz")
         os.system(f"sct_process_segmentation  -i {gt_path} -append 1 -perslice 0 -o csa.csv")
         df = pd.read_csv("csa.csv")
@@ -83,7 +85,7 @@ def main():
         metrics = []
         for i in range(int(args.iterations)):
             df = get_results(context)
-            df = compute_csa(context, df, logdir)
+            df = compute_csa(context, df, logdir, args.bids)
             metrics = list(df.columns)
             df_list.append(np.array(df))
 
