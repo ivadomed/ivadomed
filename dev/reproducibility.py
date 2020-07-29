@@ -43,9 +43,10 @@ def compute_csa(config, df_results, logdir, bids):
         # Get GT csa
         gt_path = os.path.join(bids, "derivatives", "labels", subject.split("_")[0],
                                "anat", subject + config["loader_parameters"]["target_suffix"][0] + ".nii.gz")
-        os.system(f"sct_process_segmentation  -i {gt_path} -append 1 -perslice 0 -o csa.csv")
+        os.system(f"sct_process_segmentation  -i {gt_path} -append 1 -perslice 1 -o csa.csv")
         df = pd.read_csv("csa.csv")
-        csa_gt = df["MEAN(area)"][0]
+        # Take only the medial slice
+        csa_gt = df["MEAN(area)"][len(df["MEAN(area)"]) // 2]
         os.system("rm csa.csv")
 
         # Get prediction csa
@@ -55,9 +56,10 @@ def compute_csa(config, df_results, logdir, bids):
         single_label_pred = nib.Nifti1Image(pred_nii.get_fdata()[..., 0], pred_nii.affine)
         single_label_pred_path = "pred_single_label.nii.gz"
         nib.save(single_label_pred, single_label_pred_path)
-        os.system(f"sct_process_segmentation  -i {single_label_pred_path} -append 1 -perslice 0 -o csa.csv")
+        os.system(f"sct_process_segmentation  -i {single_label_pred_path} -append 1 -perslice 1 -o csa.csv")
         df = pd.read_csv("csa.csv")
-        csa_pred = df["MEAN(area)"][0]
+        # Take only the medial slice
+        csa_pred = df["MEAN(area)"][len(df["MEAN(area)"]) // 2]
 
         # Remove files
         os.system("rm csa.csv")
