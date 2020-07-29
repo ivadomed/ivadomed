@@ -13,6 +13,7 @@ from ivadomed import main as ivado
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, nargs="+", help="Base config file path.")
+    parser.add_argument("-b", "--bids-path", required=True, type=str, help="Bids path where are located the GT.")
     parser.add_argument("-n", "--iterations", default=10, type=int, help="Number of Monte Carlo iterations.")
     parser.add_argument("-o", "--output-path", nargs="+", dest="output_path", required=True,
                         type=str, help="Output directory name without extention to save final csv file. There should "
