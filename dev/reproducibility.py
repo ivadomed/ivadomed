@@ -47,7 +47,7 @@ def compute_csa(config, df_results, logdir, bids):
         df = pd.read_csv("csa.csv")
         # Take only the medial slice
         csa_gt = float(df["MEAN(area)"][len(df["MEAN(area)"]) // 2])
-        os.system("rm csa.csv")
+        os.remove("csa.csv")
 
         # Get prediction csa
         pred_path = os.path.join(logdir, "pred_masks", subject + "_pred.nii.gz")
@@ -62,7 +62,7 @@ def compute_csa(config, df_results, logdir, bids):
         csa_pred = float(df["MEAN(area)"][len(df["MEAN(area)"]) // 2])
 
         # Remove files
-        os.system("rm csa.csv")
+        os.remove("csa.csv")
         os.system(f"rm {single_label_pred_path}")
 
         # Populate df with csa stats
