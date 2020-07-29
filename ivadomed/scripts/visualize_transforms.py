@@ -147,6 +147,9 @@ def run_visualization(input, config, number, output, roi):
                 metadata = metadata[0]
                 metadata.__setitem__('data_type', 'im')
 
+            elif "CenterCrop" in training_transforms:
+                metadata.__setitem__('crop_params', (0, 0, 0, 0, 0, 0))
+
             # Apply transformations to image
             stack_im, _ = composed_transforms(sample=data,
                                               metadata=[metadata for _ in range(number)],
