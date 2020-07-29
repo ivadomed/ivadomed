@@ -220,10 +220,12 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     nib_hard = nib.load(fname_hard)
     data_hard = nib_hard.get_fdata()
     data_hard_l = []
+    n_ls = []
     bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
     for i in range(data_hard.shape[-1]):
         data_hard_tmp, n_l = label(data_hard[..., i], structure=np.array(bin_struct))
         data_hard_l.append(data_hard_tmp)
+        n_ls.append(n_l)
 
     # load uncertainty map
     nib_uncVox = nib.load(fname_unc_vox)
@@ -249,14 +251,19 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     # channel went first due to the 'append' function
     # Befor transpose we are supposed to have MC_simulation X Channel X Height X Width X Depth
     # After transpose we expect to have MC_simulation X Height X Width X Depth X Channel
-    # this is wanted because the network output has a shape of Height X Width X Depth X Channel
-    # So the rest of the code is designed to use something like this
+    # this is wanted because the network output has a shape of  Channel X Height X Width X Depth which is saved as
+    # nifti with shape Height X Width X Depth X Channel. We are using the second shape to save image afterward.
+
     if len(data_l_lst.shape) == 4:
         data_l_lst = np.transpose(data_l_lst, (0, 2, 3, 4, 1))
     elif len(data_l_lst.shape) == 3:
         data_l_lst = np.transpose(data_l_lst, (0, 2, 3, 1))
+    else:
+        print("object does not appear to be 2D or 3D, please check the network output")
+        exit(1)
 
     # loop across all structures of data_hard_l
+
     for i_l in range(1, n_l + 1):
         # select the current structure, remaining voxels are set to zero
         data_i_l = (np.array(data_hard_l) == i_l).astype(np.int)
@@ -267,6 +274,9 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
             data_i_l = np.transpose(data_i_l, (1, 2, 3, 0))
         elif len(data_i_l.shape) == 3:
             data_i_l = np.transpose(data_i_l, (1, 2, 0))
+        else:
+            print("object does not appear to be 2D or 3D, please check the network output")
+            exit(1)
 
         # select the current structure in each MC sample
         # and store it in data_mc_i_l_lst
