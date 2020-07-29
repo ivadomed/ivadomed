@@ -249,10 +249,12 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         del nib_im
     data_l_lst = np.array(data_l_lst)
     # channel went first due to the 'append' function
-    # Before the transpose below, the variable data_l_lst has the shape: MC_simulation X Channel X Height X Width X Depth
+    # Before the transpose below, the variable data_l_lst has the shape:
+    # MC_simulation X Channel X Height X Width X Depth
     # After transpose, the shape becomes: MC_simulation X Height X Width X Depth X Channel
-    # this is wanted because the network output has a shape of  Channel X Height X Width X Depth which is saved as
-    # nifti with shape Height X Width X Depth X Channel. We are using the second shape to save image afterward.
+    # this is wanted because the input of run_uncertainty are nifti_masks created by network predictions
+    # These nifti masks have this shape: Height X Width X Depth X Channel.
+    # We want an output of the same shape.
     if len(data_l_lst.shape) == 4:
         data_l_lst = np.transpose(data_l_lst, (0, 2, 3, 4, 1))
     elif len(data_l_lst.shape) == 3:
