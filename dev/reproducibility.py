@@ -46,7 +46,7 @@ def compute_csa(config, df_results, logdir, bids):
         os.system(f"sct_process_segmentation  -i {gt_path} -append 1 -perslice 1 -o csa.csv")
         df = pd.read_csv("csa.csv")
         # Take only the medial slice
-        csa_gt = df["MEAN(area)"][len(df["MEAN(area)"]) // 2]
+        csa_gt = float(df["MEAN(area)"][len(df["MEAN(area)"]) // 2])
         os.system("rm csa.csv")
 
         # Get prediction csa
@@ -59,7 +59,7 @@ def compute_csa(config, df_results, logdir, bids):
         os.system(f"sct_process_segmentation  -i {single_label_pred_path} -append 1 -perslice 1 -o csa.csv")
         df = pd.read_csv("csa.csv")
         # Take only the medial slice
-        csa_pred = df["MEAN(area)"][len(df["MEAN(area)"]) // 2]
+        csa_pred = float(df["MEAN(area)"][len(df["MEAN(area)"]) // 2])
 
         # Remove files
         os.system("rm csa.csv")
