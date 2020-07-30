@@ -37,47 +37,38 @@ sure the ``command`` is set to "train" and ``bids_path`` point to the location o
 some of the key parameters to use cascaded models.
 
 - ``object_detection_params:object_detection_path``: Location of the object detection model. This parameter corresponds
-  to the prerequisite model path  to the trained model (see :ref:`Prerequisite`).
+  to the prerequisite model path  to the trained model (see :ref:`Prerequisite`). This spinal cord segmentation model
+  will be applied to the images and a bounding box will be created around this mask to crop the image.
 
   .. code-block:: xml
 
-     "object_detection_path": "<SPINAL_CORD_SEG_LOG_DIRECTORY>/spineGeneric/seg_sc_t1_t2_t2s_mt",
+     "object_detection_path": "<SPINAL_CORD_SEG_LOG_DIRECTORY>/spineGeneric/seg_sc_t1_t2_t2s_mt"
 
-- ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth is located
-  under the ``DATASET/derivatives/labels`` folder. In our case, the suffix is ``_seg-manual``:
+- ``object_detection_params:safety_factor``: Multiplicative factor to apply to each dimension of the bounding box. To
+  ensure all the CSF is included, a safety factor should be applied to the bounding box generated from the spinal cord.
+  A safety factor of 10% on each dimension is applied here.
 
   .. code-block:: xml
 
-     "target_suffix": ["_seg-manual"]
+     "safety_factor": [1.1, 1.1, 1.1]
 
-- ``loader_parameters:contrast_params``: Contrast(s) of interest
+- ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth are located under the
+  ``DATASET/derivatives/labels`` folder. The suffix for CSF labels in this dataset is ``_csfseg-manual``:
+
+  .. code-block:: xml
+
+     "target_suffix": ["_csfseg-manual"]
+
+- ``loader_parameters:contrast_params``: Contrast(s) of interest. The CSF labels are only available in T2w contrast in
+  the example dataset.
 
   .. code-block:: xml
 
      "contrast_params": {
-         "training_validation": ["T1w", "T2w", "T2star"],
-         "testing": ["T1w", "T2w", "T2star"],
+         "training_validation": ["T2w"],
+         "testing": ["T2w"],
          "balance": {}
      }
-
-- ``loader_parameters:slice_axis``: Orientation of the 2D slice to use with the model.
-
-  .. code-block:: xml
-
-     "slice_axis": "axial"
-
-- ``loader_parameters:multichannel``: Turn on/off multi-channel training. If ``true``, each sample has several
-  channels, where each channel is an image contrast. If ``false``, only one image contrast is used per sample.
-
-  .. code-block:: xml
-
-     "multichannel": false
-
-  .. note::
-
-     The multichannel approach requires that for each subject, the image contrasts are co-registered. This implies that
-     a ground truth segmentation is aligned with all contrasts, for a given subject. In this tutorial, only one channel
-     will be used.
 
 
 Train model
