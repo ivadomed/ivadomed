@@ -10,6 +10,9 @@ In this tutorial we will learn the following features:
 Prerequisite
 ------------
 
+In this tutorial, the spinal cord segmentation model generated from :doc:`../tutorials/one_class_segmentation_2d_unet`
+will be needed.
+
 
 
 Configuration file
