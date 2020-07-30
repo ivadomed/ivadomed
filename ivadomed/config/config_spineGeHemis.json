@@ -82,7 +82,7 @@
         "n_filters": 1
     },
     "testing_parameters": {
-        "binarize_prediction": true,
+        "binarize_prediction": -1,
         "uncertainty": {
             "epistemic": false,
             "aleatoric": false,
