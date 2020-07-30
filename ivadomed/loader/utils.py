@@ -1,5 +1,6 @@
 import collections
 import re
+import os
 
 import numpy as np
 import torch
@@ -101,7 +102,8 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
 
     # save the subject distribution
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    joblib.dump(split_dct, "./" + log_directory + "/split_datasets.joblib")
+    split_path = os.path.join(log_directory, "split_datasets.joblib")
+    joblib.dump(split_dct, split_path)
 
     return train_lst, valid_lst, test_lst
 
