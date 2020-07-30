@@ -303,9 +303,9 @@ UNet3D (Optional)
 Testing parameters
 ------------------
 
--  ``binarize_prediction``: Bool. Binarize output predictions using a
-   threshold of 0.5. If ``false``, output predictions are float between
-   0 and 1.
+- ``binarize_prediction``: Float. Threshold (between 0 and 1) used to binarize
+    the predictions before computing the validation metrics. To use soft predictions
+    (i.e. no binarisation, float between 0 and 1) for metric computation, indicate -1.
 
 uncertainty
 ^^^^^^^^^^^

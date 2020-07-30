@@ -9,6 +9,7 @@
 
 import argparse
 import copy
+from functools import partial
 import json
 import logging
 import os
@@ -44,11 +45,15 @@ def get_parser():
                         help="Keep a constant dataset split for all configs and iterations")
     parser.add_argument("-l", "--all-logs", dest="all_logs", action='store_true',
                         help="Keep all log directories for each iteration.")
+    parser.add_argument('-t', '--thr-increment', dest="thr_increment", required=False, type=float,
+                        help="A threshold analysis is performed at the end of the training using the trained model and "
+                             "the validation sub-dataset to find the optimal binarization threshold. The specified "
+                             "value indicates the increment between 0 and 1 used during the analysis (e.g. 0.1).")
 
     return parser
 
 
-def train_worker(config):
+def train_worker(config, thr_incr):
     current = mp.current_process()
     # ID of process used to assign a GPU
     ID = int(current.name[-1]) - 1
@@ -59,7 +64,8 @@ def train_worker(config):
     # Call ivado cmd_train
     try:
         # Save best validation score
-        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = ivado.run_command(config)
+        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = \
+            ivado.run_command(config, thr_increment=thr_incr)
 
     except:
         logging.exception('Got exception on main handler')
@@ -74,13 +80,6 @@ def train_worker(config):
 
 
 def test_worker(config):
-    current = mp.current_process()
-    # ID of process used to assign a GPU
-    ID = int(current.name[-1]) - 1
-
-    # Use GPU i from the array specified in the config file
-    config["gpu"] = config["gpu"][ID]
-
     # Call ivado cmd_eval
     try:
         # Save best test score
@@ -130,7 +129,8 @@ def make_category(base_item, keys, values, is_all_combin=False):
     return items, names
 
 
-def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False, all_logs=False):
+def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False, all_logs=False,
+                      thr_increment=None):
     """Automate multiple training processes on multiple GPUs.
 
     Hyperparameter optimization of models is tedious and time-consuming. This function automatizes this optimization
@@ -157,6 +157,9 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                             Flag: --n-iteration, -n
         run_test (bool): If True, the trained model is also run on the testing subdataset. flag: --run-test
         all_logs (bool): If True, all the log directories are kept for every iteration. Flag: --all-logs, -l
+        thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
+            the validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
+            increment between 0 and 1 used during the ROC analysis (e.g. 0.1). Flag: -t, --thr-increment
     """
     # Load initial config
     with open(config, "r") as fhandle:
@@ -177,18 +180,18 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
     # Split dataset if not already done
     if fixed_split and (initial_config.get("split_path") is None):
-        train_lst, valid_lst, test_lst = imed_loader_utils.split_dataset(path_folder=initial_config["bids_path"],
-                                                                         center_test_lst=initial_config["center_test"],
-                                                                         split_method=initial_config["split_method"],
-                                                                         random_seed=initial_config["random_seed"],
-                                                                         train_frac=initial_config["train_fraction"],
-                                                                         test_frac=initial_config["test_fraction"])
+        train_lst, valid_lst, test_lst = imed_loader_utils.split_dataset(path_folder=initial_config["loader_parameters"]["bids_path"],
+                                                                         center_test_lst=initial_config["split_dataset"]["center_test"],
+                                                                         split_method=initial_config["split_dataset"]["method"],
+                                                                         random_seed=initial_config["split_dataset"]["random_seed"],
+                                                                         train_frac=initial_config["split_dataset"]["train_fraction"],
+                                                                         test_frac=initial_config["split_dataset"]["test_fraction"])
 
         # save the subject distribution
         split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
         split_path = "./" + "common_split_datasets.joblib"
         joblib.dump(split_dct, split_path)
-        initial_config["split_path"] = split_path
+        initial_config["split_dataset"]["fname_split"] = split_path
 
     config_list = []
     # Test all combinations (change multiple parameters for each test)
@@ -240,12 +243,13 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                                                                                   "_n=" + str(i).zfill(2))
                     else:
                         config["log_directory"] += "_n=" + str(i).zfill(2)
-        validation_scores = pool.map(train_worker, config_list)
+        validation_scores = pool.map(partial(train_worker, thr_incr=thr_increment), config_list)
         val_df = pd.DataFrame(validation_scores, columns=[
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
             'best_validation_loss'])
 
         if run_test:
+            new_config_list = []
             for config in config_list:
                 # Delete path_pred
                 path_pred = os.path.join(config['log_directory'], 'pred_masks')
@@ -255,7 +259,13 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                     except OSError as e:
                         print("Error: %s - %s." % (e.filename, e.strerror))
 
-            test_results = pool.map(test_worker, config_list)
+                # Take the config file within the log_directory because binarize_prediction may have been updated
+                json_path = os.path.join(config['log_directory'], 'config_file.json')
+                with open(json_path) as f:
+                    config = json.load(f)
+                new_config_list.append(config)
+
+            test_results = pool.map(test_worker, new_config_list)
 
             df_lst = []
             # Merge all eval df together to have a single excel file
@@ -318,9 +328,13 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 def main():
     parser = get_parser()
     args = parser.parse_args()
+
+    # Get thr increment if available
+    thr_increment = args.thr_increment if args.thr_increment else None
+
     # Run automate training
     automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin), int(args.n_iterations),
-                      bool(args.run_test), args.all_logs)
+                      bool(args.run_test), args.all_logs, thr_increment)
 
 
 if __name__ == '__main__':

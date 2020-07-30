@@ -68,7 +68,7 @@
         "film_layers": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
     },
     "testing_parameters": {
-        "binarize_prediction": false,
+        "binarize_prediction": -1,
         "uncertainty": {
             "epistemic": false,
             "aleatoric": false,

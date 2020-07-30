@@ -175,15 +175,17 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         fname_out=fname_pred,
                                                         slice_axis=slice_axis,
                                                         kernel_dim='2d',
-                                                        bin_thr=0.9 if testing_params["binarize_prediction"] else -1)
+                                                        bin_thr=testing_params["binarize_prediction"])
                     # TODO: Adapt to multilabel
-                    preds_npy_list.append(output_nii.get_fdata()[:, :, :, 0])
+                    output_data = output_nii.get_fdata()[:, :, :, 0]
+                    preds_npy_list.append(output_data)
+
                     gt_npy_list.append(nib.load(fname_tmp).get_fdata())
 
                     output_nii_shape = output_nii.get_fdata().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
                         imed_utils.save_color_labels(np.stack(pred_tmp_lst, -1),
-                                                     testing_params["binarize_prediction"],
+                                                     testing_params["binarize_prediction"] > 0,
                                                      fname_tmp,
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                      imed_utils.AXIS_DCT[testing_params['slice_axis']])
@@ -221,8 +223,10 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         fname_out=fname_pred,
                                                         slice_axis=slice_axis,
                                                         kernel_dim='3d',
-                                                        bin_thr=0.5 if testing_params["binarize_prediction"] else -1)
-                    preds_npy_list.append(output_nii.get_fdata().transpose(3, 0, 1, 2))
+                                                        bin_thr=testing_params["binarize_prediction"])
+                    output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
+                    preds_npy_list.append(output_data)
+
                     gt_lst = []
                     for gt in metadata[0]['gt_filenames']:
                         # For multi-label, if all labels are not in every image
@@ -236,7 +240,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
                     if pred_undo.shape[0] > 1:
                         imed_utils.save_color_labels(pred_undo,
-                                                     testing_params['binarize_prediction'],
+                                                     testing_params['binarize_prediction'] > 0,
                                                      batch['input_metadata'][smp_idx][0]['input_filenames'],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                      slice_axis)
