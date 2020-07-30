@@ -100,9 +100,10 @@ between 0 and 1 to get best threshold on the validation set (e.i. -t 0.1 will re
    If a `compatible GPU <https://pytorch.org/get-started/locally/>`_ is available, it will be used by default. Otherwise, training will use the CPU, which will take
    a prohibitively long computational time (several hours).
 
-At the end of the training, the optimal threshold should be indicated:
+At the end of the training, the optimal threshold will be indicated:
 
 .. code-block:: console
+
    Running threshold analysis to find optimal threshold
 	Optimal threshold: 0.01
 	Saving plot: spineGeneric/roc.png
@@ -111,34 +112,37 @@ At the end of the training, the optimal threshold should be indicated:
 Visualize training data
 -----------------------
 
-Tensorboard helps visualize the augmented input images, the model's prediction, the groud truth, the learning curves and
-more. To access this data, use the following command-line:
+Tensorboard helps visualize the augmented input images, the model's prediction, the groud truth, the learning curves, and
+more. To access this data during or after training, use the following command-line:
 
 .. code-block:: bash
+
    tensorboard --logdir <PATH_TO_LOG_DIRECTORY>
 
 The following should be displayed in the terminal:
 
 .. code-block:: console
+
    Serving TensorBoard on localhost; to expose to the network, use a proxy or pass --bind_all
    TensorBoard 2.2.1 at http://localhost:6006/ (Press CTRL+C to quit)
 
 Open your browser and type the URL provided, in this case ``http://localhost:6006/``.
-In the scalars folder, the evolution of metrics and loss through the epochs can be visualize.
+In the scalars folder, the evolution of metrics, learning rate and loss through the epochs can be visualized.
 
-## ADD SCREENSHOT ##
+.. image:: ../../../images/tensorboard_scalar.png
+   :align: center
 
 In the image folder, the training and validation ground truth, input images and predictions are displayed. With this
 feature, it is possible to visualize the cropping from the first model and confirm that the spinal cord
-was correctly located and that the cropping was successful.
+was correctly located.
 
-## ADD SCREENSHOT ##
-
+.. image:: ../../../images/tensorboard_images.png
+   :align: center
 
 Evaluate model
 --------------
 - ``testing_parameters:binarize_prediction``: Threshold at which predictions are binarized. Before testing the model,
-  modify the binarize threshold to have a threshold adapted to the data:
+  modify the binarization threshold to have a threshold adapted to the data:
 
 .. code-block:: xml
 
@@ -146,4 +150,4 @@ Evaluate model
 
 
 To test and apply this model the dataset go to the `Evaluate model` section of the tutorial
-:doc:`../tutorials/one_class_segmentation_2d_unet`.
+:ref:`One-class segmentation with 2D U-Net<evaluate model>`.
