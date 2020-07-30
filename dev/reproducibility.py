@@ -32,6 +32,8 @@ def get_results(context):
     # RandomAffine will be applied during testing
     if "dataset_type" in context["transformation"]["RandomAffine"]:
         del context["transformation"]["RandomAffine"]["dataset_type"]
+    if "scale" in context["transformation"]["RandomAffine"]:
+        del context["transformation"]["RandomAffine"]["scale"]
     return ivado.run_command(context)
 
 
