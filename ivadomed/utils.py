@@ -248,7 +248,7 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         np.append(data_l_arr, data_im_l)
         del nib_im
     # channel went first due to the 'append' function
-    # Before the transpose below, the variable data_l_lst has the shape:
+    # Before the transpose below, the variable data_l_arr has the shape:
     # MC_simulation X Channel X Height X Width X Depth
     # After transpose, the shape becomes: MC_simulation X Height X Width X Depth X Channel
     # this is wanted because the input of run_uncertainty are nifti_masks created by network predictions
@@ -259,7 +259,7 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     elif len(data_l_arr.shape) == 4:
         data_l_arr = np.transpose(data_l_arr, (0, 2, 3, 1))
     else:
-        raise ValueError("Input data of shape {} is not valid. Shape must be 3 or 4".format(len(data_l_arr.shape)))
+        raise ValueError("Input data of shape {} is not valid. Images must be 4D or 5D".format(len(data_l_arr.shape)))
 
     # loop across all structures of data_hard_l
 
@@ -274,7 +274,7 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         elif len(data_i_l.shape) == 3:
             data_i_l = np.transpose(data_i_l, (1, 2, 0))
         else:
-            raise ValueError("Input data of shape {} is not valid. Shape must be 3 or 4".format(len(data_l_lst.shape)))
+            raise ValueError("Input data of shape {} is not valid. image must be 3D or 4D".format(len(data_l_arr.shape)))
 
         # select the current structure in each MC sample
         # and store it in data_mc_i_l_lst
@@ -288,7 +288,7 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
             if i_mc_l > 0:
                 # keep only the unc voxels of the structure of interest
                 data_mc_i_l = np.copy(data_lst[i_mc])
-                data_mc_i_l[data_l_lst[i_mc] != i_mc_l] = 0.
+                data_mc_i_l[data_l_arr[i_mc] != i_mc_l] = 0.
             else:  # no structure in this sample
                 data_mc_i_l = np.zeros(data_lst[i_mc].shape)
             data_mc_i_l_lst.append(data_mc_i_l)
