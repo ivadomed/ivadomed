@@ -23,11 +23,7 @@ To download the dataset (~450MB), run the following commands in your terminal:
 .. code-block:: bash
 
    # Download data
-   curl -o ivadomed_example_spinegeneric.zip -L https://github.com/ivadomed/data_example_spinegeneric/archive/r20200730.zip
-   unzip ivadomed_example_spinegeneric.zip
-   # Rename folder
-   mv ivadomed-data_example_spinegeneric* data_example_spinegeneric
-
+    ivadomed_download_data -d data_example_spinegeneric
 
 Configuration file
 ------------------
