@@ -7,6 +7,7 @@ In this tutorial we will learn the following features:
     - Spinal cord localization model
     - Cerebrospinal fluid (CSF) segmentation
 - Visualize training with tensorboard
+- Find optimal threshold to binarize images
 
 The model will first locate the spinal cord. Then, the input images will be crop around the spinal cord tumor mask.
 Finally, from the cropped images, the CSF will be segmented. The first cropping step allows the final segmentation
@@ -77,26 +78,35 @@ some of the key parameters to use cascaded models.
 
   .. code-block:: xml
 
-     "transformation": {
-         "CenterCrop": {
-             "size": [64, 64],
-             "preprocessing": true
-         }
+     "CenterCrop": {
+         "size": [64, 64],
+         "preprocessing": true
      }
 
 Train model
 -----------
 
-Once the configuration file is ready, run the training:
+Once the configuration file is ready, run the training. `ivadomed` has an option to find optimal threshold to binarize
+the test data to find the best balance between false positives and false negatives. Add the flag `-t` with an increment
+between 0 and 1 to get best threshold on the validation set (e.i. -t 0.1 will return the best threshold between 0.1,
+0.2, ..., 0.9)
 
 .. code-block:: bash
 
-   ivadomed -c config.json
+   ivadomed -c config.json -t 0.01
 
 .. note::
 
    If a `compatible GPU <https://pytorch.org/get-started/locally/>`_ is available, it will be used by default. Otherwise, training will use the CPU, which will take
    a prohibitively long computational time (several hours).
+
+At the end of the training, the optimal threshold should be indicated:
+
+.. code-block:: console
+   Running threshold analysis to find optimal threshold
+	Optimal threshold: 0.01
+	Saving plot: spineGeneric/roc.png
+
 
 Visualize training data
 -----------------------
@@ -127,6 +137,13 @@ was correctly located and that the cropping was successful.
 
 Evaluate model
 --------------
+- ``testing_parameters:binarize_prediction``: Threshold at which predictions are binarized. Before testing the model,
+  modify the binarize threshold to have a threshold adapted to the data:
+
+.. code-block:: xml
+
+    "binarize_prediction": 0.01
+
 
 To test and apply this model the dataset go to the `Evaluate model` section of the tutorial
 :doc:`../tutorials/one_class_segmentation_2d_unet`.
