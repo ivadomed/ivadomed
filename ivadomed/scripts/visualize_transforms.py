@@ -139,13 +139,7 @@ def run_visualization(input, config, number, output, roi):
 
             # Apply transformations to ROI
             if "ROICrop" in training_transforms and os.path.isfile(roi):
-                roi = [roi_data[:, :, i]]
-                metadata.__setitem__('data_type', 'roi')
-                _, metadata = composed_transforms(sample=roi,
-                                                  metadata=[metadata for _ in range(number)],
-                                                  data_type="roi")
-                metadata = metadata[0]
-                metadata.__setitem__('data_type', 'im')
+                metadata.__setitem__('crop_params', {})
 
             elif "CenterCrop" in training_transforms:
                 metadata.__setitem__('crop_params', {})
