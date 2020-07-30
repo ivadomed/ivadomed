@@ -221,12 +221,10 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     nib_hard = nib.load(fname_hard)
     data_hard = nib_hard.get_fdata()
     data_hard_l = []
-    n_ls = []
     bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
     for i in range(data_hard.shape[-1]):
         data_hard_tmp, n_l = label(data_hard[..., i], structure=np.array(bin_struct))
         data_hard_l.append(data_hard_tmp)
-        n_ls.append(n_l)
 
     # load uncertainty map
     nib_uncVox = nib.load(fname_unc_vox)
@@ -237,7 +235,8 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     data_iou, data_cv, data_avgUnc = np.zeros(data_hard.shape), np.zeros(data_hard.shape), np.zeros(data_hard.shape)
 
     # load all MC simulations and label them
-    data_lst, data_l_lst = [], []
+    data_lst = []
+    data_l_arr = np.array()
     for fname in fname_lst:
         nib_im = nib.load(fname)
         data_im = nib_im.get_fdata()
@@ -246,22 +245,21 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         for i in range(data_im.shape[-1]):
             data_im_tmp, _ = label(data_im[..., i], structure=bin_struct)
             data_im_l.append(data_im_tmp)
-        data_l_lst.append(data_im_l)
+        np.append(data_l_arr, data_im_l)
         del nib_im
-    data_l_lst = np.array(data_l_lst)
     # channel went first due to the 'append' function
     # Before the transpose below, the variable data_l_lst has the shape:
     # MC_simulation X Channel X Height X Width X Depth
     # After transpose, the shape becomes: MC_simulation X Height X Width X Depth X Channel
     # this is wanted because the input of run_uncertainty are nifti_masks created by network predictions
     # These nifti masks have this shape: Height X Width X Depth X Channel.
-    # We want an output of the same shape.
-    if len(data_l_lst.shape) == 4:
-        data_l_lst = np.transpose(data_l_lst, (0, 2, 3, 4, 1))
-    elif len(data_l_lst.shape) == 3:
-        data_l_lst = np.transpose(data_l_lst, (0, 2, 3, 1))
+    # We want an output of the same shape as the input.
+    if len(data_l_arr.shape) == 5:
+        data_l_arr = np.transpose(data_l_arr, (0, 2, 3, 4, 1))
+    elif len(data_l_arr.shape) == 4:
+        data_l_arr = np.transpose(data_l_arr, (0, 2, 3, 1))
     else:
-        raise ValueError("Input data of shape {} is not valid. Shape must be 3 or 4".format(len(data_l_lst.shape)))
+        raise ValueError("Input data of shape {} is not valid. Shape must be 3 or 4".format(len(data_l_arr.shape)))
 
     # loop across all structures of data_hard_l
 
@@ -284,7 +282,7 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         # loop across MC samples
         for i_mc in range(len(data_lst)):
             # find the structure of interest in the current MC sample
-            data_i_inter = data_i_l * data_l_lst[i_mc]
+            data_i_inter = data_i_l * data_l_arr[i_mc]
             i_mc_l = np.max(data_i_inter)
 
             if i_mc_l > 0:
