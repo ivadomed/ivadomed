@@ -98,7 +98,7 @@ Once the configuration file is ready, run the training:
 
 .. code-block:: bash
 
-   ivadomed config.json
+   ivadomed -c config.json
 
 .. note::
 
@@ -167,7 +167,7 @@ Then run:
 
 .. code-block:: bash
 
-   ivadomed config.json
+   ivadomed -c config.json
 
 The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
 The resulting segmentation is saved for each image in the ``<log_directory>/pred_masks`` while a csv file,
