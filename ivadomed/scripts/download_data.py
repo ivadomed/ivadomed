@@ -204,7 +204,7 @@ def main(args=None):
     # If exists, favour release artifact straight from github
 
     dict_url = {
-        "data_example_spinegeneric": ["https://github.com/ivadomed/data_example_spinegeneric/archive/r20200907.zip"],
+        "data_example_spinegeneric": ["https://github.com/ivadomed/data_example_spinegeneric/archive/r20200730.zip"],
         "data-testing": ["https://github.com/ivadomed/data-testing/archive/master.zip"],
         "t2_tumor": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
         "t2star_sc": ["https://github.com/ivadomed/t2star_sc/archive/r20200622.zip"],
