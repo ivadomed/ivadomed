@@ -29,6 +29,8 @@ def test_extract_small():
     # testing extract_small_dataset
     subprocess.check_output("ivadomed_extract_small_dataset -i testing_data/ -o small_dataset/test_script/ -n 1 -c T2w,"
                             "T1w -d 1", shell=True)
+
+
 def test_compare_model():
     # testing compare_model
     command = "ivadomed_compare_models -df testing_data/temporary_results.csv -n 2"

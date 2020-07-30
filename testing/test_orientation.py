@@ -134,7 +134,8 @@ def test_image_orientation():
 
                         # verify image after transform, undo transform and 3D reconstruction
                         input_hwd_2 = imed_postpro.threshold_predictions(arr)
-                        # Some difference are generated due to transform and undo transform (e.i. Resample interpolation)
+                        # Some difference are generated due to transform and undo transform
+                        # (e.i. Resample interpolation)
                         assert imed_metrics.dice_score(input_hwd_2, input_hwd) >= 0.8
                         input_ras_2 = imed_loader_utils.orient_img_ras(input_hwd_2, slice_axis)
                         assert imed_metrics.dice_score(input_ras_2, input_ras) >= 0.8

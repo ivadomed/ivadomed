@@ -5,6 +5,7 @@ import ivadomed.models as imed_models
 import torch
 import os
 
+
 def test_sample():
     assert 1 == 1
 

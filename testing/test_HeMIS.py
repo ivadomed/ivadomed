@@ -23,7 +23,7 @@ DROPOUT = 0.4
 BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01
-PATH_BIDS = 'testing_data/'
+PATH_BIDS = 'testing_data'
 p = 0.0001
 
 
