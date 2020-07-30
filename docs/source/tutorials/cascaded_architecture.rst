@@ -7,20 +7,21 @@ In this tutorial we will learn the following features:
     - Spinal cord localization model
     - Cerebrospinal fluid (CSF) segmentation
 
+The model will first locate the spinal cord. Then, the input images will be crop around the spinal cord tumor mask.
+Finally, from the cropped images, the CSF will be segmented. The first cropping step allows the final segmentation
+model to focus only on the most important part of the image.
+
 Prerequisite
 ------------
 
 In this tutorial, the spinal cord segmentation model generated from :doc:`../tutorials/one_class_segmentation_2d_unet`
-will be needed. In the log directory of this trained model, a folder named `seg_sc_t1_t2_t2s_mt` (if the default value
-of the parameter `model_name` was used) contains the packaged model. The path to this folder will be
-needed in this tutorial.
+will be needed. In the log directory of this trained model, a folder named ``seg_sc_t1_t2_t2s_mt`` (if the default value
+of the parameter ``model_name`` was used) contains the packaged model. The path to this folder will be
+needed in this tutorial and will be referenced as the location to the object detection model.
 
 
 Configuration file
 ------------------
-
-In ``ivadomed``, training is orchestrated by a configuration file. Examples of configuration files are available in
-the ``ivadomed/config/`` and the documentation is available in :doc:`../configuration_file`.
 
 In this tutorial we will use the configuration file: ``ivadomed/config/config.json``.
 First off, copy this configuration file in your local directory (to avoid modifying the source file):
@@ -29,17 +30,11 @@ First off, copy this configuration file in your local directory (to avoid modify
 
    cp <PATH_TO_IVADOMED>/ivadomed/config/config.json .
 
-Then, open it with a text editor. Below we will discuss some of the key parameters to perform a one-class 2D
-segmentation training.
+Then, open it with a text editor. As described in the tutorial :doc:`../tutorials/one_class_segmentation_2d_unet`, make
+sure the ``command`` is set to "train" and ``bids_path`` point to the location of the dataset. Below, we will discuss
+some of the key parameters to use cascaded models.
 
-- ``command``: Action to perform. Here, we want to train a model, so we set the fields as follows:
-
-  .. code-block:: xml
-
-     "command": "train"
-
-- ``loader_parameters:bids_path``: Location of the dataset. As discussed in :doc:`../data`, the dataset
-  should conform to the BIDS standard.
+- ``object_detection_params:object_detection_path``: Location of the object detection model.
 
   .. code-block:: xml
 
