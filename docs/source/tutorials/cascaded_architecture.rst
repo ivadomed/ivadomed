@@ -11,6 +11,8 @@ The model will first locate the spinal cord. Then, the input images will be crop
 Finally, from the cropped images, the CSF will be segmented. The first cropping step allows the final segmentation
 model to focus only on the most important part of the image.
 
+.. _Prerequisite:
+
 Prerequisite
 ------------
 
@@ -34,11 +36,12 @@ Then, open it with a text editor. As described in the tutorial :doc:`../tutorial
 sure the ``command`` is set to "train" and ``bids_path`` point to the location of the dataset. Below, we will discuss
 some of the key parameters to use cascaded models.
 
-- ``object_detection_params:object_detection_path``: Location of the object detection model.
+- ``object_detection_params:object_detection_path``: Location of the object detection model. This parameter corresponds
+  to the prerequisite model path  to the trained model (see :ref:`Prerequisite`).
 
   .. code-block:: xml
 
-     "bids_path": "data_example_spinegeneric",
+     "object_detection_path": "<SPINAL_CORD_SEG_LOG_DIRECTORY>/spineGeneric/seg_sc_t1_t2_t2s_mt",
 
 - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth is located
   under the ``DATASET/derivatives/labels`` folder. In our case, the suffix is ``_seg-manual``:
