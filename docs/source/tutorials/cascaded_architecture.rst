@@ -71,6 +71,18 @@ some of the key parameters to use cascaded models.
          "balance": {}
      }
 
+- ``transformation:CenterCrop``: Crop size in pixel. Images will be cropped or padded to fit these dimensions. This
+  allows all the images to have the same size during training. Since the images will be cropped around the spinal cord,
+  the image size can be reduced.
+
+  .. code-block:: xml
+
+     "transformation": {
+         "CenterCrop": {
+             "size": [64, 64],
+             "preprocessing": true
+         }
+     }
 
 Train model
 -----------
