@@ -15,8 +15,7 @@ Download dataset
 
 We will use a publicly-available dataset consisting of MRI data of the spinal cord. This dataset is a subset of the
 `spine-generic multi-center dataset <https://github.com/spine-generic/data-multi-subject>`_ and has been pre-processed
-to facilitate training/testing of a new model. Namely, for each subject, all six contrasts were co-registered together,
-and semi-manual cord segmentation label was created. More details
+to facilitate training/testing of a new model. Namely, for each subject, all six contrasts were co-registered together. Semi-manual cord segmentation for all modalities and manual cerebrospinal fluid labels for T2w modality were created. More details
 `here <https://github.com/ivadomed/ivadomed/blob/master/dev/prepare_data/README.md>`_.
 
 To download the dataset (~450MB), run the following commands in your terminal:
@@ -24,7 +23,7 @@ To download the dataset (~450MB), run the following commands in your terminal:
 .. code-block:: bash
 
    # Download data
-   curl -o ivadomed_example_spinegeneric.zip -L https://github.com/ivadomed/data_example_spinegeneric/releases/download/r20200907/data_spinegeneric_registered-r20200907.zip
+   curl -o ivadomed_example_spinegeneric.zip -L https://github.com/ivadomed/data_example_spinegeneric/archive/r20200730.zip
    unzip ivadomed_example_spinegeneric.zip
    # Rename folder
    mv ivadomed-data_example_spinegeneric* data_example_spinegeneric
