@@ -153,6 +153,8 @@ on training and validation sets at every epoch. To know more about the meaning o
 After 100 epochs (see ``"num_epochs"`` in the configuration file), the Dice score on the validation set should
 be ~90%.
 
+.. _Evaluate model:
+
 Evaluate model
 --------------
 
