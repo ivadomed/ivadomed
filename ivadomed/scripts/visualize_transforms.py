@@ -138,10 +138,7 @@ def run_visualization(input, config, number, output, roi):
             metadata = imed_loader_utils.SampleMetadata({"zooms": zooms, "data_type": "gt" if is_mask else "im"})
 
             # Apply transformations to ROI
-            if "ROICrop" in training_transforms and os.path.isfile(roi):
-                metadata.__setitem__('crop_params', {})
-
-            elif "CenterCrop" in training_transforms:
+            if "CenterCrop" in training_transforms or ("ROICrop" in training_transforms and os.path.isfile(roi)):
                 metadata.__setitem__('crop_params', {})
 
             # Apply transformations to image
