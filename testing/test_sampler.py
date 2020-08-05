@@ -77,7 +77,7 @@ def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
     neg_percent, pos_percent = _cmpt_label(train_loader)
-    assert neg_percent > pos_percent
+    assert (neg_percent - pos_percent) > 20
 
     print('\nLoading with sampling')
     train_loader_balanced = DataLoader(ds_train, batch_size=BATCH_SIZE,
