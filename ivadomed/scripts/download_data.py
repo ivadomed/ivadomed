@@ -208,7 +208,7 @@ def main(args=None):
         "data-testing": ["https://github.com/ivadomed/data-testing/archive/master.zip"],
         "t2_tumor": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
         "t2star_sc": ["https://github.com/ivadomed/t2star_sc/archive/r20200622.zip"],
-        "mice_uqueensland_gm": ["https://github.com/ivadomed/mice_uqueensland_gm/rarchive/r20200622.zip "],
+        "mice_uqueensland_gm": ["https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip "],
         "mice_uqueensland_sc": ["https://github.com/ivadomed/mice_uqueensland_sc/archive/r20200622.zip"],
         "findcord_tumor": ["https://github.com/ivadomed/findcord_tumor/archive/r20200621.zip"]
     }
