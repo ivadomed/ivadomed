@@ -37,6 +37,7 @@ jobs:
         COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
         COVERALLS_PARALLEL: true
       run: |
+         ivadomed_download_data -d data-testing -o testing_data
          pytest --cov=ivadomed/ --cov-report term-missing
          coveralls
 
