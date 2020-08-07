@@ -14,9 +14,21 @@ import json
 import argparse
 
 
+DICT_URL = {
+    "data_example_spinegeneric": ["https://github.com/ivadomed/data_example_spinegeneric/archive/r20200730.zip"],
+    "data_testing": ["https://github.com/ivadomed/data-testing/archive/r20200807.zip"],
+    "t2_tumor": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
+    "t2star_sc": ["https://github.com/ivadomed/t2star_sc/archive/r20200622.zip"],
+    "mice_uqueensland_gm": ["https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip "],
+    "mice_uqueensland_sc": ["https://github.com/ivadomed/mice_uqueensland_sc/archive/r20200622.zip"],
+    "findcord_tumor": ["https://github.com/ivadomed/findcord_tumor/archive/r20200621.zip"]
+    }
+
+
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", required=True,
+                        choices=(sorted(DICT_URL)),
                         help="Data to download")
     parser.add_argument("-k", "--keep", required=False, default=False,
                         help="Keep existing data in destination directory")
@@ -203,16 +215,6 @@ def main(args=None):
     # Mirror servers are listed in order of decreasing priority.
     # If exists, favour release artifact straight from github
 
-    dict_url = {
-        "data_example_spinegeneric": ["https://github.com/ivadomed/data_example_spinegeneric/archive/r20200730.zip"],
-        "data-testing": ["https://github.com/ivadomed/data-testing/archive/master.zip"],
-        "t2_tumor": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
-        "t2star_sc": ["https://github.com/ivadomed/t2star_sc/archive/r20200622.zip"],
-        "mice_uqueensland_gm": ["https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip "],
-        "mice_uqueensland_sc": ["https://github.com/ivadomed/mice_uqueensland_sc/archive/r20200622.zip"],
-        "findcord_tumor": ["https://github.com/ivadomed/findcord_tumor/archive/r20200621.zip"]
-    }
-
     if args is None:
         args = sys.argv[1:]
 
@@ -225,7 +227,7 @@ def main(args=None):
     else:
         dest_folder = arguments.output
 
-    url = dict_url[data_name]
+    url = DICT_URL[data_name]
     install_data(url, dest_folder, keep=arguments.keep)
     return 0
 
