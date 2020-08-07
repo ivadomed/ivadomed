@@ -17,12 +17,12 @@ def test_prepare_dataset_vertebral_labeling():
     subprocess.check_output("ivadomed_prepare_dataset_vertebral_labeling -p testing_data/ -s _T2w -a 3", shell=True)
 
 
-def test_visualize_transform():
+#def test_visualize_transform():
     # testing visualize_transform
-    command = "ivadomed_visualize_transforms -i testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz -n " +\
-              "2 -c testing_data/model_config.json " +\
-              "-r testing_data/derivatives/labels/sub-test001/anat/sub-unf01_T1w_seg-manual.nii.gz -o visuzalize_test"
-    subprocess.check_output(command, shell=True)
+    #command = "ivadomed_visualize_transforms -i testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz -n " +\
+     #         "2 -c testing_data/model_config.json " +\
+     #         "-r testing_data/derivatives/labels/sub-test001/anat/sub-unf01_T1w_seg-manual.nii.gz -o visuzalize_test"
+    #subprocess.check_output(command, shell=True)
 
 
 def test_extract_small():
