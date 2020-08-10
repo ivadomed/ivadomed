@@ -121,7 +121,7 @@ def test_create_eval_json():
     file_conf.close()
     file_conf = open("testing_data/model_config_eval.json", "w")
     initial_config["command"] = "eval"
-    initial_config["trasnformation"] = {
+    initial_config["transformation"] = {
         "Resample": {
             "wspace": 0.75,
             "hspace": 0.75
@@ -139,6 +139,22 @@ def test_create_eval_json():
 
 
 def test_eval():
+    subprocess.check_output(["ivadomed -c testing_data/model_config_eval.json"], shell=True)
+
+
+def test_create_automate_training_json():
+    # modify train config
+    command = "cp testing_data/model_config.json testing_data/model_config_auto.json"
+    subprocess.check_output(command, shell=True)
+    file_conf = open("testing_data/model_config_auto.json", "r")
+    initial_config = json.load(file_conf)
+    file_conf.close()
+    file_conf = open("testing_data/model_config_auto.json", "w")
+    initial_config["gpu"] = "[7]"
+    json.dump(initial_config, file_conf)
+
+
+def test_automate_training():
     subprocess.check_output(["ivadomed -c testing_data/model_config_eval.json"], shell=True)
 
 
