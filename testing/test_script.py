@@ -162,7 +162,9 @@ def test_create_automate_training_json():
 
 
 def test_automate_training():
-    subprocess.check_output(["ivadomed -c testing_data/model_config_eval.json"], shell=True)
+    command = "ivadomed_automate_training -c testing_data/model_config_auto.json " \
+              "-p testing_data/hyperparameter_opt.json -n 1"
+    subprocess.check_output(command, shell=True)
 
 
 def append_list_as_row(file_name, list_of_elem):
