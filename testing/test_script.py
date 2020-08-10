@@ -157,6 +157,7 @@ def test_create_automate_training_json():
     initial_config = json.load(file_conf)
     file_conf.close()
     file_conf = open("testing_data/model_config_auto.json", "w")
+    initial_config["command"] = "train"
     initial_config["gpu"] = "[7]"
     json.dump(initial_config, file_conf)
 
