@@ -42,7 +42,8 @@ some of the key parameters to use cascaded models.
 
 - ``object_detection_params:safety_factor``: Multiplicative factor to apply to each dimension of the bounding box. To
   ensure all the CSF is included, a safety factor should be applied to the bounding box generated from the spinal cord.
-  A safety factor of 200% on each dimension is applied on the height and width of the image.
+  A safety factor of 200% on each dimension is applied on the height and width of the image. The original depth of the
+  bounding box is kept since the CSF should not be present past this border.
 
   .. code-block:: xml
 
