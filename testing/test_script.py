@@ -5,6 +5,8 @@ from csv import writer
 from csv import reader
 import logging
 import json
+import ivadomed.models as imed_models
+import torch
 
 
 def test_download_data():
@@ -13,7 +15,6 @@ def test_download_data():
 
 
 def test_onnx_conversion():
-
     # testing convert to onnx
     subprocess.check_output("ivadomed_convert_to_onnx -m testing_data/model_unet_test.pt -d 2", shell=True)
 
@@ -25,8 +26,8 @@ def test_prepare_dataset_vertebral_labeling():
 
 def test_visualize_transform():
     # testing visualize_transform
-    command = "ivadomed_visualize_transforms -i testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz -n " +\
-              "2 -c testing_data/model_config.json " +\
+    command = "ivadomed_visualize_transforms -i testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz -n " + \
+              "2 -c testing_data/model_config.json " + \
               "-r testing_data/derivatives/labels/sub-test001/anat/sub-unf01_T1w_seg-manual.nii.gz -o visuzalize_test"
     subprocess.check_output(command, shell=True)
 
@@ -96,9 +97,9 @@ def test_creation_dataset():
     append_list_as_row("testing_data/participants.tsv", list2)
 
 
-#def test_testing_with_uncertainty():
-    # Test config. Uses Uncertainty
-    #subprocess.check_output(["ivadomed -c testing_data/model_config_test.json"], shell=True)
+# def test_testing_with_uncertainty():
+# Test config. Uses Uncertainty
+# subprocess.check_output(["ivadomed -c testing_data/model_config_test.json"], shell=True)
 
 
 def test_training():
@@ -106,10 +107,10 @@ def test_training():
     subprocess.check_output(["ivadomed -c testing_data/model_config.json"], shell=True)
 
 
-#def test_training_curve():
-    # using the results from previous training
- #   command = "ivadomed_training_curve -i testing_script/ -o training"
-  #  subprocess.check_output(command, shell=True)
+# def test_training_curve():
+# using the results from previous training
+#   command = "ivadomed_training_curve -i testing_script/ -o training"
+#  subprocess.check_output(command, shell=True)
 
 
 def test_create_eval_json():
@@ -136,12 +137,12 @@ def test_create_eval_json():
             "applied_to": ["im"]
         }}
     initial_config["testing_parameters"] = {
-                                               "binarize_prediction": False,
-                                               "uncertainty": {
-                                                   "epistemic": False,
-                                                   "aleatoric": False,
-                                                   "n_it": 2
-                                               }}
+        "binarize_prediction": False,
+        "uncertainty": {
+            "epistemic": False,
+            "aleatoric": False,
+            "n_it": 2
+        }}
     json.dump(initial_config, file_conf)
 
 
@@ -170,6 +171,59 @@ def test_automate_training():
     command = "ivadomed_automate_training -c testing_data/model_config_auto.json " \
               "-p testing_data/hyperparameter_opt.json -n 1 --run-test --all-combin"
     subprocess.check_output(command, shell=True)
+
+
+def test_create_json_3d_unet_test():
+    # modify train config
+    null = None
+    command = "cp ivadomed/config/config_tumorSeg.json testing_data/model_config_3d.json"
+    subprocess.check_output(command, shell=True)
+    file_conf = open("testing_data/model_config_3d.json", "r")
+    initial_config = json.load(file_conf)
+    file_conf.close()
+    file_conf = open("testing_data/model_config_3d.json", "w")
+    initial_config["command"] = "test"
+    initial_config["loader_parameters"] = {
+        "target_suffix": ["_lesion-manual"],
+        "roi_suffix": null,
+        "bids_path": "testing_data/",
+        "roi_params": {
+            "suffix": null,
+            "slice_filter_roi": null
+        }}
+    initial_config["log_directory"] = "3d_test"
+    initial_config["UNet3D"] = {
+        "applied": True,
+        "length_3D": [48, 48, 16],
+        "stride_3D": [48, 48, 16],
+        "attention": False,
+        "n_filters": 8
+    }
+    initial_config["transformation"] = {
+        "Resample":
+            {
+                "wspace": 1,
+                "hspace": 1,
+                "dspace": 1,
+                "preprocessing": True
+            },
+        "CenterCrop": {"size": [48, 48, 16], "preprocessing": True},
+        "NumpyToTensor": {},
+        "NormalizeInstance": {"applied_to": ["im"]}
+    }
+    json.dump(initial_config, file_conf)
+
+
+def test_create_model_unet3d():
+    model = imed_models.UNet3D(in_channel=1, out_channel=1, n_filters=8)
+    torch.save(model, "model_unet_3d_test.pt")
+    os.makedirs("3d_test")
+    command = "cp model_unet_3d_test.pt 3d_test/best_model.pt"
+    subprocess.check_output(command, shell=True)
+
+
+def test_testing_unet3d():
+    subprocess.check_output(["ivadomed -c testing_data/model_config_3d.json"], shell=True)
 
 
 def append_list_as_row(file_name, list_of_elem):
