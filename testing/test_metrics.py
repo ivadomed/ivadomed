@@ -53,9 +53,15 @@ def test_err_iou():
 
 def test_plot_roc_curve():
     tpr = [0, 0.1, 0.5, 0.6, 0.9]
-    fpr = [1, 0.8, 0.5, 0.6, 0.9]
+    fpr = [1, 0.8, 0.5, 0.3, 0.1]
     opt_thr_idx = 3
-    imed_metrics.plot_roc_curve(tpr,fpr,opt_thr_idx, "roc_test.png")
+    imed_metrics.plot_roc_curve(tpr, fpr, opt_thr_idx, "roc_test.png")
+
+
+def test_dice_plot():
+    thr_list = [0.1, 0.3, 0.5, 0.7]
+    dice_list = [0.6, 0.7, 0.8, 0.75]
+    imed_metrics.plot_dice_thr(thr_list, dice_list, 2, "test_dice.png")
 
 
 
