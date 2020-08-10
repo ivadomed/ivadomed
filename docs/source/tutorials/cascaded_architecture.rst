@@ -82,8 +82,7 @@ some of the key parameters to use cascaded models.
 Train model
 -----------
 
-Once the configuration file is ready, run the training. `ivadomed` has an option to find optimal threshold to binarize
-the test data to find the best balance between false positives and false negatives. Add the flag `-t` with an increment
+Once the configuration file is ready, run the training. `ivadomed` has an option to find a threshold value which optimized the dice score on the validation dataset. This threshold will be further used to binarize the predictions on testing data. Add the flag `-t` with an increment
 between 0 and 1 to get best threshold on the validation set (e.i. -t 0.1 will return the best threshold between 0.1,
 0.2, ..., 0.9)
 
