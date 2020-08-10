@@ -4,7 +4,7 @@ Cascaded architecture
 In this tutorial we will learn the following features:
 
 - Design a training scheme composed of two cascaded networks.
-- Visualize the training curves
+- Visualize the training with tensorboard
 - Find the optimal threshold to binarize images based on the validation sub-dataset.
 
 In our example, the model will first locate the spinal cord (step 1). This localisation will then be used to crop the images around this region of interest, before segmenting the cerebrospinal fluid (CSF, step 2).
