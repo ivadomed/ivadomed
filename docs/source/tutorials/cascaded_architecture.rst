@@ -3,11 +3,9 @@ Cascaded architecture
 
 In this tutorial we will learn the following features:
 
-- Training with a cascaded architecture composed of the following two models: 
-    - Spinal cord localization model
-    - Cerebrospinal fluid (CSF) segmentation
-- Visualize training with tensorboard
-- Find optimal threshold to binarize images
+- Design a training scheme composed of two cascaded networks.
+- Visualize the training curves
+- Find the optimal threshold to binarize images based on the validation sub-dataset.
 
 The model will first locate the spinal cord. Then, the input images will be crop around the spinal cord tumor mask.
 Finally, from the cropped images, the CSF will be segmented. The first cropping step allows the final segmentation
