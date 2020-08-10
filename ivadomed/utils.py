@@ -10,12 +10,12 @@ import onnxruntime
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision.utils as vutils
+#import torchvision.utils as vutils
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
-from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
-from ivadomed.object_detection import utils as imed_obj_detect
+#from ivadomed import transforms as imed_transforms
+#from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+#from ivadomed.object_detection import utils as imed_obj_detect
 from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
@@ -122,7 +122,6 @@ def run_uncertainty(ifolder):
         # find Monte Carlo simulations
         fname_pred_lst = [os.path.join(ifolder, f)
                           for f in os.listdir(ifolder) if subj_acq + '_pred_' in f and '_painted' not in f]
-        print()
 
         # if final segmentation from Monte Carlo simulations has not been generated yet
         if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
@@ -156,22 +155,19 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
         thr (float): Between 0 and 1. Used to threshold the soft segmentation and generate the hard segmentation.
     """
     # collect all MC simulations
-    data_lst = []
-    for fname in fname_lst:
-        nib_im = nib.load(fname)
-        data_lst.append(nib_im.get_fdata())
+    mc_data = np.array([nib.load(fname).get_fdata() for fname in fname_lst])
+    affine = nib.load(fname_lst[0]).affine
 
     # average over all the MC simulations
-    data_prob = np.mean(np.array(data_lst), axis=0)
+    data_prob = np.mean(mc_data, axis=0)
     # save prob segmentation
-    nib_prob = nib.Nifti1Image(data_prob, nib_im.affine)
+    nib_prob = nib.Nifti1Image(data_prob, affine)
     nib.save(nib_prob, fname_prob)
 
     # argmax operator
-    # TODO: adapt for multi-label pred
     data_hard = imed_postpro.threshold_predictions(data_prob, thr=thr).astype(np.uint8)
     # save hard segmentation
-    nib_hard = nib.Nifti1Image(data_hard, nib_im.affine)
+    nib_hard = nib.Nifti1Image(data_hard, affine)
     nib.save(nib_hard, fname_hard)
 
 
@@ -186,18 +182,16 @@ def voxelwise_uncertainty(fname_lst, fname_out, eps=1e-5):
         eps (float): Epsilon value to deal with np.log(0).
     """
     # collect all MC simulations
-    data_lst = []
-    for fname in fname_lst:
-        nib_im = nib.load(fname)
-        data_lst.append(nib_im.get_fdata())
+    mc_data = np.array([nib.load(fname).get_fdata() for fname in fname_lst])
+    affine = nib.load(fname_lst[0]).affine
 
     # entropy
-    unc = np.repeat(np.expand_dims(np.array(data_lst), -1), 2, -1)  # n_it, x, y, z, 2
+    unc = np.repeat(np.expand_dims(mc_data, -1), 2, -1)  # n_it, x, y, z, 2
     unc[..., 0] = 1 - unc[..., 1]
     unc = -np.sum(np.mean(unc, 0) * np.log(np.mean(unc, 0) + eps), -1)
 
     # save uncertainty map
-    nib_unc = nib.Nifti1Image(unc, nib_im.affine)
+    nib_unc = nib.Nifti1Image(unc, affine)
     nib.save(nib_unc, fname_out)
 
 
@@ -218,106 +212,86 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         fname_unc_vox (str): Filename of the voxel-wise uncertainty, which is used to compute the `avgUnc`.
         fname_out (str): Output filename.
     """
-    # load hard segmentation and label it
+    # 18-connectivity
+    bin_struct = np.array(generate_binary_structure(3, 2))
+
+    # load hard segmentation
     nib_hard = nib.load(fname_hard)
     data_hard = nib_hard.get_fdata()
-    data_hard_l = []
-    bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
-    for i in range(data_hard.shape[-1]):
-        data_hard_tmp, n_l = label(data_hard[..., i], structure=np.array(bin_struct))
-        data_hard_l.append(data_hard_tmp)
+    # Label each object of each class
+    data_hard_labeled = [label(data_hard[..., i_class], structure=bin_struct)[0] for i_class in range(data_hard.shape[-1])]
+
+    # load all MC simulations (in mc_dict["mc_data"]) and label them (in mc_dict["mc_labeled"])
+    mc_dict = {"mc_data": [], "mc_labeled": []}
+    for fname in fname_lst:
+        data = nib.load(fname).get_fdata()
+        mc_dict["mc_data"].append([data[..., i_class] for i_class in range(data.shape[-1])])
+
+        labeled_list = [label(data[..., i_class], structure=bin_struct)[0] for i_class in range(data.shape[-1])]
+        mc_dict["mc_labeled"].append(labeled_list)
 
     # load uncertainty map
-    nib_uncVox = nib.load(fname_unc_vox)
-    data_uncVox = nib_uncVox.get_fdata()
-    del nib_uncVox
+    data_uncVox = nib.load(fname_unc_vox).get_fdata()
 
-    # init output arrays
+    # Init output arrays
     data_iou, data_cv, data_avgUnc = np.zeros(data_hard.shape), np.zeros(data_hard.shape), np.zeros(data_hard.shape)
 
-    # load all MC simulations and label them
-    data_lst = []
-    data_l_arr = np.array()
-    for fname in fname_lst:
-        nib_im = nib.load(fname)
-        data_im = nib_im.get_fdata()
-        data_lst.append(data_im)
-        data_im_l = []
-        for i in range(data_im.shape[-1]):
-            data_im_tmp, _ = label(data_im[..., i], structure=bin_struct)
-            data_im_l.append(data_im_tmp)
-        np.append(data_l_arr, data_im_l)
-        del nib_im
-    # channel went first due to the 'append' function
-    # Before the transpose below, the variable data_l_arr has the shape:
-    # MC_simulation X Channel X Height X Width X Depth
-    # After transpose, the shape becomes: MC_simulation X Height X Width X Depth X Channel
-    # this is wanted because the input of run_uncertainty are nifti_masks created by network predictions
-    # These nifti masks have this shape: Height X Width X Depth X Channel.
-    # We want an output of the same shape as the input.
-    if len(data_l_arr.shape) == 5:
-        data_l_arr = np.transpose(data_l_arr, (0, 2, 3, 4, 1))
-    elif len(data_l_arr.shape) == 4:
-        data_l_arr = np.transpose(data_l_arr, (0, 2, 3, 1))
-    else:
-        raise ValueError("Input data of shape {} is not valid. Images must be 4D or 5D".format(len(data_l_arr.shape)))
+    # Loop across classes
+    for i_class in range(data_hard.shape[-1]):
+        # Hard segmentation of the i_class that has been labeled
+        data_hard_labeled_class = data_hard_labeled[i_class]
+        # Get number of objects in
+        n_obj = np.count_nonzero(np.unique(data_hard_labeled_class))
+        # Loop across objects
+        for i_obj in range(1, n_obj + 1):
+            # select the current structure, remaining voxels are set to zero
+            data_hard_labeled_class_obj = (np.array(data_hard_labeled_class) == i_obj).astype(np.int)
 
-    # loop across all structures of data_hard_l
+            # Get object coordinates
+            xx_obj, yy_obj, zz_obj = np.where(data_hard_labeled_class_obj)
 
-    for i_l in range(1, n_l + 1):
-        # select the current structure, remaining voxels are set to zero
-        data_i_l = (np.array(data_hard_l) == i_l).astype(np.int)
-        # channel went first with 'append' function for data_hard_l in line 225/226 (because we looped over channels)
-        # before transpose shape is supposed to be Channel X Height X Width X depth
-        # After transpose shape is expected to be  Height X Width X Depth X Channel
-        if len(data_i_l.shape) == 4:
-            data_i_l = np.transpose(data_i_l, (1, 2, 3, 0))
-        elif len(data_i_l.shape) == 3:
-            data_i_l = np.transpose(data_i_l, (1, 2, 0))
-        else:
-            raise ValueError("Input data of shape {} is not valid. image must be 3D or 4D".format(len(data_l_arr.shape)))
+            # Loop across the MC samples and mask the structure of interest
+            data_class_obj_mc = []
+            for i_mc in range(len(fname_lst)):
+                # Get index of the structure of interest in the MC sample labeled
+                i_mc_label = np.max(data_hard_labeled_class_obj * mc_dict["mc_labeled"][i_mc][i_class])
 
-        # select the current structure in each MC sample
-        # and store it in data_mc_i_l_lst
-        data_mc_i_l_lst = []
-        # loop across MC samples
-        for i_mc in range(len(data_lst)):
-            # find the structure of interest in the current MC sample
-            data_i_inter = data_i_l * data_l_arr[i_mc]
-            i_mc_l = np.max(data_i_inter)
+                data_tmp = np.zeros(mc_dict["mc_data"][i_mc][i_class].shape)
+                # If i_mc_label is zero, it means the structure is not present in this mc_sample
+                if i_mc_label > 0:
+                    data_tmp[mc_dict["mc_labeled"][i_mc][i_class] == i_mc_label] = 1.
 
-            if i_mc_l > 0:
-                # keep only the unc voxels of the structure of interest
-                data_mc_i_l = np.copy(data_lst[i_mc])
-                data_mc_i_l[data_l_arr[i_mc] != i_mc_l] = 0.
-            else:  # no structure in this sample
-                data_mc_i_l = np.zeros(data_lst[i_mc].shape)
-            data_mc_i_l_lst.append(data_mc_i_l)
+                data_class_obj_mc.append(data_tmp.astype(np.bool))
 
-        # compute IoU over all the N MC samples for a specific structure
-        intersection = np.logical_and(data_mc_i_l_lst[0].astype(np.bool),
-                                      data_mc_i_l_lst[1].astype(np.bool))
-        union = np.logical_or(data_mc_i_l_lst[0].astype(np.bool),
-                              data_mc_i_l_lst[1].astype(np.bool))
-        for i_mc in range(2, len(data_mc_i_l_lst)):
-            intersection = np.logical_and(intersection,
-                                          data_mc_i_l_lst[i_mc].astype(np.bool))
-            union = np.logical_or(union,
-                                  data_mc_i_l_lst[i_mc].astype(np.bool))
-        iou = np.sum(intersection) * 1. / np.sum(union)
+            # COMPUTE IoU
+            # Init intersection and union
+            intersection = np.logical_and(data_class_obj_mc[0], data_class_obj_mc[1])
+            union = np.logical_or(data_class_obj_mc[0], data_class_obj_mc[1])
+            # Loop across remaining MC samples
+            for i_mc in range(2, len(data_class_obj_mc)):
+                intersection = np.logical_and(intersection, data_class_obj_mc[i_mc])
+                union = np.logical_or(union, data_class_obj_mc[i_mc])
+            # Compute float
+            iou = np.sum(intersection) * 1. / np.sum(union)
+            # assign uncertainty value to the structure
+            data_iou[xx_obj, yy_obj, zz_obj, i_class] = iou
 
-        # compute coefficient of variation for all MC volume estimates for a given structure
-        vol_mc_lst = [np.sum(data_mc_i_l_lst[i_mc]) for i_mc in range(len(data_mc_i_l_lst))]
-        mu_mc = np.mean(vol_mc_lst)
-        sigma_mc = np.std(vol_mc_lst)
-        cv = sigma_mc / mu_mc
+            # COMPUTE COEFFICIENT OF VARIATION
+            # List of volumes for each MC sample
+            vol_mc_lst = [np.sum(data_class_obj_mc[i_mc]) for i_mc in range(len(data_class_obj_mc))]
+            # Mean volume
+            mu_mc = np.mean(vol_mc_lst)
+            # STD volume
+            sigma_mc = np.std(vol_mc_lst)
+            # Coefficient of variation
+            cv = sigma_mc / mu_mc
+            # assign uncertainty value to the structure
+            data_cv[xx_obj, yy_obj, zz_obj, i_class] = cv
 
-        # compute average voxel-wise uncertainty within the structure
-        avgUnc = np.mean(data_uncVox[data_i_l != 0])
-        # assign uncertainty value to the structure
-        data_iou[data_i_l != 0] = iou
-        data_cv[data_i_l != 0] = cv
-        data_avgUnc[data_i_l != 0] = avgUnc
+            # COMPUTE AVG VOXEL WISE UNC
+            avgUnc = np.mean(data_uncVox[xx_obj, yy_obj, zz_obj, i_class])
+            # assign uncertainty value to the structure
+            data_avgUnc[xx_obj, yy_obj, zz_obj, i_class] = avgUnc
 
     # save nifti files
     fname_iou = fname_out.split('.nii.gz')[0] + '-iou.nii.gz'
