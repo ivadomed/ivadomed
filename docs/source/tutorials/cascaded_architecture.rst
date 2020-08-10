@@ -103,7 +103,7 @@ At the end of the training, the optimal threshold will be indicated:
 Visualize training data
 -----------------------
 
-Tensorboard helps visualize the augmented input images, the model's prediction, the groud truth, the learning curves, and
+Tensorboard helps visualize the augmented input images, the model's prediction, the ground truth, the learning curves, and
 more. To access this data during or after training, use the following command-line:
 
 .. code-block:: bash
