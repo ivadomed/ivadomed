@@ -70,7 +70,8 @@ some of the key parameters to use cascaded models.
 - ``transformation:CenterCrop:size``: Crop size in voxel. Images will be cropped or padded to fit these dimensions. This
   allows all the images to have the same size during training. Since the images will be cropped around the spinal cord,
   the image size can be reduced to avoid large zero padding. The ``preprocessing`` parameter indicates this
-  transformation will only be applied once at the beginning of the training.
+  transformation will only be applied once at the beginning of the training (i.e. not at each epoch as commonly done for
+  data augmentation operations).
 
   .. code-block:: xml
 
