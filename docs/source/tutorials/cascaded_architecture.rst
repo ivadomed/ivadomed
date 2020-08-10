@@ -22,7 +22,7 @@ Configuration file
 ------------------
 
 In this tutorial we will use the configuration file: ``ivadomed/config/config.json``.
-First off, copy this configuration file in your local directory (to avoid modifying the source file):
+First off, copy this configuration file in your local directory to avoid modifying the source file:
 
 .. code-block:: bash
 
