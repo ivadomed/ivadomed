@@ -135,6 +135,13 @@ def test_create_eval_json():
         "NormalizeInstance": {
             "applied_to": ["im"]
         }}
+    initial_config["testing_parameters"] = {
+                                               "binarize_prediction": False,
+                                               "uncertainty": {
+                                                   "epistemic": False,
+                                                   "aleatoric": False,
+                                                   "n_it": 2
+                                               }}
     json.dump(initial_config, file_conf)
 
 
