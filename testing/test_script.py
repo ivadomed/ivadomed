@@ -97,9 +97,9 @@ def test_creation_dataset():
     append_list_as_row("testing_data/participants.tsv", list2)
 
 
-# def test_testing_with_uncertainty():
-# Test config. Uses Uncertainty
-# subprocess.check_output(["ivadomed -c testing_data/model_config_test.json"], shell=True)
+def test_testing_with_uncertainty():
+    # Test config. Uses Uncertainty
+    subprocess.check_output(["ivadomed -c testing_data/model_config_test.json"], shell=True)
 
 
 def test_training():
