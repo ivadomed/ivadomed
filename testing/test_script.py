@@ -3,7 +3,8 @@ import sys
 import subprocess
 from csv import writer
 from csv import reader
-import logging 
+import logging
+import json
 
 
 def test_download_data():
@@ -109,6 +110,22 @@ def test_training():
     # using the results from previous training
  #   command = "ivadomed_training_curve -i testing_script/ -o training"
   #  subprocess.check_output(command, shell=True)
+
+
+def test_create_eval_json():
+    # modify train config
+    command = "cp testing_data/model_config.json testing_data/model_config_eval.json"
+    subprocess.check_output(command, shell=True)
+    file_conf = open("testing_data/model_config_eval.json", "r")
+    initial_config = json.load(file_conf)
+    file_conf.close()
+    file_conf = open("testing_data/model_config_eval.json", "w")
+    initial_config["command"] = "eval"
+    json.dump(initial_config, file_conf)
+
+
+def test_eval():
+    subprocess.check_output(["ivadomed -c testing_data/model_config_eval.json"], shell=True)
 
 
 def append_list_as_row(file_name, list_of_elem):
