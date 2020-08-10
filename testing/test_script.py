@@ -121,6 +121,20 @@ def test_create_eval_json():
     file_conf.close()
     file_conf = open("testing_data/model_config_eval.json", "w")
     initial_config["command"] = "eval"
+    initial_config["trasnformation"] = {
+        "Resample": {
+            "wspace": 0.75,
+            "hspace": 0.75
+        },
+        "RandomAffine": {
+            "degrees": 4.6,
+            "translate": [0.03, 0.03],
+            "scale": [0.98, 1]
+        },
+        "NumpyToTensor": {},
+        "NormalizeInstance": {
+            "applied_to": ["im"]
+        }}
     json.dump(initial_config, file_conf)
 
 
