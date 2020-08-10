@@ -105,10 +105,10 @@ def test_training():
     subprocess.check_output(["ivadomed -c testing_data/model_config.json"], shell=True)
 
 
-def test_training_curve():
+#def test_training_curve():
     # using the results from previous training
-    command = "ivadomed_training_curve -i testing_script/ -o training"
-    subprocess.check_output(command, shell=True)
+ #   command = "ivadomed_training_curve -i testing_script/ -o training"
+  #  subprocess.check_output(command, shell=True)
 
 
 def append_list_as_row(file_name, list_of_elem):
