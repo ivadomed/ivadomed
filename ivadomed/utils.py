@@ -121,7 +121,8 @@ def run_uncertainty(ifolder):
         fname_soft = os.path.join(ifolder, subj_acq + '_soft.nii.gz')
         # find Monte Carlo simulations
         fname_pred_lst = [os.path.join(ifolder, f)
-                          for f in os.listdir(ifolder) if subj_acq + '_pred_' in f]
+                          for f in os.listdir(ifolder) if subj_acq + '_pred_' in f and '_painted' not in f]
+        print()
 
         # if final segmentation from Monte Carlo simulations has not been generated yet
         if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
