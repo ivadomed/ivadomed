@@ -15,9 +15,7 @@ Prerequisite
 ------------
 
 In this tutorial, the spinal cord segmentation model generated from :doc:`../tutorials/one_class_segmentation_2d_unet`
-will be needed. In the log directory of this trained model, a folder named ``seg_sc_t1_t2_t2s_mt`` (if the default value
-of the parameter ``model_name`` was used) contains the packaged model. The path to this folder will be
-needed in this tutorial and will be referenced as the location to the object detection model.
+will be needed since it will be used for the step 1. Please make sure you did this tutorial prior to this present example and that a folder named ``seg_sc_t1_t2_t2s_mt`` is available.
 
 
 Configuration file
