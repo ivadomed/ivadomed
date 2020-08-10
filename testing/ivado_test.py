@@ -11,6 +11,7 @@ def test_sample():
 
 
 def test_model_creation():
+    # creating basic model for test
     model = imed_models.Unet()
     torch.save(model, "testing_data/model_unet_test.pt")
     assert os.path.isfile("testing_data/model_unet_test.pt")
