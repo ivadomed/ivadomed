@@ -418,12 +418,13 @@ class MRI2DSegmentationDataset(Dataset):
                 if self.slice_filter_fn and not self.slice_filter_fn(slice_seg_pair):
                     continue
 
-
+                # Note: we force here gt_type=segmentation since ROI slice is needed to Crop the image
+                slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice, gt_type="segmentation")
+                
                 if self.slice_filter_roi and imed_loader_utils.filter_roi(slice_roi_pair['gt'], self.roi_thr):
                     continue
 
-                # Note: we force here gt_type=segmentation since ROI slice is needed to Crop the image
-                slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice, gt_type="segmentation")
+
 
                 item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                       slice_seg_pair,
