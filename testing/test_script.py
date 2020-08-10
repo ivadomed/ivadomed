@@ -211,6 +211,13 @@ def test_create_json_3d_unet_test():
         "NumpyToTensor": {},
         "NormalizeInstance": {"applied_to": ["im"]}
     }
+    initial_config["contrast_params"] = {
+        "random_seed": 1313,
+        "training_validation": ["T2w"],
+        "balance": {},
+        "testing": ["T2w"],
+        "center_test": []
+    }
     json.dump(initial_config, file_conf)
 
 
