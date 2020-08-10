@@ -51,5 +51,11 @@ def test_err_iou():
     assert results == 12
 
 
+def test_plot_roc_curve():
+    tpr = [0, 0.1, 0.5, 0.6, 0.9]
+    fpr = [1, 0.8, 0.5, 0.6, 0.9]
+    opt_thr_idx = 3
+    imed_metrics.plot_roc_curve(tpr,fpr,opt_thr_idx, "roc_test.png")
+
 
 
