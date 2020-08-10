@@ -6,6 +6,11 @@ from csv import reader
 import logging 
 
 
+def test_download_data():
+    command = "ivadomed_download_data -d t2_tumor"
+    subprocess.check_output(command, shell=True)
+
+
 def test_onnx_conversion():
 
     # testing convert to onnx
