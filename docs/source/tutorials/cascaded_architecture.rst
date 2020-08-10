@@ -15,7 +15,7 @@ Prerequisite
 ------------
 
 In this tutorial, the spinal cord segmentation model generated from :doc:`../tutorials/one_class_segmentation_2d_unet`
-will be needed since it will be used for the step 1. Please make sure you did this tutorial prior to this present example and that a folder named ``seg_sc_t1_t2_t2s_mt`` is available.
+will be needed since it will be used for the step 1. Please make sure you did this tutorial prior to this present example and that a folder named ``seg_sc_t1-t2-t2s_mt`` is available.
 
 
 Configuration file
@@ -38,7 +38,7 @@ some of the key parameters to use cascaded models.
 
   .. code-block:: xml
 
-     "object_detection_path": "<SPINAL_CORD_SEG_LOG_DIRECTORY>/spineGeneric/seg_sc_t1_t2_t2s_mt"
+     "object_detection_path": "<SPINAL_CORD_SEG_LOG_DIRECTORY>/spineGeneric/seg_sc_t1-t2-t2s_mt"
 
 - ``object_detection_params:safety_factor``: Multiplicative factor to apply to each dimension of the bounding box. To
   ensure all the CSF is included, a safety factor should be applied to the bounding box generated from the spinal cord.
