@@ -17,24 +17,31 @@ The purpose of the ``ivadomed`` project is to:
    :maxdepth: 1
    :caption: Overview
 
-   comparison_other_projects.md
-   technical_features.md
+   comparison_other_projects.rst
+   technical_features.rst
 
 .. toctree::
    :maxdepth: 1
    :caption: Getting started
 
-   installation.md
-   getting_started.md
-   tutorials.md
-   data.md
+   installation.rst
+   getting_started.rst
+   configuration_file.rst
+   data.rst
    models.rst
+   scripts.rst
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Tutorials
+
+   tutorials/one_class_segmentation_2d_unet.rst
 
 .. toctree::
    :maxdepth: 1
    :caption: Developer section
 
-   contributing.md
+   contributing.rst
    api_ref.rst
 
 
@@ -51,7 +58,7 @@ Contributors
 This project results from a collaboration between the
 `NeuroPoly Lab <https://www.neuro.polymtl.ca>`_ and `Mila <https://mila.quebec/en/>`_.
 
-A list of contributors is available `here <https://github.com/neuropoly/ivado-medical-imaging/graphs/contributors>`_.
+A list of contributors is available `here <https://github.com/neuropoly/ivadomed/graphs/contributors>`_.
 
 Sponsors
 --------

@@ -17,13 +17,14 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
     """Evaluate predictions from inference step.
 
     Args:
-          bids_path (string): Folder where data is stored
-          log_directory (string): Folder where the output folder "results_eval" will be created.
-          path_preds (string): Folder where model predictions were saved
-          target_suffix (list): list of suffixes
-          eval_params (dict):
+        bids_path (str): Folder where raw data is stored.
+        log_directory (str): Folder where the output folder "results_eval" is be created.
+        path_preds (str): Folder where model predictions were saved
+        target_suffix (list): List of suffixes that indicates the target mask(s).
+        eval_params (dict): Evaluation parameters.
+
     Returns:
-          pd.DataFrame: results for each prediction
+        pd.Dataframe: results for each image.
     """
     print('\nRun Evaluation on {}\n'.format(path_preds))
 
@@ -49,6 +50,7 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
         # 3D evaluation
         nib_pred = nib.load(fname_pred)
         data_pred = nib_pred.get_fdata()
+
         h, w, d = data_pred.shape[:3]
         n_classes = len(fname_gt)
         data_gt = np.zeros((h, w, d, n_classes))
@@ -80,8 +82,40 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
 
 
 class Evaluation3DMetrics(object):
+    """Computes 3D evaluation metrics.
 
-    def __init__(self, data_pred, data_gt, dim_lst, params={}):
+    Args:
+        data_pred (ndarray): Network prediction mask.
+        data_gt (ndarray): Ground-truth mask.
+        dim_lst (list): Resolution (mm) along each dimension.
+        params (dict): Evaluation parameters.
+
+    Attributes:
+        data_pred (ndarray): Network prediction mask.
+        data_gt (ndarray): Ground-truth mask.
+        n_classes (int): Number of classes.
+        px (float): Resolution (mm) along the first axis.
+        py (float): Resolution (mm) along the second axis.
+        pz (float): Resolution (mm) along the third axis.
+        bin_struct (ndarray): Binary structure.
+        size_min (int): Minimum size of objects. Objects that are smaller than this limit can be removed if
+            "removeSmall" is in params.
+        overlap_vox (int): A prediction and ground-truth are considered as overlapping if they overlap for at least this
+            amount of voxels.
+        overlap_ratio (float): A prediction and ground-truth are considered as overlapping if they overlap for at least
+            this portion of their volumes.
+        data_pred_label (ndarray): Network prediction mask that is labeled, ie each object is filled with a different
+            value.
+        data_gt_label (ndarray): Ground-truth mask that is labeled, ie each object is filled with a different
+            value.
+        n_pred (int): Number of objects in the network prediction mask.
+        n_gt (int): Number of objects in the ground-truth mask.
+        data_painted (ndarray): Mask where each predicted object is labeled depending on whether it is a TP or FP.
+    """
+
+    def __init__(self, data_pred, data_gt, dim_lst, params=None):
+        if params is None:
+            params = {}
 
         self.data_pred = data_pred
         if len(self.data_pred.shape) == 3:
@@ -158,6 +192,14 @@ class Evaluation3DMetrics(object):
             self.overlap_vox = 3
 
     def remove_small_objects(self, data):
+        """Removes all unconnected objects smaller than the minimum specified size.
+
+        Args:
+            data (ndarray): Input data.
+
+        Returns:
+            ndarray: Array with small objects.
+        """
         data_label, n = label(data,
                               structure=self.bin_struct)
 
@@ -171,6 +213,15 @@ class Evaluation3DMetrics(object):
         return data
 
     def _get_size_ranges(self, thr_lst, unit):
+        """Get size ranges of objects in image.
+
+        Args:
+            thr_lst (list): Bins ranging each size category.
+            unit (str): Choice between 'vox' for voxel of 'mm3'.
+
+        Returns:
+            list, list: range list, suffix related to range
+        """
         assert unit in ['vox', 'mm3']
 
         rng_lst, suffix_lst = [], []
@@ -201,6 +252,14 @@ class Evaluation3DMetrics(object):
         return rng_lst, suffix_lst
 
     def label_per_size(self, data):
+        """Get data with labels corresponding to label size.
+
+        Args:
+            data (ndarray): Input data.
+
+        Returns:
+            ndarray
+        """
         data_label, n = label(data,
                               structure=self.bin_struct)
         data_out = np.zeros(data.shape)
@@ -216,12 +275,20 @@ class Evaluation3DMetrics(object):
         return data_out.astype(np.int)
 
     def get_vol(self, data):
+        """Get volume."""
         vol = np.sum(data)
         vol *= self.px * self.py * self.pz
         return vol
 
     def get_rvd(self):
-        """Relative volume difference."""
+        """Relative volume difference.
+
+        The volume is here defined by the physical volume, in mm3, of the non-zero voxels of a given mask.
+        Relative volume difference equals the difference between the ground-truth and prediction volumes, divided by the
+        ground-truth volume.
+        Optimal value is zero. Negative value indicates over-segmentation, while positive value indicates
+        under-segmentation.
+        """
         vol_gt = self.get_vol(self.data_gt)
         vol_pred = self.get_vol(self.data_pred)
 
@@ -234,14 +301,23 @@ class Evaluation3DMetrics(object):
         return rvd
 
     def get_avd(self):
-        """Absolute volume difference."""
+        """Absolute volume difference.
+
+        The volume is here defined by the physical volume, in mm3, of the non-zero voxels of a given mask.
+        Absolute volume difference equals the absolute value of the Relative Volume Difference.
+        Optimal value is zero.
+        """
         return abs(self.get_rvd())
 
     def _get_ltp_lfn(self, label_size, class_idx=0):
         """Number of true positive and false negative lesion.
 
-            Note1: if two lesion_pred overlap with the current lesion_gt,
-                then only one detection is counted.
+        Args:
+            label_size (int): Size of label.
+            class_idx (int): Label index. If monolabel 0, else ranges from 0 to number of output channels - 1.
+
+        Note1: if two lesion_pred overlap with the current lesion_gt,
+            then only one detection is counted.
         """
         ltp, lfn, n_obj = 0, 0, 0
 
@@ -273,7 +349,12 @@ class Evaluation3DMetrics(object):
         return ltp, lfn, n_obj
 
     def _get_lfp(self, label_size, class_idx=0):
-        """Number of false positive lesion."""
+        """Number of false positive lesion.
+
+        Args:
+            label_size (int): Size of label.
+            class_idx (int): Label index. If monolabel 0, else ranges from 0 to number of output channels - 1.
+        """
         lfp = 0
         for idx in range(1, self.n_pred[class_idx] + 1):
             data_pred_idx = (self.data_pred_label[..., class_idx] == idx).astype(np.int)
@@ -305,7 +386,11 @@ class Evaluation3DMetrics(object):
     def get_ltpr(self, label_size=None, class_idx=0):
         """Lesion True Positive Rate / Recall / Sensitivity.
 
-            Note: computed only if n_obj >= 1.
+        Args:
+            label_size (int): Size of label.
+            class_idx (int): Label index. If monolabel 0, else ranges from 0 to number of output channels - 1.
+
+        Note: computed only if n_obj >= 1.
         """
         ltp, lfn, n_obj = self._get_ltp_lfn(label_size, class_idx)
 
@@ -318,7 +403,11 @@ class Evaluation3DMetrics(object):
     def get_lfdr(self, label_size=None, class_idx=0):
         """Lesion False Detection Rate / 1 - Precision.
 
-            Note: computed only if n_obj >= 1.
+        Args:
+            label_size (int): Size of label.
+            class_idx (int): Label index. If monolabel 0, else ranges from 0 to number of output channels - 1.
+
+        Note: computed only if n_obj >= 1.
         """
         ltp, _, n_obj = self._get_ltp_lfn(label_size, class_idx)
         lfp = self._get_lfp(label_size, class_idx)
@@ -330,6 +419,11 @@ class Evaluation3DMetrics(object):
         return lfp / denom
 
     def run_eval(self):
+        """Stores evaluation results in dictionary
+
+        Returns:
+            dict, ndarray: dictionary containing evaluation results, data with each object painted a different color
+        """
         dct = {}
 
         for n in range(self.n_classes):
@@ -345,6 +439,7 @@ class Evaluation3DMetrics(object):
             dct['n_pred_class' + str(n)], dct['n_gt_class' + str(n)] = self.n_pred[n], self.n_gt[n]
             dct['ltpr_class' + str(n)], _ = self.get_ltpr()
             dct['lfdr_class' + str(n)] = self.get_lfdr()
+            dct['mse_class' + str(n)] = imed_metrics.mse(self.data_gt[..., n], self.data_pred[..., n])
 
             for lb_size, gt_pred in zip(self.label_size_lst[n][0], self.label_size_lst[n][1]):
                 suffix = self.size_suffix_lst[int(lb_size) - 1]

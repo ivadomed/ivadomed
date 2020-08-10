@@ -1,7 +1,7 @@
 import copy
-import time
 import os
-
+import time
+import random
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
@@ -15,32 +15,42 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.postprocessing import threshold_predictions
+import datetime
 
 cudnn.benchmark = True
 
 
 def train(model_params, dataset_train, dataset_val, training_params, log_directory, device,
-          cuda_available=True, metric_fns=None, debugging=False):
+          cuda_available=True, metric_fns=None, n_gif=0, thr_increment=None, debugging=False):
     """Main command to train the network.
 
     Args:
         model_params (dict): Model's parameters.
-        dataset_train (imed_loader): Training dataset
-        dataset_val (imed_loader): Validation dataset
+        dataset_train (imed_loader): Training dataset.
+        dataset_val (imed_loader): Validation dataset.
         training_params (dict):
-        log_directory (string):
-        device (string):
-        cuda_available (Bool):
-        metric_fns (list):
-        debugging (Bool):
+        log_directory (str): Folder where log files, best and final models are saved.
+        device (str): Indicates the CPU or GPU ID.
+        cuda_available (bool): If True, CUDA is available.
+        metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
+        n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
+            parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
+            predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
+        thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
+            the validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
+            increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
+        debugging (bool): If True, extended verbosity and intermediate outputs.
+
     Returns:
-        float, float, float, float: best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
+        float, float, float, float, float: best_training_dice, best_training_loss, best_validation_dice,
+            best_validation_loss, optimal_threshold.
     """
     # Write the metrics, images, etc to TensorBoard format
     writer = SummaryWriter(log_dir=log_directory)
 
     # BALANCE SAMPLES AND PYTORCH LOADER
-    conditions = [training_params["balance_samples"], model_params["name"] != "HeMIS"]
+    conditions = all([training_params["balance_samples"], model_params["name"] != "HeMIS"])
     sampler_train, shuffle_train = get_sampler(dataset_train, conditions)
 
     train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
@@ -52,9 +62,20 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         sampler_val, shuffle_val = get_sampler(dataset_val, conditions)
 
         val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
-                            shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
-                            collate_fn=imed_loader_utils.imed_collate,
-                            num_workers=0)
+                                shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
+                                collate_fn=imed_loader_utils.imed_collate,
+                                num_workers=0)
+
+        # Init GIF
+        gif_dict = {"image_path": [], "slice_id": [], "gif": []}
+        if n_gif > 0:
+            indexes_gif = random.sample(range(len(dataset_val)), n_gif)
+        for i_gif in range(n_gif):
+            random_metadata = dict(dataset_val[indexes_gif[i_gif]]["input_metadata"][0])
+            gif_dict["image_path"].append(random_metadata['input_filenames'])
+            gif_dict["slice_id"].append(random_metadata['slice_index'])
+            gif_obj = imed_utils.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].numpy()[0].shape)
+            gif_dict["gif"].append(copy.copy(gif_obj))
 
     # GET MODEL
     if training_params["transfer_learning"]["retrain_model"]:
@@ -80,7 +101,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
     # Using Adam
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
-    scheduler, step_scheduler_batch = get_scheduler(training_params["scheduler"]["lr_scheduler"], optimizer, num_epochs)
+    scheduler, step_scheduler_batch = get_scheduler(copy.copy(training_params["scheduler"]["lr_scheduler"]), optimizer, num_epochs)
     print("\nScheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
 
     # Create dict containing gammas and betas after each FiLM layer.
@@ -100,6 +121,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     best_training_dice, best_training_loss = float("inf"), float("inf")
     best_validation_loss, best_validation_dice = float("inf"), float("inf")
     patience_count = 0
+    begin_time = time.time()
 
     # EPOCH LOOP
     for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
@@ -193,14 +215,21 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                     val_loss_total += loss.item()
                     val_dice_loss_total += loss_dice_fct(preds, gt_samples).item()
 
+                    # Add frame to GIF
+                    for i_ in range(len(input_samples)):
+                        im, pr, met = input_samples[i_].cpu().numpy()[0], preds[i_].cpu().numpy()[0], batch["input_metadata"][i_][0]
+                        for i_gif in range(n_gif):
+                            if gif_dict["image_path"][i_gif] == met.__getitem__('input_filenames') and \
+                                    gif_dict["slice_id"][i_gif] == met.__getitem__('slice_index'):
+                                overlap = imed_utils.overlap_im_seg(im, pr)
+                                gif_dict["gif"][i_gif].add(overlap, label=str(epoch))
+
                 num_steps += 1
 
                 # METRICS COMPUTATION
-                gt_npy = gt_samples.cpu().numpy().astype(np.uint8)
+                gt_npy = gt_samples.cpu().numpy()
                 preds_npy = preds.data.cpu().numpy()
-
-
-                metric_mgr(preds_npy.astype(np.uint8), gt_npy)
+                metric_mgr(preds_npy, gt_npy)
 
                 if i == 0 and debugging:
                     imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
@@ -255,18 +284,55 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     if model_params["name"] == "FiLMedUnet" and debugging:
         save_film_params(gammas_dict, betas_dict, contrast_list, model_params["depth"], log_directory)
 
+    # Convert best model to ONNX and save it in model directory
+    best_model_path = os.path.join(log_directory, model_params["folder_name"], model_params["folder_name"] + ".onnx")
+    imed_utils.save_onnx_model(torch.load(model_path), input_samples, best_model_path)
+
+    # Save GIFs
+    gif_folder = os.path.join(log_directory, "gifs")
+    if n_gif > 0 and not os.path.isdir(gif_folder):
+        os.makedirs(gif_folder)
+    for i_gif in range(n_gif):
+        fname_out = gif_dict["image_path"][i_gif].split('/')[-3] + "__"
+        fname_out += gif_dict["image_path"][i_gif].split('/')[-1].split(".nii.gz")[0].split(gif_dict["image_path"][i_gif].split('/')[-3]+"_")[1] + "__"
+        fname_out += str(gif_dict["slice_id"][i_gif]) + ".gif"
+        path_gif_out = os.path.join(gif_folder, fname_out)
+        gif_dict["gif"][i_gif].save(path_gif_out)
+
     writer.close()
-    return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
+    final_time = time.time()
+    duration_time = final_time - begin_time
+    print('begin ' + time.strftime('%H:%M:%S', time.localtime(begin_time)) + "| End " +
+          time.strftime('%H:%M:%S', time.localtime(final_time)) +
+          "| duration " + str(datetime.timedelta(seconds=duration_time)))
+
+    optimal_thr = None
+    if thr_increment:
+        print('\nRunning threshold analysis to find optimal threshold')
+        # Choice of optimisation metric
+        metric = "recall_specificity" if model_params["name"] in imed_utils.imed_loader.CLASSIFIER_LIST else "dice"
+        # Run analysis
+        optimal_thr = threshold_analysis(model=model,
+                                         val_loader=val_loader,
+                                         model_params=model_params,
+                                         metric=metric,
+                                         increment=thr_increment,
+                                         fname_out=os.path.join(log_directory, "roc.png"),
+                                         cuda_available=cuda_available)
+
+    return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss, optimal_thr
 
 
 def get_sampler(ds, balance_bool):
     """Get sampler.
 
     Args:
-        ds (BidsDataset):
-        balance_bool (Bool):
+        ds (BidsDataset): BidsDataset object.
+        balance_bool (bool): If True, a sampler is generated that balance positive and negative samples.
+
     Returns:
-        Sampler, Bool: Sampler and boolean for shuffling
+        If balance_bool is True: Returns BalancedSampler, Bool: Sampler and boolean for shuffling (set to False).
+        Otherwise: Returns None and True.
     """
     if balance_bool:
         return imed_loader_utils.BalancedSampler(ds), False
@@ -278,11 +344,12 @@ def get_scheduler(params, optimizer, num_epochs=0):
     """Get scheduler.
 
     Args:
-        params (dict):
+        params (dict): scheduler parameters, see `PyTorch documentation <https://pytorch.org/docs/stable/optim.html>`__
         optimizer (torch optim):
-        num_epochs (int):
+        num_epochs (int): number of epochs.
+
     Returns:
-        torch.optim, Bool:
+        torch.optim, bool, which indicates if the scheduler is updated for each batch (True), or for each epoch (False).
     """
     step_scheduler_batch = False
     scheduler_name = params["name"]
@@ -306,9 +373,10 @@ def get_loss_function(params):
     """Get Loss function.
 
     Args:
-        params (dict):
+        params (dict): See :mod:`ivadomed.losses`.
+
     Returns:
-        imed_losses:
+        imed_losses object.
     """
     # Loss function name
     loss_name = params["name"]
@@ -316,7 +384,8 @@ def get_loss_function(params):
 
     # Check if implemented
     loss_function_available = ["DiceLoss", "FocalLoss", "GeneralizedDiceLoss", "FocalDiceLoss", "MultiClassDiceLoss",
-                               "BinaryCrossEntropyLoss", "TverskyLoss", "FocalTverskyLoss"]
+                               "BinaryCrossEntropyLoss", "TverskyLoss", "FocalTverskyLoss", "AdapWingLoss", "L2loss",
+                               "LossCombination"]
     if loss_name not in loss_function_available:
         print("Unknown Loss function, please choose between {}".format(loss_function_available))
         exit()
@@ -332,8 +401,10 @@ def get_metadata(metadata, model_params):
     Args:
         metadata (batch):
         model_params (dict):
+
     Returns:
-        list:
+        If FiLMedUnet, Returns a list of metadata, that have been transformed by the One Hot Encoder.
+        If HeMISUnet, Returns a numpy array where each row represents a sample and each column represents a contrast.
     """
     if model_params["name"] == "HeMISUnet":
         return np.array([m[0]["missing_mod"] for m in metadata])
@@ -353,6 +424,7 @@ def store_film_params(gammas, betas, contrasts, metadata, model, film_layers, de
         model (nn.Module):
         film_layers (list):
         depth (int):
+
     Returns:
         dict, dict: gammas, betas
     """
@@ -377,15 +449,15 @@ def store_film_params(gammas, betas, contrasts, metadata, model, film_layers, de
 def save_film_params(gammas, betas, contrasts, depth, ofolder):
     """Save FiLM params as npy files.
 
-    Further used for visualisation purposes.
+    These parameters can be further used for visualisation purposes. They are saved in the `ofolder` with `.npy` format.
 
     Args:
         gammas (dict):
         betas (dict):
         contrasts (list): list of the batch sample's contrasts (eg T2w, T1w)
         depth (int):
-        ofolder (string)
-    Returns:
+        ofolder (str):
+
     """
     # Convert list of gammas/betas into numpy arrays
     gammas_dict = {i: np.array(gammas[i]) for i in range(1, 2 * depth + 3)}
@@ -402,3 +474,92 @@ def save_film_params(gammas, betas, contrasts, depth, ofolder):
     contrast_images = np.array(contrasts)
     contrast_path = os.path.join(ofolder, "contrast_image.npy")
     np.save(contrast_path, contrast_images)
+
+
+def threshold_analysis(model, val_loader, model_params, metric="dice", increment=0.1, fname_out="thr.png",
+                       cuda_available=True):
+    """Run a threshold analysis to find the optimal threshold on the validation sub-dataset.
+
+    Args:
+        model (nn.Module): Trained model.
+        val_laoder (torch.utils.data.DataLoader): Validation data loader.
+        model_params (dict): Model's parameters.
+        metric (str): Choice between "dice" and "recall_specificity". If "recall_specificity", then a ROC analysis
+            is performed.
+        increment (float): Increment between tested thresholds.
+        fname_out (str): Plot output filename.
+        cuda_available (bool): If True, CUDA is available.
+
+    Returns:
+        float: optimal threshold.
+    """
+    if metric not in ["dice", "recall_specificity"]:
+        print('\nChoice of metric for threshold analysis: dice, recall_specificity.')
+        exit()
+
+    # Eval mode
+    model.eval()
+
+    # List of thresholds
+    thr_list = list(np.arange(0.0, 1.0, increment))[1:]
+
+    # Init metric manager for each thr
+    metric_fns = [imed_metrics.recall_score,
+                  imed_metrics.dice_score,
+                  imed_metrics.specificity_score]
+    metric_dict = {thr: imed_metrics.MetricManager(metric_fns) for thr in thr_list}
+
+    # Go through val dataset
+    for i, batch in enumerate(val_loader):
+        with torch.no_grad():
+            # GET SAMPLES
+            if model_params["name"] == "HeMISUnet":
+                input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
+            else:
+                input_samples = imed_utils.cuda(batch["input"], cuda_available)
+            gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
+
+            # RUN MODEL
+            if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
+                metadata = get_metadata(batch["input_metadata"], model_params)
+                preds = model(input_samples, metadata)
+            else:
+                preds = model(input_samples)
+
+            gt_npy = threshold_predictions(gt_samples.cpu().numpy(), thr=0.5)
+            preds_npy = preds.data.cpu().numpy()
+            for thr in thr_list:
+                preds_thr = threshold_predictions(copy.deepcopy(preds_npy), thr=thr)
+                metric_dict[thr](preds_thr, gt_npy)
+
+    # Get results
+    tpr_list, fpr_list, dice_list = [], [], []
+    for thr in thr_list:
+        result_thr = metric_dict[thr].get_results()
+        tpr_list.append(result_thr["recall_score"])
+        fpr_list.append(1 - result_thr["specificity_score"])
+        dice_list.append(result_thr["dice_score"])
+
+    # Get optimal threshold
+    if metric == "dice":
+        diff_list = dice_list
+    else:
+        diff_list = [tpr - fpr for tpr, fpr in zip(tpr_list, fpr_list)]
+    optimal_idx = np.max(np.where(diff_list == np.max(diff_list)))
+    optimal_threshold = thr_list[optimal_idx]
+    print('\tOptimal threshold: {}'.format(optimal_threshold))
+
+    # Save plot
+    print('\tSaving plot: {}'.format(fname_out))
+    if metric == "dice":
+        # Run plot
+        imed_metrics.plot_dice_thr(thr_list, dice_list, optimal_idx, fname_out)
+    else:
+        # Add 0 and 1 as extrema
+        tpr_list = [0.0] + tpr_list + [1.0]
+        fpr_list = [0.0] + fpr_list + [1.0]
+        optimal_idx += 1
+        # Run plot
+        imed_metrics.plot_roc_curve(tpr_list, fpr_list, optimal_idx, fname_out)
+
+    return optimal_threshold

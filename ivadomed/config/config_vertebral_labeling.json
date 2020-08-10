@@ -1,0 +1,99 @@
+{
+    "command": "train",
+    "gpu": 7,
+    "log_directory": "labeling_t2test",
+    "model_name": "find_disc_t1",
+    "debugging": true,
+    "loader_parameters": {
+        "bids_path": "/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/deep_VL_2019/straight/",
+        "target_suffix": ["_heatmap3"],
+        "roi_params": {
+            "suffix": null,
+            "slice_filter_roi": null
+        },
+        "contrast_params": {
+            "training_validation": ["T2w_straight_mid"],
+            "testing": [ "T2w_straight_mid"],
+            "balance": {}
+        },
+        "slice_filter_params": {
+            "filter_empty_mask": true,
+            "filter_empty_input": true
+        },
+        "slice_axis": "sagittal",
+        "multichannel": false,
+	    "soft_gt": true
+    },
+    "split_dataset": {
+        "fname_split": null,
+        "random_seed": 8,
+        "center_test": [],
+        "method": "per_patient",
+        "train_fraction": 0.6,
+        "test_fraction": 0.2
+    },
+    "training_parameters": {
+        "batch_size": 2,
+        "loss": {
+            "name": "LossCombination",
+	    "losses_list":["AdapWingLoss","L2loss","DiceLoss"],
+	    "params_list":[null,null,null]
+        },
+        "training_time": {
+            "num_epochs": 200,
+            "early_stopping_patience": 100,
+            "early_stopping_epsilon": 0.001
+        },
+        "scheduler": {
+            "initial_lr":0.0005,
+            "lr_scheduler": {
+                "name": "CosineAnnealingLR",
+                "base_lr": 1e-6,
+                "max_lr": 1e-4
+            }
+        },
+        "balance_samples": false,
+        "mixup_alpha": null,
+        "transfer_learning": {
+            "retrain_model": "labeling_t2test/best_model.pt",
+            "retrain_fraction": 1.0
+        }
+    },
+    "default_model": {
+        "name": "Countception"
+    },
+    "FiLMedUnet": {
+        "applied": false,
+        "metadata": "contrasts",
+        "film_layers": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    "testing_parameters": {
+        "binarize_prediction": -1,
+        "uncertainty": {
+            "epistemic": false,
+            "aleatoric": false,
+            "n_it": 0
+        }
+    },
+    "evaluation_parameters": {
+        "targetSize": {"unit": "vox", "thr": [20, 100]},
+        "removeSmall": {"unit": "vox", "thr": 3},
+        "overlap": {"unit": "vox", "thr": 3}
+    },
+    "transformation": {
+	    "ElasticTransform": {
+                        "alpha_range": [28.0, 30.0],
+                        "sigma_range":  [3.5, 4.5],
+                        "p": 0.1,
+            "applied_to": ["im", "gt"],
+            "dataset_type": ["training"]
+            },
+
+            "CenterCrop":{
+                    "size": [320,128]
+            },
+
+      "NumpyToTensor": {},
+      "NormalizeInstance": {"applied_to": ["im"]}
+    }
+}

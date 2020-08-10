@@ -9,6 +9,7 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed import testing as imed_testing
+from ivadomed import models as imed_models
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
@@ -38,7 +39,7 @@ PATH_OUT = 'tmp'
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"], ["_seg-manual"]])
 @pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
 @pytest.mark.parametrize('testing_params', [{
-    "binarize_prediction": True,
+    "binarize_prediction": 0.5,
     "uncertainty": {
         "applied": False,
         "epistemic": False,
@@ -85,15 +86,14 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_pa
     })
 
     # Model
-    model_path = os.path.join(PATH_BIDS, "model_unet_test.pt")
-    model = torch.load(model_path, map_location=device)
+    model = imed_models.Unet()
 
     if cuda_available:
         model.cuda()
     model.eval()
 
     metric_fns = [imed_metrics.dice_score,
-                  imed_metrics.hausdorff_3D_score,
+                  imed_metrics.hausdorff_score,
                   imed_metrics.precision_score,
                   imed_metrics.recall_score,
                   imed_metrics.specificity_score,

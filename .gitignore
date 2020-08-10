@@ -4,7 +4,13 @@ ivadomed/__init__.pyc
 ivadomed/__pycache__/
 ivadomed/loader/__pycache__/
 ivadomed/FiLM/__pycache__/
+ivadomed/object_detection/__pycache__/
+ivadomed/scripts/__pycache__/
 dev/.bin/
 dev/__pycache__/
 testing/__pycache__/
 docs/build
+
+# Pycharm stuff
+.idea
+

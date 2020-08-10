@@ -1,94 +1,134 @@
 {
-	"command": "eval",
-	"gpu": 1,
-        "target_suffix": "_lesion-manual",
-        "roi_suffix": "_seg-manual",
-	"bids_path": "../duke/sct_testing/large/",
-        "random_seed": 1313,
-        "contrast_train_validation": ["acq-ax00012_T2w", "acq-axtop00100_T2w", "acq-axtsp_T2w", "acq-c4c7_T2star", "acq-axmid00100_T2w", "acq-axlow_T2w", "acq-sup_T2w", "acq-ax_T2star", "acq-inf_T2star", "acq-ax_T2w", "acq-axcsp_T2w", "acq-c1c3_T2star", "T2star", "acq-axtop_T2w", "acq-axbottom_T2w", "acq-ax00014_T2w", "T2w", "acq-sup_T2star", "acq-axmid00005_T2w", "acq-inf_T2w"],
-        "contrast_balance": {},
-	"contrast_test": ["acq-ax00012_T2w", "acq-axtop00100_T2w", "acq-axtsp_T2w", "acq-c4c7_T2star", "acq-axmid00100_T2w", "acq-axlow_T2w", "acq-sup_T2w", "acq-ax_T2star", "acq-inf_T2star", "acq-ax_T2w", "acq-axcsp_T2w", "acq-c1c3_T2star", "T2star", "acq-axtop_T2w", "acq-axbottom_T2w", "acq-ax00014_T2w", "T2w", "acq-sup_T2star", "acq-axmid00005_T2w", "acq-inf_T2w"],
-        "center_test": [],
-        "retrain_model": "log_lesionAx/best_model.pt",
-        "out_channel": 1,
-        "depth": 2,
-        "missing_modality": false,
-        "batch_size": 32,
-        "dropout_rate": 0.3,
-        "batch_norm_momentum": 0.1,
-        "num_epochs": 20,
-        "initial_lr": 0.001,
-        "lr_scheduler": {"name": "CyclicLR", "base_lr": 0.0001, "max_lr": 0.001},
-        "loss": {"name": "dice"},
-        "log_directory": "log_lesionAx_retrain",
-        "film_layers": [0, 0, 0, 0, 0, 0, 0, 0],
-	"attention_unet": false,
-	"mixup_bool": false,
-	"mixup_alpha": 2,
-	"metadata": null,
-	"multichannel": false,
-	"slice_axis": "axial",
-	"split_method": "per_patient",
-	"train_fraction": 0.6,
-	"test_fraction": 0.2,
-        "balance_samples": false,
-	"slice_filter": {"filter_empty_mask": false, "filter_empty_input": true},
-        "slice_filter_roi": 10,
-	"uncertainty": {"epistemic": true, "aleatoric": false, "n_it": 10},
-	"unet_3D": false,
-	"binarize_prediction": false,
-	"early_stopping_patience": 20,
-	"early_stopping_epsilon": 0.1,
-        "eval_params": {
-            "targetSize": {"unit": "vox", "thr": [20, 100]},
-            "removeSmall": {"unit": "vox", "thr": 3},
-            "overlap": {"unit": "vox", "thr": 3}
-            },
-	"transformation_training": {
-		"Resample": {
-			"wspace": 0.75,
-        		"hspace": 0.75
-			},
-                "ROICrop": {
-                        "size": [48, 48]
-			},
-		"ElasticTransform": {
-			"alpha_range": [28.0, 30.0],
-			"sigma_range":  [3.5, 4.5],
-			"p": 0.1
-			},
-		"RandomAffine": {
-			"degrees": 4.6,
-			"translate": [0.03, 0.03],
-			"scale": [0.98, 1.02]
-			},
-		"NumpyToTensor": {},
-		"NormalizeInstance": {"applied_to": ["im"]}
-		},
-	"transformation_validation": {
-		"Resample": {
-			"wspace": 0.75,
-			"hspace": 0.75
-			},
-		"ROICrop": {
-			"size": [48, 48]
-			},
-		"NumpyToTensor": {},
-		"NormalizeInstance": {"applied_to": ["im"]}
-		},
-        "transformation_testing": {
-                "Resample": {
-                        "wspace": 0.75,
-                        "hspace": 0.75
-                        },
-                "ROICrop": {
-                        "size": [48, 48]
-                        },
-                "RandomRotation": {
-                        "degrees": 30
-                        },
-                "NumpyToTensor": {},
-                "NormalizeInstance": {"applied_to": ["im"]}
-                },
-        "debugging": false
+  "command": "eval",
+  "gpu": 1,
+  "log_directory": "testing_script",
+  "debugging": false,
+  "object_detection_params": {
+    "object_detection_path": null
+  },
+  "loader_parameters": {
+    "target_suffix": "_lesion-manual",
+    "roi_suffix": "_seg-manual",
+    "bids_path": "../duke/sct_testing/large/",
+    "roi_params": {
+      "suffix": null,
+      "slice_filter_roi": null
+    },
+    "contrast_params": {
+      "random_seed": 1313,
+      "training_validation": [
+        "T2star",
+        "T2w",
+        "T1w"
+      ],
+      "balance": {},
+      "testing": [
+        "T2star",
+        "T2w",
+        "T1w"
+      ],
+      "center_test": []
+    },
+    "slice_filter_params": {
+      "filter_empty_mask": false,
+      "filter_empty_input": true
+    },
+    "slice_axis": "axial",
+    "split_method": "per_patient",
+    "multichannel": false,
+    "soft_input": false
+  },
+  "split_dataset": {
+    "fname_split": null,
+    "random_seed": 1313,
+    "method": "per_patient",
+    "train_fraction": 0.6,
+    "test_fraction": 0.2
+  },
+  "training_parameters": {
+    "batch_size": 32,
+    "loss": {
+      "name": "DiceLoss"
+    },
+    "training_time": {
+      "num_epochs": 1,
+      "early_stopping_patience": 50,
+      "early_stopping_epsilon": 0.001
+    },
+    "scheduler": {
+      "initial_lr": 0.001,
+      "lr_scheduler": {
+        "name": "CosineAnnealingLR",
+        "base_lr": 1e-5,
+        "max_lr": 1e-2
+      }
+    },
+    "balance_samples": false,
+    "mixup_alpha": 2,
+    "transfer_learning": {
+      "retrain_model": "log_lesionAx/best_model.pt",
+      "retrain_fraction": 1.0
+    }
+  },
+  "default_model": {
+    "name": "Unet",
+    "dropout_rate": 0.3,
+    "bn_momentum": 0.1,
+    "out_channel": 1,
+    "depth": 2
+  },
+  "FiLMedUnet": {
+    "applied": false,
+    "metadata": "contrasts",
+    "film_layers": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+  },
+  "missing_modality": false,
+  "attention_unet": false,
+  "mixup_bool": false,
+  "metadata": null,
+  "testing_parameters": {
+    "binarize_prediction": false,
+    "uncertainty": {
+      "epistemic": true,
+      "aleatoric": true,
+      "n_it": 3
+    }
+  },
+  "evaluation_parameters": {
+    "targetSize": {
+      "unit": "vox",
+      "thr": [
+        20,
+        100
+      ]
+    },
+    "removeSmall": {
+      "unit": "vox",
+      "thr": 3
+    },
+    "overlap": {
+      "unit": "vox",
+      "thr": 3
+    }
+  },
+  "transformation": {
+    "Resample": {
+      "wspace": 0.75,
+      "hspace": 0.75
+    },
+    "ElasticTransform": {
+      "alpha_range": [28.0, 30.0],
+      "sigma_range": [3.5, 4.5],
+      "p": 0.1
+    },
+    "RandomAffine": {
+      "degrees": 4.6,
+      "translate": [0.03, 0.03],
+      "scale": [0.98, 1]
+    },
+    "NumpyToTensor": {},
+    "NormalizeInstance": {
+      "applied_to": ["im"]
+    }
+  }
 }

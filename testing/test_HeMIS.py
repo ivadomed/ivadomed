@@ -33,16 +33,20 @@ def test_HeMIS(p=0.0001):
         "Resample":
             {
                 "wspace": 0.75,
-                "hspace": 0.75
+                "hspace": 0.75,
+                "preprocessing": True,
             },
         "CenterCrop":
             {
-                "size": [48, 48]
+                "size": [48, 48],
+                "preprocessing": True,
             },
         "NumpyToTensor": {}
     }
 
-    train_transform = imed_transforms.Compose(training_transform_dict)
+    transform_lst, _ = imed_transforms.prepare_transforms(training_transform_dict)
+
+    roi_params = {"suffix": "_seg-manual", "slice_filter_roi": None}
 
     train_lst = ['sub-test001']
     contrasts = ['T1w', 'T2w', 'T2star']
@@ -57,7 +61,7 @@ def test_HeMIS(p=0.0001):
             "out_channel": 1,
             "missing_probability": 0.00001,
             "missing_probability_growth": 0.9,
-            "modalities": ["T1w", "T2w"],
+            "contrasts": ["T1w", "T2w"],
             "ram": False,
             "hdf5_path": 'testing_data/mytestfile.hdf5',
             "csv_path": 'testing_data/hdf5.csv',
@@ -74,12 +78,12 @@ def test_HeMIS(p=0.0001):
                                           contrast_params=contrast_params,
                                           target_suffix=["_lesion-manual"],
                                           slice_axis=2,
-                                          transform=train_transform,
+                                          transform=transform_lst,
                                           metadata_choice=False,
                                           dim=2,
                                           slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
                                                                                  filter_empty_mask=True),
-                                          roi_suffix="_seg-manual")
+                                          roi_params=roi_params)
 
     dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
     print("[INFO]: Dataset RAM status:")
@@ -95,7 +99,7 @@ def test_HeMIS(p=0.0001):
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=1)
 
-    model = models.HeMISUnet(modalities=contrasts,
+    model = models.HeMISUnet(contrasts=contrasts,
                              depth=3,
                              drop_rate=DROPOUT,
                              bn_momentum=BN)
@@ -138,7 +142,7 @@ def test_HeMIS(p=0.0001):
             print(batch["input_metadata"][0][0]["missing_mod"])
             missing_mod = imed_training.get_metadata(batch["input_metadata"], model_params)
 
-            print("Number of missing modalities = {}."
+            print("Number of missing contrasts = {}."
                   .format(len(input_samples) * len(input_samples[0]) - missing_mod.sum()))
             print("len input = {}".format(len(input_samples)))
             print("Batch = {}, {}".format(input_samples[0].shape, gt_samples[0].shape))

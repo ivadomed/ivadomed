@@ -2,6 +2,7 @@
     "command": "train",
     "gpu": 6,
     "log_directory": "sct_testing_lesion_ax",
+    "model_name": "seg_lesion_t2_t2star",
     "debugging": false,
     "loader_parameters": {
         "bids_path": "../duke/sct_testing/large/",
@@ -22,7 +23,8 @@
              "classifier_path": null
         },
         "slice_axis": "axial",
-        "multichannel": false
+        "multichannel": false,
+        "soft_gt": false
     },
     "split_dataset": {
         "fname_split": null,
@@ -64,7 +66,7 @@
         "depth": 2
     },
     "testing_parameters": {
-        "binarize_prediction": true,
+        "binarize_prediction": -1,
         "uncertainty": {
             "epistemic": false,
             "aleatoric": false,
@@ -88,7 +90,7 @@
             "size": [48, 48],
             "preprocessing": true
         },
-        "RandomTranslation": {
+        "RandomAffine": {
             "translate": [0.03, 0.03],
             "applied_to": ["im", "gt"],
             "dataset_type": ["training"]

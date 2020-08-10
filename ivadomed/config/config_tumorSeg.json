@@ -2,12 +2,17 @@
     "command": "train",
     "gpu": 0,
     "log_directory": "tumor_segmentation",
+    "model_name": "seg_tumor_t2",
     "debugging": true,
+    "object_detection_params": {
+        "object_detection_path": null,
+        "safety_factor": [1.1, 1.1, 1.0]
+    },
     "loader_parameters": {
         "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
         "target_suffix": ["_seg-tumor"],
         "roi_params": {
-            "suffix": "_seg-tumor",
+            "suffix": null,
             "slice_filter_roi": null
         },
         "contrast_params": {
@@ -20,7 +25,8 @@
             "filter_empty_input": true
         },
         "slice_axis": "sagittal",
-        "multichannel": false
+        "multichannel": false,
+        "soft_gt": false
     },
     "split_dataset": {
         "fname_split": null,
@@ -31,7 +37,7 @@
         "test_fraction": 0.2
     },
     "training_parameters": {
-        "batch_size": 2,
+        "batch_size": 1,
         "loss": {
             "name": "DiceLoss"
         },
@@ -64,12 +70,12 @@
     "UNet3D": {
         "applied": true,
         "length_3D": [512, 256, 16],
-        "padding_3D": 0,
+        "stride_3D": [512, 256, 16],
         "attention": false,
         "n_filters": 8
     },
     "testing_parameters": {
-        "binarize_prediction": true,
+        "binarize_prediction": -1,
         "uncertainty": {
             "epistemic": false,
             "aleatoric": false,
@@ -89,13 +95,11 @@
             "dspace": 2,
             "preprocessing": true
         },
-        "CenterCrop": {
-            "size": [512, 256, 16],
-            "preprocessing": true
-        },
-        "RandomTranslation": {
+        "CenterCrop": {"size":  [512, 256, 16], "preprocessing": true},
+        "RandomAffine": {
+            "degrees": 5,
+            "scale": [0.1, 0.1, 0.1],
             "translate": [0.03, 0.03],
-            "applied_to": ["im", "gt"],
             "dataset_type": ["training"]
         },
       "NumpyToTensor": {},

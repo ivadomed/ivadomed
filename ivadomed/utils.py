@@ -1,46 +1,49 @@
 import json
 import os
 
-import onnxruntime
+import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.animation as anim
 import nibabel as nib
 import numpy as np
+import onnxruntime
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.utils as vutils
+from ivadomed import models as imed_models
+from ivadomed import postprocessing as imed_postpro
+from ivadomed import transforms as imed_transforms
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed.object_detection import utils as imed_obj_detect
 from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
-from ivadomed import models as imed_models
-from ivadomed import postprocessing as imed_postpro
-from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loaded_utils, loader as imed_loader
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
                 discard_noise=True):
-    """Convert the NN predictions as nibabel object.
+    """Save the network predictions as nibabel object.
 
-    Based on the header of fname_ref image, it creates a nibabel object from the NN predictions (data_lst),
-    given the slice indexes (z_lst) along slice_axis.
+    Based on the header of `fname_ref` image, it creates a nibabel object from the Network predictions (`data_lst`).
 
     Args:
-        data_lst (list of np arrays): predictions, either 2D slices either 3D patches.
-        z_lst (list of ints): slice indexes to reconstruct a 3D volume.
-        fname_ref (string): Filename of the input image: its header is copied to the output nibabel object.
-        fname_out (string): If not None, then the generated nibabel object is saved with this filename.
+        data_lst (list of np arrays): Predictions, either 2D slices either 3D patches.
+        z_lst (list of ints): Slice indexes to reconstruct a 3D volume for 2D slices.
+        fname_ref (str): Filename of the input image: its header is copied to the output nibabel object.
+        fname_out (str): If not None, then the generated nibabel object is saved with this filename.
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
-        debug (bool): Display additional info used for debugging.
-        kernel_dim (string): Indicates the number of dimensions of the extracted patches. Choices: '2d', '3d'.
-        bin_thr (float): If positive, then the segmentation is binarised with this given threshold.
-    Returns:
-        NibabelObject: Object containing the NN prediction.
+        debug (bool): If True, extended verbosity and intermediate outputs.
+        kernel_dim (str): Indicates whether the predictions were done on 2D or 3D patches. Choices: '2d', '3d'.
+        bin_thr (float): If positive, then the segmentation is binarized with this given threshold. Otherwise, a soft
+            segmentation is output.
+        discard_noise (bool): If True, predictions that are lower than 0.01 are set to zero.
 
+    Returns:
+        NibabelObject: Object containing the Network prediction.
     """
     # Load reference nibabel object
     nib_ref = nib.load(fname_ref)
@@ -61,33 +64,25 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
                 print("Shape element lst {}".format(arr.shape))
 
         # create data and stack on depth dimension
-        arr = np.stack(tmp_lst, axis=-1)
-
-        # If only one channel then return 3D arr
-        if arr.shape[0] == 1:
-            arr = arr[0, :]
-
-        # Reorient data
-        arr_pred_ref_space = reorient_image(arr, slice_axis, nib_ref, nib_ref_can).astype('float32')
+        arr_pred_ref_space = np.stack(tmp_lst, axis=-1)
 
     else:
         arr_pred_ref_space = data_lst[0]
-        n_channel = arr_pred_ref_space.shape[0]
-        oriented_volumes = []
-        if len(arr_pred_ref_space.shape) == 4:
-            for i in range(n_channel):
-                oriented_volumes.append(reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
-            # transpose to locate the channel dimension at the end to properly see image on viewer
-            arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
 
-    # If only one channel then return 3D arr
-    if arr_pred_ref_space.shape[0] == 1:
-        arr_pred_ref_space = arr_pred_ref_space[0, :]
+    n_channel = arr_pred_ref_space.shape[0]
+    oriented_volumes = []
+    if len(arr_pred_ref_space.shape) == 4:
+        for i in range(n_channel):
+            oriented_volumes.append(reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
+        # transpose to locate the channel dimension at the end to properly see image on viewer
+        arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
+    else:
+        arr_pred_ref_space = reorient_image(arr_pred_ref_space, slice_axis, nib_ref, nib_ref_can)
 
     if bin_thr >= 0:
         arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)
     elif discard_noise:  # discard noise
-        arr_pred_ref_space[arr_pred_ref_space <= 1e-1] = 0
+        arr_pred_ref_space[arr_pred_ref_space <= 1e-2] = 0
 
     # create nibabel object
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
@@ -100,6 +95,14 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
 
 def run_uncertainty(ifolder):
+    """Compute uncertainty from model prediction.
+
+    This function loops across the model predictions (nifti masks) and estimates the uncertainty from the Monte Carlo
+    samples. Both voxel-wise and structure-wise uncertainty are estimates.
+
+    Args:
+        ifolder (str): Folder containing the Monte Carlo samples.
+    """
     # list subj_acq prefixes
     subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(ifolder)
                     if f.endswith('.nii.gz') and '_pred' in f]
@@ -129,20 +132,26 @@ def run_uncertainty(ifolder):
         fname_unc_vox = os.path.join(ifolder, subj_acq + '_unc-vox.nii.gz')
         if not os.path.isfile(fname_unc_vox):
             # compute voxel-wise uncertainty map
-            voxelWise_uncertainty(fname_pred_lst, fname_unc_vox)
+            voxelwise_uncertainty(fname_pred_lst, fname_unc_vox)
 
         fname_unc_struct = os.path.join(ifolder, subj_acq + '_unc.nii.gz')
         if not os.path.isfile(os.path.join(ifolder, subj_acq + '_unc-cv.nii.gz')):
             # compute structure-wise uncertainty
-            structureWise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
+            structurewise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
 
 
 def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
-    """
-    Combine predictions from Monte Carlo simulations
-    by applying:
-        (1) a mean (saved as fname_prob)
-        (2) then argmax operation (saved as fname_hard).
+    """Combine predictions from Monte Carlo simulations.
+
+    Combine predictions from Monte Carlo simulations and save the resulting as:
+        (1) `fname_prob`, a soft segmentation obtained by averaging the Monte Carlo samples.
+        (2) `fname_hard`, a hard segmentation obtained thresholding with `thr`.
+
+    Args:
+        fname_lst (list of str): List of the Monte Carlo samples.
+        fname_hard (str): Filename for the output hard segmentation.
+        fname_prob (str): Filename for the output soft segmentation.
+        thr (float): Between 0 and 1. Used to threshold the soft segmentation and generate the hard segmentation.
     """
     # collect all MC simulations
     data_lst = []
@@ -164,10 +173,15 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
     nib.save(nib_hard, fname_hard)
 
 
-def voxelWise_uncertainty(fname_lst, fname_out, eps=1e-5):
-    """
-    Voxel-wise uncertainty is estimated as entropy over all
-    N MC probability maps, and saved in fname_out.
+def voxelwise_uncertainty(fname_lst, fname_out, eps=1e-5):
+    """Estimate voxel wise uncertainty.
+
+    Voxel-wise uncertainty is estimated as entropy over all N MC probability maps, and saved in `fname_out`.
+
+    Args:
+        fname_lst (list of str): List of the Monte Carlo samples.
+        fname_out (str): Output filename.
+        eps (float): Epsilon value to deal with np.log(0).
     """
     # collect all MC simulations
     data_lst = []
@@ -185,13 +199,22 @@ def voxelWise_uncertainty(fname_lst, fname_out, eps=1e-5):
     nib.save(nib_unc, fname_out)
 
 
-def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
-    """
-    Structure-wise uncertainty from N MC probability maps (fname_lst)
-    and saved in fname_out with the following suffixes:
-       - '-cv.nii.gz': coefficient of variation
-       - '-iou.nii.gz': intersection over union
-       - '-avgUnc.nii.gz': average voxel-wise uncertainty within the structure.
+def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
+    """Estimate structure wise uncertainty.
+
+    Structure-wise uncertainty from N MC probability maps (`fname_lst`) and saved in `fname_out` with the following
+    suffixes:
+
+        * '-cv.nii.gz': coefficient of variation
+        * '-iou.nii.gz': intersection over union
+        * '-avgUnc.nii.gz': average voxel-wise uncertainty within the structure.
+
+    Args:
+        fname_lst (list of str): List of the Monte Carlo samples.
+        fname_hard (str): Filename of the hard segmentation, which is used to compute the `avgUnc` by providing a mask
+            of the structures.
+        fname_unc_vox (str): Filename of the voxel-wise uncertainty, which is used to compute the `avgUnc`.
+        fname_out (str): Output filename.
     """
     # load hard segmentation and label it
     nib_hard = nib.load(fname_hard)
@@ -279,15 +302,19 @@ def structureWise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
 def mixup(data, targets, alpha, debugging=False, ofolder=None):
     """Compute the mixup data.
 
+    .. seealso::
+        Zhang, Hongyi, et al. "mixup: Beyond empirical risk minimization."
+        arXiv preprint arXiv:1710.09412 (2017).
+
     Args:
-        data (Tensor):
-        targets (Tensor):
-        alpha (float): MixUp parameter
-        debugging (Bool): If True, then samples of mixup are saved as png files
-        log_directory (string): If debugging, Output folder where "mixup" folder is created.
+        data (Tensor): Input images.
+        targets (Tensor): Input masks.
+        alpha (float): MixUp parameter.
+        debugging (Bool): If True, then samples of mixup are saved as png files.
+        ofolder (str): If debugging, output folder where "mixup" folder is created and samples are saved.
 
     Returns:
-        Tensor, Tensor: Mixed data
+        Tensor, Tensor: Mixed image, Mixed mask.
     """
     indices = torch.randperm(data.size(0))
     data2 = data[indices]
@@ -296,6 +323,7 @@ def mixup(data, targets, alpha, debugging=False, ofolder=None):
     lambda_ = np.random.beta(alpha, alpha)
     lambda_ = max(lambda_, 1 - lambda_)  # ensure lambda_ >= 0.5
     lambda_tensor = torch.FloatTensor([lambda_])
+
 
     data = data * lambda_tensor + data2 * (1 - lambda_tensor)
     targets = targets * lambda_tensor + targets2 * (1 - lambda_tensor)
@@ -310,20 +338,19 @@ def save_mixup_sample(ofolder, input_data, labeled_data, lambda_tensor):
     """Save mixup samples as png files in a "mixup" folder.
 
     Args:
-        ofolder (string): Output folder where "mixup" folder is created.
-        input_data (Tensor):
-        labeled_data (Tensor):
+        ofolder (str): Output folder where "mixup" folder is created and samples are saved.
+        input_data (Tensor): Input image.
+        labeled_data (Tensor): Input masks.
         lambda_tensor (Tensor):
-    Returns:
     """
-    #Mixup folder
+    # Mixup folder
     mixup_folder = os.path.join(ofolder, 'mixup')
     if not os.path.isdir(mixup_folder):
         os.makedirs(mixup_folder)
     # Random sample
     random_idx = np.random.randint(0, input_data.size()[0])
     # Output fname
-    ofname =  str(lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png'
+    ofname = str(lambda_tensor.data.numpy()[0]) + '_' + str(random_idx).zfill(3) + '.png'
     ofname = os.path.join(mixup_folder, ofname)
     # Tensor to Numpy
     x = input_data.data.numpy()[random_idx, 0, :, :]
@@ -340,27 +367,31 @@ def save_mixup_sample(ofolder, input_data, labeled_data, lambda_tensor):
     plt.close()
 
 
-def segment_volume(folder_model, fname_image, fname_roi=None):
+def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
     """Segment an image.
 
-    Segment an image (fname_image) using a pre-trained model (folder_model). If provided, a region of interest (fname_roi)
-    is used to crop the image prior to segment it.
+    Segment an image (`fname_image`) using a pre-trained model (`folder_model`). If provided, a region of interest
+    (`fname_roi`) is used to crop the image prior to segment it.
 
     Args:
-        folder_model (string): foldername which contains
+        folder_model (str): foldername which contains
             (1) the model ('folder_model/folder_model.pt') to use
             (2) its configuration file ('folder_model/folder_model.json') used for the training,
-                see https://github.com/neuropoly/ivado-medical-imaging/wiki/configuration-file
-        fname_image (string): image filename (e.g. .nii.gz) to segment.
-        fname_roi (string): Binary image filename (e.g. .nii.gz) defining a region of interest,
+            see https://github.com/neuropoly/ivadomed/wiki/configuration-file
+        fname_image (str): image filename (e.g. .nii.gz) to segment.
+        fname_prior (str): Image filename (e.g. .nii.gz) containing processing information (e.i. spinal cord
+            segmentation, spinal location or MS lesion classification)
+
             e.g. spinal cord centerline, used to crop the image prior to segment it if provided.
             The segmentation is not performed on the slices that are empty in this image.
+        gpu_number (int): Number representing gpu number if available.
+
     Returns:
         nibabelObject: Object containing the soft segmentation.
-
     """
     # Define device
-    device = torch.device("cpu")
+    cuda_available = torch.cuda.is_available()
+    device = torch.device("cpu") if not cuda_available else torch.device("cuda:" + str(gpu_number))
 
     # Check if model folder exists and get filenames
     fname_model, fname_model_metadata = imed_models.get_model_filenames(folder_model)
@@ -369,47 +400,53 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     with open(fname_model_metadata, "r") as fhandle:
         context = json.load(fhandle)
 
-    # TRANSFORMATIONS
-    # If ROI is not provided then force center cropping
-    if fname_roi is None and 'ROICrop' in context["transformation"].keys():
-        print("\nWARNING: fname_roi has not been specified, then a cropping around the center of the image is performed"
-              " instead of a cropping around a Region of Interest.")
-        context["transformation"] = dict((key, value) if key != 'ROICrop'
-                                                    else ('CenterCrop', value)
-                                                    for (key, value) in context["transformation"].items())
+    # LOADER
+    loader_params = context["loader_parameters"]
+    slice_axis = AXIS_DCT[loader_params['slice_axis']]
+    metadata = {}
+    fname_roi = None
+    if fname_prior is not None:
+        if 'roi_params' in loader_params and loader_params['roi_params']['suffix'] is not None:
+            fname_roi = fname_prior
+        # TRANSFORMATIONS
+        # If ROI is not provided then force center cropping
+        if fname_roi is None and 'ROICrop' in context["transformation"].keys():
+            print(
+                "\nWARNING: fname_roi has not been specified, then a cropping around the center of the image is performed"
+                " instead of a cropping around a Region of Interest.")
+            context["transformation"] = dict((key, value) if key != 'ROICrop'
+                                             else ('CenterCrop', value)
+                                             for (key, value) in context["transformation"].items())
+
+        if 'object_detection_params' in context and \
+                context['object_detection_params']['object_detection_path'] is not None:
+            imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis)
 
     # Compose transforms
     _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context["transformation"])
-    do_transforms = imed_transforms.Compose(transform_test_params, requires_undo=True)
-    # Undo Transforms
-    undo_transforms = imed_transforms.UndoCompose(do_transforms)
 
-    # LOADER
-    loader_params = context["loader_parameters"]
+    tranform_lst, undo_transforms = imed_transforms.prepare_transforms(transform_test_params)
 
     # Force filter_empty_mask to False if fname_roi = None
     if fname_roi is None and 'filter_empty_mask' in loader_params["slice_filter_params"]:
         print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
-    filename_pairs = [([fname_image], None, [fname_roi], [{}])]
+    filename_pairs = [([fname_image], None, fname_roi, [metadata])]
+
     kernel_3D = bool('UNet3D' in context and context['UNet3D']['applied'])
     if kernel_3D:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
-                                                           transform=do_transforms,
+                                                           transform=tranform_lst,
                                                            length=context["UNet3D"]["length_3D"],
-                                                           padding=context["UNet3D"]["padding_3D"])
+                                                           stride=context["UNet3D"]["stride_3D"])
     else:
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
-                                                  slice_axis=AXIS_DCT[loader_params['slice_axis']],
+                                                  slice_axis=slice_axis,
                                                   cache=True,
-                                                  transform=do_transforms,
+                                                  transform=tranform_lst,
                                                   slice_filter_fn=SliceFilter(**loader_params["slice_filter_params"]))
         ds.load_filenames()
-
-    # If fname_roi provided, then remove slices without ROI
-    if fname_roi is not None:
-        ds = imed_loaded_utils.filter_roi(ds, nb_nonzero_thr=loader_params["roi_params"]["slice_filter_roi"])
 
     if kernel_3D:
         print("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
@@ -420,7 +457,7 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["training_parameters"]["batch_size"],
                              shuffle=False, pin_memory=True,
-                             collate_fn=imed_loaded_utils.imed_collate,
+                             collate_fn=imed_loader_utils.imed_collate,
                              num_workers=0)
 
     # MODEL
@@ -431,10 +468,12 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
     # Loop across batches
     preds_list, slice_idx_list = [], []
+    last_sample_bool, volume, weight_matrix = False, None, None
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
-            img = batch['input']
+            img = cuda(batch['input'], cuda_available=cuda_available)
             preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
+            preds = preds.cpu()
 
         # Set datatype to gt since prediction should be processed the same way as gt
         for modality in batch['input_metadata']:
@@ -442,23 +481,32 @@ def segment_volume(folder_model, fname_image, fname_roi=None):
 
         # Reconstruct 3D object
         for i_slice in range(len(preds)):
-            # undo transformations
-            preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
-                                                         batch["input_metadata"][i_slice],
-                                                         data_type='gt')
+            if "bounding_box" in batch['input_metadata'][i_slice][0]:
+                imed_obj_detect.adjust_undo_transforms(undo_transforms.transforms, batch, i_slice)
 
-            # Add new segmented slice to preds_list
-            preds_list.append(np.array(preds_i_undo))
-            # Store the slice index of preds_i_undo in the original 3D image
-            slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
+            if kernel_3D:
+                batch['gt_metadata'] = batch['input_metadata']
+                preds_undo, metadata, last_sample_bool, volume, weight_matrix = \
+                    volume_reconstruction(batch, preds, undo_transforms, i_slice, volume, weight_matrix)
+                preds_list = [np.array(preds_undo)]
+            else:
+                # undo transformations
+                preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
+                                                             batch["input_metadata"][i_slice],
+                                                             data_type='gt')
+
+                # Add new segmented slice to preds_list
+                preds_list.append(np.array(preds_i_undo))
+                # Store the slice index of preds_i_undo in the original 3D image
+                slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
 
             # If last batch and last sample of this batch, then reconstruct 3D object
-            if i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1:
+            if (i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1) or last_sample_bool:
                 pred_nib = pred_to_nib(data_lst=preds_list,
                                        fname_ref=fname_image,
                                        fname_out=None,
                                        z_lst=slice_idx_list,
-                                       slice_axis=AXIS_DCT[loader_params['slice_axis']],
+                                       slice_axis=slice_axis,
                                        kernel_dim='3d' if kernel_3D else '2d',
                                        debug=False,
                                        bin_thr=-1)
@@ -470,9 +518,9 @@ def cuda(input_var, cuda_available=True, non_blocking=False):
     """Passes input_var to GPU.
 
     Args:
-        input_var (Tensor): either a tensor or a list of tensors
-        cuda_available (Bool): If false, then return identity
-        non_blocking (Bool):
+        input_var (Tensor): either a tensor or a list of tensors.
+        cuda_available (bool): If False, then return identity
+        non_blocking (bool):
 
     Returns:
         Tensor
@@ -487,9 +535,23 @@ def cuda(input_var, cuda_available=True, non_blocking=False):
 
 
 class HookBasedFeatureExtractor(nn.Module):
-    """
-    This function extracts feature maps from given layer.
+    """This function extracts feature maps from given layer. Helpful to observe where the attention of the network is
+    focused.
+
     https://github.com/ozan-oktay/Attention-Gated-Networks/tree/a96edb72622274f6705097d70cfaa7f2bf818a5a
+
+    Args:
+        submodule (nn.Module): Trained model.
+        layername (str): Name of the layer where features need to be extracted (layer of interest).
+        upscale (bool): If True output is rescaled to initial size.
+
+    Attributes:
+        submodule (nn.Module): Trained model.
+        layername (str):  Name of the layer where features need to be extracted (layer of interest).
+        outputs_size (list): List of output sizes.
+        outputs (list): List of outputs containing the features of the given layer.
+        inputs (list): List of inputs.
+        inputs_size (list): List of input sizes.
     """
 
     def __init__(self, submodule, layername, upscale=False):
@@ -504,7 +566,7 @@ class HookBasedFeatureExtractor(nn.Module):
         self.inputs_size = None
         self.upscale = upscale
 
-    def get_input_array(self, m, i, o):
+    def get_input_array(self, i):
         if isinstance(i, tuple):
             self.inputs = [i[index].data.clone() for index in range(len(i))]
             self.inputs_size = [input.size() for input in self.inputs]
@@ -513,7 +575,7 @@ class HookBasedFeatureExtractor(nn.Module):
             self.inputs_size = self.input.size()
         print('Input Array Size: ', self.inputs_size)
 
-    def get_output_array(self, m, i, o):
+    def get_output_array(self, o):
         if isinstance(o, tuple):
             self.outputs = [o[index].data.clone() for index in range(len(o))]
             self.outputs_size = [output.size() for output in self.outputs]
@@ -546,8 +608,18 @@ class HookBasedFeatureExtractor(nn.Module):
 
 
 def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
+    """Reorient an image to match a reference image orientation.
+
+    It reorients a array to a given orientation and convert it to a nibabel object using the reference nibabel header.
+
+    Args:
+        arr (ndarray): Input array, array to re orient.
+        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
+        nib_ref (nibabel): Reference nibabel object, whose header is used.
+        nib_ref_canonical (nibabel): `nib_ref` that has been reoriented to canonical orientation (RAS).
+    """
     # Orient image in RAS according to slice axis
-    arr_ras = imed_loaded_utils.orient_img_ras(arr, slice_axis)
+    arr_ras = imed_loader_utils.orient_img_ras(arr, slice_axis)
 
     # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
     ref_orientation = nib.orientations.io_orientation(nib_ref.affine)
@@ -559,6 +631,16 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
 
 
 def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_axis):
+    """Save model feature maps.
+
+    Args:
+        batch (dict):
+        layer_name (str):
+        log_directory (str): Output folder.
+        model (nn.Module): Network.
+        test_input (Tensor):
+        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
+    """
     if not os.path.exists(os.path.join(log_directory, layer_name)):
         os.mkdir(os.path.join(log_directory, layer_name))
 
@@ -596,13 +678,24 @@ def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_
 
 
 def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axis):
-    rdict = {}
+    """Saves labels encoded in RGB in specified output file.
+
+    Args:
+        gt_data (ndarray): Input image with dimensions (Number of classes, height, width, depth).
+        binarize (bool): If True binarizes gt_data to 0 and 1 values, else soft values are kept.
+        gt_filename (str): GT path and filename.
+        output_filename (str): Name of the output file where the colored labels are saved.
+        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+
+    Returns:
+        ndarray: RGB labels.
+    """
     n_class, h, w, d = gt_data.shape
     labels = range(n_class)
     # Generate color labels
     multi_labeled_pred = np.zeros((h, w, d, 3))
     if binarize:
-        rdict['gt'] = imed_postpro.threshold_predictions(gt_data)
+        gt_data = imed_postpro.threshold_predictions(gt_data)
 
     # Keep always the same color labels
     np.random.seed(6)
@@ -623,6 +716,14 @@ def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axi
 
 
 def convert_labels_to_RGB(grid_img):
+    """Converts 2D images to RGB encoded images for display in tensorboard.
+
+    Args:
+        grid_img (Tensor): GT or prediction tensor with dimensions (batch size, number of classes, height, width).
+
+    Returns:
+        tensor: RGB image with shape (height, width, 3).
+    """
     # Keep always the same color labels
     batch_size, n_class, h, w = grid_img.shape
     rgb_img = torch.zeros((batch_size, 3, h, w))
@@ -639,6 +740,20 @@ def convert_labels_to_RGB(grid_img):
 
 
 def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples, preds, is_three_dim=False):
+    """Saves input images, gt and predictions in tensorboard.
+
+    Args:
+        writer (SummaryWriter): Tensorboard's summary writer.
+        epoch (int): Epoch number.
+        dataset_type (str): Choice between Training or Validation.
+        input_samples (Tensor): Input images with shape (batch size, number of channel, height, width, depth) if 3D else
+            (batch size, number of channel, height, width)
+        gt_samples (Tensor): GT images with shape (batch size, number of channel, height, width, depth) if 3D else
+            (batch size, number of channel, height, width)
+        preds (Tensor): Model's prediction with shape (batch size, number of channel, height, width, depth) if 3D else
+            (batch size, number of channel, height, width)
+        is_three_dim (bool): True if 3D input, else False.
+    """
     if is_three_dim:
         # Take all images stacked on depth dimension
         num_2d_img = input_samples.shape[-1]
@@ -685,6 +800,18 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
 
 
 class SliceFilter(object):
+    """Filter 2D slices from dataset.
+
+    If a sample does not meet certain conditions, it is discarded from the dataset.
+
+    Args:
+        filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
+        filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
+
+    Attributes:
+        filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
+        filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
+    """
     def __init__(self, filter_empty_mask=True,
                  filter_empty_input=True,
                  filter_classification=False, classifier_path=None):
@@ -714,6 +841,14 @@ class SliceFilter(object):
 
 
 def unstack_tensors(sample):
+    """Unstack tensors.
+
+    Args:
+        sample (Tensor):
+
+    Returns:
+        list: list of Tensors.
+    """
     list_tensor = []
     for i in range(sample.shape[1]):
         list_tensor.append(sample[:, i, ].unsqueeze(1))
@@ -721,6 +856,13 @@ def unstack_tensors(sample):
 
 
 def save_onnx_model(model, inputs, model_path):
+    """Convert PyTorch model to ONNX model and save it as `model_path`.
+
+    Args:
+        model (nn.Module): PyTorch model.
+        inputs (Tensor): Tensor, used to inform shape and axes.
+        model_path (str): Output filename for the ONNX model.
+    """
     model.eval()
     dynamic_axes = {0: 'batch', 1: 'num_channels', 2: 'height', 3: 'width', 4: 'depth'}
     if len(inputs.shape) == 4:
@@ -733,7 +875,16 @@ def save_onnx_model(model, inputs, model_path):
 
 
 def onnx_inference(model_path, inputs):
-    inputs = np.array(inputs)
+    """Run ONNX inference
+
+    Args:
+        model_path (str): Path to the ONNX model.
+        inputs (Tensor): Batch of input image.
+
+    Returns:
+        Tensor: Network output.
+    """
+    inputs = np.array(inputs.cpu())
     ort_session = onnxruntime.InferenceSession(model_path)
     ort_inputs = {ort_session.get_inputs()[0].name: inputs}
     ort_outs = ort_session.run(None, ort_inputs)
@@ -744,9 +895,10 @@ def define_device(gpu_id):
     """Define the device used for the process of interest.
 
     Args:
-        gpu_id (int): ID of the GPU
+        gpu_id (int): GPU ID.
+
     Returns:
-        Bool, device: True if cuda is available
+        Bool, device: True if cuda is available.
     """
     device = torch.device("cuda:" + str(gpu_id) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
@@ -765,9 +917,7 @@ def display_selected_model_spec(params):
     """Display in terminal the selected model and its parameters.
 
     Args:
-        params (dict): keys are param names and values are param values
-    Returns:
-        None
+        params (dict): Keys are param names and values are param values.
     """
     print('\nSelected architecture: {}, with the following parameters:'.format(params["name"]))
     for k in list(params.keys()):
@@ -780,10 +930,130 @@ def display_selected_transfoms(params, dataset_type):
 
     Args:
         params (dict):
-        dataset_list (list): e.g. ['testing'] or ['training', 'validation']
-    Returns:
-        None
+        dataset_type (list): e.g. ['testing'] or ['training', 'validation']
     """
     print('\nSelected transformations for the {} dataset:'.format(dataset_type))
     for k in list(params.keys()):
         print('\t{}: {}'.format(k, params[k]))
+
+
+def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="jet"):
+    """Utils tool to plot sample before and after transform, for debugging.
+
+    Args:
+        before (ndarray): Sample before transform.
+        after (ndarray): Sample after transform.
+        list_title (list of str): Sub titles of before and after, resp.
+        fname_out (str): Output filename where the plot is saved if provided.
+        cmap (str): Matplotlib colour map.
+    """
+    if len(list_title) == 0:
+        list_title = ['Sample before transform', 'Sample after transform']
+
+    plt.interactive(False)
+    plt.figure(figsize=(20, 10))
+
+    plt.subplot(1, 2, 1)
+    plt.axis("off")
+    plt.imshow(before, interpolation='nearest', cmap=cmap)
+    plt.title(list_title[0], fontsize=20)
+
+    plt.subplot(1, 2, 2)
+    plt.axis("off")
+    plt.imshow(after, interpolation='nearest', cmap=cmap)
+    plt.title(list_title[1], fontsize=20)
+
+    if fname_out:
+        plt.savefig(fname_out)
+    else:
+        matplotlib.use('TkAgg')
+        plt.show()
+
+
+def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, weight_matrix=None):
+    """
+    Reconstructs volume prediction from subvolumes used during training
+    Args:
+        batch (dict): Dictionary containing input, gt and metadata
+        pred (tensor): Subvolume prediction
+        undo_transforms (UndoCompose): Undo transforms so prediction match original image resolution and shap
+        smp_idx (int): Batch index
+        volume (tensor): Reconstructed volume
+        weight_matrix (tensor): Weights containing the number of predictions for each voxel
+
+    Returns:
+        tensor, dict, bool, tensor, tensor: undone subvolume, metadata, boolean representing if its the last sample to
+        process, reconstructed volume, weight matrix
+    """
+    x_min, x_max, y_min, y_max, z_min, z_max = batch['input_metadata'][smp_idx][0]['coord']
+    num_pred = pred[smp_idx].shape[0]
+
+    first_sample_bool = not any([x_min, y_min, z_min])
+    x, y, z = batch['input_metadata'][smp_idx][0]['index_shape']
+    if first_sample_bool:
+        volume = torch.zeros((num_pred, x, y, z))
+        weight_matrix = torch.zeros((num_pred, x, y, z))
+
+    last_sample_bool = x_max == x and y_max == y and z_max == z
+
+    # Average predictions
+    volume[:, x_min:x_max, y_min:y_max, z_min:z_max] += pred[smp_idx]
+    weight_matrix[:, x_min:x_max, y_min:y_max, z_min:z_max] += 1
+    if last_sample_bool:
+        volume /= weight_matrix
+
+    pred_undo, metadata = undo_transforms(volume,
+                                          batch['gt_metadata'][smp_idx],
+                                          data_type='gt')
+    return pred_undo, metadata, last_sample_bool, volume, weight_matrix
+
+
+def overlap_im_seg(img, seg):
+    """Overlap image (background, greyscale) and segmentation (foreground, jet)."""
+    seg_zero, seg_nonzero = np.where(seg<=0.1), np.where(seg>0.1)
+    seg_jet = plt.cm.jet(plt.Normalize(vmin=0, vmax=1.)(seg))
+    seg_jet[seg_zero] = 0.0
+    img_grey = plt.cm.binary_r(plt.Normalize(vmin=np.amin(img), vmax=np.amax(img))(img))
+    img_out = np.copy(img_grey)
+    img_out[seg_nonzero] = seg_jet[seg_nonzero]
+    return img_out
+
+
+class LoopingPillowWriter(anim.PillowWriter):
+    def finish(self):
+        self._frames[0].save(
+            self.outfile, save_all=True, append_images=self._frames[1:],
+            duration=int(1000 / self.fps), loop=0)
+
+
+class AnimatedGif:
+    """Generates GIF.
+
+    Args:
+        size (tuple): Size of frames.
+
+    Attributes:
+        fig (plt):
+        size_x (int):
+        size_y (int):
+        images (list): List of frames.
+    """
+    def __init__(self, size):
+        self.fig = plt.figure()
+        self.fig.set_size_inches(size[0] / 50, size[1] / 50)
+        self.size_x = size[0]
+        self.size_y = size[1]
+        self.ax = self.fig.add_axes([0, 0, 1, 1], frameon=False, aspect=1)
+        self.ax.set_xticks([])
+        self.ax.set_yticks([])
+        self.images = []
+
+    def add(self, image, label=''):
+        plt_im = self.ax.imshow(image, cmap='Greys', vmin=0, vmax=1, animated=True)
+        plt_txt = self.ax.text(self.size_x * 3 // 4, self.size_y - 10, label, color='red', animated=True)
+        self.images.append([plt_im, plt_txt])
+
+    def save(self, filename):
+        animation = anim.ArtistAnimation(self.fig, self.images, interval=50, blit=True,
+                            repeat_delay=500)
+        animation.save(filename, writer=LoopingPillowWriter(fps=1))
