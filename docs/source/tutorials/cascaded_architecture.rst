@@ -92,11 +92,6 @@ between 0 and 1 to get best threshold on the validation set (e.i. -t 0.1 will re
 
    ivadomed -c config.json -t 0.01
 
-.. note::
-
-   If a `compatible GPU <https://pytorch.org/get-started/locally/>`_ is available, it will be used by default. Otherwise, training will use the CPU, which will take
-   a prohibitively long computational time (several hours).
-
 At the end of the training, the optimal threshold will be indicated:
 
 .. code-block:: console
