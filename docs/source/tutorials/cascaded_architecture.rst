@@ -8,8 +8,6 @@ In this tutorial we will learn the following features:
 - Find the optimal threshold to binarize images based on the validation sub-dataset.
 
 In our example, the model will first locate the spinal cord (step 1). This localisation will then be used to crop the images around this region of interest, before segmenting the cerebrospinal fluid (CSF, step 2).
-Finally, from the cropped images, the CSF will be segmented. The first cropping step allows the final segmentation
-model to focus only on the most important part of the image.
 
 .. _Prerequisite:
 
