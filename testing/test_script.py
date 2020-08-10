@@ -190,7 +190,20 @@ def test_create_json_3d_unet_test():
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
-        }}
+        },
+        "contrast_params": {
+            "training_validation": ["T2w"],
+            "testing": ["T2w"],
+            "balance": {}
+        },
+        "slice_filter_params": {
+            "filter_empty_mask": False,
+            "filter_empty_input": True
+        },
+        "slice_axis": "sagittal",
+        "multichannel": False,
+        "soft_gt": False
+    }
     initial_config["log_directory"] = "3d_test"
     initial_config["UNet3D"] = {
         "applied": True,
@@ -210,13 +223,6 @@ def test_create_json_3d_unet_test():
         "CenterCrop": {"size": [48, 48, 16], "preprocessing": True},
         "NumpyToTensor": {},
         "NormalizeInstance": {"applied_to": ["im"]}
-    }
-    initial_config["contrast_params"] = {
-        "random_seed": 1313,
-        "training_validation": ["T2w"],
-        "balance": {},
-        "testing": ["T2w"],
-        "center_test": []
     }
     json.dump(initial_config, file_conf)
 
