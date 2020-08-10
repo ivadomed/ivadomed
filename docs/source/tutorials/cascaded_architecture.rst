@@ -144,5 +144,5 @@ Evaluate model
     "binarize_prediction": 0.01
 
 
-To test and apply this model the dataset go to the `Evaluate model` section of the tutorial
+To test and apply this model on the testing dataset, go to the `Evaluate model` section of the tutorial
 :ref:`One-class segmentation with 2D U-Net<evaluate model>`.
