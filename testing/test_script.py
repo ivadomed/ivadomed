@@ -151,7 +151,7 @@ def test_eval():
 
 def test_create_automate_training_json():
     # modify train config
-    command = "cp testing_data/model_config.json testing_data/model_config_auto.json"
+    command = "cp testing_data/model_config_eval.json testing_data/model_config_auto.json"
     subprocess.check_output(command, shell=True)
     file_conf = open("testing_data/model_config_auto.json", "r")
     initial_config = json.load(file_conf)
