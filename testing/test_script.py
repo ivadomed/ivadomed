@@ -168,7 +168,7 @@ def test_automate_training():
     subprocess.check_output(command, shell=True)
 
     command = "ivadomed_automate_training -c testing_data/model_config_auto.json " \
-              "-p testing_data/hyperparameter_opt.json -n 1 --fixed-split --run-test --all-combin"
+              "-p testing_data/hyperparameter_opt.json -n 1 --run-test --all-combin"
     subprocess.check_output(command, shell=True)
 
 
