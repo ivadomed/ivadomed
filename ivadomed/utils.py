@@ -2,8 +2,8 @@ import json
 import os
 
 import matplotlib
-import matplotlib.pyplot as plt
 import matplotlib.animation as anim
+import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
 import onnxruntime
@@ -11,15 +11,16 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.utils as vutils
+from scipy.ndimage import label, generate_binary_structure
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed.object_detection import utils as imed_obj_detect
-from scipy.ndimage import label, generate_binary_structure
-from torch.autograd import Variable
-from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -323,7 +324,6 @@ def mixup(data, targets, alpha, debugging=False, ofolder=None):
     lambda_ = np.random.beta(alpha, alpha)
     lambda_ = max(lambda_, 1 - lambda_)  # ensure lambda_ >= 0.5
     lambda_tensor = torch.FloatTensor([lambda_])
-
 
     data = data * lambda_tensor + data2 * (1 - lambda_tensor)
     targets = targets * lambda_tensor + targets2 * (1 - lambda_tensor)
@@ -812,6 +812,7 @@ class SliceFilter(object):
         filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
         filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
     """
+
     def __init__(self, filter_empty_mask=True,
                  filter_empty_input=True):
         self.filter_empty_mask = filter_empty_mask
@@ -1001,7 +1002,7 @@ def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, we
 
 def overlap_im_seg(img, seg):
     """Overlap image (background, greyscale) and segmentation (foreground, jet)."""
-    seg_zero, seg_nonzero = np.where(seg<=0.1), np.where(seg>0.1)
+    seg_zero, seg_nonzero = np.where(seg <= 0.1), np.where(seg > 0.1)
     seg_jet = plt.cm.jet(plt.Normalize(vmin=0, vmax=1.)(seg))
     seg_jet[seg_zero] = 0.0
     img_grey = plt.cm.binary_r(plt.Normalize(vmin=np.amin(img), vmax=np.amax(img))(img))
@@ -1013,7 +1014,7 @@ def overlap_im_seg(img, seg):
 class LoopingPillowWriter(anim.PillowWriter):
     def finish(self):
         self._frames[0].save(
-            self.outfile, save_all=True, append_images=self._frames[1:],
+            self._outfile, save_all=True, append_images=self._frames[1:],
             duration=int(1000 / self.fps), loop=0)
 
 
@@ -1029,6 +1030,7 @@ class AnimatedGif:
         size_y (int):
         images (list): List of frames.
     """
+
     def __init__(self, size):
         self.fig = plt.figure()
         self.fig.set_size_inches(size[0] / 50, size[1] / 50)
@@ -1046,5 +1048,5 @@ class AnimatedGif:
 
     def save(self, filename):
         animation = anim.ArtistAnimation(self.fig, self.images, interval=50, blit=True,
-                            repeat_delay=500)
+                                         repeat_delay=500)
         animation.save(filename, writer=LoopingPillowWriter(fps=1))
