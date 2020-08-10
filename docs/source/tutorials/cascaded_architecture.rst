@@ -110,7 +110,7 @@ Visualize training data
 If the flag ``--gif`` or ``-g`` was used, the training can be visualized through gifs located in the folder
 <LOG_DIRECTORY>/gifs.
 
-.. figure:: ../../../images/training_gif.gif
+.. figure:: ../../../images/training.gif
    :width: 300
    :align: center
 
