@@ -4,7 +4,8 @@ Cascaded architecture
 In this tutorial we will learn the following features:
 
 - Design a training scheme composed of two cascaded networks.
-- Visualize the training with tensorboard
+- Visualize the training with tensorboard.
+- Generate a GIF to visualize the learning of the model.
 - Find the optimal threshold to binarize images based on the validation sub-dataset.
 
 In our example, the model will first locate the spinal cord (step 1). This localisation will then be used to crop the images around this region of interest, before segmenting the cerebrospinal fluid (CSF, step 2).
@@ -87,9 +88,13 @@ Once the configuration file is ready, run the training. `ivadomed` has an option
 between 0 and 1 to perform this threshold optimization (i.e. ``-t 0.1`` will return the best threshold between 0.1,
 0.2, ..., 0.9)
 
+To help visualize the training, the flag ``--gif`` or ``-g`` can be used. The flag should be followed by the number of
+slices by epoch to visualize. For example, ``-g 2`` will generate 2 GIFs of 2 randomly selected slices from the
+validation set.
+
 .. code-block:: bash
 
-   ivadomed -c config.json -t 0.01
+   ivadomed -c config.json -t 0.01 -g 1
 
 At the end of the training, the optimal threshold will be indicated:
 
@@ -102,9 +107,18 @@ At the end of the training, the optimal threshold will be indicated:
 
 Visualize training data
 -----------------------
+If the flag ``--gif`` or ``-g`` was used, the training can be visualized through gifs located in the folder
+<LOG_DIRECTORY>/gifs.
 
-Tensorboard helps visualize the augmented input images, the model's prediction, the ground truth, the learning curves, and
-more. To access this data during or after training, use the following command-line:
+.. figure:: ../../../images/training_gif.gif
+   :width: 300
+   :align: center
+
+   Training visualization with GIF
+
+Another way to visualize the training is to use Tensorboard. Tensorboard helps to visualize the augmented input images,
+the model's prediction, the ground truth, the learning curves, and more. To access this data during or after training,
+use the following command-line:
 
 .. code-block:: bash
 
