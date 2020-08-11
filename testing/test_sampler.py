@@ -40,14 +40,14 @@ def _cmpt_label(ds_loader):
         },
     "ROICrop":
         {
-            "size": [48, 48],
+            "size": [128, 128],
             "preprocessing": True
         },
     "NumpyToTensor": {}
 }])
 @pytest.mark.parametrize('train_lst', [['sub-unf01']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
-@pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
+@pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 16}])
 def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
@@ -85,6 +85,6 @@ def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
                                        shuffle=False, pin_memory=True,
                                        collate_fn=imed_loader_utils.imed_collate,
                                        num_workers=0)
-    time.sleep(10)
-    neg_percent, pos_percent = _cmpt_label(train_loader_balanced)
-    assert abs(neg_percent - pos_percent) <= 20.
+
+    neg_percent_bal, pos_percent_bal = _cmpt_label(train_loader_balanced)
+    assert abs(neg_percent_bal - pos_percent_bal) <= 25.
