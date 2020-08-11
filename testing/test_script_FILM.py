@@ -78,7 +78,7 @@ def test_create_json_film():
 
     initial_config["FiLMedUnet"] = {
         "applied": True,
-        "metadata": "contrasts",
+        "metadata": "mri_params",
         "film_layers": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
     }
 
