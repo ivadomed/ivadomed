@@ -118,5 +118,3 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_pa
     metric_mgr.reset()
     print(metrics_dict)
     shutil.rmtree(PATH_OUT)
-
-
