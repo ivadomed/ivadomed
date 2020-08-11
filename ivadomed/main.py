@@ -199,10 +199,10 @@ def run_command(context, n_gif=0, thr_increment=None):
             context["testing_parameters"]["binarize_prediction"] = thr
 
         # Save config file within log_directory and log_directory/model_name
-        with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
-            json.dump(context, fp, indent=4)
-        with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
-            json.dump(context, fp, indent=4)
+        #with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
+         #   json.dump(context, fp, indent=4)
+        #with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
+          #  json.dump(context, fp, indent=4)
 
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
