@@ -1,7 +1,7 @@
 bids-neuropoly>=0.2
 h5py
 joblib
-matplotlib>=3.0.3
+matplotlib>=3.3.0
 nibabel
 onnxruntime
 pandas
