@@ -186,7 +186,7 @@ def test_create_json_3d_unet_test():
     initial_config["loader_parameters"] = {
         "target_suffix": ["_lesion-manual"],
         "roi_suffix": null,
-        "bids_path": "testing_data/",
+        "bids_path": "testing_data",
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
