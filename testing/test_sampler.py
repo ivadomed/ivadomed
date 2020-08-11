@@ -87,4 +87,4 @@ def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
                                        num_workers=0)
     time.sleep(10)
     neg_percent, pos_percent = _cmpt_label(train_loader_balanced)
-    #assert abs(neg_percent - pos_percent) <= 20.
+    assert abs(neg_percent - pos_percent) <= 20.
