@@ -12,6 +12,8 @@ import torch
 def test_download_data():
     command = "ivadomed_download_data -d t2_tumor"
     subprocess.check_output(command, shell=True)
+    command = "ivadomed_download_data -d data_testing -o t2_tumor -k"
+    subprocess.check_output(command, shell=True)
 
 
 def test_onnx_conversion():
