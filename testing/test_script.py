@@ -12,7 +12,7 @@ import torch
 def test_download_data():
     command = "ivadomed_download_data -d t2_tumor"
     subprocess.check_output(command, shell=True)
-    command = "ivadomed_download_data -d data_testing -o t2_tumor -k"
+    command = "ivadomed_download_data -d data_testing -o t2_tumor -k 1"
     subprocess.check_output(command, shell=True)
 
 
