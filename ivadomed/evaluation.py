@@ -45,7 +45,7 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
         fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
-                    for suffix in target_suffix]
+                    for suffix in ["_transformed"]]
 
         # 3D evaluation
         nib_pred = nib.load(fname_pred)
@@ -443,12 +443,12 @@ class Evaluation3DMetrics(object):
 
             for lb_size, gt_pred in zip(self.label_size_lst[n][0], self.label_size_lst[n][1]):
                 suffix = self.size_suffix_lst[int(lb_size) - 1]
-
-                if gt_pred == 'gt':
-                    dct['ltpr' + suffix + "_class" + str(n)], dct['n' + suffix] = self.get_ltpr(label_size=lb_size,
-                                                                                                class_idx=n)
-                else:  # gt_pred == 'pred'
-                    dct['lfdr' + suffix + "_class" + str(n)] = self.get_lfdr(label_size=lb_size, class_idx=n)
+                #
+                # if gt_pred == 'gt':
+                #     dct['ltpr' + suffix + "_class" + str(n)], dct['n' + suffix] = self.get_ltpr(label_size=lb_size,
+                #                                                                                 class_idx=n)
+                # else:  # gt_pred == 'pred'
+                #     dct['lfdr' + suffix + "_class" + str(n)] = self.get_lfdr(label_size=lb_size, class_idx=n)
 
         if self.n_classes == 1:
             self.data_painted = np.squeeze(self.data_painted, axis=-1)

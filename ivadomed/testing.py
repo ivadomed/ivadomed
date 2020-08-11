@@ -99,6 +99,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     # INIT STORAGE VARIABLES
     preds_npy_list, gt_npy_list = [], []
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
+    pred_gt_lst = []
     volume = None
     weight_matrix = None
 
@@ -151,11 +152,19 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             if not model_params["name"].endswith('3D'):
                 last_sample_bool = (last_batch_bool and smp_idx == len(preds_cpu) - 1)
                 # undo transformations
+                for idx, trans in enumerate(testing_params["undo_transforms"].transforms.transform["gt"].transforms):
+                    if "RandomAffine" in str(trans):
+                        testing_params["undo_transforms"].transforms.transform["gt"].transforms.pop(idx)
+
                 preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
                                                                                  batch['gt_metadata'][smp_idx],
                                                                                  data_type='gt')
                 # preds_idx_undo is a list n_label arrays
                 preds_idx_arr = np.array(preds_idx_undo)
+                gt_preds_idx_undo, metadata_idx = testing_params["undo_transforms"](batch['gt'][smp_idx],
+                                                                                 batch['gt_metadata'][smp_idx],
+                                                                                 data_type='gt')
+                gt_idx_arr = np.array(gt_preds_idx_undo)
 
                 # TODO: gt_filenames should not be a list
                 fname_ref = metadata_idx[0]['gt_filenames'][0]
@@ -176,6 +185,19 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         slice_axis=slice_axis,
                                                         kernel_dim='2d',
                                                         bin_thr=testing_params["binarize_prediction"])
+
+                    gt_path = fname_tmp.replace(testing_params["target_suffix"][0], "_transformed")
+                    imed_utils.pred_to_nib(data_lst=pred_gt_lst,
+                                                        z_lst=z_tmp_lst,
+                                                        fname_ref=fname_tmp,
+                                                        fname_out=gt_path,
+                                                        slice_axis=slice_axis,
+                                                        kernel_dim='2d',
+                                                        bin_thr=testing_params["binarize_prediction"])
+                    gt_nii = nib.load(gt_path)
+                    gt_nii_3 = nib.Nifti1Image(gt_nii.get_fdata()[..., 0], gt_nii.affine)
+                    nib.save(gt_nii_3, gt_path)
+
                     # TODO: Adapt to multilabel
                     output_data = output_nii.get_fdata()[:, :, :, 0]
                     preds_npy_list.append(output_data)
@@ -191,10 +213,11 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                      imed_utils.AXIS_DCT[testing_params['slice_axis']])
 
                     # re-init pred_stack_lst
-                    pred_tmp_lst, z_tmp_lst = [], []
+                    pred_tmp_lst, z_tmp_lst, pred_gt_lst = [], [], []
 
                 # add new sample to pred_tmp_lst, of size n_label X h X w ...
                 pred_tmp_lst.append(preds_idx_arr)
+                pred_gt_lst.append(gt_idx_arr)
 
                 # TODO: slice_index should be stored in gt_metadata as well
                 z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))

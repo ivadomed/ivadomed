@@ -30,6 +30,7 @@ def get_results(context):
         shutil.rmtree(pred_mask_path)
 
     # RandomAffine will be applied during testing
+    context["testing_parameters"]["binarize_prediction"] = -1
     if "dataset_type" in context["transformation"]["RandomAffine"]:
         del context["transformation"]["RandomAffine"]["dataset_type"]
     if "scale" in context["transformation"]["RandomAffine"]:
@@ -44,7 +45,7 @@ def compute_csa(config, df_results, logdir, bids):
     for subject in subject_list:
         # Get GT csa
         gt_path = os.path.join(bids, "derivatives", "labels", subject.split("_")[0],
-                               "anat", subject + config["loader_parameters"]["target_suffix"][0] + ".nii.gz")
+                               "anat", subject + "_transformed" + ".nii.gz")
         os.system(f"sct_process_segmentation  -i {gt_path} -perslice 1 -angle-corr 0 -o csa.csv")
         df = pd.read_csv("csa.csv")
         # Take only the medial slice
