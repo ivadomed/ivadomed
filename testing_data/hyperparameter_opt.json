@@ -1,5 +1,0 @@
-{
-  "training_parameters": {
-    "batch_size": [2, 4]
-  }
-}
