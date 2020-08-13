@@ -837,7 +837,7 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
 
         writer.add_image(dataset_type + '/Ground Truth', grid_img, epoch)
 
-model = torch.load(fname_model, map_location=device)
+
 class SliceFilter(object):
     """Filter 2D slices from dataset.
 
