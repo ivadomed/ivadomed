@@ -8,6 +8,8 @@ from tensorflow.python.summary.summary_iterator import summary_iterator
 import pandas as pd
 import matplotlib.pyplot as plt
 from textwrap import wrap
+import os
+from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
 
 def get_parser():
@@ -179,7 +181,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
             events_dict = find_events(log_directory)
 
             # Get data as dataframe
-            events_vals_df = get_data(events_dict)
+            events_vals_df = tensorboard_retrieve_event(log_directory)
 
             # Store data
             events_df_list.append(events_vals_df)
@@ -209,6 +211,39 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
 
     for fname_out in plt_dict:
         plt_dict[fname_out].savefig(fname_out)
+
+
+def tensorboard_retrieve_event(dpath):
+    list_metrics = ['dice_score', 'multiclass dice_score', 'hausdorff_score', 'precision_score', 'recall_score',
+                    'specificity_score', 'intersection_over_union', 'accuracy_score']
+
+    list_loss = ['train_loss', 'validation_loss']
+    summary_iterators = [EventAccumulator(os.path.join(dpath, dname)).Reload() for dname in os.listdir(dpath)]
+
+    tags = summary_iterators[0].Tags()['scalars']
+    metrics = defaultdict(list)
+    num_metrics = 0
+    num_loss = 0
+
+    for i in range(len(summary_iterators)):
+        if summary_iterators[i].Tags()['scalars'][0] == 'Validation/Metrics':
+            # we create a empty list
+            out = [0 for i in range(len(summary_iterators[i].Scalars("Validation/Metrics")))]
+            # we ensure that value are append in the right order
+            for events in summary_iterators[i].Scalars("Validation/Metrics"):
+                out[events.step-1] = events.value
+            metrics[list_metrics[num_metrics]] = out
+            num_metrics += 1
+        elif summary_iterators[i].Tags()['scalars'][0] == 'losses':
+            out = [0 for i in range(len(summary_iterators[i].Scalars("Validation/Metrics")))]
+            # we ensure that value are append in the right order
+            for events in summary_iterators[i].Scalars("losses"):
+                out[events.step-1] = events.value
+            metrics[list_loss[num_loss]] = out
+            num_loss += 1
+
+    metrics_df = pd.DataFrame.from_dict(metrics)
+    return metrics_df
 
 
 def main():
