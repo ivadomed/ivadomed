@@ -858,6 +858,8 @@ class SliceFilter(object):
         self.filter_empty_mask = filter_empty_mask
         self.filter_empty_input = filter_empty_input
         self.filter_classification = filter_classification
+        self.device = device
+        self.classifier_path = classifier_path
 
         if self.filter_classification:
             if cuda_available:
@@ -878,7 +880,7 @@ class SliceFilter(object):
                 return False
 
         if self.filter_classification:
-            if not np.all([int(self.classifier(imed_utils.cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0)), cuda_available)) for img in input_data]):
+            if not np.all([int(self.classifier(cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0)), self.cuda_available)) for img in input_data]):
                 return False
 
         return True
