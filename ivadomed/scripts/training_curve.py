@@ -214,13 +214,24 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
 
 
 def tensorboard_retrieve_event(dpath):
+    """
+    Function that retrieves data from tensorboard summary event
+    Args:
+        dpath (str): log directory where the event are located
+
+    Returns:
+        df: a panda dataframe where the columns are the metric or loss and the row are the epochs.
+
+    """
     list_metrics = ['dice_score', 'multiclass dice_score', 'hausdorff_score', 'precision_score', 'recall_score',
                     'specificity_score', 'intersection_over_union', 'accuracy_score']
 
     list_loss = ['train_loss', 'validation_loss']
+
+    # Each element in the summary iterator represent an element (e.g., scalars, images..)
+    # stored in the summary for all epochs in the form of event.
     summary_iterators = [EventAccumulator(os.path.join(dpath, dname)).Reload() for dname in os.listdir(dpath)]
 
-    tags = summary_iterators[0].Tags()['scalars']
     metrics = defaultdict(list)
     num_metrics = 0
     num_loss = 0
@@ -229,19 +240,24 @@ def tensorboard_retrieve_event(dpath):
         if summary_iterators[i].Tags()['scalars'] == ['Validation/Metrics']:
             # we create a empty list
             out = [0 for i in range(len(summary_iterators[i].Scalars("Validation/Metrics")))]
-            # we ensure that value are append in the right order
+            # we ensure that value are append in the right order by looking at the step value
+            # (which represents the epoch)
             for events in summary_iterators[i].Scalars("Validation/Metrics"):
                 out[events.step-1] = events.value
+            # keys are the defined metrics
             metrics[list_metrics[num_metrics]] = out
             num_metrics += 1
         elif summary_iterators[i].Tags()['scalars'] == ['losses']:
             out = [0 for i in range(len(summary_iterators[i].Scalars("losses")))]
-            # we ensure that value are append in the right order
+            # we ensure that value are append in the right order by looking at the step value
+            # (which represents the epoch)
             for events in summary_iterators[i].Scalars("losses"):
                 out[events.step-1] = events.value
             metrics[list_loss[num_loss]] = out
             num_loss += 1
 
+    if num_loss == 0 and num_metrics == 0:
+        raise Exception('No metrics or losses found in the event')
     metrics_df = pd.DataFrame.from_dict(metrics)
     return metrics_df
 
