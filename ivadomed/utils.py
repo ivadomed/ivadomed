@@ -828,7 +828,7 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
 
         writer.add_image(dataset_type + '/Ground Truth', grid_img, epoch)
 
-
+model = torch.load(fname_model, map_location=device)
 class SliceFilter(object):
     """Filter 2D slices from dataset.
 
@@ -844,13 +844,17 @@ class SliceFilter(object):
     """
     def __init__(self, filter_empty_mask=True,
                  filter_empty_input=True,
-                 filter_classification=False, classifier_path=None):
+                 filter_classification=False, classifier_path=None, device=None, cuda_available=None ):
         self.filter_empty_mask = filter_empty_mask
         self.filter_empty_input = filter_empty_input
         self.filter_classification = filter_classification
 
         if self.filter_classification:
-            self.classifier = torch.load(classifier_path, map_location='cpu')
+            if cuda_available:
+                self.classifier = torch.load(classifier_path, map_location=device)
+            else:
+                self.classifier = torch.load(classifier_path, map_location='cpu')
+
 
     def __call__(self, sample):
         input_data, gt_data = sample['input'], sample['gt']
@@ -864,7 +868,7 @@ class SliceFilter(object):
                 return False
 
         if self.filter_classification:
-            if not np.all([int(self.classifier(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0))) for img in input_data]):
+            if not np.all([int(self.classifier(imed_utils.cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0)), cuda_available)) for img in input_data]):
                 return False
 
         return True

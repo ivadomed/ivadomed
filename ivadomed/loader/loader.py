@@ -17,7 +17,8 @@ from ivadomed.object_detection import utils as imed_obj_detect
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
                  dataset_type="training", requires_undo=False, metadata_type=None,
-                 object_detection_params=None, soft_gt=False, **kwargs):
+                 object_detection_params=None, soft_gt=False, device=None,
+                 cuda_available=None, **kwargs):
     """Get loader appropriate loader according to model type. Available loaders are Bids3DDataset for 3D data,
     BidsDataset for 2D data and HDF5Dataset for HeMIS.
 
@@ -77,7 +78,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                               transform=tranform_lst,
                                               metadata_choice=metadata_type,
-                                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
+                                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params, device=device,
+                                              cuda_available=cuda_available),
                                               roi_params=roi_params,
                                               object_detection_params=object_detection_params,
                                               soft_gt=soft_gt)
@@ -95,7 +97,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                               transform=tranform_lst,
                               multichannel=multichannel,
-                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
+                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params, device=device,
+                              cuda_available=cuda_available),
                               soft_gt=soft_gt,
                               object_detection_params=object_detection_params,
                               task=task)

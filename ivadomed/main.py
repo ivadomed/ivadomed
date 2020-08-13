@@ -143,11 +143,13 @@ def run_command(context, n_gif=0, thr_increment=None):
         # Get Validation dataset
         ds_valid = imed_loader.load_dataset(**{**loader_params,
                                                **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
-                                                  'dataset_type': 'validation'}})
+                                                  'dataset_type': 'validation'}},device=device,
+                                                  cuda_available=cuda_available)
         # Get Training dataset
         ds_train = imed_loader.load_dataset(**{**loader_params,
                                                **{'data_list': train_lst, 'transforms_params': transform_train_params,
-                                                  'dataset_type': 'training'}})
+                                                  'dataset_type': 'training'}},device=device,
+                                                  cuda_available=cuda_available)
 
         metric_fns = imed_utils.get_metric_fns(ds_train.task)
 
@@ -215,7 +217,8 @@ def run_command(context, n_gif=0, thr_increment=None):
         ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
                                                                   'transforms_params': transformation_dict,
                                                                   'dataset_type': 'testing',
-                                                                  'requires_undo': True}})
+                                                                  'requires_undo': True}},device=device,
+                                                                  cuda_available=cuda_available)
 
         metric_fns = imed_utils.get_metric_fns(ds_test.task)
 
