@@ -2,7 +2,9 @@ from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.special
 from scipy import spatial
+
 
 
 class MetricManager(object):
@@ -319,3 +321,6 @@ def plot_dice_thr(thr_list, dice_list, opt_thr_idx, fname_out):
     plt.ylabel('Dice')
     plt.title('Threshold analysis')
     plt.savefig(fname_out)
+
+def kl_divergence(x,y):
+    return np.sum(scipy.special.kl_div(x,y))
