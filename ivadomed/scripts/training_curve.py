@@ -30,25 +30,20 @@ def get_parser():
     return parser
 
 
-def find_events(input_folder):
-    """Get TF events path from input_folder.
+def check_events_numbers(input_folder):
+    """Check if there not more than one summary  in the directory or any subfolder
 
     Args:
         input_folder (str): Input folder path.
-    Returns:
-        dict: keys are subfolder names and values are events' paths.
     """
-    dict = {}
     for fold in os.listdir(input_folder):
         fold_path = os.path.join(input_folder, fold)
         if os.path.isdir(fold_path):
             event_list = [f for f in os.listdir(fold_path) if f.startswith("events.out.tfevents.")]
             if len(event_list):
                 if len(event_list) > 1:
-                    print('Multiple events found in this folder: {}.\nPlease keep only one before running '
+                    raise ValueError('Multiple summary found in this folder: {}.\nPlease keep only one before running '
                           'this script again.'.format(fold_path))
-                dict[fold] = os.path.join(input_folder, fold, event_list[0])
-    return dict
 
 
 def plot_curve(data_list, y_label, fig_ax, subplot_title, y_lim=None):
@@ -152,7 +147,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         events_df_list = []
         for log_directory in input_folder_list:
             # Find tf folders
-            events_dict = find_events(log_directory)
+            events_dict = check_events_numbers(log_directory)
 
             # Get data as dataframe
             events_vals_df = tensorboard_retrieve_event(log_directory)
