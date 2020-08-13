@@ -47,7 +47,7 @@ def _cmpt_label(ds_loader):
 }])
 @pytest.mark.parametrize('train_lst', [['sub-unf01']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
-@pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 16}])
+@pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
 def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
