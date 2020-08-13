@@ -13,9 +13,6 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
 
-# List of classifier models (ie not segmentation output)
-CLASSIFIER_LIST = ['resnet18', 'densenet121']
-
 
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
@@ -86,7 +83,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               soft_gt=soft_gt)
     else:
         # Task selection
-        task = "classification" if model_params["name"] in CLASSIFIER_LIST else "segmentation"
+        task = imed_utils.get_task(model_params["name"])
+        
 
         dataset = BidsDataset(bids_path,
                               subject_lst=data_list,
@@ -420,7 +418,7 @@ class MRI2DSegmentationDataset(Dataset):
 
                 # Note: we force here gt_type=segmentation since ROI slice is needed to Crop the image
                 slice_roi_pair = roi_pair.get_pair_slice(idx_pair_slice, gt_type="segmentation")
-                
+
                 if self.slice_filter_roi and imed_loader_utils.filter_roi(slice_roi_pair['gt'], self.roi_thr):
                     continue
 

@@ -138,6 +138,11 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         # PREDS TO CPU
         preds_cpu = preds.cpu()
 
+        task =  imed_utils.get_task(model_params["name"])
+        if task == "classification"
+            gt_npy_list.append(gt_samples.cpu().numpy())
+            preds_npy_list.append(preds_cpu.data.numpy())
+
         # RECONSTRUCT 3D IMAGE
         last_batch_bool = (i == len(test_loader) - 1)
 
@@ -161,7 +166,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 fname_ref = metadata_idx[0]['gt_filenames'][0]
 
                 # NEW COMPLETE VOLUME
-                if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool):
+                if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool) and task != "classification":
                     # save the completely processed file as a nifti file
                     fname_pred = os.path.join(ofolder, fname_tmp.split('/')[-1])
                     fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
