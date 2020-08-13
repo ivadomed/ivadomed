@@ -4,11 +4,9 @@ import os
 import argparse
 import numpy as np
 from collections import defaultdict
-#from tensorflow.python.summary.summary_iterator import summary_iterator
 import pandas as pd
 import matplotlib.pyplot as plt
 from textwrap import wrap
-import os
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
 
@@ -51,31 +49,6 @@ def find_events(input_folder):
                           'this script again.'.format(fold_path))
                 dict[fold] = os.path.join(input_folder, fold, event_list[0])
     return dict
-
-
-def get_data(event_dict):
-    """Get data as Pandas dataframe.
-
-    Args:
-        event_dict (dict): Dictionary containing the TF event names and their paths.
-    Returns:
-        Pandas Dataframe: where the columns are the metrics or losses and the rows represent the epochs.
-    """
-    metrics = defaultdict(list)
-    for tf_tag in event_dict:
-        for e in summary_iterator(event_dict[tf_tag]):
-            for v in e.summary.value:
-                if isinstance(v.simple_value, float):
-                    if tf_tag.startswith("Validation_Metrics_"):
-                        tag = tf_tag.split("Validation_Metrics_")[1]
-                    elif tf_tag.startswith("losses_"):
-                        tag = tf_tag.split("losses_")[1]
-                    else:
-                        print("Unknown TF tag: {}.".format(tf_tag))
-                        exit()
-                    metrics[tag].append(v.simple_value)
-    metrics_df = pd.DataFrame.from_dict(metrics)
-    return metrics_df
 
 
 def plot_curve(data_list, y_label, fig_ax, subplot_title, y_lim=None):
@@ -170,7 +143,8 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         if multiple_training:
             prefix = str(input_folder.split('/')[-1])
             input_folder = '/'.join(input_folder.split('/')[:-1])
-            input_folder_list = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if f.startswith(prefix)]
+            input_folder_list = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if
+                                 f.startswith(prefix)]
         else:
             prefix = str(input_folder.split('/')[-1])
             input_folder_list = [input_folder]
@@ -201,8 +175,8 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         for tag in events_df_list[0].keys():
             if not tag.endswith("loss"):
                 if i_subplot == 0:  # Init plot
-                    plt_dict[os.path.join(output_folder, tag+".png")] = plt.figure(figsize=(10 * n_cols, 5 * n_rows))
-                ax = plt_dict[os.path.join(output_folder, tag+".png")].add_subplot(n_rows, n_cols, i_subplot+1)
+                    plt_dict[os.path.join(output_folder, tag + ".png")] = plt.figure(figsize=(10 * n_cols, 5 * n_rows))
+                ax = plt_dict[os.path.join(output_folder, tag + ".png")].add_subplot(n_rows, n_cols, i_subplot + 1)
                 plot_curve(data_list=[df[[tag]] for df in events_df_list],
                            y_label=tag,
                            fig_ax=ax,
@@ -243,7 +217,7 @@ def tensorboard_retrieve_event(dpath):
             # we ensure that value are append in the right order by looking at the step value
             # (which represents the epoch)
             for events in summary_iterators[i].Scalars("Validation/Metrics"):
-                out[events.step-1] = events.value
+                out[events.step - 1] = events.value
             # keys are the defined metrics
             metrics[list_metrics[num_metrics]] = out
             num_metrics += 1
@@ -252,7 +226,7 @@ def tensorboard_retrieve_event(dpath):
             # we ensure that value are append in the right order by looking at the step value
             # (which represents the epoch)
             for events in summary_iterators[i].Scalars("losses"):
-                out[events.step-1] = events.value
+                out[events.step - 1] = events.value
             metrics[list_loss[num_loss]] = out
             num_loss += 1
 
