@@ -324,3 +324,7 @@ def plot_dice_thr(thr_list, dice_list, opt_thr_idx, fname_out):
 
 def kl_divergence(x,y):
     return np.sum(scipy.special.kl_div(x,y))
+
+def js_divergence(x,y):
+    m = 0.5*(x + y)
+    return 0.5*kl_divergence(x,m) + 0.5*kl_divergence(y,m)
