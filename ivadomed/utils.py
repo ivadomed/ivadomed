@@ -26,7 +26,7 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 # List of classification models (ie not segmentation output)
 CLASSIFIER_LIST = ['resnet18', 'densenet121']
 
-def get_task(model_name)
+def get_task(model_name):
     return "classification" if model_name in CLASSIFIER_LIST else "segmentation"
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,

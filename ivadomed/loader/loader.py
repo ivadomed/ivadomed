@@ -84,7 +84,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
     else:
         # Task selection
         task = imed_utils.get_task(model_params["name"])
-        
+
 
         dataset = BidsDataset(bids_path,
                               subject_lst=data_list,
