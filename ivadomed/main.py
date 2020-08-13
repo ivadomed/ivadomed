@@ -6,7 +6,7 @@ import joblib
 import torch.backends.cudnn as cudnn
 
 from ivadomed import evaluation as imed_evaluation
-from ivadomed import metrics as imed_metrics
+
 from ivadomed import testing as imed_testing
 from ivadomed import training as imed_training
 from ivadomed import transforms as imed_transforms
@@ -17,29 +17,6 @@ cudnn.benchmark = True
 
 # List of not-default available models i.e. different from Unet
 MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'resnet18', 'densenet121', 'Countception']
-
-# METRICS
-def get_metric_fns(task):
-    if task == "segmentation":
-
-            metric_fns = [imed_metrics.dice_score,
-                          imed_metrics.multi_class_dice_score,
-                          imed_metrics.hausdorff_3D_score,
-                          imed_metrics.precision_score,
-                          imed_metrics.recall_score,
-                          imed_metrics.specificity_score,
-                          imed_metrics.intersection_over_union,
-                          imed_metrics.accuracy_score]
-    else:
-            metric_fns = [imed_metrics.dice_score,
-                      imed_metrics.multi_class_dice_score,
-                      imed_metrics.precision_score,
-                      imed_metrics.recall_score,
-                      imed_metrics.specificity_score,
-                      imed_metrics.intersection_over_union,
-                      imed_metrics.accuracy_score]
-
-    return metric_fns
 
 
 def get_parser():
@@ -172,7 +149,7 @@ def run_command(context, n_gif=0, thr_increment=None):
                                                **{'data_list': train_lst, 'transforms_params': transform_train_params,
                                                   'dataset_type': 'training'}})
 
-        metric_fns = get_metric_fns(ds_train.task)
+        metric_fns = imed_utils.get_metric_fns(ds_train.task)
 
         # If FiLM, normalize data
         if model_params["name"] == "FiLMedUnet":
@@ -240,7 +217,7 @@ def run_command(context, n_gif=0, thr_increment=None):
                                                                   'dataset_type': 'testing',
                                                                   'requires_undo': True}})
 
-        metric_fns = get_metric_fns(ds_test.task)
+        metric_fns = imed_utils.get_metric_fns(ds_test.task)
 
         if model_params["name"] == "FiLMedUnet":
             clustering_path = os.path.join(log_directory, "clustering_models.joblib")

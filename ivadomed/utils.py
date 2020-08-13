@@ -14,6 +14,7 @@ import torchvision.utils as vutils
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
+from ivadomed import metrics as imed_metrics
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed.object_detection import utils as imed_obj_detect
 from scipy.ndimage import label, generate_binary_structure
@@ -28,6 +29,30 @@ CLASSIFIER_LIST = ['resnet18', 'densenet121']
 
 def get_task(model_name):
     return "classification" if model_name in CLASSIFIER_LIST else "segmentation"
+
+# METRICS
+def get_metric_fns(task):
+    if task == "segmentation":
+
+            metric_fns = [imed_metrics.dice_score,
+                          imed_metrics.multi_class_dice_score,
+                          imed_metrics.hausdorff_score,
+                          imed_metrics.precision_score,
+                          imed_metrics.recall_score,
+                          imed_metrics.specificity_score,
+                          imed_metrics.intersection_over_union,
+                          imed_metrics.accuracy_score]
+    else:
+            metric_fns = [imed_metrics.dice_score,
+                      imed_metrics.multi_class_dice_score,
+                      imed_metrics.precision_score,
+                      imed_metrics.recall_score,
+                      imed_metrics.specificity_score,
+                      imed_metrics.intersection_over_union,
+                      imed_metrics.accuracy_score]
+
+    return metric_fns
+
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
                 discard_noise=True):
