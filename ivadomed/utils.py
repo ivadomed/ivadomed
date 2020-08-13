@@ -859,7 +859,7 @@ class SliceFilter(object):
         self.filter_empty_input = filter_empty_input
         self.filter_classification = filter_classification
         self.device = device
-        self.classifier_path = classifier_path
+        self.cuda_available = cuda_available
 
         if self.filter_classification:
             if cuda_available:
