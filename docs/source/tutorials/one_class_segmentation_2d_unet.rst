@@ -15,8 +15,7 @@ Download dataset
 
 We will use a publicly-available dataset consisting of MRI data of the spinal cord. This dataset is a subset of the
 `spine-generic multi-center dataset <https://github.com/spine-generic/data-multi-subject>`_ and has been pre-processed
-to facilitate training/testing of a new model. Namely, for each subject, all six contrasts were co-registered together,
-and semi-manual cord segmentation label was created. More details
+to facilitate training/testing of a new model. Namely, for each subject, all six contrasts were co-registered together. Semi-manual cord segmentation for all modalities and manual cerebrospinal fluid labels for T2w modality were created. More details
 `here <https://github.com/ivadomed/ivadomed/blob/master/dev/prepare_data/README.md>`_.
 
 To download the dataset (~450MB), run the following commands in your terminal:
@@ -24,11 +23,7 @@ To download the dataset (~450MB), run the following commands in your terminal:
 .. code-block:: bash
 
    # Download data
-   curl -o ivadomed_example_spinegeneric.zip -L https://github.com/ivadomed/data_example_spinegeneric/releases/download/r20200907/data_spinegeneric_registered-r20200907.zip
-   unzip ivadomed_example_spinegeneric.zip
-   # Rename folder
-   mv ivadomed-data_example_spinegeneric* data_example_spinegeneric
-
+    ivadomed_download_data -d data_example_spinegeneric
 
 Configuration file
 ------------------
@@ -103,7 +98,7 @@ Once the configuration file is ready, run the training:
 
 .. code-block:: bash
 
-   ivadomed config.json
+   ivadomed -c config.json
 
 .. note::
 
@@ -158,6 +153,8 @@ on training and validation sets at every epoch. To know more about the meaning o
 After 100 epochs (see ``"num_epochs"`` in the configuration file), the Dice score on the validation set should
 be ~90%.
 
+.. _Evaluate model:
+
 Evaluate model
 --------------
 
@@ -172,7 +169,7 @@ Then run:
 
 .. code-block:: bash
 
-   ivadomed config.json
+   ivadomed -c config.json
 
 The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
 The resulting segmentation is saved for each image in the ``<log_directory>/pred_masks`` while a csv file,

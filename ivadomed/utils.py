@@ -2,8 +2,8 @@ import json
 import os
 
 import matplotlib
-import matplotlib.pyplot as plt
 import matplotlib.animation as anim
+import matplotlib.pyplot as plt
 import nibabel as nib
 import numpy as np
 import onnxruntime
@@ -11,12 +11,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.utils as vutils
+
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import metrics as imed_metrics
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed.object_detection import utils as imed_obj_detect
+
 from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
@@ -150,7 +152,7 @@ def run_uncertainty(ifolder):
         fname_soft = os.path.join(ifolder, subj_acq + '_soft.nii.gz')
         # find Monte Carlo simulations
         fname_pred_lst = [os.path.join(ifolder, f)
-                          for f in os.listdir(ifolder) if subj_acq + '_pred_' in f]
+                          for f in os.listdir(ifolder) if subj_acq + '_pred_' in f and '_painted' not in f]
 
         # if final segmentation from Monte Carlo simulations has not been generated yet
         if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
@@ -184,22 +186,19 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
         thr (float): Between 0 and 1. Used to threshold the soft segmentation and generate the hard segmentation.
     """
     # collect all MC simulations
-    data_lst = []
-    for fname in fname_lst:
-        nib_im = nib.load(fname)
-        data_lst.append(nib_im.get_fdata())
+    mc_data = np.array([nib.load(fname).get_fdata() for fname in fname_lst])
+    affine = nib.load(fname_lst[0]).affine
 
     # average over all the MC simulations
-    data_prob = np.mean(np.array(data_lst), axis=0)
+    data_prob = np.mean(mc_data, axis=0)
     # save prob segmentation
-    nib_prob = nib.Nifti1Image(data_prob, nib_im.affine)
+    nib_prob = nib.Nifti1Image(data_prob, affine)
     nib.save(nib_prob, fname_prob)
 
     # argmax operator
-    # TODO: adapt for multi-label pred
     data_hard = imed_postpro.threshold_predictions(data_prob, thr=thr).astype(np.uint8)
     # save hard segmentation
-    nib_hard = nib.Nifti1Image(data_hard, nib_im.affine)
+    nib_hard = nib.Nifti1Image(data_hard, affine)
     nib.save(nib_hard, fname_hard)
 
 
@@ -214,18 +213,19 @@ def voxelwise_uncertainty(fname_lst, fname_out, eps=1e-5):
         eps (float): Epsilon value to deal with np.log(0).
     """
     # collect all MC simulations
-    data_lst = []
-    for fname in fname_lst:
-        nib_im = nib.load(fname)
-        data_lst.append(nib_im.get_fdata())
+    mc_data = np.array([nib.load(fname).get_fdata() for fname in fname_lst])
+    affine = nib.load(fname_lst[0]).affine
 
     # entropy
-    unc = np.repeat(np.expand_dims(np.array(data_lst), -1), 2, -1)  # n_it, x, y, z, 2
+    unc = np.repeat(np.expand_dims(mc_data, -1), 2, -1)  # n_it, x, y, z, 2
     unc[..., 0] = 1 - unc[..., 1]
     unc = -np.sum(np.mean(unc, 0) * np.log(np.mean(unc, 0) + eps), -1)
 
+    # Clip values to 0
+    unc[unc < 0] = 0
+
     # save uncertainty map
-    nib_unc = nib.Nifti1Image(unc, nib_im.affine)
+    nib_unc = nib.Nifti1Image(unc, affine)
     nib.save(nib_unc, fname_out)
 
 
@@ -246,76 +246,86 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         fname_unc_vox (str): Filename of the voxel-wise uncertainty, which is used to compute the `avgUnc`.
         fname_out (str): Output filename.
     """
-    # load hard segmentation and label it
+    # 18-connectivity
+    bin_struct = np.array(generate_binary_structure(3, 2))
+
+    # load hard segmentation
     nib_hard = nib.load(fname_hard)
     data_hard = nib_hard.get_fdata()
-    bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
-    data_hard_l, n_l = label(data_hard, structure=bin_struct)
+    # Label each object of each class
+    data_hard_labeled = [label(data_hard[..., i_class], structure=bin_struct)[0] for i_class in range(data_hard.shape[-1])]
+
+    # load all MC simulations (in mc_dict["mc_data"]) and label them (in mc_dict["mc_labeled"])
+    mc_dict = {"mc_data": [], "mc_labeled": []}
+    for fname in fname_lst:
+        data = nib.load(fname).get_fdata()
+        mc_dict["mc_data"].append([data[..., i_class] for i_class in range(data.shape[-1])])
+
+        labeled_list = [label(data[..., i_class], structure=bin_struct)[0] for i_class in range(data.shape[-1])]
+        mc_dict["mc_labeled"].append(labeled_list)
 
     # load uncertainty map
-    nib_uncVox = nib.load(fname_unc_vox)
-    data_uncVox = nib_uncVox.get_fdata()
-    del nib_uncVox
+    data_uncVox = nib.load(fname_unc_vox).get_fdata()
 
-    # init output arrays
+    # Init output arrays
     data_iou, data_cv, data_avgUnc = np.zeros(data_hard.shape), np.zeros(data_hard.shape), np.zeros(data_hard.shape)
 
-    # load all MC simulations and label them
-    data_lst, data_l_lst = [], []
-    for fname in fname_lst:
-        nib_im = nib.load(fname)
-        data_im = nib_im.get_fdata()
-        data_lst.append(data_im)
-        data_im_l, _ = label(data_im, structure=bin_struct)
-        data_l_lst.append(data_im_l)
-        del nib_im
+    # Loop across classes
+    for i_class in range(data_hard.shape[-1]):
+        # Hard segmentation of the i_class that has been labeled
+        data_hard_labeled_class = data_hard_labeled[i_class]
+        # Get number of objects in
+        n_obj = np.count_nonzero(np.unique(data_hard_labeled_class))
+        # Loop across objects
+        for i_obj in range(1, n_obj + 1):
+            # select the current structure, remaining voxels are set to zero
+            data_hard_labeled_class_obj = (np.array(data_hard_labeled_class) == i_obj).astype(np.int)
 
-    # loop across all structures of data_hard_l
-    for i_l in range(1, n_l + 1):
-        # select the current structure, remaining voxels are set to zero
-        data_i_l = (data_hard_l == i_l).astype(np.int)
+            # Get object coordinates
+            xx_obj, yy_obj, zz_obj = np.where(data_hard_labeled_class_obj)
 
-        # select the current structure in each MC sample
-        # and store it in data_mc_i_l_lst
-        data_mc_i_l_lst = []
-        # loop across MC samples
-        for i_mc in range(len(data_lst)):
-            # find the structure of interest in the current MC sample
-            data_i_inter = data_i_l * data_l_lst[i_mc]
-            i_mc_l = np.max(data_i_inter)
+            # Loop across the MC samples and mask the structure of interest
+            data_class_obj_mc = []
+            for i_mc in range(len(fname_lst)):
+                # Get index of the structure of interest in the MC sample labeled
+                i_mc_label = np.max(data_hard_labeled_class_obj * mc_dict["mc_labeled"][i_mc][i_class])
 
-            if i_mc_l > 0:
-                # keep only the unc voxels of the structure of interest
-                data_mc_i_l = np.copy(data_lst[i_mc])
-                data_mc_i_l[data_l_lst[i_mc] != i_mc_l] = 0.
-            else:  # no structure in this sample
-                data_mc_i_l = np.zeros(data_lst[i_mc].shape)
-            data_mc_i_l_lst.append(data_mc_i_l)
+                data_tmp = np.zeros(mc_dict["mc_data"][i_mc][i_class].shape)
+                # If i_mc_label is zero, it means the structure is not present in this mc_sample
+                if i_mc_label > 0:
+                    data_tmp[mc_dict["mc_labeled"][i_mc][i_class] == i_mc_label] = 1.
 
-        # compute IoU over all the N MC samples for a specific structure
-        intersection = np.logical_and(data_mc_i_l_lst[0].astype(np.bool),
-                                      data_mc_i_l_lst[1].astype(np.bool))
-        union = np.logical_or(data_mc_i_l_lst[0].astype(np.bool),
-                              data_mc_i_l_lst[1].astype(np.bool))
-        for i_mc in range(2, len(data_mc_i_l_lst)):
-            intersection = np.logical_and(intersection,
-                                          data_mc_i_l_lst[i_mc].astype(np.bool))
-            union = np.logical_or(union,
-                                  data_mc_i_l_lst[i_mc].astype(np.bool))
-        iou = np.sum(intersection) * 1. / np.sum(union)
+                data_class_obj_mc.append(data_tmp.astype(np.bool))
 
-        # compute coefficient of variation for all MC volume estimates for a given structure
-        vol_mc_lst = [np.sum(data_mc_i_l_lst[i_mc]) for i_mc in range(len(data_mc_i_l_lst))]
-        mu_mc = np.mean(vol_mc_lst)
-        sigma_mc = np.std(vol_mc_lst)
-        cv = sigma_mc / mu_mc
+            # COMPUTE IoU
+            # Init intersection and union
+            intersection = np.logical_and(data_class_obj_mc[0], data_class_obj_mc[1])
+            union = np.logical_or(data_class_obj_mc[0], data_class_obj_mc[1])
+            # Loop across remaining MC samples
+            for i_mc in range(2, len(data_class_obj_mc)):
+                intersection = np.logical_and(intersection, data_class_obj_mc[i_mc])
+                union = np.logical_or(union, data_class_obj_mc[i_mc])
+            # Compute float
+            iou = np.sum(intersection) * 1. / np.sum(union)
+            # assign uncertainty value to the structure
+            data_iou[xx_obj, yy_obj, zz_obj, i_class] = iou
 
-        # compute average voxel-wise uncertainty within the structure
-        avgUnc = np.mean(data_uncVox[data_i_l != 0])
-        # assign uncertainty value to the structure
-        data_iou[data_i_l != 0] = iou
-        data_cv[data_i_l != 0] = cv
-        data_avgUnc[data_i_l != 0] = avgUnc
+            # COMPUTE COEFFICIENT OF VARIATION
+            # List of volumes for each MC sample
+            vol_mc_lst = [np.sum(data_class_obj_mc[i_mc]) for i_mc in range(len(data_class_obj_mc))]
+            # Mean volume
+            mu_mc = np.mean(vol_mc_lst)
+            # STD volume
+            sigma_mc = np.std(vol_mc_lst)
+            # Coefficient of variation
+            cv = sigma_mc / mu_mc
+            # assign uncertainty value to the structure
+            data_cv[xx_obj, yy_obj, zz_obj, i_class] = cv
+
+            # COMPUTE AVG VOXEL WISE UNC
+            avgUnc = np.mean(data_uncVox[xx_obj, yy_obj, zz_obj, i_class])
+            # assign uncertainty value to the structure
+            data_avgUnc[xx_obj, yy_obj, zz_obj, i_class] = avgUnc
 
     # save nifti files
     fname_iou = fname_out.split('.nii.gz')[0] + '-iou.nii.gz'
@@ -353,7 +363,6 @@ def mixup(data, targets, alpha, debugging=False, ofolder=None):
     lambda_ = np.random.beta(alpha, alpha)
     lambda_ = max(lambda_, 1 - lambda_)  # ensure lambda_ >= 0.5
     lambda_tensor = torch.FloatTensor([lambda_])
-
 
     data = data * lambda_tensor + data2 * (1 - lambda_tensor)
     targets = targets * lambda_tensor + targets2 * (1 - lambda_tensor)
@@ -842,6 +851,7 @@ class SliceFilter(object):
         filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
         filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
     """
+
     def __init__(self, filter_empty_mask=True,
                  filter_empty_input=True,
                  filter_classification=False, classifier_path=None):
@@ -1040,7 +1050,7 @@ def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, we
 
 def overlap_im_seg(img, seg):
     """Overlap image (background, greyscale) and segmentation (foreground, jet)."""
-    seg_zero, seg_nonzero = np.where(seg<=0.1), np.where(seg>0.1)
+    seg_zero, seg_nonzero = np.where(seg <= 0.1), np.where(seg > 0.1)
     seg_jet = plt.cm.jet(plt.Normalize(vmin=0, vmax=1.)(seg))
     seg_jet[seg_zero] = 0.0
     img_grey = plt.cm.binary_r(plt.Normalize(vmin=np.amin(img), vmax=np.amax(img))(img))
@@ -1068,6 +1078,7 @@ class AnimatedGif:
         size_y (int):
         images (list): List of frames.
     """
+
     def __init__(self, size):
         self.fig = plt.figure()
         self.fig.set_size_inches(size[0] / 50, size[1] / 50)
@@ -1085,5 +1096,5 @@ class AnimatedGif:
 
     def save(self, filename):
         animation = anim.ArtistAnimation(self.fig, self.images, interval=50, blit=True,
-                            repeat_delay=500)
+                                         repeat_delay=500)
         animation.save(filename, writer=LoopingPillowWriter(fps=1))
