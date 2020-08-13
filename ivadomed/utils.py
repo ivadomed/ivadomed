@@ -880,7 +880,7 @@ class SliceFilter(object):
                 return False
 
         if self.filter_classification:
-            if not np.all([int(self.classifier(cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0)), self.cuda_available)) for img in input_data]):
+            if not np.all([int(self.classifier(cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0), self.cuda_available))) for img in input_data]):
                 return False
 
         return True
