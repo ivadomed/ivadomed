@@ -4,7 +4,7 @@ import os
 import argparse
 import numpy as np
 from collections import defaultdict
-from tensorflow.python.summary.summary_iterator import summary_iterator
+#from tensorflow.python.summary.summary_iterator import summary_iterator
 import pandas as pd
 import matplotlib.pyplot as plt
 from textwrap import wrap
@@ -226,7 +226,7 @@ def tensorboard_retrieve_event(dpath):
     num_loss = 0
 
     for i in range(len(summary_iterators)):
-        if summary_iterators[i].Tags()['scalars'][0] == 'Validation/Metrics':
+        if summary_iterators[i].Tags()['scalars'] == ['Validation/Metrics']:
             # we create a empty list
             out = [0 for i in range(len(summary_iterators[i].Scalars("Validation/Metrics")))]
             # we ensure that value are append in the right order
@@ -234,8 +234,8 @@ def tensorboard_retrieve_event(dpath):
                 out[events.step-1] = events.value
             metrics[list_metrics[num_metrics]] = out
             num_metrics += 1
-        elif summary_iterators[i].Tags()['scalars'][0] == 'losses':
-            out = [0 for i in range(len(summary_iterators[i].Scalars("Validation/Metrics")))]
+        elif summary_iterators[i].Tags()['scalars'] == ['losses']:
+            out = [0 for i in range(len(summary_iterators[i].Scalars("losses")))]
             # we ensure that value are append in the right order
             for events in summary_iterators[i].Scalars("losses"):
                 out[events.step-1] = events.value
