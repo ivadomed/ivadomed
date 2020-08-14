@@ -1,10 +1,216 @@
 import os
 
+from collections import OrderedDict
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Module
 from torch.nn import init
+import torchvision.models
+
+
+
+#Modified from torchvision.models.resnet.Resnet
+class ResNet(nn.Module):
+    """ResNet model from “Deep Residual Learning for Image Recognition”
+    https://arxiv.org/abs/1512.03385
+    Args:
+        block (nn.Module): Basic block of the network (such as conv + bn + non-nonlinearity)
+        layers (int list): Number of blocks to stack (network depth) after each downsampling step.
+        num_classes (int): Number of GT classes.
+        zero_init_residual (bool): if True, zero-initialize the last BN in each residual branch,
+        so that the residual branch starts with zeros, and each residual block behaves like an identity.
+        groups (int): Number of parallel branches in the network, see : https://arxiv.org/pdf/1611.05431.pdf
+        width_per_group (int): base width of the blocks
+        replace_stride_with_dilation (tuple): each element in the tuple indicates if we replace the 2x2 stride with a dilated convolution
+        norm_layer (layer): Custom normalization layer, if not provided BatchNorm2d is used
+
+    """
+    def __init__(self, block, layers, num_classes=2, zero_init_residual=False,
+                 groups=1, width_per_group=64, replace_stride_with_dilation=None,
+                 norm_layer=None):
+        super(ResNet, self).__init__()
+        if norm_layer is None:
+            norm_layer = nn.BatchNorm2d
+        self._norm_layer = norm_layer
+
+        self.inplanes = 64
+        self.dilation = 1
+        if replace_stride_with_dilation is None:
+            # each element in the tuple indicates if we should replace
+            # the 2x2 stride with a dilated convolution instead
+            replace_stride_with_dilation = [False, False, False]
+        if len(replace_stride_with_dilation) != 3:
+            raise ValueError("replace_stride_with_dilation should be None "
+                             "or a 3-element tuple, got {}".format(replace_stride_with_dilation))
+        self.groups = groups
+        self.base_width = width_per_group
+        self.conv1 = nn.Conv2d(1, self.inplanes, kernel_size=7, stride=2, padding=3,
+                               bias=False)
+        self.bn1 = norm_layer(self.inplanes)
+        self.relu = nn.ReLU(inplace=True)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.layer1 = self._make_layer(block, 64, layers[0])
+        self.layer2 = self._make_layer(block, 128, layers[1], stride=2,
+                                       dilate=replace_stride_with_dilation[0])
+        self.layer3 = self._make_layer(block, 256, layers[2], stride=2,
+                                       dilate=replace_stride_with_dilation[1])
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
+                                       dilate=replace_stride_with_dilation[2])
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(512 * block.expansion, num_classes)
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
+        # Zero-initialize the last BN in each residual branch,
+        # so that the residual branch starts with zeros, and each residual block behaves like an identity.
+        # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
+        if zero_init_residual:
+            for m in self.modules():
+                if isinstance(m, torchvision.models.resnet.Bottleneck):
+                    nn.init.constant_(m.bn3.weight, 0)
+                elif isinstance(m, torchvision.models.resnet.BasicBlock):
+                    nn.init.constant_(m.bn2.weight, 0)
+
+    def _make_layer(self, block, planes, blocks, stride=1, dilate=False):
+        norm_layer = self._norm_layer
+        downsample = None
+        previous_dilation = self.dilation
+        if dilate:
+            self.dilation *= stride
+            stride = 1
+        if stride != 1 or self.inplanes != planes * block.expansion:
+            downsample = nn.Sequential(
+                torchvision.models.resnet.conv1x1(self.inplanes, planes * block.expansion, stride),
+                norm_layer(planes * block.expansion),
+            )
+
+        layers = []
+        layers.append(block(self.inplanes, planes, stride, downsample, self.groups,
+                            self.base_width, previous_dilation, norm_layer))
+        self.inplanes = planes * block.expansion
+        for _ in range(1, blocks):
+            layers.append(block(self.inplanes, planes, groups=self.groups,
+                                base_width=self.base_width, dilation=self.dilation,
+                                norm_layer=norm_layer))
+
+        return nn.Sequential(*layers)
+
+    def _forward_impl(self, x):
+        # See note [TorchScript super()]
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+
+        preds = F.softmax(x, dim=1)
+        # Remove background class
+        preds = preds[:, 1:]
+        return preds
+
+    def forward(self, x):
+        return self._forward_impl(x)
+
+
+class resnet18(ResNet):
+    def __init__(self, **kwargs):
+        super().__init__(torchvision.models.resnet.BasicBlock, [2, 2, 2, 2])
+
+
+class DenseNet(nn.Module):
+    r"""Densenet-BC model class, based on
+    `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
+
+    Args:
+        growth_rate (int) - how many filters to add each layer (`k` in paper)
+        block_config (list of 4 ints) - how many layers in each pooling block
+        num_init_features (int) - the number of filters to learn in the first convolution layer
+        bn_size (int) - multiplicative factor for number of bottle neck layers
+          (i.e. bn_size * k features in the bottleneck layer)
+        drop_rate (float) - dropout rate after each dense layer
+        num_classes (int) - number of classification classes
+        memory_efficient (bool) - If True, uses checkpointing. Much more memory efficient,
+          but slower. Default: *False*. See `"paper" <https://arxiv.org/pdf/1707.06990.pdf>`_
+    """
+
+    def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16),
+                 num_init_features=64, bn_size=4, drop_rate=0, num_classes=2, memory_efficient=False):
+
+        super(DenseNet, self).__init__()
+
+        # First convolution
+        self.features = nn.Sequential(OrderedDict([
+            ('conv0', nn.Conv2d(1, num_init_features, kernel_size=7, stride=2,
+                                padding=3, bias=False)),
+            ('norm0', nn.BatchNorm2d(num_init_features)),
+            ('relu0', nn.ReLU(inplace=True)),
+            ('pool0', nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
+        ]))
+
+        # Each denseblock
+        num_features = num_init_features
+        for i, num_layers in enumerate(block_config):
+            block = torchvision.models.densenet._DenseBlock(
+                num_layers=num_layers,
+                num_input_features=num_features,
+                bn_size=bn_size,
+                growth_rate=growth_rate,
+                drop_rate=drop_rate,
+                memory_efficient=memory_efficient
+            )
+            self.features.add_module('denseblock%d' % (i + 1), block)
+            num_features = num_features + num_layers * growth_rate
+            if i != len(block_config) - 1:
+                trans = torchvision.models.densenet._Transition(num_input_features=num_features,
+                                    num_output_features=num_features // 2)
+                self.features.add_module('transition%d' % (i + 1), trans)
+                num_features = num_features // 2
+
+        # Final batch norm
+        self.features.add_module('norm5', nn.BatchNorm2d(num_features))
+
+        # Linear layer
+        self.classifier = nn.Linear(num_features, num_classes)
+
+        # Official init from torch repo.
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.constant_(m.bias, 0)
+
+    def forward(self, x):
+        features = self.features(x)
+        out = F.relu(features, inplace=True)
+        out = F.adaptive_avg_pool2d(out, (1, 1))
+        out = torch.flatten(out, 1)
+        out = self.classifier(out)
+        preds = F.softmax(out, dim=1)
+        # Remove background class
+        preds = preds[:, 1:]
+        return preds
+
+
+class densenet121(DenseNet):
+    def __init__(self, **kwargs):
+        super().__init__(32, (6, 12, 24, 16), 64)
 
 
 class DownConv(Module):
@@ -60,7 +266,7 @@ class UpConv(Module):
     Attributes:
         downconv (DownConv): Down convolution.
     """
-    
+
     def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1):
         super(UpConv, self).__init__()
         self.downconv = DownConv(in_feat, out_feat, drop_rate, bn_momentum)
@@ -416,7 +622,7 @@ class HeMISUnet(Module):
         Havaei, M., Guizard, N., Chapados, N., Bengio, Y.:
         Hemis: Hetero-modal image segmentation.
         ArXiv link: https://arxiv.org/abs/1607.05194
-        
+
         Reuben Dorent and Samuel Joutard and Marc Modat and Sébastien Ourselin and Tom Vercauteren
         Hetero-Modal Variational Encoder-Decoder for Joint Modality Completion and Segmentation
         ArXiv link: https://arxiv.org/abs/1907.11150
@@ -869,7 +1075,7 @@ class GridAttentionBlockND(nn.Module):
             bn = nn.BatchNorm2d
             self.upsample_mode = 'bilinear'
         else:
-            raise NotImplemented
+            raise NotImplementedError
 
         # Output transform
         self.W = nn.Sequential(
@@ -1024,7 +1230,7 @@ class SimpleBlock(nn.Module):
 class Countception(Module):
     """Countception model.
     Fully convolutional model using inception module and used for keypoints detection.
-    The inception model extracts several patches within each image. Every pixel is therefore processed by the 
+    The inception model extracts several patches within each image. Every pixel is therefore processed by the
     network several times, allowing to average multiple predictions and minimize false negatives.
 
     .. seealso::
