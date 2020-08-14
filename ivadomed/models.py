@@ -8,10 +8,24 @@ from torch.nn import Module
 from torch.nn import init
 import torchvision.models
 
+https://arxiv.org/abs/1608.06993
 
 #Modified from torchvision.models.resnet.Resnet
 class ResNet(nn.Module):
+    """ResNet model from “Deep Residual Learning for Image Recognition”
+    https://arxiv.org/abs/1512.03385
+    Args:
+        block (nn.Module): Basic block of the network (such as conv + bn + non-nonlinearity)
+        layers (int list): Number of blocks to stack (network depth) after each downsampling step.
+        num_classes (int): Number of GT classes.
+        zero_init_residual (bool): if True, zero-initialize the last BN in each residual branch,
+        so that the residual branch starts with zeros, and each residual block behaves like an identity.
+        groups (int): Number of parallel branches in the network, see : https://arxiv.org/pdf/1611.05431.pdf
+        width_per_group (int): base width of the blocks
+        replace_stride_with_dilation (tuple): each element in the tuple indicates if we replace the 2x2 stride with a dilated convolution
+        norm_layer (layer): Custom normalization layer, if not provided BatchNorm2d is used
 
+    """
     def __init__(self, block, layers, num_classes=2, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
                  norm_layer=None):
@@ -252,7 +266,7 @@ class UpConv(Module):
     Attributes:
         downconv (DownConv): Down convolution.
     """
-    
+
     def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1):
         super(UpConv, self).__init__()
         self.downconv = DownConv(in_feat, out_feat, drop_rate, bn_momentum)
@@ -608,7 +622,7 @@ class HeMISUnet(Module):
         Havaei, M., Guizard, N., Chapados, N., Bengio, Y.:
         Hemis: Hetero-modal image segmentation.
         ArXiv link: https://arxiv.org/abs/1607.05194
-        
+
         Reuben Dorent and Samuel Joutard and Marc Modat and Sébastien Ourselin and Tom Vercauteren
         Hetero-Modal Variational Encoder-Decoder for Joint Modality Completion and Segmentation
         ArXiv link: https://arxiv.org/abs/1907.11150
@@ -1216,7 +1230,7 @@ class SimpleBlock(nn.Module):
 class Countception(Module):
     """Countception model.
     Fully convolutional model using inception module and used for keypoints detection.
-    The inception model extracts several patches within each image. Every pixel is therefore processed by the 
+    The inception model extracts several patches within each image. Every pixel is therefore processed by the
     network several times, allowing to average multiple predictions and minimize false negatives.
 
     .. seealso::
