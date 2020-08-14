@@ -687,7 +687,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               object_detection_params=object_detection_params)
 
         super().__init__(dataset.filename_pairs, length=model_params["length_3D"], stride=model_params["stride_3D"],
-                         transform=transform, slice_axis=slice_axis, task=task soft_gt=soft_gt)
+                         transform=transform, slice_axis=slice_axis, task=task, soft_gt=soft_gt)
 
 
 class BidsDataset(MRI2DSegmentationDataset):
