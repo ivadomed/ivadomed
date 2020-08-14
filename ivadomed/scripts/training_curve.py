@@ -192,6 +192,8 @@ def tensorboard_retrieve_event(dpath):
         df: a panda dataframe where the columns are the metric or loss and the row are the epochs.
 
     """
+    # TODO : Find a way to not hardcode this list of metrics/loss
+    # These list of metrics and losses are in the same order as in the training file (where they are written)
     list_metrics = ['dice_score', 'multiclass dice_score', 'hausdorff_score', 'precision_score', 'recall_score',
                     'specificity_score', 'intersection_over_union', 'accuracy_score']
 
