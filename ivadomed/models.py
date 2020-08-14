@@ -8,7 +8,7 @@ from torch.nn import Module
 from torch.nn import init
 import torchvision.models
 
-https://arxiv.org/abs/1608.06993
+
 
 #Modified from torchvision.models.resnet.Resnet
 class ResNet(nn.Module):
