@@ -867,6 +867,7 @@ class SliceFilter(object):
                 return False
 
         if self.filter_empty_input:
+            # Filter set of images if one of them is empty or filled with constant value (i.e. std == 0)
             if np.any([np.all(img) for img in input_data]) or np.any([img.std() == 0 for img in input_data]):
                 return False
 
