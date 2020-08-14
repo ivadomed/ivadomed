@@ -5,7 +5,7 @@ import random
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
-from torch import optim, nn
+from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm

@@ -1,8 +1,6 @@
 ivadomed
 ========
 
-.. note:: This website is under construction.
-
 ``ivadomed`` is an integrated framework for medical image analysis with deep
 learning. The name is a portmanteau between *IVADO* (The `Institute for data
 valorization <https://ivado.ca/en/>`_) and *Medical*.
@@ -36,6 +34,7 @@ The purpose of the ``ivadomed`` project is to:
    :caption: Tutorials
 
    tutorials/one_class_segmentation_2d_unet.rst
+   tutorials/cascaded_architecture.rst
 
 .. toctree::
    :maxdepth: 1

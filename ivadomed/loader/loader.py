@@ -13,14 +13,12 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
 
-# List of classifier models (ie not segmentation output)
-CLASSIFIER_LIST = ['NAME_CLASSIFIER_1']
-
 
 def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
                  dataset_type="training", requires_undo=False, metadata_type=None,
-                 object_detection_params=None, soft_gt=False, **kwargs):
+                 object_detection_params=None, soft_gt=False, device=None,
+                 cuda_available=None, **kwargs):
     """Get loader appropriate loader according to model type. Available loaders are Bids3DDataset for 3D data,
     BidsDataset for 2D data and HDF5Dataset for HeMIS.
 
@@ -80,13 +78,15 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                               transform=tranform_lst,
                                               metadata_choice=metadata_type,
-                                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
+                                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params, device=device,
+                                              cuda_available=cuda_available),
                                               roi_params=roi_params,
                                               object_detection_params=object_detection_params,
                                               soft_gt=soft_gt)
     else:
         # Task selection
-        task = "classification" if model_params["name"] in CLASSIFIER_LIST else "segmentation"
+        task = imed_utils.get_task(model_params["name"])
+
 
         dataset = BidsDataset(bids_path,
                               subject_lst=data_list,
@@ -97,7 +97,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                               transform=tranform_lst,
                               multichannel=multichannel,
-                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params),
+                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params, device=device,
+                              cuda_available=cuda_available),
                               soft_gt=soft_gt,
                               object_detection_params=object_detection_params,
                               task=task)
@@ -148,7 +149,6 @@ class SegmentationPair(object):
         self.slice_axis = slice_axis
         self.soft_gt = soft_gt
         self.prepro_transforms = prepro_transforms
-
         # list of the images
         self.input_handle = []
 
@@ -331,7 +331,7 @@ class SegmentationPair(object):
                     #    print(metadata["gt_metadata"][0]["gt_filenames"])
                     # TODO: uncomment when Anne replies
                     # assert int(np.max(labels_in_slice)) <= 1
-                    gt_slices.append(int(not np.any(gt_obj[..., slice_index])))
+                    gt_slices.append(np.asarray(int(np.any(gt_obj[..., slice_index]))))
         dreturn = {
             "input": input_slices,
             "gt": gt_slices,
@@ -425,6 +425,8 @@ class MRI2DSegmentationDataset(Dataset):
                 if self.slice_filter_roi and imed_loader_utils.filter_roi(slice_roi_pair['gt'], self.roi_thr):
                     continue
 
+
+
                 item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                       slice_seg_pair,
                                                                       slice_roi_pair)
@@ -455,6 +457,7 @@ class MRI2DSegmentationDataset(Dataset):
         stack_roi, metadata_roi = self.transform(sample=roi_pair_slice["gt"],
                                                  metadata=metadata_roi,
                                                  data_type="roi")
+
         # Update metadata_input with metadata_roi
         metadata_input = imed_loader_utils.update_metadata(metadata_roi, metadata_input)
 
@@ -477,8 +480,9 @@ class MRI2DSegmentationDataset(Dataset):
 
         else:
             # Force no transformation on labels for classification task
-            # stack_gt is a list of length n_label, values: 0 or 1
-            stack_gt = seg_pair_slice["gt"]
+            # stack_gt is a tensor of size 1x1, values: 0 or 1
+            # "expand(1)" is necessary to be compatible with segmentation convention: n_labelxhxwxd
+            stack_gt = torch.from_numpy(seg_pair_slice["gt"][0]).expand(1)
 
         data_dict = {
             'input': stack_input,
@@ -817,7 +821,7 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         if multichannel:
             for subject in multichannel_subjects.values():
-                if not None in subject["absolute_paths"]:
+                if None not in subject["absolute_paths"]:
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
 

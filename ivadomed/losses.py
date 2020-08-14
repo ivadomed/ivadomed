@@ -74,7 +74,7 @@ class BinaryCrossEntropyLoss(nn.Module):
         self.loss_fct = nn.BCELoss()
 
     def forward(self, prediction, target):
-        return self.loss_fct(prediction, target)
+        return self.loss_fct(prediction, target.float())
 
 
 class FocalLoss(nn.Module):
