@@ -35,7 +35,7 @@
     "training_parameters": {
         "batch_size": 64,
         "loss": {
-            "name": "DiceLoss"
+            "name": "BinaryCrossEntropyLoss"
         },
         "training_time": {
             "num_epochs": 100,
@@ -63,7 +63,7 @@
         "bn_momentum": 0.9,
         "depth": 2
     },
-    "NAME_CLASSIFIER_1": {
+    "resnet18": {
         "applied": true
     },
     "testing_parameters": {
@@ -85,11 +85,13 @@
             "wspace": 0.75,
             "hspace": 0.75,
             "dspace": 1,
-            "applied_to": ["im", "roi"]
+            "applied_to": ["im", "roi"],
+            "preprocessing": true
         },
         "ROICrop": {
             "size": [48, 48],
-            "applied_to": ["im"]
+            "applied_to": ["im", "roi"],
+            "preprocessing": true
         },
         "RandomAffine": {
             "translate": [0.03, 0.03],
