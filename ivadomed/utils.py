@@ -834,7 +834,8 @@ class SliceFilter(object):
                 return False
 
         if self.filter_empty_input:
-            if not np.all([np.any(img) for img in input_data]):
+            if not np.all([np.any(img) for img in input_data]) or sum([img.std() for img in input_data]) == 0:
+                print('out', [img.std() for img in input_data])
                 return False
 
         return True
