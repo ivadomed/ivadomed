@@ -517,7 +517,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             space.
     """
 
-    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
+    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0),  slice_axis=0, task="segmentation",
                  soft_gt=False):
         self.filename_pairs = filename_pairs
         self.handlers = []
@@ -527,6 +527,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         self.prepro_transforms, self.transform = transform
         self.slice_axis = slice_axis
         self.has_bounding_box = True
+        self.task = task
         self.soft_gt = soft_gt
 
         self._load_filenames()
@@ -673,7 +674,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
     """
     def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_params=None,
-                 multichannel=False, object_detection_params=None, soft_gt=False):
+                 multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
         dataset = BidsDataset(root_dir,
                               subject_lst=subject_lst,
                               target_suffix=target_suffix,
@@ -686,7 +687,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               object_detection_params=object_detection_params)
 
         super().__init__(dataset.filename_pairs, length=model_params["length_3D"], stride=model_params["stride_3D"],
-                         transform=transform, slice_axis=slice_axis, soft_gt=soft_gt)
+                         transform=transform, slice_axis=slice_axis, task=task soft_gt=soft_gt)
 
 
 class BidsDataset(MRI2DSegmentationDataset):
