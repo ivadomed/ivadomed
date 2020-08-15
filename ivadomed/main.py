@@ -202,7 +202,7 @@ def run_command(context, n_gif=0, thr_increment=None):
         # Aleatoric uncertainty
         if context['testing_parameters']['uncertainty']['aleatoric'] and \
                 context['testing_parameters']['uncertainty']['n_it'] > 0:
-            transformation_dict = transform_valid_params
+            transformation_dict = transform_train_params
         else:
             transformation_dict = transform_test_params
         # Display selected transforms
