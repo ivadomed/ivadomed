@@ -64,22 +64,38 @@ inverse transformations are required to reconstruct the predicted volume.
 Run uncertainty estimation
 --------------------------
 
+Once the configuration file has been modified, run the inference with the following command:
 
-Selected transformations for the ['testing'] dataset:
-	Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1, 'preprocessing': True}
-	CenterCrop: {'size': [128, 128], 'preprocessing': True}
-	NumpyToTensor: {}
-	NormalizeInstance: {'applied_to': ['im']}
+.. code-block:: bash
+
+   ivadomed -c config.json
+
+If aleatoric uncertainty was selected, then data augmentation operations will be performed at testing time, as indicated
+in the terminal output (see below). Note that ``ElasticTransform`` has been desactivated because no ``undo_transform``
+function is available for it.
+
+.. code-block:: bash
+
+    Selected transformations for the ['testing'] dataset:
+        Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1, 'preprocessing': True}
+        CenterCrop: {'size': [128, 128], 'preprocessing': True}
+        RandomAffine: {'degrees': 5, 'scale': [0.1, 0.1], 'translate': [0.03, 0.03], 'applied_to': ['im', 'gt']}
+        ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1, 'applied_to': ['im', 'gt']}
+        NumpyToTensor: {}
+        NormalizeInstance: {'applied_to': ['im']}
+    ElasticTransform transform not included since no undo_transform available for it.
+
+... otherwise, only preprocessing and data normalization are performed, see below:
+
+.. code-block:: bash
+
+    Selected transformations for the ['testing'] dataset:
+        Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1, 'preprocessing': True}
+        CenterCrop: {'size': [128, 128], 'preprocessing': True}
+        NumpyToTensor: {}
+        NormalizeInstance: {'applied_to': ['im']}
 
 
-Selected transformations for the ['testing'] dataset:
-	Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1, 'preprocessing': True}
-	CenterCrop: {'size': [128, 128], 'preprocessing': True}
-	RandomAffine: {'degrees': 5, 'scale': [0.1, 0.1], 'translate': [0.03, 0.03], 'applied_to': ['im', 'gt']}
-	ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1, 'applied_to': ['im', 'gt']}
-	NumpyToTensor: {}
-	NormalizeInstance: {'applied_to': ['im']}
-ElasticTransform transform not included since no undo_transform available for it.
 
 
 
