@@ -96,13 +96,6 @@ def run_command(context, n_gif=0, thr_increment=None):
     # Get transforms for each subdataset
     transform_train_params, transform_valid_params, transform_test_params = \
         imed_transforms.get_subdatasets_transforms(context["transformation"])
-    if command == "train":
-        imed_utils.display_selected_transfoms(transform_train_params, dataset_type=["training"])
-        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=["validation"])
-    elif command == "test":
-        imed_utils.display_selected_transfoms(transform_test_params, dataset_type=["testing"])
-
-
 
     # MODEL PARAMETERS
     model_params = context["default_model"]
@@ -138,6 +131,9 @@ def run_command(context, n_gif=0, thr_increment=None):
     loader_params.update({"model_params": model_params})
 
     if command == 'train':
+        # Display selected transforms
+        imed_utils.display_selected_transfoms(transform_train_params, dataset_type=["training"])
+        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=["validation"])
 
         # LOAD DATASET
         # Get Validation dataset
@@ -209,6 +205,8 @@ def run_command(context, n_gif=0, thr_increment=None):
             transformation_dict = transform_valid_params
         else:
             transformation_dict = transform_test_params
+        # Display selected transforms
+        imed_utils.display_selected_transfoms(transform_test_params, dataset_type=["testing"])
 
         # UNDO TRANSFORMS
         undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))
