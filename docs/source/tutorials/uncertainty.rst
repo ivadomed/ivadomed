@@ -122,10 +122,10 @@ with the iteration number as suffix (e.g. ``sub-001_pred_00.nii.gz`` ... ``sub-0
     Inference - Iteration 18: 100%|██████████████████████████████████████████████████████████████████████████████████| 5/5 [00:09<00:00,  1.82s/it]
     Inference - Iteration 19: 100%|██████████████████████████████████████████████████████████████████████████████████| 5/5 [00:08<00:00,  1.71s/it]
 
+The Monte Carlo samples are then used to compute uncertainties measures for each subject. The results are saved under
+``pred_masks``.
 
+.. code-block:: bash
 
     Uncertainty Computation: 100%|███████████████████████████████████████████████████████████████████████████████████| 5/5 [01:31<00:00, 18.28s/it]
-
-
-
 
