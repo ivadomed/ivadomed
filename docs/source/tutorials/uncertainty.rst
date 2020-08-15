@@ -58,8 +58,11 @@ inverse transformations are required to reconstruct the predicted volume.
             "translate": [0.1, 0.1],
             "applied_to": ["im", "gt"],
             "dataset_type": ["training"]
-        },
+        }
 
+
+Run uncertainty estimation
+--------------------------
 
 
 Selected transformations for the ['testing'] dataset:
