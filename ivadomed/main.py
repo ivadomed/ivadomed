@@ -209,7 +209,7 @@ def run_command(context, n_gif=0, thr_increment=None):
         imed_utils.display_selected_transfoms(transform_test_params, dataset_type=["testing"])
 
         # UNDO TRANSFORMS
-        undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))
+        undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict, requires_undo=True))
 
         # Get Testing dataset
         ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
