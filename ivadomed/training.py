@@ -5,7 +5,7 @@ import random
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
-from torch import optim, nn
+from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -310,7 +310,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     if thr_increment:
         print('\nRunning threshold analysis to find optimal threshold')
         # Choice of optimisation metric
-        metric = "recall_specificity" if model_params["name"] in imed_utils.imed_loader.CLASSIFIER_LIST else "dice"
+        metric = "recall_specificity" if imed_utils.get_task(model_params["name"]) == "classification" else "dice"
         # Run analysis
         optimal_thr = threshold_analysis(model=model,
                                          val_loader=val_loader,

@@ -15,6 +15,7 @@ import torchvision.utils as vutils
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
+from ivadomed import metrics as imed_metrics
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed.object_detection import utils as imed_obj_detect
 
@@ -24,6 +25,26 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
+
+# List of classification models (ie not segmentation output)
+CLASSIFIER_LIST = ['resnet18', 'densenet121']
+
+def get_task(model_name):
+    return "classification" if model_name in CLASSIFIER_LIST else "segmentation"
+
+# METRICS
+def get_metric_fns(task):
+    metric_fns = [imed_metrics.dice_score,
+              imed_metrics.multi_class_dice_score,
+              imed_metrics.precision_score,
+              imed_metrics.recall_score,
+              imed_metrics.specificity_score,
+              imed_metrics.intersection_over_union,
+              imed_metrics.accuracy_score]
+    if task == "segmentation":
+            metric_fns = metric_fns + [imed_metrics.hausdorff_score]
+
+    return metric_fns
 
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
@@ -823,9 +844,20 @@ class SliceFilter(object):
     """
 
     def __init__(self, filter_empty_mask=True,
-                 filter_empty_input=True):
+                 filter_empty_input=True,
+                 filter_classification=False, classifier_path=None, device=None, cuda_available=None ):
         self.filter_empty_mask = filter_empty_mask
         self.filter_empty_input = filter_empty_input
+        self.filter_classification = filter_classification
+        self.device = device
+        self.cuda_available = cuda_available
+
+        if self.filter_classification:
+            if cuda_available:
+                self.classifier = torch.load(classifier_path, map_location=device)
+            else:
+                self.classifier = torch.load(classifier_path, map_location='cpu')
+
 
     def __call__(self, sample):
         input_data, gt_data = sample['input'], sample['gt']
@@ -836,6 +868,10 @@ class SliceFilter(object):
 
         if self.filter_empty_input:
             if not np.all([np.any(img) for img in input_data]):
+                return False
+
+        if self.filter_classification:
+            if not np.all([int(self.classifier(cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0), self.cuda_available))) for img in input_data]):
                 return False
 
         return True
