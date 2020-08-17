@@ -190,6 +190,10 @@ def run_command(context, n_gif=0, thr_increment=None):
             debugging=context["debugging"])
 
         if thr_increment:
+            print('\nRunning threshold analysis to find optimal threshold')
+            # Choice of optimisation metric
+            metric = "recall_specificity" if model_params["name"] in imed_utils.imed_loader.CLASSIFIER_LIST else "dice"
+            # Model path
             model_path = os.path.join(log_directory, context["model_name"] + "best_model.pt")
             # Training dataset without data augmentation
             ds_train = imed_loader.load_dataset(**{**loader_params,
@@ -197,9 +201,11 @@ def run_command(context, n_gif=0, thr_increment=None):
                                                       'transforms_params': transform_valid_params,
                                                       'dataset_type': 'validation'}}, device=device,
                                                 cuda_available=cuda_available)
+            # Run analysis
             thr = imed_training.threshold_analysis(model_path=model_path,
                                                    ds=ds_train + ds_valid,
                                                    model_params=model_params,
+                                                   metric=metric,
                                                    )
 
         # Update threshold in config file
