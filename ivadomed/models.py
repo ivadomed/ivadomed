@@ -15,7 +15,6 @@ class ResNet(nn.Module):
     """ResNet model based on
      `"Deep Residual Learning for Image Recognition" <https://arxiv.org/abs/1512.03385.pdf>`_
     
-    
     Args:
         block (nn.Module): Basic block of the network (such as conv + bn + non-nonlinearity)
         layers (int list): Number of blocks to stack (network depth) after each downsampling step.
