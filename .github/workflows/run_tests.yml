@@ -3,10 +3,12 @@
 
 name: Run tests
 
-on: push:
-	branches:
-		-master
-    pull_request
+on:
+  # Trigger the workflow on push but only for the master branch
+  push:
+    branches:
+      - master
+  pull_request
 
 jobs:
   test:
