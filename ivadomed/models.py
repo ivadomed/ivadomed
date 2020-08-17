@@ -12,15 +12,17 @@ import torchvision.models
 
 #Modified from torchvision.models.resnet.Resnet
 class ResNet(nn.Module):
-    """ResNet model from “Deep Residual Learning for Image Recognition”
-    https://arxiv.org/abs/1512.03385
+    """ResNet model based on
+     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/abs/1512.03385.pdf>`_
+    
+    
     Args:
         block (nn.Module): Basic block of the network (such as conv + bn + non-nonlinearity)
         layers (int list): Number of blocks to stack (network depth) after each downsampling step.
         num_classes (int): Number of GT classes.
         zero_init_residual (bool): if True, zero-initialize the last BN in each residual branch,
         so that the residual branch starts with zeros, and each residual block behaves like an identity.
-        groups (int): Number of parallel branches in the network, see : https://arxiv.org/pdf/1611.05431.pdf
+        groups (int): Number of parallel branches in the network, see `"paper" <https://arxiv.org/pdf/1611.05431.pdf>`_
         width_per_group (int): base width of the blocks
         replace_stride_with_dilation (tuple): each element in the tuple indicates if we replace the 2x2 stride with a dilated convolution
         norm_layer (layer): Custom normalization layer, if not provided BatchNorm2d is used
