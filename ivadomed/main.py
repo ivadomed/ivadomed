@@ -203,10 +203,12 @@ def run_command(context, n_gif=0, thr_increment=None):
                                                 cuda_available=cuda_available)
             # Run analysis
             thr = imed_training.threshold_analysis(model_path=model_path,
-                                                   ds=ds_train + ds_valid,
+                                                   ds_list=[ds_train, ds_valid],
                                                    model_params=model_params,
                                                    metric=metric,
-                                                   )
+                                                   increment=thr_increment,
+                                                   fname_out=os.path.join(log_directory, "roc.png"),
+                                                   cuda_available=cuda_available)
 
         # Update threshold in config file
         if thr_increment:
