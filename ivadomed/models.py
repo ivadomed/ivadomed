@@ -132,7 +132,7 @@ class resnet18(ResNet):
 
 
 class DenseNet(nn.Module):
-    r"""Densenet-BC model class, based on
+    """Densenet-BC model class, based on
     `"Densely Connected Convolutional Networks" <https://arxiv.org/pdf/1608.06993.pdf>`_
 
     Args:
