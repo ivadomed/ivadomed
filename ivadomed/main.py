@@ -189,6 +189,19 @@ def run_command(context, n_gif=0, thr_increment=None):
             thr_increment=thr_increment,
             debugging=context["debugging"])
 
+        if thr_increment:
+            model_path = os.path.join(log_directory, context["model_name"] + "best_model.pt")
+            # Training dataset without data augmentation
+            ds_train = imed_loader.load_dataset(**{**loader_params,
+                                                   **{'data_list': train_lst,
+                                                      'transforms_params': transform_valid_params,
+                                                      'dataset_type': 'validation'}}, device=device,
+                                                cuda_available=cuda_available)
+            thr = imed_training.threshold_analysis(model_path=model_path,
+                                                   ds=ds_train + ds_valid,
+                                                   model_params=model_params,
+                                                   )
+
         # Update threshold in config file
         if thr_increment:
             context["testing_parameters"]["binarize_prediction"] = thr
