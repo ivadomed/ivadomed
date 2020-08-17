@@ -476,13 +476,13 @@ def save_film_params(gammas, betas, contrasts, depth, ofolder):
     np.save(contrast_path, contrast_images)
 
 
-def threshold_analysis(model, val_loader, model_params, metric="dice", increment=0.1, fname_out="thr.png",
+def threshold_analysis(model_path, ds_lst, model_params, metric="dice", increment=0.1, fname_out="thr.png",
                        cuda_available=True):
     """Run a threshold analysis to find the optimal threshold on the validation sub-dataset.
 
     Args:
-        model (nn.Module): Trained model.
-        val_laoder (torch.utils.data.DataLoader): Validation data loader.
+        model_path (str): Model path.
+        ds_lst (list): List of loaders.
         model_params (dict): Model's parameters.
         metric (str): Choice between "dice" and "recall_specificity". If "recall_specificity", then a ROC analysis
             is performed.
@@ -497,6 +497,8 @@ def threshold_analysis(model, val_loader, model_params, metric="dice", increment
         print('\nChoice of metric for threshold analysis: dice, recall_specificity.')
         exit()
 
+    # Load model
+    model = torch.load(model_path)
     # Eval mode
     model.eval()
 
