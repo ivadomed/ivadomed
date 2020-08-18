@@ -1,5 +1,5 @@
 import os
-
+import copy
 import nibabel as nib
 import numpy as np
 import torch
@@ -257,14 +257,15 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     return preds_npy_list, gt_npy_list
 
 
-def threshold_analysis(model_path, ds_lst, model_params, metric="dice", increment=0.1, fname_out="thr.png",
-                       cuda_available=True):
+def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric="dice", increment=0.1,
+                       fname_out="thr.png", cuda_available=True):
     """Run a threshold analysis to find the optimal threshold on a sub-dataset.
 
     Args:
         model_path (str): Model path.
         ds_lst (list): List of loaders.
         model_params (dict): Model's parameters.
+        testing_params (dict): Testing parameters
         metric (str): Choice between "dice" and "recall_specificity". If "recall_specificity", then a ROC analysis
             is performed.
         increment (float): Increment between tested thresholds.
@@ -304,28 +305,11 @@ def threshold_analysis(model_path, ds_lst, model_params, metric="dice", incremen
                                       ofolder=None,
                                       cuda_available=cuda_available)
 
-    # Go through val dataset
-    for i, batch in enumerate(loader):
-        with torch.no_grad():
-            # GET SAMPLES
-            if model_params["name"] == "HeMISUnet":
-                input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
-            else:
-                input_samples = imed_utils.cuda(batch["input"], cuda_available)
-            gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
-
-            # RUN MODEL
-            if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
-                metadata = get_metadata(batch["input_metadata"], model_params)
-                preds = model(input_samples, metadata)
-            else:
-                preds = model(input_samples)
-
-            gt_npy = threshold_predictions(gt_samples.cpu().numpy(), thr=0.5)
-            preds_npy = preds.data.cpu().numpy()
-            for thr in thr_list:
-                preds_thr = threshold_predictions(copy.deepcopy(preds_npy), thr=thr)
-                metric_dict[thr](preds_thr, gt_npy)
+    # Make sure the GT is binarized
+    gt_npy = [threshold_predictions(gt, thr=0.5) for gt in gt_npy]
+    for thr in thr_list:
+        preds_thr = threshold_predictions(copy.deepcopy(preds_npy), thr=thr)
+        metric_dict[thr](preds_thr, gt_npy)
 
     # Get results
     tpr_list, fpr_list, dice_list = [], [], []
