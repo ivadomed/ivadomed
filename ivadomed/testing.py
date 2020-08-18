@@ -309,7 +309,7 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
     gt_npy = [threshold_predictions(gt, thr=0.5) for gt in gt_npy]
     # Move threshold
     for thr in thr_list:
-        preds_thr = threshold_predictions(copy.deepcopy(preds_npy), thr=thr)
+        preds_thr = [threshold_predictions(copy.deepcopy(pred), thr=thr) for pred in preds_npy]
         metric_dict[thr](preds_thr, gt_npy)
 
     # Get results
