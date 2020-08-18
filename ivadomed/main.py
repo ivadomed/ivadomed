@@ -216,18 +216,18 @@ def run_command(context, n_gif=0, thr_increment=None):
                                                 cuda_available=cuda_available)
             # Adjust some testing parameters
             testing_params["binarize_prediction"] = -1
-
+            testing_params["uncertainty"]["applied"] = False
             # Run analysis
             thr = imed_testing.threshold_analysis(model_path=model_path,
-                                                  ds_list=[ds_train, ds_valid],
+                                                  ds_lst=[ds_train, ds_valid],
                                                   model_params=model_params,
+                                                  testing_params=testing_params,
                                                   metric=metric,
                                                   increment=thr_increment,
-                                                   fname_out=os.path.join(log_directory, "roc.png"),
-                                                   cuda_available=cuda_available)
+                                                  fname_out=os.path.join(log_directory, "roc.png"),
+                                                  cuda_available=cuda_available)
 
-        # Update threshold in config file
-        if thr_increment:
+            # Update threshold in config file
             context["testing_parameters"]["binarize_prediction"] = thr
 
         # Save config file within log_directory and log_directory/model_name
