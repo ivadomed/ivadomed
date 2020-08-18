@@ -1,7 +1,7 @@
 import json
 import os
 import argparse
-
+import copy
 import joblib
 import torch.backends.cudnn as cudnn
 
@@ -145,7 +145,7 @@ def run_command(context, n_gif=0, thr_increment=None):
     else:
         transformation_dict = transform_test_params
     undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))
-    testing_params = context["testing_parameters"]
+    testing_params = copy.deepcopy(context["testing_parameters"])
     testing_params.update(context["training_parameters"])
     testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
                            'slice_axis': loader_params['slice_axis']})
@@ -203,7 +203,6 @@ def run_command(context, n_gif=0, thr_increment=None):
             debugging=context["debugging"])
 
         if thr_increment:
-            print('\nRunning threshold analysis to find optimal threshold')
             # Choice of optimisation metric
             metric = "recall_specificity" if model_params["name"] in imed_utils.CLASSIFIER_LIST else "dice"
             # Model path
