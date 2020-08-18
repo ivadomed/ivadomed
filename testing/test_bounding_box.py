@@ -14,7 +14,7 @@ BATCH_SIZE = 8
 LOG_DIR = "log"
 
 
-@pytest.mark.parametrize('train_lst', [['sub-test001']])
+@pytest.mark.parametrize('train_lst', [['sub-unf01']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('config', [
     {
@@ -23,7 +23,9 @@ LOG_DIR = "log"
             "safety_factor": [1.0, 1.0, 1.0],
             "log_directory": LOG_DIR
         },
-        "transforms_params": {"NumpyToTensor": {}},
+        "transforms_params": {
+            "Resample": {"wspace": 0.75, "hspace": 0.75},
+            "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
         "multichannel": False,
@@ -95,3 +97,15 @@ def test_bounding_box(train_lst, target_lst, config):
             assert seg_pair['input'][0].shape[-2:] == (mx2 - mx1, my2 - my1)
 
     shutil.rmtree(LOG_DIR)
+
+
+# testing adjust bb size
+def test_adjust_bb_size():
+    test_coord = (0, 10, 0, 10, 0, 10)
+    imed_obj_detect.adjust_bb_size(test_coord, (2, 2, 2), True)
+
+
+# testing bb statistic
+def test_compute_bb_statistics():
+    imed_obj_detect.compute_bb_statistics("testing_data/bounding_box_dict.json")
+

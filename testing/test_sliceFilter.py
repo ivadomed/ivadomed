@@ -33,7 +33,7 @@ def _cmpt_slice(ds_loader):
     {"Resample": {"wspace": 0.75, "hspace": 0.75, "applied_to": ["im", "gt"], "preprocessing": True},
      "CenterCrop": {"size": [100, 100], "applied_to": ["im", "gt"], "preprocessing": True},
      "NumpyToTensor": {"applied_to": ["im", "gt"]}}])
-@pytest.mark.parametrize('train_lst', [['sub-test001']])
+@pytest.mark.parametrize('train_lst', [['sub-unf01']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('slice_filter_params', [
     {"filter_empty_mask": False, "filter_empty_input": True},
@@ -76,4 +76,4 @@ def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_
         assert cmpt_neg == 0
         assert cmpt_pos != 0
     else:
-        assert cmpt_neg > cmpt_pos
+        assert cmpt_neg != 0 and cmpt_pos != 0
