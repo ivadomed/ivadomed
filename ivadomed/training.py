@@ -14,6 +14,7 @@ from ivadomed import losses as imed_losses
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
+from ivadomed.testing import run_inference
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.postprocessing import threshold_predictions
 import datetime
@@ -511,8 +512,20 @@ def threshold_analysis(model_path, ds_lst, model_params, metric="dice", incremen
                   imed_metrics.specificity_score]
     metric_dict = {thr: imed_metrics.MetricManager(metric_fns) for thr in thr_list}
 
+    # Load
+    loader = DataLoader(ConcatDataset(ds_lst), batch_size=1,
+                        shuffle=False, pin_memory=True, sampler=None,
+                        collate_fn=imed_loader_utils.imed_collate,
+                        num_workers=0)
+
+    # Run inference
+    preds_npy, gt_npy = imed_testing.run_inference(loader, model, model_params,
+                                                   testing_params,
+                                                   ofolder,
+                                                   cuda_available)
+
     # Go through val dataset
-    for i, batch in enumerate(val_loader):
+    for i, batch in enumerate(loader):
         with torch.no_grad():
             # GET SAMPLES
             if model_params["name"] == "HeMISUnet":
