@@ -207,7 +207,7 @@ def run_command(context, n_gif=0, thr_increment=None):
             # Choice of optimisation metric
             metric = "recall_specificity" if model_params["name"] in imed_utils.CLASSIFIER_LIST else "dice"
             # Model path
-            model_path = os.path.join(log_directory, context["model_name"] + "best_model.pt")
+            model_path = os.path.join(log_directory, "best_model.pt")
             # Training dataset without data augmentation
             ds_train = imed_loader.load_dataset(**{**loader_params,
                                                    **{'data_list': train_lst,
