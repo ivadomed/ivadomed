@@ -310,7 +310,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     if thr_increment:
         print('\nRunning threshold analysis to find optimal threshold')
         # Choice of optimisation metric
-        metric = "recall_specificity" if model_params["name"] in imed_utils.imed_loader.CLASSIFIER_LIST else "dice"
+        metric = "recall_specificity" if imed_utils.get_task(model_params["name"]) == "classification" else "dice"
         # Run analysis
         optimal_thr = threshold_analysis(model=model,
                                          val_loader=val_loader,

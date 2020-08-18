@@ -48,7 +48,7 @@ def test_HeMIS(p=0.0001):
 
     roi_params = {"suffix": "_seg-manual", "slice_filter_roi": None}
 
-    train_lst = ['sub-test001']
+    train_lst = ['sub-unf01']
     contrasts = ['T1w', 'T2w', 'T2star']
 
     print('[INFO]: Creating dataset ...\n')
