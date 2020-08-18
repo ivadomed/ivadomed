@@ -199,7 +199,6 @@ def run_command(context, n_gif=0, thr_increment=None):
             cuda_available=cuda_available,
             metric_fns=metric_fns,
             n_gif=n_gif,
-            thr_increment=thr_increment,
             debugging=context["debugging"])
 
         if thr_increment:
