@@ -304,7 +304,7 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
                                       testing_params,
                                       ofolder=None,
                                       cuda_available=cuda_available)
-
+    print(len(loader), len(preds_npy), len(gt_npy))
     # Make sure the GT is binarized
     gt_npy = [threshold_predictions(gt, thr=0.5) for gt in gt_npy]
     # Move threshold
@@ -325,6 +325,7 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
         diff_list = dice_list
     else:
         diff_list = [tpr - fpr for tpr, fpr in zip(tpr_list, fpr_list)]
+    print(dice_list)
     optimal_idx = np.max(np.where(diff_list == np.max(diff_list)))
     optimal_threshold = thr_list[optimal_idx]
     print('\tOptimal threshold: {}'.format(optimal_threshold))
