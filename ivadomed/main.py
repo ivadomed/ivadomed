@@ -137,6 +137,19 @@ def run_command(context, n_gif=0, thr_increment=None):
 
     loader_params.update({"model_params": model_params})
 
+    # TESTING PARAMS
+    # Aleatoric uncertainty
+    if context['testing_parameters']['uncertainty']['aleatoric'] and \
+            context['testing_parameters']['uncertainty']['n_it'] > 0:
+        transformation_dict = transform_valid_params
+    else:
+        transformation_dict = transform_test_params
+    undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))
+    testing_params = context["testing_parameters"]
+    testing_params.update(context["training_parameters"])
+    testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
+                           'slice_axis': loader_params['slice_axis']})
+
     if command == 'train':
 
         # LOAD DATASET
@@ -201,12 +214,15 @@ def run_command(context, n_gif=0, thr_increment=None):
                                                       'transforms_params': transform_valid_params,
                                                       'dataset_type': 'validation'}}, device=device,
                                                 cuda_available=cuda_available)
+            # Adjust some testing parameters
+            testing_params["binarize_prediction"] = -1
+
             # Run analysis
-            thr = imed_training.threshold_analysis(model_path=model_path,
-                                                   ds_list=[ds_train, ds_valid],
-                                                   model_params=model_params,
-                                                   metric=metric,
-                                                   increment=thr_increment,
+            thr = imed_testing.threshold_analysis(model_path=model_path,
+                                                  ds_list=[ds_train, ds_valid],
+                                                  model_params=model_params,
+                                                  metric=metric,
+                                                  increment=thr_increment,
                                                    fname_out=os.path.join(log_directory, "roc.png"),
                                                    cuda_available=cuda_available)
 
@@ -224,17 +240,6 @@ def run_command(context, n_gif=0, thr_increment=None):
 
     elif command == 'test':
         # LOAD DATASET
-        # Aleatoric uncertainty
-        if context['testing_parameters']['uncertainty']['aleatoric'] and \
-                context['testing_parameters']['uncertainty']['n_it'] > 0:
-            transformation_dict = transform_valid_params
-        else:
-            transformation_dict = transform_test_params
-
-        # UNDO TRANSFORMS
-        undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))
-
-        # Get Testing dataset
         ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
                                                                   'transforms_params': transformation_dict,
                                                                   'dataset_type': 'testing',
@@ -254,10 +259,6 @@ def run_command(context, n_gif=0, thr_increment=None):
                                  "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
 
         # RUN INFERENCE
-        testing_params = context["testing_parameters"]
-        testing_params.update(context["training_parameters"])
-        testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
-                               'slice_axis': loader_params['slice_axis']})
         metrics_dict = imed_testing.test(model_params=model_params,
                                          dataset_test=ds_test,
                                          testing_params=testing_params,
