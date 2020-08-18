@@ -13,9 +13,9 @@ from ivadomed.loader import utils as imed_loader_utils
 SLICE_AXIS = 2
 PATH_BIDS = 'testing_data'
 PATH_MODEL = os.path.join(PATH_BIDS, "model_test")
-IMAGE_PATH = os.path.join(PATH_BIDS, "sub-test001", "anat", "sub-test001_T1w.nii.gz")
-ROI_PATH = os.path.join(PATH_BIDS, "derivatives", "labels", "sub-test001", "anat",
-                        "sub-test001_T1w_seg-manual.nii.gz")
+IMAGE_PATH = os.path.join(PATH_BIDS, "sub-unf01", "anat", "sub-unf01_T1w.nii.gz")
+ROI_PATH = os.path.join(PATH_BIDS, "derivatives", "labels", "sub-unf01", "anat",
+                        "sub-unf01_T1w_seg-manual.nii.gz")
 BATCH_SIZE = 1
 DROPOUT = 0.4
 BN = 0.1
