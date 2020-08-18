@@ -26,7 +26,7 @@ MODEL_DEFAULT = {
 }
 
 
-@pytest.mark.parametrize('train_lst', [['sub-test001']])
+@pytest.mark.parametrize('train_lst', [['sub-unf01']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('config', [
     {

@@ -10,9 +10,10 @@ N_METADATA = 1
 OUT_CHANNEL = 1
 INITIAL_LR = 0.001
 
-@pytest.mark.parametrize('fraction', [0.1, 0.3, 0.5])
+
+@pytest.mark.parametrize('fraction', [0.1, 0.2, 0.3])
 @pytest.mark.parametrize('path_model', ['testing_data/model_unet_test.pt'])
-def test_transfer_learning(path_model, fraction, tolerance=0.1):
+def test_transfer_learning(path_model, fraction, tolerance=0.15):
     device = torch.device("cpu")
     print("Working on {}.".format('cpu'))
 
