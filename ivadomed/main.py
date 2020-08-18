@@ -150,20 +150,19 @@ def run_command(context, n_gif=0, thr_increment=None):
     testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
                            'slice_axis': loader_params['slice_axis']})
 
+    # LOAD DATASET
+    # Get Validation dataset
+    ds_valid = imed_loader.load_dataset(**{**loader_params,
+                                           **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
+                                              'dataset_type': 'validation'}}, device=device,
+                                        cuda_available=cuda_available)
+    # Get Training dataset
+    ds_train = imed_loader.load_dataset(**{**loader_params,
+                                           **{'data_list': train_lst, 'transforms_params': transform_train_params,
+                                              'dataset_type': 'training'}}, device=device,
+                                        cuda_available=cuda_available)
+
     if command == 'train':
-
-        # LOAD DATASET
-        # Get Validation dataset
-        ds_valid = imed_loader.load_dataset(**{**loader_params,
-                                               **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
-                                                  'dataset_type': 'validation'}},device=device,
-                                                  cuda_available=cuda_available)
-        # Get Training dataset
-        ds_train = imed_loader.load_dataset(**{**loader_params,
-                                               **{'data_list': train_lst, 'transforms_params': transform_train_params,
-                                                  'dataset_type': 'training'}},device=device,
-                                                  cuda_available=cuda_available)
-
         metric_fns = imed_utils.get_metric_fns(ds_train.task)
 
         # If FiLM, normalize data
@@ -202,33 +201,6 @@ def run_command(context, n_gif=0, thr_increment=None):
             thr_increment=thr_increment,
             debugging=context["debugging"])
 
-        if thr_increment:
-            # Choice of optimisation metric
-            metric = "recall_specificity" if model_params["name"] in imed_utils.CLASSIFIER_LIST else "dice"
-            # Model path
-            model_path = os.path.join(log_directory, "best_model.pt")
-            # Training dataset without data augmentation
-            ds_train = imed_loader.load_dataset(**{**loader_params,
-                                                   **{'data_list': train_lst,
-                                                      'transforms_params': transform_valid_params,
-                                                      'dataset_type': 'validation'}}, device=device,
-                                                cuda_available=cuda_available)
-            # Adjust some testing parameters
-            testing_params["binarize_prediction"] = -1
-            testing_params["uncertainty"]["applied"] = False
-            # Run analysis
-            thr = imed_testing.threshold_analysis(model_path=model_path,
-                                                  ds_lst=[ds_train, ds_valid],
-                                                  model_params=model_params,
-                                                  testing_params=testing_params,
-                                                  metric=metric,
-                                                  increment=thr_increment,
-                                                  fname_out=os.path.join(log_directory, "roc.png"),
-                                                  cuda_available=cuda_available)
-
-            # Update threshold in config file
-            context["testing_parameters"]["binarize_prediction"] = thr
-
         # Save config file within log_directory and log_directory/model_name
         with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
             json.dump(context, fp, indent=4)
@@ -237,12 +209,36 @@ def run_command(context, n_gif=0, thr_increment=None):
 
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
-    elif command == 'test':
+    if thr_increment:
+        # Choice of optimisation metric
+        metric = "recall_specificity" if model_params["name"] in imed_utils.CLASSIFIER_LIST else "dice"
+        # Model path
+        model_path = os.path.join(log_directory, "best_model.pt")
+        # Adjust some testing parameters
+        testing_params["binarize_prediction"] = -1
+        testing_params["uncertainty"]["applied"] = False
+        # Run analysis
+        thr = imed_testing.threshold_analysis(model_path=model_path,
+                                              ds_lst=[ds_train, ds_valid],
+                                              model_params=model_params,
+                                              testing_params=testing_params,
+                                              metric=metric,
+                                              increment=thr_increment,
+                                              fname_out=os.path.join(log_directory, "roc.png"),
+                                              cuda_available=cuda_available)
+
+        testing_params["binarize_prediction"] = thr
+        # Update threshold in config file
+        context["testing_parameters"]["binarize_prediction"] = thr
+        with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
+            json.dump(context, fp, indent=4)
+
+    if command == 'test':
         # LOAD DATASET
         ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
                                                                   'transforms_params': transformation_dict,
                                                                   'dataset_type': 'testing',
-                                                                  'requires_undo': True}},device=device,
+                                                                  'requires_undo': True}}, device=device,
                                                                   cuda_available=cuda_available)
 
         metric_fns = imed_utils.get_metric_fns(ds_test.task)
