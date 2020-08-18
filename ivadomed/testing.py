@@ -306,7 +306,7 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
                                       cuda_available=cuda_available)
 
     # Make sure the GT is binarized
-    gt_npy = [threshold_predictions(gt, thr=0.5) for gt in gt_npy]
+    gt_npy = threshold_predictions(gt_npy, thr=0.5)
     # Move threshold
     for thr in thr_list:
         preds_thr = threshold_predictions(copy.deepcopy(preds_npy), thr=thr)
