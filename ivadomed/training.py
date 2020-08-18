@@ -305,21 +305,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
           time.strftime('%H:%M:%S', time.localtime(final_time)) +
           "| duration " + str(datetime.timedelta(seconds=duration_time)))
 
-    optimal_thr = None
-    if thr_increment:
-        print('\nRunning threshold analysis to find optimal threshold')
-        # Choice of optimisation metric
-        metric = "recall_specificity" if model_params["name"] in imed_utils.imed_loader.CLASSIFIER_LIST else "dice"
-        # Run analysis
-        optimal_thr = threshold_analysis(model=model,
-                                         val_loader=val_loader,
-                                         model_params=model_params,
-                                         metric=metric,
-                                         increment=thr_increment,
-                                         fname_out=os.path.join(log_directory, "roc.png"),
-                                         cuda_available=cuda_available)
-
-    return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss, optimal_thr
+    return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
 
 def get_sampler(ds, balance_bool):

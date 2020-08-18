@@ -189,7 +189,7 @@ def run_command(context, n_gif=0, thr_increment=None):
             print('Model directory already exists: {}'.format(path_model))
 
         # RUN TRAINING
-        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss, thr = imed_training.train(
+        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
             model_params=model_params,
             dataset_train=ds_train,
             dataset_val=ds_valid,
@@ -205,7 +205,7 @@ def run_command(context, n_gif=0, thr_increment=None):
         if thr_increment:
             print('\nRunning threshold analysis to find optimal threshold')
             # Choice of optimisation metric
-            metric = "recall_specificity" if model_params["name"] in imed_utils.imed_loader.CLASSIFIER_LIST else "dice"
+            metric = "recall_specificity" if model_params["name"] in imed_utils.CLASSIFIER_LIST else "dice"
             # Model path
             model_path = os.path.join(log_directory, context["model_name"] + "best_model.pt")
             # Training dataset without data augmentation
