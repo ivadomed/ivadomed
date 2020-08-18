@@ -4,7 +4,7 @@ import nibabel as nib
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 from tqdm import tqdm
 
 from ivadomed import metrics as imed_metrics
@@ -251,3 +251,105 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                      slice_axis)
 
     return preds_npy_list, gt_npy_list
+
+def threshold_analysis(model_path, ds_lst, model_params, metric="dice", increment=0.1, fname_out="thr.png",
+                       cuda_available=True):
+    """Run a threshold analysis to find the optimal threshold on a sub-dataset.
+
+    Args:
+        model_path (str): Model path.
+        ds_lst (list): List of loaders.
+        model_params (dict): Model's parameters.
+        metric (str): Choice between "dice" and "recall_specificity". If "recall_specificity", then a ROC analysis
+            is performed.
+        increment (float): Increment between tested thresholds.
+        fname_out (str): Plot output filename.
+        cuda_available (bool): If True, CUDA is available.
+
+    Returns:
+        float: optimal threshold.
+    """
+    if metric not in ["dice", "recall_specificity"]:
+        print('\nChoice of metric for threshold analysis: dice, recall_specificity.')
+        exit()
+
+    # Load model
+    model = torch.load(model_path)
+    # Eval mode
+    model.eval()
+
+    # List of thresholds
+    thr_list = list(np.arange(0.0, 1.0, increment))[1:]
+
+    # Init metric manager for each thr
+    metric_fns = [imed_metrics.recall_score,
+                  imed_metrics.dice_score,
+                  imed_metrics.specificity_score]
+    metric_dict = {thr: imed_metrics.MetricManager(metric_fns) for thr in thr_list}
+
+    # Load
+    loader = DataLoader(ConcatDataset(ds_lst), batch_size=8,
+                        shuffle=False, pin_memory=True, sampler=None,
+                        collate_fn=imed_loader_utils.imed_collate,
+                        num_workers=0)
+
+    # Run inference
+    preds_npy, gt_npy = run_inference(loader, model, model_params,
+                                      testing_params,
+                                      ofolder=None,
+                                      cuda_available)
+
+    # Go through val dataset
+    for i, batch in enumerate(loader):
+        with torch.no_grad():
+            # GET SAMPLES
+            if model_params["name"] == "HeMISUnet":
+                input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
+            else:
+                input_samples = imed_utils.cuda(batch["input"], cuda_available)
+            gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
+
+            # RUN MODEL
+            if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
+                metadata = get_metadata(batch["input_metadata"], model_params)
+                preds = model(input_samples, metadata)
+            else:
+                preds = model(input_samples)
+
+            gt_npy = threshold_predictions(gt_samples.cpu().numpy(), thr=0.5)
+            preds_npy = preds.data.cpu().numpy()
+            for thr in thr_list:
+                preds_thr = threshold_predictions(copy.deepcopy(preds_npy), thr=thr)
+                metric_dict[thr](preds_thr, gt_npy)
+
+    # Get results
+    tpr_list, fpr_list, dice_list = [], [], []
+    for thr in thr_list:
+        result_thr = metric_dict[thr].get_results()
+        tpr_list.append(result_thr["recall_score"])
+        fpr_list.append(1 - result_thr["specificity_score"])
+        dice_list.append(result_thr["dice_score"])
+
+    # Get optimal threshold
+    if metric == "dice":
+        diff_list = dice_list
+    else:
+        diff_list = [tpr - fpr for tpr, fpr in zip(tpr_list, fpr_list)]
+    optimal_idx = np.max(np.where(diff_list == np.max(diff_list)))
+    optimal_threshold = thr_list[optimal_idx]
+    print('\tOptimal threshold: {}'.format(optimal_threshold))
+
+    # Save plot
+    print('\tSaving plot: {}'.format(fname_out))
+    if metric == "dice":
+        # Run plot
+        imed_metrics.plot_dice_thr(thr_list, dice_list, optimal_idx, fname_out)
+    else:
+        # Add 0 and 1 as extrema
+        tpr_list = [0.0] + tpr_list + [1.0]
+        fpr_list = [0.0] + fpr_list + [1.0]
+        optimal_idx += 1
+        # Run plot
+        imed_metrics.plot_roc_curve(tpr_list, fpr_list, optimal_idx, fname_out)
+
+    return optimal_threshold
