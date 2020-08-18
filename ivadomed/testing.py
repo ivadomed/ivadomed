@@ -294,7 +294,7 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
     metric_dict = {thr: imed_metrics.MetricManager(metric_fns) for thr in thr_list}
 
     # Load
-    loader = DataLoader(ConcatDataset(ds_lst), batch_size=8,
+    loader = DataLoader(ConcatDataset(ds_lst), batch_size=testing_params["batch_size"],
                         shuffle=False, pin_memory=True, sampler=None,
                         collate_fn=imed_loader_utils.imed_collate,
                         num_workers=0)
@@ -304,12 +304,13 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
                                       testing_params,
                                       ofolder=None,
                                       cuda_available=cuda_available)
-    print(len(loader), len(preds_npy), len(gt_npy))
+
+    print('\nRunning threshold analysis to find optimal threshold')
     # Make sure the GT is binarized
-    gt_npy = threshold_predictions(gt_npy, thr=0.5)
+    gt_npy = [threshold_predictions(gt, thr=0.5) for gt in gt_npy]
     # Move threshold
-    for thr in thr_list:
-        preds_thr = threshold_predictions(copy.deepcopy(preds_npy), thr=thr)
+    for thr in tqdm(thr_list, desc="Search"):
+        preds_thr = [threshold_predictions(copy.deepcopy(pred), thr=thr) for pred in preds_npy]
         metric_dict[thr](preds_thr, gt_npy)
 
     # Get results
@@ -325,7 +326,7 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
         diff_list = dice_list
     else:
         diff_list = [tpr - fpr for tpr, fpr in zip(tpr_list, fpr_list)]
-    print(dice_list)
+
     optimal_idx = np.max(np.where(diff_list == np.max(diff_list)))
     optimal_threshold = thr_list[optimal_idx]
     print('\tOptimal threshold: {}'.format(optimal_threshold))
