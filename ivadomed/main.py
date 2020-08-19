@@ -1,7 +1,7 @@
 import json
 import os
 import argparse
-
+import copy
 import joblib
 import torch.backends.cudnn as cudnn
 
@@ -36,9 +36,9 @@ def get_parser():
                                     'sub-dataset. They are saved within the log directory.')
     optional_args.add_argument('-t', '--thr-increment', dest="thr_increment", required=False, type=float,
                                help='A threshold analysis is performed at the end of the training using the trained '
-                                    'model and the validation sub-dataset to find the optimal binarization threshold. '
-                                    'The specified value indicates the increment between 0 and 1 used during the '
-                                    'analysis (e.g. 0.1). Plot is saved under "log_directory/thr.png" and the '
+                                    'model and the training+validation sub-datasets to find the optimal binarization '
+                                    'threshold. The specified value indicates the increment between 0 and 1 used during '
+                                    'the analysis (e.g. 0.1). Plot is saved under "log_directory/thr.png" and the '
                                     'optimal threshold in "log_directory/config_file.json as "binarize_prediction" '
                                     'parameter.')
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
@@ -60,8 +60,8 @@ def run_command(context, n_gif=0, thr_increment=None):
             parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
             predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
         thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
-            the validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
-            increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
+            the training + validation sub-dataset to find the optimal binarization threshold. The specified value
+            indicates the increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
     Returns:
         If "train" command: Returns floats: best loss score for both training and validation.
         If "test" command: Returns dict: of averaged metrics computed on the testing sub dataset.
@@ -137,19 +137,31 @@ def run_command(context, n_gif=0, thr_increment=None):
 
     loader_params.update({"model_params": model_params})
 
-    if command == 'train':
+    # TESTING PARAMS
+    # Aleatoric uncertainty
+    if context['testing_parameters']['uncertainty']['aleatoric'] and \
+            context['testing_parameters']['uncertainty']['n_it'] > 0:
+        transformation_dict = transform_valid_params
+    else:
+        transformation_dict = transform_test_params
+    undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))
+    testing_params = copy.deepcopy(context["testing_parameters"])
+    testing_params.update(context["training_parameters"])
+    testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
+                           'slice_axis': loader_params['slice_axis']})
 
+    if command == 'train':
         # LOAD DATASET
         # Get Validation dataset
         ds_valid = imed_loader.load_dataset(**{**loader_params,
                                                **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
-                                                  'dataset_type': 'validation'}},device=device,
-                                                  cuda_available=cuda_available)
+                                                  'dataset_type': 'validation'}}, device=device,
+                                            cuda_available=cuda_available)
         # Get Training dataset
         ds_train = imed_loader.load_dataset(**{**loader_params,
                                                **{'data_list': train_lst, 'transforms_params': transform_train_params,
-                                                  'dataset_type': 'training'}},device=device,
-                                                  cuda_available=cuda_available)
+                                                  'dataset_type': 'training'}}, device=device,
+                                            cuda_available=cuda_available)
 
         metric_fns = imed_utils.get_metric_fns(ds_train.task)
 
@@ -176,7 +188,7 @@ def run_command(context, n_gif=0, thr_increment=None):
             print('Model directory already exists: {}'.format(path_model))
 
         # RUN TRAINING
-        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss, thr = imed_training.train(
+        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
             model_params=model_params,
             dataset_train=ds_train,
             dataset_val=ds_valid,
@@ -186,14 +198,43 @@ def run_command(context, n_gif=0, thr_increment=None):
             cuda_available=cuda_available,
             metric_fns=metric_fns,
             n_gif=n_gif,
-            thr_increment=thr_increment,
             debugging=context["debugging"])
 
-        # Update threshold in config file
-        if thr_increment:
-            context["testing_parameters"]["binarize_prediction"] = thr
+    if thr_increment:
+        # LOAD DATASET
+        if command != 'train':  # If command == train, then ds_valid already load
+            # Get Validation dataset
+            ds_valid = imed_loader.load_dataset(**{**loader_params,
+                                                   **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
+                                                      'dataset_type': 'validation'}}, device=device,
+                                                cuda_available=cuda_available)
+        # Get Training dataset with no Data Augmentation
+        ds_train = imed_loader.load_dataset(**{**loader_params,
+                                               **{'data_list': train_lst, 'transforms_params': transform_valid_params,
+                                                  'dataset_type': 'training'}}, device=device,
+                                            cuda_available=cuda_available)
 
+        # Choice of optimisation metric
+        metric = "recall_specificity" if model_params["name"] in imed_utils.CLASSIFIER_LIST else "dice"
+        # Model path
+        model_path = os.path.join(log_directory, "best_model.pt")
+        # Run analysis
+        thr = imed_testing.threshold_analysis(model_path=model_path,
+                                              ds_lst=[ds_train, ds_valid],
+                                              model_params=model_params,
+                                              testing_params=testing_params,
+                                              metric=metric,
+                                              increment=thr_increment,
+                                              fname_out=os.path.join(log_directory, "roc.png"),
+                                              cuda_available=cuda_available)
+
+        testing_params["binarize_prediction"] = thr
+        # Update threshold in config file
+        context["testing_parameters"]["binarize_prediction"] = thr
+
+    if command == 'train':
         # Save config file within log_directory and log_directory/model_name
+        # Done after the threshold_analysis to propate this info in the config files
         with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
             json.dump(context, fp, indent=4)
         with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
@@ -201,23 +242,12 @@ def run_command(context, n_gif=0, thr_increment=None):
 
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
-    elif command == 'test':
+    if command == 'test':
         # LOAD DATASET
-        # Aleatoric uncertainty
-        if context['testing_parameters']['uncertainty']['aleatoric'] and \
-                context['testing_parameters']['uncertainty']['n_it'] > 0:
-            transformation_dict = transform_valid_params
-        else:
-            transformation_dict = transform_test_params
-
-        # UNDO TRANSFORMS
-        undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))
-
-        # Get Testing dataset
         ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
                                                                   'transforms_params': transformation_dict,
                                                                   'dataset_type': 'testing',
-                                                                  'requires_undo': True}},device=device,
+                                                                  'requires_undo': True}}, device=device,
                                                                   cuda_available=cuda_available)
 
         metric_fns = imed_utils.get_metric_fns(ds_test.task)
@@ -233,10 +263,6 @@ def run_command(context, n_gif=0, thr_increment=None):
                                  "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
 
         # RUN INFERENCE
-        testing_params = context["testing_parameters"]
-        testing_params.update(context["training_parameters"])
-        testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
-                               'slice_axis': loader_params['slice_axis']})
         metrics_dict = imed_testing.test(model_params=model_params,
                                          dataset_test=ds_test,
                                          testing_params=testing_params,
