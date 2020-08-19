@@ -200,24 +200,17 @@ def run_command(context, n_gif=0, thr_increment=None):
             n_gif=n_gif,
             debugging=context["debugging"])
 
-        # Save config file within log_directory and log_directory/model_name
-        with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
-            json.dump(context, fp, indent=4)
-        with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
-            json.dump(context, fp, indent=4)
-
-        return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
-
     if thr_increment:
         # LOAD DATASET
-        # Get Validation dataset
-        ds_valid = imed_loader.load_dataset(**{**loader_params,
-                                               **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
-                                                  'dataset_type': 'validation'}}, device=device,
-                                            cuda_available=cuda_available)
-        # Get Training dataset
+        if command != 'train':  # If command == train, then ds_valid already load
+            # Get Validation dataset
+            ds_valid = imed_loader.load_dataset(**{**loader_params,
+                                                   **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
+                                                      'dataset_type': 'validation'}}, device=device,
+                                                cuda_available=cuda_available)
+        # Get Training dataset with no Data Augmentation
         ds_train = imed_loader.load_dataset(**{**loader_params,
-                                               **{'data_list': train_lst, 'transforms_params': transform_train_params,
+                                               **{'data_list': train_lst, 'transforms_params': transform_valid_params,
                                                   'dataset_type': 'training'}}, device=device,
                                             cuda_available=cuda_available)
 
@@ -225,9 +218,6 @@ def run_command(context, n_gif=0, thr_increment=None):
         metric = "recall_specificity" if model_params["name"] in imed_utils.CLASSIFIER_LIST else "dice"
         # Model path
         model_path = os.path.join(log_directory, "best_model.pt")
-        # Adjust some testing parameters
-        testing_params["binarize_prediction"] = -1
-        testing_params["uncertainty"]["applied"] = False
         # Run analysis
         thr = imed_testing.threshold_analysis(model_path=model_path,
                                               ds_lst=[ds_train, ds_valid],
@@ -241,8 +231,16 @@ def run_command(context, n_gif=0, thr_increment=None):
         testing_params["binarize_prediction"] = thr
         # Update threshold in config file
         context["testing_parameters"]["binarize_prediction"] = thr
+
+    if command == 'train':
+        # Save config file within log_directory and log_directory/model_name
+        # Done after the threshold_analysis to propate this info in the config files
         with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
             json.dump(context, fp, indent=4)
+        with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
+            json.dump(context, fp, indent=4)
+
+        return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
     if command == 'test':
         # LOAD DATASET
