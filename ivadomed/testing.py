@@ -279,6 +279,10 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
         print('\nChoice of metric for threshold analysis: dice, recall_specificity.')
         exit()
 
+    # Adjust some testing parameters
+    testing_params["binarize_prediction"] = -1
+    testing_params["uncertainty"]["applied"] = False
+
     # Load model
     model = torch.load(model_path)
     # Eval mode
