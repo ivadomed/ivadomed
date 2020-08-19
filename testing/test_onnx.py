@@ -10,7 +10,7 @@ from ivadomed import models as imed_models
 
 
 PATH_BIDS = 'testing_data'
-IMAGE_PATH = os.path.join(PATH_BIDS, "sub-test001", "anat", "sub-test001_T1w.nii.gz")
+IMAGE_PATH = os.path.join(PATH_BIDS, "sub-unf01", "anat", "sub-unf01_T1w.nii.gz")
 PATH_MODEL = os.path.join(PATH_BIDS, 'model')
 PATH_MODEL_ONNX = os.path.join(PATH_MODEL, 'model.onnx')
 PATH_MODEL_PT = PATH_MODEL_ONNX.replace('onnx', 'pt')
