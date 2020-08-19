@@ -165,11 +165,18 @@ def test_create_automate_training_json():
     json.dump(initial_config, file_conf)
 
 
-def test_automate_training():
+def test_automate_training_train():
     command = "ivadomed_automate_training -c testing_data/model_config_auto.json " \
               "-p testing_data/hyperparameter_opt.json -n 1 --fixed-split"
     subprocess.check_output(command, shell=True)
 
+
+def test_training_curve_multiple():
+    subprocess.check_output(["ivadomed_training_curve -i ./testing_script-batch_size= --multiple "
+                             "-o visu_test_multiple"], shell=True)
+
+
+def test_automate_training_test():
     command = "ivadomed_automate_training -c testing_data/model_config_auto.json " \
               "-p testing_data/hyperparameter_opt.json -n 1 --run-test --all-combin -t 0.1"
     subprocess.check_output(command, shell=True)
@@ -239,6 +246,13 @@ def test_create_model_unet3d():
 
 def test_testing_unet3d():
     subprocess.check_output(["ivadomed -c testing_data/model_config_3d.json"], shell=True)
+
+
+def test_training_curve_single():
+    subprocess.check_output(["ivadomed_training_curve -i testing_script -o visu_test"], shell=True)
+
+
+
 
 
 def append_list_as_row(file_name, list_of_elem):
