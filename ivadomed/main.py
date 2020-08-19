@@ -200,7 +200,7 @@ def run_command(context, n_gif=0, thr_increment=None):
             n_gif=n_gif,
             debugging=context["debugging"])
 
-    if thr_increment and (command == 'train' or testing_params["binarize_prediction"] < 0):
+    if thr_increment:
         # LOAD DATASET
         if command != 'train':  # If command == train, then ds_valid already load
             # Get Validation dataset
