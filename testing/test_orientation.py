@@ -20,7 +20,7 @@ def test_image_orientation():
         torch.cuda.set_device(device)
         print("Using GPU number {}".format(device))
 
-    train_lst = ['sub-test001']
+    train_lst = ['sub-unf01']
 
     training_transform_dict = {
         "Resample":
@@ -134,12 +134,13 @@ def test_image_orientation():
 
                         # verify image after transform, undo transform and 3D reconstruction
                         input_hwd_2 = imed_postpro.threshold_predictions(arr)
-                        # Some difference are generated due to transform and undo transform (e.i. Resample interpolation)
-                        assert imed_metrics.dice_score(input_hwd_2, input_hwd) >= 0.85
+                        # Some difference are generated due to transform and undo transform
+                        # (e.i. Resample interpolation)
+                        assert imed_metrics.dice_score(input_hwd_2, input_hwd) >= 0.8
                         input_ras_2 = imed_loader_utils.orient_img_ras(input_hwd_2, slice_axis)
-                        assert imed_metrics.dice_score(input_ras_2, input_ras) >= 0.85
+                        assert imed_metrics.dice_score(input_ras_2, input_ras) >= 0.8
                         input_init_2 = imed_utils.reorient_image(input_hwd_2, slice_axis, nib_ref, nib_ref_can)
-                        assert imed_metrics.dice_score(input_init_2, input_init) >= 0.85
+                        assert imed_metrics.dice_score(input_init_2, input_init) >= 0.8
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
