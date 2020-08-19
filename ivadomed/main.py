@@ -150,19 +150,19 @@ def run_command(context, n_gif=0, thr_increment=None):
     testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
                            'slice_axis': loader_params['slice_axis']})
 
-    # LOAD DATASET
-    # Get Validation dataset
-    ds_valid = imed_loader.load_dataset(**{**loader_params,
-                                           **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
-                                              'dataset_type': 'validation'}}, device=device,
-                                        cuda_available=cuda_available)
-    # Get Training dataset
-    ds_train = imed_loader.load_dataset(**{**loader_params,
-                                           **{'data_list': train_lst, 'transforms_params': transform_train_params,
-                                              'dataset_type': 'training'}}, device=device,
-                                        cuda_available=cuda_available)
-
     if command == 'train':
+        # LOAD DATASET
+        # Get Validation dataset
+        ds_valid = imed_loader.load_dataset(**{**loader_params,
+                                               **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
+                                                  'dataset_type': 'validation'}}, device=device,
+                                            cuda_available=cuda_available)
+        # Get Training dataset
+        ds_train = imed_loader.load_dataset(**{**loader_params,
+                                               **{'data_list': train_lst, 'transforms_params': transform_train_params,
+                                                  'dataset_type': 'training'}}, device=device,
+                                            cuda_available=cuda_available)
+
         metric_fns = imed_utils.get_metric_fns(ds_train.task)
 
         # If FiLM, normalize data
@@ -210,6 +210,18 @@ def run_command(context, n_gif=0, thr_increment=None):
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
     if thr_increment:
+        # LOAD DATASET
+        # Get Validation dataset
+        ds_valid = imed_loader.load_dataset(**{**loader_params,
+                                               **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
+                                                  'dataset_type': 'validation'}}, device=device,
+                                            cuda_available=cuda_available)
+        # Get Training dataset
+        ds_train = imed_loader.load_dataset(**{**loader_params,
+                                               **{'data_list': train_lst, 'transforms_params': transform_train_params,
+                                                  'dataset_type': 'training'}}, device=device,
+                                            cuda_available=cuda_available)
+
         # Choice of optimisation metric
         metric = "recall_specificity" if model_params["name"] in imed_utils.CLASSIFIER_LIST else "dice"
         # Model path
