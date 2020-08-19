@@ -241,8 +241,13 @@ def test_testing_unet3d():
     subprocess.check_output(["ivadomed -c testing_data/model_config_3d.json"], shell=True)
 
 
-def test_training_curve():
+def test_training_curve_single():
     subprocess.check_output(["ivadomed_training_curve -i testing_script -o visu_test"], shell=True)
+
+
+def test_training_curve_multiple():
+    subprocess.check_output(["ivadomed_training_curve -i ./testing_script-batch_size= --multiple "
+                             "-o visu_test_multiple"], shell=True)
 
 
 def append_list_as_row(file_name, list_of_elem):
