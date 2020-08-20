@@ -44,4 +44,13 @@ def test_filmed_unet():
     assert (type(inf) == torch.Tensor)
 
 
+def test_film_generator():
+    a = [[[[0 for i in range(64)] for i in range(64)]]]
+    inp = torch.tensor(a).float()
+    model = imed_model.FiLMgenerator(64, 1)
+    inf = model(inp)
+    assert (type(inf[0]) == torch.Tensor)
+    assert (type(inf[1]) == torch.Tensor)
+
+
 
