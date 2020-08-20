@@ -47,7 +47,7 @@ non-zero positive integer for this tutorial (e.g. ``20``).
 
 - ``transformation``: Data augmentation transformation. If you have selected the aleatoric uncertainty, the data
 augmentation that will be performed is the same as the one performed for the training, unless you modify the parameters
-in the configuration file (see below). Please make sure ``"dataset_type": ["training"]`` is conserved. Note that only
+in the configuration file (see below). Please make sure ``"dataset_type": ["training"]`` is preserved. Note that only
 transformations for which a ``undo_transform`` (i.e. inverse transformation) is available will be performed since these
 inverse transformations are required to reconstruct the predicted volume.
 
