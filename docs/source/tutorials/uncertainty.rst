@@ -29,11 +29,11 @@ field as follows:
 
      "command": "test"
 
-- ``testing_parameters:uncertainty``: Parameters related to the uncertainty estimation. ``"epistemic"`` and
-``"aleatoric"`` indicates whether the epistemic and the aleatoric uncertainty are estimated, respectively. Note that
-they can be estimated in combination (i.e. both set to ``true``). For more information about these, please read
-:ref:`Technical features <Uncertainty-measures>`. ``"n_it"`` controls the number of Monte Carlo iterations that are
-performed to estimate the uncertainty, please set it to a non-zero positive integer for this tutorial (e.g. ``20``).
+- ``testing_parameters:uncertainty``: Type of uncertainty to estimate. Available choices are ``"epistemic"`` and
+``"aleatoric"``. Note that both can be ``true``. More details on the implementation are available in
+:ref:`Technical features <Uncertainty-measures>`.
+``"n_it"`` controls the number of Monte Carlo iterations that are performed to estimate the uncertainty. Set it to a
+non-zero positive integer for this tutorial (e.g. ``20``).
 
   .. code-block:: xml
 
