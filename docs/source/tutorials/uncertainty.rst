@@ -42,7 +42,7 @@ non-zero positive integer for this tutorial (e.g. ``20``).
                "epistemic": true,
                "aleatoric": true,
                "n_it": 20
-               }
+           }
      }
 
 - ``transformation``: Data augmentation transformation. If you have selected the aleatoric uncertainty, the data
