@@ -136,7 +136,7 @@ samples.
 iterations)``.
 - ``*_unc-vox.nii.gz``: Voxel-wise measure of uncertainty derived from the entropy of the Monte Carlo samples. The
 higher a given voxel value is, the more uncertain is the prediction for this voxel.
-- ``*_unc-avgUnc.nii.gz``: Structuve-wise measure of uncertainty derived from the mean value of ``*_unc-vox.nii.gz``
+- ``*_unc-avgUnc.nii.gz``: Structure-wise measure of uncertainty derived from the mean value of ``*_unc-vox.nii.gz``
 within a given connected object (e.g. a lesion, grey matter).
 - ``*_unc-cv.nii.gz``: Structure-wise measure of uncertainty derived from the coefficient of variation of the volume
 of a given connected object across the Monte Carlo samples. The higher a given voxel value is, the more uncertain is the
