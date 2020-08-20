@@ -18,7 +18,7 @@ folder named ``seg_sc_t1-t2-t2s-mt`` is available.
 Configuration file
 ------------------
 
-The configuration file used in this tutorial is the one used for
+The configuration file used in this tutorial is the same as the one used for
 :ref:`Technical features <Uncertainty-measures>`. Please open it with a text editor. The parameters that are specific
 to this tutorial are:
 
