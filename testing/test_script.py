@@ -4,11 +4,13 @@ import subprocess
 from csv import writer
 from csv import reader
 import logging
+import nibabel as nib
 import json
 import pytest
 import ivadomed.models as imed_models
 import torch
 from ivadomed import main as imed
+from ivadomed import utils as imed_utils
 
 
 def test_download_data():
@@ -302,6 +304,18 @@ def test_object_detection(train_lst, target_lst, config):
     subprocess.check_output(command, shell=True)
 
     imed.run_command(context)
+
+
+def test_object_detection_inference():
+    fname_image = "testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz"
+
+    # Detection
+    nib_detection = imed_utils.segment_volume(folder_model="findcord_tumor", fname_image=fname_image)
+    detection_file = "detection.nii.gz"
+    nib.save(nib_detection, detection_file)
+
+    # Segmentation
+    imed_utils.segment_volume(folder_model="t2_tumor", fname_image=fname_image, fname_prior=detection_file)
 
 
 def append_list_as_row(file_name, list_of_elem):
