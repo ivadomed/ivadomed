@@ -2,7 +2,7 @@ Estimate uncertainty
 =====================
 
 This tutorial shows how to estimate uncertainty measures on the model predictions. Uncertainty measures that are
-implemented in ``ivadomed`` are detailed :doc:`../technical_features#uncertainty-measures`.
+implemented in ``ivadomed`` are detailed :ref:`Technical features <Uncertainty-measures>`.
 
 .. _Prerequisite:
 
@@ -18,7 +18,7 @@ Configuration file
 ------------------
 
 The configuration file used in this tutorial is the one used for
-:doc:`../tutorials/one_class_segmentation_2d_unet`. Please open it with a text editor. The parameters that are specific
+:ref:`Technical features <Uncertainty-measures>`. Please open it with a text editor. The parameters that are specific
 to this tutorial are:
 
 - ``command``: Action to perform. Here, we want to do some inference using the previously trained model, so we set the
@@ -31,7 +31,7 @@ field as follows:
 - ``testing_parameters:uncertainty``: Parameters related to the uncertainty estimation. ``"epistemic"`` and
 ``"aleatoric"`` indicates whether the epistemic and the aleatoric uncertainty are estimated, respectively. Note that
 they can be estimated in combination (i.e. both set to ``true``). For more information about these, please read
-:doc:`../technical_features#uncertainty-measures`. ``"n_it"`` controls the number of Monte Carlo iterations that are
+:ref:`Technical features <Uncertainty-measures>`. ``"n_it"`` controls the number of Monte Carlo iterations that are
 performed to estimate the uncertainty, please set it to a non-zero positive integer for this tutorial (e.g. ``20``).
 
   .. code-block:: xml
