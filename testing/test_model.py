@@ -35,3 +35,13 @@ def test_densenet():
     inf = model(inp)
     assert (type(inf) == torch.Tensor)
 
+
+def test_filmed_unet():
+    a = [[[[0 for i in range(100)] for i in range(100)]]]
+    inp = torch.tensor(a).float()
+    model = imed_model.FiLMedUnet()
+    inf = model(inp)
+    assert (type(inf) == torch.Tensor)
+
+
+
