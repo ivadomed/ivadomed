@@ -141,7 +141,7 @@ within a given connected object (e.g. a lesion, grey matter).
 - ``*_unc-cv.nii.gz``: Structure-wise measure of uncertainty derived from the coefficient of variation of the volume
 of a given connected object across the Monte Carlo samples. The higher a given voxel value is, the more uncertain is the
  prediction for this voxel.
-- ``*_unc-iou.nii.gz``: Structuve-wise measure of uncertainty derived from the Intersection-over-Union of the
+- ``*_unc-iou.nii.gz``: Structure-wise measure of uncertainty derived from the Intersection-over-Union of the
 predictions of a given connected object across the Monte Carlo samples. The lower a given voxel value is, the more
 uncertain is the prediction for this voxel.
 
