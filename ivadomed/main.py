@@ -96,13 +96,6 @@ def run_command(context, n_gif=0, thr_increment=None):
     # Get transforms for each subdataset
     transform_train_params, transform_valid_params, transform_test_params = \
         imed_transforms.get_subdatasets_transforms(context["transformation"])
-    if command == "train":
-        imed_utils.display_selected_transfoms(transform_train_params, dataset_type=["training"])
-        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=["validation"])
-    elif command == "test":
-        imed_utils.display_selected_transfoms(transform_test_params, dataset_type=["testing"])
-
-
 
     # MODEL PARAMETERS
     model_params = context["default_model"]

@@ -35,6 +35,7 @@ The purpose of the ``ivadomed`` project is to:
 
    tutorials/one_class_segmentation_2d_unet.rst
    tutorials/cascaded_architecture.rst
+   tutorials/uncertainty.rst
 
 .. toctree::
    :maxdepth: 1
