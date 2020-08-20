@@ -1,14 +1,13 @@
+import json
 import os
-import sys
 import subprocess
 from csv import writer
-from csv import reader
-import logging
+
 import nibabel as nib
-import json
 import pytest
-import ivadomed.models as imed_models
 import torch
+
+import ivadomed.models as imed_models
 from ivadomed import main as imed
 from ivadomed import utils as imed_utils
 
@@ -267,17 +266,17 @@ def test_training_curve_single():
         },
         "transformation": {
             "Resample": {
-              "wspace": 0.75,
-              "hspace": 0.75,
-              "dspace": 0.75,
-              "preprocessing": True
+                "wspace": 0.75,
+                "hspace": 0.75,
+                "dspace": 0.75,
+                "preprocessing": True
             },
             "CenterCrop": {
                 "size": [32, 32, 32],
                 "preprocessing": True
             },
             "NumpyToTensor": {}
-          },
+        },
         "UNet3D": {
             "applied": True,
             "length_3D": [32, 32, 32],
