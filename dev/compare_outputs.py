@@ -10,7 +10,18 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--rater-agreement-path", dest='rpath', required=True, help="Path to folder containing.")
     parser.add_argument("-u", "--uncertainty-path", dest='upath', required=True, help="Path to pred_masks folder.")
+
     return parser
+
+
+def compute_difference():
+    niftis = os.listdir(upath)
+    for nifti in niftis:
+        im1 = nibabel.load(os.path.join(upath,nifti)).get_data()
+        print(np.amax(im1))
+        print(np.amin(im1))
+
+
 def main():
     parser = get_parser()
     args = parser.parse_args()
@@ -34,4 +45,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
