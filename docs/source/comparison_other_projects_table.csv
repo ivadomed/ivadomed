@@ -1,5 +1,5 @@
 **Name**,**Website / Documentation**,**BIDS(*)**,**Framework**,**Tasks**,**Data dimension**,**Multichannel / Multilabel**,**Uncertainty**,**Transfer Learning**,**Pre-processing tools**,**Post-processing tools**,**User case examples**,**Multi-GPU data parallelism**,**Automatic Model evaluation**,**Input region of interest**, **Missing modality**, **Model performance comparison**, **Automatic hyperparameter optimisation**, **Pre-trained Models**
-ivadomed,https://ivadomed.org/en/latest/,Yes,PyTorch,"Segmentation, Detection","2D, 3D",Both,"Epistemic, Aleatoric", Yes, Yes, Yes, Yes, No, Yes, Yes (image), Yes, Yes, Yes, Yes
+ivadomed,https://ivadomed.org/en/latest/,Yes,PyTorch,"Classification, Segmentation, Detection","2D, 3D",Both,"Epistemic, Aleatoric", Yes, Yes, Yes, Yes, No, Yes, Yes (image), Yes, Yes, Yes, Yes
 monai,https://monai.io/,No,PyTorch,"Segmentation, Classification","2D, 3D",Both,None,No,Yes,No,Yes,Yes,Yes,Yes (coordinates),No,No,No,Yes
 delira,https://delira.readthedocs.io/en/master/,No,PyTorch and TensorFlow,"Classification, Generation, Segmentation","2D, 3D",None,None,Yes,No,No,Yes,Yes,No,No,No,No,No,No
 MIC-DKFZ,https://github.com/MIC-DKFZ/medicaldetectiontoolkit,No,Torch,Detection,"2D, 3D",None,None,No,No,No,No,No,Yes,Yes (image),No,No,No,No
