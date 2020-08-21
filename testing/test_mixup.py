@@ -1,5 +1,6 @@
 import ivadomed.utils as imed_utils
 import torch
+import pytest
 
 
 @pytest.mark.parametrize("debugging", [False, True])
