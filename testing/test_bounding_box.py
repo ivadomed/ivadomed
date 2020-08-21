@@ -1,13 +1,11 @@
 import numpy as np
 import pytest
-from torch.utils.data import DataLoader
 import os
 import json
 import shutil
 
 from ivadomed.loader import loader as imed_loader
 from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed.loader import utils as imed_loader_utils
 
 PATH_BIDS = 'testing_data'
 BATCH_SIZE = 8
