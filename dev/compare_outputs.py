@@ -16,8 +16,8 @@ def get_parser():
     upath =  args.upath
     niftis = os.listdir(rpath)
     div = []
-    for nifti in niftis
-        if not ignore(nifti)
+    for nifti in niftis:
+        if not ignore(nifti):
             im1 = nibabel.load(nifti).get_data()
             fname = nifti.split("/")[-1]
             im2 = nibabel.load(os.path.join(upath,fname)).get_data()
