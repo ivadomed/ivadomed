@@ -21,4 +21,6 @@ def get_parser():
             im1 = nibabel.load(nifti).get_data()
             fname = nifti.split("/")[-1]
             im2 = nibabel.load(os.path.join(upath,fname)).get_data()
-            div.append(imed_metrics.js_divergence(im1,im2))
+            el = imed_metrics.js_divergence(im1,im2)
+            print(el)
+            div.append(el)
