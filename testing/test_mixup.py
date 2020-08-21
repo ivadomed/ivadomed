@@ -4,7 +4,7 @@ import torch
 
 @pytest.mark.parametrize("debugging", [False, True])
 @pytest.mark.parametrize("ofolder", ["test", "mixup_test"])
-def test_mixup():
+def test_mixup(debugging, ofolder):
     inp = [[[[0 for i in range(40)] for i in range(40)]]]
     targ = [[[[0 for i in range(40)] for i in range(40)]]]
     for i in range(10):
