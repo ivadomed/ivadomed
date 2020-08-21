@@ -1,4 +1,19 @@
 Models
+
+======
+
+:mod:`ResNet`
+---------------------------
+
+.. autoclass:: ivadomed.models.ResNet
+
+======
+
+:mod:`DenseNet`
+---------------------------
+
+.. autoclass:: ivadomed.models.DenseNet
+
 ======
 
 :mod:`Unet`

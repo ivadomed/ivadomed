@@ -20,7 +20,7 @@ PATH_BIDS = 'testing_data'
 
 def test_hdf5():
     print('[INFO]: Starting test ... \n')
-    train_lst = ['sub-test001']
+    train_lst = ['sub-unf01']
 
     training_transform_dict = {
         "Resample":

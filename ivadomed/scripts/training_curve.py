@@ -4,10 +4,10 @@ import os
 import argparse
 import numpy as np
 from collections import defaultdict
-from tensorflow.python.summary.summary_iterator import summary_iterator
 import pandas as pd
 import matplotlib.pyplot as plt
 from textwrap import wrap
+from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
 
 def get_parser():
@@ -30,50 +30,20 @@ def get_parser():
     return parser
 
 
-def find_events(input_folder):
-    """Get TF events path from input_folder.
+def check_events_numbers(input_folder):
+    """Check if there not more than one summary  in the directory or any subfolder
 
     Args:
         input_folder (str): Input folder path.
-    Returns:
-        dict: keys are subfolder names and values are events' paths.
     """
-    dict = {}
     for fold in os.listdir(input_folder):
         fold_path = os.path.join(input_folder, fold)
         if os.path.isdir(fold_path):
             event_list = [f for f in os.listdir(fold_path) if f.startswith("events.out.tfevents.")]
             if len(event_list):
                 if len(event_list) > 1:
-                    print('Multiple events found in this folder: {}.\nPlease keep only one before running '
+                    raise ValueError('Multiple summary found in this folder: {}.\nPlease keep only one before running '
                           'this script again.'.format(fold_path))
-                dict[fold] = os.path.join(input_folder, fold, event_list[0])
-    return dict
-
-
-def get_data(event_dict):
-    """Get data as Pandas dataframe.
-
-    Args:
-        event_dict (dict): Dictionary containing the TF event names and their paths.
-    Returns:
-        Pandas Dataframe: where the columns are the metrics or losses and the rows represent the epochs.
-    """
-    metrics = defaultdict(list)
-    for tf_tag in event_dict:
-        for e in summary_iterator(event_dict[tf_tag]):
-            for v in e.summary.value:
-                if isinstance(v.simple_value, float):
-                    if tf_tag.startswith("Validation_Metrics_"):
-                        tag = tf_tag.split("Validation_Metrics_")[1]
-                    elif tf_tag.startswith("losses_"):
-                        tag = tf_tag.split("losses_")[1]
-                    else:
-                        print("Unknown TF tag: {}.".format(tf_tag))
-                        exit()
-                    metrics[tag].append(v.simple_value)
-    metrics_df = pd.DataFrame.from_dict(metrics)
-    return metrics_df
 
 
 def plot_curve(data_list, y_label, fig_ax, subplot_title, y_lim=None):
@@ -168,7 +138,8 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         if multiple_training:
             prefix = str(input_folder.split('/')[-1])
             input_folder = '/'.join(input_folder.split('/')[:-1])
-            input_folder_list = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if f.startswith(prefix)]
+            input_folder_list = [os.path.join(input_folder, f) for f in os.listdir(input_folder) if
+                                 f.startswith(prefix)]
         else:
             prefix = str(input_folder.split('/')[-1])
             input_folder_list = [input_folder]
@@ -176,10 +147,10 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         events_df_list = []
         for log_directory in input_folder_list:
             # Find tf folders
-            events_dict = find_events(log_directory)
+            events_dict = check_events_numbers(log_directory)
 
             # Get data as dataframe
-            events_vals_df = get_data(events_dict)
+            events_vals_df = tensorboard_retrieve_event(log_directory)
 
             # Store data
             events_df_list.append(events_vals_df)
@@ -199,8 +170,8 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         for tag in events_df_list[0].keys():
             if not tag.endswith("loss"):
                 if i_subplot == 0:  # Init plot
-                    plt_dict[os.path.join(output_folder, tag+".png")] = plt.figure(figsize=(10 * n_cols, 5 * n_rows))
-                ax = plt_dict[os.path.join(output_folder, tag+".png")].add_subplot(n_rows, n_cols, i_subplot+1)
+                    plt_dict[os.path.join(output_folder, tag + ".png")] = plt.figure(figsize=(10 * n_cols, 5 * n_rows))
+                ax = plt_dict[os.path.join(output_folder, tag + ".png")].add_subplot(n_rows, n_cols, i_subplot + 1)
                 plot_curve(data_list=[df[[tag]] for df in events_df_list],
                            y_label=tag,
                            fig_ax=ax,
@@ -209,6 +180,57 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
 
     for fname_out in plt_dict:
         plt_dict[fname_out].savefig(fname_out)
+
+
+def tensorboard_retrieve_event(dpath):
+    """
+    Function that retrieves data from tensorboard summary event
+    Args:
+        dpath (str): log directory where the event are located
+
+    Returns:
+        df: a panda dataframe where the columns are the metric or loss and the row are the epochs.
+
+    """
+    # TODO : Find a way to not hardcode this list of metrics/loss
+    # These list of metrics and losses are in the same order as in the training file (where they are written)
+    list_metrics = ['dice_score', 'multiclass dice_score', 'hausdorff_score', 'precision_score', 'recall_score',
+                    'specificity_score', 'intersection_over_union', 'accuracy_score']
+
+    list_loss = ['train_loss', 'validation_loss']
+
+    # Each element in the summary iterator represent an element (e.g., scalars, images..)
+    # stored in the summary for all epochs in the form of event.
+    summary_iterators = [EventAccumulator(os.path.join(dpath, dname)).Reload() for dname in os.listdir(dpath)]
+
+    metrics = defaultdict(list)
+    num_metrics = 0
+    num_loss = 0
+
+    for i in range(len(summary_iterators)):
+        if summary_iterators[i].Tags()['scalars'] == ['Validation/Metrics']:
+            # we create a empty list
+            out = [0 for i in range(len(summary_iterators[i].Scalars("Validation/Metrics")))]
+            # we ensure that value are append in the right order by looking at the step value
+            # (which represents the epoch)
+            for events in summary_iterators[i].Scalars("Validation/Metrics"):
+                out[events.step - 1] = events.value
+            # keys are the defined metrics
+            metrics[list_metrics[num_metrics]] = out
+            num_metrics += 1
+        elif summary_iterators[i].Tags()['scalars'] == ['losses']:
+            out = [0 for i in range(len(summary_iterators[i].Scalars("losses")))]
+            # we ensure that value are append in the right order by looking at the step value
+            # (which represents the epoch)
+            for events in summary_iterators[i].Scalars("losses"):
+                out[events.step - 1] = events.value
+            metrics[list_loss[num_loss]] = out
+            num_loss += 1
+
+    if num_loss == 0 and num_metrics == 0:
+        raise Exception('No metrics or losses found in the event')
+    metrics_df = pd.DataFrame.from_dict(metrics)
+    return metrics_df
 
 
 def main():

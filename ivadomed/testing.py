@@ -1,10 +1,10 @@
 import os
-
+import copy
 import nibabel as nib
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 from tqdm import tqdm
 
 from ivadomed import metrics as imed_metrics
@@ -131,12 +131,17 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             # Reconstruct image with only one modality
             input_samples = batch['input'][0]
 
-        if model_params["name"] == "UNet3D" and model_params["attention"]:
+        if model_params["name"] == "UNet3D" and model_params["attention"] and ofolder:
             imed_utils.save_feature_map(batch, "attentionblock2", os.path.dirname(ofolder), model, input_samples,
                                         slice_axis=test_loader.dataset.slice_axis)
 
         # PREDS TO CPU
         preds_cpu = preds.cpu()
+
+        task =  imed_utils.get_task(model_params["name"])
+        if task == "classification":
+            gt_npy_list.append(gt_samples.cpu().numpy())
+            preds_npy_list.append(preds_cpu.data.numpy())
 
         # RECONSTRUCT 3D IMAGE
         last_batch_bool = (i == len(test_loader) - 1)
@@ -161,14 +166,16 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 fname_ref = metadata_idx[0]['gt_filenames'][0]
 
                 # NEW COMPLETE VOLUME
-                if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool):
+                if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool) and task != "classification":
                     # save the completely processed file as a nifti file
-                    fname_pred = os.path.join(ofolder, fname_tmp.split('/')[-1])
-                    fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
-                    # If Uncertainty running, then we save each simulation result
-                    if testing_params['uncertainty']['applied']:
-                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
-
+                    if ofolder:
+                        fname_pred = os.path.join(ofolder, fname_tmp.split('/')[-1])
+                        fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
+                        # If Uncertainty running, then we save each simulation result
+                        if testing_params['uncertainty']['applied']:
+                            fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
+                    else:
+                        fname_pred = None
                     output_nii = imed_utils.pred_to_nib(data_lst=pred_tmp_lst,
                                                         z_lst=z_tmp_lst,
                                                         fname_ref=fname_tmp,
@@ -183,7 +190,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     gt_npy_list.append(nib.load(fname_tmp).get_fdata())
 
                     output_nii_shape = output_nii.get_fdata().shape
-                    if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1:
+                    if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1 and ofolder:
                         imed_utils.save_color_labels(np.stack(pred_tmp_lst, -1),
                                                      testing_params["binarize_prediction"] > 0,
                                                      fname_tmp,
@@ -210,12 +217,14 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 # Indicator of last batch
                 if last_sample_bool:
                     pred_undo = np.array(pred_undo)
-                    fname_pred = os.path.join(ofolder, fname_ref.split('/')[-1])
-                    fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
-                    # If uncertainty running, then we save each simulation result
-                    if testing_params['uncertainty']['applied']:
-                        fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
-
+                    if ofolder:
+                        fname_pred = os.path.join(ofolder, fname_ref.split('/')[-1])
+                        fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
+                        # If uncertainty running, then we save each simulation result
+                        if testing_params['uncertainty']['applied']:
+                            fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
+                    else:
+                        fname_pred = None
                     # Choose only one modality
                     output_nii = imed_utils.pred_to_nib(data_lst=[pred_undo],
                                                         z_lst=[],
@@ -238,7 +247,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     gt_npy_list.append(np.array(gt_lst))
                     # Save merged labels with color
 
-                    if pred_undo.shape[0] > 1:
+                    if pred_undo.shape[0] > 1 and ofolder:
                         imed_utils.save_color_labels(pred_undo,
                                                      testing_params['binarize_prediction'] > 0,
                                                      batch['input_metadata'][smp_idx][0]['input_filenames'],
@@ -246,3 +255,97 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                      slice_axis)
 
     return preds_npy_list, gt_npy_list
+
+
+def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric="dice", increment=0.1,
+                       fname_out="thr.png", cuda_available=True):
+    """Run a threshold analysis to find the optimal threshold on a sub-dataset.
+
+    Args:
+        model_path (str): Model path.
+        ds_lst (list): List of loaders.
+        model_params (dict): Model's parameters.
+        testing_params (dict): Testing parameters
+        metric (str): Choice between "dice" and "recall_specificity". If "recall_specificity", then a ROC analysis
+            is performed.
+        increment (float): Increment between tested thresholds.
+        fname_out (str): Plot output filename.
+        cuda_available (bool): If True, CUDA is available.
+
+    Returns:
+        float: optimal threshold.
+    """
+    if metric not in ["dice", "recall_specificity"]:
+        print('\nChoice of metric for threshold analysis: dice, recall_specificity.')
+        exit()
+
+    # Adjust some testing parameters
+    testing_params["binarize_prediction"] = -1
+    testing_params["uncertainty"]["applied"] = False
+
+    # Load model
+    model = torch.load(model_path)
+    # Eval mode
+    model.eval()
+
+    # List of thresholds
+    thr_list = list(np.arange(0.0, 1.0, increment))[1:]
+
+    # Init metric manager for each thr
+    metric_fns = [imed_metrics.recall_score,
+                  imed_metrics.dice_score,
+                  imed_metrics.specificity_score]
+    metric_dict = {thr: imed_metrics.MetricManager(metric_fns) for thr in thr_list}
+
+    # Load
+    loader = DataLoader(ConcatDataset(ds_lst), batch_size=testing_params["batch_size"],
+                        shuffle=False, pin_memory=True, sampler=None,
+                        collate_fn=imed_loader_utils.imed_collate,
+                        num_workers=0)
+
+    # Run inference
+    preds_npy, gt_npy = run_inference(loader, model, model_params,
+                                      testing_params,
+                                      ofolder=None,
+                                      cuda_available=cuda_available)
+
+    print('\nRunning threshold analysis to find optimal threshold')
+    # Make sure the GT is binarized
+    gt_npy = [threshold_predictions(gt, thr=0.5) for gt in gt_npy]
+    # Move threshold
+    for thr in tqdm(thr_list, desc="Search"):
+        preds_thr = [threshold_predictions(copy.deepcopy(pred), thr=thr) for pred in preds_npy]
+        metric_dict[thr](preds_thr, gt_npy)
+
+    # Get results
+    tpr_list, fpr_list, dice_list = [], [], []
+    for thr in thr_list:
+        result_thr = metric_dict[thr].get_results()
+        tpr_list.append(result_thr["recall_score"])
+        fpr_list.append(1 - result_thr["specificity_score"])
+        dice_list.append(result_thr["dice_score"])
+
+    # Get optimal threshold
+    if metric == "dice":
+        diff_list = dice_list
+    else:
+        diff_list = [tpr - fpr for tpr, fpr in zip(tpr_list, fpr_list)]
+
+    optimal_idx = np.max(np.where(diff_list == np.max(diff_list)))
+    optimal_threshold = thr_list[optimal_idx]
+    print('\tOptimal threshold: {}'.format(optimal_threshold))
+
+    # Save plot
+    print('\tSaving plot: {}'.format(fname_out))
+    if metric == "dice":
+        # Run plot
+        imed_metrics.plot_dice_thr(thr_list, dice_list, optimal_idx, fname_out)
+    else:
+        # Add 0 and 1 as extrema
+        tpr_list = [0.0] + tpr_list + [1.0]
+        fpr_list = [0.0] + fpr_list + [1.0]
+        optimal_idx += 1
+        # Run plot
+        imed_metrics.plot_roc_curve(tpr_list, fpr_list, optimal_idx, fname_out)
+
+    return optimal_threshold
