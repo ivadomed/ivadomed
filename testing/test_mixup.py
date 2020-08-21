@@ -9,9 +9,9 @@ def test_mixup(debugging, ofolder):
     targ = [[[[0 for i in range(40)] for i in range(40)]]]
     for i in range(10):
         for j in range(10):
-            targ[0][0][i][j]=1
+            targ[0][0][i][j] = 1
     inp = torch.tensor(inp).float()
     targ = torch.tensor(targ).float()
     # just testing if mixup function run
-    out = imed_utils.mixup(inp, targ, alpha=0.5, debugging, ofolder)
+    out = imed_utils.mixup(inp, targ, alpha=0.5, debugging=debugging, ofolder=ofolder)
 
