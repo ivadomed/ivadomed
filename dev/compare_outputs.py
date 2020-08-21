@@ -7,8 +7,8 @@ def ignore(input):
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-r", "--rater-agreement-path", dest='rpath' required=True, help="Path to folder containing.")
-    parser.add_argument("-u", "--uncertainty-path", dest='upath' required=True, help="Path to pred_masks folder.")
+    parser.add_argument("-r", "--rater-agreement-path", dest='rpath', required=True, help="Path to folder containing.")
+    parser.add_argument("-u", "--uncertainty-path", dest='upath', required=True, help="Path to pred_masks folder.")
 
     parser = get_parser()
     args = parser.parse_args()
