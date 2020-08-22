@@ -23,7 +23,7 @@ def compute_difference():
         print(np.amax(im1))
         #im1[im1 > 0.5] -= 1
         #im1 = np.abs(im1)
-        #nibabel.save( nibabel.Nifti1Image(im1, nibabel.load(path + nifti).get_affine()),"./" + nifti)
+        #nibabel.save( nibabel.Nifti1Image(im1, nibabel.load(path + nifti).get_affine()), path + nifti)
 def main():
     parser = get_parser()
     args = parser.parse_args()
