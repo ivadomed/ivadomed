@@ -135,4 +135,9 @@ Six files are generated during this process for each testing image:
   predictions of a given connected object across the Monte Carlo samples. The lower a given voxel value is, the more
   uncertain is the prediction for this voxel.
 
-These files can further be used for post-processing to refine the segmentation.
+These files can further be used for post-processing to refine the segmentation. For example, the voxels
+depicted in pink are more uncertain than the ones in blue (left image): we might want to refine the model prediction by removing
+from the foreground class the voxels with low uncertainty (blue, left image) AND low prediction value (dark red, middle image).
+
+.. image:: ../../../images/uncertainty_tutorial.png
+   :align: center
