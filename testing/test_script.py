@@ -324,3 +324,19 @@ def append_list_as_row(file_name, list_of_elem):
         csv_writer = writer(write_obj)
         # Add contents of list as last row in the csv file
         csv_writer.writerow(list_of_elem)
+
+def test_film_contrast():
+    # FiLM config
+    # Create config copy
+    base_config = "testing_data/model_config.json"
+    film_config = "testing_data/model_config_film.json"
+    subprocess.check_output(" ".join(["cp", base_config, film_config]), shell=True)
+    # Read config
+    with open(film_config, "r") as fhandle:
+        context = json.load(fhandle)
+    # Modify params
+    context["loader_parameters"]["contrast_params"]["training_validation"] = ["T2w", "T1w", "T2star"]
+    context["FiLMedUnet"]["applied"] = True
+    # Save modified config file
+    with open(film_config, 'w') as fp:
+        json.dump(context, fp, indent=4)
