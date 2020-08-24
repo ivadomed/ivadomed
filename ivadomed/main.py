@@ -96,13 +96,6 @@ def run_command(context, n_gif=0, thr_increment=None):
     # Get transforms for each subdataset
     transform_train_params, transform_valid_params, transform_test_params = \
         imed_transforms.get_subdatasets_transforms(context["transformation"])
-    if command == "train":
-        imed_utils.display_selected_transfoms(transform_train_params, dataset_type=["training"])
-        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=["validation"])
-    elif command == "test":
-        imed_utils.display_selected_transfoms(transform_test_params, dataset_type=["testing"])
-
-
 
     # MODEL PARAMETERS
     model_params = copy.deepcopy(context["default_model"])
@@ -141,14 +134,19 @@ def run_command(context, n_gif=0, thr_increment=None):
     # Aleatoric uncertainty
     if context['testing_parameters']['uncertainty']['aleatoric'] and \
             context['testing_parameters']['uncertainty']['n_it'] > 0:
-        transformation_dict = transform_valid_params
+        transformation_dict = transform_train_params
     else:
         transformation_dict = transform_test_params
-    undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict))
+    undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict, requires_undo=True))
     testing_params = copy.deepcopy(context["testing_parameters"])
     testing_params.update(context["training_parameters"])
     testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
                            'slice_axis': loader_params['slice_axis']})
+    if command == "train":
+        imed_utils.display_selected_transfoms(transform_train_params, dataset_type=["training"])
+        imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=["validation"])
+    elif command == "test":
+        imed_utils.display_selected_transfoms(transformation_dict, dataset_type=["testing"])
 
     if command == 'train':
         # LOAD DATASET

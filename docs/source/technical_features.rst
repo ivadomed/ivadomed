@@ -15,6 +15,8 @@ performance of the output segmentations.
 
    Figure FiLM
 
+.. _Uncertainty-measures:
+
 Uncertainty measures
 --------------------
 
