@@ -73,7 +73,7 @@ def train_worker(config, thr_incr):
         raise
 
     # Save config file in log directory
-    config_copy = open(config["log_directory"] + "/config.json", "w")
+    config_copy = open(config["log_directory"] + "/config_file.json", "w")
     json.dump(config, config_copy, indent=4)
 
     return config["log_directory"], best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
