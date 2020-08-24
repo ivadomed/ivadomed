@@ -221,7 +221,7 @@ def test_create_json_3d_unet_test():
         "applied": True,
         "length_3D": [48, 48, 16],
         "stride_3D": [48, 48, 16],
-        "attention": False,
+        "attention": True,
         "n_filters": 8
     }
     initial_config["transformation"] = {
