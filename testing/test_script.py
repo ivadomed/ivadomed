@@ -221,7 +221,7 @@ def test_create_json_3d_unet_test():
         "applied": True,
         "length_3D": [48, 48, 16],
         "stride_3D": [48, 48, 16],
-        "attention": False,
+        "attention": True,
         "n_filters": 8
     }
     initial_config["transformation"] = {
@@ -240,7 +240,7 @@ def test_create_json_3d_unet_test():
 
 
 def test_create_model_unet3d():
-    model = imed_models.UNet3D(in_channel=1, out_channel=1, n_filters=8)
+    model = imed_models.UNet3D(in_channel=1, out_channel=1, n_filters=8, attention=True)
     torch.save(model, "model_unet_3d_test.pt")
     os.makedirs("3d_test")
     command = "cp model_unet_3d_test.pt 3d_test/best_model.pt"
