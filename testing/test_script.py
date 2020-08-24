@@ -338,6 +338,7 @@ def test_film_contrast():
     context["loader_parameters"]["contrast_params"]["training_validation"] = ["T2w", "T1w", "T2star"]
     context["FiLMedUnet"]["applied"] = True
     context["FiLMedUnet"]["film_layers"] = 2 * [1] * context["default_model"]["depth"] + [0, 0]
+    context["debugging"] = True
     # Save modified config file
     with open(film_config, 'w') as fp:
         json.dump(context, fp, indent=4)
