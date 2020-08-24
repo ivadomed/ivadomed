@@ -15,8 +15,9 @@ Download dataset
 
 We will use a publicly-available dataset consisting of MRI data of the spinal cord. This dataset is a subset of the
 `spine-generic multi-center dataset <https://github.com/spine-generic/data-multi-subject>`_ and has been pre-processed
-to facilitate training/testing of a new model. Namely, for each subject, all six contrasts were co-registered together. Semi-manual cord segmentation for all modalities and manual cerebrospinal fluid labels for T2w modality were created. More details
-`here <https://github.com/ivadomed/ivadomed/blob/master/dev/prepare_data/README.md>`_.
+to facilitate training/testing of a new model. Namely, for each subject, all six contrasts were co-registered together.
+Semi-manual cord segmentation for all modalities and manual cerebrospinal fluid labels for T2w modality were created.
+More details `here <https://github.com/ivadomed/ivadomed/blob/master/dev/prepare_data/README.md>`_.
 
 To download the dataset (~450MB), run the following commands in your terminal:
 
@@ -102,8 +103,8 @@ Once the configuration file is ready, run the training:
 
 .. note::
 
-   If a `compatible GPU <https://pytorch.org/get-started/locally/>`_ is available, it will be used by default. Otherwise, training will use the CPU, which will take
-   a prohibitively long computational time (several hours).
+   If a `compatible GPU <https://pytorch.org/get-started/locally/>`_ is available, it will be used by default.
+   Otherwise, training will use the CPU, which will take a prohibitively long computational time (several hours).
 
 The main parameters of the training scheme and model will be displayed on the terminal, followed by the loss value
 on training and validation sets at every epoch. To know more about the meaning of each parameter, go to
