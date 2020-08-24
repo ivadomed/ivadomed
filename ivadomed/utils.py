@@ -596,7 +596,7 @@ class HookBasedFeatureExtractor(nn.Module):
         self.inputs_size = None
         self.upscale = upscale
 
-    def get_input_array(self, i):
+    def get_input_array(self, m, i, o):
         if isinstance(i, tuple):
             self.inputs = [i[index].data.clone() for index in range(len(i))]
             self.inputs_size = [input.size() for input in self.inputs]
@@ -605,7 +605,7 @@ class HookBasedFeatureExtractor(nn.Module):
             self.inputs_size = self.input.size()
         print('Input Array Size: ', self.inputs_size)
 
-    def get_output_array(self, o):
+    def get_output_array(self, m, i, o):
         if isinstance(o, tuple):
             self.outputs = [o[index].data.clone() for index in range(len(o))]
             self.outputs_size = [output.size() for output in self.outputs]
