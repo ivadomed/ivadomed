@@ -340,3 +340,7 @@ def test_film_contrast():
     # Save modified config file
     with open(film_config, 'w') as fp:
         json.dump(context, fp, indent=4)
+
+    # Run command
+    command = "ivadomed -c " + film_config
+    subprocess.check_output(command, shell=True)
