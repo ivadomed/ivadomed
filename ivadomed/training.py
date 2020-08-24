@@ -4,6 +4,7 @@ import time
 import random
 import numpy as np
 import torch
+import logging
 import torch.backends.cudnn as cudnn
 from torch import optim
 from torch.utils.data import DataLoader
@@ -18,6 +19,8 @@ from ivadomed.loader import utils as imed_loader_utils
 import datetime
 
 cudnn.benchmark = True
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def train(model_params, dataset_train, dataset_val, training_params, log_directory, device,
@@ -288,6 +291,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         # Save best model in model directory
         best_model_path = os.path.join(log_directory, model_params["folder_name"], model_params["folder_name"] + ".pt")
         torch.save(model, best_model_path)
+        logger.warning("Failed to save the model as '.onnx', saved it as '.pt': {}".format(best_model_path))
 
     # Save GIFs
     gif_folder = os.path.join(log_directory, "gifs")
