@@ -735,7 +735,7 @@ def HDF5_to_Bids(HDF5, subjects, path_dir):
         cts = grp['gt'].attrs['contrast']
 
         for ct in cts:
-            for filename in grp['gt/{}'.format(ct)].attrs['gt_filename']:
+            for filename in grp['gt/{}'.format(ct)].attrs['gt_filenames']:
                 gt_data = grp['gt/{}'.format(ct)]
                 nib_image = nib.Nifti1Image(gt_data, np.eye(4))
                 filename = os.path.join(path_label, filename.split("/")[-1])
@@ -747,5 +747,5 @@ def HDF5_to_Bids(HDF5, subjects, path_dir):
             roi_data = grp['roi/{}'.format(ct)]
             if np.any(roi_data.shape):
                 nib_image = nib.Nifti1Image(roi_data, np.eye(4))
-                filename = os.path.join(path_label, grp['roi/{}'.format(ct)].attrs['gt_filename'][0].split("/")[-1])
+                filename = os.path.join(path_label, grp['roi/{}'.format(ct)].attrs['roi_filename'][0].split("/")[-1])
                 nib.save(nib_image, filename)
