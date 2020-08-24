@@ -597,29 +597,18 @@ class HookBasedFeatureExtractor(nn.Module):
         self.upscale = upscale
 
     def get_input_array(self, m, i, o):
-        if isinstance(i, tuple):
-            self.inputs = [i[index].data.clone() for index in range(len(i))]
-            self.inputs_size = [input.size() for input in self.inputs]
-        else:
-            self.inputs = i.data.clone()
-            self.inputs_size = self.input.size()
+        assert(i, tuple)
+        self.inputs = [i[index].data.clone() for index in range(len(i))]
+        self.inputs_size = [input.size() for input in self.inputs]
+
         print('Input Array Size: ', self.inputs_size)
 
     def get_output_array(self, m, i, o):
-        if isinstance(o, tuple):
-            self.outputs = [o[index].data.clone() for index in range(len(o))]
-            self.outputs_size = [output.size() for output in self.outputs]
-        else:
-            self.outputs = o.data.clone()
-            self.outputs_size = self.outputs.size()
+        assert (i, tuple)
+        self.outputs = [o[index].data.clone() for index in range(len(o))]
+        self.outputs_size = [output.size() for output in self.outputs]
         print('Output Array Size: ', self.outputs_size)
 
-    def rescale_output_array(self, newsize):
-        us = nn.Upsample(size=newsize[2:], mode='bilinear')
-        if isinstance(self.outputs, list):
-            for index in range(len(self.outputs)): self.outputs[index] = us(self.outputs[index]).data()
-        else:
-            self.outputs = us(self.outputs).data()
 
     def forward(self, x):
         target_layer = self.submodule._modules.get(self.layername)
@@ -630,9 +619,6 @@ class HookBasedFeatureExtractor(nn.Module):
         self.submodule(x)
         h_inp.remove()
         h_out.remove()
-
-        # Rescale the feature-map if it's required
-        if self.upscale: self.rescale_output_array(x.size())
 
         return self.inputs, self.outputs
 
