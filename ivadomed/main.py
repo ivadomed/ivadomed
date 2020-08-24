@@ -67,8 +67,8 @@ def run_command(context, n_gif=0, thr_increment=None):
         If "test" command: Returns dict: of averaged metrics computed on the testing sub dataset.
         If "eval" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing sub dataset.
     """
-    command = context["command"]
-    log_directory = context["log_directory"]
+    command = copy.deepcopy(context["command"])
+    log_directory = copy.deepcopy(context["log_directory"])
     if not os.path.isdir(log_directory):
         print('Creating log directory: {}'.format(log_directory))
         os.makedirs(log_directory)
@@ -85,7 +85,7 @@ def run_command(context, n_gif=0, thr_increment=None):
                                                                                      log_directory)
 
     # Loader params
-    loader_params = context["loader_parameters"]
+    loader_params = copy.deepcopy(context["loader_parameters"])
     if command == "train":
         loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
     else:
@@ -105,8 +105,8 @@ def run_command(context, n_gif=0, thr_increment=None):
 
 
     # MODEL PARAMETERS
-    model_params = context["default_model"]
-    model_params["folder_name"] = context["model_name"]
+    model_params = copy.deepcopy(context["default_model"])
+    model_params["folder_name"] = copy.deepcopy(context["model_name"])
     model_context_list = [model_name for model_name in MODEL_LIST
                           if model_name in context and context[model_name]["applied"]]
     if len(model_context_list) == 1:
