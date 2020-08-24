@@ -207,6 +207,12 @@ def test_HeMIS(p=0.0001):
     print('Mean SD opt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
     print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
     print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
+
+
+def test_hdf5_bids():
+    os.makedirs("test_adap_bids")
+    imed_adaptative.HDF5_to_Bids('testing_data/mytestfile.hdf5', ['sub-unf01'], "test_adap_bids")
+    # once done we can delete the file
     print("[INFO]: Deleting HDF5 file.")
     os.remove('testing_data/mytestfile.hdf5')
     print('\n [INFO]: Test of HeMIS passed successfully.')
