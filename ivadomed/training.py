@@ -492,3 +492,17 @@ def load_checkpoint(model, optimizer, writer, gif_dict, fname):
     Return:
         nn.Module, torch, SummaryWriter, dict, int
     """
+    start_epoch = 0
+    try:
+        print("\nLoading checkpoint: {}".format(fname))
+        checkpoint = torch.load(fname)
+        start_epoch = checkpoint['epoch']
+        model.load_state_dict(checkpoint['state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        writer = checkpoint['tensorboard_logger']
+        gif_dict = checkpoint['gif_dict']
+        print("... Resume training from epoch #{}".format(start_epoch))
+    except:
+        logger.warning("\nNo checkpoint found at: {}".format(fname))
+
+    return model, optimizer, writer, gif_dict, start_epoch
