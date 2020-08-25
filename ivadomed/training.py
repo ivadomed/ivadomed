@@ -516,13 +516,13 @@ def load_checkpoint(model, optimizer, gif_dict, scheduler, fname):
 
     Args:
         model (nn.Module): Init model.
-        optimizer (torch.optim):
-        writer (SummaryWriter):
-        gif_dict (dict):
+        optimizer (torch.optim): Model's optimizer.
+        gif_dict (dict): Dictionary containing a GIF of the training.
+        scheduler (_LRScheduler): Learning rate scheduler.
         fname (str): Checkpoint filename.
 
     Return:
-        nn.Module, torch, SummaryWriter, dict, int
+        nn.Module, torch, dict, int, float, _LRScheduler, int
     """
     start_epoch = 1
     validation_loss = 0
