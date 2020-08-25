@@ -142,6 +142,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     # EPOCH LOOP
     for epoch in tqdm(range(num_epochs), desc="Training", initial=start_epoch):
+        epoch = epoch + start_epoch
         start_time = time.time()
 
         lr = scheduler.get_last_lr()[0]
