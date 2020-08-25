@@ -320,18 +320,19 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     if os.path.isfile(resume_path):
         state = torch.load(resume_path)
         model_path = os.path.join(log_directory, "best_model.pt")
-        torch.save(model.load_state_dict(state['state_dict']), model_path)
+        best_model = model.load_state_dict(state['state_dict'])
+        torch.save(best_model, model_path)
         # Save best model as ONNX in the model directory
         try:
             # Convert best model to ONNX and save it in model directory
             best_model_path = os.path.join(log_directory, model_params["folder_name"],
                                            model_params["folder_name"] + ".onnx")
-            imed_utils.save_onnx_model(torch.load(model_path), input_samples, best_model_path)
+            imed_utils.save_onnx_model(best_model, input_samples, best_model_path)
         except:
             # Save best model in model directory
             best_model_path = os.path.join(log_directory, model_params["folder_name"],
                                            model_params["folder_name"] + ".pt")
-            torch.save(torch.load(best_model_path), best_model_path)
+            torch.save(best_model, best_model_path)
             logger.warning("Failed to save the model as '.onnx', saved it as '.pt': {}".format(best_model_path))
 
     # Save GIFs
