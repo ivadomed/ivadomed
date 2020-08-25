@@ -1,10 +1,12 @@
 import copy
+import datetime
+import logging
 import os
-import time
 import random
+import time
+
 import numpy as np
 import torch
-import logging
 import torch.backends.cudnn as cudnn
 from torch import optim
 from torch.utils.data import DataLoader
@@ -16,7 +18,6 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils
-import datetime
 
 cudnn.benchmark = True
 logging.basicConfig(level=logging.INFO)
@@ -103,7 +104,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
     # Using Adam
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
-    scheduler, step_scheduler_batch = get_scheduler(copy.copy(training_params["scheduler"]["lr_scheduler"]), optimizer, num_epochs)
+    scheduler, step_scheduler_batch = get_scheduler(copy.copy(training_params["scheduler"]["lr_scheduler"]), optimizer,
+                                                    num_epochs)
     print("\nScheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
 
     # Create dict containing gammas and betas after each FiLM layer.
@@ -116,10 +118,12 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     start_epoch = 1
     resume_path = os.path.join(log_directory, "checkpoint.pth.tar")
     if resume_training:
-        model, optimizer, gif_dict, start_epoch, val_loss_total_avg = load_checkpoint(model=model,
-                                                                          optimizer=optimizer,
-                                                                          gif_dict=gif_dict,
-                                                                          fname=resume_path)
+        model, optimizer, gif_dict, start_epoch, val_loss_total_avg, scheduler, patience_count = load_checkpoint(
+            model=model,
+            optimizer=optimizer,
+            gif_dict=gif_dict,
+            scheduler=scheduler,
+            fname=resume_path)
         # Individually transfer the optimizer parts
         # TODO: check if following lines are needed
         for state in optimizer.state.values():
@@ -235,7 +239,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
                     # Add frame to GIF
                     for i_ in range(len(input_samples)):
-                        im, pr, met = input_samples[i_].cpu().numpy()[0], preds[i_].cpu().numpy()[0], batch["input_metadata"][i_][0]
+                        im, pr, met = input_samples[i_].cpu().numpy()[0], preds[i_].cpu().numpy()[0], \
+                                      batch["input_metadata"][i_][0]
                         for i_gif in range(n_gif):
                             if gif_dict["image_path"][i_gif] == met.__getitem__('input_filenames') and \
                                     gif_dict["slice_id"][i_gif] == met.__getitem__('slice_index'):
@@ -283,9 +288,12 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             # UPDATE BEST RESULTS
             if val_loss_total_avg < best_validation_loss:
                 # Save checkpoint
-                state = {'epoch': epoch + 1, 'state_dict': model.state_dict(),
+                state = {'epoch': epoch + 1,
+                         'state_dict': model.state_dict(),
                          'optimizer': optimizer.state_dict(),
                          'gif_dict': gif_dict,
+                         'scheduler': scheduler,
+                         'patience_count': patience_count,
                          'validation_loss': val_loss_total_avg}
                 torch.save(state, resume_path)
 
@@ -316,11 +324,13 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         # Save best model as ONNX in the model directory
         try:
             # Convert best model to ONNX and save it in model directory
-            best_model_path = os.path.join(log_directory, model_params["folder_name"], model_params["folder_name"] + ".onnx")
+            best_model_path = os.path.join(log_directory, model_params["folder_name"],
+                                           model_params["folder_name"] + ".onnx")
             imed_utils.save_onnx_model(torch.load(model_path), input_samples, best_model_path)
         except:
             # Save best model in model directory
-            best_model_path = os.path.join(log_directory, model_params["folder_name"], model_params["folder_name"] + ".pt")
+            best_model_path = os.path.join(log_directory, model_params["folder_name"],
+                                           model_params["folder_name"] + ".pt")
             torch.save(torch.load(best_model_path), best_model_path)
             logger.warning("Failed to save the model as '.onnx', saved it as '.pt': {}".format(best_model_path))
 
@@ -330,7 +340,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         os.makedirs(gif_folder)
     for i_gif in range(n_gif):
         fname_out = gif_dict["image_path"][i_gif].split('/')[-3] + "__"
-        fname_out += gif_dict["image_path"][i_gif].split('/')[-1].split(".nii.gz")[0].split(gif_dict["image_path"][i_gif].split('/')[-3]+"_")[1] + "__"
+        fname_out += gif_dict["image_path"][i_gif].split('/')[-1].split(".nii.gz")[0].split(
+            gif_dict["image_path"][i_gif].split('/')[-3] + "_")[1] + "__"
         fname_out += str(gif_dict["slice_id"][i_gif]) + ".gif"
         path_gif_out = os.path.join(gif_folder, fname_out)
         gif_dict["gif"][i_gif].save(path_gif_out)
@@ -498,7 +509,7 @@ def save_film_params(gammas, betas, contrasts, depth, ofolder):
     np.save(contrast_path, contrast_images)
 
 
-def load_checkpoint(model, optimizer, gif_dict, fname):
+def load_checkpoint(model, optimizer, gif_dict, scheduler, fname):
     """Load checkpoint.
 
     This function check if a checkpoint is available. If so, it updates the state of the input objects.
@@ -515,6 +526,7 @@ def load_checkpoint(model, optimizer, gif_dict, fname):
     """
     start_epoch = 1
     validation_loss = 0
+    patience_count = 0
     try:
         print("\nLoading checkpoint: {}".format(fname))
         checkpoint = torch.load(fname)
@@ -522,9 +534,11 @@ def load_checkpoint(model, optimizer, gif_dict, fname):
         model.load_state_dict(checkpoint['state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         validation_loss = checkpoint['validation_loss']
+        scheduler = checkpoint['scheduler']
         gif_dict = checkpoint['gif_dict']
+        patience_count = checkpoint['patience_count']
         print("... Resume training from epoch #{}".format(start_epoch))
     except:
         logger.warning("\nNo checkpoint found at: {}".format(fname))
 
-    return model, optimizer, gif_dict, start_epoch, validation_loss
+    return model, optimizer, gif_dict, start_epoch, validation_loss, scheduler, patience_count
