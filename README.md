@@ -6,6 +6,8 @@ Integrated framework for medical image analysis with deep learning.
 ![](https://github.com/neuropoly/ivadomed/workflows/Python%20package/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 
+![ivadomed Overview](https://github.com/ivadomed/ivadomed/raw/master/images/overview.pdf)
+
 The technical documentation is available [here](https://ivadomed.org).
 
 ## Contributors
