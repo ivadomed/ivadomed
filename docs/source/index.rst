@@ -23,12 +23,13 @@ The purpose of the ``ivadomed`` project is to:
    :caption: Getting started
 
    installation.rst
-   getting_started.rst
+   usage.rst
    configuration_file.rst
    data.rst
    models.rst
    scripts.rst
 
+.. _tutorials:
 .. toctree::
    :maxdepth: 1
    :caption: Tutorials
