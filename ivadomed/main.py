@@ -41,6 +41,10 @@ def get_parser():
                                     'the analysis (e.g. 0.1). Plot is saved under "log_directory/thr.png" and the '
                                     'optimal threshold in "log_directory/config_file.json as "binarize_prediction" '
                                     'parameter.')
+    optional_args.add_argument('--resume-training', dest="resume_training", required=False, action='store_true',
+                               help='Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume '
+                                    'training. This training state is saved everytime a new best model is saved in the'
+                                    'log directory.')
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                                help='Shows function documentation.')
 
