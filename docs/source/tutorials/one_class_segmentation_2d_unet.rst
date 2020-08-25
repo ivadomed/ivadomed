@@ -9,6 +9,7 @@ In this tutorial we will learn the following features:
 
 - Visualization of the outputs of a trained model.
 
+.. _Download dataset:
 
 Download dataset
 ----------------
@@ -19,12 +20,14 @@ to facilitate training/testing of a new model. Namely, for each subject, all six
 Semi-manual cord segmentation for all modalities and manual cerebrospinal fluid labels for T2w modality were created.
 More details `here <https://github.com/ivadomed/ivadomed/blob/master/dev/prepare_data/README.md>`_.
 
-To download the dataset (~450MB), run the following commands in your terminal:
+In addition to the MRI data, this sample dataset also includes a trained model for spinal cord segmentation.
+
+To download the dataset (~490MB), run the following commands in your terminal:
 
 .. code-block:: bash
 
    # Download data
-    ivadomed_download_data -d data_example_spinegeneric
+   ivadomed_download_data -d data_example_spinegeneric
 
 Configuration file
 ------------------
@@ -49,11 +52,11 @@ segmentation training.
      "command": "train"
 
 - ``loader_parameters:bids_path``: Location of the dataset. As discussed in :doc:`../data`, the dataset
-  should conform to the BIDS standard.
+  should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 
   .. code-block:: xml
 
-     "bids_path": "data_example_spinegeneric",
+     "bids_path": "<PATH_TO_DATASET>/data_example_spinegeneric"
 
 - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth is located
   under the ``DATASET/derivatives/labels`` folder. In our case, the suffix is ``_seg-manual``:
