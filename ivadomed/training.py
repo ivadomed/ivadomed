@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def train(model_params, dataset_train, dataset_val, training_params, log_directory, device,
-          cuda_available=True, metric_fns=None, n_gif=0, debugging=False):
+          cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False):
     """Main command to train the network.
 
     Args:
@@ -39,6 +39,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
             parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
             predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
+        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume
+                                training. This training state is saved everytime a new best model is saved in the log
+                                directory.
         debugging (bool): If True, extended verbosity and intermediate outputs.
 
     Returns:
