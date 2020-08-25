@@ -265,7 +265,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             if val_loss_total_avg < best_validation_loss:
                 # Save checkpoint
                 state = {'epoch': epoch + 1, 'state_dict': model.state_dict(),
-                         'optimizer': optimizer.state_dict(), 'tensorboard_logger': writer}
+                         'optimizer': optimizer.state_dict(), 'tensorboard_logger': writer,
+                         'gif_dict': gif_dict}
                 torch.save(state, os.path.join(log_directory, "checkpoint.pth.tar"))
 
                 # Save new best model
