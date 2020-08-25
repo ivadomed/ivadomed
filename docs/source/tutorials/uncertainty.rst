@@ -5,14 +5,16 @@ This tutorial shows how to estimate uncertainty measures on the model prediction
 in ``ivadomed`` are detailed in implemented in ``ivadomed`` are detailed
 :ref:`Technical features <Uncertainty-measures>`.
 
-.. _Prerequisite:
+Download dataset
+----------------
 
-Prerequisite
-------------
+A dataset example is available for this tutorial. If not already done, download the dataset with the following line.
+For more details on this dataset see :ref:One-class segmentation with 2D U-Net<Download dataset>.
 
-The spinal cord segmentation model generated from :doc:`../tutorials/one_class_segmentation_2d_unet` will be used to
-estimate uncertainty at inference time. Please make sure you finished tutorial :doc:`../tutorials/one_class_segmentation_2d_unet` before starting the current tutorial, and that a
-folder named ``seg_sc_t1-t2-t2s-mt`` is available.
+.. code-block:: bash
+
+   # Download data
+   ivadomed_download_data -d data_example_spinegeneric
 
 
 Configuration file

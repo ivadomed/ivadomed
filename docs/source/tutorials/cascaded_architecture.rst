@@ -10,14 +10,16 @@ In this tutorial we will learn the following features:
 
 In our example, the model will first locate the spinal cord (step 1). This localisation will then be used to crop the images around this region of interest, before segmenting the cerebrospinal fluid (CSF, step 2).
 
-.. _Prerequisite:
+Download dataset
+----------------
 
-Prerequisite
-------------
+A dataset example is available for this tutorial. If not already done, download the dataset with the following line.
+For more details on this dataset see :ref:One-class segmentation with 2D U-Net<Download dataset>.
 
-In this tutorial, the spinal cord segmentation model generated from :doc:`../tutorials/one_class_segmentation_2d_unet`
-will be needed since it will be used for the step 1. Please make sure you did this tutorial prior to this present example and that a folder named ``seg_sc_t1-t2-t2s-mt`` is available.
+.. code-block:: bash
 
+   # Download data
+   ivadomed_download_data -d data_example_spinegeneric
 
 Configuration file
 ------------------
@@ -39,7 +41,7 @@ some of the key parameters to use cascaded models.
 
   .. code-block:: xml
 
-     "object_detection_path": "<SPINAL_CORD_SEG_LOG_DIRECTORY>/spineGeneric/seg_sc_t1-t2-t2s-mt"
+     "object_detection_path": "<SPINAL_CORD_SEG_LOG_DIRECTORY>/data_example_spinegeneric/seg_sc_t1-t2-t2s-mt"
 
 - ``object_detection_params:safety_factor``: Multiplicative factor to apply to each dimension of the bounding box. To
   ensure all the CSF is included, a safety factor should be applied to the bounding box generated from the spinal cord.
