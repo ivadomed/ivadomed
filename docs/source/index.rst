@@ -29,6 +29,7 @@ The purpose of the ``ivadomed`` project is to:
    models.rst
    scripts.rst
 
+.. _tutorials:
 .. toctree::
    :maxdepth: 1
    :caption: Tutorials
