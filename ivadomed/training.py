@@ -320,7 +320,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     if os.path.isfile(resume_path):
         state = torch.load(resume_path)
         model_path = os.path.join(log_directory, "best_model.pt")
-        torch.save(model.load_state_dict(checkpoint['state_dict']), model_path)
+        torch.save(model.load_state_dict(state['state_dict']), model_path)
         # Save best model as ONNX in the model directory
         try:
             # Convert best model to ONNX and save it in model directory
