@@ -9,7 +9,7 @@ Download dataset
 ----------------
 
 A dataset example is available for this tutorial. If not already done, download the dataset with the following line.
-For more details on this dataset see :ref:One-class segmentation with 2D U-Net<Download dataset>.
+For more details on this dataset see :ref:`One-class segmentation with 2D U-Net<Download dataset>`.
 
 .. code-block:: bash
 
@@ -21,8 +21,9 @@ Configuration file
 ------------------
 
 The configuration file used in this tutorial is the same as the one used for
-:ref:`Technical features <Uncertainty-measures>`. Please open it with a text editor. The parameters that are specific
-to this tutorial are:
+:ref:`Technical features <Uncertainty-measures>`. Please open it with a text editor. As described in the tutorial
+:doc:`../tutorials/one_class_segmentation_2d_unet`, make sure ``bids_path`` point to the location of the dataset.
+The parameters that are specific to this tutorial are:
 
 - ``log_directory``: Location of the directory containing the trained model. To avoid having to train a model from
   scratch, in the downloaded dataset, there is a trained model for spinal cord segmentation in the folder `trained_model`.
@@ -31,13 +32,6 @@ to this tutorial are:
   .. code-block:: xml
 
      "bids_path": "<PATH_TO_DATASET>/data_example_spinegeneric/trained_model"
-
-- ``loader_parameters:bids_path``: Location of the dataset. As discussed in :doc:`../data`, the dataset
-  should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
-
-  .. code-block:: xml
-
-     "bids_path": "<PATH_TO_DATASET>/data_example_spinegeneric"
 
 - ``command``: Action to perform. Here, we want to do some inference using the previously trained model, so we set the
   field as follows:

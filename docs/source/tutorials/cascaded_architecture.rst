@@ -14,7 +14,7 @@ Download dataset
 ----------------
 
 A dataset example is available for this tutorial. If not already done, download the dataset with the following line.
-For more details on this dataset see :ref:One-class segmentation with 2D U-Net<Download dataset>.
+For more details on this dataset see :ref:`One-class segmentation with 2D U-Net<Download dataset>`.
 
 .. code-block:: bash
 
@@ -34,13 +34,6 @@ First off, copy this configuration file in your local directory to avoid modifyi
 Then, open it with a text editor. As described in the tutorial :doc:`../tutorials/one_class_segmentation_2d_unet`, make
 sure the ``command`` is set to "train" and ``bids_path`` point to the location of the dataset. Below, we will discuss
 some of the key parameters to use cascaded models.
-
-- ``loader_parameters:bids_path``: Location of the dataset. As discussed in :doc:`../data`, the dataset
-  should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
-
-  .. code-block:: xml
-
-     "bids_path": "<PATH_TO_DATASET>/data_example_spinegeneric"
 
 - ``object_detection_params:object_detection_path``: Location of the object detection model. This parameter corresponds
   to the path of the first model from the cascaded architecture that segments the spinal cord. The packaged model in the
