@@ -5,6 +5,9 @@ ivadomed
 learning. The name is a portmanteau between *IVADO* (The `Institute for data
 valorization <https://ivado.ca/en/>`_) and *Medical*.
 
+.. figure:: ../../images/overview.pdf
+   :alt: Figure Overview
+
 The purpose of the ``ivadomed`` project is to:
 
 - Provide researchers with an open-source framework for training deep learning models for applications in medical imaging;
