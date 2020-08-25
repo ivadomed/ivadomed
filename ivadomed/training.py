@@ -475,3 +475,20 @@ def save_film_params(gammas, betas, contrasts, depth, ofolder):
     contrast_images = np.array(contrasts)
     contrast_path = os.path.join(ofolder, "contrast_image.npy")
     np.save(contrast_path, contrast_images)
+
+
+def load_checkpoint(model, optimizer, writer, gif_dict, fname):
+    """Load checkpoint.
+
+    This function check if a checkpoint is available. If so, it updates the state of the input objects.
+
+    Args:
+        model (nn.Module): Init model.
+        optimizer (torch):
+        writer (SummaryWriter):
+        gif_dict (dict):
+        fname (str): Checkpoint filename.
+
+    Return:
+        nn.Module, torch, SummaryWriter, dict, int
+    """
