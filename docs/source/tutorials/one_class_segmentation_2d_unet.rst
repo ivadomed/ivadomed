@@ -52,11 +52,11 @@ segmentation training.
      "command": "train"
 
 - ``loader_parameters:bids_path``: Location of the dataset. As discussed in :doc:`../data`, the dataset
-  should conform to the BIDS standard.
+  should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 
   .. code-block:: xml
 
-     "bids_path": "data_example_spinegeneric",
+     "bids_path": "<PATH_TO_DATASET>/data_example_spinegeneric"
 
 - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth is located
   under the ``DATASET/derivatives/labels`` folder. In our case, the suffix is ``_seg-manual``:

@@ -24,6 +24,13 @@ The configuration file used in this tutorial is the same as the one used for
 :ref:`Technical features <Uncertainty-measures>`. Please open it with a text editor. The parameters that are specific
 to this tutorial are:
 
+- ``loader_parameters:bids_path``: Location of the dataset. As discussed in :doc:`../data`, the dataset
+  should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
+
+  .. code-block:: xml
+
+     "bids_path": "<PATH_TO_DATASET>/data_example_spinegeneric"
+
 - ``command``: Action to perform. Here, we want to do some inference using the previously trained model, so we set the
   field as follows:
 
