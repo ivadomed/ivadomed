@@ -116,9 +116,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     start_epoch = 1
     resume_path = os.path.join(log_directory, "checkpoint.pth.tar")
     if resume_training:
-        model, optimizer, writer, gif_dict, start_epoch = load_checkpoint(model=model,
+        model, optimizer, gif_dict, start_epoch, val_loss_total_avg = load_checkpoint(model=model,
                                                                           optimizer=optimizer,
-                                                                          writer=writer,
                                                                           gif_dict=gif_dict,
                                                                           fname=resume_path)
         # Individually transfer the optimizer parts
@@ -284,8 +283,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             if val_loss_total_avg < best_validation_loss:
                 # Save checkpoint
                 state = {'epoch': epoch + 1, 'state_dict': model.state_dict(),
-                         'optimizer': optimizer.state_dict(), 'tensorboard_logger': writer,
-                         'gif_dict': gif_dict}
+                         'optimizer': optimizer.state_dict(),
+                         'gif_dict': gif_dict,
+                         'validation_loss': val_loss_total_avg}
                 torch.save(state, resume_path)
 
                 # Update best scores
@@ -497,7 +497,7 @@ def save_film_params(gammas, betas, contrasts, depth, ofolder):
     np.save(contrast_path, contrast_images)
 
 
-def load_checkpoint(model, optimizer, writer, gif_dict, fname):
+def load_checkpoint(model, optimizer, gif_dict, fname):
     """Load checkpoint.
 
     This function check if a checkpoint is available. If so, it updates the state of the input objects.
@@ -513,16 +513,17 @@ def load_checkpoint(model, optimizer, writer, gif_dict, fname):
         nn.Module, torch, SummaryWriter, dict, int
     """
     start_epoch = 1
+    validation_loss = 0
     try:
         print("\nLoading checkpoint: {}".format(fname))
         checkpoint = torch.load(fname)
         start_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer'])
-        writer = checkpoint['tensorboard_logger']
+        validation_loss = checkpoint['validation_loss']
         gif_dict = checkpoint['gif_dict']
         print("... Resume training from epoch #{}".format(start_epoch))
     except:
         logger.warning("\nNo checkpoint found at: {}".format(fname))
 
-    return model, optimizer, writer, gif_dict, start_epoch
+    return model, optimizer, gif_dict, start_epoch, validation_loss
