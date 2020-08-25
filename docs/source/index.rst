@@ -5,8 +5,7 @@ ivadomed
 learning. The name is a portmanteau between *IVADO* (The `Institute for data
 valorization <https://ivado.ca/en/>`_) and *Medical*.
 
-.. figure:: ../../images/overview.pdf
-   :alt: Figure Overview
+.. figure:: ../../images/overview.png
 
 The purpose of the ``ivadomed`` project is to:
 
