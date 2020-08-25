@@ -60,6 +60,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
 
+    gif_dict = {"image_path": [], "slice_id": [], "gif": []}
     if dataset_val:
         sampler_val, shuffle_val = get_sampler(dataset_val, conditions)
 
@@ -69,7 +70,6 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                                 num_workers=0)
 
         # Init GIF
-        gif_dict = {"image_path": [], "slice_id": [], "gif": []}
         if n_gif > 0:
             indexes_gif = random.sample(range(len(dataset_val)), n_gif)
         for i_gif in range(n_gif):
@@ -112,6 +112,16 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         betas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
         contrast_list = []
 
+    # Resume
+    start_epoch = 1
+    resume_path = os.path.join(log_directory, "checkpoint.pth.tar")
+    if resume_training:
+        model, optimizer, writer, gif_dict, start_epoch = load_checkpoint(model=model,
+                                                                          optimizer=optimizer,
+                                                                          writer=writer,
+                                                                          gif_dict=gif_dict,
+                                                                          fname=resume_path)
+
     # LOSS
     print("\nSelected Loss: {}".format(training_params["loss"]["name"]))
     print("\twith the parameters: {}".format(
@@ -126,7 +136,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     begin_time = time.time()
 
     # EPOCH LOOP
-    for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
+    for epoch in tqdm(range(start_epoch, num_epochs + 1), desc="Training"):
         start_time = time.time()
 
         lr = scheduler.get_last_lr()[0]
@@ -270,7 +280,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 state = {'epoch': epoch + 1, 'state_dict': model.state_dict(),
                          'optimizer': optimizer.state_dict(), 'tensorboard_logger': writer,
                          'gif_dict': gif_dict}
-                torch.save(state, os.path.join(log_directory, "checkpoint.pth.tar"))
+                torch.save(state, resume_path)
 
                 # Save new best model
                 best_validation_loss, best_training_loss = val_loss_total_avg, train_loss_total_avg
@@ -484,7 +494,7 @@ def load_checkpoint(model, optimizer, writer, gif_dict, fname):
 
     Args:
         model (nn.Module): Init model.
-        optimizer (torch):
+        optimizer (torch.optim):
         writer (SummaryWriter):
         gif_dict (dict):
         fname (str): Checkpoint filename.
@@ -492,7 +502,7 @@ def load_checkpoint(model, optimizer, writer, gif_dict, fname):
     Return:
         nn.Module, torch, SummaryWriter, dict, int
     """
-    start_epoch = 0
+    start_epoch = 1
     try:
         print("\nLoading checkpoint: {}".format(fname))
         checkpoint = torch.load(fname)
