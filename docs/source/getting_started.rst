@@ -1,5 +1,5 @@
-Getting started
-===============
+Usage
+=====
 
 New model can be generated using the command-line tool from the
 terminal:
