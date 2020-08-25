@@ -24,6 +24,14 @@ The configuration file used in this tutorial is the same as the one used for
 :ref:`Technical features <Uncertainty-measures>`. Please open it with a text editor. The parameters that are specific
 to this tutorial are:
 
+- ``log_directory``: Location of the directory containing the trained model. To avoid having to train a model from
+  scratch, in the downloaded dataset, there is a trained model for spinal cord segmentation in the folder `trained_model`.
+  Modify the path so it points to the location of the trained model.
+
+  .. code-block:: xml
+
+     "bids_path": "<PATH_TO_DATASET>/data_example_spinegeneric/trained_model"
+
 - ``loader_parameters:bids_path``: Location of the dataset. As discussed in :doc:`../data`, the dataset
   should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 

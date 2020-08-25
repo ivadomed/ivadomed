@@ -43,13 +43,14 @@ some of the key parameters to use cascaded models.
      "bids_path": "<PATH_TO_DATASET>/data_example_spinegeneric"
 
 - ``object_detection_params:object_detection_path``: Location of the object detection model. This parameter corresponds
-  to the model path of the first model from the cascaded architecture that segments the spinal cord. The pretrained
-  model in the downloaded dataset will be used to detect the spinal cord. This spinal cord
-  segmentation model will be applied to the images and a bounding box will be created around this mask to crop the image.
+  to the path of the first model from the cascaded architecture that segments the spinal cord. The packaged model in the
+  downloaded dataset located in the folder `trained_model/seg_sc_t1-t2-t2s-mt` will be used to detect the spinal cord.
+  This spinal cord segmentation model will be applied to the images and a bounding box will be created around this mask
+  to crop the image.
 
   .. code-block:: xml
 
-     "object_detection_path": "<PATH_TO_DATASET>/data_example_spinegeneric/seg_sc_t1-t2-t2s-mt"
+     "object_detection_path": "<PATH_TO_DATASET>/data_example_spinegeneric/trained_model/seg_sc_t1-t2-t2s-mt"
 
 - ``object_detection_params:safety_factor``: Multiplicative factor to apply to each dimension of the bounding box. To
   ensure all the CSF is included, a safety factor should be applied to the bounding box generated from the spinal cord.
