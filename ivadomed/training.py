@@ -121,6 +121,12 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                                                                           writer=writer,
                                                                           gif_dict=gif_dict,
                                                                           fname=resume_path)
+        # Individually transfer the optimizer parts
+        # TODO: check if following lines are needed
+        for state in optimizer.state.values():
+            for k, v in state.items():
+                if torch.is_tensor(v):
+                    state[k] = v.to(device)
 
     # LOSS
     print("\nSelected Loss: {}".format(training_params["loss"]["name"]))
