@@ -65,6 +65,3 @@ def test_dice_plot():
     dice_list = [0.6, 0.7, 0.8, 0.75]
     imed_metrics.plot_dice_thr(thr_list, dice_list, 2, "test_dice.png")
     assert os.path.isfile("test_dice.png")
-
-
-
