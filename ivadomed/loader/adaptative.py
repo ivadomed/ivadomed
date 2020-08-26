@@ -707,7 +707,7 @@ def HDF5_to_Bids(HDF5, subjects, path_dir):
         exit(0)
     # loop over all subjects
     for sub in subjects:
-        path_sub = path_dir + '/' + sub
+        path_sub = path_dir + '/' + sub + '/anat/'
         path_label = path_dir + '/derivatives/labels/' + sub + '/anat/'
 
         if not path.exists(path_sub):
