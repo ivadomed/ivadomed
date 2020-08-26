@@ -41,13 +41,17 @@ def get_parser():
                                     'the analysis (e.g. 0.1). Plot is saved under "log_directory/thr.png" and the '
                                     'optimal threshold in "log_directory/config_file.json as "binarize_prediction" '
                                     'parameter.')
+    optional_args.add_argument('--resume-training', dest="resume_training", required=False, action='store_true',
+                               help='Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume '
+                                    'training. This training state is saved everytime a new best model is saved in the'
+                                    'log directory.')
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                                help='Shows function documentation.')
 
     return parser
 
 
-def run_command(context, n_gif=0, thr_increment=None):
+def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     """Run main command.
 
     This function is central in the ivadomed project as training / testing / evaluation commands are run via this
@@ -62,6 +66,9 @@ def run_command(context, n_gif=0, thr_increment=None):
         thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
             the training + validation sub-dataset to find the optimal binarization threshold. The specified value
             indicates the increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
+        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume
+                                training. This training state is saved everytime a new best model is saved in the log
+                                directory.
     Returns:
         If "train" command: Returns floats: best loss score for both training and validation.
         If "test" command: Returns dict: of averaged metrics computed on the testing sub dataset.
@@ -196,6 +203,7 @@ def run_command(context, n_gif=0, thr_increment=None):
             cuda_available=cuda_available,
             metric_fns=metric_fns,
             n_gif=n_gif,
+            resume_training=resume_training,
             debugging=context["debugging"])
 
     if thr_increment:
@@ -303,7 +311,8 @@ def run_main():
     # Run command
     run_command(context=context,
                 n_gif=args.gif if args.gif is not None else 0,
-                thr_increment=args.thr_increment if args.thr_increment else None)
+                thr_increment=args.thr_increment if args.thr_increment else None,
+                resume_training=bool(args.resume_training))
 
 
 if __name__ == "__main__":
