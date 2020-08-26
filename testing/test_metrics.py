@@ -6,16 +6,19 @@ import pytest
 @pytest.mark.parametrize("image", np.array([[[1, 1], [1, 1]], [[0, 0], [0, 0]]]))
 def test_multi_class_dice_score(image):
     results = imed_metrics.multi_class_dice_score(image, image)
+    assert results == 1
 
 
 @pytest.mark.parametrize("image", np.array([[[1, 1], [1, 1]], [[0, 0], [0, 0]]]))
 def test_mse(image):
     results = imed_metrics.mse(image, image)
+    assert results == 0.0
 
 
 @pytest.mark.parametrize("image", np.array([[[[1, 1], [1, 1]], [[0, 0], [0, 0]]]]))
 def test_haussdorf_4d(image):
     results = imed_metrics.hausdorff_score(image, image)
+    assert results == 0.0
 
 
 @pytest.mark.parametrize("image", np.array([[[0, 0], [0, 0]], [[0, 0], [0, 0]]]))
