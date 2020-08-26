@@ -1,5 +1,6 @@
 import ivadomed.metrics as imed_metrics
 import numpy as np
+import pytest
 
 
 @pytest.mark.parametrize("image", np.array([[[1, 1], [1, 1]], [[0, 0], [0, 0]]]))
