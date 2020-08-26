@@ -37,8 +37,8 @@ def test_err_rec(image, image_2):
     assert results == 1
 
 
-@pytest.mark.parametrize("image", np.array([[[0, 0], [0, 0]], [[0, 0], [0, 0]]]))
-@pytest.mark.parametrize("image_2", np.array([[[0, 0], [0, 0]], [[0, 0], [0, 0]]]))
+@pytest.mark.parametrize("image", np.array([[[1, 1], [1, 1]], [[1, 1], [1, 1]]]))
+@pytest.mark.parametrize("image_2", np.array([[[1, 1], [1, 1]], [[1, 1], [1, 1]]]))
 def test_err_spec(image, image_2):
     results = imed_metrics.specificity_score(image, image_2, err_value=12)
     assert results == 12
