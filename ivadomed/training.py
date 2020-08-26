@@ -1,10 +1,12 @@
 import copy
+import datetime
+import logging
 import os
-import time
 import random
+import time
+
 import numpy as np
 import torch
-import logging
 import torch.backends.cudnn as cudnn
 from torch import optim
 from torch.utils.data import DataLoader
@@ -16,7 +18,6 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils
-import datetime
 
 cudnn.benchmark = True
 logging.basicConfig(level=logging.INFO)
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def train(model_params, dataset_train, dataset_val, training_params, log_directory, device,
-          cuda_available=True, metric_fns=None, n_gif=0, debugging=False):
+          cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False):
     """Main command to train the network.
 
     Args:
@@ -39,6 +40,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
             parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
             predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
+        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume
+                                training. This training state is saved everytime a new best model is saved in the log
+                                directory.
         debugging (bool): If True, extended verbosity and intermediate outputs.
 
     Returns:
@@ -57,6 +61,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=0)
 
+    gif_dict = {"image_path": [], "slice_id": [], "gif": []}
     if dataset_val:
         sampler_val, shuffle_val = get_sampler(dataset_val, conditions)
 
@@ -66,7 +71,6 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                                 num_workers=0)
 
         # Init GIF
-        gif_dict = {"image_path": [], "slice_id": [], "gif": []}
         if n_gif > 0:
             indexes_gif = random.sample(range(len(dataset_val)), n_gif)
         for i_gif in range(n_gif):
@@ -100,7 +104,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     params_to_opt = filter(lambda p: p.requires_grad, model.parameters())
     # Using Adam
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
-    scheduler, step_scheduler_batch = get_scheduler(copy.copy(training_params["scheduler"]["lr_scheduler"]), optimizer, num_epochs)
+    scheduler, step_scheduler_batch = get_scheduler(copy.copy(training_params["scheduler"]["lr_scheduler"]), optimizer,
+                                                    num_epochs)
     print("\nScheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
 
     # Create dict containing gammas and betas after each FiLM layer.
@@ -108,6 +113,23 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         gammas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
         betas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
         contrast_list = []
+
+    # Resume
+    start_epoch = 1
+    resume_path = os.path.join(log_directory, "checkpoint.pth.tar")
+    if resume_training:
+        model, optimizer, gif_dict, start_epoch, val_loss_total_avg, scheduler, patience_count = load_checkpoint(
+            model=model,
+            optimizer=optimizer,
+            gif_dict=gif_dict,
+            scheduler=scheduler,
+            fname=resume_path)
+        # Individually transfer the optimizer parts
+        # TODO: check if following lines are needed
+        for state in optimizer.state.values():
+            for k, v in state.items():
+                if torch.is_tensor(v):
+                    state[k] = v.to(device)
 
     # LOSS
     print("\nSelected Loss: {}".format(training_params["loss"]["name"]))
@@ -123,7 +145,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     begin_time = time.time()
 
     # EPOCH LOOP
-    for epoch in tqdm(range(1, num_epochs + 1), desc="Training"):
+    for epoch in tqdm(range(num_epochs), desc="Training", initial=start_epoch):
+        epoch = epoch + start_epoch
         start_time = time.time()
 
         lr = scheduler.get_last_lr()[0]
@@ -216,7 +239,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
                     # Add frame to GIF
                     for i_ in range(len(input_samples)):
-                        im, pr, met = input_samples[i_].cpu().numpy()[0], preds[i_].cpu().numpy()[0], batch["input_metadata"][i_][0]
+                        im, pr, met = input_samples[i_].cpu().numpy()[0], preds[i_].cpu().numpy()[0], \
+                                      batch["input_metadata"][i_][0]
                         for i_gif in range(n_gif):
                             if gif_dict["image_path"][i_gif] == met.__getitem__('input_filenames') and \
                                     gif_dict["slice_id"][i_gif] == met.__getitem__('slice_index'):
@@ -263,10 +287,19 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
             # UPDATE BEST RESULTS
             if val_loss_total_avg < best_validation_loss:
+                # Save checkpoint
+                state = {'epoch': epoch + 1,
+                         'state_dict': model.state_dict(),
+                         'optimizer': optimizer.state_dict(),
+                         'gif_dict': gif_dict,
+                         'scheduler': scheduler,
+                         'patience_count': patience_count,
+                         'validation_loss': val_loss_total_avg}
+                torch.save(state, resume_path)
+
+                # Update best scores
                 best_validation_loss, best_training_loss = val_loss_total_avg, train_loss_total_avg
                 best_validation_dice, best_training_dice = val_dice_loss_total_avg, train_dice_loss_total_avg
-                model_path = os.path.join(log_directory, "best_model.pt")
-                torch.save(model, model_path)
 
             # EARLY STOPPING
             if epoch > 1:
@@ -283,15 +316,24 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     if model_params["name"] == "FiLMedUnet" and debugging:
         save_film_params(gammas_dict, betas_dict, contrast_list, model_params["depth"], log_directory)
 
-    try:
-        # Convert best model to ONNX and save it in model directory
-        best_model_path = os.path.join(log_directory, model_params["folder_name"], model_params["folder_name"] + ".onnx")
-        imed_utils.save_onnx_model(torch.load(model_path), input_samples, best_model_path)
-    except:
-        # Save best model in model directory
-        best_model_path = os.path.join(log_directory, model_params["folder_name"], model_params["folder_name"] + ".pt")
-        torch.save(model, best_model_path)
-        logger.warning("Failed to save the model as '.onnx', saved it as '.pt': {}".format(best_model_path))
+    # Save best model in log directory
+    if os.path.isfile(resume_path):
+        state = torch.load(resume_path)
+        model_path = os.path.join(log_directory, "best_model.pt")
+        model.load_state_dict(state['state_dict'])
+        torch.save(model, model_path)
+        # Save best model as ONNX in the model directory
+        try:
+            # Convert best model to ONNX and save it in model directory
+            best_model_path = os.path.join(log_directory, model_params["folder_name"],
+                                           model_params["folder_name"] + ".onnx")
+            imed_utils.save_onnx_model(model, input_samples, best_model_path)
+        except:
+            # Save best model in model directory
+            best_model_path = os.path.join(log_directory, model_params["folder_name"],
+                                           model_params["folder_name"] + ".pt")
+            torch.save(model, best_model_path)
+            logger.warning("Failed to save the model as '.onnx', saved it as '.pt': {}".format(best_model_path))
 
     # Save GIFs
     gif_folder = os.path.join(log_directory, "gifs")
@@ -299,7 +341,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         os.makedirs(gif_folder)
     for i_gif in range(n_gif):
         fname_out = gif_dict["image_path"][i_gif].split('/')[-3] + "__"
-        fname_out += gif_dict["image_path"][i_gif].split('/')[-1].split(".nii.gz")[0].split(gif_dict["image_path"][i_gif].split('/')[-3]+"_")[1] + "__"
+        fname_out += gif_dict["image_path"][i_gif].split('/')[-1].split(".nii.gz")[0].split(
+            gif_dict["image_path"][i_gif].split('/')[-3] + "_")[1] + "__"
         fname_out += str(gif_dict["slice_id"][i_gif]) + ".gif"
         path_gif_out = os.path.join(gif_folder, fname_out)
         gif_dict["gif"][i_gif].save(path_gif_out)
@@ -465,3 +508,38 @@ def save_film_params(gammas, betas, contrasts, depth, ofolder):
     contrast_images = np.array(contrasts)
     contrast_path = os.path.join(ofolder, "contrast_image.npy")
     np.save(contrast_path, contrast_images)
+
+
+def load_checkpoint(model, optimizer, gif_dict, scheduler, fname):
+    """Load checkpoint.
+
+    This function check if a checkpoint is available. If so, it updates the state of the input objects.
+
+    Args:
+        model (nn.Module): Init model.
+        optimizer (torch.optim): Model's optimizer.
+        gif_dict (dict): Dictionary containing a GIF of the training.
+        scheduler (_LRScheduler): Learning rate scheduler.
+        fname (str): Checkpoint filename.
+
+    Return:
+        nn.Module, torch, dict, int, float, _LRScheduler, int
+    """
+    start_epoch = 1
+    validation_loss = 0
+    patience_count = 0
+    try:
+        print("\nLoading checkpoint: {}".format(fname))
+        checkpoint = torch.load(fname)
+        start_epoch = checkpoint['epoch']
+        model.load_state_dict(checkpoint['state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        validation_loss = checkpoint['validation_loss']
+        scheduler = checkpoint['scheduler']
+        gif_dict = checkpoint['gif_dict']
+        patience_count = checkpoint['patience_count']
+        print("... Resume training from epoch #{}".format(start_epoch))
+    except:
+        logger.warning("\nNo checkpoint found at: {}".format(fname))
+
+    return model, optimizer, gif_dict, start_epoch, validation_loss, scheduler, patience_count
