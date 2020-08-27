@@ -4,7 +4,7 @@ import os
 import nibabel
 import numpy as np
 def ignore(input):
-    return "soft" not in input
+    return "unc-vox" not in input
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -20,6 +20,8 @@ def compute_difference():
     for nifti in niftis:
         im1 = nibabel.load(os.path.join(path,nifti)).get_data()
         print(np.unique(im1))
+        print(np.amax(im1))
+        im1 /= np.amax(im1)
         print(np.amax(im1))
         #im1[im1 > 0.5] -= 1
         #im1 = np.abs(im1)
@@ -37,6 +39,7 @@ def main():
             #print("not ignored")
             print(nifti)
             im1 = np.squeeze(nibabel.load(os.path.join(upath,nifti)).get_data())
+            #print(np.amax(im1))
             fname = nifti
             im2 = np.squeeze(nibabel.load(os.path.join(rpath,fname)).get_data())
             el = imed_metrics.js_divergence(im1,im2)
@@ -46,4 +49,5 @@ def main():
 
 
 if __name__ == '__main__':
-   compute_difference()
+   #compute_difference()
+   main()
