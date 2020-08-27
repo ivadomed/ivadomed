@@ -26,6 +26,6 @@ def test_tensorboard_save():
 
     assert np.allclose(input_retrieve, inp)
     assert np.allclose(pred_retrieve, pred)
-    assert(gt_retrieve, gt)
+    assert np.allclose(gt_retrieve, gt)
 
 
