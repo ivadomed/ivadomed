@@ -9,12 +9,13 @@ def subjectFilter(input):
         return False
 
 def subjectFilter(input):
-    contrasts = ["FLAIR", "ce-T1w", "PD", "T1w", "T2w"]
+
     if("sub" in input):
         return True
     else:
         return False
 
+contrasts = ["FLAIR", "ce-T1w", "PD", "T1w", "T2w"]
 files = os.listdir("/scratch/ms_brain/_BIDS_sameResolution/")
 subjects=list(filter(subjectFilter,files))
 print(subjects)
