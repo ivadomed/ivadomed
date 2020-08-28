@@ -9,7 +9,36 @@ from ivadomed.loader import utils as imed_loader_utils
 
 BIDS_PATH = 'bids'
 LOG_PATH = 'log'
-N = 10
+N = 200
+N_CENTERS = 5
+N_DISABILITIES = 3
+
+
+@pytest.mark.parametrize('split_params', [{
+        "fname_split": None,
+        "random_seed": 6,
+        "center_test": ['0'],
+        "method": "per_center",
+        "train_fraction": 0.6,
+        "test_fraction": 0.2
+    }, {
+        "fname_split": None,
+        "random_seed": 6,
+        "center_test": [],
+        "method": "per_center",
+        "train_fraction": 0.75,
+        "test_fraction": 0.25
+    }])
+def load_dataset(split_params):
+    patient_mapping = create_tsvfile()
+    create_jsonfile()
+
+    # Create log path
+    if not os.path.isdir(LOG_PATH):
+        os.mkdir(LOG_PATH)
+
+    train, val, test = imed_loader_utils.get_subdatasets_subjects_list(split_params, BIDS_PATH, LOG_PATH)
+    return train, val, test, patient_mapping
 
 
 @pytest.mark.parametrize('split_params', [{
@@ -20,20 +49,42 @@ N = 10
         "train_fraction": 0.6,
         "test_fraction": 0.2
     }])
-def test_per_center_split(split_params):
-    patient_mapping = create_tsvfile()
-    create_jsonfile()
+def test_per_center_testcenter_0(split_params):
+    train, val, test, patient_mapping = load_dataset(split_params)
 
-    # Create log path
-    if not os.path.isdir(LOG_PATH):
-        os.mkdir(LOG_PATH)
+    # Verify split proportion
+    assert len(train) == round(0.6 * (N - len(test)))
 
-    train, val, test = imed_loader_utils.get_subdatasets_subjects_list(split_params, BIDS_PATH, LOG_PATH)
-    assert len(test) == 0.2 * N
-    assert len(train) == 0.6 * N
-    assert len(val) == 0.2 * N
+    # Verify there is only the test center selected
     for sub in test:
         assert patient_mapping[sub]['center'] == '0'
+
+
+@pytest.mark.parametrize('split_params', [{
+        "fname_split": None,
+        "random_seed": 6,
+        "center_test": [],
+        "method": "per_center",
+        "train_fraction": 0.2,
+        "test_fraction": 0.4
+    }])
+def test_per_center_no_testcenter(split_params):
+    train, val, test, patient_mapping = load_dataset(split_params)
+
+    test_centers = set()
+    for sub in test:
+        test_centers.add(patient_mapping[sub]['center'])
+
+    training_centers = set()
+    for sub in train:
+        training_centers.add(patient_mapping[sub]['center'])
+
+    # Verify the test center proportion
+    assert len(test_centers) == round(N_CENTERS * 0.4)
+
+    # Verify test and training centers are fully different
+    for train_center in training_centers:
+        assert train_center not in test_centers
 
 
 def create_tsvfile():
@@ -49,11 +100,11 @@ def create_tsvfile():
         row_participants = []
         patient_id = 'sub-00' + str(participant_id)
         row_participants.append(patient_id)
-        # 3 different disabilities: 0, 1 or 2
-        disability_id = str(N % 3)
+        # N_DISABILITIES different disabilities: 0, 1, ... or N_DISABILITIES
+        disability_id = str(participant_id % 3)
         row_participants.append(disability_id)
-        # 4 different centers: 0, 1, 2 or 3
-        center_id = str(N % 4)
+        # N_CENTERS different centers: 0, 1, ..., or N_CENTERS
+        center_id = str(participant_id % N_CENTERS)
         row_participants.append(center_id)
         patient_mapping[patient_id] = {}
         patient_mapping[patient_id]['disability'] = disability_id
