@@ -1,6 +1,7 @@
 import collections
 import re
 import os
+import logging
 
 import numpy as np
 import torch
@@ -21,6 +22,9 @@ __numpy_type_map = {
 }
 
 TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 'reverse', 'translation', 'gaussian_noise']
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
@@ -97,8 +101,13 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
     df = bids.BIDS(path_folder).participants.content
 
     # If balance, then split the dataframe for each categorical value of the "balance" column
-    if balance and balance in df.keys():
-        df_list = [df[df[balance] == k] for k in df[balance].unique().tolist()]
+    if balance:
+        if balance in df.keys():
+            df_list = [df[df[balance] == k] for k in df[balance].unique().tolist()]
+        else:
+            logger.warning("No column named '{}' was found in 'participants.tsv' file. Not taken into account to split "
+                           "the dataset.".format(balance))
+            df_list = [df]
     else:
         df_list = [df]
 
