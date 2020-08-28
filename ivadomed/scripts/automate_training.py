@@ -180,12 +180,14 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
     # Split dataset if not already done
     if fixed_split and (initial_config.get("split_path") is None):
-        train_lst, valid_lst, test_lst = imed_loader_utils.split_dataset(path_folder=initial_config["loader_parameters"]["bids_path"],
-                                                                         center_test_lst=initial_config["split_dataset"]["center_test"],
-                                                                         split_method=initial_config["split_dataset"]["method"],
-                                                                         random_seed=initial_config["split_dataset"]["random_seed"],
-                                                                         train_frac=initial_config["split_dataset"]["train_fraction"],
-                                                                         test_frac=initial_config["split_dataset"]["test_fraction"])
+        train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_split(
+            path_folder=initial_config["loader_parameters"]["bids_path"],
+            center_test=initial_config["split_dataset"]["center_test"],
+            split_method=initial_config["split_dataset"]["method"],
+            random_seed=initial_config["split_dataset"]["random_seed"],
+            train_frac=initial_config["split_dataset"]["train_fraction"],
+            test_frac=initial_config["split_dataset"]["test_fraction"],
+            balance=initial_config["split_dataset"]['balance'] if 'balance' in initial_config["split_dataset"] else None)
 
         # save the subject distribution
         split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
