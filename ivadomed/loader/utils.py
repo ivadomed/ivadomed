@@ -146,7 +146,8 @@ def get_subdatasets_subjects_list(split_params, bids_path, log_directory):
                                                                random_seed=split_params['random_seed'],
                                                                train_frac=split_params['train_fraction'],
                                                                test_frac=split_params['test_fraction'],
-                                                               log_directory=log_directory)
+                                                               log_directory=log_directory,
+                                                               balance=split_params['balance'])
     return train_lst, valid_lst, test_lst
 
 
