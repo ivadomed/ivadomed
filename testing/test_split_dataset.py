@@ -3,6 +3,7 @@ import csv
 import json
 import shutil
 import pytest
+import numpy as np
 
 from ivadomed.loader import utils as imed_loader_utils
 
@@ -11,7 +12,6 @@ BIDS_PATH = 'bids'
 LOG_PATH = 'log'
 N = 200
 N_CENTERS = 5
-N_DISABILITIES = 3
 
 
 @pytest.mark.parametrize('split_params', [{
@@ -68,7 +68,7 @@ def test_per_center_testcenter_0(split_params):
         "train_fraction": 0.2,
         "test_fraction": 0.4
     }])
-def test_per_center_no_testcenter(split_params):
+def test_per_center_without_testcenter(split_params):
     train, val, test, patient_mapping = load_dataset(split_params)
 
     test_centers = set()
@@ -87,6 +87,46 @@ def test_per_center_no_testcenter(split_params):
         assert train_center not in test_centers
 
 
+@pytest.mark.parametrize('split_params', [{
+        "fname_split": None,
+        "random_seed": 6,
+        "center_test": [],
+        "method": "per_patient",
+        "train_fraction": 0.45,
+        "test_fraction": 0.35
+    }])
+def test_per_patient(split_params):
+    train, val, test, patient_mapping = load_dataset(split_params)
+
+    assert np.isclose(len(train), round(N * 0.45), atol=1)
+    assert np.isclose(len(test), round(N * 0.35), atol=1)
+
+
+@pytest.mark.parametrize('split_params', [{
+        "fname_split": None,
+        "random_seed": 6,
+        "center_test": [],
+        "balance": "disability",
+        "method": "per_patient",
+        "train_fraction": 0.45,
+        "test_fraction": 0.35
+    }])
+def test_per_patient_balance(split_params):
+    train, val, test, patient_mapping = load_dataset(split_params)
+
+    assert np.isclose(len(train), round(N * 0.45), atol=1)
+    assert np.isclose(len(test), round(N * 0.35), atol=1)
+
+    for dataset in [train, val, test]:
+        disability_count = {'0': 0, '1': 0, '2': 0}
+        for sub in dataset:
+            disability_count[patient_mapping[sub]['disability']] += 1
+
+        assert np.isclose(disability_count['0'], disability_count['1'], atol=1)
+        assert np.isclose(disability_count['1'], disability_count['2'], atol=1)
+        assert np.isclose(disability_count['0'], disability_count['2'], atol=1)
+
+
 def create_tsvfile():
     # Create bids path
     if not os.path.isdir(BIDS_PATH):
@@ -100,7 +140,7 @@ def create_tsvfile():
         row_participants = []
         patient_id = 'sub-00' + str(participant_id)
         row_participants.append(patient_id)
-        # N_DISABILITIES different disabilities: 0, 1, ... or N_DISABILITIES
+        # 3 different disabilities: 0, 1, or 2
         disability_id = str(participant_id % 3)
         row_participants.append(disability_id)
         # N_CENTERS different centers: 0, 1, ..., or N_CENTERS
