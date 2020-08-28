@@ -346,3 +346,19 @@ def test_film_contrast():
     # Run command
     command = "ivadomed -c " + film_config
     subprocess.check_output(command, shell=True)
+
+
+def test_resume_training():
+    # Train config
+    subprocess.check_output(["ivadomed -c testing_data/model_config.json"], shell=True)
+
+    # Add few epochs copy
+    base_config = "testing_data/model_config.json"
+    with open(base_config, "r") as fhandle:
+        context = json.load(fhandle)
+    context["training_parameters"]["training_time"]["num_epochs"] += 2
+    with open(base_config, 'w') as fp:
+        json.dump(context, fp, indent=4)
+
+    # Resume training
+    subprocess.check_output(["ivadomed -c testing_data/model_config.json --resume"], shell=True)
