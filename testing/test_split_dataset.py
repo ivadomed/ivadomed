@@ -150,6 +150,7 @@ def test_per_center_balance(split_params):
         assert patient_mapping[sub]['center'] == '0'
 
     check_balance(train, val, test, patient_mapping)
+    delete_test_folders()
 
 
 def create_tsvfile():
@@ -201,6 +202,3 @@ def create_jsonfile():
 def delete_test_folders():
     shutil.rmtree(BIDS_PATH)
     shutil.rmtree(LOG_PATH)
-
-
-delete_test_folders()
