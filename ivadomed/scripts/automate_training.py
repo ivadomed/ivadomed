@@ -187,6 +187,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             random_seed=initial_config["split_dataset"]["random_seed"],
             train_frac=initial_config["split_dataset"]["train_fraction"],
             test_frac=initial_config["split_dataset"]["test_fraction"],
+            log_directory="./",
             balance=initial_config["split_dataset"]['balance'] if 'balance' in initial_config["split_dataset"] else None)
 
         # save the subject distribution
