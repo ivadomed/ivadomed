@@ -25,6 +25,6 @@ def test_tensorboard_save():
             pred_retrieve = np.array(Image.open(io.BytesIO(summary_iterators[i].Images('Training/Predictions')[0][2])))
             gt_retrieve = np.array(Image.open(io.BytesIO(summary_iterators[i].Images('Training/Ground Truth')[0][2])))
 
-    assert np.allclose(imed_math.rescale_values_array(input_retrieve[0], 0, 1), inp)
-    assert np.allclose(imed_math.rescale_values_array(pred_retrieve[0], 0, 1), pred)
-    assert np.allclose(imed_math.rescale_values_array(gt_retrieve[0], 0, 1), gt)
+    assert np.allclose(imed_math.rescale_values_array(input_retrieve[:, :, 0], 0, 1), inp[0, 0, :, :])
+    assert np.allclose(imed_math.rescale_values_array(pred_retrieve[:, :, 0], 0, 1), pred[0, 0, :, :])
+    assert np.allclose(imed_math.rescale_values_array(gt_retrieve[:, :, 0], 0, 1), gt[0, 0, :, :])
