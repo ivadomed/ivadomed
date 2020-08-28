@@ -29,6 +29,7 @@
         "random_seed": 8,
         "center_test": [],
         "method": "per_patient",
+        "balance": null,
         "train_fraction": 0.6,
         "test_fraction": 0.2
     },

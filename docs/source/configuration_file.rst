@@ -153,6 +153,12 @@ ensure the model is working across domains (institutions). Note: the
 institution information is contained within the ``institution_id``
 column in the ``participants.tsv`` file.
 
+balance
+^^^^^^^
+String (Optional). Metadata contained in "participants.tsv" file with
+categorical values. Each category will be evenly distributed in the training,
+validation and testing datasets.
+
 train\_fraction
 ^^^^^^^^^^^^^^^
 
