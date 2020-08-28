@@ -23,7 +23,7 @@ __numpy_type_map = {
 TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 'reverse', 'translation', 'gaussian_noise']
 
 
-def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
+def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1, balance=None):
     """Splits list of subject into training, validation and testing datasets either according to their center or per
     patient. In the 'per_center' option the centers associated the subjects are split according the train, test and
     validation fraction whereas in the 'per_patient', the patients are directly separated according to these fractions.
@@ -36,6 +36,8 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
         random_seed (int): Random seed to ensure reproducible splits.
         train_frac (float): Between 0 and 1. Represents the train set proportion.
         test_frac (float): Between 0 and 1. Represents the test set proportion.
+        balance (string): Metadata contained in "participants.tsv" file with categorical values. Each category will be
+        evenly distributed in the training, validation and testing datasets.
 
     Returns:
         list, list, list: Train, validation and test subjects list.
@@ -45,31 +47,42 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
     X_test = []
     X_train = []
     X_val = []
-    if split_method == 'per_center':
-        # make sure that subjects coming from some centers are unseen during training
-        if len(center_test_lst) == 0:
-            centers = sorted(df['institution_id'].unique().tolist())
-            test_frac = test_frac if test_frac >= 1 / len(centers) else 1 / len(centers)
-            center_test_lst, _ = train_test_split(centers, train_size=test_frac, random_state=random_seed)
 
-        X_test = df[df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
-        X_remain = df[~df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
-
-        # split using sklearn function
-        X_train, X_tmp = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
-        if len(X_test):  # X_test contains data from centers unseen during the training, eg SpineGeneric
-            X_val = X_tmp
-        else:  # X_test contains data from centers seen during the training, eg gm_challenge
-            X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
-
-    elif split_method == 'per_patient':
-        # Separate dataset in test, train and validation using sklearn function
-        X_train, X_remain = train_test_split(df['participant_id'].tolist(), train_size=train_frac,
-                                             random_state=random_seed)
-        X_test, X_val = train_test_split(X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
-
+    if balance and balance in df.keys():
+        df_list = [df[df[balance] == k] for k in df[balance].unique().tolist()]
     else:
-        print(" {split_method} is not a supported split method")
+        df_list = [df]
+
+    for df_tmp in df_list:
+        if split_method == 'per_center':
+            # make sure that subjects coming from some centers are unseen during training
+            if len(center_test_lst) == 0:
+                centers = sorted(df['institution_id'].unique().tolist())
+                test_frac = test_frac if test_frac >= 1 / len(centers) else 1 / len(centers)
+                center_test_lst, _ = train_test_split(centers, train_size=test_frac, random_state=random_seed)
+
+            X_test_tmp = df_tmp[df_tmp['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
+            X_remain = df_tmp[~df_tmp['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
+
+            # split using sklearn function
+            X_train_tmp, X_tmp = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
+            if len(X_test_tmp):  # X_test contains data from centers unseen during the training, eg SpineGeneric
+                X_val_tmp = X_tmp
+            else:  # X_test contains data from centers seen during the training, eg gm_challenge
+                X_val_tmp, X_test_tmp = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
+
+        elif split_method == 'per_patient':
+            # Separate dataset in test, train and validation using sklearn function
+            X_train_tmp, X_remain = train_test_split(df_tmp['participant_id'].tolist(), train_size=train_frac,
+                                                 random_state=random_seed)
+            X_test_tmp, X_val_tmp = train_test_split(X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
+
+        else:
+            print(" {split_method} is not a supported split method")
+
+        X_train += X_train_tmp
+        X_val += X_val_tmp
+        X_test += X_test_tmp
 
     return X_train, X_val, X_test
 
