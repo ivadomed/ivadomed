@@ -1,3 +1,4 @@
+
 .. figure:: ../../images/overview_title.png
 
 ``ivadomed`` is an integrated framework for medical image analysis with deep
