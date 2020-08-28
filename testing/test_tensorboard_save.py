@@ -5,6 +5,7 @@ import torch
 import os
 import io
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
+import ivadomed.maths as imed_math
 from PIL import Image
 
 
@@ -24,8 +25,6 @@ def test_tensorboard_save():
             pred_retrieve = np.array(Image.open(io.BytesIO(summary_iterators[i].Images('Training/Predictions')[0][2])))
             gt_retrieve = np.array(Image.open(io.BytesIO(summary_iterators[i].Images('Training/Ground Truth')[0][2])))
 
-    assert np.allclose(input_retrieve, inp)
-    assert np.allclose(pred_retrieve, pred)
-    assert np.allclose(gt_retrieve, gt)
-
-
+    assert np.allclose(imed_math.rescale_values_array(input_retrieve[0], 0, 1), inp)
+    assert np.allclose(imed_math.rescale_values_array(pred_retrieve[0], 0, 1), pred)
+    assert np.allclose(imed_math.rescale_values_array(gt_retrieve[0], 0, 1), gt)
