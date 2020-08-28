@@ -1,5 +1,8 @@
 
+
 .. figure:: ../../images/overview_title.png
+   :alt: Figure Overview
+
 
 ``ivadomed`` is an integrated framework for medical image analysis with deep
 learning. The name is a portmanteau between *IVADO* (The `Institute for data
@@ -7,9 +10,9 @@ valorization <https://ivado.ca/en/>`_) and *Medical*.
 
 The purpose of the ``ivadomed`` project is to:
 
-* Provide researchers with an open-source framework for training deep learning models for applications in medical imaging;
+#. Provide researchers with an open-source framework for training deep learning models for applications in medical imaging;
 
-* Provide ready-to-use :doc:`models` trained on multi-center data.
+#. Provide ready-to-use :doc:`models` trained on multi-center data.
 
 .. toctree::
    :maxdepth: 1
