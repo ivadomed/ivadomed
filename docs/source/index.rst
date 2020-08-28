@@ -1,5 +1,5 @@
-ivadomed
-========
+Home Page
+=========
 
 .. image:: ../../images/overview_title.png
   :alt: Alternative text
