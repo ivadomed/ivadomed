@@ -102,6 +102,17 @@ def test_per_patient(split_params):
     assert np.isclose(len(test), round(N * 0.35), atol=1)
 
 
+def check_balance(train, val, test, patient_mapping):
+    for dataset in [train, val, test]:
+        disability_count = {'0': 0, '1': 0, '2': 0}
+        for sub in dataset:
+            disability_count[patient_mapping[sub]['disability']] += 1
+
+        assert np.isclose(disability_count['0'], disability_count['1'], atol=1)
+        assert np.isclose(disability_count['1'], disability_count['2'], atol=1)
+        assert np.isclose(disability_count['0'], disability_count['2'], atol=1)
+
+
 @pytest.mark.parametrize('split_params', [{
         "fname_split": None,
         "random_seed": 6,
@@ -116,15 +127,29 @@ def test_per_patient_balance(split_params):
 
     assert np.isclose(len(train), round(N * 0.45), atol=1)
     assert np.isclose(len(test), round(N * 0.35), atol=1)
+    check_balance(train, val, test, patient_mapping)
 
-    for dataset in [train, val, test]:
-        disability_count = {'0': 0, '1': 0, '2': 0}
-        for sub in dataset:
-            disability_count[patient_mapping[sub]['disability']] += 1
 
-        assert np.isclose(disability_count['0'], disability_count['1'], atol=1)
-        assert np.isclose(disability_count['1'], disability_count['2'], atol=1)
-        assert np.isclose(disability_count['0'], disability_count['2'], atol=1)
+@pytest.mark.parametrize('split_params', [{
+        "fname_split": None,
+        "random_seed": 6,
+        "center_test": ['0'],
+        "balance": "disability",
+        "method": "per_center",
+        "train_fraction": 0.4,
+        "test_fraction": 0.2
+    }])
+def test_per_center_balance(split_params):
+    train, val, test, patient_mapping = load_dataset(split_params)
+
+    # Verify split proportion
+    assert np.isclose(len(train), round(0.4 * (N - len(test))), atol=1)
+
+    # Verify there is only the test center selected
+    for sub in test:
+        assert patient_mapping[sub]['center'] == '0'
+
+    check_balance(train, val, test, patient_mapping)
 
 
 def create_tsvfile():
@@ -176,3 +201,6 @@ def create_jsonfile():
 def delete_test_folders():
     shutil.rmtree(BIDS_PATH)
     shutil.rmtree(LOG_PATH)
+
+
+delete_test_folders()
