@@ -87,20 +87,23 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         - the training against the validation loss
         - the metrics computed on the validation sub-dataset.
 
-    It could consider one log directory at a time, for example::
+    It could consider one log directory at a time, for example:
+
     .. image:: ../../images/plot_loss_single.png
         :width: 600px
         :align: center
 
     ... or multiple (using ``multiple_training=True``). In that case, the hard line represent the mean value across the
-    trainings whereas the envelope represents the standard deviation::
+    trainings whereas the envelope represents the standard deviation:
+
     .. image:: ../../images/plot_loss_multiple.png
         :width: 600px
         :align: center
 
     It is also possible to compare multiple trainings (or set of trainings) by listing them in ``-i``, separeted by
-    commas::
-        .. image:: ../../images/plot_loss_mosaic.png
+    commas:
+
+    .. image:: ../../images/plot_loss_mosaic.png
         :width: 600px
         :align: center
 
