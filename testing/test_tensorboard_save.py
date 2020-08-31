@@ -7,6 +7,7 @@ import io
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 import ivadomed.maths as imed_math
 from PIL import Image
+import time
 
 
 def test_tensorboard_save():
@@ -17,6 +18,7 @@ def test_tensorboard_save():
     os.makedirs(dpath)
     writer = SummaryWriter(log_dir=dpath)
     imed_utils.save_tensorboard_img(writer, 1, "Training", inp, pred, gt)
+    time.sleep(2)
 
     summary_iterators = [EventAccumulator(os.path.join(dpath, dname)).Reload() for dname in os.listdir(dpath)]
     for i in range(len(summary_iterators)):
