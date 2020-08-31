@@ -139,7 +139,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     into a dataframe to allow their comparison. The script efficiently allocates each training to one of the available
     GPUs.
 
-    # TODO: add example of DF
+    .. csv-table:: Example of dataframe
+       :file: ../../images/detailed_results.csv
 
     Args:
         config (string): Configuration filename, which is used as skeleton to configure the training. Some of its
