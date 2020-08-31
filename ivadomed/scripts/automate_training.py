@@ -139,6 +139,10 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     into a dataframe to allow their comparison. The script efficiently allocates each training to one of the available
     GPUs.
 
+    Usage example::
+
+        ivadomed_automate_training -c config.json -p params.json -n n_iterations
+
     .. csv-table:: Example of dataframe
        :file: ../../images/detailed_results.csv
 
