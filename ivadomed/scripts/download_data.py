@@ -130,11 +130,14 @@ def install_data(url, dest_folder, keep=False):
         The function tries to be smart about the data contents.
         Examples:
 
+
         #. If the archive only contains a `README.md`, and the destination folder is `${dst}`,
         `${dst}/README.md` will be created.
         Note: an archive not containing a single folder is commonly known as a "bomb" because
         it puts files anywhere in the current working directory.
         https://en.wikipedia.org/wiki/Tar_(computing)#Tarbomb
+
+
         #. If the archive contains a `${dir}/README.md`, and the destination folder is `${dst}`,
         `${dst}/README.md` will be created.
         Note: typically the package will be called `${basename}-${revision}.zip` and contain
@@ -146,7 +149,7 @@ def install_data(url, dest_folder, keep=False):
         - Uses `unzip()` to extract the bundle.
     Args:
         url (string): URL or sequence thereof (if mirrors). For this package there is a dictionnary
-         listing existing data bundle with their url. Type ivadomed_download_data -h to see possible value. Flag -d
+        listing existing data bundle with their url. Type ivadomed_download_data -h to see possible value. Flag -d
         dest_folder (string): destination directory for the data (to be created). If not used the output folder
         will be the name of the data bundle. Flag -o, --output
         keep (string): whether to keep existing data in the destination folder (if it exists). Flag -k, --keep
