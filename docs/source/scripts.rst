@@ -34,4 +34,10 @@ ivadomed_extract_small_dataset
 
 .. autofunction:: ivadomed.scripts.extract_small_dataset.extract_small_dataset
 
+ivadomed_training_curve
+""""""""""""""""""""""""""""""
+
+.. autofunction:: ivadomed.scripts.training_curve.run_plot_training_curves
+
+
 
