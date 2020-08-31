@@ -126,13 +126,18 @@ def install_data(url, dest_folder, keep=False):
         ivadomed_download_data -d data_testing -o ivado_testing_data
 
     Existing data bundle:
-        `data_example_spinegeneric <https://github.com/ivadomed/data_example_spinegeneric/archive/r20200825.zip>`_:
-            
+        `data_example_spinegeneric <https://github.com/ivadomed/data_example_spinegeneric/archive/r20200825.zip>`_
+        
         `data_testing <https://github.com/ivadomed/data-testing/archive/r20200807.zip>`_
+
         `t2_tumor <https://github.com/ivadomed/t2_tumor/archive/r20200621.zip>`_
+
         `t2star_sc <https://github.com/ivadomed/t2star_sc/archive/r20200622.zip>`_
+
         `mice_uqueensland_gm <https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip>`_
+
         `mice_uqueensland_sc <https://github.com/ivadomed/mice_uqueensland_sc/archive/r20200622.zip>`_
+
         `findcord_tumor <https://github.com/ivadomed/findcord_tumor/archive/r20200621.zip>`_
 
     .. note::
