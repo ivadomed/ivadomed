@@ -45,7 +45,7 @@ def test_extract_small():
 
 def test_compare_model():
     # testing compare_model
-    command = "ivadomed_compare_models -df testing_data/temporary_results.csv -n 2"
+    command = "ivadomed_compare_models -df testing_data/temporary_results.csv -n 2 -o output_test.csv"
     subprocess.check_output(command, shell=True)
 
 
