@@ -29,6 +29,7 @@
         "random_seed": 6,
         "center_test": ["amu"],
         "method": "per_center",
+        "balance": null,
         "train_fraction": 0.6,
         "test_fraction": 0.2
     },
