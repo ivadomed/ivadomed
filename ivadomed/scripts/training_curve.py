@@ -84,8 +84,8 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
     """Utility function to plot the training curves.
 
     This function uses the TensorFlow summary that is generated during a training to plot for each epoch:
-        - the training against the validation loss
-        - the metrics computed on the validation sub-dataset.
+    - the training against the validation loss
+    - the metrics computed on the validation sub-dataset.
 
     It could consider one log directory at a time, for example:
 
