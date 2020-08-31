@@ -148,7 +148,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             need to match the parameter "keys" of `config` file. Parameter "values" are in a list. Flag: --param, -p
             Example::
 
-                "default_model": {"depth": [2, 3, 4]}
+                {"default_model": {"depth": [2, 3, 4]}}
 
         fixed_split (bool): If True, all the experiments are run on the same training/validation/testing subdatasets.
                             Flag: --fixed-split
