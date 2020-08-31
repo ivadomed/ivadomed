@@ -135,7 +135,7 @@ def install_data(url, dest_folder, keep=False):
         `${dst}/README.md` will be created.
         Note: an archive not containing a single folder is commonly known as a "bomb" because
         it puts files anywhere in the current working directory.( see `Tarbomb
-        <https://en.wikipedia.org/wiki/Tar_(computing)#Tarbomb>`)
+        <https://en.wikipedia.org/wiki/Tar_(computing)#Tarbomb>`_)
 
 
         b. If the archive contains a `${dir}/README.md`, and the destination folder is `${dst}`,
