@@ -131,14 +131,14 @@ def install_data(url, dest_folder, keep=False):
         Examples:
 
 
-        #. If the archive only contains a `README.md`, and the destination folder is `${dst}`,
+        a. If the archive only contains a `README.md`, and the destination folder is `${dst}`,
         `${dst}/README.md` will be created.
         Note: an archive not containing a single folder is commonly known as a "bomb" because
         it puts files anywhere in the current working directory.
         https://en.wikipedia.org/wiki/Tar_(computing)#Tarbomb
 
 
-        #. If the archive contains a `${dir}/README.md`, and the destination folder is `${dst}`,
+        b. If the archive contains a `${dir}/README.md`, and the destination folder is `${dst}`,
         `${dst}/README.md` will be created.
         Note: typically the package will be called `${basename}-${revision}.zip` and contain
         a root folder named `${basename}-${revision}/` under which all the other files will
