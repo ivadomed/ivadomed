@@ -13,7 +13,6 @@ import sys
 import json
 import argparse
 
-
 DICT_URL = {
     "data_example_spinegeneric": ["https://github.com/ivadomed/data_example_spinegeneric/archive/r20200825.zip"],
     "data_testing": ["https://github.com/ivadomed/data-testing/archive/r20200807.zip"],
@@ -22,7 +21,7 @@ DICT_URL = {
     "mice_uqueensland_gm": ["https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip "],
     "mice_uqueensland_sc": ["https://github.com/ivadomed/mice_uqueensland_sc/archive/r20200622.zip"],
     "findcord_tumor": ["https://github.com/ivadomed/findcord_tumor/archive/r20200621.zip"]
-    }
+}
 
 
 def get_parser():
@@ -130,18 +129,19 @@ def install_data(url, dest_folder, keep=False):
     .. note::
         The function tries to be smart about the data contents.
         Examples:
-        a. If the archive only contains a `README.md`, and the destination folder is `${dst}`,
-            `${dst}/README.md` will be created.
-            Note: an archive not containing a single folder is commonly known as a "bomb" because
-            it puts files anywhere in the current working directory.
-            https://en.wikipedia.org/wiki/Tar_(computing)#Tarbomb
-        b. If the archive contains a `${dir}/README.md`, and the destination folder is `${dst}`,
-            `${dst}/README.md` will be created.
-            Note: typically the package will be called `${basename}-${revision}.zip` and contain
-            a root folder named `${basename}-${revision}/` under which all the other files will
-            be located.
-            The right thing to do in this case is to take the files from there and install them
-            in `${dst}`.
+
+        #. If the archive only contains a `README.md`, and the destination folder is `${dst}`,
+        `${dst}/README.md` will be created.
+        Note: an archive not containing a single folder is commonly known as a "bomb" because
+        it puts files anywhere in the current working directory.
+        https://en.wikipedia.org/wiki/Tar_(computing)#Tarbomb
+        #. If the archive contains a `${dir}/README.md`, and the destination folder is `${dst}`,
+        `${dst}/README.md` will be created.
+        Note: typically the package will be called `${basename}-${revision}.zip` and contain
+        a root folder named `${basename}-${revision}/` under which all the other files will
+        be located.
+        The right thing to do in this case is to take the files from there and install them
+        in `${dst}`.
         - Uses `download_data()` to retrieve the data.
         - Uses `unzip()` to extract the bundle.
     Args:
@@ -150,8 +150,6 @@ def install_data(url, dest_folder, keep=False):
         dest_folder (string): destination directory for the data (to be created). If not used the output folder
         will be the name of the data bundle. Flag -o, --output
         keep (string): whether to keep existing data in the destination folder (if it exists). Flag -k, --keep
-
-
     """
 
     if not keep and os.path.exists(dest_folder):
