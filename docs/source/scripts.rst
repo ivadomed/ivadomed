@@ -39,5 +39,10 @@ ivadomed_training_curve
 
 .. autofunction:: ivadomed.scripts.training_curve.run_plot_training_curves
 
+ivadomed_download_data
+""""""""""""""""""""""""""""""
+
+.. autofunction:: ivadomed.scripts.download_data.install_data
+
 
 
