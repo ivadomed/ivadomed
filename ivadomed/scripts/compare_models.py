@@ -50,7 +50,7 @@ def compute_statistics(dataframe, n_iterations, run_test=True, csv_out=None):
                             Flag: --n_iteration, -n
         run_test (int): Indicates if the comparison is done on the performances on either the testing subdataset (True)
             either on the training/validation subdatasets. Flag: --run_test
-        csv_out (string): Output csv name to store computed value (e.g., df.csv). Flag -o, --output
+        csv_out (string): Output csv name to store computed value (e.g., df.csv). Default value is model_comparison.csv Flag -o, --output
     """
     avg = dataframe.groupby(['log_directory']).mean()
     std = dataframe.groupby(['log_directory']).std()
