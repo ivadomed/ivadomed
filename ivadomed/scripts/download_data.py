@@ -128,9 +128,9 @@ def create_string(dict):
     doc_str = ""
     for i in range(len(dict.keys())):
         if i == 0:
-            doc_str = doc_str + '-`' + list(dict.keys())[i] + ' <' + dict[list(dict.keys())[i]] + '>`_'
+            doc_str = doc_str + '-`' + str(list(dict.keys())[i]) + ' <' + dict[list(dict.keys())[i]] + '>`_'
         else:
-            doc_str = doc_str + '\n -`' + list(dict.keys())[i] + ' <' + dict[list(dict.keys())[i]] + '>`_'
+            doc_str = doc_str + '\n -`' + str(list(dict.keys())[i]) + ' <' + dict[list(dict.keys())[i]] + '>`_'
     return doc_str
 
 
