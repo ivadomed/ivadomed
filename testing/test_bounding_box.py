@@ -100,10 +100,12 @@ def test_bounding_box(train_lst, target_lst, config):
 # testing adjust bb size
 def test_adjust_bb_size():
     test_coord = (0, 10, 0, 10, 0, 10)
-    imed_obj_detect.adjust_bb_size(test_coord, (2, 2, 2), True)
+    res = imed_obj_detect.adjust_bb_size(test_coord, (2, 2, 2), True)
+    assert(res == [0, 20, 0, 20, 0, 20])
 
 
-# testing bb statistic
+# testing bb statistic.
+# We just check wether or it is running as it not returning anything
 def test_compute_bb_statistics():
     imed_obj_detect.compute_bb_statistics("testing_data/bounding_box_dict.json")
 
