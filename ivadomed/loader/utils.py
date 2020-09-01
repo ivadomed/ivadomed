@@ -1,6 +1,7 @@
 import collections
 import re
 import os
+import logging
 
 import numpy as np
 import torch
@@ -22,29 +23,30 @@ __numpy_type_map = {
 
 TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 'reverse', 'translation', 'gaussian_noise']
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def split_dataset(path_folder, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
+
+def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
     """Splits list of subject into training, validation and testing datasets either according to their center or per
     patient. In the 'per_center' option the centers associated the subjects are split according the train, test and
     validation fraction whereas in the 'per_patient', the patients are directly separated according to these fractions.
 
     Args:
-        path_folder (str): Path to BIDS folder.
+        df (pd.DataFrame): Dataframe containing "participants.tsv" file information.
         center_test_lst (list): list of centers to include in the testing set.
         split_method (str): Between 'per_center' or 'per_person'. If 'per_center' the separation fraction are
             applied to centers, if 'per_person' they are applied to the subject list.
         random_seed (int): Random seed to ensure reproducible splits.
         train_frac (float): Between 0 and 1. Represents the train set proportion.
         test_frac (float): Between 0 and 1. Represents the test set proportion.
-
     Returns:
         list, list, list: Train, validation and test subjects list.
     """
-    # read participants.tsv as pandas dataframe
-    df = bids.BIDS(path_folder).participants.content
-    X_test = []
-    X_train = []
-    X_val = []
+    # Init output lists
+    X_train, X_val, X_test = [], [], []
+
+    # Split_method cases
     if split_method == 'per_center':
         # make sure that subjects coming from some centers are unseen during training
         if len(center_test_lst) == 0:
@@ -75,7 +77,7 @@ def split_dataset(path_folder, center_test_lst, split_method, random_seed, train
 
 
 def get_new_subject_split(path_folder, center_test, split_method, random_seed,
-                          train_frac, test_frac, log_directory):
+                          train_frac, test_frac, log_directory, balance):
     """Randomly split dataset between training / validation / testing.
 
     Randomly split dataset between training / validation / testing\
@@ -89,16 +91,39 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
         train_frac (float): Training dataset proportion, between 0 and 1.
         test_frac (float): Testing dataset proportionm between 0 and 1.
         log_directory (string): Output folder.
+        balance (string): Metadata contained in "participants.tsv" file with categorical values. Each category will be
+        evenly distributed in the training, validation and testing datasets.
 
     Returns:
         list, list list: Training, validation and testing subjects lists.
     """
-    train_lst, valid_lst, test_lst = split_dataset(path_folder=path_folder,
-                                                   center_test_lst=center_test,
-                                                   split_method=split_method,
-                                                   random_seed=random_seed,
-                                                   train_frac=train_frac,
-                                                   test_frac=test_frac)
+    # read participants.tsv as pandas dataframe
+    df = bids.BIDS(path_folder).participants.content
+
+    # If balance, then split the dataframe for each categorical value of the "balance" column
+    if balance:
+        if balance in df.keys():
+            df_list = [df[df[balance] == k] for k in df[balance].unique().tolist()]
+        else:
+            logger.warning("No column named '{}' was found in 'participants.tsv' file. Not taken into account to split "
+                           "the dataset.".format(balance))
+            df_list = [df]
+    else:
+        df_list = [df]
+
+    train_lst, valid_lst, test_lst = [], [], []
+    for df_tmp in df_list:
+        # Split dataset on each section of subjects
+        train_tmp, valid_tmp, test_tmp = split_dataset(df=df_tmp,
+                                                       center_test_lst=center_test,
+                                                       split_method=split_method,
+                                                       random_seed=random_seed,
+                                                       train_frac=train_frac,
+                                                       test_frac=test_frac)
+        # Update the dataset lists
+        train_lst += train_tmp
+        valid_lst += valid_tmp
+        test_lst += test_tmp
 
     # save the subject distribution
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
@@ -130,7 +155,9 @@ def get_subdatasets_subjects_list(split_params, bids_path, log_directory):
                                                                random_seed=split_params['random_seed'],
                                                                train_frac=split_params['train_fraction'],
                                                                test_frac=split_params['test_fraction'],
-                                                               log_directory=log_directory)
+                                                               log_directory=log_directory,
+                                                               balance=split_params['balance']
+                                                               if 'balance' in split_params else None)
     return train_lst, valid_lst, test_lst
 
 
