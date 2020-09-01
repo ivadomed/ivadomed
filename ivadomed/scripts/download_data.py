@@ -143,17 +143,13 @@ def install_data(url, dest_folder, keep=False):
 
         ivadomed_download_data -d data_testing -o ivado_testing_data
 
-    %s
 
     Existing data bundle:
 
-        - `data_example_spinegeneric <https://github.com/ivadomed/data_example_spinegeneric/archive/r20200825.zip>`_: 10 randomly picked subject from `Spine Generic <https://github.com/spine-generic/data-multi-subject>`_. Used for Tutorial and example in Ivadomed.
-        - `data_testing <https://github.com/ivadomed/data-testing/archive/r20200807.zip>`_: Data Used for integration/unit test in Ivadomed
-        - `t2_tumor <https://github.com/ivadomed/t2_tumor/archive/r20200621.zip>`_: Cord tumor segmentation model, trained on T2-weighted contrast.
-        - `t2star_sc <https://github.com/ivadomed/t2star_sc/archive/r20200622.zip>`_: Cord segmentation model on T2*-weighted contrast.
-        - `mice_uqueensland_gm <https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip>`_: Gray matter segmentation model on mouse MRI. Data from University of Queensland.
-        - `mice_uqueensland_sc <https://github.com/ivadomed/mice_uqueensland_sc/archive/r20200622.zip>`_ :  Cord segmentation model on mouse MRI. Data from University of Queensland.
-        - `findcord_tumor <https://github.com/ivadomed/findcord_tumor/archive/r20200621.zip>`_: Cord localisation model, trained on T2-weighted images with tumor.
+    %s
+
+
+
 
     .. note::
         The function tries to be smart about the data contents.
