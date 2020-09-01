@@ -134,7 +134,7 @@ def create_string(dict):
     return doc_str
 
 
-@docstring_parameter(create_string(DICT_URL))
+#@docstring_parameter(create_string(DICT_URL))
 def install_data(url, dest_folder, keep=False):
     """
     Download a data bundle from an URL and install it in the destination folder.
@@ -143,7 +143,7 @@ def install_data(url, dest_folder, keep=False):
 
         ivadomed_download_data -d data_testing -o ivado_testing_data
 
-    {0}
+    %s
 
     Existing data bundle:
 
@@ -249,6 +249,8 @@ def install_data(url, dest_folder, keep=False):
     shutil.rmtree(os.path.dirname(tmp_file))
     shutil.rmtree(extraction_folder)
 
+
+install_data.__doc__%=create_string(DICT_URL)
 
 def main(args=None):
     # Dictionary containing list of URLs for data names.
