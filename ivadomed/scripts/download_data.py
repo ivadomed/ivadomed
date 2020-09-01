@@ -24,6 +24,13 @@ DICT_URL = {
 }
 
 
+def docstring_parameter(*sub):
+        def dec(obj):
+            obj.__doc__ = obj.__doc__.format(*sub)
+            return obj
+        return dec
+
+
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", required=True,
@@ -117,6 +124,17 @@ def unzip(compressed, dest_folder):
         raise
 
 
+def create_string(dict):
+    doc_str = ""
+    for i in range(len(dict.keys())):
+        if i == 0:
+            doc_str = doc_str + '-`' + dict.keys[i] + ' <' + dict[dict.keys[i]] + '>`_'
+        else:
+            doc_str = doc_strstr + '\n -`' + dict.keys[i] + ' <' + dict[dict.keys[i]] + '>`_'
+    return doc_str
+
+
+@docstring_parameter(create_string(DICT_URL))
 def install_data(url, dest_folder, keep=False):
     """
     Download a data bundle from an URL and install it in the destination folder.
@@ -124,6 +142,8 @@ def install_data(url, dest_folder, keep=False):
     Usage example ::
 
         ivadomed_download_data -d data_testing -o ivado_testing_data
+
+    {0}
 
     Existing data bundle:
 
