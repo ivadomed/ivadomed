@@ -145,8 +145,7 @@ def install_data(url, dest_folder, keep=False):
 
 
     Existing data bundle:
-
-    %s
+        %s
 
 
 
