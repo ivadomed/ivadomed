@@ -76,4 +76,5 @@ def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_
         assert cmpt_neg == 0
         assert cmpt_pos != 0
     else:
+        # We verify if there are still some negative slices (they are removed with our filter)
         assert cmpt_neg != 0 and cmpt_pos != 0
