@@ -18,7 +18,7 @@ DICT_URL = {
     "data_testing": ["https://github.com/ivadomed/data-testing/archive/r20200807.zip"],
     "t2_tumor": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
     "t2star_sc": ["https://github.com/ivadomed/t2star_sc/archive/r20200622.zip"],
-    "mice_uqueensland_gm": ["https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip "],
+    "mice_uqueensland_gm": ["https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip"],
     "mice_uqueensland_sc": ["https://github.com/ivadomed/mice_uqueensland_sc/archive/r20200622.zip"],
     "findcord_tumor": ["https://github.com/ivadomed/findcord_tumor/archive/r20200621.zip"]
 }
@@ -128,9 +128,9 @@ def create_string(dict):
     doc_str = ''
     for i in range(len(dict.keys())):
         if i == 0:
-            doc_str = doc_str + '-`' + str(list(dict.keys())[i]) + ' <' + str(dict[list(dict.keys())[i]]) + '>`_'
+            doc_str = doc_str + '-`' + str(list(dict.keys())[i]) + ' <' + str(dict[list(dict.keys())[i]]) + '>`_ \n\t'
         else:
-            doc_str = doc_str + '\n\t-`' + str(list(dict.keys())[i]) + ' <' + str(dict[list(dict.keys())[i]]) + '>`_'
+            doc_str = doc_str + '-`' + str(list(dict.keys())[i]) + ' <' + str(dict[list(dict.keys())[i]]) + '>`_'
     return doc_str
 
 
