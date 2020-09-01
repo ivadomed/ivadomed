@@ -130,7 +130,7 @@ def create_string(dict):
         if i == 0:
             doc_str = doc_str + '-`' + str(list(dict.keys())[i]) + ' <' + str(dict[list(dict.keys())[i]]) + '>`_'
         else:
-            doc_str = doc_str + '\n -`' + str(list(dict.keys())[i]) + ' <' + str(dict[list(dict.keys())[i]]) + '>`_'
+            doc_str = doc_str + '\n\t -`' + str(list(dict.keys())[i]) + ' <' + str(dict[list(dict.keys())[i]]) + '>`_'
     return doc_str
 
 
