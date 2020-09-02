@@ -14,21 +14,22 @@ import json
 import argparse
 
 DICT_URL = {
-    "data_example_spinegeneric": ["https://github.com/ivadomed/data_example_spinegeneric/archive/r20200825.zip"],
-    "data_testing": ["https://github.com/ivadomed/data-testing/archive/r20200807.zip"],
-    "t2_tumor": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
-    "t2star_sc": ["https://github.com/ivadomed/t2star_sc/archive/r20200622.zip"],
-    "mice_uqueensland_gm": ["https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip"],
-    "mice_uqueensland_sc": ["https://github.com/ivadomed/mice_uqueensland_sc/archive/r20200622.zip"],
-    "findcord_tumor": ["https://github.com/ivadomed/findcord_tumor/archive/r20200621.zip"]
+    "data_example_spinegeneric": {"url":"https://github.com/ivadomed/data_example_spinegeneric/archive/r20200825.zip",
+                                  "description": "10 randomly picked subject from `Spine Generic <https://github.com/spine-generic/data-multi-subject>`_. Used for Tutorial and example in Ivadomed."}
+    "data_testing": {"url":"https://github.com/ivadomed/data-testing/archive/r20200807.zip",
+                     "description": "Data Used for integration/unit test in Ivadomed"}
+    "t2_tumor": { "url":"https://github.com/ivadomed/t2_tumor/archive/r20200621.zip",
+                  "description": "Cord tumor segmentation model, trained on T2-weighted contrast."},
+    "t2star_sc": {"url":"https://github.com/ivadomed/t2star_sc/archive/r20200622.zip",
+                  "description": "Cord tumor segmentation model, trained on T2-weighted contrast."},
+    "mice_uqueensland_gm": {"url":"https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip",
+                            "description": "Gray matter segmentation model on "
+                                           "mouse MRI. Data from University of Queensland."},
+    "mice_uqueensland_sc": {"url":"https://github.com/ivadomed/mice_uqueensland_sc/archive/r20200622.zip",
+                            "description":"Cord segmentation model on mouse MRI. Data from University of Queensland."},
+    "findcord_tumor": {"url":"https://github.com/ivadomed/findcord_tumor/archive/r20200621.zip",
+                       "description":"Cord localisation model, trained on T2-weighted images with tumor."}
 }
-
-
-def docstring_parameter(*sub):
-        def dec(obj):
-            obj.__doc__ = obj.__doc__.format(*sub)
-            return obj
-        return dec
 
 
 def get_parser():
@@ -128,13 +129,15 @@ def create_string(dict):
     doc_str = ''
     for i in range(len(dict.keys())):
         if i == 0:
-            doc_str = doc_str + '-`' + str(list(dict.keys())[i]) + ' <' + str(dict[list(dict.keys())[i]]) + '>`_ \n\t'
+            doc_str = doc_str + '-`' + str(list(dict.keys())[i]) + ' <' + str(dict[list(dict.keys())[i]]["url"][0][:-4])\
+                      + '>`_ :' + str(dict[list(dict.keys())[i]]["description"][0][:-4])
         else:
-            doc_str = doc_str + '-`' + str(list(dict.keys())[i]) + ' <' + str(dict[list(dict.keys())[i]]) + '>`_'
+            doc_str = doc_str + '|br| -`' + str(list(dict.keys())[i]) + ' <' + \
+                      str(dict[list(dict.keys())[i]]["url"][0][:-4]) + '>`_ : ' + \
+                      str(dict[list(dict.keys())[i]]["description"][0][:-4])
     return doc_str
 
 
-#@docstring_parameter(create_string(DICT_URL))
 def install_data(url, dest_folder, keep=False):
     """
     Download a data bundle from an URL and install it in the destination folder.
@@ -146,9 +149,6 @@ def install_data(url, dest_folder, keep=False):
 
     Existing data bundle:
         %s
-
-
-
 
     .. note::
         The function tries to be smart about the data contents.
@@ -264,7 +264,7 @@ def main(args=None):
     else:
         dest_folder = arguments.output
 
-    url = DICT_URL[data_name]
+    url = DICT_URL[data_name]["url"]
     install_data(url, dest_folder, keep=arguments.keep)
     return 0
 
