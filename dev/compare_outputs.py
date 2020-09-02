@@ -14,6 +14,28 @@ def get_parser():
     return parser
 
 
+
+def multi_model_entropy():
+    paths = []
+    im = {}
+    for path in paths:
+        fnames = os.listdir(os.path.join(path,"pred_masks"))
+        for fname in fnames:
+            if "soft" in fname:
+                im[fname].append(nibabel.load(os.path.join(path,"pred_masks",fname)).get_data())
+
+    for key in im:
+        mc_data = np.array(im[key])
+        unc = np.repeat(np.expand_dims(mc_data, -1), 2, -1)  # n_it, x, y, z, 2
+        unc[..., 0] = 1 - unc[..., 1]
+        unc = -np.sum(np.mean(unc, 0) * np.log(np.mean(unc, 0) + eps), -1)
+        # Clip values to 0
+        unc[unc < 0] = 0
+
+        # save uncertainty map
+        nib_unc = nib.Nifti1Image(unc, nibabel.load(os.path.join(path[0],"pred_masks",key).get_affine()))
+        nib.save(nib_unc, os.path.join("./combined_pred",key))
+
 def compute_difference():
     path = "./"
     niftis = os.listdir(path)
