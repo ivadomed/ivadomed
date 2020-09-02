@@ -132,7 +132,7 @@ def create_string(dict):
     for i in range(len(dict.keys())):
         if i == 0:
             doc_str = doc_str + '`' + str(list(dict.keys())[i]) + ' <' + str(dict[list(dict.keys())[i]]["url"][0][:-4])\
-                      + '>`_ :' + str(dict[list(dict.keys())[i]]["description"]) + ' |br|'
+                      + '>`_ :' + str(dict[list(dict.keys())[i]]["description"]) + ' |br| '
         else:
             doc_str = doc_str + '`' + str(list(dict.keys())[i]) + ' <' + \
                       str(dict[list(dict.keys())[i]]["url"][0][:-4]) + '>`_ : ' + \
