@@ -136,7 +136,7 @@ def create_string(dict):
         else:
             doc_str = doc_str + '`' + str(list(dict.keys())[i]) + ' <' + \
                       str(dict[list(dict.keys())[i]]["url"][0][:-4]) + '>`_ : ' + \
-                      str(dict[list(dict.keys())[i]]["description"]) + ' |br|'
+                      str(dict[list(dict.keys())[i]]["description"]) + ' |br| '
     return doc_str
 
 
