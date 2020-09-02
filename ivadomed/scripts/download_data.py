@@ -17,7 +17,7 @@ DICT_URL = {
     "data_example_spinegeneric": {"url":"https://github.com/ivadomed/data_example_spinegeneric/archive/r20200825.zip",
                                   "description": "10 randomly picked subject from `Spine Generic <https://github.com/spine-generic/data-multi-subject>`_. Used for Tutorial and example in Ivadomed."}
     "data_testing": {"url":"https://github.com/ivadomed/data-testing/archive/r20200807.zip",
-                     "description": "Data Used for integration/unit test in Ivadomed"}
+                     "description": "Data Used for integration/unit test in Ivadomed"},
     "t2_tumor": { "url":"https://github.com/ivadomed/t2_tumor/archive/r20200621.zip",
                   "description": "Cord tumor segmentation model, trained on T2-weighted contrast."},
     "t2star_sc": {"url":"https://github.com/ivadomed/t2star_sc/archive/r20200622.zip",
