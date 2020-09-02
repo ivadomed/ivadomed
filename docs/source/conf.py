@@ -241,6 +241,7 @@ html_css_files = ['css/custom.css']
 # typographically correct entities.
 html_use_smartypants = False
 
+smart_quotes = False
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
 
