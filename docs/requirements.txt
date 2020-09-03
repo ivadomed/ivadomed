@@ -1,2 +1,2 @@
--r ../requirements.txt
+-e ../
 sphinx==3.2.1
