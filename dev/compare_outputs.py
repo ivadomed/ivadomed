@@ -3,8 +3,6 @@ import argparse
 import os
 import nibabel
 import numpy as np
-def ignore(input):
-    return "unc-vox" not in input
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -28,6 +26,7 @@ def multi_model_entropy():
 
     for key in im:
         mc_data = np.array(im[key])
+        # Compute entropy, from run_uncertainty
         unc = np.repeat(np.expand_dims(mc_data, -1), 2, -1)  # n_it, x, y, z, 2
         unc[..., 0] = 1 - unc[..., 1]
         unc = -np.sum(np.mean(unc, 0) * np.log(np.mean(unc, 0) + eps), -1)
@@ -50,7 +49,7 @@ def compute_difference():
         #im1[im1 > 0.5] -= 1
         #im1 = np.abs(im1)
         #nibabel.save( nibabel.Nifti1Image(im1, nibabel.load(path + nifti).get_affine()), path + nifti)
-def main():
+def js_divergence():
     parser = get_parser()
     args = parser.parse_args()
     rpath =  args.rpath
@@ -59,7 +58,7 @@ def main():
     div = []
     for nifti in niftis:
         #print(nifti)
-        if not ignore(nifti):
+        if "unc-vox" in nifti:
             #print("not ignored")
             print(nifti)
             im1 = np.squeeze(nibabel.load(os.path.join(upath,nifti)).get_data())
@@ -74,4 +73,5 @@ def main():
 
 if __name__ == '__main__':
    #compute_difference()
-   main()
+   #js_divergence()
+   multi_model_entropy()
