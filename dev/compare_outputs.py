@@ -21,6 +21,8 @@ def multi_model_entropy():
     for path in paths:
         fnames = os.listdir(os.path.join(path,"pred_masks"))
         for fname in fnames:
+            if fname not in im:
+                im["fname"] = []
             if "soft" in fname:
                 im[fname].append(nibabel.load(os.path.join(path,"pred_masks",fname)).get_data())
 
@@ -34,7 +36,7 @@ def multi_model_entropy():
 
         # save uncertainty map
         nib_unc = nib.Nifti1Image(unc, nibabel.load(os.path.join(path[0],"pred_masks",key).get_affine()))
-        nib.save(nib_unc, os.path.join("./combined_pred",key))
+        nib.save(nib_unc, os.path.join("./combined_preds",key))
 
 def compute_difference():
     path = "./"
