@@ -14,7 +14,7 @@ def get_parser():
 
 
 def multi_model_entropy():
-    paths = []
+    paths = ["log_ms_brain_auto_filter-target_suffix\=\[\'_seg-lesion1\'\]","log_ms_brain_auto_filter-target_suffix\=\[\'_seg-lesion2\'\]","log_ms_brain_auto_filter-target_suffix\=\[\'_seg-lesion3\'\]","log_ms_brain_auto_filter-target_suffix\=\[\'_seg-lesion4\'\]","log_ms_brain_auto_filter-target_suffix\=\[\'_seg-lesion5\'\]","log_ms_brain_auto_filter-target_suffix\=\[\'_seg-lesion6\'\]","log_ms_brain_auto_filter-target_suffix\=\[\'_seg-lesion7\'\]"]
     im = {}
     for path in paths:
         fnames = os.listdir(os.path.join(path,"pred_masks"))
