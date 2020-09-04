@@ -249,9 +249,9 @@ def install_data(url, dest_folder, keep=False):
     shutil.rmtree(extraction_folder)
 
 
-# This line allows to format the install_data docstring
-# It can not be done in the function directly which is why it is here.
-# create_string is a custom function that convert our dict into a string
+# This line allows to format the `install_data()` docstrings, because this formatting
+# cannot be done in the function directly. 
+# `create_string()` is a custom function that converts our dict into a string
 # which is easier to add in the documentation.
 install_data.__doc__ %= create_string(DICT_URL)
 
