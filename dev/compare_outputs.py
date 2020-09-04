@@ -25,7 +25,7 @@ def multi_model_entropy():
                     im[fname] = []
                 im[fname].append(nibabel.load(os.path.join(path,"pred_masks",fname)).get_data())
 
-     eps=1e-5
+    eps=1e-5
     for key in im:
         print(key)
         mc_data = np.array(im[key])
