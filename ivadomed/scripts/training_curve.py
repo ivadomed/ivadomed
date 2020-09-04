@@ -109,13 +109,13 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         :align: center
 
     Args:
-        input_folder (str): Log directory name. Flag: --input, -i. If using ``--multiple``, this parameter indicates the
+        input_folder (str): Log directory name. Flag: `--input, -i`. If using ``--multiple``, this parameter indicates the
             suffix path of all log directories of interest. To compare trainings or set of trainings (using
             ``--multiple``) with subplots, please list the paths by separating them with commas, eg
             path_log_dir1,path_logdir2
-        output_folder (str): Output folder. Flag: -\\-output, -o.
+        output_folder (str): Output folder. Flag: `--output, -o~.
         multiple_training (bool): Indicates if multiple log directories are considered (``True``) or not (``False``).
-            Flag: -\\-multiple. All available folders with ``-i`` as prefix are considered. The plot represents the mean
+            Flag: `--multiple`. All available folders with ``-i`` as prefix are considered. The plot represents the mean
             value (hard line) surrounded by the standard deviation (envelope).
         y_lim_loss (list): List of the lower and upper limits of the y-axis of the loss plot.
     """

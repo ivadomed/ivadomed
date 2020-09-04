@@ -177,10 +177,10 @@ def install_data(url, dest_folder, keep=False):
         - Uses `unzip()` to extract the bundle.
     Args:
         url (string): URL or sequence thereof (if mirrors). For this package there is a dictionnary
-            listing existing data bundle with their url. Type ivadomed_download_data -h to see possible value. Flag -d
+            listing existing data bundle with their url. Type ivadomed_download_data -h to see possible value. Flag `-d`
         dest_folder (string): destination directory for the data (to be created). If not used the output folder
-            will be the name of the data bundle. Flag -o, -\\-output
-        keep (string): whether to keep existing data in the destination folder (if it exists). Flag -k, -\\-keep
+            will be the name of the data bundle. Flag `-o, --output`
+        keep (string): whether to keep existing data in the destination folder (if it exists). Flag `-k, --keep`
     """
 
     if not keep and os.path.exists(dest_folder):

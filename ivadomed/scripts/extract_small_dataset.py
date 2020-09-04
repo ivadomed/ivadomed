@@ -49,16 +49,16 @@ def extract_small_dataset(input, output, n=10, contrast_list=None, include_deriv
          ivadomed_extract_small_dataset -i path/to/BIDS/dataset -o path/of/small/BIDS/dataset -n 10 -c T1w,T2w -d 0 -s 1234
 
     Args:
-        input (str): Input BIDS folder. Flag: -\\-input, -i
-        output (str): Output folder. Flag: -\\-output, -o
-        n (int): Number of subjects in the output folder. Flag: -\\-number, -n
+        input (str): Input BIDS folder. Flag: `--input, -i`
+        output (str): Output folder. Flag: `--output, -o`
+        n (int): Number of subjects in the output folder. Flag: `--number, -n`
         contrast_list (list): List of image contrasts to include. If set to None, then all available contrasts are
-            included. Flag: -\\-contrasts, -c
+            included. Flag: `--contrasts, -c`
         include_derivatives (bool): If True, derivatives/labels/ content is also copied, only the raw images otherwise.
-                                    Flag: -\\-derivatives,-d
+                                    Flag: `--derivatives, -d`
         seed (int): Set np.random.RandomState to ensure reproducibility: the same subjects will be selected if the
             function is run several times on the same dataset. If set to -1, each function run is independent.
-            Flag: -\\-seed, -s.
+            Flag: `--seed, -s`.
     """
     # Create o folders
     if not os.path.isdir(output):
