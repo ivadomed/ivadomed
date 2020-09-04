@@ -94,7 +94,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         :width: 600px
         :align: center
 
-    ... or multiple (using ``multiple_training=True``). In that case, the hard line represent the mean value across the
+    ... or multiple (using ``multiple_training=True``). In that case, the hard line represents the mean value across the
     trainings whereas the envelope represents the standard deviation:
 
     .. image:: ../../images/plot_loss_multiple.png
