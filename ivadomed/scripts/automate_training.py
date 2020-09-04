@@ -148,23 +148,23 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
     Args:
         config (string): Configuration filename, which is used as skeleton to configure the training. Some of its
-            parameters (defined in `param` file) are modified across experiments. Flag: `--config, -c`
+            parameters (defined in `param` file) are modified across experiments. Flag: ``--config``, ``-c``
         param (string): json file containing parameters configurations to compare. Parameter "keys" of this file
-            need to match the parameter "keys" of `config` file. Parameter "values" are in a list. Flag: `--param, -p`
+            need to match the parameter "keys" of `config` file. Parameter "values" are in a list. Flag: ``--param``, ``-p``
             Example::
 
                 {"default_model": {"depth": [2, 3, 4]}}
 
         fixed_split (bool): If True, all the experiments are run on the same training/validation/testing subdatasets.
-                            Flag: `--fixed-split`
-        all_combin (bool): If True, all parameters combinations are run. Flag: `--all-combin`
+                            Flag: ``--fixed-split``
+        all_combin (bool): If True, all parameters combinations are run. Flag: ``--all-combin``
         n_iterations (int): Controls the number of time that each experiment (ie set of parameter) are run.
-                            Flag: `--n-iteration, -n`
-        run_test (bool): If True, the trained model is also run on the testing subdataset. flag: `--run-test`
-        all_logs (bool): If True, all the log directories are kept for every iteration. Flag: `--all-logs, -l`
+                            Flag: ``--n-iteration, -n``
+        run_test (bool): If True, the trained model is also run on the testing subdataset. flag: ``--run-test``
+        all_logs (bool): If True, all the log directories are kept for every iteration. Flag: ``--all-logs``, ``-l``
         thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
             the validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
-            increment between 0 and 1 used during the ROC analysis (e.g. 0.1). Flag: `-t, --thr-increment`
+            increment between 0 and 1 used during the ROC analysis (e.g. 0.1). Flag: ``-t``, ``--thr-increment``
     """
     # Load initial config
     with open(config, "r") as fhandle:
