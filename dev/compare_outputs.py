@@ -38,7 +38,7 @@ def multi_model_entropy():
 
         # save uncertainty map
         nib_unc = nibabel.Nifti1Image(unc, nibabel.load(os.path.join(path[0],"pred_masks",key).get_affine()))
-        nib.save(nib_unc, os.path.join("./combined_preds",key))
+        nibabel.save(nib_unc, os.path.join("./combined_preds",key))
 
 def compute_difference():
     path = "./"
