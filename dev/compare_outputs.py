@@ -26,6 +26,7 @@ def multi_model_entropy():
                 im[fname].append(nibabel.load(os.path.join(path,"pred_masks",fname)).get_data())
 
     for key in im:
+        print(key)
         mc_data = np.array(im[key])
         # Compute entropy, from run_uncertainty
         unc = np.repeat(np.expand_dims(mc_data, -1), 2, -1)  # n_it, x, y, z, 2
