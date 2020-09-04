@@ -1,9 +1,6 @@
 .. |br| raw:: html
 
    <br />
-.. |--| raw:: html
-
-    --
 
 Scripts
 =======
