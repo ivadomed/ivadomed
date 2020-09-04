@@ -159,7 +159,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                             Flag: ``--fixed-split``
         all_combin (bool): If True, all parameters combinations are run. Flag: ``--all-combin``
         n_iterations (int): Controls the number of time that each experiment (ie set of parameter) are run.
-                            Flag: ``--n-iteration, -n``
+                            Flag: ``--n-iteration``, ``-n``
         run_test (bool): If True, the trained model is also run on the testing subdataset. flag: ``--run-test``
         all_logs (bool): If True, all the log directories are kept for every iteration. Flag: ``--all-logs``, ``-l``
         thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
