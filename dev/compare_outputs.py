@@ -19,9 +19,10 @@ def multi_model_entropy():
     for path in paths:
         fnames = os.listdir(os.path.join(path,"pred_masks"))
         for fname in fnames:
-            if fname not in im:
-                im["fname"] = []
+
             if "soft" in fname:
+                if fname not in im:
+                    im[fname] = []
                 im[fname].append(nibabel.load(os.path.join(path,"pred_masks",fname)).get_data())
 
     for key in im:
