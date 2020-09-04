@@ -32,6 +32,13 @@ setup(
     packages=find_packages(exclude=['docs', 'tests']),
     include_package_data=True,
     install_requires=requirements,
+    extras_require={
+        'docs': [ # pin sphinx to match what RTD uses:
+                  # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
+                 'sphinx<2',
+                 'sphinx-rtd-theme<0.5',
+                ],
+    },
     entry_points={
         'console_scripts': [
             'ivadomed=ivadomed.main:run_main',
