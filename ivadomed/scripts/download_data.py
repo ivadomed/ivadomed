@@ -128,19 +128,10 @@ def unzip(compressed, dest_folder):
         raise
 
 
-def create_string(dict):
-    doc_str = ''
-    for i in range(len(dict.keys())):
-        if i == 0:
-            doc_str = doc_str + '`' + str(list(dict.keys())[i]) + ' <' + \
-                      str(dict[list(dict.keys())[i]]["url"][0][:-4]).replace('archive', 'tree') \
-                      + '>`_ : ' + str(dict[list(dict.keys())[i]]["description"]) + ' |br| '
-        else:
-            doc_str = doc_str + '`' + str(list(dict.keys())[i]) + ' <' + \
-                      str(dict[list(dict.keys())[i]]["url"][0][:-4]).replace('archive', 'tree') + '>`_ : ' + \
-                      str(dict[list(dict.keys())[i]]["description"]) + ' |br| '
-    return doc_str
-
+def format_bundles():
+    def format_bundle(name, values):
+        return f"`{name} <{values["url"]}>`_ : {values["description"]}"
+    return str.join("\n", ["* %s" % format_bundle(name, values) for name, values in DICT_URL.items()])
 
 def install_data(url, dest_folder, keep=False):
     """
@@ -152,7 +143,7 @@ def install_data(url, dest_folder, keep=False):
 
 
     Existing data bundle: |br|
-    %s
+     {BUNDLES}
 
     .. note::
         The function tries to be smart about the data contents.
@@ -253,7 +244,7 @@ def install_data(url, dest_folder, keep=False):
 # cannot be done in the function directly. 
 # `create_string()` is a custom function that converts our dict into a string
 # which is easier to add in the documentation.
-install_data.__doc__ %= create_string(DICT_URL)
+install_data.__doc__=install_data.__doc_.format(BUNDLES=format_bundles())
 
 
 def main(args=None):
