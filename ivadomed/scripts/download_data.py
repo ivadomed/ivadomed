@@ -130,11 +130,7 @@ def unzip(compressed, dest_folder):
 
 def format_bundles():
     def format_bundle(name, values):
-        return "`{name} <{values["
-        url
-        "]}>`_ : {values["
-        description
-        "]}"
+        return f"`{name} <{values["url"]}>`_ : {values["description"]}"
     return str.join("\n", ["* %s" % format_bundle(name, values) for name, values in DICT_URL.items()])
 
 def install_data(url, dest_folder, keep=False):
