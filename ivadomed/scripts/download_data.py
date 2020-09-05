@@ -12,6 +12,7 @@ from requests.packages.urllib3.util import Retry
 import sys
 import json
 import argparse
+import textwrap
 
 DICT_URL = {
     "data_example_spinegeneric": {
@@ -128,7 +129,7 @@ def unzip(compressed, dest_folder):
         raise
 
 
-def format_bundles():
+def _format_bundles():
     def format_bundle(name, values):
         return f'`{name} <{values["url"]}>`_ : {values["description"]}'
     return str.join("\n", ["* %s" % format_bundle(name, values) for name, values in DICT_URL.items()])
@@ -142,28 +143,29 @@ def install_data(url, dest_folder, keep=False):
         ivadomed_download_data -d data_testing -o ivado_testing_data
 
 
-    Existing data bundle: |br|
-     {BUNDLES}
+    Existing data bundles:
+
+{BUNDLES}
 
     .. note::
         The function tries to be smart about the data contents.
         Examples:
 
 
-        a. If the archive only contains a `README.md`, and the destination folder is `${dst}`,
-        `${dst}/README.md` will be created.
+        a. If the archive only contains a `README.md`, and the destination folder is `${{dst}}`,
+        `${{dst}}/README.md` will be created.
         Note: an archive not containing a single folder is commonly known as a "bomb" because
         it puts files anywhere in the current working directory.( see `Tarbomb
         <https://en.wikipedia.org/wiki/Tar_(computing)#Tarbomb>`_)
 
 
-        b. If the archive contains a `${dir}/README.md`, and the destination folder is `${dst}`,
-        `${dst}/README.md` will be created.
-        Note: typically the package will be called `${basename}-${revision}.zip` and contain
-        a root folder named `${basename}-${revision}/` under which all the other files will
+        b. If the archive contains a `${{dir}}/README.md`, and the destination folder is `${{dst}}`,
+        `${{dst}}/README.md` will be created.
+        Note: typically the package will be called `${{basename}}-${{revision}}.zip` and contain
+        a root folder named `${{basename}}-${{revision}}/` under which all the other files will
         be located.
         The right thing to do in this case is to take the files from there and install them
-        in `${dst}`.
+        in `${{dst}}`.
         - Uses `download_data()` to retrieve the data.
         - Uses `unzip()` to extract the bundle.
     Args:
@@ -244,7 +246,7 @@ def install_data(url, dest_folder, keep=False):
 # cannot be done in the function directly. 
 # `create_string()` is a custom function that converts our dict into a string
 # which is easier to add in the documentation.
-install_data.__doc__=install_data.__doc_.format(BUNDLES=format_bundles())
+install_data.__doc__=install_data.__doc__.format(BUNDLES=textwrap.indent(_format_bundles(), ' '*6))
 
 
 def main(args=None):
