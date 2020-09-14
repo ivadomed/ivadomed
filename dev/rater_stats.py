@@ -13,7 +13,7 @@ def subjectFilter(input):
         return False
 
 #contrasts = ["FLAIR", "ce-T1w", "PD", "T1w", "T2w"]
-contrasts = ["T1w"]
+contrasts = ["T2w"]
 deriv_path = "/scratch/ms_brain/_BIDS_sameResolution/derivatives/labels"
 #deriv_path = "/scratch/ms_brain/_BIDS/derivatives/labels"
 subjects=list(filter(subjectFilter,os.listdir(deriv_path)))
