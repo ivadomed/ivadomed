@@ -3,6 +3,7 @@ import random
 import shutil
 import nibabel
 import numpy as np
+import pandas as pd
 
 def subjectFilter(input):
     if("sub" in input):
@@ -15,6 +16,9 @@ contrasts = ["FLAIR", "ce-T1w", "PD", "T1w", "T2w"]
 deriv_path = "/scratch/ms_brain/_BIDS_sameResolution/derivatives/labels"
 subjects=list(filter(subjectFilter,os.listdir(deriv_path)))
 print(subjects)
+
+df = pd.DataFrame(metrics, columns = ['file' , 'rater', 'metric' , 'value'])
+
 for subject in subjects:
     files = os.listdir(os.path.join(deriv_path,subject,"anat"))
     for contrast in contrasts:
@@ -25,9 +29,11 @@ for subject in subjects:
             if rater.isnumeric():
                 fname = os.path.join(deriv_path,subject,"anat",nii)
                 im1 = nibabel.load(fname).get_data()
-                print(base_name)
-                print(rater)
+                df.append(base_name, rater, "", 0)
+                #print(base_name)
+                #print(rater)
 
+print(df.head())
 
 
         #new_name = "_".join([name, suffix])
