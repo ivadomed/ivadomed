@@ -19,7 +19,7 @@ deriv_path = "/scratch/ms_brain/_BIDS_sameResolution/derivatives/labels"
 subjects=list(filter(subjectFilter,os.listdir(deriv_path)))
 print(subjects)
 
-df = pd.DataFrame(columns = ['file' , 'rater', 'metric' , 'value'])
+df = pd.DataFrame()
 
 for subject in subjects:
     files = os.listdir(os.path.join(deriv_path,subject,"anat"))
@@ -35,8 +35,9 @@ for subject in subjects:
             #print("unique values",np.unique(im1))
             labels = measure.label(im1)
             #print("lesion count",labels.max())
-            df = df.append({'file': base_name, 'rater': rater, 'lesion_count': labels.max(), 'positive_voxels': np.count_nonzero(im1), 'value': 0}, ignore_index=True)
+            df = df.append({'file': base_name, 'rater': rater, 'lesion_count': labels.max(), 'positive_voxels': np.count_nonzero(im1)}, ignore_index=True)
             print(base_name)
             print(rater)
 
 print(df.head(30))
+df.to_csv('rater_stats.csv')
