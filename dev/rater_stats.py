@@ -29,7 +29,7 @@ for subject in subjects:
             fname = os.path.join(deriv_path,subject,"anat",nii)
             im1 = nibabel.load(fname).get_data()
             print("unique values",np.unique(im1))
-            labels = measure.label(drops)
+            labels = measure.label(im1)
             print("lesion count",labels.max())
             df = df.append({'file': base_name, 'rater': rater, 'metric': "", 'value': 0}, ignore_index=True)
             print(base_name)
