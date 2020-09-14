@@ -22,8 +22,9 @@ for subject in subjects:
         for nii in niis:
             fname = os.path.join(deriv_path,subject,"anat",nii)
             im1 = nibabel.load(fname).get_data()
-            name = "_".join((selected.split("_"))[0:2])
-            rater = (selected.split("_"))[-1]
+            name = "_".join((fname.split("_"))[0:2])
+            rater = (fname.split("_"))[-1]
+            print(name)
             print(rater)
         #new_name = "_".join([name, suffix])
         #print(new_name)
