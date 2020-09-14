@@ -14,6 +14,7 @@ def subjectFilter(input):
 
 contrasts = ["FLAIR", "ce-T1w", "PD", "T1w", "T2w"]
 deriv_path = "/scratch/ms_brain/_BIDS_sameResolution/derivatives/labels"
+deriv_path = "/scratch/ms_brain/_BIDS/derivatives/labels"
 subjects=list(filter(subjectFilter,os.listdir(deriv_path)))
 print(subjects)
 
@@ -28,6 +29,8 @@ for subject in subjects:
         if rater.isnumeric():
             fname = os.path.join(deriv_path,subject,"anat",nii)
             im1 = nibabel.load(fname).get_data()
+            #Threshold
+            #im1[im1 > 0] = 1
             print("unique values",np.unique(im1))
             labels = measure.label(im1)
             print("lesion count",labels.max())
