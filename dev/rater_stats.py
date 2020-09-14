@@ -23,7 +23,7 @@ for subject in subjects:
             fname = os.path.join(deriv_path,subject,"anat",nii)
             im1 = nibabel.load(fname).get_data()
             name = "_".join((nii.split("_"))[0:2])
-            rater = ((nii.split("_")[-1]).split(".")[0])[-1]
+            rater = ((nii.split("_")[-1]).split(".")[0])
             print(name)
             print(rater)
         #new_name = "_".join([name, suffix])
