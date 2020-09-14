@@ -16,12 +16,12 @@ print(subjects)
 for subject in subjects:
     files = os.listdir(os.path.join(deriv_path,subject,"anat"))
     for contrast in contrasts:
-        niis = [file for file in files if (contrast in file)])
+        niis = [file for file in files if (contrast in file)]
         for nii in niis:
             im1 = nibabel.load(os.path.join(deriv_path,subject,nii)).get_data()
-        name = "_".join((selected.split("_"))[0:2])
-        rater = (selected.split("_"))[-1]
-        print(rater)
+            name = "_".join((selected.split("_"))[0:2])
+            rater = (selected.split("_"))[-1]
+            print(rater)
         #new_name = "_".join([name, suffix])
         #print(new_name)
         #print(os.path.join(deriv_path,subject,"anat",new_name))
