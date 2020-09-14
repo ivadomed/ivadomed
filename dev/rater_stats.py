@@ -21,7 +21,7 @@ df = pd.DataFrame(columns = ['file' , 'rater', 'metric' , 'value'])
 
 for subject in subjects:
     files = os.listdir(os.path.join(deriv_path,subject,"anat"))
-        niis = [file for file in files if any(contrast in file for contrast in contrasts)]
+    niis = [file for file in files if any(contrast in file for contrast in contrasts)]
         for nii in niis:
             base_name = "_".join((nii.split("_"))[0:2])
             rater = ((nii.split("_")[-1]).split(".")[0])[-1]
