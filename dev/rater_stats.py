@@ -32,7 +32,7 @@ for subject in subjects:
             print(base_name)
             print(rater)
 
-print(df.head())
+print(df.head(20))
 
 
         #new_name = "_".join([name, suffix])
