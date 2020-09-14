@@ -22,15 +22,15 @@ df = pd.DataFrame(columns = ['file' , 'rater', 'metric' , 'value'])
 for subject in subjects:
     files = os.listdir(os.path.join(deriv_path,subject,"anat"))
     niis = [file for file in files if any(contrast in file for contrast in contrasts)]
-        for nii in niis:
-            base_name = "_".join((nii.split("_"))[0:2])
-            rater = ((nii.split("_")[-1]).split(".")[0])[-1]
-            if rater.isnumeric():
-                fname = os.path.join(deriv_path,subject,"anat",nii)
-                #im1 = nibabel.load(fname).get_data()
-                df.append([base_name, rater, "", 0])
-                print(base_name)
-                print(rater)
+    for nii in niis:
+        base_name = "_".join((nii.split("_"))[0:2])
+        rater = ((nii.split("_")[-1]).split(".")[0])[-1]
+        if rater.isnumeric():
+            fname = os.path.join(deriv_path,subject,"anat",nii)
+            #im1 = nibabel.load(fname).get_data()
+            df.append([base_name, rater, "", 0])
+            print(base_name)
+            print(rater)
 
 print(df.head())
 
