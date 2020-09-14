@@ -2,9 +2,8 @@ Data
 ====
 
 Without data, nothing can be done. To get you started, we recommend you
-download the `Spinal Cord MRI Public
-Database <https://openneuro.org/datasets/ds001919>`__. This dataset is
-composed of 248+ subjects from different imaging centers and includes
+download the ` Example data for Ivadomed <"https://github.com/ivadomed/data_example_spinegeneric/archive/r20200825>`__. This dataset is
+composed of 10 subjects from different imaging centers and includes
 original images in NIfTI format as well as manual segmentations and
 labels. The data are organized according to the
 `BIDS <http://bids.neuroimaging.io/>`__ convention, to be fully
@@ -36,5 +35,3 @@ compatible with ``ivadomed`` loader:
                     └── sub-siteX01_T1w_seg.nii.gz
 
 .. note:: ``participants.tsv`` should, at least, include a column ``participant_id``, which is used when loading the dataset.
-
-.. warning:: ``TODO: Update openneuro site to include derivatives``

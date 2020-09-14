@@ -138,6 +138,17 @@ algorithm described in a paper, add pointers to the section / steps.
 Please use the `Google style
 docstrings <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html>`__.
 
+Documentation changes will be uploaded to https://ivadomed.org/
+automatically once included in the main repository.
+
+To test your documentation locally, do:
+
+::
+
+    pip install '.[docs]'
+    cd docs; make html
+    open build/html/index.html
+
 Testing
 ~~~~~~~
 
