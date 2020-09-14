@@ -20,12 +20,16 @@ for subject in subjects:
     for contrast in contrasts:
         niis = [file for file in files if (contrast in file)]
         for nii in niis:
-            fname = os.path.join(deriv_path,subject,"anat",nii)
-            im1 = nibabel.load(fname).get_data()
-            name = "_".join((nii.split("_"))[0:2])
-            rater = ((nii.split("_")[-1]).split(".")[0])
-            print(name)
-            print(rater)
+            base_name = "_".join((nii.split("_"))[0:2])
+            rater = ((nii.split("_")[-1]).split(".")[0])[-1]
+            if rater.isnumeric():
+                fname = os.path.join(deriv_path,subject,"anat",nii)
+                im1 = nibabel.load(fname).get_data()
+                print(name)
+                print(rater)
+
+
+
         #new_name = "_".join([name, suffix])
         #print(new_name)
         #print(os.path.join(deriv_path,subject,"anat",new_name))
