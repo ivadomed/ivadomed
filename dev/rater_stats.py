@@ -17,7 +17,7 @@ deriv_path = "/scratch/ms_brain/_BIDS_sameResolution/derivatives/labels"
 subjects=list(filter(subjectFilter,os.listdir(deriv_path)))
 print(subjects)
 
-df = pd.DataFrame(metrics, columns = ['file' , 'rater', 'metric' , 'value'])
+df = pd.DataFrame(columns = ['file' , 'rater', 'metric' , 'value'])
 
 for subject in subjects:
     files = os.listdir(os.path.join(deriv_path,subject,"anat"))
