@@ -4,6 +4,7 @@ import shutil
 import nibabel
 import numpy as np
 import pandas as pd
+from skimage import measure
 
 def subjectFilter(input):
     if("sub" in input):
@@ -11,7 +12,6 @@ def subjectFilter(input):
     else:
         return False
 
-#suffix = "seg-random.nii.gz"
 contrasts = ["FLAIR", "ce-T1w", "PD", "T1w", "T2w"]
 deriv_path = "/scratch/ms_brain/_BIDS_sameResolution/derivatives/labels"
 subjects=list(filter(subjectFilter,os.listdir(deriv_path)))
@@ -27,15 +27,12 @@ for subject in subjects:
         rater = ((nii.split("_")[-1]).split(".")[0])[-1]
         if rater.isnumeric():
             fname = os.path.join(deriv_path,subject,"anat",nii)
-            #im1 = nibabel.load(fname).get_data()
+            im1 = nibabel.load(fname).get_data()
+            print("unique values",np.unique(im1))
+            labels = measure.label(drops)
+            print("lesion count",labels.max())
             df = df.append({'file': base_name, 'rater': rater, 'metric': "", 'value': 0}, ignore_index=True)
             print(base_name)
             print(rater)
 
 print(df.head(20))
-
-
-        #new_name = "_".join([name, suffix])
-        #print(new_name)
-        #print(os.path.join(deriv_path,subject,"anat",new_name))
-        #shutil.copyfile(os.path.join(deriv_path,subject,"anat",selected),os.path.join(deriv_path,subject,"anat",new_name))
