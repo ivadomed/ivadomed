@@ -29,7 +29,7 @@ for subject in subjects:
             if rater.isnumeric():
                 fname = os.path.join(deriv_path,subject,"anat",nii)
                 im1 = nibabel.load(fname).get_data()
-                df.append(base_name, rater, "", 0)
+                df.append([base_name, rater, "", 0])
                 #print(base_name)
                 #print(rater)
 
