@@ -2,7 +2,7 @@ Data
 ====
 
 Without data, nothing can be done. To get you started, we recommend you
-download the ` Example data for Ivadomed <"https://github.com/ivadomed/data_example_spinegeneric/archive/r20200825>`__. This dataset is
+download the ` Example data for Ivadomed <https://github.com/ivadomed/data_example_spinegeneric/archive/r20200825>`__. This dataset is
 composed of 10 subjects from different imaging centers and includes
 original images in NIfTI format as well as manual segmentations and
 labels. The data are organized according to the
