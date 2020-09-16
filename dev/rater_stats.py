@@ -28,14 +28,14 @@ for subject in subjects:
         base_name = "_".join((nii.split("_"))[0:2])
         rater = ((nii.split("_")[-1]).split(".")[0])[-1]
         if rater.isnumeric():
+        #if rater == "n":
             fname = os.path.join(deriv_path,subject,"anat",nii)
             im1 = nibabel.load(fname).get_data()
-            #Threshold
-            im1[im1 > 0] = 1
-            #print("unique values",np.unique(im1))
+            #Threshold since some files have 3 values [0, 0.2, 1]
+            im1[im1 >= 0.5] = 1
+            im1[im1 < 0.5] = 0
             labels = measure.label(im1)
-            #print("lesion count",labels.max())
-            df = df.append({'file': base_name, 'rater': rater, 'lesion_count': labels.max(), 'positive_voxels': np.count_nonzero(im1)}, ignore_index=True)
+            df = df.append({'file': base_name, 'rater': "average", 'lesion_count': labels.max(), 'positive_voxels': np.count_nonzero(im1)}, ignore_index=True)
             print(base_name)
             print(rater)
 
