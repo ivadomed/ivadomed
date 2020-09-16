@@ -26,6 +26,7 @@ def uncertainty_by_rater():
                 arr = nibabel.load(os.path.join(path,"pred_masks",fname)).get_data()
                 im[path].append(np.sum(arr))
     print(im)
+
 def multi_model_entropy():
     paths = ["log_ms_brain_auto_filter-target_suffix=[\'_seg-lesion1\']","log_ms_brain_auto_filter-target_suffix=[\'_seg-lesion2\']","log_ms_brain_auto_filter-target_suffix=[\'_seg-lesion3\']","log_ms_brain_auto_filter-target_suffix=[\'_seg-lesion4\']","log_ms_brain_auto_filter-target_suffix=[\'_seg-lesion5\']","log_ms_brain_auto_filter-target_suffix=[\'_seg-lesion6\']","log_ms_brain_auto_filter-target_suffix=[\'_seg-lesion7\']"]
     im = {}
@@ -90,4 +91,5 @@ def js_divergence():
 if __name__ == '__main__':
    #compute_difference()
    #js_divergence()
-   multi_model_entropy()
+   #multi_model_entropy()
+   uncertainty_by_rater()
