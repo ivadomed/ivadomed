@@ -25,6 +25,8 @@ def uncertainty_by_rater():
                     im[path] = []
                 arr = nibabel.load(os.path.join(path,"pred_masks",fname)).get_data()
                 im[path].append(np.sum(arr))
+    df = pd.DataFrame.from_dict(im)
+    df.to_csv('uncertainty_by_rater.csv')
     print(im)
 
 def multi_model_entropy():
