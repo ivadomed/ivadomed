@@ -70,6 +70,21 @@ def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8
                                              random_state=random_seed)
         X_test, X_val = train_test_split(X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
 
+    elif split_method == 'lumbar':
+        lumbar_subj = ["sub-Epen456", "sub-Astr247", "sub-Epen451", "sub-Epen413", "sub-Astr259", "sub-Astr202",
+                       "sub-Astr255", "sub-Epen395", "sub-Hema372", "sub-Epen429", "sub-Hema286", "sub-Epen514",
+                       "sub-Epen471", "sub-Epen415", "sub-Epen437", "sub-Epen422", "sub-Hema368", "sub-Epen411",
+                       "sub-Hema329", "sub-Epen405", "sub-Epen407", "sub-Hema306", "sub-Hema278", "sub-Hema320",
+                       "sub-Epen393", "sub-Epen432", "sub-Hema353", "sub-Astr246", "sub-Epen481", "sub-Hema350",
+                       "sub-Epen462", "sub-Hema301", "sub-Astr250", "sub-Hema370", "sub-Epen452", "sub-Astr253",
+                       "sub-Epen474", "sub-Astr149", "sub-Epen497", "sub-Hema364", "sub-Astr254", "sub-Epen493",
+                       "sub-Astr170", "sub-Epen487", "sub-Epen458"]
+        participants = [subj for subj in df['participant_id'].tolist() if subj not in lumbar_subj]
+        X_train, X_remain = train_test_split(participants, train_size=train_frac,
+                                             random_state=random_seed)
+        X_train.extend(lumbar_subj)
+        X_test, X_val = train_test_split(X_remain, train_size=test_frac / (1 - train_frac), random_state=random_seed)
+
     else:
         print(" {split_method} is not a supported split method")
 

@@ -443,8 +443,8 @@ def get_metadata(metadata, model_params):
     if model_params["name"] == "HeMISUnet":
         return np.array([m[0]["missing_mod"] for m in metadata])
     else:
-        return [model_params["film_onehotencoder"].transform([metadata[0][k]['film_input']]).tolist()[0]
-                for k in range(len(metadata[0]))]
+        return [model_params["film_onehotencoder"].transform([metadata[0][0]['film_input']]).tolist()[0]
+                for _ in range(len(metadata))]
 
 
 def store_film_params(gammas, betas, contrasts, metadata, model, film_layers, depth):
