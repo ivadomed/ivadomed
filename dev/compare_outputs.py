@@ -22,7 +22,7 @@ def uncertainty_by_rater():
             if "soft" in fname:
 
                 if path not in im:
-                    im[fname] = []
+                    im[path] = []
                 arr = nibabel.load(os.path.join(path,"pred_masks",fname)).get_data()
                 im[path].append(np.sum(arr))
     print(im)
