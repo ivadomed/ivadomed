@@ -84,34 +84,38 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
     """Utility function to plot the training curves.
 
     This function uses the TensorFlow summary that is generated during a training to plot for each epoch:
+
         - the training against the validation loss
         - the metrics computed on the validation sub-dataset.
 
-    It could consider one log directory at a time, for example::
+    It could consider one log directory at a time, for example:
+
     .. image:: ../../images/plot_loss_single.png
         :width: 600px
         :align: center
 
-    ... or multiple (using ``multiple_training=True``). In that case, the hard line represent the mean value across the
-    trainings whereas the envelope represents the standard deviation::
+    ... or multiple (using ``multiple_training=True``). In that case, the hard line represents the mean value across the
+    trainings whereas the envelope represents the standard deviation:
+
     .. image:: ../../images/plot_loss_multiple.png
         :width: 600px
         :align: center
 
     It is also possible to compare multiple trainings (or set of trainings) by listing them in ``-i``, separeted by
-    commas::
-        .. image:: ../../images/plot_loss_mosaic.png
+    commas:
+
+    .. image:: ../../images/plot_loss_mosaic.png
         :width: 600px
         :align: center
 
     Args:
-        input_folder (str): Log directory name. Flag: --input, -i. If using ``--multiple``, this parameter indicates the
+        input_folder (str): Log directory name. Flag: ``--input``, ``-i``. If using ``--multiple``, this parameter indicates the
             suffix path of all log directories of interest. To compare trainings or set of trainings (using
             ``--multiple``) with subplots, please list the paths by separating them with commas, eg
             path_log_dir1,path_logdir2
-        output_folder (str): Output folder. Flag: --output, -o.
+        output_folder (str): Output folder. Flag: ``--output``, ``-o``.
         multiple_training (bool): Indicates if multiple log directories are considered (``True``) or not (``False``).
-            Flag: --multiple. All available folders with ``-i`` as prefix are considered. The plot represents the mean
+            Flag: ``--multiple``. All available folders with ``-i`` as prefix are considered. The plot represents the mean
             value (hard line) surrounded by the standard deviation (envelope).
         y_lim_loss (list): List of the lower and upper limits of the y-axis of the loss plot.
     """
