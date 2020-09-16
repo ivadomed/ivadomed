@@ -12,7 +12,20 @@ def get_parser():
     return parser
 
 
+def uncertainty_by_rater():
+    paths = ["log_ms_brain_auto-target_suffix=[\'_seg-lesion1\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion2\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion3\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion4\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion5\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion6\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion7\']"]
+    im = {}
+    for path in paths:
+        fnames = os.listdir(os.path.join(path,"pred_masks"))
+        for fname in fnames:
 
+            if "soft" in fname:
+
+                if path not in im:
+                    im[fname] = []
+                arr = nibabel.load(os.path.join(path,"pred_masks",fname)).get_data()
+                im[path].append(np.sum(arr))
+    print(im)
 def multi_model_entropy():
     paths = ["log_ms_brain_auto_filter-target_suffix=[\'_seg-lesion1\']","log_ms_brain_auto_filter-target_suffix=[\'_seg-lesion2\']","log_ms_brain_auto_filter-target_suffix=[\'_seg-lesion3\']","log_ms_brain_auto_filter-target_suffix=[\'_seg-lesion4\']","log_ms_brain_auto_filter-target_suffix=[\'_seg-lesion5\']","log_ms_brain_auto_filter-target_suffix=[\'_seg-lesion6\']","log_ms_brain_auto_filter-target_suffix=[\'_seg-lesion7\']"]
     im = {}
