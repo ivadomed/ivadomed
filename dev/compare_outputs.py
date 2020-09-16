@@ -3,6 +3,7 @@ import argparse
 import os
 import nibabel
 import numpy as np
+import pandas as pd
 
 def get_parser():
     parser = argparse.ArgumentParser()
