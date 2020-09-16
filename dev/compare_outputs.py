@@ -19,7 +19,7 @@ def uncertainty_by_rater():
         fnames = os.listdir(os.path.join(path,"pred_masks"))
         for fname in fnames:
 
-            if "soft" in fname:
+            if "unc-vox" in fname:
 
                 if path not in im:
                     im[path] = []
