@@ -1308,11 +1308,11 @@ class Countception(Module):
         return net
 
 
-def set_model_for_retrain(model_path, retrain_fraction, map_location):
+def set_model_for_retrain(model_path, retrain_fraction, map_location, reset=True):
     """Set model for transfer learning.
 
     The first layers (defined by 1-retrain_fraction) are frozen (i.e. requires_grad=False).
-    The weights of the last layers (defined by retrain_fraction) are reset.
+    The weights of the last layers (defined by retrain_fraction) are reset unless reset option is False.
 
     Args:
         model_path (str): Pretrained model path.
