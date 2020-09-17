@@ -47,8 +47,8 @@ def test_segment_volume_2d():
             "slice_axis": "axial"
         },
         "transformation": {
-            "Resample": {"wspace": 0.75, "hspace": 0.75, "preprocessing": True},
-            "ROICrop": {"size": [48, 48], "preprocessing": True},
+            "Resample": {"wspace": 0.75, "hspace": 0.75},
+            "ROICrop": {"size": [48, 48]},
             "RandomTranslation": {
                 "translate": [0.03, 0.03],
                 "applied_to": ["im", "gt"],
@@ -108,12 +108,10 @@ def test_segment_volume_3d():
                 {
                     "wspace": 1,
                     "hspace": 1,
-                    "dspace": 2,
-                    "preprocessing": True
+                    "dspace": 2
                 },
             "CenterCrop": {
-                "size": LENGTH_3D,
-                "preprocessing": True
+                "size": LENGTH_3D
             },
             "RandomTranslation": {
                 "translate": [0.03, 0.03],
