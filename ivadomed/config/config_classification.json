@@ -86,13 +86,11 @@
             "wspace": 0.75,
             "hspace": 0.75,
             "dspace": 1,
-            "applied_to": ["im", "roi"],
-            "preprocessing": true
+            "applied_to": ["im", "roi"]
         },
         "ROICrop": {
             "size": [48, 48],
-            "applied_to": ["im", "roi"],
-            "preprocessing": true
+            "applied_to": ["im", "roi"]
         },
         "RandomAffine": {
             "translate": [0.03, 0.03],
