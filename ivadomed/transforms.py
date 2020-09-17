@@ -1024,7 +1024,7 @@ def get_preprocessing_transforms(transforms):
     original_transforms = copy.deepcopy(transforms)
     preprocessing_transforms = copy.deepcopy(transforms)
     for idx, tr in enumerate(original_transforms):
-        if tr == "Resample" or tr == "CenterCrop" or tr == "ROICrop":
+        if tr == "Resample" or tr == "CenterCrop" or tr == "ROICrop" or tr == "BoundingBoxCrop":
             del transforms[tr]
         else:
             del preprocessing_transforms[tr]
