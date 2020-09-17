@@ -1341,10 +1341,11 @@ def set_model_for_retrain(model_path, retrain_fraction, map_location, reset=True
             break
 
     # Reset weights of the last layers
-    for name, layer in model.named_modules():
-        if name in layer_names[n_freeze:]:
-            layer.reset_parameters()
-
+    if reset:
+        for name, layer in model.named_modules():
+            if name in layer_names[n_freeze:]:
+                layer.reset_parameters()
+        
     return model
 
 
