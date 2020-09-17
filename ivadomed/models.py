@@ -1319,6 +1319,7 @@ def set_model_for_retrain(model_path, retrain_fraction, map_location, reset=True
         retrain_fraction (float): Fraction of the model that will be retrained, between 0 and 1. If set to 0.3,
             then the 30% last fraction of the model will be re-initalised and retrained.
         map_location (str): Device.
+        reset (bool): if the un-frozen weight should be reset or kept as loaded.
 
     Returns:
         torch.Module: Model ready for retrain.
@@ -1345,7 +1346,7 @@ def set_model_for_retrain(model_path, retrain_fraction, map_location, reset=True
         for name, layer in model.named_modules():
             if name in layer_names[n_freeze:]:
                 layer.reset_parameters()
-        
+
     return model
 
 
