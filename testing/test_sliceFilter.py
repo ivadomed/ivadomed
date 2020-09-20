@@ -27,11 +27,11 @@ def _cmpt_slice(ds_loader):
 
 
 @pytest.mark.parametrize('transforms_dict', [
-    {"Resample": {"wspace": 0.75, "hspace": 0.75, "preprocessing": True},
-     "ROICrop": {"size": [48, 48], "preprocessing": True},
+    {"Resample": {"wspace": 0.75, "hspace": 0.75},
+     "ROICrop": {"size": [48, 48]},
      "NumpyToTensor": {}},
-    {"Resample": {"wspace": 0.75, "hspace": 0.75, "applied_to": ["im", "gt"], "preprocessing": True},
-     "CenterCrop": {"size": [100, 100], "applied_to": ["im", "gt"], "preprocessing": True},
+    {"Resample": {"wspace": 0.75, "hspace": 0.75, "applied_to": ["im", "gt"]},
+     "CenterCrop": {"size": [100, 100], "applied_to": ["im", "gt"]},
      "NumpyToTensor": {"applied_to": ["im", "gt"]}}])
 @pytest.mark.parametrize('train_lst', [['sub-unf01']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])

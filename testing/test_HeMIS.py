@@ -33,13 +33,11 @@ def test_HeMIS(p=0.0001):
         "Resample":
             {
                 "wspace": 0.75,
-                "hspace": 0.75,
-                "preprocessing": True,
+                "hspace": 0.75
             },
         "CenterCrop":
             {
-                "size": [48, 48],
-                "preprocessing": True,
+                "size": [48, 48]
             },
         "NumpyToTensor": {}
     }

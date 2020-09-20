@@ -84,12 +84,10 @@
         {
             "wspace": 0.75,
             "hspace": 0.75,
-            "dspace": 1,
-            "preprocessing": true
+            "dspace": 1
         },
         "ROICrop": {
-            "size": [48, 48],
-            "preprocessing": true
+            "size": [48, 48]
         },
         "RandomAffine": {
             "translate": [0.03, 0.03],

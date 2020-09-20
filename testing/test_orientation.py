@@ -27,13 +27,11 @@ def test_image_orientation():
             {
                 "wspace": 1.5,
                 "hspace": 1,
-                "dspace": 3,
-                "preprocessing": True
+                "dspace": 3
             },
         "CenterCrop":
             {
-                "size": [176, 128, 160],
-                "preprocessing": True
+                "size": [176, 128, 160]
             },
         "NumpyToTensor": {},
         "NormalizeInstance": {"applied_to": ['im']}
