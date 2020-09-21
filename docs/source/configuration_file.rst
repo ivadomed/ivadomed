@@ -95,22 +95,25 @@ slice\_filter
 ^^^^^^^^^^^^^
 
 Dict. Discard a slice from the dataset if it meets a condition, see
-below. - ``filter_empty_input``: Bool. Discard slices where all voxel
-intensities are zeros. - ``filter_empty_mask``: Bool. Discard slices
-where all voxel labels are zeros.
+below. 
+
+-  ``filter_empty_input``: Bool. Discard slices where all voxel
+   intensities are zeros. 
+-  ``filter_empty_mask``: Bool. Discard slices
+   where all voxel labels are zeros.
 
 roi
 ^^^
 
-Dict. of parameters about the region of interest - ``suffix``: String.
-Suffix of the derivative file containing the ROI used to crop (e.g.
-``"_seg-manual"``) with ``ROICrop`` as transform. Please use ``null`` if
-you do not want to use an ROI to crop. - ``slice_filter_roi``: int. If
-the ROI mask contains less than ``slice_filter_roi`` non-zero voxels,
-the slice will be discarded from the dataset. This feature helps with
-noisy labels, e.g., if a slice contains only 2-3 labeled voxels, we do
-not want to use these labels to crop the image. This parameter is only
-considered when using ``"ROICrop"``.
+Dict. of parameters about the region of interest 
+
+-  ``suffix``: String. Suffix of the derivative file containing the ROI used to crop (e.g. ``"_seg-manual"``) with ``ROICrop`` as transform. Please use ``null`` if
+   you do not want to use an ROI to crop. 
+-  ``slice_filter_roi``: int. If the ROI mask contains less than ``slice_filter_roi`` non-zero voxels,
+   the slice will be discarded from the dataset. This feature helps with
+   noisy labels, e.g., if a slice contains only 2-3 labeled voxels, we do
+   not want to use these labels to crop the image. This parameter is only
+   considered when using ``"ROICrop"``.
 
 soft_gt
 ^^^^^^^^^^
@@ -216,12 +219,11 @@ scheduler
 
 -  ``initial_lr``: Float. Initial learning rate.
 -  ``scheduler_lr``:
-
-1. ``name``: Choice between: ``"CosineAnnealingLR"``,
-   ``"CosineAnnealingWarmRestarts"`` and ``"CyclicLR"``. Please find
-   documentation `here <https://pytorch.org/docs/stable/optim.html>`__.
-2. Other parameters that are needed for the scheduler of interest (e.g.
-   ``"base_lr": 1e-5, "max_lr": 1e-2`` for ``"CosineAnnealingLR"``).
+     * ``name``: Choice between: ``"CosineAnnealingLR"``,
+       ``"CosineAnnealingWarmRestarts"`` and ``"CyclicLR"``. Please find
+       documentation `here <https://pytorch.org/docs/stable/optim.html>`__.
+     * Other parameters that are needed for the scheduler of interest (e.g.
+       ``"base_lr": 1e-5, "max_lr": 1e-2`` for ``"CosineAnnealingLR"``).
 
 balance\_samples
 ^^^^^^^^^^^^^^^^
@@ -265,10 +267,12 @@ Dict. Define the default model (``Unet``) and mandatory parameters that
 are common to all available architectures (listed in the
 :ref:`models:Models` section). For more specific models (see below),
 the default parameters are merged with the parameters that are specific
-to the tailored model. - ``name``: ``Unet`` (default) -
-``dropout_rate``: Float (e.g. 0.4). - ``batch_norm_momentum``: Float
-(e.g. 0.1). - ``depth``: Strictly positive integer. Number of
-down-sampling operations. - ``relu`` (optional): Bool. Sets final activation to normalized ReLU (relu between 0 and 1).
+to the tailored model.
+
+- ``name``: ``Unet`` (default) 
+- ``dropout_rate``: Float (e.g. 0.4). 
+- ``batch_norm_momentum``: Float (e.g. 0.1).
+- ``depth``: Strictly positive integer. Number of down-sampling operations. - ``relu`` (optional): Bool. Sets final activation to normalized ReLU (relu between 0 and 1).
 
 FiLMedUnet (Optional)
 ^^^^^^^^^^^^^^^^^^^^^
@@ -310,21 +314,20 @@ Testing parameters
 ------------------
 
 - ``binarize_prediction``: Float. Threshold (between 0 and 1) used to binarize
-    the predictions before computing the validation metrics. To use soft predictions
-    (i.e. no binarisation, float between 0 and 1) for metric computation, indicate -1.
+  the predictions before computing the validation metrics. To use soft predictions
+  (i.e. no binarisation, float between 0 and 1) for metric computation, indicate -1.
 
 uncertainty
 ^^^^^^^^^^^
 
 Uncertainty computation is performed if ``n_it>0`` and at least
 ``epistemic`` or ``aleatoric`` is ``true``. Note: both ``epistemic`` and
-``aleatoric`` can be ``true``. - ``epistemic``: Bool. Model-based
-uncertainty with `Monte Carlo
-Dropout <https://arxiv.org/abs/1506.02142>`__. - ``aleatoric``: Bool.
-Image-based uncertainty with `test-time
-augmentation <https://doi.org/10.1016/j.neucom.2019.01.103>`__. -
-``n_it``: Integer. Number of Monte Carlo iterations. Set to 0 for no
-uncertainty computation.
+``aleatoric`` can be ``true``.
+ 
+- ``epistemic``: Bool. Model-based uncertainty with `Monte Carlo Dropout <https://arxiv.org/abs/1506.02142>`__. 
+- ``aleatoric``: Bool. Image-based uncertainty with `test-time augmentation <https://doi.org/10.1016/j.neucom.2019.01.103>`__.
+- ``n_it``: Integer. Number of Monte Carlo iterations. Set to 0 for no
+  uncertainty computation.
 
 Cascaded Architecture Features
 ------------------------------
