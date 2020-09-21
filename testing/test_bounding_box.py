@@ -22,7 +22,6 @@ LOG_DIR = "log"
             "log_directory": LOG_DIR
         },
         "transforms_params": {
-            "Resample": {"wspace": 0.75, "hspace": 0.75},
             "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
