@@ -297,6 +297,10 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                          'validation_loss': val_loss_total_avg}
                 torch.save(state, resume_path)
 
+                # Save best model file
+                model_path = os.path.join(log_directory, "best_model.pt")
+                torch.save(model, model_path)
+
                 # Update best scores
                 best_validation_loss, best_training_loss = val_loss_total_avg, train_loss_total_avg
                 best_validation_dice, best_training_dice = val_dice_loss_total_avg, train_dice_loss_total_avg
