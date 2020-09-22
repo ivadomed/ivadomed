@@ -425,7 +425,7 @@ class Decoder(Module):
             # Remove background class
             preds = preds[:, 1:, ]
         else:
-            if self.relu_activation:
+            if hasattr(self, "relu_activation") and self.relu_activation:
                 preds = nn.ReLU()(x) / nn.ReLU()(x).max() if bool(nn.ReLU()(x).max()) else nn.ReLU()(x)
             else:
                 preds = torch.sigmoid(x)
@@ -1004,8 +1004,9 @@ class UNet3D(nn.Module):
             # Remove background class
             out = out[:, 1:, ]
         else:
-            if self.relu_activation:
-                out = nn.ReLU()(seg_layer) / nn.ReLU()(seg_layer).max() if bool(nn.ReLU()(seg_layer).max()) else nn.ReLU()(seg_layer)
+            if hasattr(self, "relu_activation") and self.relu_activation:
+                out = nn.ReLU()(seg_layer) / nn.ReLU()(seg_layer).max() if bool(nn.ReLU()(seg_layer).max()) \
+                    else nn.ReLU()(seg_layer)
             else:
                 out = torch.sigmoid(seg_layer)
         return out
@@ -1308,17 +1309,18 @@ class Countception(Module):
         return net
 
 
-def set_model_for_retrain(model_path, retrain_fraction, map_location):
+def set_model_for_retrain(model_path, retrain_fraction, map_location, reset=True):
     """Set model for transfer learning.
 
     The first layers (defined by 1-retrain_fraction) are frozen (i.e. requires_grad=False).
-    The weights of the last layers (defined by retrain_fraction) are reset.
+    The weights of the last layers (defined by retrain_fraction) are reset unless reset option is False.
 
     Args:
         model_path (str): Pretrained model path.
         retrain_fraction (float): Fraction of the model that will be retrained, between 0 and 1. If set to 0.3,
             then the 30% last fraction of the model will be re-initalised and retrained.
         map_location (str): Device.
+        reset (bool): if the un-frozen weight should be reset or kept as loaded.
 
     Returns:
         torch.Module: Model ready for retrain.
@@ -1341,9 +1343,10 @@ def set_model_for_retrain(model_path, retrain_fraction, map_location):
             break
 
     # Reset weights of the last layers
-    for name, layer in model.named_modules():
-        if name in layer_names[n_freeze:]:
-            layer.reset_parameters()
+    if reset:
+        for name, layer in model.named_modules():
+            if name in layer_names[n_freeze:]:
+                layer.reset_parameters()
 
     return model
 

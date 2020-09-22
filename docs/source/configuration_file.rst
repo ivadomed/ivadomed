@@ -247,6 +247,8 @@ transfer\_learning
    of the pre-trained model that will be fine-tuned. For instance, if
    set to 0.5, the second half of the model will be fine-tuned while the
    first layers will be frozen.
+-  ``reset``: boolean. if true, the weights of the layers that are not frozen
+   are reset. If false, they are kept as loaded.
 
 Architecture
 ------------
