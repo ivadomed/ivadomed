@@ -57,7 +57,8 @@
         "mixup_alpha": null,
         "transfer_learning": {
             "retrain_model": null,
-            "retrain_fraction": 1.0
+            "retrain_fraction": 1.0,
+            "reset": true
         }
     },
     "default_model": {
