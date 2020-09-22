@@ -219,12 +219,11 @@ scheduler
 
 -  ``initial_lr``: Float. Initial learning rate.
 -  ``scheduler_lr``:
-
-1. ``name``: Choice between: ``"CosineAnnealingLR"``,
-   ``"CosineAnnealingWarmRestarts"`` and ``"CyclicLR"``. Please find
-   documentation `here <https://pytorch.org/docs/stable/optim.html>`__.
-2. Other parameters that are needed for the scheduler of interest (e.g.
-   ``"base_lr": 1e-5, "max_lr": 1e-2`` for ``"CosineAnnealingLR"``).
+     * ``name``: Choice between: ``"CosineAnnealingLR"``,
+       ``"CosineAnnealingWarmRestarts"`` and ``"CyclicLR"``. Please find
+       documentation `here <https://pytorch.org/docs/stable/optim.html>`__.
+     * Other parameters that are needed for the scheduler of interest (e.g.
+       ``"base_lr": 1e-5, "max_lr": 1e-2`` for ``"CosineAnnealingLR"``).
 
 balance\_samples
 ^^^^^^^^^^^^^^^^
