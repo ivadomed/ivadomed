@@ -3,14 +3,14 @@
 
 **BUG**
 
- - Al/fixes prior release.  [View pull request](https://github.com/ivadomed/ivadomed/pull/449)
+ - Minor fixes prior release.  [View pull request](https://github.com/ivadomed/ivadomed/pull/449)
 
 **DEPENDENCIES**
 
  - Modify scripts/training_curve.py to avoid tensorflow dependency.  [View pull request](https://github.com/ivadomed/ivadomed/pull/396)
 
 **DOCUMENTATION**
-:
+
  - Updating documentation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/425)
  - Tutorial on uncertainty estimation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/399)
  - Tutorial cascaded architecture.  [View pull request](https://github.com/ivadomed/ivadomed/pull/389)
