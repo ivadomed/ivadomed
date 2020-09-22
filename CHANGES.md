@@ -1,3 +1,10 @@
+## v2.2.1 (2020-09-22)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.2.0...v2.2.1)
+
+**BUG**
+
+ - Cover image path change on README.  [View pull request](https://github.com/ivadomed/ivadomed/pull/451)
+
 ## v2.2.0 (2020-09-22)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.1.0...v2.2.0)
 
