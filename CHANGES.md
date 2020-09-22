@@ -1,3 +1,38 @@
+## v2.2.0 (2020-09-22)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.1.0...v2.2.0)
+
+**BUG**
+
+ - Al/fixes prior release.  [View pull request](https://github.com/ivadomed/ivadomed/pull/449)
+
+**DEPENDENCIES**
+
+ - Modify scripts/training_curve.py to avoid tensorflow dependency.  [View pull request](https://github.com/ivadomed/ivadomed/pull/396)
+
+**DOCUMENTATION**
+:
+ - Updating documentation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/425)
+ - Tutorial on uncertainty estimation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/399)
+ - Tutorial cascaded architecture.  [View pull request](https://github.com/ivadomed/ivadomed/pull/389)
+
+**ENHANCEMENT**
+
+ - Retrain model without resetting weights.  [View pull request](https://github.com/ivadomed/ivadomed/pull/447)
+ - Normalized ReLU.  [View pull request](https://github.com/ivadomed/ivadomed/pull/384)
+ - Create Ivadomed download function.  [View pull request](https://github.com/ivadomed/ivadomed/pull/379)
+
+**FEATURE**
+
+ - Evenly distribute subjects according to metadata.  [View pull request](https://github.com/ivadomed/ivadomed/pull/423)
+ - Resume training.  [View pull request](https://github.com/ivadomed/ivadomed/pull/416)
+ - Find optimal threshold with ROC analysis.  [View pull request](https://github.com/ivadomed/ivadomed/pull/383)
+ - Generate GIF during training.  [View pull request](https://github.com/ivadomed/ivadomed/pull/374)
+ - Add classifier model .  [View pull request](https://github.com/ivadomed/ivadomed/pull/278)
+
+**TESTING**
+
+ - Create coverage and improve testing.  [View pull request](https://github.com/ivadomed/ivadomed/pull/385)
+
 ## v2.1.0 (2020-07-21)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.0.2...v2.1.0)
 
