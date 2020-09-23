@@ -82,6 +82,7 @@ def train_worker(config, thr_incr):
 def test_worker(config):
     # Call ivado cmd_eval
 
+    current = mp.current_process()
     # ID of process used to assign a GPU
     ID = int(current.name[-1]) - 1
 
