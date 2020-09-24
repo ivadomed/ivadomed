@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import logging
 
 import matplotlib
 import matplotlib.animation as anim
@@ -29,6 +30,8 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
 # List of classification models (ie not segmentation output)
 CLASSIFIER_LIST = ['resnet18', 'densenet121']
+
+logger = logging.getLogger(__name__)
 
 
 def get_task(model_name):
@@ -1191,3 +1194,14 @@ def _version_string():
 
 __ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 __version__ = _version_string()
+
+
+def init_ivadomed():
+    """
+    Initialize the sct for typical terminal usage
+    :param log_level: int: 0: warning, 1: info, 2: debug.
+    :param update: Bool: If True, only update logging log level. Otherwise, set logging + Sentry.
+    :return:
+    """
+    # Display SCT version
+    logger.info('\n--\nIVADOMED ({})\n'.format(__version__))
