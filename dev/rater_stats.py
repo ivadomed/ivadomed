@@ -25,6 +25,7 @@ for subject in subjects:
     files = os.listdir(os.path.join(deriv_path,subject,"anat"))
     niis = [file for file in files if any(contrast in file for contrast in contrasts)]
     dict = {}
+    print(subject)
     for nii in niis:
         base_name = "_".join((nii.split("_"))[0:2])
         rater = ((nii.split("_")[-1]).split(".")[0])[-1]
@@ -38,8 +39,8 @@ for subject in subjects:
             dict[rater] = (base_name,im1)
             labels = measure.label(im1)
             df = df.append({'file': base_name, 'rater': rater, 'lesion_count': labels.max(), 'positive_voxels': np.count_nonzero(im1)}, ignore_index=True)
-            print(base_name)
-            print(rater)
+            #print(base_name)
+            #print(rater)
 
     gt = (dict["0"])[1]
     for key in dict:
@@ -54,4 +55,4 @@ for subject in subjects:
 
 print(df.head(30))
 df.to_csv('rater_lesion_stats.csv')
-df.to_csv('rater_voxel_stats.csv')
+df2.to_csv('rater_voxel_stats.csv')
