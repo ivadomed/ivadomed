@@ -348,4 +348,6 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
         # Run plot
         imed_metrics.plot_roc_curve(tpr_list, fpr_list, optimal_idx, fname_out)
 
+    np.save(fname_out.split('.png')[0]+'.npy', np.array(dice_list))
+
     return optimal_threshold

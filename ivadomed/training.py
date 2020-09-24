@@ -20,7 +20,7 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils
 
 cudnn.benchmark = True
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -72,13 +72,16 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
         # Init GIF
         if n_gif > 0:
+            random.seed(7054)
             indexes_gif = random.sample(range(len(dataset_val)), n_gif)
         for i_gif in range(n_gif):
             random_metadata = dict(dataset_val[indexes_gif[i_gif]]["input_metadata"][0])
-            gif_dict["image_path"].append(random_metadata['input_filenames'])
-            gif_dict["slice_id"].append(random_metadata['slice_index'])
-            gif_obj = imed_utils.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].numpy()[0].shape)
-            gif_dict["gif"].append(copy.copy(gif_obj))
+            if random_metadata['slice_index'] == 12 and "unf12" in random_metadata['input_filenames']:
+                print('hey')
+                gif_dict["image_path"].append(random_metadata['input_filenames'])
+                gif_dict["slice_id"].append(random_metadata['slice_index'])
+                gif_obj = imed_utils.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].numpy()[0].shape)
+                gif_dict["gif"].append(copy.copy(gif_obj))
 
     # GET MODEL
     if training_params["transfer_learning"]["retrain_model"]:
@@ -241,7 +244,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                     for i_ in range(len(input_samples)):
                         im, pr, met = input_samples[i_].cpu().numpy()[0], preds[i_].cpu().numpy()[0], \
                                       batch["input_metadata"][i_][0]
-                        for i_gif in range(n_gif):
+                        for i_gif in range(len(gif_dict["image_path"])):
                             if gif_dict["image_path"][i_gif] == met.__getitem__('input_filenames') and \
                                     gif_dict["slice_id"][i_gif] == met.__getitem__('slice_index'):
                                 overlap = imed_utils.overlap_im_seg(im, pr)
@@ -339,11 +342,11 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     gif_folder = os.path.join(log_directory, "gifs")
     if n_gif > 0 and not os.path.isdir(gif_folder):
         os.makedirs(gif_folder)
-    for i_gif in range(n_gif):
+    for i_gif in range(len(gif_dict["image_path"])):
         fname_out = gif_dict["image_path"][i_gif].split('/')[-3] + "__"
         fname_out += gif_dict["image_path"][i_gif].split('/')[-1].split(".nii.gz")[0].split(
             gif_dict["image_path"][i_gif].split('/')[-3] + "_")[1] + "__"
-        fname_out += str(gif_dict["slice_id"][i_gif]) + ".gif"
+        fname_out += str(gif_dict["slice_id"][i_gif]) + ".npy" #".gif"
         path_gif_out = os.path.join(gif_folder, fname_out)
         gif_dict["gif"][i_gif].save(path_gif_out)
 
