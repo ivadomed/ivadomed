@@ -41,7 +41,7 @@ for subject in subjects:
             print(base_name)
             print(rater)
 
-    gt = dict["0"]
+    gt = (dict["0"])[1]
     for key in dict:
         if key != "0":
             im1 = (dict[key])[1]
