@@ -1175,3 +1175,18 @@ def __get_commit(path_to_git_folder=None):
             commit += "*"
 
     return commit
+
+
+def __get_branch():
+    """
+    Fallback if for some reason the value vas no set by sct_launcher
+    :return:
+    """
+
+    p = subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, cwd=__ivadomed_dir__)
+    output, _ = p.communicate()
+    status = p.returncode
+
+    if status == 0:
+        return output.decode().strip()
