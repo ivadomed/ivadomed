@@ -29,6 +29,10 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 # List of classification models (ie not segmentation output)
 CLASSIFIER_LIST = ['resnet18', 'densenet121']
 
+__ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+__version__ = _version_string()
+
+
 def get_task(model_name):
     return "classification" if model_name in CLASSIFIER_LIST else "segmentation"
 
