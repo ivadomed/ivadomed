@@ -46,10 +46,10 @@ for subject in subjects:
         if key != "0":
             im1 = (dict[key])[1]
             #Threshold since some files have 3 values [0, 0.2, 1]
-            TP = np.logical_and(im1, gt)
-            FP = np.logical_and(im1, np.logical_not(gt))
-            FN = np.logical_and(np.logical_not(im1), gt)
-            TN = np.logical_and(np.logical_not(im1), np.logical_not(gt))
+            TP = np.count_nonzero(np.logical_and(im1, gt))
+            FP = np.count_nonzero(np.logical_and(im1, np.logical_not(gt)))
+            FN = np.count_nonzero(np.logical_and(np.logical_not(im1), gt))
+            TN = np.count_nonzero(np.logical_and(np.logical_not(im1), np.logical_not(gt)))
             df2 = df2.append({'file': (dict[key])[0], 'rater': key, 'TP': TP, 'FP': FP, 'FN': FN, 'TN': TN}, ignore_index=True)
 
 print(df.head(30))
