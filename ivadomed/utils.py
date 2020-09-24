@@ -1100,8 +1100,9 @@ def _git_info(commit_env='IVADOMED_COMMIT', branch_env='IVADOMED_BRANCH'):
     else:
         install_type = 'package'
 
-    from ivadomed.__init__ import __version__ as release_version
-    version_ivadomed = release_version
+    path_version = os.path.join(__ivadomed_dir__, 'version.txt')
+    with open(path_version) as f:
+        version_ivadomed = f.read().strip()
 
     return install_type, ivadomed_commit, ivadomed_branch, version_ivadomed
 
