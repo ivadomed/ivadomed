@@ -6,6 +6,7 @@ from tqdm import tqdm
 from scipy.ndimage import label, generate_binary_structure
 
 from ivadomed import metrics as imed_metrics
+from ivadomed import postprocessing as imed_postpro
 
 # labels of paint_objects method
 TP_COLOUR = 1
@@ -46,7 +47,12 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
         fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
+        fname_uncertainty = os.path.join(path_preds, subj_acq + '_soft.nii.gz')
 
+        # Uncertainty
+        uncertain_pred = None
+        if os.path.exists(fname_uncertainty):
+            uncertain_pred = nib.load(fname_uncertainty).get_fdata()
         # 3D evaluation
         nib_pred = nib.load(fname_pred)
         data_pred = nib_pred.get_fdata()
@@ -61,6 +67,7 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
         eval = Evaluation3DMetrics(data_pred=data_pred,
                                               data_gt=data_gt,
+                                              uncertain_pred=uncertain_pred,
                                               dim_lst=nib_pred.header['pixdim'][1:4],
                                               params=eval_params)
         results_pred, data_painted = eval.run_eval()
@@ -117,7 +124,7 @@ class Evaluation3DMetrics(object):
         data_painted (ndarray): Mask where each predicted object is labeled depending on whether it is a TP or FP.
     """
 
-    def __init__(self, data_pred, data_gt, dim_lst, params=None):
+    def __init__(self, data_pred, data_gt, uncertain_pred, dim_lst, params=None):
         if params is None:
             params = {}
 
@@ -133,6 +140,9 @@ class Evaluation3DMetrics(object):
         self.px, self.py, self.pz = dim_lst
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
+
+        if "uncertainty" in params and uncertain_pred is not None:
+            self.data_pred = imed_postpro.threshold_predictions(data_pred, params['uncertainty']['thr'])
 
         # Remove small objects
         if "removeSmall" in params:
