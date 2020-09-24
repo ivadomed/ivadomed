@@ -23,6 +23,7 @@ import pandas as pd
 import torch.multiprocessing as mp
 
 from ivadomed import main as ivado
+from ivadomed.utils import init_ivadomed
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.scripts.compare_models import compute_statistics
 
@@ -347,4 +348,5 @@ def main():
 
 
 if __name__ == '__main__':
+    init_ivadomed()
     main()

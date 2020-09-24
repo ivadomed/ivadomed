@@ -50,4 +50,5 @@ def main():
 
 
 if __name__ == '__main__':
+    imed_utils.init_ivadomed()
     main()

@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from textwrap import wrap
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
+from ivadomed.utils import init_ivadomed
+
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -250,4 +252,5 @@ def main():
 
 
 if __name__ == '__main__':
+    init_ivadomed()
     main()

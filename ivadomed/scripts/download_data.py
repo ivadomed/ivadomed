@@ -14,6 +14,9 @@ import json
 import argparse
 import textwrap
 
+from ivadomed.utils import init_ivadomed
+
+
 DICT_URL = {
     "data_example_spinegeneric": {
         "url": ["https://github.com/ivadomed/data_example_spinegeneric/archive/r20200825.zip"],
@@ -272,4 +275,5 @@ def main(args=None):
 
 
 if __name__ == '__main__':
+    init_ivadomed()
     main()

@@ -14,6 +14,8 @@ import argparse
 import numpy as np
 import pandas as pd
 
+from ivadomed.utils import init_ivadomed
+
 from scipy.stats import ttest_ind_from_stats
 
 
@@ -100,4 +102,5 @@ def main():
 
 
 if __name__ == '__main__':
+    init_ivadomed()
     main()

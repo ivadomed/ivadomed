@@ -6,6 +6,8 @@ import argparse
 import numpy as np
 import pandas as pd
 
+from ivadomed.utils import init_ivadomed
+
 EXCLUDED_SUBJECT = ["sub-mniPilot1"]
 
 def get_parser():
@@ -138,4 +140,5 @@ def main():
 
 
 if __name__ == '__main__':
+    init_ivadomed()
     main()
