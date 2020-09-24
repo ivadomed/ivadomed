@@ -29,12 +29,10 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 # List of classification models (ie not segmentation output)
 CLASSIFIER_LIST = ['resnet18', 'densenet121']
 
-__ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-__version__ = _version_string()
-
 
 def get_task(model_name):
     return "classification" if model_name in CLASSIFIER_LIST else "segmentation"
+
 
 # METRICS
 def get_metric_fns(task):
@@ -1086,3 +1084,16 @@ class AnimatedGif:
         animation = anim.ArtistAnimation(self.fig, self.images, interval=50, blit=True,
                                          repeat_delay=500)
         animation.save(filename, writer=LoopingPillowWriter(fps=1))
+
+
+def _version_string():
+    install_type, ivadomed_commit, ivadomed_branch, version_ivadomed = _git_info()
+    if install_type == "package":
+        return version_ivadomed
+    else:
+        return "{install_type}-{ivadomed_branch}-{ivadomed_commit}".format(**locals())
+
+
+__ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+__version__ = _version_string()
+
