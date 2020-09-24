@@ -315,4 +315,5 @@ def run_main():
 
 
 if __name__ == "__main__":
+    imed_utils.init_ivadomed()
     run_main()
