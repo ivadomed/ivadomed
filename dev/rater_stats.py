@@ -43,7 +43,7 @@ for subject in subjects:
 
     gt = dict["0"]
     for key in dict:
-        if key != "0"
+        if key != "0":
             im1 = (dict[key])[1]
             #Threshold since some files have 3 values [0, 0.2, 1]
             TP = np.logical_and(im1, gt)
