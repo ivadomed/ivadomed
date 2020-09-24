@@ -229,10 +229,9 @@ def test_create_json_3d_unet_test():
             {
                 "wspace": 1,
                 "hspace": 1,
-                "dspace": 1,
-                "preprocessing": True
+                "dspace": 1
             },
-        "CenterCrop": {"size": [48, 48, 16], "preprocessing": True},
+        "CenterCrop": {"size": [48, 48, 16]},
         "NumpyToTensor": {},
         "NormalizeInstance": {"applied_to": ["im"]}
     }
@@ -268,12 +267,10 @@ def test_training_curve_single():
             "Resample": {
                 "wspace": 0.75,
                 "hspace": 0.75,
-                "dspace": 0.75,
-                "preprocessing": True
+                "dspace": 0.75
             },
             "CenterCrop": {
-                "size": [32, 32, 32],
-                "preprocessing": True
+                "size": [32, 32, 32]
             },
             "NumpyToTensor": {}
         },

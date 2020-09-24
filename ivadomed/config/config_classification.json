@@ -55,7 +55,8 @@
         "mixup_alpha": null,
         "transfer_learning": {
             "retrain_model": null,
-            "retrain_fraction": 1.0
+            "retrain_fraction": 1.0,
+            "reset": true
         }
     },
     "default_model": {
@@ -86,13 +87,11 @@
             "wspace": 0.75,
             "hspace": 0.75,
             "dspace": 1,
-            "applied_to": ["im", "roi"],
-            "preprocessing": true
+            "applied_to": ["im", "roi"]
         },
         "ROICrop": {
             "size": [48, 48],
-            "applied_to": ["im", "roi"],
-            "preprocessing": true
+            "applied_to": ["im", "roi"]
         },
         "RandomAffine": {
             "translate": [0.03, 0.03],

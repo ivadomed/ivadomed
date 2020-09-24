@@ -755,9 +755,9 @@ def convert_labels_to_RGB(grid_img):
     np.random.seed(6)
     for i in range(n_class):
         r, g, b = np.random.randint(0, 256, size=3)
-        rgb_img[:, i, ] = r * grid_img[:, i, ]
-        rgb_img[:, i, ] = g * grid_img[:, i, ]
-        rgb_img[:, i, ] = b * grid_img[:, i, ]
+        rgb_img[:, 0, ] = r * grid_img[:, i, ]
+        rgb_img[:, 1, ] = g * grid_img[:, i, ]
+        rgb_img[:, 2, ] = b * grid_img[:, i, ]
 
     return rgb_img
 
