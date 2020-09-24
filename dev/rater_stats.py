@@ -34,8 +34,8 @@ for subject in subjects:
         #if rater == "n":
             fname = os.path.join(deriv_path,subject,"anat",nii)
             im1 = nibabel.load(fname).get_data()
-            im1[im1 >= 0.5] = 1
-            im1[im1 < 0.5] = 0
+            im1[im1 > 0] = 1
+            #im1[im1 < 0.5] = 0
             dict[rater] = (base_name,im1)
             labels = measure.label(im1)
             df = df.append({'file': base_name, 'rater': rater, 'lesion_count': labels.max(), 'positive_voxels': np.count_nonzero(im1)}, ignore_index=True)
