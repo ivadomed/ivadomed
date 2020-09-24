@@ -1097,3 +1097,21 @@ def _version_string():
 __ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 __version__ = _version_string()
 
+
+def _git_info(commit_env='IVADOMED_COMMIT', branch_env='IVADOMED_BRANCH'):
+
+    ivadomed_commit = os.getenv(commit_env, "unknown")
+    ivadomed_branch = os.getenv(branch_env, "unknown")
+    if check_exe("git") and os.path.isdir(os.path.join(__ivadomed_dir__, ".git")):
+        sct_commit = __get_commit() or ivadomed_commit
+        sct_branch = __get_branch() or ivadomed_branch
+
+    if ivadomed_commit != 'unknown':
+        install_type = 'git'
+    else:
+        install_type = 'package'
+
+    from ivadomed.__init__ import __version__ as release_version
+    version_ivadomed = release_version
+
+    return install_type, ivadomed_commit, ivadomed_branch, version_ivadomed
