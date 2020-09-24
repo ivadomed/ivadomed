@@ -348,7 +348,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     gif_folder = os.path.join(log_directory, "gifs")
     if n_gif > 0 and not os.path.isdir(gif_folder):
         os.makedirs(gif_folder)
-    for i_gif in range(len(gif_dict["image_path"])):
+    for i_gif in range(n_gif):
         fname_out = gif_dict["image_path"][i_gif].split('/')[-3] + "__"
         fname_out += gif_dict["image_path"][i_gif].split('/')[-1].split(".nii.gz")[0].split(
             gif_dict["image_path"][i_gif].split('/')[-3] + "_")[1] + "__"
