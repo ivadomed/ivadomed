@@ -10,19 +10,19 @@ import numpy as np
 import onnxruntime
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torchvision.utils as vutils
+#import torch.nn.functional as F
+#import torchvision.utils as vutils
 
-from ivadomed import models as imed_models
-from ivadomed import postprocessing as imed_postpro
-from ivadomed import transforms as imed_transforms
-from ivadomed import metrics as imed_metrics
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
-from ivadomed.object_detection import utils as imed_obj_detect
+#from ivadomed import models as imed_models
+#from ivadomed import postprocessing as imed_postpro
+#from ivadomed import transforms as imed_transforms
+#from ivadomed import metrics as imed_metrics
+#from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+#from ivadomed.object_detection import utils as imed_obj_detect
 
 from scipy.ndimage import label, generate_binary_structure
-from torch.autograd import Variable
-from torch.utils.data import DataLoader
+#from torch.autograd import Variable
+#from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
@@ -1087,25 +1087,13 @@ class AnimatedGif:
         animation.save(filename, writer=LoopingPillowWriter(fps=1))
 
 
-def _version_string():
-    install_type, ivadomed_commit, ivadomed_branch, version_ivadomed = _git_info()
-    if install_type == "package":
-        return version_ivadomed
-    else:
-        return "{install_type}-{ivadomed_branch}-{ivadomed_commit}".format(**locals())
-
-
-__ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-__version__ = _version_string()
-
-
 def _git_info(commit_env='IVADOMED_COMMIT', branch_env='IVADOMED_BRANCH'):
 
     ivadomed_commit = os.getenv(commit_env, "unknown")
     ivadomed_branch = os.getenv(branch_env, "unknown")
     if check_exe("git") and os.path.isdir(os.path.join(__ivadomed_dir__, ".git")):
-        sct_commit = __get_commit() or ivadomed_commit
-        sct_branch = __get_branch() or ivadomed_branch
+        ivadomed_commit = __get_commit() or ivadomed_commit
+        ivadomed_branch = __get_branch() or ivadomed_branch
 
     if ivadomed_commit != 'unknown':
         install_type = 'git'
@@ -1190,3 +1178,15 @@ def __get_branch():
 
     if status == 0:
         return output.decode().strip()
+
+
+def _version_string():
+    install_type, ivadomed_commit, ivadomed_branch, version_ivadomed = _git_info()
+    if install_type == "package":
+        return version_ivadomed
+    else:
+        return "{install_type}-{ivadomed_branch}-{ivadomed_commit}".format(**locals())
+
+
+__ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+__version__ = _version_string()
