@@ -1115,3 +1115,25 @@ def _git_info(commit_env='IVADOMED_COMMIT', branch_env='IVADOMED_BRANCH'):
     version_ivadomed = release_version
 
     return install_type, ivadomed_commit, ivadomed_branch, version_ivadomed
+
+
+def check_exe(name):
+    """
+    Ensure that a program exists
+    :param name: str: name or path to program
+    :return: path of the program or None
+    """
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(name)
+    if fpath and is_exe(name):
+        return fpath
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, name)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
