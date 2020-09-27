@@ -31,7 +31,8 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 # List of classification models (ie not segmentation output)
 CLASSIFIER_LIST = ['resnet18', 'densenet121']
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
 def get_task(model_name):
@@ -603,14 +604,14 @@ class HookBasedFeatureExtractor(nn.Module):
         self.upscale = upscale
 
     def get_input_array(self, m, i, o):
-        assert(i, tuple)
+        assert(isinstance(i, tuple))
         self.inputs = [i[index].data.clone() for index in range(len(i))]
         self.inputs_size = [input.size() for input in self.inputs]
 
         print('Input Array Size: ', self.inputs_size)
 
     def get_output_array(self, m, i, o):
-        assert (i, tuple)
+        assert(isinstance(i, tuple))
         self.outputs = [o[index].data.clone() for index in range(len(o))]
         self.outputs_size = [output.size() for output in self.outputs]
         print('Output Array Size: ', self.outputs_size)
@@ -754,9 +755,9 @@ def convert_labels_to_RGB(grid_img):
     np.random.seed(6)
     for i in range(n_class):
         r, g, b = np.random.randint(0, 256, size=3)
-        rgb_img[:, i, ] = r * grid_img[:, i, ]
-        rgb_img[:, i, ] = g * grid_img[:, i, ]
-        rgb_img[:, i, ] = b * grid_img[:, i, ]
+        rgb_img[:, 0, ] = r * grid_img[:, i, ]
+        rgb_img[:, 1, ] = g * grid_img[:, i, ]
+        rgb_img[:, 2, ] = b * grid_img[:, i, ]
 
     return rgb_img
 

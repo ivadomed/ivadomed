@@ -20,7 +20,7 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils
 
 cudnn.benchmark = True
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -87,8 +87,13 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             100 - training_params["transfer_learning"]['retrain_fraction'] * 100.))
         old_model_path = training_params["transfer_learning"]["retrain_model"]
         fraction = training_params["transfer_learning"]['retrain_fraction']
+        if 'reset' in training_params["transfer_learning"]:
+            reset = training_params["transfer_learning"]['reset']
+        else :
+            reset = True
         # Freeze first layers and reset last layers
-        model = imed_models.set_model_for_retrain(old_model_path, retrain_fraction=fraction, map_location=device)
+        model = imed_models.set_model_for_retrain(old_model_path, retrain_fraction=fraction, map_location=device,
+                                                  reset=reset)
     else:
         print("\nInitialising model's weights from scratch.")
         model_class = getattr(imed_models, model_params["name"])
@@ -296,6 +301,10 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                          'patience_count': patience_count,
                          'validation_loss': val_loss_total_avg}
                 torch.save(state, resume_path)
+
+                # Save best model file
+                model_path = os.path.join(log_directory, "best_model.pt")
+                torch.save(model, model_path)
 
                 # Update best scores
                 best_validation_loss, best_training_loss = val_loss_total_avg, train_loss_total_avg
