@@ -1145,8 +1145,12 @@ def check_exe(name):
 
 
 def __get_commit(path_to_git_folder=None):
-    """
-    :return: git commit ID, with trailing '*' if modified
+    """Get GIT ivadomed commit.
+
+    Args:
+        path_to_git_folder (str): Path to GIT folder.
+    Returns:
+        str: git commit ID, with trailing '*' if modified.
     """
     if path_to_git_folder is None:
         path_to_git_folder = __ivadomed_dir__
@@ -1182,11 +1186,13 @@ def __get_commit(path_to_git_folder=None):
 
 
 def __get_branch():
-    """
-    Fallback if for some reason the value vas no set by sct_launcher
-    :return:
-    """
+    """Get ivadomed branch.
 
+    Args:
+
+    Returns:
+        str: ivadomed branch.
+    """
     p = subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE,
                          stderr=subprocess.PIPE, cwd=__ivadomed_dir__)
     output, _ = p.communicate()
@@ -1209,11 +1215,6 @@ __version__ = _version_string()
 
 
 def init_ivadomed():
-    """
-    Initialize the sct for typical terminal usage
-    :param log_level: int: 0: warning, 1: info, 2: debug.
-    :param update: Bool: If True, only update logging log level. Otherwise, set logging + Sentry.
-    :return:
-    """
-    # Display SCT version
+    """Initialize the ivadomed for typical terminal usage."""
+    # Display ivadomed version
     logger.info('\n--\nIVADOMED ({})\n'.format(__version__))
