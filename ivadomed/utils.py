@@ -1092,7 +1092,16 @@ class AnimatedGif:
 
 
 def _git_info(commit_env='IVADOMED_COMMIT', branch_env='IVADOMED_BRANCH'):
+    """Get ivadomed version info from GIT.
 
+    This functions retrieves the ivadomed version, commit, branch and installation type.
+
+    Args:
+        commit_env (str):
+        branch_env (str):
+    Returns:
+        str, str, str, str: installation type, commit, branch, version.
+    """
     ivadomed_commit = os.getenv(commit_env, "unknown")
     ivadomed_branch = os.getenv(branch_env, "unknown")
     if check_exe("git") and os.path.isdir(os.path.join(__ivadomed_dir__, ".git")):
