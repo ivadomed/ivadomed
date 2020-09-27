@@ -336,6 +336,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
 
 def main():
+    init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
 
@@ -348,5 +350,4 @@ def main():
 
 
 if __name__ == '__main__':
-    init_ivadomed()
     main()

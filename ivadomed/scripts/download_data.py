@@ -10,7 +10,6 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
 import sys
-import json
 import argparse
 import textwrap
 
@@ -253,6 +252,8 @@ install_data.__doc__=install_data.__doc__.format(BUNDLES=textwrap.indent(_format
 
 
 def main(args=None):
+    init_ivadomed()
+
     # Dictionary containing list of URLs for data names.
     # Mirror servers are listed in order of decreasing priority.
     # If exists, favour release artifact straight from github
@@ -275,5 +276,4 @@ def main(args=None):
 
 
 if __name__ == '__main__':
-    init_ivadomed()
     main()

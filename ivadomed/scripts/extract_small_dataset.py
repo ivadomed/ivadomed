@@ -132,6 +132,8 @@ def extract_small_dataset(input, output, n=10, contrast_list=None, include_deriv
 
 
 def main():
+    init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
     # Run script
@@ -140,5 +142,4 @@ def main():
 
 
 if __name__ == '__main__':
-    init_ivadomed()
     main()

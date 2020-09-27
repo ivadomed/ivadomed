@@ -240,6 +240,8 @@ def tensorboard_retrieve_event(dpath):
 
 
 def main():
+    init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
     input_folder = args.input
@@ -252,5 +254,4 @@ def main():
 
 
 if __name__ == '__main__':
-    init_ivadomed()
     main()

@@ -94,6 +94,8 @@ def compute_statistics(dataframe, n_iterations, run_test=True, csv_out='comparis
 
 
 def main():
+    init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
     df = pd.read_csv(args.dataframe)
@@ -102,5 +104,4 @@ def main():
 
 
 if __name__ == '__main__':
-    init_ivadomed()
     main()
