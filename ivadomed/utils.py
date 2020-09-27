@@ -1121,10 +1121,12 @@ def _git_info(commit_env='IVADOMED_COMMIT', branch_env='IVADOMED_BRANCH'):
 
 
 def check_exe(name):
-    """
-    Ensure that a program exists
-    :param name: str: name or path to program
-    :return: path of the program or None
+    """Ensure that a program exists.
+
+    Args:
+        name (str): Name or path to program.
+    Returns:
+        str or None: path of the program or None
     """
     def is_exe(fpath):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
