@@ -1,5 +1,5 @@
   
-![ivadomed Overview](images/overview_title.png)
+![ivadomed Overview](https://github.com/ivadomed/ivadomed/raw/master/images/overview_title.png)
 
 [![Coverage Status](https://coveralls.io/repos/github/ivadomed/ivadomed/badge.svg?branch=master)](https://coveralls.io/github/ivadomed/ivadomed?branch=master)
 ![](https://github.com/neuropoly/ivadomed/workflows/Python%20package/badge.svg)
