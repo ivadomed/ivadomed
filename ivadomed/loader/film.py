@@ -63,17 +63,15 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
 
             s_out["input_metadata"]["film_input"] = [s_out["input_metadata"][k] for k in
                                                      ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
+        elif metadata_type == "contrast":
+            for i, input_metadata in enumerate(subject["input_metadata"]):
+                generic_contrast = GENERIC_CONTRAST[input_metadata["contrast"]]
+                label_contrast = CONTRAST_CATEGORY[generic_contrast]
+                s_out["input_metadata"][i]["film_input"] = [label_contrast]
         else:
             for i, input_metadata in enumerate(subject["input_metadata"]):
-                label_contrast = None
-                if 'Astr' in input_metadata["input_filenames"]:
-                    label_contrast = 0
-                elif 'Epen' in input_metadata["input_filenames"]:
-                    label_contrast = 1
-                elif 'Hema' in input_metadata["input_filenames"]:
-                    label_contrast = 2
-                # generic_contrast = GENERIC_CONTRAST[input_metadata["contrast"]]
-                # label_contrast = CONTRAST_CATEGORY[generic_contrast]
+                data = input_metadata[metadata_type]
+                label_contrast = input_metadata['metadata_dict'][data]
                 s_out["input_metadata"][i]["film_input"] = [label_contrast]
 
         for i, input_metadata in enumerate(subject["input_metadata"]):
