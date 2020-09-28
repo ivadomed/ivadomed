@@ -177,7 +177,7 @@ Then run:
 
 The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
 The resulting segmentation is saved for each image in the ``<log_directory>/pred_masks`` while a csv file,
-saved in ``log_directory/results/eval/evaluation_3Dmetrics.csv``, contains all the evaluation metrics. For more details
+saved in ``log_directory/results_eval/evaluation_3Dmetrics.csv``, contains all the evaluation metrics. For more details
 on the evaluation metrics, see :mod:`ivadomed.metrics`.
 
 .. code-block:: console

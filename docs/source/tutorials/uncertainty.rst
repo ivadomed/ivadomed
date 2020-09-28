@@ -31,7 +31,7 @@ The parameters that are specific to this tutorial are:
 
   .. code-block:: xml
 
-     "bids_path": "<PATH_TO_DATASET>/data_example_spinegeneric/trained_model"
+     "log_directory": "<PATH_TO_DATASET>/data_example_spinegeneric/trained_model"
 
 - ``command``: Action to perform. Here, we want to do some inference using the previously trained model, so we set the
   field as follows:
