@@ -166,6 +166,8 @@ def run_visualization(input, config, number, output, roi):
 
 
 def main():
+    imed_utils.init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
     input = args.input

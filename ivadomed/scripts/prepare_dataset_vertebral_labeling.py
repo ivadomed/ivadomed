@@ -103,6 +103,8 @@ def get_parser():
 
 
 def main():
+    imed_utils.init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
     bids_path = args.path
