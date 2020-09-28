@@ -59,7 +59,8 @@
         "mixup_alpha": null,
         "transfer_learning": {
             "retrain_model": null,
-            "retrain_fraction": 1.0
+            "retrain_fraction": 1.0,
+            "reset": true
         }
     },
     "default_model": {
@@ -93,10 +94,9 @@
         {
             "wspace": 1,
             "hspace": 1,
-            "dspace": 2,
-            "preprocessing": true
+            "dspace": 2
         },
-        "CenterCrop": {"size":  [512, 256, 16], "preprocessing": true},
+        "CenterCrop": {"size":  [512, 256, 16]},
         "RandomAffine": {
             "degrees": 5,
             "scale": [0.1, 0.1, 0.1],

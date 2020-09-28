@@ -30,8 +30,8 @@ MODEL_DEFAULT = {
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('config', [
     {
-        "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75, "preprocessing": True},
-                              "ROICrop": {"size": [48, 48], "preprocessing": True},
+        "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75},
+                              "ROICrop": {"size": [48, 48]},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
@@ -39,8 +39,8 @@ MODEL_DEFAULT = {
         "model_params": {"name": "Unet"},
     },
     {
-        "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75, "preprocessing": True},
-                              "ROICrop": {"size": [48, 48], "preprocessing": True},
+        "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75},
+                              "ROICrop": {"size": [48, 48]},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
@@ -48,7 +48,7 @@ MODEL_DEFAULT = {
         "model_params": {"name": "Unet"},
     },
     {
-        "transforms_params": {"CenterCrop": {"size": [96, 96, 16], "preprocessing": True},
+        "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
@@ -57,7 +57,7 @@ MODEL_DEFAULT = {
                          "attention": True},
     },
     {
-        "transforms_params": {"CenterCrop": {"size": [96, 96, 16], "preprocessing": True},
+        "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": None, "slice_filter_roi": 0},
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},

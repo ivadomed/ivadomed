@@ -290,7 +290,6 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         # RUN EVALUATION
         df_results = imed_evaluation.evaluate(bids_path=loader_params['bids_path'],
                                               log_directory=log_directory,
-                                              path_preds=path_preds,
                                               target_suffix=loader_params["target_suffix"],
                                               eval_params=context["evaluation_parameters"])
         return df_results
