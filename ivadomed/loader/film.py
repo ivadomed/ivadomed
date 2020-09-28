@@ -24,7 +24,8 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
          ds_in (BidsDataset): Dataset with metadata.
          clustering_models: Pre-trained clustering model that has been trained on metadata of the training set.
          debugging (bool): If True, extended verbosity and intermediate outputs.
-         metadata_type (str): Choice between 'mri_params' and 'constrasts'.
+         metadata_type (str): Choice between 'mri_params', 'constrast' or the name of a column from the
+            participants.tsv file.
          train_set (bool): Indicates if the input dataset is the training dataset (True) or the validation or testing
             dataset (False).
 
