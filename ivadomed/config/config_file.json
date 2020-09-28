@@ -1,0 +1,159 @@
+{
+    "command": "test",
+    "gpu": 0,
+    "log_directory": "/home/andreanne/Documents/ivadomed/repro",
+    "model_name": "gm_soft",
+    "debugging": true,
+    "loader_parameters": {
+        "bids_path": "/home/andreanne/Documents/dataset/gm_header",
+        "target_suffix": [
+            "_seg-manual"
+        ],
+        "roi_params": {
+            "suffix": null,
+            "slice_filter_roi": 10
+        },
+        "contrast_params": {
+            "training_validation": [
+                "T2star"
+            ],
+            "testing": [
+                "T2star"
+            ],
+            "balance": {},
+            "contrast_lst": [
+                "T2star"
+            ]
+        },
+        "slice_filter_params": {
+            "filter_empty_mask": false,
+            "filter_empty_input": true
+        },
+        "slice_axis": "axial",
+        "multichannel": false,
+        "soft_gt": false
+    },
+    "split_dataset": {
+        "fname_split": null,
+        "random_seed": 6,
+        "center_test": [],
+        "method": "per_patient",
+        "train_fraction": 0.9,
+        "test_fraction": 0.05
+    },
+    "training_parameters": {
+        "batch_size": 2,
+        "loss": {
+            "name": "DiceLoss"
+        },
+        "training_time": {
+            "num_epochs": 200,
+            "early_stopping_patience": 10,
+            "early_stopping_epsilon": 0.005
+        },
+        "scheduler": {
+            "initial_lr": 0.001,
+            "lr_scheduler": {
+                "name": "CosineAnnealingLR",
+                "base_lr": 0.0001,
+                "max_lr": 0.001
+            }
+        },
+        "balance_samples": false,
+        "mixup_alpha": null,
+        "transfer_learning": {
+            "retrain_model": null,
+            "retrain_fraction": 1.0
+        }
+    },
+    "default_model": {
+        "name": "Unet",
+        "dropout_rate": 0.3,
+        "bn_momentum": 0.9,
+        "depth": 3,
+        "folder_name": "gm_soft",
+        "in_channel": 1,
+        "out_channel": 1,
+        "relu": false
+    },
+    "UNet3D": {
+        "applied": false,
+        "length_3D": [
+            128,
+            128,
+            16
+        ],
+        "stride_3D": [
+            128,
+            128,
+            16
+        ],
+        "attention": false,
+        "n_filters": 8
+    },
+    "testing_parameters": {
+        "binarize_prediction": 0.5,
+        "uncertainty": {
+            "epistemic": false,
+            "aleatoric": false,
+            "n_it": 0
+        }
+    },
+    "evaluation_parameters": {},
+    "transformation": {
+        "CenterCrop": {
+            "size": [
+                128,
+                128,
+                16
+            ]
+        },
+        "RandomAffine": {
+            "degrees": 20,
+            "scale": [
+                0.1,
+                0.3
+            ],
+            "translate": [
+                0.03,
+                0.1
+            ],
+            "applied_to": [
+                "im",
+                "gt"
+            ],
+            "dataset_type": [
+                "training"
+            ]
+        },
+        "ElasticTransform": {
+            "alpha_range": [
+                144.0,
+                240.0
+            ],
+            "sigma_range": [
+                5.76,
+                8.64
+            ],
+            "p": 0.0,
+            "applied_to": [
+                "im",
+                "gt"
+            ],
+            "dataset_type": [
+                "training"
+            ]
+        },
+        "NumpyToTensor": {
+            "applied_to": [
+                "im",
+                "gt"
+            ]
+        },
+        "NormalizeInstance": {
+            "applied_to": [
+                "im"
+            ]
+        }
+    }
+}
