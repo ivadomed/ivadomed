@@ -51,6 +51,12 @@ segmentation training.
 
      "command": "train"
 
+- ``log_directory``: Folder name that will contain the output files (e.g., trained model, predictions, results).
+
+   .. code-block:: xml
+
+      "log_directory":"spinegeneric"
+
 - ``loader_parameters:bids_path``: Location of the dataset. As discussed in :doc:`../data`, the dataset
   should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 
@@ -94,6 +100,12 @@ segmentation training.
      a ground truth segmentation is aligned with all contrasts, for a given subject. In this tutorial, only one channel
      will be used.
 
+- ``training_time:num_epochs``: the maximum number of epochs that will be run during training. Each epochs is composed
+  a training part and an evaluation part. It should be a strictly positive integer.
+  
+  .. code-block:: xml
+
+     "num_epochs": 100
 
 Train model
 -----------
