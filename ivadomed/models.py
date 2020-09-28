@@ -450,7 +450,7 @@ class Unet(Module):
         depth (int): Number of down convolutions minus bottom down convolution.
         drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
-        relu (bool): If True, sets final activation to normalized ReLU (ReLU between 0 and 1).
+        final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
         **kwargs:
 
     Attributes:
@@ -458,7 +458,8 @@ class Unet(Module):
         decoder (Decoder): U-net decoder.
     """
 
-    def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, relu=False, **kwargs):
+    def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, final_activation='sigmoid',
+                 **kwargs):
         super(Unet, self).__init__()
 
         # Encoder path
@@ -466,7 +467,7 @@ class Unet(Module):
 
         # Decoder path
         self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
-                               relu=relu)
+                               final_activation=final_activation)
 
     def forward(self, x):
         features, _ = self.encoder(x)
@@ -708,7 +709,7 @@ class UNet3D(nn.Module):
         attention (bool): Boolean indicating whether the attention module is on or not.
         drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
-        relu (bool): If True, sets final activation to normalized ReLU (relu between 0 and 1).
+        final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
         **kwargs:
 
     Attributes:
@@ -717,8 +718,7 @@ class UNet3D(nn.Module):
         base_n_filter (int): Number of base filters in the U-Net.
         attention (bool): Boolean indicating whether the attention module is on or not.
         momentum (float): Batch normalization momentum.
-        final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax"
-            (only for multiclass).
+        final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
 
     Note: All layers are defined as attributes and used in the forward method.
     """
