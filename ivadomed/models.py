@@ -429,7 +429,7 @@ class Decoder(Module):
         else:
             preds = torch.sigmoid(x)
 
-        if self.n_classes > 1:
+        if self.out_channel > 1:
             # Remove background class
             preds = preds[:, 1:, ]
 
