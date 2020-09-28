@@ -1217,4 +1217,4 @@ __version__ = _version_string()
 def init_ivadomed():
     """Initialize the ivadomed for typical terminal usage."""
     # Display ivadomed version
-    logger.info('\n--\nIVADOMED ({})\n'.format(__version__))
+    logger.info('\nivadomed ({})\n'.format(__version__))
