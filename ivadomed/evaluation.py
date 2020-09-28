@@ -142,7 +142,7 @@ class Evaluation3DMetrics(object):
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
 
         if "uncertainty" in params and uncertain_pred is not None:
-            self.data_pred = imed_postpro.threshold_predictions(data_pred, params['uncertainty']['thr'])
+            self.data_pred = imed_postpro.threshold_predictions(uncertain_pred, params['uncertainty']['thr'])
 
         # Remove small objects
         if "removeSmall" in params:
