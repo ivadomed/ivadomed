@@ -812,6 +812,14 @@ class BidsDataset(MRI2DSegmentationDataset):
                     df = bids.BIDS(root_dir).participants.content
                     metadata[metadata_choice] = df[df['participant_id'] == subject_id][metadata_choice].values[0]
 
+                    # Create metadata dict for OHE
+                    data_lst = sorted(set(df[metadata_choice].values))
+                    metadata_dict = {}
+                    for idx, data in enumerate(data_lst):
+                        metadata_dict[data] = idx
+
+                    metadata['metadata_dict'] = metadata_dict
+
                 # Fill multichannel dictionary
                 if multichannel:
                     idx = idx_dict[subject.record["modality"]]
