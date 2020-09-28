@@ -24,7 +24,7 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
          ds_in (BidsDataset): Dataset with metadata.
          clustering_models: Pre-trained clustering model that has been trained on metadata of the training set.
          debugging (bool): If True, extended verbosity and intermediate outputs.
-         metadata_type (str): Choice between 'mri_params', 'constrast' or the name of a column from the
+         metadata_type (str): Choice between 'mri_params', 'constrasts' or the name of a column from the
             participants.tsv file.
          train_set (bool): Indicates if the input dataset is the training dataset (True) or the validation or testing
             dataset (False).
@@ -64,7 +64,7 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
 
             s_out["input_metadata"]["film_input"] = [s_out["input_metadata"][k] for k in
                                                      ["FlipAngle", "RepetitionTime", "EchoTime", "Manufacturer"]]
-        elif metadata_type == "contrast":
+        elif metadata_type == "contrasts":
             for i, input_metadata in enumerate(subject["input_metadata"]):
                 generic_contrast = GENERIC_CONTRAST[input_metadata["contrast"]]
                 label_contrast = CONTRAST_CATEGORY[generic_contrast]
