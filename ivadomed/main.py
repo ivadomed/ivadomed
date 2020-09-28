@@ -296,6 +296,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
 
 def run_main():
+    imed_utils.init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
 

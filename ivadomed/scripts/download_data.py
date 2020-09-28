@@ -10,9 +10,11 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
 import sys
-import json
 import argparse
 import textwrap
+
+from ivadomed.utils import init_ivadomed
+
 
 DICT_URL = {
     "data_example_spinegeneric": {
@@ -48,7 +50,7 @@ def get_parser():
     return parser
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -250,6 +252,8 @@ install_data.__doc__=install_data.__doc__.format(BUNDLES=textwrap.indent(_format
 
 
 def main(args=None):
+    init_ivadomed()
+
     # Dictionary containing list of URLs for data names.
     # Mirror servers are listed in order of decreasing priority.
     # If exists, favour release artifact straight from github
