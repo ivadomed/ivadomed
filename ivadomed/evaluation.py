@@ -1,9 +1,10 @@
 import os
-import pandas as pd
-import numpy as np
+
 import nibabel as nib
-from tqdm import tqdm
+import numpy as np
+import pandas as pd
 from scipy.ndimage import label, generate_binary_structure
+from tqdm import tqdm
 
 from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
@@ -47,7 +48,7 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
         fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
-        fname_uncertainty = None
+        fname_uncertainty = ""
         if 'uncertainty' in eval_params and 'suffix' in eval_params['uncertainty']:
             fname_uncertainty = os.path.join(path_preds, subj_acq + eval_params['uncertainty']['suffix'])
 
@@ -68,10 +69,10 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
             else:
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
         eval = Evaluation3DMetrics(data_pred=data_pred,
-                                              data_gt=data_gt,
-                                              uncertain_pred=uncertain_pred,
-                                              dim_lst=nib_pred.header['pixdim'][1:4],
-                                              params=eval_params)
+                                   data_gt=data_gt,
+                                   uncertain_pred=uncertain_pred,
+                                   dim_lst=nib_pred.header['pixdim'][1:4],
+                                   params=eval_params)
         results_pred, data_painted = eval.run_eval()
 
         # SAVE PAINTED DATA, TP FP FN
@@ -145,7 +146,9 @@ class Evaluation3DMetrics(object):
 
         if "uncertainty" in params and uncertain_pred is not None:
             if params['uncertainty']['thr'] > 0:
-                self.data_pred = imed_postpro.threshold_predictions(uncertain_pred, params['uncertainty']['thr'])
+                self.data_pred = imed_postpro.threshold_uncertainty(self.data_pred,
+                                                                    uncertain_pred,
+                                                                    params['uncertainty']['thr'])
 
         # Remove small objects
         if "removeSmall" in params:
