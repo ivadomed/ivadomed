@@ -580,6 +580,7 @@ class FiLMlayer(Module):
         self.batch_size = None
         self.height = None
         self.width = None
+        self.depth = None
         self.feature_size = None
         self.generator = FiLMgenerator(n_metadata, n_channels)
         # Add the parameters gammas and betas to access them out of the class.
@@ -605,11 +606,12 @@ class FiLMlayer(Module):
 
         # FiLM applies a different affine transformation to each channel,
         # consistent accross spatial locations
-        film_params = film_params.unsqueeze(-1).unsqueeze(-1)
         if len(data_shape) == 4:
+            film_params = film_params.unsqueeze(-1).unsqueeze(-1)
             film_params = film_params.repeat(1, 1, self.height, self.width)
         else:
-            film_params = film_params.repeat(1, 2, self.height, self.width, self.depth)
+            film_params = film_params.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
+            film_params = film_params.repeat(1, 1, self.height, self.width, self.depth)
 
         self.gammas = film_params[:, :self.feature_size, ]
         self.betas = film_params[:, self.feature_size:, ]
