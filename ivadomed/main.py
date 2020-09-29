@@ -282,10 +282,12 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         # PREDICTION FOLDER
         path_preds = os.path.join(log_directory, 'pred_masks')
         # If the prediction folder does not exist, run Inference first
-        if not os.path.isdir(path_preds):
-            print('\nRun Inference\n')
-            context["command"] = "test"
-            run_command(context)
+        if os.path.isdir(path_preds):
+            context['testing_parameters']['uncertainty']['applied'] = False
+
+        print('\nRun Inference\n')
+        context["command"] = "test"
+        run_command(context)
 
         # RUN EVALUATION
         df_results = imed_evaluation.evaluate(bids_path=loader_params['bids_path'],
