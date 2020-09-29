@@ -55,7 +55,7 @@ segmentation training.
 
   .. code-block:: xml
 
-     "log_directory":"spinegeneric"
+     "log_directory":"spineGeneric"
 
 - ``loader_parameters:bids_path``: Location of the dataset. As discussed in :doc:`../data`, the dataset
   should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
@@ -100,8 +100,8 @@ segmentation training.
      a ground truth segmentation is aligned with all contrasts, for a given subject. In this tutorial, only one channel
      will be used.
 
-- ``training_time:num_epochs``: the maximum number of epochs that will be run during training. Each epochs is composed
-  a training part and an evaluation part. It should be a strictly positive integer.
+- ``training_time:num_epochs``: the maximum number of epochs that will be run during training. Each epoch is composed
+  of a training part and an evaluation part. It should be a strictly positive integer.
   
   .. code-block:: xml
 
@@ -189,7 +189,7 @@ Then run:
 
 The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
 The resulting segmentation is saved for each image in the ``<log_directory>/pred_masks`` while a csv file,
-saved in ``log_directory/results_eval/evaluation_3Dmetrics.csv``, contains all the evaluation metrics. For more details
+saved in ``<log_directory>/results_eval/evaluation_3Dmetrics.csv``, contains all the evaluation metrics. For more details
 on the evaluation metrics, see :mod:`ivadomed.metrics`.
 
 .. code-block:: console

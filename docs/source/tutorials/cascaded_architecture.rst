@@ -35,8 +35,8 @@ Then, open it with a text editor. As described in the tutorial :doc:`../tutorial
 sure the ``command`` is set to "train" and ``bids_path`` point to the location of the dataset. Below, we will discuss
 some of the key parameters to use cascaded models.
 
-- ``debugging``: Boolean create extended verbosity and intermediate outputs. Here we will look at the intermediat prediction
-  with tensorboard, we therefore need to activate thos intermediate outputs.
+- ``debugging``: Boolean, create extended verbosity and intermediate outputs. Here we will look at the intermediate predictions
+  with tensorboard, we therefore need to activate those intermediate outputs.
   
   .. code-block:: xml
 
