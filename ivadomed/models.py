@@ -358,6 +358,7 @@ class Decoder(Module):
         n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details.
         film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied.
         hemis (bool): Boolean indicating if HeMIS is on or not.
+        final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax"
 
     Attributes:
         depth (int): Number of down convolutions minus bottom down convolution.
@@ -368,11 +369,11 @@ class Decoder(Module):
     """
 
     def __init__(self, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1,
-                 n_metadata=None, film_layers=None, hemis=False, relu=False):
+                 n_metadata=None, film_layers=None, hemis=False, final_activation="sigmoid"):
         super(Decoder, self).__init__()
         self.depth = depth
         self.out_channel = out_channel
-        self.relu_activation = relu
+        self.final_activation = final_activation
         # Up-Sampling path
         self.up_path = nn.ModuleList()
         if hemis:
@@ -420,15 +421,18 @@ class Decoder(Module):
         x = self.last_conv(x)
         if self.last_film:
             x, w_film = self.last_film(x, context, w_film)
+
+        if hasattr(self, "final_activation") and self.final_activation == "softmax":
+            preds = self.softmax(x)
+        elif hasattr(self, "final_activation") and self.final_activation == "relu":
+            preds = nn.ReLU()(x) / nn.ReLU()(x).max() if bool(nn.ReLU()(x).max()) else nn.ReLU()(x)
+        else:
+            preds = torch.sigmoid(x)
+
         if self.out_channel > 1:
-            preds = F.softmax(x, dim=1)
             # Remove background class
             preds = preds[:, 1:, ]
-        else:
-            if hasattr(self, "relu_activation") and self.relu_activation:
-                preds = nn.ReLU()(x) / nn.ReLU()(x).max() if bool(nn.ReLU()(x).max()) else nn.ReLU()(x)
-            else:
-                preds = torch.sigmoid(x)
+
         return preds
 
 
@@ -446,7 +450,7 @@ class Unet(Module):
         depth (int): Number of down convolutions minus bottom down convolution.
         drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
-        relu (bool): If True, sets final activation to normalized ReLU (ReLU between 0 and 1).
+        final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
         **kwargs:
 
     Attributes:
@@ -454,7 +458,8 @@ class Unet(Module):
         decoder (Decoder): U-net decoder.
     """
 
-    def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, relu=False, **kwargs):
+    def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, final_activation='sigmoid',
+                 **kwargs):
         super(Unet, self).__init__()
 
         # Encoder path
@@ -462,7 +467,7 @@ class Unet(Module):
 
         # Decoder path
         self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
-                               relu=relu)
+                               final_activation=final_activation)
 
     def forward(self, x):
         features, _ = self.encoder(x)
@@ -715,7 +720,7 @@ class UNet3D(nn.Module):
         attention (bool): Boolean indicating whether the attention module is on or not.
         drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
-        relu (bool): If True, sets final activation to normalized ReLU (relu between 0 and 1).
+        final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
         **kwargs:
 
     Attributes:
@@ -724,20 +729,20 @@ class UNet3D(nn.Module):
         base_n_filter (int): Number of base filters in the U-Net.
         attention (bool): Boolean indicating whether the attention module is on or not.
         momentum (float): Batch normalization momentum.
-        relu_activation (bool): If True, sets final activation to normalized ReLU (ReLU between 0 and 1).
+        final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
 
     Note: All layers are defined as attributes and used in the forward method.
     """
 
     def __init__(self, in_channel, out_channel, n_filters=16, attention=False, drop_rate=0.6, bn_momentum=0.1,
-                 relu=False, n_metadata=None, film_layers=None, **kwargs):
+                 final_activation="sigmoid", n_metadata=None, film_layers=None, **kwargs):
         super(UNet3D, self).__init__()
         self.in_channels = in_channel
         self.n_classes = out_channel
         self.base_n_filter = n_filters
         self.attention = attention
         self.momentum = bn_momentum
-        self.relu_activation = relu
+        self.final_activation = final_activation
 
         self.lrelu = nn.LeakyReLU()
         self.dropout3d = nn.Dropout3d(p=drop_rate)
@@ -1031,16 +1036,19 @@ class UNet3D(nn.Module):
 
         out = out_pred + ds1_ds2_sum_upscale_ds3_sum_upscale
         seg_layer = out
-        if self.n_classes > 1:
+
+        if hasattr(self, "final_activation") and self.final_activation == "softmax":
             out = self.softmax(out)
+        elif hasattr(self, "final_activation") and self.final_activation == "relu":
+            out = nn.ReLU()(seg_layer) / nn.ReLU()(seg_layer).max() if bool(nn.ReLU()(seg_layer).max()) \
+                else nn.ReLU()(seg_layer)
+        else:
+            out = torch.sigmoid(out)
+
+        if self.n_classes > 1:
             # Remove background class
             out = out[:, 1:, ]
-        else:
-            if hasattr(self, "relu_activation") and self.relu_activation:
-                out = nn.ReLU()(seg_layer) / nn.ReLU()(seg_layer).max() if bool(nn.ReLU()(seg_layer).max()) \
-                    else nn.ReLU()(seg_layer)
-            else:
-                out = torch.sigmoid(seg_layer)
+
         return out
 
 

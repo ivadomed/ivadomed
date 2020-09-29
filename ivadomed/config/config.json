@@ -5,7 +5,8 @@
     "model_name": "seg_sc_t1-t2-t2s-mt",
     "debugging": false,
     "object_detection_params": {
-        "object_detection_path": null
+        "object_detection_path": null,
+        "safety_factor": [1.0, 1.0, 1.0]
     },
     "loader_parameters": {
         "bids_path": "data_example_spinegeneric",
