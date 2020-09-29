@@ -53,9 +53,9 @@ segmentation training.
 
 - ``log_directory``: Folder name that will contain the output files (e.g., trained model, predictions, results).
 
-   .. code-block:: xml
+  .. code-block:: xml
 
-      "log_directory":"spinegeneric"
+     "log_directory":"spinegeneric"
 
 - ``loader_parameters:bids_path``: Location of the dataset. As discussed in :doc:`../data`, the dataset
   should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
