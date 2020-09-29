@@ -2,22 +2,23 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-import ivadomed
-
-here = path.abspath(path.dirname(__file__))
-
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 #Get README
-from os import path
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+# Get Release version
+path_version = path.join(this_directory, 'ivadomed', 'version.txt')
+with open(path_version) as f:
+    version = f.read().strip()
+
+
 setup(
     name='ivadomed',
-    version=ivadomed.__version__,
+    version=version,
     description='Feature conditioning for IVADO medical imaging project.',
     long_description=long_description,
     long_description_content_type='text/markdown',

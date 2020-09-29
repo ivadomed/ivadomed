@@ -6,6 +6,8 @@ import argparse
 import numpy as np
 import pandas as pd
 
+from ivadomed.utils import init_ivadomed
+
 EXCLUDED_SUBJECT = ["sub-mniPilot1"]
 
 def get_parser():
@@ -130,6 +132,8 @@ def extract_small_dataset(input, output, n=10, contrast_list=None, include_deriv
 
 
 def main():
+    init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
     # Run script
