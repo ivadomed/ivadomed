@@ -40,6 +40,8 @@ def convert_pytorch_to_onnx(model, dimension, gpu=0):
 
 
 def main():
+    imed_utils.init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
     fname_model = args.model

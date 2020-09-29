@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from textwrap import wrap
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
+from ivadomed.utils import init_ivadomed
+
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -238,6 +240,8 @@ def tensorboard_retrieve_event(dpath):
 
 
 def main():
+    init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
     input_folder = args.input
