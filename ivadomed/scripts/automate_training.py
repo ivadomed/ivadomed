@@ -23,6 +23,7 @@ import pandas as pd
 import torch.multiprocessing as mp
 
 from ivadomed import main as ivado
+from ivadomed.utils import init_ivadomed
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.scripts.compare_models import compute_statistics
 
@@ -344,6 +345,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
 
 def main():
+    init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
 
