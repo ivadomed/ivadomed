@@ -112,6 +112,10 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     if len(model_context_list) == 1:
         model_params["name"] = model_context_list[0]
         model_params.update(context[model_context_list[0]])
+    elif 'UNet3D' in model_context_list and 'FiLMedUnet' in model_context_list and len(model_context_list) == 2:
+        model_params["name"] = 'UNet3D'
+        for i in range(len(model_context_list)):
+            model_params.update(context[model_context_list[i]])
     elif len(model_context_list) > 1:
         print('ERROR: Several models are selected in the configuration file: {}.'
               'Please select only one (i.e. only one where: "applied": true).'.format(model_context_list))
@@ -171,7 +175,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         metric_fns = imed_utils.get_metric_fns(ds_train.task)
 
         # If FiLM, normalize data
-        if model_params["name"] == "FiLMedUnet":
+        if 'film_layers' in model_params and any(model_params['film_layers']):
             # Normalize metadata before sending to the FiLM network
             results = imed_film.get_film_metadata_models(ds_train=ds_train,
                                                          metadata_type=model_params['metadata'],
