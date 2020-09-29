@@ -175,7 +175,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                                                              debugging and epoch == 1, log_directory)
 
             # RUN MODEL
-            if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
+            if model_params["name"] == "HeMISUnet" or \
+                    ('film_layers' in model_params and any(model_params['film_layers'])):
                 metadata = get_metadata(batch["input_metadata"], model_params)
                 preds = model(input_samples, metadata)
             else:
