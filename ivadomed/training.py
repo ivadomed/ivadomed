@@ -20,7 +20,7 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils
 
 cudnn.benchmark = True
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
 

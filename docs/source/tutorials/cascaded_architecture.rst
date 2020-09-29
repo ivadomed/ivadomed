@@ -35,6 +35,13 @@ Then, open it with a text editor. As described in the tutorial :doc:`../tutorial
 sure the ``command`` is set to "train" and ``bids_path`` point to the location of the dataset. Below, we will discuss
 some of the key parameters to use cascaded models.
 
+- ``debugging``: Boolean, create extended verbosity and intermediate outputs. Here we will look at the intermediate predictions
+  with tensorboard, we therefore need to activate those intermediate outputs.
+  
+  .. code-block:: xml
+
+     "debugging": true
+
 - ``object_detection_params:object_detection_path``: Location of the object detection model. This parameter corresponds
   to the path of the first model from the cascaded architecture that segments the spinal cord. The packaged model in the
   downloaded dataset located in the folder `trained_model/seg_sc_t1-t2-t2s-mt` will be used to detect the spinal cord.
