@@ -763,6 +763,7 @@ class UNet3D(nn.Module):
             self.base_n_filter, self.base_n_filter * 2,
             kernel_size=3, stride=2, padding=1, bias=False
         )
+        self.film_layer2 = FiLMlayer(n_metadata, self.base_n_filter * 2) if film_layers and film_layers[1] else None
         self.norm_lrelu_conv_c2 = self.norm_lrelu_conv(
             self.base_n_filter * 2, self.base_n_filter * 2)
         self.inorm3d_c2 = nn.InstanceNorm3d(self.base_n_filter * 2, momentum=self.momentum)
@@ -772,6 +773,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 2, self.base_n_filter * 4,
             kernel_size=3, stride=2, padding=1, bias=False
         )
+        self.film_layer3 = FiLMlayer(n_metadata, self.base_n_filter * 4) if film_layers and film_layers[2] else None
         self.norm_lrelu_conv_c3 = self.norm_lrelu_conv(
             self.base_n_filter * 4, self.base_n_filter * 4)
         self.inorm3d_c3 = nn.InstanceNorm3d(self.base_n_filter * 4, momentum=self.momentum)
@@ -781,6 +783,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 4, self.base_n_filter * 8,
             kernel_size=3, stride=2, padding=1, bias=False
         )
+        self.film_layer4 = FiLMlayer(n_metadata, self.base_n_filter * 8) if film_layers and film_layers[3] else None
         self.norm_lrelu_conv_c4 = self.norm_lrelu_conv(
             self.base_n_filter * 8, self.base_n_filter * 8)
         self.inorm3d_c4 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=self.momentum)
@@ -790,6 +793,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 8, self.base_n_filter * 16,
             kernel_size=3, stride=2, padding=1, bias=False
         )
+        self.film_layer5 = FiLMlayer(n_metadata, self.base_n_filter * 16) if film_layers and film_layers[4] else None
         self.norm_lrelu_conv_c5 = self.norm_lrelu_conv(
             self.base_n_filter * 16, self.base_n_filter * 16)
 
@@ -801,6 +805,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 8, self.base_n_filter * 8,
             kernel_size=1, stride=1, padding=0, bias=False
         )
+        self.film_layer6 = FiLMlayer(n_metadata, self.base_n_filter * 8) if film_layers and film_layers[5] else None
         self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=self.momentum)
 
         # Attention UNet
@@ -833,6 +838,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 16, self.base_n_filter * 8,
             kernel_size=1, stride=1, padding=0, bias=False
         )
+        self.film_layer7 = FiLMlayer(n_metadata, self.base_n_filter * 8) if film_layers and film_layers[6] else None
         self.norm_lrelu_upscale_conv_norm_lrelu_l1 = \
             self.norm_lrelu_upscale_conv_norm_lrelu(
                 self.base_n_filter * 8, self.base_n_filter * 4)
@@ -844,6 +850,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 8, self.base_n_filter * 4,
             kernel_size=1, stride=1, padding=0, bias=False
         )
+        self.film_layer8 = FiLMlayer(n_metadata, self.base_n_filter * 4) if film_layers and film_layers[7] else None
         self.norm_lrelu_upscale_conv_norm_lrelu_l2 = \
             self.norm_lrelu_upscale_conv_norm_lrelu(
                 self.base_n_filter * 4, self.base_n_filter * 2)
@@ -855,6 +862,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 4, self.base_n_filter * 2,
             kernel_size=1, stride=1, padding=0, bias=False
         )
+        self.film_layer9 = FiLMlayer(n_metadata, self.base_n_filter * 2) if film_layers and film_layers[8] else None
         self.norm_lrelu_upscale_conv_norm_lrelu_l3 = \
             self.norm_lrelu_upscale_conv_norm_lrelu(
                 self.base_n_filter * 2, self.base_n_filter)
@@ -866,6 +874,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 2, self.n_classes,
             kernel_size=1, stride=1, padding=0, bias=False
         )
+        self.film_layer10 = FiLMlayer(n_metadata, self.n_classes) if film_layers and film_layers[9] else None
 
         self.ds2_1x1_conv3d = nn.Conv3d(
             self.base_n_filter * 8, self.n_classes,
@@ -910,8 +919,9 @@ class UNet3D(nn.Module):
     def forward(self, x, context=None, w_film=None):
         #  Level 1 context pathway
         out = self.conv3d_c1_1(x)
-        residual_1 = out
         out, w_film = self.film_layer1(out, context, w_film)
+        residual_1 = out
+
         out = self.lrelu(out)
         out = self.conv3d_c1_2(out)
         out = self.dropout3d(out)
@@ -924,6 +934,7 @@ class UNet3D(nn.Module):
 
         # Level 2 context pathway
         out = self.conv3d_c2(out)
+        out, w_film = self.film_layer2(out, context, w_film)
         residual_2 = out
         out = self.norm_lrelu_conv_c2(out)
         out = self.dropout3d(out)
@@ -935,6 +946,7 @@ class UNet3D(nn.Module):
 
         # Level 3 context pathway
         out = self.conv3d_c3(out)
+        out, w_film = self.film_layer3(out, context, w_film)
         residual_3 = out
         out = self.norm_lrelu_conv_c3(out)
         out = self.dropout3d(out)
@@ -946,6 +958,7 @@ class UNet3D(nn.Module):
 
         # Level 4 context pathway
         out = self.conv3d_c4(out)
+        out, w_film = self.film_layer4(out, context, w_film)
         residual_4 = out
         out = self.norm_lrelu_conv_c4(out)
         out = self.dropout3d(out)
@@ -957,6 +970,7 @@ class UNet3D(nn.Module):
 
         # Level 5
         out = self.conv3d_c5(out)
+        out, w_film = self.film_layer5(out, context, w_film)
         residual_5 = out
         out = self.norm_lrelu_conv_c5(out)
         out = self.dropout3d(out)
@@ -976,12 +990,14 @@ class UNet3D(nn.Module):
 
         out = self.conv3d_l0(out)
         out = self.inorm3d_l0(out)
+        out, w_film = self.film_layer6(out, context, w_film)
         out = self.lrelu(out)
 
         # Level 1 localization pathway
         out = torch.cat([out, context_4], dim=1)
         out = self.conv_norm_lrelu_l1(out)
         out = self.conv3d_l1(out)
+        out, w_film = self.film_layer7(out, context, w_film)
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l1(out)
 
         # Level 2 localization pathway
@@ -989,6 +1005,7 @@ class UNet3D(nn.Module):
         out = self.conv_norm_lrelu_l2(out)
         ds2 = out
         out = self.conv3d_l2(out)
+        out, w_film = self.film_layer8(out, context, w_film)
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l2(out)
 
         # Level 3 localization pathway
@@ -996,12 +1013,14 @@ class UNet3D(nn.Module):
         out = self.conv_norm_lrelu_l3(out)
         ds3 = out
         out = self.conv3d_l3(out)
+        out, w_film = self.film_layer9(out, context, w_film)
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l3(out)
 
         # Level 4 localization pathway
         out = torch.cat([context_1, out], dim=1)
         out = self.conv_norm_lrelu_l4(out)
         out_pred = self.conv3d_l4(out)
+        out_pred, w_film = self.film_layer10(out_pred, context, w_film)
 
         ds2_1x1_conv = self.ds2_1x1_conv3d(ds2)
         ds1_ds2_sum_upscale = self.upsacle(ds2_1x1_conv)
