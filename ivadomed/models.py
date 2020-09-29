@@ -406,7 +406,7 @@ class Decoder(Module):
 
         # Last Convolution
         self.last_conv = nn.Conv2d(in_channel // 2, out_channel, kernel_size=3, padding=1)
-        self.last_film = FiLMlayer(n_metadata, 1) if film_layers and film_layers[-1] else None
+        self.last_film = FiLMlayer(n_metadata, self.out_channel) if film_layers and film_layers[-1] else None
 
     def forward(self, features, context=None, w_film=None):
         x = features[-1]
