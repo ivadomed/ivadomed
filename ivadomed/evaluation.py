@@ -47,7 +47,9 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
         fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
-        fname_uncertainty = os.path.join(path_preds, subj_acq + '_soft.nii.gz')
+        fname_uncertainty = None
+        if 'uncertainty' in eval_params and 'suffix' in eval_params['uncertainty']:
+            fname_uncertainty = os.path.join(path_preds, subj_acq + eval_params['uncertainty']['suffix'])
 
         # Uncertainty
         uncertain_pred = None
