@@ -587,7 +587,13 @@ class FiLMlayer(Module):
         self.betas = None
 
     def forward(self, feature_maps, context, w_shared):
-        _, self.feature_size, self.height, self.width = feature_maps.data.shape
+        data_shape = feature_maps.data.shape
+        if len(data_shape) == 4:
+            _, self.feature_size, self.height, self.width = data_shape
+        elif len(data_shape) == 5:
+            _, self.feature_size, self.height, self.width, self.depth = data_shape
+        else:
+            raise ValueError("Dataset should be 2D or 3D.")
 
         if torch.cuda.is_available():
             context = torch.Tensor(context).cuda()
@@ -600,10 +606,13 @@ class FiLMlayer(Module):
         # FiLM applies a different affine transformation to each channel,
         # consistent accross spatial locations
         film_params = film_params.unsqueeze(-1).unsqueeze(-1)
-        film_params = film_params.repeat(1, 1, self.height, self.width)
+        if len(data_shape) == 4:
+            film_params = film_params.repeat(1, 1, self.height, self.width)
+        else:
+            film_params = film_params.repeat(1, 2, self.height, self.width, self.depth)
 
-        self.gammas = film_params[:, :self.feature_size, :, :]
-        self.betas = film_params[:, self.feature_size:, :, :]
+        self.gammas = film_params[:, :self.feature_size, ]
+        self.betas = film_params[:, self.feature_size:, ]
 
         # Apply the linear modulation
         output = self.gammas * feature_maps + self.betas
@@ -719,7 +728,7 @@ class UNet3D(nn.Module):
     """
 
     def __init__(self, in_channel, out_channel, n_filters=16, attention=False, drop_rate=0.6, bn_momentum=0.1,
-                 relu=False, **kwargs):
+                 relu=False, n_metadata=None, film_layers=None, **kwargs):
         super(UNet3D, self).__init__()
         self.in_channels = in_channel
         self.n_classes = out_channel
@@ -738,6 +747,7 @@ class UNet3D(nn.Module):
             self.in_channels, self.base_n_filter,
             kernel_size=3, stride=1, padding=1, bias=False
         )
+        self.film_layer1 = FiLMlayer(n_metadata, self.base_n_filter) if film_layers and film_layers[0] else None
         self.conv3d_c1_2 = nn.Conv3d(
             self.base_n_filter, self.base_n_filter,
             kernel_size=3, stride=1, padding=1, bias=False
@@ -895,10 +905,11 @@ class UNet3D(nn.Module):
             nn.InstanceNorm3d(feat_out, momentum=self.momentum),
             nn.LeakyReLU())
 
-    def forward(self, x):
+    def forward(self, x, context=None, w_film=None):
         #  Level 1 context pathway
         out = self.conv3d_c1_1(x)
         residual_1 = out
+        out, w_film = self.film_layer1(out, context, w_film)
         out = self.lrelu(out)
         out = self.conv3d_c1_2(out)
         out = self.dropout3d(out)
