@@ -211,7 +211,7 @@ def label_file_from_coordinates(nifti_image, coord_list):
 
 def threshold_uncertainty(data, uncertainty, thr):
     """
-    Thresholds data according to uncertainty
+    Removes uncertain voxels according to threshold
     Args:
         data (nd.array): prediction from the model
         uncertainty (nd.array): computed uncertainty
@@ -220,6 +220,5 @@ def threshold_uncertainty(data, uncertainty, thr):
     Returns:
         processed data
     """
-    # data[np.where(uncertainty > thr)] =
-    # return data
-    pass
+    data[np.where(uncertainty > thr)] = 0
+    return data
