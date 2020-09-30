@@ -924,7 +924,8 @@ class UNet3D(nn.Module):
     def forward(self, x, context=None, w_film=None):
         #  Level 1 context pathway
         out = self.conv3d_c1_1(x)
-        out, w_film = self.film_layer1(out, context, w_film)
+        if hasattr(self, 'film_layer1') and self.film_layer1:
+            out, w_film = self.film_layer1(out, context, w_film)
         residual_1 = out
 
         out = self.lrelu(out)
@@ -939,7 +940,8 @@ class UNet3D(nn.Module):
 
         # Level 2 context pathway
         out = self.conv3d_c2(out)
-        out, w_film = self.film_layer2(out, context, w_film)
+        if hasattr(self, 'film_layer2') and self.film_layer2:
+            out, w_film = self.film_layer2(out, context, w_film)
         residual_2 = out
         out = self.norm_lrelu_conv_c2(out)
         out = self.dropout3d(out)
@@ -951,7 +953,8 @@ class UNet3D(nn.Module):
 
         # Level 3 context pathway
         out = self.conv3d_c3(out)
-        out, w_film = self.film_layer3(out, context, w_film)
+        if hasattr(self, 'film_layer3') and self.film_layer3:
+            out, w_film = self.film_layer3(out, context, w_film)
         residual_3 = out
         out = self.norm_lrelu_conv_c3(out)
         out = self.dropout3d(out)
@@ -963,7 +966,8 @@ class UNet3D(nn.Module):
 
         # Level 4 context pathway
         out = self.conv3d_c4(out)
-        out, w_film = self.film_layer4(out, context, w_film)
+        if hasattr(self, 'film_layer4') and self.film_layer4:
+            out, w_film = self.film_layer4(out, context, w_film)
         residual_4 = out
         out = self.norm_lrelu_conv_c4(out)
         out = self.dropout3d(out)
@@ -975,7 +979,8 @@ class UNet3D(nn.Module):
 
         # Level 5
         out = self.conv3d_c5(out)
-        out, w_film = self.film_layer5(out, context, w_film)
+        if hasattr(self, 'film_layer5') and self.film_layer5:
+            out, w_film = self.film_layer5(out, context, w_film)
         residual_5 = out
         out = self.norm_lrelu_conv_c5(out)
         out = self.dropout3d(out)
@@ -995,14 +1000,17 @@ class UNet3D(nn.Module):
 
         out = self.conv3d_l0(out)
         out = self.inorm3d_l0(out)
-        out, w_film = self.film_layer6(out, context, w_film)
+
+        if hasattr(self, 'film_layer6') and self.film_layer6:
+            out, w_film = self.film_layer6(out, context, w_film)
         out = self.lrelu(out)
 
         # Level 1 localization pathway
         out = torch.cat([out, context_4], dim=1)
         out = self.conv_norm_lrelu_l1(out)
         out = self.conv3d_l1(out)
-        out, w_film = self.film_layer7(out, context, w_film)
+        if hasattr(self, 'film_layer7') and self.film_layer7:
+            out, w_film = self.film_layer7(out, context, w_film)
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l1(out)
 
         # Level 2 localization pathway
@@ -1010,7 +1018,8 @@ class UNet3D(nn.Module):
         out = self.conv_norm_lrelu_l2(out)
         ds2 = out
         out = self.conv3d_l2(out)
-        out, w_film = self.film_layer8(out, context, w_film)
+        if hasattr(self, 'film_layer8') and self.film_layer8:
+            out, w_film = self.film_layer8(out, context, w_film)
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l2(out)
 
         # Level 3 localization pathway
@@ -1018,14 +1027,16 @@ class UNet3D(nn.Module):
         out = self.conv_norm_lrelu_l3(out)
         ds3 = out
         out = self.conv3d_l3(out)
-        out, w_film = self.film_layer9(out, context, w_film)
+        if hasattr(self, 'film_layer9') and self.film_layer9:
+            out, w_film = self.film_layer9(out, context, w_film)
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l3(out)
 
         # Level 4 localization pathway
         out = torch.cat([context_1, out], dim=1)
         out = self.conv_norm_lrelu_l4(out)
         out_pred = self.conv3d_l4(out)
-        out_pred, w_film = self.film_layer10(out_pred, context, w_film)
+        if hasattr(self, 'film_layer10') and self.film_layer10:
+            out_pred, w_film = self.film_layer10(out_pred, context, w_film)
 
         ds2_1x1_conv = self.ds2_1x1_conv3d(ds2)
         ds1_ds2_sum_upscale = self.upsacle(ds2_1x1_conv)
