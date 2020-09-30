@@ -702,7 +702,8 @@ class BidsDataset(MRI2DSegmentationDataset):
         cache (bool): If the data should be cached in memory or not.
         transform (list): Transformation list (length 2) composed of preprocessing transforms (Compose) and transforms
             to apply during training (Compose).
-        metadata_choice (str): Choice between "mri_params", "contrasts", None or False, relatec to FiLM.
+        metadata_choice (str): Choice between "mri_params", "contrasts", the name of a column from the
+            participants.tsv file, None or False, related to FiLM.
         slice_filter_fn (SliceFilter): Class that filters slices according to their content.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
@@ -797,6 +798,7 @@ class BidsDataset(MRI2DSegmentationDataset):
 
                 # add contrast to metadata
                 metadata['contrast'] = subject.record["modality"]
+
                 if len(bounding_box_dict):
                     # Take only one bounding box for cropping
                     metadata['bounding_box'] = bounding_box_dict[str(subject.record["absolute_path"])][0]
@@ -805,6 +807,19 @@ class BidsDataset(MRI2DSegmentationDataset):
                     if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
                                 self.metadata.keys()]):
                         continue
+                elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
+                    # add custom data to metadata
+                    subject_id = subject.record["subject_id"]
+                    df = bids.BIDS(root_dir).participants.content
+                    metadata[metadata_choice] = df[df['participant_id'] == subject_id][metadata_choice].values[0]
+
+                    # Create metadata dict for OHE
+                    data_lst = sorted(set(df[metadata_choice].values))
+                    metadata_dict = {}
+                    for idx, data in enumerate(data_lst):
+                        metadata_dict[data] = idx
+
+                    metadata['metadata_dict'] = metadata_dict
 
                 # Fill multichannel dictionary
                 if multichannel:
