@@ -19,9 +19,16 @@ For more details on this dataset see :ref:`One-class segmentation with 2D U-Net<
 
 Configuration file
 ------------------
+In this tutorial we will use the configuration file: ``ivadomed/config/config.json``.
+First off, copy this configuration file in your local directory (to avoid modifying the source file):
 
-The configuration file used in this tutorial is the same as the one used for
-:ref:`Technical features <Uncertainty-measures>`. Please open it with a text editor. As described in the tutorial
+.. code-block:: bash
+
+   cp <PATH_TO_IVADOMED>/ivadomed/config/config.json .
+
+Please open it with a text editor.
+The configuration file will be modified to be the same as the one used for
+:ref:`Technical features <Uncertainty-measures>`. As described in the tutorial
 :doc:`../tutorials/one_class_segmentation_2d_unet`, make sure ``bids_path`` point to the location of the dataset.
 The parameters that are specific to this tutorial are:
 
@@ -31,7 +38,7 @@ The parameters that are specific to this tutorial are:
 
   .. code-block:: xml
 
-     "bids_path": "<PATH_TO_DATASET>/data_example_spinegeneric/trained_model"
+     "log_directory": "<PATH_TO_DATASET>/data_example_spinegeneric/trained_model"
 
 - ``command``: Action to perform. Here, we want to do some inference using the previously trained model, so we set the
   field as follows:
