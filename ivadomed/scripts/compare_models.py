@@ -14,6 +14,8 @@ import argparse
 import numpy as np
 import pandas as pd
 
+from ivadomed.utils import init_ivadomed
+
 from scipy.stats import ttest_ind_from_stats
 
 
@@ -92,6 +94,8 @@ def compute_statistics(dataframe, n_iterations, run_test=True, csv_out='comparis
 
 
 def main():
+    init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
     df = pd.read_csv(args.dataframe)

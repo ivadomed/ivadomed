@@ -1,1 +1,2 @@
-__version__ = "2.2.1"
+from .utils import __version__, __ivadomed_dir__
+
