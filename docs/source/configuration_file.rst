@@ -281,7 +281,7 @@ FiLMedUnet (Optional)
 
 -  ``applied``: Bool. Set to ``true`` to use this model.
 -  ``metadata``: String. Choice between ``"mri_params"``,
-   ``"contrasts"`` or the name of a column from the participants.tsv file. ``"mri_params"``: Vectors of
+   ``"contrasts"`` (i.e. image-based metadata) or the name of a column from the participants.tsv file (i.e. subject-based metadata). ``"mri_params"``: Vectors of
    ``[FlipAngle, EchoTime, RepetitionTime, Manufacturer]`` (defined in
    the json of each image) are input to the FiLM generator.
    ``"contrast"``: Image contrasts (according to
