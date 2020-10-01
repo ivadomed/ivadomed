@@ -243,13 +243,15 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     # https://github.com/pytorch/pytorch/issues/2517
     mp.set_start_method('spawn')
 
-    # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
-    pool = mp.Pool(processes=len(initial_config["gpu"]))
+
+
 
     results_df = pd.DataFrame()
     eval_df = pd.DataFrame()
     all_mean = pd.DataFrame()
     for i in range(n_iterations):
+        # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
+        train_pool = mp.Pool(processes=len(initial_config["gpu"]))
         if not fixed_split:
             # Set seed for iteration
             seed = random.randint(1, 10001)
@@ -261,12 +263,18 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                                                                                   "_n=" + str(i).zfill(2))
                     else:
                         config["log_directory"] += "_n=" + str(i).zfill(2)
-        validation_scores = pool.map(partial(train_worker, thr_incr=thr_increment), config_list)
+        validation_scores = train_pool.map(partial(train_worker, thr_incr=thr_increment), config_list)
+
+        train_pool.close()
+        print("waiting for join")
+        train_pool.join()
+
         val_df = pd.DataFrame(validation_scores, columns=[
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
             'best_validation_loss'])
 
         if run_test:
+            test_pool = mp.Pool(processes=len(initial_config["gpu"]))
             new_config_list = []
             for config in config_list:
                 # Delete path_pred
@@ -284,7 +292,10 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                     new_config["gpu"] = config["gpu"]
                 new_config_list.append(new_config)
 
-            test_results = pool.map(test_worker, new_config_list)
+            test_results = test_pool.map(test_worker, new_config_list)
+            test_pool.close()
+            print("waiting for join")
+            test_pool.join()
 
             df_lst = []
             # Merge all eval df together to have a single excel file
