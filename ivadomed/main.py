@@ -262,7 +262,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
         metric_fns = imed_utils.get_metric_fns(ds_test.task)
 
-        if model_params["name"] == "FiLMedUnet":
+        if 'film_layers' in model_params and any(model_params['film_layers']):
             clustering_path = os.path.join(log_directory, "clustering_models.joblib")
             metadata_clustering_models = joblib.load(clustering_path)
             ohe_path = os.path.join(log_directory, "one_hot_encoder.joblib")

@@ -121,7 +121,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         m.train()
 
             # RUN MODEL
-            if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
+            if model_params["name"] == "HeMISUnet" or \
+                    ('film_layers' in model_params and any(model_params['film_layers'])):
                 metadata = get_metadata(batch["input_metadata"], model_params)
                 preds = model(input_samples, metadata)
             else:
