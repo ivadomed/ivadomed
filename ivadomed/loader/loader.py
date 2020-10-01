@@ -807,7 +807,8 @@ class BidsDataset(MRI2DSegmentationDataset):
                     if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
                                 self.metadata.keys()]):
                         continue
-                elif metadata_choice and metadata_choice != 'contrasts' and not None:
+
+                elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
                     # add custom data to metadata
                     subject_id = subject.record["subject_id"]
                     df = bids.BIDS(root_dir).participants.content

@@ -138,7 +138,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         # PREDS TO CPU
         preds_cpu = preds.cpu()
 
-        task =  imed_utils.get_task(model_params["name"])
+        task = imed_utils.get_task(model_params["name"])
         if task == "classification":
             gt_npy_list.append(gt_samples.cpu().numpy())
             preds_npy_list.append(preds_cpu.data.numpy())
