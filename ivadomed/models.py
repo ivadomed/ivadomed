@@ -508,7 +508,7 @@ class FiLMedUnet(Unet):
     """
 
     def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4,
-                 bn_momentum=0.1, n_metadata=None, film_layers=None, **kwargs):
+                 bn_momentum=0.1, n_metadata=None, film_layers=None, dim_2d=True, **kwargs):
         super().__init__(in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1)
 
         # Verify if the length of boolean FiLM layers corresponds to the depth
@@ -520,10 +520,10 @@ class FiLMedUnet(Unet):
             film_layers = [0] * (2 * depth + 2)
         # Encoder path
         self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
-                               n_metadata=n_metadata, film_layers=film_layers)
+                               n_metadata=n_metadata, film_layers=film_layers, dim_2d=dim_2d)
         # Decoder path
         self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
-                               n_metadata=n_metadata, film_layers=film_layers)
+                               n_metadata=n_metadata, film_layers=film_layers, dim_2d=dim_2d)
 
     def forward(self, x, context=None):
         features, w_film = self.encoder(x, context)
