@@ -114,7 +114,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     print("\nScheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
 
     # Create dict containing gammas and betas after each FiLM layer.
-    if model_params["name"] == "FiLMedUnet":
+    if 'film_layers' in model_params and any(model_params['film_layers']):
         gammas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
         betas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
         contrast_list = []
@@ -197,7 +197,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
             if i == 0 and debugging:
                 imed_utils.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds,
-                                                is_three_dim=model_params["name"].endswith("3D"))
+                                                is_three_dim=not model_params["dim_2d"])
 
         if not step_scheduler_batch:
             scheduler.step()
@@ -263,10 +263,10 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
                 if i == 0 and debugging:
                     imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
-                                                    is_three_dim=model_params["name"].endswith("3D"))
+                                                    is_three_dim=not model_params['dim_2d'])
 
-                if model_params["name"] == "FiLMedUnet" and debugging and epoch == num_epochs \
-                        and i < int(len(dataset_val) / training_params["batch_size"]) + 1:
+                if 'film_layers' in model_params and any(model_params['film_layers']) and debugging and \
+                        epoch == num_epochs and i < int(len(dataset_val) / training_params["batch_size"]) + 1:
                     # Store the values of gammas and betas after the last epoch for each batch
                     gammas_dict, betas_dict, contrast_list = store_film_params(gammas_dict, betas_dict, contrast_list,
                                                                                batch['input_metadata'], model,
@@ -324,7 +324,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     # Save final model
     final_model_path = os.path.join(log_directory, "final_model.pt")
     torch.save(model, final_model_path)
-    if model_params["name"] == "FiLMedUnet" and debugging:
+    if 'film_layers' in model_params and any(model_params['film_layers']) and debugging:
         save_film_params(gammas_dict, betas_dict, contrast_list, model_params["depth"], log_directory)
 
     # Save best model in log directory
