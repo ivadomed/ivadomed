@@ -207,18 +207,3 @@ def label_file_from_coordinates(nifti_image, coord_list):
     nib_pred = nib.Nifti1Image(label_array, nifti_image.affine)
 
     return nib_pred
-
-
-def threshold_uncertainty(data, uncertainty, thr):
-    """
-    Removes uncertain voxels according to threshold
-    Args:
-        data (nd.array): prediction from the model
-        uncertainty (nd.array): computed uncertainty
-        thr (float): uncertainty threshold
-
-    Returns:
-        processed data
-    """
-    data[np.where(uncertainty > thr)] = 0
-    return data
