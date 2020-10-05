@@ -1,11 +1,13 @@
 import os
-import pandas as pd
-import numpy as np
+
 import nibabel as nib
-from tqdm import tqdm
+import numpy as np
+import pandas as pd
 from scipy.ndimage import label, generate_binary_structure
+from tqdm import tqdm
 
 from ivadomed import metrics as imed_metrics
+from ivadomed import postprocessing as imed_postpro
 
 # labels of paint_objects method
 TP_COLOUR = 1
@@ -46,7 +48,14 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
         fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
+        fname_uncertainty = ""
+        if 'uncertainty' in eval_params and 'suffix' in eval_params['uncertainty']:
+            fname_uncertainty = os.path.join(path_preds, subj_acq + eval_params['uncertainty']['suffix'])
 
+        # Uncertainty
+        data_uncertainty = None
+        if os.path.exists(fname_uncertainty):
+            data_uncertainty = nib.load(fname_uncertainty).get_fdata()
         # 3D evaluation
         nib_pred = nib.load(fname_pred)
         data_pred = nib_pred.get_fdata()
@@ -60,15 +69,20 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
             else:
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
         eval = Evaluation3DMetrics(data_pred=data_pred,
-                                              data_gt=data_gt,
-                                              dim_lst=nib_pred.header['pixdim'][1:4],
-                                              params=eval_params)
+                                   data_gt=data_gt,
+                                   data_uncertainty=data_uncertainty,
+                                   dim_lst=nib_pred.header['pixdim'][1:4],
+                                   params=eval_params)
         results_pred, data_painted = eval.run_eval()
 
         # SAVE PAINTED DATA, TP FP FN
         fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
         nib_painted = nib.Nifti1Image(data_painted, nib_pred.affine)
         nib.save(nib_painted, fname_paint)
+
+        # SAVE POST-PROCESSED PREDICTION
+        nib_pred = nib.Nifti1Image(eval.data_pred, nib_pred.affine)
+        nib.save(nib_pred, fname_pred)
 
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
@@ -113,7 +127,7 @@ class Evaluation3DMetrics(object):
         data_painted (ndarray): Mask where each predicted object is labeled depending on whether it is a TP or FP.
     """
 
-    def __init__(self, data_pred, data_gt, dim_lst, params=None):
+    def __init__(self, data_pred, data_gt, data_uncertainty, dim_lst, params=None):
         if params is None:
             params = {}
 
@@ -129,6 +143,11 @@ class Evaluation3DMetrics(object):
         self.px, self.py, self.pz = dim_lst
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
+
+        if "uncertainty" in params and data_uncertainty is not None:
+            if params['uncertainty']['thr'] > 0:
+                thr = params['uncertainty']['thr']
+                self.data_pred = imed_postpro.mask_predictions(self.data_pred, data_uncertainty < thr)
 
         # Remove small objects
         if "removeSmall" in params:
