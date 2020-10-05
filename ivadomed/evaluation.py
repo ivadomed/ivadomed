@@ -53,9 +53,9 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
             fname_uncertainty = os.path.join(path_preds, subj_acq + eval_params['uncertainty']['suffix'])
 
         # Uncertainty
-        uncertain_pred = None
+        data_uncertainty = None
         if os.path.exists(fname_uncertainty):
-            uncertain_pred = nib.load(fname_uncertainty).get_fdata()
+            data_uncertainty = nib.load(fname_uncertainty).get_fdata()
         # 3D evaluation
         nib_pred = nib.load(fname_pred)
         data_pred = nib_pred.get_fdata()
@@ -70,7 +70,7 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
         eval = Evaluation3DMetrics(data_pred=data_pred,
                                    data_gt=data_gt,
-                                   uncertain_pred=uncertain_pred,
+                                   data_uncertainty=data_uncertainty,
                                    dim_lst=nib_pred.header['pixdim'][1:4],
                                    params=eval_params)
         results_pred, data_painted = eval.run_eval()
@@ -127,7 +127,7 @@ class Evaluation3DMetrics(object):
         data_painted (ndarray): Mask where each predicted object is labeled depending on whether it is a TP or FP.
     """
 
-    def __init__(self, data_pred, data_gt, uncertain_pred, dim_lst, params=None):
+    def __init__(self, data_pred, data_gt, data_uncertainty, dim_lst, params=None):
         if params is None:
             params = {}
 
@@ -144,11 +144,10 @@ class Evaluation3DMetrics(object):
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
 
-        if "uncertainty" in params and uncertain_pred is not None:
+        if "uncertainty" in params and data_uncertainty is not None:
             if params['uncertainty']['thr'] > 0:
-                self.data_pred = imed_postpro.threshold_uncertainty(self.data_pred,
-                                                                    uncertain_pred,
-                                                                    params['uncertainty']['thr'])
+                thr = params['uncertainty']['thr']
+                self.data_pred = imed_postpro.mask_predictions(self.data_pred, data_uncertainty < thr)
 
         # Remove small objects
         if "removeSmall" in params:
