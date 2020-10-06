@@ -27,7 +27,7 @@ for subfolder in subfolders:
     if len(niis) != 5:
         print("error not 5 files in folder", subfolder)
     print(niis)
-    for nii in niis:
+    #for nii in niis:
 
     print(sub_no)
     print(folder_name)
