@@ -71,7 +71,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                 directory.
     Returns:
         If "train" command: Returns floats: best loss score for both training and validation.
-        If "eval" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing sub dataset
+        If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing sub dataset
             and return the prediction metrics before evaluation.
     """
     command = copy.deepcopy(context["command"])
@@ -152,7 +152,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     if command == "train":
         imed_utils.display_selected_transfoms(transform_train_params, dataset_type=["training"])
         imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=["validation"])
-    elif command == "eval":
+    elif command == "test":
         imed_utils.display_selected_transfoms(transformation_dict, dataset_type=["testing"])
 
     if command == 'train':

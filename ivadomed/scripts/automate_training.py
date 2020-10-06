@@ -92,7 +92,7 @@ def test_worker(config):
 
     try:
         # Save best test score
-        config["command"] = "eval"
+        config["command"] = "test"
         df_results, test_dice = ivado.run_command(config)
 
     except:

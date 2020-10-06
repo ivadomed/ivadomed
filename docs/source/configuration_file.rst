@@ -7,7 +7,7 @@ General parameters
 command
 ^^^^^^^
 
-Run the specified command. Choices: ``"train"`` or ``"eval"``,
+Run the specified command. Choices: ``"train"`` or ``"test"``,
 to train and evaluate a model respectively.
 
 gpu
