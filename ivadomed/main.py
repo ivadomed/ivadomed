@@ -71,7 +71,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                 directory.
     Returns:
         If "train" command: Returns floats: best loss score for both training and validation.
-        If "eval" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing sub dataset.
+        If "eval" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing sub dataset
+            and return the prediction metrics before evaluation.
     """
     command = copy.deepcopy(context["command"])
     log_directory = copy.deepcopy(context["log_directory"])
