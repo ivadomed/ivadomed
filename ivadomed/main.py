@@ -71,7 +71,6 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                 directory.
     Returns:
         If "train" command: Returns floats: best loss score for both training and validation.
-        If "test" command: Returns dict: of averaged metrics computed on the testing sub dataset.
         If "eval" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing sub dataset.
     """
     command = copy.deepcopy(context["command"])
@@ -152,7 +151,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     if command == "train":
         imed_utils.display_selected_transfoms(transform_train_params, dataset_type=["training"])
         imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=["validation"])
-    elif command == "test":
+    elif command == "eval":
         imed_utils.display_selected_transfoms(transformation_dict, dataset_type=["testing"])
 
     if command == 'train':
@@ -248,7 +247,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
-    if command == 'test':
+    if command == 'eval':
         # LOAD DATASET
         ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
                                                                   'transforms_params': transformation_dict,
@@ -269,32 +268,20 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                  "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
 
         # RUN INFERENCE
-        metrics_dict = imed_testing.test(model_params=model_params,
+        pred_metrics = imed_testing.test(model_params=model_params,
                                          dataset_test=ds_test,
                                          testing_params=testing_params,
                                          log_directory=log_directory,
                                          device=device,
                                          cuda_available=cuda_available,
                                          metric_fns=metric_fns)
-        return metrics_dict
-
-    elif command == 'eval':
-        # PREDICTION FOLDER
-        path_preds = os.path.join(log_directory, 'pred_masks')
-        # If the prediction folder does not exist, run Inference first
-        if os.path.isdir(path_preds):
-            context['testing_parameters']['uncertainty']['n_it'] = 0
-
-        print('\nRun Inference\n')
-        context["command"] = "test"
-        run_command(context)
 
         # RUN EVALUATION
         df_results = imed_evaluation.evaluate(bids_path=loader_params['bids_path'],
                                               log_directory=log_directory,
                                               target_suffix=loader_params["target_suffix"],
                                               eval_params=context["evaluation_parameters"])
-        return df_results
+        return df_results, pred_metrics
 
 
 def run_main():
