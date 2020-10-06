@@ -4,7 +4,8 @@ import shutil
 
 path = "../duke/sct_testing/gmseg_challenge_16/"
 subfolders = [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
-
+err = 0
+ok = 0
 for subfolder in subfolders:
 
     if "ucl" in subfolder:
@@ -26,8 +27,12 @@ for subfolder in subfolders:
     niis = [file for file in files if ("nii.gz" in file)]
     if len(niis) != 5:
         print("error not 5 files in folder", subfolder)
+        err += 1
+    else:
+        ok += 1
     print(niis)
     #for nii in niis:
 
     print(sub_no)
     print(folder_name)
+    print(err,ok)
