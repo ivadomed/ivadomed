@@ -126,7 +126,7 @@ def test_create_eval_json():
     initial_config = json.load(file_conf)
     file_conf.close()
     file_conf = open("testing_data/model_config_eval.json", "w")
-    initial_config["command"] = "eval"
+    initial_config["command"] = "test"
     initial_config["transformation"] = {
         "Resample": {
             "wspace": 0.75,

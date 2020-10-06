@@ -24,7 +24,7 @@ def get_parser():
 
 
 def get_results(context):
-    context["command"] = "eval"
+    context["command"] = "test"
     pred_mask_path = os.path.join(context["log_directory"], "pred_masks")
     if os.path.exists(pred_mask_path):
         shutil.rmtree(pred_mask_path)

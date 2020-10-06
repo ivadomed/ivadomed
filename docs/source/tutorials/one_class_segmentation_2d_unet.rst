@@ -175,11 +175,11 @@ Evaluate model
 --------------
 
 To test the trained model on the testing sub-dataset and compute evaluation metrics, open your config file and
-set ``command`` to ``eval``:
+set ``command`` to ``test``:
 
 .. code-block:: bash
 
-   "command": "eval"
+   "command": "test"
 
 Then run:
 
