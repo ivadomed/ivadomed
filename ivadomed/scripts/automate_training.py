@@ -92,16 +92,8 @@ def test_worker(config):
 
     try:
         # Save best test score
-
-        config["command"] = "test"
-        test_dict = ivado.run_command(config)
-        test_dice = test_dict['dice_score']
-
         config["command"] = "eval"
-        df_results = ivado.run_command(config)
-
-        # Uncomment to use 3D dice
-        # test_dice = eval_df["dice"].mean()
+        df_results, test_dice = ivado.run_command(config)
 
     except:
         logging.exception('Got exception on main handler')
