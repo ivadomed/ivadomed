@@ -248,7 +248,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
-    if command == 'eval':
+    if command == 'test':
         # LOAD DATASET
         ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
                                                                   'transforms_params': transformation_dict,
