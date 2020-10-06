@@ -45,7 +45,7 @@ The parameters that are specific to this tutorial are:
 
   .. code-block:: xml
 
-     "command": "test"
+     "command": "eval"
 
 - ``testing_parameters:uncertainty``: Type of uncertainty to estimate. Available choices are ``"epistemic"`` and
   ``"aleatoric"``. Note that both can be ``true``. More details on the implementation are available in :ref:`Technical features <Uncertainty-measures>`.
