@@ -194,7 +194,7 @@ def test_create_json_3d_unet_test():
     initial_config = json.load(file_conf)
     file_conf.close()
     file_conf = open("testing_data/model_config_3d.json", "w")
-    initial_config["command"] = "test"
+    initial_config["command"] = "eval"
     initial_config["loader_parameters"] = {
         "target_suffix": ["_lesion-manual"],
         "roi_suffix": null,
