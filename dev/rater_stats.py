@@ -12,6 +12,26 @@ def subjectFilter(input):
     else:
         return False
 
+
+def compute_majority(dict):
+    new_dict = {}
+    for rater in dict:
+        hspace = 0.25
+        wspace = 0.25
+        dspace = 0.5
+        zooms = (dict[rater])[2]
+        hfactor = zooms[0] / self.hspace
+        wfactor = zooms[1] / self.wspace
+        dfactor = zooms[2] / self.dspace
+        params_resample = (hfactor, wfactor, dfactor)
+        # Run resampling
+        data_out = zoom((dict[rater])[1],
+                        zoom=params_resample,
+                        order=1)
+        print(data_out.shape())
+        crop = imed_transforms.CenterCrop([128, 128])
+        print crop(data_out)[0].shape()
+        new_dict[rater] = ((dict[rater])[0], crop(data_out)[0])
 #contrasts = ["FLAIR", "ce-T1w", "PD", "T1w", "T2w"]
 contrasts = ["T2w"]
 #ms brain
@@ -48,7 +68,7 @@ for subject in subjects:
             #print(rater)
 
     compute_majority(dict)
-    
+
     gt = (dict["0"])[1]
     for key in dict:
         if key != "0":
@@ -60,25 +80,6 @@ for subject in subjects:
             TN = np.count_nonzero(np.logical_and(np.logical_not(im1), np.logical_not(gt)))
             df2 = df2.append({'file': (dict[key])[0], 'rater': key, 'TP': TP, 'FP': FP, 'FN': FN, 'TN': TN}, ignore_index=True)
 
-def compute_majority(dict):
-    new_dict = {}
-    for rater in dict:
-        hspace = 0.25
-        wspace = 0.25
-        dspace = 0.5
-        zooms = (dict[rater])[2]
-        hfactor = zooms[0] / self.hspace
-        wfactor = zooms[1] / self.wspace
-        dfactor = zooms[2] / self.dspace
-        params_resample = (hfactor, wfactor, dfactor)
-        # Run resampling
-        data_out = zoom((dict[rater])[1],
-                        zoom=params_resample,
-                        order=1)
-        print(data_out.shape())
-        crop = imed_transforms.CenterCrop([128, 128])
-        print crop(data_out)[0].shape()
-        new_dict[rater] = ((dict[rater])[0], crop(data_out)[0])
 print(df.head(30))
 df.to_csv('rater_lesion_stats.csv')
 df2.to_csv('rater_voxel_stats.csv')
