@@ -35,7 +35,7 @@ for subfolder in subfolders:
         if folder_name in subfolders2:
             for nii in niis:
                 nii_center = (nii.split("_")[-1]).split(".")[0]
-                shutil.copyfile(os.path.join(path,subfolder,"t2s",nii),os.path.join(path2,"derivatives",folder_name,"anat", folder_name + "_T2star" + "_rater" + centers[nii_center]))
+                shutil.copyfile(os.path.join(path,subfolder,"t2s",nii),os.path.join(path2,"derivatives/labels",folder_name,"anat", folder_name + "_T2star" + "_seg-lesion" + centers[nii_center]))
                 #print(os.path.join(path,subfolder,"t2s",nii),os.path.join(path2,"derivatives",folder_name,"anat", folder_name + "_T2star" + "_seg-lesion" + centers[nii_center] + ".nii.gz"))
         ok += 1
     #print(niis)
