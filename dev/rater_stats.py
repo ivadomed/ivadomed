@@ -5,7 +5,7 @@ import nibabel
 import numpy as np
 import pandas as pd
 from skimage import measure
-from ivadomed import imed_transforms
+from ivadomed import transforms as imed_transforms
 def subjectFilter(input):
     if("sub" in input):
         return True
