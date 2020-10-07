@@ -3,7 +3,7 @@ import random
 import shutil
 
 path = "../duke/sct_testing/gmseg_challenge_16/"
-path2 = "../duke/projects/ivadomed/gmseg_challenge_16_inter_rater/"
+path2 = "../duke/projects/ivadomed/gm_challenge_16_inter_rater/"
 subfolders = [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
 subfolders2 = [ name for name in os.listdir(path2) if os.path.isdir(os.path.join(path2, name)) ]
 centers = {"ucl":1, "unf":2, "vanderbilt":3, "zurich":4}
