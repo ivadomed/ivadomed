@@ -31,7 +31,7 @@ def compute_majority(dict):
                         zoom=params_resample,
                         order=1)
 
-        print(data_out[0].shape)
+        print(data_out.shape)
         crop = imed_transforms.CenterCrop([128, 128])
         metadata = {}
         metadata['crop_params'] = {}
