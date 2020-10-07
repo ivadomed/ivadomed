@@ -5,6 +5,8 @@ import shutil
 path = "../duke/sct_testing/gmseg_challenge_16/"
 path2 = "../duke/projects/ivadomed/gmseg_challenge_16_inter_rater/"
 subfolders = [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
+subfolders2 = [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
+centers = {ucl:1, unf:2, vanderbilt:3, zurich:4}
 err = 0
 ok = 0
 for subfolder in subfolders:
@@ -25,11 +27,16 @@ for subfolder in subfolders:
         print("erreur")
 
     files = os.listdir(os.path.join(path,subfolder,"t2s"))
-    niis = [file for file in files if ("nii.gz" in file)]
-    if len(niis) < 5:
+    niis = [file for file in files if ("nii.gz" in file and any(center in file for center in centers))]
+    if len(niis) < 4:
         print("error not 5 files in folder", subfolder)
         err += 1
     else:
+        if folder_name in subfolders2:
+            for nii in niis:
+                nii_center = (nii.split("_")[-1]).split(".")[0]
+                #shutil.copyfile(os.path.join(path,subfolder,"t2s",nii),os.path.join(path2,"derivatives",folder_name,"anat", folder_name + "_T2star" + "_rater" + centers[nii_center]))
+                print(os.path.join(path,subfolder,"t2s",nii),os.path.join(path2,"derivatives",folder_name,"anat", folder_name + "_T2star" + "_rater" + centers[nii_center]))
         ok += 1
     print(niis)
     #for nii in niis:
