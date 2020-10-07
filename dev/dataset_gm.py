@@ -31,8 +31,8 @@ for subfolder in subfolders:
     if len(niis) < 4:
         print("error not 5 files in folder", subfolder)
         if folder_name in subfolders2:
-            shutil.rmtree(os.path.join(path2,"derivatives/labels",folder_name)
-            shutil.rmtree(os.path.join(path2,folder_name)
+            shutil.rmtree(os.path.join(path2,"derivatives/labels",folder_name))
+            shutil.rmtree(os.path.join(path2,folder_name))
         err += 1
     else:
         if folder_name in subfolders2:
