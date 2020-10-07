@@ -66,7 +66,7 @@ for subject in subjects:
             df = df.append({'file': base_name, 'rater': rater, 'lesion_count': labels.max(), 'positive_voxels': np.count_nonzero(im1)}, ignore_index=True)
             #print(base_name)
             #print(rater)
-    print(dict)
+    #print(dict)
     compute_majority(dict)
 
     gt = (dict["0"])[1]
