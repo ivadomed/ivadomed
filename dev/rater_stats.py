@@ -35,7 +35,7 @@ def compute_majority(dict):
         crop = imed_transforms.CenterCrop([128, 128])
         metadata = {}
         metadata['crop_params'] = {}
-        print(crop(data_out,metadata)[0].shape)
+        print(crop(data_out,metadata).shape)
         new_dict[rater] = ((dict[rater])[0], crop(data_out,metadata)[0])
 #contrasts = ["FLAIR", "ce-T1w", "PD", "T1w", "T2w"]
 contrasts = ["T2star"]
