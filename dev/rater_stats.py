@@ -5,7 +5,7 @@ import nibabel
 import numpy as np
 import pandas as pd
 from skimage import measure
-
+from ivadomed import imed_transforms
 def subjectFilter(input):
     if("sub" in input):
         return True
@@ -38,13 +38,15 @@ for subject in subjects:
         #if rater == "n":
             fname = os.path.join(deriv_path,subject,"anat",nii)
             im1 = nibabel.load(fname).get_data()
+            zooms = nibabel.load(fname).header.get_zooms()
             im1[im1 > 0] = 1
             #im1[im1 < 0.5] = 0
-            dict[rater] = (base_name,im1)
+            dict[rater] = (base_name,im1,zooms)
             labels = measure.label(im1)
             df = df.append({'file': base_name, 'rater': rater, 'lesion_count': labels.max(), 'positive_voxels': np.count_nonzero(im1)}, ignore_index=True)
             #print(base_name)
             #print(rater)
+
 
     gt = (dict["0"])[1]
     for key in dict:
@@ -57,6 +59,25 @@ for subject in subjects:
             TN = np.count_nonzero(np.logical_and(np.logical_not(im1), np.logical_not(gt)))
             df2 = df2.append({'file': (dict[key])[0], 'rater': key, 'TP': TP, 'FP': FP, 'FN': FN, 'TN': TN}, ignore_index=True)
 
+def compute_majority(dict):
+    new_dict = {}
+    for rater in dict:
+        hspace = 0.25
+        wspace = 0.25
+        dspace = 0.5
+        zooms = (dict[rater])[2]
+        hfactor = zooms[0] / self.hspace
+        wfactor = zooms[1] / self.wspace
+        dfactor = zooms[2] / self.dspace
+        params_resample = (hfactor, wfactor, dfactor)
+        # Run resampling
+        data_out = zoom((dict[rater])[1],
+                        zoom=params_resample,
+                        order=1)
+        print(data_out.shape())
+        crop = imed_transforms.CenterCrop([128, 128])
+        print crop(data_out)[0].shape()
+        new_dict[rater] = ((dict[rater])[0], crop(data_out)[0])
 print(df.head(30))
 df.to_csv('rater_lesion_stats.csv')
 df2.to_csv('rater_voxel_stats.csv')

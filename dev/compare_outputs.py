@@ -58,6 +58,7 @@ def multi_model_entropy():
         nib_unc = nibabel.Nifti1Image(unc, nibabel.load(os.path.join(paths[0],"pred_masks",key)).get_affine())
         nibabel.save(nib_unc, os.path.join("./combined_preds",key))
 
+#Rater disagreement
 def compute_difference():
     path = "./"
     niftis = os.listdir(path)
@@ -70,6 +71,7 @@ def compute_difference():
         #im1[im1 > 0.5] -= 1
         #im1 = np.abs(im1)
         #nibabel.save( nibabel.Nifti1Image(im1, nibabel.load(path + nifti).get_affine()), path + nifti)
+
 def js_divergence():
     parser = get_parser()
     args = parser.parse_args()
