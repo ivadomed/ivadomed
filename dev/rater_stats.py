@@ -18,7 +18,7 @@ contrasts = ["T2w"]
 #deriv_path = "/scratch/ms_brain/_BIDS_sameResolution/derivatives/labels"
 #deriv_path = "/scratch/ms_brain/_BIDS/derivatives/labels"
 #gm
-deriv_path = "/duke/projects/ivadomed/gm_challenge_16_inter_rater/derivatives/labels"
+deriv_path = "../duke/projects/ivadomed/gm_challenge_16_inter_rater/derivatives/labels"
 
 subjects=list(filter(subjectFilter,os.listdir(deriv_path)))
 print(subjects)
