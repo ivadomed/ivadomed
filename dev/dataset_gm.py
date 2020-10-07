@@ -30,6 +30,9 @@ for subfolder in subfolders:
     niis = [file for file in files if ("nii.gz" in file and any(center in file for center in centers) and not "uncorrect" in file)]
     if len(niis) < 4:
         print("error not 5 files in folder", subfolder)
+        if folder_name in subfolders2:
+            shutil.rmtree(os.path.join(path2,"derivatives/labels",folder_name)
+            shutil.rmtree(os.path.join(path2,folder_name)
         err += 1
     else:
         if folder_name in subfolders2:
