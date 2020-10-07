@@ -5,7 +5,7 @@ import shutil
 path = "../duke/sct_testing/gmseg_challenge_16/"
 path2 = "../duke/projects/ivadomed/gmseg_challenge_16_inter_rater/"
 subfolders = [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
-subfolders2 = [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
+subfolders2 = [ name for name in os.listdir(path2) if os.path.isdir(os.path.join(path2, name)) ]
 centers = {"ucl":1, "unf":2, "vanderbilt":3, "zurich":4}
 err = 0
 ok = 0
@@ -38,9 +38,9 @@ for subfolder in subfolders:
                 #shutil.copyfile(os.path.join(path,subfolder,"t2s",nii),os.path.join(path2,"derivatives",folder_name,"anat", folder_name + "_T2star" + "_rater" + centers[nii_center]))
                 print(os.path.join(path,subfolder,"t2s",nii),os.path.join(path2,"derivatives",folder_name,"anat", folder_name + "_T2star" + "_rater" + centers[nii_center]))
         ok += 1
-    print(niis)
+    #print(niis)
     #for nii in niis:
 
-    print(sub_no)
+    #print(sub_no)
     print(folder_name)
-    print(err,ok)
+    #print(err,ok)
