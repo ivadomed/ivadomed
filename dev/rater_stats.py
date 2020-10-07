@@ -74,11 +74,16 @@ for subject in subjects:
             #print(rater)
     #print(dict)
     #compute_majority(dict)
+
+    #Majority voting for gm
     sum = np.zeros((dict["1"][1]).shape)
     for key in dict:
         sum += dict[key][1]
-    dict["0"] = (None, np.where(sum >= 3, 1, 0), None)
-
+    im1 = np.where(sum >= 3, 1, 0)
+    dict["0"] = (None, im1, None)
+    labels = measure.label(im1)
+    df = df.append({'file': "", 'rater': "0", 'lesion_count': labels.max(), 'positive_voxels': np.count_nonzero(im1)}, ignore_index=True)
+    
     gt = (dict["0"])[1]
     for key in dict:
         if key != "0":
