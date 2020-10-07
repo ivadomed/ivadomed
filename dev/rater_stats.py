@@ -73,7 +73,10 @@ for subject in subjects:
             #print(base_name)
             #print(rater)
     #print(dict)
-    compute_majority(dict)
+    #compute_majority(dict)
+    sum = np.zeros(size(dict["1"][1]))
+    for key in dict:
+        sum += dict[key][1]
 
     gt = (dict["0"])[1]
     for key in dict:
