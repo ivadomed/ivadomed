@@ -74,7 +74,7 @@ for subject in subjects:
             #print(rater)
     #print(dict)
     #compute_majority(dict)
-    sum = np.zeros(np.size(dict["1"][1]))
+    sum = np.zeros((dict["1"][1]).shape)
     for key in dict:
         sum += dict[key][1]
 
