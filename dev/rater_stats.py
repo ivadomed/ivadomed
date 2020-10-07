@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from skimage import measure
 from ivadomed import transforms as imed_transforms
+from scipy.ndimage import zoom
+
 def subjectFilter(input):
     if("sub" in input):
         return True
