@@ -6,7 +6,7 @@ path = "../duke/sct_testing/gmseg_challenge_16/"
 path2 = "../duke/projects/ivadomed/gmseg_challenge_16_inter_rater/"
 subfolders = [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
 subfolders2 = [ name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name)) ]
-centers = {ucl:1, unf:2, vanderbilt:3, zurich:4}
+centers = {"ucl":1, "unf":2, "vanderbilt":3, "zurich":4}
 err = 0
 ok = 0
 for subfolder in subfolders:
