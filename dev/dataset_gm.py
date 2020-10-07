@@ -27,7 +27,7 @@ for subfolder in subfolders:
         print("erreur")
 
     files = os.listdir(os.path.join(path,subfolder,"t2s"))
-    niis = [file for file in files if ("nii.gz" in file and any(center in file for center in centers))]
+    niis = [file for file in files if ("nii.gz" in file and any(center in file for center in centers) and not "uncorrect" in file)]
     if len(niis) < 4:
         print("error not 5 files in folder", subfolder)
         err += 1
