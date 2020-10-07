@@ -33,7 +33,7 @@ def compute_majority(dict):
         print(crop(data_out)[0].shape())
         new_dict[rater] = ((dict[rater])[0], crop(data_out)[0])
 #contrasts = ["FLAIR", "ce-T1w", "PD", "T1w", "T2w"]
-contrasts = ["T2w"]
+contrasts = ["T2star"]
 #ms brain
 #deriv_path = "/scratch/ms_brain/_BIDS_sameResolution/derivatives/labels"
 #deriv_path = "/scratch/ms_brain/_BIDS/derivatives/labels"
