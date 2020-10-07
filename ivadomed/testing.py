@@ -276,8 +276,7 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
         float: optimal threshold.
     """
     if metric not in ["dice", "recall_specificity"]:
-        print('\nChoice of metric for threshold analysis: dice, recall_specificity.')
-        exit()
+        raise ValueError('\nChoice of metric for threshold analysis: dice, recall_specificity.')
 
     # Adjust some testing parameters
     testing_params["binarize_prediction"] = -1
