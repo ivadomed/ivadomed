@@ -64,6 +64,7 @@ for subject in subjects:
             fname = os.path.join(deriv_path,subject,"anat",nii)
             im1 = nibabel.load(fname).get_data()
             zooms = nibabel.load(fname).header.get_zooms()
+            print(zooms)
             im1[im1 > 0] = 1
             #im1[im1 < 0.5] = 0
             dict[rater] = (base_name,im1,zooms)
@@ -72,8 +73,8 @@ for subject in subjects:
             #print(base_name)
             #print(rater)
     #print(dict)
-    compute_majority(dict)
-
+    #compute_majority(dict)
+"""
     gt = (dict["0"])[1]
     for key in dict:
         if key != "0":
@@ -84,7 +85,7 @@ for subject in subjects:
             FN = np.count_nonzero(np.logical_and(np.logical_not(im1), gt))
             TN = np.count_nonzero(np.logical_and(np.logical_not(im1), np.logical_not(gt)))
             df2 = df2.append({'file': (dict[key])[0], 'rater': key, 'TP': TP, 'FP': FP, 'FN': FN, 'TN': TN}, ignore_index=True)
-
+"""
 print(df.head(30))
 df.to_csv('rater_lesion_stats.csv')
 df2.to_csv('rater_voxel_stats.csv')
