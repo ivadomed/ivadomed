@@ -20,7 +20,7 @@ def compute_majority(dict):
     for rater in dict:
         hspace = 0.25
         wspace = 0.25
-        dspace = 0.5
+        dspace = 2
         zooms = (dict[rater])[2]
         hfactor = zooms[0] / hspace
         wfactor = zooms[1] / wspace
@@ -32,10 +32,10 @@ def compute_majority(dict):
                         order=1)
 
         print(data_out.shape)
-        crop = imed_transforms.CenterCrop([128, 128])
+        crop = imed_transforms.CenterCrop([128, 128,15])
         metadata = {}
         metadata['crop_params'] = {}
-        print(crop(data_out,metadata).shape)
+        print(crop(data_out,metadata)[0].shape)
         new_dict[rater] = ((dict[rater])[0], crop(data_out,metadata)[0])
 #contrasts = ["FLAIR", "ce-T1w", "PD", "T1w", "T2w"]
 contrasts = ["T2star"]
@@ -64,7 +64,7 @@ for subject in subjects:
             fname = os.path.join(deriv_path,subject,"anat",nii)
             im1 = nibabel.load(fname).get_data()
             zooms = nibabel.load(fname).header.get_zooms()
-            print(zooms)
+            #print(zooms)
             im1[im1 > 0] = 1
             #im1[im1 < 0.5] = 0
             dict[rater] = (base_name,im1,zooms)
@@ -73,8 +73,8 @@ for subject in subjects:
             #print(base_name)
             #print(rater)
     #print(dict)
-    #compute_majority(dict)
-"""
+    compute_majority(dict)
+
     gt = (dict["0"])[1]
     for key in dict:
         if key != "0":
@@ -85,7 +85,7 @@ for subject in subjects:
             FN = np.count_nonzero(np.logical_and(np.logical_not(im1), gt))
             TN = np.count_nonzero(np.logical_and(np.logical_not(im1), np.logical_not(gt)))
             df2 = df2.append({'file': (dict[key])[0], 'rater': key, 'TP': TP, 'FP': FP, 'FN': FN, 'TN': TN}, ignore_index=True)
-"""
+
 print(df.head(30))
 df.to_csv('rater_lesion_stats.csv')
 df2.to_csv('rater_voxel_stats.csv')
