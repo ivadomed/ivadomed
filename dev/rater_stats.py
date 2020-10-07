@@ -20,9 +20,9 @@ def compute_majority(dict):
         wspace = 0.25
         dspace = 0.5
         zooms = (dict[rater])[2]
-        hfactor = zooms[0] / self.hspace
-        wfactor = zooms[1] / self.wspace
-        dfactor = zooms[2] / self.dspace
+        hfactor = zooms[0] / hspace
+        wfactor = zooms[1] / wspace
+        dfactor = zooms[2] / dspace
         params_resample = (hfactor, wfactor, dfactor)
         # Run resampling
         data_out = zoom((dict[rater])[1],
