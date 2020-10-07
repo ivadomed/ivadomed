@@ -77,6 +77,7 @@ for subject in subjects:
     sum = np.zeros((dict["1"][1]).shape)
     for key in dict:
         sum += dict[key][1]
+    dict["0"] = (None, np.where(sum >= 3, 1, 0), None)
 
     gt = (dict["0"])[1]
     for key in dict:
