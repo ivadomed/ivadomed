@@ -88,7 +88,8 @@ for subject in subjects:
             FP = np.count_nonzero(np.logical_and(im1, np.logical_not(gt)))
             FN = np.count_nonzero(np.logical_and(np.logical_not(im1), gt))
             TN = np.count_nonzero(np.logical_and(np.logical_not(im1), np.logical_not(gt)))
-            df2 = df2.append({'file': (dict[key])[0], 'rater': key, 'TP': TP, 'FP': FP, 'FN': FN, 'TN': TN}, ignore_index=True)
+            total = np.size(gt)
+            df2 = df2.append({'file': (dict[key])[0], 'rater': key, 'TP': TP/total, 'FP': FP/total, 'FN': FN/total, 'TN': TN/total}, ignore_index=True)
 
 print(df.head(30))
 df.to_csv('rater_lesion_stats.csv')
