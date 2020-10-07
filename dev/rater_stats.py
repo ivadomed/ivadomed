@@ -47,7 +47,8 @@ for subject in subjects:
             #print(base_name)
             #print(rater)
 
-
+    compute_majority(dict)
+    
     gt = (dict["0"])[1]
     for key in dict:
         if key != "0":
