@@ -703,7 +703,7 @@ def HDF5_to_Bids(HDF5, subjects, path_dir):
     hdf5 = h5py.File(HDF5, "r")
     # check the dir exists:
     if not path.exists(path_dir):
-        raise FileNotFoundError("Directory doesn't exist. Stopping process.")
+        raise FileNotFoundError("Directory {} doesn't exist. Stopping process.".format(path_dir))
 
     # loop over all subjects
     for sub in subjects:

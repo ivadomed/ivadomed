@@ -406,8 +406,8 @@ def get_scheduler(params, optimizer, num_epochs=0):
         step_scheduler_batch = True
     else:
         raise ValueError(
-            "Unknown LR Scheduler name, please choose between 'CosineAnnealingLR', 'CosineAnnealingWarmRestarts',"
-            "or 'CyclicLR'")
+            "{} is an unknown LR Scheduler name, please choose between 'CosineAnnealingLR', "
+            "'CosineAnnealingWarmRestarts', or 'CyclicLR'".format(scheduler_name))
 
     return scheduler, step_scheduler_batch
 
@@ -430,7 +430,7 @@ def get_loss_function(params):
                                "BinaryCrossEntropyLoss", "TverskyLoss", "FocalTverskyLoss", "AdapWingLoss", "L2loss",
                                "LossCombination"]
     if loss_name not in loss_function_available:
-        raise ValueError("Unknown Loss function, please choose between {}".format(loss_function_available))
+        raise ValueError("Unknown Loss function: {}, please choose between {}".format(loss_name, loss_function_available))
 
     loss_class = getattr(imed_losses, loss_name)
     loss_fct = loss_class(**params)
