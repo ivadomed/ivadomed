@@ -115,7 +115,7 @@ class Compose(object):
                 params_cur = {k: parameters[k] for k in parameters if k != "applied_to" and k != "preprocessing"}
                 transform_obj = globals()[transform](**params_cur)
             else:
-                raise ValueError('ERROR: {} transform is not available in your ivadomed package. '
+                raise ValueError('ERROR: {} transform is not available. '
                       'Please check its compatibility with your model json file.'.format(transform))
 
             # check if undo_transform method is implemented
