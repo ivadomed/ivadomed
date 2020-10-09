@@ -1379,13 +1379,10 @@ def get_model_filenames(folder_model):
         if not os.path.isfile(fname_model):
             fname_model = os.path.join(folder_model, prefix_model + '.pt')
             if not os.path.exists(fname_model):
-                print('Model file not found: {}'.format(fname_model))
-                exit()
+                raise FileNotFoundError(fname_model)
         fname_model_metadata = os.path.join(folder_model, prefix_model + '.json')
         if not os.path.isfile(fname_model_metadata):
-            print('Model metadata file not found: {}'.format(fname_model_metadata))
-            exit()
+            raise FileNotFoundError(fname_model)
     else:
-        print('Model folder not found: {}'.format(folder_model))
-        exit()
+        raise FileNotFoundError(fname_model)
     return fname_model, fname_model_metadata
