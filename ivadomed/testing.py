@@ -349,7 +349,7 @@ def get_gt(filenames):
     """Get ground truth data as numpy array.
     
     Args:
-        - filenames (list): List of ground truth filenames, one per class.
+        filenames (list): List of ground truth filenames, one per class.
     Returns:
         ndarray: 4D numpy array.
     """
