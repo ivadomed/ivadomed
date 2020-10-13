@@ -97,7 +97,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         ndarray, ndarray: Prediction, Ground-truth of shape n_sample, n_label, h, w, d.
     """
     # INIT STORAGE VARIABLES
-    preds_npy_list, gt_npy_list = [], []
+    preds_npy_list, gt_npy_list, filenames = [], [], []
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     volume = None
     weight_matrix = None
@@ -183,11 +183,18 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         slice_axis=slice_axis,
                                                         kernel_dim='2d',
                                                         bin_thr=testing_params["binarize_prediction"])
-                    # TODO: Adapt to multilabel
-                    output_data = output_nii.get_fdata()[:, :, :, 0]
+                    output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
                     preds_npy_list.append(output_data)
 
-                    gt_npy_list.append(nib.load(fname_tmp).get_fdata())
+                    gt_lst = []
+                    for gt in filenames:
+                        # For multi-label, if all labels are not in every image
+                        if gt is not None:
+                            gt_lst.append(nib.load(gt).get_fdata())
+                        else:
+                            gt_lst.append(np.zeros(gt_lst[0].shape))
+
+                    gt_npy_list.append(np.array(gt_lst))
 
                     output_nii_shape = output_nii.get_fdata().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1 and ofolder:
@@ -206,6 +213,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 # TODO: slice_index should be stored in gt_metadata as well
                 z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
                 fname_tmp = fname_ref
+                filenames = metadata_idx[0]['gt_filenames']
+
 
             else:
                 pred_undo, metadata, last_sample_bool, volume, weight_matrix = \
