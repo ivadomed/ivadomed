@@ -342,7 +342,7 @@ class Evaluation3DMetrics(object):
 
         for idx in range(1, self.n_gt[class_idx] + 1):
             data_gt_idx = (self.data_gt_label[..., class_idx] == idx).astype(np.int)
-            overlap = (data_gt_idx * self.data_pred[..., class_idx]).astype(np.int)
+            overlap = (data_gt_idx * self.data_pred).astype(np.int)
 
             # if label_size is None, then we look at all object sizes
             # we check if the currrent object belongs to the current size range
@@ -377,7 +377,7 @@ class Evaluation3DMetrics(object):
         lfp = 0
         for idx in range(1, self.n_pred[class_idx] + 1):
             data_pred_idx = (self.data_pred_label[..., class_idx] == idx).astype(np.int)
-            overlap = (data_pred_idx * self.data_gt[..., class_idx]).astype(np.int)
+            overlap = (data_pred_idx * self.data_gt).astype(np.int)
 
             label_gt = np.max(data_pred_idx * self.data_gt_label[..., class_idx])
             data_gt_idx = (self.data_gt_label[..., class_idx] == label_gt).astype(np.int)
@@ -460,8 +460,8 @@ class Evaluation3DMetrics(object):
             dct['specificity_class' + str(n)] = imed_metrics.specificity_score(self.data_pred, self.data_gt,
                                                                                err_value=np.nan)
             dct['n_pred_class' + str(n)], dct['n_gt_class' + str(n)] = self.n_pred[n], self.n_gt[n]
-            dct['ltpr_class' + str(n)], _ = self.get_ltpr()
-            dct['lfdr_class' + str(n)] = self.get_lfdr()
+            dct['ltpr_class' + str(n)], _ = self.get_ltpr(class_idx=n)
+            dct['lfdr_class' + str(n)] = self.get_lfdr(class_idx=n)
             dct['mse_class' + str(n)] = imed_metrics.mse(self.data_gt, self.data_pred)
 
             for lb_size, gt_pred in zip(self.label_size_lst[n][0], self.label_size_lst[n][1]):
