@@ -449,7 +449,6 @@ class Evaluation3DMetrics(object):
         for n in range(self.n_classes):
             self.data_pred = data_pred[..., n]
             self.data_gt = data_gt[..., n]
-            data_pred = self.data_pred[..., n]
             dct['vol_pred_class' + str(n)] = self.get_vol(self.data_pred)
             dct['vol_gt_class' + str(n)] = self.get_vol(self.data_gt)
             dct['rvd_class' + str(n)], dct['avd_class' + str(n)] = self.get_rvd(), self.get_avd()
