@@ -154,7 +154,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             if "bounding_box" in batch['input_metadata'][smp_idx][0]:
                 imed_obj_detect.adjust_undo_transforms(testing_params["undo_transforms"].transforms, batch, smp_idx)
 
-            if not model_params["name"].endswith('3D'):
+            if model_params["dim_2d"]:
                 last_sample_bool = (last_batch_bool and smp_idx == len(preds_cpu) - 1)
                 # undo transformations
                 preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
