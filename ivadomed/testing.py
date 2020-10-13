@@ -346,6 +346,13 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
 
 
 def get_gt(filenames):
+    """Get ground truth data as numpy array.
+    
+    Args:
+        - filenames (list): List of ground truth filenames, one per class.
+    Returns:
+        ndarray: 4D numpy array.
+    """
     gt_lst = []
     for gt in filenames:
         # For multi-label, if all labels are not in every image
