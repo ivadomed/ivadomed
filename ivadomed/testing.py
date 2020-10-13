@@ -186,15 +186,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
                     preds_npy_list.append(output_data)
 
-                    gt_lst = []
-                    for gt in filenames:
-                        # For multi-label, if all labels are not in every image
-                        if gt is not None:
-                            gt_lst.append(nib.load(gt).get_fdata())
-                        else:
-                            gt_lst.append(np.zeros(gt_lst[0].shape))
-
-                    gt_npy_list.append(np.array(gt_lst))
+                    gt = get_gt(filenames)
+                    gt_npy_list.append(gt)
 
                     output_nii_shape = output_nii.get_fdata().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1 and ofolder:
@@ -245,15 +238,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
                     preds_npy_list.append(output_data)
 
-                    gt_lst = []
-                    for gt in metadata[0]['gt_filenames']:
-                        # For multi-label, if all labels are not in every image
-                        if gt is not None:
-                            gt_lst.append(nib.load(gt).get_fdata())
-                        else:
-                            gt_lst.append(np.zeros(gt_lst[0].shape))
-
-                    gt_npy_list.append(np.array(gt_lst))
+                    gt = get_gt(metadata[0]['gt_filenames'])
+                    gt_npy_list.append(gt)
                     # Save merged labels with color
 
                     if pred_undo.shape[0] > 1 and ofolder:
@@ -357,3 +343,14 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
         imed_metrics.plot_roc_curve(tpr_list, fpr_list, optimal_idx, fname_out)
 
     return optimal_threshold
+
+
+def get_gt(filenames):
+    gt_lst = []
+    for gt in filenames:
+        # For multi-label, if all labels are not in every image
+        if gt is not None:
+            gt_lst.append(nib.load(gt).get_fdata())
+        else:
+            gt_lst.append(np.zeros(gt_lst[0].shape))
+    return np.array(gt_lst)
