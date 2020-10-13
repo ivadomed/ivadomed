@@ -113,8 +113,7 @@ def run_visualization(input, config, number, output, roi):
         if roi and os.path.isfile(roi):
             roi_img, roi_data = get_data(roi, axis)
         else:
-            print("\nPlease provide ROI image (-r) in order to apply ROICrop transformation.")
-            exit()
+            raise ValueError("\nPlease provide ROI image (-r) in order to apply ROICrop transformation.")
 
     # Compose transforms
     dict_transforms = {}
