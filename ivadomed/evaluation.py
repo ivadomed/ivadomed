@@ -342,7 +342,7 @@ class Evaluation3DMetrics(object):
 
         for idx in range(1, self.n_gt[class_idx] + 1):
             data_gt_idx = (self.data_gt_label[..., class_idx] == idx).astype(np.int)
-            overlap = (data_gt_idx * self.data_pred[..., class_idx]).astype(np.int)
+            overlap = (data_gt_idx * self.data_pred).astype(np.int)
 
             # if label_size is None, then we look at all object sizes
             # we check if the currrent object belongs to the current size range
@@ -377,7 +377,7 @@ class Evaluation3DMetrics(object):
         lfp = 0
         for idx in range(1, self.n_pred[class_idx] + 1):
             data_pred_idx = (self.data_pred_label[..., class_idx] == idx).astype(np.int)
-            overlap = (data_pred_idx * self.data_gt[..., class_idx]).astype(np.int)
+            overlap = (data_pred_idx * self.data_gt).astype(np.int)
 
             label_gt = np.max(data_pred_idx * self.data_gt_label[..., class_idx])
             data_gt_idx = (self.data_gt_label[..., class_idx] == label_gt).astype(np.int)
@@ -444,21 +444,24 @@ class Evaluation3DMetrics(object):
             dict, ndarray: dictionary containing evaluation results, data with each object painted a different color
         """
         dct = {}
-
+        data_gt = self.data_gt.copy()
+        data_pred = self.data_pred.copy()
         for n in range(self.n_classes):
+            self.data_pred = data_pred[..., n]
+            self.data_gt = data_gt[..., n]
             dct['vol_pred_class' + str(n)] = self.get_vol(self.data_pred)
             dct['vol_gt_class' + str(n)] = self.get_vol(self.data_gt)
             dct['rvd_class' + str(n)], dct['avd_class' + str(n)] = self.get_rvd(), self.get_avd()
-            dct['dice_class' + str(n)] = imed_metrics.dice_score(self.data_gt[..., n], self.data_pred[..., n])
+            dct['dice_class' + str(n)] = imed_metrics.dice_score(self.data_gt, self.data_pred)
             dct['recall_class' + str(n)] = imed_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
             dct['precision_class' + str(n)] = imed_metrics.precision_score(self.data_pred, self.data_gt,
                                                                            err_value=np.nan)
             dct['specificity_class' + str(n)] = imed_metrics.specificity_score(self.data_pred, self.data_gt,
                                                                                err_value=np.nan)
             dct['n_pred_class' + str(n)], dct['n_gt_class' + str(n)] = self.n_pred[n], self.n_gt[n]
-            dct['ltpr_class' + str(n)], _ = self.get_ltpr()
-            dct['lfdr_class' + str(n)] = self.get_lfdr()
-            dct['mse_class' + str(n)] = imed_metrics.mse(self.data_gt[..., n], self.data_pred[..., n])
+            dct['ltpr_class' + str(n)], _ = self.get_ltpr(class_idx=n)
+            dct['lfdr_class' + str(n)] = self.get_lfdr(class_idx=n)
+            dct['mse_class' + str(n)] = imed_metrics.mse(self.data_gt, self.data_pred)
 
             for lb_size, gt_pred in zip(self.label_size_lst[n][0], self.label_size_lst[n][1]):
                 suffix = self.size_suffix_lst[int(lb_size) - 1]
