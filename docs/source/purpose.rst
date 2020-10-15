@@ -1,3 +1,12 @@
+.. |yes| raw:: html
+
+   &#9989;
+
+.. |no| raw:: html
+
+   &#10060;
+
+
 Purpose
 =======
 
