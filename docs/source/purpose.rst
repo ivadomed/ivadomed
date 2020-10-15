@@ -1,10 +1,12 @@
 .. |yes| raw:: html
 
-   &#9989;
+   <style> .line {text-align:centers;} </style>
+   <p style="color:green" align="center">	&#10004;</p>
 
 .. |no| raw:: html
 
-   &#10060;
+   <style> .line {text-align:centers;} </style>
+   <p align="center">	&#10060;</p>
 
 
 Purpose
