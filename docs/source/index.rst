@@ -23,9 +23,8 @@ Home
    :caption: Getting started
 
    installation.rst
-   usage.rst
    configuration_file.rst
-   data.rst
+   usage.rst
    models.rst
    scripts.rst
 
