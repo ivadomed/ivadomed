@@ -52,6 +52,8 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params, postprocessin
         fname_uncertainty = ""
         if 'uncertainty' in postprocessing_params and 'suffix' in postprocessing_params['uncertainty']:
             fname_uncertainty = os.path.join(path_preds, subj_acq + postprocessing_params['uncertainty']['suffix'])
+            del postprocessing_params['uncertainty']['suffix']
+        eval_params.update({'postprocessing': postprocessing_params})
 
         # Uncertainty
         data_uncertainty = None
@@ -149,7 +151,7 @@ class Evaluation3DMetrics(object):
         self.postprocessing_dict = {}
         self.size_min = 0
         if "postprocessing" in params:
-            self.postprocesing_dict = params['postprocessing']
+            self.postprocessing_dict = params['postprocessing']
 
         self.apply_postprocessing()
 
@@ -206,7 +208,8 @@ class Evaluation3DMetrics(object):
     def binarize_prediction(self, thr):
         """Binarize output.
         """
-        return imed_postpro.threshold_predictions(self.data_pred, thr)
+        if thr >= 0:
+            return imed_postpro.threshold_predictions(self.data_pred, thr)
 
     def uncertainty(self, thr):
         """Removes the most uncertain predictions.
