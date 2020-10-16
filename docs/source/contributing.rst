@@ -168,7 +168,7 @@ Licensing
 Ensure that you are the original author of your changes, and if that is
 not the case, ensure that the borrowed/adapted code is compatible with
 the `project's
-license <https://ivadomed.org/en/latest/index.html#license>`__.
+license <https://ivadomed.org/en/latest/license.html>`__.
 
 Committing
 ----------
