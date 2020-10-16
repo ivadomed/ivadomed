@@ -144,27 +144,15 @@ class Evaluation3DMetrics(object):
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
 
+        self.postprocessing_dict = {}
+        self.size_min = 0
+        if "postprocessing" in params:
+            self.postprocesing_dict = params['postprocessing']
+
         if "uncertainty" in params and data_uncertainty is not None:
             if params['uncertainty']['thr'] > 0:
                 thr = params['uncertainty']['thr']
                 self.data_pred = imed_postpro.mask_predictions(self.data_pred, data_uncertainty < thr)
-
-        # Remove small objects
-        if "removeSmall" in params:
-            size_min = params['removeSmall']['thr']
-            if params['removeSmall']['unit'] == 'vox':
-                self.size_min = size_min
-            elif params['removeSmall']['unit'] == 'mm3':
-                self.size_min = np.round(size_min / (self.px * self.py * self.pz))
-            else:
-                print('Please choose a different unit for removeSmall. Chocies: vox or mm3')
-                exit()
-
-            for idx in range(self.n_classes):
-                self.data_pred[..., idx] = self.remove_small_objects(data=self.data_pred[..., idx])
-                self.data_gt[..., idx] = self.remove_small_objects(data=self.data_gt[..., idx])
-        else:
-            self.size_min = 0
 
         if "targetSize" in params:
             self.size_rng_lst, self.size_suffix_lst = \
@@ -210,26 +198,33 @@ class Evaluation3DMetrics(object):
         else:
             self.overlap_vox = 3
 
-    def remove_small_objects(self, data):
-        """Removes all unconnected objects smaller than the minimum specified size.
+    def apply_postprocessing(self):
+        for postprocessing in self.postprocessing_dict:
+            getattr(self, postprocessing)(**self.postprocessing_dict[postprocessing])
+
+    def remove_small_objects(self, unit, thr):
+        """Remove small objects
 
         Args:
-            data (ndarray): Input data.
+            unit (str): Indicates the units of the objects: "mm3" or "vox"
+            thr (int): Minimal object size to keep in input data.
 
-        Returns:
-            ndarray: Array with small objects.
         """
-        data_label, n = label(data,
-                              structure=self.bin_struct)
+        if unit == 'vox':
+            self.size_min = thr
+        elif unit == 'mm3':
+            self.size_min = np.round(thr / (self.px * self.py * self.pz))
+        else:
+            print('Please choose a different unit for removeSmall. Choices: vox or mm3')
+            exit()
 
-        for idx in range(1, n + 1):
-            data_idx = (data_label == idx).astype(np.int)
-            n_nonzero = np.count_nonzero(data_idx)
-
-            if n_nonzero < self.size_min:
-                data[data_label == idx] = 0
-
-        return data
+        for idx in range(self.n_classes):
+            self.data_pred[..., idx] = imed_postpro.remove_small_objects(data=self.data_pred[..., idx],
+                                                                         bin_structure=self.bin_struct,
+                                                                         size_min=self.size_min)
+            self.data_gt[..., idx] = imed_postpro.remove_small_objects(data=self.data_gt[..., idx],
+                                                                       bin_structure=self.bin_struct,
+                                                                       size_min=self.size_min)
 
     def _get_size_ranges(self, thr_lst, unit):
         """Get size ranges of objects in image.
