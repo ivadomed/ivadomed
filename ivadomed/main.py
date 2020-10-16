@@ -145,7 +145,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         transformation_dict = transform_test_params
     undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict, requires_undo=True))
     testing_params = copy.deepcopy(context["training_parameters"])
-    testing_params.update(context["uncertainty"])
+    testing_params.update({'uncertainty': context["uncertainty"]})
     testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
                            'slice_axis': loader_params['slice_axis']})
     if command == "train":
