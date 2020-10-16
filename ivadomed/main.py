@@ -73,7 +73,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     Returns:
         Float or pandas Dataframe:
         If "train" command: Returns floats: best loss score for both training and validation.
-        
+
         If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing
             sub dataset and return the prediction metrics before evaluation.
     """
