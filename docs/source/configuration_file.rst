@@ -5,17 +5,17 @@ All parameters used for loading data, training and predicting are contained
 within a single JSON configuration file. This section describes how to set up
 this configuration file.
 
-For convenience, here is an example configuration file: `config\_config.json <ivadomed/config/config.json>`__.
+For convenience, here is an generic configuration file: `config\_config.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config.json>`__.
 
 Below are other, more specific configuration files:
 
-- `config\_classification.json <ivadomed/config/config_classification.json>`__. Is dedicated to classification task.
+- `config\_classification.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config_classification.json>`__: Trains a classification model.
 
-- `config\_sctTesting.json <ivadomed/config/config_sctTesting.json>`__. Is a user case of 2D segmentation using a U-Net model.
+- `config\_sctTesting.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config_sctTesting.json>`__: Trains a 2D segmentation task with the U-Net architecture.
 
-- `config\_spineGeHemis.json <ivadomed/config/config_spineGeHemis.json>`__. Shows how to use the HeMIS-UNet.
+- `config\_spineGeHemis.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config_spineGeHemis.json>`__: Trains a segmentation task with the HeMIS-UNet architecture.
 
-- `config\_tumorSeg.json <ivadomed/config/config_tumorSeg.json>`__. Runs a 3D segmentation using a 3D UNet.
+- `config\_tumorSeg.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config_tumorSeg.json>`__: Trains a segmentation task with a 3D U-Net architecture.
 
 
 General parameters
