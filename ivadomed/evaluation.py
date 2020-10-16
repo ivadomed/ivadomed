@@ -151,10 +151,7 @@ class Evaluation3DMetrics(object):
         if "postprocessing" in params:
             self.postprocesing_dict = params['postprocessing']
 
-        if "uncertainty" in params and data_uncertainty is not None:
-            if params['uncertainty']['thr'] > 0:
-                thr = params['uncertainty']['thr']
-                self.data_pred = imed_postpro.mask_predictions(self.data_pred, data_uncertainty < thr)
+        self.apply_postprocessing()
 
         if "targetSize" in params:
             self.size_rng_lst, self.size_suffix_lst = \
@@ -205,6 +202,11 @@ class Evaluation3DMetrics(object):
         """
         for postprocessing in self.postprocessing_dict:
             getattr(self, postprocessing)(**self.postprocessing_dict[postprocessing])
+
+    def binarize_prediction(self, thr):
+        """Binarize output.
+        """
+        return imed_postpro.threshold_predictions(self.data_pred, thr)
 
     def uncertainty(self, thr):
         """Removes the most uncertain predictions.
