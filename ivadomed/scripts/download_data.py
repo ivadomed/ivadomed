@@ -175,7 +175,7 @@ def install_data(url, dest_folder, keep=False):
         in `${{dst}}`.
         - Uses `download_data()` to retrieve the data.
         - Uses `unzip()` to extract the bundle.
-        
+
     Args:
         url (string): URL or sequence thereof (if mirrors). For this package there is a dictionnary
             listing existing data bundle with their url. Type ivadomed_download_data -h to see possible value. Flag ``-d``
