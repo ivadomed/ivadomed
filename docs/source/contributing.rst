@@ -4,7 +4,7 @@ Contributing to ivadomed
 Introduction
 ------------
 
-First off, thanks for taking the time to contribute! 🎉 
+First off, thanks for taking the time to contribute! 🎉
 
 When contributing to this repository, please first discuss the change
 you wish to make by opening a new `Github
@@ -167,8 +167,8 @@ Licensing
 
 Ensure that you are the original author of your changes, and if that is
 not the case, ensure that the borrowed/adapted code is compatible with
-the `project's
-license <https://ivadomed.org/en/latest/license.html>`__.
+the project's
+:ref:`license`.
 
 Committing
 ----------
@@ -234,15 +234,15 @@ If the PR fixes issue(s), indicate it after your introduction:
 ``Fixes #XXXX, Fixes #YYYY``. Note: it is important to respect the
 syntax above so that the issue(s) will be closed upon merging the PR.
 
-Work in progress 
+Work in progress
 ~~~~~~~~~~~~~~~~
 
 If your PR is not ready for review yet, you can convert it to a "Draft", so the team is informed.
 
-A draft pull request is styled differently to clearly indicate that it’s in a draft state. 
-Merging is blocked in draft pull requests. Change the status to “Ready for review” near the 
-bottom of your pull request to remove the draft state and allow merging according to your 
-project’s settings. 
+A draft pull request is styled differently to clearly indicate that it’s in a draft state.
+Merging is blocked in draft pull requests. Change the status to “Ready for review” near the
+bottom of your pull request to remove the draft state and allow merging according to your
+project’s settings.
 
 Continuous Integration
 ~~~~~~~~~~~~~~~~~~~~~~
