@@ -15,7 +15,7 @@ FP_COLOUR = 2
 FN_COLOUR = 3
 
 
-def evaluate(bids_path, log_directory, target_suffix, eval_params):
+def evaluate(bids_path, log_directory, target_suffix, eval_params, postprocessing_params):
     """Evaluate predictions from inference step.
 
     Args:
@@ -23,6 +23,7 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         log_directory (str): Folder where the output folder "results_eval" is be created.
         target_suffix (list): List of suffixes that indicates the target mask(s).
         eval_params (dict): Evaluation parameters.
+        postprocessing_params (dict): Postprocessing steps and associated parameters.
 
     Returns:
         pd.Dataframe: results for each image.
@@ -49,8 +50,8 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
         fname_uncertainty = ""
-        if 'uncertainty' in eval_params and 'suffix' in eval_params['uncertainty']:
-            fname_uncertainty = os.path.join(path_preds, subj_acq + eval_params['uncertainty']['suffix'])
+        if 'uncertainty' in postprocessing_params and 'suffix' in postprocessing_params['uncertainty']:
+            fname_uncertainty = os.path.join(path_preds, subj_acq + postprocessing_params['uncertainty']['suffix'])
 
         # Uncertainty
         data_uncertainty = None
@@ -131,6 +132,7 @@ class Evaluation3DMetrics(object):
         if params is None:
             params = {}
 
+        self.data_uncertainty = data_uncertainty
         self.data_pred = data_pred
         if len(self.data_pred.shape) == 3:
             self.data_pred = np.expand_dims(self.data_pred, -1)
@@ -199,10 +201,24 @@ class Evaluation3DMetrics(object):
             self.overlap_vox = 3
 
     def apply_postprocessing(self):
+        """Parse postprocessing parameters and apply postprocessing steps to data.
+        """
         for postprocessing in self.postprocessing_dict:
             getattr(self, postprocessing)(**self.postprocessing_dict[postprocessing])
 
-    def remove_small_objects(self, unit, thr):
+    def uncertainty(self, thr):
+        """Removes the most uncertain predictions.
+
+        Args:
+            thr (float): Uncertainty threshold.
+
+        """
+        if self.data_uncertainty is not None:
+            self.data_pred = imed_postpro.mask_predictions(self.data_pred, self.data_uncertainty < thr)
+        else:
+            raise ValueError('No uncertainty file found.')
+
+    def remove_small(self, unit, thr):
         """Remove small objects
 
         Args:
