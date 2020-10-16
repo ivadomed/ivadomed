@@ -271,7 +271,7 @@ Architecture
 ------------
 
 Architectures for both segmentation and classification are available and
-described in the :ref:`models:Models` section. If the selected
+described in the :ref:`architectures` section. If the selected
 architecture is listed in the
 `loader <ivadomed/loader/loader.py>`__ file, a
 classification (not segmentation) task is run. In the case of a
@@ -282,11 +282,10 @@ being used for the segmentation task).
 default\_model (Mandatory)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Dict. Define the default model (``Unet``) and mandatory parameters that
-are common to all available architectures (listed in the
-:ref:`models:Models` section). For more specific models (see below),
+Dictionary. Define the default model (``Unet``) and mandatory parameters that
+are common to all available :ref:`architectures`. For custom architectures (see below),
 the default parameters are merged with the parameters that are specific
-to the tailored model.
+to the tailored architecture.
 
 - ``name``: ``Unet`` (default)
 - ``dropout_rate``: Float (e.g. 0.4).

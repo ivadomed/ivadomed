@@ -27,6 +27,7 @@ Home
    configuration_file.rst
    usage.rst
    models.rst
+   pretrained_models.rst
    scripts.rst
 
 .. _tutorials:
