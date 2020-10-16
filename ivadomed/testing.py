@@ -182,7 +182,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         fname_out=fname_pred,
                                                         slice_axis=slice_axis,
                                                         kernel_dim='2d',
-                                                        bin_thr=testing_params["binarize_prediction"])
+                                                        bin_thr=-1)
                     output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
                     preds_npy_list.append(output_data)
 
@@ -192,7 +192,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     output_nii_shape = output_nii.get_fdata().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1 and ofolder:
                         imed_utils.save_color_labels(np.stack(pred_tmp_lst, -1),
-                                                     testing_params["binarize_prediction"] > 0,
+                                                     False,
                                                      fname_tmp,
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                      imed_utils.AXIS_DCT[testing_params['slice_axis']])
@@ -234,7 +234,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         fname_out=fname_pred,
                                                         slice_axis=slice_axis,
                                                         kernel_dim='3d',
-                                                        bin_thr=testing_params["binarize_prediction"])
+                                                        bin_thr=-1)
                     output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
                     preds_npy_list.append(output_data)
 
@@ -244,7 +244,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
                     if pred_undo.shape[0] > 1 and ofolder:
                         imed_utils.save_color_labels(pred_undo,
-                                                     testing_params['binarize_prediction'] > 0,
+                                                     False,
                                                      batch['input_metadata'][smp_idx][0]['input_filenames'],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                      slice_axis)
@@ -274,7 +274,6 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
         raise ValueError('\nChoice of metric for threshold analysis: dice, recall_specificity.')
 
     # Adjust some testing parameters
-    testing_params["binarize_prediction"] = -1
     testing_params["uncertainty"]["applied"] = False
 
     # Load model
