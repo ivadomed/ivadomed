@@ -45,7 +45,7 @@ def test_extract_small():
 
 def test_compare_model():
     # testing compare_model
-    command = "ivadomed_compare_models -df testing_data/temporary_results.csv -n 2"
+    command = "ivadomed_compare_models -df testing_data/temporary_results.csv -n 2 -o output_test.csv"
     subprocess.check_output(command, shell=True)
 
 
@@ -126,7 +126,7 @@ def test_create_eval_json():
     initial_config = json.load(file_conf)
     file_conf.close()
     file_conf = open("testing_data/model_config_eval.json", "w")
-    initial_config["command"] = "eval"
+    initial_config["command"] = "test"
     initial_config["transformation"] = {
         "Resample": {
             "wspace": 0.75,
@@ -229,10 +229,9 @@ def test_create_json_3d_unet_test():
             {
                 "wspace": 1,
                 "hspace": 1,
-                "dspace": 1,
-                "preprocessing": True
+                "dspace": 1
             },
-        "CenterCrop": {"size": [48, 48, 16], "preprocessing": True},
+        "CenterCrop": {"size": [48, 48, 16]},
         "NumpyToTensor": {},
         "NormalizeInstance": {"applied_to": ["im"]}
     }
@@ -268,12 +267,10 @@ def test_training_curve_single():
             "Resample": {
                 "wspace": 0.75,
                 "hspace": 0.75,
-                "dspace": 0.75,
-                "preprocessing": True
+                "dspace": 0.75
             },
             "CenterCrop": {
-                "size": [32, 32, 32],
-                "preprocessing": True
+                "size": [32, 32, 32]
             },
             "NumpyToTensor": {}
         },

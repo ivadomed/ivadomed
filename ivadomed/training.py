@@ -20,7 +20,7 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils
 
 cudnn.benchmark = True
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -87,8 +87,13 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             100 - training_params["transfer_learning"]['retrain_fraction'] * 100.))
         old_model_path = training_params["transfer_learning"]["retrain_model"]
         fraction = training_params["transfer_learning"]['retrain_fraction']
+        if 'reset' in training_params["transfer_learning"]:
+            reset = training_params["transfer_learning"]['reset']
+        else :
+            reset = True
         # Freeze first layers and reset last layers
-        model = imed_models.set_model_for_retrain(old_model_path, retrain_fraction=fraction, map_location=device)
+        model = imed_models.set_model_for_retrain(old_model_path, retrain_fraction=fraction, map_location=device,
+                                                  reset=reset)
     else:
         print("\nInitialising model's weights from scratch.")
         model_class = getattr(imed_models, model_params["name"])
@@ -297,6 +302,10 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                          'validation_loss': val_loss_total_avg}
                 torch.save(state, resume_path)
 
+                # Save best model file
+                model_path = os.path.join(log_directory, "best_model.pt")
+                torch.save(model, model_path)
+
                 # Update best scores
                 best_validation_loss, best_training_loss = val_loss_total_avg, train_loss_total_avg
                 best_validation_dice, best_training_dice = val_dice_loss_total_avg, train_dice_loss_total_avg
@@ -396,10 +405,10 @@ def get_scheduler(params, optimizer, num_epochs=0):
         scheduler = optim.lr_scheduler.CyclicLR(optimizer, **params, mode="triangular2", cycle_momentum=False)
         step_scheduler_batch = True
     else:
-        print(
-            "Unknown LR Scheduler name, please choose between 'CosineAnnealingLR', 'CosineAnnealingWarmRestarts',"
-            "or 'CyclicLR'")
-        exit()
+        raise ValueError(
+            "{} is an unknown LR Scheduler name, please choose between 'CosineAnnealingLR', "
+            "'CosineAnnealingWarmRestarts', or 'CyclicLR'".format(scheduler_name))
+
     return scheduler, step_scheduler_batch
 
 
@@ -421,8 +430,7 @@ def get_loss_function(params):
                                "BinaryCrossEntropyLoss", "TverskyLoss", "FocalTverskyLoss", "AdapWingLoss", "L2loss",
                                "LossCombination"]
     if loss_name not in loss_function_available:
-        print("Unknown Loss function, please choose between {}".format(loss_function_available))
-        exit()
+        raise ValueError("Unknown Loss function: {}, please choose between {}".format(loss_name, loss_function_available))
 
     loss_class = getattr(imed_losses, loss_name)
     loss_fct = loss_class(**params)
@@ -443,8 +451,8 @@ def get_metadata(metadata, model_params):
     if model_params["name"] == "HeMISUnet":
         return np.array([m[0]["missing_mod"] for m in metadata])
     else:
-        return [model_params["film_onehotencoder"].transform([metadata[0][k]['film_input']]).tolist()[0]
-                for k in range(len(metadata[0]))]
+        return [model_params["film_onehotencoder"].transform([metadata[k][0]['film_input']]).tolist()[0]
+                for k in range(len(metadata))]
 
 
 def store_film_params(gammas, betas, contrasts, metadata, model, film_layers, depth):

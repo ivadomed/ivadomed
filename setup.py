@@ -2,22 +2,23 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-import ivadomed
-
-here = path.abspath(path.dirname(__file__))
-
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 #Get README
-from os import path
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+# Get Release version
+path_version = path.join(this_directory, 'ivadomed', 'version.txt')
+with open(path_version) as f:
+    version = f.read().strip()
+
+
 setup(
     name='ivadomed',
-    version=ivadomed.__version__,
+    version=version,
     description='Feature conditioning for IVADO medical imaging project.',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -32,6 +33,13 @@ setup(
     packages=find_packages(exclude=['docs', 'tests']),
     include_package_data=True,
     install_requires=requirements,
+    extras_require={
+        'docs': [ # pin sphinx to match what RTD uses:
+                  # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
+                 'sphinx<2',
+                 'sphinx-rtd-theme<0.5',
+                ],
+    },
     entry_points={
         'console_scripts': [
             'ivadomed=ivadomed.main:run_main',

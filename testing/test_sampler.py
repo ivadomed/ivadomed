@@ -35,13 +35,11 @@ def _cmpt_label(ds_loader):
     "Resample":
         {
             "wspace": 0.75,
-            "hspace": 0.75,
-            "preprocessing": True
+            "hspace": 0.75
         },
     "ROICrop":
         {
-            "size": [128, 128],
-            "preprocessing": True
+            "size": [128, 128]
         },
     "NumpyToTensor": {}
 }])

@@ -81,12 +81,12 @@ def run_visualization(input, config, number, output, roi):
         :align: center
 
     Args:
-         input (string): Image filename. Flag: --input, -i
-         config (string): Configuration file filename. Flag: --config, -c
-         number (int): Number of slices randomly extracted. Flag: --number, -n
-         output (string): Folder path where the results are saved. Flag: --ofolder, -o
+         input (string): Image filename. Flag: ``--input``, ``-i``
+         config (string): Configuration file filename. Flag: ``--config``, ``-c``
+         number (int): Number of slices randomly extracted. Flag: ``--number``, ``-n``
+         output (string): Folder path where the results are saved. Flag: ``--ofolder``, ``-o``
          roi (string): Filename of the region of interest. Only needed if ROICrop is part of the transformations.
-                       Flag: -roi, -r
+                       Flag: ``--roi``, ``-r``
     """
     # Load context
     with open(config, "r") as fhandle:
@@ -113,8 +113,7 @@ def run_visualization(input, config, number, output, roi):
         if roi and os.path.isfile(roi):
             roi_img, roi_data = get_data(roi, axis)
         else:
-            print("\nPlease provide ROI image (-r) in order to apply ROICrop transformation.")
-            exit()
+            raise ValueError("\nPlease provide ROI image (-r) in order to apply ROICrop transformation.")
 
     # Compose transforms
     dict_transforms = {}
@@ -166,6 +165,8 @@ def run_visualization(input, config, number, output, roi):
 
 
 def main():
+    imed_utils.init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
     input = args.input

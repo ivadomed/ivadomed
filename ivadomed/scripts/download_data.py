@@ -10,19 +10,32 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
 import sys
-import json
 import argparse
+import textwrap
+
+from ivadomed.utils import init_ivadomed
 
 
 DICT_URL = {
-    "data_example_spinegeneric": ["https://github.com/ivadomed/data_example_spinegeneric/archive/r20200825.zip"],
-    "data_testing": ["https://github.com/ivadomed/data-testing/archive/r20200807.zip"],
-    "t2_tumor": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
-    "t2star_sc": ["https://github.com/ivadomed/t2star_sc/archive/r20200622.zip"],
-    "mice_uqueensland_gm": ["https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip "],
-    "mice_uqueensland_sc": ["https://github.com/ivadomed/mice_uqueensland_sc/archive/r20200622.zip"],
-    "findcord_tumor": ["https://github.com/ivadomed/findcord_tumor/archive/r20200621.zip"]
-    }
+    "data_example_spinegeneric": {
+        "url": ["https://github.com/ivadomed/data_example_spinegeneric/archive/r20200825.zip"],
+        "description": "10 randomly picked subject from "
+                       "`Spine Generic <https://github.com/spine-generic/data-multi-subject>`_. "
+                       "Used for Tutorial and example in Ivadomed."},
+    "data_testing": {"url": ["https://github.com/ivadomed/data-testing/archive/r20200807.zip"],
+                     "description": "Data Used for integration/unit test in Ivadomed."},
+    "t2_tumor": {"url": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
+                 "description": "Cord tumor segmentation model, trained on T2-weighted contrast."},
+    "t2star_sc": {"url": ["https://github.com/ivadomed/t2star_sc/archive/r20200622.zip"],
+                  "description": "Cord tumor segmentation model, trained on T2-weighted contrast."},
+    "mice_uqueensland_gm": {"url": ["https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip"],
+                            "description": "Gray matter segmentation model on "
+                                           "mouse MRI. Data from University of Queensland."},
+    "mice_uqueensland_sc": {"url": ["https://github.com/ivadomed/mice_uqueensland_sc/archive/r20200622.zip"],
+                            "description": "Cord segmentation model on mouse MRI. Data from University of Queensland."},
+    "findcord_tumor": {"url": ["https://github.com/ivadomed/findcord_tumor/archive/r20200621.zip"],
+                       "description": "Cord localisation model, trained on T2-weighted images with tumor."}
+}
 
 
 def get_parser():
@@ -37,7 +50,7 @@ def get_parser():
     return parser
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -118,30 +131,51 @@ def unzip(compressed, dest_folder):
         raise
 
 
+def _format_bundles():
+    def format_bundle(name, values):
+        return f'`{name} <{values["url"]}>`_ : {values["description"]}'
+    return str.join("\n", ["* %s" % format_bundle(name, values) for name, values in DICT_URL.items()])
+
 def install_data(url, dest_folder, keep=False):
     """
-    Download a data bundle from a URL and install in the destination folder.
-    :param url: URL or sequence thereof (if mirrors).
-    :param dest_folder: destination directory for the data (to be created).
-    :param keep: whether to keep existing data in the destination folder.
-    :return: None
+    Download a data bundle from an URL and install it in the destination folder.
+
+    Usage example ::
+
+        ivadomed_download_data -d data_testing -o ivado_testing_data
+
+
+    Existing data bundles:
+
+{BUNDLES}
+
     .. note::
         The function tries to be smart about the data contents.
         Examples:
-        a. If the archive only contains a `README.md`, and the destination folder is `${dst}`,
-            `${dst}/README.md` will be created.
-            Note: an archive not containing a single folder is commonly known as a "bomb" because
-            it puts files anywhere in the current working directory.
-            https://en.wikipedia.org/wiki/Tar_(computing)#Tarbomb
-        b. If the archive contains a `${dir}/README.md`, and the destination folder is `${dst}`,
-            `${dst}/README.md` will be created.
-            Note: typically the package will be called `${basename}-${revision}.zip` and contain
-            a root folder named `${basename}-${revision}/` under which all the other files will
-            be located.
-            The right thing to do in this case is to take the files from there and install them
-            in `${dst}`.
+
+
+        a. If the archive only contains a `README.md`, and the destination folder is `${{dst}}`,
+        `${{dst}}/README.md` will be created.
+        Note: an archive not containing a single folder is commonly known as a "bomb" because
+        it puts files anywhere in the current working directory.( see `Tarbomb
+        <https://en.wikipedia.org/wiki/Tar_(computing)#Tarbomb>`_)
+
+
+        b. If the archive contains a `${{dir}}/README.md`, and the destination folder is `${{dst}}`,
+        `${{dst}}/README.md` will be created.
+        Note: typically the package will be called `${{basename}}-${{revision}}.zip` and contain
+        a root folder named `${{basename}}-${{revision}}/` under which all the other files will
+        be located.
+        The right thing to do in this case is to take the files from there and install them
+        in `${{dst}}`.
         - Uses `download_data()` to retrieve the data.
         - Uses `unzip()` to extract the bundle.
+    Args:
+        url (string): URL or sequence thereof (if mirrors). For this package there is a dictionnary
+            listing existing data bundle with their url. Type ivadomed_download_data -h to see possible value. Flag ``-d``
+        dest_folder (string): destination directory for the data (to be created). If not used the output folder
+            will be the name of the data bundle. Flag ``-o``, ``--output``
+        keep (bool): whether to keep existing data in the destination folder (if it exists). Flag ``-k``, ``--keep``
     """
 
     if not keep and os.path.exists(dest_folder):
@@ -210,7 +244,16 @@ def install_data(url, dest_folder, keep=False):
     shutil.rmtree(extraction_folder)
 
 
+# This line allows to format the `install_data()` docstrings, because this formatting
+# cannot be done in the function directly. 
+# `create_string()` is a custom function that converts our dict into a string
+# which is easier to add in the documentation.
+install_data.__doc__=install_data.__doc__.format(BUNDLES=textwrap.indent(_format_bundles(), ' '*6))
+
+
 def main(args=None):
+    init_ivadomed()
+
     # Dictionary containing list of URLs for data names.
     # Mirror servers are listed in order of decreasing priority.
     # If exists, favour release artifact straight from github
@@ -227,7 +270,7 @@ def main(args=None):
     else:
         dest_folder = arguments.output
 
-    url = DICT_URL[data_name]
+    url = DICT_URL[data_name]["url"]
     install_data(url, dest_folder, keep=arguments.keep)
     return 0
 

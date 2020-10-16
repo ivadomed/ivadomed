@@ -27,13 +27,11 @@ def test_image_orientation():
             {
                 "wspace": 1.5,
                 "hspace": 1,
-                "dspace": 3,
-                "preprocessing": True
+                "dspace": 3
             },
         "CenterCrop":
             {
-                "size": [176, 128, 160],
-                "preprocessing": True
+                "size": [176, 128, 160]
             },
         "NumpyToTensor": {},
         "NormalizeInstance": {"applied_to": ['im']}
@@ -65,7 +63,7 @@ def test_image_orientation():
                                              subject_lst=train_lst,
                                              target_suffix=["_seg-manual"],
                                              contrast_params=contrast_params,
-                                             metadata_choice="without",
+                                             metadata_choice=False,
                                              slice_axis=slice_axis,
                                              transform=tranform_lst,
                                              multichannel=False)
@@ -76,7 +74,7 @@ def test_image_orientation():
                                                target_suffix=["_seg-manual"],
                                                model_params=model_params,
                                                contrast_params=contrast_params,
-                                               metadata_choice="without",
+                                               metadata_choice=False,
                                                slice_axis=slice_axis,
                                                transform=tranform_lst,
                                                multichannel=False)

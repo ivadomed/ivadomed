@@ -33,13 +33,11 @@ def test_HeMIS(p=0.0001):
         "Resample":
             {
                 "wspace": 0.75,
-                "hspace": 0.75,
-                "preprocessing": True,
+                "hspace": 0.75
             },
         "CenterCrop":
             {
-                "size": [48, 48],
-                "preprocessing": True,
+                "size": [48, 48]
             },
         "NumpyToTensor": {}
     }
@@ -212,6 +210,8 @@ def test_HeMIS(p=0.0001):
 def test_hdf5_bids():
     os.makedirs("test_adap_bids")
     imed_adaptative.HDF5_to_Bids('testing_data/mytestfile.hdf5', ['sub-unf01'], "test_adap_bids")
+    assert os.path.isdir("test_adap_bids/sub-unf01/anat")
+    assert os.path.isdir("test_adap_bids/derivatives/labels/sub-unf01/anat")
     # once done we can delete the file
     print("[INFO]: Deleting HDF5 file.")
     os.remove('testing_data/mytestfile.hdf5')

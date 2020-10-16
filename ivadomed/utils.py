@@ -1,5 +1,7 @@
 import json
 import os
+import subprocess
+import logging
 
 import matplotlib
 import matplotlib.animation as anim
@@ -29,8 +31,13 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 # List of classification models (ie not segmentation output)
 CLASSIFIER_LIST = ['resnet18', 'densenet121']
 
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+
+
 def get_task(model_name):
     return "classification" if model_name in CLASSIFIER_LIST else "segmentation"
+
 
 # METRICS
 def get_metric_fns(task):
@@ -143,7 +150,8 @@ def run_uncertainty(ifolder):
         fname_soft = os.path.join(ifolder, subj_acq + '_soft.nii.gz')
         # find Monte Carlo simulations
         fname_pred_lst = [os.path.join(ifolder, f)
-                          for f in os.listdir(ifolder) if subj_acq + '_pred_' in f and '_painted' not in f]
+                          for f in os.listdir(ifolder) if subj_acq + '_pred_' in f and
+                          ('_painted' not in f) and ('_color' not in f)]
 
         # if final segmentation from Monte Carlo simulations has not been generated yet
         if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
@@ -597,14 +605,14 @@ class HookBasedFeatureExtractor(nn.Module):
         self.upscale = upscale
 
     def get_input_array(self, m, i, o):
-        assert(i, tuple)
+        assert(isinstance(i, tuple))
         self.inputs = [i[index].data.clone() for index in range(len(i))]
         self.inputs_size = [input.size() for input in self.inputs]
 
         print('Input Array Size: ', self.inputs_size)
 
     def get_output_array(self, m, i, o):
-        assert (i, tuple)
+        assert(isinstance(i, tuple))
         self.outputs = [o[index].data.clone() for index in range(len(o))]
         self.outputs_size = [output.size() for output in self.outputs]
         print('Output Array Size: ', self.outputs_size)
@@ -748,9 +756,9 @@ def convert_labels_to_RGB(grid_img):
     np.random.seed(6)
     for i in range(n_class):
         r, g, b = np.random.randint(0, 256, size=3)
-        rgb_img[:, i, ] = r * grid_img[:, i, ]
-        rgb_img[:, i, ] = g * grid_img[:, i, ]
-        rgb_img[:, i, ] = b * grid_img[:, i, ]
+        rgb_img[:, 0, ] = r * grid_img[:, i, ]
+        rgb_img[:, 1, ] = g * grid_img[:, i, ]
+        rgb_img[:, 2, ] = b * grid_img[:, i, ]
 
     return rgb_img
 
@@ -1082,3 +1090,132 @@ class AnimatedGif:
         animation = anim.ArtistAnimation(self.fig, self.images, interval=50, blit=True,
                                          repeat_delay=500)
         animation.save(filename, writer=LoopingPillowWriter(fps=1))
+
+
+def _git_info(commit_env='IVADOMED_COMMIT', branch_env='IVADOMED_BRANCH'):
+    """Get ivadomed version info from GIT.
+
+    This functions retrieves the ivadomed version, commit, branch and installation type.
+
+    Args:
+        commit_env (str):
+        branch_env (str):
+    Returns:
+        str, str, str, str: installation type, commit, branch, version.
+    """
+    ivadomed_commit = os.getenv(commit_env, "unknown")
+    ivadomed_branch = os.getenv(branch_env, "unknown")
+    if check_exe("git") and os.path.isdir(os.path.join(__ivadomed_dir__, ".git")):
+        ivadomed_commit = __get_commit() or ivadomed_commit
+        ivadomed_branch = __get_branch() or ivadomed_branch
+
+    if ivadomed_commit != 'unknown':
+        install_type = 'git'
+    else:
+        install_type = 'package'
+
+    path_version = os.path.join(__ivadomed_dir__, 'ivadomed', 'version.txt')
+    with open(path_version) as f:
+        version_ivadomed = f.read().strip()
+
+    return install_type, ivadomed_commit, ivadomed_branch, version_ivadomed
+
+
+def check_exe(name):
+    """Ensure that a program exists.
+
+    Args:
+        name (str): Name or path to program.
+    Returns:
+        str or None: path of the program or None
+    """
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(name)
+    if fpath and is_exe(name):
+        return fpath
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, name)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+
+def __get_commit(path_to_git_folder=None):
+    """Get GIT ivadomed commit.
+
+    Args:
+        path_to_git_folder (str): Path to GIT folder.
+    Returns:
+        str: git commit ID, with trailing '*' if modified.
+    """
+    if path_to_git_folder is None:
+        path_to_git_folder = __ivadomed_dir__
+    else:
+        path_to_git_folder = os.path.abspath(os.path.expanduser(path_to_git_folder))
+
+    p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         cwd=path_to_git_folder)
+    output, _ = p.communicate()
+    status = p.returncode
+    if status == 0:
+        commit = output.decode().strip()
+    else:
+        commit = "?!?"
+
+    p = subprocess.Popen(["git", "status", "--porcelain"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         cwd=path_to_git_folder)
+    output, _ = p.communicate()
+    status = p.returncode
+    if status == 0:
+        unclean = True
+        for line in output.decode().strip().splitlines():
+            line = line.rstrip()
+            if line.startswith("??"):  # ignore ignored files, they can't hurt
+                continue
+            break
+        else:
+            unclean = False
+        if unclean:
+            commit += "*"
+
+    return commit
+
+
+def __get_branch():
+    """Get ivadomed branch.
+
+    Args:
+
+    Returns:
+        str: ivadomed branch.
+    """
+    p = subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, cwd=__ivadomed_dir__)
+    output, _ = p.communicate()
+    status = p.returncode
+
+    if status == 0:
+        return output.decode().strip()
+
+
+def _version_string():
+    install_type, ivadomed_commit, ivadomed_branch, version_ivadomed = _git_info()
+    if install_type == "package":
+        return version_ivadomed
+    else:
+        return "{install_type}-{ivadomed_branch}-{ivadomed_commit}".format(**locals())
+
+
+__ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+__version__ = _version_string()
+
+
+def init_ivadomed():
+    """Initialize the ivadomed for typical terminal usage."""
+    # Display ivadomed version
+    logger.info('\nivadomed ({})\n'.format(__version__))

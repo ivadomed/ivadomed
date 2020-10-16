@@ -55,7 +55,8 @@
         "mixup_alpha": null,
         "transfer_learning": {
             "retrain_model": null,
-            "retrain_fraction": 1.0
+            "retrain_fraction": 1.0,
+            "reset": true
         }
     },
     "default_model": {
@@ -93,19 +94,18 @@
     "evaluation_parameters": {
         "targetSize": {"unit": "vox", "thr": [20, 100]},
         "removeSmall": {"unit": "vox", "thr": 3},
-        "overlap": {"unit": "vox", "thr": 3}
+        "overlap": {"unit": "vox", "thr": 3},
+        "uncertainty": {"thr": -1, "suffix": "_unc-vox.nii.gz"}
     },
     "transformation": {
         "Resample":
         {
             "wspace": 0.75,
             "hspace": 0.75,
-            "dspace": 1,
-            "preprocessing": true
+            "dspace": 1
         },
         "CenterCrop": {
-            "size": [128, 128],
-            "preprocessing": true
+            "size": [128, 128]
         },
         "RandomAffine": {
             "translate": [0.03, 0.03],

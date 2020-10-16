@@ -71,8 +71,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                 directory.
     Returns:
         If "train" command: Returns floats: best loss score for both training and validation.
-        If "test" command: Returns dict: of averaged metrics computed on the testing sub dataset.
-        If "eval" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing sub dataset.
+        If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing sub dataset
+            and return the prediction metrics before evaluation.
     """
     command = copy.deepcopy(context["command"])
     log_directory = copy.deepcopy(context["log_directory"])
@@ -269,34 +269,25 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                  "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
 
         # RUN INFERENCE
-        metrics_dict = imed_testing.test(model_params=model_params,
+        pred_metrics = imed_testing.test(model_params=model_params,
                                          dataset_test=ds_test,
                                          testing_params=testing_params,
                                          log_directory=log_directory,
                                          device=device,
                                          cuda_available=cuda_available,
                                          metric_fns=metric_fns)
-        return metrics_dict
-
-    elif command == 'eval':
-        # PREDICTION FOLDER
-        path_preds = os.path.join(log_directory, 'pred_masks')
-        # If the prediction folder does not exist, run Inference first
-        if not os.path.isdir(path_preds):
-            print('\nRun Inference\n')
-            context["command"] = "test"
-            run_command(context)
 
         # RUN EVALUATION
         df_results = imed_evaluation.evaluate(bids_path=loader_params['bids_path'],
                                               log_directory=log_directory,
-                                              path_preds=path_preds,
                                               target_suffix=loader_params["target_suffix"],
                                               eval_params=context["evaluation_parameters"])
-        return df_results
+        return df_results, pred_metrics
 
 
 def run_main():
+    imed_utils.init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
 

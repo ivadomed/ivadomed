@@ -35,6 +35,13 @@ Then, open it with a text editor. As described in the tutorial :doc:`../tutorial
 sure the ``command`` is set to "train" and ``bids_path`` point to the location of the dataset. Below, we will discuss
 some of the key parameters to use cascaded models.
 
+- ``debugging``: Boolean, create extended verbosity and intermediate outputs. Here we will look at the intermediate predictions
+  with tensorboard, we therefore need to activate those intermediate outputs.
+  
+  .. code-block:: xml
+
+     "debugging": true
+
 - ``object_detection_params:object_detection_path``: Location of the object detection model. This parameter corresponds
   to the path of the first model from the cascaded architecture that segments the spinal cord. The packaged model in the
   downloaded dataset located in the folder `trained_model/seg_sc_t1-t2-t2s-mt` will be used to detect the spinal cord.
@@ -74,15 +81,12 @@ some of the key parameters to use cascaded models.
 
 - ``transformation:CenterCrop:size``: Crop size in voxel. Images will be cropped or padded to fit these dimensions. This
   allows all the images to have the same size during training. Since the images will be cropped around the spinal cord,
-  the image size can be reduced to avoid large zero padding. The ``preprocessing`` parameter indicates this
-  transformation will only be applied once at the beginning of the training (i.e. not at each epoch as commonly done for
-  data augmentation operations).
+  the image size can be reduced to avoid large zero padding.
 
   .. code-block:: xml
 
      "CenterCrop": {
-         "size": [64, 64],
-         "preprocessing": true
+         "size": [64, 64]
      }
 
 Train model

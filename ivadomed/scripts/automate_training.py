@@ -23,6 +23,7 @@ import pandas as pd
 import torch.multiprocessing as mp
 
 from ivadomed import main as ivado
+from ivadomed.utils import init_ivadomed
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.scripts.compare_models import compute_statistics
 
@@ -81,18 +82,18 @@ def train_worker(config, thr_incr):
 
 def test_worker(config):
     # Call ivado cmd_eval
+
+    current = mp.current_process()
+    # ID of process used to assign a GPU
+    ID = int(current.name[-1]) - 1
+
+    # Use GPU i from the array specified in the config file
+    config["gpu"] = config["gpu"][ID]
+
     try:
         # Save best test score
-
         config["command"] = "test"
-        test_dict = ivado.run_command(config)
-        test_dice = test_dict['dice_score']
-
-        config["command"] = "eval"
-        df_results = ivado.run_command(config)
-
-        # Uncomment to use 3D dice
-        # test_dice = eval_df["dice"].mean()
+        df_results, test_dice = ivado.run_command(config)
 
     except:
         logging.exception('Got exception on main handler')
@@ -139,27 +140,33 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     into a dataframe to allow their comparison. The script efficiently allocates each training to one of the available
     GPUs.
 
-    # TODO: add example of DF
+    Usage example::
+
+        ivadomed_automate_training -c config.json -p params.json -n n_iterations
+
+    .. csv-table:: Example of dataframe
+       :file: ../../images/detailed_results.csv
 
     Args:
         config (string): Configuration filename, which is used as skeleton to configure the training. Some of its
-            parameters (defined in `param` file) are modified across experiments. Flag: --config, -c
+            parameters (defined in `param` file) are modified across experiments. Flag: ``--config``, ``-c``
         param (string): json file containing parameters configurations to compare. Parameter "keys" of this file
-            need to match the parameter "keys" of `config` file. Parameter "values" are in a list. Flag: --param, -p
+            need to match the parameter "keys" of `config` file. Parameter "values" are in a list. Flag: ``--param``, ``-p``
+
             Example::
 
-                "default_model": {"depth": [2, 3, 4]}
+                {"default_model": {"depth": [2, 3, 4]}}
 
         fixed_split (bool): If True, all the experiments are run on the same training/validation/testing subdatasets.
-                            Flag: --fixed-split
-        all_combin (bool): If True, all parameters combinations are run. Flag: --all-combin
+                            Flag: ``--fixed-split``
+        all_combin (bool): If True, all parameters combinations are run. Flag: ``--all-combin``
         n_iterations (int): Controls the number of time that each experiment (ie set of parameter) are run.
-                            Flag: --n-iteration, -n
-        run_test (bool): If True, the trained model is also run on the testing subdataset. flag: --run-test
-        all_logs (bool): If True, all the log directories are kept for every iteration. Flag: --all-logs, -l
+                            Flag: ``--n-iteration``, ``-n``
+        run_test (bool): If True, the trained model is also run on the testing subdataset. flag: ``--run-test``
+        all_logs (bool): If True, all the log directories are kept for every iteration. Flag: ``--all-logs``, ``-l``
         thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
             the validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
-            increment between 0 and 1 used during the ROC analysis (e.g. 0.1). Flag: -t, --thr-increment
+            increment between 0 and 1 used during the ROC analysis (e.g. 0.1). Flag: ``-t``, ``--thr-increment``
     """
     # Load initial config
     with open(config, "r") as fhandle:
@@ -265,8 +272,9 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                 # Take the config file within the log_directory because binarize_prediction may have been updated
                 json_path = os.path.join(config['log_directory'], 'config_file.json')
                 with open(json_path) as f:
-                    config = json.load(f)
-                new_config_list.append(config)
+                    new_config = json.load(f)
+                    new_config["gpu"] = config["gpu"]
+                new_config_list.append(new_config)
 
             test_results = pool.map(test_worker, new_config_list)
 
@@ -329,6 +337,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
 
 def main():
+    init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
 

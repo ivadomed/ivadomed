@@ -97,7 +97,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         ndarray, ndarray: Prediction, Ground-truth of shape n_sample, n_label, h, w, d.
     """
     # INIT STORAGE VARIABLES
-    preds_npy_list, gt_npy_list = [], []
+    preds_npy_list, gt_npy_list, filenames = [], [], []
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
     volume = None
     weight_matrix = None
@@ -138,7 +138,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         # PREDS TO CPU
         preds_cpu = preds.cpu()
 
-        task =  imed_utils.get_task(model_params["name"])
+        task = imed_utils.get_task(model_params["name"])
         if task == "classification":
             gt_npy_list.append(gt_samples.cpu().numpy())
             preds_npy_list.append(preds_cpu.data.numpy())
@@ -170,7 +170,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     # save the completely processed file as a nifti file
                     if ofolder:
                         fname_pred = os.path.join(ofolder, fname_tmp.split('/')[-1])
-                        fname_pred = fname_pred.split(testing_params['target_suffix'][0])[0] + '_pred.nii.gz'
+                        fname_pred = fname_pred.rsplit(testing_params['target_suffix'][0],1)[0] + '_pred.nii.gz'
                         # If Uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
@@ -183,11 +183,11 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         slice_axis=slice_axis,
                                                         kernel_dim='2d',
                                                         bin_thr=testing_params["binarize_prediction"])
-                    # TODO: Adapt to multilabel
-                    output_data = output_nii.get_fdata()[:, :, :, 0]
+                    output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
                     preds_npy_list.append(output_data)
 
-                    gt_npy_list.append(nib.load(fname_tmp).get_fdata())
+                    gt = get_gt(filenames)
+                    gt_npy_list.append(gt)
 
                     output_nii_shape = output_nii.get_fdata().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1 and ofolder:
@@ -206,6 +206,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 # TODO: slice_index should be stored in gt_metadata as well
                 z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
                 fname_tmp = fname_ref
+                filenames = metadata_idx[0]['gt_filenames']
+
 
             else:
                 pred_undo, metadata, last_sample_bool, volume, weight_matrix = \
@@ -236,15 +238,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
                     preds_npy_list.append(output_data)
 
-                    gt_lst = []
-                    for gt in metadata[0]['gt_filenames']:
-                        # For multi-label, if all labels are not in every image
-                        if gt is not None:
-                            gt_lst.append(nib.load(gt).get_fdata())
-                        else:
-                            gt_lst.append(np.zeros(gt_lst[0].shape))
-
-                    gt_npy_list.append(np.array(gt_lst))
+                    gt = get_gt(metadata[0]['gt_filenames'])
+                    gt_npy_list.append(gt)
                     # Save merged labels with color
 
                     if pred_undo.shape[0] > 1 and ofolder:
@@ -276,8 +271,7 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
         float: optimal threshold.
     """
     if metric not in ["dice", "recall_specificity"]:
-        print('\nChoice of metric for threshold analysis: dice, recall_specificity.')
-        exit()
+        raise ValueError('\nChoice of metric for threshold analysis: dice, recall_specificity.')
 
     # Adjust some testing parameters
     testing_params["binarize_prediction"] = -1
@@ -349,3 +343,21 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
         imed_metrics.plot_roc_curve(tpr_list, fpr_list, optimal_idx, fname_out)
 
     return optimal_threshold
+
+
+def get_gt(filenames):
+    """Get ground truth data as numpy array.
+    
+    Args:
+        filenames (list): List of ground truth filenames, one per class.
+    Returns:
+        ndarray: 4D numpy array.
+    """
+    gt_lst = []
+    for gt in filenames:
+        # For multi-label, if all labels are not in every image
+        if gt is not None:
+            gt_lst.append(nib.load(gt).get_fdata())
+        else:
+            gt_lst.append(np.zeros(gt_lst[0].shape))
+    return np.array(gt_lst)

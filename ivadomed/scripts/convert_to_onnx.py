@@ -24,9 +24,9 @@ def convert_pytorch_to_onnx(model, dimension, gpu=0):
     (``-d``).
 
     Args:
-        model (string): Model filename. Flag: --model, -m.
-        dimension (int): Indicates whether the model is 2D or 3D. Choice between 2 or 3. Flag: --dimension, -d
-        gpu (string): GPU ID, if available. Flag: --gpu, -g
+        model (string): Model filename. Flag: ``--model``, ``-m``.
+        dimension (int): Indicates whether the model is 2D or 3D. Choice between 2 or 3. Flag: ``--dimension``, ``-d``
+        gpu (string): GPU ID, if available. Flag: ``--gpu``, ``-g``
     """
     if torch.cuda.is_available():
         device = "cuda:" + str(gpu)
@@ -40,6 +40,8 @@ def convert_pytorch_to_onnx(model, dimension, gpu=0):
 
 
 def main():
+    imed_utils.init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
     fname_model = args.model

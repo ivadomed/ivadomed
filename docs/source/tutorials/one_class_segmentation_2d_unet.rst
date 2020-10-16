@@ -51,6 +51,12 @@ segmentation training.
 
      "command": "train"
 
+- ``log_directory``: Folder name that will contain the output files (e.g., trained model, predictions, results).
+
+  .. code-block:: xml
+
+     "log_directory":"spineGeneric"
+
 - ``loader_parameters:bids_path``: Location of the dataset. As discussed in :doc:`../data`, the dataset
   should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 
@@ -94,6 +100,12 @@ segmentation training.
      a ground truth segmentation is aligned with all contrasts, for a given subject. In this tutorial, only one channel
      will be used.
 
+- ``training_time:num_epochs``: the maximum number of epochs that will be run during training. Each epoch is composed
+  of a training part and an evaluation part. It should be a strictly positive integer.
+  
+  .. code-block:: xml
+
+     "num_epochs": 100
 
 Train model
 -----------
@@ -119,16 +131,16 @@ on training and validation sets at every epoch. To know more about the meaning o
    Using GPU number 0
 
    Selected transformations for the training dataset:
-   Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1, 'preprocessing': True}
-   CenterCrop: {'size': [128, 128], 'preprocessing': True}
+   Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1}
+   CenterCrop: {'size': [128, 128]}
    RandomAffine: {'degrees': 5, 'scale': [0.1, 0.1], 'translate': [0.03, 0.03], 'applied_to': ['im', 'gt']}
    ElasticTransform: {'alpha_range': [28.0, 30.0], 'sigma_range': [3.5, 4.5], 'p': 0.1, 'applied_to': ['im', 'gt']}
    NumpyToTensor: {}
    NormalizeInstance: {'applied_to': ['im']}
 
    Selected transformations for the validation dataset:
-   Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1, 'preprocessing': True}
-   CenterCrop: {'size': [128, 128], 'preprocessing': True}
+   Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1}
+   CenterCrop: {'size': [128, 128]}
    NumpyToTensor: {}
    NormalizeInstance: {'applied_to': ['im']}
 
@@ -163,11 +175,11 @@ Evaluate model
 --------------
 
 To test the trained model on the testing sub-dataset and compute evaluation metrics, open your config file and
-set ``command`` to ``eval``:
+set ``command`` to ``test``:
 
 .. code-block:: bash
 
-   "command": "eval"
+   "command": "test"
 
 Then run:
 
@@ -177,7 +189,7 @@ Then run:
 
 The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
 The resulting segmentation is saved for each image in the ``<log_directory>/pred_masks`` while a csv file,
-saved in ``log_directory/results/eval/evaluation_3Dmetrics.csv``, contains all the evaluation metrics. For more details
+saved in ``<log_directory>/results_eval/evaluation_3Dmetrics.csv``, contains all the evaluation metrics. For more details
 on the evaluation metrics, see :mod:`ivadomed.metrics`.
 
 .. code-block:: console

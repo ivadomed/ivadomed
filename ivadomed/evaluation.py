@@ -1,11 +1,13 @@
 import os
-import pandas as pd
-import numpy as np
+
 import nibabel as nib
-from tqdm import tqdm
+import numpy as np
+import pandas as pd
 from scipy.ndimage import label, generate_binary_structure
+from tqdm import tqdm
 
 from ivadomed import metrics as imed_metrics
+from ivadomed import postprocessing as imed_postpro
 
 # labels of paint_objects method
 TP_COLOUR = 1
@@ -13,19 +15,19 @@ FP_COLOUR = 2
 FN_COLOUR = 3
 
 
-def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
+def evaluate(bids_path, log_directory, target_suffix, eval_params):
     """Evaluate predictions from inference step.
 
     Args:
         bids_path (str): Folder where raw data is stored.
         log_directory (str): Folder where the output folder "results_eval" is be created.
-        path_preds (str): Folder where model predictions were saved
         target_suffix (list): List of suffixes that indicates the target mask(s).
         eval_params (dict): Evaluation parameters.
 
     Returns:
         pd.Dataframe: results for each image.
     """
+    path_preds = os.path.join(log_directory, 'pred_masks')
     print('\nRun Evaluation on {}\n'.format(path_preds))
 
     # OUTPUT RESULT FOLDER
@@ -46,7 +48,14 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
         fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
+        fname_uncertainty = ""
+        if 'uncertainty' in eval_params and 'suffix' in eval_params['uncertainty']:
+            fname_uncertainty = os.path.join(path_preds, subj_acq + eval_params['uncertainty']['suffix'])
 
+        # Uncertainty
+        data_uncertainty = None
+        if os.path.exists(fname_uncertainty):
+            data_uncertainty = nib.load(fname_uncertainty).get_fdata()
         # 3D evaluation
         nib_pred = nib.load(fname_pred)
         data_pred = nib_pred.get_fdata()
@@ -60,15 +69,20 @@ def evaluate(bids_path, log_directory, path_preds, target_suffix, eval_params):
             else:
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
         eval = Evaluation3DMetrics(data_pred=data_pred,
-                                              data_gt=data_gt,
-                                              dim_lst=nib_pred.header['pixdim'][1:4],
-                                              params=eval_params)
+                                   data_gt=data_gt,
+                                   data_uncertainty=data_uncertainty,
+                                   dim_lst=nib_pred.header['pixdim'][1:4],
+                                   params=eval_params)
         results_pred, data_painted = eval.run_eval()
 
         # SAVE PAINTED DATA, TP FP FN
         fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
         nib_painted = nib.Nifti1Image(data_painted, nib_pred.affine)
         nib.save(nib_painted, fname_paint)
+
+        # SAVE POST-PROCESSED PREDICTION
+        nib_pred = nib.Nifti1Image(eval.data_pred, nib_pred.affine)
+        nib.save(nib_pred, fname_pred)
 
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
@@ -113,7 +127,7 @@ class Evaluation3DMetrics(object):
         data_painted (ndarray): Mask where each predicted object is labeled depending on whether it is a TP or FP.
     """
 
-    def __init__(self, data_pred, data_gt, dim_lst, params=None):
+    def __init__(self, data_pred, data_gt, data_uncertainty, dim_lst, params=None):
         if params is None:
             params = {}
 
@@ -129,6 +143,11 @@ class Evaluation3DMetrics(object):
         self.px, self.py, self.pz = dim_lst
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
+
+        if "uncertainty" in params and data_uncertainty is not None:
+            if params['uncertainty']['thr'] > 0:
+                thr = params['uncertainty']['thr']
+                self.data_pred = imed_postpro.mask_predictions(self.data_pred, data_uncertainty < thr)
 
         # Remove small objects
         if "removeSmall" in params:
@@ -323,7 +342,7 @@ class Evaluation3DMetrics(object):
 
         for idx in range(1, self.n_gt[class_idx] + 1):
             data_gt_idx = (self.data_gt_label[..., class_idx] == idx).astype(np.int)
-            overlap = (data_gt_idx * self.data_pred[..., class_idx]).astype(np.int)
+            overlap = (data_gt_idx * self.data_pred).astype(np.int)
 
             # if label_size is None, then we look at all object sizes
             # we check if the currrent object belongs to the current size range
@@ -358,7 +377,7 @@ class Evaluation3DMetrics(object):
         lfp = 0
         for idx in range(1, self.n_pred[class_idx] + 1):
             data_pred_idx = (self.data_pred_label[..., class_idx] == idx).astype(np.int)
-            overlap = (data_pred_idx * self.data_gt[..., class_idx]).astype(np.int)
+            overlap = (data_pred_idx * self.data_gt).astype(np.int)
 
             label_gt = np.max(data_pred_idx * self.data_gt_label[..., class_idx])
             data_gt_idx = (self.data_gt_label[..., class_idx] == label_gt).astype(np.int)
@@ -425,21 +444,24 @@ class Evaluation3DMetrics(object):
             dict, ndarray: dictionary containing evaluation results, data with each object painted a different color
         """
         dct = {}
-
+        data_gt = self.data_gt.copy()
+        data_pred = self.data_pred.copy()
         for n in range(self.n_classes):
+            self.data_pred = data_pred[..., n]
+            self.data_gt = data_gt[..., n]
             dct['vol_pred_class' + str(n)] = self.get_vol(self.data_pred)
             dct['vol_gt_class' + str(n)] = self.get_vol(self.data_gt)
             dct['rvd_class' + str(n)], dct['avd_class' + str(n)] = self.get_rvd(), self.get_avd()
-            dct['dice_class' + str(n)] = imed_metrics.dice_score(self.data_gt[..., n], self.data_pred[..., n])
+            dct['dice_class' + str(n)] = imed_metrics.dice_score(self.data_gt, self.data_pred)
             dct['recall_class' + str(n)] = imed_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
             dct['precision_class' + str(n)] = imed_metrics.precision_score(self.data_pred, self.data_gt,
                                                                            err_value=np.nan)
             dct['specificity_class' + str(n)] = imed_metrics.specificity_score(self.data_pred, self.data_gt,
                                                                                err_value=np.nan)
             dct['n_pred_class' + str(n)], dct['n_gt_class' + str(n)] = self.n_pred[n], self.n_gt[n]
-            dct['ltpr_class' + str(n)], _ = self.get_ltpr()
-            dct['lfdr_class' + str(n)] = self.get_lfdr()
-            dct['mse_class' + str(n)] = imed_metrics.mse(self.data_gt[..., n], self.data_pred[..., n])
+            dct['ltpr_class' + str(n)], _ = self.get_ltpr(class_idx=n)
+            dct['lfdr_class' + str(n)] = self.get_lfdr(class_idx=n)
+            dct['mse_class' + str(n)] = imed_metrics.mse(self.data_gt, self.data_pred)
 
             for lb_size, gt_pred in zip(self.label_size_lst[n][0], self.label_size_lst[n][1]):
                 suffix = self.size_suffix_lst[int(lb_size) - 1]
