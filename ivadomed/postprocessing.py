@@ -207,3 +207,27 @@ def label_file_from_coordinates(nifti_image, coord_list):
     nib_pred = nib.Nifti1Image(label_array, nifti_image.affine)
 
     return nib_pred
+
+
+def remove_small_objects(data, bin_structure, size_min):
+    """Removes all unconnected objects smaller than the minimum specified size.
+
+    Args:
+        data (ndarray): Input data.
+        bin_structure (ndarray): Structuring element that defines feature connections.
+        size_min (int): Minimal object size to keep in input data.
+
+    Returns:
+        ndarray: Array with small objects.
+    """
+
+    data_label, n = label(data, structure=bin_structure)
+
+    for idx in range(1, n + 1):
+        data_idx = (data_label == idx).astype(np.int)
+        n_nonzero = np.count_nonzero(data_idx)
+
+        if n_nonzero < size_min:
+            data[data_label == idx] = 0
+
+    return data
