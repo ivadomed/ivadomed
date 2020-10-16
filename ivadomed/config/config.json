@@ -80,7 +80,7 @@
         "n_it": 0
     },
     "postprocessing": {
-        "remove_small_objects": {"unit": "vox", "thr": 3},
+        "remove_small": {"unit": "vox", "thr": 3},
         "uncertainty": {"thr": -1, "suffix": "_unc-vox.nii.gz"}
     },
     "evaluation_parameters": {
