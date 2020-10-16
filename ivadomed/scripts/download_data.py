@@ -27,14 +27,19 @@ DICT_URL = {
     "t2_tumor": {"url": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
                  "description": "Cord tumor segmentation model, trained on T2-weighted contrast."},
     "t2star_sc": {"url": ["https://github.com/ivadomed/t2star_sc/archive/r20200622.zip"],
-                  "description": "Cord tumor segmentation model, trained on T2-weighted contrast."},
+                  "description": "spinal cord segmentation model, trained on T2-star contrast."},
     "mice_uqueensland_gm": {"url": ["https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip"],
                             "description": "Gray matter segmentation model on "
                                            "mouse MRI. Data from University of Queensland."},
     "mice_uqueensland_sc": {"url": ["https://github.com/ivadomed/mice_uqueensland_sc/archive/r20200622.zip"],
                             "description": "Cord segmentation model on mouse MRI. Data from University of Queensland."},
     "findcord_tumor": {"url": ["https://github.com/ivadomed/findcord_tumor/archive/r20200621.zip"],
-                       "description": "Cord localisation model, trained on T2-weighted images with tumor."}
+                       "description": "Cord localisation model, trained on T2-weighted images with tumor."},
+    "model_find_disc_t1": {"url": ["https://github.com/ivadomed/model_find_disc_t1/archive/r20201013.zip"],
+                           "description": "Intervertebral disc detection model trained on T1-weighted images."},
+    "model_find_disc_t2": {"url": ["https://github.com/ivadomed/model_find_disc_t2/archive/r20200928.zip"],
+                           "description": "Intervertebral disc detection model trained on T2-weighted images."}
+
 }
 
 
