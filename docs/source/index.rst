@@ -26,7 +26,7 @@ Home
    data.rst
    configuration_file.rst
    usage.rst
-   models.rst
+   architectures.rst
    pretrained_models.rst
    scripts.rst
 
