@@ -14,5 +14,5 @@ terminal:
 where ``config.json`` is a configuration file, which parameters are
 described in the :ref:`configuration_file:Configuration File`.
 
-To fully benefit from all the features of ``ivadomed``, please see the
-:ref:`tutorials<tutorials>`.
+To fully benefit from all the features of ``ivadomed``, please see section 
+``TUTORIALS``.
