@@ -79,7 +79,7 @@
         "aleatoric": false,
         "n_it": 0
     },
-    "post_processing": {
+    "postprocessing": {
         "binarize_prediction": -1,
         "removeSmall": {"unit": "vox", "thr": 3},
         "uncertainty": {"thr": -1, "suffix": "_unc-vox.nii.gz"}
