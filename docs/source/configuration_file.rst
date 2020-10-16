@@ -402,5 +402,5 @@ Available transformations:
    ``0`` to disable.
 -  ``HistogramClipping`` (parameters: ``min_percentile``,
    ``max_percentile``)
--  ``Clage`` (parameters: ``clip_limit``, ``kernel_size``)
+-  ``Clahe`` (parameters: ``clip_limit``, ``kernel_size``)
 -  ``RandomReverse``
