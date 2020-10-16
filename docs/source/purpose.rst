@@ -6,7 +6,7 @@
 .. |no| raw:: html
 
    <style> .line {text-align:centers;} </style>
-   <p align="center">	&#10060;</p>
+   <p style="color:red" align="center">	&#10007;</p>
 
 
 Purpose
