@@ -342,7 +342,7 @@ class AdapWingLoss(nn.Module):
     Adaptive Wing loss
     Used for heatmap ground truth.
 
-    ..seealso::
+    .. seealso::
         Wang, Xinyao, Liefeng Bo, and Li Fuxin. "Adaptive wing loss for robust face alignment via heatmap regression."
         Proceedings of the IEEE International Conference on Computer Vision. 2019.
 
