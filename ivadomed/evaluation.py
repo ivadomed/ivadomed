@@ -218,10 +218,11 @@ class Evaluation3DMetrics(object):
             thr (float): Uncertainty threshold.
 
         """
-        if self.data_uncertainty is not None:
-            self.data_pred = imed_postpro.mask_predictions(self.data_pred, self.data_uncertainty < thr)
-        else:
-            raise ValueError('No uncertainty file found.')
+        if thr >= 0:
+            if self.data_uncertainty is not None:
+                self.data_pred = imed_postpro.mask_predictions(self.data_pred, self.data_uncertainty < thr)
+            else:
+                raise ValueError('No uncertainty file found.')
 
     def remove_small(self, unit, thr):
         """Remove small objects
@@ -266,8 +267,9 @@ class Evaluation3DMetrics(object):
             thr (float): Threshold under which predictions are set to 0.
 
        """
-        mask = self.data_pred > thr
-        self.data_pred = imed_postpro.mask_predictions(self.data_pred, mask)
+        if thr >= 0:
+            mask = self.data_pred > thr
+            self.data_pred = imed_postpro.mask_predictions(self.data_pred, mask)
 
     def _get_size_ranges(self, thr_lst, unit):
         """Get size ranges of objects in image.
