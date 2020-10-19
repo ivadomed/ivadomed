@@ -66,13 +66,16 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
             the training + validation sub-dataset to find the optimal binarization threshold. The specified value
             indicates the increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
-        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume
-                                training. This training state is saved everytime a new best model is saved in the log
-                                directory.
+        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume training.
+            This training state is saved everytime a new best model is saved in the log
+            directory.
+
     Returns:
+        Float or pandas Dataframe:
         If "train" command: Returns floats: best loss score for both training and validation.
-        If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing sub dataset
-            and return the prediction metrics before evaluation.
+
+        If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing
+            sub dataset and return the prediction metrics before evaluation.
     """
     command = copy.deepcopy(context["command"])
     log_directory = copy.deepcopy(context["log_directory"])
