@@ -23,10 +23,11 @@ Home
    :caption: Getting started
 
    installation.rst
-   usage.rst
-   configuration_file.rst
    data.rst
-   models.rst
+   configuration_file.rst
+   usage.rst
+   architectures.rst
+   pretrained_models.rst
    scripts.rst
 
 .. _tutorials:

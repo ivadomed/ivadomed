@@ -1,6 +1,23 @@
 Configuration File
 ==================
 
+All parameters used for loading data, training and predicting are contained
+within a single JSON configuration file. This section describes how to set up
+this configuration file.
+
+For convenience, here is an generic configuration file: `config\_config.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config.json>`__.
+
+Below are other, more specific configuration files:
+
+- `config\_classification.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config_classification.json>`__: Trains a classification model.
+
+- `config\_sctTesting.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config_sctTesting.json>`__: Trains a 2D segmentation task with the U-Net architecture.
+
+- `config\_spineGeHemis.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config_spineGeHemis.json>`__: Trains a segmentation task with the HeMIS-UNet architecture.
+
+- `config\_tumorSeg.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config_tumorSeg.json>`__: Trains a segmentation task with a 3D U-Net architecture.
+
+
 General parameters
 ------------------
 
@@ -95,20 +112,20 @@ slice\_filter
 ^^^^^^^^^^^^^
 
 Dict. Discard a slice from the dataset if it meets a condition, see
-below. 
+below.
 
 -  ``filter_empty_input``: Bool. Discard slices where all voxel
-   intensities are zeros. 
+   intensities are zeros.
 -  ``filter_empty_mask``: Bool. Discard slices
    where all voxel labels are zeros.
 
 roi
 ^^^
 
-Dict. of parameters about the region of interest 
+Dict. of parameters about the region of interest
 
 -  ``suffix``: String. Suffix of the derivative file containing the ROI used to crop (e.g. ``"_seg-manual"``) with ``ROICrop`` as transform. Please use ``null`` if
-   you do not want to use an ROI to crop. 
+   you do not want to use an ROI to crop.
 -  ``slice_filter_roi``: int. If the ROI mask contains less than ``slice_filter_roi`` non-zero voxels,
    the slice will be discarded from the dataset. This feature helps with
    noisy labels, e.g., if a slice contains only 2-3 labeled voxels, we do
@@ -254,9 +271,9 @@ Architecture
 ------------
 
 Architectures for both segmentation and classification are available and
-described in the :ref:`models:Models` section. If the selected
+described in the :ref:`architectures` section. If the selected
 architecture is listed in the
-`loader <ivadomed/loader/loader.py>`__ file, a
+`loader <https://github.com/ivadomed/ivadomed/blob/lr/fixing_documentation/ivadomed/loader/loader.py>`__ file, a
 classification (not segmentation) task is run. In the case of a
 classification task, the ground truth will correspond to a single label
 value extracted from ``target``, instead being an array (the latter
@@ -265,14 +282,13 @@ being used for the segmentation task).
 default\_model (Mandatory)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Dict. Define the default model (``Unet``) and mandatory parameters that
-are common to all available architectures (listed in the
-:ref:`models:Models` section). For more specific models (see below),
+Dictionary. Define the default model (``Unet``) and mandatory parameters that
+are common to all available :ref:`architectures`. For custom architectures (see below),
 the default parameters are merged with the parameters that are specific
-to the tailored model.
+to the tailored architecture.
 
-- ``name``: ``Unet`` (default) 
-- ``dropout_rate``: Float (e.g. 0.4). 
+- ``name``: ``Unet`` (default)
+- ``dropout_rate``: Float (e.g. 0.4).
 - ``batch_norm_momentum``: Float (e.g. 0.1).
 - ``depth``: Strictly positive integer. Number of down-sampling operations. - ``relu`` (optional): Bool. Sets final activation to normalized ReLU (relu between 0 and 1).
 
@@ -325,8 +341,8 @@ uncertainty
 Uncertainty computation is performed if ``n_it>0`` and at least
 ``epistemic`` or ``aleatoric`` is ``true``. Note: both ``epistemic`` and
 ``aleatoric`` can be ``true``.
- 
-- ``epistemic``: Bool. Model-based uncertainty with `Monte Carlo Dropout <https://arxiv.org/abs/1506.02142>`__. 
+
+- ``epistemic``: Bool. Model-based uncertainty with `Monte Carlo Dropout <https://arxiv.org/abs/1506.02142>`__.
 - ``aleatoric``: Bool. Image-based uncertainty with `test-time augmentation <https://doi.org/10.1016/j.neucom.2019.01.103>`__.
 - ``n_it``: Integer. Number of Monte Carlo iterations. Set to 0 for no
   uncertainty computation.
@@ -337,10 +353,10 @@ Cascaded Architecture Features
 object\_detection\_params (Optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
--  ``object_detection_path``: String. Path to object detection model and 
-   the configuration file. The folder, configuration file, and model need 
-   to have the same name (e.g. ``findcord_tumor/``, 
-   ``findcord_tumor/findcord_tumor.json``, and 
+-  ``object_detection_path``: String. Path to object detection model and
+   the configuration file. The folder, configuration file, and model need
+   to have the same name (e.g. ``findcord_tumor/``,
+   ``findcord_tumor/findcord_tumor.json``, and
    ``findcord_tumor/findcord_tumor.onnx``, respectively).
    The model's prediction will be used to generate bounding boxes.
 -  ``safety_factor``: List. List of length 3 containing the factors to
@@ -386,20 +402,5 @@ Available transformations:
    ``0`` to disable.
 -  ``HistogramClipping`` (parameters: ``min_percentile``,
    ``max_percentile``)
--  ``Clage`` (parameters: ``clip_limit``, ``kernel_size``)
+-  ``Clahe`` (parameters: ``clip_limit``, ``kernel_size``)
 -  ``RandomReverse``
-
-Examples
---------
-
-Examples of configuration files: `config\_config.json <ivadomed/config/config.json>`__.
-
-In particular:
-
-- `config\_classification.json <ivadomed/config/config_classification.json>`__. Is dedicated to classification task.
-
-- `config\_sctTesting.json <ivadomed/config/config_sctTesting.json>`__. Is a user case of 2D segmentation using a U-Net model.
-
-- `config\_spineGeHemis.json <ivadomed/config/config_spineGeHemis.json>`__. Shows how to use the HeMIS-UNet.
-
-- `config\_tumorSeg.json <ivadomed/config/config_tumorSeg.json>`__. Runs a 3D segmentation using a 3D UNet.

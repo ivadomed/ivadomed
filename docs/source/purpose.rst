@@ -1,3 +1,14 @@
+.. |yes| raw:: html
+
+   <style> .line {text-align:centers;} </style>
+   <p style="color:green" align="center">	&#10004;</p>
+
+.. |no| raw:: html
+
+   <style> .line {text-align:centers;} </style>
+   <p style="color:red" align="center">	&#10007;</p>
+
+
 Purpose
 =======
 
@@ -5,7 +16,7 @@ The purpose of the ``ivadomed`` project is to:
 
 * Provide researchers with an open-source framework for training deep learning models for applications in medical imaging;
 
-* Provide ready-to-use :doc:`models` trained on multi-center data.
+* Provide ready-to-use :doc:`pretrained_models` trained on multi-center data.
 
 Comparison with other projects
 ------------------------------
