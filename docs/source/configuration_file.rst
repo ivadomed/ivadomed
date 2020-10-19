@@ -312,25 +312,6 @@ UNet3D (Optional)
 -  ``attention_unet`` (optional): Bool. Use attention gates in the Unet's decoder.
 -  ``n_filters`` (optional): Int. Number of filters in the first convolution of the UNet. This number of filters will be doubled at each convolution.
 
-Testing parameters
-------------------
-
-- ``binarize_prediction``: Float. Threshold (between 0 and 1) used to binarize
-  the predictions before computing the validation metrics. To use soft predictions
-  (i.e. no binarisation, float between 0 and 1) for metric computation, indicate -1.
-
-uncertainty
-^^^^^^^^^^^
-
-Uncertainty computation is performed if ``n_it>0`` and at least
-``epistemic`` or ``aleatoric`` is ``true``. Note: both ``epistemic`` and
-``aleatoric`` can be ``true``.
- 
-- ``epistemic``: Bool. Model-based uncertainty with `Monte Carlo Dropout <https://arxiv.org/abs/1506.02142>`__. 
-- ``aleatoric``: Bool. Image-based uncertainty with `test-time augmentation <https://doi.org/10.1016/j.neucom.2019.01.103>`__.
-- ``n_it``: Integer. Number of Monte Carlo iterations. Set to 0 for no
-  uncertainty computation.
-
 Cascaded Architecture Features
 ------------------------------
 
@@ -388,6 +369,89 @@ Available transformations:
    ``max_percentile``)
 -  ``Clage`` (parameters: ``clip_limit``, ``kernel_size``)
 -  ``RandomReverse``
+
+.. _Uncertainty:
+
+Uncertainty
+___________
+
+Uncertainty computation is performed if ``n_it>0`` and at least
+``epistemic`` or ``aleatoric`` is ``true``. Note: both ``epistemic`` and
+``aleatoric`` can be ``true``.
+
+epistemic
+^^^^^^^^^
+Bool. Model-based uncertainty with `Monte Carlo Dropout <https://arxiv.org/abs/1506.02142>`__.
+
+aleatoric
+^^^^^^^^^
+Bool. Image-based uncertainty with `test-time augmentation <https://doi.org/10.1016/j.neucom.2019.01.103>`__.
+
+n_it
+^^^^
+Integer. Number of Monte Carlo iterations. Set to 0 for no uncertainty computation.
+
+Postprocessing
+--------------
+
+binarize\_prediction
+^^^^^^^^^^^^^^^^^^^^
+Dict. Binarizes predictions according to the given threshold ``thr``. Predictions below the threshold become 0, and
+predictions above or equal to threshold become 1.
+
+- ``thr``: Float. Threshold is between 0 and 1. To use soft predictions
+  (i.e. no binarisation, float between 0 and 1) for metric computation, indicate -1.
+
+fill\_holes
+^^^^^^^^^^^
+Dict. Fill holes in the predictions. No parameters required (e.i., {}).
+
+keep\_largest
+^^^^^^^^^^^^^
+Dict. Keeps only the largest object in prediction. Only nearest neighbors are connected to the center,
+diagonally-connected elements are not considered neighbors. No parameters required (e.i, {})
+
+remove\_noise
+^^^^^^^^^^^^^
+Dict. Sets to zero prediction values under the given threshold ``thr``.
+
+- ``thr``: Float. Threshold is between 0 and 1. Threshold set to ``-1`` will not apply this postprocessing step.
+
+remove\_small
+^^^^^^^^^^^^^
+Dict. Remove small objects from the prediction. An object is defined as a group of connected voxels. Only nearest
+neighbors are connected to the center, diagonally-connected elements are not considered neighbors.
+
+- ``unit``: String. Either "vox" for voxels or "mm3". Indicates the unit used to define the minimal object size.
+- ``thr``: Int. Minimal object size.
+
+threshold\_uncertainty
+^^^^^^^^^^^^^^^^^^^^^^
+Dict. Removes the most uncertain predictions (set to 0) according to a threshold ``thr`` using the uncertainty file with
+the suffix ``suffix``. To apply this method, uncertainty needs to be evaluated on the predictions with the
+:ref:`uncertainty <Uncertainty>` parameter.
+
+- ``thr``: Float. Threshold is between 0 and 1. Threshold set to ``-1`` will not apply this postprocessing step.
+- ``suffix``: String. Indicates the suffix of an uncertainty file. Choices: ``_unc-vox.nii.gz`` for voxel-wise
+  uncertainty, ``_unc-avgUnc.nii.gz`` for structure-wise uncertainty derived from mean value of ``_unc-vox.nii.gz``
+  within a given connected object, or ``_unc-cv`` for structure-wise uncertainty derived from coefficient of variation.
+
+Evaluation parameters
+---------------------
+Dict. Parameters to get object detection metrics (true positive and false detection rates), and this, for defined
+object sizes.
+
+targetSize
+^^^^^^^^^^
+- ``unit``: String. Either "vox" for voxels or "mm3". Indicates the unit used to define the target object sizes.
+- ``thr``: List. containing two int values. The two values will create 3 target size bins: minimal size to first list
+  element, first list element to second list element, and second list element to infinity.
+
+overlap
+^^^^^^^
+- ``unit``: String. Either "vox" for voxels or "mm3". Indicates the unit used to define the overlap.
+- ``thr``: Int. Minimal object size overlapping to be considered a TP, FP, or FN.
+
 
 Examples
 --------
