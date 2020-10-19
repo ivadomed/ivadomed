@@ -259,6 +259,16 @@ class Evaluation3DMetrics(object):
         """
         self.data_pred = imed_postpro.keep_largest_object(self.data_pred)
 
+    def remove_noise(self, thr):
+        """Remove prediction values under the given threshold
+
+        Args:
+            thr (float): Threshold under which predictions are set to 0.
+
+       """
+        mask = self.data_pred > thr
+        self.data_pred = imed_postpro.mask_predictions(self.data_pred, mask)
+
     def _get_size_ranges(self, thr_lst, unit):
         """Get size ranges of objects in image.
 
