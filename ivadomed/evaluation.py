@@ -247,6 +247,11 @@ class Evaluation3DMetrics(object):
                                                                        bin_structure=self.bin_struct,
                                                                        size_min=self.size_min)
 
+    def fill_holes(self):
+        """Fill holes in the predictions
+        """
+        self.data_pred = imed_postpro.fill_holes(self.data_pred)
+
     def _get_size_ranges(self, thr_lst, unit):
         """Get size ranges of objects in image.
 
