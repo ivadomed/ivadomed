@@ -47,20 +47,19 @@ The parameters that are specific to this tutorial are:
 
      "command": "test"
 
-- ``testing_parameters:uncertainty``: Type of uncertainty to estimate. Available choices are ``"epistemic"`` and
+- ``uncertainty``: Type of uncertainty to estimate. Available choices are ``"epistemic"`` and
   ``"aleatoric"``. Note that both can be ``true``. More details on the implementation are available in :ref:`Technical features <Uncertainty-measures>`.
   ``"n_it"`` controls the number of Monte Carlo iterations that are performed to estimate the uncertainty. Set it to a
   non-zero positive integer for this tutorial (e.g. ``20``).
 
   .. code-block:: xml
 
-     "testing_parameters": {
-          "uncertainty": {
-               "epistemic": true,
-               "aleatoric": true,
-               "n_it": 20
-           }
-     }
+      "uncertainty": {
+           "epistemic": true,
+           "aleatoric": true,
+           "n_it": 20
+      }
+
 
 - ``transformation``: Data augmentation transformation. If you have selected the aleatoric uncertainty, the data
   augmentation that will be performed is the same as the one performed for the training. Note that only transformations 
