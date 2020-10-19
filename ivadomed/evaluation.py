@@ -254,6 +254,11 @@ class Evaluation3DMetrics(object):
         self.data_pred = imed_postpro.threshold_predictions(self.data_pred)
         self.data_pred = imed_postpro.fill_holes(self.data_pred)
 
+    def keep_largest(self):
+        """Keep largest object in prediction
+        """
+        self.data_pred = imed_postpro.keep_largest_object(self.data_pred)
+
     def _get_size_ranges(self, thr_lst, unit):
         """Get size ranges of objects in image.
 
