@@ -141,13 +141,19 @@ def test_create_eval_json():
         "NormalizeInstance": {
             "applied_to": ["im"]
         }}
-    initial_config["testing_parameters"] = {
-        "binarize_prediction": False,
-        "uncertainty": {
+    initial_config["uncertainty"] = {
             "epistemic": False,
             "aleatoric": False,
             "n_it": 2
-        }}
+        }
+    initial_config["postprocessing"] = {
+            "remove_noise": {"thr": 0.01},
+            "keep_largest": {},
+            "binarize_prediction": {"thr": 0.5},
+            "fill_holes": {},
+            "remove_small": {"unit": "vox", "thr": 3},
+            "uncertainty": {"thr": 0.4, "suffix": "_unc-vox.nii.gz"}
+        }
     json.dump(initial_config, file_conf)
 
 
