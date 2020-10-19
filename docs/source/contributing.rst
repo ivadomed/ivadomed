@@ -279,6 +279,8 @@ modules or data/binaries (which requires to re-run installer for people
 working on the dev version), MAJOR version when there are major
 incompatible API changes, Beta releases follow the following convention:
 
-MAJOR.MINOR.PATCH-beta.x (with x = 0, 1, 2, etc.) Stable version is
-indicated in the file version.txt. For development version (on master),
-the version is "dev".
+MAJOR.MINOR.PATCH-beta.x (with x = 0, 1, 2, etc.)
+
+Stable version is indicated in the file version.txt. For development 
+version (on master), the version is "dev". On the release branch, edit 
+version.txt (example: 2.3.0), then commit.
