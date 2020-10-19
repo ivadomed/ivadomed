@@ -75,17 +75,17 @@
         "film_layers": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
     },
     "uncertainty": {
-        "epistemic": true,
-        "aleatoric": true,
-        "n_it": 10
+        "epistemic": false,
+        "aleatoric": false,
+        "n_it": 0
     },
     "postprocessing": {
-        "remove_noise": {"thr": 0.1},
+        "remove_noise": {"thr": -1},
         "keep_largest": {},
         "binarize_prediction": {"thr": 0.5},
         "fill_holes": {},
         "remove_small": {"unit": "vox", "thr": 3},
-        "uncertainty": {"thr": 0.4, "suffix": "_unc-vox.nii.gz"}
+        "uncertainty": {"thr": -1, "suffix": "_unc-vox.nii.gz"}
     },
     "evaluation_parameters": {
         "targetSize": {"unit": "vox", "thr": [20, 100]},
