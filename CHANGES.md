@@ -1,3 +1,29 @@
+## v2.3.0 (2020-10-19)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.2.1...v2.3.0)
+
+**BUG**
+
+ - Adapt all metrics to multiclass predictions.  [View pull request](https://github.com/ivadomed/ivadomed/pull/472)
+ - fix run_test gpu assignation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/453)
+
+**DOCUMENTATION**
+
+ - Improving documentation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/477)
+ - Tutorial fix.  [View pull request](https://github.com/ivadomed/ivadomed/pull/461)
+
+**ENHANCEMENT**
+
+ - Download data: Add models.  [View pull request](https://github.com/ivadomed/ivadomed/pull/476)
+ - Refactoring: Changing print and exit to raise error.  [View pull request](https://github.com/ivadomed/ivadomed/pull/467)
+ - Remove "eval" cmd.  [View pull request](https://github.com/ivadomed/ivadomed/pull/465)
+ - Custom final activation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/458)
+ - Display version.  [View pull request](https://github.com/ivadomed/ivadomed/pull/456)
+
+**FEATURE**
+
+ - Use custom data for film.  [View pull request](https://github.com/ivadomed/ivadomed/pull/460)
+ - Uncertainty as post-processing step.  [View pull request](https://github.com/ivadomed/ivadomed/pull/459)
+
 ## v2.2.1 (2020-09-22)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.2.0...v2.2.1)
 
