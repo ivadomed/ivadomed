@@ -142,7 +142,7 @@ def test_create_eval_json():
             "applied_to": ["im"]
         }}
     initial_config["uncertainty"] = {
-            "epistemic": False,
+            "epistemic": True,
             "aleatoric": False,
             "n_it": 2
         }
@@ -327,6 +327,7 @@ def append_list_as_row(file_name, list_of_elem):
         csv_writer = writer(write_obj)
         # Add contents of list as last row in the csv file
         csv_writer.writerow(list_of_elem)
+
 
 def test_film_contrast():
     # FiLM config
