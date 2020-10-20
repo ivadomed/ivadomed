@@ -277,7 +277,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                          log_directory=log_directory,
                                          device=device,
                                          cuda_available=cuda_available,
-                                         metric_fns=metric_fns)
+                                         metric_fns=metric_fns,
+                                         postprocessing=context['postprocessing'])
 
         # RUN EVALUATION
         df_results = imed_evaluation.evaluate(bids_path=loader_params['bids_path'],

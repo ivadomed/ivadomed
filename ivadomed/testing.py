@@ -18,7 +18,7 @@ cudnn.benchmark = True
 
 
 def test(model_params, dataset_test, testing_params, log_directory, device, cuda_available=True,
-         metric_fns=None):
+         metric_fns=None, postprocessing=None):
     """Main command to test the network.
 
     Args:
@@ -29,6 +29,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
         device (torch.device): Indicates the CPU or GPU ID.
         cuda_available (bool): If True, CUDA is available.
         metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
+        postprocessing (dict): Contains postprocessing steps.
 
     Returns:
         dict: result metrics.
@@ -67,7 +68,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
 
     for i_monteCarlo in range(n_monteCarlo):
         preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, path_3Dpred,
-                                          cuda_available, i_monteCarlo)
+                                          cuda_available, i_monteCarlo, postprocessing)
         metric_mgr(preds_npy, gt_npy)
 
     # COMPUTE UNCERTAINTY MAPS
@@ -81,7 +82,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
 
 
 def run_inference(test_loader, model, model_params, testing_params, ofolder, cuda_available,
-                  i_monte_carlo=None):
+                  i_monte_carlo=None, postprocessing=None):
     """Run inference on the test data and save results as nibabel files.
 
     Args:
@@ -92,6 +93,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         ofolder (str): Folder where predictions are saved.
         cuda_available (bool): If True, CUDA is available.
         i_monte_carlo (int): i_th Monte Carlo iteration.
+        postprocessing (dict): Indicates postprocessing steps.
 
     Returns:
         ndarray, ndarray: Prediction, Ground-truth of shape n_sample, n_label, h, w, d.
@@ -182,7 +184,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         fname_out=fname_pred,
                                                         slice_axis=slice_axis,
                                                         kernel_dim='2d',
-                                                        bin_thr=-1)
+                                                        bin_thr=-1,
+                                                        postprocessing=postprocessing)
                     output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
                     preds_npy_list.append(output_data)
 
@@ -234,7 +237,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                         fname_out=fname_pred,
                                                         slice_axis=slice_axis,
                                                         kernel_dim='3d',
-                                                        bin_thr=-1)
+                                                        bin_thr=-1,
+                                                        postprocessing=postprocessing)
                     output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
                     preds_npy_list.append(output_data)
 
