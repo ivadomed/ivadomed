@@ -54,7 +54,7 @@ def get_metric_fns(task):
 
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
-                discard_noise=True, postprocessing=None, data_uncertainty=None):
+                discard_noise=True, postprocessing=None):
     """Save the network predictions as nibabel object.
 
     Based on the header of `fname_ref` image, it creates a nibabel object from the Network predictions (`data_lst`).
@@ -71,7 +71,6 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
             segmentation is output.
         discard_noise (bool): If True, predictions that are lower than 0.01 are set to zero.
         postprocessing (dict): Contains postprocessing steps to be applied.
-        data_uncertainty (ndarray): Uncertainty used for postprocessing.
 
     Returns:
         NibabelObject: Object containing the Network prediction.
