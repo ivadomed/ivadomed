@@ -15,7 +15,7 @@ FP_COLOUR = 2
 FN_COLOUR = 3
 
 
-def evaluate(bids_path, log_directory, target_suffix, eval_params, postprocessing_params):
+def evaluate(bids_path, log_directory, target_suffix, eval_params):
     """Evaluate predictions from inference step.
 
     Args:
@@ -23,7 +23,6 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params, postprocessin
         log_directory (str): Folder where the output folder "results_eval" is be created.
         target_suffix (list): List of suffixes that indicates the target mask(s).
         eval_params (dict): Evaluation parameters.
-        postprocessing_params (dict): Postprocessing steps and associated parameters.
 
     Returns:
         pd.Dataframe: results for each image.
@@ -49,16 +48,10 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params, postprocessin
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
         fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
-        fname_uncertainty = ""
-        if 'uncertainty' in postprocessing_params and 'suffix' in postprocessing_params['uncertainty']:
-            fname_uncertainty = os.path.join(path_preds, subj_acq + postprocessing_params['uncertainty']['suffix'])
-            del postprocessing_params['uncertainty']['suffix']
-        eval_params.update({'postprocessing': postprocessing_params})
 
         # Uncertainty
         data_uncertainty = None
-        if os.path.exists(fname_uncertainty):
-            data_uncertainty = nib.load(fname_uncertainty).get_fdata()
+
         # 3D evaluation
         nib_pred = nib.load(fname_pred)
         data_pred = nib_pred.get_fdata()
@@ -73,7 +66,6 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params, postprocessin
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
         eval = Evaluation3DMetrics(data_pred=data_pred,
                                    data_gt=data_gt,
-                                   data_uncertainty=data_uncertainty,
                                    dim_lst=nib_pred.header['pixdim'][1:4],
                                    params=eval_params)
         results_pred, data_painted = eval.run_eval()
@@ -82,10 +74,6 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params, postprocessin
         fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
         nib_painted = nib.Nifti1Image(data_painted, nib_pred.affine)
         nib.save(nib_painted, fname_paint)
-
-        # SAVE POST-PROCESSED PREDICTION
-        nib_pred = nib.Nifti1Image(eval.data_pred, nib_pred.affine)
-        nib.save(nib_pred, fname_pred)
 
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
@@ -130,11 +118,10 @@ class Evaluation3DMetrics(object):
         data_painted (ndarray): Mask where each predicted object is labeled depending on whether it is a TP or FP.
     """
 
-    def __init__(self, data_pred, data_gt, data_uncertainty, dim_lst, params=None):
+    def __init__(self, data_pred, data_gt, dim_lst, params=None):
         if params is None:
             params = {}
 
-        self.data_uncertainty = data_uncertainty
         self.data_pred = data_pred
         if len(self.data_pred.shape) == 3:
             self.data_pred = np.expand_dims(self.data_pred, -1)
@@ -150,13 +137,6 @@ class Evaluation3DMetrics(object):
 
         self.postprocessing_dict = {}
         self.size_min = 0
-        if "postprocessing" in params:
-            postpro = imed_postpro.Postprocessing(params['postprocessing'],
-                                                  self.data_pred,
-                                                  dim_lst,
-                                                  self.data_uncertainty)
-            self.data_pred = postpro.apply()
-            self.size_min = postpro.size_min
 
         if "targetSize" in params:
             self.size_rng_lst, self.size_suffix_lst = \
