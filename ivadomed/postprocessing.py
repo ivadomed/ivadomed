@@ -258,6 +258,7 @@ class Postprocessing(object):
         bin_struct (ndarray): Binary structure.
 
     """
+
     def __init__(self, postprocessing_params, data_pred, dim_lst, filename_prefix):
         self.postprocessing_dict = postprocessing_params
         self.data_pred = data_pred
