@@ -269,18 +269,5 @@ reviewers will be notified when you add them.
 Versioning
 ----------
 
-Versioning uses the following convention: MAJOR.MINOR.PATCH, where:
-
-PATCH version when there are backwards-compatible bug fixes or
-enhancements, without alteration to Python's modules or data/binaries.
-MINOR version when there are minor API changes or new functionality in a
-backwards-compatible manner, or when there are alteration to Python's
-modules or data/binaries (which requires to re-run installer for people
-working on the dev version), MAJOR version when there are major
-incompatible API changes, Beta releases follow the following convention:
-
-MAJOR.MINOR.PATCH-beta.x (with x = 0, 1, 2, etc.)
-
-Stable version is indicated in the file version.txt. For development 
-version (on master), the version is "dev". On the release branch, edit 
-version.txt (example: 2.3.0), then commit.
+The procedure for creating a new ``ivadomed`` release is described 
+`here <https://github.com/ivadomed/ivadomed/wiki/create-new-release>`_.
