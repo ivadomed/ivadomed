@@ -59,7 +59,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
     # UNCERTAINTY SETTINGS
     if (testing_params['uncertainty']['epistemic'] or testing_params['uncertainty']['aleatoric']) and \
             testing_params['uncertainty']['n_it'] > 0:
-        n_monteCarlo = testing_params['uncertainty']['n_it']
+        n_monteCarlo = testing_params['uncertainty']['n_it'] + 1
         testing_params['uncertainty']['applied'] = True
         print('\nComputing model uncertainty over {} iterations.'.format(n_monteCarlo))
     else:
@@ -70,10 +70,11 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
         preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, path_3Dpred,
                                           cuda_available, i_monteCarlo, postprocessing)
         metric_mgr(preds_npy, gt_npy)
-
-    # COMPUTE UNCERTAINTY MAPS
-    if n_monteCarlo > 1:
-        imed_utils.run_uncertainty(ifolder=path_3Dpred)
+        # If uncertainty computation, don't apply it on last iteration for prediction
+        if testing_params['uncertainty']['applied'] and not (n_monteCarlo - 2 == i_monteCarlo):
+            testing_params['uncertainty']['applied'] = False
+            # COMPUTE UNCERTAINTY MAPS
+            imed_utils.run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
@@ -176,6 +177,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         # If Uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
+                            postprocessing = None
                     else:
                         fname_pred = None
                     output_nii = imed_utils.pred_to_nib(data_lst=pred_tmp_lst,
@@ -210,7 +212,6 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
                 fname_tmp = fname_ref
                 filenames = metadata_idx[0]['gt_filenames']
-
 
             else:
                 pred_undo, metadata, last_sample_bool, volume, weight_matrix = \
