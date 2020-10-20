@@ -241,7 +241,6 @@ class Postprocessing(object):
     """Postprocessing steps
 
     """
-
     def __init__(self, postprocessing_params, data_pred, dim_lst, data_uncertainty):
         self.postprocessing_dict = postprocessing_params
         self.data_pred = data_pred
@@ -251,17 +250,18 @@ class Postprocessing(object):
         self.bin_struct = generate_binary_structure(3, 2)
         self.size_min = 0
 
-    def apply_postprocessing(self):
+    def apply(self):
         """Parse postprocessing parameters and apply postprocessing steps to data.
         """
         for postprocessing in self.postprocessing_dict:
             getattr(self, postprocessing)(**self.postprocessing_dict[postprocessing])
+        return self.data_pred
 
     def binarize_prediction(self, thr):
         """Binarize output.
         """
         if thr >= 0:
-            return threshold_predictions(self.data_pred, thr)
+            self.data_pred = threshold_predictions(self.data_pred, thr)
 
     def uncertainty(self, thr):
         """Removes the most uncertain predictions.
