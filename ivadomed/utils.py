@@ -554,7 +554,8 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
                                        slice_axis=slice_axis,
                                        kernel_dim='3d' if kernel_3D else '2d',
                                        debug=False,
-                                       bin_thr=-1)
+                                       bin_thr=-1,
+                                       postprocessing=context['postprocessing'])
 
     return pred_nib
 
