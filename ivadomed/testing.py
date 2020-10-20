@@ -61,7 +61,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
             testing_params['uncertainty']['n_it'] > 0:
         n_monteCarlo = testing_params['uncertainty']['n_it'] + 1
         testing_params['uncertainty']['applied'] = True
-        print('\nComputing model uncertainty over {} iterations.'.format(n_monteCarlo))
+        print('\nComputing model uncertainty over {} iterations.'.format(n_monteCarlo - 1))
     else:
         testing_params['uncertainty']['applied'] = False
         n_monteCarlo = 1
@@ -71,7 +71,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
                                           cuda_available, i_monteCarlo, postprocessing)
         metric_mgr(preds_npy, gt_npy)
         # If uncertainty computation, don't apply it on last iteration for prediction
-        if testing_params['uncertainty']['applied'] and not (n_monteCarlo - 2 == i_monteCarlo):
+        if testing_params['uncertainty']['applied'] and (n_monteCarlo - 2 == i_monteCarlo):
             testing_params['uncertainty']['applied'] = False
             # COMPUTE UNCERTAINTY MAPS
             imed_utils.run_uncertainty(ifolder=path_3Dpred)
