@@ -70,6 +70,8 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         bin_thr (float): If positive, then the segmentation is binarized with this given threshold. Otherwise, a soft
             segmentation is output.
         discard_noise (bool): If True, predictions that are lower than 0.01 are set to zero.
+        postprocessing (dict): Contains postprocessing steps to be applied.
+        data_uncertainty (ndarray): Uncertainty used for postprocessing.
 
     Returns:
         NibabelObject: Object containing the Network prediction.
