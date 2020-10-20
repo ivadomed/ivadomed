@@ -1,6 +1,7 @@
 # Deals with postprocessing on generated segmentation.
 
 import functools
+import os
 
 import nibabel as nib
 import numpy as np
@@ -241,10 +242,10 @@ class Postprocessing(object):
     """Postprocessing steps
 
     """
-    def __init__(self, postprocessing_params, data_pred, dim_lst, data_uncertainty):
+    def __init__(self, postprocessing_params, data_pred, dim_lst, filename_prefix):
         self.postprocessing_dict = postprocessing_params
         self.data_pred = data_pred
-        self.data_uncertainty = data_uncertainty
+        self.filename_prefix = filename_prefix
         self.px, self.py, self.pz = dim_lst
         h, w, d, self.n_classes = self.data_pred.shape
         self.bin_struct = generate_binary_structure(3, 2)
@@ -263,16 +264,19 @@ class Postprocessing(object):
         if thr >= 0:
             self.data_pred = threshold_predictions(self.data_pred, thr)
 
-    def uncertainty(self, thr):
+    def uncertainty(self, thr, suffix):
         """Removes the most uncertain predictions.
 
         Args:
             thr (float): Uncertainty threshold.
+            suffix (str): Suffix of uncertainty filename.
 
         """
         if thr >= 0:
-            if self.data_uncertainty is not None:
-                self.data_pred = mask_predictions(self.data_pred, self.data_uncertainty < thr)
+            uncertainty_path = os.path.join(self.filename_prefix, suffix)
+            if os.path.exists(uncertainty_path):
+                data_uncertainty = nib.load(uncertainty_path).get_fdata()
+                self.data_pred = mask_predictions(self.data_pred, data_uncertainty < thr)
             else:
                 raise ValueError('No uncertainty file found.')
 
