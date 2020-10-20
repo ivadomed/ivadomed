@@ -120,7 +120,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         postpro = imed_postpro.Postprocessing(postprocessing,
                                               arr_pred_ref_space,
                                               nib_ref.header['pixdim'][1:4],
-                                              data_uncertainty)
+                                              fname_out.split("_pred.nii.gz")[0])
         arr_pred_ref_space = postpro.apply()
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
 
