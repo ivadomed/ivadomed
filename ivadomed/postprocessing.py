@@ -273,7 +273,7 @@ class Postprocessing(object):
 
         """
         if thr >= 0:
-            uncertainty_path = os.path.join(self.filename_prefix, suffix)
+            uncertainty_path = self.filename_prefix + suffix
             if os.path.exists(uncertainty_path):
                 data_uncertainty = nib.load(uncertainty_path).get_fdata()
                 self.data_pred = mask_predictions(self.data_pred, data_uncertainty < thr)
