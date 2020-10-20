@@ -1,9 +1,10 @@
 # Deals with postprocessing on generated segmentation.
 
 import functools
-import numpy as np
+
 import nibabel as nib
-from scipy.ndimage.measurements import label
+import numpy as np
+from scipy.ndimage import label, generate_binary_structure
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.feature import peak_local_max
 
@@ -17,6 +18,7 @@ def nifti_capable(wrapped):
     Returns:
         Functions' return.
     """
+
     @functools.wraps(wrapped)
     def wrapper(data, *args, **kwargs):
         if isinstance(data, nib.Nifti1Image):
@@ -35,6 +37,7 @@ def binarize_with_low_threshold(wrapped):
     Returns:
         Functions' return.
     """
+
     @functools.wraps(wrapped)
     def wrapper(data, *args, **kwargs):
         if not np.array_equal(data, data.astype(bool)):
@@ -53,6 +56,7 @@ def multilabel_capable(wrapped):
     Returns:
         Functions' return.
     """
+
     @functools.wraps(wrapped)
     def wrapper(data, *args, **kwargs):
         if len(data.shape) == 4:
@@ -231,3 +235,87 @@ def remove_small_objects(data, bin_structure, size_min):
             data[data_label == idx] = 0
 
     return data
+
+
+class Postprocessing(object):
+    """Postprocessing steps
+
+    """
+
+    def __init__(self, postprocessing_params, data_pred, dim_lst, data_uncertainty):
+        self.postprocessing_dict = postprocessing_params
+        self.data_pred = data_pred
+        self.data_uncertainty = data_uncertainty
+        self.px, self.py, self.pz = dim_lst
+        h, w, d, self.n_classes = self.data_pred.shape
+        self.bin_struct = generate_binary_structure(3, 2)
+        self.size_min = 0
+
+    def apply_postprocessing(self):
+        """Parse postprocessing parameters and apply postprocessing steps to data.
+        """
+        for postprocessing in self.postprocessing_dict:
+            getattr(self, postprocessing)(**self.postprocessing_dict[postprocessing])
+
+    def binarize_prediction(self, thr):
+        """Binarize output.
+        """
+        if thr >= 0:
+            return threshold_predictions(self.data_pred, thr)
+
+    def uncertainty(self, thr):
+        """Removes the most uncertain predictions.
+
+        Args:
+            thr (float): Uncertainty threshold.
+
+        """
+        if thr >= 0:
+            if self.data_uncertainty is not None:
+                self.data_pred = mask_predictions(self.data_pred, self.data_uncertainty < thr)
+            else:
+                raise ValueError('No uncertainty file found.')
+
+    def remove_small(self, unit, thr):
+        """Remove small objects
+
+        Args:
+            unit (str): Indicates the units of the objects: "mm3" or "vox"
+            thr (int): Minimal object size to keep in input data.
+
+        """
+        if unit == 'vox':
+            self.size_min = thr
+        elif unit == 'mm3':
+            self.size_min = np.round(thr / (self.px * self.py * self.pz))
+        else:
+            print('Please choose a different unit for removeSmall. Choices: vox or mm3')
+            exit()
+
+        for idx in range(self.n_classes):
+            self.data_pred[..., idx] = remove_small_objects(data=self.data_pred[..., idx],
+                                                            bin_structure=self.bin_struct,
+                                                            size_min=self.size_min)
+
+    def fill_holes(self):
+        """Fill holes in the predictions
+        """
+        # Function fill_holes requires a binary input
+        self.data_pred = threshold_predictions(self.data_pred)
+        self.data_pred = fill_holes(self.data_pred)
+
+    def keep_largest(self):
+        """Keep largest object in prediction
+        """
+        self.data_pred = keep_largest_object(self.data_pred)
+
+    def remove_noise(self, thr):
+        """Remove prediction values under the given threshold
+
+        Args:
+            thr (float): Threshold under which predictions are set to 0.
+
+       """
+        if thr >= 0:
+            mask = self.data_pred > thr
+            self.data_pred = mask_predictions(self.data_pred, mask)
