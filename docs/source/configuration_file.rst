@@ -420,7 +420,7 @@ predictions above or equal to threshold become 1.
 
 fill\_holes
 ^^^^^^^^^^^
-Dict. Fill holes in the predictions. No parameters required (e.i., {}).
+Dict. Fill holes in the predictions. No parameters required (i.e., {}).
 
 keep\_largest
 ^^^^^^^^^^^^^
