@@ -424,8 +424,8 @@ Dict. Fill holes in the predictions. No parameters required (i.e., {}).
 
 keep\_largest
 ^^^^^^^^^^^^^
-Dict. Keeps only the largest object in prediction. Only nearest neighbors are connected to the center,
-diagonally-connected elements are not considered neighbors. No parameters required (e.i, {})
+Dict. Keeps only the largest connected object in prediction. Only nearest neighbors are connected to the center,
+diagonally-connected elements are not considered neighbors. No parameters required (i.e., {})
 
 remove\_noise
 ^^^^^^^^^^^^^
