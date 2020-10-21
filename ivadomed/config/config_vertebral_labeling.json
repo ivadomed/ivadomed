@@ -77,8 +77,8 @@
     "postprocessing": {
         "remove_noise": {"thr": -1},
         "binarize_prediction": {"thr": 0.5},
-        "remove_small": {"unit": "vox", "thr": 3},
-        "uncertainty": {"thr": -1, "suffix": "_unc-vox.nii.gz"}
+        "uncertainty": {"thr": -1, "suffix": "_unc-vox.nii.gz"},
+        "remove_small": {"unit": "vox", "thr": 3}
     },
     "evaluation_parameters": {
         "targetSize": {"unit": "vox", "thr": [20, 100]},
