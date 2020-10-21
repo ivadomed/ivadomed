@@ -116,10 +116,11 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
     # create nibabel object
     if postprocessing:
+        fname_prefix = fname_out.split("_pred.nii.gz")[0] if fname_out is not None else None
         postpro = imed_postpro.Postprocessing(postprocessing,
                                               arr_pred_ref_space,
                                               nib_ref.header['pixdim'][1:4],
-                                              fname_out.split("_pred.nii.gz")[0])
+                                              fname_prefix)
         arr_pred_ref_space = postpro.apply()
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
 
