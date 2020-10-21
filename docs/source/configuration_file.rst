@@ -450,7 +450,9 @@ the suffix ``suffix``. To apply this method, uncertainty needs to be evaluated o
 - ``thr``: Float. Threshold is between 0 and 1. Threshold set to ``-1`` will not apply this postprocessing step.
 - ``suffix``: String. Indicates the suffix of an uncertainty file. Choices: ``_unc-vox.nii.gz`` for voxel-wise
   uncertainty, ``_unc-avgUnc.nii.gz`` for structure-wise uncertainty derived from mean value of ``_unc-vox.nii.gz``
-  within a given connected object, or ``_unc-cv`` for structure-wise uncertainty derived from coefficient of variation.
+  within a given connected object, ``_unc-cv.nii.gz`` for structure-wise uncertainty derived from coefficient of
+  variation, ``_unc-iou.nii.gz`` for structure-wise measure of uncertainty derived from the Intersection-over-Union of
+  the predictions, or ``_soft.nii.gz`` to threshold on the average of Monte Carlo iterations.
 
 Evaluation parameters
 ---------------------
