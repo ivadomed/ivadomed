@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 from csv import writer
+import shutil
 
 import nibabel as nib
 import pytest
@@ -260,12 +261,23 @@ def test_training_curve_single():
     subprocess.check_output(["ivadomed_training_curve -i testing_script -o visu_test"], shell=True)
 
 
+def create_packaged_model():
+    model_name = "dummy_model"
+    os.makedirs(model_name)
+
+    # Save model
+    model = imed_models.UNet3D(in_channel=1, out_channel=1)
+    torch.save(model, os.path.join(model_name, model_name + ".pt"))
+
+    shutil.copyfile("testing_data/model_config_3d.json", os.path.join(model_name, model_name + ".json"))
+
+
 @pytest.mark.parametrize('train_lst', [['sub-unf01', 'sub-unf02', 'sub-unf03']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('config', [
     {
         "object_detection_params": {
-            "object_detection_path": "findcord_tumor",
+            "object_detection_path": "dummy_model",
             "safety_factor": None,
             "log_directory": "testing_script"
         },
@@ -302,8 +314,7 @@ def test_object_detection(train_lst, target_lst, config):
         context = json.load(fp)
     context.update(config)
 
-    command = "ivadomed_download_data -d findcord_tumor"
-    subprocess.check_output(command, shell=True)
+    create_packaged_model()
 
     imed.run_command(context)
 
@@ -312,12 +323,12 @@ def test_object_detection_inference():
     fname_image = "testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz"
 
     # Detection
-    nib_detection = imed_utils.segment_volume(folder_model="findcord_tumor", fname_image=fname_image)
+    nib_detection = imed_utils.segment_volume(folder_model="dummy_model", fname_image=fname_image)
     detection_file = "detection.nii.gz"
     nib.save(nib_detection, detection_file)
 
     # Segmentation
-    imed_utils.segment_volume(folder_model="t2_tumor", fname_image=fname_image, fname_prior=detection_file)
+    imed_utils.segment_volume(folder_model="dummy_model", fname_image=fname_image, fname_prior=detection_file)
 
 
 def append_list_as_row(file_name, list_of_elem):
