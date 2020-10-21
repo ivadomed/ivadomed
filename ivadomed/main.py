@@ -236,9 +236,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                               fname_out=os.path.join(log_directory, "roc.png"),
                                               cuda_available=cuda_available)
 
-        testing_params["binarize_prediction"] = thr
         # Update threshold in config file
-        context["postprocessing"]["binarize_prediction"] = thr
+        context["postprocessing"]["binarize_prediction"] = {"thr": thr}
 
     if command == 'train':
         # Save config file within log_directory and log_directory/model_name
