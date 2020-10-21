@@ -151,9 +151,9 @@ def test_create_eval_json():
             "remove_noise": {"thr": 0.01},
             "keep_largest": {},
             "binarize_prediction": {"thr": 0.5},
+            "uncertainty": {"thr": 0.4, "suffix": "_unc-vox.nii.gz"},
             "fill_holes": {},
-            "remove_small": {"unit": "vox", "thr": 3},
-            "uncertainty": {"thr": 0.4, "suffix": "_unc-vox.nii.gz"}
+            "remove_small": {"unit": "vox", "thr": 3}
         }
     json.dump(initial_config, file_conf)
 
