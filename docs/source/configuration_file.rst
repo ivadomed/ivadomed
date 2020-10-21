@@ -429,7 +429,7 @@ diagonally-connected elements are not considered neighbors. No parameters requir
 
 remove\_noise
 ^^^^^^^^^^^^^
-Dict. Sets to zero prediction values under the given threshold ``thr``.
+Dict. Sets to zero prediction values strictly below the given threshold ``thr``.
 
 - ``thr``: Float. Threshold is between 0 and 1. Threshold set to ``-1`` will not apply this postprocessing step.
 
