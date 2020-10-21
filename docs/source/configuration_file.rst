@@ -460,7 +460,7 @@ object sizes.
 targetSize
 ^^^^^^^^^^
 - ``unit``: String. Either "vox" for voxels or "mm3". Indicates the unit used to define the target object sizes.
-- ``thr``: List. containing two int values. The two values will create 3 target size bins: minimal size to first list
+- ``thr``: List. Containing int values. These values will create several consecutive target size bins. For instance with a list of two values, we will have three target size bins: minimal size to first list
   element, first list element to second list element, and second list element to infinity.
 
 overlap
