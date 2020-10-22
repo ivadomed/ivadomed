@@ -23,6 +23,7 @@ import pandas as pd
 import torch.multiprocessing as mp
 
 from ivadomed import main as ivado
+from ivadomed import config_manager as imed_config_manager
 from ivadomed.utils import init_ivadomed
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.scripts.compare_models import compute_statistics
@@ -169,8 +170,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             increment between 0 and 1 used during the ROC analysis (e.g. 0.1). Flag: ``-t``, ``--thr-increment``
     """
     # Load initial config
-    with open(config, "r") as fhandle:
-        initial_config = json.load(fhandle)
+    initial_config = imed_config_manager.ConfigurationManager(config).get_config()
 
     # Hyperparameters values to experiment
     with open(param, "r") as fhandle:
@@ -271,9 +271,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
                 # Take the config file within the log_directory because binarize_prediction may have been updated
                 json_path = os.path.join(config['log_directory'], 'config_file.json')
-                with open(json_path) as f:
-                    new_config = json.load(f)
-                    new_config["gpu"] = config["gpu"]
+                new_config = imed_config_manager.ConfigurationManager(json_path).get_config()
+                new_config["gpu"] = config["gpu"]
                 new_config_list.append(new_config)
 
             test_results = pool.map(test_worker, new_config_list)
