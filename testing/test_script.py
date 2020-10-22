@@ -267,7 +267,7 @@ def test_training_curve_single():
 @pytest.mark.parametrize('config', [
     {
         "object_detection_params": {
-            "object_detection_path": "dummy_model",
+            "object_detection_path": "findcord_tumor",
             "safety_factor": None,
             "log_directory": "testing_script"
         },
