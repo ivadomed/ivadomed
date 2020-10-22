@@ -14,7 +14,7 @@ class ConfigurationManager(object):
     def __init__(self, context_path):
         self.context_path = context_path
         self._validate_path()
-        default_config_path = os.path.join(__ivadomed_dir__, "ivadomed", "config", "config.json")
+        default_config_path = os.path.join(__ivadomed_dir__, "ivadomed", "config", "config_default.json")
         self.default_config = _load_json(default_config_path)
         self.context = _load_json(context_path)
 
