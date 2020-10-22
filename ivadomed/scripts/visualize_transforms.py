@@ -7,6 +7,7 @@ import numpy as np
 import random
 import json
 
+from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
@@ -89,8 +90,8 @@ def run_visualization(input, config, number, output, roi):
                        Flag: ``--roi``, ``-r``
     """
     # Load context
-    with open(config, "r") as fhandle:
-        context = json.load(fhandle)
+    context = imed_config_manager.ConfigurationManager(config).get_config()
+
     # Create output folder
     if not os.path.isdir(output):
         os.makedirs(output)
