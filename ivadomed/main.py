@@ -295,8 +295,7 @@ def run_main():
 
     # Get context from configuration file
     path_config_file = args.config
-    config_manager = imed_config_manager.ConfigurationManager(path_config_file)
-    context = config_manager.get_config()
+    context = imed_config_manager.ConfigurationManager(path_config_file).get_config()
 
     # Run command
     run_command(context=context,
