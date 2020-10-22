@@ -8,6 +8,7 @@ import nibabel as nib
 import pytest
 import torch
 
+from ivadomed import config_manager as imed_config_manager
 import ivadomed.models as imed_models
 from ivadomed import main as imed
 from ivadomed import utils as imed_utils
@@ -261,17 +262,6 @@ def test_training_curve_single():
     subprocess.check_output(["ivadomed_training_curve -i testing_script -o visu_test"], shell=True)
 
 
-def create_packaged_model():
-    model_name = "dummy_model"
-    os.makedirs(model_name)
-
-    # Save model
-    model = imed_models.UNet3D(in_channel=1, out_channel=1)
-    torch.save(model, os.path.join(model_name, model_name + ".pt"))
-
-    shutil.copyfile("testing_data/model_config_3d.json", os.path.join(model_name, model_name + ".json"))
-
-
 @pytest.mark.parametrize('train_lst', [['sub-unf01', 'sub-unf02', 'sub-unf03']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('config', [
@@ -310,11 +300,11 @@ def create_packaged_model():
     }])
 def test_object_detection(train_lst, target_lst, config):
     # Load config file
-    with open("testing_data/model_config.json", 'r') as fp:
-        context = json.load(fp)
+    context = imed_config_manager.ConfigurationManager("testing_data/model_config.json").get_config()
     context.update(config)
 
-    create_packaged_model()
+    command = "ivadomed_download_data -d findcord_tumor"
+    subprocess.check_output(command, shell=True)
 
     imed.run_command(context)
 
@@ -323,12 +313,12 @@ def test_object_detection_inference():
     fname_image = "testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz"
 
     # Detection
-    nib_detection = imed_utils.segment_volume(folder_model="dummy_model", fname_image=fname_image)
+    nib_detection = imed_utils.segment_volume(folder_model="findcord_tumor", fname_image=fname_image)
     detection_file = "detection.nii.gz"
     nib.save(nib_detection, detection_file)
 
     # Segmentation
-    imed_utils.segment_volume(folder_model="dummy_model", fname_image=fname_image, fname_prior=detection_file)
+    imed_utils.segment_volume(folder_model="t2_tumor", fname_image=fname_image, fname_prior=detection_file)
 
 
 def append_list_as_row(file_name, list_of_elem):
