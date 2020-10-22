@@ -17,6 +17,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 from scipy.ndimage import label, generate_binary_structure
 
+from ivadomed import config_manager as imed_config_manager
 from ivadomed import main as imed
 from ivadomed import utils as imed_utils
 from ivadomed import metrics as imed_metrics
@@ -244,8 +245,7 @@ def run_main(args):
     thrUnc = None if args.thrUnc is None else float(args.thrUnc)
     sufUnc = args.suffixUnc
 
-    with open(args.c, "r") as fhandle:
-        context = json.load(fhandle)
+    context = imed_config_manager.ConfigurationManager(args.c).get_config()
 
     ofolder = args.ofolder
     if not os.path.isdir(ofolder):
