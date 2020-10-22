@@ -1,3 +1,10 @@
+## v2.3.1 (2020-10-19)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.3.0...v2.3.1)
+
+**BUG**
+
+ - Version format.  [View pull request](https://github.com/ivadomed/ivadomed/pull/481)
+
 ## v2.3.0 (2020-10-19) 
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.2.1...v2.3.0)
 
