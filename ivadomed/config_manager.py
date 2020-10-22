@@ -5,12 +5,28 @@ from ivadomed.utils import __ivadomed_dir__
 
 
 def _load_json(config_path):
+    """Load json file content
+
+    Args:
+        config_path (str): Path to json file.
+
+    """
     with open(config_path, "r") as fhandle:
         default_config = json.load(fhandle)
     return default_config
 
 
 class ConfigurationManager(object):
+    """Configuration file manager
+
+    Args:
+        context_path (str): Path to configuration file.
+
+    Attributes:
+        context_path (str): Path to configuration file.
+        default_config (str): Path to default configuratio file.
+
+    """
     def __init__(self, context_path):
         self.context_path = context_path
         self._validate_path()
@@ -19,10 +35,17 @@ class ConfigurationManager(object):
         self.context = _load_json(context_path)
 
     def get_config(self):
+        """Get updated configuration file with all parameters from the default config file.
+
+        Returns:
+            dict: Updated configuration dict.
+        """
         self.default_config.update(self.context)
         return self.default_config
 
     def _validate_path(self):
+        """Ensure validity of configuration file path.
+        """
         if not os.path.isfile(self.context_path) or not self.context_path.endswith('.json'):
             raise ValueError(
                 "\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(self.context_path))
