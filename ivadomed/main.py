@@ -142,14 +142,13 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
     # TESTING PARAMS
     # Aleatoric uncertainty
-    if context['testing_parameters']['uncertainty']['aleatoric'] and \
-            context['testing_parameters']['uncertainty']['n_it'] > 0:
+    if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
         transformation_dict = transform_train_params
     else:
         transformation_dict = transform_test_params
     undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict, requires_undo=True))
-    testing_params = copy.deepcopy(context["testing_parameters"])
-    testing_params.update(context["training_parameters"])
+    testing_params = copy.deepcopy(context["training_parameters"])
+    testing_params.update({'uncertainty': context["uncertainty"]})
     testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
                            'slice_axis': loader_params['slice_axis']})
     if command == "train":
@@ -237,9 +236,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                               fname_out=os.path.join(log_directory, "roc.png"),
                                               cuda_available=cuda_available)
 
-        testing_params["binarize_prediction"] = thr
         # Update threshold in config file
-        context["testing_parameters"]["binarize_prediction"] = thr
+        context["postprocessing"]["binarize_prediction"] = {"thr": thr}
 
     if command == 'train':
         # Save config file within log_directory and log_directory/model_name
@@ -278,7 +276,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                          log_directory=log_directory,
                                          device=device,
                                          cuda_available=cuda_available,
-                                         metric_fns=metric_fns)
+                                         metric_fns=metric_fns,
+                                         postprocessing=context['postprocessing'])
 
         # RUN EVALUATION
         df_results = imed_evaluation.evaluate(bids_path=loader_params['bids_path'],

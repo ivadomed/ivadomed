@@ -48,14 +48,10 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
         fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
-        fname_uncertainty = ""
-        if 'uncertainty' in eval_params and 'suffix' in eval_params['uncertainty']:
-            fname_uncertainty = os.path.join(path_preds, subj_acq + eval_params['uncertainty']['suffix'])
 
         # Uncertainty
         data_uncertainty = None
-        if os.path.exists(fname_uncertainty):
-            data_uncertainty = nib.load(fname_uncertainty).get_fdata()
+
         # 3D evaluation
         nib_pred = nib.load(fname_pred)
         data_pred = nib_pred.get_fdata()
@@ -70,7 +66,6 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
         eval = Evaluation3DMetrics(data_pred=data_pred,
                                    data_gt=data_gt,
-                                   data_uncertainty=data_uncertainty,
                                    dim_lst=nib_pred.header['pixdim'][1:4],
                                    params=eval_params)
         results_pred, data_painted = eval.run_eval()
@@ -79,10 +74,6 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
         nib_painted = nib.Nifti1Image(data_painted, nib_pred.affine)
         nib.save(nib_painted, fname_paint)
-
-        # SAVE POST-PROCESSED PREDICTION
-        nib_pred = nib.Nifti1Image(eval.data_pred, nib_pred.affine)
-        nib.save(nib_pred, fname_pred)
 
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
@@ -127,7 +118,7 @@ class Evaluation3DMetrics(object):
         data_painted (ndarray): Mask where each predicted object is labeled depending on whether it is a TP or FP.
     """
 
-    def __init__(self, data_pred, data_gt, data_uncertainty, dim_lst, params=None):
+    def __init__(self, data_pred, data_gt, dim_lst, params=None):
         if params is None:
             params = {}
 
@@ -144,27 +135,8 @@ class Evaluation3DMetrics(object):
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
 
-        if "uncertainty" in params and data_uncertainty is not None:
-            if params['uncertainty']['thr'] > 0:
-                thr = params['uncertainty']['thr']
-                self.data_pred = imed_postpro.mask_predictions(self.data_pred, data_uncertainty < thr)
-
-        # Remove small objects
-        if "removeSmall" in params:
-            size_min = params['removeSmall']['thr']
-            if params['removeSmall']['unit'] == 'vox':
-                self.size_min = size_min
-            elif params['removeSmall']['unit'] == 'mm3':
-                self.size_min = np.round(size_min / (self.px * self.py * self.pz))
-            else:
-                print('Please choose a different unit for removeSmall. Chocies: vox or mm3')
-                exit()
-
-            for idx in range(self.n_classes):
-                self.data_pred[..., idx] = self.remove_small_objects(data=self.data_pred[..., idx])
-                self.data_gt[..., idx] = self.remove_small_objects(data=self.data_gt[..., idx])
-        else:
-            self.size_min = 0
+        self.postprocessing_dict = {}
+        self.size_min = 0
 
         if "targetSize" in params:
             self.size_rng_lst, self.size_suffix_lst = \
@@ -209,27 +181,6 @@ class Evaluation3DMetrics(object):
                 self.overlap_vox = None
         else:
             self.overlap_vox = 3
-
-    def remove_small_objects(self, data):
-        """Removes all unconnected objects smaller than the minimum specified size.
-
-        Args:
-            data (ndarray): Input data.
-
-        Returns:
-            ndarray: Array with small objects.
-        """
-        data_label, n = label(data,
-                              structure=self.bin_struct)
-
-        for idx in range(1, n + 1):
-            data_idx = (data_label == idx).astype(np.int)
-            n_nonzero = np.count_nonzero(data_idx)
-
-            if n_nonzero < self.size_min:
-                data[data_label == idx] = 0
-
-        return data
 
     def _get_size_ranges(self, thr_lst, unit):
         """Get size ranges of objects in image.

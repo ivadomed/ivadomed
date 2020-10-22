@@ -154,7 +154,7 @@ was correctly located.
 
 Evaluate model
 --------------
-- ``testing_parameters:binarize_prediction``: Threshold at which predictions are binarized. Before testing the model,
+- ``postprocessing:binarize_prediction``: Threshold at which predictions are binarized. Before testing the model,
   modify the binarization threshold to have a threshold adapted to the data:
 
 .. code-block:: xml
