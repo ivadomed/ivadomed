@@ -414,7 +414,7 @@ def save_mixup_sample(ofolder, input_data, labeled_data, lambda_tensor):
     plt.close()
 
 
-def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
+def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0, options=None):
     """Segment an image.
 
     Segment an image (`fname_image`) using a pre-trained model (`folder_model`). If provided, a region of interest
@@ -432,6 +432,7 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
             e.g. spinal cord centerline, used to crop the image prior to segment it if provided.
             The segmentation is not performed on the slices that are empty in this image.
         gpu_number (int): Number representing gpu number if available.
+        options (dict):
 
     Returns:
         nibabelObject: Object containing the soft segmentation.
@@ -445,6 +446,21 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
 
     # Load model training config
     context = imed_config_manager.ConfigurationManager(fname_model_metadata).get_config()
+
+    if options is not None:
+        postpro = {}
+        if 'thr' in options:
+            postpro['binarize_prediction'] = {"thr": options['thr']}
+        if 'largest' in options and options['largest']:
+            postpro['keep_largest'] = {}
+        if 'fill_holes' in options and options['fill_holes']:
+            postpro['fill_holes'] = {}
+        if 'remove_small' in options and ('mm' in options['remove_small'] or 'vox' in options['remove_small']):
+            unit = 'mm3' if 'mm3' in options['remove_small'] else 'vox'
+            thr = int(options['remove_small'].replace(unit, ""))
+            postpro['remove_small'] = {"unit": unit, "thr": thr}
+
+        context['postprocessing'] = postpro
 
     # LOADER
     loader_params = context["loader_parameters"]
