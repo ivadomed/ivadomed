@@ -9,7 +9,8 @@ def _load_json(config_path):
 
     Args:
         config_path (str): Path to json file.
-
+    Returns:
+        dict: config dictionary.
     """
     with open(config_path, "r") as fhandle:
         default_config = json.load(fhandle)
