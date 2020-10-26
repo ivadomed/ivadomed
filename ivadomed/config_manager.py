@@ -43,8 +43,16 @@ class ConfigurationManager(object):
         Returns:
             dict: Updated configuration dict.
         """
+        if self.context['debugging']:
+            self._display_differing_keys()
         self.default_config.update(self.context)
+
         return self.default_config
+
+    def _display_differing_keys(self):
+        for key in self.default_config:
+            if key not in self.context:
+                print(f'Adding the following key in configuration file:\n {key}: {self.default_config[key]}')
 
     def _validate_path(self):
         """Ensure validity of configuration file path.
