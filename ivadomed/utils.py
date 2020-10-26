@@ -18,7 +18,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from ivadomed import __ivadomed_dir__
+from . import __ivadomed_dir__
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models

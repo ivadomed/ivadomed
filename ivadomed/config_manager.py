@@ -1,7 +1,7 @@
 import json
 import os
 
-from ivadomed import __ivadomed_dir__
+from . import __ivadomed_dir__
 
 
 def _load_json(config_path):
