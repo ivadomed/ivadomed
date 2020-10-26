@@ -80,6 +80,5 @@
         "overlap": {"unit": "vox", "thr": 1}
     },
     "transformation": {
-      "NumpyToTensor": {}
     }
 }
