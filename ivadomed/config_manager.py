@@ -69,7 +69,7 @@ class ConfigurationManager(object):
         if self.updated_config['debugging']:
             self._display_differing_keys()
 
-        return self.default_config
+        return self.updated_config
 
     def _display_differing_keys(self):
         print('Adding the following keys to the configuration file')
