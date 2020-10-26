@@ -18,6 +18,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from . import __ivadomed_dir__
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
@@ -1221,7 +1222,6 @@ def _version_string():
         return "{install_type}-{ivadomed_branch}-{ivadomed_commit}".format(**locals())
 
 
-__ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 __version__ = _version_string()
 
 
