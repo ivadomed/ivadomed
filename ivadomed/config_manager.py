@@ -1,7 +1,7 @@
 import json
 import os
 
-__ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+from ivadomed import __ivadomed_dir__
 
 
 def _load_json(config_path):
