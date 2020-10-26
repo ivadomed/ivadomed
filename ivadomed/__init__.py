@@ -1,3 +1,1 @@
-from .utils import __version__
-import os
-__ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+from .utils import __version__, __ivadomed_dir__
