@@ -6,6 +6,15 @@ __ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 
 def update(d, u):
+    """Update dictionary and nested dictionaries.
+
+    Args:
+        d (dict): Source dictionary that is updated by destination dictionary.
+        u (dict): Destination dictionary.
+
+    Returns:
+        dict: updated dictionary
+    """
     for k, v in u.items():
         if isinstance(v, collections.abc.Mapping):
             d[k] = update(d.get(k, {}), v)
@@ -15,6 +24,14 @@ def update(d, u):
 
 
 def deep_dict_compare(source_dict, dest_dict, keyname=None):
+    """Compare and display differences between dictionaries (and nested dictionaries).
+
+    Args:
+        source_dict (dict): Source dictionary.
+        dest_dict (dict): Destination dictionary.
+        keyname (str): Key name to indicate the path to nested parameter.
+
+    """
     for key in dest_dict:
         if key not in source_dict:
             key_str = key if keyname is None else keyname + key
@@ -48,7 +65,9 @@ class ConfigurationManager(object):
 
     Attributes:
         context_path (str): Path to configuration file.
-        default_config (str): Path to default configuratio file.
+        default_config (dict): Default configuration file.
+        context (dict): Provided configuration file.
+        updated_config (dict): Update configuration file.
 
     """
     def __init__(self, context_path):
@@ -72,6 +91,8 @@ class ConfigurationManager(object):
         return self.updated_config
 
     def _display_differing_keys(self):
+        """Display differences between dictionaries.
+        """
         print('Adding the following keys to the configuration file')
         deep_dict_compare(self.context, self.updated_config)
         print('\n')
