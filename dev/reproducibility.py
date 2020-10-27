@@ -7,6 +7,7 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 
+from ivadomed import config_manager as imed_config_manager
 from ivadomed import main as ivado
 
 
@@ -83,8 +84,7 @@ def main():
 
     for logdir, output_path in zip(args.logdir, args.output_path):
         config = os.path.join(logdir, "config_file.json")
-        with open(config, "r") as fhandle:
-            context = json.load(fhandle)
+        context = imed_config_manager.ConfigurationManager(config).get_config()
 
         df_list = []
         metrics = []

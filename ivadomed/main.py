@@ -6,7 +6,7 @@ import joblib
 import torch.backends.cudnn as cudnn
 
 from ivadomed import evaluation as imed_evaluation
-
+from ivadomed import config_manager as imed_config_manager
 from ivadomed import testing as imed_testing
 from ivadomed import training as imed_training
 from ivadomed import transforms as imed_transforms
@@ -295,11 +295,7 @@ def run_main():
 
     # Get context from configuration file
     path_config_file = args.config
-    if not os.path.isfile(path_config_file) or not path_config_file.endswith('.json'):
-        print("\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(path_config_file))
-        return
-    with open(path_config_file, "r") as fhandle:
-        context = json.load(fhandle)
+    context = imed_config_manager.ConfigurationManager(path_config_file).get_config()
 
     # Run command
     run_command(context=context,

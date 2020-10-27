@@ -13,6 +13,7 @@ from sklearn.externals import joblib
 
 from torchvision import transforms as torch_transforms
 
+from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import loader as imed_loader
 from ivadomed import utils as imed_utils
 from ivadomed import transforms as imed_transforms
@@ -89,7 +90,6 @@ def run_main(context):
 if __name__ == "__main__":
     fname_config_file = sys.argv[1]
 
-    with open(fname_config_file, "r") as fhandle:
-        context = json.load(fhandle)
+    context = imed_config_manager.ConfigurationManager(fname_config_file).get_config()
 
     run_main(context)

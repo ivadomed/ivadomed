@@ -12,6 +12,7 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
+from ivadomed import config_manager as imed_config_manager
 
 def plot_histogram(data, layer_no, fname_out):
     """
@@ -105,6 +106,7 @@ def visualize_tsne(data, contrast_images, layer_no, fname_out):
     plt.ylim(-500, 500)
     fig.savefig(fname_out)
 
+
 def run_main(context):
     """
     Main command to create and save the graphs to visualize the film parameters.
@@ -150,10 +152,10 @@ def run_main(context):
         visualize_tsne(gammas[layer_no], contrast_images, layer_no, out_dir + f"/tsne_gamma_{layer_no}.png")
         visualize_tsne(betas[layer_no], contrast_images, layer_no, out_dir + f"/tsne_beta_{layer_no}.png")
 
+
 if __name__ == "__main__":
     fname_config_file = sys.argv[1]
 
-    with open(fname_config_file, "r") as fhandle:
-        context = json.load(fhandle)
+    context = imed_config_manager.ConfigurationManager(fname_config_file).get_config()
 
     run_main(context)

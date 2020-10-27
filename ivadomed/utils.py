@@ -18,6 +18,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from ivadomed import config_manager as imed_config_manager
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
@@ -443,8 +444,7 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
     fname_model, fname_model_metadata = imed_models.get_model_filenames(folder_model)
 
     # Load model training config
-    with open(fname_model_metadata, "r") as fhandle:
-        context = json.load(fhandle)
+    context = imed_config_manager.ConfigurationManager(fname_model_metadata).get_config()
 
     # LOADER
     loader_params = context["loader_parameters"]
