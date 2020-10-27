@@ -76,8 +76,6 @@
     },
     "postprocessing": {},
     "evaluation_parameters": {
-        "targetSize": {"unit": "vox", "thr": [20, 100]},
-        "overlap": {"unit": "vox", "thr": 1}
     },
     "transformation": {
     }
