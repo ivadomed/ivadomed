@@ -414,7 +414,7 @@ def save_mixup_sample(ofolder, input_data, labeled_data, lambda_tensor):
     plt.close()
 
 
-def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0, options=None):
+def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
     """Segment an image.
 
     Segment an image (`fname_image`) using a pre-trained model (`folder_model`). If provided, a region of interest
@@ -426,13 +426,13 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0, op
             (2) its configuration file ('folder_model/folder_model.json') used for the training,
             see https://github.com/neuropoly/ivadomed/wiki/configuration-file
         fname_image (str): image filename (e.g. .nii.gz) to segment.
-        fname_prior (str): Image filename (e.g. .nii.gz) containing processing information (e.i. spinal cord
-            segmentation, spinal location or MS lesion classification)
-
-            e.g. spinal cord centerline, used to crop the image prior to segment it if provided.
-            The segmentation is not performed on the slices that are empty in this image.
         gpu_number (int): Number representing gpu number if available.
-        options (dict):
+        options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename
+            (e.g., .nii.gz) containing processing information (e.i., spinal cord segmentation, spinal location or MS
+            lesion classification)
+
+            e.g., spinal cord centerline, used to crop the image prior to segment it if provided.
+            The segmentation is not performed on the slices that are empty in this image.
 
     Returns:
         nibabelObject: Object containing the soft segmentation.
@@ -467,6 +467,7 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0, op
     slice_axis = AXIS_DCT[loader_params['slice_axis']]
     metadata = {}
     fname_roi = None
+    fname_prior = options['fname_prior'] if (options is not None) and ('fname_prior' in options) else None
     if fname_prior is not None:
         if 'roi_params' in loader_params and loader_params['roi_params']['suffix'] is not None:
             fname_roi = fname_prior
@@ -474,8 +475,9 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0, op
         # If ROI is not provided then force center cropping
         if fname_roi is None and 'ROICrop' in context["transformation"].keys():
             print(
-                "\nWARNING: fname_roi has not been specified, then a cropping around the center of the image is performed"
-                " instead of a cropping around a Region of Interest.")
+                "\n WARNING: fname_roi has not been specified, then a cropping around the center of the image is "
+                "performed instead of a cropping around a Region of Interest.")
+            
             context["transformation"] = dict((key, value) if key != 'ROICrop'
                                              else ('CenterCrop', value)
                                              for (key, value) in context["transformation"].items())
