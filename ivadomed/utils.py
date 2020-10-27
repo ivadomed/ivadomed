@@ -477,7 +477,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
             print(
                 "\n WARNING: fname_roi has not been specified, then a cropping around the center of the image is "
                 "performed instead of a cropping around a Region of Interest.")
-            
+
             context["transformation"] = dict((key, value) if key != 'ROICrop'
                                              else ('CenterCrop', value)
                                              for (key, value) in context["transformation"].items())
