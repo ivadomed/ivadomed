@@ -48,21 +48,9 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
         fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
-<<<<<<< HEAD
-        fname_uncertainty = ""
-        if 'uncertainty' in eval_params and 'suffix' in eval_params['uncertainty']:
-            fname_uncertainty = os.path.join(path_preds, subj_acq + eval_params['uncertainty']['suffix'])
-
-        # Uncertainty
-        uncertain_pred = None
-        if os.path.exists(fname_uncertainty):
-            uncertain_pred = nib.load(fname_uncertainty).get_fdata()
-=======
-
         # Uncertainty
         data_uncertainty = None
 
->>>>>>> origin
         # 3D evaluation
         nib_pred = nib.load(fname_pred)
         data_pred = nib_pred.get_fdata()
@@ -77,10 +65,6 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
         eval = Evaluation3DMetrics(data_pred=data_pred,
                                    data_gt=data_gt,
-<<<<<<< HEAD
-                                   uncertain_pred=uncertain_pred,
-=======
->>>>>>> origin
                                    dim_lst=nib_pred.header['pixdim'][1:4],
                                    params=eval_params)
         results_pred, data_painted = eval.run_eval()
@@ -137,7 +121,7 @@ class Evaluation3DMetrics(object):
         data_painted (ndarray): Mask where each predicted object is labeled depending on whether it is a TP or FP.
     """
 
-    def __init__(self, data_pred, data_gt, uncertain_pred, dim_lst, params=None):
+    def __init__(self, data_pred, data_gt, dim_lst, params=None):
         if params is None:
             params = {}
 
@@ -153,34 +137,8 @@ class Evaluation3DMetrics(object):
         self.px, self.py, self.pz = dim_lst
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
-
-<<<<<<< HEAD
-        if "uncertainty" in params and uncertain_pred is not None:
-            if params['uncertainty']['thr'] > 0:
-                self.data_pred = imed_postpro.threshold_uncertainty(self.data_pred,
-                                                                    uncertain_pred,
-                                                                    params['uncertainty']['thr'])
-
-        # Remove small objects
-        if "removeSmall" in params:
-            size_min = params['removeSmall']['thr']
-            if params['removeSmall']['unit'] == 'vox':
-                self.size_min = size_min
-            elif params['removeSmall']['unit'] == 'mm3':
-                self.size_min = np.round(size_min / (self.px * self.py * self.pz))
-            else:
-                print('Please choose a different unit for removeSmall. Chocies: vox or mm3')
-                exit()
-
-            for idx in range(self.n_classes):
-                self.data_pred[..., idx] = self.remove_small_objects(data=self.data_pred[..., idx])
-                self.data_gt[..., idx] = self.remove_small_objects(data=self.data_gt[..., idx])
-        else:
-            self.size_min = 0
-=======
         self.postprocessing_dict = {}
         self.size_min = 0
->>>>>>> origin
 
         if "targetSize" in params:
             self.size_rng_lst, self.size_suffix_lst = \
