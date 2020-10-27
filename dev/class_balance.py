@@ -15,6 +15,7 @@ import json
 import argparse
 import numpy as np
 
+from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
 from ivadomed import utils as imed_utils
 from ivadomed import transforms as imed_transforms
@@ -37,8 +38,7 @@ def print_stats(arr):
 
 
 def run_main(args):
-    with open(args.c, "r") as fhandle:
-        context = json.load(fhandle)
+    context = imed_config_manager.ConfigurationManager(args.c).get_config()
 
     transform_lst = torch_transforms.Compose([
         imed_transforms.Resample(wspace=0.75, hspace=0.75),

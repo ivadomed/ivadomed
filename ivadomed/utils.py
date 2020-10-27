@@ -1,7 +1,7 @@
 import json
+import logging
 import os
 import subprocess
-import logging
 
 import matplotlib
 import matplotlib.animation as anim
@@ -13,18 +13,18 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.utils as vutils
-
-from ivadomed import models as imed_models
-from ivadomed import postprocessing as imed_postpro
-from ivadomed import transforms as imed_transforms
-from ivadomed import metrics as imed_metrics
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
-from ivadomed.object_detection import utils as imed_obj_detect
-
 from scipy.ndimage import label, generate_binary_structure
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+from ivadomed import config_manager as imed_config_manager
+from ivadomed import metrics as imed_metrics
+from ivadomed import models as imed_models
+from ivadomed import postprocessing as imed_postpro
+from ivadomed import transforms as imed_transforms
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed.object_detection import utils as imed_obj_detect
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -42,20 +42,20 @@ def get_task(model_name):
 # METRICS
 def get_metric_fns(task):
     metric_fns = [imed_metrics.dice_score,
-              imed_metrics.multi_class_dice_score,
-              imed_metrics.precision_score,
-              imed_metrics.recall_score,
-              imed_metrics.specificity_score,
-              imed_metrics.intersection_over_union,
-              imed_metrics.accuracy_score]
+                  imed_metrics.multi_class_dice_score,
+                  imed_metrics.precision_score,
+                  imed_metrics.recall_score,
+                  imed_metrics.specificity_score,
+                  imed_metrics.intersection_over_union,
+                  imed_metrics.accuracy_score]
     if task == "segmentation":
-            metric_fns = metric_fns + [imed_metrics.hausdorff_score]
+        metric_fns = metric_fns + [imed_metrics.hausdorff_score]
 
     return metric_fns
 
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
-                discard_noise=True):
+                discard_noise=True, postprocessing=None):
     """Save the network predictions as nibabel object.
 
     Based on the header of `fname_ref` image, it creates a nibabel object from the Network predictions (`data_lst`).
@@ -71,6 +71,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         bin_thr (float): If positive, then the segmentation is binarized with this given threshold. Otherwise, a soft
             segmentation is output.
         discard_noise (bool): If True, predictions that are lower than 0.01 are set to zero.
+        postprocessing (dict): Contains postprocessing steps to be applied.
 
     Returns:
         NibabelObject: Object containing the Network prediction.
@@ -115,6 +116,13 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         arr_pred_ref_space[arr_pred_ref_space <= 1e-2] = 0
 
     # create nibabel object
+    if postprocessing:
+        fname_prefix = fname_out.split("_pred.nii.gz")[0] if fname_out is not None else None
+        postpro = imed_postpro.Postprocessing(postprocessing,
+                                              arr_pred_ref_space,
+                                              nib_ref.header['pixdim'][1:4],
+                                              fname_prefix)
+        arr_pred_ref_space = postpro.apply()
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
 
     # save as nifti file
@@ -252,7 +260,8 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     nib_hard = nib.load(fname_hard)
     data_hard = nib_hard.get_fdata()
     # Label each object of each class
-    data_hard_labeled = [label(data_hard[..., i_class], structure=bin_struct)[0] for i_class in range(data_hard.shape[-1])]
+    data_hard_labeled = [label(data_hard[..., i_class], structure=bin_struct)[0] for i_class in
+                         range(data_hard.shape[-1])]
 
     # load all MC simulations (in mc_dict["mc_data"]) and label them (in mc_dict["mc_labeled"])
     mc_dict = {"mc_data": [], "mc_labeled": []}
@@ -435,8 +444,7 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
     fname_model, fname_model_metadata = imed_models.get_model_filenames(folder_model)
 
     # Load model training config
-    with open(fname_model_metadata, "r") as fhandle:
-        context = json.load(fhandle)
+    context = imed_config_manager.ConfigurationManager(fname_model_metadata).get_config()
 
     # LOADER
     loader_params = context["loader_parameters"]
@@ -547,7 +555,8 @@ def segment_volume(folder_model, fname_image, fname_prior=None, gpu_number=0):
                                        slice_axis=slice_axis,
                                        kernel_dim='3d' if kernel_3D else '2d',
                                        debug=False,
-                                       bin_thr=-1)
+                                       bin_thr=-1,
+                                       postprocessing=context['postprocessing'])
 
     return pred_nib
 
@@ -605,18 +614,17 @@ class HookBasedFeatureExtractor(nn.Module):
         self.upscale = upscale
 
     def get_input_array(self, m, i, o):
-        assert(isinstance(i, tuple))
+        assert (isinstance(i, tuple))
         self.inputs = [i[index].data.clone() for index in range(len(i))]
         self.inputs_size = [input.size() for input in self.inputs]
 
         print('Input Array Size: ', self.inputs_size)
 
     def get_output_array(self, m, i, o):
-        assert(isinstance(i, tuple))
+        assert (isinstance(i, tuple))
         self.outputs = [o[index].data.clone() for index in range(len(o))]
         self.outputs_size = [output.size() for output in self.outputs]
         print('Output Array Size: ', self.outputs_size)
-
 
     def forward(self, x):
         target_layer = self.submodule._modules.get(self.layername)
@@ -839,7 +847,7 @@ class SliceFilter(object):
 
     def __init__(self, filter_empty_mask=True,
                  filter_empty_input=True,
-                 filter_classification=False, classifier_path=None, device=None, cuda_available=None ):
+                 filter_classification=False, classifier_path=None, device=None, cuda_available=None):
         self.filter_empty_mask = filter_empty_mask
         self.filter_empty_input = filter_empty_input
         self.filter_classification = filter_classification
@@ -851,7 +859,6 @@ class SliceFilter(object):
                 self.classifier = torch.load(classifier_path, map_location=device)
             else:
                 self.classifier = torch.load(classifier_path, map_location='cpu')
-
 
     def __call__(self, sample):
         input_data, gt_data = sample['input'], sample['gt']
@@ -866,7 +873,9 @@ class SliceFilter(object):
                 return False
 
         if self.filter_classification:
-            if not np.all([int(self.classifier(cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0), self.cuda_available))) for img in input_data]):
+            if not np.all([int(
+                    self.classifier(cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0), self.cuda_available)))
+                           for img in input_data]):
                 return False
 
         return True
@@ -1129,6 +1138,7 @@ def check_exe(name):
     Returns:
         str or None: path of the program or None
     """
+
     def is_exe(fpath):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 

@@ -6,7 +6,7 @@ import joblib
 import torch.backends.cudnn as cudnn
 
 from ivadomed import evaluation as imed_evaluation
-
+from ivadomed import config_manager as imed_config_manager
 from ivadomed import testing as imed_testing
 from ivadomed import training as imed_training
 from ivadomed import transforms as imed_transforms
@@ -66,13 +66,16 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
             the training + validation sub-dataset to find the optimal binarization threshold. The specified value
             indicates the increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
-        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume
-                                training. This training state is saved everytime a new best model is saved in the log
-                                directory.
+        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume training.
+            This training state is saved everytime a new best model is saved in the log
+            directory.
+
     Returns:
+        Float or pandas Dataframe:
         If "train" command: Returns floats: best loss score for both training and validation.
-        If "test" command: Returns dict: of averaged metrics computed on the testing sub dataset.
-        If "eval" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing sub dataset.
+
+        If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing
+            sub dataset and return the prediction metrics before evaluation.
     """
     command = copy.deepcopy(context["command"])
     log_directory = copy.deepcopy(context["log_directory"])
@@ -143,14 +146,13 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
     # TESTING PARAMS
     # Aleatoric uncertainty
-    if context['testing_parameters']['uncertainty']['aleatoric'] and \
-            context['testing_parameters']['uncertainty']['n_it'] > 0:
+    if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
         transformation_dict = transform_train_params
     else:
         transformation_dict = transform_test_params
     undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict, requires_undo=True))
-    testing_params = copy.deepcopy(context["testing_parameters"])
-    testing_params.update(context["training_parameters"])
+    testing_params = copy.deepcopy(context["training_parameters"])
+    testing_params.update({'uncertainty': context["uncertainty"]})
     testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
                            'slice_axis': loader_params['slice_axis']})
     if command == "train":
@@ -238,9 +240,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                               fname_out=os.path.join(log_directory, "roc.png"),
                                               cuda_available=cuda_available)
 
-        testing_params["binarize_prediction"] = thr
         # Update threshold in config file
-        context["testing_parameters"]["binarize_prediction"] = thr
+        context["postprocessing"]["binarize_prediction"] = {"thr": thr}
 
     if command == 'train':
         # Save config file within log_directory and log_directory/model_name
@@ -273,32 +274,21 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                  "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
 
         # RUN INFERENCE
-        metrics_dict = imed_testing.test(model_params=model_params,
+        pred_metrics = imed_testing.test(model_params=model_params,
                                          dataset_test=ds_test,
                                          testing_params=testing_params,
                                          log_directory=log_directory,
                                          device=device,
                                          cuda_available=cuda_available,
-                                         metric_fns=metric_fns)
-        return metrics_dict
-
-    elif command == 'eval':
-        # PREDICTION FOLDER
-        path_preds = os.path.join(log_directory, 'pred_masks')
-        # If the prediction folder does not exist, run Inference first
-        if os.path.isdir(path_preds):
-            context['testing_parameters']['uncertainty']['n_it'] = 0
-
-        print('\nRun Inference\n')
-        context["command"] = "test"
-        run_command(context)
+                                         metric_fns=metric_fns,
+                                         postprocessing=context['postprocessing'])
 
         # RUN EVALUATION
         df_results = imed_evaluation.evaluate(bids_path=loader_params['bids_path'],
                                               log_directory=log_directory,
                                               target_suffix=loader_params["target_suffix"],
                                               eval_params=context["evaluation_parameters"])
-        return df_results
+        return df_results, pred_metrics
 
 
 def run_main():
@@ -309,11 +299,7 @@ def run_main():
 
     # Get context from configuration file
     path_config_file = args.config
-    if not os.path.isfile(path_config_file) or not path_config_file.endswith('.json'):
-        print("\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(path_config_file))
-        return
-    with open(path_config_file, "r") as fhandle:
-        context = json.load(fhandle)
+    context = imed_config_manager.ConfigurationManager(path_config_file).get_config()
 
     # Run command
     run_command(context=context,

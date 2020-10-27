@@ -57,6 +57,7 @@ def test_segment_volume_2d():
             "NumpyToTensor": {},
             "NormalizeInstance": {"applied_to": ["im"]}
         },
+        "postprocessing": {},
         "training_parameters": {
             "batch_size": BATCH_SIZE
         }
@@ -121,6 +122,7 @@ def test_segment_volume_3d():
             "NumpyToTensor": {},
             "NormalizeInstance": {"applied_to": ["im"]}
         },
+        "postprocessing": {},
         "training_parameters": {
             "batch_size": BATCH_SIZE
         }

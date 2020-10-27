@@ -4,7 +4,7 @@ Contributing to ivadomed
 Introduction
 ------------
 
-First off, thanks for taking the time to contribute! 🎉 
+First off, thanks for taking the time to contribute! 🎉
 
 When contributing to this repository, please first discuss the change
 you wish to make by opening a new `Github
@@ -167,8 +167,8 @@ Licensing
 
 Ensure that you are the original author of your changes, and if that is
 not the case, ensure that the borrowed/adapted code is compatible with
-the `project's
-license <https://ivadomed.org/en/latest/index.html#license>`__.
+the project's
+:ref:`license`.
 
 Committing
 ----------
@@ -234,15 +234,15 @@ If the PR fixes issue(s), indicate it after your introduction:
 ``Fixes #XXXX, Fixes #YYYY``. Note: it is important to respect the
 syntax above so that the issue(s) will be closed upon merging the PR.
 
-Work in progress 
+Work in progress
 ~~~~~~~~~~~~~~~~
 
 If your PR is not ready for review yet, you can convert it to a "Draft", so the team is informed.
 
-A draft pull request is styled differently to clearly indicate that it’s in a draft state. 
-Merging is blocked in draft pull requests. Change the status to “Ready for review” near the 
-bottom of your pull request to remove the draft state and allow merging according to your 
-project’s settings. 
+A draft pull request is styled differently to clearly indicate that it’s in a draft state.
+Merging is blocked in draft pull requests. Change the status to “Ready for review” near the
+bottom of your pull request to remove the draft state and allow merging according to your
+project’s settings.
 
 Continuous Integration
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -269,16 +269,5 @@ reviewers will be notified when you add them.
 Versioning
 ----------
 
-Versioning uses the following convention: MAJOR.MINOR.PATCH, where:
-
-PATCH version when there are backwards-compatible bug fixes or
-enhancements, without alteration to Python's modules or data/binaries.
-MINOR version when there are minor API changes or new functionality in a
-backwards-compatible manner, or when there are alteration to Python's
-modules or data/binaries (which requires to re-run installer for people
-working on the dev version), MAJOR version when there are major
-incompatible API changes, Beta releases follow the following convention:
-
-MAJOR.MINOR.PATCH-beta.x (with x = 0, 1, 2, etc.) Stable version is
-indicated in the file version.txt. For development version (on master),
-the version is "dev".
+The procedure for creating a new ``ivadomed`` release is described 
+`here <https://github.com/ivadomed/ivadomed/wiki/create-new-release>`_.

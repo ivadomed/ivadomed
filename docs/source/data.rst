@@ -1,12 +1,12 @@
 Data
 ====
 
-Without data, nothing can be done. To get you started, we recommend you
-download the `Example data for Ivadomed <https://github.com/ivadomed/data_example_spinegeneric/releases/tag/r20200825>`__. This dataset is composed of 10 subjects from different imaging centers and includes
-original images in NIfTI format as well as manual segmentations and
-labels. The data are organized according to the
-`BIDS <http://bids.neuroimaging.io/>`__ convention, to be fully
-compatible with ``ivadomed`` loader:
+To facilitate the organization of data, ``ivadomed`` requires the data to be
+organized according to the `Brain Imaging Data Structure (BIDS) <http://bids.neuroimaging.io/>`__ convention.
+An example of this organization is shown below:
+
+.. image:: ../../images/1920px-BIDS_Logo.png
+    :alt: BIDS_Logo
 
 ::
 

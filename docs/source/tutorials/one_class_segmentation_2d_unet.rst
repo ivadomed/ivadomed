@@ -57,7 +57,7 @@ segmentation training.
 
      "log_directory":"spineGeneric"
 
-- ``loader_parameters:bids_path``: Location of the dataset. As discussed in :doc:`../data`, the dataset
+- ``loader_parameters:bids_path``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
   should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 
   .. code-block:: xml
@@ -175,11 +175,11 @@ Evaluate model
 --------------
 
 To test the trained model on the testing sub-dataset and compute evaluation metrics, open your config file and
-set ``command`` to ``eval``:
+set ``command`` to ``test``:
 
 .. code-block:: bash
 
-   "command": "eval"
+   "command": "test"
 
 Then run:
 

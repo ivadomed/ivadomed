@@ -48,6 +48,7 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
         fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
+<<<<<<< HEAD
         fname_uncertainty = ""
         if 'uncertainty' in eval_params and 'suffix' in eval_params['uncertainty']:
             fname_uncertainty = os.path.join(path_preds, subj_acq + eval_params['uncertainty']['suffix'])
@@ -56,6 +57,12 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         uncertain_pred = None
         if os.path.exists(fname_uncertainty):
             uncertain_pred = nib.load(fname_uncertainty).get_fdata()
+=======
+
+        # Uncertainty
+        data_uncertainty = None
+
+>>>>>>> origin
         # 3D evaluation
         nib_pred = nib.load(fname_pred)
         data_pred = nib_pred.get_fdata()
@@ -70,7 +77,10 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
                 data_gt[..., idx] = np.zeros((h, w, d), dtype='u1')
         eval = Evaluation3DMetrics(data_pred=data_pred,
                                    data_gt=data_gt,
+<<<<<<< HEAD
                                    uncertain_pred=uncertain_pred,
+=======
+>>>>>>> origin
                                    dim_lst=nib_pred.header['pixdim'][1:4],
                                    params=eval_params)
         results_pred, data_painted = eval.run_eval()
@@ -144,6 +154,7 @@ class Evaluation3DMetrics(object):
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
 
+<<<<<<< HEAD
         if "uncertainty" in params and uncertain_pred is not None:
             if params['uncertainty']['thr'] > 0:
                 self.data_pred = imed_postpro.threshold_uncertainty(self.data_pred,
@@ -166,6 +177,10 @@ class Evaluation3DMetrics(object):
                 self.data_gt[..., idx] = self.remove_small_objects(data=self.data_gt[..., idx])
         else:
             self.size_min = 0
+=======
+        self.postprocessing_dict = {}
+        self.size_min = 0
+>>>>>>> origin
 
         if "targetSize" in params:
             self.size_rng_lst, self.size_suffix_lst = \
@@ -210,27 +225,6 @@ class Evaluation3DMetrics(object):
                 self.overlap_vox = None
         else:
             self.overlap_vox = 3
-
-    def remove_small_objects(self, data):
-        """Removes all unconnected objects smaller than the minimum specified size.
-
-        Args:
-            data (ndarray): Input data.
-
-        Returns:
-            ndarray: Array with small objects.
-        """
-        data_label, n = label(data,
-                              structure=self.bin_struct)
-
-        for idx in range(1, n + 1):
-            data_idx = (data_label == idx).astype(np.int)
-            n_nonzero = np.count_nonzero(data_idx)
-
-            if n_nonzero < self.size_min:
-                data[data_label == idx] = 0
-
-        return data
 
     def _get_size_ranges(self, thr_lst, unit):
         """Get size ranges of objects in image.
@@ -343,7 +337,7 @@ class Evaluation3DMetrics(object):
 
         for idx in range(1, self.n_gt[class_idx] + 1):
             data_gt_idx = (self.data_gt_label[..., class_idx] == idx).astype(np.int)
-            overlap = (data_gt_idx * self.data_pred[..., class_idx]).astype(np.int)
+            overlap = (data_gt_idx * self.data_pred).astype(np.int)
 
             # if label_size is None, then we look at all object sizes
             # we check if the currrent object belongs to the current size range
@@ -378,7 +372,7 @@ class Evaluation3DMetrics(object):
         lfp = 0
         for idx in range(1, self.n_pred[class_idx] + 1):
             data_pred_idx = (self.data_pred_label[..., class_idx] == idx).astype(np.int)
-            overlap = (data_pred_idx * self.data_gt[..., class_idx]).astype(np.int)
+            overlap = (data_pred_idx * self.data_gt).astype(np.int)
 
             label_gt = np.max(data_pred_idx * self.data_gt_label[..., class_idx])
             data_gt_idx = (self.data_gt_label[..., class_idx] == label_gt).astype(np.int)
@@ -445,21 +439,24 @@ class Evaluation3DMetrics(object):
             dict, ndarray: dictionary containing evaluation results, data with each object painted a different color
         """
         dct = {}
-
+        data_gt = self.data_gt.copy()
+        data_pred = self.data_pred.copy()
         for n in range(self.n_classes):
+            self.data_pred = data_pred[..., n]
+            self.data_gt = data_gt[..., n]
             dct['vol_pred_class' + str(n)] = self.get_vol(self.data_pred)
             dct['vol_gt_class' + str(n)] = self.get_vol(self.data_gt)
             dct['rvd_class' + str(n)], dct['avd_class' + str(n)] = self.get_rvd(), self.get_avd()
-            dct['dice_class' + str(n)] = imed_metrics.dice_score(self.data_gt[..., n], self.data_pred[..., n])
+            dct['dice_class' + str(n)] = imed_metrics.dice_score(self.data_gt, self.data_pred)
             dct['recall_class' + str(n)] = imed_metrics.recall_score(self.data_pred, self.data_gt, err_value=np.nan)
             dct['precision_class' + str(n)] = imed_metrics.precision_score(self.data_pred, self.data_gt,
                                                                            err_value=np.nan)
             dct['specificity_class' + str(n)] = imed_metrics.specificity_score(self.data_pred, self.data_gt,
                                                                                err_value=np.nan)
             dct['n_pred_class' + str(n)], dct['n_gt_class' + str(n)] = self.n_pred[n], self.n_gt[n]
-            dct['ltpr_class' + str(n)], _ = self.get_ltpr()
-            dct['lfdr_class' + str(n)] = self.get_lfdr()
-            dct['mse_class' + str(n)] = imed_metrics.mse(self.data_gt[..., n], self.data_pred[..., n])
+            dct['ltpr_class' + str(n)], _ = self.get_ltpr(class_idx=n)
+            dct['lfdr_class' + str(n)] = self.get_lfdr(class_idx=n)
+            dct['mse_class' + str(n)] = imed_metrics.mse(self.data_gt, self.data_pred)
 
             for lb_size, gt_pred in zip(self.label_size_lst[n][0], self.label_size_lst[n][1]):
                 suffix = self.size_suffix_lst[int(lb_size) - 1]

@@ -7,6 +7,7 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 
+from ivadomed import config_manager as imed_config_manager
 from ivadomed import main as ivado
 
 
@@ -24,7 +25,7 @@ def get_parser():
 
 
 def get_results(context):
-    context["command"] = "eval"
+    context["command"] = "test"
     pred_mask_path = os.path.join(context["log_directory"], "pred_masks")
     if os.path.exists(pred_mask_path):
         shutil.rmtree(pred_mask_path)
@@ -83,8 +84,7 @@ def main():
 
     for logdir, output_path in zip(args.logdir, args.output_path):
         config = os.path.join(logdir, "config_file.json")
-        with open(config, "r") as fhandle:
-            context = json.load(fhandle)
+        context = imed_config_manager.ConfigurationManager(config).get_config()
 
         df_list = []
         metrics = []

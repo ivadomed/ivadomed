@@ -145,7 +145,7 @@ class DenseNet(nn.Module):
         drop_rate (float) - dropout rate after each dense layer
         num_classes (int) - number of classification classes
         memory_efficient (bool) - If True, uses checkpointing. Much more memory efficient,
-          but slower. Default: *False*. See `"paper" <https://arxiv.org/pdf/1707.06990.pdf>`_
+          but slower. Default: *False*. See `"article" <https://arxiv.org/pdf/1707.06990.pdf>`_
     """
 
     def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16),
@@ -1462,13 +1462,10 @@ def get_model_filenames(folder_model):
         if not os.path.isfile(fname_model):
             fname_model = os.path.join(folder_model, prefix_model + '.pt')
             if not os.path.exists(fname_model):
-                print('Model file not found: {}'.format(fname_model))
-                exit()
+                raise FileNotFoundError(fname_model)
         fname_model_metadata = os.path.join(folder_model, prefix_model + '.json')
         if not os.path.isfile(fname_model_metadata):
-            print('Model metadata file not found: {}'.format(fname_model_metadata))
-            exit()
+            raise FileNotFoundError(fname_model)
     else:
-        print('Model folder not found: {}'.format(folder_model))
-        exit()
+        raise FileNotFoundError(fname_model)
     return fname_model, fname_model_metadata

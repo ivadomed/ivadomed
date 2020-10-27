@@ -2,11 +2,13 @@ import json
 import os
 import subprocess
 from csv import writer
+import shutil
 
 import nibabel as nib
 import pytest
 import torch
 
+from ivadomed import config_manager as imed_config_manager
 import ivadomed.models as imed_models
 from ivadomed import main as imed
 from ivadomed import utils as imed_utils
@@ -126,7 +128,7 @@ def test_create_eval_json():
     initial_config = json.load(file_conf)
     file_conf.close()
     file_conf = open("testing_data/model_config_eval.json", "w")
-    initial_config["command"] = "eval"
+    initial_config["command"] = "test"
     initial_config["transformation"] = {
         "Resample": {
             "wspace": 0.75,
@@ -141,13 +143,19 @@ def test_create_eval_json():
         "NormalizeInstance": {
             "applied_to": ["im"]
         }}
-    initial_config["testing_parameters"] = {
-        "binarize_prediction": False,
-        "uncertainty": {
-            "epistemic": False,
+    initial_config["uncertainty"] = {
+            "epistemic": True,
             "aleatoric": False,
             "n_it": 2
-        }}
+        }
+    initial_config["postprocessing"] = {
+            "remove_noise": {"thr": 0.01},
+            "keep_largest": {},
+            "binarize_prediction": {"thr": 0.5},
+            "uncertainty": {"thr": 0.4, "suffix": "_unc-vox.nii.gz"},
+            "fill_holes": {},
+            "remove_small": {"unit": "vox", "thr": 3}
+        }
     json.dump(initial_config, file_conf)
 
 
@@ -292,8 +300,7 @@ def test_training_curve_single():
     }])
 def test_object_detection(train_lst, target_lst, config):
     # Load config file
-    with open("testing_data/model_config.json", 'r') as fp:
-        context = json.load(fp)
+    context = imed_config_manager.ConfigurationManager("testing_data/model_config.json").get_config()
     context.update(config)
 
     command = "ivadomed_download_data -d findcord_tumor"
@@ -321,6 +328,7 @@ def append_list_as_row(file_name, list_of_elem):
         csv_writer = writer(write_obj)
         # Add contents of list as last row in the csv file
         csv_writer.writerow(list_of_elem)
+
 
 def test_film_contrast():
     # FiLM config
