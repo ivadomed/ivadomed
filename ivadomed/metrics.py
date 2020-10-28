@@ -34,7 +34,7 @@ class MetricManager(object):
         res_dict = {}
         for key, val in self.result_dict.items():
             if np.all(np.isnan(val)):  # if all values are np.nan
-                res_dict[key] = None
+                res_dict[key] = -1
             else:
                 res_dict[key] = np.nanmean(val)
         return res_dict
