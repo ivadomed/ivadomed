@@ -1,3 +1,21 @@
+## v2.4.0 (2020-10-27)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.3.1...v2.4.0)
+
+**BUG**
+
+ - Fix missing version.txt in wheels package.  [View pull request](https://github.com/ivadomed/ivadomed/pull/488)
+
+**DOCUMENTATION**
+
+ - Added reference to arXiv citation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/485)
+ - Documenting release workflow.  [View pull request](https://github.com/ivadomed/ivadomed/pull/483)
+
+**ENHANCEMENT**
+
+ - Option to override postprocessing in segment volume.  [View pull request](https://github.com/ivadomed/ivadomed/pull/486)
+ - Configuration File Manager.  [View pull request](https://github.com/ivadomed/ivadomed/pull/484)
+
+
 ## v2.3.1 (2020-10-19)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.3.0...v2.3.1)
 
