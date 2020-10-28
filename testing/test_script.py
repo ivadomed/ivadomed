@@ -271,6 +271,24 @@ def test_training_curve_single():
             "safety_factor": None,
             "log_directory": "testing_script"
         },
+        "training_parameters": {
+        "batch_size": 1,
+        "loss": {
+            "name": "DiceLoss"
+        },
+        "training_time": {
+            "num_epochs": 2,
+            "early_stopping_patience": 50,
+            "early_stopping_epsilon": 0.001
+        },
+        "scheduler": {
+            "initial_lr": 0.001,
+            "lr_scheduler": {
+                "name": "CosineAnnealingLR",
+                "base_lr": 1e-5,
+                "max_lr": 1e-2
+            }
+        },
         "transformation": {
             "Resample": {
                 "wspace": 0.75,
