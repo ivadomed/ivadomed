@@ -836,7 +836,8 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
                                     scale_each=True)
         writer.add_image(dataset_type + '/Input', grid_img, epoch)
 
-        grid_img_2 = vutils.make_grid(convert_labels_to_RGB(preds),
+        predi = convert_labels_to_RGB(preds)
+        grid_img_2 = vutils.make_grid(predi,
                                     normalize=True,
                                     scale_each=True)
 
