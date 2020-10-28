@@ -277,7 +277,7 @@ def test_training_curve_single():
             "name": "DiceLoss"
         },
         "training_time": {
-            "num_epochs": 2,
+            "num_epochs": 3,
             "early_stopping_patience": 50,
             "early_stopping_epsilon": 0.001
         },
