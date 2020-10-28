@@ -836,17 +836,17 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
                                     scale_each=True)
         writer.add_image(dataset_type + '/Input', grid_img, epoch)
 
-        grid_img = vutils.make_grid(convert_labels_to_RGB(preds),
+        grid_img_2 = vutils.make_grid(convert_labels_to_RGB(preds),
                                     normalize=True,
                                     scale_each=True)
 
-        writer.add_image(dataset_type + '/Predictions', grid_img, epoch)
+        writer.add_image(dataset_type + '/Predictions', grid_img_2, epoch)
 
-        grid_img = vutils.make_grid(convert_labels_to_RGB(gt_samples),
+        grid_img_3 = vutils.make_grid(convert_labels_to_RGB(gt_samples),
                                     normalize=True,
                                     scale_each=True)
 
-        writer.add_image(dataset_type + '/Ground Truth', grid_img, epoch)
+        writer.add_image(dataset_type + '/Ground Truth', grid_img_3, epoch)
 
 
 class SliceFilter(object):
