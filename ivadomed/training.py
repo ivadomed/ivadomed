@@ -274,6 +274,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             # METRICS COMPUTATION FOR CURRENT EPOCH
             val_loss_total_avg_old = val_loss_total_avg if epoch > 1 else None
             metrics_dict = metric_mgr.get_results()
+            print(metrics_dict)
             metric_mgr.reset()
             print(metrics_dict)
             writer.add_scalars('Validation/Metrics', metrics_dict, epoch)

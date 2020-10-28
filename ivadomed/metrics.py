@@ -96,6 +96,7 @@ def dice_score(im1, im2, empty_score=0.0):
 
     im_sum = im1.sum() + im2.sum()
     if im_sum == 0:
+        print("erro_value_dice")
         return empty_score
 
     intersection = (im1 * im2).sum()
