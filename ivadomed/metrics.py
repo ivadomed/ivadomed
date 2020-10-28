@@ -73,7 +73,7 @@ def numeric_score(prediction, groundtruth):
     return FP, FN, TP, TN
 
 
-def dice_score(im1, im2, empty_score=np.nan):
+def dice_score(im1, im2, empty_score=0.0):
     """Computes the Dice coefficient between im1 and im2.
 
     Compute a soft Dice coefficient between im1 and im2, ie equals twice the sum of the two masks product, divided by
