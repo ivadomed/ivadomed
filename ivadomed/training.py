@@ -275,6 +275,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             val_loss_total_avg_old = val_loss_total_avg if epoch > 1 else None
             metrics_dict = metric_mgr.get_results()
             metric_mgr.reset()
+            print(metrics_dict)
             writer.add_scalars('Validation/Metrics', metrics_dict, epoch)
             val_loss_total_avg = val_loss_total / num_steps
             writer.add_scalars('losses', {
