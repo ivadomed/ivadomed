@@ -95,7 +95,7 @@ def dice_score(im1, im2, empty_score=0.0):
         raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
 
     im_sum = im1.sum() + im2.sum()
-    if im_sum == 0:
+    if im_sum == 0 or np.isnan(im_sum):
         print("error_value_dice")
         return empty_score
 
@@ -172,7 +172,7 @@ def precision_score(prediction, groundtruth, err_value=0.0):
         float: Precision score.
     """
     FP, FN, TP, TN = numeric_score(prediction, groundtruth)
-    if (TP + FP) <= 0.0:
+    if (TP + FP) <= 0.0 or np.isnan((TP + FP)):
         return err_value
 
     precision = np.divide(TP, TP + FP)
