@@ -282,11 +282,11 @@ def test_training_curve_single():
             "early_stopping_epsilon": 0.001
         },
         "scheduler": {
-            "initial_lr": 0.001,
+            "initial_lr": 0.00001,
             "lr_scheduler": {
                 "name": "CosineAnnealingLR",
                 "base_lr": 1e-5,
-                "max_lr": 1e-2
+                "max_lr": 1e-4
             }
             },
         "balance_samples": False,
