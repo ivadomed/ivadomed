@@ -288,7 +288,14 @@ def test_training_curve_single():
                 "base_lr": 1e-5,
                 "max_lr": 1e-2
             }
-        }},
+            },
+        "balance_samples": False,
+        "mixup_alpha": None,
+        "transfer_learning": {
+        "retrain_model": None,
+        "retrain_fraction": 1.0
+                    }
+        },
         "transformation": {
             "Resample": {
                 "wspace": 0.75,
