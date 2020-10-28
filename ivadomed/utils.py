@@ -48,8 +48,6 @@ def get_metric_fns(task):
                   imed_metrics.specificity_score,
                   imed_metrics.intersection_over_union,
                   imed_metrics.accuracy_score]
-    if task == "segmentation":
-        metric_fns = metric_fns + [imed_metrics.hausdorff_score]
 
     return metric_fns
 
