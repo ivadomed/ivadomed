@@ -288,7 +288,7 @@ def test_training_curve_single():
                 "base_lr": 1e-5,
                 "max_lr": 1e-2
             }
-        },
+        }},
         "transformation": {
             "Resample": {
                 "wspace": 0.75,
@@ -314,7 +314,7 @@ def test_training_curve_single():
             "train_fraction": 0.34,
             "test_fraction": 0.33,
             "center_test": []
-        },
+        }
     }])
 def test_object_detection(train_lst, target_lst, config):
     # Load config file
