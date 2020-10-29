@@ -258,7 +258,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                                                   'requires_undo': True}}, device=device,
                                                                   cuda_available=cuda_available)
 
-        metric_fns = imed_utils.get_metric_fns(ds_test.task)
+        metric_fns = imed_metrics.get_metric_fns(ds_test.task)
 
         if model_params["name"] == "FiLMedUnet":
             clustering_path = os.path.join(log_directory, "clustering_models.joblib")
