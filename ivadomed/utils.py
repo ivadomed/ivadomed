@@ -20,7 +20,7 @@ from tqdm import tqdm
 
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import metrics as imed_metrics
-from ivadomed import models as imed_models
+from ivadomed import image as imed_image
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
@@ -116,29 +116,6 @@ class HookBasedFeatureExtractor(nn.Module):
         return self.inputs, self.outputs
 
 
-def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
-    """Reorient an image to match a reference image orientation.
-
-    It reorients a array to a given orientation and convert it to a nibabel object using the reference nibabel header.
-
-    Args:
-        arr (ndarray): Input array, array to re orient.
-        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
-        nib_ref (nibabel): Reference nibabel object, whose header is used.
-        nib_ref_canonical (nibabel): `nib_ref` that has been reoriented to canonical orientation (RAS).
-    """
-    # Orient image in RAS according to slice axis
-    arr_ras = imed_loader_utils.orient_img_ras(arr, slice_axis)
-
-    # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
-    ref_orientation = nib.orientations.io_orientation(nib_ref.affine)
-    ras_orientation = nib.orientations.io_orientation(nib_ref_canonical.affine)
-    # Return the orientation that transforms from ras to ref_orientation
-    trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
-    # apply transformation
-    return nib.orientations.apply_orientation(arr_ras, trans_orient)
-
-
 def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_axis):
     """Save model feature maps.
 
@@ -173,14 +150,14 @@ def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_
         # Write the attentions to a nifti image
         nib_ref = nib.load(path)
         nib_ref_can = nib.as_closest_canonical(nib_ref)
-        oriented_image = reorient_image(orig_input_img[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
+        oriented_image = imed_image.reorient_image(orig_input_img[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
 
         nib_pred = nib.Nifti1Image(oriented_image, nib_ref.affine)
         nib.save(nib_pred, save_directory)
 
         basename = basename.split(".")[0] + "_att.nii.gz"
         save_directory = os.path.join(log_directory, layer_name, basename)
-        attention_map = reorient_image(upsampled_attention[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
+        attention_map = imed_image.reorient_image(upsampled_attention[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
         nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
 
         nib.save(nib_pred, save_directory)
