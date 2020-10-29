@@ -13,8 +13,6 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
 
-AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
-
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
                 discard_noise=True, postprocessing=None):
@@ -144,7 +142,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
 
     # LOADER
     loader_params = context["loader_parameters"]
-    slice_axis = AXIS_DCT[loader_params['slice_axis']]
+    slice_axis = imed_utils.AXIS_DCT[loader_params['slice_axis']]
     metadata = {}
     fname_roi = None
     fname_prior = options['fname_prior'] if (options is not None) and ('fname_prior' in options) else None

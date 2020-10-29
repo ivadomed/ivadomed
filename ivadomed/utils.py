@@ -15,6 +15,7 @@ from ivadomed import inference as imed_inference
 from ivadomed import image as imed_image
 from ivadomed import postprocessing as imed_postpro
 
+AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
 # List of classification models (ie not segmentation output)
 CLASSIFIER_LIST = ['resnet18', 'densenet121']
