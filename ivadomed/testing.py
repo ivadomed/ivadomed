@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from ivadomed import metrics as imed_metrics
 from ivadomed import utils as imed_utils
+from ivadomed import uncertainty as imed_uncertainty
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.training import get_metadata
@@ -74,7 +75,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
         if testing_params['uncertainty']['applied'] and (n_monteCarlo - 2 == i_monteCarlo):
             testing_params['uncertainty']['applied'] = False
             # COMPUTE UNCERTAINTY MAPS
-            imed_utils.run_uncertainty(ifolder=path_3Dpred)
+            imed_uncertainty.run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
