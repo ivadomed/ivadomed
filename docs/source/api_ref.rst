@@ -89,6 +89,30 @@ Utils API
 
 .. automodule:: ivadomed.utils
 
+Image API
++++++++++
+
+.. automodule:: ivadomed.image
+
+Visualize API
++++++++++++++
+
+.. automodule:: ivadomed.visualize
+
+Inference API
++++++++++++++
+
+.. automodule:: ivadomed.inference
+
+Mixup API
++++++++++
+
+.. automodule:: ivadomed.mixup
+
+Uncertainty API
++++++++++++++++
+
+.. automodule:: ivadomed.uncertainty
 
 Maths API
 +++++++++
