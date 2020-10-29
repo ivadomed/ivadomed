@@ -8,6 +8,7 @@ import torch
 
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
+from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils
 
 SLICE_AXIS = 2
@@ -67,7 +68,7 @@ def test_segment_volume_2d():
     with open(PATH_CONFIG, 'w') as fp:
         json.dump(config, fp)
 
-    nib_img = imed_utils.segment_volume(PATH_MODEL, IMAGE_PATH, ROI_PATH)
+    nib_img = imed_inference.segment_volume(PATH_MODEL, IMAGE_PATH, ROI_PATH)
 
     assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
     assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
@@ -132,7 +133,7 @@ def test_segment_volume_3d():
     with open(PATH_CONFIG, 'w') as fp:
         json.dump(config, fp)
 
-    nib_img = imed_utils.segment_volume(PATH_MODEL, IMAGE_PATH)
+    nib_img = imed_inference.segment_volume(PATH_MODEL, IMAGE_PATH)
     assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
     assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
     assert nib_img.dataobj.dtype == 'float32'

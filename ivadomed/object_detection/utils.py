@@ -9,6 +9,7 @@ from scipy import ndimage
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
+from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils
 
 
@@ -112,7 +113,7 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
     for subject in subject_list:
         if subject.record["modality"] in contrast_lst:
             subject_path = str(subject.record["absolute_path"])
-            object_mask = imed_utils.segment_volume(model_path, subject_path, gpu_number=gpu_number)
+            object_mask = imed_inference.segment_volume(model_path, subject_path, gpu_number=gpu_number)
             if keep_largest_only:
                 object_mask = imed_postpro.keep_largest_object(object_mask)
 

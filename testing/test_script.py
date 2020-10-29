@@ -12,6 +12,7 @@ from ivadomed import config_manager as imed_config_manager
 import ivadomed.models as imed_models
 from ivadomed import main as imed
 from ivadomed import utils as imed_utils
+from ivadomed import inference as imed_inference
 
 
 def test_download_data():
@@ -313,12 +314,12 @@ def test_object_detection_inference():
     fname_image = "testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz"
 
     # Detection
-    nib_detection = imed_utils.segment_volume(folder_model="findcord_tumor", fname_image=fname_image)
+    nib_detection = imed_inference.segment_volume(folder_model="findcord_tumor", fname_image=fname_image)
     detection_file = "detection.nii.gz"
     nib.save(nib_detection, detection_file)
 
     # Segmentation
-    imed_utils.segment_volume(folder_model="t2_tumor", fname_image=fname_image, options={'fname_prior': detection_file})
+    imed_inference.segment_volume(folder_model="t2_tumor", fname_image=fname_image, options={'fname_prior': detection_file})
 
 
 def append_list_as_row(file_name, list_of_elem):
