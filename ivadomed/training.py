@@ -14,6 +14,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from ivadomed import losses as imed_losses
+from ivadomed import mixup as imed_mixup
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
@@ -171,7 +172,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
             # MIXUP
             if training_params["mixup_alpha"]:
-                input_samples, gt_samples = imed_utils.mixup(input_samples, gt_samples, training_params["mixup_alpha"],
+                input_samples, gt_samples = imed_mixup.mixup(input_samples, gt_samples, training_params["mixup_alpha"],
                                                              debugging and epoch == 1, log_directory)
 
             # RUN MODEL
