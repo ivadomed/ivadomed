@@ -5,6 +5,21 @@ import numpy as np
 from scipy import spatial
 
 
+# METRICS
+def get_metric_fns(task):
+    metric_fns = [imed_metrics.dice_score,
+                  imed_metrics.multi_class_dice_score,
+                  imed_metrics.precision_score,
+                  imed_metrics.recall_score,
+                  imed_metrics.specificity_score,
+                  imed_metrics.intersection_over_union,
+                  imed_metrics.accuracy_score]
+    if task == "segmentation":
+        metric_fns = metric_fns + [imed_metrics.hausdorff_score]
+
+    return metric_fns
+
+
 class MetricManager(object):
     """Computes specified metrics and stores them in a dictionary.
 
