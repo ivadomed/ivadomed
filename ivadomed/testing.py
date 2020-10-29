@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from ivadomed import metrics as imed_metrics
 from ivadomed import utils as imed_utils
+from ivadomed import inference as imed_inference
 from ivadomed import uncertainty as imed_uncertainty
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
@@ -181,7 +182,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                             postprocessing = None
                     else:
                         fname_pred = None
-                    output_nii = imed_utils.pred_to_nib(data_lst=pred_tmp_lst,
+                    output_nii = imed_inference.pred_to_nib(data_lst=pred_tmp_lst,
                                                         z_lst=z_tmp_lst,
                                                         fname_ref=fname_tmp,
                                                         fname_out=fname_pred,
@@ -233,7 +234,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     else:
                         fname_pred = None
                     # Choose only one modality
-                    output_nii = imed_utils.pred_to_nib(data_lst=[pred_undo],
+                    output_nii = imed_inference.pred_to_nib(data_lst=[pred_undo],
                                                         z_lst=[],
                                                         fname_ref=fname_ref,
                                                         fname_out=fname_pred,
