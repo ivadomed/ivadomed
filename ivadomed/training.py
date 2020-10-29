@@ -18,6 +18,7 @@ from ivadomed import mixup as imed_mixup
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
+from ivadomed import visualize as imed_visualize
 from ivadomed.loader import utils as imed_loader_utils
 
 cudnn.benchmark = True
@@ -250,7 +251,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                         for i_gif in range(n_gif):
                             if gif_dict["image_path"][i_gif] == met.__getitem__('input_filenames') and \
                                     gif_dict["slice_id"][i_gif] == met.__getitem__('slice_index'):
-                                overlap = imed_utils.overlap_im_seg(im, pr)
+                                overlap = imed_visualize.overlap_im_seg(im, pr)
                                 gif_dict["gif"][i_gif].add(overlap, label=str(epoch))
 
                 num_steps += 1
