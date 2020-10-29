@@ -102,6 +102,22 @@ def test_per_patient(split_params):
     assert np.isclose(len(test), round(N * 0.35), atol=1)
 
 
+@pytest.mark.parametrize('split_params', [{
+        "fname_split": None,
+        "random_seed": 6,
+        "center_test": [],
+        "method": "per_patient",
+        "train_fraction": 0.6,
+        "test_fraction": 0
+    }])
+def test_per_patient(split_params):
+    train, val, test, patient_mapping = load_dataset(split_params)
+
+    assert np.isclose(len(train), round(N * 0.6), atol=1)
+    assert np.isclose(len(val), round(N * 0.4), atol=1)
+    assert np.isclose(len(test), 0, atol=1)
+
+
 def check_balance(train, val, test, patient_mapping):
     for dataset in [train, val, test]:
         disability_count = {'0': 0, '1': 0, '2': 0}
