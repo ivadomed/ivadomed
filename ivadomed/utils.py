@@ -19,7 +19,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from ivadomed import config_manager as imed_config_manager
-from ivadomed import metrics as imed_metrics
+from ivadomed import inference as imed_inference
 from ivadomed import image as imed_image
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
@@ -195,7 +195,7 @@ def save_color_labels(gt_data, binarize, gt_filename, output_filename, slice_axi
     rgb_dtype = np.dtype([('R', 'u1'), ('G', 'u1'), ('B', 'u1')])
     multi_labeled_pred = multi_labeled_pred.copy().astype('u1').view(dtype=rgb_dtype).reshape((h, w, d))
 
-    pred_to_nib([multi_labeled_pred], [], gt_filename,
+    imed_inference.pred_to_nib([multi_labeled_pred], [], gt_filename,
                 output_filename, slice_axis=slice_axis, kernel_dim='3d', bin_thr=-1, discard_noise=False)
 
     return multi_labeled_pred
