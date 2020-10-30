@@ -6,7 +6,6 @@ import nibabel as nib
 import torchvision.utils as vutils
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import inference as imed_inference
-from ivadomed import utils as imed_utils
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
@@ -204,7 +203,7 @@ def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_
     # Save for subject in batch
     for i in range(batch['input'].size(0)):
         inp_fmap, out_fmap = \
-            imed_utils.HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input[i][None,]))
+            HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input[i][None,]))
 
         # Display the input image and Down_sample the input image
         orig_input_img = test_input[i][None,].cpu().numpy()
@@ -232,3 +231,62 @@ def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_
         nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
 
         nib.save(nib_pred, save_directory)
+
+
+class HookBasedFeatureExtractor(nn.Module):
+    """This function extracts feature maps from given layer. Helpful to observe where the attention of the network is
+    focused.
+
+    https://github.com/ozan-oktay/Attention-Gated-Networks/tree/a96edb72622274f6705097d70cfaa7f2bf818a5a
+
+    Args:
+        submodule (nn.Module): Trained model.
+        layername (str): Name of the layer where features need to be extracted (layer of interest).
+        upscale (bool): If True output is rescaled to initial size.
+
+    Attributes:
+        submodule (nn.Module): Trained model.
+        layername (str):  Name of the layer where features need to be extracted (layer of interest).
+        outputs_size (list): List of output sizes.
+        outputs (list): List of outputs containing the features of the given layer.
+        inputs (list): List of inputs.
+        inputs_size (list): List of input sizes.
+    """
+
+    def __init__(self, submodule, layername, upscale=False):
+        super(HookBasedFeatureExtractor, self).__init__()
+
+        self.submodule = submodule
+        self.submodule.eval()
+        self.layername = layername
+        self.outputs_size = None
+        self.outputs = None
+        self.inputs = None
+        self.inputs_size = None
+        self.upscale = upscale
+
+    def get_input_array(self, m, i, o):
+        assert (isinstance(i, tuple))
+        self.inputs = [i[index].data.clone() for index in range(len(i))]
+        self.inputs_size = [input.size() for input in self.inputs]
+
+        print('Input Array Size: ', self.inputs_size)
+
+    def get_output_array(self, m, i, o):
+        assert (isinstance(i, tuple))
+        self.outputs = [o[index].data.clone() for index in range(len(o))]
+        self.outputs_size = [output.size() for output in self.outputs]
+        print('Output Array Size: ', self.outputs_size)
+
+    def forward(self, x):
+        target_layer = self.submodule._modules.get(self.layername)
+
+        # Collect the output tensor
+        h_inp = target_layer.register_forward_hook(self.get_input_array)
+        h_out = target_layer.register_forward_hook(self.get_output_array)
+        self.submodule(x)
+        h_inp.remove()
+        h_out.remove()
+
+        return self.inputs, self.outputs
+
