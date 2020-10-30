@@ -290,7 +290,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
     if command == 'segment':
         bids_ds = bids.BIDS(context["loader_parameters"]["bids_path"])
-        bids_subjects = [s for s in bids_ds.get_subjects() if s.record["subject_id"] in test_lst]
+        subj_lst = bids_ds.participants.content['participant_id'].tolist()
+        bids_subjects = [s for s in bids_ds.get_subjects() if s.record["subject_id"] in subj_lst]
         for subject in bids_subjects:
             fname_img = subject.record["absolute_path"]
             pred = imed_utils.segment_volume(os.path.join(context['log_directory'], context['model_name']),
@@ -301,6 +302,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                 os.makedirs(pred_path)
             filename = subject.record['subject_id'] + "_" + subject.record['modality'] + "_pred" + ".nii.gz"
             nib.save(pred, os.path.join(pred_path, filename))
+
 
 def run_main():
     imed_utils.init_ivadomed()
