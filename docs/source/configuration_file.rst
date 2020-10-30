@@ -24,8 +24,8 @@ General parameters
 command
 ^^^^^^^
 
-Run the specified command. Choices: ``"train"`` or ``"test"``,
-to train and evaluate a model respectively.
+Run the specified command. Choices: ``"train"``, ``"test"`` or ``segment``,
+to train, evaluate a model, or segment a dataset respectively.
 
 gpu
 ^^^
