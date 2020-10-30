@@ -63,7 +63,7 @@ def run_main(args):
                                      metadata_choice=context["metadata"],
                                      contrast_balance=context["contrast_balance"],
                                      transform=transform_lst,
-                                     slice_filter_fn=imed_utils.SliceFilter())
+                                     slice_filter_fn=imed_loader_utils.SliceFilter())
 
         print("Loaded {} axial slices for the {} set.".format(len(ds), ds_name))
         ds_loader = DataLoader(ds, batch_size=1,
