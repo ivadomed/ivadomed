@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from ivadomed import metrics as imed_metrics
 from ivadomed import utils as imed_utils
+from ivadomed import visualize as imed_visualize
 from ivadomed import inference as imed_inference
 from ivadomed import uncertainty as imed_uncertainty
 from ivadomed.loader import utils as imed_loader_utils
@@ -198,7 +199,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
                     output_nii_shape = output_nii.get_fdata().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1 and ofolder:
-                        imed_utils.save_color_labels(np.stack(pred_tmp_lst, -1),
+                        imed_visualize.save_color_labels(np.stack(pred_tmp_lst, -1),
                                                      False,
                                                      fname_tmp,
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
@@ -250,7 +251,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     # Save merged labels with color
 
                     if pred_undo.shape[0] > 1 and ofolder:
-                        imed_utils.save_color_labels(pred_undo,
+                        imed_visualize.save_color_labels(pred_undo,
                                                      False,
                                                      batch['input_metadata'][smp_idx][0]['input_filenames'],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
