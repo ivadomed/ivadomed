@@ -10,6 +10,8 @@ from tqdm import tqdm
 from ivadomed import losses as imed_losses
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
+from ivadomed import training as imed_training
+from ivadomed.loader import film as imed_film
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 
 cudnn.benchmark = True
@@ -72,18 +74,18 @@ MODEL_DEFAULT = {
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
         "multichannel": False,
         "model_params": {"name": "UNet3D", "length_3D": [96, 96, 16], "n_filters": 8, "stride_3D": [96, 96, 16],
-                         "attention": False, "metadata": "sex", "film_layers": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]},
+                         "attention": False, "metadata": "contrasts", "film_layers": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                         "n_metadata": 2},
     },
     {
-        "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75},
-                              "ROICrop": {"size": [48, 48]},
+        "transforms_params": {"CenterCrop": {"size": [96, 96, 16]},
                               "NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
         "multichannel": False,
         "model_params": {"name": "Unet", 'is_2d': False, "length_3D": [96, 96, 16], "n_filters": 8,
                          "stride_3D": [96, 96, 16]},
-    },
+    }
 ])
 def test_unet_time(train_lst, target_lst, config):
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
@@ -159,7 +161,11 @@ def test_unet_time(train_lst, target_lst, config):
             load_lst.append(tot_load)
 
             start_pred = time.time()
-            preds = model(input_samples)
+
+            if 'film_layers' in model_params:
+                preds = model(input_samples, [[0, 1]])
+            else:
+                preds = model(input_samples)
             tot_pred = time.time() - start_pred
             pred_lst.append(tot_pred)
 
