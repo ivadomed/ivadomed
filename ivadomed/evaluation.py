@@ -74,10 +74,6 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         nib_painted = nib.Nifti1Image(data_painted, nib_pred.affine)
         nib.save(nib_painted, fname_paint)
 
-        # SAVE POST-PROCESSED PREDICTION
-        nib_pred = nib.Nifti1Image(eval.data_pred, nib_pred.affine)
-        nib.save(nib_pred, fname_pred)
-
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
         df_results = df_results.append(results_pred, ignore_index=True)
