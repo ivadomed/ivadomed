@@ -162,11 +162,11 @@ def test_create_eval_json():
 def test_eval():
     subprocess.check_output(["ivadomed -c testing_data/model_config_eval.json"], shell=True)
 
-    
+
 def test_segment():
     command = "cp testing_data/model_config_eval.json testing_data/model_config_segment.json"
     subprocess.check_output(command, shell=True)
-    file_conf = open("testing_data/model_config_segment.json", "r")
+    file_conf = open("testing_data/model_config_segment.json", "w")
     initial_config = json.load(file_conf)
     initial_config['command'] = "segment"
     json.dump(initial_config, file_conf)
