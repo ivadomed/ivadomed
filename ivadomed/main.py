@@ -4,7 +4,9 @@ import argparse
 import copy
 import joblib
 import torch.backends.cudnn as cudnn
+import nibabel as nib
 
+from bids_neuropoly import bids
 from ivadomed import evaluation as imed_evaluation
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import testing as imed_testing
@@ -286,6 +288,19 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                               eval_params=context["evaluation_parameters"])
         return df_results, pred_metrics
 
+    if command == 'segment':
+        bids_ds = bids.BIDS(context["loader_parameters"]["bids_path"])
+        bids_subjects = [s for s in bids_ds.get_subjects() if s.record["subject_id"] in test_lst]
+        for subject in bids_subjects:
+            fname_img = subject.record["absolute_path"]
+            pred = imed_utils.segment_volume(os.path.join(context['log_directory'], context['model_name']),
+                                             fname_image=fname_img,
+                                             gpu_number=context['gpu'])
+            pred_path = os.path.join(context['log_directory'], "pred_masks")
+            if not os.path.exists(pred_path):
+                os.makedirs(pred_path)
+            filename = subject.record['subject_id'] + "_" + subject.record['modality'] + "_pred" + ".nii.gz"
+            nib.save(pred, os.path.join(pred_path, filename))
 
 def run_main():
     imed_utils.init_ivadomed()
