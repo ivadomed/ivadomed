@@ -1,5 +1,5 @@
 bids-neuropoly>=0.2
-h5py
+h5py==2.10.0
 joblib
 matplotlib>=3.3.0
 nibabel
