@@ -72,7 +72,7 @@ MODEL_DEFAULT = {
         "contrast_params": {"contrast_lst": ['T1w', 'T2w'], "balance": {}},
         "multichannel": False,
         "model_params": {"name": "UNet3D", "length_3D": [96, 96, 16], "n_filters": 8, "stride_3D": [96, 96, 16],
-                         "attention": False, "metadata": "contrasts", "film_layers": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]},
+                         "attention": False, "metadata": "sex", "film_layers": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]},
     },
     {
         "transforms_params": {"Resample": {"wspace": 0.75, "hspace": 0.75},
@@ -81,7 +81,8 @@ MODEL_DEFAULT = {
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
         "multichannel": False,
-        "model_params": {"name": "Unet", 'is_2d': False},
+        "model_params": {"name": "Unet", 'is_2d': False, "length_3D": [96, 96, 16], "n_filters": 8,
+                         "stride_3D": [96, 96, 16]},
     },
 ])
 def test_unet_time(train_lst, target_lst, config):
