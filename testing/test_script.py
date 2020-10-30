@@ -113,22 +113,6 @@ def test_training():
     # Train config
     subprocess.check_output(["ivadomed -c testing_data/model_config.json"], shell=True)
 
-
-def test_create_segment_file():
-    command = "cp testing_data/model_config_test.json testing_data/model_config_segment.json"
-    subprocess.check_output(command, shell=True)
-    file_conf = open("testing_data/model_config_segment.json", "r")
-    initial_config = json.load(file_conf)
-    file_conf.close()
-    file_conf = open("testing_data/model_config_segment.json", "w")
-    initial_config['command'] = "segment"
-    json.dump(initial_config, file_conf)
-
-
-def test_segment():
-    subprocess.check_output(["ivadomed -c testing_data/model_config_segment.json"], shell=True)
-
-
 # def test_training_curve():
 # using the results from previous training
 #   command = "ivadomed_training_curve -i testing_script/ -o training"
@@ -323,6 +307,24 @@ def test_object_detection(train_lst, target_lst, config):
 
     imed.run_command(context)
 
+
+def test_create_segment_file():
+    command = "cp testing_data/model_config_test.json testing_data/model_config_segment.json"
+    subprocess.check_output(command, shell=True)
+    command = "scp -r findcord_tumor testing_script"
+    subprocess.check_output(command, shell=True)
+    file_conf = open("testing_data/model_config_segment.json", "r")
+    initial_config = json.load(file_conf)
+    file_conf.close()
+    file_conf = open("testing_data/model_config_segment.json", "w")
+    initial_config['command'] = "segment"
+    initial_config['model_name'] = "findcord_tumor"
+    
+    json.dump(initial_config, file_conf)
+
+
+def test_segment():
+    subprocess.check_output(["ivadomed -c testing_data/model_config_segment.json"], shell=True)
 
 def test_object_detection_inference():
     fname_image = "testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz"
