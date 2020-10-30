@@ -33,6 +33,7 @@ def test_create_segment_file():
     initial_config['command'] = "segment"
     initial_config['model_name'] = "t2_tumor"
     initial_config['postprocessing'] = {}
+    initial_config['split_dataset']['test_fraction'] = 1.0
 
     json.dump(initial_config, file_conf)
 
