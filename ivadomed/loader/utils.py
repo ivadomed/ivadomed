@@ -9,6 +9,7 @@ import joblib
 from bids_neuropoly import bids
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
+from ivadomed import utils as imed_utils
 
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
@@ -406,3 +407,53 @@ def update_metadata(metadata_src_lst, metadata_dest_lst):
     if metadata_src_lst and metadata_dest_lst:
         metadata_dest_lst[0]._update(metadata_src_lst[0], TRANSFORM_PARAMS)
     return metadata_dest_lst
+
+
+class SliceFilter(object):
+    """Filter 2D slices from dataset.
+
+    If a sample does not meet certain conditions, it is discarded from the dataset.
+
+    Args:
+        filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
+        filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
+
+    Attributes:
+        filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
+        filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
+    """
+
+    def __init__(self, filter_empty_mask=True,
+                 filter_empty_input=True,
+                 filter_classification=False, classifier_path=None, device=None, cuda_available=None):
+        self.filter_empty_mask = filter_empty_mask
+        self.filter_empty_input = filter_empty_input
+        self.filter_classification = filter_classification
+        self.device = device
+        self.cuda_available = cuda_available
+
+        if self.filter_classification:
+            if cuda_available:
+                self.classifier = torch.load(classifier_path, map_location=device)
+            else:
+                self.classifier = torch.load(classifier_path, map_location='cpu')
+
+    def __call__(self, sample):
+        input_data, gt_data = sample['input'], sample['gt']
+
+        if self.filter_empty_mask:
+            if not np.any(gt_data):
+                return False
+
+        if self.filter_empty_input:
+            # Filter set of images if one of them is empty or filled with constant value (i.e. std == 0)
+            if np.any([img.std() == 0 for img in input_data]):
+                return False
+
+        if self.filter_classification:
+            if not np.all([int(
+                    self.classifier(imed_utils.cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0), self.cuda_available)))
+                           for img in input_data]):
+                return False
+
+        return True
