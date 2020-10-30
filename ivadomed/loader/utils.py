@@ -72,6 +72,7 @@ def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8
         else:
             X_train, X_remain = train_test_split(df['participant_id'].tolist(), train_size=train_frac,
                                                  random_state=random_seed)
+            # In case the entire dataset is used to train / validate the model
             if test_frac == 0:
                 X_val = X_remain
             else:
