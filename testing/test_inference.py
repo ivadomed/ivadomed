@@ -50,7 +50,7 @@ PATH_OUT = 'tmp'
 def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_params):
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
 
-    model_params = {"name": "Unet"}
+    model_params = {"name": "Unet", "is_2d": True}
     loader_params = {
         "transforms_params": transforms_dict,
         "data_list": test_lst,
