@@ -244,11 +244,11 @@ class DownConv(Module):
             bn = nn.InstanceNorm3d
             dropout = nn.Dropout3d
 
-        self.conv1 = conv(in_feat, out_feat, kernel_size=3, padding=1, bias=False)
+        self.conv1 = conv(in_feat, out_feat, kernel_size=3, padding=1)
         self.conv1_bn = bn(out_feat, momentum=bn_momentum)
         self.conv1_drop = dropout(drop_rate)
 
-        self.conv2 = conv(out_feat, out_feat, kernel_size=3, padding=1, bias=False)
+        self.conv2 = conv(out_feat, out_feat, kernel_size=3, padding=1)
         self.conv2_bn = bn(out_feat, momentum=bn_momentum)
         self.conv2_drop = dropout(drop_rate)
 
