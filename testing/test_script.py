@@ -26,6 +26,7 @@ def test_download_data():
 def test_create_segment_file():
     command = "cp testing_data/model_config_test.json testing_data/model_config_segment.json"
     subprocess.check_output(command, shell=True)
+    os.makedirs("testing_script", exist_ok=True)
     command = "scp -r findcord_tumor testing_script"
     subprocess.check_output(command, shell=True)
     file_conf = open("testing_data/model_config_segment.json", "r")
@@ -81,7 +82,6 @@ def test_creation_dataset():
     os.makedirs("testing_data/sub-test003/anat/", exist_ok=True)
     os.makedirs("testing_data/derivatives/labels/sub-test002/anat/", exist_ok=True)
     os.makedirs("testing_data/derivatives/labels/sub-test003/anat/", exist_ok=True)
-    os.makedirs("testing_script", exist_ok=True)
 
     # sub-test002 and sub-test003 will just be copy of our only real testing subject
     command = "cp testing_data/sub-unf01/anat/sub-unf01_T2w.nii.gz testing_data/sub-test002/anat/sub-test002" + \
