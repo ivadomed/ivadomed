@@ -21,6 +21,26 @@ def test_download_data():
     subprocess.check_output(command, shell=True)
 
 
+def test_create_segment_file():
+    command = "cp testing_data/model_config_test.json testing_data/model_config_segment.json"
+    subprocess.check_output(command, shell=True)
+    command = "scp -r t2_tumor testing_script"
+    subprocess.check_output(command, shell=True)
+    file_conf = open("testing_data/model_config_segment.json", "r")
+    initial_config = json.load(file_conf)
+    file_conf.close()
+    file_conf = open("testing_data/model_config_segment.json", "w")
+    initial_config['command'] = "segment"
+    initial_config['model_name'] = "t2_tumor"
+    initial_config['postprocessing'] = {}
+
+    json.dump(initial_config, file_conf)
+
+
+def test_segment():
+    subprocess.check_output(["ivadomed -c testing_data/model_config_segment.json"], shell=True)
+
+
 def test_onnx_conversion():
     # testing convert to onnx
     subprocess.check_output("ivadomed_convert_to_onnx -m testing_data/model_unet_test.pt -d 2", shell=True)
@@ -307,25 +327,6 @@ def test_object_detection(train_lst, target_lst, config):
 
     imed.run_command(context)
 
-
-def test_create_segment_file():
-    command = "cp testing_data/model_config_test.json testing_data/model_config_segment.json"
-    subprocess.check_output(command, shell=True)
-    command = "scp -r findcord_tumor testing_script"
-    subprocess.check_output(command, shell=True)
-    file_conf = open("testing_data/model_config_segment.json", "r")
-    initial_config = json.load(file_conf)
-    file_conf.close()
-    file_conf = open("testing_data/model_config_segment.json", "w")
-    initial_config['command'] = "segment"
-    initial_config['model_name'] = "findcord_tumor"
-    initial_config['postprocessing'] = {}
-    
-    json.dump(initial_config, file_conf)
-
-
-def test_segment():
-    subprocess.check_output(["ivadomed -c testing_data/model_config_segment.json"], shell=True)
 
 def test_object_detection_inference():
     fname_image = "testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz"
