@@ -197,7 +197,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             num_steps += 1
 
             if i == 0 and debugging:
-                imed_utils.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds,
+                imed_visualize.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds,
                                                 is_three_dim=model_params["name"].endswith("3D"))
 
         if not step_scheduler_batch:
@@ -262,7 +262,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 metric_mgr(preds_npy, gt_npy)
 
                 if i == 0 and debugging:
-                    imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
+                    imed_visualize.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
                                                     is_three_dim=model_params["name"].endswith("3D"))
 
                 if model_params["name"] == "FiLMedUnet" and debugging and epoch == num_epochs \

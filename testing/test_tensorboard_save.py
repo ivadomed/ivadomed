@@ -1,4 +1,5 @@
 import ivadomed.utils as imed_utils
+import ivadomed.visualize as imed_visualize
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import torch
@@ -17,7 +18,7 @@ def test_tensorboard_save():
     dpath = "test_tensorboard_save"
     os.makedirs(dpath)
     writer = SummaryWriter(log_dir=dpath)
-    imed_utils.save_tensorboard_img(writer, 1, "Training", inp, pred, gt)
+    imed_visualize.save_tensorboard_img(writer, 1, "Training", inp, pred, gt)
     writer.flush()
 
     summary_iterators = [EventAccumulator(os.path.join(dpath, dname)).Reload() for dname in os.listdir(dpath)]
