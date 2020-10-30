@@ -233,9 +233,9 @@ class DownConv(Module):
         conv2_drop (Dropout2d): Second 2D dropout.
     """
 
-    def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1, dim_2d=True):
+    def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1, is_2d=True):
         super(DownConv, self).__init__()
-        if dim_2d:
+        if is_2d:
             conv = nn.Conv2d
             bn = nn.BatchNorm2d
             dropout = nn.Dropout2d
@@ -277,14 +277,14 @@ class UpConv(Module):
         downconv (DownConv): Down convolution.
     """
 
-    def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1, dim_2d=True):
+    def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1, is_2d=True):
         super(UpConv, self).__init__()
-        self.dim_2d = dim_2d
-        self.downconv = DownConv(in_feat, out_feat, drop_rate, bn_momentum, dim_2d)
+        self.is_2d = is_2d
+        self.downconv = DownConv(in_feat, out_feat, drop_rate, bn_momentum, is_2d)
 
     def forward(self, x, y):
-        mode = 'bilinear' if self.dim_2d else 'trilinear'
-        dims = -2 if self.dim_2d else -3
+        mode = 'bilinear' if self.is_2d else 'trilinear'
+        dims = -2 if self.is_2d else -3
         x = F.interpolate(x, size=y.size()[dims:], mode=mode, align_corners=True)
         x = torch.cat([x, y], dim=1)
         x = self.downconv(x)
@@ -311,24 +311,24 @@ class Encoder(Module):
     """
 
     def __init__(self, in_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, n_metadata=None, film_layers=None,
-                 dim_2d=True, n_filters=64):
+                 is_2d=True, n_filters=64):
         super(Encoder, self).__init__()
         self.depth = depth
         self.down_path = nn.ModuleList()
         # first block
-        self.down_path.append(DownConv(in_channel, n_filters, drop_rate, bn_momentum, dim_2d))
+        self.down_path.append(DownConv(in_channel, n_filters, drop_rate, bn_momentum, is_2d))
         self.down_path.append(FiLMlayer(n_metadata, n_filters) if film_layers and film_layers[0] else None)
-        max_pool = nn.MaxPool2d if dim_2d else nn.MaxPool3d
+        max_pool = nn.MaxPool2d if is_2d else nn.MaxPool3d
         self.down_path.append(max_pool(2))
 
         for i in range(depth - 1):
-            self.down_path.append(DownConv(n_filters, n_filters * 2, drop_rate, bn_momentum, dim_2d))
+            self.down_path.append(DownConv(n_filters, n_filters * 2, drop_rate, bn_momentum, is_2d))
             self.down_path.append(FiLMlayer(n_metadata, n_filters * 2) if film_layers and film_layers[i + 1] else None)
             self.down_path.append(max_pool(2))
             n_filters = n_filters * 2
 
         # Bottom
-        self.conv_bottom = DownConv(n_filters, n_filters, drop_rate, bn_momentum, dim_2d)
+        self.conv_bottom = DownConv(n_filters, n_filters, drop_rate, bn_momentum, is_2d)
         self.film_bottom = FiLMlayer(n_metadata, n_filters) if film_layers and film_layers[self.depth] else None
 
     def forward(self, x, context=None):
@@ -380,7 +380,7 @@ class Decoder(Module):
     """
 
     def __init__(self, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1,
-                 n_metadata=None, film_layers=None, hemis=False, final_activation="sigmoid", dim_2d=True, n_filters=64):
+                 n_metadata=None, film_layers=None, hemis=False, final_activation="sigmoid", is_2d=True, n_filters=64):
         super(Decoder, self).__init__()
         self.depth = depth
         self.out_channel = out_channel
@@ -390,7 +390,7 @@ class Decoder(Module):
         if hemis:
             in_channel = n_filters * 2 ** self.depth
             self.up_path.append(UpConv(in_channel * 2, n_filters * 2 ** (self.depth - 1), drop_rate, bn_momentum,
-                                       dim_2d))
+                                       is_2d))
             if film_layers and film_layers[self.depth + 1]:
                 self.up_path.append(FiLMlayer(n_metadata, n_filters * 2 ** (self.depth - 1)))
             else:
@@ -399,7 +399,7 @@ class Decoder(Module):
         else:
             in_channel = n_filters * 2 ** self.depth
 
-            self.up_path.append(UpConv(in_channel, n_filters * 2 ** (self.depth - 1), drop_rate, bn_momentum, dim_2d))
+            self.up_path.append(UpConv(in_channel, n_filters * 2 ** (self.depth - 1), drop_rate, bn_momentum, is_2d))
             if film_layers and film_layers[self.depth + 1]:
                 self.up_path.append(FiLMlayer(n_metadata, n_filters * 2 ** (self.depth - 1)))
             else:
@@ -410,14 +410,14 @@ class Decoder(Module):
 
             self.up_path.append(
                 UpConv(in_channel + n_filters * 2 ** (self.depth - i - 1 + int(hemis)), n_filters * 2 ** (self.depth - i - 1),
-                       drop_rate, bn_momentum, dim_2d))
+                       drop_rate, bn_momentum, is_2d))
             if film_layers and film_layers[self.depth + i + 1]:
                 self.up_path.append(FiLMlayer(n_metadata, n_filters * 2 ** (self.depth - i - 1)))
             else:
                 self.up_path.append(None)
 
         # Last Convolution
-        conv = nn.Conv2d if dim_2d else nn.Conv3d
+        conv = nn.Conv2d if is_2d else nn.Conv3d
         self.last_conv = conv(in_channel // 2, out_channel, kernel_size=3, padding=1)
         self.last_film = FiLMlayer(n_metadata, self.out_channel) if film_layers and film_layers[-1] else None
 
@@ -471,16 +471,16 @@ class Unet(Module):
     """
 
     def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, final_activation='sigmoid',
-                 dim_2d=True, n_filters=64, **kwargs):
+                 is_2d=True, n_filters=64, **kwargs):
         super(Unet, self).__init__()
 
         # Encoder path
         self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
-                               dim_2d=dim_2d, n_filters=n_filters)
+                               is_2d=is_2d, n_filters=n_filters)
 
         # Decoder path
         self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
-                               final_activation=final_activation, dim_2d=dim_2d, n_filters=n_filters)
+                               final_activation=final_activation, is_2d=is_2d, n_filters=n_filters)
 
     def forward(self, x):
         features, _ = self.encoder(x)
@@ -508,7 +508,7 @@ class FiLMedUnet(Unet):
     """
 
     def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4,
-                 bn_momentum=0.1, n_metadata=None, film_layers=None, dim_2d=True, n_filters=64, **kwargs):
+                 bn_momentum=0.1, n_metadata=None, film_layers=None, is_2d=True, n_filters=64, **kwargs):
         super().__init__(in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1)
 
         # Verify if the length of boolean FiLM layers corresponds to the depth
@@ -520,10 +520,10 @@ class FiLMedUnet(Unet):
             film_layers = [0] * (2 * depth + 2)
         # Encoder path
         self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
-                               n_metadata=n_metadata, film_layers=film_layers, dim_2d=dim_2d, n_filters=n_filters)
+                               n_metadata=n_metadata, film_layers=film_layers, is_2d=is_2d, n_filters=n_filters)
         # Decoder path
         self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
-                               n_metadata=n_metadata, film_layers=film_layers, dim_2d=dim_2d, n_filters=n_filters)
+                               n_metadata=n_metadata, film_layers=film_layers, is_2d=is_2d, n_filters=n_filters)
 
     def forward(self, x, context=None):
         features, w_film = self.encoder(x, context)

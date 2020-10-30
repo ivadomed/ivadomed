@@ -197,7 +197,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
             if i == 0 and debugging:
                 imed_utils.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds,
-                                                is_three_dim=not model_params["dim_2d"])
+                                                is_three_dim=not model_params["is_2d"])
 
         if not step_scheduler_batch:
             scheduler.step()
@@ -263,7 +263,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
                 if i == 0 and debugging:
                     imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
-                                                    is_three_dim=not model_params['dim_2d'])
+                                                    is_three_dim=not model_params['is_2d'])
 
                 if 'film_layers' in model_params and any(model_params['film_layers']) and debugging and \
                         epoch == num_epochs and i < int(len(dataset_val) / training_params["batch_size"]) + 1:
