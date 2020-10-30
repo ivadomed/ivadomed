@@ -8,11 +8,7 @@ import nibabel as nib
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
-from torch.autograd import Variable
-
-from ivadomed import image as imed_image
 
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
@@ -104,53 +100,6 @@ class HookBasedFeatureExtractor(nn.Module):
         h_out.remove()
 
         return self.inputs, self.outputs
-
-
-def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_axis):
-    """Save model feature maps.
-
-    Args:
-        batch (dict):
-        layer_name (str):
-        log_directory (str): Output folder.
-        model (nn.Module): Network.
-        test_input (Tensor):
-        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
-    """
-    if not os.path.exists(os.path.join(log_directory, layer_name)):
-        os.mkdir(os.path.join(log_directory, layer_name))
-
-    # Save for subject in batch
-    for i in range(batch['input'].size(0)):
-        inp_fmap, out_fmap = \
-            HookBasedFeatureExtractor(model, layer_name, False).forward(Variable(test_input[i][None,]))
-
-        # Display the input image and Down_sample the input image
-        orig_input_img = test_input[i][None,].cpu().numpy()
-        upsampled_attention = F.interpolate(out_fmap[1],
-                                            size=test_input[i][None,].size()[2:],
-                                            mode='trilinear',
-                                            align_corners=True).data.cpu().numpy()
-
-        path = batch["input_metadata"][0][i]["input_filenames"]
-
-        basename = path.split('/')[-1]
-        save_directory = os.path.join(log_directory, layer_name, basename)
-
-        # Write the attentions to a nifti image
-        nib_ref = nib.load(path)
-        nib_ref_can = nib.as_closest_canonical(nib_ref)
-        oriented_image = imed_image.reorient_image(orig_input_img[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
-
-        nib_pred = nib.Nifti1Image(oriented_image, nib_ref.affine)
-        nib.save(nib_pred, save_directory)
-
-        basename = basename.split(".")[0] + "_att.nii.gz"
-        save_directory = os.path.join(log_directory, layer_name, basename)
-        attention_map = imed_image.reorient_image(upsampled_attention[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
-        nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
-
-        nib.save(nib_pred, save_directory)
 
 
 class SliceFilter(object):
