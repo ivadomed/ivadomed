@@ -318,7 +318,7 @@ def test_object_detection_inference():
     nib.save(nib_detection, detection_file)
 
     # Segmentation
-    imed_utils.segment_volume(folder_model="t2_tumor", fname_image=fname_image, fname_prior=detection_file)
+    imed_utils.segment_volume(folder_model="t2_tumor", fname_image=fname_image, options={'fname_prior': detection_file})
 
 
 def append_list_as_row(file_name, list_of_elem):
