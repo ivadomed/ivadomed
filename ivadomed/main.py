@@ -123,6 +123,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         print('ERROR: Several models are selected in the configuration file: {}.'
               'Please select only one (i.e. only one where: "applied": true).'.format(model_context_list))
         exit()
+
+    model_params['is_2d'] = False if "UNet3D" in model_params['name'] else model_params['is_2d']
     # Get in_channel from contrast_lst
     if loader_params["multichannel"]:
         model_params["in_channel"] = len(loader_params["contrast_params"]["contrast_lst"])
