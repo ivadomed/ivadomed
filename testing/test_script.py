@@ -319,6 +319,7 @@ def test_create_segment_file():
     file_conf = open("testing_data/model_config_segment.json", "w")
     initial_config['command'] = "segment"
     initial_config['model_name'] = "findcord_tumor"
+    initial_config['postprocessing'] = {}
     
     json.dump(initial_config, file_conf)
 
