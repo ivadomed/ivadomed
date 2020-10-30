@@ -114,6 +114,21 @@ def test_training():
     subprocess.check_output(["ivadomed -c testing_data/model_config.json"], shell=True)
 
 
+def test_create_segment_file():
+    command = "cp testing_data/model_config_test.json testing_data/model_config_segment.json"
+    subprocess.check_output(command, shell=True)
+    file_conf = open("testing_data/model_config_segment.json", "r")
+    initial_config = json.load(file_conf)
+    file_conf.close()
+    file_conf = open("testing_data/model_config_segment.json", "w")
+    initial_config['command'] = "segment"
+    json.dump(initial_config, file_conf)
+
+
+def test_segment():
+    subprocess.check_output(["ivadomed -c testing_data/model_config_segment.json"], shell=True)
+
+
 # def test_training_curve():
 # using the results from previous training
 #   command = "ivadomed_training_curve -i testing_script/ -o training"
@@ -161,21 +176,6 @@ def test_create_eval_json():
 
 def test_eval():
     subprocess.check_output(["ivadomed -c testing_data/model_config_eval.json"], shell=True)
-
-
-def test_create_segment_file():
-    command = "cp testing_data/model_config_eval.json testing_data/model_config_segment.json"
-    subprocess.check_output(command, shell=True)
-    file_conf = open("testing_data/model_config_segment.json", "r")
-    initial_config = json.load(file_conf)
-    file_conf.close()
-    file_conf = open("testing_data/model_config_segment.json", "w")
-    initial_config['command'] = "segment"
-    json.dump(initial_config, file_conf)
-
-    
-def test_segment():
-    subprocess.check_output(["ivadomed -c testing_data/model_config_segment.json"], shell=True)
 
 
 def test_create_automate_training_json():
