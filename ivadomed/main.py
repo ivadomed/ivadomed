@@ -292,9 +292,18 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         bids_ds = bids.BIDS(context["loader_parameters"]["bids_path"])
         subj_lst = bids_ds.participants.content['participant_id'].tolist()
         bids_subjects = [s for s in bids_ds.get_subjects() if s.record["subject_id"] in subj_lst]
+
+        # Add postprocessing to packaged model
+        path_model = os.path.join(context['log_directory'], context['model_name'])
+        path_model_config = os.path.join(path_model, context['model_name'] + ".json")
+        model_config = imed_config_manager.load_json(path_model_config)
+        model_config['postprocessing'] = context['postprocessing']
+        with open(path_model_config, 'w') as fp:
+            json.dump(model_config, fp, indent=4)
+
         for subject in bids_subjects:
             fname_img = subject.record["absolute_path"]
-            pred = imed_utils.segment_volume(os.path.join(context['log_directory'], context['model_name']),
+            pred = imed_utils.segment_volume(path_model,
                                              fname_image=fname_img,
                                              gpu_number=context['gpu'])
             pred_path = os.path.join(context['log_directory'], "pred_masks")
