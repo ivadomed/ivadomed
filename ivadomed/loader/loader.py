@@ -55,7 +55,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
     if 'ROICrop' not in transforms_params:
         roi_params["slice_filter_roi"] = None
 
-    if model_params["name"] == "UNet3D" or ("is_2d" in model_params and not model_params['dim_2d']):
+    if model_params["name"] == "UNet3D" or not model_params['dim_2d']:
         dataset = Bids3DDataset(bids_path,
                                 subject_lst=data_list,
                                 target_suffix=target_suffix,
