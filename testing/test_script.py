@@ -17,6 +17,8 @@ from ivadomed import utils as imed_utils
 def test_download_data():
     command = "ivadomed_download_data -d t2_tumor"
     subprocess.check_output(command, shell=True)
+    command = "ivadomed_download_data -d findcord_tumor"
+    subprocess.check_output(command, shell=True)
     command = "ivadomed_download_data -d data_testing -o output -k 1"
     subprocess.check_output(command, shell=True)
 
@@ -24,14 +26,14 @@ def test_download_data():
 def test_create_segment_file():
     command = "cp testing_data/model_config_test.json testing_data/model_config_segment.json"
     subprocess.check_output(command, shell=True)
-    command = "scp -r t2_tumor testing_script"
+    command = "scp -r findcord_tumor testing_script"
     subprocess.check_output(command, shell=True)
     file_conf = open("testing_data/model_config_segment.json", "r")
     initial_config = json.load(file_conf)
     file_conf.close()
     file_conf = open("testing_data/model_config_segment.json", "w")
     initial_config['command'] = "segment"
-    initial_config['model_name'] = "t2_tumor"
+    initial_config['model_name'] = "findcord_tumor"
     initial_config['postprocessing'] = {}
     initial_config['split_dataset']['test_fraction'] = 1.0
 
