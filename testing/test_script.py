@@ -43,7 +43,7 @@ def test_create_segment_file():
 
 def test_segment():
     subprocess.check_output(["ivadomed -c testing_data/model_config_segment.json"], shell=True)
-    os.rmdir(os.path.join('testing_script', 'pred_masks'))
+    shutil.rmtree(os.path.join('testing_script', 'pred_masks'))
 
 
 def test_onnx_conversion():
