@@ -36,7 +36,7 @@ LOG_DIR = "log"
         "transforms_params": {"NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
-        "UNet3D": {
+        "Modified3DUNet": {
             "applied": True,
             "length_3D": [16, 16, 16],
             "stride_3D": [1, 1, 1],
@@ -65,9 +65,9 @@ def test_bounding_box(train_lst, target_lst, config):
         "slice_axis": "axial"
     }
 
-    if "UNet3D" in config:
-        config['model_params']["name"] = "UNet3D"
-        config['model_params'].update(config["UNet3D"])
+    if "Modified3DUNet" in config:
+        config['model_params']["name"] = "Modified3DUNet"
+        config['model_params'].update(config["Modified3DUNet"])
 
     bounding_box_dict = {}
     bounding_box_path = os.path.join(LOG_DIR, 'bounding_boxes.json')
@@ -85,10 +85,10 @@ def test_bounding_box(train_lst, target_lst, config):
     loader_params.update(config)
     ds = imed_loader.load_dataset(**loader_params)
 
-    handler = ds.handlers if "UNet3D" in config else ds.indexes
+    handler = ds.handlers if "Modified3DUNet" in config else ds.indexes
     for index in handler:
         seg_pair, _ = index
-        if "UNet3D" in config:
+        if "Modified3DUNet" in config:
             assert seg_pair['input'][0].shape[-3:] == (mx2 - mx1, my2 - my1, mz2 - mz1)
         else:
             assert seg_pair['input'][0].shape[-2:] == (mx2 - mx1, my2 - my1)

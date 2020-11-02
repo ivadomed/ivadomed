@@ -135,7 +135,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             # Reconstruct image with only one modality
             input_samples = batch['input'][0]
 
-        if model_params["name"] == "UNet3D" and model_params["attention"] and ofolder:
+        if model_params["name"] == "Modified3DUNet" and model_params["attention"] and ofolder:
             imed_utils.save_feature_map(batch, "attentionblock2", os.path.dirname(ofolder), model, input_samples,
                                         slice_axis=test_loader.dataset.slice_axis)
 

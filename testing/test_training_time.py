@@ -105,7 +105,8 @@ def test_unet_time(train_lst, target_lst, config):
     ds_train = imed_loader.load_dataset(**loader_params)
 
     # Loader
-    train_loader = DataLoader(ds_train, batch_size=1 if config["model_params"]["name"] == "UNet3D" else BATCH_SIZE,
+    train_loader = DataLoader(ds_train,
+                              batch_size=1 if config["model_params"]["name"] == "Modified3DUNet" else BATCH_SIZE,
                               shuffle=True, pin_memory=True,
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=1)

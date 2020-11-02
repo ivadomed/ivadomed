@@ -77,9 +77,9 @@ def test_segment_volume_2d():
 
 
 def test_segment_volume_3d():
-    model = imed_models.UNet3D(in_channel=1,
-                               out_channel=1,
-                               base_n_filter=1)
+    model = imed_models.Modified3DUNet(in_channel=1,
+                                       out_channel=1,
+                                       base_n_filter=1)
 
     # temporary folder that will be deleted at the end of the test
     if not os.path.exists(PATH_MODEL):
@@ -87,7 +87,7 @@ def test_segment_volume_3d():
 
     torch.save(model, os.path.join(PATH_MODEL, "model_test.pt"))
     config = {
-        "UNet3D": {
+        "Modified3DUNet": {
             "applied": True,
             "length_3D": LENGTH_3D,
             "stride_3D": LENGTH_3D,

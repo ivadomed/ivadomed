@@ -16,7 +16,7 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 cudnn.benchmark = True
 
 # List of not-default available models i.e. different from Unet
-MODEL_LIST = ['UNet3D', 'HeMISUnet', 'FiLMedUnet', 'resnet18', 'densenet121', 'Countception']
+MODEL_LIST = ['Modified3DUNet', 'HeMISUnet', 'FiLMedUnet', 'resnet18', 'densenet121', 'Countception']
 
 
 def get_parser():
@@ -115,8 +115,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     if len(model_context_list) == 1:
         model_params["name"] = model_context_list[0]
         model_params.update(context[model_context_list[0]])
-    elif 'UNet3D' in model_context_list and 'FiLMedUnet' in model_context_list and len(model_context_list) == 2:
-        model_params["name"] = 'UNet3D'
+    elif 'Modified3DUNet' in model_context_list and 'FiLMedUnet' in model_context_list and len(model_context_list) == 2:
+        model_params["name"] = 'Modified3DUNet'
         for i in range(len(model_context_list)):
             model_params.update(context[model_context_list[i]])
     elif len(model_context_list) > 1:
@@ -124,7 +124,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
               'Please select only one (i.e. only one where: "applied": true).'.format(model_context_list))
         exit()
 
-    model_params['is_2d'] = False if "UNet3D" in model_params['name'] else model_params['is_2d']
+    model_params['is_2d'] = False if "Modified3DUNet" in model_params['name'] else model_params['is_2d']
     # Get in_channel from contrast_lst
     if loader_params["multichannel"]:
         model_params["in_channel"] = len(loader_params["contrast_params"]["contrast_lst"])

@@ -315,8 +315,8 @@ HeMISUnet (Optional)
    growth at each epoch: at each epoch, the ``missing_probability`` is
    modified with the exponent ``missing_probability_growth``.
 
-UNet3D (Optional)
-^^^^^^^^^^^^^^^^^
+Modified3DUNet (Optional)
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 -  ``length_3D``: (Int, Int, Int). Size of the 3D patches used as
    model's input tensors.
