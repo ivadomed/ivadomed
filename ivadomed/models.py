@@ -463,6 +463,8 @@ class Unet(Module):
         drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
         final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
+        is_2d (bool): Indicates dimensionality of model.
+        n_filters (int):  Number of base filters in the U-Net.
         **kwargs:
 
     Attributes:
@@ -500,6 +502,8 @@ class FiLMedUnet(Unet):
         bn_momentum (float): Batch normalization momentum.
         n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details.
         film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied.
+        is_2d (bool): Indicates dimensionality of model.
+        n_filters (int):  Number of base filters in the U-Net.
         **kwargs:
 
     Attributes:
