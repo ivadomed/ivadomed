@@ -290,7 +290,10 @@ to the tailored architecture.
 - ``name``: ``Unet`` (default)
 - ``dropout_rate``: Float (e.g. 0.4).
 - ``batch_norm_momentum``: Float (e.g. 0.1).
-- ``depth``: Strictly positive integer. Number of down-sampling operations. - ``relu`` (optional): Bool. Sets final activation to normalized ReLU (relu between 0 and 1).
+- ``depth``: Strictly positive integer. Number of down-sampling operations. - ``relu`` (optional): Bool.
+  Sets final activation to normalized ReLU (relu between 0 and 1).
+- ``is_dim``: Indicates dimensionality of model (2D or 3D). If ``is_dim`` is ``False``, then parameters ``length3D`` and
+  ``stride3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`).
 
 FiLMedUnet (Optional)
 ^^^^^^^^^^^^^^^^^^^^^
@@ -314,6 +317,8 @@ HeMISUnet (Optional)
 -  ``missing_probability_growth``: Float. Controls missing probability
    growth at each epoch: at each epoch, the ``missing_probability`` is
    modified with the exponent ``missing_probability_growth``.
+
+.. _Modified3DUNet:
 
 Modified3DUNet (Optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -485,4 +490,3 @@ In particular:
 - `config\_spineGeHemis.json <ivadomed/config/config_spineGeHemis.json>`__. Shows how to use the HeMIS-UNet.
 
 - `config\_tumorSeg.json <ivadomed/config/config_tumorSeg.json>`__. Runs a 3D segmentation using a 3D UNet.
-=======
