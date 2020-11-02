@@ -8,6 +8,7 @@ from ivadomed import postprocessing as imed_postpro
 from ivadomed import inference as imed_inference
 import torch
 import torch.nn.functional as F
+import torch.nn as nn
 from torch.autograd import Variable
 from ivadomed import image as imed_image
 
