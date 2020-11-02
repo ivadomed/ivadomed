@@ -36,7 +36,7 @@ The following architectures are availabled in ``ivadomed``.
 
 
 :mod:`Modified3DUNet`
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: ivadomed.models.Modified3DUNet
 
