@@ -98,8 +98,8 @@ class ConfigurationManager(object):
     def change_keys(self):
         for key in self.key_change_dict:
             if key in self.context:
-                self.context[key] = self.context[self.key_change_dict[key]]
-                del self.context[self.key_change_dict[key]]
+                self.context[self.key_change_dict[key]] = self.context[key]
+                del self.context[key]
 
     def _display_differing_keys(self):
         """Display differences between dictionaries.
