@@ -187,7 +187,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
                                                   slice_axis=slice_axis,
                                                   cache=True,
                                                   transform=tranform_lst,
-                                                  slice_filter_fn=imed_utils.SliceFilter(**loader_params["slice_filter_params"]))
+                                                  slice_filter_fn=imed_loader_utils.SliceFilter(**loader_params["slice_filter_params"]))
         ds.load_filenames()
 
     if kernel_3D:
