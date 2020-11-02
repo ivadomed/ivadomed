@@ -23,8 +23,9 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
+from ivadomed import training as imed_training
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -518,6 +519,15 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
     else:
         print("\nLoaded {} {} slices.".format(len(ds), loader_params['slice_axis']))
 
+    model_params = {}
+    if 'FiLMedUnet' in context and context['FiLMedUnet']['applied']:
+        results = imed_film.get_film_metadata_models(ds_train=ds,
+                                                     metadata_type=context['FiLMedUnet']['metadata'],
+                                                     debugging=context["debugging"])
+        ds, train_onehotencoder, metadata_clustering_models = results
+        model_params.update({"film_onehotencoder": train_onehotencoder,
+                             "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
+
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["training_parameters"]["batch_size"],
                              shuffle=False, pin_memory=True,
@@ -536,7 +546,13 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
             img = cuda(batch['input'], cuda_available=cuda_available)
-            preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
+
+            if ('FiLMedUnet' in context and context['FiLMedUnet']['applied']) or \
+                    ('HeMISUnet' in context and context['HeMISUnet']['applied']):
+                metadata = imed_training.get_metadata(batch["input_metadata"], model_params)
+                preds = model(img, metadata)
+            else:
+                preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
             preds = preds.cpu()
 
         # Set datatype to gt since prediction should be processed the same way as gt
