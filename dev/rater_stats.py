@@ -60,18 +60,21 @@ for subject in subjects:
         rater = ((nii.split("_")[-1]).split(".")[0])[-1]
         if rater.isnumeric():
 
-        #if rater == "n":
-            fname = os.path.join(deriv_path,subject,"anat",nii)
-            im1 = nibabel.load(fname).get_data()
-            zooms = nibabel.load(fname).header.get_zooms()
-            #print(zooms)
-            im1[im1 > 0] = 1
-            #im1[im1 < 0.5] = 0
-            dict[rater] = (base_name,im1,zooms)
-            labels = measure.label(im1)
-            df = df.append({'file': base_name, 'rater': rater, 'lesion_count': labels.max(), 'positive_voxels': np.count_nonzero(im1)}, ignore_index=True)
-            #print(base_name)
-            #print(rater)
+            #if rater == "n":
+
+            #If we want to use majority instead of staples for MS brain
+            #if rater != 0:
+                fname = os.path.join(deriv_path,subject,"anat",nii)
+                im1 = nibabel.load(fname).get_data()
+                zooms = nibabel.load(fname).header.get_zooms()
+                #print(zooms)
+                im1[im1 > 0] = 1
+                #im1[im1 < 0.5] = 0
+                dict[rater] = (base_name,im1,zooms)
+                labels = measure.label(im1)
+                df = df.append({'file': base_name, 'rater': rater, 'lesion_count': labels.max(), 'positive_voxels': np.count_nonzero(im1)}, ignore_index=True)
+                #print(base_name)
+                #print(rater)
     #print(dict)
     #compute_majority(dict)
 
@@ -79,7 +82,8 @@ for subject in subjects:
     sum = np.zeros((dict["1"][1]).shape)
     for key in dict:
         sum += dict[key][1]
-    im1 = np.where(sum >= 2, 1, 0)
+    threshold = 2
+    im1 = np.where(sum >= threshold, 1, 0)
     dict["0"] = (None, im1, None)
     labels = measure.label(im1)
     df = df.append({'file': "", 'rater': "0", 'lesion_count': labels.max(), 'positive_voxels': np.count_nonzero(im1)}, ignore_index=True)
