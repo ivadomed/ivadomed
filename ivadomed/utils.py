@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import subprocess
+import joblib
 
 import matplotlib
 import matplotlib.animation as anim
@@ -448,7 +449,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
     # Load model training config
     context = imed_config_manager.ConfigurationManager(fname_model_metadata).get_config()
 
-    if options is not None:
+    if any(pp in options for pp in ['thr', 'largest', ' fill_holes', 'remove_small']):
         postpro = {}
         if 'thr' in options:
             postpro['binarize_prediction'] = {"thr": options['thr']}
@@ -500,6 +501,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
     filename_pairs = [([fname_image], None, fname_roi, [metadata])]
 
     kernel_3D = bool('UNet3D' in context and context['UNet3D']['applied'])
+
     if kernel_3D:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                            transform=tranform_lst,
@@ -521,12 +523,18 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
 
     model_params = {}
     if 'FiLMedUnet' in context and context['FiLMedUnet']['applied']:
-        results = imed_film.get_film_metadata_models(ds_train=ds,
-                                                     metadata_type=context['FiLMedUnet']['metadata'],
-                                                     debugging=context["debugging"])
-        ds, train_onehotencoder, metadata_clustering_models = results
-        model_params.update({"film_onehotencoder": train_onehotencoder,
-                             "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
+        metadata_dict = joblib.load(os.path.join(folder_model, 'metadata_dict.joblib'))
+        for idx in ds.indexes:
+            for i in range(len(idx)):
+                idx[i]['input_metadata'][0][context['FiLMedUnet']['metadata']] = options['metadata']
+                idx[i]['input_metadata'][0]['metadata_dict'] = metadata_dict
+
+        ds = imed_film.normalize_metadata(ds, None, context["debugging"], context['FiLMedUnet']['metadata'])
+        onehotencoder = joblib.load(os.path.join(folder_model, 'one_hot_encoder.joblib'))
+
+        model_params.update({"name": 'FiLMedUnet',
+                             "film_onehotencoder": onehotencoder,
+                             "n_metadata": len([ll for l in onehotencoder.categories_ for ll in l])})
 
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["training_parameters"]["batch_size"],

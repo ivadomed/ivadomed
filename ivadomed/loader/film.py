@@ -76,7 +76,8 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
                 s_out["input_metadata"][i]["film_input"] = [label_contrast]
 
         for i, input_metadata in enumerate(subject["input_metadata"]):
-            s_out["input_metadata"][i]["contrast"] = input_metadata["contrast"]
+            if 'contrast' in input_metadata:
+                s_out["input_metadata"][i]["contrast"] = input_metadata["contrast"]
 
             if train_set:
                 X_train_ohe.append(s_out["input_metadata"][i]["film_input"])
