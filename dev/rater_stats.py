@@ -24,9 +24,9 @@ def ms_brain_center_consensus(dict):
     nibabel.save( nibabel.Nifti1Image(center_1, nibabel.load(dict["1"][0]).get_affine()), "_".join(fname.split("_")[0:-1]) + "majority-center1" + ".nii.gz")
     nibabel.save( nibabel.Nifti1Image(center_2, nibabel.load(dict["3"][0]).get_affine()), "_".join(fname.split("_")[0:-1]) + "_majority-center2" + ".nii.gz")
     nibabel.save( nibabel.Nifti1Image(center_3, nibabel.load(dict["7"][0]).get_affine()), "_".join(fname.split("_")[0:-1]) + "_majority-center3" + ".nii.gz")
-    global = dict["1"][2] + dict["2"][2] + dict["3"][2] + dict["4"][2] + dict["5"][2] + dict["6"][2] + dict["7"][2]
-    center_1 = np.where(center_1 >= 4, 1, 0)
-    nibabel.save( nibabel.Nifti1Image(center_3, nibabel.load(dict["7"][0]).get_affine()), "_".join(fname.split("_")[0:-1]) + "_majority-center3" + ".nii.gz")
+    glob = dict["1"][2] + dict["2"][2] + dict["3"][2] + dict["4"][2] + dict["5"][2] + dict["6"][2] + dict["7"][2]
+    glob = np.where(glob >= 4, 1, 0)
+    nibabel.save( nibabel.Nifti1Image(glob, nibabel.load(dict["1"][0]).get_affine()), "_".join(fname.split("_")[0:-1]) + "_majority-global" + ".nii.gz")
 
 #contrasts = ["FLAIR", "ce-T1w", "PD", "T1w", "T2w"]
 contrasts = ["T2star"]
