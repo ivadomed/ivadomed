@@ -48,13 +48,17 @@ aas-journal: Astrophysical Journal <- The name of the AAS journal.
 
 # Summary
 
-XX
+ivadomed is an open-source Python package for designing, end-to-end training, and evaluating deep learning models applied to medical imaging data. The package includes APIs, command-line tools, documentation, and tutorials. ivadomed also includes pre-trained models such as spinal tumor segmentation and vertebral labeling. Original features of ivadomed include a data loader that can parse image metadata (e.g., acquisition parameters, image contrast, resolution) and subject metadata (e.g., pathology, age, sex) for custom data splitting or extra information during training and evaluation. Any dataset following the Brain Imaging Data Structure (BIDS) convention will be compatible with ivadomed without the need to manually organize the data, which is typically a tedious task. Beyond the traditional deep learning methods, ivadomed features cutting-edge architectures, such as FiLM and HeMis, as well as various uncertainty estimation methods (aleatoric and epistemic), and losses adapted to imbalanced classes and non-binary predictions. Each step is conveniently configurable via a single file. At the same time, the code is highly modular to allow addition/modification of an architecture or pre/post-processing steps. Example applications of ivadomed include MRI object detection, segmentation, and labeling of anatomical and pathological structures. Overall, ivadomed enables easy and quick exploration of the latest advances in deep learning for medical imaging applications. ivadomed's main project page is available at \url{https://ivadomed.org}.
 
 # Statement of need
 
-XX
+Deep learning is increasingly used in medical image processing \citep{kim_deep_2019}. It provides automated solutions to repetitive and/or tedious tasks such as the segmentation of pathological structures. However, medical imaging data present many challenges: datasets are often not publicly-available, ground truth labels are scarce due to the limited availability of expert raters, and needs can be very specific and tailored to particular datasets (e.g., segmentation of spinal tumors on sagittal MRI T2-weighted scans). Thus, offering solution for convenient training models (or fine-tuning of pre-existing models) is needed. 
 
-# XX
+We present ivadomed, a deep learning toolbox dedicated to medical data processing. ivadomed aims to support the integration of deep learning models into the clinical routine, as well as state-of-the-art academic biomedical research. It features intuitive command-line tools for end-to-end training and evaluation of various deep learning models. The package also includes pre-trained models that can be used to accommodate specific datasets with transfer learning.
+
+Another challenge of medical imaging is the heterogeneity of the data across clinical centers, in terms of image features (e.g., contrast, resolution) and population demographics. This makes it challenging to create models that can generalize well across the many existing datasets. Recent cutting-edge methods address this problem, such as FiLM \citep{perez2017film} and HeMis \citep{havaei2016hemis}, however they are usually not implemented within a comprehensive framework that enables end-to-end training and experimentation. In addition to providing these advanced architectures, ivadomed features multiple uncertainty estimation methods (aleatoric and epistemic), losses adapted to imbalanced classes and non-binary predictions. Each step can be conveniently customized via a single configuration file, and at the same time, the code is highly modular to allow addition/modification of architecture or pre-/post-processing steps.
+
+# Software description
 
 XX
 
