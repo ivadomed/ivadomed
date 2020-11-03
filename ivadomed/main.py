@@ -308,6 +308,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         with open(path_model_config, 'w') as fp:
             json.dump(model_config, fp, indent=4)
 
+        options = None
         for subject in bids_subjects:
             fname_img = subject.record["absolute_path"]
             if 'film_layers' in model_params and any(model_params['film_layers']) and model_params['metadata']:
