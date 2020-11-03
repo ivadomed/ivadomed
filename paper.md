@@ -60,7 +60,23 @@ Another challenge of medical imaging is the heterogeneity of the data across cli
 
 # Software description
 
+ivadomed is based on PyTorch framework \citep{paszke2017automatic} with GPU acceleration supported by CUDA. It can easily be installed via \href{https://pypi.org/project/ivadomed/}{PyPI} and the whole package is tested with a \href{https://github.com/ivadomed/ivadomed/actions?query=workflow\%3A\%22Run+tests\%22}{continuous integration} framework. The project website, which includes user and API documentation, is available at \url{https://ivadomed.org}. The name ivadomed is a portmanteau between \textit{IVADO} (\href{https://ivado.ca}{The Institute for data valorization}) and \textit{medical}.
+
+## Loader
+
 XX
+
+## Training
+
+XX
+
+## Evaluation
+
+XX
+
+# Usage
+
+XX # Mention (if applicable) a representative set of past or ongoing research projects using the software and recent scholarly publications enabled by it.
 
 # Citations
 
