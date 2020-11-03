@@ -14,8 +14,8 @@ def get_parser():
 
 
 def uncertainty_by_rater():
-    #paths = ["log_ms_brain_auto-target_suffix=[\'_seg-lesion1\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion2\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion3\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion4\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion5\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion6\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion7\']"]
-    paths = ["log_gm_auto-target_suffix=[\'_seg-lesion1\']","log_gm_auto-target_suffix=[\'_seg-lesion2\']","log_gm_auto-target_suffix=[\'_seg-lesion3\']","log_gm_auto-target_suffix=[\'_seg-lesion4\']"]
+    paths = ["log_ms_brain_auto-target_suffix=[\'_seg-lesion0\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion1\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion2\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion3\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion4\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion5\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion6\']","log_ms_brain_auto-target_suffix=[\'_seg-lesion7\']"]
+    #paths = ["log_gm_auto-target_suffix=[\'_seg-lesion1\']","log_gm_auto-target_suffix=[\'_seg-lesion2\']","log_gm_auto-target_suffix=[\'_seg-lesion3\']","log_gm_auto-target_suffix=[\'_seg-lesion4\']"]
     im = {}
     for path in paths:
         fnames = os.listdir(os.path.join(path,"pred_masks"))
