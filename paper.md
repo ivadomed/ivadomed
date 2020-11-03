@@ -1,18 +1,42 @@
 ---
-title: 'XX'
+title: 'ivadomed: A Medical Imaging Deep Learning Toolbox'
 tags:
-  - XX
+  - Deep Learning
+  - Medical Imaging
+  - Segmentation
+  - Open-source
+  - Pipeline
 authors:
-  - name: XX
+  - name: Charley Gros
+    orcid: 0000-0003-4318-0024
+    affiliation: 1
+  - name: Andreanne Lemay
     orcid: XX
-    affiliation: "1, 2"
-  - name: Author Without ORCID
-    affiliation: 2
+    affiliation: 1
+  - name: Olivier Vincent
+    orcid: XX
+    affiliation: 1
+  - name: Lucas Rouhier
+    orcid: XX
+    affiliation: 1
+  - name: Anthime Bucquet
+    orcid: XX
+    affiliation: 1
+  - name: Joseph Paul Cohen
+    orcid: XX
+    affiliation: "2, 3"
+  - name: Julien Cohen-Adad
+    orcid: XX
+    affiliation: "1, 4"
 affiliations:
- - name: XX
+ - name: NeuroPoly Lab, Institute of Biomedical Engineering, Polytechnique Montreal, Montreal, Canada
    index: 1
- - name: Institution Name
+ - name: AIMI, Stanford University, Stanford, CA, USA
    index: 2
+ - name: Mila, Quebec AI Institute, Montreal, QC, Canada
+   index: 3
+ - name:  Functional Neuroimaging Unit, CRIUGM, Université de Montréal, Montreal, QC, Canada
+   index: 4
 date: 3 November 2020
 bibliography: paper.bib
 
