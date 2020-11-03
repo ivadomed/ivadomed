@@ -21,7 +21,7 @@ def ms_brain_center_consensus(dict):
     center_2 = dict["3"][2] + dict["6"][2]
     center_2 = np.where(center_2 >= 1, 1, 0)
     center_3 = dict["7"][2]
-    nibabel.save( nibabel.Nifti1Image(center_1, nibabel.load(dict["1"][0]).get_affine()), "_".join(fname.split("_")[0:-1]) + "majority-center1" + ".nii.gz")
+    nibabel.save( nibabel.Nifti1Image(center_1, nibabel.load(dict["1"][0]).get_affine()), "_".join(fname.split("_")[0:-1]) + "_majority-center1" + ".nii.gz")
     nibabel.save( nibabel.Nifti1Image(center_2, nibabel.load(dict["3"][0]).get_affine()), "_".join(fname.split("_")[0:-1]) + "_majority-center2" + ".nii.gz")
     nibabel.save( nibabel.Nifti1Image(center_3, nibabel.load(dict["7"][0]).get_affine()), "_".join(fname.split("_")[0:-1]) + "_majority-center3" + ".nii.gz")
     glob = dict["1"][2] + dict["2"][2] + dict["3"][2] + dict["4"][2] + dict["5"][2] + dict["6"][2] + dict["7"][2]
