@@ -100,6 +100,6 @@ and referenced from text using \autoref{fig:example}.
 
 # Acknowledgements
 
-XX
+The authors thank Alexandru Jora, Nick Guenther, Christian Perone, Valentine Louis-Lucas, Benoît Sauty-De-Chalon, Alexandru Foias, Marie-Hélène Bourget and Leander Van Eekelen for their useful contributions, and Guillaume Dumas for proof-reading the manuscript. Funded by the Institut de valorisation des données (IVADO), the Canada Research Chair in Quantitative Magnetic Resonance Imaging [950-230815], the Canadian Institute of Health Research [CIHR FDN-143263], the Canada Foundation for Innovation [32454, 34824], the Fonds de Recherche du Québec - Santé [28826], the Natural Sciences and Engineering Research Council of Canada [RGPIN-2019-07244]. FRQNT Strategic Clusters Program (2020‐RS4‐265502 ‐ Centre UNIQUE  ‐Union Neurosciences \& Artificial Intelligence –Quebec, Canada First Research Excellence Fund through the TransMedTech Institute. C.G has a fellowship from IVADOMED [EX-2018-4], A.L. has a fellowship from NSERC and FRQNT, O.V. has a fellowship from NSERC, FRQNT and UNIQUE.
 
 # References
