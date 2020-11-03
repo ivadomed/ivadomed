@@ -27,7 +27,7 @@ deriv_path = "../duke/projects/ivadomed/gm_challenge_16_inter_rater/derivatives/
 subjects=list(filter(subjectFilter,os.listdir(deriv_path)))
 print(subjects)
 
-def ms_brain_center_consensus(dict)
+def ms_brain_center_consensus(dict):
     center_1 = dict["1"][2] + dict["2"][2] + dict["4"][2] + dict["5"][2]
     center_1 = np.where(center_1 >= threshold, 1, 0)
     center_2 = dict["3"][2] + dict["6"][2]
