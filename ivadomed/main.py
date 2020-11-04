@@ -103,6 +103,10 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     if "FiLMedUnet" in context and context["FiLMedUnet"]["applied"]:
         loader_params.update({"metadata_type": context["FiLMedUnet"]["metadata"]})
 
+    if context['training_parameters']['balance_samples']['applied'] and \
+            context['training_parameters']['balance_samples']['type'] != 'gt':
+        loader_params.update({"metadata_type": context['training_parameters']['balance_samples']['type']})
+
     # Get transforms for each subdataset
     transform_train_params, transform_valid_params, transform_test_params = \
         imed_transforms.get_subdatasets_transforms(context["transformation"])
