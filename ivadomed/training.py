@@ -53,8 +53,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     writer = SummaryWriter(log_dir=log_directory)
 
     # BALANCE SAMPLES AND PYTORCH LOADER
-    conditions = all([training_params["balance_samples"], model_params["name"] != "HeMIS"])
-    sampler_train, shuffle_train = get_sampler(dataset_train, conditions)
+    conditions = all([training_params["balance_samples"]["applied"], model_params["name"] != "HeMIS"])
+    sampler_train, shuffle_train = get_sampler(dataset_train, conditions, training_params['balance_samples']['type'])
 
     train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
@@ -63,7 +63,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     gif_dict = {"image_path": [], "slice_id": [], "gif": []}
     if dataset_val:
-        sampler_val, shuffle_val = get_sampler(dataset_val, conditions)
+        sampler_val, shuffle_val = get_sampler(dataset_val, conditions, training_params['balance_samples']['type'])
 
         val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
                                 shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
@@ -366,7 +366,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
 
-def get_sampler(ds, balance_bool):
+def get_sampler(ds, balance_bool, metadata):
     """Get sampler.
 
     Args:
@@ -378,7 +378,7 @@ def get_sampler(ds, balance_bool):
         Otherwise: Returns None and True.
     """
     if balance_bool:
-        return imed_loader_utils.BalancedSampler(ds), False
+        return imed_loader_utils.BalancedSampler(ds, metadata), False
     else:
         return None, True
 
