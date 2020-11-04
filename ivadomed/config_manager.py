@@ -57,6 +57,9 @@ def load_json(config_path):
     return default_config
 
 
+KEY_CHANGE_DICT = {'UNet3D': 'Modified3DUNet'}
+
+
 class ConfigurationManager(object):
     """Configuration file manager
 
@@ -72,6 +75,7 @@ class ConfigurationManager(object):
     """
     def __init__(self, context_path):
         self.context_path = context_path
+        self.key_change_dict = KEY_CHANGE_DICT
         self._validate_path()
         default_config_path = os.path.join(__ivadomed_dir__, "ivadomed", "config", "config_default.json")
         self.default_config = load_json(default_config_path)
@@ -84,11 +88,18 @@ class ConfigurationManager(object):
         Returns:
             dict: Updated configuration dict.
         """
+        self.change_keys()
         self.updated_config = update(self.default_config, self.context)
         if self.updated_config['debugging']:
             self._display_differing_keys()
 
         return self.updated_config
+
+    def change_keys(self):
+        for key in self.key_change_dict:
+            if key in self.context:
+                self.context[self.key_change_dict[key]] = self.context[key]
+                del self.context[key]
 
     def _display_differing_keys(self):
         """Display differences between dictionaries.

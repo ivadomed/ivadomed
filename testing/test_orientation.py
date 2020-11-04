@@ -40,7 +40,7 @@ def test_image_orientation():
     tranform_lst, training_undo_transform = imed_transforms.prepare_transforms(training_transform_dict)
 
     model_params = {
-            "name": "UNet3D",
+            "name": "Modified3DUNet",
             "dropout_rate": 0.3,
             "bn_momentum": 0.9,
             "depth": 2,

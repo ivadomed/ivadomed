@@ -500,13 +500,12 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
 
     filename_pairs = [([fname_image], None, fname_roi, [metadata])]
 
-    kernel_3D = bool('UNet3D' in context and context['UNet3D']['applied'])
-
+    kernel_3D = bool('Modified3DUNet' in context and context['Modified3DUNet']['applied'])
     if kernel_3D:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                            transform=tranform_lst,
-                                                           length=context["UNet3D"]["length_3D"],
-                                                           stride=context["UNet3D"]["stride_3D"])
+                                                           length=context["Modified3DUNet"]["length_3D"],
+                                                           stride=context["Modified3DUNet"]["stride_3D"])
     else:
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
                                                   slice_axis=slice_axis,
@@ -517,7 +516,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
 
     if kernel_3D:
         print("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
-                                                           context['UNet3D']['length_3D']))
+                                                           context['Modified3DUNet']['length_3D']))
     else:
         print("\nLoaded {} {} slices.".format(len(ds), loader_params['slice_axis']))
 

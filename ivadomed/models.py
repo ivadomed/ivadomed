@@ -233,15 +233,24 @@ class DownConv(Module):
         conv2_drop (Dropout2d): Second 2D dropout.
     """
 
-    def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1):
+    def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1, is_2d=True):
         super(DownConv, self).__init__()
-        self.conv1 = nn.Conv2d(in_feat, out_feat, kernel_size=3, padding=1)
-        self.conv1_bn = nn.BatchNorm2d(out_feat, momentum=bn_momentum)
-        self.conv1_drop = nn.Dropout2d(drop_rate)
+        if is_2d:
+            conv = nn.Conv2d
+            bn = nn.BatchNorm2d
+            dropout = nn.Dropout2d
+        else:
+            conv = nn.Conv3d
+            bn = nn.InstanceNorm3d
+            dropout = nn.Dropout3d
 
-        self.conv2 = nn.Conv2d(out_feat, out_feat, kernel_size=3, padding=1)
-        self.conv2_bn = nn.BatchNorm2d(out_feat, momentum=bn_momentum)
-        self.conv2_drop = nn.Dropout2d(drop_rate)
+        self.conv1 = conv(in_feat, out_feat, kernel_size=3, padding=1)
+        self.conv1_bn = bn(out_feat, momentum=bn_momentum)
+        self.conv1_drop = dropout(drop_rate)
+
+        self.conv2 = conv(out_feat, out_feat, kernel_size=3, padding=1)
+        self.conv2_bn = bn(out_feat, momentum=bn_momentum)
+        self.conv2_drop = dropout(drop_rate)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -268,12 +277,15 @@ class UpConv(Module):
         downconv (DownConv): Down convolution.
     """
 
-    def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1):
+    def __init__(self, in_feat, out_feat, drop_rate=0.4, bn_momentum=0.1, is_2d=True):
         super(UpConv, self).__init__()
-        self.downconv = DownConv(in_feat, out_feat, drop_rate, bn_momentum)
+        self.is_2d = is_2d
+        self.downconv = DownConv(in_feat, out_feat, drop_rate, bn_momentum, is_2d)
 
     def forward(self, x, y):
-        x = F.interpolate(x, size=y.size()[-2:], mode='bilinear', align_corners=True)
+        mode = 'bilinear' if self.is_2d else 'trilinear'
+        dims = -2 if self.is_2d else -3
+        x = F.interpolate(x, size=y.size()[dims:], mode=mode, align_corners=True)
         x = torch.cat([x, y], dim=1)
         x = self.downconv(x)
         return x
@@ -298,27 +310,26 @@ class Encoder(Module):
         film_bottom (FiLMlayer): FiLM layer applied to bottom convolution.
     """
 
-    def __init__(self, in_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, n_metadata=None, film_layers=None):
+    def __init__(self, in_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, n_metadata=None, film_layers=None,
+                 is_2d=True, n_filters=64):
         super(Encoder, self).__init__()
         self.depth = depth
         self.down_path = nn.ModuleList()
         # first block
-        self.down_path.append(DownConv(in_channel, 64, drop_rate, bn_momentum))
-        self.down_path.append(FiLMlayer(n_metadata, 64) if film_layers and film_layers[0] else None)
-        self.down_path.append(nn.MaxPool2d(2))
-
-        # other blocks
-        in_channel = 64
+        self.down_path.append(DownConv(in_channel, n_filters, drop_rate, bn_momentum, is_2d))
+        self.down_path.append(FiLMlayer(n_metadata, n_filters) if film_layers and film_layers[0] else None)
+        max_pool = nn.MaxPool2d if is_2d else nn.MaxPool3d
+        self.down_path.append(max_pool(2))
 
         for i in range(depth - 1):
-            self.down_path.append(DownConv(in_channel, in_channel * 2, drop_rate, bn_momentum))
-            self.down_path.append(FiLMlayer(n_metadata, in_channel * 2) if film_layers and film_layers[i + 1] else None)
-            self.down_path.append(nn.MaxPool2d(2))
-            in_channel = in_channel * 2
+            self.down_path.append(DownConv(n_filters, n_filters * 2, drop_rate, bn_momentum, is_2d))
+            self.down_path.append(FiLMlayer(n_metadata, n_filters * 2) if film_layers and film_layers[i + 1] else None)
+            self.down_path.append(max_pool(2))
+            n_filters = n_filters * 2
 
         # Bottom
-        self.conv_bottom = DownConv(in_channel, in_channel, drop_rate, bn_momentum)
-        self.film_bottom = FiLMlayer(n_metadata, in_channel) if film_layers and film_layers[self.depth] else None
+        self.conv_bottom = DownConv(n_filters, n_filters, drop_rate, bn_momentum, is_2d)
+        self.film_bottom = FiLMlayer(n_metadata, n_filters) if film_layers and film_layers[self.depth] else None
 
     def forward(self, x, context=None):
         features = []
@@ -369,7 +380,7 @@ class Decoder(Module):
     """
 
     def __init__(self, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1,
-                 n_metadata=None, film_layers=None, hemis=False, final_activation="sigmoid"):
+                 n_metadata=None, film_layers=None, hemis=False, final_activation="sigmoid", is_2d=True, n_filters=64):
         super(Decoder, self).__init__()
         self.depth = depth
         self.out_channel = out_channel
@@ -377,19 +388,20 @@ class Decoder(Module):
         # Up-Sampling path
         self.up_path = nn.ModuleList()
         if hemis:
-            in_channel = 64 * 2 ** self.depth
-            self.up_path.append(UpConv(in_channel * 2, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
+            in_channel = n_filters * 2 ** self.depth
+            self.up_path.append(UpConv(in_channel * 2, n_filters * 2 ** (self.depth - 1), drop_rate, bn_momentum,
+                                       is_2d))
             if film_layers and film_layers[self.depth + 1]:
-                self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)))
+                self.up_path.append(FiLMlayer(n_metadata, n_filters * 2 ** (self.depth - 1)))
             else:
                 self.up_path.append(None)
             # self.depth += 1
         else:
-            in_channel = 64 * 2 ** self.depth
+            in_channel = n_filters * 2 ** self.depth
 
-            self.up_path.append(UpConv(in_channel, 64 * 2 ** (self.depth - 1), drop_rate, bn_momentum))
+            self.up_path.append(UpConv(in_channel, n_filters * 2 ** (self.depth - 1), drop_rate, bn_momentum, is_2d))
             if film_layers and film_layers[self.depth + 1]:
-                self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - 1)))
+                self.up_path.append(FiLMlayer(n_metadata, n_filters * 2 ** (self.depth - 1)))
             else:
                 self.up_path.append(None)
 
@@ -397,17 +409,17 @@ class Decoder(Module):
             in_channel //= 2
 
             self.up_path.append(
-                UpConv(in_channel + 64 * 2 ** (self.depth - i - 1 + int(hemis)), 64 * 2 ** (self.depth - i - 1),
-                       drop_rate,
-                       bn_momentum))
+                UpConv(in_channel + n_filters * 2 ** (self.depth - i - 1 + int(hemis)), n_filters * 2 ** (self.depth - i - 1),
+                       drop_rate, bn_momentum, is_2d))
             if film_layers and film_layers[self.depth + i + 1]:
-                self.up_path.append(FiLMlayer(n_metadata, 64 * 2 ** (self.depth - i - 1)))
+                self.up_path.append(FiLMlayer(n_metadata, n_filters * 2 ** (self.depth - i - 1)))
             else:
                 self.up_path.append(None)
 
         # Last Convolution
-        self.last_conv = nn.Conv2d(in_channel // 2, out_channel, kernel_size=3, padding=1)
-        self.last_film = FiLMlayer(n_metadata, 1) if film_layers and film_layers[-1] else None
+        conv = nn.Conv2d if is_2d else nn.Conv3d
+        self.last_conv = conv(in_channel // 2, out_channel, kernel_size=3, padding=1)
+        self.last_film = FiLMlayer(n_metadata, self.out_channel) if film_layers and film_layers[-1] else None
 
     def forward(self, features, context=None, w_film=None):
         x = features[-1]
@@ -451,6 +463,8 @@ class Unet(Module):
         drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
         final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
+        is_2d (bool): Indicates dimensionality of model.
+        n_filters (int):  Number of base filters in the U-Net.
         **kwargs:
 
     Attributes:
@@ -459,15 +473,16 @@ class Unet(Module):
     """
 
     def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, final_activation='sigmoid',
-                 **kwargs):
+                 is_2d=True, n_filters=64, **kwargs):
         super(Unet, self).__init__()
 
         # Encoder path
-        self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum)
+        self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
+                               is_2d=is_2d, n_filters=n_filters)
 
         # Decoder path
         self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
-                               final_activation=final_activation)
+                               final_activation=final_activation, is_2d=is_2d, n_filters=n_filters)
 
     def forward(self, x):
         features, _ = self.encoder(x)
@@ -487,6 +502,8 @@ class FiLMedUnet(Unet):
         bn_momentum (float): Batch normalization momentum.
         n_metadata (dict): FiLM metadata see ivadomed.loader.film for more details.
         film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied.
+        is_2d (bool): Indicates dimensionality of model.
+        n_filters (int):  Number of base filters in the U-Net.
         **kwargs:
 
     Attributes:
@@ -495,7 +512,7 @@ class FiLMedUnet(Unet):
     """
 
     def __init__(self, in_channel=1, out_channel=1, depth=3, drop_rate=0.4,
-                 bn_momentum=0.1, n_metadata=None, film_layers=None, **kwargs):
+                 bn_momentum=0.1, n_metadata=None, film_layers=None, is_2d=True, n_filters=64, **kwargs):
         super().__init__(in_channel=1, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1)
 
         # Verify if the length of boolean FiLM layers corresponds to the depth
@@ -507,10 +524,10 @@ class FiLMedUnet(Unet):
             film_layers = [0] * (2 * depth + 2)
         # Encoder path
         self.encoder = Encoder(in_channel=in_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
-                               n_metadata=n_metadata, film_layers=film_layers)
+                               n_metadata=n_metadata, film_layers=film_layers, is_2d=is_2d, n_filters=n_filters)
         # Decoder path
         self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate, bn_momentum=bn_momentum,
-                               n_metadata=n_metadata, film_layers=film_layers)
+                               n_metadata=n_metadata, film_layers=film_layers, is_2d=is_2d, n_filters=n_filters)
 
     def forward(self, x, context=None):
         features, w_film = self.encoder(x, context)
@@ -585,6 +602,7 @@ class FiLMlayer(Module):
         self.batch_size = None
         self.height = None
         self.width = None
+        self.depth = None
         self.feature_size = None
         self.generator = FiLMgenerator(n_metadata, n_channels)
         # Add the parameters gammas and betas to access them out of the class.
@@ -592,7 +610,13 @@ class FiLMlayer(Module):
         self.betas = None
 
     def forward(self, feature_maps, context, w_shared):
-        _, self.feature_size, self.height, self.width = feature_maps.data.shape
+        data_shape = feature_maps.data.shape
+        if len(data_shape) == 4:
+            _, self.feature_size, self.height, self.width = data_shape
+        elif len(data_shape) == 5:
+            _, self.feature_size, self.height, self.width, self.depth = data_shape
+        else:
+            raise ValueError("Dataset should be 2D or 3D.")
 
         if torch.cuda.is_available():
             context = torch.Tensor(context).cuda()
@@ -604,11 +628,15 @@ class FiLMlayer(Module):
 
         # FiLM applies a different affine transformation to each channel,
         # consistent accross spatial locations
-        film_params = film_params.unsqueeze(-1).unsqueeze(-1)
-        film_params = film_params.repeat(1, 1, self.height, self.width)
+        if len(data_shape) == 4:
+            film_params = film_params.unsqueeze(-1).unsqueeze(-1)
+            film_params = film_params.repeat(1, 1, self.height, self.width)
+        else:
+            film_params = film_params.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
+            film_params = film_params.repeat(1, 1, self.height, self.width, self.depth)
 
-        self.gammas = film_params[:, :self.feature_size, :, :]
-        self.betas = film_params[:, self.feature_size:, :, :]
+        self.gammas = film_params[:, :self.feature_size, ]
+        self.betas = film_params[:, self.feature_size:, ]
 
         # Apply the linear modulation
         output = self.gammas * feature_maps + self.betas
@@ -692,7 +720,7 @@ class HeMISUnet(Module):
         return preds
 
 
-class UNet3D(nn.Module):
+class Modified3DUNet(nn.Module):
     """Code from the following repository:
     https://github.com/pykao/Modified-3D-UNet-Pytorch
     The main differences with the original UNet resides in the use of LeakyReLU instead of ReLU, InstanceNormalisation
@@ -724,8 +752,8 @@ class UNet3D(nn.Module):
     """
 
     def __init__(self, in_channel, out_channel, n_filters=16, attention=False, drop_rate=0.6, bn_momentum=0.1,
-                 final_activation="sigmoid", **kwargs):
-        super(UNet3D, self).__init__()
+                 final_activation="sigmoid", n_metadata=None, film_layers=None, **kwargs):
+        super(Modified3DUNet, self).__init__()
         self.in_channels = in_channel
         self.n_classes = out_channel
         self.base_n_filter = n_filters
@@ -743,6 +771,7 @@ class UNet3D(nn.Module):
             self.in_channels, self.base_n_filter,
             kernel_size=3, stride=1, padding=1, bias=False
         )
+        self.film_layer1 = FiLMlayer(n_metadata, self.base_n_filter) if film_layers and film_layers[0] else None
         self.conv3d_c1_2 = nn.Conv3d(
             self.base_n_filter, self.base_n_filter,
             kernel_size=3, stride=1, padding=1, bias=False
@@ -756,6 +785,7 @@ class UNet3D(nn.Module):
             self.base_n_filter, self.base_n_filter * 2,
             kernel_size=3, stride=2, padding=1, bias=False
         )
+        self.film_layer2 = FiLMlayer(n_metadata, self.base_n_filter * 2) if film_layers and film_layers[1] else None
         self.norm_lrelu_conv_c2 = self.norm_lrelu_conv(
             self.base_n_filter * 2, self.base_n_filter * 2)
         self.inorm3d_c2 = nn.InstanceNorm3d(self.base_n_filter * 2, momentum=self.momentum)
@@ -765,6 +795,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 2, self.base_n_filter * 4,
             kernel_size=3, stride=2, padding=1, bias=False
         )
+        self.film_layer3 = FiLMlayer(n_metadata, self.base_n_filter * 4) if film_layers and film_layers[2] else None
         self.norm_lrelu_conv_c3 = self.norm_lrelu_conv(
             self.base_n_filter * 4, self.base_n_filter * 4)
         self.inorm3d_c3 = nn.InstanceNorm3d(self.base_n_filter * 4, momentum=self.momentum)
@@ -774,6 +805,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 4, self.base_n_filter * 8,
             kernel_size=3, stride=2, padding=1, bias=False
         )
+        self.film_layer4 = FiLMlayer(n_metadata, self.base_n_filter * 8) if film_layers and film_layers[3] else None
         self.norm_lrelu_conv_c4 = self.norm_lrelu_conv(
             self.base_n_filter * 8, self.base_n_filter * 8)
         self.inorm3d_c4 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=self.momentum)
@@ -783,17 +815,25 @@ class UNet3D(nn.Module):
             self.base_n_filter * 8, self.base_n_filter * 16,
             kernel_size=3, stride=2, padding=1, bias=False
         )
+
         self.norm_lrelu_conv_c5 = self.norm_lrelu_conv(
             self.base_n_filter * 16, self.base_n_filter * 16)
 
-        self.norm_lrelu_upscale_conv_norm_lrelu_l0 = \
-            self.norm_lrelu_upscale_conv_norm_lrelu(
-                self.base_n_filter * 16, self.base_n_filter * 8)
+        if film_layers and film_layers[4]:
+            self.norm_lrelu_0 = self.norm_lrelu(self.base_n_filter * 16)
+            self.film_layer5 = FiLMlayer(n_metadata, self.base_n_filter * 16)
+            self.upscale_conv_norm_lrelu_0 = self.upscale_conv_norm_lrelu(self.base_n_filter * 16,
+                                                                          self.base_n_filter * 8)
+        else:
+            self.norm_lrelu_upscale_conv_norm_lrelu_l0 = \
+                self.norm_lrelu_upscale_conv_norm_lrelu(
+                    self.base_n_filter * 16, self.base_n_filter * 8)
 
         self.conv3d_l0 = nn.Conv3d(
             self.base_n_filter * 8, self.base_n_filter * 8,
             kernel_size=1, stride=1, padding=0, bias=False
         )
+        self.film_layer6 = FiLMlayer(n_metadata, self.base_n_filter * 8) if film_layers and film_layers[5] else None
         self.inorm3d_l0 = nn.InstanceNorm3d(self.base_n_filter * 8, momentum=self.momentum)
 
         # Attention UNet
@@ -826,6 +866,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 16, self.base_n_filter * 8,
             kernel_size=1, stride=1, padding=0, bias=False
         )
+        self.film_layer7 = FiLMlayer(n_metadata, self.base_n_filter * 4) if film_layers and film_layers[6] else None
         self.norm_lrelu_upscale_conv_norm_lrelu_l1 = \
             self.norm_lrelu_upscale_conv_norm_lrelu(
                 self.base_n_filter * 8, self.base_n_filter * 4)
@@ -837,6 +878,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 8, self.base_n_filter * 4,
             kernel_size=1, stride=1, padding=0, bias=False
         )
+        self.film_layer8 = FiLMlayer(n_metadata, self.base_n_filter * 2) if film_layers and film_layers[7] else None
         self.norm_lrelu_upscale_conv_norm_lrelu_l2 = \
             self.norm_lrelu_upscale_conv_norm_lrelu(
                 self.base_n_filter * 4, self.base_n_filter * 2)
@@ -848,6 +890,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 4, self.base_n_filter * 2,
             kernel_size=1, stride=1, padding=0, bias=False
         )
+        self.film_layer9 = FiLMlayer(n_metadata, self.base_n_filter) if film_layers and film_layers[8] else None
         self.norm_lrelu_upscale_conv_norm_lrelu_l3 = \
             self.norm_lrelu_upscale_conv_norm_lrelu(
                 self.base_n_filter * 2, self.base_n_filter)
@@ -859,6 +902,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 2, self.n_classes,
             kernel_size=1, stride=1, padding=0, bias=False
         )
+        # self.film_layer10 = FiLMlayer(n_metadata, ) if film_layers and film_layers[9] else None
 
         self.ds2_1x1_conv3d = nn.Conv3d(
             self.base_n_filter * 8, self.n_classes,
@@ -868,6 +912,7 @@ class UNet3D(nn.Module):
             self.base_n_filter * 4, self.n_classes,
             kernel_size=1, stride=1, padding=0, bias=False
         )
+        self.film_layer10 = FiLMlayer(n_metadata, self.n_classes) if film_layers and film_layers[9] else None
 
     def conv_norm_lrelu(self, feat_in, feat_out):
         return nn.Sequential(
@@ -900,19 +945,37 @@ class UNet3D(nn.Module):
             nn.InstanceNorm3d(feat_out, momentum=self.momentum),
             nn.LeakyReLU())
 
-    def forward(self, x):
+    def norm_lrelu(self, feat_in):
+        return nn.Sequential(
+            nn.InstanceNorm3d(feat_in, momentum=self.momentum),
+            nn.LeakyReLU())
+
+    def upscale_conv_norm_lrelu(self, feat_in, feat_out):
+        return nn.Sequential(
+            nn.Upsample(scale_factor=2, mode='nearest'),
+            # should be feat_in*2 or feat_in
+            nn.Conv3d(feat_in, feat_out, kernel_size=3,
+                      stride=1, padding=1, bias=False),
+            nn.InstanceNorm3d(feat_out, momentum=self.momentum),
+            nn.LeakyReLU())
+
+    def forward(self, x, context=None, w_film=None):
         #  Level 1 context pathway
         out = self.conv3d_c1_1(x)
         residual_1 = out
+
         out = self.lrelu(out)
         out = self.conv3d_c1_2(out)
         out = self.dropout3d(out)
         out = self.lrelu_conv_c1(out)
         # Element Wise Summation
         out += residual_1
-        context_1 = self.lrelu(out)
+        out = self.lrelu(out)
+        context_1 = out
         out = self.inorm3d_c1(out)
         out = self.lrelu(out)
+        if hasattr(self, 'film_layer1') and self.film_layer1:
+            out, w_film = self.film_layer1(out, context, w_film)
 
         # Level 2 context pathway
         out = self.conv3d_c2(out)
@@ -923,6 +986,8 @@ class UNet3D(nn.Module):
         out += residual_2
         out = self.inorm3d_c2(out)
         out = self.lrelu(out)
+        if hasattr(self, 'film_layer2') and self.film_layer2:
+            out, w_film = self.film_layer2(out, context, w_film)
         context_2 = out
 
         # Level 3 context pathway
@@ -934,6 +999,8 @@ class UNet3D(nn.Module):
         out += residual_3
         out = self.inorm3d_c3(out)
         out = self.lrelu(out)
+        if hasattr(self, 'film_layer3') and self.film_layer3:
+            out, w_film = self.film_layer3(out, context, w_film)
         context_3 = out
 
         # Level 4 context pathway
@@ -945,6 +1012,8 @@ class UNet3D(nn.Module):
         out += residual_4
         out = self.inorm3d_c4(out)
         out = self.lrelu(out)
+        if hasattr(self, 'film_layer4') and self.film_layer4:
+            out, w_film = self.film_layer4(out, context, w_film)
         context_4 = out
 
         # Level 5
@@ -964,17 +1033,28 @@ class UNet3D(nn.Module):
             context_3, att3 = self.attentionblock3(context_3, gating)
             context_2, att2 = self.attentionblock2(context_2, gating)
 
-        out = self.norm_lrelu_upscale_conv_norm_lrelu_l0(out)
+        if hasattr(self, 'film_layer5') and self.film_layer5:
+            out = self.norm_lrelu_0(out)
+            out, w_film = self.film_layer5(out, context, w_film)
+            out = self.upscale_conv_norm_lrelu_0(out)
+        else:
+            out = self.norm_lrelu_upscale_conv_norm_lrelu_l0(out)
 
         out = self.conv3d_l0(out)
+
         out = self.inorm3d_l0(out)
         out = self.lrelu(out)
+        if hasattr(self, 'film_layer6') and self.film_layer6:
+            out, w_film = self.film_layer6(out, context, w_film)
 
         # Level 1 localization pathway
         out = torch.cat([out, context_4], dim=1)
         out = self.conv_norm_lrelu_l1(out)
         out = self.conv3d_l1(out)
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l1(out)
+        if hasattr(self, 'film_layer7') and self.film_layer7:
+            out, w_film = self.film_layer7(out, context, w_film)
+
 
         # Level 2 localization pathway
         out = torch.cat([out, context_3], dim=1)
@@ -982,6 +1062,8 @@ class UNet3D(nn.Module):
         ds2 = out
         out = self.conv3d_l2(out)
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l2(out)
+        if hasattr(self, 'film_layer8') and self.film_layer8:
+            out, w_film = self.film_layer8(out, context, w_film)
 
         # Level 3 localization pathway
         out = torch.cat([out, context_2], dim=1)
@@ -989,10 +1071,13 @@ class UNet3D(nn.Module):
         ds3 = out
         out = self.conv3d_l3(out)
         out = self.norm_lrelu_upscale_conv_norm_lrelu_l3(out)
+        if hasattr(self, 'film_layer9') and self.film_layer9:
+            out, w_film = self.film_layer9(out, context, w_film)
 
         # Level 4 localization pathway
         out = torch.cat([context_1, out], dim=1)
         out = self.conv_norm_lrelu_l4(out)
+
         out_pred = self.conv3d_l4(out)
 
         ds2_1x1_conv = self.ds2_1x1_conv3d(ds2)
@@ -1003,6 +1088,8 @@ class UNet3D(nn.Module):
             ds1_ds2_sum_upscale_ds3_sum)
 
         out = out_pred + ds1_ds2_sum_upscale_ds3_sum_upscale
+        if hasattr(self, 'film_layer10') and self.film_layer10:
+            out, w_film = self.film_layer10(out, context, w_film)
         seg_layer = out
 
         if hasattr(self, "final_activation") and self.final_activation == "softmax":

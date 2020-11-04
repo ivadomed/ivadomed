@@ -70,7 +70,8 @@
         "name": "Unet",
         "dropout_rate": 0.3,
         "bn_momentum": 0.9,
-        "depth": 3
+        "depth": 3,
+        "is_2d": true
     },
     "uncertainty": {
         "epistemic": false,
