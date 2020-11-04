@@ -17,8 +17,33 @@ from ivadomed import utils as imed_utils
 def test_download_data():
     command = "ivadomed_download_data -d t2_tumor"
     subprocess.check_output(command, shell=True)
-    command = "ivadomed_download_data -d data_testing -o t2_tumor -k 1"
+    command = "ivadomed_download_data -d findcord_tumor"
     subprocess.check_output(command, shell=True)
+    command = "ivadomed_download_data -d data_testing -o output -k 1"
+    subprocess.check_output(command, shell=True)
+
+
+def test_create_segment_file():
+    command = "cp testing_data/model_config_test.json testing_data/model_config_segment.json"
+    subprocess.check_output(command, shell=True)
+    os.makedirs("testing_script", exist_ok=True)
+    command = "scp -r findcord_tumor testing_script"
+    subprocess.check_output(command, shell=True)
+    file_conf = open("testing_data/model_config_segment.json", "r")
+    initial_config = json.load(file_conf)
+    file_conf.close()
+    file_conf = open("testing_data/model_config_segment.json", "w")
+    initial_config['command'] = "segment"
+    initial_config['model_name'] = "findcord_tumor"
+    initial_config['postprocessing'] = {}
+    initial_config['split_dataset']['test_fraction'] = 1.0
+
+    json.dump(initial_config, file_conf)
+
+
+def test_segment():
+    subprocess.check_output(["ivadomed -c testing_data/model_config_segment.json"], shell=True)
+    shutil.rmtree(os.path.join('testing_script', 'pred_masks'))
 
 
 def test_onnx_conversion():
@@ -58,7 +83,6 @@ def test_creation_dataset():
     os.makedirs("testing_data/sub-test003/anat/", exist_ok=True)
     os.makedirs("testing_data/derivatives/labels/sub-test002/anat/", exist_ok=True)
     os.makedirs("testing_data/derivatives/labels/sub-test003/anat/", exist_ok=True)
-    os.makedirs("testing_script", exist_ok=True)
 
     # sub-test002 and sub-test003 will just be copy of our only real testing subject
     command = "cp testing_data/sub-unf01/anat/sub-unf01_T2w.nii.gz testing_data/sub-test002/anat/sub-test002" + \
@@ -112,7 +136,6 @@ def test_testing_with_uncertainty():
 def test_training():
     # Train config
     subprocess.check_output(["ivadomed -c testing_data/model_config.json"], shell=True)
-
 
 # def test_training_curve():
 # using the results from previous training

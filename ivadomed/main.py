@@ -4,7 +4,9 @@ import argparse
 import copy
 import joblib
 import torch.backends.cudnn as cudnn
+import nibabel as nib
 
+from bids_neuropoly import bids
 from ivadomed import evaluation as imed_evaluation
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import testing as imed_testing
@@ -73,9 +75,9 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     Returns:
         Float or pandas Dataframe:
         If "train" command: Returns floats: best loss score for both training and validation.
-
         If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing
             sub dataset and return the prediction metrics before evaluation.
+        If "segment" command: No return value.
     """
     command = copy.deepcopy(context["command"])
     log_directory = copy.deepcopy(context["log_directory"])
@@ -195,6 +197,12 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         if not os.path.isdir(path_model):
             print('Creating model directory: {}'.format(path_model))
             os.makedirs(path_model)
+            if 'film_layers' in model_params and any(model_params['film_layers']):
+                joblib.dump(train_onehotencoder, os.path.join(path_model, "one_hot_encoder.joblib"))
+                if 'metadata_dict' in ds_train[0]['input_metadata'][0]:
+                    metadata_dict = ds_train[0]['input_metadata'][0]['metadata_dict']
+                    joblib.dump(metadata_dict, os.path.join(path_model, "metadata_dict.joblib"))
+
         else:
             print('Model directory already exists: {}'.format(path_model))
 
@@ -289,6 +297,37 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                               target_suffix=loader_params["target_suffix"],
                                               eval_params=context["evaluation_parameters"])
         return df_results, pred_metrics
+
+    if command == 'segment':
+        bids_ds = bids.BIDS(context["loader_parameters"]["bids_path"])
+        df = bids_ds.participants.content
+        subj_lst = df['participant_id'].tolist()
+        bids_subjects = [s for s in bids_ds.get_subjects() if s.record["subject_id"] in subj_lst]
+
+        # Add postprocessing to packaged model
+        path_model = os.path.join(context['log_directory'], context['model_name'])
+        path_model_config = os.path.join(path_model, context['model_name'] + ".json")
+        model_config = imed_config_manager.load_json(path_model_config)
+        model_config['postprocessing'] = context['postprocessing']
+        with open(path_model_config, 'w') as fp:
+            json.dump(model_config, fp, indent=4)
+
+        options = None
+        for subject in bids_subjects:
+            fname_img = subject.record["absolute_path"]
+            if 'film_layers' in model_params and any(model_params['film_layers']) and model_params['metadata']:
+                subj_id = subject.record['subject_id']
+                metadata = df[df['participant_id'] == subj_id][model_params['metadata']].values[0]
+                options = {'metadata': metadata}
+            pred = imed_utils.segment_volume(path_model,
+                                             fname_image=fname_img,
+                                             gpu_number=context['gpu'],
+                                             options=options)
+            pred_path = os.path.join(context['log_directory'], "pred_masks")
+            if not os.path.exists(pred_path):
+                os.makedirs(pred_path)
+            filename = subject.record['subject_id'] + "_" + subject.record['modality'] + "_pred" + ".nii.gz"
+            nib.save(pred, os.path.join(pred_path, filename))
 
 
 def run_main():

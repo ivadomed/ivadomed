@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import subprocess
+import joblib
 
 import matplotlib
 import matplotlib.animation as anim
@@ -23,8 +24,9 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
+from ivadomed import training as imed_training
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -447,7 +449,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
     # Load model training config
     context = imed_config_manager.ConfigurationManager(fname_model_metadata).get_config()
 
-    if options is not None:
+    if options is not None and any(pp in options for pp in ['thr', 'largest', ' fill_holes', 'remove_small']):
         postpro = {}
         if 'thr' in options:
             postpro['binarize_prediction'] = {"thr": options['thr']}
@@ -499,6 +501,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
     filename_pairs = [([fname_image], None, fname_roi, [metadata])]
 
     kernel_3D = bool('UNet3D' in context and context['UNet3D']['applied'])
+
     if kernel_3D:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                            transform=tranform_lst,
@@ -518,6 +521,21 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
     else:
         print("\nLoaded {} {} slices.".format(len(ds), loader_params['slice_axis']))
 
+    model_params = {}
+    if 'FiLMedUnet' in context and context['FiLMedUnet']['applied']:
+        metadata_dict = joblib.load(os.path.join(folder_model, 'metadata_dict.joblib'))
+        for idx in ds.indexes:
+            for i in range(len(idx)):
+                idx[i]['input_metadata'][0][context['FiLMedUnet']['metadata']] = options['metadata']
+                idx[i]['input_metadata'][0]['metadata_dict'] = metadata_dict
+
+        ds = imed_film.normalize_metadata(ds, None, context["debugging"], context['FiLMedUnet']['metadata'])
+        onehotencoder = joblib.load(os.path.join(folder_model, 'one_hot_encoder.joblib'))
+
+        model_params.update({"name": 'FiLMedUnet',
+                             "film_onehotencoder": onehotencoder,
+                             "n_metadata": len([ll for l in onehotencoder.categories_ for ll in l])})
+
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["training_parameters"]["batch_size"],
                              shuffle=False, pin_memory=True,
@@ -536,7 +554,13 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
             img = cuda(batch['input'], cuda_available=cuda_available)
-            preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
+
+            if ('FiLMedUnet' in context and context['FiLMedUnet']['applied']) or \
+                    ('HeMISUnet' in context and context['HeMISUnet']['applied']):
+                metadata = imed_training.get_metadata(batch["input_metadata"], model_params)
+                preds = model(img, metadata)
+            else:
+                preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
             preds = preds.cpu()
 
         # Set datatype to gt since prediction should be processed the same way as gt
