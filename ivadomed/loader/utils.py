@@ -326,26 +326,27 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
                           frequency).
     """
 
-    def __init__(self, dataset):
+    def __init__(self, dataset, metadata='gt'):
         self.indices = list(range(len(dataset)))
 
         self.nb_samples = len(self.indices)
+        self.metadata_dict = {}
+        self.label_idx = 0
 
         cmpt_label = {}
         for idx in self.indices:
-            label = self._get_label(dataset, idx)
+            label = self._get_label(dataset, idx, metadata)
             if label in cmpt_label:
                 cmpt_label[label] += 1
             else:
                 cmpt_label[label] = 1
 
-        weights = [1.0 / cmpt_label[self._get_label(dataset, idx)]
+        weights = [1.0 / cmpt_label[self._get_label(dataset, idx, metadata)]
                    for idx in self.indices]
 
         self.weights = torch.DoubleTensor(weights)
 
-    @staticmethod
-    def _get_label(dataset, idx):
+    def _get_label(self, dataset, idx, metadata):
         """Returns 1 if sample is not empty, 0 if it is empty (only zeros).
 
         Args:
@@ -355,12 +356,20 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         Returns:
             int: 0 or 1.
         """
-        # For now, only supported with single label
-        sample_gt = np.array(dataset[idx]['gt'][0])
-        if np.any(sample_gt):
-            return 1
+        if metadata != 'gt':
+            label_str = dataset[idx]['input_metadata'][0][metadata]
+            if label_str not in self.metadata_dict:
+                self.metadata_dict[label_str] = self.label_idx
+                self.label_idx += 1
+            return self.metadata_dict[label_str]
+
         else:
-            return 0
+            # For now, only supported with single label
+            sample_gt = np.array(dataset[idx]['gt'][0])
+            if np.any(sample_gt):
+                return 1
+            else:
+                return 0
 
     def __iter__(self):
         return (self.indices[i] for i in torch.multinomial(
