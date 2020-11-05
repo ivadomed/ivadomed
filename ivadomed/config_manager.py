@@ -57,6 +57,7 @@ def _load_json(config_path):
     return default_config
 
 
+# To ensure retrocompatibility for parameter changes in configuration file
 KEY_CHANGE_DICT = {'UNet3D': 'Modified3DUNet'}
 
 
