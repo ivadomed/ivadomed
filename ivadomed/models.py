@@ -616,7 +616,7 @@ class FiLMlayer(Module):
         elif len(data_shape) == 5:
             _, self.feature_size, self.height, self.width, self.depth = data_shape
         else:
-            raise ValueError("Dataset should be 2D or 3D.")
+            raise ValueError("Data should be either 2D (tensor length: 4) or 3D (tensor length: 5), found shape: {}".format(data_shape))
 
         if torch.cuda.is_available():
             context = torch.Tensor(context).cuda()
