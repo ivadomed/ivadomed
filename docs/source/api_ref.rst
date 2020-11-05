@@ -89,11 +89,6 @@ Utils API
 
 .. automodule:: ivadomed.utils
 
-Image API
-+++++++++
-
-.. automodule:: ivadomed.image
-
 Visualize API
 +++++++++++++
 
