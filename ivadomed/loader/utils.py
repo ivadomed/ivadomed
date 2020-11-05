@@ -460,7 +460,6 @@ class SliceFilter(object):
         return True
 
 
-
 def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     """Reorient an image to match a reference image orientation.
 

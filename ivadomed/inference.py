@@ -4,7 +4,6 @@ import numpy as np
 import onnxruntime
 import torch
 from torch.utils.data import DataLoader
-from ivadomed import image as imed_image
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
@@ -64,11 +63,11 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     oriented_volumes = []
     if len(arr_pred_ref_space.shape) == 4:
         for i in range(n_channel):
-            oriented_volumes.append(imed_image.reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
+            oriented_volumes.append(imed_loader_utils.reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
         # transpose to locate the channel dimension at the end to properly see image on viewer
         arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
     else:
-        arr_pred_ref_space = imed_image.reorient_image(arr_pred_ref_space, slice_axis, nib_ref, nib_ref_can)
+        arr_pred_ref_space = imed_loader_utils.reorient_image(arr_pred_ref_space, slice_axis, nib_ref, nib_ref_can)
 
     if bin_thr >= 0:
         arr_pred_ref_space = imed_postpro.threshold_predictions(arr_pred_ref_space, thr=bin_thr)

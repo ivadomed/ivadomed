@@ -10,7 +10,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from torch.autograd import Variable
-from ivadomed import image as imed_image
+from ivadomed.loader import utils as imed_loader_utils
 
 
 def overlap_im_seg(img, seg):
@@ -221,14 +221,14 @@ def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_
         # Write the attentions to a nifti image
         nib_ref = nib.load(path)
         nib_ref_can = nib.as_closest_canonical(nib_ref)
-        oriented_image = imed_image.reorient_image(orig_input_img[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
+        oriented_image = imed_loader_utils.reorient_image(orig_input_img[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
 
         nib_pred = nib.Nifti1Image(oriented_image, nib_ref.affine)
         nib.save(nib_pred, save_directory)
 
         basename = basename.split(".")[0] + "_att.nii.gz"
         save_directory = os.path.join(log_directory, layer_name, basename)
-        attention_map = imed_image.reorient_image(upsampled_attention[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
+        attention_map = imed_loader_utils.reorient_image(upsampled_attention[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
         nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
 
         nib.save(nib_pred, save_directory)
