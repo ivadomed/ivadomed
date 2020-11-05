@@ -7,7 +7,6 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
-from ivadomed import image as imed_image
 from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
 
 GPU_NUMBER = 0
@@ -138,7 +137,7 @@ def test_image_orientation():
                         assert imed_metrics.dice_score(input_hwd_2, input_hwd) >= 0.8
                         input_ras_2 = imed_loader_utils.orient_img_ras(input_hwd_2, slice_axis)
                         assert imed_metrics.dice_score(input_ras_2, input_ras) >= 0.8
-                        input_init_2 = imed_image.reorient_image(input_hwd_2, slice_axis, nib_ref, nib_ref_can)
+                        input_init_2 = imed_loader_utils.reorient_image(input_hwd_2, slice_axis, nib_ref, nib_ref_can)
                         assert imed_metrics.dice_score(input_init_2, input_init) >= 0.8
 
                         # re-init pred_stack_lst
