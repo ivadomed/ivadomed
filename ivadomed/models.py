@@ -463,7 +463,7 @@ class Unet(Module):
         drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
         final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
-        is_2d (bool): Indicates dimensionality of model.
+        is_2d (bool): Indicates dimensionality of model: True for 2D convolutions, False for 3D convolutions.
         n_filters (int):  Number of base filters in the U-Net.
         **kwargs:
 
