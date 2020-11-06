@@ -14,7 +14,7 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 # List of classification models (ie not segmentation output)
 CLASSIFIER_LIST = ['resnet18', 'densenet121']
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
