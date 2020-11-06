@@ -128,7 +128,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
     # Load model training config
     context = imed_config_manager.ConfigurationManager(fname_model_metadata).get_config()
 
-    if any(pp in options for pp in ['thr', 'largest', ' fill_holes', 'remove_small']):
+    if options is not None and any(pp in options for pp in ['thr', 'largest', ' fill_holes', 'remove_small']):
         postpro = {}
         if 'thr' in options:
             postpro['binarize_prediction'] = {"thr": options['thr']}
