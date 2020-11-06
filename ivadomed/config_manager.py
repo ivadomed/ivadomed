@@ -1,8 +1,7 @@
 import json
 import os
 import collections.abc
-
-__ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+from ivadomed import utils as imed_utils
 
 
 def update(d, u):
@@ -78,7 +77,7 @@ class ConfigurationManager(object):
         self.context_path = context_path
         self.key_change_dict = KEY_CHANGE_DICT
         self._validate_path()
-        default_config_path = os.path.join(__ivadomed_dir__, "ivadomed", "config", "config_default.json")
+        default_config_path = os.path.join(imed_utils.__ivadomed_dir__, "ivadomed", "config", "config_default.json")
         self.default_config = _load_json(default_config_path)
         self.context = _load_json(context_path)
         self.updated_config = {}

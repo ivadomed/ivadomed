@@ -29,17 +29,6 @@ sys.path.insert(0, os.path.abspath('../../ivadomed/'))
 # TODO: find a way to minimize the number of imports below (maybe by adding
 # "import *" in the __init__ files).
 import ivadomed
-import ivadomed.main
-import ivadomed.losses
-import ivadomed.loader
-import ivadomed.loader.utils
-import ivadomed.scripts
-import ivadomed.scripts.visualize_transforms
-import ivadomed.scripts.convert_to_onnx
-import ivadomed.scripts.automate_training
-import ivadomed.scripts.compare_models
-import ivadomed.scripts.prepare_dataset_vertebral_labeling as prepare_dataset_vertebral_labeling
-import ivadomed.scripts.extract_small_dataset
 
 
 source_suffix = '.rst'
