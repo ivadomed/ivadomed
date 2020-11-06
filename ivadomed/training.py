@@ -14,13 +14,14 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from ivadomed import losses as imed_losses
+from ivadomed import mixup as imed_mixup
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
+from ivadomed import visualize as imed_visualize
 from ivadomed.loader import utils as imed_loader_utils
 
 cudnn.benchmark = True
-logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -171,7 +172,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
             # MIXUP
             if training_params["mixup_alpha"]:
-                input_samples, gt_samples = imed_utils.mixup(input_samples, gt_samples, training_params["mixup_alpha"],
+                input_samples, gt_samples = imed_mixup.mixup(input_samples, gt_samples, training_params["mixup_alpha"],
                                                              debugging and epoch == 1, log_directory)
 
             # RUN MODEL
@@ -251,7 +252,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                         for i_gif in range(n_gif):
                             if gif_dict["image_path"][i_gif] == met.__getitem__('input_filenames') and \
                                     gif_dict["slice_id"][i_gif] == met.__getitem__('slice_index'):
-                                overlap = imed_utils.overlap_im_seg(im, pr)
+                                overlap = imed_visualize.overlap_im_seg(im, pr)
                                 gif_dict["gif"][i_gif].add(overlap, label=str(epoch))
 
                 num_steps += 1
@@ -262,8 +263,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 metric_mgr(preds_npy, gt_npy)
 
                 if i == 0 and debugging:
-                    imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
-                                                    is_three_dim=not model_params['is_2d'])
+                    imed_visualize.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
+                                                        is_three_dim=not model_params['is_2d'])
 
                 if 'film_layers' in model_params and any(model_params['film_layers']) and debugging and \
                         epoch == num_epochs and i < int(len(dataset_val) / training_params["batch_size"]) + 1:

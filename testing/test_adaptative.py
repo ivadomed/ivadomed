@@ -48,7 +48,7 @@ def test_hdf5():
                                              transform=transform_lst,
                                              contrast_balance={},
                                              slice_axis=2,
-                                             slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                             slice_filter_fn=imed_loader_utils.SliceFilter(filter_empty_input=True,
                                                                                     filter_empty_mask=True))
 
     # Checking architecture
@@ -107,7 +107,7 @@ def test_hdf5():
                                           transform=transform_lst,
                                           metadata_choice=False,
                                           dim=2,
-                                          slice_filter_fn=imed_utils.SliceFilter(filter_empty_input=True,
+                                          slice_filter_fn=imed_loader_utils.SliceFilter(filter_empty_input=True,
                                                                                  filter_empty_mask=True),
                                           roi_params=roi_params)
 

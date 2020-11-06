@@ -463,7 +463,7 @@ class Unet(Module):
         drop_rate (float): Probability of dropout.
         bn_momentum (float): Batch normalization momentum.
         final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
-        is_2d (bool): Indicates dimensionality of model.
+        is_2d (bool): Indicates dimensionality of model: True for 2D convolutions, False for 3D convolutions.
         n_filters (int):  Number of base filters in the U-Net.
         **kwargs:
 
@@ -616,7 +616,7 @@ class FiLMlayer(Module):
         elif len(data_shape) == 5:
             _, self.feature_size, self.height, self.width, self.depth = data_shape
         else:
-            raise ValueError("Dataset should be 2D or 3D.")
+            raise ValueError("Data should be either 2D (tensor length: 4) or 3D (tensor length: 5), found shape: {}".format(data_shape))
 
         if torch.cuda.is_available():
             context = torch.Tensor(context).cuda()
@@ -718,6 +718,18 @@ class HeMISUnet(Module):
         preds = self.decoder(features_mod)
 
         return preds
+
+
+class UNet3D(nn.Module):
+    """To ensure retrocompatibility, when calling UNet3D (old model name), Modified3DUNet will be called.
+    see Modified3DUNet to learn more about parameters.
+    """
+    def __init__(self, in_channel, out_channel, n_filters=16, attention=False, drop_rate=0.6, bn_momentum=0.1,
+                 final_activation="sigmoid", n_metadata=None, film_layers=None, **kwargs):
+        super(UNet3D, self).__init__()
+        Modified3DUNet(in_channel=in_channel, out_channel=out_channel, n_filters=n_filters, attention=attention,
+                       drop_rate=drop_rate, bn_momentum=bn_momentum, final_activation=final_activation,
+                       n_metadata=n_metadata, film_layers=film_layers, **kwargs)
 
 
 class Modified3DUNet(nn.Module):

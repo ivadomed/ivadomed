@@ -13,6 +13,7 @@ from ivadomed import testing as imed_testing
 from ivadomed import training as imed_training
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
+from ivadomed import metrics as imed_metrics
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 
 cudnn.benchmark = True
@@ -182,7 +183,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                                   'dataset_type': 'training'}}, device=device,
                                             cuda_available=cuda_available)
 
-        metric_fns = imed_utils.get_metric_fns(ds_train.task)
+        metric_fns = imed_metrics.get_metric_fns(ds_train.task)
 
         # If FiLM, normalize data
         if 'film_layers' in model_params and any(model_params['film_layers']):
@@ -275,7 +276,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                                                   'requires_undo': True}}, device=device,
                                                                   cuda_available=cuda_available)
 
-        metric_fns = imed_utils.get_metric_fns(ds_test.task)
+        metric_fns = imed_metrics.get_metric_fns(ds_test.task)
 
         if 'film_layers' in model_params and any(model_params['film_layers']):
             clustering_path = os.path.join(log_directory, "clustering_models.joblib")

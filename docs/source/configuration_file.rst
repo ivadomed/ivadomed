@@ -293,7 +293,7 @@ to the tailored architecture.
 - ``dropout_rate``: Float (e.g. 0.4).
 - ``batch_norm_momentum``: Float (e.g. 0.1).
 - ``depth``: Strictly positive integer. Number of down-sampling operations. - ``relu`` (optional): Bool.
-  Sets final activation to normalized ReLU (relu between 0 and 1).
+  Sets final activation to normalized ReLU (relu between 0 and 1), instead of sigmoid. Only available when `is_2D=True`.
 - ``is_dim``: Indicates dimensionality of model (2D or 3D). If ``is_dim`` is ``False``, then parameters ``length_3D`` and
   ``stride_3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`).
 

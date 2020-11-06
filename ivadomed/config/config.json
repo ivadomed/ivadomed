@@ -9,7 +9,7 @@
         "safety_factor": [1.0, 1.0, 1.0]
     },
     "loader_parameters": {
-        "bids_path": "/home/andreanne/Documents/dataset/data_example_spinegeneric",
+        "bids_path": "data_example_spinegeneric",
         "target_suffix": ["_seg-manual"],
         "roi_params": {
             "suffix": null,
@@ -74,8 +74,8 @@
         "metadata": "contrasts",
         "film_layers": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
     },
-        "UNet3D": {
-        "applied": true,
+    "Modified3DUNet": {
+        "applied": false,
         "length_3D": [128, 128, 16],
         "stride_3D": [128, 128, 16],
         "attention": false,
@@ -106,7 +106,7 @@
             "dspace": 1
         },
         "CenterCrop": {
-            "size": [128, 128, 16]},
+            "size": [128, 128]},
         "RandomAffine": {
             "degrees": 5,
             "scale": [0.1, 0.1],

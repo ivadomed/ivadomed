@@ -9,6 +9,8 @@ import joblib
 from bids_neuropoly import bids
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
+from ivadomed import utils as imed_utils
+import nibabel as nib
 
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
@@ -23,7 +25,6 @@ __numpy_type_map = {
 
 TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 'reverse', 'translation', 'gaussian_noise']
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -424,3 +425,76 @@ def update_metadata(metadata_src_lst, metadata_dest_lst):
     if metadata_src_lst and metadata_dest_lst:
         metadata_dest_lst[0]._update(metadata_src_lst[0], TRANSFORM_PARAMS)
     return metadata_dest_lst
+
+
+class SliceFilter(object):
+    """Filter 2D slices from dataset.
+
+    If a sample does not meet certain conditions, it is discarded from the dataset.
+
+    Args:
+        filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
+        filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
+
+    Attributes:
+        filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
+        filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
+    """
+
+    def __init__(self, filter_empty_mask=True,
+                 filter_empty_input=True,
+                 filter_classification=False, classifier_path=None, device=None, cuda_available=None):
+        self.filter_empty_mask = filter_empty_mask
+        self.filter_empty_input = filter_empty_input
+        self.filter_classification = filter_classification
+        self.device = device
+        self.cuda_available = cuda_available
+
+        if self.filter_classification:
+            if cuda_available:
+                self.classifier = torch.load(classifier_path, map_location=device)
+            else:
+                self.classifier = torch.load(classifier_path, map_location='cpu')
+
+    def __call__(self, sample):
+        input_data, gt_data = sample['input'], sample['gt']
+
+        if self.filter_empty_mask:
+            if not np.any(gt_data):
+                return False
+
+        if self.filter_empty_input:
+            # Filter set of images if one of them is empty or filled with constant value (i.e. std == 0)
+            if np.any([img.std() == 0 for img in input_data]):
+                return False
+
+        if self.filter_classification:
+            if not np.all([int(
+                    self.classifier(imed_utils.cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0), self.cuda_available)))
+                           for img in input_data]):
+                return False
+
+        return True
+
+
+def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
+    """Reorient an image to match a reference image orientation.
+
+    It reorients a array to a given orientation and convert it to a nibabel object using the reference nibabel header.
+
+    Args:
+        arr (ndarray): Input array, array to re orient.
+        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
+        nib_ref (nibabel): Reference nibabel object, whose header is used.
+        nib_ref_canonical (nibabel): `nib_ref` that has been reoriented to canonical orientation (RAS).
+    """
+    # Orient image in RAS according to slice axis
+    arr_ras = orient_img_ras(arr, slice_axis)
+
+    # https://gitship.com/neuroscience/nibabel/blob/master/nibabel/orientations.py
+    ref_orientation = nib.orientations.io_orientation(nib_ref.affine)
+    ras_orientation = nib.orientations.io_orientation(nib_ref_canonical.affine)
+    # Return the orientation that transforms from ras to ref_orientation
+    trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
+    # apply transformation
+    return nib.orientations.apply_orientation(arr_ras, trans_orient)
