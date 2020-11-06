@@ -7,23 +7,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
-<<<<<<< HEAD
-import torch.nn.functional as F
-import torchvision.utils as vutils
-from scipy.ndimage import label, generate_binary_structure
-from torch.autograd import Variable
-from torch.utils.data import DataLoader
-from tqdm import tqdm
-
-from ivadomed import config_manager as imed_config_manager
-from ivadomed import metrics as imed_metrics
-from ivadomed import models as imed_models
-from ivadomed import postprocessing as imed_postpro
-from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
-from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed import training as imed_training
-
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
