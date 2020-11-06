@@ -197,8 +197,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             num_steps += 1
 
             if i == 0 and debugging:
-                imed_utils.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds,
-                                                is_three_dim=not model_params["is_2d"])
+                imed_visualize.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds,
+                                                    is_three_dim=not model_params["is_2d"])
 
         if not step_scheduler_batch:
             scheduler.step()
