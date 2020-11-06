@@ -1,4 +1,4 @@
-import ivadomed.utils as imed_utils
+import ivadomed.mixup as imed_mixup
 import torch
 import pytest
 
@@ -14,5 +14,5 @@ def test_mixup(debugging, ofolder):
     inp = torch.tensor(inp).float()
     targ = torch.tensor(targ).float()
     # just testing if mixup function run
-    out = imed_utils.mixup(inp, targ, alpha=0.5, debugging=debugging, ofolder=ofolder)
+    out = imed_mixup.mixup(inp, targ, alpha=0.5, debugging=debugging, ofolder=ofolder)
 

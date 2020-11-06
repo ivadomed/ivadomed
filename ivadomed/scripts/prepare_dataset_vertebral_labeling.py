@@ -5,6 +5,7 @@ import nibabel as nib
 import numpy as np
 import os
 import ivadomed.maths as imed_maths
+import ivadomed.loader.utils as imed_loader_utils
 
 
 def mask2label(path_label, aim=0):
@@ -82,7 +83,7 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
                 label_array[list_points[j][1], list_points[j][2]] = 1
 
             heatmap = imed_maths.heatmap_generation(label_array[:, :], 10)
-            arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(heatmap[:, :], axis=0), 2, lab, nib_ref_can)
+            arr_pred_ref_space = imed_loader_utils.reorient_image(np.expand_dims(heatmap[:, :], axis=0), 2, lab, nib_ref_can)
             nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
             nib.save(nib_pred, os.path.join(path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
                                             '_mid_heatmap' + str(aim) + '.nii.gz'))

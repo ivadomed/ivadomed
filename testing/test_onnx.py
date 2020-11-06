@@ -6,6 +6,7 @@ import json
 import shutil
 
 from ivadomed import utils as imed_utils
+from ivadomed import inference as imed_inference
 from ivadomed import models as imed_models
 
 
@@ -32,6 +33,6 @@ def test_onnx():
     model.eval()
     out_pt = model(img_tensor).detach().numpy()
 
-    out_onnx = imed_utils.onnx_inference(PATH_MODEL_ONNX, img_tensor).numpy()
+    out_onnx = imed_inference.onnx_inference(PATH_MODEL_ONNX, img_tensor).numpy()
     shutil.rmtree(PATH_MODEL)
     assert np.allclose(out_pt, out_onnx, rtol=1e-3)

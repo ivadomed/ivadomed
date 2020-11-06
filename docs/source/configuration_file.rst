@@ -487,4 +487,4 @@ In particular:
 - `config\_spineGeHemis.json <ivadomed/config/config_spineGeHemis.json>`__. Shows how to use the HeMIS-UNet.
 
 - `config\_tumorSeg.json <ivadomed/config/config_tumorSeg.json>`__. Runs a 3D segmentation using a 3D UNet.
-=======
+
