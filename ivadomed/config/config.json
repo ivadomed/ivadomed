@@ -106,7 +106,7 @@
             "dspace": 1
         },
         "CenterCrop": {
-            "size": [128, 128, 16]},
+            "size": [128, 128]},
         "RandomAffine": {
             "degrees": 5,
             "scale": [0.1, 0.1],
