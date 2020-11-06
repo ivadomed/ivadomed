@@ -3,14 +3,17 @@ import nibabel as nib
 import numpy as np
 import onnxruntime
 import torch
+import joblib
+
 from torch.utils.data import DataLoader
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
+from ivadomed import training as imed_training
 
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
@@ -63,7 +66,8 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     oriented_volumes = []
     if len(arr_pred_ref_space.shape) == 4:
         for i in range(n_channel):
-            oriented_volumes.append(imed_loader_utils.reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
+            oriented_volumes.append(
+                imed_loader_utils.reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
         # transpose to locate the channel dimension at the end to properly see image on viewer
         arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
     else:
@@ -124,7 +128,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
     # Load model training config
     context = imed_config_manager.ConfigurationManager(fname_model_metadata).get_config()
 
-    if options is not None:
+    if any(pp in options for pp in ['thr', 'largest', ' fill_holes', 'remove_small']):
         postpro = {}
         if 'thr' in options:
             postpro['binarize_prediction'] = {"thr": options['thr']}
@@ -186,7 +190,8 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
                                                   slice_axis=slice_axis,
                                                   cache=True,
                                                   transform=tranform_lst,
-                                                  slice_filter_fn=imed_loader_utils.SliceFilter(**loader_params["slice_filter_params"]))
+                                                  slice_filter_fn=imed_loader_utils.SliceFilter(
+                                                      **loader_params["slice_filter_params"]))
         ds.load_filenames()
 
     if kernel_3D:
@@ -194,6 +199,21 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
                                                            context['UNet3D']['length_3D']))
     else:
         print("\nLoaded {} {} slices.".format(len(ds), loader_params['slice_axis']))
+
+    model_params = {}
+    if 'FiLMedUnet' in context and context['FiLMedUnet']['applied']:
+        metadata_dict = joblib.load(os.path.join(folder_model, 'metadata_dict.joblib'))
+        for idx in ds.indexes:
+            for i in range(len(idx)):
+                idx[i]['input_metadata'][0][context['FiLMedUnet']['metadata']] = options['metadata']
+                idx[i]['input_metadata'][0]['metadata_dict'] = metadata_dict
+
+        ds = imed_film.normalize_metadata(ds, None, context["debugging"], context['FiLMedUnet']['metadata'])
+        onehotencoder = joblib.load(os.path.join(folder_model, 'one_hot_encoder.joblib'))
+
+        model_params.update({"name": 'FiLMedUnet',
+                             "film_onehotencoder": onehotencoder,
+                             "n_metadata": len([ll for l in onehotencoder.categories_ for ll in l])})
 
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["training_parameters"]["batch_size"],
@@ -213,7 +233,15 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
             img = imed_utils.cuda(batch['input'], cuda_available=cuda_available)
-            preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
+
+            if ('FiLMedUnet' in context and context['FiLMedUnet']['applied']) or \
+                    ('HeMISUnet' in context and context['HeMISUnet']['applied']):
+                metadata = imed_training.get_metadata(batch["input_metadata"], model_params)
+                preds = model(img, metadata)
+
+            else:
+                preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
+
             preds = preds.cpu()
 
         # Set datatype to gt since prediction should be processed the same way as gt

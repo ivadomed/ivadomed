@@ -14,6 +14,7 @@ from ivadomed import training as imed_training
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed import metrics as imed_metrics
+from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 
 cudnn.benchmark = True
@@ -316,10 +317,10 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                 subj_id = subject.record['subject_id']
                 metadata = df[df['participant_id'] == subj_id][model_params['metadata']].values[0]
                 options = {'metadata': metadata}
-            pred = imed_utils.segment_volume(path_model,
-                                             fname_image=fname_img,
-                                             gpu_number=context['gpu'],
-                                             options=options)
+            pred = imed_inference.segment_volume(path_model,
+                                                 fname_image=fname_img,
+                                                 gpu_number=context['gpu'],
+                                                 options=options)
             pred_path = os.path.join(context['log_directory'], "pred_masks")
             if not os.path.exists(pred_path):
                 os.makedirs(pred_path)
