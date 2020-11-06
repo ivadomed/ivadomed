@@ -75,7 +75,7 @@
         "film_layers": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
     },
     "Modified3DUNet": {
-        "applied": true,
+        "applied": false,
         "length_3D": [128, 128, 16],
         "stride_3D": [128, 128, 16],
         "attention": false,
