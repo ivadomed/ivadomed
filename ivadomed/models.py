@@ -720,6 +720,18 @@ class HeMISUnet(Module):
         return preds
 
 
+class UNet3D(nn.Module):
+    """To ensure retrocompatibility, when calling UNet3D (old model name), Modified3DUNet will be called.
+    see Modified3DUNet to learn more about parameters.
+    """
+    def __init__(self, in_channel, out_channel, n_filters=16, attention=False, drop_rate=0.6, bn_momentum=0.1,
+                 final_activation="sigmoid", n_metadata=None, film_layers=None, **kwargs):
+        super(UNet3D, self).__init__()
+        Modified3DUNet(in_channel=in_channel, out_channel=out_channel, n_filters=n_filters, attention=attention,
+                       drop_rate=drop_rate, bn_momentum=bn_momentum, final_activation=final_activation,
+                       n_metadata=n_metadata, film_layers=film_layers, **kwargs)
+
+
 class Modified3DUNet(nn.Module):
     """Code from the following repository:
     https://github.com/pykao/Modified-3D-UNet-Pytorch
