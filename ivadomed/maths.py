@@ -1,6 +1,6 @@
 import numpy as np
 import os
-import scipy
+import scipy.signal
 
 
 def rescale_values_array(arr, minv=0.0, maxv=1.0, dtype=np.float32):

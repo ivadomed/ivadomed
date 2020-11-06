@@ -1,4 +1,4 @@
-from ivadomed import utils as imed_utils
+from ivadomed import visualize as imed_visualize
 import numpy as np
 import torch
 
@@ -11,7 +11,7 @@ def test_save_rbg():
         image[1][2][5][i+3] = 1
         image[2][2][5][i + 6] = 1
     image_n = np.array(image)
-    imed_utils.save_color_labels(image_n, False,
+    imed_visualize.save_color_labels(image_n, False,
                                  "testing_data/derivatives/labels/sub-unf01/anat/sub-unf01_T2w_lesion-manual.nii.gz",
                                  "rgb_test.nii.gz", 0)
 
@@ -25,4 +25,4 @@ def test_rbg_conversion():
         image[2][2][5][i + 6] = 1
     image_n = np.array(image)
     tensor_multi = torch.tensor(image_n)
-    imed_utils.convert_labels_to_RGB(tensor_multi)
+    imed_visualize.convert_labels_to_RGB(tensor_multi)
