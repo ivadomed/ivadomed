@@ -48,7 +48,6 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
         fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
-
         # Uncertainty
         data_uncertainty = None
 
@@ -134,7 +133,6 @@ class Evaluation3DMetrics(object):
         self.px, self.py, self.pz = dim_lst
 
         self.bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
-
         self.postprocessing_dict = {}
         self.size_min = 0
 

@@ -19,7 +19,7 @@ LENGTH_3D = (112, 112, 112)
 
 
 def test_onnx():
-    model = imed_models.UNet3D(1, 1)
+    model = imed_models.Modified3DUNet(1, 1)
     if not os.path.exists(PATH_MODEL):
         os.mkdir(PATH_MODEL)
     torch.save(model, PATH_MODEL_PT)

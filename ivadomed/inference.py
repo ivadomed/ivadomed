@@ -97,10 +97,8 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
 def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
     """Segment an image.
-
     Segment an image (`fname_image`) using a pre-trained model (`folder_model`). If provided, a region of interest
     (`fname_roi`) is used to crop the image prior to segment it.
-
     Args:
         folder_model (str): foldername which contains
             (1) the model ('folder_model/folder_model.pt') to use
@@ -111,10 +109,8 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
         options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename
             (e.g., .nii.gz) containing processing information (e.i., spinal cord segmentation, spinal location or MS
             lesion classification)
-
             e.g., spinal cord centerline, used to crop the image prior to segment it if provided.
             The segmentation is not performed on the slices that are empty in this image.
-
     Returns:
         nibabelObject: Object containing the soft segmentation.
     """
@@ -179,12 +175,13 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
 
     filename_pairs = [([fname_image], None, fname_roi, [metadata])]
 
-    kernel_3D = bool('UNet3D' in context and context['UNet3D']['applied'])
+    kernel_3D = bool('Modified3DUNet' in context and context['Modified3DUNet']['applied']) or \
+                not context['default_model']['is_2d']
     if kernel_3D:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                            transform=tranform_lst,
-                                                           length=context["UNet3D"]["length_3D"],
-                                                           stride=context["UNet3D"]["stride_3D"])
+                                                           length=context["Modified3DUNet"]["length_3D"],
+                                                           stride=context["Modified3DUNet"]["stride_3D"])
     else:
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
                                                   slice_axis=slice_axis,
@@ -196,7 +193,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
 
     if kernel_3D:
         print("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
-                                                           context['UNet3D']['length_3D']))
+                                                           context['Modified3DUNet']['length_3D']))
     else:
         print("\nLoaded {} {} slices.".format(len(ds), loader_params['slice_axis']))
 
