@@ -76,7 +76,9 @@ It can be overwhelming to get started and choose across all the available models
 
 ## Evaluation
 
-XX
+A model can be thoroughly evaluated on the testing set by computing various popular metrics for segmentation, classification, and regression tasks. Slice-wise or patch-wise predictions are reconstructed in the initial space for evaluation and output visualization. `ivadomed` can produce aleatoric [@wang_aleatoric_2019] and/or epistemic [@nair_exploring_2018] uncertainty, voxel-wise and/or object-wise [@roy_quicknat_2018], using multiple available measures (e.g., entropy, coefficient of variation). Results are reported in a CSV file. The evaluation framework can be further customized with post-processing (e.g., fill holes, remove small objects, thresholding using uncertainty). It is also possible to compute metrics for specific object sizes (e.g., small vs. large lesions). `ivadomed` has a module to find the optimal threshold value on the output soft prediction, via a grid-search finding applied to evaluation metrics or ROC curve.
+
+Multiple visualization tools are included in `ivadomed` to support the design and optimization of tailored training models: GIF animations across training epochs, visual quality control of data augmentation, training curve plots, integration of the TensorBoard module, and output images with true/false positive labels. 
 
 # Usage
 
