@@ -127,7 +127,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         m.train()
 
             # RUN MODEL
-            if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
+            if model_params["name"] == "HeMISUnet" or \
+                    ('film_layers' in model_params and any(model_params['film_layers'])):
                 metadata = get_metadata(batch["input_metadata"], model_params)
                 preds = model(input_samples, metadata)
             else:
@@ -137,9 +138,9 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             # Reconstruct image with only one modality
             input_samples = batch['input'][0]
 
-        if model_params["name"] == "UNet3D" and model_params["attention"] and ofolder:
+        if model_params["name"] == "Modified3DUNet" and model_params["attention"] and ofolder:
             imed_visualize.save_feature_map(batch, "attentionblock2", os.path.dirname(ofolder), model, input_samples,
-                                        slice_axis=test_loader.dataset.slice_axis)
+                                            slice_axis=test_loader.dataset.slice_axis)
 
         # PREDS TO CPU
         preds_cpu = preds.cpu()
@@ -159,7 +160,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             if "bounding_box" in batch['input_metadata'][smp_idx][0]:
                 imed_obj_detect.adjust_undo_transforms(testing_params["undo_transforms"].transforms, batch, smp_idx)
 
-            if not model_params["name"].endswith('3D'):
+            if model_params["is_2d"]:
                 last_sample_bool = (last_batch_bool and smp_idx == len(preds_cpu) - 1)
                 # undo transformations
                 preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
