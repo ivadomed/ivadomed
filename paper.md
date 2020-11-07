@@ -82,13 +82,7 @@ Multiple visualization tools are included in `ivadomed` to support the design an
 
 # Usage
 
-XX # Mention (if applicable) a representative set of past or ongoing research projects using the software and recent scholarly publications enabled by it.
-
-# Figures
-
-Figures can be included like this:
-![Caption for example figure.\label{fig:example}](figure.png)
-and referenced from text using \autoref{fig:example}.
+Past or ongoing research projects using `ivadomed` are listed [here](https://github.com/ivadomed/ivadomed/docs/source/use_cases.rst).
 
 # Acknowledgements
 
