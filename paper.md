@@ -58,9 +58,15 @@ Another challenge of medical imaging is the heterogeneity of the data across cli
 
 `ivadomed` is based on PyTorch framework [@paszke2017automatic] with GPU acceleration supported by CUDA. It can easily be installed via [PyPI](https://pypi.org/project/ivadomed/) and the whole package is tested with a [continuous integration](https://github.com/ivadomed/ivadomed/actions?query=workflow\%3A\%22Run+tests\%22) framework. The project website, which includes user and API documentation, is available at https://ivadomed.org. The name `ivadomed` is a portmanteau between [*IVADO (The Institute for data valorization)*](https://ivado.ca) and *medical*.
 
+![Overview of `ivadomed` main features.\label{fig:overview}](https://github.com/ivadomed/ivadomed/raw/master/images/overview.png)
+
 ## Loader
 
-XX
+An important aspect of machine learning is data management. Lots of time is usually spent manually organizing data into a proper structure to make the dataset compatible with a chosen analysis pipeline [@Willemink2020-au]. `ivadomed` features a data loader module that expects datasets to be structured according to a widely-accepted convention: the Brain Imaging Data Structure (BIDS) [@bids_2016]. Thus, any dataset following the BIDS convention can immediately be used by `ivadomed`, e.g., for training a new model, without the need to spend time organizing the data. BIDS convention is designed around neuroimaging MRI data and accepts NIfTI file formats, but the BIDS community is actively expanding its specifications to other modalities (CT, MEG/EEG, microscopy) and file formats (PNG, OME-TIFF), which `ivadomed` will then be able to accommodate. 
+
+One benefit of the BIDS convention is that each image file is associated with a JSON file containing metadata. `ivadomed`'s loader can parse image metadata (e.g., acquisition parameters, image contrast, resolution) and subject metadata (e.g., pathology, age, sex) for custom data splitting or extra information during training and evaluation. It is possible to modulate specific layers of a convolutional neural network using metadata information (e.g., image contrast, data center, disease phenotype), to tailor it towards a particular data domain or to enable experiments with architectures such as FiLM [@perez2017film] (which is implemented in `ivadomed`). Metadata could also be useful to mitigate class imbalance via data balancing techniques.
+
+`ivadomed`'s data loader can accommodate 2D/3D images, multiple input channels as well as multiple prediction classes. Images can be loaded as a volume, slice-wise, or patch-wise. Data can be saved on the RAM or used "on the fly" via HDF5 format. Cropping, resampling, normalization, and histogram clipping and equalization can be applied during the loading as a pre-processing step. `ivadomed` can deal with missing modalities [@havaei2016hemis] by resorting to curriculum learning to train the model. 
 
 ## Training
 
