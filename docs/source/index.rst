@@ -29,7 +29,7 @@ Home
 
    purpose.rst
    technical_features.rst
-   user_cases.rst
+   use_cases.rst
 
 .. toctree::
    :maxdepth: 1
