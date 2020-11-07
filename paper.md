@@ -70,7 +70,9 @@ One benefit of the BIDS convention is that each image file is associated with a 
 
 ## Training
 
-XX
+`ivadomed` includes all the necessary components for training segmentation models from start to finish. The first step usually consists of applying data augmentation transformations, such as affine, elastic, and ground-truth dilation, which are all included in `ivadomed`. The next step is model training, which can be done either from scratch or using transfer learning on a pre-trained model by freezing some layers. Available architectures include: 2D U-Net [@Ronneberger2015unet], 3D U-Net [@isensee2017brain], ResNet [@he2016resnet], DenseNet [@Huang2017densenet], Count-ception [@Cohen2017countception], and HeMIS U-Net. These models can easily be enriched via attention blocks [@oktay2018attention] or FiLM layers (which modulate U-Net features using metadata). To facilitate the training process, `ivadomed` offers multiple loss functions such as the Dice coefficient [@milletari2016v], cross-entropy, and L2 norm, including some adapted to medical imaging challenges, such as the adaptive wing loss [@wang_adaptive_2019] for soft labels and the focal Dice loss [@wong20183d] for class imbalance. To partly address the problem of small datasets, mixup [@zhang2017mixup] has been implemented and adapted for segmentation tasks. To mitigate class imbalance, `ivadomed` supports cascaded architectures. With a single inference, it is possible to narrow down the region of interest via object detection, and then segment a specific structure. In case of interruption during training, all parameters are saved after each epoch so that training can be resumed at any time. 
+
+It can be overwhelming to get started and choose across all the available models, losses, and parameters. `ivadomed`'s repository includes the script `ivadomed_automate_training` to configure and launch multiple trainings across GPUs. In addition, `ivadomed` includes tutorials that cover typical training scenarios such as one-class segmentation, cascade of architectures, and uncertainty estimation. 
 
 ## Evaluation
 
