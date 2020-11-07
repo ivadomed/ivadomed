@@ -14,7 +14,7 @@ Use case 2 - Creation of anatomical template:
 Use case 3 - Tumor segmentation:
 --------------------------------
 
-`ivadomed` also proves to be useful in the context of clinical radiology routine \citep{lemay_fully_2020}, where clinicians need to segment tumors, edema, and cavity to establish prognosis and monitor the outcome. The framework is composed of a cascaded architecture that detects the spinal cord, crops the image around the region of interest, and segments the tumor (Figure herebelow). The resulting model can be applied to new data using only CPUs, which is more convenient in the clinical setting. The advanced features and architectures available in `ivadomed`, such as FiLM, were pivotal in obtaining encouraging results despite the difficulty of the task and the relatively low number of images.
+`ivadomed` also proves to be useful in the context of clinical radiology routine REF, where clinicians need to segment tumors, edema, and cavity to establish prognosis and monitor the outcome. The framework is composed of a cascaded architecture that detects the spinal cord, crops the image around the region of interest, and segments the tumor (Figure herebelow). The resulting model can be applied to new data using only CPUs, which is more convenient in the clinical setting. The advanced features and architectures available in `ivadomed`, such as FiLM, were pivotal in obtaining encouraging results despite the difficulty of the task and the relatively low number of images.
 
 .. figure:: ../../images/lemay_2020.png
    :alt: Figure tumor segmentation
