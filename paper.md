@@ -78,7 +78,9 @@ Multiple visualization tools are included in `ivadomed` to support the design an
 
 # Usage
 
-Past or ongoing research projects using `ivadomed` are listed [here](https://github.com/ivadomed/ivadomed/docs/source/use_cases.rst).
+Past or ongoing research projects using `ivadomed` are listed [here](https://github.com/ivadomed/ivadomed/docs/source/use_cases.rst). For example, `ivadomed` has been used to create the framework depicted in \autoref{fig:lemay2020}, specifically designed for spinal cord tumor segmentation on MRI data [@lemay_fully_2020].
+
+![Fully automatic spinal cord tumor segmentation framework..\label{fig:lemay2020}](https://github.com/ivadomed/ivadomed/raw/master/images/lemay_2020.png)
 
 # Acknowledgements
 
