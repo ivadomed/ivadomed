@@ -35,10 +35,10 @@ The following architectures are availabled in ``ivadomed``.
 .. autoclass:: ivadomed.models.HeMISUnet
 
 
-:mod:`UNet3D`
-^^^^^^^^^^^^^
+:mod:`Modified3DUNet`
+^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: ivadomed.models.UNet3D
+.. autoclass:: ivadomed.models.Modified3DUNet
 
 
 :mod:`Countception`
