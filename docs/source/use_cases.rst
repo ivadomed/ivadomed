@@ -16,7 +16,7 @@ Use case 3 - Tumor segmentation:
 
 `ivadomed` also proves to be useful in the context of clinical radiology routine REF, where clinicians need to segment tumors, edema, and cavity to establish prognosis and monitor the outcome. The framework is composed of a cascaded architecture that detects the spinal cord, crops the image around the region of interest, and segments the tumor (Figure herebelow). The resulting model can be applied to new data using only CPUs, which is more convenient in the clinical setting. The advanced features and architectures available in `ivadomed`, such as FiLM, were pivotal in obtaining encouraging results despite the difficulty of the task and the relatively low number of images.
 
-.. figure:: ../../images/lemay_2020.png
+.. figure:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/use_cases/lemay_2020.png
    :alt: Figure tumor segmentation
 
    Fully automatic spinal cord tumor segmentation framework. Step 1: The spinal cord is localized using a 3D U-Net and the image is cropped around the generated mask. Step 2: The spinal cord tumors are segmented.
