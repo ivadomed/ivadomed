@@ -54,7 +54,7 @@ We present `ivadomed`, a deep learning toolbox dedicated to medical data process
 
 Another challenge of medical imaging is the heterogeneity of the data across clinical centers, in terms of image features (e.g., contrast, resolution) and population demographics. This makes it challenging to create models that can generalize well across the many existing datasets. Recent cutting-edge methods address this problem, such as FiLM [@perez2017film] and HeMis [@havaei2016hemis], however they are usually not implemented within a comprehensive framework that enables end-to-end training and experimentation. In addition to providing these advanced architectures, `ivadomed` features multiple uncertainty estimation methods (aleatoric and epistemic), losses adapted to imbalanced classes and non-binary predictions. Each step can be conveniently customized via a single configuration file, and at the same time, the code is highly modular to allow addition/modification of architecture or pre-/post-processing steps.
 
-![Overview of `ivadomed` main features.\label{fig:overview}](https://github.com/ivadomed/ivadomed/raw/master/images/overview.png)
+![Overview of `ivadomed` main features.\label{fig:overview}](https://raw.githubusercontent.com/ivadomed/doc-figures/main/overview.png)
 
 ## Loader
 
