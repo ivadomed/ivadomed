@@ -70,7 +70,7 @@
         "depth": 3
     },
     "FiLMedUnet": {
-        "applied": true,
+        "applied": false,
         "metadata": "contrasts",
         "film_layers": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
     },
