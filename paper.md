@@ -78,7 +78,7 @@ Another challenge of medical imaging is the heterogeneity of the data across cli
 
 # Usage
 
-Past or ongoing research projects using `ivadomed` are listed [here](https://github.com/ivadomed/ivadomed/docs/source/use_cases.rst). For example, `ivadomed` has been used to create the framework depicted in \autoref{fig:lemay2020}, specifically designed for spinal cord tumor segmentation on MRI data [@lemay_fully_2020].
+Past and ongoing research projects using `ivadomed` are listed [here](https://github.com/ivadomed/ivadomed/docs/source/use_cases.rst). The figure below illustrates a cascaded architecture for segmenting spinal tumors on MRI data [@lemay_fully_2020].
 
 ![Fully automatic spinal cord tumor segmentation framework..\label{fig:lemay2020}](https://raw.githubusercontent.com/ivadomed/doc-figures/main/use_cases/lemay_2020.png)
 
