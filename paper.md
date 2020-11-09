@@ -14,7 +14,7 @@ authors:
     orcid: XX
     affiliation: 1
   - name: Olivier Vincent
-    orcid: XX
+    orcid: 0000-0002-5554-8108
     affiliation: 1
   - name: Lucas Rouhier
     orcid: XX
