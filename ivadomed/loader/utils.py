@@ -328,12 +328,15 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 
     Args:
         dataset (BidsDataset): Dataset containing input, gt and metadata.
+        metadata (str): Indicates which metadata to use to balance the sampler.
 
     Attributes:
         indices (list): List from 0 to length of dataset (number of elements in the dataset).
         nb_samples (int): Number of elements in the dataset.
         weights (Tensor): Weight of each dataset element equal to 1 over the frequency of a given label (inverse of the
                           frequency).
+        metadata_dict (dict): Stores the mapping from metadata string to index (int).
+        label_idx (int): Keeps track of the label indices already used for the metadata_dict.
     """
 
     def __init__(self, dataset, metadata='gt'):

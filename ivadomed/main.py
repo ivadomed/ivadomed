@@ -92,7 +92,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     # Define device
     cuda_available, device = imed_utils.define_device(context['gpu'])
 
-    # Get subject lists
+    # Get subject lists. "segment" command uses all participants of BIDS path, hence no need to split
     if command != "segment":
         train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
                                                                                          context['loader_parameters']
@@ -108,6 +108,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     if "FiLMedUnet" in context and context["FiLMedUnet"]["applied"]:
         loader_params.update({"metadata_type": context["FiLMedUnet"]["metadata"]})
 
+    # Load metadata necessary to balance the loader
     if context['training_parameters']['balance_samples']['applied'] and \
             context['training_parameters']['balance_samples']['type'] != 'gt':
         loader_params.update({"metadata_type": context['training_parameters']['balance_samples']['type']})
