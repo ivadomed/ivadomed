@@ -78,7 +78,7 @@ Another challenge of medical imaging is the heterogeneity of the data across hos
 
 # Usage
 
-Past and ongoing research projects using `ivadomed` are listed [here](https://ivadomed.org/en/stable/use_cases.html). The figure below illustrates a cascaded architecture for segmenting spinal tumors on MRI data [@lemay_fully_2020].
+Past and ongoing research projects using `ivadomed` are listed [here](https://ivadomed.org/en/latest/use_cases.html). The figure below illustrates a cascaded architecture for segmenting spinal tumors on MRI data [@lemay_fully_2020].
 
 ![Fully automatic spinal cord tumor segmentation framework..\label{fig:lemay2020}](https://raw.githubusercontent.com/ivadomed/doc-figures/main/use_cases/lemay_2020.png)
 
