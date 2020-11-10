@@ -11,7 +11,7 @@ authors:
     orcid: 0000-0003-4318-0024
     affiliation: 1
   - name: Andreanne Lemay
-    orcid: XX
+    orcid: 0000-0001-8581-2929
     affiliation: 1
   - name: Olivier Vincent
     orcid: 0000-0002-5554-8108
