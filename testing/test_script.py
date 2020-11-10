@@ -354,7 +354,8 @@ def append_list_as_row(file_name, list_of_elem):
         csv_writer.writerow(list_of_elem)
 
 
-def test_film_contrast():
+@pytest.mark.parametrize('balance_type', ['gt', 'sex'])
+def test_film_contrast(balance_type):
     # FiLM config
     # Create config copy
     base_config = "testing_data/model_config.json"
@@ -364,6 +365,9 @@ def test_film_contrast():
     with open(film_config, "r") as fhandle:
         context = json.load(fhandle)
     # Modify params
+    context["training_parameters"]["balance_samples"] = {}
+    context["training_parameters"]["balance_samples"]["applied"] = True
+    context["training_parameters"]["balance_samples"]["type"] = balance_type
     context["loader_parameters"]["contrast_params"]["training_validation"] = ["T2w", "T1w", "T2star"]
     context["FiLMedUnet"]["applied"] = True
     context["FiLMedUnet"]["film_layers"] = 2 * [1] * context["default_model"]["depth"] + [0, 0]
