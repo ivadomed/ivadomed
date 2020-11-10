@@ -41,7 +41,7 @@ def deep_dict_compare(source_dict, dest_dict, keyname=None):
                 deep_dict_compare(source_dict[key], dest_dict[key], key + ": ")
 
 
-def _load_json(config_path):
+def load_json(config_path):
     """Load json file content
 
     Args:
@@ -78,8 +78,8 @@ class ConfigurationManager(object):
         self.key_change_dict = KEY_CHANGE_DICT
         self._validate_path()
         default_config_path = os.path.join(imed_utils.__ivadomed_dir__, "ivadomed", "config", "config_default.json")
-        self.default_config = _load_json(default_config_path)
-        self.context = _load_json(context_path)
+        self.default_config = load_json(default_config_path)
+        self.context = load_json(context_path)
         self.updated_config = {}
 
     def get_config(self):
