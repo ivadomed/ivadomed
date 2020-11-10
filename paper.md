@@ -72,7 +72,7 @@ Another challenge of medical imaging is the heterogeneity of the data across hos
 
 **Uncertainty:** Aleatoric [@wang_aleatoric_2019] and/or epistemic [@nair_exploring_2018] uncertainties can be computed voxel-wise and/or object-wise [@roy_quicknat_2018]. Multiple metrics are available, including entropy and coefficient of variation.
 
-**Post-processing:** Predictions can be conveniently filtered using popular methods, e.g. fill holes, remove small objects, threshold using uncertainty. It is also possible to compute metrics for specific object sizes (e.g., small vs. large lesions). `ivadomed` has a module to find the optimal threshold value on the output soft prediction, via a grid-search finding applied to evaluation metrics or ROC curve.
+**Post-processing:** Predictions can be conveniently filtered using popular methods, e.g., fill holes, remove small objects, threshold using uncertainty. It is also possible to compute metrics for specific object sizes (e.g., small vs. large lesions). `ivadomed` has a module to find the optimal threshold value on the soft output prediction, via a grid-search finding applied to evaluation metrics or ROC curve.
 
 **Visualize performance:** Convenient visualization tools are available for model design and optimization: GIF animations across training epochs, visual quality control of data augmentation, training curve plots, integration of the TensorBoard module, and output images with true/false positive labels. See [this example tutorial](https://ivadomed.org/en/latest/tutorials/cascaded_architecture.html#visualize-training-data).
 
