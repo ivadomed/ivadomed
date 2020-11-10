@@ -93,10 +93,11 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     cuda_available, device = imed_utils.define_device(context['gpu'])
 
     # Get subject lists
-    train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
-                                                                                     context['loader_parameters']
-                                                                                     ['bids_path'],
-                                                                                     log_directory)
+    if command != "segment":
+        train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
+                                                                                         context['loader_parameters']
+                                                                                         ['bids_path'],
+                                                                                         log_directory)
 
     # Loader params
     loader_params = copy.deepcopy(context["loader_parameters"])
