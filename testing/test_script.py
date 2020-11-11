@@ -121,8 +121,8 @@ def test_creation_dataset():
     command = "cp testing_data/model_unet_test.pt testing_script/best_model.pt"
     subprocess.check_output(command, shell=True)
 
-    list1 = ["sub-test002"]
-    list2 = ["sub-test003"]
+    list1 = ["sub-test002", "-"]
+    list2 = ["sub-test003", "-"]
 
     # add subjects to participants.tsv
     append_list_as_row("testing_data/participants.tsv", list1)
@@ -349,7 +349,7 @@ def append_list_as_row(file_name, list_of_elem):
     # Open file in append mode
     with open(file_name, 'a+', newline='') as write_obj:
         # Create a writer object from csv module
-        csv_writer = writer(write_obj)
+        csv_writer = writer(write_obj, delimiter='\t', lineterminator='\n')
         # Add contents of list as last row in the csv file
         csv_writer.writerow(list_of_elem)
 
