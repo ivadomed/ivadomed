@@ -5,7 +5,7 @@ To facilitate the organization of data, ``ivadomed`` requires the data to be
 organized according to the `Brain Imaging Data Structure (BIDS) <http://bids.neuroimaging.io/>`__ convention.
 An example of this organization is shown below:
 
-.. image:: ../../images/1920px-BIDS_Logo.png
+.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/data/1920px-BIDS_Logo.png
     :alt: BIDS_Logo
 
 ::
