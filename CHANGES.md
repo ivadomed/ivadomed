@@ -1,3 +1,33 @@
+## v2.5.0 (2020-11-10)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.4.0...v2.5.0)
+
+**BUG**
+
+ - paper.md: Fixed broken link.  [View pull request](https://github.com/ivadomed/ivadomed/pull/517)
+ - Change default value of config.json.  [View pull request](https://github.com/ivadomed/ivadomed/pull/514)
+
+**DEPENDENCIES**
+
+ - Requirements.txt: force onnxruntime version.  [View pull request](https://github.com/ivadomed/ivadomed/pull/505)
+ - set h5py version in requirements.txt.  [View pull request](https://github.com/ivadomed/ivadomed/pull/500)
+
+**DOCUMENTATION**
+
+ - JOSS submission.  [View pull request](https://github.com/ivadomed/ivadomed/pull/502)
+
+**ENHANCEMENT**
+
+ - Some fixes to logging.  [View pull request](https://github.com/ivadomed/ivadomed/pull/509)
+
+**FEATURE**
+
+ - Training without test set.  [View pull request](https://github.com/ivadomed/ivadomed/pull/498)
+ - FiLM for 3D Unet.  [View pull request](https://github.com/ivadomed/ivadomed/pull/491)
+
+**REFACTORING**
+
+ - Refactor utils.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/497)
+
 ## v2.4.0 (2020-10-27)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.3.1...v2.4.0)
 
