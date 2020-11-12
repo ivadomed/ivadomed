@@ -337,9 +337,9 @@ def test_object_detection_inference():
     fname_image = "testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz"
 
     # Detection
-    nib_detection = imed_inference.segment_volume(folder_model="findcord_tumor", fname_image=fname_image)
+    nib_detection, _ = imed_inference.segment_volume(folder_model="findcord_tumor", fname_image=fname_image)
     detection_file = "detection.nii.gz"
-    nib.save(nib_detection, detection_file)
+    nib.save(nib_detection[0], detection_file)
 
     # Segmentation
     imed_inference.segment_volume(folder_model="t2_tumor", fname_image=fname_image, options={'fname_prior': detection_file})
