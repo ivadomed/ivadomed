@@ -323,15 +323,18 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                 subj_id = subject.record['subject_id']
                 metadata = df[df['participant_id'] == subj_id][model_params['metadata']].values[0]
                 options = {'metadata': metadata}
-            pred = imed_inference.segment_volume(path_model,
-                                                 fname_image=fname_img,
-                                                 gpu_number=context['gpu'],
-                                                 options=options)
+            pred_list, target_list = imed_inference.segment_volume(path_model,
+                                                                   fname_image=fname_img,
+                                                                   gpu_number=context['gpu'],
+                                                                   options=options)
             pred_path = os.path.join(context['log_directory'], "pred_masks")
             if not os.path.exists(pred_path):
                 os.makedirs(pred_path)
-            filename = subject.record['subject_id'] + "_" + subject.record['modality'] + "_pred" + ".nii.gz"
-            nib.save(pred, os.path.join(pred_path, filename))
+
+            for pred, target in zip(pred_list, target_list):
+                filename = subject.record['subject_id'] + "_" + subject.record['modality'] + target + "_pred" + \
+                           ".nii.gz"
+                nib.save(pred, os.path.join(pred_path, filename))
 
 
 def run_main():
