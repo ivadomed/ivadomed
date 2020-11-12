@@ -278,7 +278,19 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
                                        bin_thr=-1,
                                        postprocessing=context['postprocessing'])
 
-    return pred_nib
+                pred_list = split_classes(pred_nib)
+                target_list = context['loader_parameters']['target_suffix']
+
+    return pred_list, target_list
+
+
+def split_classes(nib_prediction):
+    pred = nib_prediction.get_fdata()
+    pred_list = []
+    for c in range(pred.shape[-1]):
+        class_pred = nib.Nifti1Image(pred[..., c], nib_prediction.affine)
+        pred_list.append(class_pred)
+    return pred_list
 
 
 def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, weight_matrix=None):
