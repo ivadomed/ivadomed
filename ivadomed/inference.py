@@ -95,7 +95,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     return nib_pred
 
 
-def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
+def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
     """Segment an image.
     Segment an image (`fname_image`) using a pre-trained model (`folder_model`). If provided, a region of interest
     (`fname_roi`) is used to crop the image prior to segment it.
@@ -104,7 +104,8 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
             (1) the model ('folder_model/folder_model.pt') to use
             (2) its configuration file ('folder_model/folder_model.json') used for the training,
             see https://github.com/neuropoly/ivadomed/wiki/configuration-file
-        fname_image (str): image filename (e.g. .nii.gz) to segment.
+        fname_images (list): list of image filenames (e.g. .nii.gz) to segment. Multichannel models require multiple
+            images to segment, e.i., len(fname_images) > 1.
         gpu_number (int): Number representing gpu number if available.
         options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename
             (e.g., .nii.gz) containing processing information (e.i., spinal cord segmentation, spinal location or MS
@@ -173,7 +174,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
         print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
-    filename_pairs = [([fname_image], None, fname_roi, [metadata])]
+    filename_pairs = [(fname_images, None, fname_roi, [metadata])]
 
     kernel_3D = bool('Modified3DUNet' in context and context['Modified3DUNet']['applied']) or \
                 not context['default_model']['is_2d']
@@ -269,7 +270,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
             # If last batch and last sample of this batch, then reconstruct 3D object
             if (i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1) or last_sample_bool:
                 pred_nib = pred_to_nib(data_lst=preds_list,
-                                       fname_ref=fname_image,
+                                       fname_ref=fname_images[0],
                                        fname_out=None,
                                        z_lst=slice_idx_list,
                                        slice_axis=slice_axis,
