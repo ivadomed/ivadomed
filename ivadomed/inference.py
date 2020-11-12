@@ -143,7 +143,7 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
     # LOADER
     loader_params = context["loader_parameters"]
     slice_axis = imed_utils.AXIS_DCT[loader_params['slice_axis']]
-    metadata = {}
+    metadata = [{}]
     fname_roi = None
     fname_prior = options['fname_prior'] if (options is not None) and ('fname_prior' in options) else None
     if fname_prior is not None:
@@ -163,6 +163,7 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
         if 'object_detection_params' in context and \
                 context['object_detection_params']['object_detection_path'] is not None:
             imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis)
+            metadata = [metadata] * len(fname_images)
 
     # Compose transforms
     _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context["transformation"])
@@ -174,7 +175,7 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
         print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
-    filename_pairs = [(fname_images, None, fname_roi, [metadata])]
+    filename_pairs = [(fname_images, None, fname_roi, metadata)]
 
     kernel_3D = bool('Modified3DUNet' in context and context['Modified3DUNet']['applied']) or \
                 not context['default_model']['is_2d']
