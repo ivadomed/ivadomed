@@ -290,7 +290,7 @@ def split_classes(nib_prediction):
     pred = nib_prediction.get_fdata()
     pred_list = []
     for c in range(pred.shape[-1]):
-        class_pred = nib.Nifti1Image(pred[..., c], nib_prediction.affine)
+        class_pred = nib.Nifti1Image(pred[..., c].astype('float32'), nib_prediction.affine)
         pred_list.append(class_pred)
     return pred_list
 
