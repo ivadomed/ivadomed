@@ -113,7 +113,7 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
     for subject in subject_list:
         if subject.record["modality"] in contrast_lst:
             subject_path = str(subject.record["absolute_path"])
-            object_mask, _ = imed_inference.segment_volume(model_path, subject_path, gpu_number=gpu_number)
+            object_mask, _ = imed_inference.segment_volume(model_path, [subject_path], gpu_number=gpu_number)
             object_mask = object_mask[0]
             if keep_largest_only:
                 object_mask = imed_postpro.keep_largest_object(object_mask)

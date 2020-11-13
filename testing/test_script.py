@@ -334,15 +334,16 @@ def test_object_detection(train_lst, target_lst, config):
 
 
 def test_object_detection_inference():
-    fname_image = "testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz"
+    fname_images = ["testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz"]
 
     # Detection
-    nib_detection, _ = imed_inference.segment_volume(folder_model="findcord_tumor", fname_image=fname_image)
+    nib_detection, _ = imed_inference.segment_volume(folder_model="findcord_tumor", fname_images=fname_images)
     detection_file = "detection.nii.gz"
     nib.save(nib_detection[0], detection_file)
 
     # Segmentation
-    imed_inference.segment_volume(folder_model="t2_tumor", fname_image=fname_image, options={'fname_prior': detection_file})
+    imed_inference.segment_volume(folder_model="t2_tumor", fname_images=fname_images,
+                                  options={'fname_prior': detection_file})
 
 
 def append_list_as_row(file_name, list_of_elem):
