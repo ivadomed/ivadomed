@@ -318,13 +318,24 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
         options = None
         for subject in bids_subjects:
-            fname_img = subject.record["absolute_path"]
+            if context['loader_parameters']['multichannel']:
+                fname_img = []
+                contrasts = context['loader_parameters']['contrast_params']['testing']
+                # Keep contrast order
+                for c in contrasts:
+                    for s in bids_subjects:
+                        if subject.record['subject_id'] == s.record['subject_id'] and s.record['modality'] == c:
+                            fname_img.append(s.record['absolute_path'])
+                            bids_subjects.remove(s)
+            else:
+                fname_img = [subject.record['absolute_path']]
+
             if 'film_layers' in model_params and any(model_params['film_layers']) and model_params['metadata']:
                 subj_id = subject.record['subject_id']
                 metadata = df[df['participant_id'] == subj_id][model_params['metadata']].values[0]
                 options = {'metadata': metadata}
             pred_list, target_list = imed_inference.segment_volume(path_model,
-                                                                   fname_image=fname_img,
+                                                                   fname_images=fname_img,
                                                                    gpu_number=context['gpu'],
                                                                    options=options)
             pred_path = os.path.join(context['log_directory'], "pred_masks")
