@@ -1,16 +1,10 @@
-@article{wang_adaptive_2019,
-	title = {Adaptive {Wing} {Loss} for {Robust} {Face} {Alignment} via {Heatmap} {Regression}},
-	url = {http://arxiv.org/abs/1904.07399},
-	abstract = {Heatmap regression with a deep network has become one of the mainstream approaches to localize facial landmarks. However, the loss function for heatmap regression is rarely studied. In this paper, we analyze the ideal loss function properties for heatmap regression in face alignment problems. Then we propose a novel loss function, named Adaptive Wing loss, that is able to adapt its shape to different types of ground truth heatmap pixels. This adaptability penalizes loss more on foreground pixels while less on background pixels. To address the imbalance between foreground and background pixels, we also propose Weighted Loss Map, which assigns high weights on foreground and difficult background pixels to help training process focus more on pixels that are crucial to landmark localization. To further improve face alignment accuracy, we introduce boundary prediction and CoordConv with boundary coordinates. Extensive experiments on different benchmarks, including COFW, 300W and WFLW, show our approach outperforms the state-of-the-art by a significant margin on various evaluation metrics. Besides, the Adaptive Wing loss also helps other heatmap regression tasks. Code will be made publicly available at https://github.com/protossw512/AdaptiveWingLoss.},
-	urldate = {2019-12-15},
-	journal = {arXiv:1904.07399 [cs]},
-	author = {Wang, Xinyao and Bo, Liefeng and Fuxin, Li},
-	month = oct,
-	year = {2019},
-	note = {arXiv: 1904.07399},
-	keywords = {Computer Science - Computer Vision and Pattern Recognition},
-	annote = {Comment: Camera-ready version for ICCV 2019},
-	file = {arXiv Fulltext PDF:C\:\\Users\\Lucas\\Zotero\\storage\\ZITJDN2F\\Wang et al. - 2019 - Adaptive Wing Loss for Robust Face Alignment via H.pdf:application/pdf;arXiv.org Snapshot:C\:\\Users\\Lucas\\Zotero\\storage\\9BT2TJFQ\\1904.html:text/html}
+@inproceedings{wang_adaptive_2019,
+  title={Adaptive wing loss for robust face alignment via heatmap regression},
+  author={Wang, Xinyao and Bo, Liefeng and Fuxin, Li},
+  booktitle={Proceedings of the IEEE International Conference on Computer Vision},
+  pages={6971--6981},
+  year={2019},
+  doi={10.1109/iccv.2019.00707}
 }
 
 
@@ -110,22 +104,16 @@ Publisher: Nature Publishing Group},
 }
 
 
-
-@article{nair_exploring_2018,
-	title = {Exploring {Uncertainty} {Measures} in {Deep} {Networks} for {Multiple} {Sclerosis} {Lesion} {Detection} and {Segmentation}},
-	url = {http://arxiv.org/abs/1808.01200},
-	abstract = {Deep learning (DL) networks have recently been shown to outperform other segmentation methods on various public, medical-image challenge datasets [3,11,16], especially for large pathologies. However, in the context of diseases such as Multiple Sclerosis (MS), monitoring all the focal lesions visible on MRI sequences, even very small ones, is essential for disease staging, prognosis, and evaluating treatment efficacy. Moreover, producing deterministic outputs hinders DL adoption into clinical routines. Uncertainty estimates for the predictions would permit subsequent revision by clinicians. We present the first exploration of multiple uncertainty estimates based on Monte Carlo (MC) dropout [4] in the context of deep networks for lesion detection and segmentation in medical images. Specifically, we develop a 3D MS lesion segmentation CNN, augmented to provide four different voxel-based uncertainty measures based on MC dropout. We train the network on a proprietary, large-scale, multi-site, multi-scanner, clinical MS dataset, and compute lesion-wise uncertainties by accumulating evidence from voxel-wise uncertainties within detected lesions. We analyze the performance of voxel-based segmentation and lesion-level detection by choosing operating points based on the uncertainty. Empirical evidence suggests that uncertainty measures consistently allow us to choose superior operating points compared only using the network's sigmoid output as a probability.},
-	urldate = {2020-09-28},
-	journal = {arXiv:1808.01200 [cs]},
-	author = {Nair, Tanya and Precup, Doina and Arnold, Douglas L. and Arbel, Tal},
-	month = oct,
-	year = {2018},
-	note = {arXiv: 1808.01200},
-	keywords = {Computer Science - Computer Vision and Pattern Recognition},
-	annote = {Comment: Updated references in Introduction; Accepted to the 21st International Conference on Medical Image Computing and Computer Assisted Intervention (MICCAI 2018)},
-	file = {arXiv Fulltext PDF:C\:\\Users\\Lucas\\Zotero\\storage\\PQFS7ZXK\\Nair et al. - 2018 - Exploring Uncertainty Measures in Deep Networks fo.pdf:application/pdf;arXiv.org Snapshot:C\:\\Users\\Lucas\\Zotero\\storage\\6RDHLL3J\\1808.html:text/html}
+@article{,
+  title={Exploring uncertainty measures in deep networks for multiple sclerosis lesion detection and segmentation},
+  author={Nair, Tanya and Precup, Doina and Arnold, Douglas L and Arbel, Tal},
+  journal={Medical image analysis},
+  volume={59},
+  pages={101557},
+  year={2020},
+  publisher={Elsevier},
+  doi={10.1016/j.media.2019.101557}
 }
-
 
 
 @article{wang_aleatoric_2019,
@@ -167,14 +155,15 @@ Publisher: Nature Publishing Group},
   year={2017}
 }
 
-@inproceedings{havaei2016hemis,
-  title={Hemis: Hetero-modal image segmentation},
+
+@article{havaei2016hemis,
+  title={HeMIS: Hetero-Modal Image Segmentation},
   author={Havaei, Mohammad and Guizard, Nicolas and Chapados, Nicolas and Bengio, Yoshua},
-  booktitle={International Conference on Medical Image Computing and Computer-Assisted Intervention},
-  pages={469--477},
+  journal={arXiv preprint arXiv:1607.05194},
   year={2016},
-  organization={Springer}
+  doi={10.1007/978-3-319-46723-8_54}
 }
+
 
 @inproceedings{Cohen2017countception,
 abstract = {Counting objects in digital images is a process that should be replaced by machines. This tedious task is time consuming and prone to errors due to fatigue of human annotators. The goal is to have a system that takes as input an image and returns a count of the objects inside and justification for the prediction in the form of object localization. We repose a problem, originally posed by Lempitsky and Zisserman, to instead predict a count map which contains redundant counts based on the receptive field of a smaller regression network. The regression network predicts a count of the objects that exist inside this frame. By processing the image in a fully convolutional way each pixel is going to be accounted for some number of times, the number of windows which include it, which is the size of each window, (i.e., 32x32 = 1024). To recover the true count we take the average over the redundant predictions. Our contribution is redundant counting instead of predicting a density map in order to average over errors. We also propose a novel deep neural network architecture adapted from the Inception family of networks called the Count-ception network. Together our approach results in a 20{\%} relative improvement (2.9 to 2.3 MAE) over the state of the art method by Xie, Noble, and Zisserman in 2016.},
@@ -187,8 +176,10 @@ file = {:Users/ieee8023/Library/Application Support/Mendeley Desktop/Downloaded/
 mendeley-groups = {neuralnetworks/counting/core-counting},
 title = {{Count-ception: Counting by Fully Convolutional Redundant Counting}},
 url = {http://arxiv.org/abs/1703.08710},
-year = {2017}
+year = {2017},
+doi = {10.1109/iccvw.2017.9}
 }
+
 
 @inproceedings{Huang2017densenet,
 archivePrefix = {arXiv},
@@ -242,6 +233,7 @@ year = {2016}
 	abstract = {Whole brain segmentation from structural magnetic resonance imaging (MRI) is a prerequisite for most morphological analyses, but is computationally intense and can therefore delay the availability of image markers after scan acquisition. We introduce QuickNAT, a fully convolutional, densely connected neural network that segments a {\textbackslash}revision\{MRI brain scan\} in 20 seconds. To enable training of the complex network with millions of learnable parameters using limited annotated data, we propose to first pre-train on auxiliary labels created from existing segmentation software. Subsequently, the pre-trained model is fine-tuned on manual labels to rectify errors in auxiliary labels. With this learning strategy, we are able to use large neuroimaging repositories without manual annotations for training. In an extensive set of evaluations on eight datasets that cover a wide age range, pathology, and different scanners, we demonstrate that QuickNAT achieves superior segmentation accuracy and reliability in comparison to state-of-the-art methods, while being orders of magnitude faster. The speed up facilitates processing of large data repositories and supports translation of imaging biomarkers by making them available within seconds for fast clinical decision making.},
 	urldate = {2020-09-28},
 	journal = {arXiv:1801.04161 [cs]},
+	doi = {10.1016/j.neuroimage.2018.11.042},
 	author = {Roy, Abhijit Guha and Conjeti, Sailesh and Navab, Nassir and Wachinger, Christian},
 	month = nov,
 	year = {2018},
@@ -250,6 +242,7 @@ year = {2016}
 	annote = {Comment: Accepted for Publication at NeuroImage},
 	file = {arXiv Fulltext PDF:C\:\\Users\\Lucas\\Zotero\\storage\\864K65TV\\Roy et al. - 2018 - QuickNAT A Fully Convolutional Network for Quick .pdf:application/pdf}
 }
+
 
 @inproceedings{isensee2017brain,
   title={Brain tumor segmentation and radiomics survival prediction: Contribution to the \uppercase{BRATS} 2017 challenge},
@@ -260,14 +253,17 @@ year = {2016}
   organization={Springer}
 }
 
+
 @inproceedings{milletari2016v,
   title={V-net: Fully convolutional neural networks for volumetric medical image segmentation},
   author={Milletari, Fausto and Navab, Nassir and Ahmadi, Seyed-Ahmad},
   booktitle={2016 fourth international conference on 3D vision (3DV)},
   pages={565--571},
+  doi={10.1109/3dv.2016.79},
   year={2016},
   organization={IEEE}
 }
+
 
 @inproceedings{wong20183d,
   title={3D segmentation with exponential logarithmic loss for highly unbalanced object sizes},
@@ -275,7 +271,8 @@ year = {2016}
   booktitle={International Conference on Medical Image Computing and Computer-Assisted Intervention},
   pages={612--619},
   year={2018},
-  organization={Springer}
+  organization={Springer},
+  doi={10.1007/978-3-030-00931-1_70}
 }
 
 @ARTICLE{Willemink2020-au,
