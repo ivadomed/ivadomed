@@ -17,13 +17,10 @@ authors:
     orcid: 0000-0002-5554-8108
     affiliation: 1
   - name: Lucas Rouhier
-    orcid: XX
     affiliation: 1
   - name: Anthime Bucquet
-    orcid: XX
     affiliation: 1
   - name: Joseph Paul Cohen
-    orcid: XX
     affiliation: "2, 3"
   - name: Julien Cohen-Adad
     orcid: 0000-0003-3662-9532
