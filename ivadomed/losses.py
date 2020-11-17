@@ -377,6 +377,9 @@ class AdapWingLoss(nn.Module):
 
         mask = torch.zeros_like(target)
         kernel = scipy.ndimage.morphology.generate_binary_structure(2, 2)
+        if len(input.shape) == 5:
+            kernel = scipy.ndimage.morphology.generate_binary_structure(3, 2)
+
         for i in range(batch_size):
             img_list = list()
             img_list.append(np.round(target[i].cpu().numpy() * 255))
