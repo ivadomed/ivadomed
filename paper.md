@@ -17,13 +17,10 @@ authors:
     orcid: 0000-0002-5554-8108
     affiliation: 1
   - name: Lucas Rouhier
-    orcid: XX
     affiliation: 1
   - name: Anthime Bucquet
-    orcid: XX
     affiliation: 1
   - name: Joseph Paul Cohen
-    orcid: XX
     affiliation: "2, 3"
   - name: Julien Cohen-Adad
     orcid: 0000-0003-3662-9532
@@ -52,7 +49,7 @@ Deep learning applied to medical imaging presents many challenges: datasets are 
 
 Another challenge of medical imaging is the heterogeneity of the data across hospitals (e.g., contrast, resolution), making it difficult to create models that can generalize well. Recent cutting-edge methods address this problem, such as FiLM [@perez2017film] and HeMis [@havaei2016hemis], however they are usually not implemented within a comprehensive framework. In addition to providing these architectures, `ivadomed` features losses adapted to imbalanced classes and non-binary predictions.
 
-![Overview of `ivadomed` main features.\label{fig:overview}](https://raw.githubusercontent.com/ivadomed/doc-figures/main/overview_title.png)
+![Overview of `ivadomed` main features.\label{fig:overview}](https://raw.githubusercontent.com/ivadomed/doc-figures/main/index/overview_title.png)
 
 ## Loader
 
