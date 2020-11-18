@@ -10,7 +10,7 @@ FiLM permits to add priors during training/inference based on the
 imaging physics (e.g. acquisition parameters), thereby improving the
 performance of the output segmentations.
 
-.. figure:: ../../images/film_figure.png
+.. figure:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/technical_features/film_figure.png
    :alt: Figure FiLM
 
    Figure FiLM
@@ -35,7 +35,7 @@ These measures can be used to perform some
 `post-processing <https://arxiv.org/abs/1808.01200>`__ based on the
 uncertainty measures.
 
-.. figure:: ../../images/uncertainty_measures.png
+.. figure:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/technical_features/uncertainty_measures.png
    :alt: Figure Uncertainty
 
    Figure Uncertainty
@@ -62,7 +62,7 @@ by combining two random samples from the training set and from the
 associated labels. The motivation is to regularize the network while
 extending the training distribution.
 
-.. figure:: ../../images/mixup.png
+.. figure:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/technical_features/mixup.png
    :alt: Figure mixup
 
    Figure mixup
@@ -80,7 +80,7 @@ which depends on the distance to the core of the lesion. Thus, the prior
 knowledge about the subjective lesion borders is then leveraged to the
 network.
 
-.. figure:: ../../images/dilate-gt.png
+.. figure:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/technical_features/dilate-gt.png
    :alt: Figure Data Augmentation on lesion ground truths
 
    Figure Data Augmentation on lesion ground truths

@@ -1,4 +1,4 @@
-.. image:: ../../images/overview_title.png
+.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/index/overview_title.png
   :alt: Alternative text
 
 |

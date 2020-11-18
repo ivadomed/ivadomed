@@ -156,5 +156,5 @@ These files can further be used for post-processing to refine the segmentation. 
 depicted in pink are more uncertain than the ones in blue (left image): we might want to refine the model prediction by removing
 from the foreground class the voxels with low uncertainty (blue, left image) AND low prediction value (dark red, middle image).
 
-.. image:: ../../../images/uncertainty_tutorial.png
+.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/tutorials/uncertainty/uncertainty_tutorial.png
    :align: center
