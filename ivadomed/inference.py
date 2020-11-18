@@ -287,6 +287,13 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
 
 
 def split_classes(nib_prediction):
+    """Split a 4D nibabel multi-class segmentation file in multiple 3D nibabel binary segmentation files.
+    
+    Args:
+        nib_prediction (nibabelObject): 4D nibabel object.
+    Returns:
+        list of nibabelObject.
+     """
     pred = nib_prediction.get_fdata()
     pred_list = []
     for c in range(pred.shape[-1]):
