@@ -92,21 +92,21 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
 
     It could consider one log directory at a time, for example:
 
-    .. image:: ../../images/plot_loss_single.png
+    .. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/scripts/plot_loss_single.png
         :width: 600px
         :align: center
 
     ... or multiple (using ``multiple_training=True``). In that case, the hard line represents the mean value across the
     trainings whereas the envelope represents the standard deviation:
 
-    .. image:: ../../images/plot_loss_multiple.png
+    .. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/scripts/plot_loss_multiple.png
         :width: 600px
         :align: center
 
     It is also possible to compare multiple trainings (or set of trainings) by listing them in ``-i``, separeted by
     commas:
 
-    .. image:: ../../images/plot_loss_mosaic.png
+    .. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/scripts/plot_loss_mosaic.png
         :width: 600px
         :align: center
 
