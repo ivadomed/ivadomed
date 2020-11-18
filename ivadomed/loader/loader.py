@@ -268,9 +268,10 @@ class SegmentationPair(object):
                     "crop_params": {}
                 }))
             else:
+                # Temporarily append null metadata to null gt
                 gt_meta_dict.append(None)
 
-        # Fill null metadata
+        # Replace null metadata with metadata from other existing classes of the same subject
         for idx, gt_metadata in enumerate(gt_meta_dict):
             if gt_metadata is None:
                 gt_meta_dict[idx] = list(filter(None, gt_meta_dict))[0]
