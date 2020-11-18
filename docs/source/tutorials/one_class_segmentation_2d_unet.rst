@@ -232,5 +232,5 @@ After the training for 100 epochs, the segmentations should be similar to the on
 The output and ground truth segmentations of the spinal cord are presented in red (subject ``sub-hamburg01`` with
 contrast T2w):
 
-.. image:: ../../../images/sc_prediction.png
+.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/tutorials/one_class_segmentation_2d_unet/sc_prediction.png
    :align: center

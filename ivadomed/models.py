@@ -438,6 +438,12 @@ class Decoder(Module):
             preds = self.softmax(x)
         elif hasattr(self, "final_activation") and self.final_activation == "relu":
             preds = nn.ReLU()(x) / nn.ReLU()(x).max() if bool(nn.ReLU()(x).max()) else nn.ReLU()(x)
+            # If model multiclass
+            if preds.shape[1] > 1:
+                class_sum = preds.sum(dim=1).unsqueeze(1)
+                # Avoid division by zero
+                class_sum[class_sum == 0] = 1
+                preds /= class_sum
         else:
             preds = torch.sigmoid(x)
 

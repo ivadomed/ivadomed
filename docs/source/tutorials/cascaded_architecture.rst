@@ -118,7 +118,7 @@ Visualize training data
 If the flag ``--gif`` or ``-g`` was used, the training can be visualized through gifs located in the folder
 <LOG_DIRECTORY>/gifs.
 
-.. figure:: ../../../images/training.gif
+.. figure:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/tutorials/cascaded_architecture/training.gif
    :width: 300
    :align: center
 
@@ -142,14 +142,14 @@ The following should be displayed in the terminal:
 Open your browser and type the URL provided, in this case ``http://localhost:6006/``.
 In the scalars folder, the evolution of metrics, learning rate and loss through the epochs can be visualized.
 
-.. image:: ../../../images/tensorboard_scalar.png
+.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/tutorials/cascaded_architecture/tensorboard_scalar.png
    :align: center
 
 In the image folder, the training and validation ground truth, input images and predictions are displayed. With this
 feature, it is possible to visualize the cropping from the first model and confirm that the spinal cord
 was correctly located.
 
-.. image:: ../../../images/tensorboard_images.png
+.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/tutorials/cascaded_architecture/tensorboard_images.png
    :align: center
 
 Evaluate model
