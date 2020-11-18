@@ -377,6 +377,7 @@ class AdapWingLoss(nn.Module):
 
         mask = torch.zeros_like(target)
         kernel = scipy.ndimage.morphology.generate_binary_structure(2, 2)
+        # For multi-class segmentation tasks
         if len(input.shape) == 5:
             kernel = scipy.ndimage.morphology.generate_binary_structure(3, 2)
 
