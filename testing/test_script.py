@@ -121,8 +121,8 @@ def test_creation_dataset():
     command = "cp testing_data/model_unet_test.pt testing_script/best_model.pt"
     subprocess.check_output(command, shell=True)
 
-    list1 = ["sub-test002"]
-    list2 = ["sub-test003"]
+    list1 = ["sub-test002", "-"]
+    list2 = ["sub-test003", "-"]
 
     # add subjects to participants.tsv
     append_list_as_row("testing_data/participants.tsv", list1)
@@ -349,12 +349,13 @@ def append_list_as_row(file_name, list_of_elem):
     # Open file in append mode
     with open(file_name, 'a+', newline='') as write_obj:
         # Create a writer object from csv module
-        csv_writer = writer(write_obj)
+        csv_writer = writer(write_obj, delimiter='\t', lineterminator='\n')
         # Add contents of list as last row in the csv file
         csv_writer.writerow(list_of_elem)
 
 
-def test_film_contrast():
+@pytest.mark.parametrize('balance_type', ['gt', 'sex'])
+def test_film_contrast(balance_type):
     # FiLM config
     # Create config copy
     base_config = "testing_data/model_config.json"
@@ -364,6 +365,9 @@ def test_film_contrast():
     with open(film_config, "r") as fhandle:
         context = json.load(fhandle)
     # Modify params
+    context["training_parameters"]["balance_samples"] = {}
+    context["training_parameters"]["balance_samples"]["applied"] = True
+    context["training_parameters"]["balance_samples"]["type"] = balance_type
     context["loader_parameters"]["contrast_params"]["training_validation"] = ["T2w", "T1w", "T2star"]
     context["FiLMedUnet"]["applied"] = True
     context["FiLMedUnet"]["film_layers"] = 2 * [1] * context["default_model"]["depth"] + [0, 0]

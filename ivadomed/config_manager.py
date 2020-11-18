@@ -18,7 +18,11 @@ def update(d, u):
         if isinstance(v, collections.abc.Mapping):
             d[k] = update(d.get(k, {}), v)
         else:
-            d[k] = v
+            # If source dictionary has keys that the destination dict doesn't have, keep these keys
+            if k in d and isinstance(d[k], collections.abc.Mapping) and not isinstance(v, collections.abc.Mapping):
+                pass
+            else:
+                d[k] = v
     return d
 
 
@@ -38,7 +42,11 @@ def deep_dict_compare(source_dict, dest_dict, keyname=None):
 
         else:
             if isinstance(dest_dict[key], collections.abc.Mapping):
-                deep_dict_compare(source_dict[key], dest_dict[key], key + ": ")
+                if isinstance(source_dict[key], collections.abc.Mapping):
+                    deep_dict_compare(source_dict[key], dest_dict[key], key + ": ")
+                # In case a new dictionary appears in updated file
+                else:
+                    deep_dict_compare(source_dict, dest_dict[key], key + ": ")
 
 
 def load_json(config_path):
