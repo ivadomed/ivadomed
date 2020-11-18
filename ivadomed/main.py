@@ -7,6 +7,7 @@ import torch.backends.cudnn as cudnn
 import nibabel as nib
 
 from bids_neuropoly import bids
+from ivadomed.utils import logger
 from ivadomed import evaluation as imed_evaluation
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import testing as imed_testing
@@ -320,13 +321,19 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         for subject in bids_subjects:
             if context['loader_parameters']['multichannel']:
                 fname_img = []
+                provided_contrasts = []
                 contrasts = context['loader_parameters']['contrast_params']['testing']
                 # Keep contrast order
                 for c in contrasts:
                     for s in bids_subjects:
                         if subject.record['subject_id'] == s.record['subject_id'] and s.record['modality'] == c:
+                            provided_contrasts.append(c)
                             fname_img.append(s.record['absolute_path'])
                             bids_subjects.remove(s)
+                if len(fname_img) != len(contrasts):
+                    logger.warning("Missing contrast for subject {}. {} were provided but {} are required. Skipping "
+                                   "subject.".format(subject.record['subject_id'], provided_contrasts, contrasts))
+                    continue
             else:
                 fname_img = [subject.record['absolute_path']]
 
