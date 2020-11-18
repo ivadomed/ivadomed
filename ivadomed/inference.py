@@ -246,16 +246,17 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
             preds = preds.cpu()
 
         # Set datatype to gt since prediction should be processed the same way as gt
-        for modality in batch['input_metadata']:
-            modality[0]['data_type'] = 'gt'
+        for b in batch['input_metadata']:
+            for modality in b:
+                modality['data_type'] = 'gt'
 
         # Reconstruct 3D object
         for i_slice in range(len(preds)):
             if "bounding_box" in batch['input_metadata'][i_slice][0]:
                 imed_obj_detect.adjust_undo_transforms(undo_transforms.transforms, batch, i_slice)
 
+            batch['gt_metadata'] = [[metadata[0]] * preds.shape[1] for metadata in batch['input_metadata']]
             if kernel_3D:
-                batch['gt_metadata'] = batch['input_metadata']
                 preds_undo, metadata, last_sample_bool, volume, weight_matrix = \
                     volume_reconstruction(batch, preds, undo_transforms, i_slice, volume, weight_matrix)
                 preds_list = [np.array(preds_undo)]
