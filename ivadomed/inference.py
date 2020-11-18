@@ -113,7 +113,9 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
             e.g., spinal cord centerline, used to crop the image prior to segment it if provided.
             The segmentation is not performed on the slices that are empty in this image.
     Returns:
-        nibabelObject: Object containing the soft segmentation.
+        list: List of nibabel objects containing the soft segmentation(s), one per prediction class.
+        list: List of target suffix associated with each prediction in `pred_list`
+
     """
     # Define device
     cuda_available = torch.cuda.is_available()
