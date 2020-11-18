@@ -632,7 +632,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
         subvolumes = {
             'input': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
-            'gt': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
+            'gt': torch.zeros(stack_gt.shape[0], shape_x, shape_y, shape_z) if stack_gt is not None else None,
             'input_metadata': metadata_input,
             'gt_metadata': metadata_gt
         }
