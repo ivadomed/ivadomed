@@ -247,8 +247,12 @@ scheduler
 balance\_samples
 ^^^^^^^^^^^^^^^^
 
-Bool. Balance positive and negative labels in both the training and the
-validation datasets.
+Dict. Balance labels in both the training and the validation datasets.
+
+- ``applied``: Bool. Indicates whether to use a balanced sampler or not.
+- ``type``: Str. Indicates which metadata to use to balance the sampler.
+  Choices: ``gt`` or  the name of a column from the participants.tsv file
+  (i.e. subject-based metadata).
 
 mixup\_alpha
 ^^^^^^^^^^^^
