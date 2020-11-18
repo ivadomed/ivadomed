@@ -67,7 +67,7 @@ def run_visualization(input, config, number, output, roi):
 
     Provides a visualization of a series of three transformation on a randomly selected slice:
 
-    .. image:: ../../images/transforms_im.png
+    .. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/scripts/transforms_im.png
         :width: 600px
         :align: center
 
@@ -77,7 +77,7 @@ def run_visualization(input, config, number, output, roi):
 
     Gives:
 
-    .. image:: ../../images/transforms_gt.png
+    .. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/scripts/transforms_gt.png
         :width: 600px
         :align: center
 
