@@ -55,7 +55,10 @@
                 "max_lr": 1e-2
             }
         },
-        "balance_samples": false,
+        "balance_samples": {
+            "applied": false,
+            "type": "gt"
+        },
         "mixup_alpha": null,
         "transfer_learning": {
             "retrain_model": null,

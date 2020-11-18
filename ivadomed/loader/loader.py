@@ -816,6 +816,10 @@ class BidsDataset(MRI2DSegmentationDataset):
                     # add custom data to metadata
                     subject_id = subject.record["subject_id"]
                     df = bids.BIDS(root_dir).participants.content
+                    if metadata_choice not in df.columns:
+                        raise ValueError("The following metadata cannot be found in participants.tsv file: {}. "
+                                         "Invalid metadata choice.".format(metadata_choice))
+
                     metadata[metadata_choice] = df[df['participant_id'] == subject_id][metadata_choice].values[0]
 
                     # Create metadata dict for OHE
