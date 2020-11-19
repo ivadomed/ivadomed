@@ -267,8 +267,14 @@ class SegmentationPair(object):
                     "data_type": 'gt',
                     "crop_params": {}
                 }))
-            elif len(gt_meta_dict):
-                gt_meta_dict.append(gt_meta_dict[0])
+            else:
+                # Temporarily append null metadata to null gt
+                gt_meta_dict.append(None)
+
+        # Replace null metadata with metadata from other existing classes of the same subject
+        for idx, gt_metadata in enumerate(gt_meta_dict):
+            if gt_metadata is None:
+                gt_meta_dict[idx] = list(filter(None, gt_meta_dict))[0]
 
         input_meta_dict = []
         for handle in self.input_handle:
@@ -424,8 +430,6 @@ class MRI2DSegmentationDataset(Dataset):
 
                 if self.slice_filter_roi and imed_loader_utils.filter_roi(slice_roi_pair['gt'], self.roi_thr):
                     continue
-
-
 
                 item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                       slice_seg_pair,
