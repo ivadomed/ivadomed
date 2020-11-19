@@ -170,14 +170,14 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 preds_idx_arr = np.array(preds_idx_undo)
 
                 # TODO: gt_filenames should not be a list
-                fname_ref = metadata_idx[0]['gt_filenames'][0]
+                fname_ref = list(filter(None, metadata_idx[0]['gt_filenames']))[0]
 
                 # NEW COMPLETE VOLUME
                 if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool) and task != "classification":
                     # save the completely processed file as a nifti file
                     if ofolder:
                         fname_pred = os.path.join(ofolder, fname_tmp.split('/')[-1])
-                        fname_pred = fname_pred.rsplit(testing_params['target_suffix'][0],1)[0] + '_pred.nii.gz'
+                        fname_pred = fname_pred.rsplit("_", 1)[0] + '_pred.nii.gz'
                         # If Uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
@@ -367,5 +367,5 @@ def get_gt(filenames):
         if gt is not None:
             gt_lst.append(nib.load(gt).get_fdata())
         else:
-            gt_lst.append(np.zeros(gt_lst[0].shape))
+            gt_lst.append(np.zeros(nib.load(list(filter(None, filenames))[0]).get_fdata().shape))
     return np.array(gt_lst)
