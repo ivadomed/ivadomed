@@ -40,7 +40,9 @@ def get_parser():
     parser.add_argument("-n", "--n-iterations", dest="n_iterations", default=1,
                         type=int, help="Number of times to run each config.")
     parser.add_argument("--all-combin", dest='all_combin', action='store_true',
-                        help="To run all combinations of config")
+                        help="To run all combinations of config"),
+    parser.add_argument("-m", "--multi-params", dest="multi_params", action='store_true',
+                        help="To change multiple parameters at once.")
     parser.add_argument("--run-test", dest='run_test', action='store_true',
                         help="Evaluate the trained model on the testing sub-set.")
     parser.add_argument("--fixed-split", dest='fixed_split', action='store_true',
@@ -132,7 +134,7 @@ def make_category(base_item, keys, values, is_all_combin=False):
 
 
 def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False, all_logs=False,
-                      thr_increment=None):
+                      thr_increment=None, multiple_params=False):
     """Automate multiple training processes on multiple GPUs.
 
     Hyperparameter optimization of models is tedious and time-consuming. This function automatizes this optimization
@@ -168,6 +170,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
         thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
             the validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
             increment between 0 and 1 used during the ROC analysis (e.g. 0.1). Flag: ``-t``, ``--thr-increment``
+        multiple_params (bool): If True, more than one parameter will be change at the time from the hyperparameters.
+            All the first elements from the hyperparameters list will be applied, then all the second, etc.
     """
     # Load initial config
     initial_config = imed_config_manager.ConfigurationManager(config).get_config()
@@ -222,6 +226,23 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                 new_config["log_directory"] = new_config["log_directory"] + names[idx][i]
 
             config_list.append(copy.deepcopy(new_config))
+    elif multiple_params:
+        params_len = set()
+        for param in param_dict:
+            params_len.add(len(param_dict[param]))
+        # All lists in hyperparameter file should be the same length
+        if len(params_len) != 1:
+            raise ValueError("To use flag --multi-params or -m, all hyperparameter lists need to be the same size.")
+
+        for config_idx in range(params_len.pop()):
+            new_config = copy.deepcopy(initial_config)
+            config_name = ""
+            for param in param_dict:
+                new_config[param] = param_dict[param][config_idx]
+                config_name += names_dict[param][config_idx]
+            new_config["log_directory"] = initial_config["log_directory"] + config_name
+            config_list.append(copy.deepcopy(new_config))
+
     # Change a single parameter for each test
     else:
         for param in param_dict:
@@ -346,7 +367,7 @@ def main():
 
     # Run automate training
     automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin), int(args.n_iterations),
-                      bool(args.run_test), args.all_logs, thr_increment)
+                      bool(args.run_test), args.all_logs, thr_increment, bool(args.multi_params))
 
 
 if __name__ == '__main__':
