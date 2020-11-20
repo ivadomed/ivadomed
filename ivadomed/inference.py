@@ -95,7 +95,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     return nib_pred
 
 
-def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
+def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
     """Segment an image.
     Segment an image (`fname_image`) using a pre-trained model (`folder_model`). If provided, a region of interest
     (`fname_roi`) is used to crop the image prior to segment it.
@@ -104,7 +104,8 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
             (1) the model ('folder_model/folder_model.pt') to use
             (2) its configuration file ('folder_model/folder_model.json') used for the training,
             see https://github.com/neuropoly/ivadomed/wiki/configuration-file
-        fname_image (str): image filename (e.g. .nii.gz) to segment.
+        fname_images (list): list of image filenames (e.g. .nii.gz) to segment. Multichannel models require multiple
+            images to segment, e.i., len(fname_images) > 1.
         gpu_number (int): Number representing gpu number if available.
         options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename
             (e.g., .nii.gz) containing processing information (e.i., spinal cord segmentation, spinal location or MS
@@ -112,7 +113,9 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
             e.g., spinal cord centerline, used to crop the image prior to segment it if provided.
             The segmentation is not performed on the slices that are empty in this image.
     Returns:
-        nibabelObject: Object containing the soft segmentation.
+        list: List of nibabel objects containing the soft segmentation(s), one per prediction class.
+        list: List of target suffix associated with each prediction in `pred_list`
+
     """
     # Define device
     cuda_available = torch.cuda.is_available()
@@ -162,6 +165,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
         if 'object_detection_params' in context and \
                 context['object_detection_params']['object_detection_path'] is not None:
             imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis)
+            metadata = [metadata] * len(fname_images)
 
     # Compose transforms
     _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context["transformation"])
@@ -173,7 +177,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
         print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
-    filename_pairs = [([fname_image], None, fname_roi, [metadata])]
+    filename_pairs = [(fname_images, None, fname_roi, metadata if isinstance(metadata, list) else [metadata])]
 
     kernel_3D = bool('Modified3DUNet' in context and context['Modified3DUNet']['applied']) or \
                 not context['default_model']['is_2d']
@@ -242,16 +246,17 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
             preds = preds.cpu()
 
         # Set datatype to gt since prediction should be processed the same way as gt
-        for modality in batch['input_metadata']:
-            modality[0]['data_type'] = 'gt'
+        for b in batch['input_metadata']:
+            for modality in b:
+                modality['data_type'] = 'gt'
 
         # Reconstruct 3D object
         for i_slice in range(len(preds)):
             if "bounding_box" in batch['input_metadata'][i_slice][0]:
                 imed_obj_detect.adjust_undo_transforms(undo_transforms.transforms, batch, i_slice)
 
+            batch['gt_metadata'] = [[metadata[0]] * preds.shape[1] for metadata in batch['input_metadata']]
             if kernel_3D:
-                batch['gt_metadata'] = batch['input_metadata']
                 preds_undo, metadata, last_sample_bool, volume, weight_matrix = \
                     volume_reconstruction(batch, preds, undo_transforms, i_slice, volume, weight_matrix)
                 preds_list = [np.array(preds_undo)]
@@ -269,7 +274,7 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
             # If last batch and last sample of this batch, then reconstruct 3D object
             if (i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1) or last_sample_bool:
                 pred_nib = pred_to_nib(data_lst=preds_list,
-                                       fname_ref=fname_image,
+                                       fname_ref=fname_images[0],
                                        fname_out=None,
                                        z_lst=slice_idx_list,
                                        slice_axis=slice_axis,
@@ -278,7 +283,26 @@ def segment_volume(folder_model, fname_image, gpu_number=0, options=None):
                                        bin_thr=-1,
                                        postprocessing=context['postprocessing'])
 
-    return pred_nib
+                pred_list = split_classes(pred_nib)
+                target_list = context['loader_parameters']['target_suffix']
+
+    return pred_list, target_list
+
+
+def split_classes(nib_prediction):
+    """Split a 4D nibabel multi-class segmentation file in multiple 3D nibabel binary segmentation files.
+    
+    Args:
+        nib_prediction (nibabelObject): 4D nibabel object.
+    Returns:
+        list of nibabelObject.
+     """
+    pred = nib_prediction.get_fdata()
+    pred_list = []
+    for c in range(pred.shape[-1]):
+        class_pred = nib.Nifti1Image(pred[..., c].astype('float32'), nib_prediction.affine)
+        pred_list.append(class_pred)
+    return pred_list
 
 
 def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, weight_matrix=None):

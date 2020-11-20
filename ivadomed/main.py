@@ -7,6 +7,7 @@ import torch.backends.cudnn as cudnn
 import nibabel as nib
 
 from bids_neuropoly import bids
+from ivadomed.utils import logger
 from ivadomed import evaluation as imed_evaluation
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import testing as imed_testing
@@ -324,20 +325,40 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
         options = None
         for subject in bids_subjects:
-            fname_img = subject.record["absolute_path"]
+            if context['loader_parameters']['multichannel']:
+                fname_img = []
+                provided_contrasts = []
+                contrasts = context['loader_parameters']['contrast_params']['testing']
+                # Keep contrast order
+                for c in contrasts:
+                    for s in bids_subjects:
+                        if subject.record['subject_id'] == s.record['subject_id'] and s.record['modality'] == c:
+                            provided_contrasts.append(c)
+                            fname_img.append(s.record['absolute_path'])
+                            bids_subjects.remove(s)
+                if len(fname_img) != len(contrasts):
+                    logger.warning("Missing contrast for subject {}. {} were provided but {} are required. Skipping "
+                                   "subject.".format(subject.record['subject_id'], provided_contrasts, contrasts))
+                    continue
+            else:
+                fname_img = [subject.record['absolute_path']]
+
             if 'film_layers' in model_params and any(model_params['film_layers']) and model_params['metadata']:
                 subj_id = subject.record['subject_id']
                 metadata = df[df['participant_id'] == subj_id][model_params['metadata']].values[0]
                 options = {'metadata': metadata}
-            pred = imed_inference.segment_volume(path_model,
-                                                 fname_image=fname_img,
-                                                 gpu_number=context['gpu'],
-                                                 options=options)
+            pred_list, target_list = imed_inference.segment_volume(path_model,
+                                                                   fname_images=fname_img,
+                                                                   gpu_number=context['gpu'],
+                                                                   options=options)
             pred_path = os.path.join(context['log_directory'], "pred_masks")
             if not os.path.exists(pred_path):
                 os.makedirs(pred_path)
-            filename = subject.record['subject_id'] + "_" + subject.record['modality'] + "_pred" + ".nii.gz"
-            nib.save(pred, os.path.join(pred_path, filename))
+
+            for pred, target in zip(pred_list, target_list):
+                filename = subject.record['subject_id'] + "_" + subject.record['modality'] + target + "_pred" + \
+                           ".nii.gz"
+                nib.save(pred, os.path.join(pred_path, filename))
 
 
 def run_main():

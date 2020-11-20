@@ -113,7 +113,8 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
     for subject in subject_list:
         if subject.record["modality"] in contrast_lst:
             subject_path = str(subject.record["absolute_path"])
-            object_mask = imed_inference.segment_volume(model_path, subject_path, gpu_number=gpu_number)
+            object_mask, _ = imed_inference.segment_volume(model_path, [subject_path], gpu_number=gpu_number)
+            object_mask = object_mask[0]
             if keep_largest_only:
                 object_mask = imed_postpro.keep_largest_object(object_mask)
 
@@ -122,7 +123,7 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
                 os.mkdir(mask_path)
             nib.save(object_mask, os.path.join(mask_path, subject_path.split("/")[-1]))
             ras_orientation = nib.as_closest_canonical(object_mask)
-            hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata()[..., 0], slice_axis)
+            hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata(), slice_axis)
             bounding_boxes = get_bounding_boxes(hwd_orientation)
             bounding_box_dict[subject_path] = [adjust_bb_size(bb, safety_factor) for bb in bounding_boxes]
 
