@@ -119,7 +119,9 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
         sampled_dfs = []
         for m, n, v in zip(subject_selection["metadata"], subject_selection["n"], subject_selection["value"]):
             sampled_dfs.append(df[df[m] == v].sample(n=n, random_state=random_seed))
-        df = pd.concat(sampled_dfs)
+
+        if len(sampled_dfs) != 0:
+            df = pd.concat(sampled_dfs)
 
     # If balance, then split the dataframe for each categorical value of the "balance" column
     if balance:
