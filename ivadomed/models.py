@@ -283,6 +283,9 @@ class UpConv(Module):
         self.downconv = DownConv(in_feat, out_feat, drop_rate, bn_momentum, is_2d)
 
     def forward(self, x, y):
+        # For retrocompatibility purposes
+        if not hasattr(self, "is_2d"):
+            self.is_2d = True
         mode = 'bilinear' if self.is_2d else 'trilinear'
         dims = -2 if self.is_2d else -3
         x = F.interpolate(x, size=y.size()[dims:], mode=mode, align_corners=True)
