@@ -233,6 +233,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         # If uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
+                            postprocessing = None
                     else:
                         fname_pred = None
                     # Choose only one modality
