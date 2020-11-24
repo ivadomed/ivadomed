@@ -504,7 +504,7 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     # apply transformation
     return nib.orientations.apply_orientation(arr_ras, trans_orient)
 
-def create_bids_dataframe(loader_param, derivatives):
+def create_bids_dataframe(loader_params, derivatives):
     """Create a dataframe containing all BIDS image files in a bids_path and their metadata.
 
     Args:
@@ -516,10 +516,10 @@ def create_bids_dataframe(loader_param, derivatives):
     """
 
     # Get bids_path, bids_config, target_suffix and extensions from loader parameters
-    bids_path = loader_param['bids_path']
-    bids_config = loader_param['bids_config']
-    target_suffix = loader_param['target_suffix']
-    extensions = loader_param['extensions']
+    bids_path = loader_params['bids_path']
+    bids_config = loader_params['bids_config']
+    target_suffix = loader_params['target_suffix']
+    extensions = loader_params['extensions']
 
     # Suppress a Future Warning from pybids about leading dot included in 'extension' from version 0.14.0
     # The config_bids.json file used matches the future behavior
