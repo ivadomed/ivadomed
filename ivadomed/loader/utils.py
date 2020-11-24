@@ -11,6 +11,8 @@ from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
 from ivadomed import utils as imed_utils
 import nibabel as nib
+import bids as pybids   #"bids" is already taken by bids_neuropoly
+import pandas as pd
 
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
@@ -501,3 +503,81 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
     # apply transformation
     return nib.orientations.apply_orientation(arr_ras, trans_orient)
+
+def create_bids_dataframe(loader_param, derivatives):
+    """Create a dataframe containing all BIDS image files in a bids_path and their metadata.
+
+    Args:
+        loader_params (dict): Loader parameters, see :doc:`configuration_file` for more details.
+        derivatives (bool): If True, derivatives are indexed.
+
+    Returns:
+        df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
+    """
+
+    # Get bids_path, bids_config, target_suffix and extensions from loader parameters
+    bids_path = loader_param['bids_path']
+    bids_config = loader_param['bids_config']
+    target_suffix = loader_param['target_suffix']
+    extensions = loader_param['extensions']
+
+    # Suppress a Future Warning from pybids about leading dot included in 'extension' from version 0.14.0
+    # The config_bids.json file used matches the future behavior
+    # TODO: when reaching version 0.14.0, remove the following line
+    pybids.config.set_option('extension_initial_dot', True)
+
+    # Initialize BIDSLayoutIndexer and BIDSLayout
+    # validate=True by default for both indexer and layout, BIDS-validator is not skipped
+    # Force index for subfolders starting with string "sub", and samples tsv and json files (for microscopy)
+    force_index = [d for d in os.listdir(bids_path) if (os.path.isdir(os.path.join(bids_path, d))) and (d.startswith("sub"))]
+    force_index.extend(['samples.tsv', 'samples.json'])
+    indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
+    layout = pybids.BIDSLayout(bids_path, config=bids_config, indexer=indexer, derivatives=derivatives)
+
+    # Transform layout to dataframe with all entities and json metadata
+    # As per pybids, derivatives don't include parsed entities and json metadata, only the "path" columns
+    df = layout.to_df(metadata=True)
+
+    # Add filename and parent_path columns
+    df['filename'] = df['path'].apply(os.path.basename)
+    df['parent_path'] = df['path'].apply(os.path.dirname)
+
+    # Filter rows with chosen extensions from loader parameters
+    # We may want to filter according to data_type as well (ex: anat, microscopy, etc)
+    df = df[df['filename'].str.contains('|'.join(extensions))]
+
+    # Update dataframe with files from subject folders only, and files from chosen derivatives from loader parameters
+    df_derivatives = df[df['path'].str.contains('derivatives') & df['filename'].str.contains('|'.join(target_suffix))]
+    df = df[df['path'].str.startswith(bids_path + "/sub")]
+    df = pd.concat([df, df_derivatives])
+
+    # Reset index
+    df.reset_index(drop=True, inplace=True)
+    print(df)
+
+    # Add metadata from participants.tsv
+    fname_participants = bids_path + "/participants.tsv"
+    df_participants = pd.read_csv(fname_participants, sep='\t')
+    df['participant_id'] = "sub-" + df['subject']
+    df = pd.merge(df, df_participants, on='participant_id', suffixes=("_x", None), how='left')
+
+    # Add metadata from samples.tsv, if present
+    fname_samples = bids_path + "/samples.tsv"
+    if os.path.exists(fname_samples):
+        df_samples = pd.read_csv(fname_samples, sep='\t')
+        df['sample_id'] = "sample-" + df['sample']
+        df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None), how='left')
+
+    # TODO: sessions.tsv and scans.tsv
+    # There is a function for this in pybids, I can't make it work on their examples at the moment.
+    # Could also be used for participants.tsv
+    # Could be used for samples.tsv with modifications to pybids after BEP microscopy is merged in BIDS.
+
+    # TODO: check if other files are needed for EEG
+
+    # Drop columns with all null values
+    df.dropna(axis=1, inplace=True, how='all')
+
+    # TODO: read appropriate metadata from image files and add to dataframe
+
+    return df
