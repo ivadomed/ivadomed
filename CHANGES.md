@@ -1,3 +1,30 @@
+## v2.6.0 (2020-11-23)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.5.0...v2.6.0)
+
+**BUG**
+
+ - Make is_2d retrocompatibility.  [View pull request](https://github.com/ivadomed/ivadomed/pull/535)
+ - Support multiclass if first class missing.  [View pull request](https://github.com/ivadomed/ivadomed/pull/522)
+
+**DOCUMENTATION**
+
+ - AdapWing 3D: fix comment.  [View pull request](https://github.com/ivadomed/ivadomed/pull/531)
+ - paper.md: overview_title.png path.  [View pull request](https://github.com/ivadomed/ivadomed/pull/529)
+ - paper.bib: correct typo.  [View pull request](https://github.com/ivadomed/ivadomed/pull/528)
+ - Fix DOIs in paper.bib.  [View pull request](https://github.com/ivadomed/ivadomed/pull/527)
+ - Redirect to DokuWiki/GitHub from the contributing guidelines.  [View pull request](https://github.com/ivadomed/ivadomed/pull/523)
+ - Change path for images.  [View pull request](https://github.com/ivadomed/ivadomed/pull/521)
+
+**ENHANCEMENT**
+
+ - automate_training: add new parameter to change multiple params.  [View pull request](https://github.com/ivadomed/ivadomed/pull/533)
+ - Softseg multiclass.  [View pull request](https://github.com/ivadomed/ivadomed/pull/530)
+ - Multiclass and multichannel support for segment volume.  [View pull request](https://github.com/ivadomed/ivadomed/pull/524)
+
+**FEATURE**
+
+ - Create sample to balance metadata.  [View pull request](https://github.com/ivadomed/ivadomed/pull/503)
+
 ## v2.5.0 (2020-11-10)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.4.0...v2.5.0)
 
