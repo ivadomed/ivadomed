@@ -1,7 +1,7 @@
 {
     "command": "train",
     "gpu": 0,
-    "log_directory": "/home/mhbourget/ivadomed/log_directory/new_loader",
+    "log_directory": "log_directory/new_loader",
     "model_name": "model_name",
     "debugging": false,
     "object_detection_params": {
@@ -9,8 +9,8 @@
         "safety_factor": [1.0, 1.0, 1.0]
     },
     "loader_parameters": {
-        "bids_path": "/home/mhbourget/ivadomed/data_example_microscopy_sem",
-        "bids_config": "/home/mhbourget/ivadomed/ivadomed/config/config_bids.json",
+        "bids_path": "data_example_microscopy_sem",
+        "bids_config": "ivadomed/config/config_bids.json",
         "target_suffix": ["_seg-manual", "_seg-axon-manual"],
         "extensions": [".png", ".nii.gz"],
         "roi_params": {
