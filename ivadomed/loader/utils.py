@@ -556,13 +556,13 @@ def create_bids_dataframe(loader_params, derivatives):
     print(df)
 
     # Add metadata from participants.tsv
-    fname_participants = bids_path + "/participants.tsv"
+    fname_participants = os.path.join(bids_path, "participants.tsv")
     df_participants = pd.read_csv(fname_participants, sep='\t')
     df['participant_id'] = "sub-" + df['subject']
     df = pd.merge(df, df_participants, on='participant_id', suffixes=("_x", None), how='left')
 
     # Add metadata from samples.tsv, if present
-    fname_samples = bids_path + "/samples.tsv"
+    fname_samples = os.path.join(bids_path, "samples.tsv")
     if os.path.exists(fname_samples):
         df_samples = pd.read_csv(fname_samples, sep='\t')
         df['sample_id'] = "sample-" + df['sample']
