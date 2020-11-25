@@ -492,7 +492,8 @@ class HDF5Dataset:
 
     def __init__(self, root_dir, subject_lst, model_params, target_suffix, contrast_params,
                  slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
-                 slice_filter_fn=None, roi_params=None, object_detection_params=None, soft_gt=False):
+                 slice_filter_fn=None, roi_params=None, object_detection_params=None, soft_gt=False,
+                 task="segmentation"):
         self.cst_lst = copy.deepcopy(contrast_params["contrast_lst"])
         self.gt_lst = copy.deepcopy(model_params["target_lst"] if "target_lst" in model_params else None)
         self.roi_lst = copy.deepcopy(model_params["roi_lst"] if "roi_lst" in model_params else None)
@@ -500,6 +501,7 @@ class HDF5Dataset:
         self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
         self.filter_slices = slice_filter_fn
         self.prepro_transforms, self.transform = transform
+        self.task = task
 
         metadata_choice = False if metadata_choice is None else metadata_choice
         # Getting HDS5 dataset file
