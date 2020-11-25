@@ -517,7 +517,7 @@ def create_bids_dataframe(loader_params, derivatives):
 
     # Get bids_path, bids_config, target_suffix and extensions from loader parameters
     bids_path = loader_params['bids_path']
-    bids_config = loader_params['bids_config']
+    bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
     target_suffix = loader_params['target_suffix']
     extensions = loader_params['extensions']
 
