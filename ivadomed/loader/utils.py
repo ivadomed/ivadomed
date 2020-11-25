@@ -547,9 +547,7 @@ def create_bids_dataframe(loader_params, derivatives):
     df = df[df['filename'].str.contains('|'.join(extensions))]
 
     # Update dataframe with files from subject folders only, and files from chosen derivatives from loader parameters
-    df_derivatives = df[df['path'].str.contains('derivatives') & df['filename'].str.contains('|'.join(target_suffix))]
-    df = df[df['path'].str.startswith(bids_path + "/sub")]
-    df = pd.concat([df, df_derivatives])
+    df = df[~df['path'].str.contains('derivatives') | df['filename'].str.contains('|'.join(target_suffix))]
 
     # Reset index
     df.reset_index(drop=True, inplace=True)
