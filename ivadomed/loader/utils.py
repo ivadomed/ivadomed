@@ -553,7 +553,6 @@ def create_bids_dataframe(loader_params, derivatives):
 
     # Reset index
     df.reset_index(drop=True, inplace=True)
-    print(df)
 
     # Add metadata from participants.tsv
     fname_participants = os.path.join(bids_path, "participants.tsv")
