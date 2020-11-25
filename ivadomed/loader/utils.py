@@ -70,13 +70,17 @@ def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8
     elif split_method == 'per_patient':
         # Separate dataset in test, train and validation using sklearn function
         # In case we want to use the entire dataset for testing purposes
-        if test_frac == 1:
+        X_remain = df['participant_id'].tolist()
+        if len(center_test_lst):
+            X_test = df[df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
+            X_remain = df[~df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
+
+        if test_frac == 1 and not len(center_test_lst):
             X_test = df['participant_id'].tolist()
         else:
-            X_train, X_remain = train_test_split(df['participant_id'].tolist(), train_size=train_frac,
-                                                 random_state=random_seed)
+            X_train, X_remain = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
             # In case the entire dataset is used to train / validate the model
-            if test_frac == 0:
+            if test_frac == 0 or len(center_test_lst):
                 X_val = X_remain
             else:
                 X_test, X_val = train_test_split(X_remain, train_size=test_frac / (1 - train_frac),
