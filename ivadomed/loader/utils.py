@@ -508,6 +508,7 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     # apply transformation
     return nib.orientations.apply_orientation(arr_ras, trans_orient)
 
+
 def create_bids_dataframe(loader_params, derivatives):
     """Create a dataframe containing all BIDS image files in a bids_path and their metadata.
 
