@@ -556,11 +556,12 @@ def create_bids_dataframe(loader_params, derivatives):
     # Reset index
     df.reset_index(drop=True, inplace=True)
 
-    # Add metadata from participants.tsv
+    # Add metadata from participants.tsv, if present
     fname_participants = os.path.join(bids_path, "participants.tsv")
-    df_participants = pd.read_csv(fname_participants, sep='\t')
     df['participant_id'] = "sub-" + df['subject']
-    df = pd.merge(df, df_participants, on='participant_id', suffixes=("_x", None), how='left')
+    if os.path.exists(fname_participants):
+        df_participants = pd.read_csv(fname_participants, sep='\t')
+        df = pd.merge(df, df_participants, on='participant_id', suffixes=("_x", None), how='left')
 
     # Add metadata from samples.tsv, if present
     fname_samples = os.path.join(bids_path, "samples.tsv")
