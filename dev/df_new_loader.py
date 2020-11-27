@@ -12,15 +12,14 @@ import os
 import pandas as pd
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
-import bids as pybids
 
 # GET LOADER PARAMETERS FROM IVADOMED CONFIG FILE
 # The loader parameters have 2 new fields: "bids_config" and "extensions".
 # "bids_config" is mandatory for microscopy until BEP is merged and pybids is updated, the file is
 # in ivadomed/config/config_bids.json.
-# "bids_config" is optional for anat, can be the same as microscopy or set to null.
+# "bids_config" is optional for anat
 # "extensions" is used to filter which files are to be indexed, in case multiple file types are present.
-path_config_file = "/home/mhbourget/ivadomed/ivadomed/config/config_new_loader.json"
+path_config_file = "ivadomed/config/config_new_loader.json"
 context = imed_config_manager.ConfigurationManager(path_config_file).get_config()
 loader_params = context["loader_parameters"]
 
@@ -34,5 +33,6 @@ derivatives = True
 df = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
 
 # SAVE DATAFRAME TO CSV FILE
-path_csv = "./test.csv"
+path_csv = "test.csv"
 df.to_csv(path_csv)
+print(df)
