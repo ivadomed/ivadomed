@@ -90,7 +90,7 @@ def test_hdf5():
             "ram": False,
             "hdf5_path": 'testing_data/mytestfile.hdf5',
             "csv_path": 'testing_data/hdf5.csv',
-            "target_lst": ["T2w"],
+            "target_contrast": "T2w",
             "roi_lst": ["T2w"]
         }
     contrast_params = {
