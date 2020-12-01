@@ -442,6 +442,7 @@ class Bids_to_hdf5:
                 grp['roi'].attrs.create('contrast', [contrast], dtype=self.dt)
 
             # dataset metadata
+            # Change None to 'None' to store in hdf5
             grp[key].attrs['roi_filename'] = ['None' if v is None else v for v in roi_metadata['gt_filenames']]
             grp[key].attrs['data_type'] = roi_metadata['data_type']
 
