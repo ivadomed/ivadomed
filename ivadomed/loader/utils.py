@@ -424,7 +424,7 @@ def update_metadata(metadata_src_lst, metadata_dest_lst):
 
     Args:
         metadata_src_lst (list): List of source metadata used as reference for the destination metadata.
-        metadata_dest_lst (list): List of metadate that needs to be updated.
+        metadata_dest_lst (list): List of metadata that needs to be updated.
 
     Returns:
         list: updated metadata list.
