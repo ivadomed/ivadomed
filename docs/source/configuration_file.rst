@@ -327,8 +327,8 @@ HeMISUnet (Optional)
 - ``ram``. Bool. Indicates whether to save the data in ram or not.
 - ``hdf5_path``: Str. Path to hdf5 files containing the dataset.
 - ``csv_path``: Str. Path to dataframe.
-- ``target_contrast``: Str. Contrast of GT to be used.
-- `` Contrast label used for ROI cropping.``: Str. Contrast of ROI to be used.
+- ``target_contrast``: Str. Contrast label used for ground truth.
+- `` Contrast label used for ROI cropping.``: Str. Contrast label used for ROI cropping.
 
 .. _Modified3DUNet:
 

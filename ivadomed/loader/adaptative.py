@@ -25,7 +25,7 @@ class Dataframe:
         contrasts (list of str): List of the contrasts of interest.
         path (str): Dataframe path.
         target_suffix (list of str): List of suffix of targetted structures.
-        roi_suffix (str): List of suffix of ROI masks.
+        roi_suffix (list): List of suffix of ROI masks.
         filter_slices (SliceFilter): Object that filters slices according to their content.
         dim (int): Choice 2 or 3, for 2D or 3D data respectively.
 
@@ -483,7 +483,7 @@ class HDF5Dataset:
     Attributes:
         cst_lst (list): Contrast list.
         gt_contrast (str): Contrast label used for ground truth.
-        roi_lst (list): Contrast label used for ROI cropping.
+        roi_contrast (str): Contrast label used for ROI cropping.
         dim (int): Choice 2 or 3, for 2D or 3D data respectively.
         filter_slices (SliceFilter): Object that filters slices according to their content.
         prepro_transforms (Compose): Transforms to be applied before training.
@@ -498,7 +498,7 @@ class HDF5Dataset:
                  task="segmentation"):
         self.cst_lst = copy.deepcopy(contrast_params["contrast_lst"])
         self.gt_contrast = copy.deepcopy(model_params["target_contrast"] if "target_contrast" in model_params else None)
-        self.roi_lst = copy.deepcopy(model_params["roi_lst"] if "roi_lst" in model_params else None)
+        self.roi_contrast = copy.deepcopy(model_params["roi_contrast"] if "roi_contrast" in model_params else None)
         self.dim = dim
         self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
         self.filter_slices = slice_filter_fn
@@ -527,7 +527,7 @@ class HDF5Dataset:
             self.hdf5_file = h5py.File(model_params["hdf5_path"], "r")
         # Loading dataframe object
         self.df_object = Dataframe(self.hdf5_file, self.cst_lst, model_params["csv_path"],
-                                   target_suffix=[self.gt_contrast], roi_suffix=self.roi_lst, dim=self.dim,
+                                   target_suffix=[self.gt_contrast], roi_suffix=[self.roi_contrast], dim=self.dim,
                                    filter_slices=slice_filter_fn)
         if complet:
             self.df_object.clean(self.cst_lst)
@@ -629,18 +629,18 @@ class HDF5Dataset:
         # ROI
         roi_img = []
         roi_metadata = []
-        if self.roi_lst:
-            if self.status['roi/' + self.roi_lst[0]]:
-                roi_data = line['roi/' + self.roi_lst[0]]
+        if self.roi_contrast:
+            if self.status['roi/' + self.roi_contrast]:
+                roi_data = line['roi/' + self.roi_contrast]
             else:
-                roi_data = self.hdf5_file[line['roi/' + self.roi_lst[0]]][line['Slices']]
+                roi_data = self.hdf5_file[line['roi/' + self.roi_contrast]][line['Slices']]
 
             roi_data = roi_data.astype(np.uint8)
             roi_img.append(roi_data)
 
             roi_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
                                                                   self.hdf5_file[
-                                                                      line['roi/' + self.roi_lst[0]]].attrs.items()}))
+                                                                      line['roi/' + self.roi_contrast]].attrs.items()}))
             roi_metadata[0]['crop_params'] = {}
 
         # Run transforms on ROI
