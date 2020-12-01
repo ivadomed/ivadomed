@@ -520,11 +520,12 @@ def create_bids_dataframe(loader_params, derivatives):
         df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
     """
 
-    # Get bids_path, bids_config, target_suffix and extensions from loader parameters
+    # Get bids_path, bids_config, target_suffix, extensions and data_types from loader parameters
     bids_path = loader_params['bids_path']
     bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
     target_suffix = loader_params['target_suffix']
     extensions = loader_params['extensions']
+    data_types = loader_params['data_types']
 
     # Suppress a Future Warning from pybids about leading dot included in 'extension' from version 0.14.0
     # The config_bids.json file used matches the future behavior
@@ -547,9 +548,9 @@ def create_bids_dataframe(loader_params, derivatives):
     df['filename'] = df['path'].apply(os.path.basename)
     df['parent_path'] = df['path'].apply(os.path.dirname)
 
-    # Filter rows with chosen extensions from loader parameters
-    # We may want to filter according to data_type as well (ex: anat, microscopy, etc)
-    df = df[df['filename'].str.contains('|'.join(extensions))]
+    # Filter rows with chosen extensions and data_types from loader parameters
+    df = df[df['filename'].str.endswith(tuple(extensions))]
+    df = df[df['parent_path'].str.endswith(tuple(data_types))]
 
     # Update dataframe with files from subject folders only, and files from chosen derivatives from loader parameters
     df = df[~df['path'].str.contains('derivatives') | df['filename'].str.contains('|'.join(target_suffix))]
