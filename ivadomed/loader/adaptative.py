@@ -350,16 +350,16 @@ class Bids_to_hdf5:
                 input_volumes.append(slice_seg_pair["input"][0])
 
                 # Handle unlabeled data
-                if not len(slice_seg_pair["gt"]):
-                    gt_volume = []
-                else:
-                    gt_volume.append((slice_seg_pair["gt"][0] * 255).astype(np.uint8) / 255.)
+                gt_slice_list = []
+                for gt_slice in slice_seg_pair["gt"]:
+                    gt_slice_list.append((gt_slice * 255).astype(np.uint8) / 255.)
+                gt_volume.append(gt_slice_list)
 
                 # Handle data with no ROI provided
-                if not len(roi_pair_slice["gt"]):
-                    roi_volume = []
-                else:
-                    roi_volume.append((roi_pair_slice["gt"][0] * 255).astype(np.uint8) / 255.)
+                roi_slice_list = []
+                for roi_slice in roi_pair_slice["gt"]:
+                    roi_slice_list.append((roi_slice * 255).astype(np.uint8) / 255.)
+                roi_volume.append(roi_slice_list)
 
             # Getting metadata using the one from the last slice
             input_metadata = slice_seg_pair['input_metadata'][0]
@@ -481,7 +481,7 @@ class HDF5Dataset:
 
     Attributes:
         cst_lst (list): Contrast list.
-        gt_lst (list): Contrast label used for ground truth.
+        gt_contrast (str): Contrast label used for ground truth.
         roi_lst (list): Contrast label used for ROI cropping.
         dim (int): Choice 2 or 3, for 2D or 3D data respectively.
         filter_slices (SliceFilter): Object that filters slices according to their content.
@@ -496,7 +496,7 @@ class HDF5Dataset:
                  slice_filter_fn=None, roi_params=None, object_detection_params=None, soft_gt=False,
                  task="segmentation"):
         self.cst_lst = copy.deepcopy(contrast_params["contrast_lst"])
-        self.gt_lst = copy.deepcopy(model_params["target_lst"] if "target_lst" in model_params else None)
+        self.gt_contrast = copy.deepcopy(model_params["target_contrast"] if "target_contrast" in model_params else None)
         self.roi_lst = copy.deepcopy(model_params["roi_lst"] if "roi_lst" in model_params else None)
         self.dim = dim
         self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
@@ -526,7 +526,7 @@ class HDF5Dataset:
             self.hdf5_file = h5py.File(model_params["hdf5_path"], "r")
         # Loading dataframe object
         self.df_object = Dataframe(self.hdf5_file, self.cst_lst, model_params["csv_path"],
-                                   target_suffix=self.gt_lst, roi_suffix=self.roi_lst, dim=self.dim,
+                                   target_suffix=[self.gt_contrast], roi_suffix=self.roi_lst, dim=self.dim,
                                    filter_slices=slice_filter_fn)
         if complet:
             self.df_object.clean(self.cst_lst)
@@ -611,19 +611,19 @@ class HDF5Dataset:
             input_metadata.append(metadata)
 
         # GT
-        gt_img = []
-        gt_metadata = []
-        for idx, gt in enumerate(self.gt_lst):
-            if self.status['gt/' + gt]:
-                gt_data = line['gt/' + gt]
-            else:
-                gt_data = self.hdf5_file[line['gt/' + gt]][line['Slices']]
+        if self.status['gt/' + self.gt_contrast]:
+            gt_data = line['gt/' + self.gt_contrast]
+        else:
+            gt_data = self.hdf5_file[line['gt/' + self.gt_contrast]][line['Slices']]
 
-            gt_data = gt_data.astype(np.uint8)
-            gt_img.append(gt_data)
+        gt_img = gt_data.astype(np.uint8)
+
+        gt_metadata = []
+        for n_gt in range(gt_img.shape[0]):
             gt_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
-                                                                 self.hdf5_file[line['gt/' + gt]].attrs.items()}))
-            gt_metadata[idx]['crop_params'] = {}
+                                                                 self.hdf5_file[line['gt/' +
+                                                                 self.gt_contrast]].attrs.items()}))
+            gt_metadata[n_gt]['crop_params'] = {}
 
         # ROI
         roi_img = []
@@ -644,7 +644,7 @@ class HDF5Dataset:
 
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
-        stack_roi, metadata_roi = self.transform(sample=roi_img,
+        stack_roi, metadata_roi = self.transform(sample=list(roi_img),
                                                  metadata=roi_metadata,
                                                  data_type="roi")
         # Update metadata_input with metadata_roi
@@ -658,7 +658,7 @@ class HDF5Dataset:
         metadata_gt = imed_loader_utils.update_metadata(metadata_input, gt_metadata)
 
         # Run transforms on images
-        stack_gt, metadata_gt = self.transform(sample=gt_img,
+        stack_gt, metadata_gt = self.transform(sample=list(gt_img),
                                                metadata=metadata_gt,
                                                data_type="gt")
         data_dict = {
