@@ -417,7 +417,8 @@ class Bids_to_hdf5:
                 grp['gt'].attrs.create('contrast', [contrast], dtype=self.dt)
 
             # dataset metadata
-            grp[key].attrs['gt_filenames'] = input_metadata['gt_filenames']
+            # Change None to 'None' to store in hdf5
+            grp[key].attrs['gt_filenames'] = ['None' if v is None else v for v in input_metadata['gt_filenames']]
             grp[key].attrs['data_type'] = gt_metadata['data_type']
 
             if "zooms" in gt_metadata.keys():
@@ -441,7 +442,7 @@ class Bids_to_hdf5:
                 grp['roi'].attrs.create('contrast', [contrast], dtype=self.dt)
 
             # dataset metadata
-            grp[key].attrs['roi_filename'] = roi_metadata['gt_filenames']
+            grp[key].attrs['roi_filename'] = ['None' if v is None else v for v in roi_metadata['gt_filenames']]
             grp[key].attrs['data_type'] = roi_metadata['data_type']
 
             if "zooms" in roi_metadata.keys():
