@@ -12,7 +12,8 @@
         "bids_path": "data_example_microscopy_sem",
         "bids_config": "ivadomed/config/config_bids.json",
         "target_suffix": ["_seg-manual", "_seg-axon-manual"],
-        "extensions": [".png", ".nii.gz"],
+        "extensions": [".nii.gz", ".png"],
+        "data_types": ["anat", "microscopy"],
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
