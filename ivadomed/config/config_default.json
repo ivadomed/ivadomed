@@ -10,6 +10,7 @@
     },
     "loader_parameters": {
         "bids_path": "bids_path",
+        "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": [],
         "roi_params": {
             "suffix": null,
