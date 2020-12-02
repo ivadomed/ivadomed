@@ -575,9 +575,25 @@ def create_bids_dataframe(loader_params, derivatives):
         df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None), how='left')
         df.drop(['participant_id', 'sample_id'], axis=1, inplace=True)
 
-    # TODO: sessions.tsv and scans.tsv
-    # There is a function for this in pybids, I can't make it work on their examples at the moment.
-    # Could be used for samples.tsv with modifications to pybids after BEP microscopy is merged in BIDS.
+    # Add metadata from all _sessions.tsv files, if present
+    # Uses pybids function
+    if layout.get_collections(level='subject'):
+        df_sessions = layout.get_collections(level='subject', merge=True).to_df()
+        df_sessions.drop(['suffix'], axis=1, inplace=True)
+        df = pd.merge(df, df_sessions, on=['subject', 'session'], suffixes=("_x", None), how='left')
+
+    # Add metadata from all _scans.tsv files, if present
+    # TODO: use pybids function after BEP microscopy is merged in BIDS
+    # TODO: verify merge behavior with EEG and DWI scans files, tested with anat and microscopy only
+    df_scans = pd.DataFrame()
+    for root, dirs, files in os.walk(bids_path):
+        for file in files:
+            if file.endswith("scans.tsv"):
+                df_temp = pd.read_csv(os.path.join(root, file), sep='\t')
+                df_scans = pd.concat([df_scans, df_temp], ignore_index=True)
+    if not df_scans.empty:
+        df_scans['filename'] = df_scans['filename'].apply(os.path.basename)
+        df = pd.merge(df, df_scans, on=['filename'], suffixes=("_x", None), how='left')
 
     # TODO: check if other files are needed for EEG
 
