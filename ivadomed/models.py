@@ -380,6 +380,7 @@ class Decoder(Module):
         up_path (ModuleList): List of module operations done during decoding.
         last_conv (Conv2d): Last convolution.
         last_film (FiLMlayer): FiLM layer applied to last convolution.
+        softmax (Softmax): Softmax layer that can be applied as last layer.
     """
 
     def __init__(self, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1,
