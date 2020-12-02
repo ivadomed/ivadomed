@@ -781,7 +781,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                     print("Subject without derivative, skipping.")
                     continue
                 derivatives = subject.get_derivatives("labels")
-                target_filename, roi_filename = [[]] * len(target_suffix), None
+                target_filename, roi_filename = [[] for _ in range(len(target_suffix))], None
 
                 for deriv in derivatives:
                     for idx, suffix_list in enumerate(target_suffix):
