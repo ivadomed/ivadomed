@@ -325,7 +325,7 @@ HeMISUnet (Optional)
    modified with the exponent ``missing_probability_growth``.
 - ``contrasts``: List. List of contrasts used as input.
 - ``ram``. Bool. Indicates whether to save the data in ram or not.
-- ``hdf5_path``: Str. Path to hdf5 files containing the dataset.
+- ``hdf5_path``: Str. Path to hdf5 file containing the dataset.
 - ``csv_path``: Str. Path to dataframe (csv file).
 - ``target_contrast``: Str. Contrast whom the label file is used as ground truth.
 - `` Contrast label used for ROI cropping.``: Str. Contrast whom the label file is used for ROI cropping.
