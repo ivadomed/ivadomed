@@ -555,9 +555,6 @@ def create_bids_dataframe(loader_params, derivatives):
     # Update dataframe with files from subject folders only, and files from chosen derivatives from loader parameters
     df = df[~df['path'].str.contains('derivatives') | df['filename'].str.contains('|'.join(target_suffix))]
 
-    # Reset index
-    df.reset_index(drop=True, inplace=True)
-
     # Add metadata from participants.tsv file, if present
     # Uses pybids function
     if layout.get_collections(level='dataset'):
@@ -597,9 +594,29 @@ def create_bids_dataframe(loader_params, derivatives):
 
     # TODO: check if other files are needed for EEG
 
-    # Drop columns with all null values
-    df.dropna(axis=1, inplace=True, how='all')
+    # If indexing of derivatives is true
+    # Get list of subject files, list of subject prefix filenames without extensions, and list of available derivatives
+    if derivatives:
+        subject_files = df[~df['path'].str.contains('derivatives')]['filename'].to_list()
+        prefix_fnames = []
+        [prefix_fnames.append(s.split('.')[0]) for s in subject_files]
+        deriv = df[df['path'].str.contains('derivatives')]['filename'].tolist()
+        has_deriv = []
+        [has_deriv.append(p) for p in prefix_fnames for d in deriv if p in d]
+
+        # Filter rows with available derivatives only
+        if has_deriv:
+            df = df[df['filename'].str.contains('|'.join(has_deriv))]
+        else:
+            # Behavior TBD when derivatives are indexed but no match is found.
+            raise RuntimeError("Derivatives not found.")
 
     # TODO: read appropriate metadata from image files and add to dataframe
+
+    # Reset index
+    df.reset_index(drop=True, inplace=True)
+
+    # Drop columns with all null values
+    df.dropna(axis=1, inplace=True, how='all')
 
     return df
