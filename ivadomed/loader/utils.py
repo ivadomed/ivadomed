@@ -558,23 +558,25 @@ def create_bids_dataframe(loader_params, derivatives):
     # Reset index
     df.reset_index(drop=True, inplace=True)
 
-    # Add metadata from participants.tsv, if present
-    fname_participants = os.path.join(bids_path, "participants.tsv")
-    df['participant_id'] = "sub-" + df['subject']
-    if os.path.exists(fname_participants):
-        df_participants = pd.read_csv(fname_participants, sep='\t')
-        df = pd.merge(df, df_participants, on='participant_id', suffixes=("_x", None), how='left')
+    # Add metadata from participants.tsv file, if present
+    # Uses pybids function
+    if layout.get_collections(level='dataset'):
+        df_participants = layout.get_collections(level='dataset', merge=True).to_df()
+        df_participants.drop(['suffix'], axis=1, inplace=True)
+        df = pd.merge(df, df_participants, on='subject', suffixes=("_x", None), how='left')
 
-    # Add metadata from samples.tsv, if present
+    # Add metadata from samples.tsv file, if present
+    # TODO: use pybids function after BEP microscopy is merged in BIDS
     fname_samples = os.path.join(bids_path, "samples.tsv")
     if os.path.exists(fname_samples):
         df_samples = pd.read_csv(fname_samples, sep='\t')
+        df['participant_id'] = "sub-" + df['subject']
         df['sample_id'] = "sample-" + df['sample']
         df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None), how='left')
+        df.drop(['participant_id', 'sample_id'], axis=1, inplace=True)
 
     # TODO: sessions.tsv and scans.tsv
     # There is a function for this in pybids, I can't make it work on their examples at the moment.
-    # Could also be used for participants.tsv
     # Could be used for samples.tsv with modifications to pybids after BEP microscopy is merged in BIDS.
 
     # TODO: check if other files are needed for EEG
