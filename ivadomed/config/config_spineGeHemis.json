@@ -74,7 +74,7 @@
         "hdf5_path": "/home/andreanne/Documents/dataset/HeMIS.hdf5",
         "csv_path": "/home/andreanne/Documents/dataset/HeMIS.csv",
         "target_contrast": "T2w",
-        "roi_lst": null
+        "roi_contrast": null
     },
     "UNet3D": {
         "applied": false,

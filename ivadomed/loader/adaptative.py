@@ -49,7 +49,7 @@ class Dataframe:
         else:
             self.contrasts.append('gt')
 
-        if roi_suffix:
+        if roi_suffix[0]:
             for roi in roi_suffix:
                 self.contrasts.append('roi/' + roi)
         else:
