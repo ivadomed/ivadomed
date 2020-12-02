@@ -328,7 +328,7 @@ HeMISUnet (Optional)
 - ``hdf5_path``: Str. Path to hdf5 file containing the dataset.
 - ``csv_path``: Str. Path to dataframe (csv file).
 - ``target_contrast``: Str. Contrast whom the label file is used as ground truth.
-- `` Contrast label used for ROI cropping.``: Str. Contrast whom the label file is used for ROI cropping.
+- ``roi_contrast``: Str. Contrast whom the label file is used for ROI cropping.
 
 .. _Modified3DUNet:
 
