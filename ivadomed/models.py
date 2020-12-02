@@ -423,6 +423,7 @@ class Decoder(Module):
         conv = nn.Conv2d if is_2d else nn.Conv3d
         self.last_conv = conv(in_channel // 2, out_channel, kernel_size=3, padding=1)
         self.last_film = FiLMlayer(n_metadata, self.out_channel) if film_layers and film_layers[-1] else None
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, features, context=None, w_film=None):
         x = features[-1]
