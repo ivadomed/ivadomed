@@ -4,6 +4,7 @@ import os
 import logging
 
 import numpy as np
+import pandas as pd
 import torch
 import joblib
 from bids_neuropoly import bids
@@ -91,7 +92,7 @@ def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8
 
 
 def get_new_subject_split(path_folder, center_test, split_method, random_seed,
-                          train_frac, test_frac, log_directory, balance):
+                          train_frac, test_frac, log_directory, balance, subject_selection=None):
     """Randomly split dataset between training / validation / testing.
 
     Randomly split dataset between training / validation / testing\
@@ -107,12 +108,24 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
         log_directory (string): Output folder.
         balance (string): Metadata contained in "participants.tsv" file with categorical values. Each category will be
         evenly distributed in the training, validation and testing datasets.
+        subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
     Returns:
         list, list list: Training, validation and testing subjects lists.
     """
     # read participants.tsv as pandas dataframe
     df = bids.BIDS(path_folder).participants.content
+    if subject_selection is not None:
+        # Verify subject_selection format
+        if not (len(subject_selection["metadata"]) == len(subject_selection["n"]) == len(subject_selection["value"])):
+            raise ValueError("All lists in subject_selection parameter should have the same length.")
+
+        sampled_dfs = []
+        for m, n, v in zip(subject_selection["metadata"], subject_selection["n"], subject_selection["value"]):
+            sampled_dfs.append(df[df[m] == v].sample(n=n, random_state=random_seed))
+
+        if len(sampled_dfs) != 0:
+            df = pd.concat(sampled_dfs)
 
     # If balance, then split the dataframe for each categorical value of the "balance" column
     if balance:
@@ -147,13 +160,14 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
     return train_lst, valid_lst, test_lst
 
 
-def get_subdatasets_subjects_list(split_params, bids_path, log_directory):
+def get_subdatasets_subjects_list(split_params, bids_path, log_directory, subject_selection=None):
     """Get lists of subjects for each sub-dataset between training / validation / testing.
 
     Args:
         split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
         bids_path (str): Path to the BIDS dataset.
         log_directory (str): Output folder.
+        subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
     Returns:
         list, list list: Training, validation and testing subjects lists.
@@ -171,7 +185,8 @@ def get_subdatasets_subjects_list(split_params, bids_path, log_directory):
                                                                test_frac=split_params['test_fraction'],
                                                                log_directory=log_directory,
                                                                balance=split_params['balance']
-                                                               if 'balance' in split_params else None)
+                                                               if 'balance' in split_params else None,
+                                                               subject_selection=subject_selection)
     return train_lst, valid_lst, test_lst
 
 

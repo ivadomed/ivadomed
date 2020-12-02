@@ -70,6 +70,19 @@ bids\_path
 
 String. Path of the BIDS folder.
 
+subject\_selection
+^^^^^^^^^^^^^^^^^^
+
+Dict.  Used to specify a custom subject selection from a dataset.
+
+- ``n``: List. List containing the number subjects of each metadata.
+- ``metadata``: List. List of metadata used to select the subjects. Each metadata
+  should be the name of a column from the participants.tsv file.
+- ``value``: List. List of metadata values of the subject to be selected.
+
+Example: ``"subject_selection": {"n": [5, 10], "metadata": ["disease", "disease"], "value": ["healthy", "ms"]}``.
+In this example, a subdataset composed of 5 healthy subjects and 10 ms subjects will be selected for training/testing.
+
 target\_suffix
 ^^^^^^^^^^^^^^
 
