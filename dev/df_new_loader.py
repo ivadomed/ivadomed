@@ -22,11 +22,13 @@ from ivadomed.loader import utils as imed_loader_utils
 path_config_file = "ivadomed/config/config_new_loader.json"
 context = imed_config_manager.ConfigurationManager(path_config_file).get_config()
 loader_params = context["loader_parameters"]
+loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
 
 # CHOOSE TO INDEX DERIVATIVES OR NOT
 # To discuss: depending on how derivatives availibility is checked and split is done afterwards.
 # As per pybids, the indexing of derivatives works only if a "dataset_description.json" file
-# is present in "derivatives" or "labels" folder.
+# is present in "derivatives" or "labels" folder with minimal content:
+# {"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}
 derivatives = True
 
 # CREATE DATAFRAME

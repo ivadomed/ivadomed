@@ -19,7 +19,7 @@
             "slice_filter_roi": null
         },
         "contrast_params": {
-            "training_validation": [],
+            "training_validation": ["T1w", "SEM"],
             "testing": [],
             "balance": {}
         },

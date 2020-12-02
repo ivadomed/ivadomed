@@ -526,6 +526,7 @@ def create_bids_dataframe(loader_params, derivatives):
     target_suffix = loader_params['target_suffix']
     extensions = loader_params['extensions']
     data_types = loader_params['data_types']
+    contrast_lst = loader_params["contrast_params"]["contrast_lst"]
 
     # Suppress a Future Warning from pybids about leading dot included in 'extension' from version 0.14.0
     # The config_bids.json file used matches the future behavior
@@ -552,8 +553,9 @@ def create_bids_dataframe(loader_params, derivatives):
     df = df[df['filename'].str.endswith(tuple(extensions))]
     df = df[df['parent_path'].str.endswith(tuple(data_types))]
 
-    # Update dataframe with files from subject folders only, and files from chosen derivatives from loader parameters
-    df = df[~df['path'].str.contains('derivatives') | df['filename'].str.contains('|'.join(target_suffix))]
+    # Update dataframe with subject files with chosen contrast and derivative files with chosen target_suffix from loader parameters
+    df = (df[(~df['path'].str.contains('derivatives') & df['suffix'].str.contains('|'.join(contrast_lst))) |
+          df['filename'].str.contains('|'.join(target_suffix))])
 
     # Add metadata from participants.tsv file, if present
     # Uses pybids function
