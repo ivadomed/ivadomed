@@ -615,6 +615,148 @@ class FiLMlayer(Module):
 
         return output, new_w_shared
 
+"""
+        Vanilla HeMIS structure:
+        BACK END
+        * 2x 2D-Convs (ReLU), stride 1
+        * (2,2) max pooling, stride 1
+        * Zero padding
+        ABSTRACTION
+        * Take mean/variation across modalities per feature map
+        FRONT END
+        * Concatenate mean and variation feature maps
+        * 2D-Conv (ReLU)
+        * 2D-Conv (Softmax, n_channels = n_classes)
+        """
+
+class HeMIS(Module):
+    """
+    An implementation of a vanilla HeMIS architecture (as shown in Havaei et al. 2016,
+    ArXiv link: https://arxiv.org/abs/1607.05194). This network deals with missing contrasts.
+    Optional arguments are present to include non-vanilla elements like dropout and batchnorm.
+
+    Param:
+        contrasts (list): list of all possible contrasts. ['T1', 'T2', 'T2S', 'F']
+
+    Args:
+        contrasts (list): List of contrasts.
+        out_channel (int): Number of output channels.
+        drop_rate (float): Probability of dropout. Set to None for no dropout.
+        bn_momentum (float): Batch normalization momentum. Set to None for no batchnorm.
+        **kwargs:
+
+    Attributes:
+        contrasts (list): List of contrasts.
+        branches (ModuleDict): Contains convolutional branch in the backend for each modality.
+    """
+
+    def __init__(self, contrasts, out_channel, drop_rate=None, bn_momentum=None):
+        super().__init__()
+        self.contrasts = contrasts
+
+        # Back end
+        self.branches = nn.ModuleDict(
+            [['branch_{}'.format(mod),
+              self.build_vanilla_backend(name=mod, 
+                                         bn_momentum=bn_momentum,
+                                         drop_rate=drop_rate)] for mod in self.contrasts])
+
+        # Front end
+        self.frontend = self.build_vanilla_frontend(out_channels=out_channel,
+                                                     bn_momentum=bn_momentum,
+                                                     drop_rate=drop_rate)
+
+    def build_vanilla_backend(self, name, bn_momentum, drop_rate):
+        layers = []
+
+        # TODO: Fix one-off shape error somewhere
+
+        # First layer
+        layers.append(['{}_conv0'.format(name), nn.Conv2d(in_channels=1, out_channels=48,
+                                                          kernel_size=5, padding=2)])
+        if bn_momentum:
+            layers.append(['{}_bn0'.format(name), nn.BatchNorm2d(48, momentum=bn_momentum)])
+        layers.append(['{}_relu0'.format(name), nn.ReLU(inplace=True)])
+        if drop_rate:
+            layers.append(['{}_drop0'.format(name), nn.Dropout2d(drop_rate)])
+
+        # Second layer
+        layers.append(['{}_conv1'.format(name), nn.Conv2d(in_channels=48, out_channels=48,
+                                                          kernel_size=5, padding=2)])
+        if bn_momentum:
+            layers.append(['{}_bn1'.format(name), nn.BatchNorm2d(48, momentum=bn_momentum)])
+        layers.append(['{}_relu1'.format(name), nn.ReLU(inplace=True)])
+        if drop_rate:
+            layers.append(['{}_drop1'.format(name), nn.Dropout2d(drop_rate)])
+
+        layers.append(['{}_maxpool'.format(name), nn.MaxPool2d(kernel_size=2, stride=1)])
+
+        branch = nn.Sequential(OrderedDict(layers))
+        return branch
+
+    def build_vanilla_frontend(self, out_channels, bn_momentum, drop_rate):
+        layers = []
+
+        # First layer
+        layers.append(['frontend_conv0', nn.Conv2d(in_channels=2*48, out_channels=16,
+                                                   kernel_size=5, padding=2)])
+        if bn_momentum:
+            layers.append(['frontend_bn0', nn.BatchNorm2d(16, momentum=bn_momentum)])
+        layers.append(['frontend_relu0', nn.ReLU(inplace=True)])
+        if drop_rate:
+            layers.append(['frontend_drop0', nn.Dropout2d(drop_rate)])
+
+        # Second layer
+        layers.append(['frontend_conv1', nn.Conv2d(in_channels=16, out_channels=out_channels,
+                                                   kernel_size=21, padding=2)])
+        layers.append(['frontend_softmax', nn.Softmax2d()])
+
+        # if bn_momentum:
+        #     layers.append(['frontend_bn0', nn.BatchNorm2d(16, momentum=bn_momentum)])
+        # layers.append(['frontend_relu1', nn.ReLU(inplace=True)])
+        # if drop_rate:
+        #     layers.append(['frontend_drop0', nn.Dropout2d(drop_rate)])
+
+        frontend = nn.Sequential(OrderedDict(layers))
+        return frontend
+
+    def forward(self, x_mods, indexes_mod):
+        """
+        Forward pass.
+
+        Param:
+            x_mods (list): List containing input images. len(x_mods) is equal to number of contrasts.
+                           x_mod[i] contains images of modality i (len(x_mod[i])) is equal to batch size.
+            indexes_mod (list): One-hot encoded list of available modalities per sample in batch, e.g.
+                                [[1, 1, 1], [1, 1, 0], [1, 0, 1], [1, 1, 0]]
+                                   (1st)      (2nd)      (3rd)      (4rd)     sample
+        """
+
+        # Backend
+        features_mod = []
+        for i, mod in enumerate(self.contrasts):
+            features = self.branches['branch_{}'.format(mod)](x_mods[i])
+            features_mod.append(features)
+
+        import ipdb; ipdb.set_trace()
+
+        # Abstraction
+        features_stacked = torch.stack(features_mod, 0)
+        features = torch.cat([features_stacked.mean(0)])
+
+        # for j in range(self.depth + 1):
+        #     features_cat = torch.cat(features_mod[j], 0).transpose(0, 1)
+
+        #     features_mod[j] = torch.cat([torch.cat([features_cat[i][indexes_mod[i]].squeeze(1).mean(0),
+        #                                             features_cat[i][indexes_mod[i]].squeeze(1).var(0)], 0).unsqueeze(0)
+        #                                  for i in range(len(indexes_mod))], 0)
+
+        # # Frontend
+        # preds = self.frontend(features_mod)
+
+        #return preds
+        return features_mod
+
 
 class HeMISUnet(Module):
     """A U-Net model inspired by HeMIS to deal with missing contrasts.
@@ -677,6 +819,9 @@ class HeMISUnet(Module):
 
             for j in range(self.depth + 1):
                 features_mod[j].append(features[j].unsqueeze(0))
+        
+        import ipdb; ipdb.set_trace()
+        # TODO: understand the block underneath.
 
         # Abstraction
         for j in range(self.depth + 1):
