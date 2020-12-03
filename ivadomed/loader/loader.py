@@ -188,7 +188,7 @@ class SegmentationPair(object):
         if self.gt_filenames is not None:
             for idx, gt in enumerate(self.gt_handle):
                 if gt is not None:
-                    self.gt_handle[idx] = nib.as_closest_canonical(gt)
+                    self.gt_handle[idx] = [nib.as_closest_canonical(gt_rater) for gt_rater in gt]
 
         # If binary classification, then extract labels from GT mask
 
