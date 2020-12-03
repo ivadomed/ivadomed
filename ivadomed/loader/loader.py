@@ -162,7 +162,7 @@ class SegmentationPair(object):
         # list of GT for multiclass segmentation
         self.gt_handle = []
 
-        # Unlabeled data (inference time)
+        # Labeled data (ie not inference time)
         if self.gt_filenames is not None:
             if not isinstance(self.gt_filenames, list):
                 self.gt_filenames = [self.gt_filenames]
@@ -182,7 +182,7 @@ class SegmentationPair(object):
         for idx, handle in enumerate(self.input_handle):
             self.input_handle[idx] = nib.as_closest_canonical(handle)
 
-        # Unlabeled data
+        # Labeled data (ie not inference time)
         if self.gt_filenames is not None:
             for idx, gt in enumerate(self.gt_handle):
                 if gt is not None:
