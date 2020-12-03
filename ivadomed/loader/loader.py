@@ -213,8 +213,9 @@ class SegmentationPair(object):
 
         for gt in self.gt_handle:
             if gt is not None:
-                shape = imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis)
-                gt_shape.append(tuple(shape))
+                for gt_rater in gt:
+                    shape = imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis)
+                    gt_shape.append(tuple(shape))
 
                 if not len(set(gt_shape)):
                     raise RuntimeError('Labels have different dimensions.')
