@@ -165,7 +165,8 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
 
         if 'object_detection_params' in context and \
                 context['object_detection_params']['object_detection_path'] is not None:
-            imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis)
+            imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis,
+                                               context['object_detection_params']['safety_factor'])
             metadata = [metadata] * len(fname_images)
 
     # Compose transforms
