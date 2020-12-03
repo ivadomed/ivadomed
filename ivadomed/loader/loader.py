@@ -168,10 +168,9 @@ class SegmentationPair(object):
                 self.gt_filenames = [self.gt_filenames]
             for gt in self.gt_filenames:
                 if gt is not None:
-                    if isinstance(gt, str):
-                        self.gt_handle.append(nib.load(gt))
-                    else:  # type == list, when multiple annotations for same tissue
-                        self.gt_handle.append([nib.load(gt_rater) for gt_rater in gt])
+                    if not isinstance(gt, list):  # this tissue has annotation from only one rater
+                        gt = [gt]
+                    self.gt_handle.append([nib.load(gt_rater) for gt_rater in gt])
                 else:
                     self.gt_handle.append(None)
 
