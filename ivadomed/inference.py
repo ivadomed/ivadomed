@@ -140,6 +140,7 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
             thr = int(options['remove_small'].replace(unit, ""))
             postpro['remove_small'] = {"unit": unit, "thr": thr}
 
+        postpro.update(context['postprocessing'])
         context['postprocessing'] = postpro
 
     # LOADER
