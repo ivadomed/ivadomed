@@ -380,6 +380,7 @@ class Decoder(Module):
         up_path (ModuleList): List of module operations done during decoding.
         last_conv (Conv2d): Last convolution.
         last_film (FiLMlayer): FiLM layer applied to last convolution.
+        softmax (Softmax): Softmax layer that can be applied as last layer.
     """
 
     def __init__(self, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1,
@@ -423,6 +424,7 @@ class Decoder(Module):
         conv = nn.Conv2d if is_2d else nn.Conv3d
         self.last_conv = conv(in_channel // 2, out_channel, kernel_size=3, padding=1)
         self.last_film = FiLMlayer(n_metadata, self.out_channel) if film_layers and film_layers[-1] else None
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, features, context=None, w_film=None):
         x = features[-1]
