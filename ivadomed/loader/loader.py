@@ -168,7 +168,10 @@ class SegmentationPair(object):
                 self.gt_filenames = [self.gt_filenames]
             for gt in self.gt_filenames:
                 if gt is not None:
-                    self.gt_handle.append(nib.load(gt))
+                    if isinstance(gt, str):
+                        self.gt_handle.append(nib.load(gt))
+                    else:  # type == list, when multiple annotations for same tissue
+                        self.gt_handle.append([nib.load(gt_rater) for gt_rater in gt])
                 else:
                     self.gt_handle.append(None)
 
@@ -787,7 +790,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                     for idx, suffix_list in enumerate(target_suffix):
                         # If suffix_list is a string, then only one rater annotation per class is available.
                         # Otherwise, multiple raters segmented the same class.
-                        if type(suffix_list) == str:
+                        if isinstance(suffix_list, str):
                             suffix_list = [suffix_list]
                         for suffix in suffix_list:
                             if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
