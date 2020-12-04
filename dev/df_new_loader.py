@@ -25,7 +25,6 @@ loader_params = context["loader_parameters"]
 loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
 
 # CHOOSE TO INDEX DERIVATIVES OR NOT
-# To discuss: depending on how derivatives availibility is checked and split is done afterwards.
 # As per pybids, the indexing of derivatives works only if a "dataset_description.json" file
 # is present in "derivatives" or "labels" folder with minimal content:
 # {"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}
@@ -35,6 +34,6 @@ derivatives = True
 df = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
 
 # SAVE DATAFRAME TO CSV FILE
-path_csv = "test.csv"
+path_csv = "test_df_new_loader.csv"
 df.to_csv(path_csv)
 print(df)

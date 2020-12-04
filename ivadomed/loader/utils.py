@@ -617,23 +617,26 @@ def create_bids_dataframe(loader_params, derivatives):
     # TODO: check if other files are needed for EEG and DWI
 
     # If indexing of derivatives is true
-    # Get list of subject files, list of subject prefix filenames without extensions, and list of available derivatives
+    # Get list of subject files with available derivatives
     if derivatives:
         subject_files = df[~df['path'].str.contains('derivatives')]['filename'].to_list()
         prefix_fnames = []
         [prefix_fnames.append(s.split('.')[0]) for s in subject_files]
         deriv = df[df['path'].str.contains('derivatives')]['filename'].tolist()
         has_deriv = []
-        [has_deriv.append(p) for p in prefix_fnames for d in deriv if p in d]
+        for p in prefix_fnames:
+            available = [p for d in deriv if p in d]
+            if available:
+                has_deriv.extend(available)
+            else:
+                logger.warning("Missing derivative for subject {}. Skipping.".format(p))
 
-        # Filter rows with available derivatives only
+        # Filter dataframe to keep subjects files with available derivatives only
         if has_deriv:
             df = df[df['filename'].str.contains('|'.join(has_deriv))]
         else:
-            # Behavior TBD when derivatives are indexed but no match is found.
+            # Raise error and exit if no derivatives are found for any subject files
             raise RuntimeError("Derivatives not found.")
-
-    # TODO: read appropriate metadata from image files and add to dataframe
 
     # Reset index
     df.reset_index(drop=True, inplace=True)
