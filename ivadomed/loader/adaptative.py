@@ -432,7 +432,7 @@ class HDF5Dataset:
     def __init__(self, root_dir, subject_lst, model_params, target_suffix, contrast_params,
                  slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
                  slice_filter_fn=None, roi_params=None, object_detection_params=None, soft_gt=False,
-                 task="segmentation", multichannel=False):
+                 task="segmentation", multichannel=False, dataset_type='training'):
         self.cst_lst = copy.deepcopy(contrast_params["contrast_lst"])
         self.gt_contrast = copy.deepcopy(model_params["target_contrast"] if "target_contrast" in model_params else None)
         self.roi_contrast = copy.deepcopy(model_params["roi_contrast"] if "roi_contrast" in model_params else None)
@@ -443,8 +443,9 @@ class HDF5Dataset:
         self.task = task
 
         metadata_choice = False if metadata_choice is None else metadata_choice
+        hdf5_path = model_params["hdf5_path"].replace('.hdf5', dataset_type + '.hdf5')
         # Getting HDS5 dataset file
-        if not os.path.exists(model_params["hdf5_path"]):
+        if not os.path.exists(hdf5_path):
             print("Computing hdf5 file of the data")
             dataset = imed_loader.BidsDataset(root_dir=root_dir,
                                               subject_lst=subject_lst,
@@ -457,7 +458,7 @@ class HDF5Dataset:
                                               multichannel=multichannel,
                                               object_detection_params=object_detection_params)
 
-            hdf5_file = Bids_to_hdf5(hdf5_name=model_params["hdf5_path"],
+            hdf5_file = Bids_to_hdf5(hdf5_name=hdf5_path,
                                      dataset=dataset,
                                      metadata_choice=metadata_choice,
                                      slice_axis=slice_axis,
@@ -465,7 +466,7 @@ class HDF5Dataset:
                                      soft_gt=soft_gt)
             self.hdf5_file = hdf5_file.hdf5_file
         else:
-            self.hdf5_file = h5py.File(model_params["hdf5_path"], "r")
+            self.hdf5_file = h5py.File(hdf5_path, "r")
         # Loading dataframe object
         self.df_object = Dataframe(self.hdf5_file, self.cst_lst, model_params["csv_path"],
                                    target_suffix=[self.gt_contrast], roi_suffix=[self.roi_contrast], dim=self.dim,

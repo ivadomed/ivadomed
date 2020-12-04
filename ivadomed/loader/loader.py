@@ -71,6 +71,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
 
     elif model_params["name"] == "HeMISUnet":
         dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
+                                              dataset_type=dataset_type,
                                               subject_lst=data_list,
                                               model_params=model_params,
                                               contrast_params=contrast_params,
