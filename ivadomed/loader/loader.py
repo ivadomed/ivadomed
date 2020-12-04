@@ -290,7 +290,7 @@ class SegmentationPair(object):
                         "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
                         "data_type": 'gt',
                         "crop_params": {}
-                    }) for idx, gt_rater in gt])
+                    }) for idx, gt_rater in enumerate(gt)])
 
             else:
                 # Temporarily append null metadata to null gt
