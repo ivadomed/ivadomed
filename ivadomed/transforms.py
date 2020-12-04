@@ -32,7 +32,10 @@ def multichannel_capable(wrapped):
             list_data, list_metadata = [], []
             for s_cur, m_cur in zip(sample, metadata):
                 if len(list_metadata) > 0:
-                    imed_loader_utils.update_metadata([list_metadata[-1]], [m_cur])
+                    if not isinstance(list_metadata[-1], list):
+                    	imed_loader_utils.update_metadata([list_metadata[-1]], [m_cur])
+                    else:
+                        imed_loader_utils.update_metadata(list_metadata[-1], [m_cur])
                 # Run function for each sample of the list
                 data_cur, metadata_cur = wrapped(self, s_cur, m_cur)
                 list_data.append(data_cur)
@@ -242,6 +245,7 @@ class Resample(ImedTransform):
         return data_out, metadata
 
     @multichannel_capable
+    @multichannel_capable  # for multiple raters during training/preprocessing
     @two_dim_compatible
     def __call__(self, sample, metadata=None):
         """Resample to a given resolution, in millimeters."""
@@ -388,6 +392,7 @@ class Crop(ImedTransform):
         return npad_out_tuple, sample
 
     @multichannel_capable
+    @multichannel_capable  # for multiple raters during training/preprocessing
     def __call__(self, sample, metadata):
         # Get params
         is_2d = sample.shape[-1] == 1
@@ -437,6 +442,7 @@ class CenterCrop(Crop):
     """Make a centered crop of a specified size."""
 
     @multichannel_capable
+    @multichannel_capable  # for multiple raters during training/preprocessing
     @two_dim_compatible
     def __call__(self, sample, metadata=None):
         # Crop parameters
@@ -456,6 +462,7 @@ class ROICrop(Crop):
     """Make a crop of a specified size around a Region of Interest (ROI)."""
 
     @multichannel_capable
+    @multichannel_capable  # for multiple raters during training/preprocessing
     @two_dim_compatible
     def __call__(self, sample, metadata=None):
         # If crop_params are not in metadata,
