@@ -78,6 +78,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                               transform=tranform_lst,
                                               metadata_choice=metadata_type,
+                                              multichannel=multichannel,
                                               slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params,
                                                                                             device=device,
                                                                                             cuda_available=cuda_available),
@@ -843,7 +844,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                     subj_id = subject.record["subject_id"]
                     multichannel_subjects[subj_id]["absolute_paths"][idx] = subject.record.absolute_path
                     # Store only existing target filenames
-                    if any(target_filename):
+                    if all(target_filename):
                         multichannel_subjects[subj_id]["deriv_path"] = target_filename
                     multichannel_subjects[subj_id]["metadata"][idx] = metadata
                     if roi_filename:
