@@ -271,7 +271,7 @@ class SegmentationPair(object):
             dict: Input and gt metadata.
         """
         gt_meta_dict = []
-        for idx_tissue, gt in enumerate(self.gt_handle):
+        for idx_class, gt in enumerate(self.gt_handle):
             if gt is not None:
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
                     gt_meta_dict.append(imed_loader_utils.SampleMetadata({
@@ -286,7 +286,7 @@ class SegmentationPair(object):
                     gt_meta_dict.append([imed_loader_utils.SampleMetadata({
                         "zooms": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_zooms(), self.slice_axis),
                         "data_shape": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis),
-                        "gt_filenames": self.metadata[0]["gt_filenames"][idx_tissue][idx_rater],
+                        "gt_filenames": self.metadata[0]["gt_filenames"][idx_class][idx_rater],
                         "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
                         "data_type": 'gt',
                         "crop_params": {}
@@ -475,6 +475,15 @@ class MRI2DSegmentationDataset(Dataset):
             index (int): Slice index.
         """
         seg_pair_slice, roi_pair_slice = self.indexes[index]
+
+        # In case multiple raters
+        if isintance(seg_pair_slice['gt'][0], list):
+            # Randomly pick a rater
+            idx_rater = random.randint(0, len(seg_pair_slice['gt'][0]))
+            # Use it as ground truth for this iteration
+            # Note: in case of multi-class: the same rater is used across classes
+            for idx_class in range(len(seg_pair_slice['gt'])):
+                seg_pair_slice['gt'][idx_class] = seg_pair_slice['gt'][idx_class][idx_rater]
 
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
