@@ -352,10 +352,18 @@ class SegmentationPair(object):
             gt_slices = []
             for gt_obj in gt_dataobj:
                 if gt_type == "segmentation":
-                    gt_slices.append(np.asarray(gt_obj[..., slice_index],
-                                                dtype=np.float32))
+                    if not isinstance(gt_obj, list):  # annotation from only one rater
+                        gt_slices.append(np.asarray(gt_obj[..., slice_index],
+                                                    dtype=np.float32))
+                    else:  # annotations from several raters
+                        gt_slices.append([np.asarray(gt_obj_rater[..., slice_index],
+                                                    dtype=np.float32) for gt_obj_rater in gt_obj])
                 else:
-                    gt_slices.append(np.asarray(int(np.any(gt_obj[..., slice_index]))))
+                    if not isinstance(gt_obj, list):  # annotation from only one rater
+                        gt_slices.append(np.asarray(int(np.any(gt_obj[..., slice_index]))))
+                    else:  # annotations from several raters
+                        gt_slices.append([np.asarray(int(np.any(gt_obj_rater[..., slice_index])))
+                                            for gt_obj_rater in gt_obj])
         dreturn = {
             "input": input_slices,
             "gt": gt_slices,
