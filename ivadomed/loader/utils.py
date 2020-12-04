@@ -445,11 +445,11 @@ def update_metadata(metadata_src_lst, metadata_dest_lst):
         list: updated metadata list.
     """
     if metadata_src_lst and metadata_dest_lst:
-        if not isinstance(metadata_dest_lst[0], list):
+        if not isinstance(metadata_dest_lst[0], list):  # annotation from one rater only
             metadata_dest_lst[0]._update(metadata_src_lst[0], TRANSFORM_PARAMS)
-        else:
+        else:  # annotations from several raters
             for idx, _ in enumerate(metadata_dest_lst[0]):
-                metadata_dest_lst[0][idx]._update(metadata_src_lst[0][idx], TRANSFORM_PARAMS)
+                metadata_dest_lst[0][idx]._update(metadata_src_lst[0], TRANSFORM_PARAMS)
     return metadata_dest_lst
 
 
