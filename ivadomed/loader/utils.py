@@ -625,11 +625,14 @@ def create_bids_dataframe(loader_params, derivatives):
         deriv = df[df['path'].str.contains('derivatives')]['filename'].tolist()
         has_deriv = []
         for p in prefix_fnames:
-            available = [p for d in deriv if p in d]
+            available = [d for d in deriv if p in d]
             if available:
-                has_deriv.extend(available)
+                has_deriv.append(p)
+                for t in target_suffix:
+                    if t not in str(available):
+                        logger.warning("Missing target_suffix {} for subject {}.".format(t, p))
             else:
-                logger.warning("Missing derivative for subject {}. Skipping.".format(p))
+                logger.warning("Missing derivatives for subject {}. Skipping subject.".format(p))
 
         # Filter dataframe to keep subjects files with available derivatives only
         if has_deriv:
