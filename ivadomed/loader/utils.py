@@ -535,7 +535,7 @@ def create_bids_dataframe(loader_params, derivatives):
         df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
     """
 
-    # Get bids_path, bids_config, target_suffix, extensions and data_types from loader parameters
+    # Get bids_path, bids_config, target_suffix, extensions and contrast_lst from loader parameters
     bids_path = loader_params['bids_path']
     bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
     target_suffix = loader_params['target_suffix']
@@ -549,24 +549,31 @@ def create_bids_dataframe(loader_params, derivatives):
 
     # Initialize BIDSLayoutIndexer and BIDSLayout
     # validate=True by default for both indexer and layout, BIDS-validator is not skipped
-    # Force index for subfolders starting with string "sub", and samples tsv and json files (for microscopy)
-    force_index = [d for d in os.listdir(bids_path) if (os.path.isdir(os.path.join(bids_path, d))) and (d.startswith("sub"))]
-    force_index.extend(['samples.tsv', 'samples.json'])
+    # Force index for samples tsv and json files, and for subject subfolders containing microscopy files based on extensions.
+    # TODO: remove force indexing of microscopy files after BEP microscopy is merged in BIDS
+    ext_microscopy = ('.png', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
+    force_index = ['samples.tsv', 'samples.json']
+    if not bids_path.endswith("/"):
+        bids_path = bids_path + "/"
+    for root, dirs, files in os.walk(bids_path):
+        for file in files:
+            if file.endswith(ext_microscopy) and (root.replace(bids_path, '').startswith("sub")):
+                force_index.append(os.path.join(root.replace(bids_path, '')))
     indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
     layout = pybids.BIDSLayout(bids_path, config=bids_config, indexer=indexer, derivatives=derivatives)
 
     # Transform layout to dataframe with all entities and json metadata
-    # As per pybids, derivatives don't include parsed entities and json metadata, only the "path" columns
+    # As per pybids, derivatives don't include parsed entities, only the "path" column
     df = layout.to_df(metadata=True)
 
     # Add filename and parent_path columns
     df['filename'] = df['path'].apply(os.path.basename)
     df['parent_path'] = df['path'].apply(os.path.dirname)
 
-    # Filter rows with chosen extensions and data_types from loader parameters
+    # Filter rows with chosen extensions from loader parameters
     df = df[df['filename'].str.endswith(tuple(extensions))]
 
-    # Update dataframe with subject files with chosen contrast and derivative files with chosen target_suffix from loader parameters
+    # Update dataframe with subject files of chosen contrasts, and derivative files of chosen target_suffix from loader parameters
     df = (df[(~df['path'].str.contains('derivatives') & df['suffix'].str.contains('|'.join(contrast_lst))) |
           df['filename'].str.contains('|'.join(target_suffix))])
 
@@ -607,7 +614,7 @@ def create_bids_dataframe(loader_params, derivatives):
         df_scans['filename'] = df_scans['filename'].apply(os.path.basename)
         df = pd.merge(df, df_scans, on=['filename'], suffixes=("_x", None), how='left')
 
-    # TODO: check if other files are needed for EEG
+    # TODO: check if other files are needed for EEG and DWI
 
     # If indexing of derivatives is true
     # Get list of subject files, list of subject prefix filenames without extensions, and list of available derivatives
