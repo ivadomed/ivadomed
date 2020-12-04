@@ -355,13 +355,6 @@ class SegmentationPair(object):
                     gt_slices.append(np.asarray(gt_obj[..., slice_index],
                                                 dtype=np.float32))
                 else:
-                    # TODO: rm when Anne replies
-                    # Assert that there is only one non_zero_label in the current slice
-                    # labels_in_slice = np.unique(gt_obj[..., slice_index][np.nonzero(gt_obj[..., slice_index])]).tolist()
-                    # if len(labels_in_slice) > 1:
-                    #    print(metadata["gt_metadata"][0]["gt_filenames"])
-                    # TODO: uncomment when Anne replies
-                    # assert int(np.max(labels_in_slice)) <= 1
                     gt_slices.append(np.asarray(int(np.any(gt_obj[..., slice_index]))))
         dreturn = {
             "input": input_slices,
