@@ -1,5 +1,5 @@
 import copy
-
+import random
 import nibabel as nib
 import numpy as np
 import torch
@@ -477,13 +477,14 @@ class MRI2DSegmentationDataset(Dataset):
         seg_pair_slice, roi_pair_slice = self.indexes[index]
 
         # In case multiple raters
-        if isintance(seg_pair_slice['gt'][0], list):
+        if isinstance(seg_pair_slice['gt'][0], list):
             # Randomly pick a rater
-            idx_rater = random.randint(0, len(seg_pair_slice['gt'][0]))
+            idx_rater = random.randint(0, len(seg_pair_slice['gt'][0])-1)
             # Use it as ground truth for this iteration
             # Note: in case of multi-class: the same rater is used across classes
             for idx_class in range(len(seg_pair_slice['gt'])):
                 seg_pair_slice['gt'][idx_class] = seg_pair_slice['gt'][idx_class][idx_rater]
+                seg_pair_slice['gt_metadata'][idx_class] = seg_pair_slice['gt_metadata'][idx_class][idx_rater]
 
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
