@@ -168,9 +168,10 @@ class SegmentationPair(object):
                 self.gt_filenames = [self.gt_filenames]
             for gt in self.gt_filenames:
                 if gt is not None:
-                    if not isinstance(gt, list):  # this tissue has annotation from only one rater
-                        gt = [gt]
-                    self.gt_handle.append([nib.load(gt_rater) for gt_rater in gt])
+                    if isinstance(gt, str):  # this tissue has annotation from only one rater
+                        self.gt_handle.append(nib.load(gt))
+                    else:  # this tissue has annotation from several raters
+                        self.gt_handle.append([nib.load(gt_rater) for gt_rater in gt])
                 else:
                     self.gt_handle.append(None)
 
@@ -188,7 +189,10 @@ class SegmentationPair(object):
         if self.gt_filenames is not None:
             for idx, gt in enumerate(self.gt_handle):
                 if gt is not None:
-                    self.gt_handle[idx] = [nib.as_closest_canonical(gt_rater) for gt_rater in gt]
+                    if not isinstance(gt, list):  # this tissue has annotation from only one rater
+                        self.gt_handle[idx] = nib.as_closest_canonical(gt)
+                    else:  # this tissue has annotation from several raters
+                        self.gt_handle[idx] = [nib.as_closest_canonical(gt_rater) for gt_rater in gt]
 
         # If binary classification, then extract labels from GT mask
 
@@ -213,6 +217,8 @@ class SegmentationPair(object):
 
         for gt in self.gt_handle:
             if gt is not None:
+                if not isinstance(gt, list):  # this tissue has annotation from only one rater
+                    gt = [gt]
                 for gt_rater in gt:
                     shape = imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis)
                     gt_shape.append(tuple(shape))
@@ -238,10 +244,15 @@ class SegmentationPair(object):
             gt_data = None
         for gt in self.gt_handle:
             if gt is not None:
-                hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
-                                                                self.slice_axis)
                 data_type = np.float32 if self.soft_gt else np.uint8
-                gt_data.append(hwd_oriented.astype(data_type))
+                if not isinstance(gt, list):  # this tissue has annotation from only one rater
+                    hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
+                                                                   self.slice_axis)
+                    gt_data.append(hwd_oriented.astype(data_type))
+                else:  # this tissue has annotation from several raters
+                    hwd_oriented_list = [imed_loader_utils.orient_img_hwd(gt_rater.get_fdata(cache_mode, dtype=np.float32),
+                                                                   self.slice_axis) for gt_rater in gt]
+                    gt_data.append([hwd_oriented.astype(data_type) for hwd_oriented in hwd_oriented_list])
             else:
                 gt_data.append(
                     np.zeros(imed_loader_utils.orient_shapes_hwd(self.input_handle[0].shape, self.slice_axis),
@@ -262,14 +273,25 @@ class SegmentationPair(object):
         gt_meta_dict = []
         for gt in self.gt_handle:
             if gt is not None:
-                gt_meta_dict.append(imed_loader_utils.SampleMetadata({
-                    "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
-                    "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
-                    "gt_filenames": self.metadata[0]["gt_filenames"],
-                    "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
-                    "data_type": 'gt',
-                    "crop_params": {}
-                }))
+                if not isinstance(gt, list):  # this tissue has annotation from only one rater
+                    gt_meta_dict.append(imed_loader_utils.SampleMetadata({
+                        "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
+                        "gt_filenames": self.metadata[0]["gt_filenames"],
+                        "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
+                        "data_type": 'gt',
+                        "crop_params": {}
+                    }))
+                else:
+                    gt_meta_dict.append([imed_loader_utils.SampleMetadata({
+                        "zooms": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_zooms(), self.slice_axis),
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis),
+                        "gt_filenames": self.metadata[0]["gt_filenames"][idx],
+                        "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
+                        "data_type": 'gt',
+                        "crop_params": {}
+                    }) for idx, gt_rater in gt])
+
             else:
                 # Temporarily append null metadata to null gt
                 gt_meta_dict.append(None)
