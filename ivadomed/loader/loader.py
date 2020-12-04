@@ -78,15 +78,15 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                               transform=tranform_lst,
                                               metadata_choice=metadata_type,
-                                              slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params, device=device,
-                                              cuda_available=cuda_available),
+                                              slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params,
+                                                                                            device=device,
+                                                                                            cuda_available=cuda_available),
                                               roi_params=roi_params,
                                               object_detection_params=object_detection_params,
                                               soft_gt=soft_gt)
     else:
         # Task selection
         task = imed_utils.get_task(model_params["name"])
-
 
         dataset = BidsDataset(bids_path,
                               subject_lst=data_list,
@@ -98,7 +98,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               transform=tranform_lst,
                               multichannel=multichannel,
                               slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params, device=device,
-                              cuda_available=cuda_available),
+                                                                            cuda_available=cuda_available),
                               soft_gt=soft_gt,
                               object_detection_params=object_detection_params,
                               task=task)
@@ -521,7 +521,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             space.
     """
 
-    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0),  slice_axis=0, task="segmentation",
+    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
+                 task="segmentation",
                  soft_gt=False):
         self.filename_pairs = filename_pairs
         self.handlers = []
@@ -676,6 +677,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
             contrast is processed individually (ie different sample / tensor).
         object_detection_params (dict): Object dection parameters.
     """
+
     def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
@@ -725,6 +727,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         metadata (dict): Dictionary containing FiLM metadata.
 
     """
+
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
@@ -792,7 +795,11 @@ class BidsDataset(MRI2DSegmentationDataset):
                             deriv.endswith(subject.record["modality"] + self.roi_params["suffix"] + ".nii.gz"):
                         roi_filename = [deriv]
 
-                if (not any(target_filename)) or (not (self.roi_params["suffix"] is None) and (roi_filename is None)):
+                # Stop if target filename is only None or if there is no ROI when ROI wanted.
+                # This doesn't apply to multichannel
+                if ((not any(target_filename)) or
+                    (not (self.roi_params["suffix"] is None) and (roi_filename is None))) \
+                        and not multichannel:
                     continue
 
                 if not subject.has_metadata():
@@ -835,7 +842,9 @@ class BidsDataset(MRI2DSegmentationDataset):
                     idx = idx_dict[subject.record["modality"]]
                     subj_id = subject.record["subject_id"]
                     multichannel_subjects[subj_id]["absolute_paths"][idx] = subject.record.absolute_path
-                    multichannel_subjects[subj_id]["deriv_path"] = target_filename
+                    # Store only existing target filenames
+                    if any(target_filename):
+                        multichannel_subjects[subj_id]["deriv_path"] = target_filename
                     multichannel_subjects[subj_id]["metadata"][idx] = metadata
                     if roi_filename:
                         multichannel_subjects[subj_id]["roi_filename"] = roi_filename
