@@ -215,5 +215,5 @@ def test_hdf5_bids():
     assert os.path.isdir("test_adap_bids/derivatives/labels/sub-unf01/anat")
     # once done we can delete the file
     print("[INFO]: Deleting HDF5 file.")
-    os.remove('testing_data/mytestfile.hdf5')
+    os.remove('testing_data/mytestfiletraining.hdf5')
     print('\n [INFO]: Test of HeMIS passed successfully.')
