@@ -64,8 +64,8 @@ def test_modified_encoder():
 def test_modified_decoder():
     # verifying if changes such as 2D attention and other modification works 
     a = [torch.zeros((1, 64, 322, 322)), torch.zeros((1, 128, 161, 161)),
-         torch.zeros((1, 256, 80, 80)), torch.zeros((1, 512, 40, 40))] # by changing the depth, the length of the input feature list should be changed
-    inp = a # should not be transformed to torch tensor because "a" is the appended feature list from skip connections
+         torch.zeros((1, 256, 80, 80)), torch.zeros((1, 512, 40, 40))] # by changing the depth, the length of the input feature list should be changed.
+    inp = a # should not be transformed to torch tensor because "a" is the appended feature list from the skip connections.
     model = imed_model.Decoder(out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1,
                  n_metadata=None, film_layers=None, hemis=False, final_activation="sigmoid", is_2d=True,
                  n_filters=64, attention=True)
