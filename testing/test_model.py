@@ -59,7 +59,7 @@ def test_modified_encoder():
     model = imed_model.Encoder(in_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, n_metadata=None, film_layers=None,
                  is_2d=True, n_filters=64)
     inf = model(inp)
-    assert(type(inf) == torch.Tensor)
+    assert(type(inf) == tuple)
     
 def test_modified_decoder():
     # verifying if changes such as 2D attention and other modification works 
