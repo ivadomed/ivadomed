@@ -834,17 +834,19 @@ class BidsDataset(MRI2DSegmentationDataset):
                     print("Subject without derivative, skipping.")
                     continue
                 derivatives = subject.get_derivatives("labels")
-                target_filename, roi_filename = [[] for _ in range(len(target_suffix))], None
+                target_filename, roi_filename = [None] * len(target_suffix), None
 
                 for deriv in derivatives:
                     for idx, suffix_list in enumerate(target_suffix):
                         # If suffix_list is a string, then only one rater annotation per class is available.
                         # Otherwise, multiple raters segmented the same class.
-                        if isinstance(suffix_list, str):
-                            suffix_list = [suffix_list]
-                        for suffix in suffix_list:
-                            if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
-                                target_filename[idx].append(deriv)
+                        if isinstance(suffix_list, list):
+                            target_filename[idx] = []
+                            for suffix in suffix_list:
+                                if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
+                                    target_filename[idx].append(deriv)
+                        elif deriv.endswith(subject.record["modality"] + suffix_list + ".nii.gz"):
+                            target_filename[idx] = deriv
 
                     if not (self.roi_params["suffix"] is None) and \
                             deriv.endswith(subject.record["modality"] + self.roi_params["suffix"] + ".nii.gz"):
