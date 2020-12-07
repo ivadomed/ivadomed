@@ -78,15 +78,15 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                               transform=tranform_lst,
                                               metadata_choice=metadata_type,
-                                              slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params, device=device,
-                                              cuda_available=cuda_available),
+                                              slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params,
+                                                                                            device=device,
+                                                                                            cuda_available=cuda_available),
                                               roi_params=roi_params,
                                               object_detection_params=object_detection_params,
                                               soft_gt=soft_gt)
     else:
         # Task selection
         task = imed_utils.get_task(model_params["name"])
-
 
         dataset = BidsDataset(bids_path,
                               subject_lst=data_list,
@@ -98,7 +98,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               transform=tranform_lst,
                               multichannel=multichannel,
                               slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params, device=device,
-                              cuda_available=cuda_available),
+                                                                            cuda_available=cuda_available),
                               soft_gt=soft_gt,
                               object_detection_params=object_detection_params,
                               task=task)
@@ -247,11 +247,12 @@ class SegmentationPair(object):
                 data_type = np.float32 if self.soft_gt else np.uint8
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
                     hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
-                                                                   self.slice_axis)
+                                                                    self.slice_axis)
                     gt_data.append(hwd_oriented.astype(data_type))
                 else:  # this tissue has annotation from several raters
-                    hwd_oriented_list = [imed_loader_utils.orient_img_hwd(gt_rater.get_fdata(cache_mode, dtype=np.float32),
-                                                                   self.slice_axis) for gt_rater in gt]
+                    hwd_oriented_list = [
+                        imed_loader_utils.orient_img_hwd(gt_rater.get_fdata(cache_mode, dtype=np.float32),
+                                                         self.slice_axis) for gt_rater in gt]
                     gt_data.append([hwd_oriented.astype(data_type) for hwd_oriented in hwd_oriented_list])
             else:
                 gt_data.append(
@@ -278,16 +279,19 @@ class SegmentationPair(object):
                         "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
                         "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"],
-                        "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
+                        "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
+                            0] else None,
                         "data_type": 'gt',
                         "crop_params": {}
                     }))
                 else:
                     gt_meta_dict.append([imed_loader_utils.SampleMetadata({
                         "zooms": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_zooms(), self.slice_axis),
-                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis),
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(),
+                                                                          self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"][idx_class][idx_rater],
-                        "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
+                        "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
+                            0] else None,
                         "data_type": 'gt',
                         "crop_params": {}
                     }) for idx_rater, gt_rater in enumerate(gt)])
@@ -357,13 +361,13 @@ class SegmentationPair(object):
                                                     dtype=np.float32))
                     else:  # annotations from several raters
                         gt_slices.append([np.asarray(gt_obj_rater[..., slice_index],
-                                                    dtype=np.float32) for gt_obj_rater in gt_obj])
+                                                     dtype=np.float32) for gt_obj_rater in gt_obj])
                 else:
                     if not isinstance(gt_obj, list):  # annotation from only one rater
                         gt_slices.append(np.asarray(int(np.any(gt_obj[..., slice_index]))))
                     else:  # annotations from several raters
                         gt_slices.append([np.asarray(int(np.any(gt_obj_rater[..., slice_index])))
-                                            for gt_obj_rater in gt_obj])
+                                          for gt_obj_rater in gt_obj])
         dreturn = {
             "input": input_slices,
             "gt": gt_slices,
@@ -479,7 +483,7 @@ class MRI2DSegmentationDataset(Dataset):
         # In case multiple raters
         if isinstance(seg_pair_slice['gt'][0], list):
             # Randomly pick a rater
-            idx_rater = random.randint(0, len(seg_pair_slice['gt'][0])-1)
+            idx_rater = random.randint(0, len(seg_pair_slice['gt'][0]) - 1)
             # Use it as ground truth for this iteration
             # Note: in case of multi-class: the same rater is used across classes
             for idx_class in range(len(seg_pair_slice['gt'])):
@@ -557,7 +561,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             space.
     """
 
-    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0),  slice_axis=0, task="segmentation",
+    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
+                 task="segmentation",
                  soft_gt=False):
         self.filename_pairs = filename_pairs
         self.handlers = []
@@ -643,7 +648,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         # In case multiple raters
         if isinstance(seg_pair['gt'][0], list):
             # Randomly pick a rater
-            idx_rater = random.randint(0, len(seg_pair['gt'][0])-1)
+            idx_rater = random.randint(0, len(seg_pair['gt'][0]) - 1)
             # Use it as ground truth for this iteration
             # Note: in case of multi-class: the same rater is used across classes
             for idx_class in range(len(seg_pair['gt'])):
@@ -722,6 +727,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
             contrast is processed individually (ie different sample / tensor).
         object_detection_params (dict): Object dection parameters.
     """
+
     def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
@@ -771,6 +777,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         metadata (dict): Dictionary containing FiLM metadata.
 
     """
+
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):

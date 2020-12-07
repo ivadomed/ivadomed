@@ -310,6 +310,7 @@ class SampleMetadata(object):
     Attributes:
         metadata (dict): Image metadata.
     """
+
     def __init__(self, d=None):
         self.metadata = {} or d
 
@@ -496,8 +497,9 @@ class SliceFilter(object):
 
         if self.filter_classification:
             if not np.all([int(
-                    self.classifier(imed_utils.cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0), self.cuda_available)))
-                           for img in input_data]):
+                    self.classifier(
+                        imed_utils.cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0), self.cuda_available)))
+                for img in input_data]):
                 return False
 
         return True
