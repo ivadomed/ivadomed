@@ -481,7 +481,7 @@ class MRI2DSegmentationDataset(Dataset):
         seg_pair_slice, roi_pair_slice = self.indexes[index]
 
         # In case multiple raters
-        if isinstance(seg_pair_slice['gt'][0], list):
+        if seg_pair_slice['gt'] is not None and isinstance(seg_pair_slice['gt'][0], list):
             # Randomly pick a rater
             idx_rater = random.randint(0, len(seg_pair_slice['gt'][0]) - 1)
             # Use it as ground truth for this iteration
@@ -646,7 +646,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         seg_pair, _ = self.handlers[coord['handler_index']]
 
         # In case multiple raters
-        if isinstance(seg_pair['gt'][0], list):
+        if seg_pair['gt'] is not None and isinstance(seg_pair['gt'][0], list):
             # Randomly pick a rater
             idx_rater = random.randint(0, len(seg_pair['gt'][0]) - 1)
             # Use it as ground truth for this iteration
