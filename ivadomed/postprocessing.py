@@ -280,6 +280,24 @@ class Postprocessing(object):
         if thr >= 0:
             self.data_pred = threshold_predictions(self.data_pred, thr)
 
+    def binarize_maxpooling(self):
+        """Binarize by setting to 1 the voxel having the max prediction across all classes.
+        """
+        # Generate background class
+        background = np.ones(self.data_pred[..., 0].shape)
+        n_class = self.data_pred.shape[-1]
+        for c in range(n_class):
+            background -= self.data_pred[..., c]
+
+        # Concatenate background class
+        pred_with_background = np.concatenate((background[..., None], self.data_pred), axis=-1)
+
+        # Find class with max pred
+        class_pred = np.argmax(pred_with_background, axis=-1)
+        self.data_pred = np.zeros_like(self.data_pred)
+        for c in range(n_class):
+            self.data_pred[..., c] = class_pred == c + 1
+
     def uncertainty(self, thr, suffix):
         """Removes the most uncertain predictions.
 
