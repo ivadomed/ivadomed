@@ -570,12 +570,14 @@ def create_bids_dataframe(loader_params, derivatives):
     df['filename'] = df['path'].apply(os.path.basename)
     df['parent_path'] = df['path'].apply(os.path.dirname)
 
-    # Filter rows with chosen extensions from loader parameters
-    df = df[df['filename'].str.endswith(tuple(extensions))]
+    # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
+    df = df[~df['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
 
-    # Update dataframe with subject files of chosen contrasts, and derivative files of chosen target_suffix from loader parameters
-    df = (df[(~df['path'].str.contains('derivatives') & df['suffix'].str.contains('|'.join(contrast_lst))) |
-          df['filename'].str.contains('|'.join(target_suffix))])
+    # Update dataframe with subject files of chosen contrasts and extensions,
+    # and with derivative files of chosen target_suffix from loader parameters
+    df = (df[(~df['path'].str.contains('derivatives') & df['suffix'].str.contains('|'.join(contrast_lst)) &
+          df['extension'].str.contains('|'.join(extensions))) |
+          (df['filename'].str.contains('|'.join(target_suffix)))])
 
     # Add metadata from participants.tsv file, if present
     # Uses pybids function
