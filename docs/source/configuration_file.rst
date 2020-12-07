@@ -90,7 +90,12 @@ List. Suffix list of the derivative file containing the ground-truth of
 interest (e.g. [``"_seg-manual"``, ``"_lesion-manual"``]). The length of
 this list controls the number of output channels of the model (i.e.
 ``out_channel``). If the list has a length greater than 1, then a
-multi-class model will be trained.
+multi-class model will be trained. If a list of list(s) is input for a
+training, (e.g. [[``"_seg-manual-rater1"``, ``"_seg-manual-rater2"``],
+[``"_lesion-manual-rater1"``, ``"_lesion-manual-rater2"``]), then each
+sublist is associated with one class but contains the annotations from
+different experts: at each training iteration, one of these annotations
+will be randomly chosen.
 
 contrasts
 ^^^^^^^^^
