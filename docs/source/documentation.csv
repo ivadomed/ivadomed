@@ -1,4 +1,7 @@
-**Name**,**User case examples**,**Packaged Multi-center Model**
+"
+**Name**","
+**User case examples**","
+**Packaged Multi-center Model**"
 `ivadomed <https://github.com/ivadomed/ivadomed>`_,|yes|,|yes|
 `monai <https://github.com/Project-MONAI/MONAI>`_,|yes|,|no|
 `delira <https://github.com/justusschock/delira>`_,|yes|,|no|
