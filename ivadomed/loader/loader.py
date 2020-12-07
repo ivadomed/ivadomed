@@ -640,6 +640,16 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         coord = self.indexes[index]
         seg_pair, _ = self.handlers[coord['handler_index']]
 
+        # In case multiple raters
+        if isinstance(seg_pair['gt'][0], list):
+            # Randomly pick a rater
+            idx_rater = random.randint(0, len(seg_pair['gt'][0])-1)
+            # Use it as ground truth for this iteration
+            # Note: in case of multi-class: the same rater is used across classes
+            for idx_class in range(len(seg_pair['gt'])):
+                seg_pair['gt'][idx_class] = seg_pair['gt'][idx_class][idx_rater]
+                seg_pair['gt_metadata'][idx_class] = seg_pair['gt_metadata'][idx_class][idx_rater]
+
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
         # Use copy to have different coordinates for reconstruction for a given handler
