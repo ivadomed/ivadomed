@@ -848,11 +848,6 @@ class BidsDataset(MRI2DSegmentationDataset):
                                 if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
                                     target_filename[idx].append(deriv)
                         elif deriv.endswith(subject.record["modality"] + suffix_list + ".nii.gz"):
-                        #if isinstance(suffix_list, str):
-                        #    suffix_list = [suffix_list]
-                        #for suffix in suffix_list:
-                        #    if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
-                        #        target_filename[idx].append(deriv)
                             target_filename[idx] = deriv
 
                     if not (self.roi_params["suffix"] is None) and \
