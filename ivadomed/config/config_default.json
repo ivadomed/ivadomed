@@ -12,6 +12,7 @@
         "bids_path": "bids_path",
         "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": [],
+        "extensions": [],
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
