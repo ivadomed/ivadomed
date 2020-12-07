@@ -9,12 +9,11 @@ from torch.nn import init
 import torchvision.models
 
 
-
-#Modified from torchvision.models.resnet.Resnet
+# Modified from torchvision.models.resnet.Resnet
 class ResNet(nn.Module):
     """ResNet model based on
      `"Deep Residual Learning for Image Recognition" <https://arxiv.org/abs/1512.03385.pdf>`_
-    
+
     Args:
         block (nn.Module): Basic block of the network (such as conv + bn + non-nonlinearity)
         layers (int list): Number of blocks to stack (network depth) after each downsampling step.
@@ -27,6 +26,7 @@ class ResNet(nn.Module):
         norm_layer (layer): Custom normalization layer, if not provided BatchNorm2d is used
 
     """
+
     def __init__(self, block, layers, num_classes=2, zero_init_residual=False,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
                  norm_layer=None):
@@ -177,7 +177,7 @@ class DenseNet(nn.Module):
             num_features = num_features + num_layers * growth_rate
             if i != len(block_config) - 1:
                 trans = torchvision.models.densenet._Transition(num_input_features=num_features,
-                                    num_output_features=num_features // 2)
+                                                                num_output_features=num_features // 2)
                 self.features.add_module('transition%d' % (i + 1), trans)
                 num_features = num_features // 2
 
@@ -293,6 +293,7 @@ class UpConv(Module):
         x = self.downconv(x)
         return x
 
+
 class Encoder(Module):
     """Encoding part of the U-Net model.
     It returns the features map for the skip connections
@@ -324,13 +325,15 @@ class Encoder(Module):
         self.down_path.append(max_pool(2))
 
         for i in range(depth - 1):
-            self.down_path.append(DownConv(n_filters*2**i, n_filters*2**(i+1), drop_rate, bn_momentum, is_2d))
-            self.down_path.append(FiLMlayer(n_metadata, n_filters * 2**(i+1)) if film_layers and film_layers[i + 1] else None)
+            self.down_path.append(DownConv(n_filters * 2 ** i, n_filters * 2 ** (i + 1), drop_rate, bn_momentum, is_2d))
+            self.down_path.append(
+                FiLMlayer(n_metadata, n_filters * 2 ** (i + 1)) if film_layers and film_layers[i + 1] else None)
             self.down_path.append(max_pool(2))
 
         # Bottom
-        self.conv_bottom = DownConv(n_filters*2**(depth-1), n_filters*2**depth, drop_rate, bn_momentum, is_2d)
-        self.film_bottom = FiLMlayer(n_metadata, n_filters*2**depth) if film_layers and film_layers[self.depth] else None 
+        self.conv_bottom = DownConv(n_filters * 2 ** (depth - 1), n_filters * 2 ** depth, drop_rate, bn_momentum, is_2d)
+        self.film_bottom = FiLMlayer(n_metadata, n_filters * 2 ** depth) if film_layers and film_layers[
+            self.depth] else None
 
     def forward(self, x, context=None):
         features = []
@@ -356,7 +359,8 @@ class Encoder(Module):
             x, w_film = self.film_bottom(x, context, None if 'w_film' not in locals() else w_film)
         features.append(x)
         return features, None if 'w_film' not in locals() else w_film
-    
+
+
 class Decoder(Module):
     """Decoding part of the U-Net model.
 
@@ -380,10 +384,9 @@ class Decoder(Module):
         softmax (Softmax): Softmax layer that can be applied as last layer.
     """
 
-
     def __init__(self, out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1,
                  n_metadata=None, film_layers=None, hemis=False, final_activation="sigmoid", is_2d=True,
-                 n_filters=64, attention= True):
+                 n_filters=64, attention=True):
         super(Decoder, self).__init__()
         self.depth = depth
         self.out_channel = out_channel
@@ -405,7 +408,7 @@ class Decoder(Module):
         else:
             in_channel = n_filters * 2 ** self.depth
 
-            self.up_path.append(UpConv(in_channel+n_filters * 2 ** (self.depth - 1)
+            self.up_path.append(UpConv(in_channel + n_filters * 2 ** (self.depth - 1)
                                        , n_filters * 2 ** (self.depth - 1), drop_rate, bn_momentum, is_2d))
             if film_layers and film_layers[self.depth + 1]:
                 self.up_path.append(FiLMlayer(n_metadata, n_filters * 2 ** (self.depth - 1)))
@@ -415,9 +418,9 @@ class Decoder(Module):
         for i in range(1, depth):
             in_channel //= 2
 
-            self.up_path.append(UpConv(in_channel+ n_filters * 2 ** (self.depth - i - 1 + int(hemis)),
+            self.up_path.append(UpConv(in_channel + n_filters * 2 ** (self.depth - i - 1 + int(hemis)),
                                        n_filters * 2 ** (self.depth - i - 1),
-                       drop_rate, bn_momentum, is_2d))
+                                       drop_rate, bn_momentum, is_2d))
             if film_layers and film_layers[self.depth + i + 1]:
                 self.up_path.append(FiLMlayer(n_metadata, n_filters * 2 ** (self.depth - i - 1)))
             else:
@@ -428,20 +431,18 @@ class Decoder(Module):
         self.last_conv = conv(in_channel // 2, out_channel, kernel_size=3, padding=1)
         self.last_film = FiLMlayer(n_metadata, self.out_channel) if film_layers and film_layers[-1] else None
         self.softmax = nn.Softmax(dim=1)
-        
+
         ### ATTENTION MODULE ###
         if self.attention:
-            
-            self.gating = UnetGridGatingSignal2(self.base_n_filter * 2**(self.depth),
-                                                self.base_n_filter * 2**(self.depth-1), kernel_size=(1, 1),
-                                                is_batchnorm=True)
-            for k in range(1,self.depth+1):
-                
-                self.att_path.append(GridAttentionBlock2D(in_channels=self.base_n_filter * 2**(self.depth-k),
-                                                        gating_channels=self.base_n_filter * 2**(self.depth-1),
-                                                        inter_channels=self.base_n_filter * 2**(self.depth-k),
-                                                        sub_sample_factor=2))
 
+            self.gating = UnetGridGatingSignal2(self.base_n_filter * 2 ** (self.depth),
+                                                self.base_n_filter * 2 ** (self.depth - 1), kernel_size=(1, 1),
+                                                is_batchnorm=True)
+            for k in range(1, self.depth + 1):
+                self.att_path.append(GridAttentionBlock2D(in_channels=self.base_n_filter * 2 ** (self.depth - k),
+                                                          gating_channels=self.base_n_filter * 2 ** (self.depth - 1),
+                                                          inter_channels=self.base_n_filter * 2 ** (self.depth - k),
+                                                          sub_sample_factor=2))
 
     def forward(self, features, context=None, w_film=None):
         x = features[-1]
@@ -449,15 +450,13 @@ class Decoder(Module):
 
         for i in range(self.depth):
             if self.attention:
-                y, att = self.att_path[i](features[(self.depth-1)-i],gating)
-                x = self.up_path[2*i](x, y)
-                
-            else:
-                x = self.up_path[2*i](x, features[(self.depth-1)-i])
-            if self.up_path[2*i+1]:
-                x, w_film = self.up_path[2*i+ 1](x, context, w_film)
-                
+                y, att = self.att_path[i](features[(self.depth - 1) - i], gating)
+                x = self.up_path[2 * i](x, y)
 
+            else:
+                x = self.up_path[2 * i](x, features[(self.depth - 1) - i])
+            if self.up_path[2 * i + 1]:
+                x, w_film = self.up_path[2 * i + 1](x, context, w_film)
 
         # Last convolution
         x = self.last_conv(x)
@@ -502,7 +501,7 @@ class Unet(Module):
         is_2d (bool): Indicates dimensionality of model: True for 2D convolutions, False for 3D convolutions.
         n_filters (int):  Number of base filters in the U-Net.
         attention (bool): Boolian indicating if attention module is on or not.
-        
+
         **kwargs:
 
     Attributes:
@@ -516,20 +515,18 @@ class Unet(Module):
 
         # Encoder path
         self.encoder = Encoder(in_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1, n_metadata=None, film_layers=None,
-                 is_2d=True, n_filters=64)
+                               is_2d=True, n_filters=64)
 
         # Decoder path
         self.decoder = Decoder(out_channel=1, depth=3, drop_rate=0.4, bn_momentum=0.1,
-                 n_metadata=None, film_layers=None, hemis=False, final_activation="sigmoid", is_2d=True,
-                 n_filters=64, attention=True)
-
+                               n_metadata=None, film_layers=None, hemis=False, final_activation="sigmoid", is_2d=True,
+                               n_filters=64, attention=True)
 
     def forward(self, x):
         features, _ = self.encoder(x)
         preds = self.decoder(features)
 
         return preds
-
 
 
 class FiLMedUnet(Unet):
@@ -657,7 +654,9 @@ class FiLMlayer(Module):
         elif len(data_shape) == 5:
             _, self.feature_size, self.height, self.width, self.depth = data_shape
         else:
-            raise ValueError("Data should be either 2D (tensor length: 4) or 3D (tensor length: 5), found shape: {}".format(data_shape))
+            raise ValueError(
+                "Data should be either 2D (tensor length: 4) or 3D (tensor length: 5), found shape: {}".format(
+                    data_shape))
 
         if torch.cuda.is_available():
             context = torch.Tensor(context).cuda()
@@ -1096,7 +1095,6 @@ class Modified3DUNet(nn.Module):
         if hasattr(self, 'film_layer7') and self.film_layer7:
             out, w_film = self.film_layer7(out, context, w_film)
 
-
         # Level 2 localization pathway
         out = torch.cat([out, context_3], dim=1)
         out = self.conv_norm_lrelu_l2(out)
@@ -1152,13 +1150,13 @@ class UNet3D(Modified3DUNet):
     """To ensure retrocompatibility, when calling UNet3D (old model name), Modified3DUNet will be called.
     see Modified3DUNet to learn more about parameters.
     """
+
     def __init__(self, in_channel, out_channel, n_filters=16, attention=False, drop_rate=0.6, bn_momentum=0.1,
                  final_activation="sigmoid", n_metadata=None, film_layers=None, **kwargs):
         super(UNet3D, self).__init__()
         Modified3DUNet(in_channel=in_channel, out_channel=out_channel, n_filters=n_filters, attention=attention,
                        drop_rate=drop_rate, bn_momentum=bn_momentum, final_activation=final_activation,
                        n_metadata=n_metadata, film_layers=film_layers, **kwargs)
-
 
 
 class _GridAttentionBlockND(nn.Module):
@@ -1189,23 +1187,27 @@ class _GridAttentionBlockND(nn.Module):
         psi (Conv2d or Conv3d): Convolution layer for gating operation.
 
     """
+
     def __init__(self, in_channels, gating_channels, inter_channels=None, dimension=3,
                  sub_sample_factor=2):
         super(_GridAttentionBlockND, self).__init__()
 
-        assert dimension in [2, 3] # for debugging
+        assert dimension in [2, 3]  # for debugging
 
         # Downsampling rate for the input featuremap
-        if isinstance(sub_sample_factor, tuple): self.sub_sample_factor = sub_sample_factor
-        elif isinstance(sub_sample_factor, list): self.sub_sample_factor = tuple(sub_sample_factor)
-        else: self.sub_sample_factor = tuple([sub_sample_factor]) * dimension
+        if isinstance(sub_sample_factor, tuple):
+            self.sub_sample_factor = sub_sample_factor
+        elif isinstance(sub_sample_factor, list):
+            self.sub_sample_factor = tuple(sub_sample_factor)
+        else:
+            self.sub_sample_factor = tuple([sub_sample_factor]) * dimension
 
         # Default parameter set
         self.dimension = dimension
         self.sub_sample_kernel_size = self.sub_sample_factor
 
         # Number of channels (pixel dimensions)
-        self.in_channels = in_channels 
+        self.in_channels = in_channels
         self.gating_channels = gating_channels
         self.inter_channels = inter_channels
 
@@ -1233,15 +1235,17 @@ class _GridAttentionBlockND(nn.Module):
 
         # Theta^T * x_ij + Phi^T * gating_signal + bias
         self.theta = conv_nd(in_channels=self.in_channels, out_channels=self.inter_channels,
-                             kernel_size=self.sub_sample_kernel_size, stride=self.sub_sample_factor, padding=0, bias=False)
+                             kernel_size=self.sub_sample_kernel_size, stride=self.sub_sample_factor, padding=0,
+                             bias=False)
         self.phi = conv_nd(in_channels=self.gating_channels, out_channels=self.inter_channels,
                            kernel_size=1, stride=1, padding=0, bias=True)
-        self.psi = conv_nd(in_channels=self.inter_channels, out_channels=1, kernel_size=1, stride=1, padding=0, bias=True)
+        self.psi = conv_nd(in_channels=self.inter_channels, out_channels=1, kernel_size=1, stride=1, padding=0,
+                           bias=True)
 
         # Initialise weights
         for m in self.children():
             weights_init_kaiming(m)
-         
+
         # Define the operation
         self.operation_function = self._concatenation
 
@@ -1270,7 +1274,6 @@ class _GridAttentionBlockND(nn.Module):
         phi_g = F.upsample(self.phi(g), size=theta_x_size[2:], mode=self.upsample_mode)
         f = F.relu(theta_x + phi_g, inplace=True)
 
-
         #  psi^T * f -> (b, psi_i_c, t/s1, h/s2, w/s3)
         sigm_psi_f = F.sigmoid(self.psi(f))
 
@@ -1297,7 +1300,7 @@ class GridAttentionBlock2D(_GridAttentionBlockND):
 
 class GridAttentionBlock3D(_GridAttentionBlockND):
     def __init__(self, in_channels, gating_channels, inter_channels=None,
-                 sub_sample_factor=(2,2,2)):
+                 sub_sample_factor=(2, 2, 2)):
         super(GridAttentionBlock3D, self).__init__(in_channels,
                                                    inter_channels=inter_channels,
                                                    gating_channels=gating_channels,
@@ -1355,7 +1358,7 @@ class UnetGridGatingSignal3(nn.Module):
     def forward(self, inputs):
         outputs = self.conv1(inputs)
         return outputs
-    
+
 
 class UnetGridGatingSignal2(nn.Module):
     """Operation to extract important features for a specific task using 1x1 convolution (Gating) which is used in the 2D
@@ -1375,13 +1378,13 @@ class UnetGridGatingSignal2(nn.Module):
         super(UnetGridGatingSignal2, self).__init__()
 
         if is_batchnorm:
-            
+
             self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size, kernel_size, (1, 1), (0, 0)),
                                        nn.BatchNorm2d(out_size),
                                        nn.ReLU(inplace=True)
                                        )
         else:
-                                       
+
             self.conv1 = nn.Sequential(nn.Conv2d(in_size, out_size, kernel_size, (1, 1), (0, 0)),
                                        nn.ReLU(inplace=True)
                                        )
