@@ -447,6 +447,11 @@ predictions above or equal to threshold become 1.
 - ``thr``: Float. Threshold is between 0 and 1. To use soft predictions
   (i.e. no binarisation, float between 0 and 1) for metric computation, indicate -1.
 
+binarize\_maxpooling
+^^^^^^^^^^^^^^^^^^^^
+Dict. Binarize by setting to 1 the voxel having the maximum prediction across all classes. Useful for multiclass models.
+No parameters required (i.e., {}).
+
 fill\_holes
 ^^^^^^^^^^^
 Dict. Fill holes in the predictions. No parameters required (i.e., {}).
