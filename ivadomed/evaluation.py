@@ -381,7 +381,7 @@ class Evaluation3DMetrics(object):
         lfp = self._get_lfp(label_size, class_idx)
 
         denom = ltp + lfp
-        if denom == 0 or n_obj == 0:
+        if denom == 0:
             return np.nan
 
         return lfp / denom
