@@ -1250,44 +1250,39 @@ class _GridAttentionBlockND(nn.Module):
         self.operation_function = self._concatenation
 
     def forward(self, x, g):
-
         """
         Args:
             x (list): list of features include skip connections and bottom later size=(b, c, t, h, w) for 3D and (b,c,h,w) for 2D.
             g (torch.tensor): gating attention signal, comes from the bottom layer of the Unet unsing 2 or 3d conv.
             inter_channels (int): Number of channels in the intermediate gating step.
         """
-
         output = self.operation_function(x, g)
         return output
 
+    def _concatenation(self, x, g):
+        input_size = x.size()
+        batch_size = input_size[0]
+        assert batch_size == g.size(0)
 
-	def _concatenation(self, x, g):
-		input_size = x.size()
-		batch_size = input_size[0]
-		assert batch_size == g.size(0)
+        # theta => (b, c, t, h, w) -> (b, i_c, t, h, w) -> (b, i_c, thw)
+        # phi   => (b, g_d) -> (b, i_c)
+        theta_x = self.theta(x)
+        theta_x_size = theta_x.size()
 
-		# theta => (b, c, t, h, w) -> (b, i_c, t, h, w) -> (b, i_c, thw)
-		# phi   => (b, g_d) -> (b, i_c)
-		theta_x = self.theta(x)
-		theta_x_size = theta_x.size()
+        # g (b, c, t', h', w') -> phi_g (b, i_c, t', h', w')
+        # Relu(theta_x + phi_g + bias) -> f = (b, i_c, thw) -> (b, i_c, t/s1, h/s2, w/s3)
+        phi_g = F.interpolate(self.phi(g), size=theta_x_size[2:], mode=self.upsample_mode, align_corners=True)
+        f = F.relu(theta_x + phi_g, inplace=True)
 
-		# g (b, c, t', h', w') -> phi_g (b, i_c, t', h', w')
-		# Relu(theta_x + phi_g + bias) -> f = (b, i_c, thw) -> (b, i_c, t/s1, h/s2, w/s3)
-		phi_g = F.interpolate(self.phi(g), size=theta_x_size[2:], mode=self.upsample_mode, align_corners=True)
-		f = F.relu(theta_x + phi_g, inplace=True)
+        #  psi^T * f -> (b, psi_i_c, t/s1, h/s2, w/s3)
+        sigm_psi_f = torch.sigmoid(self.psi(f))
 
-		#  psi^T * f -> (b, psi_i_c, t/s1, h/s2, w/s3)
-		sigm_psi_f = torch.sigmoid(self.psi(f))
+        # upsample the attentions and multiply
+        sigm_psi_f = F.interpolate(sigm_psi_f, size=input_size[2:], mode=self.upsample_mode, align_corners=True)
+        y = sigm_psi_f.expand_as(x) * x
+        W_y = self.W(y)
 
-		# upsample the attentions and multiply
-		sigm_psi_f = F.interpolate(sigm_psi_f, size=input_size[2:], mode=self.upsample_mode, align_corners=True)
-
-		y = sigm_psi_f.expand_as(x) * x
-
-		W_y = self.W(y)
-
-		return W_y, sigm_psi_f
+        return W_y, sigm_psi_f
 
 
 class GridAttentionBlock2D(_GridAttentionBlockND):
