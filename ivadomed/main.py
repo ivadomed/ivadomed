@@ -177,9 +177,10 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         imed_utils.display_selected_transfoms(transformation_dict, dataset_type=["testing"])
 
     # Check if multiple raters
-    if any([class_suffix for class_suffix in loader_params["target_suffix"]]):
+    if any([isinstance(class_suffix, list) for class_suffix in loader_params["target_suffix"]]):
         print(
-            "\nAnnotations from multiple raters will be used during model training, one annotation from one rater randomly selected at each iteration.\n")
+            "\nAnnotations from multiple raters will be used during model training, one annotation from one rater "
+            "randomly selected at each iteration.\n")
         if command != "train":
             print(
                 "\nERROR: Please provide only one annotation per class in 'target_suffix' when not training a model.\n")
