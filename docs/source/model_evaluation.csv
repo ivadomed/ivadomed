@@ -1,0 +1,10 @@
+**Name**,**Automatic hyperparameter optimisation**,**Automatic Model evaluation**,**Model performance comparison**,**Uncertainty**
+`ivadomed <https://github.com/ivadomed/ivadomed>`_,|yes|,|yes|,|yes|,|yes|
+`monai <https://github.com/Project-MONAI/MONAI>`_,|no|,|yes|,|no|,|no| 
+`delira <https://github.com/justusschock/delira>`_,|no|,|no|,|no|,|no|
+`MIC-DKFZ <https://github.com/MIC-DKFZ/medicaldetectiontoolkit>`_,|no|,|yes|,|no|,|no|
+`ANTsPyNet <https://github.com/ANTsX/ANTsPyNet>`_,|no|,|no|,|no|,|no|
+`DLTK <https://github.com/DLTK/DLTK>`_,|no|,|no|,|no|,|no| 
+`MIScnn <https://github.com/frankkramer-lab/MIScnn>`_,|no|,|yes|,|no|,|no| 
+`niftytorch <https://niftytorch.github.io/doc/>`_,|yes|,|no|,|no|,|no| 
+`DeepNeuro <https://github.com/QTIM-Lab/DeepNeuro>`_,|no|,|no|,|no|,|no|
