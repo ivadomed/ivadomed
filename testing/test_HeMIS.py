@@ -54,7 +54,7 @@ def test_HeMIS(p=0.0001):
             "name": "HeMISUnet",
             "dropout_rate": 0.3,
             "bn_momentum": 0.9,
-            "depth": 2,
+            "depth": 3,
             "in_channel": 1,
             "out_channel": 1,
             "missing_probability": 0.00001,
