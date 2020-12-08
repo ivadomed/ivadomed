@@ -26,31 +26,10 @@ of the existing projects. This table was mostly based on the existing documentat
 understand that the field is rapidly evolving, and that this table might reflect the reality. If you notice
 inconsistencies, please let us know by `opening an issue <https://github.com/ivadomed/ivadomed/issues>`_.
 
-General overview
-++++++++++++++++
-
 .. csv-table::
-   :file: general_overview.csv
+   :file: comparison_dl_soft_transposed.csv
 
 (*): `Brain Imaging Data Structure <https://bids.neuroimaging.io/>`_
-
-Pipeline features
-+++++++++++++++++
-
-.. csv-table:: 
-   :file: pipeline_features.csv
-
-Model evaluation
-++++++++++++++++
-
-.. csv-table:: 
-   :file: model_evaluation.csv
-
-Documentation
-+++++++++++++
-
-.. csv-table:: 
-   :file: documentation.csv
 
 
 
