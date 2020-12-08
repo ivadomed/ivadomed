@@ -2,7 +2,6 @@
 ![ivadomed Overview](https://raw.githubusercontent.com/ivadomed/doc-figures/main/index/overview_title.png)
 
 [![Coverage Status](https://coveralls.io/repos/github/ivadomed/ivadomed/badge.svg?branch=master)](https://coveralls.io/github/ivadomed/ivadomed?branch=master)
-![](https://github.com/neuropoly/ivadomed/workflows/Python%20package/badge.svg)
 [![test status](https://github.com/ivadomed/ivadomed/workflows/Run%20tests/badge.svg)](https://github.com/ivadomed/ivadomed/actions?query=workflow%3A%22Run+tests%22)
 [![publish package](https://github.com/ivadomed/ivadomed/workflows/Publish%20Package/badge.svg)](https://github.com/ivadomed/ivadomed/actions?query=workflow%3A%22Publish+Package%22)
 [![Documentation Status](https://readthedocs.org/projects/ivado-medical-imaging/badge/?version=stable)](https://ivadomed.org/en/stable/?badge=stable)
