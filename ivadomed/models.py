@@ -1225,7 +1225,7 @@ class _GridAttentionBlockND(nn.Module):
             bn = nn.BatchNorm2d
             self.upsample_mode = 'bilinear'
         else:
-            raise NotImplemented
+            raise NotImplementedError
 
         # Output transform
         self.W = nn.Sequential(
