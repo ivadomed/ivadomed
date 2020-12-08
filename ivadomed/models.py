@@ -373,7 +373,7 @@ class Decoder(Module):
         film_layers (list): List of 0 or 1 indicating on which layer FiLM is applied.
         hemis (bool): Boolean indicating if HeMIS is on or not.
         final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax"
-        attention (bool): Boolian indicating if attention module is on or not.
+        attention (bool): Boolean indicating if attention module is on or not.
 
     Attributes:
         depth (int): Number of down convolutions minus bottom down convolution.
@@ -435,7 +435,7 @@ class Decoder(Module):
         ### ATTENTION MODULE ###
         if self.attention:
 
-            self.gating = UnetGridGatingSignal2(self.base_n_filter * 2 ** (self.depth),
+            self.gating = UnetGridGatingSignal2(self.base_n_filter * 2 ** self.depth,
                                                 self.base_n_filter * 2 ** (self.depth - 1), kernel_size=(1, 1),
                                                 is_batchnorm=True)
             for k in range(1, self.depth + 1):
@@ -500,7 +500,7 @@ class Unet(Module):
         final_activation (str): Choice of final activation between "sigmoid", "relu" and "softmax".
         is_2d (bool): Indicates dimensionality of model: True for 2D convolutions, False for 3D convolutions.
         n_filters (int):  Number of base filters in the U-Net.
-        attention (bool): Boolian indicating if attention module is on or not.
+        attention (bool): Boolean indicating if attention module is on or not.
 
         **kwargs:
 
@@ -1250,41 +1250,44 @@ class _GridAttentionBlockND(nn.Module):
         self.operation_function = self._concatenation
 
     def forward(self, x, g):
-        '''
-        :param x: (b, c, t, h, w)
-        :param g: (b, g_d)
-        :return:
-        '''
+
+        """
+        Args:
+            x (list): list of features include skip connections and bottom later size=(b, c, t, h, w) for 3D and (b,c,h,w) for 2D.
+            g (torch.tensor): gating attention signal, comes from the bottom layer of the Unet unsing 2 or 3d conv.
+            inter_channels (int): Number of channels in the intermediate gating step.
+        """
 
         output = self.operation_function(x, g)
         return output
 
-    def _concatenation(self, x, g):
-        input_size = x.size()
-        batch_size = input_size[0]
-        assert batch_size == g.size(0)
 
-        # theta => (b, c, t, h, w) -> (b, i_c, t, h, w) -> (b, i_c, thw)
-        # phi   => (b, g_d) -> (b, i_c)
-        theta_x = self.theta(x)
-        theta_x_size = theta_x.size()
+def _concatenation(self, x, g):
+    input_size = x.size()
+    batch_size = input_size[0]
+    assert batch_size == g.size(0)
 
-        # g (b, c, t', h', w') -> phi_g (b, i_c, t', h', w')
-        #  Relu(theta_x + phi_g + bias) -> f = (b, i_c, thw) -> (b, i_c, t/s1, h/s2, w/s3)
-        phi_g = F.upsample(self.phi(g), size=theta_x_size[2:], mode=self.upsample_mode)
-        f = F.relu(theta_x + phi_g, inplace=True)
+    # theta => (b, c, t, h, w) -> (b, i_c, t, h, w) -> (b, i_c, thw)
+    # phi   => (b, g_d) -> (b, i_c)
+    theta_x = self.theta(x)
+    theta_x_size = theta_x.size()
 
-        #  psi^T * f -> (b, psi_i_c, t/s1, h/s2, w/s3)
-        sigm_psi_f = F.sigmoid(self.psi(f))
+    # g (b, c, t', h', w') -> phi_g (b, i_c, t', h', w')
+    # Relu(theta_x + phi_g + bias) -> f = (b, i_c, thw) -> (b, i_c, t/s1, h/s2, w/s3)
+    phi_g = F.interpolate(self.phi(g), size=theta_x_size[2:], mode=self.upsample_mode, align_corners=True)
+    f = F.relu(theta_x + phi_g, inplace=True)
 
-        # upsample the attentions and multiply
-        sigm_psi_f = F.upsample(sigm_psi_f, size=input_size[2:], mode=self.upsample_mode)
+    #  psi^T * f -> (b, psi_i_c, t/s1, h/s2, w/s3)
+    sigm_psi_f = torch.sigmoid(self.psi(f))
 
-        y = sigm_psi_f.expand_as(x) * x
+    # upsample the attentions and multiply
+    sigm_psi_f = F.interpolate(sigm_psi_f, size=input_size[2:], mode=self.upsample_mode, align_corners=True)
 
-        W_y = self.W(y)
+    y = sigm_psi_f.expand_as(x) * x
 
-        return W_y, sigm_psi_f
+    W_y = self.W(y)
+
+    return W_y, sigm_psi_f
 
 
 class GridAttentionBlock2D(_GridAttentionBlockND):
