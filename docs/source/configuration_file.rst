@@ -70,6 +70,12 @@ bids\_path
 
 String. Path of the BIDS folder.
 
+bids\_config
+^^^^^^^^^^^^
+
+String (Optional). Path of the custom BIDS configuration file for BIDS non-compliant modalities
+(e.g. ``"ivadomed/config/config_bids.json"``).
+
 subject\_selection
 ^^^^^^^^^^^^^^^^^^
 
@@ -96,6 +102,11 @@ training, (e.g. [[``"_seg-manual-rater1"``, ``"_seg-manual-rater2"``],
 sublist is associated with one class but contains the annotations from
 different experts: at each training iteration, one of these annotations
 will be randomly chosen.
+
+extensions
+^^^^^^^^^^
+
+List. Used to specify a list of file extensions to be selected for training/testing.
 
 contrasts
 ^^^^^^^^^
