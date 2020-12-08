@@ -70,6 +70,12 @@ bids\_path
 
 String. Path of the BIDS folder.
 
+bids\_config
+^^^^^^^^^^^^
+
+String (Optional). Path of the custom BIDS configuration file for BIDS non-compliant modalities
+(e.g. ``"ivadomed/config/config_bids.json"``).
+
 subject\_selection
 ^^^^^^^^^^^^^^^^^^
 
@@ -91,6 +97,11 @@ interest (e.g. [``"_seg-manual"``, ``"_lesion-manual"``]). The length of
 this list controls the number of output channels of the model (i.e.
 ``out_channel``). If the list has a length greater than 1, then a
 multi-class model will be trained.
+
+extensions
+^^^^^^^^^^
+
+List. Used to specify a list of file extensions to be selected for training/testing.
 
 contrasts
 ^^^^^^^^^
@@ -441,6 +452,11 @@ predictions above or equal to threshold become 1.
 
 - ``thr``: Float. Threshold is between 0 and 1. To use soft predictions
   (i.e. no binarisation, float between 0 and 1) for metric computation, indicate -1.
+
+binarize\_maxpooling
+^^^^^^^^^^^^^^^^^^^^
+Dict. Binarize by setting to 1 the voxel having the maximum prediction across all classes. Useful for multiclass models.
+No parameters required (i.e., {}).
 
 fill\_holes
 ^^^^^^^^^^^

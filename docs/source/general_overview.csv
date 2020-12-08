@@ -1,0 +1,14 @@
+**Name**,**BIDS**,**DL base library**,"**Task (segmentation, detection, classification)**",**Data dimension**,**Multichannel**,**Multilabel**
+`ivadomed <https://github.com/ivadomed/ivadomed>`_,|yes|,PyTorch,"Classification, Segmentation, Detection","2D, 3D",|yes| ,|yes| 
+`monai <https://github.com/Project-MONAI/MONAI>`_,|no|,PyTorch,"Segmentation, Classification","2D, 3D",|yes| ," 
+ 		
+
+|yes| 
+"
+`delira <https://github.com/justusschock/delira>`_,|no|,PyTorch and TensorFlow,"Classification, Generation, Segmentation","2D, 3D",|no| ,|no| 
+`MIC-DKFZ <https://github.com/MIC-DKFZ/medicaldetectiontoolkit>`_,|no|,PyTorch,Detection,"2D, 3D",|no| ,|no| 
+`ANTsPyNet <https://github.com/ANTsX/ANTsPyNet>`_,|no|,Tensorflow/Keras,"Classification, Segmentation, Clustering, Registration","2D, 3D",|no| ,|yes| 
+`DLTK <https://github.com/DLTK/DLTK>`_,|no|,Tensorflow,"Classification, Segmentation,Registration",3D,|no| ,|yes| 
+`MIScnn <https://github.com/frankkramer-lab/MIScnn>`_,|no|,Tensorflow/Keras,Segmentation,"2D, 3D",|no| ,|yes| 
+`niftytorch <https://niftytorch.github.io/doc/>`_,|yes|,PyTorch,"Classification, Segmentation ",3D,|no| ,|no| 
+`DeepNeuro <https://github.com/QTIM-Lab/DeepNeuro>`_,|no|,Tensorflow/Keras,Segmentation,"2D, 3D",|no| ,|no|
