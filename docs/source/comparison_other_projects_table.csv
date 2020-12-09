@@ -1,0 +1,21 @@
+**Name**,**BIDS (1)**,**DL base library**,**Task (2)**,**Data dimension**,**Multichannel**,**Multilabel**,**Uncertainty**,**Transfer Learning**,**Pre-processing tools**,**Post-processing tools**,**User case examples**,**Multi-GPU data parallelism**,**Automatic Model evaluation**,**Input region of interest**,**Missing modality**,**Model performance comparison**,**Automatic hyperparameter optimisation**,**Packaged Multi-center Model**
+`ivadomed <https://github.com/ivadomed/ivadomed>`_,|yes|,PyTorch,"Class, 
+Seg, Detect","2D, 3D",|yes| ,|yes| ,|yes|,|yes|,|yes|,|yes|,|yes|,|no|,|yes|,|yes| ,|yes|,|yes|,|yes|,|yes|
+`monai <https://github.com/Project-MONAI/MONAI>`_,|no|,PyTorch,"Seg, Class","2D, 3D",|yes| ," 
+ 		
+
+|yes| 
+",|no| ,|no|,|yes|,|no|,|yes|,|yes|,|yes|,|yes| ,|no|,|no|,|no|,|no|
+`delira <https://github.com/justusschock/delira>`_,|no|,PyTorch and TensorFlow,"Class, Gen, Seg","2D, 3D",|no| ,|no| ,|no|,|yes|,|no|,|no|,|yes|,|yes|,|no|,|no|,|no|,|no|,|no|,|no|
+`MIC-DKFZ <https://github.com/MIC-DKFZ/medicaldetectiontoolkit>`_,|no|,PyTorch,Detect,"2D, 3D",|no| ,|no| ,|no|,|no|,|no|,|no|,|no|,|no|,|yes|,|yes|,|no|,|no|,|no|,|no|
+`ANTsPyNet <https://github.com/ANTsX/ANTsPyNet>`_,|no|,Tensorflow/Keras,"Class, 
+Seg, 
+Clust, 
+Reg","2D, 3D",|no| ,|yes| ,|no|,|no|,|no|,|no|,|yes| ,|no|,|no|,|no|,|no|,|no|,|no|,|no|
+`DLTK <https://github.com/DLTK/DLTK>`_,|no|,Tensorflow,"Class, 
+Seg, 
+Reg",3D,|no| ,|yes| ,|no| ,|yes|,|no|,|no|,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|
+`MIScnn <https://github.com/frankkramer-lab/MIScnn>`_,|no|,Tensorflow/Keras,Seg,"2D, 3D",|no| ,|yes| ,|no| ,|no|,|yes|,|yes|,|no|,|yes|,|yes|,|no|,|no|,|no|,|no|,|no|
+`niftytorch <https://niftytorch.github.io/doc/>`_,|yes|,PyTorch,"Class, 
+Seg",3D,|no| ,|no| ,|no| ,|no|,|no|,|no|,|yes|,|yes|,|no|,|yes|,|no|,|no|,|yes|,|no|
+`DeepNeuro <https://github.com/QTIM-Lab/DeepNeuro>`_,|no|,Tensorflow/Keras,Seg,"2D, 3D",|no| ,|no|,|no|,|no|,|yes|,|yes|,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|

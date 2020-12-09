@@ -27,9 +27,10 @@ understand that the field is rapidly evolving, and that this table might reflect
 inconsistencies, please let us know by `opening an issue <https://github.com/ivadomed/ivadomed/issues>`_.
 
 .. csv-table::
-   :file: comparison_dl_soft_transposed.csv
+   :file: comparison_other_projects_table.csv
 
-(*): `Brain Imaging Data Structure <https://bids.neuroimaging.io/>`_
+(1): `Brain Imaging Data Structure <https://bids.neuroimaging.io/>`_
+(2): Class: Classification| Seg: Segmentation | Detect: Detection | Gen: Generation| Clust: Clustering | Reg: Registration
 
 
 
