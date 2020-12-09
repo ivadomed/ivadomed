@@ -321,13 +321,18 @@ class Postprocessing(object):
         """Remove small objects
 
         Args:
-            unit (str or list): Indicates the units of the objects: "mm3" or "vox"
-            thr (int): Minimal object size to keep in input data.
+            unit (str): Indicates the units of the objects: "mm3" or "vox"
+            thr (int or list): Minimal object size to keep in input data.
 
         """
         if isinstance(thr, list) and (self.n_classes != len(thr)):
             raise ValueError("Length mismatch for remove small object postprocessing step: threshold length of {} "
                              "while the number of predicted class is {}.".format(len(thr), self.n_classes))
+
+        # Convert thr to list
+        if isinstance(thr, int):
+            thr = [thr] * self.n_classes
+
         if unit == 'vox':
             size_min = thr
         elif unit == 'mm3':
