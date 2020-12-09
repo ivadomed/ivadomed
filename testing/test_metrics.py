@@ -58,6 +58,7 @@ def test_plot_roc_curve():
     opt_thr_idx = 3
     imed_metrics.plot_roc_curve(tpr, fpr, opt_thr_idx, "roc_test.png")
     assert os.path.isfile("roc_test.png")
+    os.remove("roc_test.png")
 
 
 def test_dice_plot():
@@ -65,3 +66,4 @@ def test_dice_plot():
     dice_list = [0.6, 0.7, 0.8, 0.75]
     imed_metrics.plot_dice_thr(thr_list, dice_list, 2, "test_dice.png")
     assert os.path.isfile("test_dice.png")
+    os.remove("test_dice.png")
