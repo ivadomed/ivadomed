@@ -136,7 +136,7 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
             postpro['keep_largest'] = {}
         if 'fill_holes' in options and options['fill_holes']:
             postpro['fill_holes'] = {}
-        if 'remove_small' in options and options['fill_holes'] and \
+        if 'remove_small' in options and options['remove_small'] and \
                 ('mm' in options['remove_small'] or 'vox' in options['remove_small']):
             unit = 'mm3' if 'mm3' in options['remove_small'] else 'vox'
             thr = int(options['remove_small'].replace(unit, ""))
