@@ -1,6 +1,7 @@
 import ivadomed.mixup as imed_mixup
 import torch
 import pytest
+import os
 
 
 @pytest.mark.parametrize("debugging", [False, True])
@@ -15,4 +16,5 @@ def test_mixup(debugging, ofolder):
     targ = torch.tensor(targ).float()
     # just testing if mixup function run
     out = imed_mixup.mixup(inp, targ, alpha=0.5, debugging=debugging, ofolder=ofolder)
+    os.remove(ofolder)
 
