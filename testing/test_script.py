@@ -32,6 +32,8 @@ def test_download_data():
 def test_create_segment_file():
     command = "cp testing_data/model_config_test.json testing_data/model_config_segment.json"
     subprocess.check_output(command, shell=True)
+    command = "ivadomed_download_data -d findcord_tumor"
+    subprocess.check_output(command, shell=True)
     os.makedirs("testing_script", exist_ok=True)
     command = "scp -r findcord_tumor testing_script"
     subprocess.check_output(command, shell=True)
@@ -50,11 +52,14 @@ def test_create_segment_file():
 def test_segment():
     subprocess.check_output(["ivadomed -c testing_data/model_config_segment.json"], shell=True)
     shutil.rmtree(os.path.join('testing_script', 'pred_masks'))
+    shutil.rmtree("findcord_tumor")
 
 
 def test_onnx_conversion():
     # testing convert to onnx
     subprocess.check_output("ivadomed_convert_to_onnx -m testing_data/model_unet_test.pt -d 2", shell=True)
+    assert os.path.isfile('model_unet_test.onnx')
+    os.remove('model_unet_test.onnx')
 
 
 def test_prepare_dataset_vertebral_labeling():
