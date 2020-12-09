@@ -71,14 +71,19 @@ def test_visualize_transform():
     # testing visualize_transform
     command = "ivadomed_visualize_transforms -i testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz -n " + \
               "2 -c testing_data/model_config.json " + \
-              "-r testing_data/derivatives/labels/sub-test001/anat/sub-unf01_T1w_seg-manual.nii.gz -o visuzalize_test"
+              "-r testing_data/derivatives/labels/sub-test001/anat/sub-unf01_T1w_seg-manual.nii.gz -o visualize_test"
     subprocess.check_output(command, shell=True)
+    assert os.path.isdir("visualize_test")
+    shutil.rmtree("visualize_test")
 
 
 def test_extract_small():
     # testing extract_small_dataset
     subprocess.check_output("ivadomed_extract_small_dataset -i testing_data/ -o small_dataset/test_script/ -n 1 -c T2w,"
                             "T1w -d 1", shell=True)
+    assert os.path.isdir("small_dataset/test_script/")
+    shutil.rmtree("small_dataset")
+
 
 
 def test_compare_model():
