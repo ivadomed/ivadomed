@@ -8,6 +8,10 @@
    <style> .line {text-align:centers;} </style>
    <p style="color:red" align="center">	&#10007;</p>
 
+.. |cent| raw:: html
+
+  <style> .line {text-align:center;} </style>
+
 
 Purpose
 =======
@@ -25,6 +29,9 @@ We acknowledge the existence of projects with similar purposes. The table below 
 of the existing projects. This table was mostly based on the existing documentation for each project. We
 understand that the field is rapidly evolving, and that this table might reflect the reality. If you notice
 inconsistencies, please let us know by `opening an issue <https://github.com/ivadomed/ivadomed/issues>`_.
+
+..
+  If you wish to modify the csv tbale please modify https://docs.google.com/spreadsheets/d/1_MydnHnlOAuYzJ9QBCvPC9Jq2xUmPWI-XttTfcdtW2Y/edit#gid=0
 
 .. csv-table::
    :file: comparison_other_projects_table.csv
