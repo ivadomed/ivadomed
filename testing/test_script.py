@@ -85,11 +85,11 @@ def test_extract_small():
     shutil.rmtree("small_dataset")
 
 
-
 def test_compare_model():
     # testing compare_model
     command = "ivadomed_compare_models -df testing_data/temporary_results.csv -n 2 -o output_test.csv"
     subprocess.check_output(command, shell=True)
+    assert os.path.isfile("output_test.csv")
 
 
 def test_creation_dataset():
@@ -230,6 +230,10 @@ def test_automate_training_test():
     command = "ivadomed_automate_training -c testing_data/model_config_auto.json " \
               "-p testing_data/hyperparameter_opt.json -n 1 --run-test --all-combin -t 0.1"
     subprocess.check_output(command, shell=True)
+    assert os.path.isdir("testing_script-batch_size\=2")
+    assert os.path.isdir("testing_script-batch_size\=4")
+    shutil.rmtree("testing_script-batch_size\=2")
+    shutil.rmtree("testing_script-batch_size\=4")
 
 
 def test_create_json_3d_unet_test():
