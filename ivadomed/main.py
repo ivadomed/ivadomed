@@ -176,6 +176,16 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     elif command == "test":
         imed_utils.display_selected_transfoms(transformation_dict, dataset_type=["testing"])
 
+    # Check if multiple raters
+    if any([isinstance(class_suffix, list) for class_suffix in loader_params["target_suffix"]]):
+        print(
+            "\nAnnotations from multiple raters will be used during model training, one annotation from one rater "
+            "randomly selected at each iteration.\n")
+        if command != "train":
+            print(
+                "\nERROR: Please provide only one annotation per class in 'target_suffix' when not training a model.\n")
+            exit()
+
     if command == 'train':
         # LOAD DATASET
         # Get Validation dataset
@@ -238,7 +248,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         if command != 'train':  # If command == train, then ds_valid already load
             # Get Validation dataset
             ds_valid = imed_loader.load_dataset(**{**loader_params,
-                                                   **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
+                                                   **{'data_list': valid_lst,
+                                                      'transforms_params': transform_valid_params,
                                                       'dataset_type': 'validation'}}, device=device,
                                                 cuda_available=cuda_available)
         # Get Training dataset with no Data Augmentation
@@ -280,7 +291,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                                                   'transforms_params': transformation_dict,
                                                                   'dataset_type': 'testing',
                                                                   'requires_undo': True}}, device=device,
-                                                                  cuda_available=cuda_available)
+                                           cuda_available=cuda_available)
 
         metric_fns = imed_metrics.get_metric_fns(ds_test.task)
 
