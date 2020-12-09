@@ -69,7 +69,6 @@ def test_visualize_transform():
               "-r testing_data/derivatives/labels/sub-test001/anat/sub-unf01_T1w_seg-manual.nii.gz -o visualize_test"
     subprocess.check_output(command, shell=True)
     assert os.path.isdir("visualize_test")
-    shutil.rmtree("visualize_test")
 
 
 def test_extract_small():
@@ -77,7 +76,6 @@ def test_extract_small():
     subprocess.check_output("ivadomed_extract_small_dataset -i testing_data/ -o small_dataset/test_script/ -n 1 -c T2w,"
                             "T1w -d 1", shell=True)
     assert os.path.isdir("small_dataset/test_script/")
-    shutil.rmtree("small_dataset")
 
 
 def test_compare_model():
@@ -219,8 +217,7 @@ def test_automate_training_train():
 
 
 def test_training_curve_multiple():
-    subprocess.check_output(["ivadomed_training_curve -i ./testing_script-batch_size= --multiple "
-                             "-o visu_test_multiple"], shell=True)
+    subprocess.check_output(["ivadomed_training_curve -i ./testing_script-batch_size= --multiple -o visu_test_multiple"], shell=True)
 
 
 def test_automate_training_test():
@@ -410,9 +407,11 @@ def test_resume_training():
     subprocess.check_output(["ivadomed -c testing_data/model_config.json --resume"], shell=True)
 
 
-def cleaning_test():
+def test_cleaning():
     shutil.rmtree("testing_script-batch_size=2")
     shutil.rmtree("testing_script-batch_size=4")
     shutil.rmtree("t2_tumor")
     shutil.rmtree("findcord_tumor")
     shutil.rmtree("output")
+    shutil.rmtree("small_dataset")
+    shutil.rmtree("visualize_test")
