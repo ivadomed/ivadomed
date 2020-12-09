@@ -1,6 +1,6 @@
 **Name**,`ivadomed <https://github.com/ivadomed/ivadomed>`_,`monai <https://github.com/Project-MONAI/MONAI>`_,`delira <https://github.com/justusschock/delira>`_,`MIC-DKFZ <https://github.com/MIC-DKFZ/medicaldetectiontoolkit>`_,`ANTsPyNet <https://github.com/ANTsX/ANTsPyNet>`_,`DLTK <https://github.com/DLTK/DLTK>`_,`MIScnn <https://github.com/frankkramer-lab/MIScnn>`_,`niftytorch <https://niftytorch.github.io/doc/>`_,`DeepNeuro <https://github.com/QTIM-Lab/DeepNeuro>`_
 **BIDS (1)**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|,|no|
-**DL base library**,PyTorch,PyTorch,PyTorch and TF,PyTorch,TF/Keras,TF,TF/Keras,PyTorch,TF/Keras
+**DL base library**,PyTorch,PyTorch,"PyTorch, TF",PyTorch,TF/Keras,TF,TF/Keras,PyTorch,TF/Keras
 **Task (2)**,"Class, 
 Seg, Detect","Seg, Class","Class, Gen, Seg",Detect,"Class, 
 Seg, 
@@ -22,9 +22,9 @@ Seg",Seg
 **Post-processing tools**,|yes|,|no|,|no|,|no|,|no|,|no|,|yes|,|no|,|yes|
 **User case examples**,|yes|,|yes|,|yes|,|no|,|yes| ,|yes|,|no|,|yes|,|yes|
 **Multi-GPU data parallelism**,|no|,|yes|,|yes|,|no|,|no|,|no|,|yes|,|yes|,|no|
-**Automatic Model evaluation**,|yes|,|yes|,|no|,|yes|,|no|,|no|,|yes|,|no|,|no|
+**Model evaluation**,|yes|,|yes|,|no|,|yes|,|no|,|no|,|yes|,|no|,|no|
 **Input region of interest**,|yes| ,|yes| ,|no|,|yes|,|no|,|no|,|no|,|yes|,|no|
 **Missing modality**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|no|
-**Model performance comparison**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|no|
+**Models comparison**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|no|
 **Automatic hyperparameter optimisation**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|,|no|
-**Packaged Multi-center Model**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|
+**Multi-center models**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|
