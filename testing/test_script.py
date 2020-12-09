@@ -7,6 +7,7 @@ import shutil
 import nibabel as nib
 import pytest
 import torch
+import shutil
 
 from ivadomed import config_manager as imed_config_manager
 import ivadomed.models as imed_models
@@ -22,6 +23,10 @@ def test_download_data():
     subprocess.check_output(command, shell=True)
     command = "ivadomed_download_data -d data_testing -o output -k 1"
     subprocess.check_output(command, shell=True)
+    assert os.path.isdir("output")
+    shutil.rmtree("t2_tumor")
+    shutil.rmtree("findcord_tumor")
+    shutil.rmtree("output")
 
 
 def test_create_segment_file():
