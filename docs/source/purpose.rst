@@ -31,7 +31,7 @@ inconsistencies, please let us know by `opening an issue <https://github.com/iva
 
 (1): `Brain Imaging Data Structure <https://bids.neuroimaging.io/>`_ 
 
-(2): Class: Classification| Seg: Segmentation | Detect: Detection | Gen: Generation| Clust: Clustering | Reg: Registration
+(2): Class: Classification | Seg: Segmentation | Detect: Detection | Gen: Generation | Clust: Clustering | Reg: Registration
 
 
 
