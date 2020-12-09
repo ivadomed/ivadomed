@@ -58,8 +58,8 @@ def test_segment():
 def test_onnx_conversion():
     # testing convert to onnx
     subprocess.check_output("ivadomed_convert_to_onnx -m testing_data/model_unet_test.pt -d 2", shell=True)
-    assert os.path.isfile('model_unet_test.onnx')
-    os.remove('model_unet_test.onnx')
+    assert os.path.isfile('testing_data/model_unet_test.onnx')
+    os.remove('testing_data/model_unet_test.onnx')
 
 
 def test_prepare_dataset_vertebral_labeling():
