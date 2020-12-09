@@ -132,10 +132,18 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
         postpro = {}
         if 'binarize_prediction' in options and options['binarize_prediction']:
             postpro['binarize_prediction'] = {"thr": options['binarize_prediction']}
-        if 'keep_largest' in options and options['keep_largest']:
-            postpro['keep_largest'] = {}
+        if 'keep_largest' in options and options['keep_largest'] is not None:
+            if options['keep_largest']:
+                postpro['keep_largest'] = {}
+            # Remove key in context if value set to 0
+            elif 'keep_largest' in context['postprocessing']:
+                del context['postprocessing']['keep_largest']
         if 'fill_holes' in options and options['fill_holes']:
-            postpro['fill_holes'] = {}
+            if options['fill_holes']:
+                postpro['fill_holes'] = {}
+            # Remove key in context if value set to 0
+            elif 'fill_holes' in context['postprocessing']:
+                del context['postprocessing']['fill_holes']
         if 'remove_small' in options and options['remove_small'] and \
                 ('mm' in options['remove_small'] or 'vox' in options['remove_small']):
             unit = 'mm3' if 'mm3' in options['remove_small'] else 'vox'
