@@ -9,6 +9,7 @@ from tensorboard.backend.event_processing.event_accumulator import EventAccumula
 import ivadomed.maths as imed_math
 from PIL import Image
 import time
+import shutil
 
 
 def test_tensorboard_save():
@@ -31,3 +32,4 @@ def test_tensorboard_save():
     assert np.allclose(imed_math.rescale_values_array(input_retrieve[:, :, 0], 0, 1), inp[0, 0, :, :])
     assert np.allclose(imed_math.rescale_values_array(pred_retrieve[:, :, 0], 0, 1), pred[0, 0, :, :])
     assert np.allclose(imed_math.rescale_values_array(gt_retrieve[:, :, 0], 0, 1), gt[0, 0, :, :])
+    shutil.rmtree(dpath)
