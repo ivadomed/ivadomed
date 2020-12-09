@@ -24,9 +24,6 @@ def test_download_data():
     command = "ivadomed_download_data -d data_testing -o output -k 1"
     subprocess.check_output(command, shell=True)
     assert os.path.isdir("output")
-    shutil.rmtree("t2_tumor")
-    shutil.rmtree("findcord_tumor")
-    shutil.rmtree("output")
 
 
 def test_create_segment_file():
