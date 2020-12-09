@@ -29,7 +29,8 @@ inconsistencies, please let us know by `opening an issue <https://github.com/iva
 .. csv-table::
    :file: comparison_other_projects_table.csv
 
-(1): `Brain Imaging Data Structure <https://bids.neuroimaging.io/>`_
+(1): `Brain Imaging Data Structure <https://bids.neuroimaging.io/>`_ 
+
 (2): Class: Classification| Seg: Segmentation | Detect: Detection | Gen: Generation| Clust: Clustering | Reg: Registration
 
 
