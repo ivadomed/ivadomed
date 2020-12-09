@@ -127,21 +127,22 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
     # Load model training config
     context = imed_config_manager.ConfigurationManager(fname_model_metadata).get_config()
 
-    if options is not None and any(pp in options for pp in ['thr', 'largest', ' fill_holes', 'remove_small']):
+    postpro_list = ['binarize_prediction', 'keep_largest', ' fill_holes', 'remove_small']
+    if options is not None and any(pp in options for pp in postpro_list):
         postpro = {}
-        if 'thr' in options:
-            postpro['binarize_prediction'] = {"thr": options['thr']}
-        if 'largest' in options and options['largest']:
+        if 'binarize_prediction' in options and options['binarize_prediction']:
+            postpro['binarize_prediction'] = {"thr": options['binarize_prediction']}
+        if 'keep_largest' in options and options['keep_largest']:
             postpro['keep_largest'] = {}
         if 'fill_holes' in options and options['fill_holes']:
             postpro['fill_holes'] = {}
-        if 'remove_small' in options and ('mm' in options['remove_small'] or 'vox' in options['remove_small']):
+        if 'remove_small' in options and options['fill_holes'] and \
+                ('mm' in options['remove_small'] or 'vox' in options['remove_small']):
             unit = 'mm3' if 'mm3' in options['remove_small'] else 'vox'
             thr = int(options['remove_small'].replace(unit, ""))
             postpro['remove_small'] = {"unit": unit, "thr": thr}
 
-        postpro.update(context['postprocessing'])
-        context['postprocessing'] = postpro
+        context['postprocessing'].update(postpro)
 
     # LOADER
     loader_params = context["loader_parameters"]
