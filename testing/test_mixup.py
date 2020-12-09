@@ -1,8 +1,8 @@
 import ivadomed.mixup as imed_mixup
 import torch
 import pytest
+import shutil
 import os
-
 
 @pytest.mark.parametrize("debugging", [False, True])
 @pytest.mark.parametrize("ofolder", ["test", "mixup_test"])
@@ -16,5 +16,7 @@ def test_mixup(debugging, ofolder):
     targ = torch.tensor(targ).float()
     # just testing if mixup function run
     out = imed_mixup.mixup(inp, targ, alpha=0.5, debugging=debugging, ofolder=ofolder)
-    os.remove(ofolder)
+    if debugging:
+        assert os.path.isdir(ofolder)
+        shutil.rmtree(ofolder)
 
