@@ -221,8 +221,6 @@ def test_automate_training_train():
     subprocess.check_output(command, shell=True)
     assert os.path.isdir("testing_script-batch_size=2")
     assert os.path.isdir("testing_script-batch_size=4")
-    shutil.rmtree("testing_script-batch_size=2")
-    shutil.rmtree("testing_script-batch_size=4")
 
 
 def test_training_curve_multiple():
@@ -234,7 +232,6 @@ def test_automate_training_test():
     command = "ivadomed_automate_training -c testing_data/model_config_auto.json " \
               "-p testing_data/hyperparameter_opt.json -n 1 --run-test --all-combin -t 0.1"
     subprocess.check_output(command, shell=True)
-
 
 
 def test_create_json_3d_unet_test():
@@ -416,3 +413,11 @@ def test_resume_training():
 
     # Resume training
     subprocess.check_output(["ivadomed -c testing_data/model_config.json --resume"], shell=True)
+
+
+def cleaning_test():
+    shutil.rmtree("testing_script-batch_size=2")
+    shutil.rmtree("testing_script-batch_size=4")
+    shutil.rmtree("t2_tumor")
+    shutil.rmtree("findcord_tumor")
+    shutil.rmtree("output")
