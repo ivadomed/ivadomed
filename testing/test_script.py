@@ -32,8 +32,6 @@ def test_download_data():
 def test_create_segment_file():
     command = "cp testing_data/model_config_test.json testing_data/model_config_segment.json"
     subprocess.check_output(command, shell=True)
-    command = "ivadomed_download_data -d findcord_tumor"
-    subprocess.check_output(command, shell=True)
     os.makedirs("testing_script", exist_ok=True)
     command = "scp -r findcord_tumor testing_script"
     subprocess.check_output(command, shell=True)
