@@ -1,6 +1,7 @@
 from ivadomed import visualize as imed_visualize
 import numpy as np
 import torch
+import os
 
 
 def test_save_rbg():
@@ -14,6 +15,8 @@ def test_save_rbg():
     imed_visualize.save_color_labels(image_n, False,
                                  "testing_data/derivatives/labels/sub-unf01/anat/sub-unf01_T2w_lesion-manual.nii.gz",
                                  "rgb_test.nii.gz", 0)
+    assert os.path.isfile("rgb_test.nii.gz")
+    os.remove("rgb_test.nii.gz")
 
 
 def test_rbg_conversion():
