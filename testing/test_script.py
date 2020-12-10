@@ -282,10 +282,6 @@ def test_testing_unet3d():
     subprocess.check_output(["ivadomed -c testing_data/model_config_3d.json"], shell=True)
 
 
-def test_training_curve_single():
-    subprocess.check_output(["ivadomed_training_curve -i testing_script -o visu_test"], shell=True)
-
-
 @pytest.mark.parametrize('train_lst', [['sub-unf01', 'sub-unf02', 'sub-unf03']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('config', [
