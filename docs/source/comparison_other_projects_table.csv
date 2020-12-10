@@ -26,5 +26,5 @@ Seg",Seg
 **Input region of interest**,|yes| ,|yes| ,|no|,|yes|,|no|,|no|,|no|,|yes|,|no|
 **Missing modality**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|no|
 **Models comparison**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|no|
-**Automatic hyperparameter optimisation**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|,|no|
+**Hyperparam optimisation**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|,|no|
 **Multi-center models**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|
