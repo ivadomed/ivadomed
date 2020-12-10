@@ -38,7 +38,6 @@ inconsistencies, please let us know by `opening an issue <https://github.com/iva
 
 (1): `"BIDS" stands for the Brain Imaging Data Structure <https://bids.neuroimaging.io/>`_, which is a convention initiated by the neuroimaging community to organize datasets (filenames, metadata, etc.). This facilitates the sharing of datasets and minimizes the burden of organizing datasets for training.
 
-(2): Class: Classification | Seg: Segmentation | Detect: Detection | Gen: Generation | Clust: Clustering | Reg: Registration
-
+(2): **Class**: Classification | **Seg**: Segmentation | **Detect**: Detection | **Gen**: Generation | **Clust**: Clustering | **Reg**: Registration
 
 
