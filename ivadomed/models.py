@@ -398,7 +398,7 @@ class Decoder(Module):
         self.att_path = nn.ModuleList()
         if hemis:
             in_channel = n_filters * 2 ** self.depth
-            self.up_path.append(UpConv(in_channel, n_filters * 2 ** (self.depth - 1), drop_rate, bn_momentum,
+            self.up_path.append(UpConv(in_channel * 2, n_filters * 2 ** (self.depth - 1), drop_rate, bn_momentum,
                                        is_2d))
             if film_layers and film_layers[self.depth + 1]:
                 self.up_path.append(FiLMlayer(n_metadata, n_filters * 2 ** (self.depth - 1)))
