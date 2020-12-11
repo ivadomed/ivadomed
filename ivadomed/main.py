@@ -56,6 +56,15 @@ def get_parser():
     return parser
 
 
+def save_config_file(context, log_directory):
+    # Save config file within log_directory and log_directory/model_name
+    # Done after the threshold_analysis to propate this info in the config files
+    with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
+        json.dump(context, fp, indent=4)
+    with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
+        json.dump(context, fp, indent=4)
+
+
 def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     """Run main command.
 
@@ -229,6 +238,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         else:
             print('Model directory already exists: {}'.format(path_model))
 
+        save_config_file(context, log_directory)
+
         # RUN TRAINING
         best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
             model_params=model_params,
@@ -274,15 +285,9 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
         # Update threshold in config file
         context["postprocessing"]["binarize_prediction"] = {"thr": thr}
+        save_config_file(context, log_directory)
 
     if command == 'train':
-        # Save config file within log_directory and log_directory/model_name
-        # Done after the threshold_analysis to propate this info in the config files
-        with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
-            json.dump(context, fp, indent=4)
-        with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
-            json.dump(context, fp, indent=4)
-
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
     if command == 'test':
