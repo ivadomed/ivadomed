@@ -1,14 +1,30 @@
-**Name**,**Repository**,**BIDS**,**DL base library**,"**Task (segmentation, detection, classification)**",**Data dimension**,**Multichannel**,**Multilabel**,**Uncertainty**,**Transfer Learning**,**Pre-processing tools**,**Post-processing tools**,**User case examples**,**Multi-GPU data parallelism**,**Automatic Model evaluation**,**Input region of interest**,**Missing modality**,**Model performance comparison**,**Automatic hyperparameter optimisation**,**Packaged Multi-center Model**
-**ivadomed**,https://github.com/ivadomed/ivadomed,|yes|,PyTorch,"Classification, Segmentation, Detection","2D, 3D",|yes| ,|yes| ,|yes|,|yes|,|yes|,|yes|,|yes|,|no|,|yes|,|yes| ,|yes|,|yes|,|yes|,|yes|
-monai,https://github.com/Project-MONAI/MONAI,|no|,PyTorch,"Segmentation, Classification","2D, 3D",|yes| ," 
+**Name**,`ivadomed <https://github.com/ivadomed/ivadomed>`_,`monai <https://github.com/Project-MONAI/MONAI>`_,`delira <https://github.com/justusschock/delira>`_,`MIC-DKFZ <https://github.com/MIC-DKFZ/medicaldetectiontoolkit>`_,`ANTsPyNet <https://github.com/ANTsX/ANTsPyNet>`_,`DLTK <https://github.com/DLTK/DLTK>`_,`MIScnn <https://github.com/frankkramer-lab/MIScnn>`_,`niftytorch <https://niftytorch.github.io/doc/>`_,`DeepNeuro <https://github.com/QTIM-Lab/DeepNeuro>`_
+**BIDS (1)**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|,|no|
+**DL base library**,PyTorch,PyTorch,"PyTorch, TF",PyTorch,TF/Keras,TF,TF/Keras,PyTorch,TF/Keras
+**Task (2)**,"Class, 
+Seg, Detect","Seg, Class","Class, Gen, Seg",Detect,"Class, 
+Seg, 
+Clust, 
+Reg","Class, 
+Seg, 
+Reg",Seg,"Class, 
+Seg",Seg
+**Data dimension**,"2D, 3D","2D, 3D","2D, 3D","2D, 3D","2D, 3D",3D,"2D, 3D",3D,"2D, 3D"
+**Multichannel**,|yes| ,|yes| ,|no| ,|no| ,|no| ,|no| ,|no| ,|no| ,|no| 
+**Multilabel**,|yes| ," 
  		
 
 |yes| 
-",|no| ,|no|,|yes|,|no|,|yes|,|yes|,|yes|,|yes| ,|no|,|no|,|no|,|no|
-delira,https://github.com/justusschock/delira,|no|,PyTorch and TensorFlow,"Classification, Generation, Segmentation","2D, 3D",|no| ,|no| ,|no|,|yes|,|no|,|no|,|yes|,|yes|,|no|,|no|,|no|,|no|,|no|,|no|
-MIC-DKFZ,https://github.com/MIC-DKFZ/medicaldetectiontoolkit,|no|,PyTorch,Detection,"2D, 3D",|no| ,|no| ,|no|,|no|,|no|,|no|,|no|,|no|,|yes|,|yes|,|no|,|no|,|no|,|no|
-ANTsPyNet,https://github.com/ANTsX/ANTsPyNet,|no|,Tensorflow/Keras,"Classification, Segmentation, Clustering, GAN, Registration, Super-resolution, Autoencoder","2D, 3D",|no| ,|yes| ,|no|,|no|,|no|,|no|,|yes| ,|no|,|no|,|no|,|no|,|no|,|no|,|no|
-DLTK,https://github.com/DLTK/DLTK,|no|,Tensorflow,"Classification, Segmentation, GAN, Registration, Super-resolution, Autoencoder",3D,|no| ,|yes| ,|no| ,|yes|,|no|,|no|,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|
-MIScnn,https://github.com/frankkramer-lab/MIScnn,|no|,Tensorflow/Keras,Segmentation,"2D, 3D",|no| ,|yes| ,|no| ,|no|,|yes|,|yes|,|no|,|yes|,|yes|,|no|,|no|,|no|,|no|,|no|
-niftytorch,https://niftytorch.github.io/doc/,|yes|,PyTorch,"Classification, Segmentation ",3D,|no| ,|no| ,|no| ,|no|,|no|,|no|,|yes|,|yes|,|no|,|yes|,|no|,|no|,|yes|,|no|
-DeepNeuro,https://github.com/QTIM-Lab/DeepNeuro,|no|,Tensorflow/Keras,Segmentation,"2D, 3D",|no| ,|no|,|no|,|no|,|yes|,|yes|,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|
+",|no| ,|no| ,|yes| ,|yes| ,|yes| ,|no| ,|no|
+**Uncertainty**,|yes|,|no| ,|no|,|no|,|no|,|no| ,|no| ,|no| ,|no|
+**Transfer Learning**,|yes|,|no|,|yes|,|no|,|no|,|yes|,|no|,|no|,|no|
+**Pre-processing tools**,|yes|,|yes|,|no|,|no|,|no|,|no|,|yes|,|no|,|yes|
+**Post-processing tools**,|yes|,|no|,|no|,|no|,|no|,|no|,|yes|,|no|,|yes|
+**User case examples**,|yes|,|yes|,|yes|,|no|,|yes| ,|yes|,|no|,|yes|,|yes|
+**Multi-GPU data parallelism**,|no|,|yes|,|yes|,|no|,|no|,|no|,|yes|,|yes|,|no|
+**Model evaluation**,|yes|,|yes|,|no|,|yes|,|no|,|no|,|yes|,|no|,|no|
+**Input region of interest**,|yes| ,|yes| ,|no|,|yes|,|no|,|no|,|no|,|yes|,|no|
+**Missing modality**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|no|
+**Models comparison**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|no|
+**Hyperparam optimisation**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|,|no|
+**Multi-center models**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|
