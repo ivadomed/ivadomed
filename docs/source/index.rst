@@ -12,7 +12,7 @@ If you use ``ivadomed`` for your research, please cite:
 .. code::
 
   @misc{gros2020ivadomed,
-      title={ivadomed: A Medical Imaging Deep Learning Toolbox}, 
+      title={ivadomed: A Medical Imaging Deep Learning Toolbox},
       author={Charley Gros and Andreanne Lemay and Olivier Vincent and Lucas Rouhier and Anthime Bucquet and Joseph Paul Cohen and Julien Cohen-Adad},
       year={2020},
       eprint={2010.09984},
@@ -42,6 +42,7 @@ Home
    architectures.rst
    pretrained_models.rst
    scripts.rst
+   help.rst
 
 .. _tutorials:
 .. toctree::
