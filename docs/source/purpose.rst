@@ -8,6 +8,10 @@
    <style> .line {text-align:centers;} </style>
    <p style="color:red" align="center">	&#10007;</p>
 
+.. |cent| raw:: html
+
+  <style> .line {text-align:center;} </style>
+
 
 Purpose
 =======
@@ -26,32 +30,13 @@ of the existing projects. This table was mostly based on the existing documentat
 understand that the field is rapidly evolving, and that this table might reflect the reality. If you notice
 inconsistencies, please let us know by `opening an issue <https://github.com/ivadomed/ivadomed/issues>`_.
 
-General overview
-++++++++++++++++
+..
+  If you wish to modify the csv tbale please modify https://docs.google.com/spreadsheets/d/1_MydnHnlOAuYzJ9QBCvPC9Jq2xUmPWI-XttTfcdtW2Y/edit#gid=0
 
 .. csv-table::
-   :file: general_overview.csv
+   :file: comparison_other_projects_table.csv
 
-(*): `Brain Imaging Data Structure <https://bids.neuroimaging.io/>`_
+(1): "BIDS" stands for the `Brain Imaging Data Structure <https://bids.neuroimaging.io/>`_, which is a convention initiated by the neuroimaging community to organize datasets (filenames, metadata, etc.). This facilitates the sharing of datasets and minimizes the burden of organizing datasets for training.
 
-Pipeline features
-+++++++++++++++++
-
-.. csv-table:: 
-   :file: pipeline_features.csv
-
-Model evaluation
-++++++++++++++++
-
-.. csv-table:: 
-   :file: model_evaluation.csv
-
-Documentation
-+++++++++++++
-
-.. csv-table:: 
-   :file: documentation.csv
-
-
-
+(2): **Class**: Classification | **Seg**: Segmentation | **Detect**: Detection | **Gen**: Generation | **Clust**: Clustering | **Reg**: Registration
 
