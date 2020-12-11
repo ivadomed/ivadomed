@@ -138,16 +138,16 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
             # Remove key in context if value set to 0
             elif 'keep_largest' in context['postprocessing']:
                 del context['postprocessing']['keep_largest']
-        if 'fill_holes' in options and options['fill_holes']:
+        if 'fill_holes' in options and options['fill_holes'] is not None:
             if options['fill_holes']:
                 postpro['fill_holes'] = {}
             # Remove key in context if value set to 0
             elif 'fill_holes' in context['postprocessing']:
                 del context['postprocessing']['fill_holes']
         if 'remove_small' in options and options['remove_small'] and \
-                ('mm' in options['remove_small'] or 'vox' in options['remove_small']):
-            unit = 'mm3' if 'mm3' in options['remove_small'] else 'vox'
-            thr = int(options['remove_small'].replace(unit, ""))
+                ('mm' in options['remove_small'][-1] or 'vox' in options['remove_small'][-1]):
+            unit = 'mm3' if 'mm3' in options['remove_small'][-1] else 'vox'
+            thr = [int(t.replace(unit, "")) for t in options['remove_small']]
             postpro['remove_small'] = {"unit": unit, "thr": thr}
 
         context['postprocessing'].update(postpro)
