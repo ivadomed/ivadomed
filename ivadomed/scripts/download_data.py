@@ -264,12 +264,12 @@ def main(args=None):
     # Mirror servers are listed in order of decreasing priority.
     # If exists, favour release artifact straight from github
 
-    if args is None:
-        args = sys.argv[1:]
-
-    # Get parser info
     parser = get_parser()
-    arguments = parser.parse_args(args)
+    if args:
+        arguments = parser.parse_args(args)
+    else:
+        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+
     data_name = arguments.d
 
     if arguments.output is None:
