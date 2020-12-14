@@ -251,7 +251,7 @@ def install_data(url, dest_folder, keep=False):
 
 
 # This line allows to format the `install_data()` docstrings, because this formatting
-# cannot be done in the function directly. 
+# cannot be done in the function directly.
 # `create_string()` is a custom function that converts our dict into a string
 # which is easier to add in the documentation.
 install_data.__doc__=install_data.__doc__.format(BUNDLES=textwrap.indent(_format_bundles(), ' '*6))
@@ -269,8 +269,9 @@ def main(args=None):
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse_args()
+    arguments = parser.parse_args(args)
     data_name = arguments.d
+
     if arguments.output is None:
         dest_folder = os.path.join(os.path.abspath(os.curdir), data_name)
     else:
