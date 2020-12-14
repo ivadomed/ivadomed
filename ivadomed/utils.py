@@ -2,7 +2,7 @@ import logging
 import os
 import subprocess
 import joblib
-
+import sys
 import matplotlib
 import matplotlib.pyplot as plt
 import torch
@@ -205,6 +205,22 @@ def check_exe(name):
                 return exe_file
 
     return None
+
+
+def get_arguments(parser, args):
+    """Get arguments from function input or command line.
+
+    Arguments:
+        parser (argparse.ArgumentParser): ArgumentParser object
+        args (list): either a list of arguments or None. The list
+            should be formatted like this:
+            ["-d", "SOME_ARG", "--model", "SOME_ARG"]
+    """
+    if args:
+        args = parser.parse_args(args)
+    else:
+        args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    return args
 
 
 def __get_commit(path_to_git_folder=None):
