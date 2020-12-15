@@ -5,7 +5,8 @@ from ivadomed.utils import init_ivadomed, __ivadomed_dir__
 from ivadomed.scripts import download_data as ivadomed_download_data
 
 __test_dir__ = os.path.join(__ivadomed_dir__, 'testing/functional_tests')
-__data_testing_dir__ = os.path.join(__test_dir__, 'data_testing')
+__fixtures_dir__ = os.path.join(__test_dir__, 'fixtures')
+__tmp_dir__ = os.path.join(__test_dir__, "tmp")
 sys.path.append(__test_dir__)
 
 init_ivadomed()
@@ -74,3 +75,20 @@ def remove_dataset(dataset='data_testing', verbose=True):
     __dataset_dir__ = os.path.join(__test_dir__, dataset)
     printv("rm -rf %s" % (__dataset_dir__), verbose=verbose, type="code")
     shutil.rmtree(__dataset_dir__, ignore_errors=True)
+
+
+def create_tmp_dir():
+    """Create temporary directory for test data.
+
+    This directory copies the ``fixtures`` directory to a ``tmp`` directory.
+    Any data files created during testing will go into ``tmp`` directory.
+    This is created/removed for each test.
+    """
+    remove_tmp_dir()
+    shutil.copytree(__fixtures_dir__, __tmp_dir__)
+
+
+def remove_tmp_dir():
+    """Recursively remove the ``tmp`` directory if it exists.
+    """
+    shutil.rmtree(__tmp_dir__, ignore_errors=True)
