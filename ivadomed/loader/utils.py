@@ -584,9 +584,9 @@ def create_bids_dataframe(loader_params, derivatives):
 
     # Update dataframe with subject files of chosen contrasts and extensions,
     # and with derivative files of chosen target_suffix from loader parameters
-    df = (df[(~df['path'].str.contains('derivatives') & df['suffix'].str.contains('|'.join(contrast_lst)) &
-          df['extension'].str.contains('|'.join(extensions))) |
-          (df['filename'].str.contains('|'.join(target_suffix)))])
+    df = df[(~df['path'].str.contains('derivatives') & df['suffix'].str.contains('|'.join(contrast_lst)) &
+         df['extension'].str.contains('|'.join(extensions))) |
+         (df['path'].str.contains('derivatives') & df['filename'].str.contains('|'.join(target_suffix)))]
 
     # Add metadata from participants.tsv file, if present
     # Uses pybids function
