@@ -26,7 +26,7 @@ def main_run(argv):
     CLI = argparse.ArgumentParser()
     CLI.add_argument(
         "--ifolders",
-        nargs=2,  # 2 folders expected to be merged
+        nargs='*',  # Any number of folders expected to be merged - Must be higher than 1 dataset
         type=str,
         default=[],  # default if nothing is provided - This should give an error later on
     )
@@ -44,9 +44,7 @@ def main_run(argv):
     print("Output folder: %r" % args.ofolder)
 
 
-
-    datasetFolder1 = args.ifolders[0]
-    datasetFolder2 = args.ifolders[1]
+    path_folders = args.ifolders
     output_folder = args.ofolder[0]
 
 
@@ -56,26 +54,40 @@ def main_run(argv):
     if not os.path.exists(output_folder):
         os.mkdir(output_folder)
 
-    # Load the .tsv files
-    df1 = bids.BIDS(datasetFolder1).participants.content
-    df2 = bids.BIDS(datasetFolder2).participants.content
 
-    # Merge the .tsv files and save them in a new file (This keeps also non-overlapping fields)
-    df_merged = pd.merge(left=df1, right=df2, how='outer')
+    # Load and merge the .tsv and .json files
+
+    if isinstance(path_folders, str):
+        raise TypeError("'bids_path' in the config file should be a list")
+    elif len(path_folders) < 2:
+        raise Exception("Less than 2 datasets selected. No need to merge")
+    else:
+        # Merge multiple .tsv files into the same dataframe
+        df_merged = bids.BIDS(path_folders[0]).participants.content
+        # Convert to string to get rid of potential TypeError during merging within the same column
+        df_merged = df_merged.astype(str)
+
+        # Get first .json file
+        jsonFile = os.path.join(path_folders[0], 'participants.json')
+        with open(jsonFile) as json_file:
+            json_merged = json.load(json_file)
+
+        for iFolder in range(1, len(path_folders)):
+            df_next = bids.BIDS(path_folders[iFolder]).participants.content
+            df_next = df_next.astype(str)
+            # Merge the .tsv files (This keeps also non-overlapping fields)
+            df_merged = pd.merge(left=df_merged, right=df_next, how='outer')
+
+            jsonFile_next = os.path.join(path_folders[iFolder], 'participants.json')
+            with open(jsonFile_next) as json_file:
+                jsonNext = json.load(json_file)
+
+            # Merge .json files
+            json_merged = {**json_merged, **jsonNext}
+
+
+    # Create new .tsv and .json files from the merged entries
     df_merged.to_csv(os.path.join(output_folder, 'participants.tsv'), sep='\t', index=False)
-
-
-    # Do the same for the .json files
-    jsonFile1 = os.path.join(datasetFolder1, 'participants.json')
-    jsonFile2 = os.path.join(datasetFolder2, 'participants.json')
-
-    with open(jsonFile1) as json_file:
-        json1 = json.load(json_file)
-    with open(jsonFile2) as json_file:
-        json2 = json.load(json_file)
-
-    # Merge .json files
-    json_merged = {**json1, **json2}
 
     with open(os.path.join(output_folder, 'participants.json'), 'w') as outfile:
         json.dump(json_merged, outfile, indent=4)
@@ -86,16 +98,18 @@ def main_run(argv):
         json.dump({"BIDSVersion": "1.0.1", "Name": "SCT_testing"}, outfile, indent=4) # Confirm the version is correct
 
 
-    all_datasets = [datasetFolder1, datasetFolder2]
-    for datasetFolder in all_datasets:
+    # Start copying folders
+    for datasetFolder in path_folders:
         subjectsFolders = glob.glob(os.path.join(datasetFolder, 'sub-*'))
         derivativesFolder = glob.glob(os.path.join(datasetFolder, 'derivatives'))
 
-        if derivativesFolder!=[]:
-            foldersToCopy = subjectsFolders.append(derivativesFolder)
-            print("No derivatives are present in this folder")
+        if derivativesFolder != []:
+            subjectsFolders.append(derivativesFolder[0])
+            foldersToCopy = subjectsFolders
         else:
             foldersToCopy = subjectsFolders
+            print("No derivatives are present in this folder")
+
 
         for subFolder in foldersToCopy:
             copy_tree(subFolder, os.path.join(output_folder, os.path.basename(os.path.normpath(subFolder))))
