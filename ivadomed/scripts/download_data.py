@@ -9,10 +9,8 @@ import zipfile
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
-import sys
 import argparse
 import textwrap
-
 from ivadomed.utils import init_ivadomed, get_arguments
 
 
