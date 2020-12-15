@@ -13,7 +13,7 @@ import sys
 import argparse
 import textwrap
 
-from ivadomed.utils import init_ivadomed
+from ivadomed.utils import init_ivadomed, get_arguments
 
 
 DICT_URL = {
@@ -265,10 +265,7 @@ def main(args=None):
     # If exists, favour release artifact straight from github
 
     parser = get_parser()
-    if args:
-        arguments = parser.parse_args(args)
-    else:
-        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = get_arguments(parser, args)
 
     data_name = arguments.d
 
