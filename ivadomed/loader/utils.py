@@ -14,6 +14,7 @@ from ivadomed import utils as imed_utils
 import nibabel as nib
 import bids as pybids   #"bids" is already taken by bids_neuropoly
 import pandas as pd
+import itertools
 
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
@@ -545,6 +546,8 @@ def create_bids_dataframe(loader_params, derivatives):
     bids_path = loader_params['bids_path']
     bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
     target_suffix = loader_params['target_suffix']
+    if any(isinstance(t, list) for t in target_suffix):
+        target_suffix = list(itertools.chain.from_iterable(target_suffix))
     extensions = loader_params['extensions']
     contrast_lst = loader_params["contrast_params"]["contrast_lst"]
 
