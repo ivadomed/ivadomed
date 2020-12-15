@@ -1,14 +1,14 @@
 import logging
 import pytest
 import os
-from cli_base import download_test_data, __data_testing_dir__, remove_test_data
+from cli_base import download_dataset, __data_testing_dir__, remove_dataset
 from ivadomed.scripts import convert_to_onnx
 from ivadomed.utils import ArgParseException
 logger = logging.getLogger(__name__)
 
 
 def setup_function():
-    download_test_data()
+    download_dataset()
 
 
 def test_convert_to_onnx():
@@ -29,4 +29,4 @@ def test_convert_to_onnx_no_dimension():
 
 
 def teardown_function():
-    remove_test_data()
+    remove_dataset()
