@@ -51,24 +51,26 @@ def printv(string, verbose=1, type='normal'):
             print(string)
 
 
-def download_test_data(verbose=True):
+def download_dataset(dataset='data_testing', verbose=True):
     """Download testing data from internet.
 
     Args:
         verbose (bool): whether or not to print
     """
     printv('\nDownloading testing data...', verbose)
+    __dataset_dir__ = os.path.join(__test_dir__, dataset)
     ivadomed_download_data.main([
-        '-d', 'data_testing',
-        '-o', __data_testing_dir__
+        '-d', dataset,
+        '-o', __dataset_dir__
     ])
 
 
-def remove_test_data(verbose=True):
+def remove_dataset(dataset='data_testing', verbose=True):
     """Recursively remove the data_testing folder.
 
     Args:
         verbose (bool): whether or not to print
     """
-    printv("rm -rf %s" % (__data_testing_dir__), verbose=verbose, type="code")
-    shutil.rmtree(__data_testing_dir__, ignore_errors=True)
+    __dataset_dir__ = os.path.join(__test_dir__, dataset)
+    printv("rm -rf %s" % (__dataset_dir__), verbose=verbose, type="code")
+    shutil.rmtree(__dataset_dir__, ignore_errors=True)
