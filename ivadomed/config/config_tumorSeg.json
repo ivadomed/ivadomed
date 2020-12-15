@@ -9,7 +9,7 @@
         "safety_factor": [1.1, 1.1, 1.0]
     },
     "loader_parameters": {
-        "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
+        "bids_path": ["/home/andreanne/Documents/dataset/toy_dataset"],
         "target_suffix": ["_seg-tumor"],
         "roi_params": {
             "suffix": null,

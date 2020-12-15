@@ -9,7 +9,7 @@
         "safety_factor": [1.0, 1.0, 1.0]
     },
     "loader_parameters": {
-        "bids_path": "bids_path",
+        "bids_path": ["bids_path"],
         "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": [],
         "extensions": [],

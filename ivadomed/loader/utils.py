@@ -93,7 +93,7 @@ def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8
     return X_train, X_val, X_test
 
 
-def get_new_subject_split(path_folder, center_test, split_method, random_seed,
+def get_new_subject_split(path_folders, center_test, split_method, random_seed,
                           train_frac, test_frac, log_directory, balance, subject_selection=None):
     """Randomly split dataset between training / validation / testing.
 
@@ -101,7 +101,7 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
         and save it in log_directory + "/split_datasets.joblib".
 
     Args:
-        path_folder (string): Dataset folder.
+        path_folders (list): Dataset folders.
         center_test (list): List of centers to include in the testing set.
         split_method (string): See imed_loader_utils.split_dataset.
         random_seed (int): Random seed.
@@ -115,8 +115,46 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
     Returns:
         list, list list: Training, validation and testing subjects lists.
     """
-    # read participants.tsv as pandas dataframe
-    df = bids.BIDS(path_folder).participants.content
+
+    if isinstance(path_folders, str):
+        raise TypeError("'bids_path' in the config file should be a list")
+    elif len(path_folders) == 1:
+        # read participants.tsv as pandas dataframe
+        df = bids.BIDS(path_folders).participants.content
+        # Append a new column to show which dataset the Subjects belong to (this will be used later for loading)
+        df['bids_path'] = [path_folders[0]]*len(df)
+    elif path_folders == []:
+        raise Exception("No dataset folder selected")
+    else:
+        # Merge multiple .tsv files into the same dataframe
+        df = bids.BIDS(path_folders[0]).participants.content
+
+
+        # WARNING - THE .TSV IS CONVERTED TO STR - MAKE SURE NO NUMERIC VALUES ARE USED LATER ON
+
+
+        # Convert to string to get rid of potential TypeError during merging within the same column
+        df = df.astype(str)
+
+        # Add the Bids_path to the dataframe
+        df['bids_path'] = [path_folders[0]]*len(df)
+
+        for iFolder in range(1, len(path_folders)):
+            df_next = bids.BIDS(path_folders[iFolder]).participants.content
+            df_next = df_next.astype(str)
+            df_next['bids_path'] = [path_folders[iFolder]]*len(df_next)
+            # Merge the .tsv files (This keeps also non-overlapping fields)
+            df = pd.merge(left=df, right=df_next, how='outer')
+
+
+
+    ##################
+    # CONTINUE HERE - MAKE SURE THAT THE DATASET FOLDER IS DUMPED IN THE JOBLIB
+    ##################
+
+
+
+
     if subject_selection is not None:
         # Verify subject_selection format
         if not (len(subject_selection["metadata"]) == len(subject_selection["n"]) == len(subject_selection["value"])):
@@ -179,7 +217,7 @@ def get_subdatasets_subjects_list(split_params, bids_path, log_directory, subjec
         old_split = joblib.load(split_params["fname_split"])
         train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
     else:
-        train_lst, valid_lst, test_lst = get_new_subject_split(path_folder=bids_path,
+        train_lst, valid_lst, test_lst = get_new_subject_split(path_folders=bids_path,
                                                                center_test=split_params['center_test'],
                                                                split_method=split_params['method'],
                                                                random_seed=split_params['random_seed'],
