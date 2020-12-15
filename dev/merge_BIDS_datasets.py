@@ -6,10 +6,10 @@ import os
 import argparse
 import sys
 
-# This scripts merges 2 BIDS datasets.
+# This scripts merges several BIDS datasets.
 # the new participants.tsv and participants.json are merged versions of the initial files.
 # 2 Inputs should be added:
-# 1. --ifolders: list of the 2 Folders to be merged
+# 1. --ifolders: list of the Datset / BIDS Folders to be merged
 # 2. --ofolder: output folder
 
 # Example call:
@@ -47,7 +47,7 @@ def main_run(argv):
     output_folder = args.ofolder[0]
 
 
-    print('Make sure there were no inconsistencies in column labels between the two initial participants.tsv files - e.g. subject_id - subject_ids etc.')
+    print('Make sure there were no inconsistencies in column labels between the initial participants.tsv files - e.g. subject_id - subject_ids etc.')
 
     # Create output folder if it doesnt exist
     if not os.path.exists(output_folder):
