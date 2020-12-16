@@ -6,7 +6,7 @@ working under a virtual environment, which could be set as follows:
 
 ::
 
-    virtualenv venv-ivadomed --python=python3.6
+    virtualenv venv-ivadomed
     source venv-ivadomed/bin/activate
 
 Install from release (recommended)
