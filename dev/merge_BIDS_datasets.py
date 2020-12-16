@@ -62,7 +62,7 @@ def main_run(argv):
         raise Exception("Less than 2 datasets selected. No need to merge")
     else:
         # Merge multiple .tsv files into the same dataframe
-        df_merged = pd.read_table(os.path.join(path_folders[0], 'participants.tsv'))
+        df_merged = pd.read_table(os.path.join(path_folders[0], 'participants.tsv'), encoding="ISO-8859-1")
 
         # Convert to string to get rid of potential TypeError during merging within the same column
         df_merged = df_merged.astype(str)
@@ -73,7 +73,7 @@ def main_run(argv):
             json_merged = json.load(json_file)
 
         for iFolder in range(1, len(path_folders)):
-            df_next = pd.read_table(os.path.join(path_folders[iFolder], 'participants.tsv'))
+            df_next = pd.read_table(os.path.join(path_folders[iFolder], 'participants.tsv'), encoding="ISO-8859-1")
             df_next = df_next.astype(str)
             # Merge the .tsv files (This keeps also non-overlapping fields)
             df_merged = pd.merge(left=df_merged, right=df_next, how='outer')
