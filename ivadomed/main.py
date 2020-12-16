@@ -158,102 +158,36 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             exit()
 
     if command == 'train':
-        # LOAD DATASET
-        # Get Validation dataset
-        ds_valid = imed_loader.load_dataset(**{**loader_params,
-                                               **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
-                                                  'dataset_type': 'validation'}}, device=device,
-                                            cuda_available=cuda_available)
-        # Get Training dataset
-        ds_train = imed_loader.load_dataset(**{**loader_params,
-                                               **{'data_list': train_lst, 'transforms_params': transform_train_params,
-                                                  'dataset_type': 'training'}}, device=device,
-                                            cuda_available=cuda_available)
+        ds_valid = get_validation_dataset(loader_params, valid_lst, transform_valid_params, device,
+                                          cuda_available)
 
-        metric_fns = imed_metrics.get_metric_fns(ds_train.task)
+        ds_train = get_training_dataset(loader_params, train_lst, transform_train_params, device,
+                                        cuda_available)
+        model_params, best_training_dice, best_training_loss, best_validation_dice, \
+            best_validation_loss, ds_valid = run_training(ds_train, ds_valid, loader_params, model_params,
+                                                context, cuda_available, log_directory,
+                                                resume_training, device, n_gif)
+        if thr_increment:
+            ds_train = get_training_dataset(loader_params, train_lst, transform_valid_params, device,
+                                            cuda_available)
 
-        # If FiLM, normalize data
-        if 'film_layers' in model_params and any(model_params['film_layers']):
-            # Normalize metadata before sending to the FiLM network
-            results = imed_film.get_film_metadata_models(ds_train=ds_train,
-                                                         metadata_type=model_params['metadata'],
-                                                         debugging=context["debugging"])
-            ds_train, train_onehotencoder, metadata_clustering_models = results
-            ds_valid = imed_film.normalize_metadata(ds_valid, metadata_clustering_models, context["debugging"],
-                                                    model_params['metadata'])
-            model_params.update({"film_onehotencoder": train_onehotencoder,
-                                 "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
-            joblib.dump(metadata_clustering_models, "./" + log_directory + "/clustering_models.joblib")
-            joblib.dump(train_onehotencoder, "./" + log_directory + "/one_hot_encoder.joblib")
-
-        # Model directory
-        path_model = os.path.join(log_directory, context["model_name"])
-        if not os.path.isdir(path_model):
-            print('Creating model directory: {}'.format(path_model))
-            os.makedirs(path_model)
-            if 'film_layers' in model_params and any(model_params['film_layers']):
-                joblib.dump(train_onehotencoder, os.path.join(path_model, "one_hot_encoder.joblib"))
-                if 'metadata_dict' in ds_train[0]['input_metadata'][0]:
-                    metadata_dict = ds_train[0]['input_metadata'][0]['metadata_dict']
-                    joblib.dump(metadata_dict, os.path.join(path_model, "metadata_dict.joblib"))
-
-        else:
-            print('Model directory already exists: {}'.format(path_model))
-
-        save_config_file(context, log_directory)
-
-        # RUN TRAINING
-        best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
-            model_params=model_params,
-            dataset_train=ds_train,
-            dataset_val=ds_valid,
-            training_params=context["training_parameters"],
-            log_directory=log_directory,
-            device=device,
-            cuda_available=cuda_available,
-            metric_fns=metric_fns,
-            n_gif=n_gif,
-            resume_training=resume_training,
-            debugging=context["debugging"])
-
-    if thr_increment:
-        # LOAD DATASET
-        if command != 'train':  # If command == train, then ds_valid already load
-            # Get Validation dataset
-            ds_valid = imed_loader.load_dataset(**{**loader_params,
-                                                   **{'data_list': valid_lst,
-                                                      'transforms_params': transform_valid_params,
-                                                      'dataset_type': 'validation'}}, device=device,
-                                                cuda_available=cuda_available)
-        # Get Training dataset with no Data Augmentation
-        ds_train = imed_loader.load_dataset(**{**loader_params,
-                                               **{'data_list': train_lst, 'transforms_params': transform_valid_params,
-                                                  'dataset_type': 'training'}}, device=device,
-                                            cuda_available=cuda_available)
-
-        # Choice of optimisation metric
-        metric = "recall_specificity" if model_params["name"] in imed_utils.CLASSIFIER_LIST else "dice"
-        # Model path
-        model_path = os.path.join(log_directory, "best_model.pt")
-        # Run analysis
-        thr = imed_testing.threshold_analysis(model_path=model_path,
-                                              ds_lst=[ds_train, ds_valid],
-                                              model_params=model_params,
-                                              testing_params=testing_params,
-                                              metric=metric,
-                                              increment=thr_increment,
-                                              fname_out=os.path.join(log_directory, "roc.png"),
-                                              cuda_available=cuda_available)
-
-        # Update threshold in config file
-        context["postprocessing"]["binarize_prediction"] = {"thr": thr}
-        save_config_file(context, log_directory)
-
-    if command == 'train':
+            perform_threshold_analysis(context, log_directory, model_params, testing_params,
+                                       thr_increment, cuda_available, device, ds_train,
+                                       ds_valid)
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
+    if thr_increment:
+        ds_valid = get_validation_dataset(loader_params, valid_lst, transform_valid_params, device,
+                                          cuda_available)
+        # Get Training dataset with no Data Augmentation
+        ds_train = get_training_dataset(loader_params, train_lst, transform_valid_params, device,
+                                        cuda_available)
+
+        context = perform_threshold_analysis(context, log_directory, model_params, testing_params,
+                                             thr_increment, cuda_available, device, ds_train,
+                                             ds_valid)
+
     if command == 'test':
-        # LOAD DATASET
         ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
                                                                   'transforms_params': transformation_dict,
                                                                   'dataset_type': 'testing',
@@ -437,9 +371,104 @@ def get_model_parameters(context, loader_params):
     return model_params
 
 
+def get_validation_dataset(loader_params, valid_lst, transform_valid_params, device,
+                           cuda_available):
+    ds_valid = imed_loader.load_dataset(**{**loader_params,
+                                           **{'data_list': valid_lst,
+                                              'transforms_params': transform_valid_params,
+                                              'dataset_type': 'validation'}}, device=device,
+                                        cuda_available=cuda_available)
+    return ds_valid
+
+
+def get_training_dataset(loader_params, train_lst, transform_train_params, device,
+                         cuda_available):
+    ds_train = imed_loader.load_dataset(**{**loader_params,
+                                           **{'data_list': train_lst,
+                                              'transforms_params': transform_train_params,
+                                              'dataset_type': 'training'}}, device=device,
+                                        cuda_available=cuda_available)
+    return ds_train
+
+
+def run_training(ds_train, ds_valid, loader_params, model_params, context, cuda_available,
+                 log_directory, resume_training, device, n_gif):
+
+    metric_fns = imed_metrics.get_metric_fns(ds_train.task)
+
+    # If FiLM, normalize data
+    if 'film_layers' in model_params and any(model_params['film_layers']):
+        # Normalize metadata before sending to the FiLM network
+        results = imed_film.get_film_metadata_models(ds_train=ds_train,
+                                                     metadata_type=model_params['metadata'],
+                                                     debugging=context["debugging"])
+        ds_train, train_onehotencoder, metadata_clustering_models = results
+        ds_valid = imed_film.normalize_metadata(ds_valid, metadata_clustering_models, context["debugging"],
+                                                model_params['metadata'])
+        model_params.update({"film_onehotencoder": train_onehotencoder,
+                             "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
+        joblib.dump(metadata_clustering_models, "./" + log_directory + "/clustering_models.joblib")
+        joblib.dump(train_onehotencoder, "./" + log_directory + "/one_hot_encoder.joblib")
+
+    # Model directory
+    path_model = os.path.join(log_directory, context["model_name"])
+    if not os.path.isdir(path_model):
+        print('Creating model directory: {}'.format(path_model))
+        os.makedirs(path_model)
+        if 'film_layers' in model_params and any(model_params['film_layers']):
+            joblib.dump(train_onehotencoder, os.path.join(path_model, "one_hot_encoder.joblib"))
+            if 'metadata_dict' in ds_train[0]['input_metadata'][0]:
+                metadata_dict = ds_train[0]['input_metadata'][0]['metadata_dict']
+                joblib.dump(metadata_dict, os.path.join(path_model, "metadata_dict.joblib"))
+
+    else:
+        print('Model directory already exists: {}'.format(path_model))
+
+    save_config_file(context, log_directory)
+
+    # RUN TRAINING
+    best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
+        model_params=model_params,
+        dataset_train=ds_train,
+        dataset_val=ds_valid,
+        training_params=context["training_parameters"],
+        log_directory=log_directory,
+        device=device,
+        cuda_available=cuda_available,
+        metric_fns=metric_fns,
+        n_gif=n_gif,
+        resume_training=resume_training,
+        debugging=context["debugging"])
+
+    return model_params, best_training_dice, best_training_loss, \
+        best_validation_dice, best_validation_loss, ds_valid
+
+
+def perform_threshold_analysis(context, log_directory, model_params, testing_params,
+                               thr_increment, cuda_available, device, ds_train, ds_valid):
+
+    # Choice of optimisation metric
+    metric = "recall_specificity" if model_params["name"] in imed_utils.CLASSIFIER_LIST else "dice"
+    # Model path
+    model_path = os.path.join(log_directory, "best_model.pt")
+    # Run analysis
+    thr = imed_testing.threshold_analysis(model_path=model_path,
+                                          ds_lst=[ds_train, ds_valid],
+                                          model_params=model_params,
+                                          testing_params=testing_params,
+                                          metric=metric,
+                                          increment=thr_increment,
+                                          fname_out=os.path.join(log_directory, "roc.png"),
+                                          cuda_available=cuda_available)
+
+    # Update threshold in config file
+    context["postprocessing"]["binarize_prediction"] = {"thr": thr}
+    save_config_file(context, log_directory)
+    return context
+
+
 def run_main():
     imed_utils.init_ivadomed()
-
     parser = get_parser()
     args = parser.parse_args()
 
@@ -447,7 +476,6 @@ def run_main():
     path_config_file = args.config
     context = imed_config_manager.ConfigurationManager(path_config_file).get_config()
 
-    # Run command
     run_command(context=context,
                 n_gif=args.gif if args.gif is not None else 0,
                 thr_increment=args.thr_increment if args.thr_increment else None,
