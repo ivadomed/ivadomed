@@ -102,6 +102,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                                                                          context["loader_parameters"]
                                                                                          ['subject_selection'])
 
+
     # Loader params
     loader_params = copy.deepcopy(context["loader_parameters"])
     if command == "train":
@@ -212,8 +213,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                                     model_params['metadata'])
             model_params.update({"film_onehotencoder": train_onehotencoder,
                                  "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
-            joblib.dump(metadata_clustering_models, "./" + log_directory + "/clustering_models.joblib")
-            joblib.dump(train_onehotencoder, "./" + log_directory + "/one_hot_encoder.joblib")
+            joblib.dump(metadata_clustering_models, os.path.join(log_directory, "clustering_models.joblib"))
+            joblib.dump(train_onehotencoder, os.path.join(log_directory, "one_hot_encoder.joblib"))
 
         # Model directory
         path_model = os.path.join(log_directory, context["model_name"])
@@ -277,7 +278,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
     if command == 'train':
         # Save config file within log_directory and log_directory/model_name
-        # Done after the threshold_analysis to propate this info in the config files
+        # Done after the threshold_analysis to propagate this info in the config files
         with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
             json.dump(context, fp, indent=4)
         with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:

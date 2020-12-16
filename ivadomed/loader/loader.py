@@ -3,6 +3,8 @@ import random
 import nibabel as nib
 import numpy as np
 import torch
+import pandas as pd
+import os
 from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
@@ -750,7 +752,7 @@ class BidsDataset(MRI2DSegmentationDataset):
     """ BIDS specific dataset loader.
 
     Args:
-        root_dir (str): Path to the BIDS dataset.
+        root_dirs (list): List of Paths to the BIDS datasets.
         subject_lst (list): Subject names list.
         target_suffix (list): List of suffixes for target masks.
         contrast_params (dict): Contains image contrasts related parameters.
@@ -778,11 +780,15 @@ class BidsDataset(MRI2DSegmentationDataset):
 
     """
 
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
+    def __init__(self, root_BIDS_list, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 
-        self.bids_ds = bids.BIDS(root_dir)
+        #self.bids_ds = bids.BIDS(root_BIDS_list)
+        self.bids_ds = []
+        for BIDSFolder in root_BIDS_list:
+            self.bids_ds.append(bids.BIDS(BIDSFolder))
+
         self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
         self.soft_gt = soft_gt
         self.filename_pairs = []
@@ -790,7 +796,11 @@ class BidsDataset(MRI2DSegmentationDataset):
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
 
-        bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
+
+        # Append subjects from all BIDSdatasets into a list
+        bids_subjects = [s for s in self.bids_ds[0].get_subjects() if s.record["subject_id"] in subject_lst]
+        for iBIDSFolder in range(1, len(root_BIDS_list)):
+            bids_subjects = bids_subjects + [s for s in self.bids_ds[iBIDSFolder].get_subjects() if s.record["subject_id"] in subject_lst]
 
         # Create a list with the filenames for all contrasts and subjects
         subjects_tot = []
@@ -816,10 +826,21 @@ class BidsDataset(MRI2DSegmentationDataset):
                                                "roi_filename": None,
                                                "metadata": [None] * num_contrast} for subject in subject_lst}
 
+
+
+        ###############################################################
+
+        # TAKE CARE OF BOUNDING BOX AFTER CHANGES - WARNING - TEST THIS
+
+
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
-                                                                self.bids_ds.get_subjects(),
-                                                                slice_axis,
-                                                                contrast_params["contrast_lst"])
+                                                                    self.bids_ds[0].get_subjects(),
+                                                                    slice_axis,
+                                                                    contrast_params["contrast_lst"])
+
+
+        ###############################################################
+
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_params["contrast_lst"]:
@@ -865,19 +886,43 @@ class BidsDataset(MRI2DSegmentationDataset):
                 # add contrast to metadata
                 metadata['contrast'] = subject.record["modality"]
 
+
+
+                #########################################################################################
+                # TAKE CARE OF BOUNDING BOX - NOT TESTED YET
+
                 if len(bounding_box_dict):
                     # Take only one bounding box for cropping
                     metadata['bounding_box'] = bounding_box_dict[str(subject.record["absolute_path"])][0]
+
+                #########################################################################################
+
+
 
                 if metadata_choice == 'mri_params':
                     if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
                                 self.metadata.keys()]):
                         continue
-
                 elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
                     # add custom data to metadata
                     subject_id = subject.record["subject_id"]
-                    df = bids.BIDS(root_dir).participants.content
+
+
+                    # Merge multiple .tsv files into the same dataframe
+                    df = pd.read_table(os.path.join(root_BIDS_list[0], 'participants.tsv'), encoding="ISO-8859-1")
+                    # Convert to string to get rid of potential TypeError during merging within the same column
+                    df = df.astype(str)
+                    # Add the Bids_path to the dataframe
+                    df['bids_path'] = [root_BIDS_list[0]] * len(df)
+
+                    for iFolder in range(1, len(root_BIDS_list)):
+                        df_next = pd.read_table(os.path.join(root_BIDS_list[iFolder], 'participants.tsv'), encoding="ISO-8859-1")
+                        df_next = df_next.astype(str)
+                        df_next['bids_path'] = [root_BIDS_list[iFolder]] * len(df_next)
+                        # Merge the .tsv files (This keeps also non-overlapping fields)
+                        df = pd.merge(left=df, right=df_next, how='outer')
+                    #df = bids.BIDS(root_dir).participants.content
+
                     if metadata_choice not in df.columns:
                         raise ValueError("The following metadata cannot be found in participants.tsv file: {}. "
                                          "Invalid metadata choice.".format(metadata_choice))
@@ -911,6 +956,9 @@ class BidsDataset(MRI2DSegmentationDataset):
                 if None not in subject["absolute_paths"]:
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
+
+        if self.filename_pairs == []:
+            raise Exception('No subjects were selected - check selection of parameters on config.json (e.g. center selected + target_suffix)')
 
         super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
                          self.soft_gt)

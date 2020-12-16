@@ -58,8 +58,8 @@ def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8
             test_frac = test_frac if test_frac >= 1 / len(centers) else 1 / len(centers)
             center_test_lst, _ = train_test_split(centers, train_size=test_frac, random_state=random_seed)
 
-        X_test = df[df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
-        X_remain = df[~df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
+        X_test = df[df['institution_id'].isin(center_test_lst)]
+        X_remain = df[~df['institution_id'].isin(center_test_lst)]
 
         # split using sklearn function
         X_train, X_tmp = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
@@ -71,13 +71,13 @@ def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8
     elif split_method == 'per_patient':
         # Separate dataset in test, train and validation using sklearn function
         # In case we want to use the entire dataset for testing purposes
-        X_remain = df['participant_id'].tolist()
+        X_remain = df
         if len(center_test_lst):
-            X_test = df[df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
-            X_remain = df[~df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
+            X_test = df[df['institution_id'].isin(center_test_lst)]
+            X_remain = df[~df['institution_id'].isin(center_test_lst)]
 
         if test_frac == 1 and not len(center_test_lst):
-            X_test = df['participant_id'].tolist()
+            X_test = df
         else:
             X_train, X_remain = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
             # In case the entire dataset is used to train / validate the model
@@ -120,19 +120,14 @@ def get_new_subject_split(path_folders, center_test, split_method, random_seed,
         raise TypeError("'bids_path' in the config file should be a list")
     elif len(path_folders) == 1:
         # read participants.tsv as pandas dataframe
-        df = bids.BIDS(path_folders).participants.content
+        df = bids.BIDS(path_folders[0]).participants.content
         # Append a new column to show which dataset the Subjects belong to (this will be used later for loading)
         df['bids_path'] = [path_folders[0]]*len(df)
     elif path_folders == []:
         raise Exception("No dataset folder selected")
     else:
         # Merge multiple .tsv files into the same dataframe
-        df = bids.BIDS(path_folders[0]).participants.content
-
-
-        # WARNING - THE .TSV IS CONVERTED TO STR - MAKE SURE NO NUMERIC VALUES ARE USED LATER ON
-
-
+        df = pd.read_table(os.path.join(path_folders[0], 'participants.tsv'), encoding="ISO-8859-1")
         # Convert to string to get rid of potential TypeError during merging within the same column
         df = df.astype(str)
 
@@ -140,20 +135,11 @@ def get_new_subject_split(path_folders, center_test, split_method, random_seed,
         df['bids_path'] = [path_folders[0]]*len(df)
 
         for iFolder in range(1, len(path_folders)):
-            df_next = bids.BIDS(path_folders[iFolder]).participants.content
+            df_next = pd.read_table(os.path.join(path_folders[iFolder], 'participants.tsv'), encoding="ISO-8859-1")
             df_next = df_next.astype(str)
             df_next['bids_path'] = [path_folders[iFolder]]*len(df_next)
             # Merge the .tsv files (This keeps also non-overlapping fields)
             df = pd.merge(left=df, right=df_next, how='outer')
-
-
-
-    ##################
-    # CONTINUE HERE - MAKE SURE THAT THE DATASET FOLDER IS DUMPED IN THE JOBLIB
-    ##################
-
-
-
 
     if subject_selection is not None:
         # Verify subject_selection format
@@ -188,14 +174,17 @@ def get_new_subject_split(path_folders, center_test, split_method, random_seed,
                                                        train_frac=train_frac,
                                                        test_frac=test_frac)
         # Update the dataset lists
-        train_lst += train_tmp
-        valid_lst += valid_tmp
-        test_lst += test_tmp
+        train_lst += train_tmp['participant_id'].tolist()
+        valid_lst += valid_tmp['participant_id'].tolist()
+        test_lst += test_tmp['participant_id'].tolist()
 
     # save the subject distribution
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
     split_path = os.path.join(log_directory, "split_datasets.joblib")
     joblib.dump(split_dct, split_path)
+
+    # Save the newly created .tsv on the output folder to be used during evaluation
+    df.to_csv(os.path.join(log_directory, 'participants.tsv'), sep='\t', index=False)
 
     return train_lst, valid_lst, test_lst
 

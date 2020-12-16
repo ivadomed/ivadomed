@@ -35,6 +35,10 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
     if not os.path.isdir(path_results):
         os.makedirs(path_results)
 
+    # Load participants.tsv from the output folder - This will be used to get the BIDS folder that each subject was
+    # derived from - Not using the bids_path input anymore - remove dependency
+    df_participantsTSV = pd.read_table(os.path.join(log_directory, 'participants.tsv'), encoding="ISO-8859-1")
+
     # INIT DATA FRAME
     df_results = pd.DataFrame()
 
@@ -46,8 +50,25 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         # Fnames of pred and ground-truth
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
-        fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
+
+
+
+
+        ########### MAKE SURE THERE ARE NOT DUPLICATIONS IN THE DATASETS  ###################
+        # THIS SHOULD BE DONE DURING TRAINING AT THE LOADER
+
+        the_BIDS_path = df_participantsTSV[df_participantsTSV['participant_id'] == subj]['bids_path'].tolist()
+        the_BIDS_path = the_BIDS_path[0]
+
+        #####################################################################################33
+        # fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
+        #             for suffix in target_suffix]
+
+        fname_gt = [os.path.join(the_BIDS_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
+
+
+
         # Uncertainty
         data_uncertainty = None
 
