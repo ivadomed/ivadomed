@@ -117,17 +117,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     transform_train_params, transform_valid_params, transform_test_params = \
         imed_transforms.get_subdatasets_transforms(context["transformation"])
 
-    model_params = get_model_parameters(context)
-    # Get in_channel from contrast_lst
-    if loader_params["multichannel"]:
-        model_params["in_channel"] = len(loader_params["contrast_params"]["contrast_lst"])
-    else:
-        model_params["in_channel"] = 1
-    # Get out_channel from target_suffix
-    model_params["out_channel"] = len(loader_params["target_suffix"])
-    # If multi-class output, then add background class
-    if model_params["out_channel"] > 1:
-        model_params.update({"out_channel": model_params["out_channel"] + 1})
+    model_params = get_model_parameters(context, loader_params)
+
     # Display for spec' check
     imed_utils.display_selected_model_spec(params=model_params)
     # Update loader params
@@ -388,7 +379,7 @@ def get_loader_parameters(context, command):
     return loader_params
 
 
-def get_model_parameters(context):
+def get_model_parameters(context, loader_params):
     """Get model parameters from config file.
 
     If no other models are specified, use the ``default_model``.
@@ -403,12 +394,15 @@ def get_model_parameters(context):
                     "default_model": dictionary containing information about default model
                     "model_name": TODO
                 }
+        loader_params (dict): loader parameters from ``get_loader_parameters()``
 
     Returns:
         dict: {
             "folder_name": TODO
             "name": name of the model to be used
             "is_2D": whether or not model is 2D or 3D
+            "in_channel": TODO
+            "out_channel": TODO
             ... any other model parameters
         }
     """
@@ -430,6 +424,16 @@ def get_model_parameters(context):
         exit()
 
     model_params['is_2d'] = False if "Modified3DUNet" in model_params['name'] else model_params['is_2d']
+    # Get in_channel from contrast_lst
+    if loader_params["multichannel"]:
+        model_params["in_channel"] = len(loader_params["contrast_params"]["contrast_lst"])
+    else:
+        model_params["in_channel"] = 1
+    # Get out_channel from target_suffix
+    model_params["out_channel"] = len(loader_params["target_suffix"])
+    # If multi-class output, then add background class
+    if model_params["out_channel"] > 1:
+        model_params.update({"out_channel": model_params["out_channel"] + 1})
     return model_params
 
 
