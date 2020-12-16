@@ -5,8 +5,6 @@ import argparse
 import nibabel as nib
 import numpy as np
 import random
-import json
-
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import transforms as imed_transforms
