@@ -444,7 +444,7 @@ class HDF5Dataset:
 
         metadata_choice = False if metadata_choice is None else metadata_choice
         hdf5_path = model_params["hdf5_path"].replace('.hdf5', dataset_type + '.hdf5')
-        # Getting HDS5 dataset file
+        # Getting HDF5 dataset file
         if not os.path.exists(hdf5_path):
             print("Computing hdf5 file of the data")
             dataset = imed_loader.BidsDataset(root_dir=root_dir,
@@ -535,15 +535,17 @@ class HDF5Dataset:
         missing_modalities = self.cst_matrix[index]
 
         input_metadata = []
-        input_tensor = None
+        input_tensors = []
         # Inputs
         for i, ct in enumerate(self.cst_lst):
+            # Input tensors
             if self.status[ct]:
-                input_tensor = line[ct] * missing_modalities[i]
+                tensor = line[ct] * missing_modalities[i]
             else:
-                input_tensor = self.hdf5_file[line[ct]][line['Slices']] * missing_modalities[i]
+                tensor = self.hdf5_file[line[ct]][line['Slices']] * missing_modalities[i]
+            input_tensors.append(tensor)
 
-            # input Metadata
+            # input metadata
             metadata = imed_loader_utils.SampleMetadata({key: value for key, value in self.hdf5_file['{}/inputs/{}'
                                                         .format(line['Subjects'], ct)].attrs.items()})
             metadata['slice_index'] = line["Slices"]
@@ -595,7 +597,7 @@ class HDF5Dataset:
         metadata_input = imed_loader_utils.update_metadata(metadata_roi, input_metadata)
 
         # Run transforms on images
-        stack_input, metadata_input = self.transform(sample=list(input_tensor),
+        stack_input, metadata_input = self.transform(sample=list(input_tensors),
                                                      metadata=metadata_input,
                                                      data_type="im")
         # Update metadata_input with metadata_roi
