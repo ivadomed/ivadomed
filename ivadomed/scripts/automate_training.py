@@ -35,8 +35,8 @@ logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, help="Base config file path.")
-    parser.add_argument("-p", "--params", required=True, help="JSON file where hyperparameters to experiment are "
-                                                              "listed.")
+    parser.add_argument("-p", "--params", required=True,
+                        help="JSON file where hyperparameters to experiment are listed.")
     parser.add_argument("-n", "--n-iterations", dest="n_iterations", default=1,
                         type=int, help="Number of times to run each config.")
     parser.add_argument("--all-combin", dest='all_combin', action='store_true',
@@ -50,9 +50,13 @@ def get_parser():
     parser.add_argument("-l", "--all-logs", dest="all_logs", action='store_true',
                         help="Keep all log directories for each iteration.")
     parser.add_argument('-t', '--thr-increment', dest="thr_increment", required=False, type=float,
-                        help="A threshold analysis is performed at the end of the training using the trained model and "
-                             "the validation sub-dataset to find the optimal binarization threshold. The specified "
-                             "value indicates the increment between 0 and 1 used during the analysis (e.g. 0.1).")
+                        help="""A threshold analysis is performed at the end of the training
+                                using the trained model and the validation sub-dataset to find
+                                the optimal binarization threshold. The specified value indicates
+                                the increment between 0 and 1 used during the analysis
+                                (e.g. 0.1).""")
+    parser.add_argument("-o", "--output", required=False,
+                        help="Output Folder.")
 
     return parser
 
@@ -71,7 +75,7 @@ def train_worker(config, thr_incr):
         best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = \
             ivado.run_command(config, thr_increment=thr_incr)
 
-    except:
+    except Exception:
         logging.exception('Got exception on main handler')
         print("Unexpected error:", sys.exc_info()[0])
         raise
@@ -80,7 +84,8 @@ def train_worker(config, thr_incr):
     config_copy = open(config["log_directory"] + "/config_file.json", "w")
     json.dump(config, config_copy, indent=4)
 
-    return config["log_directory"], best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
+    return config["log_directory"], best_training_dice, best_training_loss, best_validation_dice, \
+        best_validation_loss
 
 
 def test_worker(config):
@@ -98,7 +103,7 @@ def test_worker(config):
         config["command"] = "test"
         df_results, test_dice = ivado.run_command(config)
 
-    except:
+    except Exception:
         logging.exception('Got exception on main handler')
         print("Unexpected error:", sys.exc_info()[0])
         raise
@@ -133,15 +138,16 @@ def make_category(base_item, keys, values, is_all_combin=False):
     return items, names
 
 
-def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False, all_logs=False,
-                      thr_increment=None, multiple_params=False):
+def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False,
+                      all_logs=False, thr_increment=None, multiple_params=False):
     """Automate multiple training processes on multiple GPUs.
 
-    Hyperparameter optimization of models is tedious and time-consuming. This function automatizes this optimization
-    across multiple GPUs. It runs trainings, on the same training and validation datasets, by combining a given set of
-    parameters and set of values for each of these parameters. Results are collected for each combination and reported
-    into a dataframe to allow their comparison. The script efficiently allocates each training to one of the available
-    GPUs.
+    Hyperparameter optimization of models is tedious and time-consuming.
+    This function automatizes this optimization across multiple GPUs. It runs trainings, on the
+    same training and validation datasets, by combining a given set of parameters and set of
+    values for each of these parameters. Results are collected for each combination and reported
+    into a dataframe to allow their comparison. The script efficiently allocates each training to
+    one of the available GPUs.
 
     Usage example::
 
@@ -151,27 +157,33 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
        :file: ../../images/detailed_results.csv
 
     Args:
-        config (string): Configuration filename, which is used as skeleton to configure the training. Some of its
-            parameters (defined in `param` file) are modified across experiments. Flag: ``--config``, ``-c``
-        param (string): json file containing parameters configurations to compare. Parameter "keys" of this file
-            need to match the parameter "keys" of `config` file. Parameter "values" are in a list. Flag: ``--param``, ``-p``
+        config (string): Configuration filename, which is used as skeleton to configure the
+            training. Some of its parameters (defined in `param` file) are modified across
+            experiments. Flag: ``--config``, ``-c``
+        param (string): json file containing parameters configurations to compare.
+            Parameter "keys" of this file need to match the parameter "keys" of `config` file.
+            Parameter "values" are in a list. Flag: ``--param``, ``-p``
 
             Example::
 
                 {"default_model": {"depth": [2, 3, 4]}}
 
-        fixed_split (bool): If True, all the experiments are run on the same training/validation/testing subdatasets.
-                            Flag: ``--fixed-split``
+        fixed_split (bool): If True, all the experiments are run on the same
+            training/validation/testing subdatasets. Flag: ``--fixed-split``
         all_combin (bool): If True, all parameters combinations are run. Flag: ``--all-combin``
-        n_iterations (int): Controls the number of time that each experiment (ie set of parameter) are run.
-                            Flag: ``--n-iteration``, ``-n``
-        run_test (bool): If True, the trained model is also run on the testing subdataset. flag: ``--run-test``
-        all_logs (bool): If True, all the log directories are kept for every iteration. Flag: ``--all-logs``, ``-l``
-        thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
-            the validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
-            increment between 0 and 1 used during the ROC analysis (e.g. 0.1). Flag: ``-t``, ``--thr-increment``
-        multiple_params (bool): If True, more than one parameter will be change at the time from the hyperparameters.
-            All the first elements from the hyperparameters list will be applied, then all the second, etc.
+        n_iterations (int): Controls the number of time that each experiment (ie set of parameter)
+            are run. Flag: ``--n-iteration``, ``-n``
+        run_test (bool): If True, the trained model is also run on the testing subdataset.
+            Flag: ``--run-test``
+        all_logs (bool): If True, all the log directories are kept for every iteration.
+            Flag: ``--all-logs``, ``-l``
+        thr_increment (float): A threshold analysis is performed at the end of the training
+            using the trained model and the validation sub-dataset to find the optimal binarization
+            threshold. The specified value indicates the increment between 0 and 1 used during the
+            ROC analysis (e.g. 0.1). Flag: ``-t``, ``--thr-increment``
+        multiple_params (bool): If True, more than one parameter will be change at the time from
+            the hyperparameters. All the first elements from the hyperparameters list will be
+            applied, then all the second, etc.
     """
     # Load initial config
     initial_config = imed_config_manager.ConfigurationManager(config).get_config()
