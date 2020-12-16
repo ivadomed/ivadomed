@@ -165,6 +165,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         for i, batch in enumerate(train_loader):
             # GET SAMPLES
             if model_params["name"] == "HeMISUnet":
+                batch["input"] = batch["input"].squeeze() if batch["input"].shape[1] > 1 else batch["input"]
                 input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
             else:
                 input_samples = imed_utils.cuda(batch["input"], cuda_available)
@@ -227,6 +228,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 with torch.no_grad():
                     # GET SAMPLES
                     if model_params["name"] == "HeMISUnet":
+                        batch["input"] = batch["input"].squeeze() if batch["input"].shape[1] > 1 else batch["input"]
                         input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
                     else:
                         input_samples = imed_utils.cuda(batch["input"], cuda_available)
