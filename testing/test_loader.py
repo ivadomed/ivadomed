@@ -17,10 +17,10 @@ from ivadomed.loader import utils as imed_loader_utils
         "balance": {}
     }}])
 def test_bids_df_microscopy_png(loader_parameters):
-	# Test: microscopy png file format
-	# Test: _sessions.tsv and _scans.tsv files
-	# Test: target_suffix as a nested list
-	# Test: when no contrast_params are provided
+    # Test for microscopy png file format
+    # Test for _sessions.tsv and _scans.tsv files
+    # Test for target_suffix as a nested list
+    # Test for when no contrast_params are provided
     loader_params = loader_parameters
     loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
     derivatives = True
@@ -41,8 +41,9 @@ def test_bids_df_microscopy_png(loader_parameters):
         "balance": {}
     }}])
 def test_bids_df_anat(loader_parameters):
-	# Test: MRI anat nii.gz file format
-	# Test: when no file extensions are provided
+    # Test for MRI anat nii.gz file format
+    # Test for when no file extensions are provided
+    # Test for multiple target_suffix
     loader_params = loader_parameters
     loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
     derivatives = True
