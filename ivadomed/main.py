@@ -129,24 +129,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     transform_train_params, transform_valid_params, transform_test_params = \
         imed_transforms.get_subdatasets_transforms(context["transformation"])
 
-    # MODEL PARAMETERS
-    model_params = copy.deepcopy(context["default_model"])
-    model_params["folder_name"] = copy.deepcopy(context["model_name"])
-    model_context_list = [model_name for model_name in MODEL_LIST
-                          if model_name in context and context[model_name]["applied"]]
-    if len(model_context_list) == 1:
-        model_params["name"] = model_context_list[0]
-        model_params.update(context[model_context_list[0]])
-    elif 'Modified3DUNet' in model_context_list and 'FiLMedUnet' in model_context_list and len(model_context_list) == 2:
-        model_params["name"] = 'Modified3DUNet'
-        for i in range(len(model_context_list)):
-            model_params.update(context[model_context_list[i]])
-    elif len(model_context_list) > 1:
-        print('ERROR: Several models are selected in the configuration file: {}.'
-              'Please select only one (i.e. only one where: "applied": true).'.format(model_context_list))
-        exit()
-
-    model_params['is_2d'] = False if "Modified3DUNet" in model_params['name'] else model_params['is_2d']
+    model_params = get_model_parameters(context)
     # Get in_channel from contrast_lst
     if loader_params["multichannel"]:
         model_params["in_channel"] = len(loader_params["contrast_params"]["contrast_lst"])
@@ -377,6 +360,51 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                 filename = subject.record['subject_id'] + "_" + subject.record['modality'] + target + "_pred" + \
                            ".nii.gz"
                 nib.save(pred, os.path.join(pred_path, filename))
+
+
+def get_model_parameters(context):
+    """Get model parameters from config file.
+
+    If no other models are specified, use the ``default_model``.
+    If other models are specified in the ``context`` dict, make sure they are in the ``MODEL_LIST``
+        and that at most 1 is selected, with the exception of ``Modified3DUNet`` and ``FiLMedUnet``.
+
+    Args:
+        context (dict): a dictionary from the config file. Must contain:
+            ::
+
+                {
+                    "default_model": dictionary containing information about default model
+                    "model_name": TODO
+                }
+
+    Returns:
+        dict: {
+            "folder_name": TODO
+            "name": name of the model to be used
+            "is_2D": whether or not model is 2D or 3D
+            ... any other model parameters
+        }
+    """
+    model_params = copy.deepcopy(context["default_model"])
+    model_params["folder_name"] = copy.deepcopy(context["model_name"])
+    model_context_list = [model_name for model_name in MODEL_LIST
+                          if model_name in context and context[model_name]["applied"]]
+    if len(model_context_list) == 1:
+        model_params["name"] = model_context_list[0]
+        model_params.update(context[model_context_list[0]])
+    elif model_context_list == ['Modified3DUNet', 'FiLMedUnet']:
+        model_params["name"] = 'Modified3DUNet'
+        for i in range(len(model_context_list)):
+            model_params.update(context[model_context_list[i]])
+    elif len(model_context_list) > 1:
+        print(f"""ERROR: Several models are selected in the configuration file:
+                  {model_context_list}. Please select only one (i.e. only one where:
+                  "applied": true).""")
+        exit()
+
+    model_params['is_2d'] = False if "Modified3DUNet" in model_params['name'] else model_params['is_2d']
+    return model_params
 
 
 def run_main():
