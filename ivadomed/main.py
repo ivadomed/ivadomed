@@ -111,19 +111,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                                                                          context["loader_parameters"]
                                                                                          ['subject_selection'])
 
-    # Loader params
-    loader_params = copy.deepcopy(context["loader_parameters"])
-    if command == "train":
-        loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
-    else:
-        loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["testing"]
-    if "FiLMedUnet" in context and context["FiLMedUnet"]["applied"]:
-        loader_params.update({"metadata_type": context["FiLMedUnet"]["metadata"]})
-
-    # Load metadata necessary to balance the loader
-    if context['training_parameters']['balance_samples']['applied'] and \
-            context['training_parameters']['balance_samples']['type'] != 'gt':
-        loader_params.update({"metadata_type": context['training_parameters']['balance_samples']['type']})
+    loader_params = get_loader_parameters(context, command)
 
     # Get transforms for each subdataset
     transform_train_params, transform_valid_params, transform_test_params = \
@@ -360,6 +348,44 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                 filename = subject.record['subject_id'] + "_" + subject.record['modality'] + target + "_pred" + \
                            ".nii.gz"
                 nib.save(pred, os.path.join(pred_path, filename))
+
+
+def get_loader_parameters(context, command):
+    """Get loader parameters from config file.
+
+    Args:
+        context (dict): a dictionary from the config file. Must contain:
+            ::
+
+                {
+                    "loader_parameters": dictionary containing information about loading
+                }
+        command (str): one of "test", "train", or "segment"
+
+    Returns:
+        dict: {
+            "contrast_params": {
+                "contast_lst": TODO
+            }
+        }
+
+    TODO: finish this docstring, context and return dicts are incomplete
+    """
+    loader_params = copy.deepcopy(context["loader_parameters"])
+    if command == "train":
+        loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
+    else:
+        loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["testing"]
+    if "FiLMedUnet" in context and context["FiLMedUnet"]["applied"]:
+        loader_params.update({"metadata_type": context["FiLMedUnet"]["metadata"]})
+
+    # Load metadata necessary to balance the loader
+    if context['training_parameters']['balance_samples']['applied'] and \
+            context['training_parameters']['balance_samples']['type'] != 'gt':
+        loader_params.update({
+            "metadata_type": context['training_parameters']['balance_samples']['type']
+        })
+    return loader_params
 
 
 def get_model_parameters(context):
