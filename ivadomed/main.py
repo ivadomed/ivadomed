@@ -200,56 +200,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                                cuda_available, log_directory, context)
         return df_results, pred_metrics
 
-    if command == 'segment':
-        bids_ds = bids.BIDS(context["loader_parameters"]["bids_path"])
-        df = bids_ds.participants.content
-        subj_lst = df['participant_id'].tolist()
-        bids_subjects = [s for s in bids_ds.get_subjects() if s.record["subject_id"] in subj_lst]
-
-        # Add postprocessing to packaged model
-        path_model = os.path.join(context['log_directory'], context['model_name'])
-        path_model_config = os.path.join(path_model, context['model_name'] + ".json")
-        model_config = imed_config_manager.load_json(path_model_config)
-        model_config['postprocessing'] = context['postprocessing']
-        with open(path_model_config, 'w') as fp:
-            json.dump(model_config, fp, indent=4)
-
-        options = None
-        for subject in bids_subjects:
-            if context['loader_parameters']['multichannel']:
-                fname_img = []
-                provided_contrasts = []
-                contrasts = context['loader_parameters']['contrast_params']['testing']
-                # Keep contrast order
-                for c in contrasts:
-                    for s in bids_subjects:
-                        if subject.record['subject_id'] == s.record['subject_id'] and s.record['modality'] == c:
-                            provided_contrasts.append(c)
-                            fname_img.append(s.record['absolute_path'])
-                            bids_subjects.remove(s)
-                if len(fname_img) != len(contrasts):
-                    logger.warning("Missing contrast for subject {}. {} were provided but {} are required. Skipping "
-                                   "subject.".format(subject.record['subject_id'], provided_contrasts, contrasts))
-                    continue
-            else:
-                fname_img = [subject.record['absolute_path']]
-
-            if 'film_layers' in model_params and any(model_params['film_layers']) and model_params['metadata']:
-                subj_id = subject.record['subject_id']
-                metadata = df[df['participant_id'] == subj_id][model_params['metadata']].values[0]
-                options = {'metadata': metadata}
-            pred_list, target_list = imed_inference.segment_volume(path_model,
-                                                                   fname_images=fname_img,
-                                                                   gpu_number=context['gpu'],
-                                                                   options=options)
-            pred_path = os.path.join(context['log_directory'], "pred_masks")
-            if not os.path.exists(pred_path):
-                os.makedirs(pred_path)
-
-            for pred, target in zip(pred_list, target_list):
-                filename = subject.record['subject_id'] + "_" + subject.record['modality'] + target + "_pred" + \
-                           ".nii.gz"
-                nib.save(pred, os.path.join(pred_path, filename))
+    elif command == 'segment':
+        run_segmentation(context, model_params)
 
 
 def get_loader_parameters(context, command):
@@ -489,6 +441,58 @@ def run_testing(loader_params, model_params, testing_params, test_lst, transform
                                           target_suffix=loader_params["target_suffix"],
                                           eval_params=context["evaluation_parameters"])
     return df_results, pred_metrics
+
+
+def run_segmentation(context, model_params):
+    bids_ds = bids.BIDS(context["loader_parameters"]["bids_path"])
+    df = bids_ds.participants.content
+    subj_lst = df['participant_id'].tolist()
+    bids_subjects = [s for s in bids_ds.get_subjects() if s.record["subject_id"] in subj_lst]
+
+    # Add postprocessing to packaged model
+    path_model = os.path.join(context['log_directory'], context['model_name'])
+    path_model_config = os.path.join(path_model, context['model_name'] + ".json")
+    model_config = imed_config_manager.load_json(path_model_config)
+    model_config['postprocessing'] = context['postprocessing']
+    with open(path_model_config, 'w') as fp:
+        json.dump(model_config, fp, indent=4)
+
+    options = None
+    for subject in bids_subjects:
+        if context['loader_parameters']['multichannel']:
+            fname_img = []
+            provided_contrasts = []
+            contrasts = context['loader_parameters']['contrast_params']['testing']
+            # Keep contrast order
+            for c in contrasts:
+                for s in bids_subjects:
+                    if subject.record['subject_id'] == s.record['subject_id'] and s.record['modality'] == c:
+                        provided_contrasts.append(c)
+                        fname_img.append(s.record['absolute_path'])
+                        bids_subjects.remove(s)
+            if len(fname_img) != len(contrasts):
+                logger.warning("Missing contrast for subject {}. {} were provided but {} are required. Skipping "
+                               "subject.".format(subject.record['subject_id'], provided_contrasts, contrasts))
+                continue
+        else:
+            fname_img = [subject.record['absolute_path']]
+
+        if 'film_layers' in model_params and any(model_params['film_layers']) and model_params['metadata']:
+            subj_id = subject.record['subject_id']
+            metadata = df[df['participant_id'] == subj_id][model_params['metadata']].values[0]
+            options = {'metadata': metadata}
+        pred_list, target_list = imed_inference.segment_volume(path_model,
+                                                               fname_images=fname_img,
+                                                               gpu_number=context['gpu'],
+                                                               options=options)
+        pred_path = os.path.join(context['log_directory'], "pred_masks")
+        if not os.path.exists(pred_path):
+            os.makedirs(pred_path)
+
+        for pred, target in zip(pred_list, target_list):
+            filename = subject.record['subject_id'] + "_" + subject.record['modality'] + target + "_pred" + \
+                       ".nii.gz"
+            nib.save(pred, os.path.join(pred_path, filename))
 
 
 def run_main():
