@@ -48,5 +48,8 @@ ivadomed_download_data
 
 .. autofunction:: ivadomed.scripts.download_data.install_data
 
+ivadomed_visualize_and_compare_testing_models
+"""""""""""""""""""""""""""""""""""""""""""""
 
+.. autofunction:: ivadomed.scripts.ivadomed_visualize_and_compare_testing_models
 

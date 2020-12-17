@@ -51,6 +51,7 @@ setup(
             'ivadomed_extract_small_dataset=ivadomed.scripts.extract_small_dataset:main',
             'ivadomed_download_data=ivadomed.scripts.download_data:main',
             'ivadomed_training_curve=ivadomed.scripts.training_curve:main'
+            'ivadomed_visualize_and_compare_testing_models=ivadomed.scripts.ivadomed_visualize_and_compare_testing_models:main'
         ],
     },
 )
