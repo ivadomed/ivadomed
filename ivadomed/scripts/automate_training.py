@@ -27,6 +27,7 @@ from ivadomed import config_manager as imed_config_manager
 from ivadomed.utils import init_ivadomed
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.scripts.compare_models import compute_statistics
+from ivadomed import utils as imed_utils
 
 LOG_FILENAME = 'log.txt'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
@@ -368,18 +369,19 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
         compute_statistics(results_df, n_iterations, run_test)
 
 
-def main():
+def main(args=None):
     init_ivadomed()
 
     parser = get_parser()
-    args = parser.parse_args()
+    args = imed_utils.get_arguments(parser, args)
 
     # Get thr increment if available
     thr_increment = args.thr_increment if args.thr_increment else None
 
     # Run automate training
-    automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin), int(args.n_iterations),
-                      bool(args.run_test), args.all_logs, thr_increment, bool(args.multi_params))
+    automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin),
+                      int(args.n_iterations), bool(args.run_test), args.all_logs, thr_increment,
+                      bool(args.multi_params))
 
 
 if __name__ == '__main__':
