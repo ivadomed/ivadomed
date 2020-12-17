@@ -141,6 +141,24 @@ def get_new_subject_split(path_folders, center_test, split_method, random_seed,
             # Merge the .tsv files (This keeps also non-overlapping fields)
             df = pd.merge(left=df, right=df_next, how='outer')
 
+    # Get rid of duplicate entries based on the field "participant_id" (the same subject could have in theory be
+    # included in both datasets). The assumption here is that the two datasets contain identical copies of the subject
+    # folders, if that's not the case, we lose information
+
+    logical_keep_first_encounter = []
+    indicesOfDuplicates = []
+    used = set()  # For debugging
+
+    for iEntry in range(len(df)):
+        if df['participant_id'][iEntry] not in used:
+            used.add(df['participant_id'][iEntry])  # For debugging
+            logical_keep_first_encounter.append(iEntry)
+        else:
+            indicesOfDuplicates.append(iEntry)  # For debugging
+    # Just keep the dataframe with unique participant_id
+    df = df.iloc[logical_keep_first_encounter, :]
+
+
     if subject_selection is not None:
         # Verify subject_selection format
         if not (len(subject_selection["metadata"]) == len(subject_selection["n"]) == len(subject_selection["value"])):

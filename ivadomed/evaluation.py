@@ -51,23 +51,12 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
 
-
-
-
-        ########### MAKE SURE THERE ARE NOT DUPLICATIONS IN THE DATASETS  ###################
-        # THIS SHOULD BE DONE DURING TRAINING AT THE LOADER
-
+        # Use the path that is stored on the .tsv file for retrieving the derivative
         the_BIDS_path = df_participantsTSV[df_participantsTSV['participant_id'] == subj]['bids_path'].tolist()
         the_BIDS_path = the_BIDS_path[0]
 
-        #####################################################################################33
-        # fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
-        #             for suffix in target_suffix]
-
         fname_gt = [os.path.join(the_BIDS_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
-
-
 
         # Uncertainty
         data_uncertainty = None
