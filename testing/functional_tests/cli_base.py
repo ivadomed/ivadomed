@@ -59,7 +59,10 @@ def download_dataset(dataset='data_testing', verbose=True):
         verbose (bool): whether or not to print
     """
     printv('\nDownloading testing data...', verbose)
-    __dataset_dir__ = os.path.join(__test_dir__, dataset)
+    if os.path.exists(__tmp_dir__):
+        __dataset_dir__ = os.path.join(__tmp_dir__, dataset)
+    else:
+        __dataset_dir__ = os.path.join(__test_dir__, dataset)
     ivadomed_download_data.main([
         '-d', dataset,
         '-o', __dataset_dir__
@@ -72,7 +75,10 @@ def remove_dataset(dataset='data_testing', verbose=True):
     Args:
         verbose (bool): whether or not to print
     """
-    __dataset_dir__ = os.path.join(__test_dir__, dataset)
+    if os.path.exists(__tmp_dir__):
+        __dataset_dir__ = os.path.join(__tmp_dir__, dataset)
+    else:
+        __dataset_dir__ = os.path.join(__test_dir__, dataset)
     printv("rm -rf %s" % (__dataset_dir__), verbose=verbose, type="code")
     shutil.rmtree(__dataset_dir__, ignore_errors=True)
 
