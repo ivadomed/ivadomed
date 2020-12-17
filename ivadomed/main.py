@@ -188,39 +188,9 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                              ds_valid)
 
     if command == 'test':
-        ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
-                                                                  'transforms_params': transformation_dict,
-                                                                  'dataset_type': 'testing',
-                                                                  'requires_undo': True}}, device=device,
-                                           cuda_available=cuda_available)
-
-        metric_fns = imed_metrics.get_metric_fns(ds_test.task)
-
-        if 'film_layers' in model_params and any(model_params['film_layers']):
-            clustering_path = os.path.join(log_directory, "clustering_models.joblib")
-            metadata_clustering_models = joblib.load(clustering_path)
-            ohe_path = os.path.join(log_directory, "one_hot_encoder.joblib")
-            one_hot_encoder = joblib.load(ohe_path)
-            ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"],
-                                                   model_params['metadata'])
-            model_params.update({"film_onehotencoder": one_hot_encoder,
-                                 "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
-
-        # RUN INFERENCE
-        pred_metrics = imed_testing.test(model_params=model_params,
-                                         dataset_test=ds_test,
-                                         testing_params=testing_params,
-                                         log_directory=log_directory,
-                                         device=device,
-                                         cuda_available=cuda_available,
-                                         metric_fns=metric_fns,
-                                         postprocessing=context['postprocessing'])
-
-        # RUN EVALUATION
-        df_results = imed_evaluation.evaluate(bids_path=loader_params['bids_path'],
-                                              log_directory=log_directory,
-                                              target_suffix=loader_params["target_suffix"],
-                                              eval_params=context["evaluation_parameters"])
+        df_results, pred_metrics = run_testing(loader_params, model_params, testing_params,
+                                               test_lst, transformation_dict, device,
+                                               cuda_available, log_directory, context)
         return df_results, pred_metrics
 
     if command == 'segment':
@@ -465,6 +435,44 @@ def perform_threshold_analysis(context, log_directory, model_params, testing_par
     context["postprocessing"]["binarize_prediction"] = {"thr": thr}
     save_config_file(context, log_directory)
     return context
+
+
+def run_testing(loader_params, model_params, testing_params, test_lst, transformation_dict, device,
+                cuda_available, log_directory, context):
+    ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
+                                                              'transforms_params': transformation_dict,
+                                                              'dataset_type': 'testing',
+                                                              'requires_undo': True}}, device=device,
+                                       cuda_available=cuda_available)
+
+    metric_fns = imed_metrics.get_metric_fns(ds_test.task)
+
+    if 'film_layers' in model_params and any(model_params['film_layers']):
+        clustering_path = os.path.join(log_directory, "clustering_models.joblib")
+        metadata_clustering_models = joblib.load(clustering_path)
+        ohe_path = os.path.join(log_directory, "one_hot_encoder.joblib")
+        one_hot_encoder = joblib.load(ohe_path)
+        ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"],
+                                               model_params['metadata'])
+        model_params.update({"film_onehotencoder": one_hot_encoder,
+                             "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
+
+    # RUN INFERENCE
+    pred_metrics = imed_testing.test(model_params=model_params,
+                                     dataset_test=ds_test,
+                                     testing_params=testing_params,
+                                     log_directory=log_directory,
+                                     device=device,
+                                     cuda_available=cuda_available,
+                                     metric_fns=metric_fns,
+                                     postprocessing=context['postprocessing'])
+
+    # RUN EVALUATION
+    df_results = imed_evaluation.evaluate(bids_path=loader_params['bids_path'],
+                                          log_directory=log_directory,
+                                          target_suffix=loader_params["target_suffix"],
+                                          eval_params=context["evaluation_parameters"])
+    return df_results, pred_metrics
 
 
 def run_main():
