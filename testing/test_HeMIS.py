@@ -78,7 +78,6 @@ def test_HeMIS(p=0.0001):
                                           slice_axis=2,
                                           transform=transform_lst,
                                           metadata_choice=False,
-                                          multichannel=True,
                                           dim=2,
                                           slice_filter_fn=imed_loader_utils.SliceFilter(filter_empty_input=True,
                                                                                  filter_empty_mask=True),
