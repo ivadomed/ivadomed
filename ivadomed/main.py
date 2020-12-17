@@ -57,8 +57,17 @@ def get_parser():
 
 
 def save_config_file(context, log_directory):
-    # Save config file within log_directory and log_directory/model_name
-    # Done after the threshold_analysis to propate this info in the config files
+    """Save config file within ``log_directory``.
+
+    Saved as {log_directory}/{model_name}.json
+    Done after threshold analysis to update info in config files.
+
+    Args:
+        context (dict): Dictionary containing all parameters that are needed for a given process.
+            See :doc:`configuration_file` for more details.
+        log_directory (str): Name of directory to store logging.
+    """
+
     with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
         json.dump(context, fp, indent=4)
     with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
