@@ -280,6 +280,24 @@ class Postprocessing(object):
         if thr >= 0:
             self.data_pred = threshold_predictions(self.data_pred, thr)
 
+    def binarize_maxpooling(self):
+        """Binarize by setting to 1 the voxel having the max prediction across all classes.
+        """
+        # Generate background class
+        background = np.ones(self.data_pred[..., 0].shape)
+        n_class = self.data_pred.shape[-1]
+        for c in range(n_class):
+            background -= self.data_pred[..., c]
+
+        # Concatenate background class
+        pred_with_background = np.concatenate((background[..., None], self.data_pred), axis=-1)
+
+        # Find class with max pred
+        class_pred = np.argmax(pred_with_background, axis=-1)
+        self.data_pred = np.zeros_like(self.data_pred)
+        for c in range(n_class):
+            self.data_pred[..., c] = class_pred == c + 1
+
     def uncertainty(self, thr, suffix):
         """Removes the most uncertain predictions.
 
@@ -304,9 +322,17 @@ class Postprocessing(object):
 
         Args:
             unit (str): Indicates the units of the objects: "mm3" or "vox"
-            thr (int): Minimal object size to keep in input data.
+            thr (int or list): Minimal object size to keep in input data.
 
         """
+        if isinstance(thr, list) and (self.n_classes != len(thr)):
+            raise ValueError("Length mismatch for remove small object postprocessing step: threshold length of {} "
+                             "while the number of predicted class is {}.".format(len(thr), self.n_classes))
+
+        # Convert thr to list
+        if isinstance(thr, int):
+            thr = [thr] * self.n_classes
+
         if unit == 'vox':
             size_min = thr
         elif unit == 'mm3':
@@ -318,7 +344,7 @@ class Postprocessing(object):
         for idx in range(self.n_classes):
             self.data_pred[..., idx] = remove_small_objects(data=self.data_pred[..., idx],
                                                             bin_structure=self.bin_struct,
-                                                            size_min=size_min)
+                                                            size_min=size_min[idx])
 
     def fill_holes(self):
         """Fill holes in the predictions

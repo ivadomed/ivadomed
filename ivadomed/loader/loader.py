@@ -1,5 +1,5 @@
 import copy
-
+import random
 import nibabel as nib
 import numpy as np
 import torch
@@ -164,13 +164,16 @@ class SegmentationPair(object):
         # list of GT for multiclass segmentation
         self.gt_handle = []
 
-        # Unlabeled data (inference time)
+        # Labeled data (ie not inference time)
         if self.gt_filenames is not None:
             if not isinstance(self.gt_filenames, list):
                 self.gt_filenames = [self.gt_filenames]
             for gt in self.gt_filenames:
                 if gt is not None:
-                    self.gt_handle.append(nib.load(gt))
+                    if isinstance(gt, str):  # this tissue has annotation from only one rater
+                        self.gt_handle.append(nib.load(gt))
+                    else:  # this tissue has annotation from several raters
+                        self.gt_handle.append([nib.load(gt_rater) for gt_rater in gt])
                 else:
                     self.gt_handle.append(None)
 
@@ -184,11 +187,14 @@ class SegmentationPair(object):
         for idx, handle in enumerate(self.input_handle):
             self.input_handle[idx] = nib.as_closest_canonical(handle)
 
-        # Unlabeled data
+        # Labeled data (ie not inference time)
         if self.gt_filenames is not None:
             for idx, gt in enumerate(self.gt_handle):
                 if gt is not None:
-                    self.gt_handle[idx] = nib.as_closest_canonical(gt)
+                    if not isinstance(gt, list):  # this tissue has annotation from only one rater
+                        self.gt_handle[idx] = nib.as_closest_canonical(gt)
+                    else:  # this tissue has annotation from several raters
+                        self.gt_handle[idx] = [nib.as_closest_canonical(gt_rater) for gt_rater in gt]
 
         # If binary classification, then extract labels from GT mask
 
@@ -213,8 +219,11 @@ class SegmentationPair(object):
 
         for gt in self.gt_handle:
             if gt is not None:
-                shape = imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis)
-                gt_shape.append(tuple(shape))
+                if not isinstance(gt, list):  # this tissue has annotation from only one rater
+                    gt = [gt]
+                for gt_rater in gt:
+                    shape = imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis)
+                    gt_shape.append(tuple(shape))
 
                 if not len(set(gt_shape)):
                     raise RuntimeError('Labels have different dimensions.')
@@ -237,10 +246,16 @@ class SegmentationPair(object):
             gt_data = None
         for gt in self.gt_handle:
             if gt is not None:
-                hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
-                                                                self.slice_axis)
                 data_type = np.float32 if self.soft_gt else np.uint8
-                gt_data.append(hwd_oriented.astype(data_type))
+                if not isinstance(gt, list):  # this tissue has annotation from only one rater
+                    hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
+                                                                    self.slice_axis)
+                    gt_data.append(hwd_oriented.astype(data_type))
+                else:  # this tissue has annotation from several raters
+                    hwd_oriented_list = [
+                        imed_loader_utils.orient_img_hwd(gt_rater.get_fdata(cache_mode, dtype=np.float32),
+                                                         self.slice_axis) for gt_rater in gt]
+                    gt_data.append([hwd_oriented.astype(data_type) for hwd_oriented in hwd_oriented_list])
             else:
                 gt_data.append(
                     np.zeros(imed_loader_utils.orient_shapes_hwd(self.input_handle[0].shape, self.slice_axis),
@@ -259,16 +274,30 @@ class SegmentationPair(object):
             dict: Input and gt metadata.
         """
         gt_meta_dict = []
-        for gt in self.gt_handle:
+        for idx_class, gt in enumerate(self.gt_handle):
             if gt is not None:
-                gt_meta_dict.append(imed_loader_utils.SampleMetadata({
-                    "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
-                    "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
-                    "gt_filenames": self.metadata[0]["gt_filenames"],
-                    "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
-                    "data_type": 'gt',
-                    "crop_params": {}
-                }))
+                if not isinstance(gt, list):  # this tissue has annotation from only one rater
+                    gt_meta_dict.append(imed_loader_utils.SampleMetadata({
+                        "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
+                        "gt_filenames": self.metadata[0]["gt_filenames"],
+                        "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
+                            0] else None,
+                        "data_type": 'gt',
+                        "crop_params": {}
+                    }))
+                else:
+                    gt_meta_dict.append([imed_loader_utils.SampleMetadata({
+                        "zooms": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_zooms(), self.slice_axis),
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(),
+                                                                          self.slice_axis),
+                        "gt_filenames": self.metadata[0]["gt_filenames"][idx_class][idx_rater],
+                        "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
+                            0] else None,
+                        "data_type": 'gt',
+                        "crop_params": {}
+                    }) for idx_rater, gt_rater in enumerate(gt)])
+
             else:
                 # Temporarily append null metadata to null gt
                 gt_meta_dict.append(None)
@@ -329,17 +358,19 @@ class SegmentationPair(object):
             gt_slices = []
             for gt_obj in gt_dataobj:
                 if gt_type == "segmentation":
-                    gt_slices.append(np.asarray(gt_obj[..., slice_index],
-                                                dtype=np.float32))
+                    data_type = np.float32 if self.soft_gt else np.uint8
+                    if not isinstance(gt_obj, list):  # annotation from only one rater
+                        gt_slices.append(np.asarray(gt_obj[..., slice_index],
+                                                    dtype=data_type))
+                    else:  # annotations from several raters
+                        gt_slices.append([np.asarray(gt_obj_rater[..., slice_index],
+                                                     dtype=data_type) for gt_obj_rater in gt_obj])
                 else:
-                    # TODO: rm when Anne replies
-                    # Assert that there is only one non_zero_label in the current slice
-                    # labels_in_slice = np.unique(gt_obj[..., slice_index][np.nonzero(gt_obj[..., slice_index])]).tolist()
-                    # if len(labels_in_slice) > 1:
-                    #    print(metadata["gt_metadata"][0]["gt_filenames"])
-                    # TODO: uncomment when Anne replies
-                    # assert int(np.max(labels_in_slice)) <= 1
-                    gt_slices.append(np.asarray(int(np.any(gt_obj[..., slice_index]))))
+                    if not isinstance(gt_obj, list):  # annotation from only one rater
+                        gt_slices.append(np.asarray(int(np.any(gt_obj[..., slice_index]))))
+                    else:  # annotations from several raters
+                        gt_slices.append([np.asarray(int(np.any(gt_obj_rater[..., slice_index])))
+                                          for gt_obj_rater in gt_obj])
         dreturn = {
             "input": input_slices,
             "gt": gt_slices,
@@ -451,6 +482,16 @@ class MRI2DSegmentationDataset(Dataset):
             index (int): Slice index.
         """
         seg_pair_slice, roi_pair_slice = self.indexes[index]
+
+        # In case multiple raters
+        if seg_pair_slice['gt'] is not None and isinstance(seg_pair_slice['gt'][0], list):
+            # Randomly pick a rater
+            idx_rater = random.randint(0, len(seg_pair_slice['gt'][0]) - 1)
+            # Use it as ground truth for this iteration
+            # Note: in case of multi-class: the same rater is used across classes
+            for idx_class in range(len(seg_pair_slice['gt'])):
+                seg_pair_slice['gt'][idx_class] = seg_pair_slice['gt'][idx_class][idx_rater]
+                seg_pair_slice['gt_metadata'][idx_class] = seg_pair_slice['gt_metadata'][idx_class][idx_rater]
 
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
@@ -606,6 +647,16 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         """
         coord = self.indexes[index]
         seg_pair, _ = self.handlers[coord['handler_index']]
+
+        # In case multiple raters
+        if seg_pair['gt'] is not None and isinstance(seg_pair['gt'][0], list):
+            # Randomly pick a rater
+            idx_rater = random.randint(0, len(seg_pair['gt'][0]) - 1)
+            # Use it as ground truth for this iteration
+            # Note: in case of multi-class: the same rater is used across classes
+            for idx_class in range(len(seg_pair['gt'])):
+                seg_pair['gt'][idx_class] = seg_pair['gt'][idx_class][idx_rater]
+                seg_pair['gt_metadata'][idx_class] = seg_pair['gt_metadata'][idx_class][idx_rater]
 
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
@@ -786,11 +837,20 @@ class BidsDataset(MRI2DSegmentationDataset):
                     print("Subject without derivative, skipping.")
                     continue
                 derivatives = subject.get_derivatives("labels")
-                target_filename, roi_filename = [None] * len(target_suffix), None
+                if isinstance(target_suffix[0], str):
+                    target_filename, roi_filename = [None] * len(target_suffix), None
+                else:
+                    target_filename, roi_filename = [[] for _ in range(len(target_suffix))], None
 
                 for deriv in derivatives:
-                    for idx, suffix in enumerate(target_suffix):
-                        if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
+                    for idx, suffix_list in enumerate(target_suffix):
+                        # If suffix_list is a string, then only one rater annotation per class is available.
+                        # Otherwise, multiple raters segmented the same class.
+                        if isinstance(suffix_list, list):
+                            for suffix in suffix_list:
+                                if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
+                                    target_filename[idx].append(deriv)
+                        elif deriv.endswith(subject.record["modality"] + suffix_list + ".nii.gz"):
                             target_filename[idx] = deriv
 
                     if not (self.roi_params["suffix"] is None) and \

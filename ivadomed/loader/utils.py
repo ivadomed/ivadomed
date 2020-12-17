@@ -12,6 +12,8 @@ from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
 from ivadomed import utils as imed_utils
 import nibabel as nib
+import bids as pybids   #"bids" is already taken by bids_neuropoly
+import pandas as pd
 
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
@@ -310,6 +312,7 @@ class SampleMetadata(object):
     Attributes:
         metadata (dict): Image metadata.
     """
+
     def __init__(self, d=None):
         self.metadata = {} or d
 
@@ -445,7 +448,11 @@ def update_metadata(metadata_src_lst, metadata_dest_lst):
         list: updated metadata list.
     """
     if metadata_src_lst and metadata_dest_lst:
-        metadata_dest_lst[0]._update(metadata_src_lst[0], TRANSFORM_PARAMS)
+        if not isinstance(metadata_dest_lst[0], list):  # annotation from one rater only
+            metadata_dest_lst[0]._update(metadata_src_lst[0], TRANSFORM_PARAMS)
+        else:  # annotations from several raters
+            for idx, _ in enumerate(metadata_dest_lst[0]):
+                metadata_dest_lst[0][idx]._update(metadata_src_lst[0], TRANSFORM_PARAMS)
     return metadata_dest_lst
 
 
@@ -492,8 +499,9 @@ class SliceFilter(object):
 
         if self.filter_classification:
             if not np.all([int(
-                    self.classifier(imed_utils.cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0), self.cuda_available)))
-                           for img in input_data]):
+                    self.classifier(
+                        imed_utils.cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0), self.cuda_available)))
+                for img in input_data]):
                 return False
 
         return True
@@ -520,3 +528,131 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
     # apply transformation
     return nib.orientations.apply_orientation(arr_ras, trans_orient)
+
+
+def create_bids_dataframe(loader_params, derivatives):
+    """Create a dataframe containing all BIDS image files in a bids_path and their metadata.
+
+    Args:
+        loader_params (dict): Loader parameters, see :doc:`configuration_file` for more details.
+        derivatives (bool): If True, derivatives are indexed.
+
+    Returns:
+        df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
+    """
+
+    # Get bids_path, bids_config, target_suffix, extensions and contrast_lst from loader parameters
+    bids_path = loader_params['bids_path']
+    bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
+    target_suffix = loader_params['target_suffix']
+    extensions = loader_params['extensions']
+    contrast_lst = loader_params["contrast_params"]["contrast_lst"]
+
+    # Suppress a Future Warning from pybids about leading dot included in 'extension' from version 0.14.0
+    # The config_bids.json file used matches the future behavior
+    # TODO: when reaching version 0.14.0, remove the following line
+    pybids.config.set_option('extension_initial_dot', True)
+
+    # Initialize BIDSLayoutIndexer and BIDSLayout
+    # validate=True by default for both indexer and layout, BIDS-validator is not skipped
+    # Force index for samples tsv and json files, and for subject subfolders containing microscopy files based on extensions.
+    # TODO: remove force indexing of microscopy files after BEP microscopy is merged in BIDS
+    ext_microscopy = ('.png', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
+    force_index = ['samples.tsv', 'samples.json']
+    if not bids_path.endswith("/"):
+        bids_path = bids_path + "/"
+    for root, dirs, files in os.walk(bids_path):
+        for file in files:
+            if file.endswith(ext_microscopy) and (root.replace(bids_path, '').startswith("sub")):
+                force_index.append(os.path.join(root.replace(bids_path, '')))
+    indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
+    layout = pybids.BIDSLayout(bids_path, config=bids_config, indexer=indexer, derivatives=derivatives)
+
+    # Transform layout to dataframe with all entities and json metadata
+    # As per pybids, derivatives don't include parsed entities, only the "path" column
+    df = layout.to_df(metadata=True)
+
+    # Add filename and parent_path columns
+    df['filename'] = df['path'].apply(os.path.basename)
+    df['parent_path'] = df['path'].apply(os.path.dirname)
+
+    # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
+    df = df[~df['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
+
+    # Update dataframe with subject files of chosen contrasts and extensions,
+    # and with derivative files of chosen target_suffix from loader parameters
+    df = (df[(~df['path'].str.contains('derivatives') & df['suffix'].str.contains('|'.join(contrast_lst)) &
+          df['extension'].str.contains('|'.join(extensions))) |
+          (df['filename'].str.contains('|'.join(target_suffix)))])
+
+    # Add metadata from participants.tsv file, if present
+    # Uses pybids function
+    if layout.get_collections(level='dataset'):
+        df_participants = layout.get_collections(level='dataset', merge=True).to_df()
+        df_participants.drop(['suffix'], axis=1, inplace=True)
+        df = pd.merge(df, df_participants, on='subject', suffixes=("_x", None), how='left')
+
+    # Add metadata from samples.tsv file, if present
+    # TODO: use pybids function after BEP microscopy is merged in BIDS
+    fname_samples = os.path.join(bids_path, "samples.tsv")
+    if os.path.exists(fname_samples):
+        df_samples = pd.read_csv(fname_samples, sep='\t')
+        df['participant_id'] = "sub-" + df['subject']
+        df['sample_id'] = "sample-" + df['sample']
+        df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None), how='left')
+        df.drop(['participant_id', 'sample_id'], axis=1, inplace=True)
+
+    # Add metadata from all _sessions.tsv files, if present
+    # Uses pybids function
+    if layout.get_collections(level='subject'):
+        df_sessions = layout.get_collections(level='subject', merge=True).to_df()
+        df_sessions.drop(['suffix'], axis=1, inplace=True)
+        df = pd.merge(df, df_sessions, on=['subject', 'session'], suffixes=("_x", None), how='left')
+
+    # Add metadata from all _scans.tsv files, if present
+    # TODO: use pybids function after BEP microscopy is merged in BIDS
+    # TODO: verify merge behavior with EEG and DWI scans files, tested with anat and microscopy only
+    df_scans = pd.DataFrame()
+    for root, dirs, files in os.walk(bids_path):
+        for file in files:
+            if file.endswith("scans.tsv"):
+                df_temp = pd.read_csv(os.path.join(root, file), sep='\t')
+                df_scans = pd.concat([df_scans, df_temp], ignore_index=True)
+    if not df_scans.empty:
+        df_scans['filename'] = df_scans['filename'].apply(os.path.basename)
+        df = pd.merge(df, df_scans, on=['filename'], suffixes=("_x", None), how='left')
+
+    # TODO: check if other files are needed for EEG and DWI
+
+    # If indexing of derivatives is true
+    # Get list of subject files with available derivatives
+    if derivatives:
+        subject_files = df[~df['path'].str.contains('derivatives')]['filename'].to_list()
+        prefix_fnames = []
+        [prefix_fnames.append(s.split('.')[0]) for s in subject_files]
+        deriv = df[df['path'].str.contains('derivatives')]['filename'].tolist()
+        has_deriv = []
+        for p in prefix_fnames:
+            available = [d for d in deriv if p in d]
+            if available:
+                has_deriv.append(p)
+                for t in target_suffix:
+                    if t not in str(available):
+                        logger.warning("Missing target_suffix {} for subject {}.".format(t, p))
+            else:
+                logger.warning("Missing derivatives for subject {}. Skipping subject.".format(p))
+
+        # Filter dataframe to keep subjects files with available derivatives only
+        if has_deriv:
+            df = df[df['filename'].str.contains('|'.join(has_deriv))]
+        else:
+            # Raise error and exit if no derivatives are found for any subject files
+            raise RuntimeError("Derivatives not found.")
+
+    # Reset index
+    df.reset_index(drop=True, inplace=True)
+
+    # Drop columns with all null values
+    df.dropna(axis=1, inplace=True, how='all')
+
+    return df

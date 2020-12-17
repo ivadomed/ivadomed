@@ -26,13 +26,17 @@ def multichannel_capable(wrapped):
     Returns:
         Functions' return.
     """
+
     @functools.wraps(wrapped)
     def wrapper(self, sample, metadata):
         if isinstance(sample, list):
             list_data, list_metadata = [], []
             for s_cur, m_cur in zip(sample, metadata):
                 if len(list_metadata) > 0:
-                    imed_loader_utils.update_metadata([list_metadata[-1]], [m_cur])
+                    if not isinstance(list_metadata[-1], list):
+                        imed_loader_utils.update_metadata([list_metadata[-1]], [m_cur])
+                    else:
+                        imed_loader_utils.update_metadata(list_metadata[-1], [m_cur])
                 # Run function for each sample of the list
                 data_cur, metadata_cur = wrapped(self, s_cur, m_cur)
                 list_data.append(data_cur)
@@ -56,6 +60,7 @@ def two_dim_compatible(wrapped):
     Returns:
         Functions' return.
     """
+
     @functools.wraps(wrapped)
     def wrapper(self, sample, metadata):
         # Check if sample is 2D
@@ -116,7 +121,7 @@ class Compose(object):
                 transform_obj = globals()[transform](**params_cur)
             else:
                 raise ValueError('ERROR: {} transform is not available. '
-                      'Please check its compatibility with your model json file.'.format(transform))
+                                 'Please check its compatibility with your model json file.'.format(transform))
 
             # check if undo_transform method is implemented
             if requires_undo:
@@ -157,6 +162,7 @@ class UndoCompose(object):
     Args:
         transforms (torchvision_transforms.Compose):
     """
+
     def __init__(self, compose):
         self.transforms = compose
 
@@ -179,6 +185,7 @@ class UndoTransform(object):
     Args:
         transform (ImedTransform):
     """
+
     def __init__(self, transform):
         self.transform = transform
 
@@ -242,6 +249,7 @@ class Resample(ImedTransform):
         return data_out, metadata
 
     @multichannel_capable
+    @multichannel_capable  # for multiple raters during training/preprocessing
     @two_dim_compatible
     def __call__(self, sample, metadata=None):
         """Resample to a given resolution, in millimeters."""
@@ -359,6 +367,7 @@ class Crop(ImedTransform):
     Attributes:
         size (tuple of int): Size of the output sample. Tuple of size 3.
     """
+
     def __init__(self, size):
         self.size = size if len(size) == 3 else size + [0]
 
@@ -388,6 +397,7 @@ class Crop(ImedTransform):
         return npad_out_tuple, sample
 
     @multichannel_capable
+    @multichannel_capable  # for multiple raters during training/preprocessing
     def __call__(self, sample, metadata):
         # Get params
         is_2d = sample.shape[-1] == 1
@@ -437,6 +447,7 @@ class CenterCrop(Crop):
     """Make a centered crop of a specified size."""
 
     @multichannel_capable
+    @multichannel_capable  # for multiple raters during training/preprocessing
     @two_dim_compatible
     def __call__(self, sample, metadata=None):
         # Crop parameters
@@ -456,6 +467,7 @@ class ROICrop(Crop):
     """Make a crop of a specified size around a Region of Interest (ROI)."""
 
     @multichannel_capable
+    @multichannel_capable  # for multiple raters during training/preprocessing
     @two_dim_compatible
     def __call__(self, sample, metadata=None):
         # If crop_params are not in metadata,
@@ -640,6 +652,7 @@ class RandomAffine(ImedTransform):
         translate (list of float):
         scale (list of float):
     """
+
     def __init__(self, degrees=0, translate=None, scale=None):
         # Rotation
         if isinstance(degrees, numbers.Number):
@@ -807,6 +820,7 @@ class RandomShiftIntensity(ImedTransform):
             randomly selected from.
         prob (float): Between 0 and 1. Probability of occurence of this transformation.
     """
+
     def __init__(self, shift_range, prob=0.1):
         self.shift_range = shift_range
         self.prob = prob
@@ -947,6 +961,7 @@ class Clahe(ImedTransform):
         kernel_size (tuple of int): Defines the shape of contextual regions used in the algorithm. Length equals image
         dimension (ie 2 or 3 for 2D or 3D, respectively).
     """
+
     def __init__(self, clip_limit=3.0, kernel_size=(8, 8)):
         self.clip_limit = clip_limit
         self.kernel_size = kernel_size
@@ -969,6 +984,7 @@ class HistogramClipping(ImedTransform):
         min_percentile (float): Between 0 and 100. Lower clipping limit.
         max_percentile (float): Between 0 and 100. Higher clipping limit.
     """
+
     def __init__(self, min_percentile=5.0, max_percentile=95.0):
         self.min_percentile = min_percentile
         self.max_percentile = max_percentile

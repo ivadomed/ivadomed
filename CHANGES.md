@@ -1,3 +1,28 @@
+## v2.6.1 (2020-12-15)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.6.0...v2.6.1)
+
+**BUG**
+
+ - Fix missing attribute softmax.  [View pull request](https://github.com/ivadomed/ivadomed/pull/547)
+ - Split_dataset: consider center_list when per_patient is used.  [View pull request](https://github.com/ivadomed/ivadomed/pull/537)
+
+**DOCUMENTATION**
+
+ - Make usage clearer.  [View pull request](https://github.com/ivadomed/ivadomed/pull/578)
+ - Removing support for Python 3.9 (for now).  [View pull request](https://github.com/ivadomed/ivadomed/pull/562)
+ - Updating comparison table after review.  [View pull request](https://github.com/ivadomed/ivadomed/pull/560)
+
+**ENHANCEMENT**
+
+ - Remove small for multiclass.  [View pull request](https://github.com/ivadomed/ivadomed/pull/570)
+ - Save config file before training.  [View pull request](https://github.com/ivadomed/ivadomed/pull/569)
+ - Apply bounding box safety factor in segment volume.  [View pull request](https://github.com/ivadomed/ivadomed/pull/549)
+ - Multichannel support for convert_to_onnx script.  [View pull request](https://github.com/ivadomed/ivadomed/pull/544)
+
+**FEATURE**
+
+ - Select subjects for training based on metadata.  [View pull request](https://github.com/ivadomed/ivadomed/pull/534)
+
 ## v2.6.0 (2020-11-23)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.5.0...v2.6.0)
 

@@ -70,6 +70,12 @@ bids\_path
 
 String. Path of the BIDS folder.
 
+bids\_config
+^^^^^^^^^^^^
+
+String (Optional). Path of the custom BIDS configuration file for BIDS non-compliant modalities
+(e.g. ``"ivadomed/config/config_bids.json"``).
+
 subject\_selection
 ^^^^^^^^^^^^^^^^^^
 
@@ -90,7 +96,17 @@ List. Suffix list of the derivative file containing the ground-truth of
 interest (e.g. [``"_seg-manual"``, ``"_lesion-manual"``]). The length of
 this list controls the number of output channels of the model (i.e.
 ``out_channel``). If the list has a length greater than 1, then a
-multi-class model will be trained.
+multi-class model will be trained. If a list of list(s) is input for a
+training, (e.g. [[``"_seg-manual-rater1"``, ``"_seg-manual-rater2"``],
+[``"_lesion-manual-rater1"``, ``"_lesion-manual-rater2"``]), then each
+sublist is associated with one class but contains the annotations from
+different experts: at each training iteration, one of these annotations
+will be randomly chosen.
+
+extensions
+^^^^^^^^^^
+
+List. Used to specify a list of file extensions to be selected for training/testing.
 
 contrasts
 ^^^^^^^^^
@@ -448,6 +464,11 @@ predictions above or equal to threshold become 1.
 - ``thr``: Float. Threshold is between 0 and 1. To use soft predictions
   (i.e. no binarisation, float between 0 and 1) for metric computation, indicate -1.
 
+binarize\_maxpooling
+^^^^^^^^^^^^^^^^^^^^
+Dict. Binarize by setting to 1 the voxel having the maximum prediction across all classes. Useful for multiclass models.
+No parameters required (i.e., {}).
+
 fill\_holes
 ^^^^^^^^^^^
 Dict. Fill holes in the predictions. No parameters required (i.e., {}).
@@ -469,7 +490,8 @@ Dict. Remove small objects from the prediction. An object is defined as a group 
 neighbors are connected to the center, diagonally-connected elements are not considered neighbors.
 
 - ``unit``: String. Either "vox" for voxels or "mm3". Indicates the unit used to define the minimal object size.
-- ``thr``: Int. Minimal object size.
+- ``thr``: Int or list. Minimal object size. If a list of thresholds is chosen, the length should match the number of
+  predicted classes.
 
 threshold\_uncertainty
 ^^^^^^^^^^^^^^^^^^^^^^
