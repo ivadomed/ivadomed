@@ -146,10 +146,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     else:
         transformation_dict = transform_test_params
     undo_transforms = imed_transforms.UndoCompose(imed_transforms.Compose(transformation_dict, requires_undo=True))
-    testing_params = copy.deepcopy(context["training_parameters"])
-    testing_params.update({'uncertainty': context["uncertainty"]})
-    testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
-                           'slice_axis': loader_params['slice_axis']})
+    testing_params = get_testing_parameters(context, loader_params, undo_transforms)
+
     if command == "train":
         imed_utils.display_selected_transfoms(transform_train_params, dataset_type=["training"])
         imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=["validation"])
@@ -348,6 +346,15 @@ def get_model_parameters(context, loader_params):
     if model_params["out_channel"] > 1:
         model_params.update({"out_channel": model_params["out_channel"] + 1})
     return model_params
+
+
+def get_testing_parameters(context, loader_params, undo_transforms):
+    testing_params = copy.deepcopy(context["training_parameters"])
+    testing_params.update({'uncertainty': context["uncertainty"]})
+    testing_params.update({'target_suffix': loader_params["target_suffix"],
+                           'undo_transforms': undo_transforms,
+                           'slice_axis': loader_params['slice_axis']})
+    return testing_params
 
 
 def get_validation_dataset(loader_params, valid_lst, transform_valid_params, device,
