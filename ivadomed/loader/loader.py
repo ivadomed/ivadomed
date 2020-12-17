@@ -26,7 +26,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
 
     Args:
         data_list (list): Subject names list.
-        bids_path (str): Path to the BIDS dataset.
+        bids_path (list): Path to the BIDS dataset(s).
         transforms_params (dict): Dictionary containing transformations for "training", "validation", "testing" (keys),
             eg output of imed_transforms.get_subdatasets_transforms.
         model_params (dict): Dictionary containing model parameters.
@@ -796,11 +796,10 @@ class BidsDataset(MRI2DSegmentationDataset):
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
 
-
         # Append subjects from all BIDSdatasets into a list
         bids_subjects = [s for s in self.bids_ds[0].get_subjects() if s.record["subject_id"] in subject_lst]
         for iBIDSFolder in range(1, len(root_BIDS_list)):
-            bids_subjects = bids_subjects + [s for s in self.bids_ds[iBIDSFolder].get_subjects() if s.record["subject_id"] in subject_lst]
+            bids_subjects += [s for s in self.bids_ds[iBIDSFolder].get_subjects() if s.record["subject_id"] in subject_lst]
 
         # Create a list with the filenames for all contrasts and subjects
         subjects_tot = []
@@ -906,7 +905,6 @@ class BidsDataset(MRI2DSegmentationDataset):
                 elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
                     # add custom data to metadata
                     subject_id = subject.record["subject_id"]
-
 
                     # Merge multiple .tsv files into the same dataframe
                     df = pd.read_table(os.path.join(root_BIDS_list[0], 'participants.tsv'), encoding="ISO-8859-1")

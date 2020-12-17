@@ -93,6 +93,10 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     # Define device
     cuda_available, device = imed_utils.define_device(context['gpu'])
 
+    # If bids_path is string, assign to list - Do this here so it propagates to all functions
+    if isinstance(context['loader_parameters']['bids_path'], str):
+        context['loader_parameters']['bids_path'] = [context['loader_parameters']['bids_path']]
+
     # Get subject lists. "segment" command uses all participants of BIDS path, hence no need to split
     if command != "segment":
         train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
@@ -101,7 +105,6 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                                                                          log_directory,
                                                                                          context["loader_parameters"]
                                                                                          ['subject_selection'])
-
 
     # Loader params
     loader_params = copy.deepcopy(context["loader_parameters"])

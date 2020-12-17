@@ -212,7 +212,7 @@ def get_subdatasets_subjects_list(split_params, bids_path, log_directory, subjec
 
     Args:
         split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
-        bids_path (str): Path to the BIDS dataset.
+        bids_path (list): Path to the BIDS dataset(s).
         log_directory (str): Output folder.
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
