@@ -35,8 +35,13 @@ DICT_URL = {
                        "description": "Cord localisation model, trained on T2-weighted images with tumor."},
     "model_find_disc_t1": {"url": ["https://github.com/ivadomed/model_find_disc_t1/archive/r20201013.zip"],
                            "description": "Intervertebral disc detection model trained on T1-weighted images."},
-    "model_find_disc_t2": {"url": ["https://github.com/ivadomed/model_find_disc_t2/archive/r20200928.zip"],
-                           "description": "Intervertebral disc detection model trained on T2-weighted images."}
+    "model_find_disc_t2": {
+        "url": ["https://github.com/ivadomed/model_find_disc_t2/archive/r20200928.zip"],
+        "description": "Intervertebral disc detection model trained on T2-weighted images."},
+    "data_functional_testing": {
+        "url": ["https://github.com/ivadomed/data_functional_testing/archive/r20201218.zip"],
+        "description": "Data used for functional testing in Ivadomed."
+    }
 
 }
 
