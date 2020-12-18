@@ -59,12 +59,12 @@ def test_HeMIS(p=0.0001):
             "out_channel": 1,
             "missing_probability": 0.00001,
             "missing_probability_growth": 0.9,
-            "contrasts": ["T1w", "T2w"],
+            "contrasts": ["T1w", "T2w", "T2star"],
             "ram": False,
             "hdf5_path": 'testing_data/mytestfile.hdf5',
             "csv_path": 'testing_data/hdf5.csv',
-            "target_lst": ["T2w"],
-            "roi_lst": ["T2w"]
+            "target_contrast": "T2w",
+            "roi_contrast": "T2w"
         }
     contrast_params = {
         "contrast_lst": ['T1w', 'T2w', 'T2star'],
@@ -80,7 +80,7 @@ def test_HeMIS(p=0.0001):
                                           metadata_choice=False,
                                           dim=2,
                                           slice_filter_fn=imed_loader_utils.SliceFilter(filter_empty_input=True,
-                                                                                 filter_empty_mask=True),
+                                                                                        filter_empty_mask=True),
                                           roi_params=roi_params)
 
     dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
@@ -209,10 +209,10 @@ def test_HeMIS(p=0.0001):
 
 def test_hdf5_bids():
     os.makedirs("test_adap_bids")
-    imed_adaptative.HDF5_to_Bids('testing_data/mytestfile.hdf5', ['sub-unf01'], "test_adap_bids")
+    imed_adaptative.HDF5_to_Bids('testing_data/mytestfiletraining.hdf5', ['sub-unf01'], "test_adap_bids")
     assert os.path.isdir("test_adap_bids/sub-unf01/anat")
     assert os.path.isdir("test_adap_bids/derivatives/labels/sub-unf01/anat")
     # once done we can delete the file
     print("[INFO]: Deleting HDF5 file.")
-    os.remove('testing_data/mytestfile.hdf5')
+    os.remove('testing_data/mytestfiletraining.hdf5')
     print('\n [INFO]: Test of HeMIS passed successfully.')

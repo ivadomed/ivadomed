@@ -71,6 +71,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
 
     elif model_params["name"] == "HeMISUnet":
         dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
+                                              dataset_type=dataset_type,
                                               subject_lst=data_list,
                                               model_params=model_params,
                                               contrast_params=contrast_params,
@@ -855,7 +856,11 @@ class BidsDataset(MRI2DSegmentationDataset):
                             deriv.endswith(subject.record["modality"] + self.roi_params["suffix"] + ".nii.gz"):
                         roi_filename = [deriv]
 
-                if (not any(target_filename)) or (not (self.roi_params["suffix"] is None) and (roi_filename is None)):
+                # Stop if target filename is only None or if there is no ROI when ROI wanted.
+                # This doesn't apply to multichannel
+                if ((not any(target_filename)) or
+                    (not (self.roi_params["suffix"] is None) and (roi_filename is None))) \
+                        and not multichannel:
                     continue
 
                 if not subject.has_metadata():
@@ -898,7 +903,9 @@ class BidsDataset(MRI2DSegmentationDataset):
                     idx = idx_dict[subject.record["modality"]]
                     subj_id = subject.record["subject_id"]
                     multichannel_subjects[subj_id]["absolute_paths"][idx] = subject.record.absolute_path
-                    multichannel_subjects[subj_id]["deriv_path"] = target_filename
+                    # Store only existing target filenames
+                    if all(target_filename):
+                        multichannel_subjects[subj_id]["deriv_path"] = target_filename
                     multichannel_subjects[subj_id]["metadata"][idx] = metadata
                     if roi_filename:
                         multichannel_subjects[subj_id]["roi_filename"] = roi_filename
@@ -909,7 +916,8 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         if multichannel:
             for subject in multichannel_subjects.values():
-                if None not in subject["absolute_paths"]:
+                # Retain only if there is a derivative and all modalities are present
+                if None not in subject["absolute_paths"] and subject['deriv_path'] is not None:
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
 

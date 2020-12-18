@@ -352,6 +352,12 @@ HeMISUnet (Optional)
 -  ``missing_probability_growth``: Float. Controls missing probability
    growth at each epoch: at each epoch, the ``missing_probability`` is
    modified with the exponent ``missing_probability_growth``.
+- ``contrasts``: List. List of contrasts used as input.
+- ``ram``. Bool. Indicates whether to save the data in ram or not.
+- ``hdf5_path``: Str. Path to hdf5 file containing the dataset.
+- ``csv_path``: Str. Path to dataframe (csv file).
+- ``target_contrast``: Str. Contrast whom the label file is used as ground truth.
+- ``roi_contrast``: Str. Contrast whom the label file is used for ROI cropping.
 
 .. _Modified3DUNet:
 
