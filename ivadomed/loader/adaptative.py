@@ -193,8 +193,8 @@ class Bids_to_hdf5:
         slice_filter_fn (SliceFilter): Object that filters slices according to their content.
     """
 
-    def __init__(self, dataset, hdf5_name, slice_axis=2, metadata_choice=False, slice_filter_fn=None, soft_gt=False,
-                 contrasts=None, multichannel=False):
+    def __init__(self, dataset, hdf5_name, contrasts,
+                 slice_axis=2, metadata_choice=False, slice_filter_fn=None, soft_gt=False):
         print("Starting conversion")
         self.soft_gt = soft_gt
         self.contrasts = contrasts

@@ -51,7 +51,8 @@ def test_hdf5():
                                       transform=transform_lst,
                                       multichannel=True)
 
-    hdf5_file = imed_adaptative.Bids_to_hdf5(dataset, 'testing_data/mytestfile.hdf5')
+    hdf5_file = imed_adaptative.Bids_to_hdf5(dataset, 'testing_data/mytestfile.hdf5',
+                                             contrasts=contrast_params['contrast_lst'])
 
     # Checking architecture
     def print_attrs(name, obj):
