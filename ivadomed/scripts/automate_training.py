@@ -271,7 +271,9 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
     # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
     pool = mp.Pool(processes=len(initial_config["gpu"]))
-
+    __output_dir__ = os.path.join(initial_config.get('output_dir', ''), 'results/')
+    if not os.path.exists(__output_dir__):
+        os.mkdir(__output_dir__)
     results_df = pd.DataFrame()
     eval_df = pd.DataFrame()
     all_mean = pd.DataFrame()
@@ -346,8 +348,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             combined_df = val_df
 
         results_df = pd.concat([results_df, combined_df])
-        results_df.to_csv("temporary_results.csv")
-        eval_df.to_csv("average_eval.csv")
+        results_df.to_csv(os.path.join(__output_dir__, "temporary_results.csv"))
+        eval_df.to_csv(os.path.join(__output_dir__, "average_eval.csv"))
 
     # Merge config and results in a df
     config_df = pd.DataFrame.from_dict(config_list)
@@ -359,7 +361,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     results_df = results_df.reset_index()
     results_df = results_df.sort_values(by=['best_validation_loss'])
 
-    results_df.to_csv("detailed_results.csv")
+    results_df.to_csv(os.path.join(__output_dir__, "detailed_results.csv"))
 
     print("Detailed results")
     print(results_df)

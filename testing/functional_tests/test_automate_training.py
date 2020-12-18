@@ -14,10 +14,14 @@ def test_automate_training():
     config_file = os.path.join(__tmp_dir__, 'automate_training_config.json')
     param_file = os.path.join(__tmp_dir__,
                               'automate_training_hyperparameter_opt.json')
+    __output_dir__ = os.path.join(__tmp_dir__, 'results')
     automate_training.main(args=[
         '--config', f'{config_file}',
         '--params', f'{param_file}'
     ])
+    assert os.path.exists(os.path.join(__output_dir__, 'detailed_results.csv'))
+    assert os.path.exists(os.path.join(__output_dir__, 'temporary_results.csv'))
+    assert os.path.exists(os.path.join(__output_dir__, 'average_eval.csv'))
 
 
 def teardown_function():
