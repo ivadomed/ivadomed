@@ -112,7 +112,7 @@ def test_worker(config):
     return config["log_directory"], test_dice, df_results
 
 
-def make_category(base_item, keys, values, is_all_combin=False):
+def make_category(base_item, keys, values, is_all_combin=False, multiple_params=False):
     items = []
     names = []
 
@@ -126,7 +126,22 @@ def make_category(base_item, keys, values, is_all_combin=False):
 
             items.append(new_item)
             names.append(name_str)
+    elif multiple_params:
+        value_len = set()
+        for value in values:
+            value_len.add(len(value))
+        if len(value_len) != 1:
+            raise ValueError("To use flag --multi-params or -m, all hyperparameter lists need to be the same size.")
 
+        for v_idx in range(len(values[0])):
+            name_str = ""
+            new_item = copy.deepcopy(base_item)
+            for k_idx, key in enumerate(keys):
+                new_item[key] = values[k_idx][v_idx]
+                name_str += "-" + str(key) + "=" + str(values[k_idx][v_idx]).replace("/", "_")
+
+            items.append(new_item)
+            names.append(name_str)
     else:
         for value_list, key in zip(values, keys):
             for value in value_list:
@@ -200,7 +215,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
         base_item = initial_config[category]
         keys = list(hyperparams[category].keys())
         values = [hyperparams[category][k] for k in keys]
-        new_parameters, names = make_category(base_item, keys, values, all_combin)
+        new_parameters, names = make_category(base_item, keys, values, all_combin, multiple_params)
         param_dict[category] = new_parameters
         names_dict[category] = names
 
@@ -242,14 +257,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
             config_list.append(copy.deepcopy(new_config))
     elif multiple_params:
-        params_len = set()
-        for param in param_dict:
-            params_len.add(len(param_dict[param]))
-        # All lists in hyperparameter file should be the same length
-        if len(params_len) != 1:
-            raise ValueError("To use flag --multi-params or -m, all hyperparameter lists need to be the same size.")
-
-        for config_idx in range(params_len.pop()):
+        for config_idx in range(len(names)):
             new_config = copy.deepcopy(initial_config)
             config_name = ""
             for param in param_dict:
