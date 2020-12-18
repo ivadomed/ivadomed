@@ -7,11 +7,11 @@ logger = logging.getLogger(__name__)
 
 def setup_function():
     create_tmp_dir()
-    download_dataset("data_example_spinegeneric")
+    download_dataset("data_functional_testing")
 
 
 def test_automate_training():
-    config_file = os.path.join(__tmp_dir__, 'automate_training_config_test.json')
+    config_file = os.path.join(__tmp_dir__, 'automate_training_config.json')
     param_file = os.path.join(__tmp_dir__,
                               'automate_training_hyperparameter_opt.json')
     automate_training.main(args=[
@@ -21,5 +21,5 @@ def test_automate_training():
 
 
 def teardown_function():
-    remove_dataset("data_example_spinegeneric")
+    remove_dataset("data_functional_testing")
     remove_tmp_dir()
