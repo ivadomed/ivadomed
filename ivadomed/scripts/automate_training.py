@@ -56,7 +56,7 @@ def get_parser():
                                 the optimal binarization threshold. The specified value indicates
                                 the increment between 0 and 1 used during the analysis
                                 (e.g. 0.1).""")
-    parser.add_argument("-o", "--output", required=False,
+    parser.add_argument("-o", "--output_dir", required=False,
                         help="Output Folder.")
 
     return parser
@@ -140,7 +140,8 @@ def make_category(base_item, keys, values, is_all_combin=False):
 
 
 def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False,
-                      all_logs=False, thr_increment=None, multiple_params=False):
+                      all_logs=False, thr_increment=None, multiple_params=False,
+                      output_dir=None):
     """Automate multiple training processes on multiple GPUs.
 
     Hyperparameter optimization of models is tedious and time-consuming.
@@ -185,6 +186,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
         multiple_params (bool): If True, more than one parameter will be change at the time from
             the hyperparameters. All the first elements from the hyperparameters list will be
             applied, then all the second, etc.
+        output_dir (str): Path to where the results will be saved.
     """
     # Load initial config
     initial_config = imed_config_manager.ConfigurationManager(config).get_config()
@@ -265,15 +267,16 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                 new_config["log_directory"] = initial_config["log_directory"] + name
                 config_list.append(copy.deepcopy(new_config))
 
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    if not output_dir:
+        output_dir = ""
     # CUDA problem when forking process
     # https://github.com/pytorch/pytorch/issues/2517
     mp.set_start_method('spawn')
 
     # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
     pool = mp.Pool(processes=len(initial_config["gpu"]))
-    __output_dir__ = os.path.join(initial_config.get('output_dir', ''), 'results/')
-    if not os.path.exists(__output_dir__):
-        os.mkdir(__output_dir__)
     results_df = pd.DataFrame()
     eval_df = pd.DataFrame()
     all_mean = pd.DataFrame()
@@ -348,8 +351,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             combined_df = val_df
 
         results_df = pd.concat([results_df, combined_df])
-        results_df.to_csv(os.path.join(__output_dir__, "temporary_results.csv"))
-        eval_df.to_csv(os.path.join(__output_dir__, "average_eval.csv"))
+        results_df.to_csv(os.path.join(output_dir, "temporary_results.csv"))
+        eval_df.to_csv(os.path.join(output_dir, "average_eval.csv"))
 
     # Merge config and results in a df
     config_df = pd.DataFrame.from_dict(config_list)
@@ -361,7 +364,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     results_df = results_df.reset_index()
     results_df = results_df.sort_values(by=['best_validation_loss'])
 
-    results_df.to_csv(os.path.join(__output_dir__, "detailed_results.csv"))
+    results_df.to_csv(os.path.join(output_dir, "detailed_results.csv"))
 
     print("Detailed results")
     print(results_df)
@@ -383,7 +386,7 @@ def main(args=None):
     # Run automate training
     automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin),
                       int(args.n_iterations), bool(args.run_test), args.all_logs, thr_increment,
-                      bool(args.multi_params))
+                      bool(args.multi_params), args.output_dir)
 
 
 if __name__ == '__main__':

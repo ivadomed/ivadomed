@@ -17,7 +17,8 @@ def test_automate_training():
     __output_dir__ = os.path.join(__tmp_dir__, 'results')
     automate_training.main(args=[
         '--config', f'{config_file}',
-        '--params', f'{param_file}'
+        '--params', f'{param_file}',
+        '--output_dir', f'{__output_dir__}'
     ])
     assert os.path.exists(os.path.join(__output_dir__, 'detailed_results.csv'))
     assert os.path.exists(os.path.join(__output_dir__, 'temporary_results.csv'))
