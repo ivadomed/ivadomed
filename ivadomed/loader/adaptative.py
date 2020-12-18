@@ -193,9 +193,11 @@ class Bids_to_hdf5:
         slice_filter_fn (SliceFilter): Object that filters slices according to their content.
     """
 
-    def __init__(self,dataset, hdf5_name, slice_axis=2, metadata_choice=False, slice_filter_fn=None, soft_gt=False):
+    def __init__(self, dataset, hdf5_name, slice_axis=2, metadata_choice=False, slice_filter_fn=None, soft_gt=False,
+                 contrasts=None, multichannel=False):
         print("Starting conversion")
         self.soft_gt = soft_gt
+        self.contrasts = contrasts
         self.dt = h5py.special_dtype(vlen=str)
         # opening an hdf5 file with write access and writing metadata
         self.hdf5_file = h5py.File(hdf5_name, "w")
@@ -249,9 +251,12 @@ class Bids_to_hdf5:
             input_data_shape, _ = seg_pair.get_pair_shapes()
 
             useful_slices = []
-            input_volumes = []
             gt_volume = []
             roi_volume = []
+
+            input_volumes = {}
+            for contrast in self.contrasts:
+                input_volumes[contrast] = []
 
             for idx_pair_slice in range(input_data_shape[-1]):
 
@@ -271,10 +276,9 @@ class Bids_to_hdf5:
                 slice_seg_pair, roi_pair_slice = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                                                 slice_seg_pair,
                                                                                                 roi_pair_slice)
-                input_slice_list = []
-                for input in slice_seg_pair["input"]:
-                    input_slice_list.append(input)
-                input_volumes.append(input_slice_list)
+
+                for input_slice, c in zip(slice_seg_pair["input"], self.contrasts):
+                    input_volumes[c].append(input_slice)
 
                 # Handle unlabeled data
                 gt_slice_list = []
@@ -289,7 +293,7 @@ class Bids_to_hdf5:
                 roi_volume.append(roi_slice_list)
 
             # Getting metadata using the one from the last slice
-            input_metadata = slice_seg_pair['input_metadata'][0]
+            # TODO: verify implications of using the same metadata for all classes
             gt_metadata = slice_seg_pair['gt_metadata'][0]
             roi_metadata = roi_pair_slice['input_metadata'][0]
 
@@ -298,12 +302,8 @@ class Bids_to_hdf5:
             else:
                 grp.attrs['slices'] = useful_slices
 
-            # Find contrasts
-            contrasts = set()
-            for slice_metadata in slice_seg_pair['input_metadata']:
-                contrasts.add(slice_metadata['contrast'])
             # Creating datasets and metadata
-            for contrast in contrasts:
+            for c_idx, contrast in enumerate(self.contrasts):
                 # Inputs
                 print(len(input_volumes))
                 print("grp= ", str(subject_id))
@@ -312,7 +312,7 @@ class Bids_to_hdf5:
                 if len(input_volumes) < 1:
                     print("list empty")
                     continue
-                grp.create_dataset(key, data=input_volumes)
+                grp.create_dataset(key, data=input_volumes[contrast])
                 # Sub-group metadata
                 if grp['inputs'].attrs.__contains__('contrast'):
                     attr = grp['inputs'].attrs['contrast']
@@ -324,6 +324,7 @@ class Bids_to_hdf5:
                     grp['inputs'].attrs.create('contrast', [contrast], dtype=self.dt)
 
                 # dataset metadata
+                input_metadata = slice_seg_pair['input_metadata'][c_idx]
                 grp[key].attrs['input_filenames'] = input_metadata['input_filenames']
                 grp[key].attrs['data_type'] = input_metadata['data_type']
 
@@ -432,7 +433,7 @@ class HDF5Dataset:
     def __init__(self, root_dir, subject_lst, model_params, target_suffix, contrast_params,
                  slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
                  slice_filter_fn=None, roi_params=None, object_detection_params=None, soft_gt=False,
-                 task="segmentation", multichannel=False, dataset_type='training'):
+                 task="segmentation", dataset_type='training'):
         self.cst_lst = copy.deepcopy(contrast_params["contrast_lst"])
         self.gt_contrast = copy.deepcopy(model_params["target_contrast"] if "target_contrast" in model_params else None)
         self.roi_contrast = copy.deepcopy(model_params["roi_contrast"] if "roi_contrast" in model_params else None)
@@ -455,7 +456,7 @@ class HDF5Dataset:
                                               metadata_choice=metadata_choice,
                                               slice_axis=slice_axis,
                                               transform=transform,
-                                              multichannel=multichannel,
+                                              multichannel=True,
                                               object_detection_params=object_detection_params)
 
             hdf5_file = Bids_to_hdf5(hdf5_name=hdf5_path,
@@ -463,6 +464,7 @@ class HDF5Dataset:
                                      metadata_choice=metadata_choice,
                                      slice_axis=slice_axis,
                                      slice_filter_fn=slice_filter_fn,
+                                     contrasts=self.cst_lst,
                                      soft_gt=soft_gt)
             self.hdf5_file = hdf5_file.hdf5_file
         else:
