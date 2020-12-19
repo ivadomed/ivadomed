@@ -51,5 +51,5 @@ ivadomed_download_data
 ivadomed_visualize_and_compare_testing_models
 """""""""""""""""""""""""""""""""""""""""""""
 
-.. autofunction:: ivadomed.scripts.ivadomed_visualize_and_compare_testing_models
+.. autofunction:: ivadomed.scripts.visualize_and_compare_testing_models.visualize_and_compare_models
 
