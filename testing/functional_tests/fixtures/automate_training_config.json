@@ -2,7 +2,6 @@
   "command": "train",
   "gpu": [7],
   "log_directory": "tmp/logs",
-  "output_dir": "tmp/",
   "debugging": false,
   "model_name": "unit_test",
   "object_detection_params": {
