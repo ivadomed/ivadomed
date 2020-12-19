@@ -6,7 +6,7 @@ from ivadomed.scripts import download_data as ivadomed_download_data
 
 __test_dir__ = os.path.join(__ivadomed_dir__, 'testing/functional_tests')
 __fixtures_dir__ = os.path.join(__test_dir__, 'fixtures')
-__tmp_dir__ = os.path.join(__test_dir__, "tmp")
+__tmp_dir__ = os.path.join("tmp")
 sys.path.append(__test_dir__)
 
 init_ivadomed()
