@@ -6,6 +6,7 @@ import pandas as pd
 
 from ivadomed.loader import utils as imed_loader_utils
 
+
 @pytest.mark.parametrize('loader_parameters', [{
     "bids_path": "testing_data/microscopy_png",
     "bids_config": "ivadomed/config/config_bids.json",
@@ -30,6 +31,7 @@ def test_bids_df_microscopy_png(loader_parameters):
     df.to_csv("testing_data/microscopy_png/df_test.csv", index=False)
     command = "diff testing_data/microscopy_png/df_test.csv testing_data/microscopy_png/df_ref.csv"
     subprocess.check_output(command, shell=True)
+
 
 @pytest.mark.parametrize('loader_parameters', [{
     "bids_path": "testing_data",
