@@ -1,8 +1,8 @@
 import os
-import subprocess
 
 import pytest
 import pandas as pd
+import csv_diff
 
 from ivadomed.loader import utils as imed_loader_utils
 
@@ -24,13 +24,16 @@ def test_bids_df_microscopy_png(loader_parameters):
     # Test for when no contrast_params are provided
     loader_params = loader_parameters
     loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
+    bids_path = loader_params["bids_path"]
     derivatives = True
-    df = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
-    df = df.drop(columns=['path', 'parent_path'])
-    df = df.sort_values(by=['filename']).reset_index(drop=True)
-    df.to_csv("testing_data/microscopy_png/df_test.csv", index=False)
-    command = "diff testing_data/microscopy_png/df_test.csv testing_data/microscopy_png/df_ref.csv"
-    subprocess.check_output(command, shell=True)
+    df_test = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
+    df_test = df_test.drop(columns=['path', 'parent_path'])
+    df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
+    csv_ref = os.path.join(bids_path, "df_ref.csv")
+    csv_test = os.path.join(bids_path, "df_test.csv")
+    df_test.to_csv(csv_test, index=False)
+    diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
+    assert diff == {'added': [], 'removed': [], 'changed': [], 'columns_added': [], 'columns_removed': []}
 
 
 @pytest.mark.parametrize('loader_parameters', [{
@@ -48,10 +51,13 @@ def test_bids_df_anat(loader_parameters):
     # Test for multiple target_suffix
     loader_params = loader_parameters
     loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
+    bids_path = loader_params["bids_path"]
     derivatives = True
-    df = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
-    df = df.drop(columns=['path', 'parent_path'])
-    df = df.sort_values(by=['filename']).reset_index(drop=True)
-    df.to_csv("testing_data/df_test.csv", index=False)
-    command = "diff testing_data/df_test.csv testing_data/df_ref.csv"
-    subprocess.check_output(command, shell=True)
+    df_test = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
+    df_test = df_test.drop(columns=['path', 'parent_path'])
+    df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
+    csv_ref = os.path.join(bids_path, "df_ref.csv")
+    csv_test = os.path.join(bids_path, "df_test.csv")
+    df_test.to_csv(csv_test, index=False)
+    diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
+    assert diff == {'added': [], 'removed': [], 'changed': [], 'columns_added': [], 'columns_removed': []}
