@@ -546,6 +546,7 @@ def create_bids_dataframe(loader_params, derivatives):
     bids_path = loader_params['bids_path']
     bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
     target_suffix = loader_params['target_suffix']
+    # If `target_suffix` is a list of lists convert to list
     if any(isinstance(t, list) for t in target_suffix):
         target_suffix = list(itertools.chain.from_iterable(target_suffix))
     extensions = loader_params['extensions']
