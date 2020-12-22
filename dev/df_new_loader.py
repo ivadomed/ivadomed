@@ -2,6 +2,7 @@
 ##############################################################
 #
 # This script is used to test the dataframe of the new loader
+# and the new splitting method
 # This script was used to generate the df_ref for data-testing
 #
 # Usage: python dev/df_new_loader.py
@@ -38,7 +39,25 @@ df = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
 df = df.drop(columns=['path', 'parent_path'])
 df = df.sort_values(by=['filename']).reset_index(drop=True)
 
-# SAVE DATAFRAME TO CSV FILE
+# SAVE DATAFRAME TO CSV FILE FOR data-testing
 path_csv = "test_df_new_loader.csv"
 df.to_csv(path_csv, index=False)
 print(df)
+
+# CREATE LOG DIRECTORY
+log_directory = context["log_directory"]
+if not os.path.isdir(log_directory):
+    print('Creating log directory: {}'.format(log_directory))
+    os.makedirs(log_directory)
+else:
+    print('Log directory already exists: {}'.format(log_directory))
+
+# SPLIT TRAIN/VALID/TEST (with "new" functions)
+train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list_new(context["split_dataset"],
+                                                                                        df,
+                                                                                        log_directory,
+                                                                                        context["loader_parameters"]
+                                                                                        ['subject_selection'])
+print("Train:", train_lst)
+print("Valid:", valid_lst)
+print("Test:", test_lst)
