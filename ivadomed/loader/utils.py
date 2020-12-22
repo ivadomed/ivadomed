@@ -95,6 +95,50 @@ def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8
     return X_train, X_val, X_test
 
 
+def split_dataset_new(df, data_testing, random_seed, train_frac=0.8, test_frac=0.1):
+    """Splits list of subject into training, validation and testing datasets according to the data_type selected in config.
+    Example: If data_type is "institution_id", the centers associated to the subjects are split according the train, test and
+    validation fraction whereas if data_type is "subject", the patients are directly separated according to these fractions.
+
+    Args:
+        df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
+        data_testing (list): List of data to include in the testing set.
+        random_seed (int): Random seed to ensure reproducible splits.
+        train_frac (float): Between 0 and 1. Represents the train set proportion.
+        test_frac (float): Between 0 and 1. Represents the test set proportion.
+    Returns:
+        list, list, list: Train, validation and test subjects list.
+    """
+    # Init output lists
+    X_train, X_val, X_test = [], [], []
+
+    # Get data_type and data_value from split parameters
+    data_type = data_testing['data_type']
+    data_value = data_testing['data_value']
+
+    # Filter dataframe with rows where data_type is not NAN
+    df = df[df[data_type].notna()]
+
+    # Split according to data_type
+    # Make sure that data_type coming from data_value are unseen during training
+    if len(data_value) == 0:
+        data = sorted(df[data_type].unique().tolist())
+        test_frac = test_frac if test_frac >= 1 / len(data) else 1 / len(data)
+        data_value, _ = train_test_split(data, train_size=test_frac, random_state=random_seed)
+
+    X_test = df[df[data_type].isin(data_value)]['filename'].tolist()
+    X_remain = df[~df[data_type].isin(data_value)]["filename"].tolist()
+
+    # split using sklearn function
+    X_train, X_tmp = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
+    if X_test:  # X_test contains data from data_value unseen during the training, eg centers in SpineGeneric
+        X_val = X_tmp
+    else:  # X_test contains data from data_value seen during the training, eg centers in gm_challenge
+        X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
+
+    return X_train, X_val, X_test
+
+
 def get_new_subject_split(path_folder, center_test, split_method, random_seed,
                           train_frac, test_frac, log_directory, balance, subject_selection=None):
     """Randomly split dataset between training / validation / testing.
