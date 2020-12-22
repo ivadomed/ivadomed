@@ -181,7 +181,7 @@ class BIDStoHDF5:
         target_suffix (list): List of suffixes for target masks.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
         contrast_lst (list): List of the contrasts.
-        hdf5_path (str): Path and name of the hdf5 file.
+        path_hdf5 (str): Path and name of the hdf5 file.
         contrast_balance (dict): Dictionary controlling image contrasts balance.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
         metadata_choice (str): Choice between "mri_params", "contrasts", None or False, related to FiLM.
@@ -192,7 +192,7 @@ class BIDStoHDF5:
     Attributes:
         bids_ds (BIDS): BIDS dataset.
         dt (dtype): hdf5 special dtype.
-        hdf5_path (str): path to hdf5 file containing dataset information.
+        path_hdf5 (str): path to hdf5 file containing dataset information.
         filename_pairs (list): A list of tuples in the format (input filename list containing all modalities,ground \
             truth filename, ROI filename, metadata).
         metadata (dict): Dictionary containing metadata of input and gt.
@@ -203,7 +203,7 @@ class BIDStoHDF5:
         slice_filter_fn (SliceFilter): Object that filters slices according to their content.
     """
 
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, hdf5_path, contrast_balance=None,
+    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, path_hdf5, contrast_balance=None,
                  slice_axis=2, metadata_choice=False, slice_filter_fn=None, roi_params=None, transform=None,
                  object_detection_params=None, soft_gt=False):
         print("Starting conversion")
@@ -214,7 +214,7 @@ class BIDStoHDF5:
         self.dt = h5py.special_dtype(vlen=str)
         # opening an hdf5 file with write access and writing metadata
         # self.hdf5_file = h5py.File(hdf5_name, "w")
-        self.hdf5_path = hdf5_path
+        self.path_hdf5 = path_hdf5
         list_patients = []
 
         self.filename_pairs = []
@@ -297,7 +297,7 @@ class BIDStoHDF5:
         self.slice_filter_fn = slice_filter_fn
 
         # Update HDF5 metadata
-        with h5py.File(self.hdf5_path, "w") as hdf5_file:
+        with h5py.File(self.path_hdf5, "w") as hdf5_file:
             hdf5_file.attrs.create('patients_id', list(set(list_patients)), dtype=self.dt)
             hdf5_file.attrs['slice_axis'] = slice_axis
 
@@ -310,7 +310,7 @@ class BIDStoHDF5:
 
     def _load_filenames(self):
         """Load preprocessed pair data (input and gt) in handler."""
-        with h5py.File(self.hdf5_path, "a") as hdf5_file:
+        with h5py.File(self.path_hdf5, "a") as hdf5_file:
             for subject_id, input_filename, gt_filename, roi_filename, metadata in self.filename_pairs:
                 # Creating/ getting the subject group
                 if str(subject_id) in hdf5_file.keys():
@@ -506,11 +506,11 @@ class HDF5Dataset:
 
         metadata_choice = False if metadata_choice is None else metadata_choice
         # Getting HDS5 dataset file
-        if not os.path.exists(model_params["hdf5_path"]):
+        if not os.path.exists(model_params["path_hdf5"]):
             print("Computing hdf5 file of the data")
             bids_to_hdf5 = BIDStoHDF5(root_dir,
                                         subject_lst=subject_lst,
-                                        hdf5_path=model_params["hdf5_path"],
+                                        path_hdf5=model_params["path_hdf5"],
                                         target_suffix=target_suffix,
                                         roi_params=self.roi_params,
                                         contrast_lst=self.cst_lst,
@@ -521,12 +521,12 @@ class HDF5Dataset:
                                         transform=transform,
                                         object_detection_params=object_detection_params,
                                         soft_gt=soft_gt)
-            self.hdf5_path = bids_to_hdf5.hdf5_path
+            self.path_hdf5 = bids_to_hdf5.path_hdf5
         else:
-            self.hdf5_path = model_params["hdf5_path"]
+            self.path_hdf5 = model_params["path_hdf5"]
 
         # Loading dataframe object
-        with h5py.File(self.hdf5_path, "r") as hdf5_file:
+        with h5py.File(self.path_hdf5, "r") as hdf5_file:
             self.df_object = Dataframe(hdf5_file, self.cst_lst, model_params["csv_path"],
                                        target_suffix=self.gt_lst, roi_suffix=self.roi_lst,
                                        dim=self.dim, filter_slices=slice_filter_fn)
@@ -555,7 +555,7 @@ class HDF5Dataset:
             contrast_lst (list of str): List of contrasts of interest.
         """
         keys = self.status.keys()
-        with h5py.File(self.hdf5_path, "r") as hdf5_file:
+        with h5py.File(self.path_hdf5, "r") as hdf5_file:
             for ct in contrast_lst:
                 if ct not in keys:
                     print("Key error: status has no key {}".format(ct))
@@ -598,7 +598,7 @@ class HDF5Dataset:
         input_tensors = []
 
         # Inputs
-        with h5py.File(self.hdf5_path, "r") as f:
+        with h5py.File(self.path_hdf5, "r") as f:
             for i, ct in enumerate(self.cst_lst):
                 if self.status[ct]:
                     input_tensor = line[ct] * missing_modalities[i]
@@ -698,16 +698,16 @@ class HDF5Dataset:
             print("Missing contrasts = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
 
 
-def HDF5ToBIDS(hdf5_path, subjects, path_dir):
+def HDF5ToBIDS(path_hdf5, subjects, path_dir):
     """Convert HDF5 file to BIDS dataset.
 
     Args:
-        hdf5_path (str): Path to the HDF5 file.
+        path_hdf5 (str): Path to the HDF5 file.
         subjects (list): List of subject names.
         path_dir (str): Output folder path, already existing.
     """
     # Open FDH5 file
-    with h5py.File(hdf5_path, "r") as hdf5_file:
+    with h5py.File(path_hdf5, "r") as hdf5_file:
         # check the dir exists:
         if not path.exists(path_dir):
             raise FileNotFoundError("Directory {} doesn't exist. Stopping process.".format(path_dir))

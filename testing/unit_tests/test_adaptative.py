@@ -40,7 +40,7 @@ def test_hdf5():
 
     bids_to_hdf5 = imed_adaptative.BIDStoHDF5(PATH_BIDS,
                                                 subject_lst=train_lst,
-                                                hdf5_path='testing_data/mytestfile.hdf5',
+                                                path_hdf5='testing_data/mytestfile.hdf5',
                                                 target_suffix=["_lesion-manual"],
                                                 roi_params=roi_params,
                                                 contrast_lst=['T1w', 'T2w', 'T2star'],
@@ -60,7 +60,7 @@ def test_hdf5():
             print("    %s: %s" % (key, val))
 
     print('\n[INFO]: HDF5 architecture:')
-    with h5py.File(bids_to_hdf5.hdf5_path, "a") as hdf5_file:
+    with h5py.File(bids_to_hdf5.path_hdf5, "a") as hdf5_file:
         hdf5_file.visititems(print_attrs)
         print('\n[INFO]: HDF5 file successfully generated.')
         print('[INFO]: Generating dataframe ...\n')
@@ -89,7 +89,7 @@ def test_hdf5():
                 "missing_probability_growth": 0.9,
                 "contrasts": ["T1w", "T2w"],
                 "ram": False,
-                "hdf5_path": 'testing_data/mytestfile.hdf5',
+                "path_hdf5": 'testing_data/mytestfile.hdf5',
                 "csv_path": 'testing_data/hdf5.csv',
                 "target_lst": ["T2w"],
                 "roi_lst": ["T2w"]

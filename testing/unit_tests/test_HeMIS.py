@@ -61,7 +61,7 @@ def test_HeMIS(p=0.0001):
             "missing_probability_growth": 0.9,
             "contrasts": ["T1w", "T2w"],
             "ram": False,
-            "hdf5_path": 'testing_data/mytestfile.hdf5',
+            "path_hdf5": 'testing_data/mytestfile.hdf5',
             "csv_path": 'testing_data/hdf5.csv',
             "target_lst": ["T2w"],
             "roi_lst": ["T2w"]
