@@ -34,7 +34,6 @@
         "fname_split": null,
         "random_seed": 6,
         "data_testing": {"data_type": "subject", "data_value":[]},
-        "method": "per_patient",
         "balance": null,
         "train_fraction": 0.6,
         "test_fraction": 0.2
