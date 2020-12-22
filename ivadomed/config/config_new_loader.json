@@ -33,7 +33,7 @@
     "split_dataset": {
         "fname_split": null,
         "random_seed": 6,
-        "center_test": [],
+        "data_testing": {"data_type": "subject", "data_value":[]},
         "method": "per_patient",
         "balance": null,
         "train_fraction": 0.6,
