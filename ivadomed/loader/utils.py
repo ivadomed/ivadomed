@@ -164,6 +164,71 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
     return train_lst, valid_lst, test_lst
 
 
+def get_new_subject_split_new(df, data_testing, random_seed,
+                          train_frac, test_frac, log_directory, balance, subject_selection=None):
+    """Randomly split dataset between training / validation / testing.
+
+    Randomly split dataset between training / validation / testing\
+        and save it in log_directory + "/split_datasets.joblib".
+
+    Args:
+        df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
+        data_testing (list): List of data to include in the testing set.
+        random_seed (int): Random seed.
+        train_frac (float): Training dataset proportion, between 0 and 1.
+        test_frac (float): Testing dataset proportionm between 0 and 1.
+        log_directory (string): Output folder.
+        balance (string): Metadata contained in "participants.tsv" file with categorical values. Each category will be
+        evenly distributed in the training, validation and testing datasets.
+        subject_selection (dict): Used to specify a custom subject selection from a dataset.
+
+    Returns:
+        list, list list: Training, validation and testing subjects lists.
+    """
+    if subject_selection is not None:
+        # Verify subject_selection format
+        if not (len(subject_selection["metadata"]) == len(subject_selection["n"]) == len(subject_selection["value"])):
+            raise ValueError("All lists in subject_selection parameter should have the same length.")
+
+        sampled_dfs = []
+        for m, n, v in zip(subject_selection["metadata"], subject_selection["n"], subject_selection["value"]):
+            sampled_dfs.append(df[df[m] == v].sample(n=n, random_state=random_seed))
+
+        if len(sampled_dfs) != 0:
+            df = pd.concat(sampled_dfs)
+
+    # If balance, then split the dataframe for each categorical value of the "balance" column
+    if balance:
+        if balance in df.keys():
+            df_list = [df[df[balance] == k] for k in df[balance].unique().tolist()]
+        else:
+            logger.warning("No column named '{}' was found in 'participants.tsv' file. Not taken into account to split "
+                           "the dataset.".format(balance))
+            df_list = [df]
+    else:
+        df_list = [df]
+
+    train_lst, valid_lst, test_lst = [], [], []
+    for df_tmp in df_list:
+        # Split dataset on each section of subjects
+        train_tmp, valid_tmp, test_tmp = split_dataset_new(df=df_tmp,
+                                                        data_testing=data_testing,
+                                                        random_seed=random_seed,
+                                                        train_frac=train_frac,
+                                                        test_frac=test_frac)
+        # Update the dataset lists
+        train_lst += train_tmp
+        valid_lst += valid_tmp
+        test_lst += test_tmp
+
+    # save the subject distribution
+    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
+    split_path = os.path.join(log_directory, "split_datasets.joblib")
+    joblib.dump(split_dct, split_path)
+
+    return train_lst, valid_lst, test_lst
+
+
 def get_subdatasets_subjects_list(split_params, bids_path, log_directory, subject_selection=None):
     """Get lists of subjects for each sub-dataset between training / validation / testing.
 
