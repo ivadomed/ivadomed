@@ -209,7 +209,7 @@ def test_HeMIS(p=0.0001):
 
 def test_hdf5_bids():
     os.makedirs("test_adap_bids")
-    imed_adaptative.HDF5_to_Bids('testing_data/mytestfile.hdf5', ['sub-unf01'], "test_adap_bids")
+    imed_adaptative.HDF5ToBIDS('testing_data/mytestfile.hdf5', ['sub-unf01'], "test_adap_bids")
     assert os.path.isdir("test_adap_bids/sub-unf01/anat")
     assert os.path.isdir("test_adap_bids/derivatives/labels/sub-unf01/anat")
     # once done we can delete the file

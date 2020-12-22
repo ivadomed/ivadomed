@@ -38,7 +38,7 @@ def test_hdf5():
 
     roi_params = {"suffix": "_seg-manual", "slice_filter_roi": None}
 
-    bids_to_hdf5 = imed_adaptative.Bids_to_hdf5(PATH_BIDS,
+    bids_to_hdf5 = imed_adaptative.BIDStoHDF5(PATH_BIDS,
                                                 subject_lst=train_lst,
                                                 hdf5_path='testing_data/mytestfile.hdf5',
                                                 target_suffix=["_lesion-manual"],

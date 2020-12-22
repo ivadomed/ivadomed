@@ -172,7 +172,7 @@ class Dataframe:
         self.df = self.df.dropna()
 
 
-class Bids_to_hdf5:
+class BIDStoHDF5:
     """Converts a BIDS dataset to a HDF5 file.
 
     Args:
@@ -508,7 +508,7 @@ class HDF5Dataset:
         # Getting HDS5 dataset file
         if not os.path.exists(model_params["hdf5_path"]):
             print("Computing hdf5 file of the data")
-            bids_to_hdf5 = Bids_to_hdf5(root_dir,
+            bids_to_hdf5 = BIDStoHDF5(root_dir,
                                         subject_lst=subject_lst,
                                         hdf5_path=model_params["hdf5_path"],
                                         target_suffix=target_suffix,
@@ -698,7 +698,7 @@ class HDF5Dataset:
             print("Missing contrasts = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
 
 
-def HDF5_to_Bids(hdf5_path, subjects, path_dir):
+def HDF5ToBIDS(hdf5_path, subjects, path_dir):
     """Convert HDF5 file to BIDS dataset.
 
     Args:
