@@ -16,6 +16,7 @@ import bids as pybids   #"bids" is already taken by bids_neuropoly
 import pandas as pd
 import itertools
 
+
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
     'float32': torch.FloatTensor,
@@ -183,6 +184,35 @@ def get_subdatasets_subjects_list(split_params, bids_path, log_directory, subjec
         train_lst, valid_lst, test_lst = get_new_subject_split(path_folder=bids_path,
                                                                center_test=split_params['center_test'],
                                                                split_method=split_params['method'],
+                                                               random_seed=split_params['random_seed'],
+                                                               train_frac=split_params['train_fraction'],
+                                                               test_frac=split_params['test_fraction'],
+                                                               log_directory=log_directory,
+                                                               balance=split_params['balance']
+                                                               if 'balance' in split_params else None,
+                                                               subject_selection=subject_selection)
+    return train_lst, valid_lst, test_lst
+
+
+def get_subdatasets_subjects_list_new(split_params, df, log_directory, subject_selection=None):
+    """Get lists of filenames for each sub-dataset between training / validation / testing.
+
+    Args:
+        split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
+        df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
+        log_directory (str): Output folder.
+        subject_selection (dict): Used to specify a custom subject selection from a dataset.
+
+    Returns:
+        list, list list: Training, validation and testing subjects lists.
+    """
+    if split_params["fname_split"]:
+        # Load subjects lists
+        old_split = joblib.load(split_params["fname_split"])
+        train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
+    else:
+        train_lst, valid_lst, test_lst = get_new_subject_split_new(df=df,
+                                                               data_testing=split_params['data_testing'],
                                                                random_seed=split_params['random_seed'],
                                                                train_frac=split_params['train_fraction'],
                                                                test_frac=split_params['test_fraction'],
