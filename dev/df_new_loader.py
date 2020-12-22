@@ -2,6 +2,7 @@
 ##############################################################
 #
 # This script is used to test the dataframe of the new loader
+# This script was used to generate the df_ref for data-testing
 #
 # Usage: python dev/df_new_loader.py
 #
@@ -33,7 +34,11 @@ derivatives = True
 # CREATE DATAFRAME
 df = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
 
+# DROP "path" AND "parent_path" COLUMNS AND SORT BY FILENAME FOR TESTING PURPOSES WITH data-testing
+df = df.drop(columns=['path', 'parent_path'])
+df = df.sort_values(by=['filename']).reset_index(drop=True)
+
 # SAVE DATAFRAME TO CSV FILE
 path_csv = "test_df_new_loader.csv"
-df.to_csv(path_csv)
+df.to_csv(path_csv, index=False)
 print(df)
