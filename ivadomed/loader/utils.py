@@ -96,13 +96,13 @@ def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8
 
 
 def split_dataset_new(df, data_testing, random_seed, train_frac=0.8, test_frac=0.1):
-    """Splits list of subject into training, validation and testing datasets according to the data_type selected in config.
+    """Splits list of filename into training, validation and testing datasets according to the data_type selected in data_testing.
     Example: If data_type is "institution_id", the centers associated to the subjects are split according the train, test and
     validation fraction whereas if data_type is "subject", the patients are directly separated according to these fractions.
 
     Args:
         df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
-        data_testing (list): List of data to include in the testing set.
+        data_testing (dict): Used to specify the data_type and data_value to include in the testing set.
         random_seed (int): Random seed to ensure reproducible splits.
         train_frac (float): Between 0 and 1. Represents the train set proportion.
         test_frac (float): Between 0 and 1. Represents the test set proportion.
@@ -217,7 +217,7 @@ def get_new_subject_split_new(df, data_testing, random_seed,
 
     Args:
         df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
-        data_testing (list): List of data to include in the testing set.
+        data_testing (dict): Used to specify the data_type and data_value to include in the testing set.
         random_seed (int): Random seed.
         train_frac (float): Training dataset proportion, between 0 and 1.
         test_frac (float): Testing dataset proportionm between 0 and 1.
