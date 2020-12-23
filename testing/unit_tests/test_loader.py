@@ -32,6 +32,9 @@ def test_bids_df_microscopy_png(loader_parameters):
     derivatives = True
     df_test = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
     df_test = df_test.drop(columns=['path', 'parent_path'])
+    # TODO: modify df_ref.csv file in data-testing dataset to include "participant_id"
+    # and "sample_id" columns, then delete next line
+    df_test = df_test.drop(columns=['participant_id', 'sample_id'])
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
     csv_ref = os.path.join(bids_path, "df_ref.csv")
     csv_test = os.path.join(bids_path, "df_test.csv")
@@ -64,6 +67,8 @@ def test_bids_df_anat(loader_parameters):
     derivatives = True
     df_test = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
     df_test = df_test.drop(columns=['path', 'parent_path'])
+    # TODO: modify df_ref.csv file in data-testing dataset to include "participant_id" column then delete next line
+    df_test = df_test.drop(columns=['participant_id'])
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
     csv_ref = os.path.join(bids_path, "df_ref.csv")
     csv_test = os.path.join(bids_path, "df_test.csv")
