@@ -732,22 +732,22 @@ def create_bids_dataframe(loader_params, derivatives):
          df['extension'].str.contains('|'.join(extensions))) |
          (df['path'].str.contains('derivatives') & df['filename'].str.contains('|'.join(target_suffix)))]
 
-    # Add metadata from participants.tsv file, if present
+    # Add participant_id column, and metadata from participants.tsv file if present
     # Uses pybids function
+    df['participant_id'] = "sub-" + df['subject']
     if layout.get_collections(level='dataset'):
         df_participants = layout.get_collections(level='dataset', merge=True).to_df()
         df_participants.drop(['suffix'], axis=1, inplace=True)
         df = pd.merge(df, df_participants, on='subject', suffixes=("_x", None), how='left')
 
-    # Add metadata from samples.tsv file, if present
+    # Add sample_id column if sample column exists, and add metadata from samples.tsv file if present
     # TODO: use pybids function after BEP microscopy is merged in BIDS
+    if 'sample' in df:
+        df['sample_id'] = "sample-" + df['sample']
     fname_samples = os.path.join(bids_path, "samples.tsv")
     if os.path.exists(fname_samples):
         df_samples = pd.read_csv(fname_samples, sep='\t')
-        df['participant_id'] = "sub-" + df['subject']
-        df['sample_id'] = "sample-" + df['sample']
         df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None), how='left')
-        df.drop(['participant_id', 'sample_id'], axis=1, inplace=True)
 
     # Add metadata from all _sessions.tsv files, if present
     # Uses pybids function
