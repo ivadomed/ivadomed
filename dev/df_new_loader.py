@@ -9,6 +9,7 @@
 #
 ##############################################################
 
+
 # IMPORTS
 import os
 import pandas as pd
@@ -35,6 +36,9 @@ derivatives = True
 # CREATE DATAFRAME
 df = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
 
+# COPY DATAFRAME TO TEST get_subdatasets_subjects_list_new FUNCTION (BELOW)
+df2 = df
+
 # DROP "path" AND "parent_path" COLUMNS AND SORT BY FILENAME FOR TESTING PURPOSES WITH data-testing
 df = df.drop(columns=['path', 'parent_path'])
 df = df.sort_values(by=['filename']).reset_index(drop=True)
@@ -54,7 +58,7 @@ else:
 
 # SPLIT TRAIN/VALID/TEST (with "new" functions)
 train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list_new(context["split_dataset"],
-                                                                                        df,
+                                                                                        df2,
                                                                                         log_directory,
                                                                                         context["loader_parameters"]
                                                                                         ['subject_selection'])
