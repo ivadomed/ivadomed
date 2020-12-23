@@ -96,7 +96,7 @@ def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8
 
 
 def split_dataset_new(df, data_testing, random_seed, train_frac=0.8, test_frac=0.1):
-    """Splits list of filename into training, validation and testing datasets according to the data_type selected in data_testing.
+    """Splits dataset into training, validation and testing datasets according to the data_type selected in data_testing.
     Example: If data_type is "institution_id", the centers associated to the subjects are split according the train, test and
     validation fraction whereas if data_type is "subject", the patients are directly separated according to these fractions.
 
@@ -107,7 +107,7 @@ def split_dataset_new(df, data_testing, random_seed, train_frac=0.8, test_frac=0
         train_frac (float): Between 0 and 1. Represents the train set proportion.
         test_frac (float): Between 0 and 1. Represents the test set proportion.
     Returns:
-        list, list, list: Train, validation and test subjects list.
+        list, list, list: Train, validation and test data_type list.
     """
     # Init output lists
     X_train, X_val, X_test = [], [], []
@@ -126,8 +126,8 @@ def split_dataset_new(df, data_testing, random_seed, train_frac=0.8, test_frac=0
         test_frac = test_frac if test_frac >= 1 / len(data) else 1 / len(data)
         data_value, _ = train_test_split(data, train_size=test_frac, random_state=random_seed)
 
-    X_test = df[df[data_type].isin(data_value)]['filename'].tolist()
-    X_remain = df[~df[data_type].isin(data_value)]["filename"].tolist()
+    X_test = df[df[data_type].isin(data_value)][data_type].unique().tolist()
+    X_remain = df[~df[data_type].isin(data_value)][data_type].unique().tolist()
 
     # split using sklearn function
     X_train, X_tmp = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
