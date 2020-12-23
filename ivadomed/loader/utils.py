@@ -688,6 +688,10 @@ def create_bids_dataframe(loader_params, derivatives):
     # If `target_suffix` is a list of lists convert to list
     if any(isinstance(t, list) for t in target_suffix):
         target_suffix = list(itertools.chain.from_iterable(target_suffix))
+    roi_suffix = loader_params['roi_params']['suffix']
+    # If `roi_suffix` is not None, add to target_suffix
+    if roi_suffix is not None:
+        target_suffix.append(roi_suffix)
     extensions = loader_params['extensions']
     contrast_lst = loader_params["contrast_params"]["contrast_lst"]
 
@@ -775,15 +779,23 @@ def create_bids_dataframe(loader_params, derivatives):
         [prefix_fnames.append(s.split('.')[0]) for s in subject_files]
         deriv = df[df['path'].str.contains('derivatives')]['filename'].tolist()
         has_deriv = []
-        for p in prefix_fnames:
-            available = [d for d in deriv if p in d]
-            if available:
-                has_deriv.append(p)
-                for t in target_suffix:
-                    if t not in str(available):
-                        logger.warning("Missing target_suffix {} for subject {}.".format(t, p))
-            else:
-                logger.warning("Missing derivatives for subject {}. Skipping subject.".format(p))
+        if roi_suffix is not None:
+            for p in prefix_fnames:
+                available = [d for d in deriv if p in d]
+                if roi_suffix in ('|'.join(available)):
+                    has_deriv.append(p)
+                else:
+                    logger.warning("Missing ROI derivatives for subject {}. Skipping subject.".format(p))
+        else:
+            for p in prefix_fnames:
+                available = [d for d in deriv if p in d]
+                if available:
+                    has_deriv.append(p)
+                    for t in target_suffix:
+                        if t not in str(available):
+                            logger.warning("Missing target_suffix {} for subject {}.".format(t, p))
+                else:
+                    logger.warning("Missing derivatives for subject {}. Skipping subject.".format(p))
 
         # Filter dataframe to keep subjects files with available derivatives only
         if has_deriv:
