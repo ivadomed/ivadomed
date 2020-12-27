@@ -334,9 +334,10 @@ class Bids_to_hdf5:
                     grp[key].attrs["data_shape"] = input_metadata['data_shape']
                 if "bounding_box" in input_metadata.keys():
                     grp[key].attrs["bounding_box"] = input_metadata['bounding_box']
-                # if "crop_params" in input_metadata.keys() and 'CenterCrop' in input_metadata['crop_params']:
-                #     # TODO save whole dict in crop_params
-                #     grp[key].attrs["crop_params"] = input_metadata['crop_params']['CenterCrop']
+                if "crop_params" in input_metadata.keys():
+                    # Store entire crop_params dict into individual HDF5 metadata attributes
+                    for k, v in input_metadata['crop_params'].items():
+                        grp[key].attrs["crop_params/{}".format(k)] = v
 
                 # GT
                 key = "gt/{}".format(contrast)
@@ -360,9 +361,10 @@ class Bids_to_hdf5:
                     grp[key].attrs["zooms"] = gt_metadata['zooms']
                 if "data_shape" in gt_metadata.keys():
                     grp[key].attrs["data_shape"] = gt_metadata['data_shape']
-                # if "crop_params" in gt_metadata.keys():
-                #     grp[key].create_dataset('crop_params', data=gt_metadata['crop_params'])
-                #     grp[key].attrs.create("crop_params", gt_metadata['crop_params'])
+                if "crop_params" in gt_metadata.keys():
+                    # Store entire crop_params dict into individual HDF5 metadata attributes
+                    for k, v in gt_metadata['crop_params'].items():
+                        grp[key].attrs["crop_params/{}".format(k)] = v
                 if gt_metadata['bounding_box'] is not None:
                     grp[key].attrs["bounding_box"] = gt_metadata['bounding_box']
 
@@ -552,8 +554,10 @@ class HDF5Dataset:
                                                         .format(line['Subjects'], ct)].attrs.items()})
             metadata['slice_index'] = line["Slices"]
             metadata['missing_mod'] = missing_modalities
-            if 'crop_params' not in metadata:
-                metadata['crop_params'] = {}
+            # Take crop_params (if available) from individual HDF5 attributes ('crop_params/<param>') to single python dict
+            crop_params_keys = [key for key in metadata.keys() if 'crop_params/' in key]
+            crop_params = {key.replace('crop_params/', ''): metadata[key] for key in crop_params_keys}
+            metadata['crop_params'] = crop_params
             input_metadata.append(metadata)
 
         # GT
@@ -569,8 +573,10 @@ class HDF5Dataset:
             gt_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
                                                                  self.hdf5_file[line['gt/' +
                                                                  self.gt_contrast]].attrs.items()}))
-            if 'crop_params' not in gt_metadata[n_gt]:
-                gt_metadata[n_gt]['crop_params'] = {}
+            # Take crop_params (if available) from individual HDF5 attributes ('crop_params/<param>') to single python dict
+            crop_params_keys = [key for key in gt_metadata[n_gt].keys() if 'crop_params/' in key]
+            crop_params = {key.replace('crop_params/', ''): gt_metadata[n_gt][key] for key in crop_params_keys}
+            gt_metadata[n_gt]['crop_params'] = crop_params
 
         # ROI
         roi_img = []
@@ -587,8 +593,10 @@ class HDF5Dataset:
             roi_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
                                                                   self.hdf5_file[
                                                                       line['roi/' + self.roi_contrast]].attrs.items()}))
-            if 'crop_params' not in roi_metadata[0]:
-                roi_metadata[0]['crop_params'] = {}
+            # Take crop_params (if available) from individual HDF5 attributes ('crop_params/<param>') to single python dict
+            crop_params_keys = [key for key in roi_metadata[0].keys() if 'crop_params/' in key]
+            crop_params = {key.replace('crop_params/', ''): roi_metadata[0][key] for key in crop_params_keys}
+            roi_metadata[0]['crop_params'] = crop_params
 
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
