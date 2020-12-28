@@ -334,6 +334,8 @@ class Bids_to_hdf5:
                     grp[key].attrs["data_shape"] = input_metadata['data_shape']
                 if "bounding_box" in input_metadata.keys():
                     grp[key].attrs["bounding_box"] = input_metadata['bounding_box']
+                if "preresample_shape" in input_metadata.keys():
+                    grp[key].attrs["preresample_shape"] = input_metadata["preresample_shape"]
                 if "crop_params" in input_metadata.keys():
                     # Store entire crop_params dict into individual HDF5 metadata attributes
                     for k, v in input_metadata['crop_params'].items():
@@ -361,6 +363,8 @@ class Bids_to_hdf5:
                     grp[key].attrs["zooms"] = gt_metadata['zooms']
                 if "data_shape" in gt_metadata.keys():
                     grp[key].attrs["data_shape"] = gt_metadata['data_shape']
+                if "preresample_shape" in gt_metadata.keys():
+                    grp[key].attrs["preresample_shape"] = gt_metadata['preresample_shape']
                 if "crop_params" in gt_metadata.keys():
                     # Store entire crop_params dict into individual HDF5 metadata attributes
                     for k, v in gt_metadata['crop_params'].items():
