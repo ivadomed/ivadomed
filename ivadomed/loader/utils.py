@@ -465,12 +465,14 @@ class SliceFilter(object):
     Args:
         filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
         filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
-        filter_absent_mask (bool): If True, samples where all voxel labels in one or more masks are discarded.
+        filter_absent_mask (bool): If True, samples where all voxel labels are zero in one or more masks are discarded.
+        filter_classification (bool): If True, samples where all images fail a custom classifier filter are discarded. 
 
     Attributes:
         filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
         filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
-        filter_absent_mask (bool): If True, samples where all voxel labels in one or more masks are discarded.
+        filter_absent_mask (bool): If True, samples where all voxel labels are zero in one or more masks are discarded.
+        filter_classification (bool): If True, samples where all images fail a custom classifier filter are discarded. 
 
     """
 
