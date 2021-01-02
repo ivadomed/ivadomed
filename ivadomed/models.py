@@ -794,6 +794,8 @@ class HeMISUnet(Module):
         super(HeMISUnet, self).__init__()
         self.depth = depth
         self.contrasts = contrasts
+        if 'final_activation' in kwargs:
+            self.final_activation = kwargs['final_activation']
 
         # Encoder path
         self.Encoder_mod = nn.ModuleDict(
@@ -801,8 +803,9 @@ class HeMISUnet(Module):
                                                 bn_momentum=bn_momentum)] for Mod in self.contrasts])
 
         # Decoder path
-        self.decoder = Decoder(out_channel=out_channel, depth=depth, drop_rate=drop_rate,
-                               bn_momentum=bn_momentum, hemis=True)
+        self.decoder = Decoder(out_channel=out_channel, depth=depth,
+                               drop_rate=drop_rate, bn_momentum=bn_momentum, hemis=True,
+                               final_activation=self.final_activation)
 
     def forward(self, x_mods, indexes_mod):
         """
