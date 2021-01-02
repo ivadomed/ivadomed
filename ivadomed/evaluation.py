@@ -73,16 +73,17 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
                                    data_uncertainty=data_uncertainty,
                                    dim_lst=nib_pred.header['pixdim'][1:4],
                                    params=eval_params)
-        results_pred, data_painted = eval.run_eval()
+        results_pred, data_painted, data_painted_argmax = eval.run_eval()
 
         # SAVE PAINTED DATA, TP FP FN
         fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
         nib_painted = nib.Nifti1Image(data_painted, nib_pred.affine)
         nib.save(nib_painted, fname_paint)
 
-        # SAVE POST-PROCESSED PREDICTION
-        nib_pred = nib.Nifti1Image(eval.data_pred, nib_pred.affine)
-        nib.save(nib_pred, fname_pred)
+        # SAVE PAINTED DATA (ONE PLANE, ARGMAX)
+        fname_paint_argmax = fname_pred.split('.nii.gz')[0] + '_painted_argmax.nii.gz'
+        nib_painted_argmax = nib.Nifti1Image(data_painted_argmax, nib_pred.affine)
+        nib.save(nib_painted_argmax, fname_paint_argmax)
 
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
@@ -197,6 +198,12 @@ class Evaluation3DMetrics(object):
 
         # painted data, object wise
         self.data_painted = np.copy(self.data_pred)
+
+        # painted data, voxelwise & argmax
+        self.data_painted_argmax = np.copy(self.data_pred)
+        background = np.expand_dims(np.all(self.data_painted_argmax < 0.50, axis=-1).astype('<f8'), axis=-1)
+        self.data_painted_argmax = np.concatenate([background, self.data_painted_argmax], axis=-1)
+        self.data_painted_argmax = np.argmax(self.data_painted_argmax, axis=-1)[..., 1:]
 
         # overlap_vox is used to define the object-wise TP, FP, FN
         if "overlap" in params:
@@ -475,4 +482,4 @@ class Evaluation3DMetrics(object):
         if self.n_classes == 1:
             self.data_painted = np.squeeze(self.data_painted, axis=-1)
 
-        return dct, self.data_painted
+        return dct, self.data_painted, self.data_painted_argmax
