@@ -615,20 +615,6 @@ class FiLMlayer(Module):
 
         return output, new_w_shared
 
-"""
-        Vanilla HeMIS structure:
-        BACK END
-        * 2x 2D-Convs (ReLU), stride 1
-        * (2,2) max pooling, stride 1
-        * Zero padding
-        ABSTRACTION
-        * Take mean/variation across modalities per feature map
-        FRONT END
-        * Concatenate mean and variation feature maps
-        * 2D-Conv (ReLU)
-        * 2D-Conv (Softmax, n_channels = n_classes)
-        """
-
 class HeMIS(Module):
     """
     An implementation of a vanilla HeMIS architecture (as shown in Havaei et al. 2016,
@@ -643,7 +629,6 @@ class HeMIS(Module):
         out_channel (int): Number of output channels.
         drop_rate (float): Probability of dropout. Set to None for no dropout.
         bn_momentum (float): Batch normalization momentum. Set to None for no batchnorm.
-        **kwargs:
 
     Attributes:
         contrasts (list): List of contrasts.
@@ -669,8 +654,6 @@ class HeMIS(Module):
     def build_vanilla_backend(self, name, bn_momentum, drop_rate):
         layers = []
 
-        # TODO: Fix one-off shape error somewhere
-
         # First layer
         layers.append(['{}_conv0'.format(name), nn.Conv2d(in_channels=1, out_channels=48,
                                                           kernel_size=5, padding=2)])
@@ -688,6 +671,8 @@ class HeMIS(Module):
         layers.append(['{}_relu1'.format(name), nn.ReLU(inplace=True)])
         if drop_rate:
             layers.append(['{}_drop1'.format(name), nn.Dropout2d(drop_rate)])
+
+        layers.append(['{}_pad'.format(name), nn.ZeroPad2d((1,0,1,0))])
 
         layers.append(['{}_maxpool'.format(name), nn.MaxPool2d(kernel_size=2, stride=1)])
 
@@ -708,14 +693,8 @@ class HeMIS(Module):
 
         # Second layer
         layers.append(['frontend_conv1', nn.Conv2d(in_channels=16, out_channels=out_channels,
-                                                   kernel_size=21, padding=2)])
+                                                   kernel_size=21, padding=10)])
         layers.append(['frontend_softmax', nn.Softmax2d()])
-
-        # if bn_momentum:
-        #     layers.append(['frontend_bn0', nn.BatchNorm2d(16, momentum=bn_momentum)])
-        # layers.append(['frontend_relu1', nn.ReLU(inplace=True)])
-        # if drop_rate:
-        #     layers.append(['frontend_drop0', nn.Dropout2d(drop_rate)])
 
         frontend = nn.Sequential(OrderedDict(layers))
         return frontend
@@ -727,7 +706,7 @@ class HeMIS(Module):
         Param:
             x_mods (list): List containing input images. len(x_mods) is equal to number of contrasts.
                            x_mod[i] contains images of modality i (len(x_mod[i])) is equal to batch size.
-            indexes_mod (list): One-hot encoded list of available modalities per sample in batch, e.g.
+            indexes_mod (np.array): One-hot encoded array of available modalities per sample in batch, e.g.
                                 [[1, 1, 1], [1, 1, 0], [1, 0, 1], [1, 1, 0]]
                                    (1st)      (2nd)      (3rd)      (4rd)     sample
         """
@@ -736,27 +715,18 @@ class HeMIS(Module):
         features_mod = []
         for i, mod in enumerate(self.contrasts):
             features = self.branches['branch_{}'.format(mod)](x_mods[i])
-            features_mod.append(features)
-
-        import ipdb; ipdb.set_trace()
+            features_mod.append(features.unsqueeze(0))
 
         # Abstraction
-        features_stacked = torch.stack(features_mod, 0)
-        features = torch.cat([features_stacked.mean(0)])
+        features_cat = torch.cat(features_mod, 0).transpose(0, 1)
+        features_mod = torch.cat([torch.cat([features_cat[i][indexes_mod[i]].squeeze(1).mean(0),
+                                             features_cat[i][indexes_mod[i]].squeeze(1).var(0)], 0).unsqueeze(0)
+                                             for i in range(len(indexes_mod))], 0)
 
-        # for j in range(self.depth + 1):
-        #     features_cat = torch.cat(features_mod[j], 0).transpose(0, 1)
+        # Frontend
+        preds = self.frontend(features_mod)
 
-        #     features_mod[j] = torch.cat([torch.cat([features_cat[i][indexes_mod[i]].squeeze(1).mean(0),
-        #                                             features_cat[i][indexes_mod[i]].squeeze(1).var(0)], 0).unsqueeze(0)
-        #                                  for i in range(len(indexes_mod))], 0)
-
-        # # Frontend
-        # preds = self.frontend(features_mod)
-
-        #return preds
-        return features_mod
-
+        return preds
 
 class HeMISUnet(Module):
     """A U-Net model inspired by HeMIS to deal with missing contrasts.
