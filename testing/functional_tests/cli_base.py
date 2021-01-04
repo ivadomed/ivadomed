@@ -6,13 +6,15 @@ from ivadomed.scripts import download_data as ivadomed_download_data
 
 __test_dir__ = os.path.join(__ivadomed_dir__, 'testing/functional_tests')
 __fixtures_dir__ = os.path.join(__test_dir__, 'fixtures')
-__tmp_dir__ = os.path.join("tmp")
+__tmp_dir__ = "tmp"
 sys.path.append(__test_dir__)
 
 init_ivadomed()
 
 
 class bcolors(object):
+    """Class for different colours."""
+
     normal = '\033[0m'
     red = '\033[91m'
     green = '\033[92m'
@@ -25,10 +27,10 @@ class bcolors(object):
 
 
 def printv(string, verbose=1, type='normal'):
-    """Enables to print color-coded messages, depending on verbose status.
+    """Print color-coded messages, depending on verbose status.
+
     Only use in command-line programs (e.g. sct_propseg).
     """
-
     colors = {
         'normal': bcolors.normal,
         'info': bcolors.green,
@@ -95,6 +97,5 @@ def create_tmp_dir():
 
 
 def remove_tmp_dir():
-    """Recursively remove the ``tmp`` directory if it exists.
-    """
+    """Recursively remove the ``tmp`` directory if it exists."""
     shutil.rmtree(__tmp_dir__, ignore_errors=True)
