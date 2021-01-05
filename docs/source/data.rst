@@ -13,7 +13,7 @@ An example of this organization is shown below:
     dataset/
     └── dataset_description.json
     └── participants.tsv
-    └── sub-01
+    └── sub-01  <--------------------- Folder enclosing data for subject 1
     └── sub-02
     └── sub-03
         └── anat
