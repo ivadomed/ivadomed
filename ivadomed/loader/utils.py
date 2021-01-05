@@ -14,6 +14,7 @@ from ivadomed import utils as imed_utils
 import nibabel as nib
 import bids as pybids   #"bids" is already taken by bids_neuropoly
 import pandas as pd
+import itertools
 
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
@@ -545,6 +546,9 @@ def create_bids_dataframe(loader_params, derivatives):
     bids_path = loader_params['bids_path']
     bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
     target_suffix = loader_params['target_suffix']
+    # If `target_suffix` is a list of lists convert to list
+    if any(isinstance(t, list) for t in target_suffix):
+        target_suffix = list(itertools.chain.from_iterable(target_suffix))
     extensions = loader_params['extensions']
     contrast_lst = loader_params["contrast_params"]["contrast_lst"]
 
@@ -581,9 +585,9 @@ def create_bids_dataframe(loader_params, derivatives):
 
     # Update dataframe with subject files of chosen contrasts and extensions,
     # and with derivative files of chosen target_suffix from loader parameters
-    df = (df[(~df['path'].str.contains('derivatives') & df['suffix'].str.contains('|'.join(contrast_lst)) &
-          df['extension'].str.contains('|'.join(extensions))) |
-          (df['filename'].str.contains('|'.join(target_suffix)))])
+    df = df[(~df['path'].str.contains('derivatives') & df['suffix'].str.contains('|'.join(contrast_lst)) &
+         df['extension'].str.contains('|'.join(extensions))) |
+         (df['path'].str.contains('derivatives') & df['filename'].str.contains('|'.join(target_suffix)))]
 
     # Add metadata from participants.tsv file, if present
     # Uses pybids function
