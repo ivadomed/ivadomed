@@ -766,6 +766,8 @@ class HeMISUnet(Module):
         self.contrasts = contrasts
         if 'final_activation' in kwargs:
             self.final_activation = kwargs['final_activation']
+        else:
+            self.final_activation = 'sigmoid'
 
         # Encoder path
         self.Encoder_mod = nn.ModuleDict(
