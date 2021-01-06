@@ -108,7 +108,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             # input_samples: list of batch_size tensors, whose size is n_channels X height X width X depth
             # gt_samples: idem with n_labels
             # batch['*_metadata']: list of batch_size lists, whose size is n_channels or n_labels
-            if model_params["name"] == "HeMISUnet":
+            if model_params["name"] in ["HeMISUnet", "HeMIS"]:
                 input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
             else:
                 input_samples = imed_utils.cuda(batch["input"], cuda_available)
@@ -121,13 +121,13 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         m.train()
 
             # RUN MODEL
-            if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
+            if model_params["name"] in ["HeMISUnet", "HeMIS", "FiLMedUnet"]:
                 metadata = get_metadata(batch["input_metadata"], model_params)
                 preds = model(input_samples, metadata)
             else:
                 preds = model(input_samples)
 
-        if model_params["name"] == "HeMISUnet":
+        if model_params["name"] in ["HeMISUnet", "HeMIS"]:
             # Reconstruct image with only one modality
             input_samples = batch['input'][0]
 

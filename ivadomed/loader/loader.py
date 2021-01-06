@@ -69,7 +69,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                 object_detection_params=object_detection_params,
                                 soft_gt=soft_gt)
 
-    elif model_params["name"] == "HeMISUnet":
+    elif model_params["name"] in ["HeMISUnet", "HeMIS"]:
         dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
                                               subject_lst=data_list,
                                               model_params=model_params,

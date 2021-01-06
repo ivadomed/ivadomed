@@ -163,7 +163,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         num_steps = 0
         for i, batch in enumerate(train_loader):
             # GET SAMPLES
-            if model_params["name"] == "HeMISUnet":
+            if model_params["name"] in ["HeMISUnet", "HeMIS"]:
                 input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
             else:
                 input_samples = imed_utils.cuda(batch["input"], cuda_available)
@@ -175,7 +175,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                                                              debugging and epoch == 1, log_directory)
 
             # RUN MODEL
-            if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
+            if model_params["name"] in ["HeMISUnet", "HeMIS", "FiLMedUnet"]:
                 metadata = get_metadata(batch["input_metadata"], model_params)
                 preds = model(input_samples, metadata)
             else:
@@ -210,7 +210,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         tqdm.write(msg)
 
         # CURRICULUM LEARNING
-        if model_params["name"] == "HeMISUnet":
+        if model_params["name"] in ["HeMISUnet", "HeMIS"]:
             # Increase the probability of a missing modality
             model_params["missing_probability"] **= model_params["missing_probability_growth"]
             dataset_train.update(p=model_params["missing_probability"])
@@ -224,14 +224,14 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             for i, batch in enumerate(val_loader):
                 with torch.no_grad():
                     # GET SAMPLES
-                    if model_params["name"] == "HeMISUnet":
+                    if model_params["name"] in ["HeMISUnet", "HeMIS"]:
                         input_samples = imed_utils.cuda(imed_utils.unstack_tensors(batch["input"]), cuda_available)
                     else:
                         input_samples = imed_utils.cuda(batch["input"], cuda_available)
                     gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
 
                     # RUN MODEL
-                    if model_params["name"] in ["HeMISUnet", "FiLMedUnet"]:
+                    if model_params["name"] in ["HeMISUnet", "HeMIS", "FiLMedUnet"]:
                         metadata = get_metadata(batch["input_metadata"], model_params)
                         preds = model(input_samples, metadata)
                     else:
@@ -446,9 +446,9 @@ def get_metadata(metadata, model_params):
 
     Returns:
         If FiLMedUnet, Returns a list of metadata, that have been transformed by the One Hot Encoder.
-        If HeMISUnet, Returns a numpy array where each row represents a sample and each column represents a contrast.
+        If HeMISUnet or HeMIS, Returns a numpy array where each row represents a sample and each column represents a contrast.
     """
-    if model_params["name"] == "HeMISUnet":
+    if model_params["name"] in ["HeMISUnet", "HeMIS"]:
         return np.array([m[0]["missing_mod"] for m in metadata])
     else:
         return [model_params["film_onehotencoder"].transform([metadata[k][0]['film_input']]).tolist()[0]
