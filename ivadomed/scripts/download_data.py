@@ -9,11 +9,9 @@ import zipfile
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
-import sys
 import argparse
 import textwrap
-
-from ivadomed.utils import init_ivadomed
+from ivadomed.utils import init_ivadomed, get_arguments
 
 
 DICT_URL = {
@@ -37,8 +35,13 @@ DICT_URL = {
                        "description": "Cord localisation model, trained on T2-weighted images with tumor."},
     "model_find_disc_t1": {"url": ["https://github.com/ivadomed/model_find_disc_t1/archive/r20201013.zip"],
                            "description": "Intervertebral disc detection model trained on T1-weighted images."},
-    "model_find_disc_t2": {"url": ["https://github.com/ivadomed/model_find_disc_t2/archive/r20200928.zip"],
-                           "description": "Intervertebral disc detection model trained on T2-weighted images."}
+    "model_find_disc_t2": {
+        "url": ["https://github.com/ivadomed/model_find_disc_t2/archive/r20200928.zip"],
+        "description": "Intervertebral disc detection model trained on T2-weighted images."},
+    "data_functional_testing": {
+        "url": ["https://github.com/ivadomed/data_functional_testing/archive/r20201218.zip"],
+        "description": "Data used for functional testing in Ivadomed."
+    }
 
 }
 
@@ -251,7 +254,7 @@ def install_data(url, dest_folder, keep=False):
 
 
 # This line allows to format the `install_data()` docstrings, because this formatting
-# cannot be done in the function directly. 
+# cannot be done in the function directly.
 # `create_string()` is a custom function that converts our dict into a string
 # which is easier to add in the documentation.
 install_data.__doc__=install_data.__doc__.format(BUNDLES=textwrap.indent(_format_bundles(), ' '*6))
@@ -264,13 +267,11 @@ def main(args=None):
     # Mirror servers are listed in order of decreasing priority.
     # If exists, favour release artifact straight from github
 
-    if args is None:
-        args = sys.argv[1:]
-
-    # Get parser info
     parser = get_parser()
-    arguments = parser.parse_args()
+    arguments = get_arguments(parser, args)
+
     data_name = arguments.d
+
     if arguments.output is None:
         dest_folder = os.path.join(os.path.abspath(os.curdir), data_name)
     else:

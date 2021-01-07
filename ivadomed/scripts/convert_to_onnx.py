@@ -1,6 +1,5 @@
 import argparse
 import torch
-
 from ivadomed import utils as imed_utils
 
 
@@ -41,16 +40,14 @@ def convert_pytorch_to_onnx(model, dimension, n_channels, gpu=0):
     imed_utils.save_onnx_model(model_net, dummy_input, model.replace("pt", "onnx"))
 
 
-def main():
+def main(args=None):
     imed_utils.init_ivadomed()
-
     parser = get_parser()
-    args = parser.parse_args()
+    args = imed_utils.get_arguments(parser, args)
     fname_model = args.model
     dimension = int(args.dimension)
     gpu = str(args.gpu)
     n_channels = args.n_channels
-    # Run Script
     convert_pytorch_to_onnx(fname_model, dimension, n_channels, gpu)
 
 

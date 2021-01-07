@@ -14,7 +14,12 @@ from ivadomed import models
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed import training as imed_training
+import logging
+import pytest
+from unit_base import remove_tmp_dir, __tmp_dir__, create_tmp_dir, download_dataset
+logger = logging.getLogger(__name__)
 
+__dataset_dir__ = os.path.join(__tmp_dir__, "data_testing")
 cudnn.benchmark = True
 
 GPU_NUMBER = 0
@@ -23,10 +28,19 @@ DROPOUT = 0.4
 BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01
-PATH_BIDS = 'testing_data'
+PATH_BIDS = __dataset_dir__
 p = 0.0001
 
 
+@pytest.fixture(autouse=True, scope='module')
+def module_setup_teardown():
+    create_tmp_dir()
+    download_dataset("data_testing")
+    yield
+    remove_tmp_dir()
+
+
+@pytest.mark.run(order=1)
 def test_HeMIS(p=0.0001):
     print('[INFO]: Starting test ... \n')
     training_transform_dict = {
@@ -205,14 +219,14 @@ def test_HeMIS(p=0.0001):
     print('Mean SD opt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
     print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
     print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
+    assert os.path.exists(os.path.join(__dataset_dir__, 'mytestfile.hdf5'))
 
 
+@pytest.mark.run(order=2)
 def test_hdf5_bids():
-    os.makedirs("test_adap_bids")
-    imed_adaptative.HDF5ToBIDS('testing_data/mytestfile.hdf5', ['sub-unf01'], "test_adap_bids")
-    assert os.path.isdir("test_adap_bids/sub-unf01/anat")
-    assert os.path.isdir("test_adap_bids/derivatives/labels/sub-unf01/anat")
-    # once done we can delete the file
-    print("[INFO]: Deleting HDF5 file.")
-    os.remove('testing_data/mytestfile.hdf5')
+    os.makedirs(os.path.join(__tmp_dir__, "test_adap_bids"))
+    imed_adaptative.HDF5ToBIDS(os.path.join(__dataset_dir__, 'mytestfile.hdf5'),
+                                 ['sub-unf01'], os.path.join(__tmp_dir__, "test_adap_bids"))
+    assert os.path.isdir(os.path.join(__tmp_dir__, "test_adap_bids/sub-unf01/anat"))
+    assert os.path.isdir(os.path.join(__tmp_dir__, "test_adap_bids/derivatives/labels/sub-unf01/anat"))
     print('\n [INFO]: Test of HeMIS passed successfully.')
