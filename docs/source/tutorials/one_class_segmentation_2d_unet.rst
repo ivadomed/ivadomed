@@ -226,7 +226,7 @@ input image with the overlaid prediction (segmentation) for one of the test subj
 
 .. code-block:: bash
 
-   fsleyes "<bids_path>/sub-hamburg01/anat/sub-hamburg01_T2w.nii.gz <log_directory>/pred_masks/sub-hamburg01_T2w_pred.nii.gz -cm red -a 0.5
+   fsleyes "<bids_path>/sub-hamburg01/anat/sub-hamburg01_T2w.nii.gz <log_directory>/pred_masks/sub-hamburg01_T2w_pred.nii.gz -cm red
 
 After the training for 100 epochs, the segmentations should be similar to the one presented in the following image.
 The output and ground truth segmentations of the spinal cord are presented in red (subject ``sub-hamburg01`` with
