@@ -55,7 +55,7 @@ segmentation training.
 
   .. code-block:: xml
 
-     "log_directory":"spineGeneric"
+     "log_directory": "spineGeneric"
 
 - ``loader_parameters:bids_path``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
   should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
