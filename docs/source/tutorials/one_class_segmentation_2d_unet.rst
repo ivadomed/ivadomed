@@ -222,11 +222,11 @@ on the evaluation metrics, see :mod:`ivadomed.metrics`.
 The test image segmentations are stored in ``<log_directory>/pred_masks/`` and have the same name as the input image
 with the suffix ``_pred``. To visualize the segmentation of a given subject, you can use any Nifti image viewer.
 For `FSLeyes <https://users.fmrib.ox.ac.uk/~paulmc/fsleyes/userdoc/latest/>`_ users, this command will open the
-input image with the overlaid prediction (segmentation):
+input image with the overlaid prediction (segmentation) for one of the test subject:
 
 .. code-block:: bash
 
-   fsleyes path/to/input/image.nii.gz path/to/pred_masks/subject_id_contrast_pred.nii.gz -cm red -a 0.5
+   fsleyes "<PATH_TO_DATASET>/data_example_spinegeneric/sub-hamburg01/anat/sub-hamburg01_T2w.nii.gz <log_directory>/pred_masks/sub-hamburg01_T2w_pred.nii.gz -cm red -a 0.5
 
 After the training for 100 epochs, the segmentations should be similar to the one presented in the following image.
 The output and ground truth segmentations of the spinal cord are presented in red (subject ``sub-hamburg01`` with
