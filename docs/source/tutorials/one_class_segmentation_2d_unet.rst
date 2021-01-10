@@ -221,7 +221,7 @@ on the evaluation metrics, see :mod:`ivadomed.metrics`.
 
 The test image segmentations are stored in ``<log_directory>/pred_masks/`` and have the same name as the input image
 with the suffix ``_pred``. To visualize the segmentation of a given subject, you can use any Nifti image viewer.
-For `FSLeyes <https://users.fmrib.ox.ac.uk/~paulmc/fsleyes/userdoc/latest/>`_ user, this command will open the
+For `FSLeyes <https://users.fmrib.ox.ac.uk/~paulmc/fsleyes/userdoc/latest/>`_ users, this command will open the
 input image with the overlaid prediction (segmentation):
 
 .. code-block:: bash
