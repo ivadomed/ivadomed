@@ -389,18 +389,10 @@ object\_detection\_params (Optional)
 Transformations
 ---------------
 
-Transformations applied during data augmentation. Transformations are
-sorted in the order they are applied to the image samples. For each
-transformation, the following parameters are customizable: -
-``applied_to``: list betweem ``"im", "gt", "roi"``. If not specified,
-then the transformation is applied to all loaded samples. Otherwise,
-only applied to the specified types: eg ``["gt"]`` implies that this
-transformation is only applied to the ground-truth data. -
-``dataset_type``: list between ``"training", "validation", "testing"``.
-If not specified, then the transformation is applied to the three
-sub-datasets. Otherwise, only applied to the specified subdatasets: eg
-``["testing"]`` implies that this transformation is only applied to the
-testing sub-dataset.
+Transformations applied during data augmentation. Transformations are sorted in the order they are applied to the image samples. For each transformation, the following parameters are customizable: 
+
+- ``applied_to``: list betweem ``"im", "gt", "roi"``. If not specified, then the transformation is applied to all loaded samples. Otherwise, only applied to the specified types: Example: ``["gt"]`` implies that this transformation is only applied to the ground-truth data.
+- ``dataset_type``: list between ``"training", "validation", "testing"``. If not specified, then the transformation is applied to the three sub-datasets. Otherwise, only applied to the specified subdatasets. Example: ``["testing"]`` implies that this transformation is only applied to the testing sub-dataset.
 
 Available transformations:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
