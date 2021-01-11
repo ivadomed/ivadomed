@@ -328,8 +328,8 @@ to the tailored architecture.
 - ``depth``: Strictly positive integer. Number of down-sampling operations. 
 - ``final_activation`` (optional): Bool. Defines the final activation layer. Options: ``sigmoid`` (default), ``relu``
   (normalized ReLU), or ``softmax``.
-- ``is_2d``: Indicates dimensionality of model (2D or 3D). If ``is_dim`` is ``False``, then parameters ``length_3D`` and
-  ``stride_3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`).
+- ``is_2d``: Indicates if the model is 2d, if not the model is 3d. If ``is_2d`` is ``False``, then parameters
+  ``length_3D`` and ``stride_3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`).
 
 FiLMedUnet (Optional)
 ^^^^^^^^^^^^^^^^^^^^^
