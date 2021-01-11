@@ -326,8 +326,8 @@ to the tailored architecture.
 - ``dropout_rate``: Float (e.g. 0.4).
 - ``bn_momentum``: Float (e.g. 0.1).
 - ``depth``: Strictly positive integer. Number of down-sampling operations. 
-- ``final_activation`` (optional): Bool. Defines the final activation layer. Options: ``sigmoid`` (default), ``relu``
-  (normalized ReLU), or ``softmax``.
+- ``final_activation`` (optional): Final activation layer. Options: ``sigmoid`` (default), ``relu`` 
+(normalized ReLU), or ``softmax``.
 - ``is_2d``: Indicates if the model is 2d, if not the model is 3d. If ``is_2d`` is ``False``, then parameters
   ``length_3D`` and ``stride_3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`).
 
