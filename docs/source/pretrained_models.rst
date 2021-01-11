@@ -13,7 +13,7 @@ For convenience, the following pre-trained models are ready-to-use:
 
 Packaged model format
 =====================
-Each folder contains a model (.pt or .onnx) with its corresponding configuration file. The packaged model is
+Each folder contains a model (.pt or .onnx) with its corresponding configuration file (.json). The packaged model is
 automatically generated during training. The folder containing the packaged model will be saved at the path specified by
 the key "log_directory" in the configuration file. The packaged model, the configuration file, and the model file will
 be named by the string specified by the key "model_name" in the configuration file.
