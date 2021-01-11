@@ -40,7 +40,8 @@ def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8
 
     Args:
         df (pd.DataFrame): Dataframe containing "participants.tsv" file information.
-        center_test_lst (list): list of centers to include in the testing set.
+        center_test_lst (list): list of centers to include in the testing set. Must be
+            float.
         split_method (str): Between 'per_center' or 'per_person'. If 'per_center' the separation fraction are
             applied to centers, if 'per_person' they are applied to the subject list.
         random_seed (int): Random seed to ensure reproducible splits.
