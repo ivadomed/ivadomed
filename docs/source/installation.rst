@@ -1,8 +1,8 @@
 Installation
 ============
 
-Supported OS:
--------------
+Supported OS
+------------
 
 Currently, we only support ``MacOS`` and ``Linux`` operating systems. You can try installing
 on ``Windows``, but we cannot guarantee success. We would like to add support for ``Windows``
