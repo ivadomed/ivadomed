@@ -324,9 +324,11 @@ to the tailored architecture.
 
 - ``name``: ``Unet`` (default)
 - ``dropout_rate``: Float (e.g. 0.4).
-- ``bn_momentum``: Float (e.g. 0.1).
+- ``bn_momentum``: Float (e.g. 0.1). Batch normalization momentum. Defines the importance of the running average:
+  (1 - `bn_momentum`). A large running average factor will lead to a slow and smooth learning. See `PyTorch's BatchNorm
+  classes for more details. <https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html>`__ for more details.
 - ``depth``: Strictly positive integer. Number of down-sampling operations. 
-- ``final_activation`` (optional): Final activation layer. Options: ``sigmoid`` (default), ``relu`` 
+- ``final_activation`` (optional): Str. Final activation layer. Options: ``sigmoid`` (default), ``relu``
 (normalized ReLU), or ``softmax``.
 - ``is_2d``: Indicates if the model is 2d, if not the model is 3d. If ``is_2d`` is ``False``, then parameters
   ``length_3D`` and ``stride_3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`).
