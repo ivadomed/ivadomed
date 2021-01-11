@@ -324,7 +324,7 @@ to the tailored architecture.
 
 - ``name``: ``Unet`` (default)
 - ``dropout_rate``: Float (e.g. 0.4).
-- ``batch_norm_momentum``: Float (e.g. 0.1).
+- ``bn_momentum``: Float (e.g. 0.1).
 - ``depth``: Strictly positive integer. Number of down-sampling operations. 
 - ``final_activation`` (optional): Bool. Defines the final activation layer. Options: ``sigmoid`` (default), ``relu``
   (normalized ReLU), or ``softmax``.
