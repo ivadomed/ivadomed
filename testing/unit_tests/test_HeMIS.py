@@ -61,7 +61,7 @@ def test_HeMIS(p=0.0001):
             "missing_probability_growth": 0.9,
             "contrasts": ["T1w", "T2w"],
             "ram": False,
-            "hdf5_path": 'testing_data/mytestfile.hdf5',
+            "path_hdf5": 'testing_data/mytestfile.hdf5',
             "csv_path": 'testing_data/hdf5.csv',
             "target_lst": ["T2w"],
             "roi_lst": ["T2w"]
@@ -209,7 +209,7 @@ def test_HeMIS(p=0.0001):
 
 def test_hdf5_bids():
     os.makedirs("test_adap_bids")
-    imed_adaptative.HDF5_to_Bids('testing_data/mytestfile.hdf5', ['sub-unf01'], "test_adap_bids")
+    imed_adaptative.HDF5ToBIDS('testing_data/mytestfile.hdf5', ['sub-unf01'], "test_adap_bids")
     assert os.path.isdir("test_adap_bids/sub-unf01/anat")
     assert os.path.isdir("test_adap_bids/derivatives/labels/sub-unf01/anat")
     # once done we can delete the file

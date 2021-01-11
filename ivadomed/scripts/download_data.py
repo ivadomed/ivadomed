@@ -246,6 +246,7 @@ def install_data(url, dest_folder, keep=False):
             shutil.copy(srcpath, dstpath)
 
     logger.info("Removing temporary folders...")
+    logger.info("Folder Created: {}".format(dest_folder))
     shutil.rmtree(os.path.dirname(tmp_file))
     shutil.rmtree(extraction_folder)
 
