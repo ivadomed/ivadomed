@@ -1,13 +1,12 @@
 import os
 import time
-
+import pytest
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch import optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
 import ivadomed.transforms as imed_transforms
 from ivadomed import losses
 from ivadomed import models
@@ -30,14 +29,6 @@ N_EPOCHS = 10
 INIT_LR = 0.01
 PATH_BIDS = __dataset_dir__
 p = 0.0001
-
-
-@pytest.fixture(autouse=True, scope='module')
-def module_setup_teardown():
-    create_tmp_dir()
-    download_dataset("data_testing")
-    yield
-    remove_tmp_dir()
 
 
 @pytest.mark.run(order=1)
