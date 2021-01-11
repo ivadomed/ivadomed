@@ -78,7 +78,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             random_metadata = dict(dataset_val[indexes_gif[i_gif]]["input_metadata"][0])
             gif_dict["image_path"].append(random_metadata['input_filenames'])
             gif_dict["slice_id"].append(random_metadata['slice_index'])
-            gif_obj = imed_utils.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].numpy()[0].shape)
+            gif_obj = imed_visualize.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].numpy()[0].shape)
             gif_dict["gif"].append(copy.copy(gif_obj))
 
     # GET MODEL
