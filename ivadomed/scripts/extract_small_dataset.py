@@ -5,8 +5,7 @@ import shutil
 import argparse
 import numpy as np
 import pandas as pd
-
-from ivadomed.utils import init_ivadomed
+from ivadomed import utils as imed_utils
 
 EXCLUDED_SUBJECT = ["sub-mniPilot1"]
 
@@ -131,12 +130,10 @@ def extract_small_dataset(input, output, n=10, contrast_list=None, include_deriv
     df.to_csv(oparticipantstsv, sep='\t', index=False)
 
 
-def main():
-    init_ivadomed()
-
+def main(args=None):
+    imed_utils.init_ivadomed()
     parser = get_parser()
-    args = parser.parse_args()
-    # Run script
+    args = imed_utils.get_arguments(parser, args)
     extract_small_dataset(args.input, args.output, int(args.number), args.contrasts.split(","),
                           bool(int(args.derivatives)), int(args.seed))
 
