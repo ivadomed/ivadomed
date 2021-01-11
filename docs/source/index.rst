@@ -4,7 +4,7 @@
 |
 
 ``ivadomed`` is an integrated framework for medical image analysis with deep
-learning. The name is a portmanteau between *IVADO* (The `Institute for data
+learning, based on `PyTorch <https://pytorch.org/>`_. The name is a portmanteau between *IVADO* (The `Institute for data
 valorization <https://ivado.ca/en/>`_) and *Medical*.
 
 If you use ``ivadomed`` for your research, please cite:

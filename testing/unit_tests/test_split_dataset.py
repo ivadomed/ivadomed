@@ -17,7 +17,7 @@ N_CENTERS = 5
 @pytest.mark.parametrize('split_params', [{
         "fname_split": None,
         "random_seed": 6,
-        "center_test": ['0'],
+        "center_test": [0],
         "method": "per_center",
         "train_fraction": 0.6,
         "test_fraction": 0.2
@@ -44,7 +44,7 @@ def load_dataset(split_params):
 @pytest.mark.parametrize('split_params', [{
         "fname_split": None,
         "random_seed": 6,
-        "center_test": ['0'],
+        "center_test": [0],
         "method": "per_center",
         "train_fraction": 0.6,
         "test_fraction": 0.2
@@ -149,7 +149,7 @@ def test_per_patient_balance(split_params):
 @pytest.mark.parametrize('split_params', [{
         "fname_split": None,
         "random_seed": 6,
-        "center_test": ['0'],
+        "center_test": [0],
         "balance": "disability",
         "method": "per_center",
         "train_fraction": 0.4,
