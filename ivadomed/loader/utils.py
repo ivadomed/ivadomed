@@ -221,7 +221,7 @@ def get_new_subject_split_new(df, data_testing, random_seed,
         random_seed (int): Random seed.
         train_frac (float): Training dataset proportion, between 0 and 1.
         test_frac (float): Testing dataset proportionm between 0 and 1.
-        log_directory (string): Output folder.
+        log_directory (str): Output folder.
         balance (string): Metadata contained in "participants.tsv" file with categorical values. Each category will be
         evenly distributed in the training, validation and testing datasets.
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
