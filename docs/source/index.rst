@@ -38,7 +38,7 @@ Home
    installation.rst
    data.rst
    configuration_file.rst
-   usage.rst
+   command_line_tools.rst
    architectures.rst
    pretrained_models.rst
    scripts.rst
