@@ -2,11 +2,9 @@
 
 ## Installation
 
-First, you will need to install the following requirements:
+Assuming you have already installed the `ivadomed` package, you will also need to install:
 
 ```
-cd ivadomed
-pip install -r requirements.txt
 pip install sphinx_rtd_theme
 ```
 
