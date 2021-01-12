@@ -1,13 +1,12 @@
 import logging
 import os
-from cli_base import remove_tmp_dir, __tmp_dir__, create_tmp_dir, download_dataset
+from cli_base import remove_tmp_dir, __tmp_dir__, create_tmp_dir
 from ivadomed.scripts import visualize_transforms
 logger = logging.getLogger(__name__)
 
 
 def setup_function():
     create_tmp_dir()
-    download_dataset("data_functional_testing")
 
 
 def test_visualize_transforms_n_1():

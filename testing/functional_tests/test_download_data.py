@@ -1,15 +1,19 @@
 import logging
 import pytest
 import os
-from cli_base import __test_dir__, remove_dataset
+from cli_base import remove_dataset, __tmp_dir__, create_tmp_dir, remove_tmp_dir
 from ivadomed.scripts import download_data
 from ivadomed.utils import ArgParseException
 logger = logging.getLogger(__name__)
 
 
+def setup_function():
+    create_tmp_dir()
+
+
 def test_download_data():
     for dataset in download_data.DICT_URL:
-        output_folder = os.path.join(__test_dir__, dataset)
+        output_folder = os.path.join(__tmp_dir__, dataset)
         download_data.main(args=['-d', dataset,
                                  '-o', output_folder])
         assert os.path.exists(output_folder)
@@ -22,5 +26,4 @@ def test_download_data_no_dataset_specified():
 
 
 def teardown_function():
-    for dataset in download_data.DICT_URL:
-        remove_dataset(dataset=dataset)
+    remove_tmp_dir()

@@ -1,13 +1,12 @@
 import logging
 import os
-from cli_base import remove_tmp_dir, __tmp_dir__, download_dataset, remove_dataset, create_tmp_dir
+from cli_base import remove_tmp_dir, __tmp_dir__, create_tmp_dir
 from ivadomed.scripts import automate_training
 logger = logging.getLogger(__name__)
 
 
 def setup_function():
     create_tmp_dir()
-    download_dataset("data_functional_testing")
 
 
 def test_automate_training():
@@ -26,5 +25,4 @@ def test_automate_training():
 
 
 def teardown_function():
-    remove_dataset("data_functional_testing")
     remove_tmp_dir()

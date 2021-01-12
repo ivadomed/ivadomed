@@ -1,12 +1,11 @@
 import logging
 import os
-from cli_base import remove_tmp_dir, __tmp_dir__, create_tmp_dir, download_dataset
+from cli_base import remove_tmp_dir, __tmp_dir__, create_tmp_dir
 from ivadomed.scripts import training_curve
 logger = logging.getLogger(__name__)
 
 def setup_function():
     create_tmp_dir()
-    download_dataset("data_functional_testing")
 
 def test_training_curve():
     __data_testing_dir__ = os.path.join(__tmp_dir__, "data_functional_testing")
