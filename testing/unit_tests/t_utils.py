@@ -5,8 +5,9 @@ from ivadomed.utils import init_ivadomed, __ivadomed_dir__
 from ivadomed.scripts import download_data as ivadomed_download_data
 
 __test_dir__ = os.path.join(__ivadomed_dir__, 'testing/unit_tests')
-__data_testing_dir__ = "data_testing"
+__data_testing_dir_ref__ = "data_testing"
 __tmp_dir__ = "tmp"
+__data_testing_dir__ = os.path.join(__tmp_dir__, __data_testing_dir_ref__)
 sys.path.append(__test_dir__)
 
 init_ivadomed()
@@ -97,9 +98,9 @@ def create_tmp_dir():
     """
     remove_tmp_dir()
     os.mkdir(__tmp_dir__)
-    if os.path.exists(__data_testing_dir__):
-        shutil.copytree(__data_testing_dir__,
-                        os.path.join(__tmp_dir__, __data_testing_dir__))
+    if os.path.exists(__data_testing_dir_ref__):
+        shutil.copytree(__data_testing_dir_ref__,
+                        __data_testing_dir__)
 
 
 def remove_tmp_dir():
