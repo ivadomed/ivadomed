@@ -39,6 +39,7 @@ setup(
             # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
             'sphinx<2',
             'sphinx-rtd-theme<0.5',
+            'sphinxcontrib-programoutput'
         ],
     },
     entry_points={

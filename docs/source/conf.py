@@ -78,6 +78,7 @@ extensions = [
     'sphinx.ext.inheritance_diagram',
     'sphinx.ext.intersphinx',
     'sphinx.ext.autosectionlabel',
+    'sphinxcontrib.programoutput',
 ]
 
 autoclass_content = "both"
