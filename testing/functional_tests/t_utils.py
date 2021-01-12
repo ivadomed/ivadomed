@@ -100,8 +100,7 @@ def create_tmp_dir():
     os.mkdir(__tmp_dir__)
     if os.path.exists(__data_testing_dir__):
         shutil.copytree(__data_testing_dir__,
-                        os.path.join(__tmp_dir__, __data_testing_dir__),
-                        dirs_exist_ok=True)
+                        os.path.join(__tmp_dir__, __data_testing_dir__))
 
 
 def remove_tmp_dir():
