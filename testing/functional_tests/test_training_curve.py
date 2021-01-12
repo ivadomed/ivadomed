@@ -1,6 +1,6 @@
 import logging
 import os
-from cli_base import remove_tmp_dir, __tmp_dir__, create_tmp_dir
+from t_utils import remove_tmp_dir, __tmp_dir__, create_tmp_dir
 from ivadomed.scripts import training_curve
 logger = logging.getLogger(__name__)
 

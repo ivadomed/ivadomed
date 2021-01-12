@@ -1,6 +1,6 @@
 import logging
 import os
-from cli_base import remove_tmp_dir, __tmp_dir__, create_tmp_dir, __data_testing_dir__
+from t_utils import remove_tmp_dir, __tmp_dir__, create_tmp_dir, __data_testing_dir__
 from ivadomed.scripts import compare_models
 logger = logging.getLogger(__name__)
 
