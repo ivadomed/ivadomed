@@ -20,7 +20,6 @@ be named by the string specified by the key ``model_name`` in the configuration 
 
 .. code-block:: xml
 
-   t2star_sc
-   │
-   ├── t2star_sc.json
-   ├── t2star_sc.pt
+   my_model
+   ├── my_model.json
+   └── my_model.onnx
