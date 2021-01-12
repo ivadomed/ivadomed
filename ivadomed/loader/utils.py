@@ -465,13 +465,13 @@ class SliceFilter(object):
     Args:
         filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
         filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
-        filter_absent_mask (bool): If True, samples where all voxel labels are zero in one or more masks are discarded.
+        filter_absent_class (bool): If True, samples where all voxel labels are zero for one or more classes are discarded.
         filter_classification (bool): If True, samples where all images fail a custom classifier filter are discarded. 
 
     Attributes:
         filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
         filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
-        filter_absent_mask (bool): If True, samples where all voxel labels are zero in one or more masks are discarded.
+        filter_absent_class (bool): If True, samples where all voxel labels are zero for one or more classes are discarded.
         filter_classification (bool): If True, samples where all images fail a custom classifier filter are discarded. 
 
     """
@@ -479,11 +479,11 @@ class SliceFilter(object):
     def __init__(self, filter_empty_mask=True,
                  filter_empty_input=True,
                  filter_classification=False,
-                 filter_absent_mask=False,
+                 filter_absent_class=False,
                  classifier_path=None, device=None, cuda_available=None):
         self.filter_empty_mask = filter_empty_mask
         self.filter_empty_input = filter_empty_input
-        self.filter_absent_mask = filter_absent_mask
+        self.filter_absent_class = filter_absent_class
         self.filter_classification = filter_classification
         self.device = device
         self.cuda_available = cuda_available
@@ -502,8 +502,8 @@ class SliceFilter(object):
             if not np.any(gt_data):
                 return False
 
-        if self.filter_absent_mask:
-            # Filter slices that have absent masks (i.e. one or more masks are empty)
+        if self.filter_absent_class:
+            # Filter slices that have absent classes (i.e. one or more masks are empty)
             if not np.all([np.any(mask) for mask in gt_data]):
                 return False
 
