@@ -632,17 +632,19 @@ class HeMIS(Module):
 
     Attributes:
         contrasts (list): List of contrasts.
+        out_channel (int): Number of output channels.
         branches (ModuleDict): Contains convolutional branch in the backend for each modality.
     """
 
-    def __init__(self, contrasts, out_channel, drop_rate=None, bn_momentum=None):
+    def __init__(self, contrasts, out_channel, drop_rate=None, bn_momentum=None, **kwargs):
         super().__init__()
         self.contrasts = contrasts
+        self.out_channel = out_channel
 
         # Back end
         self.branches = nn.ModuleDict(
             [['branch_{}'.format(mod),
-              self.build_vanilla_backend(name=mod, 
+              self.build_vanilla_backend(name=mod,
                                          bn_momentum=bn_momentum,
                                          drop_rate=drop_rate)] for mod in self.contrasts])
 
@@ -726,6 +728,10 @@ class HeMIS(Module):
         # Frontend
         preds = self.frontend(features_mod)
 
+        if self.out_channel > 1:
+            # Remove background class
+            preds = preds[:, 1:, ]
+
         return preds
 
 class HeMISUnet(Module):
@@ -794,9 +800,6 @@ class HeMISUnet(Module):
 
             for j in range(self.depth + 1):
                 features_mod[j].append(features[j].unsqueeze(0))
-        
-        import ipdb; ipdb.set_trace()
-        # TODO: understand the block underneath.
 
         # Abstraction
         for j in range(self.depth + 1):
