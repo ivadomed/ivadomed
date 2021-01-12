@@ -34,7 +34,9 @@ def get_parser():
 
 
 def check_events_numbers(input_folder):
-    """Check if there not more than one summary  in the directory or any subfolder
+    """Check to make sure there is at most one summary in any folder or any subfolder.
+
+    A summary is defined as any file of the format ``events.out.tfevents.{...}```
 
     Args:
         input_folder (str): Input folder path.
@@ -45,8 +47,8 @@ def check_events_numbers(input_folder):
             event_list = [f for f in os.listdir(fold_path) if f.startswith("events.out.tfevents.")]
             if len(event_list):
                 if len(event_list) > 1:
-                    raise ValueError('Multiple summary found in this folder: {}.\nPlease keep only one before running '
-                          'this script again.'.format(fold_path))
+                    raise ValueError(f"Multiple summary found in this folder: {fold_path}.\n"
+                                     f"Please keep only one before running this script again.")
 
 
 def plot_curve(data_list, y_label, fig_ax, subplot_title, y_lim=None):
@@ -128,9 +130,9 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
 
     # Create output folder
     if os.path.isdir(output_folder):
-        print("Output folder already exists: {}.".format(output_folder))
+        print(f"Output folder already exists: {output_folder}.")
     else:
-        print("Creating output folder: {}.".format(output_folder))
+        print(f"Creating output folder: {output_folder}.")
         os.makedirs(output_folder)
 
     # Config subplots
@@ -155,7 +157,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         events_df_list = []
         for log_directory in input_folder_list:
             # Find tf folders
-            events_dict = check_events_numbers(log_directory)
+            check_events_numbers(log_directory)
 
             # Get data as dataframe
             events_vals_df = tensorboard_retrieve_event(log_directory)
@@ -190,11 +192,11 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         plt_dict[fname_out].savefig(fname_out)
 
 
-def tensorboard_retrieve_event(dpath):
-    """
-    Function that retrieves data from tensorboard summary event
+def tensorboard_retrieve_event(log_directory):
+    """Retrieve data from tensorboard summary event.
+
     Args:
-        dpath (str): log directory where the event are located
+        log_directory (str): log directory where the event files are located
 
     Returns:
         df: a panda dataframe where the columns are the metric or loss and the row are the epochs.
@@ -209,7 +211,7 @@ def tensorboard_retrieve_event(dpath):
 
     # Each element in the summary iterator represent an element (e.g., scalars, images..)
     # stored in the summary for all epochs in the form of event.
-    summary_iterators = [EventAccumulator(os.path.join(dpath, dname)).Reload() for dname in os.listdir(dpath)]
+    summary_iterators = [EventAccumulator(os.path.join(log_directory, dname)).Reload() for dname in os.listdir(log_directory)]
 
     metrics = defaultdict(list)
     num_metrics = 0
