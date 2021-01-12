@@ -119,22 +119,27 @@ def split_dataset_new(df, data_testing, random_seed, train_frac=0.8, test_frac=0
     # Filter dataframe with rows where data_type is not NAN
     df = df[df[data_type].notna()]
 
-    # Split according to data_type
+    # List unique data_type
+    data = sorted(df[data_type].unique().tolist())
+
+    # Split test dataset according to data_value
     # Make sure that data_type coming from data_value are unseen during training
-    if len(data_value) == 0:
-        data = sorted(df[data_type].unique().tolist())
+    if len(data_value) == 0 and test_frac != 0:
         test_frac = test_frac if test_frac >= 1 / len(data) else 1 / len(data)
         data_value, _ = train_test_split(data, train_size=test_frac, random_state=random_seed)
-
     X_test = df[df[data_type].isin(data_value)][data_type].unique().tolist()
     X_remain = df[~df[data_type].isin(data_value)][data_type].unique().tolist()
 
-    # split using sklearn function
+    # Split remainder in train/valid or train/valid/test datasets using sklearn function
+    train_frac = train_frac*len(data)/len(X_remain)
     X_train, X_tmp = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
-    if X_test:  # X_test contains data from data_value unseen during the training, eg centers in SpineGeneric
+    if test_frac == 0 or len(X_test):
+        # X_test already contains data from data_value unseen during the training, eg centers in SpineGeneric
         X_val = X_tmp
-    else:  # X_test contains data from data_value seen during the training, eg centers in gm_challenge
-        X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
+    else:
+        # X_test will contain data from data_value seen during the training, eg centers in gm_challenge
+        test_frac = test_frac*len(data)/len(X_tmp)
+        X_val, X_test = train_test_split(X_tmp, train_size=1-test_frac, random_state=random_seed)
 
     return X_train, X_val, X_test
 
