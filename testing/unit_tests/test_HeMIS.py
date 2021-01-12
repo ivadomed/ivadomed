@@ -1,13 +1,12 @@
 import os
 import time
-
+import pytest
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 from torch import optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
 import ivadomed.transforms as imed_transforms
 from ivadomed import losses
 from ivadomed import models
@@ -27,6 +26,7 @@ PATH_BIDS = 'testing_data'
 p = 0.0001
 
 
+@pytest.mark.run(order=1)
 def test_HeMIS(p=0.0001):
     print('[INFO]: Starting test ... \n')
     training_transform_dict = {
@@ -207,6 +207,7 @@ def test_HeMIS(p=0.0001):
     print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
 
 
+@pytest.mark.run(order=2)
 def test_hdf5_bids():
     os.makedirs("test_adap_bids")
     imed_adaptative.HDF5ToBIDS('testing_data/mytestfile.hdf5', ['sub-unf01'], "test_adap_bids")
