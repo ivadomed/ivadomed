@@ -111,7 +111,6 @@ def split_dataset_new(df, data_testing, random_seed, train_frac=0.8, test_frac=0
         list, list, list: Train, validation and test data_type list.
     """
     # Init output lists
-    X_train, X_val, X_test = [], [], []
 
     # Get data_type and data_value from split parameters
     data_type = data_testing['data_type']
