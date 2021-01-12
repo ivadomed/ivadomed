@@ -1,6 +1,6 @@
 import logging
 import os
-from t_utils import remove_tmp_dir, __tmp_dir__, create_tmp_dir
+from t_utils import remove_tmp_dir, __tmp_dir__, create_tmp_dir, __data_testing_dir__
 from ivadomed.scripts import automate_training
 logger = logging.getLogger(__name__)
 
@@ -10,8 +10,8 @@ def setup_function():
 
 
 def test_automate_training():
-    config_file = os.path.join(__tmp_dir__, 'automate_training_config.json')
-    param_file = os.path.join(__tmp_dir__,
+    config_file = os.path.join(__data_testing_dir__, 'automate_training_config.json')
+    param_file = os.path.join(__data_testing_dir__,
                               'automate_training_hyperparameter_opt.json')
     __output_dir__ = os.path.join(__tmp_dir__, 'results')
     automate_training.main(args=[

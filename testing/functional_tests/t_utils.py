@@ -97,7 +97,7 @@ def create_tmp_dir():
     This is created/removed for each test.
     """
     remove_tmp_dir()
-    shutil.copytree(__fixtures_dir__, __tmp_dir__)
+    os.mkdir(__tmp_dir__)
     if os.path.exists(__data_testing_dir__):
         shutil.copytree(__data_testing_dir__,
                         os.path.join(__tmp_dir__, __data_testing_dir__),
