@@ -218,3 +218,4 @@ def test_hdf5_bids():
     assert os.path.isdir("test_adap_bids/sub-unf01/anat")
     assert os.path.isdir("test_adap_bids/derivatives/labels/sub-unf01/anat")
     print('\n [INFO]: Test of HeMIS passed successfully.')
+    os.remove('testing_data/mytestfile.hdf5')
