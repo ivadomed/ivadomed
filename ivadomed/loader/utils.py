@@ -103,6 +103,7 @@ def split_dataset_new(df, split_output, data_testing, random_seed, train_frac=0.
 
     Args:
         df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
+        split_output (str): Used to specify if "participant_id" or "sample_id" is used to split.
         data_testing (dict): Used to specify the data_type and data_value to include in the testing set.
         random_seed (int): Random seed to ensure reproducible splits.
         train_frac (float): Between 0 and 1. Represents the train set proportion.
@@ -222,6 +223,7 @@ def get_new_subject_split_new(df, split_output, data_testing, random_seed,
 
     Args:
         df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
+        split_output (str): Used to specify if "participant_id" or "sample_id" is used to split
         data_testing (dict): Used to specify the data_type and data_value to include in the testing set.
         random_seed (int): Random seed.
         train_frac (float): Training dataset proportion, between 0 and 1.
