@@ -17,14 +17,12 @@ import random
 import shutil
 import sys
 from itertools import product
-
 import joblib
 import pandas as pd
 import torch.multiprocessing as mp
 
 from ivadomed import main as ivado
 from ivadomed import config_manager as imed_config_manager
-from ivadomed.utils import init_ivadomed
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.scripts.compare_models import compute_statistics
 from ivadomed import utils as imed_utils
@@ -63,6 +61,14 @@ def get_parser():
 
 
 def train_worker(config, thr_incr):
+    """
+    Args:
+        config (dict): dictionary containing configuration details.
+        thr_incr (float): A threshold analysis is performed at the end of the training
+            using the trained model and the validation sub-dataset to find the optimal binarization
+            threshold. The specified value indicates the increment between 0 and 1 used during the
+            ROC analysis (e.g. 0.1). Flag: ``-t``, ``--thr-increment``
+    """
     current = mp.current_process()
     # ID of process used to assign a GPU
     ID = int(current.name[-1]) - 1
@@ -300,7 +306,11 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                                                                                   "_n=" + str(i).zfill(2))
                     else:
                         config["log_directory"] += "_n=" + str(i).zfill(2)
-        validation_scores = pool.map(partial(train_worker, thr_incr=thr_increment), config_list)
+        try:
+            validation_scores = pool.map(partial(train_worker, thr_incr=thr_increment), config_list)
+        except Exception:
+            pool.close()
+            raise Exception('Training failed')
         val_df = pd.DataFrame(validation_scores, columns=[
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
             'best_validation_loss'])
@@ -322,7 +332,11 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                 new_config["gpu"] = config["gpu"]
                 new_config_list.append(new_config)
 
-            test_results = pool.map(test_worker, new_config_list)
+            try:
+                test_results = pool.map(test_worker, new_config_list)
+            except Exception:
+                pool.close()
+                raise Exception("Testing failed")
 
             df_lst = []
             # Merge all eval df together to have a single excel file
@@ -383,15 +397,13 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
 
 def main(args=None):
-    init_ivadomed()
-
+    imed_utils.init_ivadomed()
     parser = get_parser()
     args = imed_utils.get_arguments(parser, args)
 
     # Get thr increment if available
     thr_increment = args.thr_increment if args.thr_increment else None
 
-    # Run automate training
     automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin),
                       int(args.n_iterations), bool(args.run_test), args.all_logs, thr_increment,
                       bool(args.multi_params), args.output_dir)
