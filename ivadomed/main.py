@@ -35,10 +35,9 @@ def get_parser():
     # OPTIONAL ARGUMENTS
     optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
     optional_args.add_argument('-g', '--gif', required=False, type=int, default=0,
-                               help='Generates a GIF of during training, one frame per epoch for a given slice.'
-                                    ' The parameter indicates the number of 2D slices used to generate GIFs, one GIF '
-                                    'per slice. A GIF shows predictions of a given slice from the validation '
-                                    'sub-dataset. They are saved within the log directory.')
+                               help='Number of GIF files to output. Each GIF file corresponds to a 2D slice showing the '
+                                    'prediction over epochs (one frame per epoch). The prediction is run on the '
+                                    'validation dataset. GIF files are saved in the log directory.')
     optional_args.add_argument('-t', '--thr-increment', dest="thr_increment", required=False, type=float,
                                help='A threshold analysis is performed at the end of the training using the trained '
                                     'model and the training+validation sub-datasets to find the optimal binarization '

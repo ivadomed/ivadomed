@@ -2,7 +2,7 @@
     "command": "train",
     "gpu": 0,
     "log_directory": "log_directory",
-    "model_name": "model_name",
+    "model_name": "my_model",
     "debugging": false,
     "object_detection_params": {
         "object_detection_path": null,
