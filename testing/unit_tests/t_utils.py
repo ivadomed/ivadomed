@@ -8,7 +8,6 @@ __test_dir__ = os.path.join(__ivadomed_dir__, 'testing/unit_tests')
 __data_testing_dir_ref__ = "data_testing"
 __tmp_dir__ = "tmp"
 __data_testing_dir__ = os.path.join(__tmp_dir__, __data_testing_dir_ref__)
-sys.path.append(__test_dir__)
 
 init_ivadomed()
 

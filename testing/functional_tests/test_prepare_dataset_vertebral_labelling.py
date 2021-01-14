@@ -1,6 +1,6 @@
 import logging
 import os
-from t_utils import remove_tmp_dir, __tmp_dir__, create_tmp_dir, __data_testing_dir__
+from t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__
 from ivadomed.scripts import prepare_dataset_vertebral_labeling
 logger = logging.getLogger(__name__)
 
