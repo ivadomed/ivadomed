@@ -14,6 +14,7 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed import training as imed_training
 import logging
+from t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
 logger = logging.getLogger(__name__)
 
 cudnn.benchmark = True
@@ -24,8 +25,13 @@ DROPOUT = 0.4
 BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01
-PATH_BIDS = "testing_data"
 p = 0.0001
+__path_hdf5__ = os.path.join(__data_testing_dir__, "mytestfile.hdf5")
+__path_csv__ = os.path.join(__data_testing_dir__, "hdf5.csv")
+
+
+def setup_function():
+    create_tmp_dir()
 
 
 @pytest.mark.run(order=1)
@@ -63,8 +69,8 @@ def test_HeMIS(p=0.0001):
             "missing_probability_growth": 0.9,
             "contrasts": ["T1w", "T2w"],
             "ram": False,
-            "path_hdf5": os.path.join(PATH_BIDS, 'mytestfile.hdf5'),
-            "csv_path": os.path.join(PATH_BIDS, 'hdf5.csv'),
+            "path_hdf5": __path_hdf5__,
+            "csv_path": __path_csv__,
             "target_lst": ["T2w"],
             "roi_lst": ["T2w"]
         }
@@ -72,7 +78,7 @@ def test_HeMIS(p=0.0001):
         "contrast_lst": ['T1w', 'T2w', 'T2star'],
         "balance": {}
     }
-    dataset = imed_adaptative.HDF5Dataset(root_dir=PATH_BIDS,
+    dataset = imed_adaptative.HDF5Dataset(root_dir=__data_testing_dir__,
                                           subject_lst=train_lst,
                                           model_params=model_params,
                                           contrast_params=contrast_params,
@@ -81,8 +87,9 @@ def test_HeMIS(p=0.0001):
                                           transform=transform_lst,
                                           metadata_choice=False,
                                           dim=2,
-                                          slice_filter_fn=imed_loader_utils.SliceFilter(filter_empty_input=True,
-                                                                                 filter_empty_mask=True),
+                                          slice_filter_fn=imed_loader_utils.SliceFilter(
+                                            filter_empty_input=True,
+                                            filter_empty_mask=True),
                                           roi_params=roi_params)
 
     dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
@@ -207,15 +214,20 @@ def test_HeMIS(p=0.0001):
     print('Mean SD opt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
     print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
     print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
-    assert os.path.exists(os.path.join(PATH_BIDS, 'mytestfile.hdf5'))
 
 
 @pytest.mark.run(order=2)
 def test_hdf5_bids():
-    os.makedirs("test_adap_bids")
-    imed_adaptative.HDF5ToBIDS(os.path.join(PATH_BIDS, 'mytestfile.hdf5'),
-                               ['sub-unf01'], "test_adap_bids")
-    assert os.path.isdir("test_adap_bids/sub-unf01/anat")
-    assert os.path.isdir("test_adap_bids/derivatives/labels/sub-unf01/anat")
+    __output_dir__ = os.path.join(__tmp_dir__, "test_adap_bids")
+    os.makedirs(__output_dir__)
+    imed_adaptative.HDF5ToBIDS(
+        __path_hdf5__,
+        ['sub-unf01'],
+        __output_dir__)
+    assert os.path.isdir(os.path.join(__output_dir__, "sub-unf01/anat"))
+    assert os.path.isdir(os.path.join(__output_dir__, "derivatives/labels/sub-unf01/anat"))
     print('\n [INFO]: Test of HeMIS passed successfully.')
-    os.remove('testing_data/mytestfile.hdf5')
+
+
+def teardown_function():
+    remove_tmp_dir()
