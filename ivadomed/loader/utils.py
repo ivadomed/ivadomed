@@ -745,6 +745,11 @@ def create_bids_dataframe(loader_params, derivatives):
     # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
     df = df[~df['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
 
+    # Add ivadomed_id column corresponding to filename minus modality and extension for files that are not derivatives.
+    for index, row in df.iterrows():
+        if isinstance(row['suffix'], str):
+            df.loc[index, 'ivadomed_id'] = re.sub(r'_' + row['suffix'] + '.*', '', row['filename'])
+
     # Update dataframe with subject files of chosen contrasts and extensions,
     # and with derivative files of chosen target_suffix from loader parameters
     df = df[(~df['path'].str.contains('derivatives') & df['suffix'].str.contains('|'.join(contrast_lst)) &
