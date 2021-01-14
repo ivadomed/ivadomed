@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import scipy
+import scipy.ndimage
 import numpy as np
 
 
@@ -181,7 +182,7 @@ class GeneralizedDiceLoss(nn.Module):
         epsilon (float): Epsilon to avoid division by zero.
         include_background (float): If True, then an extra channel is added, which represents the background class.
     """
-    
+
     def __init__(self, epsilon=1e-5, include_background=True):
         super(GeneralizedDiceLoss, self).__init__()
         self.epsilon = epsilon
