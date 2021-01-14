@@ -1,8 +1,7 @@
-import collections
+import collections.abc
 import re
 import os
 import logging
-
 import numpy as np
 import pandas as pd
 import torch
@@ -12,8 +11,7 @@ from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
 from ivadomed import utils as imed_utils
 import nibabel as nib
-import bids as pybids   #"bids" is already taken by bids_neuropoly
-import pandas as pd
+import bids as pybids   # "bids" is already taken by bids_neuropoly
 import itertools
 
 __numpy_type_map = {
@@ -27,7 +25,8 @@ __numpy_type_map = {
     'uint8': torch.ByteTensor,
 }
 
-TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 'reverse', 'translation', 'gaussian_noise']
+TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 'reverse',
+                    'translation', 'gaussian_noise']
 
 logger = logging.getLogger(__name__)
 
@@ -110,8 +109,9 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
         train_frac (float): Training dataset proportion, between 0 and 1.
         test_frac (float): Testing dataset proportionm between 0 and 1.
         log_directory (string): Output folder.
-        balance (string): Metadata contained in "participants.tsv" file with categorical values. Each category will be
-        evenly distributed in the training, validation and testing datasets.
+        balance (string): Metadata contained in "participants.tsv" file with categorical values.
+            Each category will be evenly distributed in the training, validation and testing
+            datasets.
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
     Returns:
@@ -136,8 +136,8 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
         if balance in df.keys():
             df_list = [df[df[balance] == k] for k in df[balance].unique().tolist()]
         else:
-            logger.warning("No column named '{}' was found in 'participants.tsv' file. Not taken into account to split "
-                           "the dataset.".format(balance))
+            logger.warning(f"""No column named '{balance}' was found in 'participants.tsv' file.
+                               Not taken into account to split the dataset.""")
             df_list = [df]
     else:
         df_list = [df]
@@ -225,9 +225,9 @@ def imed_collate(batch):
         return torch.DoubleTensor(batch)
     elif isinstance(batch[0], string_classes):
         return batch
-    elif isinstance(batch[0], collections.Mapping):
+    elif isinstance(batch[0], collections.abc.Mapping):
         return {key: imed_collate([d[key] for d in batch]) for key in batch[0]}
-    elif isinstance(batch[0], collections.Sequence):
+    elif isinstance(batch[0], collections.abc.Sequence):
         return [imed_collate(samples) for samples in batch]
 
     return batch
@@ -236,8 +236,9 @@ def imed_collate(batch):
 def filter_roi(roi_data, nb_nonzero_thr):
     """Filter slices from dataset using ROI data.
 
-    This function filters slices (roi_data) where the number of non-zero voxels within the ROI slice (e.g. centerline,
-    SC segmentation) is inferior or equal to a given threshold (nb_nonzero_thr).
+    This function filters slices (roi_data) where the number of non-zero voxels within the
+    ROI slice (e.g. centerline, SC segmentation) is inferior or equal to a given threshold
+    (nb_nonzero_thr).
 
     Args:
         roi_data (nd.array): ROI slice.
@@ -255,7 +256,8 @@ def orient_img_hwd(data, slice_axis):
 
     Args:
         data (ndarray): RAS oriented data.
-        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
+        slice_axis (int): Indicates the axis used for the 2D slice extraction:
+            Sagittal: 0, Coronal: 1, Axial: 2.
 
     Returns:
         ndarray: Array oriented with the following dimensions: (height, width, depth).
@@ -273,7 +275,8 @@ def orient_img_ras(data, slice_axis):
 
     Args:
         data (ndarray): Data with following dimensions (Height, Width, Depth).
-        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
+        slice_axis (int): Indicates the axis used for the 2D slice extraction:
+            Sagittal: 0, Coronal: 1, Axial: 2.
 
     Returns:
         ndarray: Array oriented in RAS.
@@ -291,8 +294,10 @@ def orient_shapes_hwd(data, slice_axis):
     """Swap dimensions according to match the height, width, depth orientation.
 
     Args:
-        data (list or tuple): Shape or numbers associated with each image dimension (e.i. image resolution).
-        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
+        data (list or tuple): Shape or numbers associated with each image dimension
+            (e.g. image resolution).
+        slice_axis (int): Indicates the axis used for the 2D slice extraction:
+            Sagittal: 0, Coronal: 1, Axial: 2.
 
     Returns:
         ndarray: Reoriented vector.
@@ -331,8 +336,10 @@ class SampleMetadata(object):
         return self.metadata.items()
 
     def _update(self, ref, list_keys):
-        """Update metadata keys with a reference metadata. A given list of metadata keys will be changed and given the
-        values of the reference metadata.
+        """Update metadata keys with a reference metadata.
+
+        A given list of metadata keys will be changed and given the values of the reference
+        metadata.
 
         Args:
             ref (SampleMetadata): Reference metadata object.
@@ -357,8 +364,8 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
     Attributes:
         indices (list): List from 0 to length of dataset (number of elements in the dataset).
         nb_samples (int): Number of elements in the dataset.
-        weights (Tensor): Weight of each dataset element equal to 1 over the frequency of a given label (inverse of the
-                          frequency).
+        weights (Tensor): Weight of each dataset element equal to 1 over the frequency of a
+            given label (inverse of the frequency).
         metadata_dict (dict): Stores the mapping from metadata string to index (int).
         label_idx (int): Keeps track of the label indices already used for the metadata_dict.
     """
@@ -439,11 +446,13 @@ def clean_metadata(metadata_lst):
 
 
 def update_metadata(metadata_src_lst, metadata_dest_lst):
-    """Update metadata keys with a reference metadata. A given list of metadata keys will be changed and given the
-    values of the reference metadata.
+    """Update metadata keys with a reference metadata.
+
+    A given list of metadata keys will be changed and given the values of the reference metadata.
 
     Args:
-        metadata_src_lst (list): List of source metadata used as reference for the destination metadata.
+        metadata_src_lst (list): List of source metadata used as reference for the
+            destination metadata.
         metadata_dest_lst (list): List of metadate that needs to be updated.
 
     Returns:
@@ -472,9 +481,8 @@ class SliceFilter(object):
         filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
     """
 
-    def __init__(self, filter_empty_mask=True,
-                 filter_empty_input=True,
-                 filter_classification=False, classifier_path=None, device=None, cuda_available=None):
+    def __init__(self, filter_empty_mask=True, filter_empty_input=True, filter_classification=False,
+                 classifier_path=None, device=None, cuda_available=None):
         self.filter_empty_mask = filter_empty_mask
         self.filter_empty_input = filter_empty_input
         self.filter_classification = filter_classification
@@ -502,8 +510,8 @@ class SliceFilter(object):
         if self.filter_classification:
             if not np.all([int(
                     self.classifier(
-                        imed_utils.cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0), self.cuda_available)))
-                for img in input_data]):
+                        imed_utils.cuda(torch.from_numpy(img.copy()).unsqueeze(0).unsqueeze(0),
+                                        self.cuda_available))) for img in input_data]):
                 return False
 
         return True
@@ -512,11 +520,13 @@ class SliceFilter(object):
 def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     """Reorient an image to match a reference image orientation.
 
-    It reorients a array to a given orientation and convert it to a nibabel object using the reference nibabel header.
+    It reorients a array to a given orientation and convert it to a nibabel object using the
+    reference nibabel header.
 
     Args:
         arr (ndarray): Input array, array to re orient.
-        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
+        slice_axis (int): Indicates the axis used for the 2D slice extraction:
+            Sagittal: 0, Coronal: 1, Axial: 2.
         nib_ref (nibabel): Reference nibabel object, whose header is used.
         nib_ref_canonical (nibabel): `nib_ref` that has been reoriented to canonical orientation (RAS).
     """
