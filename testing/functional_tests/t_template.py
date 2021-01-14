@@ -48,6 +48,10 @@ Folder Structure:
     ``__data_testing_dir__``: ``tmp/data_functional_testing``
     ``__tmp_dir__``: ``tmp``
 
+Names and Files:
+    Generally speaking, one test file should correspond to one file in the ``ivadomed`` package.
+    Tests files should be named: ``test_my_file.py``.
+
 """
 
 import logging
