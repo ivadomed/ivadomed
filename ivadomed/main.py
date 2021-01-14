@@ -403,7 +403,7 @@ def create_dataset_and_ivadomed_version_log(context):
         f = open(log_file, "w")
     except OSError as err:
         print("OS error: {0}".format(err))
-        raise Exception("Have you selected a log folder you have writing permissions?")
+        raise Exception("Have you selected a log folder, and do you have write permissions for that folder?")
 
     # IVADOMED
     f.write('IVADOMED TOOLBOX\n----------------\n(' + ivadomed_version + ')')
@@ -432,14 +432,15 @@ def create_dataset_and_ivadomed_version_log(context):
         os_running = 'osx'
     elif platform_running.find('linux') != -1:
         os_running = 'linux'
+    elif platform_running.find('win32') or platform_running.find('win64'):
+        os_running = 'windows'
+    else:
+        os_running = 'NA'
+
     f.write('OS: ' + os_running + ' (' + platform.platform() + ')\n')
 
     # Display number of CPU cores
     f.write('CPU cores: Available: {}\n\n\n\n\n'.format(multiprocessing.cpu_count()))
-
-    # CONFIG JSON FILE
-    #config_json_version = imed_utils.__get_commit(path_to_git_folder=path_config_file) # Needs change in the docstring for inheriting from run_command - is it worth it?
-    #f.write('CONFIG FILE\n---------------\n' + config_json_version)
 
     # USER INPUTS
     f.write('CONFIG INPUTS\n-------------\n')
