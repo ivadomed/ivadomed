@@ -4,7 +4,6 @@
 
 
 from math import isclose
-
 import numpy as np
 import pytest
 import torch
@@ -14,9 +13,9 @@ from ivadomed import maths as imed_maths
 
 from ivadomed.loader.utils import SampleMetadata
 from ivadomed.metrics import dice_score
-from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomAffine, RandomReverse, DilateGT, \
-    ElasticTransform, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, RandomShiftIntensity, NumpyToTensor, \
-    Resample
+from ivadomed.transforms import Clahe, AdditiveGaussianNoise, RandomAffine, RandomReverse, \
+    DilateGT, ElasticTransform, ROICrop, CenterCrop, NormalizeInstance, HistogramClipping, \
+    NumpyToTensor, Resample
 
 DEBUGGING = False
 if DEBUGGING:

@@ -3,12 +3,11 @@
 # pytest unit tests for ivadomed.losses
 
 from math import isclose
-
 import pytest
 import torch
 
-from ivadomed.losses import GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss, FocalTverskyLoss, DiceLoss, \
-    AdapWingLoss, L2loss, LossCombination, FocalDiceLoss
+from ivadomed.losses import GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss, FocalTverskyLoss,\
+    DiceLoss, AdapWingLoss, L2loss, LossCombination, FocalDiceLoss
 
 
 @pytest.mark.parametrize('params', [
@@ -43,7 +42,7 @@ from ivadomed.losses import GeneralizedDiceLoss, MultiClassDiceLoss, TverskyLoss
      MultiClassDiceLoss(classes_of_interest=[1]))
 ])
 def test_multiclassdiceloss(params):
-    """Test MultiClassDiceLoss.
+    """Test MultiClassDiceLoss class in ivadomed.losses.
 
     Args:
         params (tuple): containing input tensor, target tensor, expected value, loss function
@@ -84,7 +83,7 @@ def test_multiclassdiceloss(params):
      GeneralizedDiceLoss(epsilon=1e-5))
 ])
 def test_generalizeddiceloss(params):
-    """Test GeneralizedDiceLoss.
+    """Test GeneralizedDiceLoss class in ivadomed.losses.
 
     Args:
         params (tuple): containing input tensor, target tensor, expected value, loss function
@@ -111,7 +110,7 @@ def test_generalizeddiceloss(params):
      DiceLoss()),
 ])
 def test_diceloss(params):
-    """Test Dice Loss.
+    """Test DiceLoss class in ivadomed.losses.
 
     Args:
         params (tuple): containing input tensor, target tensor, expected value, loss function
@@ -158,7 +157,7 @@ def test_diceloss(params):
      TverskyLoss(alpha=0.3, beta=0.7)),
 ])
 def test_tverskyloss(params):
-    """Test TverskyLoss.
+    """Test TverskyLoss class in ivadomed.losses.
 
     Args:
         params (tuple): containing input tensor, target tensor, expected value, loss function
@@ -200,7 +199,7 @@ def test_tverskyloss(params):
      FocalTverskyLoss(alpha=0.7, beta=0.3, gamma=1.33)),
 ])
 def test_focaltverskyloss(params):
-    """Test FocalTverskyLoss.
+    """Test FocalTverskyLoss class in ivadomed.losses.
 
     Args:
         params (tuple): containing input tensor, target tensor, expected value, loss function
@@ -232,8 +231,7 @@ def test_focaltverskyloss(params):
      L2loss()),
 ])
 def test_L2loss(params):
-    """
-    test L2 loss
+    """test L2Loss class in ivadomed.losses.
 
     Args:
         params (tuple): containing input tensor, target tensor, expected value, loss function
@@ -267,8 +265,7 @@ def test_L2loss(params):
      AdapWingLoss(epsilon=2)),
 ])
 def test_adapwingloss(params):
-    """
-    test AdapWingLoss
+    """Test AdapWingLoss class in ivadomed.losses.
 
     Args:
         params (tuple): containing input tensor, target tensor, expected value, loss function
@@ -297,14 +294,12 @@ def test_adapwingloss(params):
      LossCombination(["DiceLoss", "L2loss"], [None, None])),
 ])
 def test_losscombination(params):
-    """
-    test LossCombination
+    """Test LossCombination class in ivadomed.losses.
 
     Args:
         params (tuple): containing input tensor, target tensor, expected value, loss function
 
     """
-
     input, target, expected_value, loss_fct = params
     loss = loss_fct.forward(input, target)
     assert isclose(loss.detach().cpu().numpy(), expected_value, rel_tol=1e-2)
@@ -327,8 +322,7 @@ def test_losscombination(params):
      FocalDiceLoss()),
 ])
 def test_focaldiceloss(params):
-    """
-    test focaldiceloss
+    """Test FocalDiceLoss class in ivadomed.losses.
 
     Args:
         params (tuple): containing input tensor, target tensor, expected value, loss function
