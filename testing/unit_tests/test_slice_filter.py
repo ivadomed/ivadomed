@@ -5,12 +5,16 @@ from torch.utils.data import DataLoader
 
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
 
 cudnn.benchmark = True
 
 GPU_NUMBER = 0
 BATCH_SIZE = 1
-PATH_BIDS = 'testing_data'
+
+
+def setup_function():
+    create_tmp_dir()
 
 
 def _cmpt_slice(ds_loader):
@@ -42,7 +46,7 @@ def _cmpt_slice(ds_loader):
     {"suffix": "_seg-manual", "slice_filter_roi": 10},
     {"suffix": None, "slice_filter_roi": 0}])
 def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_filter_params):
-    if "ROICrop" in transforms_dict and roi_params["suffix"] == None:
+    if "ROICrop" in transforms_dict and roi_params["suffix"] is None:
         return
 
     cuda_available, device = imed_utils.define_device(GPU_NUMBER)
@@ -53,7 +57,7 @@ def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_
         "dataset_type": "training",
         "requires_undo": False,
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
-        "bids_path": PATH_BIDS,
+        "bids_path": __data_testing_dir__,
         "target_suffix": target_lst,
         "roi_params": roi_params,
         "model_params": {"name": "Unet"},
@@ -78,3 +82,7 @@ def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_
     else:
         # We verify if there are still some negative slices (they are removed with our filter)
         assert cmpt_neg != 0 and cmpt_pos != 0
+
+
+def teardown_function():
+    remove_tmp_dir()
