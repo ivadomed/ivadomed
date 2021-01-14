@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Template for Fucntional Tests
+"""Template for Functional Tests
 
 This file is a template for writing functional tests. It will not be run during testing, but you
 can use it as a guide for writing your tests.
