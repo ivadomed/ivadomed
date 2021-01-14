@@ -1,12 +1,12 @@
 Installation
 ============
 
-Supported OS:
--------------
+Supported OS
+------------
 
-Currently, we only support ``MacOS`` and ``Linux`` operating systems. You can try installing
-on ``Windows``, but we cannot guarantee success. We would like to add support for ``Windows``
-in the future though.
+Currently, we only support ``MacOS`` and ``Linux`` operating systems. ``Windows``
+users have the possibility to install and use ``ivadomed`` via
+`Windows Subsystem for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/>`_.
 
 Python
 ------
