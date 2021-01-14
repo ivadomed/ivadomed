@@ -7,24 +7,36 @@ import nibabel as nib
 import numpy as np
 import pytest
 import scipy
-
+import os
 from ivadomed import postprocessing as imed_postpro
+from t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
 
 
-def nii_dummy_seg(size_arr=(15, 15, 9), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI', shape='rectangle',
-                  radius_RL=3.0, radius_AP=2.0, zeroslice=[], softseg=False):
-    """Create a dummy nibabel object with a ellipse or rectangle of ones running from top to bottom in the 3rd
+def setup_function():
+    create_tmp_dir()
+
+
+def nii_dummy_seg(size_arr=(15, 15, 9), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
+                  shape='rectangle', radius_RL=3.0, radius_AP=2.0, zeroslice=[], softseg=False):
+    """Create a dummy nibabel object.
+
+    Create either an ellipse or rectangle of ones running from top to bottom in the 3rd
     dimension.
-    :param size_arr: tuple: (nx, ny, nz)
-    :param pixdim: tuple: (px, py, pz)
-    :param dtype: Numpy dtype.
-    :param orientation: Orientation of the image. Default: LPI
-    :param shape: {'rectangle', 'ellipse'}
-    :param radius_RL: float: 1st radius. With a, b = 50.0, 30.0 (in mm), theoretical CSA of ellipse is 4712.4
-    :param radius_AP: float: 2nd radius
-    :param zeroslice: list int: zero all slices listed in this param
-    :param softseg: Bool: Generate soft segmentation by applying blurring filter.
-    :return: nibabel: Image object
+
+    Args:
+        size_arr (tuple): (nx, ny, nz)
+        pixdim (tuple): (px, py, pz)
+        dtype: Numpy dtype.
+        orientation: Orientation of the image. Default: LPI
+        shape: {'rectangle', 'ellipse'}
+        radius_RL (float): 1st radius. With a, b = 50.0, 30.0 (in mm), theoretical CSA of ellipse
+            is 4712.4
+        radius_AP: float: 2nd radius
+        zeroslice (list int): zero all slices listed in this param
+        softseg (bool): Generate soft segmentation by applying blurring filter.
+
+    Retunrs:
+        nibabel: Image object
     """
     # Create a 3d array, with dimensions corresponding to x: RL, y: AP, z: IS
     nx, ny, nz = [int(size_arr[i] * pixdim[i]) for i in range(3)]
@@ -52,11 +64,11 @@ def nii_dummy_seg(size_arr=(15, 15, 9), pixdim=(1, 1, 1), dtype=np.float64, orie
 
 
 def check_bin_vs_soft(arr_in, arr_out):
-    """
-    Make sure that if input was bin, output is also bin. Or, if input was soft, output is soft.
-    :param arr_in:
-    :param arr_out:
-    :return:
+    """Make sure that if input was bin, output is also bin. Or, if input was soft, output is soft.
+
+    Args:
+        arr_in: TODO
+        arr_out: TODO
     """
     if np.array_equal(arr_in, arr_in.astype(bool)):
         if np.array_equal(arr_out, arr_out.astype(bool)):
@@ -108,7 +120,9 @@ def test_keep_largest_object_per_slice(nii_seg):
     coord = (1, 1, 1)
     nii_seg.dataobj[coord] = 1
     # Test function with array input
-    arr_seg_proc = imed_postpro.keep_largest_object_per_slice(np.copy(np.asanyarray(nii_seg.dataobj)), axis=2)
+    arr_seg_proc = imed_postpro.keep_largest_object_per_slice(np.copy(
+                                                                np.asanyarray(nii_seg.dataobj)),
+                                                              axis=2)
     assert isinstance(arr_seg_proc, np.ndarray)
     assert check_bin_vs_soft(nii_seg.dataobj, arr_seg_proc)
     assert arr_seg_proc[coord] == 0
@@ -155,8 +169,13 @@ def test_label_file_from_coordinates():
     # create fake coordinate
     coord = [[0, 0, 0]]
     # load test image
-    nifti = nib.load('testing_data/sub-unf01/anat/sub-unf01_T1w.nii.gz')
+    nifti = nib.load(
+        os.path.join(__data_testing_dir__, 'sub-unf01/anat/sub-unf01_T1w.nii.gz'))
     # create fake label
     label = imed_postpro.label_file_from_coordinates(nifti, coord)
     # check if it worked
     assert isinstance(label, nib.nifti1.Nifti1Image)
+
+
+def teardown_function():
+    remove_tmp_dir()

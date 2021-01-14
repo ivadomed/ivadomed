@@ -1,5 +1,4 @@
 import time
-
 import numpy as np
 import pytest
 import torch.backends.cudnn as cudnn
@@ -10,9 +9,8 @@ from tqdm import tqdm
 from ivadomed import losses as imed_losses
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
-from ivadomed import training as imed_training
-from ivadomed.loader import film as imed_film
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
 
 cudnn.benchmark = True
 
@@ -20,12 +18,15 @@ GPU_NUMBER = 0
 BATCH_SIZE = 8
 N_EPOCHS = 2
 INIT_LR = 0.01
-PATH_BIDS = 'testing_data'
 MODEL_DEFAULT = {
     "dropout_rate": 0.3,
     "bn_momentum": 0.1,
     "depth": 3
 }
+
+
+def setup_function():
+    create_tmp_dir()
 
 
 @pytest.mark.parametrize('train_lst', [['sub-unf01']])
@@ -94,7 +95,7 @@ def test_unet_time(train_lst, target_lst, config):
         "data_list": train_lst,
         "dataset_type": "training",
         "requires_undo": False,
-        "bids_path": PATH_BIDS,
+        "bids_path": __data_testing_dir__,
         "target_suffix": target_lst,
         "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
         "slice_axis": "axial"
@@ -136,7 +137,7 @@ def test_unet_time(train_lst, target_lst, config):
     # TODO: add to pytest
     loss_fct = imed_losses.DiceLoss()
 
-    load_lst, pred_lst, opt_lst, schedul_lst, init_lst, gen_lst = [], [], [], [], [], []
+    load_lst, pred_lst, opt_lst, schedule_lst, init_lst, gen_lst = [], [], [], [], [], []
     for epoch in tqdm(range(1, N_EPOCHS + 1), desc="Training"):
         start_time = time.time()
 
@@ -185,11 +186,11 @@ def test_unet_time(train_lst, target_lst, config):
 
             start_gen = time.time()
 
-        start_schedul = time.time()
+        start_schedule = time.time()
         if not step_scheduler_batch:
             scheduler.step()
-        tot_schedul = time.time() - start_schedul
-        schedul_lst.append(tot_schedul)
+        tot_schedule = time.time() - start_schedule
+        schedule_lst.append(tot_schedule)
 
         end_time = time.time()
         total_time = end_time - start_time
@@ -200,4 +201,8 @@ def test_unet_time(train_lst, target_lst, config):
     print('Mean SD pred {} -- {}'.format(np.mean(pred_lst), np.std(pred_lst)))
     print('Mean SDopt {} --  {}'.format(np.mean(opt_lst), np.std(opt_lst)))
     print('Mean SD gen {} -- {}'.format(np.mean(gen_lst), np.std(gen_lst)))
-    print('Mean SD scheduler {} -- {}'.format(np.mean(schedul_lst), np.std(schedul_lst)))
+    print('Mean SD scheduler {} -- {}'.format(np.mean(schedule_lst), np.std(schedule_lst)))
+
+
+def teardown_function():
+    remove_tmp_dir()

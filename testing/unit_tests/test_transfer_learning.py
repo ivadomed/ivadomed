@@ -1,8 +1,9 @@
 import pytest
 import torch
 import torch.backends.cudnn as cudnn
-
+import os
 from ivadomed import models as imed_models
+from t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
 
 cudnn.benchmark = True
 
@@ -11,8 +12,12 @@ OUT_CHANNEL = 1
 INITIAL_LR = 0.001
 
 
+def setup_function():
+    create_tmp_dir()
+
+
 @pytest.mark.parametrize('fraction', [0.1, 0.2, 0.3])
-@pytest.mark.parametrize('path_model', ['testing_data/model_unet_test.pt'])
+@pytest.mark.parametrize('path_model', [os.path.join(__data_testing_dir__, 'model_unet_test.pt')])
 def test_transfer_learning(path_model, fraction, tolerance=0.15):
     device = torch.device("cpu")
     print("Working on {}.".format('cpu'))
@@ -20,7 +25,8 @@ def test_transfer_learning(path_model, fraction, tolerance=0.15):
     # Load pretrained model
     model_pretrained = torch.load(path_model, map_location=device)
     # Setup model for retrain
-    model_to_retrain = imed_models.set_model_for_retrain(path_model, retrain_fraction=fraction, map_location=device)
+    model_to_retrain = imed_models.set_model_for_retrain(path_model, retrain_fraction=fraction,
+                                                         map_location=device)
 
     print('\nSet fraction to retrain: ' + str(fraction))
 
@@ -39,7 +45,7 @@ def test_transfer_learning(path_model, fraction, tolerance=0.15):
     assert (total_params > total_trainable_params)
 
     # Check reset weights
-    reset_list = [(p1.data.ne(p2.data).sum() > 0).cpu().numpy() \
+    reset_list = [(p1.data.ne(p2.data).sum() > 0).cpu().numpy()
                   for p1, p2 in zip(model_pretrained.parameters(), model_to_retrain.parameters())]
     reset_measured = sum(reset_list) * 1.0 / len(reset_list)
     print('\nMeasure: reset fraction of the model: ' + str(round(reset_measured, 1)))
@@ -52,3 +58,7 @@ def test_transfer_learning(path_model, fraction, tolerance=0.15):
     #    else:
     #        print('\t', name_p1[0], False)
     # assert(weights_reset)
+
+
+def teardown_function():
+    remove_tmp_dir()

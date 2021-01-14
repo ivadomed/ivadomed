@@ -6,6 +6,9 @@ from torch.utils.data import DataLoader
 import ivadomed.transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
+import logging
+from t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__
+logger = logging.getLogger(__name__)
 
 GPU_NUMBER = 0
 BATCH_SIZE = 4
@@ -15,7 +18,10 @@ BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01
 FILM_LAYERS = [0, 0, 0, 0, 0, 1, 1, 1]
-PATH_BIDS = 'testing_data'
+
+
+def setup_function():
+    create_tmp_dir()
 
 
 def test_hdf5():
@@ -38,18 +44,19 @@ def test_hdf5():
 
     roi_params = {"suffix": "_seg-manual", "slice_filter_roi": None}
 
-    bids_to_hdf5 = imed_adaptative.BIDStoHDF5(PATH_BIDS,
-                                                subject_lst=train_lst,
-                                                path_hdf5='testing_data/mytestfile.hdf5',
-                                                target_suffix=["_lesion-manual"],
-                                                roi_params=roi_params,
-                                                contrast_lst=['T1w', 'T2w', 'T2star'],
-                                                metadata_choice="contrast",
-                                                transform=transform_lst,
-                                                contrast_balance={},
-                                                slice_axis=2,
-                                                slice_filter_fn=imed_loader_utils.SliceFilter(filter_empty_input=True,
-                                                                                    filter_empty_mask=True))
+    bids_to_hdf5 = imed_adaptative.BIDStoHDF5(__data_testing_dir__,
+                                              subject_lst=train_lst,
+                                              path_hdf5=os.path.join(__data_testing_dir__, 'mytestfile.hdf5'),
+                                              target_suffix=["_lesion-manual"],
+                                              roi_params=roi_params,
+                                              contrast_lst=['T1w', 'T2w', 'T2star'],
+                                              metadata_choice="contrast",
+                                              transform=transform_lst,
+                                              contrast_balance={},
+                                              slice_axis=2,
+                                              slice_filter_fn=imed_loader_utils.SliceFilter(
+                                                filter_empty_input=True,
+                                                filter_empty_mask=True))
 
     # Checking architecture
     def print_attrs(name, obj):
@@ -67,7 +74,7 @@ def test_hdf5():
 
         df = imed_adaptative.Dataframe(hdf5_file=hdf5_file,
                                        contrasts=['T1w', 'T2w', 'T2star'],
-                                       path='testing_data/hdf5.csv',
+                                       path=os.path.join(__data_testing_dir__, 'hdf5.csv'),
                                        target_suffix=['T1w', 'T2w', 'T2star'],
                                        roi_suffix=['T1w', 'T2w', 'T2star'],
                                        dim=2,
@@ -89,8 +96,8 @@ def test_hdf5():
                 "missing_probability_growth": 0.9,
                 "contrasts": ["T1w", "T2w"],
                 "ram": False,
-                "path_hdf5": 'testing_data/mytestfile.hdf5',
-                "csv_path": 'testing_data/hdf5.csv',
+                "path_hdf5": os.path.join(__data_testing_dir__, 'mytestfile.hdf5'),
+                "csv_path": os.path.join(__data_testing_dir__, 'hdf5.csv'),
                 "target_lst": ["T2w"],
                 "roi_lst": ["T2w"]
             }
@@ -99,7 +106,7 @@ def test_hdf5():
             "balance": {}
         }
 
-        dataset = imed_adaptative.HDF5Dataset(root_dir=PATH_BIDS,
+        dataset = imed_adaptative.HDF5Dataset(root_dir=__data_testing_dir__,
                                               subject_lst=train_lst,
                                               target_suffix="_lesion-manual",
                                               slice_axis=2,
@@ -108,8 +115,9 @@ def test_hdf5():
                                               transform=transform_lst,
                                               metadata_choice=False,
                                               dim=2,
-                                              slice_filter_fn=imed_loader_utils.SliceFilter(filter_empty_input=True,
-                                                                                     filter_empty_mask=True),
+                                              slice_filter_fn=imed_loader_utils.SliceFilter(
+                                                filter_empty_input=True,
+                                                filter_empty_mask=True),
                                               roi_params=roi_params)
 
         dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
@@ -145,6 +153,9 @@ def test_hdf5():
                 var_gt = gt_samples
 
             break
-        os.remove('testing_data/mytestfile.hdf5')
-        print("Congrats your dataloader works! You can go Home now and get a beer.")
+        print("Congrats your dataloader works! You can go home now and get a beer.")
         return 0
+
+
+def teardown_function():
+    remove_tmp_dir()
