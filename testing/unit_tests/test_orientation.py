@@ -7,7 +7,7 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
-from t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
 
 logger = logging.getLogger(__name__)
 

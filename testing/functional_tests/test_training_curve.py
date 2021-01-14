@@ -1,11 +1,13 @@
 import logging
 import os
-from t_utils import remove_tmp_dir, __tmp_dir__, create_tmp_dir
+from functional_tests.t_utils import remove_tmp_dir, __tmp_dir__, create_tmp_dir
 from ivadomed.scripts import training_curve
 logger = logging.getLogger(__name__)
 
+
 def setup_function():
     create_tmp_dir()
+
 
 def test_training_curve():
     __data_testing_dir__ = os.path.join(__tmp_dir__, "data_functional_testing")
@@ -23,6 +25,7 @@ def test_training_curve():
     assert os.path.exists(os.path.join(__output_dir__, "precision_score.png"))
     assert os.path.exists(os.path.join(__output_dir__, "recall_score.png"))
     assert os.path.exists(os.path.join(__output_dir__, "specificity_score.png"))
+
 
 def teardown_function():
     remove_tmp_dir()

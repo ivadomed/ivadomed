@@ -7,7 +7,7 @@ import io
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 import ivadomed.maths as imed_math
 from PIL import Image
-from t_utils import remove_tmp_dir, create_tmp_dir,  __tmp_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __tmp_dir__
 
 
 def setup_function():

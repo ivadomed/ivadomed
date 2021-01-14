@@ -1,6 +1,6 @@
 import logging
 import os
-from t_utils import remove_tmp_dir, __tmp_dir__, create_tmp_dir, __data_testing_dir__
+from functional_tests.t_utils import remove_tmp_dir, __tmp_dir__, create_tmp_dir, __data_testing_dir__
 from ivadomed.scripts import automate_training
 logger = logging.getLogger(__name__)
 

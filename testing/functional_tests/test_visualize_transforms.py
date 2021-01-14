@@ -1,6 +1,6 @@
 import logging
 import os
-from t_utils import remove_tmp_dir, __tmp_dir__, create_tmp_dir
+from functional_tests.t_utils import remove_tmp_dir, __tmp_dir__, create_tmp_dir
 from ivadomed.scripts import visualize_transforms
 logger = logging.getLogger(__name__)
 
