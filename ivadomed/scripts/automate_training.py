@@ -291,7 +291,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
         mp.set_start_method('spawn')
     except RuntimeError:
         if mp.get_start_method() != 'spawn':
-            logging.warning('Bleh')
+            logging.error(mp.get_start_method())
+            raise Exception()
 
     # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
     pool = mp.Pool(processes=len(initial_config["gpu"]))
