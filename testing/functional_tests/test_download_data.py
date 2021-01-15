@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def setup_function():
-    create_tmp_dir()
+    create_tmp_dir(copy_data_testing_dir=False)
 
 
 def test_download_data():
