@@ -156,19 +156,19 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             exit()
 
     if command == 'train':
-        ds_valid = get_validation_dataset(loader_params, valid_lst, transform_valid_params, device,
-                                          cuda_available)
+        ds_valid = get_dataset(loader_params, valid_lst, transform_valid_params, device,
+                               cuda_available, 'validation')
 
-        ds_train = get_training_dataset(loader_params, train_lst, transform_train_params, device,
-                                        cuda_available)
+        ds_train = get_dataset(loader_params, train_lst, transform_train_params, device,
+                               cuda_available, 'training')
         model_params, best_training_dice, best_training_loss, best_validation_dice, \
             best_validation_loss, ds_valid = run_training(ds_train, ds_valid, loader_params,
                                                           model_params, context, cuda_available,
                                                           log_directory, resume_training, device,
                                                           n_gif)
         if thr_increment:
-            ds_train = get_training_dataset(loader_params, train_lst, transform_valid_params,
-                                            device, cuda_available)
+            ds_train = get_dataset(loader_params, train_lst, transform_valid_params,
+                                   device, cuda_available, 'training')
 
             perform_threshold_analysis(context, log_directory, model_params, testing_params,
                                        thr_increment, cuda_available, device, ds_train,
@@ -176,11 +176,11 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
     if thr_increment:
-        ds_valid = get_validation_dataset(loader_params, valid_lst, transform_valid_params, device,
-                                          cuda_available)
+        ds_valid = get_dataset(loader_params, valid_lst, transform_valid_params, device,
+                               cuda_available, 'validation')
         # Get Training dataset with no Data Augmentation
-        ds_train = get_training_dataset(loader_params, train_lst, transform_valid_params, device,
-                                        cuda_available)
+        ds_train = get_dataset(loader_params, train_lst, transform_valid_params, device,
+                               cuda_available, 'training')
 
         context = perform_threshold_analysis(context, log_directory, model_params, testing_params,
                                              thr_increment, cuda_available, device, ds_train,
@@ -311,24 +311,22 @@ def get_testing_parameters(context, loader_params, undo_transforms):
     return testing_params
 
 
-def get_validation_dataset(loader_params, valid_lst, transform_valid_params, device,
-                           cuda_available):
-    ds_valid = imed_loader.load_dataset(**{**loader_params,
-                                           **{'data_list': valid_lst,
-                                              'transforms_params': transform_valid_params,
-                                              'dataset_type': 'validation'}}, device=device,
-                                        cuda_available=cuda_available)
-    return ds_valid
-
-
-def get_training_dataset(loader_params, train_lst, transform_train_params, device,
-                         cuda_available):
-    ds_train = imed_loader.load_dataset(**{**loader_params,
-                                           **{'data_list': train_lst,
-                                              'transforms_params': transform_train_params,
-                                              'dataset_type': 'training'}}, device=device,
-                                        cuda_available=cuda_available)
-    return ds_train
+def get_dataset(loader_params, data_list, transforms_params, device, cuda_available,
+                dataset_type, requires_undo=False):
+    if requires_undo:
+        dataset = imed_loader.load_dataset(**{**loader_params,
+                                              **{'data_list': data_list,
+                                                  'transforms_params': transforms_params,
+                                                  'dataset_type': 'training',
+                                                  'requires_undo': True}}, device=device,
+                                           cuda_available=cuda_available)
+    else:
+        dataset = imed_loader.load_dataset(**{**loader_params,
+                                              **{'data_list': data_list,
+                                                  'transforms_params': transforms_params,
+                                                  'dataset_type': 'training'}}, device=device,
+                                           cuda_available=cuda_available)
+    return dataset
 
 
 def run_training(ds_train, ds_valid, loader_params, model_params, context, cuda_available,
@@ -409,11 +407,8 @@ def perform_threshold_analysis(context, log_directory, model_params, testing_par
 
 def run_testing(loader_params, model_params, testing_params, test_lst, transformation_dict, device,
                 cuda_available, log_directory, context):
-    ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
-                                                              'transforms_params': transformation_dict,
-                                                              'dataset_type': 'testing',
-                                                              'requires_undo': True}}, device=device,
-                                       cuda_available=cuda_available)
+    ds_test = get_dataset(loader_params, test_lst, transformation_dict, device, cuda_available,
+                          'testing', requires_undo=True)
 
     metric_fns = imed_metrics.get_metric_fns(ds_test.task)
 
