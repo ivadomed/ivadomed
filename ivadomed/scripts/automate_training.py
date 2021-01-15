@@ -401,12 +401,6 @@ def main(args=None):
     # Get thr increment if available
     thr_increment = args.thr_increment if args.thr_increment else None
 
-    automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin),
-                      int(args.n_iterations), bool(args.run_test), args.all_logs, thr_increment,
-                      bool(args.multi_params), args.output_dir)
-
-
-if __name__ == '__main__':
     # CUDA problem when forking process
     # https://github.com/pytorch/pytorch/issues/2517
     try:
@@ -414,4 +408,11 @@ if __name__ == '__main__':
     except RuntimeError:
         if mp.get_start_method() != 'spawn':
             raise Exception(f"Error in set_start_method: {mp.get_start_method()}")
+
+    automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin),
+                      int(args.n_iterations), bool(args.run_test), args.all_logs, thr_increment,
+                      bool(args.multi_params), args.output_dir)
+
+
+if __name__ == '__main__':
     main()
