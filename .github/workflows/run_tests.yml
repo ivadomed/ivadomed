@@ -52,7 +52,7 @@ jobs:
 
   coveralls:
     needs: test
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     container: python:3-slim
     steps:
     - name: Finished
