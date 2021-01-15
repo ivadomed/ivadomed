@@ -287,7 +287,11 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
         output_dir = ""
     # CUDA problem when forking process
     # https://github.com/pytorch/pytorch/issues/2517
-    mp.set_start_method('spawn')
+    try:
+        mp.set_start_method('spawn')
+    except RuntimeError:
+        if mp.get_start_method() != 'spawn':
+            logging.warning('Bleh')
 
     # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
     pool = mp.Pool(processes=len(initial_config["gpu"]))
