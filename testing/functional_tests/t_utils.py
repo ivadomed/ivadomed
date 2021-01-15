@@ -85,19 +85,22 @@ def remove_dataset(dataset='data_testing', verbose=True):
     shutil.rmtree(__dataset_dir__, ignore_errors=True)
 
 
-def create_tmp_dir():
+def create_tmp_dir(copy_data_testing_dir=True):
     """Create temporary directory for test data and copy test data files.
 
     1. Remove the ``tmp`` directory if it exists.
-    2. Copy the ``fixtures`` directory to a ``tmp`` directory.
-    3. Copy the ``data_functional_testing`` directory to the ``tmp`` directory.
+    2. Copy the ``data_functional_testing`` directory to the ``tmp`` directory.
 
     Any data files created during testing will go into ``tmp`` directory.
     This is created/removed for each test.
+
+    Args:
+        copy_data_testing_dir (bool): If true, copy the __data_testing_dir_ref__ folder
+            into the ``tmp`` folder.
     """
     remove_tmp_dir()
     os.mkdir(__tmp_dir__)
-    if os.path.exists(__data_testing_dir__):
+    if os.path.exists(__data_testing_dir__) and copy_data_testing_dir:
         shutil.copytree(__data_testing_dir__,
                         os.path.join(__tmp_dir__, __data_testing_dir__))
 
