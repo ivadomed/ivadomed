@@ -20,7 +20,7 @@ from itertools import product
 import joblib
 import pandas as pd
 import torch.multiprocessing as mp
-
+# mp.set_start_method('spawn')
 from ivadomed import main as ivado
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
@@ -406,8 +406,9 @@ def main(args=None):
     try:
         mp.set_start_method('spawn')
     except RuntimeError:
-        if mp.get_start_method() != 'spawn':
-            logging.warning(f"set_start_method: {mp.get_start_method()}")
+        pass
+        # if mp.get_start_method() != 'spawn':
+        #     logging.warning(f"set_start_method: {mp.get_start_method()}")
             # raise Exception(f"Error in set_start_method: {mp.get_start_method()}")
 
     automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin),
