@@ -113,12 +113,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     """
     command = copy.deepcopy(context["command"])
 
-    log_directory = copy.deepcopy(context["log_directory"])
-    if not os.path.isdir(log_directory):
-        print('Creating log directory: {}'.format(log_directory))
-        os.makedirs(log_directory)
-    else:
-        print('Log directory already exists: {}'.format(log_directory))
+    log_directory = create_log_directory(context)
 
     create_dataset_and_ivadomed_version_log(context)
 
@@ -218,6 +213,16 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
     elif command == 'segment':
         run_segmentation(context, model_params)
+
+
+def create_log_directory(context):
+    log_directory = copy.deepcopy(context["log_directory"])
+    if not os.path.isdir(log_directory):
+        print('Creating log directory: {}'.format(log_directory))
+        os.makedirs(log_directory)
+    else:
+        print('Log directory already exists: {}'.format(log_directory))
+    return log_directory
 
 
 def get_loader_parameters(context, command):
