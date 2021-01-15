@@ -65,24 +65,6 @@ def get_parser():
     return parser
 
 
-def save_config_file(context, log_directory):
-    """Save config file within ``log_directory``.
-
-    Saved as {log_directory}/{model_name}.json
-    Done after threshold analysis to update info in config files.
-
-    Args:
-        context (dict): Dictionary containing all parameters that are needed for a given process.
-            See :doc:`configuration_file` for more details.
-        log_directory (str): Name of directory to store logging.
-    """
-
-    with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
-        json.dump(context, fp, indent=4)
-    with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
-        json.dump(context, fp, indent=4)
-
-
 def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     """Run main command.
 
@@ -111,15 +93,14 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             testing sub dataset and return the prediction metrics before evaluation.
         If "segment" command: No return value.
     """
-    command = copy.deepcopy(context["command"])
 
     log_directory = create_log_directory(context)
-
     create_dataset_and_ivadomed_version_log(context)
 
     # Define device
     cuda_available, device = imed_utils.define_device(context['gpu'])
 
+    command = copy.deepcopy(context["command"])
     # Get subject lists. "segment" command uses all participants of BIDS path, hence no need to split
     if command != "segment":
         train_lst, valid_lst, test_lst = \
@@ -514,6 +495,25 @@ def run_segmentation(context, model_params):
             filename = subject.record['subject_id'] + "_" + subject.record['modality'] + target + "_pred" + \
                        ".nii.gz"
             nib.save(pred, os.path.join(pred_path, filename))
+
+
+def save_config_file(context, log_directory):
+    """Save config file within ``log_directory``.
+
+    Saved as {log_directory}/{model_name}.json
+    Done after threshold analysis to update info in config files.
+
+    Args:
+        context (dict): Dictionary containing all parameters that are needed for a given process.
+            See :doc:`configuration_file` for more details.
+        log_directory (str): Name of directory to store logging.
+    """
+
+    with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
+        json.dump(context, fp, indent=4)
+    with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"),
+              'w') as fp:
+        json.dump(context, fp, indent=4)
 
 
 def create_dataset_and_ivadomed_version_log(context):
