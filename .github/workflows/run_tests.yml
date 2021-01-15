@@ -31,8 +31,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest coverage coveralls pytest-cov
         # if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        If (Test-Path -Path requirements.txt ) { pip install -r requirements.txt }
-        pip install torch==1.7.1+cpu torchvision==0.8.2+cpu torchaudio===0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
+        If (Test-Path -Path requirements.txt ) { pip install -r requirements.txt -f https://download.pytorch.org/whl/torch_stable.html }
+        # pip install torch==1.7.1+cpu torchvision==0.8.2+cpu torchaudio===0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
         pip install -e .
     - name: Lint with flake8
       run: |
