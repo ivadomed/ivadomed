@@ -5,6 +5,9 @@ import copy
 import joblib
 import torch.backends.cudnn as cudnn
 import nibabel as nib
+import sys
+import platform
+import multiprocessing
 
 from bids_neuropoly import bids
 from ivadomed.utils import logger
@@ -97,6 +100,9 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         os.makedirs(log_directory)
     else:
         print('Log directory already exists: {}'.format(log_directory))
+
+    # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
+    create_dataset_and_ivadomed_version_log(context)
 
     # Define device
     cuda_available, device = imed_utils.define_device(context['gpu'])
@@ -376,6 +382,76 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                 filename = subject.record['subject_id'] + "_" + subject.record['modality'] + target + "_pred" + \
                            ".nii.gz"
                 nib.save(pred, os.path.join(pred_path, filename))
+
+
+def create_dataset_and_ivadomed_version_log(context):
+
+    dataset_paths = context['loader_parameters']['bids_path']
+
+    ivadomed_version = imed_utils._version_string()
+    datasets_version = []
+
+    if isinstance(dataset_paths, str):
+        datasets_version = [imed_utils.__get_commit(path_to_git_folder=dataset_paths)]
+    elif type(dataset_paths)==type([]):  # Bad
+        for Dataset in dataset_paths:
+            datasets_version.append(imed_utils.__get_commit(path_to_git_folder=Dataset))
+
+    log_file = os.path.join(context['log_directory'], 'version_info.log')
+
+    try:
+        f = open(log_file, "w")
+    except OSError as err:
+        print("OS error: {0}".format(err))
+        raise Exception("Have you selected a log folder, and do you have write permissions for that folder?")
+
+    # IVADOMED
+    f.write('IVADOMED TOOLBOX\n----------------\n(' + ivadomed_version + ')')
+
+    # DATASETS
+    f.write('\n\n\nDATASET VERSION\n---------------\n')
+    if len(datasets_version) == 1:
+        f.write('A single BIDS dataset was used for training.\n' + dataset_paths)
+        if datasets_version[0] != '?!?':  # This is what was returned from _version_string when no git is present
+            f.write(' - Dataset Annex version: ' + datasets_version[0] + '\n\n')
+        else:
+            f.write(' - Dataset is not Annexed.\n')
+    else:
+        f.write('The following BIDS datasets were used for training.\n')
+
+        for iDataset in len(dataset_paths):
+            if len(datasets_version[0]) != 0:
+                f.write(str(iDataset+1) + '. ' + dataset_paths[iDataset] + ' - Dataset Annex version: ' + datasets_version[0] + '\n')
+            else:
+                f.write('\n')
+
+    # SYSTEM INFO
+    f.write('\n\nSYSTEM INFO\n-------------\n')
+    platform_running = sys.platform
+    if platform_running.find('darwin') != -1:
+        os_running = 'osx'
+    elif platform_running.find('linux') != -1:
+        os_running = 'linux'
+    elif platform_running.find('win32') or platform_running.find('win64'):
+        os_running = 'windows'
+    else:
+        os_running = 'NA'
+
+    f.write('OS: ' + os_running + ' (' + platform.platform() + ')\n')
+
+    # Display number of CPU cores
+    f.write('CPU cores: Available: {}\n\n\n\n\n'.format(multiprocessing.cpu_count()))
+
+    # USER INPUTS
+    f.write('CONFIG INPUTS\n-------------\n')
+    if sys.version_info[0] > 2:
+        for k, v in context.items():
+            f.write(str(k) + ': ' + str(v) + '\n')  # Making sure all numbers are converted to strings
+    else:
+        for k, v in context.viewitems():  # Python2
+            f.write(str(k) + ': ' + str(v) + '\n')
+
+    f.close()
 
 
 def run_main():
