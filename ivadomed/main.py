@@ -38,20 +38,27 @@ def get_parser():
     # OPTIONAL ARGUMENTS
     optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
     optional_args.add_argument('-g', '--gif', required=False, type=int, default=0,
-                               help='Number of GIF files to output. Each GIF file corresponds to a 2D slice showing the '
-                                    'prediction over epochs (one frame per epoch). The prediction is run on the '
-                                    'validation dataset. GIF files are saved in the log directory.')
-    optional_args.add_argument('-t', '--thr-increment', dest="thr_increment", required=False, type=float,
-                               help='A threshold analysis is performed at the end of the training using the trained '
-                                    'model and the training+validation sub-datasets to find the optimal binarization '
-                                    'threshold. The specified value indicates the increment between 0 and 1 used during '
-                                    'the analysis (e.g. 0.1). Plot is saved under "log_directory/thr.png" and the '
-                                    'optimal threshold in "log_directory/config_file.json as "binarize_prediction" '
-                                    'parameter.')
-    optional_args.add_argument('--resume-training', dest="resume_training", required=False, action='store_true',
-                               help='Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume '
-                                    'training. This training state is saved everytime a new best model is saved in the'
-                                    'log directory.')
+                               help="""Number of GIF files to output. Each GIF file corresponds to
+                                       a 2D slice showing the prediction over epochs
+                                       (one frame per epoch). The prediction is run on the
+                                       validation dataset. GIF files are saved in the log
+                                       directory.""")
+    optional_args.add_argument('-t', '--thr-increment', dest="thr_increment", required=False,
+                               type=float,
+                               help="""A threshold analysis is performed at the end of the training
+                                       using the trained model and the training+validation
+                                       sub-datasets to find the optimal binarization threshold. The
+                                       specified value indicates the increment between 0 and 1 used
+                                       during the analysis (e.g. 0.1). Plot is saved under
+                                       "log_directory/thr.png" and the optimal threshold in
+                                       "log_directory/config_file.json as "binarize_prediction"
+                                       parameter.""")
+    optional_args.add_argument('--resume-training', dest="resume_training", required=False,
+                               action='store_true',
+                               help="""Load a saved model ("checkpoint.pth.tar" in the
+                                       log_directory) for resume training. This training state is
+                                       saved everytime a new best model is saved in the log
+                                       directory.""")
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                                help='Shows function documentation.')
 
@@ -79,30 +86,33 @@ def save_config_file(context, log_directory):
 def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     """Run main command.
 
-    This function is central in the ivadomed project as training / testing / evaluation commands are run via this
-    function. All the process parameters are defined in the config.
+    This function is central in the ivadomed project as training / testing / evaluation commands
+    are run via this function. All the process parameters are defined in the config.
 
     Args:
-        context (dict): Dictionary containing all parameters that are needed for a given process. See
-            :doc:`configuration_file` for more details.
-        n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
-            parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
-            predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
-        thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
-            the training + validation sub-dataset to find the optimal binarization threshold. The specified value
-            indicates the increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
-        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume training.
-            This training state is saved everytime a new best model is saved in the log
-            directory.
+        context (dict): Dictionary containing all parameters that are needed for a given process.
+            See :doc:`configuration_file` for more details.
+        n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a
+            given slice. The parameter indicates the number of 2D slices used to generate GIFs,
+            one GIF per slice. A GIF shows predictions of a given slice from the validation
+            sub-dataset. They are saved within the log directory.
+        thr_increment (float): A threshold analysis is performed at the end of the training using
+            the trained model and the training + validation sub-dataset to find the optimal
+            binarization threshold. The specified value indicates the increment between 0 and 1
+            used during the ROC analysis (e.g. 0.1).
+        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the log_directory) for
+            resume training. This training state is saved everytime a new best model is saved in
+            the log directory.
 
     Returns:
         Float or pandas Dataframe:
         If "train" command: Returns floats: best loss score for both training and validation.
-        If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing
-            sub dataset and return the prediction metrics before evaluation.
+        If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of the
+            testing sub dataset and return the prediction metrics before evaluation.
         If "segment" command: No return value.
     """
     command = copy.deepcopy(context["command"])
+
     log_directory = copy.deepcopy(context["log_directory"])
     if not os.path.isdir(log_directory):
         print('Creating log directory: {}'.format(log_directory))
@@ -110,7 +120,6 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     else:
         print('Log directory already exists: {}'.format(log_directory))
 
-    # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
     create_dataset_and_ivadomed_version_log(context)
 
     # Define device
@@ -118,12 +127,13 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
     # Get subject lists. "segment" command uses all participants of BIDS path, hence no need to split
     if command != "segment":
-        train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
-                                                                                         context['loader_parameters']
-                                                                                         ['bids_path'],
-                                                                                         log_directory,
-                                                                                         context["loader_parameters"]
-                                                                                         ['subject_selection'])
+        train_lst, valid_lst, test_lst = \
+            imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
+                                                            context['loader_parameters']
+                                                            ['bids_path'],
+                                                            log_directory,
+                                                            context["loader_parameters"]
+                                                            ['subject_selection'])
 
     loader_params = get_loader_parameters(context, command)
 
@@ -162,8 +172,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     # Check if multiple raters
     if any([isinstance(class_suffix, list) for class_suffix in loader_params["target_suffix"]]):
         print(
-            "\nAnnotations from multiple raters will be used during model training, one annotation from one rater "
-            "randomly selected at each iteration.\n")
+            """\nAnnotations from multiple raters will be used during model training, one annotation
+                from one rater randomly selected at each iteration.\n""")
         if command != "train":
             print(
                 "\nERROR: Please provide only one annotation per class in 'target_suffix' when not training a model.\n")
@@ -176,12 +186,13 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         ds_train = get_training_dataset(loader_params, train_lst, transform_train_params, device,
                                         cuda_available)
         model_params, best_training_dice, best_training_loss, best_validation_dice, \
-            best_validation_loss, ds_valid = run_training(ds_train, ds_valid, loader_params, model_params,
-                                                context, cuda_available, log_directory,
-                                                resume_training, device, n_gif)
+            best_validation_loss, ds_valid = run_training(ds_train, ds_valid, loader_params,
+                                                          model_params, context, cuda_available,
+                                                          log_directory, resume_training, device,
+                                                          n_gif)
         if thr_increment:
-            ds_train = get_training_dataset(loader_params, train_lst, transform_valid_params, device,
-                                            cuda_available)
+            ds_train = get_training_dataset(loader_params, train_lst, transform_valid_params,
+                                            device, cuda_available)
 
             perform_threshold_analysis(context, log_directory, model_params, testing_params,
                                        thr_increment, cuda_available, device, ds_train,
@@ -501,6 +512,11 @@ def run_segmentation(context, model_params):
 
 
 def create_dataset_and_ivadomed_version_log(context):
+    """Create log with the version of Ivadomed software and the version of Annexed dataset (if present).
+
+    Args:
+        context (dict): TODO
+    """
 
     dataset_paths = context['loader_parameters']['bids_path']
 
@@ -509,7 +525,7 @@ def create_dataset_and_ivadomed_version_log(context):
 
     if isinstance(dataset_paths, str):
         datasets_version = [imed_utils.__get_commit(path_to_git_folder=dataset_paths)]
-    elif type(dataset_paths)==type([]):  # Bad
+    elif type(dataset_paths) == type([]):  # Bad
         for Dataset in dataset_paths:
             datasets_version.append(imed_utils.__get_commit(path_to_git_folder=Dataset))
 
