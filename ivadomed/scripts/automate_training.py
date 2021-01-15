@@ -288,7 +288,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     # CUDA problem when forking process
     # https://github.com/pytorch/pytorch/issues/2517
     try:
-        mp.set_start_method('spawn')
+        mp.set_start_method('spawn', force=True)
     except RuntimeError:
         if mp.get_start_method() != 'spawn':
             logging.error(mp.get_start_method())
