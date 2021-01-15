@@ -407,7 +407,8 @@ def main(args=None):
         mp.set_start_method('spawn')
     except RuntimeError:
         if mp.get_start_method() != 'spawn':
-            raise Exception(f"Error in set_start_method: {mp.get_start_method()}")
+            logging.warning(f"set_start_method: {mp.get_start_method()}")
+            # raise Exception(f"Error in set_start_method: {mp.get_start_method()}")
 
     automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin),
                       int(args.n_iterations), bool(args.run_test), args.all_logs, thr_increment,
