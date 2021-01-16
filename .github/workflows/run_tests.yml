@@ -88,7 +88,7 @@ jobs:
          coveralls --service=github
 
   coveralls:
-    needs: test
+    needs: ["test-linux", "test-windows"]
     runs-on: ubuntu-latest
     container: python:3-slim
     steps:
