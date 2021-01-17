@@ -676,14 +676,15 @@ class HDF5Dataset:
 
             return data_dict
 
-    def update(self, strategy="Missing", p=0.0001):
+    def update(self, strategy="Missing", p=0.0001, contrasts=['T1w']):
         """Update the Dataframe itself.
 
         Args:
             p (float): Float between 0 and 1, probability of the contrast to be missing.
-            strategy (str): Update the dataframe using the corresponding strategy. For now the only the strategy
-                implemented is the one used by HeMIS (i.e. by removing contrasts with a certain probability.) Other
-                strategies that could be implemented are Active Learning, Curriculum Learning, ...
+            contrasts (list): Contrasts to remove during training and testing. 
+            strategy (str): Update the dataframe using the corresponding strategy. Current options are:
+                * 'Missing' - contrasts are removed with probability p (used for HeMIS)
+                * 'Remove_contrast' - remove all contrasts present in 'contrasts' variable (used for HeMIS)
         """
         if strategy == 'Missing':
             print("Probalility of missing contrast = {}".format(p))
@@ -696,6 +697,19 @@ class HDF5Dataset:
                 self.cst_matrix[idx, ] = missing_mod
 
             print("Missing contrasts = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
+        if strategy == 'Remove_contrasts':
+            # Reset contrast matrix in case it was updated somewhere
+            self.cst_matrix = np.ones([len(self.dataframe), len(self.cst_lst)], dtype=int)
+
+            # Guard against unknown/misspelled contrasts
+            if not all([cst in self.cst_lst for cst in contrasts]):
+                raise ValueError("One or more contrasts ordered to be missing are not found in the dataset.")
+
+            print("Removing the following contrasts from pool: ", contrasts)
+            cols = [self.cst_lst.index(cst) for cst in contrasts]
+            self.cst_matrix[:,cols] = 0
+        else:
+            pass
 
 
 def HDF5ToBIDS(path_hdf5, subjects, path_dir):
