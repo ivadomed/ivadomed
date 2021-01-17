@@ -74,14 +74,11 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         nib_painted = nib.Nifti1Image(data_painted, nib_pred.affine)
         nib.save(nib_painted, fname_paint)
 
-<<<<<<< HEAD
         # SAVE PAINTED DATA (ONE PLANE, ARGMAX)
         fname_paint_argmax = fname_pred.split('.nii.gz')[0] + '_painted_argmax.nii.gz'
         nib_painted_argmax = nib.Nifti1Image(data_painted_argmax, nib_pred.affine)
         nib.save(nib_painted_argmax, fname_paint_argmax)
 
-=======
->>>>>>> master
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
         df_results = df_results.append(results_pred, ignore_index=True)
