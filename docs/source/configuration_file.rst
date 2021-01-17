@@ -1,14 +1,33 @@
 Configuration File
 ==================
 
+All parameters used for loading data, training and predicting are contained
+within a single JSON configuration file. This section describes how to set up
+this configuration file.
+
+For convenience, here is an generic configuration file: `config\_config.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config.json>`__.
+
+Below are other, more specific configuration files:
+
+- `config\_classification.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config_classification.json>`__: Trains a classification model.
+
+- `config\_sctTesting.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config_sctTesting.json>`__: Trains a 2D segmentation task with the U-Net architecture.
+
+- `config\_spineGeHemis.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config_spineGeHemis.json>`__: Trains a segmentation task with the HeMIS-UNet architecture.
+
+- `config\_tumorSeg.json <https://raw.githubusercontent.com/ivadomed/ivadomed/master/ivadomed/config/config_tumorSeg.json>`__: Trains a segmentation task with a 3D U-Net architecture.
+
+
 General parameters
 ------------------
 
 command
 ^^^^^^^
 
-Run the specified command. Choices: ``"train"`` or ``"test"``,
-to train and evaluate a model respectively.
+Run the specified command. Choices: ``"train"``: train a model on a training/validation
+sub-datasets, ``"test"``: evaluate a trained model on a testing sub-dataset, ``"segment"``:
+segment a entire dataset using a trained model.
+
 
 gpu
 ^^^
@@ -51,6 +70,25 @@ bids\_path
 
 String. Path of the BIDS folder.
 
+bids\_config
+^^^^^^^^^^^^
+
+String (Optional). Path of the custom BIDS configuration file for BIDS non-compliant modalities
+(e.g. ``"ivadomed/config/config_bids.json"``).
+
+subject\_selection
+^^^^^^^^^^^^^^^^^^
+
+Dict.  Used to specify a custom subject selection from a dataset.
+
+- ``n``: List. List containing the number subjects of each metadata.
+- ``metadata``: List. List of metadata used to select the subjects. Each metadata
+  should be the name of a column from the participants.tsv file.
+- ``value``: List. List of metadata values of the subject to be selected.
+
+Example: ``"subject_selection": {"n": [5, 10], "metadata": ["disease", "disease"], "value": ["healthy", "ms"]}``.
+In this example, a subdataset composed of 5 healthy subjects and 10 ms subjects will be selected for training/testing.
+
 target\_suffix
 ^^^^^^^^^^^^^^
 
@@ -58,7 +96,17 @@ List. Suffix list of the derivative file containing the ground-truth of
 interest (e.g. [``"_seg-manual"``, ``"_lesion-manual"``]). The length of
 this list controls the number of output channels of the model (i.e.
 ``out_channel``). If the list has a length greater than 1, then a
-multi-class model will be trained.
+multi-class model will be trained. If a list of list(s) is input for a
+training, (e.g. [[``"_seg-manual-rater1"``, ``"_seg-manual-rater2"``],
+[``"_lesion-manual-rater1"``, ``"_lesion-manual-rater2"``]), then each
+sublist is associated with one class but contains the annotations from
+different experts: at each training iteration, one of these annotations
+will be randomly chosen.
+
+extensions
+^^^^^^^^^^
+
+List. Used to specify a list of file extensions to be selected for training/testing.
 
 contrasts
 ^^^^^^^^^
@@ -95,20 +143,26 @@ slice\_filter
 ^^^^^^^^^^^^^
 
 Dict. Discard a slice from the dataset if it meets a condition, see
-below. 
+below.
 
 -  ``filter_empty_input``: Bool. Discard slices where all voxel
-   intensities are zeros. 
+   intensities are zeros.
 -  ``filter_empty_mask``: Bool. Discard slices
    where all voxel labels are zeros.
+-  ``filter_absent_class``: Bool. Discard slices where all voxel
+   labels are zero for one or more classes (this is most relevant for
+   multi-class models that need GT for all classes at train time).
+-  ``filter_classification``: Bool. Discard slices where all images fail 
+   a custom classifier filter. If used, ``classifier_path`` must also be
+   specified, pointing to a saved PyTorch classifier. 
 
 roi
 ^^^
 
-Dict. of parameters about the region of interest 
+Dict. of parameters about the region of interest
 
 -  ``suffix``: String. Suffix of the derivative file containing the ROI used to crop (e.g. ``"_seg-manual"``) with ``ROICrop`` as transform. Please use ``null`` if
-   you do not want to use an ROI to crop. 
+   you do not want to use an ROI to crop.
 -  ``slice_filter_roi``: int. If the ROI mask contains less than ``slice_filter_roi`` non-zero voxels,
    the slice will be discarded from the dataset. This feature helps with
    noisy labels, e.g., if a slice contains only 2-3 labeled voxels, we do
@@ -228,8 +282,12 @@ scheduler
 balance\_samples
 ^^^^^^^^^^^^^^^^
 
-Bool. Balance positive and negative labels in both the training and the
-validation datasets.
+Dict. Balance labels in both the training and the validation datasets.
+
+- ``applied``: Bool. Indicates whether to use a balanced sampler or not.
+- ``type``: Str. Indicates which metadata to use to balance the sampler.
+  Choices: ``gt`` or  the name of a column from the participants.tsv file
+  (i.e. subject-based metadata).
 
 mixup\_alpha
 ^^^^^^^^^^^^
@@ -254,9 +312,9 @@ Architecture
 ------------
 
 Architectures for both segmentation and classification are available and
-described in the :ref:`models:Models` section. If the selected
+described in the :ref:`architectures` section. If the selected
 architecture is listed in the
-`loader <ivadomed/loader/loader.py>`__ file, a
+`loader <https://github.com/ivadomed/ivadomed/blob/lr/fixing_documentation/ivadomed/loader/loader.py>`__ file, a
 classification (not segmentation) task is run. In the case of a
 classification task, the ground truth will correspond to a single label
 value extracted from ``target``, instead being an array (the latter
@@ -265,16 +323,18 @@ being used for the segmentation task).
 default\_model (Mandatory)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Dict. Define the default model (``Unet``) and mandatory parameters that
-are common to all available architectures (listed in the
-:ref:`models:Models` section). For more specific models (see below),
+Dictionary. Define the default model (``Unet``) and mandatory parameters that
+are common to all available :ref:`architectures`. For custom architectures (see below),
 the default parameters are merged with the parameters that are specific
-to the tailored model.
+to the tailored architecture.
 
-- ``name``: ``Unet`` (default) 
-- ``dropout_rate``: Float (e.g. 0.4). 
+- ``name``: ``Unet`` (default)
+- ``dropout_rate``: Float (e.g. 0.4).
 - ``batch_norm_momentum``: Float (e.g. 0.1).
-- ``depth``: Strictly positive integer. Number of down-sampling operations. - ``relu`` (optional): Bool. Sets final activation to normalized ReLU (relu between 0 and 1).
+- ``depth``: Strictly positive integer. Number of down-sampling operations. - ``relu`` (optional): Bool.
+  Sets final activation to normalized ReLU (relu between 0 and 1), instead of sigmoid. Only available when `is_2D=True`.
+- ``is_dim``: Indicates dimensionality of model (2D or 3D). If ``is_dim`` is ``False``, then parameters ``length_3D`` and
+  ``stride_3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`).
 
 FiLMedUnet (Optional)
 ^^^^^^^^^^^^^^^^^^^^^
@@ -299,8 +359,10 @@ HeMISUnet (Optional)
    growth at each epoch: at each epoch, the ``missing_probability`` is
    modified with the exponent ``missing_probability_growth``.
 
-UNet3D (Optional)
-^^^^^^^^^^^^^^^^^
+.. _Modified3DUNet:
+
+Modified3DUNet (Optional)
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 -  ``length_3D``: (Int, Int, Int). Size of the 3D patches used as
    model's input tensors.
@@ -312,35 +374,16 @@ UNet3D (Optional)
 -  ``attention_unet`` (optional): Bool. Use attention gates in the Unet's decoder.
 -  ``n_filters`` (optional): Int. Number of filters in the first convolution of the UNet. This number of filters will be doubled at each convolution.
 
-Testing parameters
-------------------
-
-- ``binarize_prediction``: Float. Threshold (between 0 and 1) used to binarize
-  the predictions before computing the validation metrics. To use soft predictions
-  (i.e. no binarisation, float between 0 and 1) for metric computation, indicate -1.
-
-uncertainty
-^^^^^^^^^^^
-
-Uncertainty computation is performed if ``n_it>0`` and at least
-``epistemic`` or ``aleatoric`` is ``true``. Note: both ``epistemic`` and
-``aleatoric`` can be ``true``.
- 
-- ``epistemic``: Bool. Model-based uncertainty with `Monte Carlo Dropout <https://arxiv.org/abs/1506.02142>`__. 
-- ``aleatoric``: Bool. Image-based uncertainty with `test-time augmentation <https://doi.org/10.1016/j.neucom.2019.01.103>`__.
-- ``n_it``: Integer. Number of Monte Carlo iterations. Set to 0 for no
-  uncertainty computation.
-
 Cascaded Architecture Features
 ------------------------------
 
 object\_detection\_params (Optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
--  ``object_detection_path``: String. Path to object detection model and 
-   the configuration file. The folder, configuration file, and model need 
-   to have the same name (e.g. ``findcord_tumor/``, 
-   ``findcord_tumor/findcord_tumor.json``, and 
+-  ``object_detection_path``: String. Path to object detection model and
+   the configuration file. The folder, configuration file, and model need
+   to have the same name (e.g. ``findcord_tumor/``,
+   ``findcord_tumor/findcord_tumor.json``, and
    ``findcord_tumor/findcord_tumor.onnx``, respectively).
    The model's prediction will be used to generate bounding boxes.
 -  ``safety_factor``: List. List of length 3 containing the factors to
@@ -386,8 +429,99 @@ Available transformations:
    ``0`` to disable.
 -  ``HistogramClipping`` (parameters: ``min_percentile``,
    ``max_percentile``)
--  ``Clage`` (parameters: ``clip_limit``, ``kernel_size``)
+-  ``Clahe`` (parameters: ``clip_limit``, ``kernel_size``)
 -  ``RandomReverse``
+
+.. _Uncertainty:
+
+Uncertainty
+___________
+
+Uncertainty computation is performed if ``n_it>0`` and at least
+``epistemic`` or ``aleatoric`` is ``true``. Note: both ``epistemic`` and
+``aleatoric`` can be ``true``.
+
+epistemic
+^^^^^^^^^
+Bool. Model-based uncertainty with `Monte Carlo Dropout <https://arxiv.org/abs/1506.02142>`__.
+
+aleatoric
+^^^^^^^^^
+Bool. Image-based uncertainty with `test-time augmentation <https://doi.org/10.1016/j.neucom.2019.01.103>`__.
+
+n_it
+^^^^
+Integer. Number of Monte Carlo iterations. Set to 0 for no uncertainty computation.
+
+Postprocessing
+--------------
+
+binarize\_prediction
+^^^^^^^^^^^^^^^^^^^^
+Dict. Binarizes predictions according to the given threshold ``thr``. Predictions below the threshold become 0, and
+predictions above or equal to threshold become 1.
+
+- ``thr``: Float. Threshold is between 0 and 1. To use soft predictions
+  (i.e. no binarisation, float between 0 and 1) for metric computation, indicate -1.
+
+binarize\_maxpooling
+^^^^^^^^^^^^^^^^^^^^
+Dict. Binarize by setting to 1 the voxel having the maximum prediction across all classes. Useful for multiclass models.
+No parameters required (i.e., {}).
+
+fill\_holes
+^^^^^^^^^^^
+Dict. Fill holes in the predictions. No parameters required (i.e., {}).
+
+keep\_largest
+^^^^^^^^^^^^^
+Dict. Keeps only the largest connected object in prediction. Only nearest neighbors are connected to the center,
+diagonally-connected elements are not considered neighbors. No parameters required (i.e., {})
+
+remove\_noise
+^^^^^^^^^^^^^
+Dict. Sets to zero prediction values strictly below the given threshold ``thr``.
+
+- ``thr``: Float. Threshold is between 0 and 1. Threshold set to ``-1`` will not apply this postprocessing step.
+
+remove\_small
+^^^^^^^^^^^^^
+Dict. Remove small objects from the prediction. An object is defined as a group of connected voxels. Only nearest
+neighbors are connected to the center, diagonally-connected elements are not considered neighbors.
+
+- ``unit``: String. Either "vox" for voxels or "mm3". Indicates the unit used to define the minimal object size.
+- ``thr``: Int or list. Minimal object size. If a list of thresholds is chosen, the length should match the number of
+  predicted classes.
+
+threshold\_uncertainty
+^^^^^^^^^^^^^^^^^^^^^^
+Dict. Removes the most uncertain predictions (set to 0) according to a threshold ``thr`` using the uncertainty file with
+the suffix ``suffix``. To apply this method, uncertainty needs to be evaluated on the predictions with the
+:ref:`uncertainty <Uncertainty>` parameter.
+
+- ``thr``: Float. Threshold is between 0 and 1. Threshold set to ``-1`` will not apply this postprocessing step.
+- ``suffix``: String. Indicates the suffix of an uncertainty file. Choices: ``_unc-vox.nii.gz`` for voxel-wise
+  uncertainty, ``_unc-avgUnc.nii.gz`` for structure-wise uncertainty derived from mean value of ``_unc-vox.nii.gz``
+  within a given connected object, ``_unc-cv.nii.gz`` for structure-wise uncertainty derived from coefficient of
+  variation, ``_unc-iou.nii.gz`` for structure-wise measure of uncertainty derived from the Intersection-over-Union of
+  the predictions, or ``_soft.nii.gz`` to threshold on the average of Monte Carlo iterations.
+
+Evaluation parameters
+---------------------
+Dict. Parameters to get object detection metrics (true positive and false detection rates), and this, for defined
+object sizes.
+
+targetSize
+^^^^^^^^^^
+- ``unit``: String. Either "vox" for voxels or "mm3". Indicates the unit used to define the target object sizes.
+- ``thr``: List. Containing int values. These values will create several consecutive target size bins. For instance with a list of two values, we will have three target size bins: minimal size to first list
+  element, first list element to second list element, and second list element to infinity.
+
+overlap
+^^^^^^^
+- ``unit``: String. Either "vox" for voxels or "mm3". Indicates the unit used to define the overlap.
+- ``thr``: Int. Minimal object size overlapping to be considered a TP, FP, or FN.
+
 
 Examples
 --------

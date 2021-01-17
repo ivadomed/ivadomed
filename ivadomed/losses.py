@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import scipy
+import scipy.ndimage
 import numpy as np
 
 
@@ -181,7 +182,7 @@ class GeneralizedDiceLoss(nn.Module):
         epsilon (float): Epsilon to avoid division by zero.
         include_background (float): If True, then an extra channel is added, which represents the background class.
     """
-    
+
     def __init__(self, epsilon=1e-5, include_background=True):
         super(GeneralizedDiceLoss, self).__init__()
         self.epsilon = epsilon
@@ -342,7 +343,7 @@ class AdapWingLoss(nn.Module):
     Adaptive Wing loss
     Used for heatmap ground truth.
 
-    ..seealso::
+    .. seealso::
         Wang, Xinyao, Liefeng Bo, and Li Fuxin. "Adaptive wing loss for robust face alignment via heatmap regression."
         Proceedings of the IEEE International Conference on Computer Vision. 2019.
 
@@ -377,6 +378,10 @@ class AdapWingLoss(nn.Module):
 
         mask = torch.zeros_like(target)
         kernel = scipy.ndimage.morphology.generate_binary_structure(2, 2)
+        # For 3D segmentation tasks
+        if len(input.shape) == 5:
+            kernel = scipy.ndimage.morphology.generate_binary_structure(3, 2)
+
         for i in range(batch_size):
             img_list = list()
             img_list.append(np.round(target[i].cpu().numpy() * 255))

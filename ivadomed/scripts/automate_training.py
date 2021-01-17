@@ -23,6 +23,7 @@ import pandas as pd
 import torch.multiprocessing as mp
 
 from ivadomed import main as ivado
+from ivadomed import config_manager as imed_config_manager
 from ivadomed.utils import init_ivadomed
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.scripts.compare_models import compute_statistics
@@ -39,7 +40,9 @@ def get_parser():
     parser.add_argument("-n", "--n-iterations", dest="n_iterations", default=1,
                         type=int, help="Number of times to run each config.")
     parser.add_argument("--all-combin", dest='all_combin', action='store_true',
-                        help="To run all combinations of config")
+                        help="To run all combinations of config"),
+    parser.add_argument("-m", "--multi-params", dest="multi_params", action='store_true',
+                        help="To change multiple parameters at once.")
     parser.add_argument("--run-test", dest='run_test', action='store_true',
                         help="Evaluate the trained model on the testing sub-set.")
     parser.add_argument("--fixed-split", dest='fixed_split', action='store_true',
@@ -103,7 +106,7 @@ def test_worker(config):
     return config["log_directory"], test_dice, df_results
 
 
-def make_category(base_item, keys, values, is_all_combin=False):
+def make_category(base_item, keys, values, is_all_combin=False, multiple_params=False):
     items = []
     names = []
 
@@ -117,7 +120,22 @@ def make_category(base_item, keys, values, is_all_combin=False):
 
             items.append(new_item)
             names.append(name_str)
+    elif multiple_params:
+        value_len = set()
+        for value in values:
+            value_len.add(len(value))
+        if len(value_len) != 1:
+            raise ValueError("To use flag --multi-params or -m, all hyperparameter lists need to be the same size.")
 
+        for v_idx in range(len(values[0])):
+            name_str = ""
+            new_item = copy.deepcopy(base_item)
+            for k_idx, key in enumerate(keys):
+                new_item[key] = values[k_idx][v_idx]
+                name_str += "-" + str(key) + "=" + str(values[k_idx][v_idx]).replace("/", "_")
+
+            items.append(new_item)
+            names.append(name_str)
     else:
         for value_list, key in zip(values, keys):
             for value in value_list:
@@ -131,7 +149,7 @@ def make_category(base_item, keys, values, is_all_combin=False):
 
 
 def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False, all_logs=False,
-                      thr_increment=None):
+                      thr_increment=None, multiple_params=False):
     """Automate multiple training processes on multiple GPUs.
 
     Hyperparameter optimization of models is tedious and time-consuming. This function automatizes this optimization
@@ -167,10 +185,11 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
         thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
             the validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
             increment between 0 and 1 used during the ROC analysis (e.g. 0.1). Flag: ``-t``, ``--thr-increment``
+        multiple_params (bool): If True, more than one parameter will be change at the time from the hyperparameters.
+            All the first elements from the hyperparameters list will be applied, then all the second, etc.
     """
     # Load initial config
-    with open(config, "r") as fhandle:
-        initial_config = json.load(fhandle)
+    initial_config = imed_config_manager.ConfigurationManager(config).get_config()
 
     # Hyperparameters values to experiment
     with open(param, "r") as fhandle:
@@ -181,7 +200,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
         base_item = initial_config[category]
         keys = list(hyperparams[category].keys())
         values = [hyperparams[category][k] for k in keys]
-        new_parameters, names = make_category(base_item, keys, values, all_combin)
+        new_parameters, names = make_category(base_item, keys, values, all_combin, multiple_params)
         param_dict[category] = new_parameters
         names_dict[category] = names
 
@@ -222,6 +241,16 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                 new_config["log_directory"] = new_config["log_directory"] + names[idx][i]
 
             config_list.append(copy.deepcopy(new_config))
+    elif multiple_params:
+        for config_idx in range(len(names)):
+            new_config = copy.deepcopy(initial_config)
+            config_name = ""
+            for param in param_dict:
+                new_config[param] = param_dict[param][config_idx]
+                config_name += names_dict[param][config_idx]
+            new_config["log_directory"] = initial_config["log_directory"] + config_name
+            config_list.append(copy.deepcopy(new_config))
+
     # Change a single parameter for each test
     else:
         for param in param_dict:
@@ -271,9 +300,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
                 # Take the config file within the log_directory because binarize_prediction may have been updated
                 json_path = os.path.join(config['log_directory'], 'config_file.json')
-                with open(json_path) as f:
-                    new_config = json.load(f)
-                    new_config["gpu"] = config["gpu"]
+                new_config = imed_config_manager.ConfigurationManager(json_path).get_config()
+                new_config["gpu"] = config["gpu"]
                 new_config_list.append(new_config)
 
             test_results = pool.map(test_worker, new_config_list)
@@ -347,7 +375,7 @@ def main():
 
     # Run automate training
     automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin), int(args.n_iterations),
-                      bool(args.run_test), args.all_logs, thr_increment)
+                      bool(args.run_test), args.all_logs, thr_increment, bool(args.multi_params))
 
 
 if __name__ == '__main__':

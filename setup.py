@@ -5,7 +5,7 @@ from os import path
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
-#Get README
+# Get README
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
@@ -30,15 +30,16 @@ setup(
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 3',
     ],
+    python_requires='>=3.6, <3.9',
     packages=find_packages(exclude=['docs', 'tests']),
     include_package_data=True,
     install_requires=requirements,
     extras_require={
-        'docs': [ # pin sphinx to match what RTD uses:
-                  # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
-                 'sphinx<2',
-                 'sphinx-rtd-theme<0.5',
-                ],
+        'docs': [  # pin sphinx to match what RTD uses:
+            # https://github.com/readthedocs/readthedocs.org/blob/ecac31de54bbb2c100f933e86eb22b0f4389ba84/requirements/pip.txt#L16
+            'sphinx<2',
+            'sphinx-rtd-theme<0.5',
+        ],
     },
     entry_points={
         'console_scripts': [

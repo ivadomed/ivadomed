@@ -1,11 +1,11 @@
 Contributors
 ============
 
-.. image:: ../../images/neuropoly_logo.png
+.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/contributors/neuropoly_logo.png
   :height: 80
   :alt: Alternative text
 
-.. image:: ../../images/mila_logo.png
+.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/contributors/mila_logo.png
   :height: 80
   :alt: Alternative text
 
@@ -16,7 +16,7 @@ A list of contributors is available `here <https://github.com/neuropoly/ivadomed
 
 Sponsors
 --------
-.. image:: ../../images/ivado_logo.png
+.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/contributors/ivado_logo.png
   :height: 80
   :alt: Alternative text
 

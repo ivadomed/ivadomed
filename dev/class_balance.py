@@ -15,6 +15,7 @@ import json
 import argparse
 import numpy as np
 
+from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
 from ivadomed import utils as imed_utils
 from ivadomed import transforms as imed_transforms
@@ -37,8 +38,7 @@ def print_stats(arr):
 
 
 def run_main(args):
-    with open(args.c, "r") as fhandle:
-        context = json.load(fhandle)
+    context = imed_config_manager.ConfigurationManager(args.c).get_config()
 
     transform_lst = torch_transforms.Compose([
         imed_transforms.Resample(wspace=0.75, hspace=0.75),
@@ -63,7 +63,7 @@ def run_main(args):
                                      metadata_choice=context["metadata"],
                                      contrast_balance=context["contrast_balance"],
                                      transform=transform_lst,
-                                     slice_filter_fn=imed_utils.SliceFilter())
+                                     slice_filter_fn=imed_loader_utils.SliceFilter())
 
         print("Loaded {} axial slices for the {} set.".format(len(ds), ds_name))
         ds_loader = DataLoader(ds, batch_size=1,

@@ -7,6 +7,7 @@ import numpy as np
 import random
 import json
 
+from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
@@ -66,7 +67,7 @@ def run_visualization(input, config, number, output, roi):
 
     Provides a visualization of a series of three transformation on a randomly selected slice:
 
-    .. image:: ../../images/transforms_im.png
+    .. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/scripts/transforms_im.png
         :width: 600px
         :align: center
 
@@ -76,7 +77,7 @@ def run_visualization(input, config, number, output, roi):
 
     Gives:
 
-    .. image:: ../../images/transforms_gt.png
+    .. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/scripts/transforms_gt.png
         :width: 600px
         :align: center
 
@@ -89,8 +90,8 @@ def run_visualization(input, config, number, output, roi):
                        Flag: ``--roi``, ``-r``
     """
     # Load context
-    with open(config, "r") as fhandle:
-        context = json.load(fhandle)
+    context = imed_config_manager.ConfigurationManager(config).get_config()
+
     # Create output folder
     if not os.path.isdir(output):
         os.makedirs(output)

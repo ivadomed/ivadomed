@@ -25,6 +25,7 @@ import numpy as np
 import seaborn as sns
 from scipy.ndimage import label, generate_binary_structure
 
+from ivadomed import config_manager as imed_config_manager
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -55,8 +56,7 @@ def plot_distrib(arr, label, xlim, fname_out):
 
 
 def run_main(args):
-    with open(args.c, "r") as fhandle:
-        context = json.load(fhandle)
+    context = imed_config_manager.ConfigurationManager(args.c).get_config()
 
     path_folder = os.path.join(context['bids_path'], 'derivatives', 'labels')
 

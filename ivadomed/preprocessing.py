@@ -1,7 +1,7 @@
 # Transformation to perform on image before network processing
 import nibabel as nib
 import numpy as np
-import ivadomed.utils as imed_utils
+import ivadomed.loader.utils as imed_loader_utils
 
 
 def get_midslice_average(path_im, ind, slice_axis=0):
@@ -31,7 +31,7 @@ def get_midslice_average(path_im, ind, slice_axis=0):
     slc[slice_axis] = slice(ind - numb_of_slice, ind + numb_of_slice)
     mid = np.mean(arr_can[tuple(slc)], slice_axis)
 
-    arr_pred_ref_space = imed_utils.reorient_image(np.expand_dims(mid[:, :], axis=slice_axis), 2, image,
+    arr_pred_ref_space = imed_loader_utils.reorient_image(np.expand_dims(mid[:, :], axis=slice_axis), 2, image,
                                                    image_can).astype('float32')
     nib_pred = nib.Nifti1Image(arr_pred_ref_space, image.affine)
 

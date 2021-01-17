@@ -55,14 +55,14 @@ segmentation training.
 
   .. code-block:: xml
 
-     "log_directory":"spineGeneric"
+     "log_directory": "spineGeneric"
 
-- ``loader_parameters:bids_path``: Location of the dataset. As discussed in :doc:`../data`, the dataset
+- ``loader_parameters:bids_path``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
   should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 
   .. code-block:: xml
 
-     "bids_path": "<PATH_TO_DATASET>/data_example_spinegeneric"
+     "bids_path": "data_example_spinegeneric"
 
 - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth is located
   under the ``DATASET/derivatives/labels`` folder. In our case, the suffix is ``_seg-manual``:
@@ -221,16 +221,16 @@ on the evaluation metrics, see :mod:`ivadomed.metrics`.
 
 The test image segmentations are stored in ``<log_directory>/pred_masks/`` and have the same name as the input image
 with the suffix ``_pred``. To visualize the segmentation of a given subject, you can use any Nifti image viewer.
-For `FSLeyes <https://users.fmrib.ox.ac.uk/~paulmc/fsleyes/userdoc/latest/>`_ user, this command will open the
-input image with the overlaid prediction (segmentation):
+For `FSLeyes <https://users.fmrib.ox.ac.uk/~paulmc/fsleyes/userdoc/latest/>`_ users, this command will open the
+input image with the overlaid prediction (segmentation) for one of the test subject:
 
 .. code-block:: bash
 
-   fsleyes path/to/input/image.nii.gz path/to/pred_masks/subject_id_contrast_pred.nii.gz -cm red -a 0.5
+   fsleyes "<bids_path>/sub-hamburg01/anat/sub-hamburg01_T2w.nii.gz <log_directory>/pred_masks/sub-hamburg01_T2w_pred.nii.gz -cm red
 
 After the training for 100 epochs, the segmentations should be similar to the one presented in the following image.
 The output and ground truth segmentations of the spinal cord are presented in red (subject ``sub-hamburg01`` with
 contrast T2w):
 
-.. image:: ../../../images/sc_prediction.png
+.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/tutorials/one_class_segmentation_2d_unet/sc_prediction.png
    :align: center

@@ -47,20 +47,19 @@ The parameters that are specific to this tutorial are:
 
      "command": "test"
 
-- ``testing_parameters:uncertainty``: Type of uncertainty to estimate. Available choices are ``"epistemic"`` and
+- ``uncertainty``: Type of uncertainty to estimate. Available choices are ``"epistemic"`` and
   ``"aleatoric"``. Note that both can be ``true``. More details on the implementation are available in :ref:`Technical features <Uncertainty-measures>`.
   ``"n_it"`` controls the number of Monte Carlo iterations that are performed to estimate the uncertainty. Set it to a
   non-zero positive integer for this tutorial (e.g. ``20``).
 
   .. code-block:: xml
 
-     "testing_parameters": {
-          "uncertainty": {
-               "epistemic": true,
-               "aleatoric": true,
-               "n_it": 20
-           }
-     }
+      "uncertainty": {
+           "epistemic": true,
+           "aleatoric": true,
+           "n_it": 20
+      }
+
 
 - ``transformation``: Data augmentation transformation. If you have selected the aleatoric uncertainty, the data
   augmentation that will be performed is the same as the one performed for the training. Note that only transformations 
@@ -157,5 +156,5 @@ These files can further be used for post-processing to refine the segmentation. 
 depicted in pink are more uncertain than the ones in blue (left image): we might want to refine the model prediction by removing
 from the foreground class the voxels with low uncertainty (blue, left image) AND low prediction value (dark red, middle image).
 
-.. image:: ../../../images/uncertainty_tutorial.png
+.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/tutorials/uncertainty/uncertainty_tutorial.png
    :align: center

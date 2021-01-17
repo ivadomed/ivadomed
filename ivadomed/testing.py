@@ -9,6 +9,9 @@ from tqdm import tqdm
 
 from ivadomed import metrics as imed_metrics
 from ivadomed import utils as imed_utils
+from ivadomed import visualize as imed_visualize
+from ivadomed import inference as imed_inference
+from ivadomed import uncertainty as imed_uncertainty
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.training import get_metadata
@@ -18,7 +21,7 @@ cudnn.benchmark = True
 
 
 def test(model_params, dataset_test, testing_params, log_directory, device, cuda_available=True,
-         metric_fns=None):
+         metric_fns=None, postprocessing=None):
     """Main command to test the network.
 
     Args:
@@ -29,6 +32,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
         device (torch.device): Indicates the CPU or GPU ID.
         cuda_available (bool): If True, CUDA is available.
         metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
+        postprocessing (dict): Contains postprocessing steps.
 
     Returns:
         dict: result metrics.
@@ -58,21 +62,22 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
     # UNCERTAINTY SETTINGS
     if (testing_params['uncertainty']['epistemic'] or testing_params['uncertainty']['aleatoric']) and \
             testing_params['uncertainty']['n_it'] > 0:
-        n_monteCarlo = testing_params['uncertainty']['n_it']
+        n_monteCarlo = testing_params['uncertainty']['n_it'] + 1
         testing_params['uncertainty']['applied'] = True
-        print('\nComputing model uncertainty over {} iterations.'.format(n_monteCarlo))
+        print('\nComputing model uncertainty over {} iterations.'.format(n_monteCarlo - 1))
     else:
         testing_params['uncertainty']['applied'] = False
         n_monteCarlo = 1
 
     for i_monteCarlo in range(n_monteCarlo):
         preds_npy, gt_npy = run_inference(test_loader, model, model_params, testing_params, path_3Dpred,
-                                          cuda_available, i_monteCarlo)
+                                          cuda_available, i_monteCarlo, postprocessing)
         metric_mgr(preds_npy, gt_npy)
-
-    # COMPUTE UNCERTAINTY MAPS
-    if n_monteCarlo > 1:
-        imed_utils.run_uncertainty(ifolder=path_3Dpred)
+        # If uncertainty computation, don't apply it on last iteration for prediction
+        if testing_params['uncertainty']['applied'] and (n_monteCarlo - 2 == i_monteCarlo):
+            testing_params['uncertainty']['applied'] = False
+            # COMPUTE UNCERTAINTY MAPS
+            imed_uncertainty.run_uncertainty(ifolder=path_3Dpred)
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
@@ -81,7 +86,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
 
 
 def run_inference(test_loader, model, model_params, testing_params, ofolder, cuda_available,
-                  i_monte_carlo=None):
+                  i_monte_carlo=None, postprocessing=None):
     """Run inference on the test data and save results as nibabel files.
 
     Args:
@@ -92,6 +97,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         ofolder (str): Folder where predictions are saved.
         cuda_available (bool): If True, CUDA is available.
         i_monte_carlo (int): i_th Monte Carlo iteration.
+        postprocessing (dict): Indicates postprocessing steps.
 
     Returns:
         ndarray, ndarray: Prediction, Ground-truth of shape n_sample, n_label, h, w, d.
@@ -121,7 +127,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         m.train()
 
             # RUN MODEL
-            if model_params["name"] in ["HeMISUnet", "HeMIS", "FiLMedUnet"]:
+            if model_params["name"] in ["HeMISUnet", "HeMIS"] or \
+                    ('film_layers' in model_params and any(model_params['film_layers'])):
                 metadata = get_metadata(batch["input_metadata"], model_params)
                 preds = model(input_samples, metadata)
             else:
@@ -131,9 +138,9 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             # Reconstruct image with only one modality
             input_samples = batch['input'][0]
 
-        if model_params["name"] == "UNet3D" and model_params["attention"] and ofolder:
-            imed_utils.save_feature_map(batch, "attentionblock2", os.path.dirname(ofolder), model, input_samples,
-                                        slice_axis=test_loader.dataset.slice_axis)
+        if model_params["name"] == "Modified3DUNet" and model_params["attention"] and ofolder:
+            imed_visualize.save_feature_map(batch, "attentionblock2", os.path.dirname(ofolder), model, input_samples,
+                                            slice_axis=test_loader.dataset.slice_axis)
 
         # PREDS TO CPU
         preds_cpu = preds.cpu()
@@ -153,7 +160,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             if "bounding_box" in batch['input_metadata'][smp_idx][0]:
                 imed_obj_detect.adjust_undo_transforms(testing_params["undo_transforms"].transforms, batch, smp_idx)
 
-            if not model_params["name"].endswith('3D'):
+            if model_params["is_2d"]:
                 last_sample_bool = (last_batch_bool and smp_idx == len(preds_cpu) - 1)
                 # undo transformations
                 preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
@@ -163,26 +170,28 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 preds_idx_arr = np.array(preds_idx_undo)
 
                 # TODO: gt_filenames should not be a list
-                fname_ref = metadata_idx[0]['gt_filenames'][0]
+                fname_ref = list(filter(None, metadata_idx[0]['gt_filenames']))[0]
 
                 # NEW COMPLETE VOLUME
                 if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool) and task != "classification":
                     # save the completely processed file as a nifti file
                     if ofolder:
                         fname_pred = os.path.join(ofolder, fname_tmp.split('/')[-1])
-                        fname_pred = fname_pred.rsplit(testing_params['target_suffix'][0],1)[0] + '_pred.nii.gz'
+                        fname_pred = fname_pred.rsplit("_", 1)[0] + '_pred.nii.gz'
                         # If Uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
+                            postprocessing = None
                     else:
                         fname_pred = None
-                    output_nii = imed_utils.pred_to_nib(data_lst=pred_tmp_lst,
+                    output_nii = imed_inference.pred_to_nib(data_lst=pred_tmp_lst,
                                                         z_lst=z_tmp_lst,
                                                         fname_ref=fname_tmp,
                                                         fname_out=fname_pred,
                                                         slice_axis=slice_axis,
                                                         kernel_dim='2d',
-                                                        bin_thr=testing_params["binarize_prediction"])
+                                                        bin_thr=-1,
+                                                        postprocessing=postprocessing)
                     output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
                     preds_npy_list.append(output_data)
 
@@ -191,8 +200,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
                     output_nii_shape = output_nii.get_fdata().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1 and ofolder:
-                        imed_utils.save_color_labels(np.stack(pred_tmp_lst, -1),
-                                                     testing_params["binarize_prediction"] > 0,
+                        imed_visualize.save_color_labels(np.stack(pred_tmp_lst, -1),
+                                                     False,
                                                      fname_tmp,
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                      imed_utils.AXIS_DCT[testing_params['slice_axis']])
@@ -208,10 +217,9 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 fname_tmp = fname_ref
                 filenames = metadata_idx[0]['gt_filenames']
 
-
             else:
                 pred_undo, metadata, last_sample_bool, volume, weight_matrix = \
-                    imed_utils.volume_reconstruction(batch,
+                    imed_inference.volume_reconstruction(batch,
                                                      preds_cpu,
                                                      testing_params['undo_transforms'],
                                                      smp_idx, volume, weight_matrix)
@@ -225,16 +233,18 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         # If uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
                             fname_pred = fname_pred.split('.nii.gz')[0] + '_' + str(i_monte_carlo).zfill(2) + '.nii.gz'
+                            postprocessing = None
                     else:
                         fname_pred = None
                     # Choose only one modality
-                    output_nii = imed_utils.pred_to_nib(data_lst=[pred_undo],
+                    output_nii = imed_inference.pred_to_nib(data_lst=[pred_undo],
                                                         z_lst=[],
                                                         fname_ref=fname_ref,
                                                         fname_out=fname_pred,
                                                         slice_axis=slice_axis,
                                                         kernel_dim='3d',
-                                                        bin_thr=testing_params["binarize_prediction"])
+                                                        bin_thr=-1,
+                                                        postprocessing=postprocessing)
                     output_data = output_nii.get_fdata().transpose(3, 0, 1, 2)
                     preds_npy_list.append(output_data)
 
@@ -243,8 +253,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     # Save merged labels with color
 
                     if pred_undo.shape[0] > 1 and ofolder:
-                        imed_utils.save_color_labels(pred_undo,
-                                                     testing_params['binarize_prediction'] > 0,
+                        imed_visualize.save_color_labels(pred_undo,
+                                                     False,
                                                      batch['input_metadata'][smp_idx][0]['input_filenames'],
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                      slice_axis)
@@ -274,7 +284,6 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
         raise ValueError('\nChoice of metric for threshold analysis: dice, recall_specificity.')
 
     # Adjust some testing parameters
-    testing_params["binarize_prediction"] = -1
     testing_params["uncertainty"]["applied"] = False
 
     # Load model
@@ -359,5 +368,5 @@ def get_gt(filenames):
         if gt is not None:
             gt_lst.append(nib.load(gt).get_fdata())
         else:
-            gt_lst.append(np.zeros(gt_lst[0].shape))
+            gt_lst.append(np.zeros(nib.load(list(filter(None, filenames))[0]).get_fdata().shape))
     return np.array(gt_lst)

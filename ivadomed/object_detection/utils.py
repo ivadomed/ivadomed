@@ -9,6 +9,7 @@ from scipy import ndimage
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
+from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils
 
 
@@ -112,7 +113,8 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
     for subject in subject_list:
         if subject.record["modality"] in contrast_lst:
             subject_path = str(subject.record["absolute_path"])
-            object_mask = imed_utils.segment_volume(model_path, subject_path, gpu_number=gpu_number)
+            object_mask, _ = imed_inference.segment_volume(model_path, [subject_path], gpu_number=gpu_number)
+            object_mask = object_mask[0]
             if keep_largest_only:
                 object_mask = imed_postpro.keep_largest_object(object_mask)
 
@@ -121,7 +123,7 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
                 os.mkdir(mask_path)
             nib.save(object_mask, os.path.join(mask_path, subject_path.split("/")[-1]))
             ras_orientation = nib.as_closest_canonical(object_mask)
-            hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata()[..., 0], slice_axis)
+            hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata(), slice_axis)
             bounding_boxes = get_bounding_boxes(hwd_orientation)
             bounding_box_dict[subject_path] = [adjust_bb_size(bb, safety_factor) for bb in bounding_boxes]
 
@@ -279,7 +281,7 @@ def verify_metadata(metadata, has_bounding_box):
     return has_bounding_box
 
 
-def bounding_box_prior(fname_mask, metadata, slice_axis):
+def bounding_box_prior(fname_mask, metadata, slice_axis, safety_factor=None):
     """
     Computes prior steps to a model requiring bounding box crop. This includes loading a mask of the ROI, orienting the
     given mask into the following dimensions: (height, width, depth), extracting the bounding boxes and storing the
@@ -289,6 +291,7 @@ def bounding_box_prior(fname_mask, metadata, slice_axis):
         fname_mask (str): Filename containing the mask of the ROI
         metadata (dict): Dictionary containing the image metadata
         slice_axis (int): Slice axis (0: sagittal, 1: coronal, 2: axial)
+        safety_factor (list or tuple): Factors to multiply each dimension of the bounding box.
 
     """
     nib_prior = nib.load(fname_mask)
@@ -296,8 +299,11 @@ def bounding_box_prior(fname_mask, metadata, slice_axis):
     nib_ras = nib.as_closest_canonical(nib_prior)
     np_mask = nib_ras.get_fdata()[..., 0] if len(nib_ras.get_fdata().shape) == 4 else nib_ras.get_fdata()
     np_mask = imed_loader_utils.orient_img_hwd(np_mask, slice_axis)
-    bounding_box = get_bounding_boxes(np_mask)
-    metadata['bounding_box'] = bounding_box[0]
+    # Extract the bounding box from the list
+    bounding_box = get_bounding_boxes(np_mask)[0]
+    if safety_factor:
+        bounding_box = adjust_bb_size(bounding_box, safety_factor)
+    metadata['bounding_box'] = bounding_box
 
 
 def compute_bb_statistics(bounding_box_path):

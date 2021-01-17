@@ -1,5 +1,5 @@
 import copy
-
+import random
 import nibabel as nib
 import numpy as np
 import torch
@@ -40,8 +40,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         dataset_type (str): Choice between "training", "validation" or "testing".
         requires_undo (bool): If True, the transformations without undo_transform will be discarded.
         object_detection_params (dict): Object dection parameters.
-        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
-            (to save memory).
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
     Returns:
         BidsDataset
 
@@ -55,7 +55,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
     if 'ROICrop' not in transforms_params:
         roi_params["slice_filter_roi"] = None
 
-    if model_params["name"] == "UNet3D":
+    if model_params["name"] == "Modified3DUNet" or ('is_2d' in model_params and not model_params['is_2d']):
         dataset = Bids3DDataset(bids_path,
                                 subject_lst=data_list,
                                 target_suffix=target_suffix,
@@ -78,15 +78,15 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                               transform=tranform_lst,
                                               metadata_choice=metadata_type,
-                                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params, device=device,
-                                              cuda_available=cuda_available),
+                                              slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params,
+                                                                                            device=device,
+                                                                                            cuda_available=cuda_available),
                                               roi_params=roi_params,
                                               object_detection_params=object_detection_params,
                                               soft_gt=soft_gt)
     else:
         # Task selection
         task = imed_utils.get_task(model_params["name"])
-
 
         dataset = BidsDataset(bids_path,
                               subject_lst=data_list,
@@ -97,14 +97,14 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                               transform=tranform_lst,
                               multichannel=multichannel,
-                              slice_filter_fn=imed_utils.SliceFilter(**slice_filter_params, device=device,
-                              cuda_available=cuda_available),
+                              slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params, device=device,
+                                                                            cuda_available=cuda_available),
                               soft_gt=soft_gt,
                               object_detection_params=object_detection_params,
                               task=task)
         dataset.load_filenames()
 
-    if model_params["name"] != "UNet3D":
+    if model_params["name"] != "Modified3DUNet":
         print("Loaded {} {} slices for the {} set.".format(len(dataset), slice_axis, dataset_type))
     else:
         print("Loaded {} volumes of size {} for the {} set.".format(len(dataset), slice_axis, dataset_type))
@@ -125,8 +125,6 @@ class SegmentationPair(object):
         cache (bool): If the data should be cached in memory or not.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
         prepro_transforms (dict): Output of get_preprocessing_transforms.
-        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
-             (to save memory).
 
     Attributes:
         input_filenames (list): List of input filenames.
@@ -162,13 +160,16 @@ class SegmentationPair(object):
         # list of GT for multiclass segmentation
         self.gt_handle = []
 
-        # Unlabeled data (inference time)
+        # Labeled data (ie not inference time)
         if self.gt_filenames is not None:
             if not isinstance(self.gt_filenames, list):
                 self.gt_filenames = [self.gt_filenames]
             for gt in self.gt_filenames:
                 if gt is not None:
-                    self.gt_handle.append(nib.load(gt))
+                    if isinstance(gt, str):  # this tissue has annotation from only one rater
+                        self.gt_handle.append(nib.load(gt))
+                    else:  # this tissue has annotation from several raters
+                        self.gt_handle.append([nib.load(gt_rater) for gt_rater in gt])
                 else:
                     self.gt_handle.append(None)
 
@@ -182,11 +183,14 @@ class SegmentationPair(object):
         for idx, handle in enumerate(self.input_handle):
             self.input_handle[idx] = nib.as_closest_canonical(handle)
 
-        # Unlabeled data
+        # Labeled data (ie not inference time)
         if self.gt_filenames is not None:
             for idx, gt in enumerate(self.gt_handle):
                 if gt is not None:
-                    self.gt_handle[idx] = nib.as_closest_canonical(gt)
+                    if not isinstance(gt, list):  # this tissue has annotation from only one rater
+                        self.gt_handle[idx] = nib.as_closest_canonical(gt)
+                    else:  # this tissue has annotation from several raters
+                        self.gt_handle[idx] = [nib.as_closest_canonical(gt_rater) for gt_rater in gt]
 
         # If binary classification, then extract labels from GT mask
 
@@ -211,8 +215,11 @@ class SegmentationPair(object):
 
         for gt in self.gt_handle:
             if gt is not None:
-                shape = imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis)
-                gt_shape.append(tuple(shape))
+                if not isinstance(gt, list):  # this tissue has annotation from only one rater
+                    gt = [gt]
+                for gt_rater in gt:
+                    shape = imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis)
+                    gt_shape.append(tuple(shape))
 
                 if not len(set(gt_shape)):
                     raise RuntimeError('Labels have different dimensions.')
@@ -235,10 +242,15 @@ class SegmentationPair(object):
             gt_data = None
         for gt in self.gt_handle:
             if gt is not None:
-                hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
-                                                                self.slice_axis)
-                data_type = np.float32 if self.soft_gt else np.uint8
-                gt_data.append(hwd_oriented.astype(data_type))
+                if not isinstance(gt, list):  # this tissue has annotation from only one rater
+                    hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
+                                                                    self.slice_axis)
+                    gt_data.append(hwd_oriented)
+                else:  # this tissue has annotation from several raters
+                    hwd_oriented_list = [
+                        imed_loader_utils.orient_img_hwd(gt_rater.get_fdata(cache_mode, dtype=np.float32),
+                                                         self.slice_axis) for gt_rater in gt]
+                    gt_data.append([hwd_oriented.astype(data_type) for hwd_oriented in hwd_oriented_list])
             else:
                 gt_data.append(
                     np.zeros(imed_loader_utils.orient_shapes_hwd(self.input_handle[0].shape, self.slice_axis),
@@ -257,18 +269,38 @@ class SegmentationPair(object):
             dict: Input and gt metadata.
         """
         gt_meta_dict = []
-        for gt in self.gt_handle:
+        for idx_class, gt in enumerate(self.gt_handle):
             if gt is not None:
-                gt_meta_dict.append(imed_loader_utils.SampleMetadata({
-                    "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
-                    "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
-                    "gt_filenames": self.metadata[0]["gt_filenames"],
-                    "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[0] else None,
-                    "data_type": 'gt',
-                    "crop_params": {}
-                }))
-            elif len(gt_meta_dict):
-                gt_meta_dict.append(gt_meta_dict[0])
+                if not isinstance(gt, list):  # this tissue has annotation from only one rater
+                    gt_meta_dict.append(imed_loader_utils.SampleMetadata({
+                        "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
+                        "gt_filenames": self.metadata[0]["gt_filenames"],
+                        "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
+                            0] else None,
+                        "data_type": 'gt',
+                        "crop_params": {}
+                    }))
+                else:
+                    gt_meta_dict.append([imed_loader_utils.SampleMetadata({
+                        "zooms": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_zooms(), self.slice_axis),
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(),
+                                                                          self.slice_axis),
+                        "gt_filenames": self.metadata[0]["gt_filenames"][idx_class][idx_rater],
+                        "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
+                            0] else None,
+                        "data_type": 'gt',
+                        "crop_params": {}
+                    }) for idx_rater, gt_rater in enumerate(gt)])
+
+            else:
+                # Temporarily append null metadata to null gt
+                gt_meta_dict.append(None)
+
+        # Replace null metadata with metadata from other existing classes of the same subject
+        for idx, gt_metadata in enumerate(gt_meta_dict):
+            if gt_metadata is None:
+                gt_meta_dict[idx] = list(filter(None, gt_meta_dict))[0]
 
         input_meta_dict = []
         for handle in self.input_handle:
@@ -321,17 +353,18 @@ class SegmentationPair(object):
             gt_slices = []
             for gt_obj in gt_dataobj:
                 if gt_type == "segmentation":
-                    gt_slices.append(np.asarray(gt_obj[..., slice_index],
-                                                dtype=np.float32))
+                    if not isinstance(gt_obj, list):  # annotation from only one rater
+                        gt_slices.append(np.asarray(gt_obj[..., slice_index],
+                                                    dtype=np.float32))
+                    else:  # annotations from several raters
+                        gt_slices.append([np.asarray(gt_obj_rater[..., slice_index],
+                                                     dtype=np.float32) for gt_obj_rater in gt_obj])
                 else:
-                    # TODO: rm when Anne replies
-                    # Assert that there is only one non_zero_label in the current slice
-                    # labels_in_slice = np.unique(gt_obj[..., slice_index][np.nonzero(gt_obj[..., slice_index])]).tolist()
-                    # if len(labels_in_slice) > 1:
-                    #    print(metadata["gt_metadata"][0]["gt_filenames"])
-                    # TODO: uncomment when Anne replies
-                    # assert int(np.max(labels_in_slice)) <= 1
-                    gt_slices.append(np.asarray(int(np.any(gt_obj[..., slice_index]))))
+                    if not isinstance(gt_obj, list):  # annotation from only one rater
+                        gt_slices.append(np.asarray(int(np.any(gt_obj[..., slice_index]))))
+                    else:  # annotations from several raters
+                        gt_slices.append([np.asarray(int(np.any(gt_obj_rater[..., slice_index])))
+                                          for gt_obj_rater in gt_obj])
         dreturn = {
             "input": input_slices,
             "gt": gt_slices,
@@ -355,9 +388,8 @@ class MRI2DSegmentationDataset(Dataset):
         task (str): choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
-        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
-            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
-            space.
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
 
     Attributes:
         indexes (list): List of indices corresponding to each slice or subvolume in the dataset.
@@ -372,9 +404,8 @@ class MRI2DSegmentationDataset(Dataset):
         has_bounding_box (bool): True if bounding box in all metadata, else False.
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
-        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
-            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
-            space.
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
         slice_filter_roi (bool): Indicates whether a slice filtering is done based on ROI data.
         roi_thr (int): If the ROI mask contains less than this number of non-zero voxels, the slice will be discarded
             from the dataset.
@@ -425,8 +456,6 @@ class MRI2DSegmentationDataset(Dataset):
                 if self.slice_filter_roi and imed_loader_utils.filter_roi(slice_roi_pair['gt'], self.roi_thr):
                     continue
 
-
-
                 item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                       slice_seg_pair,
                                                                       slice_roi_pair)
@@ -445,6 +474,16 @@ class MRI2DSegmentationDataset(Dataset):
             index (int): Slice index.
         """
         seg_pair_slice, roi_pair_slice = self.indexes[index]
+
+        # In case multiple raters
+        if seg_pair_slice['gt'] is not None and isinstance(seg_pair_slice['gt'][0], list):
+            # Randomly pick a rater
+            idx_rater = random.randint(0, len(seg_pair_slice['gt'][0]) - 1)
+            # Use it as ground truth for this iteration
+            # Note: in case of multi-class: the same rater is used across classes
+            for idx_class in range(len(seg_pair_slice['gt'])):
+                seg_pair_slice['gt'][idx_class] = seg_pair_slice['gt'][idx_class][idx_rater]
+                seg_pair_slice['gt_metadata'][idx_class] = seg_pair_slice['gt_metadata'][idx_class][idx_rater]
 
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
@@ -476,7 +515,7 @@ class MRI2DSegmentationDataset(Dataset):
                                                    data_type="gt")
             # Make sure stack_gt is binarized
             if stack_gt is not None and not self.soft_gt:
-                stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5)
+                stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5).astype(np.uint8)
 
         else:
             # Force no transformation on labels for classification task
@@ -512,12 +551,12 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         length (tuple): Size of each dimensions of the subvolumes, length equals 3.
         stride (tuple): Size of the overlapping per subvolume and dimensions, length equals 3.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
-        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
-            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
-            space.
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
     """
 
-    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0),  slice_axis=0, task="segmentation",
+    def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
+                 task="segmentation",
                  soft_gt=False):
         self.filename_pairs = filename_pairs
         self.handlers = []
@@ -600,6 +639,16 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         coord = self.indexes[index]
         seg_pair, _ = self.handlers[coord['handler_index']]
 
+        # In case multiple raters
+        if seg_pair['gt'] is not None and isinstance(seg_pair['gt'][0], list):
+            # Randomly pick a rater
+            idx_rater = random.randint(0, len(seg_pair['gt'][0]) - 1)
+            # Use it as ground truth for this iteration
+            # Note: in case of multi-class: the same rater is used across classes
+            for idx_class in range(len(seg_pair['gt'])):
+                seg_pair['gt'][idx_class] = seg_pair['gt'][idx_class][idx_rater]
+                seg_pair['gt_metadata'][idx_class] = seg_pair['gt_metadata'][idx_class][idx_rater]
+
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
         # Use copy to have different coordinates for reconstruction for a given handler
@@ -619,7 +668,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                                data_type="gt")
         # Make sure stack_gt is binarized
         if stack_gt is not None and not self.soft_gt:
-            stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5)
+            stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5).astype(np.uint8)
 
         shape_x = coord["x_max"] - coord["x_min"]
         shape_y = coord["y_max"] - coord["y_min"]
@@ -632,7 +681,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
         subvolumes = {
             'input': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
-            'gt': torch.zeros(stack_input.shape[0], shape_x, shape_y, shape_z),
+            'gt': torch.zeros(stack_gt.shape[0], shape_x, shape_y, shape_z) if stack_gt is not None else None,
             'input_metadata': metadata_input,
             'gt_metadata': metadata_gt
         }
@@ -672,6 +721,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
             contrast is processed individually (ie different sample / tensor).
         object_detection_params (dict): Object dection parameters.
     """
+
     def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
@@ -711,8 +761,8 @@ class BidsDataset(MRI2DSegmentationDataset):
         object_detection_params (dict): Object dection parameters.
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
-        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
-            (to save memory).
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
 
     Attributes:
         bids_ds (BIDS): BIDS dataset.
@@ -721,6 +771,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         metadata (dict): Dictionary containing FiLM metadata.
 
     """
+
     def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
@@ -777,11 +828,20 @@ class BidsDataset(MRI2DSegmentationDataset):
                     print("Subject without derivative, skipping.")
                     continue
                 derivatives = subject.get_derivatives("labels")
-                target_filename, roi_filename = [None] * len(target_suffix), None
+                if isinstance(target_suffix[0], str):
+                    target_filename, roi_filename = [None] * len(target_suffix), None
+                else:
+                    target_filename, roi_filename = [[] for _ in range(len(target_suffix))], None
 
                 for deriv in derivatives:
-                    for idx, suffix in enumerate(target_suffix):
-                        if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
+                    for idx, suffix_list in enumerate(target_suffix):
+                        # If suffix_list is a string, then only one rater annotation per class is available.
+                        # Otherwise, multiple raters segmented the same class.
+                        if isinstance(suffix_list, list):
+                            for suffix in suffix_list:
+                                if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
+                                    target_filename[idx].append(deriv)
+                        elif deriv.endswith(subject.record["modality"] + suffix_list + ".nii.gz"):
                             target_filename[idx] = deriv
 
                     if not (self.roi_params["suffix"] is None) and \
@@ -807,10 +867,15 @@ class BidsDataset(MRI2DSegmentationDataset):
                     if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
                                 self.metadata.keys()]):
                         continue
+
                 elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
                     # add custom data to metadata
                     subject_id = subject.record["subject_id"]
                     df = bids.BIDS(root_dir).participants.content
+                    if metadata_choice not in df.columns:
+                        raise ValueError("The following metadata cannot be found in participants.tsv file: {}. "
+                                         "Invalid metadata choice.".format(metadata_choice))
+
                     metadata[metadata_choice] = df[df['participant_id'] == subject_id][metadata_choice].values[0]
 
                     # Create metadata dict for OHE

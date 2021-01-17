@@ -1,3 +1,136 @@
+## v2.6.1 (2020-12-15)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.6.0...v2.6.1)
+
+**BUG**
+
+ - Fix missing attribute softmax.  [View pull request](https://github.com/ivadomed/ivadomed/pull/547)
+ - Split_dataset: consider center_list when per_patient is used.  [View pull request](https://github.com/ivadomed/ivadomed/pull/537)
+
+**DOCUMENTATION**
+
+ - Make usage clearer.  [View pull request](https://github.com/ivadomed/ivadomed/pull/578)
+ - Removing support for Python 3.9 (for now).  [View pull request](https://github.com/ivadomed/ivadomed/pull/562)
+ - Updating comparison table after review.  [View pull request](https://github.com/ivadomed/ivadomed/pull/560)
+
+**ENHANCEMENT**
+
+ - Remove small for multiclass.  [View pull request](https://github.com/ivadomed/ivadomed/pull/570)
+ - Save config file before training.  [View pull request](https://github.com/ivadomed/ivadomed/pull/569)
+ - Apply bounding box safety factor in segment volume.  [View pull request](https://github.com/ivadomed/ivadomed/pull/549)
+ - Multichannel support for convert_to_onnx script.  [View pull request](https://github.com/ivadomed/ivadomed/pull/544)
+
+**FEATURE**
+
+ - Select subjects for training based on metadata.  [View pull request](https://github.com/ivadomed/ivadomed/pull/534)
+
+## v2.6.0 (2020-11-23)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.5.0...v2.6.0)
+
+**BUG**
+
+ - Make is_2d retrocompatibility.  [View pull request](https://github.com/ivadomed/ivadomed/pull/535)
+ - Support multiclass if first class missing.  [View pull request](https://github.com/ivadomed/ivadomed/pull/522)
+
+**DOCUMENTATION**
+
+ - AdapWing 3D: fix comment.  [View pull request](https://github.com/ivadomed/ivadomed/pull/531)
+ - paper.md: overview_title.png path.  [View pull request](https://github.com/ivadomed/ivadomed/pull/529)
+ - paper.bib: correct typo.  [View pull request](https://github.com/ivadomed/ivadomed/pull/528)
+ - Fix DOIs in paper.bib.  [View pull request](https://github.com/ivadomed/ivadomed/pull/527)
+ - Redirect to DokuWiki/GitHub from the contributing guidelines.  [View pull request](https://github.com/ivadomed/ivadomed/pull/523)
+ - Change path for images.  [View pull request](https://github.com/ivadomed/ivadomed/pull/521)
+
+**ENHANCEMENT**
+
+ - automate_training: add new parameter to change multiple params.  [View pull request](https://github.com/ivadomed/ivadomed/pull/533)
+ - Softseg multiclass.  [View pull request](https://github.com/ivadomed/ivadomed/pull/530)
+ - Multiclass and multichannel support for segment volume.  [View pull request](https://github.com/ivadomed/ivadomed/pull/524)
+
+**FEATURE**
+
+ - Create sample to balance metadata.  [View pull request](https://github.com/ivadomed/ivadomed/pull/503)
+
+## v2.5.0 (2020-11-10)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.4.0...v2.5.0)
+
+**BUG**
+
+ - paper.md: Fixed broken link.  [View pull request](https://github.com/ivadomed/ivadomed/pull/517)
+ - Change default value of config.json.  [View pull request](https://github.com/ivadomed/ivadomed/pull/514)
+
+**DEPENDENCIES**
+
+ - Requirements.txt: force onnxruntime version.  [View pull request](https://github.com/ivadomed/ivadomed/pull/505)
+ - set h5py version in requirements.txt.  [View pull request](https://github.com/ivadomed/ivadomed/pull/500)
+
+**DOCUMENTATION**
+
+ - JOSS submission.  [View pull request](https://github.com/ivadomed/ivadomed/pull/502)
+
+**ENHANCEMENT**
+
+ - Some fixes to logging.  [View pull request](https://github.com/ivadomed/ivadomed/pull/509)
+
+**FEATURE**
+
+ - Training without test set.  [View pull request](https://github.com/ivadomed/ivadomed/pull/498)
+ - FiLM for 3D Unet.  [View pull request](https://github.com/ivadomed/ivadomed/pull/491)
+
+**REFACTORING**
+
+ - Refactor utils.py.  [View pull request](https://github.com/ivadomed/ivadomed/pull/497)
+
+## v2.4.0 (2020-10-27)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.3.1...v2.4.0)
+
+**BUG**
+
+ - Fix missing version.txt in wheels package.  [View pull request](https://github.com/ivadomed/ivadomed/pull/488)
+
+**DOCUMENTATION**
+
+ - Added reference to arXiv citation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/485)
+ - Documenting release workflow.  [View pull request](https://github.com/ivadomed/ivadomed/pull/483)
+
+**ENHANCEMENT**
+
+ - Option to override postprocessing in segment volume.  [View pull request](https://github.com/ivadomed/ivadomed/pull/486)
+ - Configuration File Manager.  [View pull request](https://github.com/ivadomed/ivadomed/pull/484)
+
+
+## v2.3.1 (2020-10-19)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.3.0...v2.3.1)
+
+**BUG**
+
+ - Version format.  [View pull request](https://github.com/ivadomed/ivadomed/pull/481)
+
+## v2.3.0 (2020-10-19) 
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.2.1...v2.3.0)
+
+**BUG**
+
+ - Adapt all metrics to multiclass predictions.  [View pull request](https://github.com/ivadomed/ivadomed/pull/472)
+ - fix run_test gpu assignation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/453)
+
+**DOCUMENTATION**
+
+ - Improving documentation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/477)
+ - Tutorial fix.  [View pull request](https://github.com/ivadomed/ivadomed/pull/461)
+
+**ENHANCEMENT**
+
+ - Download data: Add models.  [View pull request](https://github.com/ivadomed/ivadomed/pull/476)
+ - Refactoring: Changing print and exit to raise error.  [View pull request](https://github.com/ivadomed/ivadomed/pull/467)
+ - Remove "eval" cmd.  [View pull request](https://github.com/ivadomed/ivadomed/pull/465)
+ - Custom final activation.  [View pull request](https://github.com/ivadomed/ivadomed/pull/458)
+ - Display version.  [View pull request](https://github.com/ivadomed/ivadomed/pull/456)
+
+**FEATURE**
+
+ - Use custom data for film.  [View pull request](https://github.com/ivadomed/ivadomed/pull/460)
+ - Uncertainty as post-processing step.  [View pull request](https://github.com/ivadomed/ivadomed/pull/459)
+
 ## v2.2.1 (2020-09-22)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.2.0...v2.2.1)
 

@@ -1,36 +1,33 @@
 Data
 ====
 
-Without data, nothing can be done. To get you started, we recommend you
-download the `Example data for Ivadomed <https://github.com/ivadomed/data_example_spinegeneric/releases/tag/r20200825>`__. This dataset is composed of 10 subjects from different imaging centers and includes
-original images in NIfTI format as well as manual segmentations and
-labels. The data are organized according to the
-`BIDS <http://bids.neuroimaging.io/>`__ convention, to be fully
-compatible with ``ivadomed`` loader:
+To facilitate the organization of data, ``ivadomed`` requires the data to be
+organized according to the `Brain Imaging Data Structure (BIDS) <http://bids.neuroimaging.io/>`__ convention.
+An example of this organization is shown below:
+
+.. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/data/1920px-BIDS_Logo.png
+    :alt: BIDS_Logo
 
 ::
 
     dataset/
     └── dataset_description.json
     └── participants.tsv
-    └── sub-01
+    └── sub-01  <--------------------- Folder enclosing data for subject 1
+    └── sub-02
+    └── sub-03
         └── anat
-            └── sub-siteX01_T1w_reg.nii.gz
-            └── sub-siteX01_T1w_reg.json
-            └── sub-siteX01_T2w_reg.nii.gz
-            └── sub-siteX01_T2w_reg.json
-            └── sub-siteX01_acq-MTon_MTS_reg.nii.gz
-            └── sub-siteX01_acq-MTon_MTS_reg.json
-            └── sub-siteX01_acq-MToff_MTS_reg.nii.gz
-            └── sub-siteX01_acq-MToff_MTS_reg.json
-            └── sub-siteX01_acq-T1w_MTS.nii.gz
-            └── sub-siteX01_acq-T1w_MTS.json
-            └── sub-siteX01_T2star_reg.nii.gz
-            └── sub-siteX01_T2star_reg.json
+            └── sub-03_T1w.nii.gz  <-- MRI image in NIfTI format
+            └── sub-03_T1w.json  <---- Metadata including image parameters, MRI vendor, etc.
+            └── sub-03_T2w.nii.gz
+            └── sub-03_T2w.json
     └── derivatives
         └── labels
-            └── sub-siteX01
+            └── sub-03
                 └── anat
-                    └── sub-siteX01_T1w_seg.nii.gz
+                    └── sub-03_seg-tumor-manual.nii.gz  <-- Manually-corrected segmentation
+                    └── sub-03_seg-tumor-manual.json  <---- Metadata including author who performed the labeling and date
 
 .. note:: ``participants.tsv`` should, at least, include a column ``participant_id``, which is used when loading the dataset.
+
+.. note:: For an exhaustive list of derivatives used in ``ivadomed``, please see our `wiki <https://github.com/ivadomed/ivadomed/wiki/repositories#derivatives>`_

@@ -1,9 +1,11 @@
 # Deals with postprocessing on generated segmentation.
 
 import functools
-import numpy as np
+import os
+
 import nibabel as nib
-from scipy.ndimage.measurements import label
+import numpy as np
+from scipy.ndimage import label, generate_binary_structure
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.feature import peak_local_max
 
@@ -17,6 +19,7 @@ def nifti_capable(wrapped):
     Returns:
         Functions' return.
     """
+
     @functools.wraps(wrapped)
     def wrapper(data, *args, **kwargs):
         if isinstance(data, nib.Nifti1Image):
@@ -35,6 +38,7 @@ def binarize_with_low_threshold(wrapped):
     Returns:
         Functions' return.
     """
+
     @functools.wraps(wrapped)
     def wrapper(data, *args, **kwargs):
         if not np.array_equal(data, data.astype(bool)):
@@ -53,6 +57,7 @@ def multilabel_capable(wrapped):
     Returns:
         Functions' return.
     """
+
     @functools.wraps(wrapped)
     def wrapper(data, *args, **kwargs):
         if len(data.shape) == 4:
@@ -207,3 +212,159 @@ def label_file_from_coordinates(nifti_image, coord_list):
     nib_pred = nib.Nifti1Image(label_array, nifti_image.affine)
 
     return nib_pred
+
+
+def remove_small_objects(data, bin_structure, size_min):
+    """Removes all unconnected objects smaller than the minimum specified size.
+
+    Args:
+        data (ndarray): Input data.
+        bin_structure (ndarray): Structuring element that defines feature connections.
+        size_min (int): Minimal object size to keep in input data.
+
+    Returns:
+        ndarray: Array with small objects.
+    """
+
+    data_label, n = label(data, structure=bin_structure)
+
+    for idx in range(1, n + 1):
+        data_idx = (data_label == idx).astype(np.int)
+        n_nonzero = np.count_nonzero(data_idx)
+
+        if n_nonzero < size_min:
+            data[data_label == idx] = 0
+
+    return data
+
+
+class Postprocessing(object):
+    """Postprocessing steps manager
+
+    Args:
+        postprocessing_params (dict): Indicates postprocessing steps (in the right order)
+        data_pred (ndarray): Prediction from the model.
+        dim_lst (list): Dimensions of a voxel in mm.
+        filename_prefix (str): Path to prediction file without suffix.
+
+    Attributes:
+        postprocessing_params (dict): Indicates postprocessing steps (in the right order)
+        data_pred (ndarray): Prediction from the model.
+        px (float): Resolution (mm) along the first axis.
+        py (float): Resolution (mm) along the second axis.
+        pz (float): Resolution (mm) along the third axis.
+        filename_prefix (str): Path to prediction file without suffix.
+        n_classes (int): Number of classes.
+        bin_struct (ndarray): Binary structure.
+
+    """
+
+    def __init__(self, postprocessing_params, data_pred, dim_lst, filename_prefix):
+        self.postprocessing_dict = postprocessing_params
+        self.data_pred = data_pred
+        self.filename_prefix = filename_prefix
+        self.px, self.py, self.pz = dim_lst
+        h, w, d, self.n_classes = self.data_pred.shape
+        self.bin_struct = generate_binary_structure(3, 2)
+
+    def apply(self):
+        """Parse postprocessing parameters and apply postprocessing steps to data.
+        """
+        for postprocessing in self.postprocessing_dict:
+            getattr(self, postprocessing)(**self.postprocessing_dict[postprocessing])
+        return self.data_pred
+
+    def binarize_prediction(self, thr):
+        """Binarize output.
+        """
+        if thr >= 0:
+            self.data_pred = threshold_predictions(self.data_pred, thr)
+
+    def binarize_maxpooling(self):
+        """Binarize by setting to 1 the voxel having the max prediction across all classes.
+        """
+        # Generate background class
+        background = np.ones(self.data_pred[..., 0].shape)
+        n_class = self.data_pred.shape[-1]
+        for c in range(n_class):
+            background -= self.data_pred[..., c]
+
+        # Concatenate background class
+        pred_with_background = np.concatenate((background[..., None], self.data_pred), axis=-1)
+
+        # Find class with max pred
+        class_pred = np.argmax(pred_with_background, axis=-1)
+        self.data_pred = np.zeros_like(self.data_pred)
+        for c in range(n_class):
+            self.data_pred[..., c] = class_pred == c + 1
+
+    def uncertainty(self, thr, suffix):
+        """Removes the most uncertain predictions.
+
+        Args:
+            thr (float): Uncertainty threshold.
+            suffix (str): Suffix of uncertainty filename.
+
+        """
+        if thr >= 0:
+            uncertainty_path = self.filename_prefix + suffix
+            if os.path.exists(uncertainty_path):
+                data_uncertainty = nib.load(uncertainty_path).get_fdata()
+                if suffix == "_unc-iou.nii.gz" or suffix == "_soft.nii.gz":
+                    self.data_pred = mask_predictions(self.data_pred, data_uncertainty > thr)
+                else:
+                    self.data_pred = mask_predictions(self.data_pred, data_uncertainty < thr)
+            else:
+                raise ValueError('No uncertainty file found.')
+
+    def remove_small(self, unit, thr):
+        """Remove small objects
+
+        Args:
+            unit (str): Indicates the units of the objects: "mm3" or "vox"
+            thr (int or list): Minimal object size to keep in input data.
+
+        """
+        if isinstance(thr, list) and (self.n_classes != len(thr)):
+            raise ValueError("Length mismatch for remove small object postprocessing step: threshold length of {} "
+                             "while the number of predicted class is {}.".format(len(thr), self.n_classes))
+
+        # Convert thr to list
+        if isinstance(thr, int):
+            thr = [thr] * self.n_classes
+
+        if unit == 'vox':
+            size_min = thr
+        elif unit == 'mm3':
+            size_min = np.round(thr / (self.px * self.py * self.pz))
+        else:
+            print('Please choose a different unit for removeSmall. Choices: vox or mm3')
+            exit()
+
+        for idx in range(self.n_classes):
+            self.data_pred[..., idx] = remove_small_objects(data=self.data_pred[..., idx],
+                                                            bin_structure=self.bin_struct,
+                                                            size_min=size_min[idx])
+
+    def fill_holes(self):
+        """Fill holes in the predictions
+        """
+        # Function fill_holes requires a binary input
+        self.data_pred = threshold_predictions(self.data_pred)
+        self.data_pred = fill_holes(self.data_pred)
+
+    def keep_largest(self):
+        """Keep largest object in prediction
+        """
+        self.data_pred = keep_largest_object(self.data_pred)
+
+    def remove_noise(self, thr):
+        """Remove prediction values under the given threshold
+
+        Args:
+            thr (float): Threshold under which predictions are set to 0.
+
+       """
+        if thr >= 0:
+            mask = self.data_pred > thr
+            self.data_pred = mask_predictions(self.data_pred, mask)

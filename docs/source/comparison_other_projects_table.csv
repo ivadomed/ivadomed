@@ -1,10 +1,19 @@
-**Name**,**Repository**,**BIDS**,**DL base library**,"**Task (segmentation, detection, classification)**",**Data dimension**,**Multichannel / Multilabel**,**Uncertainty**,**Transfer Learning**,**Pre-processing tools**,**Post-processing tools**,**User case examples**,**Multi-GPU data parallelism**,**Automatic Model evaluation**,**Input region of interest**,**Missing modality**,**Model performance comparison**,**Automatic hyperparameter optimisation**,**Packaged Multi-center Model**
-**ivadomed**,https://github.com/neuropoly/ivado-medical-imaging,Yes,PyTorch,"Classification, Segmentation, Detection","2D, 3D",Both,**Epistemic Aleatoric**,Yes,Yes,Yes,Yes,No,Yes,Yes (image),**Yes**,**Yes**,Yes,Yes
-monai,https://github.com/Project-MONAI/MONAI,No,PyTorch,"Segmentation, Classification","2D,3D",Both,None,No,Yes,No,Yes,Yes,Yes,Yes (coordinates),No,No,No,No
-delira,https://github.com/justusschock/delira,No,PyTorch and TensorFlow,"Classification, Generation, Segmentation","2D,3D",None,None,Yes,No,No,Yes,Yes,No,No,No,No,No,No
-MIC-DKFZ,https://github.com/MIC-DKFZ/medicaldetectiontoolkit,No,Torch,Detection,"2D,3D",None,None,No,No,No,No,No,Yes,Yes (image),No,No,No,No
-ANTsPyNet,https://github.com/ANTsX/ANTsPyNet,No,Kears (backend TF),"Classification, segmentation,clustering, GAN, registration, super-resolution, autoencoder","2D,3D",Multilabel,None,No,No,No,Yes ,No,No,No,No,No,No,No
-DLTK,https://github.com/DLTK/DLTK,No,Tensorflow,"Classification, segmentation, GAN, registration, super-resolution, autoencoder",3D,Multilabel,None,Yes,No,No,Yes,No,No,No,No,No,No,No
-MIScnn,https://github.com/frankkramer-lab/MIScnn,No,Tensorflow/Keras,Segmentation,"2D,3D",Multilabel,None,No,Yes,Yes,No,Yes,Yes,No,No,No,No,No
-niftytorch,https://niftytorch.github.io/doc/,Yes,Torch,Classificication /segmentation ,3D,None,None,No,No,No,Yes,Yes,No,Yes,No,No,Yes,No
-DeepNeuro,https://github.com/QTIM-Lab/DeepNeuro,No,Tensorflow/Keras,Segmentation,2D/3D,None,None,No,Yes,Yes,Yes,No,No,No,No,No,No,Yes
+**Name**,`ivadomed <https://github.com/ivadomed/ivadomed>`_,`monai <https://github.com/Project-MONAI/MONAI>`_,`delira <https://github.com/justusschock/delira>`_,`MIC-DKFZ <https://github.com/MIC-DKFZ/medicaldetectiontoolkit>`_,`ANTsPyNet <https://github.com/ANTsX/ANTsPyNet>`_,`DLTK <https://github.com/DLTK/DLTK>`_,`MIScnn <https://github.com/frankkramer-lab/MIScnn>`_,`niftytorch <https://niftytorch.github.io/doc/>`_,`DeepNeuro <https://github.com/QTIM-Lab/DeepNeuro>`_,`DeepReg <https://github.com/DeepRegNet/DeepReg>`_
+**BIDS (1)**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|,|no|,|no|
+**DL base library**,PyTorch,PyTorch,"PyTorch, TF",PyTorch,TF/Keras,TF,TF/Keras,PyTorch,TF/Keras,TF
+**Task (2)**,"Class, Seg, Detect","Seg, Class","Class, Gen, Seg",Detect,"Class, Seg, Clust, Reg","Class, Seg, Reg",Seg,"Class, Seg",Seg,Reg
+**Data dimension**,"2D, 3D","2D, 3D","2D, 3D","2D, 3D","2D, 3D",3D,"2D, 3D",3D,"2D, 3D","2D, 3D"
+**Multichannel**,|yes| ,|yes| ,|no| ,|no| ,|no| ,|no| ,|no| ,|no| ,|no|, |yes|
+**Multilabel**,|yes| ,|yes| ,|no| ,|no| ,|yes| ,|yes| ,|yes| ,|no| ,|no| ,|yes|
+**Uncertainty**,|yes|,|no| ,|no|,|no|,|no|,|no| ,|no| ,|no| ,|no| ,|no|
+**Transfer Learning**,|yes|,|no|,|yes|,|no|,|no|,|yes|,|no|,|no|,|no|,|no|
+**Pre-processing tools**,|yes|,|yes|,|no|,|no|,|no|,|no|,|yes|,|no|,|yes|,|yes|
+**Post-processing tools**,|yes|,|no|,|no|,|no|,|no|,|no|,|yes|,|no|,|yes|,|yes|
+**User case examples**,|yes|,|yes|,|yes|,|no|,|yes| ,|yes|,|no|,|yes|,|yes|,|yes|
+**Multi-GPU data parallelism**,|no|,|yes|,|yes|,|no|,|no|,|no|,|yes|,|yes|,|no|,|no|
+**Model evaluation**,|yes|,|yes|,|no|,|yes|,|no|,|no|,|yes|,|no|,|no|,|yes|
+**Input region of interest**,|yes| ,|yes| ,|no|,|yes|,|no|,|no|,|no|,|yes|,|no|,|yes|
+**Missing modality**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|
+**Models comparison**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|
+**Hyperparam optimisation**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|,|no|,|yes|
+**Multi-center models**,|yes|,|no|,|no|,|no|,|no|,|no|,|no|,|no|,|yes|,|no|

@@ -14,13 +14,14 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from ivadomed import losses as imed_losses
+from ivadomed import mixup as imed_mixup
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
+from ivadomed import visualize as imed_visualize
 from ivadomed.loader import utils as imed_loader_utils
 
 cudnn.benchmark = True
-logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
 
@@ -53,8 +54,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     writer = SummaryWriter(log_dir=log_directory)
 
     # BALANCE SAMPLES AND PYTORCH LOADER
-    conditions = all([training_params["balance_samples"], model_params["name"] != "HeMIS"])
-    sampler_train, shuffle_train = get_sampler(dataset_train, conditions)
+    conditions = all([training_params["balance_samples"]["applied"], model_params["name"] != "HeMIS"])
+    sampler_train, shuffle_train = get_sampler(dataset_train, conditions, training_params['balance_samples']['type'])
 
     train_loader = DataLoader(dataset_train, batch_size=training_params["batch_size"],
                               shuffle=shuffle_train, pin_memory=True, sampler=sampler_train,
@@ -63,7 +64,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     gif_dict = {"image_path": [], "slice_id": [], "gif": []}
     if dataset_val:
-        sampler_val, shuffle_val = get_sampler(dataset_val, conditions)
+        sampler_val, shuffle_val = get_sampler(dataset_val, conditions, training_params['balance_samples']['type'])
 
         val_loader = DataLoader(dataset_val, batch_size=training_params["batch_size"],
                                 shuffle=shuffle_val, pin_memory=True, sampler=sampler_val,
@@ -77,7 +78,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             random_metadata = dict(dataset_val[indexes_gif[i_gif]]["input_metadata"][0])
             gif_dict["image_path"].append(random_metadata['input_filenames'])
             gif_dict["slice_id"].append(random_metadata['slice_index'])
-            gif_obj = imed_utils.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].numpy()[0].shape)
+            gif_obj = imed_visualize.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].numpy()[0].shape)
             gif_dict["gif"].append(copy.copy(gif_obj))
 
     # GET MODEL
@@ -114,7 +115,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     print("\nScheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
 
     # Create dict containing gammas and betas after each FiLM layer.
-    if model_params["name"] == "FiLMedUnet":
+    if 'film_layers' in model_params and any(model_params['film_layers']):
         gammas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
         betas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
         contrast_list = []
@@ -171,11 +172,12 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
             # MIXUP
             if training_params["mixup_alpha"]:
-                input_samples, gt_samples = imed_utils.mixup(input_samples, gt_samples, training_params["mixup_alpha"],
+                input_samples, gt_samples = imed_mixup.mixup(input_samples, gt_samples, training_params["mixup_alpha"],
                                                              debugging and epoch == 1, log_directory)
 
             # RUN MODEL
-            if model_params["name"] in ["HeMISUnet", "HeMIS", "FiLMedUnet"]:
+            if model_params["name"] in ["HeMISUnet", "HeMIS"] or \
+                    ('film_layers' in model_params and any(model_params['film_layers'])):
                 metadata = get_metadata(batch["input_metadata"], model_params)
                 preds = model(input_samples, metadata)
             else:
@@ -195,8 +197,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             num_steps += 1
 
             if i == 0 and debugging:
-                imed_utils.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds,
-                                                is_three_dim=model_params["name"].endswith("3D"))
+                imed_visualize.save_tensorboard_img(writer, epoch, "Train", input_samples, gt_samples, preds,
+                                                    is_three_dim=not model_params["is_2d"])
 
         if not step_scheduler_batch:
             scheduler.step()
@@ -231,7 +233,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                     gt_samples = imed_utils.cuda(batch["gt"], cuda_available, non_blocking=True)
 
                     # RUN MODEL
-                    if model_params["name"] in ["HeMISUnet", "HeMIS", "FiLMedUnet"]:
+                    if model_params["name"] in ["HeMISUnet", "HeMIS"] or \
+                            ('film_layers' in model_params and any(model_params['film_layers'])):
                         metadata = get_metadata(batch["input_metadata"], model_params)
                         preds = model(input_samples, metadata)
                     else:
@@ -249,7 +252,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                         for i_gif in range(n_gif):
                             if gif_dict["image_path"][i_gif] == met.__getitem__('input_filenames') and \
                                     gif_dict["slice_id"][i_gif] == met.__getitem__('slice_index'):
-                                overlap = imed_utils.overlap_im_seg(im, pr)
+                                overlap = imed_visualize.overlap_im_seg(im, pr)
                                 gif_dict["gif"][i_gif].add(overlap, label=str(epoch))
 
                 num_steps += 1
@@ -260,11 +263,11 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 metric_mgr(preds_npy, gt_npy)
 
                 if i == 0 and debugging:
-                    imed_utils.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
-                                                    is_three_dim=model_params["name"].endswith("3D"))
+                    imed_visualize.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
+                                                        is_three_dim=not model_params['is_2d'])
 
-                if model_params["name"] == "FiLMedUnet" and debugging and epoch == num_epochs \
-                        and i < int(len(dataset_val) / training_params["batch_size"]) + 1:
+                if 'film_layers' in model_params and any(model_params['film_layers']) and debugging and \
+                        epoch == num_epochs and i < int(len(dataset_val) / training_params["batch_size"]) + 1:
                     # Store the values of gammas and betas after the last epoch for each batch
                     gammas_dict, betas_dict, contrast_list = store_film_params(gammas_dict, betas_dict, contrast_list,
                                                                                batch['input_metadata'], model,
@@ -322,7 +325,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     # Save final model
     final_model_path = os.path.join(log_directory, "final_model.pt")
     torch.save(model, final_model_path)
-    if model_params["name"] == "FiLMedUnet" and debugging:
+    if 'film_layers' in model_params and any(model_params['film_layers']) and debugging:
         save_film_params(gammas_dict, betas_dict, contrast_list, model_params["depth"], log_directory)
 
     # Save best model in log directory
@@ -366,7 +369,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
 
-def get_sampler(ds, balance_bool):
+def get_sampler(ds, balance_bool, metadata):
     """Get sampler.
 
     Args:
@@ -378,7 +381,7 @@ def get_sampler(ds, balance_bool):
         Otherwise: Returns None and True.
     """
     if balance_bool:
-        return imed_loader_utils.BalancedSampler(ds), False
+        return imed_loader_utils.BalancedSampler(ds, metadata), False
     else:
         return None, True
 

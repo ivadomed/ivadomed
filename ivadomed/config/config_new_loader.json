@@ -1,0 +1,88 @@
+{
+    "command": "train",
+    "gpu": 0,
+    "log_directory": "log_directory/new_loader",
+    "model_name": "model_name",
+    "debugging": true,
+    "object_detection_params": {
+        "object_detection_path": null,
+        "safety_factor": [1.0, 1.0, 1.0]
+    },
+    "loader_parameters": {
+        "bids_path": "data_example_microscopy_sem",
+        "bids_config": "ivadomed/config/config_bids.json",
+        "target_suffix": ["_seg-manual", "_seg-axon-manual"],
+        "extensions": [".nii.gz", ".png"],
+        "roi_params": {
+            "suffix": null,
+            "slice_filter_roi": null
+        },
+        "contrast_params": {
+            "training_validation": ["T1w", "SEM"],
+            "testing": [],
+            "balance": {}
+        },
+        "slice_filter_params": {
+            "filter_empty_mask": false,
+            "filter_empty_input": true
+        },
+        "slice_axis": "axial",
+        "multichannel": false,
+        "soft_gt": false
+    },
+    "split_dataset": {
+        "fname_split": null,
+        "random_seed": 6,
+        "center_test": [],
+        "method": "per_patient",
+        "balance": null,
+        "train_fraction": 0.6,
+        "test_fraction": 0.2
+    },
+    "training_parameters": {
+        "batch_size": 18,
+        "loss": {
+            "name": "DiceLoss"
+        },
+        "training_time": {
+            "num_epochs": 100,
+            "early_stopping_patience": 50,
+            "early_stopping_epsilon": 0.001
+        },
+        "scheduler": {
+            "initial_lr": 0.001,
+            "lr_scheduler": {
+                "name": "CosineAnnealingLR",
+                "base_lr": 1e-5,
+                "max_lr": 1e-2
+            }
+        },
+        "balance_samples": {
+            "applied": false,
+            "type": "gt"
+        },
+        "mixup_alpha": null,
+        "transfer_learning": {
+            "retrain_model": null,
+            "retrain_fraction": 1.0,
+            "reset": true
+        }
+    },
+    "default_model": {
+        "name": "Unet",
+        "dropout_rate": 0.3,
+        "bn_momentum": 0.9,
+        "depth": 3,
+        "is_2d": true
+    },
+    "uncertainty": {
+        "epistemic": false,
+        "aleatoric": false,
+        "n_it": 0
+    },
+    "postprocessing": {},
+    "evaluation_parameters": {
+    },
+    "transformation": {
+    }
+}
