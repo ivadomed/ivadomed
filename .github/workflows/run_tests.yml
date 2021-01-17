@@ -69,7 +69,7 @@ jobs:
         pip install flake8 pytest coverage coveralls pytest-cov
         If (Test-Path -Path requirements.txt ) { pip install -r requirements.txt -f https://download.pytorch.org/whl/torch_stable.html }
         pip uninstall torch torchvision
-        pip install torch>=1.5.0+cpu torchvision>=0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+        pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
         pip install -e .
     - name: Lint with flake8
       run: |
