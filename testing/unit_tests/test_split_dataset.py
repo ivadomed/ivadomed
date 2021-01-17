@@ -1,23 +1,25 @@
 import os
 import csv
 import json
-import shutil
 import pytest
 import numpy as np
-
 from ivadomed.loader import utils as imed_loader_utils
+from t_utils import remove_tmp_dir, create_tmp_dir,  __tmp_dir__
 
-
-BIDS_PATH = 'bids'
-LOG_PATH = 'log'
+BIDS_PATH = os.path.join(__tmp_dir__, 'bids')
+LOG_PATH = os.path.join(__tmp_dir__, 'log')
 N = 200
 N_CENTERS = 5
+
+
+def setup_function():
+    create_tmp_dir()
 
 
 @pytest.mark.parametrize('split_params', [{
         "fname_split": None,
         "random_seed": 6,
-        "center_test": ['0'],
+        "center_test": [0],
         "method": "per_center",
         "train_fraction": 0.6,
         "test_fraction": 0.2
@@ -37,14 +39,15 @@ def load_dataset(split_params):
     if not os.path.isdir(LOG_PATH):
         os.mkdir(LOG_PATH)
 
-    train, val, test = imed_loader_utils.get_subdatasets_subjects_list(split_params, BIDS_PATH, LOG_PATH)
+    train, val, test = imed_loader_utils.get_subdatasets_subjects_list(split_params, BIDS_PATH,
+                                                                       LOG_PATH)
     return train, val, test, patient_mapping
 
 
 @pytest.mark.parametrize('split_params', [{
         "fname_split": None,
         "random_seed": 6,
-        "center_test": ['0'],
+        "center_test": [0],
         "method": "per_center",
         "train_fraction": 0.6,
         "test_fraction": 0.2
@@ -110,7 +113,7 @@ def test_per_patient(split_params):
         "train_fraction": 0.6,
         "test_fraction": 0
     }])
-def test_per_patient(split_params):
+def test_per_patient_2(split_params):
     train, val, test, patient_mapping = load_dataset(split_params)
 
     assert np.isclose(len(train), round(N * 0.6), atol=1)
@@ -149,7 +152,7 @@ def test_per_patient_balance(split_params):
 @pytest.mark.parametrize('split_params', [{
         "fname_split": None,
         "random_seed": 6,
-        "center_test": ['0'],
+        "center_test": [0],
         "balance": "disability",
         "method": "per_center",
         "train_fraction": 0.4,
@@ -166,7 +169,6 @@ def test_per_center_balance(split_params):
         assert patient_mapping[sub]['center'] == '0'
 
     check_balance(train, val, test, patient_mapping)
-    delete_test_folders()
 
 
 def create_tsvfile():
@@ -193,7 +195,6 @@ def create_tsvfile():
         patient_mapping[patient_id]['center'] = center_id
         participants.append(row_participants)
 
-    # # Save participants.tsv
     with open(os.path.join(BIDS_PATH, "participants.tsv"), 'w') as tsv_file:
         tsv_writer = csv.writer(tsv_file, delimiter='\t', lineterminator='\n')
         tsv_writer.writerow(["participant_id", "disability", "institution_id"])
@@ -204,17 +205,16 @@ def create_tsvfile():
 
 
 def create_jsonfile():
-    #Create dataset_description.json
+    """Create dataset_description.json."""
+
     dataset_description = {}
     dataset_description[u'Name'] = 'Test'
     dataset_description[u'BIDSVersion'] = '1.2.1'
 
-    # Save dataset_description.json
     with open(os.path.join(BIDS_PATH, "dataset_description.json"), 'w') as outfile:
         outfile.write(json.dumps(dataset_description, indent=2, sort_keys=True))
         outfile.close()
 
 
-def delete_test_folders():
-    shutil.rmtree(BIDS_PATH)
-    shutil.rmtree(LOG_PATH)
+def teardown_function():
+    remove_tmp_dir()

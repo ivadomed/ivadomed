@@ -1,4 +1,3 @@
-import ivadomed.utils as imed_utils
 import ivadomed.visualize as imed_visualize
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
@@ -8,14 +7,18 @@ import io
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 import ivadomed.maths as imed_math
 from PIL import Image
-import time
+from t_utils import remove_tmp_dir, create_tmp_dir,  __tmp_dir__
+
+
+def setup_function():
+    create_tmp_dir()
 
 
 def test_tensorboard_save():
     inp = torch.tensor(np.zeros((1, 1, 15, 15)))
     gt = torch.tensor(np.zeros((1, 1, 15, 15)))
     pred = torch.tensor(np.zeros((1, 1, 15, 15)))
-    dpath = "test_tensorboard_save"
+    dpath = os.path.join(__tmp_dir__, "test_tensorboard_save")
     os.makedirs(dpath)
     writer = SummaryWriter(log_dir=dpath)
     imed_visualize.save_tensorboard_img(writer, 1, "Training", inp, pred, gt)
@@ -31,3 +34,7 @@ def test_tensorboard_save():
     assert np.allclose(imed_math.rescale_values_array(input_retrieve[:, :, 0], 0, 1), inp[0, 0, :, :])
     assert np.allclose(imed_math.rescale_values_array(pred_retrieve[:, :, 0], 0, 1), pred[0, 0, :, :])
     assert np.allclose(imed_math.rescale_values_array(gt_retrieve[:, :, 0], 0, 1), gt[0, 0, :, :])
+
+
+def teardown_function():
+    remove_tmp_dir()
