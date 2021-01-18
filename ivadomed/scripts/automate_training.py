@@ -20,7 +20,6 @@ from itertools import product
 import joblib
 import pandas as pd
 import torch.multiprocessing as mp
-mp.set_start_method('spawn')
 from ivadomed import main as ivado
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
@@ -286,8 +285,12 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     if not output_dir:
         output_dir = ""
 
+    # CUDA problem when forking process
+    # https://github.com/pytorch/pytorch/issues/2517
+    ctx = mp.get_context("spawn")
+
     # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
-    pool = mp.Pool(processes=len(initial_config["gpu"]))
+    pool = ctx.Pool(processes=len(initial_config["gpu"]))
     results_df = pd.DataFrame()
     eval_df = pd.DataFrame()
     all_mean = pd.DataFrame()
@@ -400,16 +403,6 @@ def main(args=None):
 
     # Get thr increment if available
     thr_increment = args.thr_increment if args.thr_increment else None
-
-    # CUDA problem when forking process
-    # https://github.com/pytorch/pytorch/issues/2517
-    # try:
-    #     mp.set_start_method('spawn')
-    # except RuntimeError:
-    #     pass
-    #     # if mp.get_start_method() != 'spawn':
-    #     #     logging.warning(f"set_start_method: {mp.get_start_method()}")
-    #         # raise Exception(f"Error in set_start_method: {mp.get_start_method()}")
 
     automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin),
                       int(args.n_iterations), bool(args.run_test), args.all_logs, thr_increment,
