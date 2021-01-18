@@ -1,7 +1,7 @@
 import argparse
 import torch
 
-from ivadomed.utils import init_ivadomed, Metavar
+from ivadomed.utils import init_ivadomed, Metavar, save_onnx_model
 
 
 def get_parser():
@@ -42,7 +42,7 @@ def convert_pytorch_to_onnx(model, dimension, n_channels, gpu=0):
     model_net = torch.load(model, map_location=device)
     dummy_input = torch.randn(1, n_channels, 96, 96, device=device) if dimension == 2 \
                   else torch.randn(1, n_channels, 96, 96, 96, device=device)
-    imed_utils.save_onnx_model(model_net, dummy_input, model.replace("pt", "onnx"))
+    save_onnx_model(model_net, dummy_input, model.replace("pt", "onnx"))
 
 
 def main():
