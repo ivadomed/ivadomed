@@ -7,7 +7,7 @@ from ivadomed.utils import init_ivadomed, Metavar, save_onnx_model
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--model", dest="model", required=True, type=str,
-                        help="Path to .pt model.", metavar=Metavar.str)
+                        help="Path to .pt model.", metavar=Metavar.file)
     parser.add_argument("-d", "--dimension", dest="dimension", required=True,
                         type=int, help="Input dimension (2 for 2D inputs, 3 for 3D inputs).",
                         metavar=Metavar.int)
@@ -15,7 +15,7 @@ def get_parser():
                         help="Number of input channels of the model.",
                         metavar=Metavar.int)
     parser.add_argument("-g", "--gpu", dest="gpu", default=0, type=str,
-                        help="GPU number if available.", metavar=Metavar.str)
+                        help="GPU number if available.", metavar=Metavar.int)
     return parser
 
 

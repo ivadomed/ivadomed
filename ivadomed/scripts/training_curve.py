@@ -22,15 +22,15 @@ def get_parser():
                                 path_log_dir1,path_logdir2.""",
                         metavar=Metavar.str)
     parser.add_argument("--multiple", required=False, dest="multiple", action='store_true',
-                        help="Multiple log directories are considered: all available folders with -i as "
-                             "prefix. The plot represents the mean value (hard line) surrounded by the standard "
-                             "deviation envelope.")
+                        help="""Multiple log directories are considered: all available folders
+                                with -i as prefix. The plot represents the mean value (hard line)
+                                surrounded by the standard deviation envelope.""")
     parser.add_argument("-y", "--ylim_loss", required=False, type=str,
                         help="""Indicates the limits on the y-axis for the loss plots, otherwise
                                 these limits are automatically defined. Please separate the lower
                                 and the upper limit by a comma, eg -1,0. Note: for the validation
                                 metrics: the y-limits are always 0.0 and 1.0.""",
-                        metavar=Metavar.str)
+                        metavar=Metavar.float)
     parser.add_argument("-o", "--output", required=True, type=str,
                         help="Output folder.", metavar=Metavar.file)
     return parser
