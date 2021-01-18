@@ -13,7 +13,7 @@ import sys
 import argparse
 import textwrap
 
-from ivadomed.utils import init_ivadomed
+from ivadomed.utils import init_ivadomed, Metavar
 
 
 DICT_URL = {
@@ -47,11 +47,11 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", required=True,
                         choices=(sorted(DICT_URL)),
-                        help="Data to download")
-    parser.add_argument("-k", "--keep", required=False, default=False,
+                        help="Data to download", metavar=Metavar.str)
+    parser.add_argument("-k", "--keep", action="store_true",
                         help="Keep existing data in destination directory")
     parser.add_argument("-o", "--output", required=False,
-                        help="Output Folder.")
+                        help="Output Folder.", metavar=Metavar.file)
     return parser
 
 
@@ -278,7 +278,7 @@ def main(args=None):
         dest_folder = arguments.output
 
     url = DICT_URL[data_name]["url"]
-    install_data(url, dest_folder, keep=arguments.keep)
+    install_data(url, dest_folder, keep=bool(arguments.keep))
     return 0
 
 
