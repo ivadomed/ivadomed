@@ -11,10 +11,9 @@ from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
 from ivadomed import utils as imed_utils
 import nibabel as nib
-import bids as pybids   # "bids" is already taken by bids_neuropoly
+import bids as pybids  # "bids" is already taken by bids_neuropoly
 import itertools
 import random
-
 
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
@@ -122,7 +121,7 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
         raise KeyError("No split_method '{}' was not found in metadata".format(split_method))
     if not data_type in df:
         logger.warning("No data_type named '{}' was found in metadata. Not taken into account "
-                        "to split the dataset.".format(data_type))
+                       "to split the dataset.".format(data_type))
         data_type = split_method
 
     # Filter dataframe with rows where split_method is not NAN
@@ -140,10 +139,10 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
     # List dataset unique values according to split_method
     # Update train fraction to apply to X_remain
     data = sorted(df[split_method].unique().tolist())
-    train_frac_update = train_frac*len(data)/len(X_remain)
+    train_frac_update = train_frac * len(data) / len(X_remain)
     if ((train_frac_update > (1 - 1 / len(X_remain)) and len(X_remain) < 2) or train_frac_update > 1):
         raise RuntimeError("{}/{} '{}' remaining for training and validation sets, train_fraction {} is too large, "
-                            "validation set would be empty.".format(len(X_remain), len(data), split_method, train_frac))
+                           "validation set would be empty.".format(len(X_remain), len(data), split_method, train_frac))
 
     # Split remainder in TRAIN and VALID sets according to train_frac_update using sklearn function
     X_train, X_val = train_test_split(X_remain, train_size=train_frac_update, random_state=random_seed)
@@ -231,7 +230,7 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
 
 
 def get_new_subject_split_new(df, split_method, data_testing, random_seed,
-                          train_frac, test_frac, log_directory, balance, subject_selection=None):
+                              train_frac, test_frac, log_directory, balance, subject_selection=None):
     """Randomly split dataset between training / validation / testing.
 
     Randomly split dataset between training / validation / testing\
@@ -282,11 +281,11 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
     for df_tmp in df_list:
         # Split dataset on each section of subjects
         train_tmp, valid_tmp, test_tmp = split_dataset_new(df=df_tmp,
-                                                        split_method=split_method,
-                                                        data_testing=data_testing,
-                                                        random_seed=random_seed,
-                                                        train_frac=train_frac,
-                                                        test_frac=test_frac)
+                                                           split_method=split_method,
+                                                           data_testing=data_testing,
+                                                           random_seed=random_seed,
+                                                           train_frac=train_frac,
+                                                           test_frac=test_frac)
         # Update the dataset lists
         train_lst += train_tmp
         valid_lst += valid_tmp
@@ -348,15 +347,15 @@ def get_subdatasets_subjects_list_new(split_params, df, log_directory, subject_s
         train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
     else:
         train_lst, valid_lst, test_lst = get_new_subject_split_new(df=df,
-                                                               split_method=split_params['split_method'],
-                                                               data_testing=split_params['data_testing'],
-                                                               random_seed=split_params['random_seed'],
-                                                               train_frac=split_params['train_fraction'],
-                                                               test_frac=split_params['test_fraction'],
-                                                               log_directory=log_directory,
-                                                               balance=split_params['balance']
-                                                               if 'balance' in split_params else None,
-                                                               subject_selection=subject_selection)
+                                                                   split_method=split_params['split_method'],
+                                                                   data_testing=split_params['data_testing'],
+                                                                   random_seed=split_params['random_seed'],
+                                                                   train_frac=split_params['train_fraction'],
+                                                                   test_frac=split_params['test_fraction'],
+                                                                   log_directory=log_directory,
+                                                                   balance=split_params['balance']
+                                                                   if 'balance' in split_params else None,
+                                                                   subject_selection=subject_selection)
     return train_lst, valid_lst, test_lst
 
 
@@ -787,8 +786,8 @@ def create_bids_dataframe(loader_params, derivatives):
     # Update dataframe with subject files of chosen contrasts and extensions,
     # and with derivative files of chosen target_suffix from loader parameters
     df = df[(~df['path'].str.contains('derivatives') & df['suffix'].str.contains('|'.join(contrast_lst)) &
-         df['extension'].str.contains('|'.join(extensions))) |
-         (df['path'].str.contains('derivatives') & df['filename'].str.contains('|'.join(target_suffix)))]
+             df['extension'].str.contains('|'.join(extensions))) |
+            (df['path'].str.contains('derivatives') & df['filename'].str.contains('|'.join(target_suffix)))]
 
     # Add participant_id column, and metadata from participants.tsv file if present
     # Uses pybids function
