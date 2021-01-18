@@ -13,6 +13,7 @@ from ivadomed import utils as imed_utils
 import nibabel as nib
 import bids as pybids   # "bids" is already taken by bids_neuropoly
 import itertools
+import random
 
 
 __numpy_type_map = {
@@ -123,7 +124,6 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
         logger.warning("No data_type named '{}' was found in metadata. Not taken into account "
                         "to split the dataset.".format(data_type))
         data_type = split_method
-
 
     # Filter dataframe with rows where split_method is not NAN
     df = df[df[split_method].notna()]
@@ -258,8 +258,11 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
             raise ValueError("All lists in subject_selection parameter should have the same length.")
 
         sampled_dfs = []
+        random.seed(random_seed)
         for m, n, v in zip(subject_selection["metadata"], subject_selection["n"], subject_selection["value"]):
-            sampled_dfs.append(df[df[m] == v].sample(n=n, random_state=random_seed))
+            fnames = random.sample(df[df[m] == v][split_method].unique().tolist(), n)
+            for fname in fnames:
+                sampled_dfs.append(df[df[split_method] == fname])
 
         if len(sampled_dfs) != 0:
             df = pd.concat(sampled_dfs)
