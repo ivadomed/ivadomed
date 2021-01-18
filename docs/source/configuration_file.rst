@@ -149,6 +149,12 @@ below.
    intensities are zeros.
 -  ``filter_empty_mask``: Bool. Discard slices
    where all voxel labels are zeros.
+-  ``filter_absent_class``: Bool. Discard slices where all voxel
+   labels are zero for one or more classes (this is most relevant for
+   multi-class models that need GT for all classes at train time).
+-  ``filter_classification``: Bool. Discard slices where all images fail 
+   a custom classifier filter. If used, ``classifier_path`` must also be
+   specified, pointing to a saved PyTorch classifier. 
 
 roi
 ^^^
