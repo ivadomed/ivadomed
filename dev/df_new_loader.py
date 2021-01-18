@@ -58,10 +58,10 @@ else:
 
 # SPLIT TRAIN/VALID/TEST (with "new" functions)
 train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list_new(context["split_dataset"],
-                                                                                        df2,
-                                                                                        log_directory,
-                                                                                        context["loader_parameters"]
-                                                                                        ['subject_selection'])
+                                                                                     df2,
+                                                                                     log_directory,
+                                                                                     context["loader_parameters"]
+                                                                                     ['subject_selection'])
 print("Train:", train_lst)
 print("Valid:", valid_lst)
 print("Test:", test_lst)
