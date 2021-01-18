@@ -11,7 +11,8 @@ def get_parser():
                         type=int, help="Input dimension (2 for 2D inputs, 3 for 3D inputs).")
     parser.add_argument("-n", "--n_channels", dest="n_channels", default=1, type=int,
                         help="Number of input channels of the model.")
-    parser.add_argument("-g", "--gpu", dest="gpu", default=0, type=str, help="GPU number if available.")
+    parser.add_argument("-g", "--gpu", dest="gpu", default=[0], type=list,
+                        help="GPU ID to use, if available.")
     return parser
 
 
@@ -48,7 +49,8 @@ def main():
     args = parser.parse_args()
     fname_model = args.model
     dimension = int(args.dimension)
-    gpu = str(args.gpu)
+    gpu = list(args.gpu)
+    gpu = str(gpu[0])
     n_channels = args.n_channels
     # Run Script
     convert_pytorch_to_onnx(fname_model, dimension, n_channels, gpu)
