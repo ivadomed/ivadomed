@@ -1,5 +1,5 @@
 import argparse
-import ivadomed.utils as imed_utils
+from ivadomed.utils import init_ivadomed, Metavar
 import ivadomed.preprocessing as imed_preprocessing
 import nibabel as nib
 import numpy as np
@@ -50,7 +50,7 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
     Example::
 
         ivadomed_prepare_dataset_vertebral_labeling -p path/to/bids -s _T2w -a 0
-    
+
     Args:
         path (string): path to BIDS dataset form which images will be generated. Flag: ``--path``, ``-p``
         suffix (string): suffix of image that will be processed (e.g., T2w). Flag: ``--suffix``, ``-s``
@@ -94,17 +94,21 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", dest="path", required=True, type=str,
-                        help="Path to bids folder")
-    parser.add_argument("-s", "--suffix", dest="suffix", required=True,
-                        type=str, help="Suffix of the input file as in sub-xxxSUFFIX.nii.gz (E.g., _T2w)")
+                        help="Path to bids folder",
+                        metavar=Metavar.file)
+    parser.add_argument("-s", "--suffix", dest="suffix", required=True, type=str,
+                        help="""Suffix of the input file as in
+                                sub-xxxSUFFIX.nii.gz (E.g., _T2w)""",
+                        metavar=Metavar.str)
     parser.add_argument("-a", "--aim", dest="aim", default=-1, type=int,
-                        help="-1 or positive int. If set to any positive int,"
-                             " only label with this value will be taken into account ")
+                        help="""-1 or positive int. If set to any positive int,
+                                only label with this value will be taken into account""",
+                        metavar=Metavar.int)
     return parser
 
 
 def main():
-    imed_utils.init_ivadomed()
+    init_ivadomed()
 
     parser = get_parser()
     args = parser.parse_args()
@@ -114,5 +118,6 @@ def main():
     # Run Script
     extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()
