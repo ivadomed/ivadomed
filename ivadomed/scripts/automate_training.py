@@ -63,7 +63,7 @@ def train_worker(config, thr_incr):
     ID = int(current.name[-1]) - 1
 
     # Use GPU i from the array specified in the config file
-    config["gpu"] = config["gpu"][ID]
+    config["gpu_ids"] = config["gpu_ids"][ID]
 
     # Call ivado cmd_train
     try:
@@ -91,7 +91,7 @@ def test_worker(config):
     ID = int(current.name[-1]) - 1
 
     # Use GPU i from the array specified in the config file
-    config["gpu"] = config["gpu"][ID]
+    config["gpu_ids"] = config["gpu_ids"][ID]
 
     try:
         # Save best test score
@@ -265,7 +265,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     mp.set_start_method('spawn')
 
     # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
-    pool = mp.Pool(processes=len(initial_config["gpu"]))
+    pool = mp.Pool(processes=len(initial_config["gpu_ids"]))
 
     results_df = pd.DataFrame()
     eval_df = pd.DataFrame()
@@ -301,7 +301,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                 # Take the config file within the log_directory because binarize_prediction may have been updated
                 json_path = os.path.join(config['log_directory'], 'config_file.json')
                 new_config = imed_config_manager.ConfigurationManager(json_path).get_config()
-                new_config["gpu"] = config["gpu"]
+                new_config["gpu_ids"] = config["gpu_ids"]
                 new_config_list.append(new_config)
 
             test_results = pool.map(test_worker, new_config_list)
