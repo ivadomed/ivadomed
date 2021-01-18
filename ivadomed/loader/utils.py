@@ -269,7 +269,7 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
     # If balance, then split the dataframe for each categorical value of the "balance" column
     if balance:
         if balance in df.keys():
-            df_list = [df[df[balance] == k] for k in df[balance].unique().tolist()]
+            df_list = [df[df[balance] == k] for k in df[balance][df[balance].notna()].unique().tolist()]
         else:
             logger.warning("No column named '{}' was found in 'participants.tsv' file. Not taken into account to split "
                            "the dataset.".format(balance))
