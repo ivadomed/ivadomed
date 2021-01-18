@@ -14,7 +14,7 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from ivadomed.utils import init_ivadomed
+from ivadomed.utils import init_ivadomed, Metavar
 
 from scipy.stats import ttest_ind_from_stats
 
@@ -22,13 +22,17 @@ from scipy.stats import ttest_ind_from_stats
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-df", "--dataframe", required=True,
-                        help="Path to saved dataframe (csv file).")
+                        help="Path to saved dataframe (csv file).",
+                        metavar=Metavar.file)
     parser.add_argument("-n", "--n-iterations", required=True, dest="n_iterations",
-                        type=int, help="Number of times each config was run .")
+                        type=int, help="Number of times each config was run .",
+                        metavar=Metavar.int)
     parser.add_argument("--run_test", dest='run_test', action='store_true',
-                        help="Evaluate the trained model on the testing sub-set instead of validation.")
+                        help="""Evaluate the trained model on the testing sub-set instead of
+                                validation.""")
     parser.add_argument("-o", "--output", dest='out', default="comparison_models.csv",
-                        help="if defined will represents the output csv file.")
+                        help="if defined will represents the output csv file.",
+                        metavar=Metavar.file)
     return parser
 
 
