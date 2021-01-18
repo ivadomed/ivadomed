@@ -6,25 +6,30 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from ivadomed.utils import init_ivadomed
+from ivadomed.utils import init_ivadomed, Metavar
 
 EXCLUDED_SUBJECT = ["sub-mniPilot1"]
+
 
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True,
-                        help="Input BIDS folder.")
+                        help="Input BIDS folder.", metavar=Metavar.file)
     parser.add_argument("-n", "--number", required=False, default=1,
-                        help="Number of subjects.")
+                        help="Number of subjects.", metavar=Metavar.int)
     parser.add_argument("-c", "--contrasts", required=False,
-                        help="Contrast list.")
+                        help="Contrast list.", metavar=Metavar.list)
     parser.add_argument("-o", "--output", required=True,
-                        help="Output BIDS Folder.")
+                        help="Output BIDS Folder.", metavar=Metavar.file)
     parser.add_argument("-s", "--seed", required=False, default=-1,
-                        help="Set np.random.RandomState to ensure reproducibility: the same subjects will be selected "
-                             "if the script is run several times on the same dataset. Set to -1 (default) otherwise.")
-    parser.add_argument("-d", "--derivatives", required=False, default=1,
-                        help="1: Include derivatives/labels content. 0: Do not include derivatives/labels content.")
+                        help="""Set np.random.RandomState to ensure reproducibility: the same
+                                subjects will be selected if the script is run several times on the
+                                same dataset. Set to -1 (default) otherwise.""",
+                        metavar=Metavar.int)
+    parser.add_argument("-d", "--exclude-derivatives",
+                        action="store_true",
+                        dest="exclude_derivatives",
+                        help="""If true, do not include derivatives/labels content.""")
     return parser
 
 
@@ -43,7 +48,8 @@ def remove_some_contrasts(folder, subject_list, good_contrast_list):
         os.remove(ff)
 
 
-def extract_small_dataset(input, output, n=10, contrast_list=None, include_derivatives=True, seed=-1):
+def extract_small_dataset(input, output, n=10, contrast_list=None, include_derivatives=True,
+                          seed=-1):
     """Extract small BIDS dataset from a larger BIDS dataset.
 
     Example::
@@ -138,7 +144,7 @@ def main():
     args = parser.parse_args()
     # Run script
     extract_small_dataset(args.input, args.output, int(args.number), args.contrasts.split(","),
-                          bool(int(args.derivatives)), int(args.seed))
+                          not bool(args.exclude_derivatives), int(args.seed))
 
 
 if __name__ == '__main__':
