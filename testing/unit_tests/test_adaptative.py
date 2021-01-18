@@ -10,7 +10,7 @@ import logging
 from t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__
 logger = logging.getLogger(__name__)
 
-GPU_NUMBER = 0
+GPU_ID = 0
 BATCH_SIZE = 4
 DROPOUT = 0.4
 DEPTH = 3
@@ -129,11 +129,11 @@ def test_hdf5():
 
         print("\n[INFO]: Starting loader test ...")
 
-        device = torch.device("cuda:" + str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
+        device = torch.device("cuda:" + str(GPU_ID) if torch.cuda.is_available() else "cpu")
         cuda_available = torch.cuda.is_available()
         if cuda_available:
             torch.cuda.set_device(device)
-            print("Using GPU number {}".format(device))
+            print("Using GPU ID {}".format(device))
 
         train_loader = DataLoader(dataset, batch_size=BATCH_SIZE,
                                   shuffle=False, pin_memory=True,

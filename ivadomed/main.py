@@ -372,7 +372,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                 options = {'metadata': metadata}
             pred_list, target_list = imed_inference.segment_volume(path_model,
                                                                    fname_images=fname_img,
-                                                                   gpu_number=context['gpu'][0],
+                                                                   gpu_id=context['gpu'][0],
                                                                    options=options)
             pred_path = os.path.join(context['log_directory'], "pred_masks")
             if not os.path.exists(pred_path):

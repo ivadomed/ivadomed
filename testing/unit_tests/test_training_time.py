@@ -14,7 +14,7 @@ from t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 0
+GPU_ID = 0
 BATCH_SIZE = 8
 N_EPOCHS = 2
 INIT_LR = 0.01
@@ -89,7 +89,7 @@ def setup_function():
     }
 ])
 def test_unet_time(train_lst, target_lst, config):
-    cuda_available, device = imed_utils.define_device(GPU_NUMBER)
+    cuda_available, device = imed_utils.define_device(GPU_ID)
 
     loader_params = {
         "data_list": train_lst,
