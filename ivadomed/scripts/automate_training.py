@@ -289,7 +289,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     # https://github.com/pytorch/pytorch/issues/2517
     #try:
         #mp.set_start_method('spawn')
-    global ctx = mp.get_context("spawn")
+    global ctx
+    ctx = mp.get_context("spawn")
     #except RuntimeError:
     #    if mp.get_start_method() != 'spawn':
     #        logging.warning('Bleh')
