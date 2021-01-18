@@ -95,51 +95,67 @@ def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8
     return X_train, X_val, X_test
 
 
-def split_dataset_new(df, split_output, data_testing, random_seed, train_frac=0.8, test_frac=0.1):
-    """Splits dataset into training, validation and testing datasets according to the data_type selected in data_testing.
-    Example: If data_type is "institution_id", the centers associated to the subjects are split according the train, test and
-    validation fraction whereas if data_type is "subject", the patients are directly separated according to these fractions.
+def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.8, test_frac=0.1):
+    """Splits dataset into training, validation and testing sets by applying train, test and validation fractions
+    according to the split_method.
+    The "data_testing" parameter can be used to specify the data_type and data_value to include in the testing set,
+    the dataset is then split as not to mix the data_testing between the training/validation set and the testing set.
 
     Args:
         df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
-        split_output (str): Used to specify if "participant_id" or "sample_id" is used to split.
-        data_testing (dict): Used to specify the data_type and data_value to include in the testing set.
+        split_method (str): Used to specify on which metadata to split the dataset (eg. "participant_id", "sample_id", etc.)
+        data_testing (dict): Used to specify data_type and data_value to include in the testing set.
         random_seed (int): Random seed to ensure reproducible splits.
         train_frac (float): Between 0 and 1. Represents the train set proportion.
         test_frac (float): Between 0 and 1. Represents the test set proportion.
     Returns:
         list, list, list: Train, validation and test data_type list.
     """
-    # Init output lists
 
     # Get data_type and data_value from split parameters
-    data_type = data_testing['data_type'] if data_testing['data_type'] else split_output
+    # If no data_type is provided, data_type is the same as split_method
+    data_type = data_testing['data_type'] if data_testing['data_type'] else split_method
     data_value = data_testing['data_value']
 
-    # Filter dataframe with rows where data_type is not NAN
-    df = df[df[data_type].notna()]
+    if not split_method in df:
+        raise KeyError("No split_method '{}' was not found in metadata".format(split_method))
+    if not data_type in df:
+        logger.warning("No data_type named '{}' was found in metadata. Not taken into account "
+                        "to split the dataset.".format(data_type))
+        data_type = split_method
 
-    # List unique data_type
-    data = sorted(df[split_output].unique().tolist())
 
-    # Split test dataset according to data_value
-    # Make sure that data_type coming from data_value are unseen during training
+    # Filter dataframe with rows where split_method is not NAN
+    df = df[df[split_method].notna()]
+
+    # If no data_value list is provided, create a random data_value according to data_type and test_fraction
+    # Split the TEST and remainder set using sklearn function
     if len(data_value) == 0 and test_frac != 0:
-        test_frac = test_frac if test_frac >= 1 / len(data) else 1 / len(data)
-        data_value, _ = train_test_split(data, train_size=test_frac, random_state=random_seed)
-    X_test = df[df[data_type].isin(data_value)][split_output].unique().tolist()
-    X_remain = df[~df[data_type].isin(data_value)][split_output].unique().tolist()
+        data_value = sorted(df[data_type].unique().tolist())
+        test_frac = test_frac if test_frac >= 1 / len(data_value) else 1 / len(data_value)
+        data_value, _ = train_test_split(data_value, train_size=test_frac, random_state=random_seed)
+    X_test = df[df[data_type].isin(data_value)]['ivadomed_id'].unique().tolist()
+    X_remain = df[~df[data_type].isin(data_value)][split_method].unique().tolist()
 
-    # Split remainder in train/valid or train/valid/test datasets using sklearn function
-    train_frac = train_frac*len(data)/len(X_remain)
-    X_train, X_tmp = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
-    if test_frac == 0 or len(X_test):
-        # X_test already contains data from data_value unseen during the training, eg centers in SpineGeneric
-        X_val = X_tmp
-    else:
-        # X_test will contain data from data_value seen during the training, eg centers in gm_challenge
-        test_frac = test_frac*len(data)/len(X_tmp)
-        X_val, X_test = train_test_split(X_tmp, train_size=1-test_frac, random_state=random_seed)
+    # List dataset unique values according to split_method
+    # Update train fraction to apply to X_remain
+    data = sorted(df[split_method].unique().tolist())
+    train_frac_update = train_frac*len(data)/len(X_remain)
+    if ((train_frac_update > (1 - 1 / len(X_remain)) and len(X_remain) < 2) or train_frac_update > 1):
+        raise RuntimeError("{}/{} '{}' remaining for training and validation sets, train_fraction {} is too large, "
+                            "validation set would be empty.".format(len(X_remain), len(data), split_method, train_frac))
+
+    # Split remainder in TRAIN and VALID sets according to train_frac_update using sklearn function
+    X_train, X_val = train_test_split(X_remain, train_size=train_frac_update, random_state=random_seed)
+
+    # Convert train and valid sets from list of "split_method" to list of "ivadomed_id"
+    X_train = df[df[split_method].isin(X_train)]['ivadomed_id'].unique().tolist()
+    X_val = df[df[split_method].isin(X_val)]['ivadomed_id'].unique().tolist()
+
+    # Make sure that test dataset is unseen during training
+    # (in cases where there are multiple "data_type" for a same "split_method")
+    X_train = list(set(X_train) - set(X_test))
+    X_val = list(set(X_val) - set(X_test))
 
     return X_train, X_val, X_test
 
@@ -214,7 +230,7 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
     return train_lst, valid_lst, test_lst
 
 
-def get_new_subject_split_new(df, split_output, data_testing, random_seed,
+def get_new_subject_split_new(df, split_method, data_testing, random_seed,
                           train_frac, test_frac, log_directory, balance, subject_selection=None):
     """Randomly split dataset between training / validation / testing.
 
@@ -223,7 +239,7 @@ def get_new_subject_split_new(df, split_output, data_testing, random_seed,
 
     Args:
         df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
-        split_output (str): Used to specify if "participant_id" or "sample_id" is used to split
+        split_method (str): Used to specify on which metadata to split the dataset (eg. "participant_id", "sample_id", etc.)
         data_testing (dict): Used to specify the data_type and data_value to include in the testing set.
         random_seed (int): Random seed.
         train_frac (float): Training dataset proportion, between 0 and 1.
@@ -263,7 +279,7 @@ def get_new_subject_split_new(df, split_output, data_testing, random_seed,
     for df_tmp in df_list:
         # Split dataset on each section of subjects
         train_tmp, valid_tmp, test_tmp = split_dataset_new(df=df_tmp,
-                                                        split_output=split_output,
+                                                        split_method=split_method,
                                                         data_testing=data_testing,
                                                         random_seed=random_seed,
                                                         train_frac=train_frac,
@@ -312,7 +328,7 @@ def get_subdatasets_subjects_list(split_params, bids_path, log_directory, subjec
 
 
 def get_subdatasets_subjects_list_new(split_params, df, log_directory, subject_selection=None):
-    """Get lists of filenames for each sub-dataset between training / validation / testing.
+    """Get lists of subjects for each sub-dataset between training / validation / testing.
 
     Args:
         split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
@@ -329,7 +345,7 @@ def get_subdatasets_subjects_list_new(split_params, df, log_directory, subject_s
         train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
     else:
         train_lst, valid_lst, test_lst = get_new_subject_split_new(df=df,
-                                                               split_output=split_params['split_output'],
+                                                               split_method=split_params['split_method'],
                                                                data_testing=split_params['data_testing'],
                                                                random_seed=split_params['random_seed'],
                                                                train_frac=split_params['train_fraction'],
