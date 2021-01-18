@@ -33,7 +33,7 @@
     "split_dataset": {
         "fname_split": null,
         "random_seed": 500,
-        "split_output": "participant_id",
+        "split_method" : "participant_id",
         "data_testing": {"data_type": "institution_id", "data_value":["oxfordFmrib"]},
         "balance": null,
         "train_fraction": 0.6,
