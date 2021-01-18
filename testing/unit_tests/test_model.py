@@ -2,7 +2,7 @@ import ivadomed.models as imed_model
 import torch
 import torchvision
 
-# testing countception model
+
 def test_countception():
     a = [[[[0 for i in range(10)] for i in range(10)]]]
     inp = torch.tensor(a).float()
@@ -51,6 +51,3 @@ def test_film_generator():
     inf = model(inp)
     assert (type(inf[0]) == torch.Tensor)
     assert (type(inf[1]) == torch.nn.parameter.Parameter)
-
-
-
