@@ -1,17 +1,21 @@
 import argparse
 import torch
 
-from ivadomed import utils as imed_utils
+from ivadomed.utils import init_ivadomed, Metavar
 
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--model", dest="model", required=True, type=str, help="Path to .pt model.")
+    parser.add_argument("-m", "--model", dest="model", required=True, type=str,
+                        help="Path to .pt model.", metavar=Metavar.str)
     parser.add_argument("-d", "--dimension", dest="dimension", required=True,
-                        type=int, help="Input dimension (2 for 2D inputs, 3 for 3D inputs).")
+                        type=int, help="Input dimension (2 for 2D inputs, 3 for 3D inputs).",
+                        metavar=Metavar.int)
     parser.add_argument("-n", "--n_channels", dest="n_channels", default=1, type=int,
-                        help="Number of input channels of the model.")
-    parser.add_argument("-g", "--gpu", dest="gpu", default=0, type=str, help="GPU number if available.")
+                        help="Number of input channels of the model.",
+                        metavar=Metavar.int)
+    parser.add_argument("-g", "--gpu", dest="gpu", default=0, type=str,
+                        help="GPU number if available.", metavar=Metavar.str)
     return parser
 
 
@@ -42,7 +46,7 @@ def convert_pytorch_to_onnx(model, dimension, n_channels, gpu=0):
 
 
 def main():
-    imed_utils.init_ivadomed()
+    init_ivadomed()
 
     parser = get_parser()
     args = parser.parse_args()
