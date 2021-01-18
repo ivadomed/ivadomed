@@ -9,6 +9,7 @@ from ivadomed import utils as imed_utils
 
 EXCLUDED_SUBJECT = ["sub-mniPilot1"]
 
+
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True,
@@ -78,14 +79,16 @@ def extract_small_dataset(input, output, n=10, contrast_list=None, include_deriv
 
     # Get subject list
     subject_list = [s for s in os.listdir(input)
-                    if s.startswith("sub-") and os.path.isdir(os.path.join(input, s)) and not s in EXCLUDED_SUBJECT]
+                    if s.startswith("sub-") and os.path.isdir(os.path.join(input, s))
+                    and s not in EXCLUDED_SUBJECT]
+
     # Randomly select subjects
     if seed != -1:
         # Reproducibility
         r = np.random.RandomState(seed)
         subject_random_list = list(r.choice(subject_list, n))
     else:
-        subject_random_list = list(np.random.choice(subject_list, n))
+        subject_random_list = list(np.random.choice(subject_list, n, replace=False))
 
     # Loop across subjects
     for subject in subject_random_list:

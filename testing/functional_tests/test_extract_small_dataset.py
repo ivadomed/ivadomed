@@ -40,6 +40,7 @@ def test_extract_small_dataset_n_2():
         'sub-unf02' not in output_dir_list or \
         'sub-unf03' not in output_dir_list
 
+
 def test_extract_small_dataset_no_derivatives():
     __output_dir__ = os.path.join(__tmp_dir__, 'output_extract_small_dataset_3')
     extract_small_dataset.main(args=['--input', __data_testing_dir__,
@@ -54,6 +55,7 @@ def test_extract_small_dataset_no_derivatives():
         'sub-unf02' in output_dir_list or \
         'sub-unf03' in output_dir_list
 
+
 def test_extract_small_dataset_contrast_list():
     __output_dir__ = os.path.join(__tmp_dir__, 'output_extract_small_dataset_4')
     extract_small_dataset.main(args=['--input', __data_testing_dir__,
@@ -67,6 +69,7 @@ def test_extract_small_dataset_contrast_list():
     assert 'sub-unf01' in output_dir_list or \
         'sub-unf02' in output_dir_list or \
         'sub-unf03' in output_dir_list
+
 
 def teardown_function():
     remove_tmp_dir()
