@@ -69,7 +69,7 @@ def train_worker(config, thr_incr):
             threshold. The specified value indicates the increment between 0 and 1 used during the
             ROC analysis (e.g. 0.1). Flag: ``-t``, ``--thr-increment``
     """
-    current = mp.current_process()
+    current = ctx.current_process()
     # ID of process used to assign a GPU
     ID = int(current.name[-1]) - 1
 
@@ -98,7 +98,7 @@ def train_worker(config, thr_incr):
 def test_worker(config):
     # Call ivado cmd_eval
 
-    current = mp.current_process()
+    current = ctx.current_process()
     # ID of process used to assign a GPU
     ID = int(current.name[-1]) - 1
 
@@ -289,7 +289,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     # https://github.com/pytorch/pytorch/issues/2517
     #try:
         #mp.set_start_method('spawn')
-    ctx = mp.get_context("spawn")
+    global ctx = mp.get_context("spawn")
     #except RuntimeError:
     #    if mp.get_start_method() != 'spawn':
     #        logging.warning('Bleh')
