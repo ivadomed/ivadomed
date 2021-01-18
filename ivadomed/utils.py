@@ -1,12 +1,10 @@
 import logging
 import os
 import subprocess
-import joblib
-
 import matplotlib
 import matplotlib.pyplot as plt
 import torch
-import torch.nn as nn
+from enum import Enum
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -14,6 +12,20 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 CLASSIFIER_LIST = ['resnet18', 'densenet121']
 
 logger = logging.getLogger(__name__)
+
+
+class Metavar(Enum):
+    """This class is used to display intuitive input types via the metavar field of argparse."""
+
+    file = "<file>"
+    str = "<str>"
+    folder = "<folder>"
+    int = "<int>"
+    list = "<list>"
+    float = "<float>"
+
+    def __str__(self):
+        return self.value
 
 
 def get_task(model_name):
