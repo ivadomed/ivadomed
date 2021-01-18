@@ -259,9 +259,9 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
         sampled_dfs = []
         random.seed(random_seed)
         for m, n, v in zip(subject_selection["metadata"], subject_selection["n"], subject_selection["value"]):
-            samples = random.sample(df[df[m] == v][split_method].unique().tolist(), n)
-            for sample in samples:
-                sampled_dfs.append(df[df[split_method] == sample])
+            participants = random.sample(df[df[m] == v]['participant_id'].unique().tolist(), n)
+            for participant in participants:
+                sampled_dfs.append(df[df['participant_id'] == participant])
 
         if len(sampled_dfs) != 0:
             df = pd.concat(sampled_dfs)
