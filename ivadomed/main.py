@@ -183,6 +183,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     testing_params.update({'uncertainty': context["uncertainty"]})
     testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
                            'slice_axis': loader_params['slice_axis']})
+    testing_params.update({'remove_contrasts': context['testing_parameters']['remove_contrasts']})
     if command == "train":
         imed_utils.display_selected_transfoms(transform_train_params, dataset_type=["training"])
         imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=["validation"])

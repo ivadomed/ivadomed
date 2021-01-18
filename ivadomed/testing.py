@@ -60,9 +60,9 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
     metric_mgr = imed_metrics.MetricManager(metric_fns)
 
     # CURRICULUM LEARNING
-    if model_params["name"] in ["HeMISUnet", "HeMIS"] and testing_params['remove_contrasts']:
+    if model_params["name"] in ["HeMISUnet", "HeMIS"] and 'remove_contrasts' in testing_params:
         # Remove contrasts (only for HeMIS)
-        dataset_train.update(strategy='Remove_contrasts', contrasts=testing_params['remove_contrasts'])
+        dataset_test.update(strategy='Remove_contrasts', contrasts=testing_params['remove_contrasts'])
 
     # UNCERTAINTY SETTINGS
     if (testing_params['uncertainty']['epistemic'] or testing_params['uncertainty']['aleatoric']) and \
