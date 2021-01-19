@@ -4,10 +4,10 @@ import shutil
 from ivadomed.utils import init_ivadomed, __ivadomed_dir__
 from ivadomed.scripts import download_data as ivadomed_download_data
 
-__test_dir__ = os.path.join(__ivadomed_dir__, 'testing/unit_tests')
-__data_testing_dir_ref__ = "data_testing"
+__test_dir__ = os.path.join(__ivadomed_dir__, 'testing/functional_tests')
+__fixtures_dir__ = os.path.join(__test_dir__, 'fixtures')
+__data_testing_dir__ = "data_functional_testing"
 __tmp_dir__ = "tmp"
-__data_testing_dir__ = os.path.join(__tmp_dir__, __data_testing_dir_ref__)
 
 init_ivadomed()
 
@@ -89,7 +89,7 @@ def create_tmp_dir(copy_data_testing_dir=True):
     """Create temporary directory for test data and copy test data files.
 
     1. Remove the ``tmp`` directory if it exists.
-    2. Copy the ``data_testing`` directory to the ``tmp`` directory.
+    2. Copy the ``data_functional_testing`` directory to the ``tmp`` directory.
 
     Any data files created during testing will go into ``tmp`` directory.
     This is created/removed for each test.
@@ -100,9 +100,9 @@ def create_tmp_dir(copy_data_testing_dir=True):
     """
     remove_tmp_dir()
     os.mkdir(__tmp_dir__)
-    if os.path.exists(__data_testing_dir_ref__) and copy_data_testing_dir:
-        shutil.copytree(__data_testing_dir_ref__,
-                        __data_testing_dir__)
+    if os.path.exists(__data_testing_dir__) and copy_data_testing_dir:
+        shutil.copytree(__data_testing_dir__,
+                        os.path.join(__tmp_dir__, __data_testing_dir__))
 
 
 def remove_tmp_dir():

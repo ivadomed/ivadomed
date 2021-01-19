@@ -17,16 +17,14 @@ import random
 import shutil
 import sys
 from itertools import product
-
 import joblib
 import pandas as pd
 import torch.multiprocessing as mp
-
 from ivadomed import main as ivado
 from ivadomed import config_manager as imed_config_manager
-from ivadomed.utils import init_ivadomed, Metavar
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.scripts.compare_models import compute_statistics
+from ivadomed import utils as imed_utils
 
 LOG_FILENAME = 'log.txt'
 logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
@@ -35,14 +33,13 @@ logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, help="Base config file path.",
-                        metavar=Metavar.file)
+                        metavar=imed_utils.Metavar.file)
     parser.add_argument("-p", "--params", required=True,
-                        help="""JSON file where hyperparameters to experiment are
-                                listed.""",
-                        metavar=Metavar.file)
+                        help="JSON file where hyperparameters to experiment are listed.",
+                        metavar=imed_utils.Metavar.file)
     parser.add_argument("-n", "--n-iterations", dest="n_iterations", default=1,
                         type=int, help="Number of times to run each config.",
-                        metavar=Metavar.int)
+                        metavar=imed_utils.Metavar.int)
     parser.add_argument("--all-combin", dest='all_combin', action='store_true',
                         help="To run all combinations of config"),
     parser.add_argument("-m", "--multi-params", dest="multi_params", action='store_true',
@@ -58,12 +55,22 @@ def get_parser():
                                 the trained model and the validation sub-dataset to find the optimal
                                 binarization threshold. The specified value indicates the increment
                                 between 0 and 1 used during the analysis (e.g. 0.1).""",
-                        metavar=Metavar.float)
+                        metavar=imed_utils.Metavar.float)
+    parser.add_argument("-o", "--output_dir", required=False,
+                        help="Output Folder.")
 
     return parser
 
 
 def train_worker(config, thr_incr):
+    """
+    Args:
+        config (dict): dictionary containing configuration details.
+        thr_incr (float): A threshold analysis is performed at the end of the training
+            using the trained model and the validation sub-dataset to find the optimal binarization
+            threshold. The specified value indicates the increment between 0 and 1 used during the
+            ROC analysis (e.g. 0.1). Flag: ``-t``, ``--thr-increment``
+    """
     current = mp.current_process()
     # ID of process used to assign a GPU
     ID = int(current.name[-1]) - 1
@@ -77,7 +84,7 @@ def train_worker(config, thr_incr):
         best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = \
             ivado.run_command(config, thr_increment=thr_incr)
 
-    except:
+    except Exception:
         logging.exception('Got exception on main handler')
         print("Unexpected error:", sys.exc_info()[0])
         raise
@@ -86,7 +93,8 @@ def train_worker(config, thr_incr):
     config_copy = open(config["log_directory"] + "/config_file.json", "w")
     json.dump(config, config_copy, indent=4)
 
-    return config["log_directory"], best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
+    return config["log_directory"], best_training_dice, best_training_loss, best_validation_dice, \
+        best_validation_loss
 
 
 def test_worker(config):
@@ -104,7 +112,7 @@ def test_worker(config):
         config["command"] = "test"
         df_results, test_dice = ivado.run_command(config)
 
-    except:
+    except Exception:
         logging.exception('Got exception on main handler')
         print("Unexpected error:", sys.exc_info()[0])
         raise
@@ -154,15 +162,17 @@ def make_category(base_item, keys, values, is_all_combin=False, multiple_params=
     return items, names
 
 
-def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False, all_logs=False,
-                      thr_increment=None, multiple_params=False):
+def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False,
+                      all_logs=False, thr_increment=None, multiple_params=False,
+                      output_dir=None):
     """Automate multiple training processes on multiple GPUs.
 
-    Hyperparameter optimization of models is tedious and time-consuming. This function automatizes this optimization
-    across multiple GPUs. It runs trainings, on the same training and validation datasets, by combining a given set of
-    parameters and set of values for each of these parameters. Results are collected for each combination and reported
-    into a dataframe to allow their comparison. The script efficiently allocates each training to one of the available
-    GPUs.
+    Hyperparameter optimization of models is tedious and time-consuming.
+    This function automatizes this optimization across multiple GPUs. It runs trainings, on the
+    same training and validation datasets, by combining a given set of parameters and set of
+    values for each of these parameters. Results are collected for each combination and reported
+    into a dataframe to allow their comparison. The script efficiently allocates each training to
+    one of the available GPUs.
 
     Usage example::
 
@@ -172,27 +182,34 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
        :file: ../../images/detailed_results.csv
 
     Args:
-        config (string): Configuration filename, which is used as skeleton to configure the training. Some of its
-            parameters (defined in `param` file) are modified across experiments. Flag: ``--config``, ``-c``
-        param (string): json file containing parameters configurations to compare. Parameter "keys" of this file
-            need to match the parameter "keys" of `config` file. Parameter "values" are in a list. Flag: ``--param``, ``-p``
+        config (string): Configuration filename, which is used as skeleton to configure the
+            training. Some of its parameters (defined in `param` file) are modified across
+            experiments. Flag: ``--config``, ``-c``
+        param (string): json file containing parameters configurations to compare.
+            Parameter "keys" of this file need to match the parameter "keys" of `config` file.
+            Parameter "values" are in a list. Flag: ``--param``, ``-p``
 
             Example::
 
                 {"default_model": {"depth": [2, 3, 4]}}
 
-        fixed_split (bool): If True, all the experiments are run on the same training/validation/testing subdatasets.
-                            Flag: ``--fixed-split``
+        fixed_split (bool): If True, all the experiments are run on the same
+            training/validation/testing subdatasets. Flag: ``--fixed-split``
         all_combin (bool): If True, all parameters combinations are run. Flag: ``--all-combin``
-        n_iterations (int): Controls the number of time that each experiment (ie set of parameter) are run.
-                            Flag: ``--n-iteration``, ``-n``
-        run_test (bool): If True, the trained model is also run on the testing subdataset. flag: ``--run-test``
-        all_logs (bool): If True, all the log directories are kept for every iteration. Flag: ``--all-logs``, ``-l``
-        thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
-            the validation sub-dataset to find the optimal binarization threshold. The specified value indicates the
-            increment between 0 and 1 used during the ROC analysis (e.g. 0.1). Flag: ``-t``, ``--thr-increment``
-        multiple_params (bool): If True, more than one parameter will be change at the time from the hyperparameters.
-            All the first elements from the hyperparameters list will be applied, then all the second, etc.
+        n_iterations (int): Controls the number of time that each experiment (ie set of parameter)
+            are run. Flag: ``--n-iteration``, ``-n``
+        run_test (bool): If True, the trained model is also run on the testing subdataset.
+            Flag: ``--run-test``
+        all_logs (bool): If True, all the log directories are kept for every iteration.
+            Flag: ``--all-logs``, ``-l``
+        thr_increment (float): A threshold analysis is performed at the end of the training
+            using the trained model and the validation sub-dataset to find the optimal binarization
+            threshold. The specified value indicates the increment between 0 and 1 used during the
+            ROC analysis (e.g. 0.1). Flag: ``-t``, ``--thr-increment``
+        multiple_params (bool): If True, more than one parameter will be change at the time from
+            the hyperparameters. All the first elements from the hyperparameters list will be
+            applied, then all the second, etc.
+        output_dir (str): Path to where the results will be saved.
     """
     # Load initial config
     initial_config = imed_config_manager.ConfigurationManager(config).get_config()
@@ -266,13 +283,17 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                 new_config["log_directory"] = initial_config["log_directory"] + name
                 config_list.append(copy.deepcopy(new_config))
 
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    if not output_dir:
+        output_dir = ""
+
     # CUDA problem when forking process
     # https://github.com/pytorch/pytorch/issues/2517
-    mp.set_start_method('spawn')
+    ctx = mp.get_context("spawn")
 
     # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
-    pool = mp.Pool(processes=len(initial_config["gpu"]))
-
+    pool = ctx.Pool(processes=len(initial_config["gpu"]))
     results_df = pd.DataFrame()
     eval_df = pd.DataFrame()
     all_mean = pd.DataFrame()
@@ -288,7 +309,11 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                                                                                   "_n=" + str(i).zfill(2))
                     else:
                         config["log_directory"] += "_n=" + str(i).zfill(2)
-        validation_scores = pool.map(partial(train_worker, thr_incr=thr_increment), config_list)
+        try:
+            validation_scores = pool.map(partial(train_worker, thr_incr=thr_increment), config_list)
+        except Exception:
+            pool.close()
+            raise Exception('Training failed')
         val_df = pd.DataFrame(validation_scores, columns=[
             'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
             'best_validation_loss'])
@@ -310,7 +335,11 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                 new_config["gpu"] = config["gpu"]
                 new_config_list.append(new_config)
 
-            test_results = pool.map(test_worker, new_config_list)
+            try:
+                test_results = pool.map(test_worker, new_config_list)
+            except Exception:
+                pool.close()
+                raise Exception("Testing failed")
 
             df_lst = []
             # Merge all eval df together to have a single excel file
@@ -347,8 +376,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             combined_df = val_df
 
         results_df = pd.concat([results_df, combined_df])
-        results_df.to_csv("temporary_results.csv")
-        eval_df.to_csv("average_eval.csv")
+        results_df.to_csv(os.path.join(output_dir, "temporary_results.csv"))
+        eval_df.to_csv(os.path.join(output_dir, "average_eval.csv"))
 
     # Merge config and results in a df
     config_df = pd.DataFrame.from_dict(config_list)
@@ -360,7 +389,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     results_df = results_df.reset_index()
     results_df = results_df.sort_values(by=['best_validation_loss'])
 
-    results_df.to_csv("detailed_results.csv")
+    results_df.to_csv(os.path.join(output_dir, "detailed_results.csv"))
 
     print("Detailed results")
     print(results_df)
@@ -370,18 +399,25 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
         compute_statistics(results_df, n_iterations, run_test)
 
 
-def main():
-    init_ivadomed()
-
+def main(args=None):
+    imed_utils.init_ivadomed()
     parser = get_parser()
-    args = parser.parse_args()
+    args = imed_utils.get_arguments(parser, args)
 
     # Get thr increment if available
     thr_increment = args.thr_increment if args.thr_increment else None
 
-    # Run automate training
-    automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin), int(args.n_iterations),
-                      bool(args.run_test), args.all_logs, thr_increment, bool(args.multi_params))
+    automate_training(config=args.config,
+                      param=args.params,
+                      fixed_split=bool(args.fixed_split),
+                      all_combin=bool(args.all_combin),
+                      n_iterations=int(args.n_iterations),
+                      run_test=bool(args.run_test),
+                      all_logs=args.all_logs,
+                      thr_increment=thr_increment,
+                      multiple_params=bool(args.multi_params),
+                      output_dir=args.output_dir
+                      )
 
 
 if __name__ == '__main__':

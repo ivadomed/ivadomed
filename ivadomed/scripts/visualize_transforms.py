@@ -168,18 +168,12 @@ def run_visualization(input, config, number, output, roi):
                                                cmap="jet" if is_mask else "gray")
 
 
-def main():
+def main(args=None):
     imed_utils.init_ivadomed()
-
     parser = get_parser()
-    args = parser.parse_args()
-    input = args.input
-    config = args.config
-    number = int(args.number)
-    output = args.output
-    roi = args.roi
-    # Run script
-    run_visualization(input, config, number, output, roi)
+    args = imed_utils.get_arguments(parser, args)
+    run_visualization(input=args.input, config=args.config, number=int(args.number),
+                      output=args.output, roi=args.roi)
 
 
 if __name__ == '__main__':

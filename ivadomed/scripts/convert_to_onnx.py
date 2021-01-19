@@ -1,21 +1,20 @@
 import argparse
 import torch
-
-from ivadomed.utils import init_ivadomed, Metavar, save_onnx_model
+from ivadomed import utils as imed_utils
 
 
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--model", dest="model", required=True, type=str,
-                        help="Path to .pt model.", metavar=Metavar.file)
+                        help="Path to .pt model.", metavar=imed_utils.Metavar.file)
     parser.add_argument("-d", "--dimension", dest="dimension", required=True,
                         type=int, help="Input dimension (2 for 2D inputs, 3 for 3D inputs).",
-                        metavar=Metavar.int)
+                        metavar=imed_utils.Metavar.int)
     parser.add_argument("-n", "--n_channels", dest="n_channels", default=1, type=int,
                         help="Number of input channels of the model.",
-                        metavar=Metavar.int)
+                        metavar=imed_utils.Metavar.int)
     parser.add_argument("-g", "--gpu", dest="gpu", default=0, type=str,
-                        help="GPU number if available.", metavar=Metavar.int)
+                        help="GPU number if available.", metavar=imed_utils.Metavar.int)
     return parser
 
 
@@ -42,19 +41,17 @@ def convert_pytorch_to_onnx(model, dimension, n_channels, gpu=0):
     model_net = torch.load(model, map_location=device)
     dummy_input = torch.randn(1, n_channels, 96, 96, device=device) if dimension == 2 \
                   else torch.randn(1, n_channels, 96, 96, 96, device=device)
-    save_onnx_model(model_net, dummy_input, model.replace("pt", "onnx"))
+    imed_utils.save_onnx_model(model_net, dummy_input, model.replace("pt", "onnx"))
 
 
-def main():
-    init_ivadomed()
-
+def main(args=None):
+    imed_utils.init_ivadomed()
     parser = get_parser()
-    args = parser.parse_args()
+    args = imed_utils.get_arguments(parser, args)
     fname_model = args.model
     dimension = int(args.dimension)
     gpu = str(args.gpu)
     n_channels = args.n_channels
-    # Run Script
     convert_pytorch_to_onnx(fname_model, dimension, n_channels, gpu)
 
 

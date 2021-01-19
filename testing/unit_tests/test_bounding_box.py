@@ -7,7 +7,7 @@ import shutil
 from ivadomed.loader import loader as imed_loader
 from ivadomed.object_detection import utils as imed_obj_detect
 import logging
-from t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
 logger = logging.getLogger(__name__)
 
 BATCH_SIZE = 8

@@ -4,7 +4,7 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
-from t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
 
 
 cudnn.benchmark = True
