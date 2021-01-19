@@ -404,9 +404,17 @@ def main(args=None):
     # Get thr increment if available
     thr_increment = args.thr_increment if args.thr_increment else None
 
-    automate_training(args.config, args.params, bool(args.fixed_split), bool(args.all_combin),
-                      int(args.n_iterations), bool(args.run_test), args.all_logs, thr_increment,
-                      bool(args.multi_params), args.output_dir)
+    automate_training(config=args.config,
+                      param=args.params,
+                      fixed_split=bool(args.fixed_split),
+                      all_combin=bool(args.all_combin),
+                      n_iterations=int(args.n_iterations),
+                      run_test=bool(args.run_test),
+                      all_logs=args.all_logs,
+                      thr_increment=thr_increment,
+                      multiple_params=bool(args.multi_params),
+                      output_dir=args.output_dir
+                      )
 
 
 if __name__ == '__main__':
