@@ -467,12 +467,12 @@ def store_film_params(gammas, betas, metadata_values, metadata, model, film_laye
     Args:
         gammas (dict):
         betas (dict):
-        metadata_values (list): list of the batch sample's metadata_values (eg T2w, T1w)
+        metadata_values (list): list of the batch sample's metadata values (e.g., T2w, astrocytoma)
         metadata (list):
         model (nn.Module):
         film_layers (list):
         depth (int):
-        film_metadata (str): Metadata of interest used to modulate the network
+        film_metadata (str): Metadata of interest used to modulate the network (e.g., contrast, tumor_type).
 
     Returns:
         dict, dict: gammas, betas
