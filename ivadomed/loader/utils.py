@@ -11,8 +11,9 @@ from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
 from ivadomed import utils as imed_utils
 import nibabel as nib
-import bids as pybids   # "bids" is already taken by bids_neuropoly
+import bids as pybids  # "bids" is already taken by bids_neuropoly
 import itertools
+import random
 
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
@@ -94,6 +95,70 @@ def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8
     return X_train, X_val, X_test
 
 
+def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.8, test_frac=0.1):
+    """Splits dataset into training, validation and testing sets by applying train, test and validation fractions
+    according to the split_method.
+    The "data_testing" parameter can be used to specify the data_type and data_value to include in the testing set,
+    the dataset is then split as not to mix the data_testing between the training/validation set and the testing set.
+
+    Args:
+        df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
+        split_method (str): Used to specify on which metadata to split the dataset (eg. "participant_id", "sample_id", etc.)
+        data_testing (dict): Used to specify data_type and data_value to include in the testing set.
+        random_seed (int): Random seed to ensure reproducible splits.
+        train_frac (float): Between 0 and 1. Represents the train set proportion.
+        test_frac (float): Between 0 and 1. Represents the test set proportion.
+    Returns:
+        list, list, list: Train, validation and test data_type list.
+    """
+
+    # Get data_type and data_value from split parameters
+    # If no data_type is provided, data_type is the same as split_method
+    data_type = data_testing['data_type'] if data_testing['data_type'] else split_method
+    data_value = data_testing['data_value']
+
+    if not split_method in df:
+        raise KeyError("No split_method '{}' was not found in metadata".format(split_method))
+    if not data_type in df:
+        logger.warning("No data_type named '{}' was found in metadata. Not taken into account "
+                       "to split the dataset.".format(data_type))
+        data_type = split_method
+
+    # Filter dataframe with rows where split_method is not NAN
+    df = df[df[split_method].notna()]
+
+    # If no data_value list is provided, create a random data_value according to data_type and test_fraction
+    # Split the TEST and remainder set using sklearn function
+    if len(data_value) == 0 and test_frac != 0:
+        data_value = sorted(df[data_type].unique().tolist())
+        test_frac = test_frac if test_frac >= 1 / len(data_value) else 1 / len(data_value)
+        data_value, _ = train_test_split(data_value, train_size=test_frac, random_state=random_seed)
+    X_test = df[df[data_type].isin(data_value)]['ivadomed_id'].unique().tolist()
+    X_remain = df[~df[data_type].isin(data_value)][split_method].unique().tolist()
+
+    # List dataset unique values according to split_method
+    # Update train fraction to apply to X_remain
+    data = sorted(df[split_method].unique().tolist())
+    train_frac_update = train_frac * len(data) / len(X_remain)
+    if ((train_frac_update > (1 - 1 / len(X_remain)) and len(X_remain) < 2) or train_frac_update > 1):
+        raise RuntimeError("{}/{} '{}' remaining for training and validation sets, train_fraction {} is too large, "
+                           "validation set would be empty.".format(len(X_remain), len(data), split_method, train_frac))
+
+    # Split remainder in TRAIN and VALID sets according to train_frac_update using sklearn function
+    X_train, X_val = train_test_split(X_remain, train_size=train_frac_update, random_state=random_seed)
+
+    # Convert train and valid sets from list of "split_method" to list of "ivadomed_id"
+    X_train = df[df[split_method].isin(X_train)]['ivadomed_id'].unique().tolist()
+    X_val = df[df[split_method].isin(X_val)]['ivadomed_id'].unique().tolist()
+
+    # Make sure that test dataset is unseen during training
+    # (in cases where there are multiple "data_type" for a same "split_method")
+    X_train = list(set(X_train) - set(X_test))
+    X_val = list(set(X_val) - set(X_test))
+
+    return X_train, X_val, X_test
+
+
 def get_new_subject_split(path_folder, center_test, split_method, random_seed,
                           train_frac, test_frac, log_directory, balance, subject_selection=None):
     """Randomly split dataset between training / validation / testing.
@@ -164,6 +229,76 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
     return train_lst, valid_lst, test_lst
 
 
+def get_new_subject_split_new(df, split_method, data_testing, random_seed,
+                              train_frac, test_frac, log_directory, balance, subject_selection=None):
+    """Randomly split dataset between training / validation / testing.
+
+    Randomly split dataset between training / validation / testing\
+        and save it in log_directory + "/split_datasets.joblib".
+
+    Args:
+        df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
+        split_method (str): Used to specify on which metadata to split the dataset (eg. "participant_id", "sample_id", etc.)
+        data_testing (dict): Used to specify the data_type and data_value to include in the testing set.
+        random_seed (int): Random seed.
+        train_frac (float): Training dataset proportion, between 0 and 1.
+        test_frac (float): Testing dataset proportionm between 0 and 1.
+        log_directory (str): Output folder.
+        balance (str): Metadata contained in "participants.tsv" file with categorical values. Each category will be
+        evenly distributed in the training, validation and testing datasets.
+        subject_selection (dict): Used to specify a custom subject selection from a dataset.
+
+    Returns:
+        list, list list: Training, validation and testing subjects lists.
+    """
+    if subject_selection is not None:
+        # Verify subject_selection format
+        if not (len(subject_selection["metadata"]) == len(subject_selection["n"]) == len(subject_selection["value"])):
+            raise ValueError("All lists in subject_selection parameter should have the same length.")
+
+        sampled_dfs = []
+        random.seed(random_seed)
+        for m, n, v in zip(subject_selection["metadata"], subject_selection["n"], subject_selection["value"]):
+            participants = random.sample(df[df[m] == v]['participant_id'].unique().tolist(), n)
+            for participant in participants:
+                sampled_dfs.append(df[df['participant_id'] == participant])
+
+        if len(sampled_dfs) != 0:
+            df = pd.concat(sampled_dfs)
+
+    # If balance, then split the dataframe for each categorical value of the "balance" column
+    if balance:
+        if balance in df.keys():
+            df_list = [df[df[balance] == k] for k in df[balance][df[balance].notna()].unique().tolist()]
+        else:
+            logger.warning("No column named '{}' was found in 'participants.tsv' file. Not taken into account to split "
+                           "the dataset.".format(balance))
+            df_list = [df]
+    else:
+        df_list = [df]
+
+    train_lst, valid_lst, test_lst = [], [], []
+    for df_tmp in df_list:
+        # Split dataset on each section of subjects
+        train_tmp, valid_tmp, test_tmp = split_dataset_new(df=df_tmp,
+                                                           split_method=split_method,
+                                                           data_testing=data_testing,
+                                                           random_seed=random_seed,
+                                                           train_frac=train_frac,
+                                                           test_frac=test_frac)
+        # Update the dataset lists
+        train_lst += train_tmp
+        valid_lst += valid_tmp
+        test_lst += test_tmp
+
+    # save the subject distribution
+    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
+    split_path = os.path.join(log_directory, "split_datasets.joblib")
+    joblib.dump(split_dct, split_path)
+
+    return train_lst, valid_lst, test_lst
+
+
 def get_subdatasets_subjects_list(split_params, bids_path, log_directory, subject_selection=None):
     """Get lists of subjects for each sub-dataset between training / validation / testing.
 
@@ -191,6 +326,36 @@ def get_subdatasets_subjects_list(split_params, bids_path, log_directory, subjec
                                                                balance=split_params['balance']
                                                                if 'balance' in split_params else None,
                                                                subject_selection=subject_selection)
+    return train_lst, valid_lst, test_lst
+
+
+def get_subdatasets_subjects_list_new(split_params, df, log_directory, subject_selection=None):
+    """Get lists of subjects for each sub-dataset between training / validation / testing.
+
+    Args:
+        split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
+        df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
+        log_directory (str): Output folder.
+        subject_selection (dict): Used to specify a custom subject selection from a dataset.
+
+    Returns:
+        list, list list: Training, validation and testing subjects lists.
+    """
+    if split_params["fname_split"]:
+        # Load subjects lists
+        old_split = joblib.load(split_params["fname_split"])
+        train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
+    else:
+        train_lst, valid_lst, test_lst = get_new_subject_split_new(df=df,
+                                                                   split_method=split_params['split_method'],
+                                                                   data_testing=split_params['data_testing'],
+                                                                   random_seed=split_params['random_seed'],
+                                                                   train_frac=split_params['train_fraction'],
+                                                                   test_frac=split_params['test_fraction'],
+                                                                   log_directory=log_directory,
+                                                                   balance=split_params['balance']
+                                                                   if 'balance' in split_params else None,
+                                                                   subject_selection=subject_selection)
     return train_lst, valid_lst, test_lst
 
 
@@ -575,6 +740,10 @@ def create_bids_dataframe(loader_params, derivatives):
     # If `target_suffix` is a list of lists convert to list
     if any(isinstance(t, list) for t in target_suffix):
         target_suffix = list(itertools.chain.from_iterable(target_suffix))
+    roi_suffix = loader_params['roi_params']['suffix']
+    # If `roi_suffix` is not None, add to target_suffix
+    if roi_suffix is not None:
+        target_suffix.append(roi_suffix)
     extensions = loader_params['extensions']
     contrast_lst = loader_params["contrast_params"]["contrast_lst"]
 
@@ -609,28 +778,33 @@ def create_bids_dataframe(loader_params, derivatives):
     # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
     df = df[~df['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
 
+    # Add ivadomed_id column corresponding to filename minus modality and extension for files that are not derivatives.
+    for index, row in df.iterrows():
+        if isinstance(row['suffix'], str):
+            df.loc[index, 'ivadomed_id'] = re.sub(r'_' + row['suffix'] + '.*', '', row['filename'])
+
     # Update dataframe with subject files of chosen contrasts and extensions,
     # and with derivative files of chosen target_suffix from loader parameters
     df = df[(~df['path'].str.contains('derivatives') & df['suffix'].str.contains('|'.join(contrast_lst)) &
-         df['extension'].str.contains('|'.join(extensions))) |
-         (df['path'].str.contains('derivatives') & df['filename'].str.contains('|'.join(target_suffix)))]
+             df['extension'].str.contains('|'.join(extensions))) |
+            (df['path'].str.contains('derivatives') & df['filename'].str.contains('|'.join(target_suffix)))]
 
-    # Add metadata from participants.tsv file, if present
+    # Add participant_id column, and metadata from participants.tsv file if present
     # Uses pybids function
+    df['participant_id'] = "sub-" + df['subject']
     if layout.get_collections(level='dataset'):
         df_participants = layout.get_collections(level='dataset', merge=True).to_df()
         df_participants.drop(['suffix'], axis=1, inplace=True)
         df = pd.merge(df, df_participants, on='subject', suffixes=("_x", None), how='left')
 
-    # Add metadata from samples.tsv file, if present
+    # Add sample_id column if sample column exists, and add metadata from samples.tsv file if present
     # TODO: use pybids function after BEP microscopy is merged in BIDS
+    if 'sample' in df:
+        df['sample_id'] = "sample-" + df['sample']
     fname_samples = os.path.join(bids_path, "samples.tsv")
     if os.path.exists(fname_samples):
         df_samples = pd.read_csv(fname_samples, sep='\t')
-        df['participant_id'] = "sub-" + df['subject']
-        df['sample_id'] = "sample-" + df['sample']
         df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None), how='left')
-        df.drop(['participant_id', 'sample_id'], axis=1, inplace=True)
 
     # Add metadata from all _sessions.tsv files, if present
     # Uses pybids function
@@ -662,15 +836,23 @@ def create_bids_dataframe(loader_params, derivatives):
         [prefix_fnames.append(s.split('.')[0]) for s in subject_files]
         deriv = df[df['path'].str.contains('derivatives')]['filename'].tolist()
         has_deriv = []
-        for p in prefix_fnames:
-            available = [d for d in deriv if p in d]
-            if available:
-                has_deriv.append(p)
-                for t in target_suffix:
-                    if t not in str(available):
-                        logger.warning("Missing target_suffix {} for subject {}.".format(t, p))
-            else:
-                logger.warning("Missing derivatives for subject {}. Skipping subject.".format(p))
+        if roi_suffix is not None:
+            for p in prefix_fnames:
+                available = [d for d in deriv if p in d]
+                if roi_suffix in ('|'.join(available)):
+                    has_deriv.append(p)
+                else:
+                    logger.warning("Missing ROI derivatives for subject {}. Skipping subject.".format(p))
+        else:
+            for p in prefix_fnames:
+                available = [d for d in deriv if p in d]
+                if available:
+                    has_deriv.append(p)
+                    for t in target_suffix:
+                        if t not in str(available):
+                            logger.warning("Missing target_suffix {} for subject {}.".format(t, p))
+                else:
+                    logger.warning("Missing derivatives for subject {}. Skipping subject.".format(p))
 
         # Filter dataframe to keep subjects files with available derivatives only
         if has_deriv:
