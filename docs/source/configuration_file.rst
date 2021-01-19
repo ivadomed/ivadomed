@@ -32,7 +32,10 @@ segment a entire dataset using a trained model.
 gpu_ids
 ^^^^^^^
 
-``List`` ``Integer``. List of IDs of one or more GPUs to use.
+``list`` ``integer``: List of IDs of one or more GPUs to use.
+
+.. note::
+    Currently only ``ivadomed_automate_training`` supports the use of more than one GPU.
 
 log\_directory
 ^^^^^^^^^^^^^^
