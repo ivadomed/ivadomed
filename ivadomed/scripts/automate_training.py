@@ -73,7 +73,7 @@ def train_worker(config, thr_incr):
     ID = int(current.name[-1]) - 1
 
     # Use GPU i from the array specified in the config file
-    config["gpu_ids"] = config["gpu_ids"][ID]
+    config["gpu_ids"] = [config["gpu_ids"][ID]]
 
     # Call ivado cmd_train
     try:
@@ -102,7 +102,7 @@ def test_worker(config):
     ID = int(current.name[-1]) - 1
 
     # Use GPU i from the array specified in the config file
-    config["gpu_ids"] = config["gpu_ids"][ID]
+    config["gpu_ids"] = [config["gpu_ids"][ID]]
 
     try:
         # Save best test score
@@ -290,6 +290,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     ctx = mp.get_context("spawn")
 
     # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
+    print(initial_config['gpu_ids'])
+
     pool = ctx.Pool(processes=len(initial_config["gpu_ids"]))
     results_df = pd.DataFrame()
     eval_df = pd.DataFrame()

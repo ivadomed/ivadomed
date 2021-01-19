@@ -24,5 +24,21 @@ def test_automate_training():
     assert os.path.exists(os.path.join(__output_dir__, 'average_eval.csv'))
 
 
+def test_automate_training_run_test():
+    config_file = os.path.join(__data_testing_dir__, 'automate_training_config.json')
+    param_file = os.path.join(__data_testing_dir__,
+                              'automate_training_hyperparameter_opt.json')
+    __output_dir__ = os.path.join(__tmp_dir__, 'results')
+    automate_training.main(args=[
+        '--config', f'{config_file}',
+        '--params', f'{param_file}',
+        '--output_dir', f'{__output_dir__}',
+        '--run-test'
+    ])
+    assert os.path.exists(os.path.join(__output_dir__, 'detailed_results.csv'))
+    assert os.path.exists(os.path.join(__output_dir__, 'temporary_results.csv'))
+    assert os.path.exists(os.path.join(__output_dir__, 'average_eval.csv'))
+
+
 def teardown_function():
     remove_tmp_dir()
