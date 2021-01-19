@@ -10,7 +10,7 @@ from ivadomed import losses as imed_losses
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
-from t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
 
 cudnn.benchmark = True
 

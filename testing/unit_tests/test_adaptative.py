@@ -7,7 +7,7 @@ import ivadomed.transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 import logging
-from t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__
 logger = logging.getLogger(__name__)
 
 GPU_ID = 0
