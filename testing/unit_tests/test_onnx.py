@@ -7,7 +7,7 @@ import logging
 from ivadomed import utils as imed_utils
 from ivadomed import inference as imed_inference
 from ivadomed import models as imed_models
-from t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
 logger = logging.getLogger(__name__)
 
 

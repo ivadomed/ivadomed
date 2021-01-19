@@ -9,7 +9,7 @@ import pytest
 import scipy
 import os
 from ivadomed import postprocessing as imed_postpro
-from t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
 
 
 def setup_function():

@@ -9,12 +9,12 @@ import ivadomed.loader.utils as imed_loader_utils
 
 
 def mask2label(path_label, aim=0):
-    """
-    Retrieve points coordinates and value from a label file containing singl voxel label
+    """Retrieve points coordinates and value from a label file containing singl voxel label.
+
     Args:
         path_label (str): path of nifti image
-        aim (int): -1 will return all points with label between 3 and 30 , any other int > 0  will return
-        only the coordinates of points with label defined by aim.
+        aim (int): -1 will return all points with label between 3 and 30 , any other int > 0
+            will return only the coordinates of points with label defined by aim.
 
     Returns:
         ndarray: array containing the asked point in the format [x,y,z,value] in the RAS orientation.
@@ -50,12 +50,14 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
     Example::
 
         ivadomed_prepare_dataset_vertebral_labeling -p path/to/bids -s _T2w -a 0
-    
+
     Args:
-        path (string): path to BIDS dataset form which images will be generated. Flag: ``--path``, ``-p``
-        suffix (string): suffix of image that will be processed (e.g., T2w). Flag: ``--suffix``, ``-s``
-        aim (int): If aim is not 0, retrieves only labels with value = aim, else create heatmap with all labels.
-                  Flag: ``--aim``, ``-a``
+        path (string): path to BIDS dataset form which images will be generated.
+            Flag: ``--path``, ``-p``
+        suffix (string): suffix of image that will be processed (e.g., T2w).
+            Flag: ``--suffix``, ``-s``
+        aim (int): If aim is not 0, retrieves only labels with value = aim, else create heatmap
+            with all labels. Flag: ``--aim``, ``-a``
 
     Returns:
         None. Images are saved in BIDS folder
@@ -103,16 +105,12 @@ def get_parser():
     return parser
 
 
-def main():
+def main(args=None):
     imed_utils.init_ivadomed()
-
     parser = get_parser()
-    args = parser.parse_args()
-    bids_path = args.path
-    suffix = args.suffix
-    aim = args.aim
-    # Run Script
-    extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim)
+    args = imed_utils.get_arguments(parser, args)
+    extract_mid_slice_and_convert_coordinates_to_heatmaps(path=args.path, suffix=args.suffix,
+                                                          aim=args.aim)
 
 if __name__=='__main__':
     main()
