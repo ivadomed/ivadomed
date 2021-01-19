@@ -266,8 +266,9 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                     imed_visualize.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
                                                         is_three_dim=not model_params['is_2d'])
 
-                if 'film_layers' in model_params and any(model_params['film_layers']) and debugging and \
-                        epoch == num_epochs and i < int(len(dataset_val) / training_params["batch_size"]) + 1:
+                last_epoch = epoch == num_epochs or \
+                             (patience_count + 1) >= training_params["training_time"]["early_stopping_patience"]
+                if 'film_layers' in model_params and any(model_params['film_layers']) and debugging and last_epoch:
                     # Store the values of gammas and betas after the last epoch for each batch
                     gammas_dict, betas_dict, metadata_values_lst = store_film_params(gammas_dict, betas_dict,
                                                                                      metadata_values_lst,
