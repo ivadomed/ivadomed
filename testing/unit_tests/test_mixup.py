@@ -3,7 +3,7 @@ import torch
 import pytest
 import logging
 import os
-from t_utils import remove_tmp_dir, create_tmp_dir,  __tmp_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __tmp_dir__
 logger = logging.getLogger(__name__)
 
 

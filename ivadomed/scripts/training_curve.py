@@ -8,32 +8,35 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from textwrap import wrap
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
-
-from ivadomed.utils import init_ivadomed
+from ivadomed import utils as imed_utils
 
 
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True, type=str,
-                        help="Input log directory. If using --multiple, this parameter indicates the suffix path of all"
-                             " log directories of interest. To compare trainings or set of trainings (using "
-                             "``--multiple``) with subplots, please list the paths by separating them with commas, eg "
-                             "path_log_dir1,path_logdir2.")
+                        help="""Input log directory. If using --multiple, this parameter indicates
+                                the suffix path of all log directories of interest. To compare
+                                trainings or set of trainings (using ``--multiple``) with subplots,
+                                please list the paths by separating them with commas, e.g.
+                                path_log_dir1,path_logdir2.""")
     parser.add_argument("--multiple", required=False, dest="multiple", action='store_true',
-                        help="Multiple log directories are considered: all available folders with -i as "
-                             "prefix. The plot represents the mean value (hard line) surrounded by the standard "
-                             "deviation envelope.")
+                        help="""Multiple log directories are considered: all available folders
+                                with -i as prefix. The plot represents the mean value (hard line)
+                                surrounded by the standard deviation envelope.""")
     parser.add_argument("-y", "--ylim_loss", required=False, type=str,
-                        help="Indicates the limits on the y-axis for the loss plots, otherwise these limits are "
-                             "automatically defined. Please separate the lower and the upper limit by a comma, eg -1,0."
-                             "Note: for the validation metrics: the y-limits are always 0.0 and 1.0.")
+                        help="""Indicates the limits on the y-axis for the loss plots, otherwise
+                                these limits are automatically defined. Please separate the lower
+                                and the upper limit by a comma, eg -1,0.
+                                Note: for the validation metrics: the y-limits are always 0.0 and 1.0.""")
     parser.add_argument("-o", "--output", required=True, type=str,
                         help="Output folder.")
     return parser
 
 
 def check_events_numbers(input_folder):
-    """Check if there not more than one summary  in the directory or any subfolder
+    """Check to make sure there is at most one summary in any folder or any subfolder.
+
+    A summary is defined as any file of the format ``events.out.tfevents.{...}```
 
     Args:
         input_folder (str): Input folder path.
@@ -44,8 +47,8 @@ def check_events_numbers(input_folder):
             event_list = [f for f in os.listdir(fold_path) if f.startswith("events.out.tfevents.")]
             if len(event_list):
                 if len(event_list) > 1:
-                    raise ValueError('Multiple summary found in this folder: {}.\nPlease keep only one before running '
-                          'this script again.'.format(fold_path))
+                    raise ValueError(f"Multiple summary found in this folder: {fold_path}.\n"
+                                     f"Please keep only one before running this script again.")
 
 
 def plot_curve(data_list, y_label, fig_ax, subplot_title, y_lim=None):
@@ -96,29 +99,30 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         :width: 600px
         :align: center
 
-    ... or multiple (using ``multiple_training=True``). In that case, the hard line represents the mean value across the
-    trainings whereas the envelope represents the standard deviation:
+    ... or multiple (using ``multiple_training=True``). In that case, the hard line represents
+    the mean value across the trainings whereas the envelope represents the standard deviation:
 
     .. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/scripts/plot_loss_multiple.png
         :width: 600px
         :align: center
 
-    It is also possible to compare multiple trainings (or set of trainings) by listing them in ``-i``, separeted by
-    commas:
+    It is also possible to compare multiple trainings (or set of trainings) by listing them
+    in ``-i``, separated by commas:
 
     .. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/scripts/plot_loss_mosaic.png
         :width: 600px
         :align: center
 
     Args:
-        input_folder (str): Log directory name. Flag: ``--input``, ``-i``. If using ``--multiple``, this parameter indicates the
-            suffix path of all log directories of interest. To compare trainings or set of trainings (using
-            ``--multiple``) with subplots, please list the paths by separating them with commas, eg
-            path_log_dir1,path_logdir2
+        input_folder (str): Log directory name. Flag: ``--input``, ``-i``. If using ``--multiple``,
+            this parameter indicates the suffix path of all log directories of interest. To compare
+            trainings or set of trainings (using ``--multiple``) with subplots, please list the
+            paths by separating them with commas, e.g. path_log_dir1, path_logdir2
         output_folder (str): Output folder. Flag: ``--output``, ``-o``.
-        multiple_training (bool): Indicates if multiple log directories are considered (``True``) or not (``False``).
-            Flag: ``--multiple``. All available folders with ``-i`` as prefix are considered. The plot represents the mean
-            value (hard line) surrounded by the standard deviation (envelope).
+        multiple_training (bool): Indicates if multiple log directories are considered (``True``)
+            or not (``False``). Flag: ``--multiple``. All available folders with ``-i`` as prefix
+            are considered. The plot represents the mean value (hard line) surrounded by the
+            standard deviation (envelope).
         y_lim_loss (list): List of the lower and upper limits of the y-axis of the loss plot.
     """
     group_list = input_folder.split(",")
@@ -126,9 +130,9 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
 
     # Create output folder
     if os.path.isdir(output_folder):
-        print("Output folder already exists: {}.".format(output_folder))
+        print(f"Output folder already exists: {output_folder}.")
     else:
-        print("Creating output folder: {}.".format(output_folder))
+        print(f"Creating output folder: {output_folder}.")
         os.makedirs(output_folder)
 
     # Config subplots
@@ -153,7 +157,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         events_df_list = []
         for log_directory in input_folder_list:
             # Find tf folders
-            events_dict = check_events_numbers(log_directory)
+            check_events_numbers(log_directory)
 
             # Get data as dataframe
             events_vals_df = tensorboard_retrieve_event(log_directory)
@@ -188,11 +192,11 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         plt_dict[fname_out].savefig(fname_out)
 
 
-def tensorboard_retrieve_event(dpath):
-    """
-    Function that retrieves data from tensorboard summary event
+def tensorboard_retrieve_event(log_directory):
+    """Retrieve data from tensorboard summary event.
+
     Args:
-        dpath (str): log directory where the event are located
+        log_directory (str): log directory where the event files are located
 
     Returns:
         df: a panda dataframe where the columns are the metric or loss and the row are the epochs.
@@ -200,14 +204,14 @@ def tensorboard_retrieve_event(dpath):
     """
     # TODO : Find a way to not hardcode this list of metrics/loss
     # These list of metrics and losses are in the same order as in the training file (where they are written)
-    list_metrics = ['dice_score', 'multiclass dice_score', 'hausdorff_score', 'precision_score', 'recall_score',
-                    'specificity_score', 'intersection_over_union', 'accuracy_score']
+    list_metrics = ['dice_score', 'multiclass dice_score', 'hausdorff_score', 'precision_score',
+                    'recall_score', 'specificity_score', 'intersection_over_union', 'accuracy_score']
 
     list_loss = ['train_loss', 'validation_loss']
 
     # Each element in the summary iterator represent an element (e.g., scalars, images..)
     # stored in the summary for all epochs in the form of event.
-    summary_iterators = [EventAccumulator(os.path.join(dpath, dname)).Reload() for dname in os.listdir(dpath)]
+    summary_iterators = [EventAccumulator(os.path.join(log_directory, dname)).Reload() for dname in os.listdir(log_directory)]
 
     metrics = defaultdict(list)
     num_metrics = 0
@@ -239,18 +243,14 @@ def tensorboard_retrieve_event(dpath):
     return metrics_df
 
 
-def main():
-    init_ivadomed()
-
+def main(args=None):
+    imed_utils.init_ivadomed()
     parser = get_parser()
-    args = parser.parse_args()
-    input_folder = args.input
-    multiple = args.multiple
-    output_folder = args.output
+    args = imed_utils.get_arguments(parser, args)
     y_lim_loss = [int(y) for y in args.ylim_loss.split(',')] if args.ylim_loss else None
 
-    # Run script
-    run_plot_training_curves(input_folder, output_folder, multiple, y_lim_loss)
+    run_plot_training_curves(input_folder=args.input, output_folder=args.output,
+                             multiple_training=args.multiple, y_lim_loss=y_lim_loss)
 
 
 if __name__ == '__main__':

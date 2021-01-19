@@ -14,7 +14,7 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed import training as imed_training
 import logging
-from t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
 logger = logging.getLogger(__name__)
 
 cudnn.benchmark = True

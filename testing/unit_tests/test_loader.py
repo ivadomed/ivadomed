@@ -2,7 +2,7 @@ import os
 import pytest
 import csv_diff
 import logging
-from t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__
 from ivadomed.loader import utils as imed_loader_utils
 logger = logging.getLogger(__name__)
 
