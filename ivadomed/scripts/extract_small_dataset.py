@@ -25,10 +25,10 @@ def get_parser():
                                 subjects will be selected if the script is run several times on the
                                 same dataset. Set to -1 (default) otherwise.""",
                         metavar=imed_utils.Metavar.int)
-    parser.add_argument("-d", "--exclude-derivatives",
+    parser.add_argument("-d", "--include-derivatives",
                         action="store_true",
-                        dest="exclude_derivatives",
-                        help="""If true, do not include derivatives/labels content.""")
+                        dest="include_derivatives",
+                        help="""If true, include derivatives/labels content.""")
     return parser
 
 
@@ -150,7 +150,7 @@ def main(args=None):
         contrast_list = None
 
     extract_small_dataset(args.input, args.output, int(args.number), contrast_list,
-                          not bool(args.exclude_derivatives), int(args.seed))
+                          bool(args.include_derivatives), int(args.seed))
 
 
 if __name__ == '__main__':
