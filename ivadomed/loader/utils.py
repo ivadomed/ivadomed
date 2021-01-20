@@ -744,9 +744,7 @@ class BidsDataframe:
     def __init__(self, loader_params, derivatives):
 
         # bids_path from loader parameters
-        self.bids_path = loader_params['bids_path']
-        if not self.bids_path.endswith("/"):
-            self.bids_path = self.bids_path + "/"
+        self.bids_path = os.path.join(loader_params['bids_path'], '')
 
         # bids_config from loader parameters
         self.bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
