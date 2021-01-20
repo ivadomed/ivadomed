@@ -29,10 +29,13 @@ sub-datasets, ``"test"``: evaluate a trained model on a testing sub-dataset, ``"
 segment a entire dataset using a trained model.
 
 
-gpu
-^^^
+gpu_ids
+^^^^^^^
 
-Integer. ID of the GPU to use.
+``list`` ``integer``: List of IDs of one or more GPUs to use.
+
+.. note::
+    Currently only ``ivadomed_automate_training`` supports the use of more than one GPU.
 
 log\_directory
 ^^^^^^^^^^^^^^
@@ -152,9 +155,9 @@ below.
 -  ``filter_absent_class``: Bool. Discard slices where all voxel
    labels are zero for one or more classes (this is most relevant for
    multi-class models that need GT for all classes at train time).
--  ``filter_classification``: Bool. Discard slices where all images fail 
+-  ``filter_classification``: Bool. Discard slices where all images fail
    a custom classifier filter. If used, ``classifier_path`` must also be
-   specified, pointing to a saved PyTorch classifier. 
+   specified, pointing to a saved PyTorch classifier.
 
 roi
 ^^^

@@ -8,7 +8,7 @@ from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_d
 
 
 cudnn.benchmark = True
-GPU_NUMBER = 0
+GPU_ID = 0
 BATCH_SIZE = 1
 
 
@@ -49,7 +49,7 @@ def _cmpt_label(ds_loader):
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
 def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
-    cuda_available, device = imed_utils.define_device(GPU_NUMBER)
+    cuda_available, device = imed_utils.define_device(GPU_ID)
 
     loader_params = {
         "transforms_params": transforms_dict,
