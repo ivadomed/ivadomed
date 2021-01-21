@@ -10,11 +10,12 @@ def get_parser():
                         type=int, help="Input dimension (2 for 2D inputs, 3 for 3D inputs).")
     parser.add_argument("-n", "--n_channels", dest="n_channels", default=1, type=int,
                         help="Number of input channels of the model.")
-    parser.add_argument("-g", "--gpu", dest="gpu", default=0, type=str, help="GPU number if available.")
+    parser.add_argument("-g", "--gpu_id", dest="gpu_id", default=0, type=str,
+                        help="GPU ID to use, if available.")
     return parser
 
 
-def convert_pytorch_to_onnx(model, dimension, n_channels, gpu=0):
+def convert_pytorch_to_onnx(model, dimension, n_channels, gpu_id=0):
     """Convert PyTorch model to ONNX.
 
     The integration of Deep Learning models into the clinical routine requires cpu optimized models. To export the
@@ -27,10 +28,10 @@ def convert_pytorch_to_onnx(model, dimension, n_channels, gpu=0):
     Args:
         model (string): Model filename. Flag: ``--model``, ``-m``.
         dimension (int): Indicates whether the model is 2D or 3D. Choice between 2 or 3. Flag: ``--dimension``, ``-d``
-        gpu (string): GPU ID, if available. Flag: ``--gpu``, ``-g``
+        gpu_id (string): GPU ID, if available. Flag: ``--gpu_id``, ``-g``
     """
     if torch.cuda.is_available():
-        device = "cuda:" + str(gpu)
+        device = "cuda:" + str(gpu_id)
     else:
         device = "cpu"
 
@@ -46,9 +47,10 @@ def main(args=None):
     args = imed_utils.get_arguments(parser, args)
     fname_model = args.model
     dimension = int(args.dimension)
-    gpu = str(args.gpu)
+    gpu_id = str(args.gpu_id)
     n_channels = args.n_channels
-    convert_pytorch_to_onnx(fname_model, dimension, n_channels, gpu)
+
+    convert_pytorch_to_onnx(fname_model, dimension, n_channels, gpu_id)
 
 
 if __name__ == '__main__':

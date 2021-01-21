@@ -86,7 +86,7 @@ def resize_to_multiple(shape, multiple, length):
     return new_dim
 
 
-def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, slice_axis=0, contrast_lst=None,
+def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_id=0, slice_axis=0, contrast_lst=None,
                                keep_largest_only=True, safety_factor=None):
     """Creates json file containing the bounding box dimension for each images. The file has the following format:
     {"path/to/img.nii.gz": [[x1_min, x1_max, y1_min, y1_max, z1_min, z1_max],
@@ -97,7 +97,7 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
         subject_list (list): List of all subjects in the BIDS directory.
         model_path (string): Path to object detection model.
         log_dir (string): Log directory.
-        gpu_number (int): If available, GPU number.
+        gpu_id (int): If available, GPU number.
         slice_axis (int): Slice axis (0: sagittal, 1: coronal, 2: axial).
         contrast_lst (list): Contrasts.
         keep_largest_only (bool): Boolean representing if only the largest object of the prediction is kept.
@@ -113,7 +113,7 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
     for subject in subject_list:
         if subject.record["modality"] in contrast_lst:
             subject_path = str(subject.record["absolute_path"])
-            object_mask, _ = imed_inference.segment_volume(model_path, [subject_path], gpu_number=gpu_number)
+            object_mask, _ = imed_inference.segment_volume(model_path, [subject_path], gpu_id=gpu_id)
             object_mask = object_mask[0]
             if keep_largest_only:
                 object_mask = imed_postpro.keep_largest_object(object_mask)

@@ -11,7 +11,7 @@ from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_d
 
 logger = logging.getLogger(__name__)
 
-GPU_NUMBER = 0
+GPU_ID = 0
 
 
 def setup_function():
@@ -19,11 +19,11 @@ def setup_function():
 
 
 def test_image_orientation():
-    device = torch.device("cuda:" + str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:" + str(GPU_ID) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if cuda_available:
         torch.cuda.set_device(device)
-        print("Using GPU number {}".format(device))
+        print("Using GPU ID {}".format(device))
 
     train_lst = ['sub-unf01']
 

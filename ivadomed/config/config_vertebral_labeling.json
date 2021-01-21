@@ -1,6 +1,6 @@
 {
     "command": "train",
-    "gpu": 7,
+    "gpu_ids": [7],
     "log_directory": "labeling_t2test",
     "model_name": "find_disc_t1",
     "debugging": true,
