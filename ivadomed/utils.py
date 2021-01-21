@@ -103,9 +103,9 @@ def define_device(gpu_id):
         print("Working on {}.".format(device))
     if cuda_available:
         # Set the GPU
-        gpu_number = int(gpu_id)
-        torch.cuda.set_device(gpu_number)
-        print("Using GPU number {}".format(gpu_number))
+        gpu_id = int(gpu_id)
+        torch.cuda.set_device(gpu_id)
+        print(f"Using GPU ID {gpu_id}")
     return cuda_available, device
 
 

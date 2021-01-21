@@ -76,7 +76,7 @@ def train_worker(config, thr_incr):
     ID = int(current.name[-1]) - 1
 
     # Use GPU i from the array specified in the config file
-    config["gpu"] = config["gpu"][ID]
+    config["gpu_ids"] = [config["gpu_ids"][ID]]
 
     # Call ivado cmd_train
     try:
@@ -86,7 +86,7 @@ def train_worker(config, thr_incr):
 
     except Exception:
         logging.exception('Got exception on main handler')
-        print("Unexpected error:", sys.exc_info()[0])
+        logging.info("Unexpected error:", sys.exc_info()[0])
         raise
 
     # Save config file in log directory
@@ -105,7 +105,7 @@ def test_worker(config):
     ID = int(current.name[-1]) - 1
 
     # Use GPU i from the array specified in the config file
-    config["gpu"] = config["gpu"][ID]
+    config["gpu_ids"] = [config["gpu_ids"][ID]]
 
     try:
         # Save best test score
@@ -114,7 +114,7 @@ def test_worker(config):
 
     except Exception:
         logging.exception('Got exception on main handler')
-        print("Unexpected error:", sys.exc_info()[0])
+        logging.info("Unexpected error:", sys.exc_info()[0])
         raise
 
     return config["log_directory"], test_dice, df_results
@@ -293,91 +293,88 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     ctx = mp.get_context("spawn")
 
     # Run all configs on a separate process, with a maximum of n_gpus  processes at a given time
-    pool = ctx.Pool(processes=len(initial_config["gpu"]))
+    logging.info(initial_config['gpu_ids'])
+
     results_df = pd.DataFrame()
     eval_df = pd.DataFrame()
     all_mean = pd.DataFrame()
-    for i in range(n_iterations):
-        if not fixed_split:
-            # Set seed for iteration
-            seed = random.randint(1, 10001)
-            for config in config_list:
-                config["split_dataset"]["random_seed"] = seed
-                if all_logs:
-                    if i:
-                        config["log_directory"] = config["log_directory"].replace("_n=" + str(i - 1).zfill(2),
-                                                                                  "_n=" + str(i).zfill(2))
-                    else:
-                        config["log_directory"] += "_n=" + str(i).zfill(2)
-        try:
-            validation_scores = pool.map(partial(train_worker, thr_incr=thr_increment), config_list)
-        except Exception:
-            pool.close()
-            raise Exception('Training failed')
-        val_df = pd.DataFrame(validation_scores, columns=[
-            'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
-            'best_validation_loss'])
 
-        if run_test:
-            new_config_list = []
-            for config in config_list:
-                # Delete path_pred
-                path_pred = os.path.join(config['log_directory'], 'pred_masks')
-                if os.path.isdir(path_pred) and n_iterations > 1:
-                    try:
-                        shutil.rmtree(path_pred)
-                    except OSError as e:
-                        print("Error: %s - %s." % (e.filename, e.strerror))
+    with ctx.Pool(processes=len(initial_config["gpu_ids"])) as pool:
+        for i in range(n_iterations):
+            if not fixed_split:
+                # Set seed for iteration
+                seed = random.randint(1, 10001)
+                for config in config_list:
+                    config["split_dataset"]["random_seed"] = seed
+                    if all_logs:
+                        if i:
+                            config["log_directory"] = config["log_directory"].replace("_n=" + str(i - 1).zfill(2),
+                                                                                      "_n=" + str(i).zfill(2))
+                        else:
+                            config["log_directory"] += "_n=" + str(i).zfill(2)
 
-                # Take the config file within the log_directory because binarize_prediction may have been updated
-                json_path = os.path.join(config['log_directory'], 'config_file.json')
-                new_config = imed_config_manager.ConfigurationManager(json_path).get_config()
-                new_config["gpu"] = config["gpu"]
-                new_config_list.append(new_config)
+                validation_scores = pool.map(partial(train_worker, thr_incr=thr_increment), config_list)
 
-            try:
+            val_df = pd.DataFrame(validation_scores, columns=[
+                'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
+                'best_validation_loss'])
+
+            if run_test:
+                new_config_list = []
+                for config in config_list:
+                    # Delete path_pred
+                    path_pred = os.path.join(config['log_directory'], 'pred_masks')
+                    if os.path.isdir(path_pred) and n_iterations > 1:
+                        try:
+                            shutil.rmtree(path_pred)
+                        except OSError as e:
+                            logging.info("Error: %s - %s." % (e.filename, e.strerror))
+
+                    # Take the config file within the log_directory because binarize_prediction may have been updated
+                    json_path = os.path.join(config['log_directory'], 'config_file.json')
+                    new_config = imed_config_manager.ConfigurationManager(json_path).get_config()
+                    new_config["gpu_ids"] = config["gpu_ids"]
+                    new_config_list.append(new_config)
+
                 test_results = pool.map(test_worker, new_config_list)
-            except Exception:
-                pool.close()
-                raise Exception("Testing failed")
 
-            df_lst = []
-            # Merge all eval df together to have a single excel file
-            for j, result in enumerate(test_results):
-                df = result[-1]
+                df_lst = []
+                # Merge all eval df together to have a single excel file
+                for j, result in enumerate(test_results):
+                    df = result[-1]
 
-                if i == 0:
-                    all_mean = df.mean(axis=0)
-                    std_metrics = df.std(axis=0)
-                    metrics = pd.concat([all_mean, std_metrics], sort=False, axis=1)
-                else:
-                    all_mean = pd.concat([all_mean, df.mean(axis=0)], sort=False, axis=1)
-                    mean_metrics = all_mean.mean(axis=1)
-                    std_metrics = all_mean.std(axis=1)
-                    metrics = pd.concat([mean_metrics, std_metrics], sort=False, axis=1)
+                    if i == 0:
+                        all_mean = df.mean(axis=0)
+                        std_metrics = df.std(axis=0)
+                        metrics = pd.concat([all_mean, std_metrics], sort=False, axis=1)
+                    else:
+                        all_mean = pd.concat([all_mean, df.mean(axis=0)], sort=False, axis=1)
+                        mean_metrics = all_mean.mean(axis=1)
+                        std_metrics = all_mean.std(axis=1)
+                        metrics = pd.concat([mean_metrics, std_metrics], sort=False, axis=1)
 
-                metrics.rename({0: "mean"}, axis=1, inplace=True)
-                metrics.rename({1: "std"}, axis=1, inplace=True)
-                id = result[0].split("_n=")[0]
-                cols = metrics.columns.values
-                for idx, col in enumerate(cols):
-                    metrics.rename({col: col + "_" + id}, axis=1, inplace=True)
-                df_lst.append(metrics)
-                test_results[j] = result[:2]
+                    metrics.rename({0: "mean"}, axis=1, inplace=True)
+                    metrics.rename({1: "std"}, axis=1, inplace=True)
+                    id = result[0].split("_n=")[0]
+                    cols = metrics.columns.values
+                    for idx, col in enumerate(cols):
+                        metrics.rename({col: col + "_" + id}, axis=1, inplace=True)
+                    df_lst.append(metrics)
+                    test_results[j] = result[:2]
 
-            # Init or add eval results to dataframe
-            eval_df = pd.concat(df_lst, sort=False, axis=1)
+                # Init or add eval results to dataframe
+                eval_df = pd.concat(df_lst, sort=False, axis=1)
 
-            test_df = pd.DataFrame(test_results, columns=['log_directory', 'test_dice'])
-            combined_df = val_df.set_index('log_directory').join(test_df.set_index('log_directory'))
-            combined_df = combined_df.reset_index()
+                test_df = pd.DataFrame(test_results, columns=['log_directory', 'test_dice'])
+                combined_df = val_df.set_index('log_directory').join(test_df.set_index('log_directory'))
+                combined_df = combined_df.reset_index()
 
-        else:
-            combined_df = val_df
+            else:
+                combined_df = val_df
 
-        results_df = pd.concat([results_df, combined_df])
-        results_df.to_csv(os.path.join(output_dir, "temporary_results.csv"))
-        eval_df.to_csv(os.path.join(output_dir, "average_eval.csv"))
+            results_df = pd.concat([results_df, combined_df])
+            results_df.to_csv(os.path.join(output_dir, "temporary_results.csv"))
+            eval_df.to_csv(os.path.join(output_dir, "average_eval.csv"))
 
     # Merge config and results in a df
     config_df = pd.DataFrame.from_dict(config_list)
@@ -391,8 +388,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
 
     results_df.to_csv(os.path.join(output_dir, "detailed_results.csv"))
 
-    print("Detailed results")
-    print(results_df)
+    logging.info("Detailed results")
+    logging.info(results_df)
 
     # Compute avg, std, p-values
     if n_iterations > 1:
