@@ -729,6 +729,7 @@ class BidsDataframe:
     Args:
         loader_params (dict): Loader parameters, see :doc:`configuration_file` for more details.
         derivatives (bool): If True, derivatives are indexed.
+        log_directory (str): Output folder.
 
     Attributes:
         bids_path (str): Path to the BIDS dataset.
@@ -738,10 +739,11 @@ class BidsDataframe:
         extensions (list of str): List of file extensions of interest.
         contrast_lst (list of str): List of the contrasts of interest.
         derivatives (bool): If True, derivatives are indexed.
+        log_directory (str): Output folder.
         df (pd.DataFrame): Dataframe containing dataset information
     """
 
-    def __init__(self, loader_params, derivatives):
+    def __init__(self, loader_params, derivatives, log_directory):
 
         # bids_path from loader parameters
         self.bids_path = os.path.join(loader_params['bids_path'], '')
@@ -767,6 +769,9 @@ class BidsDataframe:
 
         # derivatives
         self.derivatives = derivatives
+
+        # log_directory
+        self.log_directory = log_directory
 
         # dataframe
         self.create_bids_dataframe()
