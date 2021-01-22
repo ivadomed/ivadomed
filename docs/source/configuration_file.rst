@@ -1112,26 +1112,397 @@ testing sub-dataset.
 Available Transformations:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
--  ``NumpyToTensor``
--  ``CenterCrop2D`` (parameters: ``size``)
--  ``ROICrop2D`` (parameters: ``size``)
--  ``NormalizeInstance``
--  ``RandomAffine`` (parameters: ``degrees`` (Positive integer),
-   ``translate`` (List of floats between 0. and 1.), ``scale`` (List of
-   floats between 0. and 1.))
--  ``RandomShiftIntensity`` (parameters: ``shift_range``)
--  ``ElasticTransform`` (parameters: ``alpha_range``, ``sigma_range``,
-   ``p``)
--  ``Resample`` (parameters: ``wspace``, ``hspace``, ``dspace``)
--  ``AdditionGaussianNoise`` (parameters: ``mean``, ``std``)
--  ``DilateGT`` (parameters: ``dilation_factor``) Float. Controls the
-   number of iterations of ground-truth dilation depending on the size
-   of each individual lesion, data augmentation of the training set. Use
-   ``0`` to disable.
--  ``HistogramClipping`` (parameters: ``min_percentile``,
-   ``max_percentile``)
--  ``Clahe`` (parameters: ``clip_limit``, ``kernel_size``)
--  ``RandomReverse``
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "NumpyToTensor",
+        "type": "dict",
+        "description": "Converts nd array to tensor object."
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "NumpyToTensor": {
+                "applied_to": ["im", "gt"]
+            }
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "CenterCrop",
+        "type": "dict",
+        "options": {
+            "size": {
+                "type": "list, int"
+            },
+            "applied_to": {
+                "type": "list, string"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "CenterCrop": {
+                "applied_to": ["im", "gt"],
+                "size":  [512, 256, 16]
+            }
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "ROICrop",
+        "type": "dict",
+        "options": {
+            "size": {
+                "type": "list, int"
+            },
+            "applied_to": {
+                "type": "list, string"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "ROICrop": {
+                "size": [48, 48]
+            }
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "NormalizeInstance",
+        "type": "dict",
+        "$$description": [
+            "Normalize a tensor or an array image with mean and standard deviation estimated from\n",
+            "the sample itself."
+        ]
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "NormalizeInstance": {}
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomAffine",
+        "type": "dict",
+        "options": {
+            "degrees": {
+                "type": "float or tuple of float",
+                "range": "(0, inf)",
+                "$$description": [
+                    "Positive float or list (or tuple) of length two. Angles in degrees. If only\n",
+                    "a float is provided, then rotation angle is selected within the range\n",
+                    "[-degrees, degrees]. Otherwise, the tuple defines this range."
+                ]
+            },
+            "translate": {
+                "type": "list, float",
+                "range": "[0, 1]",
+                "$$description": [
+                    "Length 2 or 3 depending on the sample shape (2D or 3D). Defines\n",
+                    "the maximum range of translation along each axis."
+                ]
+            },
+            "scale": {
+                "type": "list, float",
+                "range": "[0, 1]",
+                "$$description": [
+                    "Length 2 or 3 depending on the sample shape (2D or 3D). Defines\n",
+                    "the maximum range of scaling along each axis."
+                ]
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomAffine": {
+                "translate": [0.03, 0.03],
+                "applied_to": ["im"],
+                "dataset_type": ["training"],
+                "scale": [0.1, 0.5],
+                "degrees": 180
+            }
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomShiftIntensity",
+        "type": "dict",
+        "options": {
+            "shift_range": {
+                "type": "[float, float]",
+                "description": "Range from which the offset applied is randomly selected."
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomShiftIntensity": {
+                "shift_range": [28.0, 30.0]
+            }
+        }
+     }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "ElasticTransform",
+        "type": "dict",
+        "$$description": [
+            "Applies elastic transformation. See also:\n",
+            "`Best practices for convolutional neural networks
+             applied to visual document analysis <http://cognitivemedium.com/assets/rmnist/Simard.pdf>`__."
+        ],
+        "options": {
+            "alpha_range": {
+                "type": "(float, float)",
+                "description": "Deformation coefficient."
+            },
+            "sigma_range": {
+                "type": "(float, float)",
+                "description": "Standard deviation."
+            },
+            "p": {
+                "type": "float"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "ElasticTransform": {
+                "alpha_range": [28.0, 30.0],
+                "sigma_range":  [3.5, 4.5],
+                "p": 0.1,
+                "applied_to": ["im", "gt"],
+                "dataset_type": ["training"]
+            }
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "Resample",
+        "type": "dict",
+        "options": {
+            "wspace": {
+                "type": "float",
+                "range": "[0, 1]",
+                "description": "Resolution along the first axis, in mm."
+            },
+            "hspace": {
+                "type": "float",
+                "range": "[0, 1]",
+                "description": "Resolution along the second axis, in mm."
+            },
+            "dspace": {
+                "type": "float",
+                "range": "[0, 1]",
+                "description": "Resolution along the third axis, in mm."
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "Resample": {
+                "wspace": 0.75,
+                "hspace": 0.75,
+                "dspace": 1
+            }
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "AdditiveGaussianNoise",
+        "type": "dict",
+        "options": {
+            "mean": {
+                "type": "float",
+                "description": "Mean of Gaussian noise."
+            },
+            "std": {
+                "type": "float",
+                "description": "Standard deviation of Gaussian noise."
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "AdditiveGaussianNoise": {
+                "mean": 0.0,
+                "std": 0.02
+            }
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "DilateGT",
+        "type": "dict",
+        "options": {
+            "dilation_factor": {
+                "type": "float",
+                "$$description": [
+                    "Controls the number of iterations of ground-truth dilation depending on\n",
+                    "the size of each individual lesion, data augmentation of the training set.\n",
+                    "Use ``0`` to disable."
+                ]
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "DilateGT": {
+                "dilation_factor": 0
+            }
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "HistogramClipping",
+        "description": "Perform intensity clipping based on percentiles.",
+        "type": "dict",
+        "options": {
+            "min_percentile": {
+                "type": "float",
+                "range": "[0, 100]"
+            },
+            "max_percentile": {
+                "type": "float",
+                "range": "[0, 100]"
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "HistogramClipping": {
+                "min_percentile": 50,
+                "max_percentile": 75
+            }
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "Clahe",
+        "type": "dict",
+        "options": {
+            "clip_limit": {
+                "type": "float"
+            },
+            "kernel_size": {
+                "type": "list, int",
+                "$$description": [
+                    "Defines the shape of contextual regions used in the algorithm.\n",
+                    "List length = dimension, i.e. 2D or 3D"
+                ]
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "Clahe": {
+                "clip_limit": 0.5,
+                "kernel_size": [8, 8]
+            }
+        }
+    }
+
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "RandomReverse",
+        "type": "dict",
+        "description": "Make a randomized symmetric inversion of the different values of each dimensions."
+    }
+
+.. code-block:: JSON
+
+    {
+        "transformation": {
+            "RandomReverse": {
+                "applied_to": ["im"]
+            }
+        }
+    }
+
 
 .. _Uncertainty:
 
