@@ -72,6 +72,7 @@ General Parameters
         "type": "string"
     }
 
+
 .. jsonschema::
 
     {
@@ -109,7 +110,7 @@ When possible, the folder name will follow the following convention:
         "type": "boolean"
     }
 
-Loader parameters
+Loader Parameters
 -----------------
 
 .. jsonschema::
@@ -119,6 +120,16 @@ Loader parameters
         "title": "bids_path",
         "description": "Path of the BIDS folder.",
         "type": "string"
+    }
+
+Example:
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "bids_path": "path/to/data_example_spinegeneric"
+        }
     }
 
 
@@ -137,7 +148,9 @@ Example:
 .. code-block:: JSON
 
     {
-        "bids_config": "ivadomed/config/config_bids.json"
+        "loader_parameters": {
+            "bids_config": "ivadomed/config/config_bids.json"
+        }
     }
 
 
@@ -173,10 +186,12 @@ Example:
 .. code-block:: JSON
 
     {
-        "subject_selection": {
-            "n": [5, 10],
-            "metadata": ["disease", "disease"],
-            "value": ["healthy", "ms"]
+        "loader_parameters": {
+            "subject_selection": {
+                "n": [5, 10],
+                "metadata": ["disease", "disease"],
+                "value": ["healthy", "ms"]
+            }
         }
     }
 
@@ -198,7 +213,9 @@ Example:
 .. code-block:: JSON
 
     {
-        "target_suffix": ["_seg-manual", "_lesion-manual"]
+        "loader_parameters": {
+            "target_suffix": ["_seg-manual", "_lesion-manual"]
+        }
     }
 
 The length of this list controls the number of output channels of the model (i.e.
@@ -218,14 +235,25 @@ will be randomly chosen.
         "title": "extensions",
         "description": "Used to specify a list of file extensions to be selected for
             training/testing.",
-        "type": "list * string"
+        "type": "list, string"
     }
+
+Example:
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "extensions": [".nii.gz", ".png"]
+        }
+    }
+
 
 .. jsonschema::
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "contrasts",
+        "title": "contrast_params",
         "type": "dict",
         "options": {
             "train_validation": {
@@ -257,6 +285,20 @@ will be randomly chosen.
         }
     }
 
+Example:
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "contrast_params": {
+                "training_validation": ["T1w", "T2w", "T2star"],
+                "testing": ["T1w", "T2w", "T2star"],
+                "balance": {}
+            }
+        }
+    }
+
 
 .. jsonschema::
 
@@ -269,6 +311,16 @@ will be randomly chosen.
     }
 
 See details in both ``train_validation`` and ``test`` for the contrasts that are input.
+
+Example:
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "multichannel": false
+        }
+    }
 
 
 .. jsonschema::
@@ -284,12 +336,22 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
         }
     }
 
+Example:
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "slice_axis": "sagittal"
+        }
+    }
+
 
 .. jsonschema::
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "slice_filter",
+        "title": "slice_filter_params",
         "description": "Discard a slice from the dataset if it meets a condition, see
             below.",
         "type": "dict",
@@ -320,11 +382,24 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
         }
     }
 
+Example:
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "slice_filter_params": {
+                "filter_empty_mask": false,
+                "filter_empty_input": true
+            }
+        }
+    }
+
 .. jsonschema::
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "roi",
+        "title": "roi_params",
         "description": "Parameters for the region of interest",
         "type": "dict",
         "options": {
@@ -349,6 +424,19 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
         }
     }
 
+Example:
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "roi_params": {
+                "suffix": null,
+                "slice_filter_roi": null
+            }
+        }
+    }
+
 .. jsonschema::
 
     {
@@ -360,6 +448,16 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
             "after interpolations implied by preprocessing or data-augmentation operations."
         ],
         "type": "boolean"
+    }
+
+Example:
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "soft_gt": true
+        }
     }
 
 
