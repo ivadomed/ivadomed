@@ -1451,6 +1451,18 @@ object sizes.
         }
     }
 
+.. code-block:: JSON
+
+    {
+        "evaluation_parameters": {
+            "target_size": {
+                "thr": [20, 100],
+                "unit": "vox"
+            }
+        }
+    }
+
+
 .. jsonschema::
 
     {
@@ -1470,6 +1482,17 @@ object sizes.
                     "Either `vox` for voxels or `mm3`. Indicates the unit used to define the\n",
                     "overlap."
                 ]
+            }
+        }
+    }
+
+.. code-block:: JSON
+
+    {
+        "evaluation_parameters": {
+            "overlap": {
+                "thr": 30,
+                "unit": "vox"
             }
         }
     }
