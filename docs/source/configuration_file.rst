@@ -73,6 +73,15 @@ General Parameters
     }
 
 
+Example:
+
+.. code-block:: JSON
+
+    {
+        "log_directory": "tmp/spineGeneric"
+    }
+
+
 .. jsonschema::
 
     {
@@ -101,6 +110,13 @@ When possible, the folder name will follow the following convention:
    contrast = {t1, t2, t2star, dwi, ...}
 
 
+.. code-block:: JSON
+
+   {
+       "model_name": "seg_gm_t2star"
+   }
+
+
 .. jsonschema::
 
     {
@@ -109,6 +125,15 @@ When possible, the folder name will follow the following convention:
         "description": "Extended verbosity and intermediate outputs.",
         "type": "boolean"
     }
+
+Example:
+
+.. code-block:: JSON
+
+    {
+        "debugging": true
+    }
+
 
 Loader Parameters
 -----------------
