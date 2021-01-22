@@ -897,8 +897,6 @@ being used for the segmentation task).
    }
 
 
-
-
 .. code-block:: JSON
 
     {
@@ -908,7 +906,6 @@ being used for the segmentation task).
             "batch_norm_momentum": 0.1
         }
     }
-
 
 
 .. jsonschema::
@@ -942,6 +939,16 @@ being used for the segmentation task).
        }
    }
 
+.. code-block:: JSON
+
+    {
+        "FiLMedUnet": {
+            "applied": false,
+            "metadata": "contrasts",
+            "film_layers": [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+        }
+    }
+
 
 .. jsonschema::
 
@@ -974,6 +981,22 @@ being used for the segmentation task).
             }
          }
       }
+
+.. code-block:: JSON
+
+    {
+        "HeMISUnet": {
+            "applied": true,
+            "missing_probability": 0.00001,
+            "missing_probability_growth": 0.9,
+            "contrasts": ["T1w", "T2w"],
+            "ram": true,
+            "hdf5_path": "/path/to/HeMIS.hdf5",
+            "csv_path": "/path/to/HeMIS.csv",
+            "target_lst": ["T2w"],
+            "roi_lst": null
+        }
+    }
 
 .. _Modified3DUNet:
 
@@ -1013,8 +1036,6 @@ being used for the segmentation task).
             }
        }
    }
-
-
 
 .. code-block:: JSON
 
