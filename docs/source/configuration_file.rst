@@ -1083,6 +1083,15 @@ Cascaded Architecture Features
        }
    }
 
+.. code-block:: JSON
+
+    {
+        "object_detection_params": {
+            "object_detection_path": null,
+            "safety_factor": [1.0, 1.0, 1.0]
+        }
+    }
+
 
 Transformations
 ---------------
