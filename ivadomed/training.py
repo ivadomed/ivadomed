@@ -92,9 +92,21 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             reset = training_params["transfer_learning"]['reset']
         else:
             reset = True
+
         # Freeze first layers and reset last layers
-        model = imed_models.set_model_for_retrain(old_model_path, retrain_fraction=fraction, map_location=device,
-                                                  reset=reset)
+        def freeze_all_but_film(model_path, map_location):
+            model = torch.load(model_path, map_location=map_location)
+            # Set freeze first layers
+            for name, layer in model.named_parameters():
+                if not 'generator.linear' in name:
+                    layer.requires_grad = False
+            return model
+
+        model = freeze_all_but_film(old_model_path, map_location=device)
+        # model = imed_models.set_model_for_retrain(old_model_path, retrain_fraction=fraction, map_location=device,
+        #                                           reset=reset)
+        model_og = copy.deepcopy(model)
+        model_og.eval()
     else:
         print("\nInitialising model's weights from scratch.")
         model_class = getattr(imed_models, model_params["name"])
@@ -179,12 +191,18 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             if model_params["name"] == "HeMISUnet" or \
                     ('film_layers' in model_params and any(model_params['film_layers'])):
                 metadata = get_metadata(batch["input_metadata"], model_params)
+                metadata_0 = [model_params["film_onehotencoder"].transform([[0]]).tolist()[0] for _ in range(len(batch["input_metadata"]))]
+                metadata_1 = [model_params["film_onehotencoder"].transform([[1]]).tolist()[0] for _ in range(len(batch["input_metadata"]))]
                 preds = model(input_samples, metadata)
+                preds_0 = model(input_samples, metadata_0)
+                preds_1 = model(input_samples, metadata_1)
+                ref_0 = model_og(input_samples, metadata_0)
+                ref_1 = model_og(input_samples, metadata_1)
             else:
                 preds = model(input_samples)
 
             # LOSS
-            loss = loss_fct(preds, gt_samples)
+            loss = 2 * loss_fct(preds, gt_samples) + loss_fct(preds_0, ref_0) + loss_fct(preds_1, ref_1)
             train_loss_total += loss.item()
             train_dice_loss_total += loss_dice_fct(preds, gt_samples).item()
 

@@ -70,8 +70,10 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
                 label_contrast = CONTRAST_CATEGORY[generic_contrast]
                 s_out["input_metadata"][i]["film_input"] = [label_contrast]
         else:
+
             for i, input_metadata in enumerate(subject["input_metadata"]):
                 data = input_metadata[metadata_type]
+                input_metadata['metadata_dict'] = {'kidney': 0, 'spleen': 1, 'liver': 2}
                 label_contrast = input_metadata['metadata_dict'][data]
                 s_out["input_metadata"][i]["film_input"] = [label_contrast]
 
@@ -86,6 +88,9 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
         del s_out, subject
 
     if train_set:
+        X_train_ohe.append([0])
+        X_train_ohe.append([1])
+        X_train_ohe.append([2])
         X_train_ohe = np.vstack(X_train_ohe)
         ohe.fit(X_train_ohe)
         return ds_out, ohe
