@@ -1152,6 +1152,14 @@ Uncertainty computation is performed if ``n_it>0`` and at least
         "description": "Model-based uncertainty with `Monte Carlo Dropout <https://arxiv.org/abs/1506.02142>`__."
     }
 
+.. code-block:: JSON
+
+    {
+        "uncertainty": {
+            "epistemic": true
+        }
+    }
+
 .. jsonschema::
 
     {
@@ -1161,6 +1169,14 @@ Uncertainty computation is performed if ``n_it>0`` and at least
         "description": "Image-based uncertainty with `test-time augmentation <https://doi.org/10.1016/j.neucom.2019.01.103>`__."
     }
 
+.. code-block:: JSON
+
+    {
+        "uncertainty": {
+            "aleatoric": true
+        }
+    }
+
 .. jsonschema::
 
     {
@@ -1168,6 +1184,14 @@ Uncertainty computation is performed if ``n_it>0`` and at least
         "title": "n_it",
         "type": "int",
         "description": "Number of Monte Carlo iterations. Set to 0 for no uncertainty computation."
+    }
+
+.. code-block:: JSON
+
+    {
+        "uncertainty": {
+            "n_it": 2
+        }
     }
 
 
