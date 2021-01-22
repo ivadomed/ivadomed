@@ -739,7 +739,6 @@ class BidsDataframe:
         extensions (list of str): List of file extensions of interest.
         contrast_lst (list of str): List of the contrasts of interest.
         derivatives (bool): If True, derivatives are indexed.
-        log_directory (str): Output folder.
         df (pd.DataFrame): Dataframe containing dataset information
     """
 
@@ -770,11 +769,11 @@ class BidsDataframe:
         # derivatives
         self.derivatives = derivatives
 
-        # log_directory
-        self.log_directory = log_directory
-
-        # dataframe
+        # Create dataframe
         self.create_bids_dataframe()
+
+        # Save dataframe as csv file
+        self.save(os.path.join(log_directory, "bids_dataframe.csv"))
 
     def create_bids_dataframe(self):
         """Generate the dataframe."""
