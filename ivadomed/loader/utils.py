@@ -919,3 +919,14 @@ class BidsDataframe:
         """
         prefix_fname = subject_fname.split('.')[0]
         return [d for d in deriv_fnames if prefix_fname in d]
+
+    def save(self, path):
+        """Save the dataframe into a csv file.
+        Args:
+            path (str): Path to csv file.
+        """
+        try:
+            self.df.to_csv(path, index=False)
+            print("Dataframe has been saved at {}.".format(path))
+        except FileNotFoundError:
+            print("Wrong path.")
