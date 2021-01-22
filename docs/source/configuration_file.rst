@@ -1207,7 +1207,7 @@ object sizes.
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "targetSize",
+        "title": "target_size",
         "type": "dict",
         "options": {
             "thr": {
