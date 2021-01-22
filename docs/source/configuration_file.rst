@@ -73,7 +73,7 @@ General Parameters
     }
 
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -92,7 +92,7 @@ Example:
         "type": "string"
     }
 
-Example:
+
 
 .. code-block:: sh
 
@@ -126,7 +126,7 @@ When possible, the folder name will follow the following convention:
         "type": "boolean"
     }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -147,7 +147,7 @@ Loader Parameters
         "type": "string"
     }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -168,7 +168,7 @@ Example:
         "type": "string"
     }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -206,7 +206,7 @@ Example:
     }
 
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -233,7 +233,7 @@ for training/testing.
         "type": "list * string"
     }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -263,7 +263,7 @@ will be randomly chosen.
         "type": "list, string"
     }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -310,7 +310,7 @@ Example:
         }
     }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -337,7 +337,7 @@ Example:
 
 See details in both ``train_validation`` and ``test`` for the contrasts that are input.
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -361,7 +361,7 @@ Example:
         }
     }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -407,7 +407,6 @@ Example:
         }
     }
 
-Example:
 
 .. code-block:: JSON
 
@@ -449,7 +448,7 @@ Example:
         }
     }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -474,8 +473,6 @@ Example:
         ],
         "type": "boolean"
     }
-
-Example:
 
 .. code-block:: JSON
 
@@ -608,7 +605,6 @@ Split Dataset
 Training Parameters
 -------------------
 
-
 .. jsonschema::
 
     {
@@ -616,6 +612,14 @@ Training Parameters
         "title": "batch_size",
         "type": "int",
         "range": "(0, inf)"
+    }
+
+.. code-block:: JSON
+
+    {
+        "training_parameters": {
+            "batch_size": 24
+        }
     }
 
 
@@ -637,6 +641,17 @@ Training Parameters
             }
         }
     }
+
+.. code-block:: JSON
+
+    {
+        "training_parameters": {
+            "loss": {
+                "name": "DiceLoss"
+            }
+        }
+    }
+
 
 .. jsonschema::
 
@@ -674,6 +689,19 @@ Training Parameters
         }
     }
 
+.. code-block:: JSON
+
+    {
+        "training_parameters": {
+            "training_time": {
+                "num_epochs": 100,
+                "early_stopping_patience": 50,
+                "early_stopping_epsilon": 0.001
+            }
+        }
+    }
+
+
 .. jsonschema::
 
     {
@@ -702,18 +730,19 @@ Training Parameters
         }
     }
 
-Example:
-
 .. code-block:: JSON
 
     {
-        "scheduler":
-            "initial_lr": 0.001,
-            "scheduler_lr": {
-                "name": "CosineAnnealingLR",
-                "max_lr": 1e-2,
-                "base_lr": 1e-5
+        "training_parameters": {
+            "scheduler": {
+                "initial_lr": 0.001,
+                "scheduler_lr": {
+                    "name": "CosineAnnealingLR",
+                    "max_lr": 1e-2,
+                    "base_lr": 1e-5
+                }
             }
+        }
     }
 
 
@@ -740,15 +769,14 @@ Example:
         }
      }
 
-Example:
-
 .. code-block:: JSON
 
-    "balance_samples": {
-        "applied": false,
-        "type": "gt"
+    "training_parameters": {
+        "balance_samples": {
+            "applied": false,
+            "type": "gt"
+        }
     }
-
 
 
 .. jsonschema::
@@ -759,6 +787,12 @@ Example:
         "description": "Alpha parameter of the Beta distribution, see `original paper on
         the Mixup technique <https://arxiv.org/abs/1710.09412>`__.",
         "type": "float"
+    }
+
+.. code-block:: JSON
+
+    "training_parameters": {
+        "mixup_alpha": null
     }
 
 
@@ -792,6 +826,17 @@ Example:
            }
        }
    }
+
+.. code-block:: JSON
+
+   "training_parameters": {
+       "transfer_learning": {
+           "retrain_model": null,
+           "retrain_fraction": 1.0,
+           "reset": true
+       }
+   }
+
 
 Architecture
 ------------
@@ -852,7 +897,7 @@ being used for the segmentation task).
    }
 
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -969,7 +1014,7 @@ Example:
        }
    }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -1121,7 +1166,7 @@ Postprocessing
         ]
     }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -1146,7 +1191,7 @@ Example:
         ]
     }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -1166,7 +1211,7 @@ Example:
         "description": "Fill holes in the predictions. No parameters required (i.e., {})."
     }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -1190,7 +1235,7 @@ Example:
         ]
     }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -1217,7 +1262,7 @@ Example:
         "description": "Sets to zero prediction values strictly below the given threshold ``thr``."
     }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -1259,7 +1304,7 @@ Example:
         }
     }
 
-Example:
+
 
 .. code-block:: JSON
 
@@ -1306,7 +1351,7 @@ Example:
         }
     }
 
-Example:
+
 
 .. code-block:: JSON
 
