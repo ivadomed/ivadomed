@@ -811,11 +811,11 @@ class BidsDataframe:
 
         # Update dataframe with subject files of chosen contrasts and extensions,
         # and with derivative files of chosen target_suffix from loader parameters
-        self.df = self.df[(~self.df['path'].str.contains('derivatives') & self.df['suffix'].str.contains(
-            '|'.join(self.contrast_lst)) &
-                           self.df['extension'].str.contains('|'.join(self.extensions))) |
-                          (self.df['path'].str.contains('derivatives') & self.df['filename'].str.contains(
-                              '|'.join(self.target_suffix)))]
+        self.df = self.df[(~self.df['path'].str.contains('derivatives')
+                           & self.df['suffix'].str.contains('|'.join(self.contrast_lst))
+                           & self.df['extension'].str.contains('|'.join(self.extensions)))
+                           | (self.df['path'].str.contains('derivatives')
+                           & self.df['filename'].str.contains('|'.join(self.target_suffix)))]
 
         # Add participant_id column, and metadata from participants.tsv file if present
         # Uses pybids function
@@ -863,28 +863,31 @@ class BidsDataframe:
             subject_fnames = self.get_subject_fnames()
             deriv_fnames = self.get_deriv_fnames()
             has_deriv = []
+            deriv = []
 
             for subject_fname in subject_fnames:
-                if self.roi_suffix is not None:
-                    available = self.get_derivatives(subject_fname, deriv_fnames)
-                    if self.roi_suffix in ('|'.join(available)):
-                        has_deriv.append(subject_fname)
+                available = self.get_derivatives(subject_fname, deriv_fnames)
+                if available:
+                    if self.roi_suffix is not None:
+                        if self.roi_suffix in ('|'.join(available)):
+                            has_deriv.append(subject_fname)
+                            deriv.extend(available)
+                        else:
+                            logger.warning("Missing roi_suffix {} for {}. Skipping."
+                                           .format(self.roi_suffix, subject_fname))
                     else:
-                        logger.warning(
-                            "Missing ROI derivatives for subject {}. Skipping subject.".format(subject_fname))
+                        has_deriv.append(subject_fname)
+                        deriv.extend(available)
+                    for target in self.target_suffix:
+                        if target not in str(available) and target != self.roi_suffix:
+                            logger.warning("Missing target_suffix {} for {}".format(target, subject_fname))
                 else:
-                    available = self.get_derivatives(subject_fname, deriv_fnames)
-                    if available:
-                        has_deriv.append(subject_fname)
-                        for target in self.target_suffix:
-                            if target not in str(available):
-                                logger.warning("Missing target_suffix {} for subject {}.".format(target, subject_fname))
-                    else:
-                        logger.warning("Missing derivatives for subject {}. Skipping subject.".format(subject_fname))
+                    logger.warning("Missing derivatives for {}. Skipping.".format(subject_fname))
 
             # Filter dataframe to keep subjects files with available derivatives only
             if has_deriv:
-                self.df = self.df[self.df['filename'].str.contains('|'.join(has_deriv))]
+                self.df = self.df[self.df['filename'].str.contains('|'.join(has_deriv))
+                                  | self.df['filename'].str.contains('|'.join(deriv))]
             else:
                 # Raise error and exit if no derivatives are found for any subject files
                 raise RuntimeError("Derivatives not found.")
