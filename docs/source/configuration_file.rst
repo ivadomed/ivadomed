@@ -1251,20 +1251,3 @@ object sizes.
             }
         }
     }
-
-
-
-Examples
---------
-
-Examples of configuration files: `config\_config.json <ivadomed/config/config.json>`__.
-
-In particular:
-
-- `config\_classification.json <ivadomed/config/config_classification.json>`__. Is dedicated to classification task.
-
-- `config\_sctTesting.json <ivadomed/config/config_sctTesting.json>`__. Is a user case of 2D segmentation using a U-Net model.
-
-- `config\_spineGeHemis.json <ivadomed/config/config_spineGeHemis.json>`__. Shows how to use the HeMIS-UNet.
-
-- `config\_tumorSeg.json <ivadomed/config/config_tumorSeg.json>`__. Runs a 3D segmentation using a 3D UNet.
