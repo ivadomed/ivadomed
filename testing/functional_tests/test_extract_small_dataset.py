@@ -12,8 +12,7 @@ def setup_function():
 def test_extract_small_dataset_default_n():
     __output_dir__ = os.path.join(__tmp_dir__, 'output_extract_small_dataset')
     extract_small_dataset.main(args=['--input', __data_testing_dir__,
-                                     '--output', __output_dir__,
-                                     '-d'])
+                                     '--output', __output_dir__])
     assert os.path.exists(__output_dir__)
     output_dir_list = os.listdir(__output_dir__)
     assert 'derivatives' in output_dir_list
@@ -28,8 +27,7 @@ def test_extract_small_dataset_n_2():
     __output_dir__ = os.path.join(__tmp_dir__, 'output_extract_small_dataset_2')
     extract_small_dataset.main(args=['--input', __data_testing_dir__,
                                      '--output', __output_dir__,
-                                     '-n', '2',
-                                     '-d'])
+                                     '-n', '2'])
     assert os.path.exists(__output_dir__)
     output_dir_list = os.listdir(__output_dir__)
     assert 'derivatives' in output_dir_list
@@ -46,7 +44,8 @@ def test_extract_small_dataset_n_2():
 def test_extract_small_dataset_no_derivatives():
     __output_dir__ = os.path.join(__tmp_dir__, 'output_extract_small_dataset_3')
     extract_small_dataset.main(args=['--input', __data_testing_dir__,
-                                     '--output', __output_dir__])
+                                     '--output', __output_dir__,
+                                     '-d', '0'])
     assert os.path.exists(__output_dir__)
     output_dir_list = os.listdir(__output_dir__)
     assert 'derivatives' not in output_dir_list
@@ -61,8 +60,7 @@ def test_extract_small_dataset_contrast_list():
     __output_dir__ = os.path.join(__tmp_dir__, 'output_extract_small_dataset_4')
     extract_small_dataset.main(args=['--input', __data_testing_dir__,
                                      '--output', __output_dir__,
-                                     '-c', 'T1w, T2w',
-                                     '-d'])
+                                     '-c', 'T1w, T2w'])
     assert os.path.exists(__output_dir__)
     output_dir_list = os.listdir(__output_dir__)
     assert 'derivatives' in output_dir_list
