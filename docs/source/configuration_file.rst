@@ -500,6 +500,14 @@ Split Dataset
         "type": "string"
     }
 
+.. code-block:: JSON
+
+    {
+        "split_dataset": {
+            "fname_split": null
+        }
+    }
+
 
 .. jsonschema::
 
@@ -512,6 +520,14 @@ Split Dataset
             "the sub-datasets, which is useful for reproducibility."
         ],
         "type": "int"
+    }
+
+.. code-block:: JSON
+
+    {
+        "split_dataset": {
+            "random_seed": 6
+        }
     }
 
 
@@ -543,6 +559,14 @@ Split Dataset
         }
     }
 
+.. code-block:: JSON
+
+    {
+        "split_dataset": {
+            "method": "per_center"
+        }
+    }
+
 .. note::
     The institution information is contained within the ``institution_id`` column in the
     ``participants.tsv`` file.
@@ -561,6 +585,14 @@ Split Dataset
         "required": "false"
     }
 
+.. code-block:: JSON
+
+    {
+        "split_dataset": {
+            "balance": null
+        }
+    }
+
 
 .. jsonschema::
 
@@ -570,6 +602,14 @@ Split Dataset
         "description": "Fraction of the dataset used as training set.",
         "type": "float",
         "range": "[0, 1]"
+    }
+
+.. code-block:: JSON
+
+    {
+        "split_dataset": {
+            "train_fraction": 0.6
+        }
     }
 
 .. jsonschema::
@@ -585,6 +625,14 @@ Split Dataset
         "range": "[0, 1]"
     }
 
+.. code-block:: JSON
+
+    {
+        "split_dataset": {
+            "test_fraction": 0.2
+        }
+    }
+
 
 .. jsonschema::
 
@@ -598,6 +646,14 @@ Split Dataset
             "``institution_id``, which associates a subject with an institution/center."
         ],
         "type": "list, string"
+    }
+
+.. code-block:: JSON
+
+    {
+        "split_dataset": {
+            "center_test": []
+        }
     }
 
 
