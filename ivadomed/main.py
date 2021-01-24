@@ -32,6 +32,12 @@ def get_parser():
 
     # MANDATORY ARGUMENTS
     mandatory_args = parser.add_argument_group('MANDATORY ARGUMENTS')
+    command_group = mandatory_args.add_mutually_exclusive_group(required=True)
+    
+    command_group.add_argument("--train", dest='train', action='store_true', 
+                        help="Train data only")
+    command_group.add_argument("--test", dest='test', action='store_true', 
+                        help="Test data only")
     mandatory_args.add_argument("-c", "--config", required=True, type=str,
                                 help="Path to configuration file.")
 
