@@ -2,23 +2,28 @@ import nibabel as nib
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-
+import logging
 from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
-from ivadomed import utils as imed_utils
 from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
 
-GPU_NUMBER = 0
-PATH_BIDS = 'testing_data'
+logger = logging.getLogger(__name__)
+
+GPU_ID = 0
+
+
+def setup_function():
+    create_tmp_dir()
 
 
 def test_image_orientation():
-    device = torch.device("cuda:" + str(GPU_NUMBER) if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:" + str(GPU_ID) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if cuda_available:
         torch.cuda.set_device(device)
-        print("Using GPU number {}".format(device))
+        print("Using GPU ID {}".format(device))
 
     train_lst = ['sub-unf01']
 
@@ -59,7 +64,7 @@ def test_image_orientation():
     for dim in ['2d', '3d']:
         for slice_axis in [0, 1, 2]:
             if dim == '2d':
-                ds = imed_loader.BidsDataset(PATH_BIDS,
+                ds = imed_loader.BidsDataset(__data_testing_dir__,
                                              subject_lst=train_lst,
                                              target_suffix=["_seg-manual"],
                                              contrast_params=contrast_params,
@@ -69,7 +74,7 @@ def test_image_orientation():
                                              multichannel=False)
                 ds.load_filenames()
             else:
-                ds = imed_loader.Bids3DDataset(PATH_BIDS,
+                ds = imed_loader.Bids3DDataset(__data_testing_dir__,
                                                subject_lst=train_lst,
                                                target_suffix=["_seg-manual"],
                                                model_params=model_params,
@@ -142,3 +147,7 @@ def test_image_orientation():
 
                         # re-init pred_stack_lst
                         pred_tmp_lst, z_tmp_lst = [], []
+
+
+def teardown_function():
+    remove_tmp_dir()

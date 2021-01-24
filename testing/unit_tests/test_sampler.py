@@ -2,16 +2,18 @@ import numpy as np
 import pytest
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
-
 from ivadomed import utils as imed_utils
-import time
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
+
 
 cudnn.benchmark = True
-
-GPU_NUMBER = 0
+GPU_ID = 0
 BATCH_SIZE = 1
-PATH_BIDS = 'testing_data'
+
+
+def setup_function():
+    create_tmp_dir()
 
 
 def _cmpt_label(ds_loader):
@@ -47,7 +49,7 @@ def _cmpt_label(ds_loader):
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
 def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
-    cuda_available, device = imed_utils.define_device(GPU_NUMBER)
+    cuda_available, device = imed_utils.define_device(GPU_ID)
 
     loader_params = {
         "transforms_params": transforms_dict,
@@ -55,7 +57,7 @@ def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
         "dataset_type": "training",
         "requires_undo": False,
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
-        "bids_path": PATH_BIDS,
+        "bids_path": __data_testing_dir__,
         "target_suffix": target_lst,
         "roi_params": roi_params,
         "model_params": {"name": "Unet"},
@@ -85,7 +87,11 @@ def test_sampler(transforms_dict, train_lst, target_lst, roi_params):
                                        num_workers=0)
 
     neg_percent_bal, pos_percent_bal = _cmpt_label(train_loader_balanced)
-    # We check if the loader is more balanced. The actual distribution comes from a probabilistic model
-    # This is however not very efficient to get clos to 50 %
-    # in the case where we have 16 slices, with 87,5 % of one class (positive sample).
+    # Check if the loader is more balanced. The actual distribution comes from a probabilistic model
+    # This is however not very efficient to get close to 50 %
+    # in the case where we have 16 slices, with 87.5 % of one class (positive sample).
     assert abs(neg_percent_bal - pos_percent_bal) < abs(neg_percent - pos_percent)
+
+
+def teardown_function():
+    remove_tmp_dir()
