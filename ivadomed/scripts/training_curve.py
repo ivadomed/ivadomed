@@ -18,7 +18,8 @@ def get_parser():
                                 the suffix path of all log directories of interest. To compare
                                 trainings or set of trainings (using ``--multiple``) with subplots,
                                 please list the paths by separating them with commas, e.g.
-                                path_log_dir1,path_logdir2.""")
+                                path_log_dir1,path_logdir2.""",
+                        metavar=imed_utils.Metavar.str)
     parser.add_argument("--multiple", required=False, dest="multiple", action='store_true',
                         help="""Multiple log directories are considered: all available folders
                                 with -i as prefix. The plot represents the mean value (hard line)
@@ -26,10 +27,11 @@ def get_parser():
     parser.add_argument("-y", "--ylim_loss", required=False, type=str,
                         help="""Indicates the limits on the y-axis for the loss plots, otherwise
                                 these limits are automatically defined. Please separate the lower
-                                and the upper limit by a comma, eg -1,0.
-                                Note: for the validation metrics: the y-limits are always 0.0 and 1.0.""")
+                                and the upper limit by a comma, e.g. -1,0. Note: for the validation
+                                metrics: the y-limits are always 0.0 and 1.0.""",
+                        metavar=imed_utils.Metavar.float)
     parser.add_argument("-o", "--output", required=True, type=str,
-                        help="Output folder.")
+                        help="Output folder.", metavar=imed_utils.Metavar.file)
     return parser
 
 
