@@ -1,5 +1,4 @@
 {
-    "command": "test",
     "gpu_ids": [2],
     "log_directory": "spineGeneric_small",
     "model_name": "seg_sc_t2star",

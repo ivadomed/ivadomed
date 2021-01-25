@@ -1,5 +1,4 @@
 {
-    "command": "train",
     "gpu_ids": [6],
     "log_directory": "sct_testing_lesion_ax",
     "model_name": "seg_lesion_t2_t2star",

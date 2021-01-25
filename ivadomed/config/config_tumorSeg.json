@@ -1,5 +1,4 @@
 {
-    "command": "train",
     "gpu_ids": [0],
     "log_directory": "tumor_segmentation",
     "model_name": "seg_tumor_t2",
