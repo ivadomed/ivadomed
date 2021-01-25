@@ -97,11 +97,8 @@ Once the configuration file is ready, run the training:
 
    ivadomed --train -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
 
-- We can pass other flags to execute different commands (training, testing, segmentation)
-
-   To train model: ``--train``
-   To test model: ``--test``
-   To perform segmentation: ``--segment``
+- We can pass other flags to execute different commands (training, testing, segmentation), see `Usage <../usage.html>`__.
+ 
 
 - ``--path-output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
 
