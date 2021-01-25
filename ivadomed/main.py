@@ -35,9 +35,11 @@ def get_parser():
     command_group = mandatory_args.add_mutually_exclusive_group(required=True)
     
     command_group.add_argument("--train", dest='train', action='store_true', 
-                        help="Train data only")
+                        help="Perform training on data.")
     command_group.add_argument("--test", dest='test', action='store_true', 
-                        help="Test data only")
+                        help="Perform testing on trained model.")
+    command_group.add_argument("--segment", dest='segment', action='store_true', 
+                        help="Perform segmentation on data.")
     mandatory_args.add_argument("-c", "--config", required=True, type=str,
                                 help="Path to configuration file.")
 
@@ -73,7 +75,7 @@ def save_config_file(context, log_directory):
         json.dump(context, fp, indent=4)
 
 
-def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
+def run_command(context, command="train", n_gif=0, thr_increment=None, resume_training=False):
     """Run main command.
 
     This function is central in the ivadomed project as training / testing / evaluation commands are run via this
@@ -99,7 +101,6 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             sub dataset and return the prediction metrics before evaluation.
         If "segment" command: No return value.
     """
-    command = copy.deepcopy(context["command"])
     log_directory = copy.deepcopy(context["log_directory"])
     if not os.path.isdir(log_directory):
         print('Creating log directory: {}'.format(log_directory))
@@ -460,6 +461,20 @@ def create_dataset_and_ivadomed_version_log(context):
     f.close()
 
 
+def get_command(args):
+    try:
+        if args.train:
+            return "train"
+        elif args.test:
+            return "test"
+        elif args.segment:
+            return "segment"
+        else:
+            return "train" # default to training
+    except AttributeError:
+        logger.warning("No argument given for command: ( --train | --test | --segment ). Will default to train command.")
+
+
 def run_main():
     imed_utils.init_ivadomed()
 
@@ -469,9 +484,12 @@ def run_main():
     # Get context from configuration file
     path_config_file = args.config
     context = imed_config_manager.ConfigurationManager(path_config_file).get_config()
+    
+    command = get_command(args)
 
     # Run command
     run_command(context=context,
+                command=command if command is not None else "train",
                 n_gif=args.gif if args.gif is not None else 0,
                 thr_increment=args.thr_increment if args.thr_increment else None,
                 resume_training=bool(args.resume_training))
