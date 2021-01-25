@@ -45,25 +45,6 @@ First off, copy this configuration file in your local directory (to avoid modify
 Then, open it with a text editor. Below we will discuss some of the key parameters to perform a one-class 2D
 segmentation training.
 
-- ``command``: Action to perform. Here, we want to train a model, so we set the fields as follows:
-
-  .. code-block:: xml
-
-     "command": "train"
-
-- ``log_directory``: Folder name that will contain the output files (e.g., trained model, predictions, results).
-
-  .. code-block:: xml
-
-     "log_directory": "spineGeneric"
-
-- ``loader_parameters:bids_path``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
-  should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
-
-  .. code-block:: xml
-
-     "bids_path": "data_example_spinegeneric"
-
 - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth is located
   under the ``DATASET/derivatives/labels`` folder. In our case, the suffix is ``_seg-manual``:
 
@@ -114,7 +95,26 @@ Once the configuration file is ready, run the training:
 
 .. code-block:: bash
 
-   ivadomed -c config.json
+   ivadomed --train -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
+
+- We can pass other flags to execute different commands (training, testing, segmentation)
+
+   To train model: ``--train``
+   To test model: ``--test``
+   To perform segmentation: ``--segment``
+
+- ``--path-output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
+
+  .. code-block:: bash
+
+     --path-output path/to/output/directory
+
+- ``--path-data``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
+  should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
+
+  .. code-block:: bash
+
+     --path-data path/to/bids/data
 
 .. note::
 
@@ -174,22 +174,15 @@ be ~90%.
 Evaluate model
 --------------
 
-To test the trained model on the testing sub-dataset and compute evaluation metrics, open your config file and
-set ``command`` to ``test``:
+To test the trained model on the testing sub-dataset and compute evaluation metrics, run:
 
 .. code-block:: bash
 
-   "command": "test"
-
-Then run:
-
-.. code-block:: bash
-
-   ivadomed -c config.json
+   ivadomed --test -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
 
 The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
-The resulting segmentation is saved for each image in the ``<log_directory>/pred_masks`` while a csv file,
-saved in ``<log_directory>/results_eval/evaluation_3Dmetrics.csv``, contains all the evaluation metrics. For more details
+The resulting segmentation is saved for each image in the ``<PATH_TO_OUT_DIR>/pred_masks`` while a csv file,
+saved in ``<PATH_TO_OUT_DIR>/results_eval/evaluation_3Dmetrics.csv``, contains all the evaluation metrics. For more details
 on the evaluation metrics, see :mod:`ivadomed.metrics`.
 
 .. code-block:: console
@@ -219,14 +212,14 @@ on the evaluation metrics, see :mod:`ivadomed.metrics`.
    [5 rows x 16 columns]
 
 
-The test image segmentations are stored in ``<log_directory>/pred_masks/`` and have the same name as the input image
+The test image segmentations are stored in ``<PATH_TO_OUT_DIR>/pred_masks/`` and have the same name as the input image
 with the suffix ``_pred``. To visualize the segmentation of a given subject, you can use any Nifti image viewer.
 For `FSLeyes <https://users.fmrib.ox.ac.uk/~paulmc/fsleyes/userdoc/latest/>`_ users, this command will open the
 input image with the overlaid prediction (segmentation) for one of the test subject:
 
 .. code-block:: bash
 
-   fsleyes "<bids_path>/sub-hamburg01/anat/sub-hamburg01_T2w.nii.gz <log_directory>/pred_masks/sub-hamburg01_T2w_pred.nii.gz -cm red
+   fsleyes "<PATH_TO_BIDS_DATA>/sub-hamburg01/anat/sub-hamburg01_T2w.nii.gz <PATH_TO_OUT_DIR>/pred_masks/sub-hamburg01_T2w_pred.nii.gz -cm red
 
 After the training for 100 epochs, the segmentations should be similar to the one presented in the following image.
 The output and ground truth segmentations of the spinal cord are presented in red (subject ``sub-hamburg01`` with

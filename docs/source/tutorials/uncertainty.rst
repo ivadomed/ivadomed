@@ -29,23 +29,8 @@ First off, copy this configuration file in your local directory (to avoid modify
 Please open it with a text editor.
 The configuration file will be modified to be the same as the one used for
 :ref:`Technical features <Uncertainty-measures>`. As described in the tutorial
-:doc:`../tutorials/one_class_segmentation_2d_unet`, make sure ``bids_path`` point to the location of the dataset.
+:doc:`../tutorials/one_class_segmentation_2d_unet`.
 The parameters that are specific to this tutorial are:
-
-- ``log_directory``: Location of the directory containing the trained model. To avoid having to train a model from
-  scratch, in the downloaded dataset, there is a trained model for spinal cord segmentation in the folder `trained_model`.
-  Modify the path so it points to the location of the trained model.
-
-  .. code-block:: xml
-
-     "log_directory": "<PATH_TO_DATASET>/data_example_spinegeneric/trained_model"
-
-- ``command``: Action to perform. Here, we want to do some inference using the previously trained model, so we set the
-  field as follows:
-
-  .. code-block:: xml
-
-     "command": "test"
 
 - ``uncertainty``: Type of uncertainty to estimate. Available choices are ``"epistemic"`` and
   ``"aleatoric"``. Note that both can be ``true``. More details on the implementation are available in :ref:`Technical features <Uncertainty-measures>`.
@@ -74,7 +59,28 @@ Once the configuration file has been modified, run the inference with the follow
 
 .. code-block:: bash
 
-   ivadomed -c config.json
+   ivadomed --test -c config.json --path-data <PATH_TO_DATASET>/data_example_spinegeneric/trained_model --path-output path/to/output/directory
+
+- Here, we want to do some inference using the previously trained model, so we set the
+  command flag as follows:
+
+  .. code-block:: bash
+
+     --test
+
+- ``--path-data``: Location of the directory containing the trained model. To avoid having to train a model from
+  scratch, in the downloaded dataset, there is a trained model for spinal cord segmentation in the folder `trained_model`.
+  Modify the path so it points to the location of the trained model.
+
+  .. code-block:: bash
+
+     --path-data <PATH_TO_DATASET>/data_example_spinegeneric/trained_model
+
+- ``--path-output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
+
+  .. code-block:: bash
+
+     --path-output path/to/output/directory
 
 If aleatoric uncertainty was selected, then data augmentation operations will be performed at testing time, as indicated
 in the terminal output (see below). Note that ``ElasticTransform`` has been desactivated because no ``undo_transform``

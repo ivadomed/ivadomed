@@ -21,14 +21,6 @@ Below are other, more specific configuration files:
 General parameters
 ------------------
 
-command
-^^^^^^^
-
-Run the specified command. Choices: ``"train"``: train a model on a training/validation
-sub-datasets, ``"test"``: evaluate a trained model on a testing sub-dataset, ``"segment"``:
-segment a entire dataset using a trained model.
-
-
 gpu_ids
 ^^^^^^^
 
@@ -37,19 +29,14 @@ gpu_ids
 .. note::
     Currently only ``ivadomed_automate_training`` supports the use of more than one GPU.
 
-log\_directory
-^^^^^^^^^^^^^^
-
-Folder name that will contain the output files (e.g., trained model,
-predictions, results).
 
 model\_name
 ^^^^^^^^^^^^^^
 
 Folder name containing the trained model (ONNX format) and its configuration
-file, located within ``"log_directory/"``, eg
-``"log_directory/seg_gm_t2star/seg_gm_t2star.onnx"`` and
-``"log_directory/seg_gm_t2star/seg_gm_t2star.json"``, respectively. When
+file, located within output directory you specify in command line, eg
+``"<PATH_TO_OUT_DIR>/seg_gm_t2star/seg_gm_t2star.onnx"`` and
+``"<PATH_TO_OUT_DIR>/seg_gm_t2star/seg_gm_t2star.json"``, respectively. When
 possible, the folder name will follow the following convention:
 ``task_(animal)_region_(contrast)`` with
 
@@ -67,11 +54,6 @@ Bool. Extended verbosity and intermediate outputs.
 
 Loader parameters
 -----------------
-
-bids\_path
-^^^^^^^^^^
-
-String. Path of the BIDS folder.
 
 bids\_config
 ^^^^^^^^^^^^
