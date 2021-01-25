@@ -108,19 +108,21 @@ def test_worker(config):
     return config["log_directory"], test_dice, df_results
 
 
-def make_category(base_item, keys, values, is_all_combin=False, multiple_params=False):
+def make_category(category_init, category_hyper, is_all_combin=False, multiple_params=False):
     """
     """
     items = []
     names = []
+    keys = list(category_hyper.keys())
+    values = list(category_hyper.values())
 
     if is_all_combin:
         for combination in product(*values):
-            new_item = copy.deepcopy(base_item)
+            new_item = copy.deepcopy(category_init)
             name_str = ""
             for i in range(len(keys)):
                 new_item[keys[i]] = combination[i]
-                name_str += "-" + str(keys[i]) + "=" + str(combination[i]).replace("/", "_")
+                name_str += create_name_str(keys[i], combination[i])
 
             items.append(new_item)
             names.append(name_str)
@@ -133,23 +135,28 @@ def make_category(base_item, keys, values, is_all_combin=False, multiple_params=
 
         for v_idx in range(len(values[0])):
             name_str = ""
-            new_item = copy.deepcopy(base_item)
+            new_item = copy.deepcopy(category_init)
             for k_idx, key in enumerate(keys):
                 new_item[key] = values[k_idx][v_idx]
-                name_str += "-" + str(key) + "=" + str(values[k_idx][v_idx]).replace("/", "_")
+                name_str += create_name_str(key, values[k_idx][v_idx])
 
             items.append(new_item)
             names.append(name_str)
     else:
         for value_list, key in zip(values, keys):
             for value in value_list:
-                new_item = copy.deepcopy(base_item)
+                new_item = copy.deepcopy(category_init)
                 new_item[key] = value
                 items.append(new_item)
                 # replace / by _ to avoid creating new paths
-                names.append("-" + str(key) + "=" + str(value).replace("/", "_"))
+                names.append(create_name_str(key, value))
 
     return items, names
+
+
+def create_name_str(key, value):
+    name_str = "-" + str(key) + "=" + str(value).replace("/", "_")
+    return name_str
 
 
 def automate_training(file_config, file_hyperparams, fixed_split, all_combin, n_iterations=1,
@@ -205,14 +212,13 @@ def automate_training(file_config, file_hyperparams, fixed_split, all_combin, n_
     with open(file_hyperparams, "r") as fhandle:
         hyperparams = json.load(fhandle)
     param_dict, names_dict = {}, {}
-    for category in hyperparams.keys():
-        assert category in initial_config
-        base_item = initial_config[category]
-        keys = list(hyperparams[category].keys())
-        values = [hyperparams[category][k] for k in keys]
-        new_parameters, names = make_category(base_item, keys, values, all_combin, multiple_params)
-        param_dict[category] = new_parameters
-        names_dict[category] = names
+    for category_name, category_hyper in hyperparams.items():
+        assert category_name in initial_config
+        category_init = initial_config[category_name]
+        new_parameters, names = make_category(category_init, category_hyper, all_combin,
+                                              multiple_params)
+        param_dict[category_name] = new_parameters
+        names_dict[category_name] = names
 
     # Split dataset if not already done
     if fixed_split and (initial_config.get("split_path") is None):
