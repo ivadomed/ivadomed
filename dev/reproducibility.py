@@ -25,6 +25,7 @@ def get_parser():
 
 
 def get_results(context):
+    context["command"] = "test"
     pred_mask_path = os.path.join(context["log_directory"], "pred_masks")
     if os.path.exists(pred_mask_path):
         shutil.rmtree(pred_mask_path)
@@ -34,7 +35,6 @@ def get_results(context):
         del context["transformation"]["RandomAffine"]["dataset_type"]
     if "scale" in context["transformation"]["RandomAffine"]:
         del context["transformation"]["RandomAffine"]["scale"]
-    context["command"] = "test"
     return ivado.run_command(context)
 
 
