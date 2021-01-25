@@ -1,10 +1,8 @@
 {
     "gpu_ids": [7],
-    "log_directory": "labeling_t2test",
     "model_name": "find_disc_t1",
     "debugging": true,
     "loader_parameters": {
-        "bids_path": "/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/deep_VL_2019/straight/",
         "target_suffix": ["_heatmap3"],
         "roi_params": {
             "suffix": null,
