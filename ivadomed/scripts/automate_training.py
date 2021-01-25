@@ -81,6 +81,7 @@ def train_worker(config, thr_incr):
     # Call ivado cmd_train
     try:
         # Save best validation score
+        config["command"] = "train"
         best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = \
             ivado.run_command(config, thr_increment=thr_incr)
 
@@ -109,7 +110,8 @@ def test_worker(config):
 
     try:
         # Save best test score
-        df_results, test_dice = ivado.run_command(config, command="test")
+        config["command"] = "test"
+        df_results, test_dice = ivado.run_command(config)
 
     except Exception:
         logging.exception('Got exception on main handler')

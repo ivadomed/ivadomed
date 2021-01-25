@@ -313,6 +313,41 @@ __ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 __version__ = _version_string()
 
 
+def get_command(args):
+    try:
+        if args.train:
+            return "train"
+        elif args.test:
+            return "test"
+        elif args.segment:
+            return "segment"
+        else:
+            return "train" # default to training
+    except AttributeError:
+        logger.warning("Issue parsing argument for command: ( --train | --test | --segment ). Will default to train command.")
+        return "train"
+
+
+def get_log_directory(args):
+    try:
+        if args.path_data:
+            return args.path_data
+        else:
+            logger.err("Issue parsing argument for --path-output. No path to output directory specified.")
+    except AttributeError:
+        logger.err("Issue parsing argument for --path-output. No path to output directory specified.")
+
+
+def get_bids_path(args):
+    try:
+        if args.path_data:
+            return args.path_data
+        else:
+            logger.err("Issue parsing argument for --path-data. No path to data specified.")
+    except AttributeError:
+        logger.err("Issue parsing argument for --path-data. No path to data specified.")
+
+
 def init_ivadomed():
     """Initialize the ivadomed for typical terminal usage."""
     # Display ivadomed version

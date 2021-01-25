@@ -35,13 +35,17 @@ def get_parser():
     command_group = mandatory_args.add_mutually_exclusive_group(required=True)
     
     command_group.add_argument("--train", dest='train', action='store_true', 
-                        help="Perform training on data.")
+                                help="Perform training on data.")
     command_group.add_argument("--test", dest='test', action='store_true', 
-                        help="Perform testing on trained model.")
+                                help="Perform testing on trained model.")
     command_group.add_argument("--segment", dest='segment', action='store_true', 
-                        help="Perform segmentation on data.")
+                                help="Perform segmentation on data.")
     mandatory_args.add_argument("-c", "--config", required=True, type=str,
                                 help="Path to configuration file.")
+    mandatory_args.add_argument("-pd", "--path-data", required=True, type=str,
+                                help="Path to data in BIDs format.")
+    mandatory_args.add_argument("-po", "--path-output", required=True, type=str,
+                                help="Path to output log directory.")
 
     # OPTIONAL ARGUMENTS
     optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
@@ -53,13 +57,12 @@ def get_parser():
                                help='A threshold analysis is performed at the end of the training using the trained '
                                     'model and the training+validation sub-datasets to find the optimal binarization '
                                     'threshold. The specified value indicates the increment between 0 and 1 used during '
-                                    'the analysis (e.g. 0.1). Plot is saved under "log_directory/thr.png" and the '
-                                    'optimal threshold in "log_directory/config_file.json as "binarize_prediction" '
+                                    'the analysis (e.g. 0.1). Plot is saved under "[PATH_OUTPUT]/thr.png" and the '
+                                    'optimal threshold in "[PATH_OUTPUT]/config_file.json as "binarize_prediction" '
                                     'parameter.')
     optional_args.add_argument('--resume-training', dest="resume_training", required=False, action='store_true',
-                               help='Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume '
-                                    'training. This training state is saved everytime a new best model is saved in the'
-                                    'log directory.')
+                               help='Load a saved model ("checkpoint.pth.tar" in the output directory specified with flag "--path-output") for resume '
+                                    'training. This training state is saved everytime a new best model is saved in the output directory specified with flag "--path-output"')
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                                help='Shows function documentation.')
 
@@ -75,7 +78,7 @@ def save_config_file(context, log_directory):
         json.dump(context, fp, indent=4)
 
 
-def run_command(context, command="train", n_gif=0, thr_increment=None, resume_training=False):
+def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     """Run main command.
 
     This function is central in the ivadomed project as training / testing / evaluation commands are run via this
@@ -90,7 +93,7 @@ def run_command(context, command="train", n_gif=0, thr_increment=None, resume_tr
         thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
             the training + validation sub-dataset to find the optimal binarization threshold. The specified value
             indicates the increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
-        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume training.
+        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the output directory specified with flag "--path-output") for resume training.
             This training state is saved everytime a new best model is saved in the log
             directory.
 
@@ -101,6 +104,7 @@ def run_command(context, command="train", n_gif=0, thr_increment=None, resume_tr
             sub dataset and return the prediction metrics before evaluation.
         If "segment" command: No return value.
     """
+    command = copy.deepcopy(context["command"])
     log_directory = copy.deepcopy(context["log_directory"])
     if not os.path.isdir(log_directory):
         print('Creating log directory: {}'.format(log_directory))
@@ -461,20 +465,6 @@ def create_dataset_and_ivadomed_version_log(context):
     f.close()
 
 
-def get_command(args):
-    try:
-        if args.train:
-            return "train"
-        elif args.test:
-            return "test"
-        elif args.segment:
-            return "segment"
-        else:
-            return "train" # default to training
-    except AttributeError:
-        logger.warning("No argument given for command: ( --train | --test | --segment ). Will default to train command.")
-
-
 def run_main():
     imed_utils.init_ivadomed()
 
@@ -485,11 +475,12 @@ def run_main():
     path_config_file = args.config
     context = imed_config_manager.ConfigurationManager(path_config_file).get_config()
     
-    command = get_command(args)
+    context["command"] = imed_utils.get_command(args)
+    context["log_directory"] = imed_utils.get_log_directory(args)
+    context['loader_parameters']["bids_path"] = imed_utils.get_bids_path(args)
 
     # Run command
     run_command(context=context,
-                command=command if command is not None else "train",
                 n_gif=args.gif if args.gif is not None else 0,
                 thr_increment=args.thr_increment if args.thr_increment else None,
                 resume_training=bool(args.resume_training))

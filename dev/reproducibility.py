@@ -34,7 +34,8 @@ def get_results(context):
         del context["transformation"]["RandomAffine"]["dataset_type"]
     if "scale" in context["transformation"]["RandomAffine"]:
         del context["transformation"]["RandomAffine"]["scale"]
-    return ivado.run_command(context, command="test")
+    context["command"] = "test"
+    return ivado.run_command(context)
 
 
 def compute_csa(config, df_results, logdir, bids):
