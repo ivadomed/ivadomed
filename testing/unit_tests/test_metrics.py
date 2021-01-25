@@ -2,6 +2,13 @@ import ivadomed.metrics as imed_metrics
 import numpy as np
 import pytest
 import os
+import logging
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __tmp_dir__
+logger = logging.getLogger(__name__)
+
+
+def setup_function():
+    create_tmp_dir()
 
 
 @pytest.mark.parametrize("image", np.array([[[1, 1], [1, 1]], [[0, 0], [0, 0]]]))
@@ -51,17 +58,23 @@ def test_err_iou(image, image_2):
     assert results == 12
 
 
-# we test wether the ploting code run or not
 def test_plot_roc_curve():
+    """Test if plotting code ran."""
     tpr = [0, 0.1, 0.5, 0.6, 0.9]
     fpr = [1, 0.8, 0.5, 0.3, 0.1]
     opt_thr_idx = 3
-    imed_metrics.plot_roc_curve(tpr, fpr, opt_thr_idx, "roc_test.png")
-    assert os.path.isfile("roc_test.png")
+    __output_file__ = os.path.join(__tmp_dir__, "roc_test.png")
+    imed_metrics.plot_roc_curve(tpr, fpr, opt_thr_idx, __output_file__)
+    assert os.path.isfile(__output_file__)
 
 
 def test_dice_plot():
     thr_list = [0.1, 0.3, 0.5, 0.7]
     dice_list = [0.6, 0.7, 0.8, 0.75]
-    imed_metrics.plot_dice_thr(thr_list, dice_list, 2, "test_dice.png")
-    assert os.path.isfile("test_dice.png")
+    __output_file__ = os.path.join(__tmp_dir__, "test_dice.png")
+    imed_metrics.plot_dice_thr(thr_list, dice_list, 2, __output_file__)
+    assert os.path.isfile(__output_file__)
+
+
+def teardown_function():
+    remove_tmp_dir()

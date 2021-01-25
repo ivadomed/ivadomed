@@ -5,7 +5,6 @@ import argparse
 import nibabel as nib
 import numpy as np
 import random
-import json
 
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
@@ -17,14 +16,18 @@ from ivadomed import maths as imed_maths
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True,
-                        help="Input image filename.")
+                        help="Input image filename.",
+                        metavar=imed_utils.Metavar.file)
     parser.add_argument("-c", "--config", required=True,
-                        help="Config filename.")
+                        help="Config filename.",
+                        metavar=imed_utils.Metavar.file)
     parser.add_argument("-n", "--number", required=False, default=1,
-                        help="Number of random slices to visualize.")
+                        help="Number of random slices to visualize.",
+                        metavar=imed_utils.Metavar.int)
     parser.add_argument("-o", "--output", required=False, default="./",
-                        help="Output folder.")
-    parser.add_argument("-r", "--roi", required=False,
+                        help="Output folder.",
+                        metavar=imed_utils.Metavar.file)
+    parser.add_argument("-r", "--roi", required=False, metavar=imed_utils.Metavar.file,
                         help="ROI filename. Only required if ROICrop is part of the transformations.")
     return parser
 
@@ -165,18 +168,12 @@ def run_visualization(input, config, number, output, roi):
                                                cmap="jet" if is_mask else "gray")
 
 
-def main():
+def main(args=None):
     imed_utils.init_ivadomed()
-
     parser = get_parser()
-    args = parser.parse_args()
-    input = args.input
-    config = args.config
-    number = int(args.number)
-    output = args.output
-    roi = args.roi
-    # Run script
-    run_visualization(input, config, number, output, roi)
+    args = imed_utils.get_arguments(parser, args)
+    run_visualization(input=args.input, config=args.config, number=int(args.number),
+                      output=args.output, roi=args.roi)
 
 
 if __name__ == '__main__':
