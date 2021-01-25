@@ -13,20 +13,24 @@ EXCLUDED_SUBJECT = ["sub-mniPilot1"]
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True,
-                        help="Input BIDS folder.")
+                        help="Input BIDS folder.", metavar=imed_utils.Metavar.file)
     parser.add_argument("-n", "--number", required=False, default=1,
-                        help="Number of subjects.")
+                        help="Number of subjects.", metavar=imed_utils.Metavar.int)
     parser.add_argument("-c", "--contrasts", required=False,
-                        help="Contrast list.")
+                        help="Contrast list.", metavar=imed_utils.Metavar.list)
     parser.add_argument("-o", "--output", required=True,
-                        help="Output BIDS Folder.")
+                        help="Output BIDS Folder.", metavar=imed_utils.Metavar.file)
     parser.add_argument("-s", "--seed", required=False, default=-1,
-                        help="""Set np.random.RandomState to ensure reproducibility:
-                                the same subjects will be selected f the script is run several
-                                times on the same dataset. Set to -1 (default) otherwise.""")
-    parser.add_argument("-d", "--derivatives", required=False, default=1,
-                        help="""1: Include derivatives/labels content.
-                                0: Do not include derivatives/labels content.""")
+                        help="""Set np.random.RandomState to ensure reproducibility: the same
+                                subjects will be selected if the script is run several times on the
+                                same dataset. Set to -1 (default) otherwise.""",
+                        metavar=imed_utils.Metavar.int)
+    parser.add_argument("-d", "--derivatives",
+                        dest="derivatives",
+                        default=1,
+                        help="""If true, include derivatives/labels content.
+                                1 = true, 0 = false""",
+                        metavar=imed_utils.Metavar.int)
     return parser
 
 
@@ -45,7 +49,8 @@ def remove_some_contrasts(folder, subject_list, good_contrast_list):
         os.remove(ff)
 
 
-def extract_small_dataset(input, output, n=10, contrast_list=None, include_derivatives=True, seed=-1):
+def extract_small_dataset(input, output, n=10, contrast_list=None, include_derivatives=True,
+                          seed=-1):
     """Extract small BIDS dataset from a larger BIDS dataset.
 
     Example::
@@ -145,6 +150,7 @@ def main(args=None):
         contrast_list = args.contrasts.split(",")
     else:
         contrast_list = None
+
     extract_small_dataset(args.input, args.output, int(args.number), contrast_list,
                           bool(int(args.derivatives)), int(args.seed))
 

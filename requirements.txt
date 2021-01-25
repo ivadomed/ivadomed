@@ -18,3 +18,4 @@ torchvision==0.6.0
 tqdm>=4.30
 pytest-ordering
 sphinx-jsonschema
+pytest-console-scripts
