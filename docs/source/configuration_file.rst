@@ -827,10 +827,12 @@ Training Parameters
 
 .. code-block:: JSON
 
-    "training_parameters": {
-        "balance_samples": {
-            "applied": false,
-            "type": "gt"
+    {
+        "training_parameters": {
+            "balance_samples": {
+                "applied": false,
+                "type": "gt"
+            }
         }
     }
 
@@ -847,8 +849,10 @@ Training Parameters
 
 .. code-block:: JSON
 
-    "training_parameters": {
-        "mixup_alpha": null
+    {
+        "training_parameters": {
+            "mixup_alpha": null
+        }
     }
 
 
@@ -885,12 +889,14 @@ Training Parameters
 
 .. code-block:: JSON
 
-   "training_parameters": {
-       "transfer_learning": {
-           "retrain_model": null,
-           "retrain_fraction": 1.0,
-           "reset": true
-       }
+    {
+        "training_parameters": {
+            "transfer_learning": {
+                "retrain_model": null,
+                "retrain_fraction": 1.0,
+                "reset": true
+            }
+        }
    }
 
 
