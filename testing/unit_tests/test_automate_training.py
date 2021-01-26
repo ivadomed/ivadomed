@@ -55,11 +55,6 @@ expected_items_complex_neither = [
         'scheduler': {'initial_lr': 0.001}
     },
     {
-        'batch_size': 32,
-        'loss': {'name': 'DiceLoss'},
-        'scheduler': {'initial_lr': 0.001}
-    },
-    {
         'batch_size': 64,
         'loss': {'name': 'DiceLoss'},
         'scheduler': {'initial_lr': 0.001}
@@ -73,21 +68,14 @@ expected_items_complex_neither = [
         'batch_size': 18,
         'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
         'scheduler': {'initial_lr': 0.001}
-    },
-    {
-        'batch_size': 18,
-        'loss': {'name': 'GeneralizedDiceLoss'},
-        'scheduler': {'initial_lr': 0.001}
     }
 ]
 
 expected_names_complex_neither = [
     '-batch_size=2',
-    '-batch_size=32',
     '-batch_size=64',
     "-loss={'name': 'DiceLoss'}",
-    "-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}",
-    "-loss={'name': 'GeneralizedDiceLoss'}"
+    "-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}"
 ]
 
 expected_items_complex_all_combin = [
@@ -102,38 +90,26 @@ expected_items_complex_all_combin = [
         'scheduler': {'initial_lr': 0.001}
     },
     {
+        'batch_size': 64,
+        'loss': {'name': 'DiceLoss'},
+        'scheduler': {'initial_lr': 0.001}
+    },
+    {
+        'batch_size': 64,
+        'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
+        'scheduler': {'initial_lr': 0.001}
+    }
+]
+
+expected_items_complex_multi_param = [
+    {
         'batch_size': 2,
-        'loss': {'name': 'GeneralizedDiceLoss'},
-        'scheduler': {'initial_lr': 0.001}
-    },
-    {
-        'batch_size': 32,
-        'loss': {'name': 'DiceLoss'},
-        'scheduler': {'initial_lr': 0.001}
-    },
-    {
-        'batch_size': 32,
-        'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
-        'scheduler': {'initial_lr': 0.001}
-    },
-    {
-        'batch_size': 32,
-        'loss': {'name': 'GeneralizedDiceLoss'},
-        'scheduler': {'initial_lr': 0.001}
-    },
-    {
-        'batch_size': 64,
         'loss': {'name': 'DiceLoss'},
         'scheduler': {'initial_lr': 0.001}
     },
     {
         'batch_size': 64,
         'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
-        'scheduler': {'initial_lr': 0.001}
-    },
-    {
-        'batch_size': 64,
-        'loss': {'name': 'GeneralizedDiceLoss'},
         'scheduler': {'initial_lr': 0.001}
     }
 ]
@@ -141,13 +117,13 @@ expected_items_complex_all_combin = [
 expected_names_complex_all_combin = [
     "-batch_size=2-loss={'name': 'DiceLoss'}",
     "-batch_size=2-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}",
-    "-batch_size=2-loss={'name': 'GeneralizedDiceLoss'}",
-    "-batch_size=32-loss={'name': 'DiceLoss'}",
-    "-batch_size=32-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}",
-    "-batch_size=32-loss={'name': 'GeneralizedDiceLoss'}",
     "-batch_size=64-loss={'name': 'DiceLoss'}",
-    "-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}",
-    "-batch_size=64-loss={'name': 'GeneralizedDiceLoss'}"
+    "-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}"
+]
+
+expected_names_complex_multi_param = [
+    "-batch_size=2-loss={'name': 'DiceLoss'}",
+    "-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}"
 ]
 
 param_dict = {
@@ -214,114 +190,6 @@ expected_config_list_all_combin = [
                           'depth': 4,
                           'is_2d': True},
         'log_directory': "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=4"},
-    {'training_parameters': {'batch_size': 2,
-                             'loss': {'name': 'GeneralizedDiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 2,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=2-loss={'name': 'GeneralizedDiceLoss'}-depth=2"},
-    {'training_parameters': {'batch_size': 2,
-                             'loss': {'name': 'GeneralizedDiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 3,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=2-loss={'name': 'GeneralizedDiceLoss'}-depth=3"},
-    {'training_parameters': {'batch_size': 2,
-                             'loss': {'name': 'GeneralizedDiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 4,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=2-loss={'name': 'GeneralizedDiceLoss'}-depth=4"},
-    {'training_parameters': {'batch_size': 32,
-                             'loss': {'name': 'DiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 2,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=32-loss={'name': 'DiceLoss'}-depth=2"},
-    {'training_parameters': {'batch_size': 32,
-                             'loss': {'name': 'DiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 3,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=32-loss={'name': 'DiceLoss'}-depth=3"},
-    {'training_parameters': {'batch_size': 32,
-                             'loss': {'name': 'DiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 4,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=32-loss={'name': 'DiceLoss'}-depth=4"},
-    {'training_parameters': {'batch_size': 32,
-                             'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 2,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=32-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=2"},
-    {'training_parameters': {'batch_size': 32,
-                             'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 3,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=32-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=3"},
-    {'training_parameters': {'batch_size': 32,
-                             'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 4,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=32-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=4"},
-    {'training_parameters': {'batch_size': 32,
-                             'loss': {'name': 'GeneralizedDiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 2,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=32-loss={'name': 'GeneralizedDiceLoss'}-depth=2"},
-    {'training_parameters': {'batch_size': 32,
-                             'loss': {'name': 'GeneralizedDiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 3,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=32-loss={'name': 'GeneralizedDiceLoss'}-depth=3"},
-    {'training_parameters': {'batch_size': 32,
-                             'loss': {'name': 'GeneralizedDiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 4,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=32-loss={'name': 'GeneralizedDiceLoss'}-depth=4"},
     {'training_parameters': {'batch_size': 64,
                              'loss': {'name': 'DiceLoss'},
                              'scheduler': {'initial_lr': 0.001}},
@@ -377,34 +245,7 @@ expected_config_list_all_combin = [
                           'bn_momentum': 0.9,
                           'depth': 4,
                           'is_2d': True},
-        'log_directory': "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=4"},
-    {'training_parameters': {'batch_size': 64,
-                             'loss': {'name': 'GeneralizedDiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 2,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=64-loss={'name': 'GeneralizedDiceLoss'}-depth=2"},
-    {'training_parameters': {'batch_size': 64,
-                             'loss': {'name': 'GeneralizedDiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 3,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=64-loss={'name': 'GeneralizedDiceLoss'}-depth=3"},
-    {'training_parameters': {'batch_size': 64,
-                             'loss': {'name': 'GeneralizedDiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-        'default_model': {'name': 'Unet',
-                          'dropout_rate': 0.3,
-                          'bn_momentum': 0.9,
-                          'depth': 4,
-                          'is_2d': True},
-        'log_directory': "./tmp/-batch_size=64-loss={'name': 'GeneralizedDiceLoss'}-depth=4"}
+        'log_directory': "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=4"}
 ]
 
 
@@ -426,7 +267,7 @@ expected_config_list_neither = [
     },
     {
         'training_parameters': {
-            'batch_size': 32,
+            'batch_size': 64,
             'loss': {'name': 'DiceLoss'},
             'scheduler': {'initial_lr': 0.001}
         },
@@ -437,17 +278,9 @@ expected_config_list_neither = [
             'depth': 3,
             'is_2d': True
         },
-        'log_directory': './tmp/-batch_size=32'
+        'log_directory': './tmp/-batch_size=64'
     },
-    {'training_parameters': {'batch_size': 64,
-                             'loss': {'name': 'DiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-     'default_model': {'name': 'Unet',
-                       'dropout_rate': 0.3,
-                       'bn_momentum': 0.9,
-                       'depth': 3,
-                       'is_2d': True},
-     'log_directory': './tmp/-batch_size=64'},
+
     {'training_parameters': {'batch_size': 18,
                              'loss': {'name': 'DiceLoss'},
                              'scheduler': {'initial_lr': 0.001}},
@@ -467,14 +300,57 @@ expected_config_list_neither = [
                        'is_2d': True},
      'log_directory': "./tmp/-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}"},
     {'training_parameters': {'batch_size': 18,
-                             'loss': {'name': 'GeneralizedDiceLoss'},
+                             'loss': {'name': 'DiceLoss'},
+                             'scheduler': {'initial_lr': 0.001}},
+     'default_model': {'name': 'Unet',
+                       'dropout_rate': 0.3,
+                       'bn_momentum': 0.9,
+                       'depth': 2,
+                       'is_2d': True},
+     'log_directory': './tmp/-depth=2'},
+    {'training_parameters': {'batch_size': 18,
+                             'loss': {'name': 'DiceLoss'},
                              'scheduler': {'initial_lr': 0.001}},
      'default_model': {'name': 'Unet',
                        'dropout_rate': 0.3,
                        'bn_momentum': 0.9,
                        'depth': 3,
                        'is_2d': True},
-     'log_directory': "./tmp/-loss={'name': 'GeneralizedDiceLoss'}"},
+     'log_directory': './tmp/-depth=3'},
+    {
+        'training_parameters': {'batch_size': 18,
+                                'loss': {'name': 'DiceLoss'},
+                                'scheduler': {'initial_lr': 0.001}},
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 4,
+                          'is_2d': True},
+        'log_directory': './tmp/-depth=4'
+    }
+]
+
+expected_config_list_multi_param = [
+    {
+        'training_parameters': {'batch_size': 2,
+                                'loss': {'name': 'DiceLoss'},
+                                'scheduler': {'initial_lr': 0.001}},
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 3,
+                          'is_2d': True},
+        'log_directory': "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}"
+    },
+    {'training_parameters': {'batch_size': 64,
+                             'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
+                             'scheduler': {'initial_lr': 0.001}},
+     'default_model': {'name': 'Unet',
+                       'dropout_rate': 0.3,
+                       'bn_momentum': 0.9,
+                       'depth': 3,
+                       'is_2d': True},
+     'log_directory': "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}"},
     {'training_parameters': {'batch_size': 18,
                              'loss': {'name': 'DiceLoss'},
                              'scheduler': {'initial_lr': 0.001}},
@@ -529,6 +405,9 @@ def setup_function():
         ),
         pytest.param(
             True, False, expected_items_simple, expected_names_simple, id="is_all_combin"
+        ),
+        pytest.param(
+            False, True, expected_items_simple, expected_names_simple, id="multi_param"
         )
     ]
 )
@@ -551,11 +430,10 @@ def test_make_category_simple(category_init, category_hyper, is_all_combin, mult
     ])
 @pytest.mark.parametrize("category_hyper", [
     {
-        'batch_size': [2, 32, 64],
+        'batch_size': [2, 64],
         'loss': [
             {'name': 'DiceLoss'},
-            {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
-            {'name': 'GeneralizedDiceLoss'}
+            {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}
          ]
     }
 ])
@@ -573,6 +451,10 @@ def test_make_category_simple(category_init, category_hyper, is_all_combin, mult
         pytest.param(
             True, False, expected_items_complex_all_combin,
             expected_names_complex_all_combin, id="is_all_combin"
+        ),
+        pytest.param(
+            False, True, expected_items_complex_multi_param,
+            expected_names_complex_multi_param, id="multi_param"
         )
     ]
 )
@@ -626,6 +508,19 @@ def test_make_category_complex(category_init, category_hyper, is_all_combin, mul
             },
             expected_config_list_all_combin,
             id="is_all_combin"
+        ),
+        pytest.param(
+            False, True,
+            {
+                'training_parameters': expected_items_complex_multi_param,
+                'default_model': expected_items_simple
+            },
+            {
+                'training_parameters': expected_names_complex_multi_param,
+                'default_model': expected_names_simple
+            },
+            expected_config_list_multi_param,
+            id="multi_param"
         ),
     ]
 )
