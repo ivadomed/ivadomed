@@ -171,6 +171,27 @@ def create_name_str(key, value):
     return name_str
 
 
+def split_dataset(initial_config):
+    train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_split(
+        path_folder=initial_config["loader_parameters"]["bids_path"],
+        center_test=initial_config["split_dataset"]["center_test"],
+        split_method=initial_config["split_dataset"]["method"],
+        random_seed=initial_config["split_dataset"]["random_seed"],
+        train_frac=initial_config["split_dataset"]["train_fraction"],
+        test_frac=initial_config["split_dataset"]["test_fraction"],
+        log_directory="./",
+        balance=initial_config["split_dataset"]['balance'] \
+        if 'balance' in initial_config["split_dataset"] else None
+    )
+
+    # save the subject distribution
+    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
+    split_path = "./" + "common_split_datasets.joblib"
+    joblib.dump(split_dct, split_path)
+    initial_config["split_dataset"]["fname_split"] = split_path
+    return initial_config
+
+
 def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n_iterations=1,
                       run_test=False, all_logs=False, thr_increment=None, multiple_params=False,
                       output_dir=None):
@@ -236,23 +257,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
 
     # Split dataset if not already done
     if fixed_split and (initial_config.get("split_path") is None):
-        train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_split(
-            path_folder=initial_config["loader_parameters"]["bids_path"],
-            center_test=initial_config["split_dataset"]["center_test"],
-            split_method=initial_config["split_dataset"]["method"],
-            random_seed=initial_config["split_dataset"]["random_seed"],
-            train_frac=initial_config["split_dataset"]["train_fraction"],
-            test_frac=initial_config["split_dataset"]["test_fraction"],
-            log_directory="./",
-            balance=initial_config["split_dataset"]['balance'] \
-            if 'balance' in initial_config["split_dataset"] else None
-        )
-
-        # save the subject distribution
-        split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-        split_path = "./" + "common_split_datasets.joblib"
-        joblib.dump(split_dct, split_path)
-        initial_config["split_dataset"]["fname_split"] = split_path
+        initial_config = split_dataset(initial_config)
 
     config_list = []
     # Test all combinations (change multiple parameters for each test)
