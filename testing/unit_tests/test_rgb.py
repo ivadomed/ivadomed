@@ -2,7 +2,7 @@ from ivadomed import visualize as imed_visualize
 import numpy as np
 import torch
 import os
-from t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__, __tmp_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__, __tmp_dir__
 
 
 def setup_function():

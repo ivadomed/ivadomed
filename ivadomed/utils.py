@@ -1,12 +1,11 @@
 import logging
 import os
+import sys
 import subprocess
-import joblib
-
 import matplotlib
 import matplotlib.pyplot as plt
 import torch
-import torch.nn as nn
+from enum import Enum
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -14,6 +13,20 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 CLASSIFIER_LIST = ['resnet18', 'densenet121']
 
 logger = logging.getLogger(__name__)
+
+
+class Metavar(Enum):
+    """This class is used to display intuitive input types via the metavar field of argparse."""
+
+    file = "<file>"
+    str = "<str>"
+    folder = "<folder>"
+    int = "<int>"
+    list = "<list>"
+    float = "<float>"
+
+    def __str__(self):
+        return self.value
 
 
 def get_task(model_name):
@@ -90,9 +103,9 @@ def define_device(gpu_id):
         print("Working on {}.".format(device))
     if cuda_available:
         # Set the GPU
-        gpu_number = int(gpu_id)
-        torch.cuda.set_device(gpu_number)
-        print("Using GPU number {}".format(gpu_number))
+        gpu_id = int(gpu_id)
+        torch.cuda.set_device(gpu_id)
+        print(f"Using GPU ID {gpu_id}")
     return cuda_available, device
 
 
@@ -205,6 +218,29 @@ def check_exe(name):
                 return exe_file
 
     return None
+
+
+class ArgParseException(Exception):
+    pass
+
+
+def get_arguments(parser, args):
+    """Get arguments from function input or command line.
+
+    Arguments:
+        parser (argparse.ArgumentParser): ArgumentParser object
+        args (list): either a list of arguments or None. The list
+            should be formatted like this:
+            ["-d", "SOME_ARG", "--model", "SOME_ARG"]
+    """
+    try:
+        if args:
+            args = parser.parse_args(args)
+        else:
+            args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    except SystemExit:
+        raise ArgParseException('Error parsing args')
+    return args
 
 
 def __get_commit(path_to_git_folder=None):

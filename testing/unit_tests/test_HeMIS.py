@@ -14,12 +14,12 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed import training as imed_training
 import logging
-from t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
 logger = logging.getLogger(__name__)
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 0
+GPU_ID = 0
 BATCH_SIZE = 4
 DROPOUT = 0.4
 BN = 0.1
@@ -115,8 +115,8 @@ def test_HeMIS(p=0.0001):
     cuda_available = torch.cuda.is_available()
 
     if cuda_available:
-        torch.cuda.set_device(GPU_NUMBER)
-        print("Using GPU number {}".format(GPU_NUMBER))
+        torch.cuda.set_device(GPU_ID)
+        print("Using GPU ID {}".format(GPU_ID))
         model.cuda()
 
     # Initialing Optimizer and scheduler

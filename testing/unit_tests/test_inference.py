@@ -12,12 +12,12 @@ from ivadomed import testing as imed_testing
 from ivadomed import models as imed_models
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 import logging
-from t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
 logger = logging.getLogger(__name__)
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 0
+GPU_ID = 0
 BATCH_SIZE = 8
 DROPOUT = 0.4
 BN = 0.1
@@ -52,7 +52,7 @@ def setup_function():
         "n_it": 0
     }}])
 def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_params):
-    cuda_available, device = imed_utils.define_device(GPU_NUMBER)
+    cuda_available, device = imed_utils.define_device(GPU_ID)
 
     model_params = {"name": "Unet", "is_2d": True}
     loader_params = {

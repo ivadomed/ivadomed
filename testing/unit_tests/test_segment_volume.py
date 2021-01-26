@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from ivadomed import models as imed_models
 from ivadomed import inference as imed_inference
-from t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__, __tmp_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__, __tmp_dir__
 
 BATCH_SIZE = 1
 DROPOUT = 0.4

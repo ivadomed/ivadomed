@@ -70,8 +70,8 @@ def save_config_file(context, log_directory):
 def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     """Run main command.
 
-    This function is central in the ivadomed project as training / testing / evaluation commands are run via this
-    function. All the process parameters are defined in the config.
+    This function is central in the ivadomed project as training / testing / evaluation commands
+    are run via this function. All the process parameters are defined in the config.
 
     Args:
         context (dict): Dictionary containing all parameters that are needed for a given process. See
@@ -87,11 +87,12 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             directory.
 
     Returns:
-        Float or pandas Dataframe:
-        If "train" command: Returns floats: best loss score for both training and validation.
-        If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing
-            sub dataset and return the prediction metrics before evaluation.
-        If "segment" command: No return value.
+        float or pandas.DataFrame or None:
+            * If "train" command: Returns floats: best loss score for both training and validation.
+            * If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of
+              the testing sub-dataset and return the prediction metrics before evaluation.
+            * If "segment" command: No return value.
+
     """
     command = copy.deepcopy(context["command"])
     log_directory = copy.deepcopy(context["log_directory"])
@@ -105,7 +106,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     create_dataset_and_ivadomed_version_log(context)
 
     # Define device
-    cuda_available, device = imed_utils.define_device(context['gpu'])
+    cuda_available, device = imed_utils.define_device(context['gpu_ids'][0])
 
     # Get subject lists. "segment" command uses all participants of BIDS path, hence no need to split
     if command != "segment":
@@ -167,7 +168,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     # Update loader params
     if 'object_detection_params' in context:
         object_detection_params = context['object_detection_params']
-        object_detection_params.update({"gpu": context['gpu'],
+        object_detection_params.update({"gpu_ids": context['gpu_ids'][0],
                                         "log_directory": context['log_directory']})
         loader_params.update({"object_detection_params": object_detection_params})
 
@@ -372,7 +373,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                 options = {'metadata': metadata}
             pred_list, target_list = imed_inference.segment_volume(path_model,
                                                                    fname_images=fname_img,
-                                                                   gpu_number=context['gpu'],
+                                                                   gpu_id=context['gpu_ids'][0],
                                                                    options=options)
             pred_path = os.path.join(context['log_directory'], "pred_masks")
             if not os.path.exists(pred_path):

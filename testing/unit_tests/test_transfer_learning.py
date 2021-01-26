@@ -3,7 +3,7 @@ import torch
 import torch.backends.cudnn as cudnn
 import os
 from ivadomed import models as imed_models
-from t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
 
 cudnn.benchmark = True
 
@@ -21,6 +21,7 @@ def setup_function():
 def test_transfer_learning(path_model, fraction, tolerance=0.15):
     device = torch.device("cpu")
     print("Working on {}.".format('cpu'))
+    print(__data_testing_dir__)
 
     # Load pretrained model
     model_pretrained = torch.load(path_model, map_location=device)
