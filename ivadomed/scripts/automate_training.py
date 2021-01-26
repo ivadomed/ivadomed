@@ -192,6 +192,47 @@ def split_dataset(initial_config):
     return initial_config
 
 
+def make_config_list(names_dict, param_dict, initial_config, all_combin, multiple_params):
+    config_list = []
+    # Test all combinations (change multiple parameters for each test)
+    if all_combin:
+
+        # Cartesian product (all combinations)
+        combinations = (dict(zip(param_dict.keys(), values))
+                        for values in product(*param_dict.values()))
+        names = list(product(*names_dict.values()))
+
+        for idx, combination in enumerate(combinations):
+
+            new_config = copy.deepcopy(initial_config)
+
+            for i, param in enumerate(combination):
+                value = combination[param]
+                new_config[param] = value
+                new_config["log_directory"] = new_config["log_directory"] + names[idx][i]
+
+            config_list.append(copy.deepcopy(new_config))
+    elif multiple_params:
+        for config_idx in range(len(names)):
+            new_config = copy.deepcopy(initial_config)
+            config_name = ""
+            for param in param_dict:
+                new_config[param] = param_dict[param][config_idx]
+                config_name += names_dict[param][config_idx]
+            new_config["log_directory"] = initial_config["log_directory"] + config_name
+            config_list.append(copy.deepcopy(new_config))
+
+    # Change a single parameter for each test
+    else:
+        for param in param_dict:
+            new_config = copy.deepcopy(initial_config)
+            for value, name in zip(param_dict[param], names_dict[param]):
+                new_config[param] = value
+                new_config["log_directory"] = initial_config["log_directory"] + name
+                config_list.append(copy.deepcopy(new_config))
+    return config_list
+
+
 def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n_iterations=1,
                       run_test=False, all_logs=False, thr_increment=None, multiple_params=False,
                       output_dir=None):
@@ -259,43 +300,8 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
     if fixed_split and (initial_config.get("split_path") is None):
         initial_config = split_dataset(initial_config)
 
-    config_list = []
-    # Test all combinations (change multiple parameters for each test)
-    if all_combin:
-
-        # Cartesian product (all combinations)
-        combinations = (dict(zip(param_dict.keys(), values))
-                        for values in product(*param_dict.values()))
-        names = list(product(*names_dict.values()))
-
-        for idx, combination in enumerate(combinations):
-
-            new_config = copy.deepcopy(initial_config)
-
-            for i, param in enumerate(combination):
-                value = combination[param]
-                new_config[param] = value
-                new_config["log_directory"] = new_config["log_directory"] + names[idx][i]
-
-            config_list.append(copy.deepcopy(new_config))
-    elif multiple_params:
-        for config_idx in range(len(names)):
-            new_config = copy.deepcopy(initial_config)
-            config_name = ""
-            for param in param_dict:
-                new_config[param] = param_dict[param][config_idx]
-                config_name += names_dict[param][config_idx]
-            new_config["log_directory"] = initial_config["log_directory"] + config_name
-            config_list.append(copy.deepcopy(new_config))
-
-    # Change a single parameter for each test
-    else:
-        for param in param_dict:
-            new_config = copy.deepcopy(initial_config)
-            for value, name in zip(param_dict[param], names_dict[param]):
-                new_config[param] = value
-                new_config["log_directory"] = initial_config["log_directory"] + name
-                config_list.append(copy.deepcopy(new_config))
+    config_list = make_config_list(names_dict, param_dict, initial_config, all_combin,
+                                   multiple_params)
 
     if output_dir and not os.path.exists(output_dir):
         os.makedirs(output_dir)
