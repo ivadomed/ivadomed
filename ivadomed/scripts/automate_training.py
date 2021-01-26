@@ -3,7 +3,7 @@
 #
 # This script enables training and comparison of models on multiple GPUs.
 #
-# Usage: python scripts/automate_training.py -c path/to/config.json -p path/to/hyperparams.json -n number_of_iterations --all-combin
+# Usage: python scripts/automate_training.py -c path/to/config.json -p path/to/config_hyper.json -n number_of_iterations --all-combin
 #
 ##############################################################
 
@@ -159,7 +159,7 @@ def create_name_str(key, value):
     return name_str
 
 
-def automate_training(file_config, file_hyperparams, fixed_split, all_combin, n_iterations=1,
+def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n_iterations=1,
                       run_test=False, all_logs=False, thr_increment=None, multiple_params=False):
     """Automate multiple training processes on multiple GPUs.
 
@@ -180,7 +180,7 @@ def automate_training(file_config, file_hyperparams, fixed_split, all_combin, n_
         file_config (string): Configuration filename, which is used as skeleton to configure the
             training. Some of its parameters (defined in `param` file) are modified across
             experiments. Flag: ``--config``, ``-c``
-        file_hyperparams (string): json file containing parameters configurations to compare.
+        file_config_hyper (string): json file containing parameters configurations to compare.
             Parameter "keys" of this file need to match the parameter "keys" of `config` file.
             Parameter "values" are in a list. Flag: ``--param``, ``-p``
 
@@ -209,10 +209,10 @@ def automate_training(file_config, file_hyperparams, fixed_split, all_combin, n_
     initial_config = imed_config_manager.ConfigurationManager(file_config).get_config()
 
     # Hyperparameters values to experiment
-    with open(file_hyperparams, "r") as fhandle:
-        hyperparams = json.load(fhandle)
+    with open(file_config_hyper, "r") as fhandle:
+        config_hyper = json.load(fhandle)
     param_dict, names_dict = {}, {}
-    for category_name, category_hyper in hyperparams.items():
+    for category_name, category_hyper in config_hyper.items():
         assert category_name in initial_config
         category_init = initial_config[category_name]
         new_parameters, names = make_category(category_init, category_hyper, all_combin,
