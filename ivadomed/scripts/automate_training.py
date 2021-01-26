@@ -212,15 +212,17 @@ def make_config_list(names_dict, param_dict, initial_config, all_combin, multipl
                 new_config["log_directory"] = new_config["log_directory"] + names[idx][i]
 
             config_list.append(copy.deepcopy(new_config))
-    elif multiple_params:
-        for config_idx in range(len(names)):
-            new_config = copy.deepcopy(initial_config)
-            config_name = ""
-            for param in param_dict:
-                new_config[param] = param_dict[param][config_idx]
-                config_name += names_dict[param][config_idx]
-            new_config["log_directory"] = initial_config["log_directory"] + config_name
-            config_list.append(copy.deepcopy(new_config))
+
+    # Note: This code doesn't work, names is not defined
+    # elif multiple_params:
+    #     for config_idx in range(len(names)):
+    #         new_config = copy.deepcopy(initial_config)
+    #         config_name = ""
+    #         for param in param_dict:
+    #             new_config[param] = param_dict[param][config_idx]
+    #             config_name += names_dict[param][config_idx]
+    #         new_config["log_directory"] = initial_config["log_directory"] + config_name
+    #         config_list.append(copy.deepcopy(new_config))
 
     # Change a single parameter for each test
     else:
