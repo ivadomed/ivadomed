@@ -97,8 +97,10 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
 def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
     """Segment an image.
+
     Segment an image (`fname_image`) using a pre-trained model (`folder_model`). If provided, a region of interest
     (`fname_roi`) is used to crop the image prior to segment it.
+
     Args:
         folder_model (str): foldername which contains
             (1) the model ('folder_model/folder_model.pt') to use
@@ -112,6 +114,7 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
             lesion classification)
             e.g., spinal cord centerline, used to crop the image prior to segment it if provided.
             The segmentation is not performed on the slices that are empty in this image.
+
     Returns:
         list: List of nibabel objects containing the soft segmentation(s), one per prediction class.
         list: List of target suffix associated with each prediction in `pred_list`
