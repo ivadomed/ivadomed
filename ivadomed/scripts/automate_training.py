@@ -193,6 +193,78 @@ def split_dataset(initial_config):
 
 
 def make_config_list(names_dict, param_dict, initial_config, all_combin, multiple_params):
+    """Create a list of config dictionaries corresponding to different hyperparameters.
+
+    Args:
+        names_dict (dict)(list)(str): A dictionary containing a list of names corresponding
+            to each category.
+
+            .. code-block:: JSON
+
+                {
+                    "training_parameters": [
+                        "-batch_size=2-loss={'name': 'DiceLoss'}",
+                        "-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}"
+                    ],
+                    "default_model": ["-depth=2", "-depth=3", "-depth=4"]
+                }
+        param_dict (dict)(list)(dict): A dictionary containing a list of parameter dictionaries
+            corresponding to each category.
+
+            .. code-block:: JSON
+
+                {
+                    "training_parameters": [
+                        {
+                            "batch_size": 2,
+                            "loss": {"name": "DiceLoss"},
+                        },
+                        {
+                            "batch_size": 64,
+                            "loss": {"name": "FocalLoss", "params": {"gamma": 0.2, "alpha": 0.5}
+                        }
+                    ],
+                    "default_model": [
+                        {
+                            "name": "Unet",
+                            "depth": 2
+                        },
+                        {
+                            "name": "Unet",
+                            "depth": 3
+                        },
+                        {
+                            "name": "Unet",
+                            "depth": 4
+                        }
+                }
+        initial_config (dict): The original config file, which we use as a basis from which
+            to modify our hyperparameters.
+
+            .. code-block:: JSON
+
+                {
+                    "training_parameters": {
+                        "batch_size": 18,
+                        "loss": {"name": "DiceLoss"},
+                        "scheduler": {
+                            "initial_lr": 0.001
+                        }
+                    },
+                    "default_model":     {
+                        "name": "Unet",
+                        "dropout_rate": 0.3,
+                        "bn_momentum": 0.9,
+                        "depth": 3,
+                        "is_2d": true
+                    },
+                    "log_directory": "./tmp/"
+                }
+        all_combin (bool): If true, combine the hyperparameters combinatorically.
+        multiple_params (bool): This doesn't actually make a difference for this function, TODO:
+            figure that out.
+
+    """
     config_list = []
     # Test all combinations (change multiple parameters for each test)
     if all_combin:
@@ -398,16 +470,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
             results_df.to_csv(os.path.join(output_dir, "temporary_results.csv"))
             eval_df.to_csv(os.path.join(output_dir, "average_eval.csv"))
 
-    # Merge config and results in a df
-    config_df = pd.DataFrame.from_dict(config_list)
-    keep = list(param_dict.keys())
-    keep.append("log_directory")
-    config_df = config_df[keep]
-
-    results_df = config_df.set_index('log_directory').join(results_df.set_index('log_directory'))
-    results_df = results_df.reset_index()
-    results_df = results_df.sort_values(by=['best_validation_loss'])
-
+    results_df = format_results(results_df, config_list, param_dict)
     results_df.to_csv(os.path.join(output_dir, "detailed_results.csv"))
 
     logging.info("Detailed results")
@@ -416,6 +479,20 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
     # Compute avg, std, p-values
     if n_iterations > 1:
         compute_statistics(results_df, n_iterations, run_test)
+
+
+def format_results(results_df, config_list, param_dict):
+    """Merge config and results in a df."""
+
+    config_df = pd.DataFrame.from_dict(config_list)
+    keep = list(param_dict.keys())
+    keep.append("log_directory")
+    config_df = config_df[keep]
+
+    results_df = config_df.set_index('log_directory').join(results_df.set_index('log_directory'))
+    results_df = results_df.reset_index()
+    results_df = results_df.sort_values(by=['best_validation_loss'])
+    return results_df
 
 
 def main(args=None):
