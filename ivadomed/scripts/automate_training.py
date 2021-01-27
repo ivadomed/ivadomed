@@ -307,6 +307,20 @@ def make_config_list(names_dict, param_dict, initial_config, all_combin, multipl
     return config_list
 
 
+def format_results(results_df, config_list, param_dict):
+    """Merge config and results in a df."""
+
+    config_df = pd.DataFrame.from_dict(config_list)
+    keep = list(param_dict.keys())
+    keep.append("log_directory")
+    config_df = config_df[keep]
+
+    results_df = config_df.set_index('log_directory').join(results_df.set_index('log_directory'))
+    results_df = results_df.reset_index()
+    results_df = results_df.sort_values(by=['best_validation_loss'])
+    return results_df
+
+
 def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n_iterations=1,
                       run_test=False, all_logs=False, thr_increment=None, multiple_params=False,
                       output_dir=None):
@@ -320,15 +334,153 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
 
     Usage example::
 
-        ivadomed_automate_training -c config.json -p params.json -n n_iterations
+        ivadomed_automate_training -c config.json -p config_hyper.json -n n_iterations
 
     .. csv-table:: Example of dataframe
        :file: ../../images/detailed_results.csv
 
+    Config File:
+        The config file is the standard config file used in ``ivadomed`` functions. We use this
+        as the basis. We call a key of this config file a ``category``. In the example below,
+        we would say that ``training_parameters``, ``default_model``, and ``log_directory`` are
+        ``categories``.
+
+        .. code-block:: JSON
+
+            {
+                "training_parameters": {
+                    "batch_size": 18,
+                    "loss": {"name": "DiceLoss"},
+                    "scheduler": {
+                        "initial_lr": 0.001
+                    }
+                },
+                "default_model":     {
+                    "name": "Unet",
+                    "dropout_rate": 0.3,
+                    "depth": 3
+                },
+                "log_directory": "./tmp/"
+            }
+
+    Hyperparameter Config File:
+        The hyperparameter config file must have keys corresponding to the ``category`` keys in
+        the config file. Each ``category`` is a dictionary, containing ``key, list`` pairs.
+        The lists contain the different values we would like to try. So, in the example below,
+        we are going to try a ``batch_size`` of 2 and 64. How we implement this depends on 3
+        options: ``all_combin``, ``multi_param``, or the default.
+
+        .. code-block:: JSON
+
+            {
+              "training_parameters": {
+                "batch_size": [2, 64],
+                "loss": [
+                  {"name": "DiceLoss"},
+                  {"name": "FocalLoss", "params": {"gamma": 0.2, "alpha" : 0.5}}
+                ],
+              },
+              "default_model": {"depth": [2, 3, 4]}
+            }
+
+    Default:
+        The default option is to change only one parameter at a time relative to the base
+        config file. We then create a list of config options, called ``config_list``.
+        Using the examples above, we would have 2 + 2 + 3 = 7 different config options:
+
+        .. code-block:: python
+
+            config_list = [
+                {
+                    "training_parameters": {
+                        "batch_size": 2,
+                        "loss": {"name": "DiceLoss"},
+                        "scheduler": {
+                            "initial_lr": 0.001
+                        }
+                    },
+                    "default_model":     {
+                        "name": "Unet",
+                        "dropout_rate": 0.3,
+                        "depth": 3
+                    },
+                    "log_directory": "./tmp/"
+                },
+                {
+                    "training_parameters": {
+                        "batch_size": 64,
+                        "loss": {"name": "DiceLoss"},
+                        "scheduler": {
+                            "initial_lr": 0.001
+                        }
+                    },
+                    "default_model":     {
+                        "name": "Unet",
+                        "dropout_rate": 0.3,
+                        "depth": 3
+                    },
+                    "log_directory": "./tmp/"
+                },
+                {
+                    "training_parameters": {
+                        "batch_size": 18,
+                        "loss": {"name": "DiceLoss"},
+                        "scheduler": {
+                            "initial_lr": 0.001
+                        }
+                    },
+                    "default_model":     {
+                        "name": "Unet",
+                        "dropout_rate": 0.3,
+                        "depth": 3
+                    },
+                    "log_directory": "./tmp/"
+                },
+                # etc ...
+            ]
+
+
+    All Combinations:
+        If we select the ``all_combin`` option, we will create a list of configuration options
+        combinatorically. Using the config examples above, we would have 2 * 2 * 3 = 12 different
+        config options. I'm not going to write out the whole ``config_list`` because it's
+        quite long, but here are the combinations:
+
+        .. code-block::
+
+            batch_size = 2, loss = DiceLoss, depth = 2
+            batch_size = 2, loss = FocalLoss, depth = 2
+            batch_size = 2, loss = DiceLoss, depth = 3
+            batch_size = 2, loss = FocalLoss, depth = 3
+            batch_size = 2, loss = DiceLoss, depth = 4
+            batch_size = 2, loss = FocalLoss, depth = 4
+            batch_size = 64, loss = DiceLoss, depth = 2
+            batch_size = 64, loss = FocalLoss, depth = 2
+            batch_size = 64, loss = DiceLoss, depth = 3
+            batch_size = 64, loss = FocalLoss, depth = 3
+            batch_size = 64, loss = DiceLoss, depth = 4
+            batch_size = 64, loss = FocalLoss, depth = 4
+
+    Multiple Parameters:
+        The ``multi_params`` option entails changing all the first elements from the list,
+        then all the second parameters from the list, etc. This requires the parameter lists
+        within a ``category`` to be the same length. In our example above:
+
+        .. code-block::
+
+            batch_size = 2, loss = DiceLoss, depth = 2
+            batch_size = 64, loss = FocalLoss, depth = 2
+            batch_size = 2, loss = DiceLoss, depth = 3
+            batch_size = 64, loss = FocalLoss, depth = 3
+            batch_size = 2, loss = DiceLoss, depth = 4
+            batch_size = 64, loss = FocalLoss, depth = 4
+
+
     Args:
         file_config (string): Configuration filename, which is used as skeleton to configure the
-            training. Some of its parameters (defined in `param` file) are modified across
-            experiments. Flag: ``--config``, ``-c``
+            training. This is the standard config file used in ``ivadomed`` functions. In the
+            code, we call the keys from this config file ``categories``.
+            Flag: ``--config``, ``-c``
         file_config_hyper (string): json file containing parameters configurations to compare.
             Parameter "keys" of this file need to match the parameter "keys" of `config` file.
             Parameter "values" are in a list. Flag: ``--param``, ``-p``
@@ -361,6 +513,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
     # Hyperparameters values to experiment
     with open(file_config_hyper, "r") as fhandle:
         config_hyper = json.load(fhandle)
+
     param_dict, names_dict = {}, {}
     for category_name, category_hyper in config_hyper.items():
         assert category_name in initial_config
@@ -479,20 +632,6 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
     # Compute avg, std, p-values
     if n_iterations > 1:
         compute_statistics(results_df, n_iterations, run_test)
-
-
-def format_results(results_df, config_list, param_dict):
-    """Merge config and results in a df."""
-
-    config_df = pd.DataFrame.from_dict(config_list)
-    keep = list(param_dict.keys())
-    keep.append("log_directory")
-    config_df = config_df[keep]
-
-    results_df = config_df.set_index('log_directory').join(results_df.set_index('log_directory'))
-    results_df = results_df.reset_index()
-    results_df = results_df.sort_values(by=['best_validation_loss'])
-    return results_df
 
 
 def main(args=None):
