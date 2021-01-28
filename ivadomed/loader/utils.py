@@ -903,7 +903,11 @@ class BidsDataframe:
         self.df.dropna(axis=1, inplace=True, how='all')
 
     def get_subject_fnames(self):
-        """Return the list of subject filenames in dataframe."""
+        """Get the list of subject filenames in dataframe.
+        
+        Returns:
+            list: subject filenames.
+        """
         return self.df[~self.df['path'].str.contains('derivatives')]['filename'].to_list()
 
     def get_deriv_fnames(self):
