@@ -29,8 +29,35 @@ First off, copy this configuration file in your local directory (to avoid modify
 Please open it with a text editor.
 The configuration file will be modified to be the same as the one used for
 :ref:`Technical features <Uncertainty-measures>`. As described in the tutorial
-:doc:`../tutorials/one_class_segmentation_2d_unet`.
+:doc:`../tutorials/one_class_segmentation_2d_unet`, make sure ``bids_path`` point to the location of the dataset.
 The parameters that are specific to this tutorial are:
+
+- ``path_output``: Location of the directory containing the trained model. To avoid having to train a model from
+  scratch, in the downloaded dataset, there is a trained model for spinal cord segmentation in the folder `trained_model`.
+  Modify the path so it points to the location of the trained model. 
+
+  .. code-block:: xml
+
+     "path_output": "<PATH_TO_DATASET>/data_example_spinegeneric/trained_model"
+
+  Note that you can also pass this argument via CLI (see :ref:`Usage <Usage>`)
+  
+  .. code-block:: bash
+
+    ivadomed -c path/to/config --path-output path/to/output/directory
+
+- ``command``: Action to perform. Here, we want to do some inference using the previously trained model, so we set the
+  field as follows:
+
+  .. code-block:: xml
+
+     "command": "test"
+
+  Note that you can also pass this argument via CLI (see :ref:`Usage <Usage>`)
+  
+  .. code-block:: bash
+
+    ivadomed --test -c path/to/config
 
 - ``uncertainty``: Type of uncertainty to estimate. Available choices are ``"epistemic"`` and
   ``"aleatoric"``. Note that both can be ``true``. More details on the implementation are available in :ref:`Technical features <Uncertainty-measures>`.
@@ -50,6 +77,7 @@ The parameters that are specific to this tutorial are:
   augmentation that will be performed is the same as the one performed for the training. Note that only transformations 
   for which a ``undo_transform`` (i.e. inverse transformation) is available will be performed since these inverse 
   transformations are required to reconstruct the predicted volume.
+
 
 
 Run uncertainty estimation
@@ -81,6 +109,12 @@ Once the configuration file has been modified, run the inference with the follow
   .. code-block:: bash
 
      --path-output path/to/output/directory
+
+If you set the "command", "path_output", and "path_data" arguments in your config file, you do not need to pass the CLI flags:
+
+.. code-block:: bash
+
+   ivadomed -c config.json
 
 If aleatoric uncertainty was selected, then data augmentation operations will be performed at testing time, as indicated
 in the terminal output (see below). Note that ``ElasticTransform`` has been desactivated because no ``undo_transform``

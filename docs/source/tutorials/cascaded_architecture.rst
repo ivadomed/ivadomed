@@ -31,7 +31,8 @@ First off, copy this configuration file in your local directory to avoid modifyi
 
    cp <PATH_TO_IVADOMED>/ivadomed/config/config.json .
 
-Then, open it with a text editor. As described in the tutorial :doc:`../tutorials/one_class_segmentation_2d_unet`. Below, we will discuss
+Then, open it with a text editor. As described in the tutorial :doc:`../tutorials/one_class_segmentation_2d_unet`, make
+sure the ``command`` is set to "train" and ``bids_path`` point to the location of the dataset. Below, we will discuss
 some of the key parameters to use cascaded models.
 
 - ``debugging``: Boolean, create extended verbosity and intermediate outputs. Here we will look at the intermediate predictions
@@ -104,6 +105,19 @@ Make sure to run the CLI command with the "--train" flag, and to point to the lo
 .. code-block:: bash
 
    ivadomed --train -c config.json --path-data path/to/bids/data --path-output path/to/output/directory -t 0.01 -g 1
+
+If you prefer to use config files over CLI flags, set "command" to the following in you config file:
+. code-block:: bash
+
+   "command": "train"
+
+You can also set "path_output", and "path_data" arguments in your config file.
+
+Then run:
+
+.. code-block:: bash
+
+   ivadomed -c config.json
 
 At the end of the training, the optimal threshold will be indicated:
 

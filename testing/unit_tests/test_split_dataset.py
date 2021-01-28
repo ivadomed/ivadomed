@@ -172,7 +172,7 @@ def test_per_center_balance(split_params):
 
 
 def create_tsvfile():
-    # Create bids path
+    # Create data path
     if not os.path.isdir(PATH_DATA):
         os.mkdir(PATH_DATA)
 

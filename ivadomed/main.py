@@ -119,7 +119,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     # Define device
     cuda_available, device = imed_utils.define_device(context['gpu_ids'][0])
 
-    # Get subject lists. "segment" command uses all participants of BIDS path, hence no need to split
+    # Get subject lists. "segment" command uses all participants of data path, hence no need to split
     if command != "segment":
         train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
                                                                                          context['loader_parameters']

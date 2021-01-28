@@ -22,6 +22,7 @@ Below are other, more specific configuration files:
 General Parameters
 ------------------
 
+
 .. jsonschema::
 
     {
@@ -65,7 +66,7 @@ General Parameters
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "path_output",
+        "title": "log_directory",
         "description": "Folder name that will contain the output files (e.g., trained model,
             predictions, results).",
         "type": "string"
@@ -77,25 +78,17 @@ General Parameters
 .. code-block:: JSON
 
     {
-        "path_output": "tmp/spineGeneric"
+        "log_directory": "tmp/spineGeneric"
     }
 
 
-
 .. jsonschema::
-
-
-Folder name containing the trained model (ONNX format) and its configuration
-file, located within output directory you specify in command line, eg
-``"<PATH_TO_OUT_DIR>/seg_gm_t2star/seg_gm_t2star.onnx"`` and
-``"<PATH_TO_OUT_DIR>/seg_gm_t2star/seg_gm_t2star.json"``, respectively. When
-possible, the folder name will follow the following convention:
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "model_name",
         "description": "Folder name containing the trained model (ONNX format) and its configuration
-            file, located within ``path_output/``",
+            file, located within ``log_directory/``",
         "type": "string"
     }
 
@@ -103,11 +96,10 @@ possible, the folder name will follow the following convention:
 
 .. code-block:: sh
 
-    "path_output/seg_gm_t2star/seg_gm_t2star.onnx"
-    "path_output/seg_gm_t2star/seg_gm_t2star.json"
+    "log_directory/seg_gm_t2star/seg_gm_t2star.onnx"
+    "log_directory/seg_gm_t2star/seg_gm_t2star.json"
 
 When possible, the folder name will follow the following convention:
-
 ``task_(animal)_region_(contrast)`` with
 
 .. code-block:: sh
@@ -146,12 +138,11 @@ When possible, the folder name will follow the following convention:
 Loader Parameters
 -----------------
 
-
 .. jsonschema::
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "path_data",
+        "title": "bids_path",
         "description": "Path of the BIDS folder.",
         "type": "string"
     }
@@ -162,7 +153,7 @@ Loader Parameters
 
     {
         "loader_parameters": {
-            "path_data": "path/to/data_example_spinegeneric"
+            "bids_path": "path/to/data_example_spinegeneric"
         }
     }
 

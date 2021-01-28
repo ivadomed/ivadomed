@@ -45,6 +45,43 @@ First off, copy this configuration file in your local directory (to avoid modify
 Then, open it with a text editor. Below we will discuss some of the key parameters to perform a one-class 2D
 segmentation training.
 
+- ``command``: Action to perform. Here, we want to train a model, so we set the fields as follows:
+
+  .. code-block:: xml
+
+     "command": "train"
+
+  Note that you can also pass this argument via CLI (see :ref:`Usage <Usage>`)
+  
+  .. code-block:: bash
+
+    ivadomed --train -c path/to/config
+
+- ``path_output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
+
+  .. code-block:: xml
+
+     "path_output": "spineGeneric"
+
+  Note that you can also pass this argument via CLI (see :ref:`Usage <Usage>`)
+  
+  .. code-block:: bash
+
+    ivadomed -c path/to/config --path-output path/to/output/directory
+
+- ``loader_parameters:path_data``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
+  should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
+
+  .. code-block:: xml
+
+     "path_data": "data_example_spinegeneric"
+
+   Note that you can also pass this argument via CLI (see :ref:`Usage <Usage>`)
+  
+  .. code-block:: bash
+
+    ivadomed -c path/to/config --path-data path/to/bids/data
+
 - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth is located
   under the ``DATASET/derivatives/labels`` folder. In our case, the suffix is ``_seg-manual``:
 
@@ -113,6 +150,12 @@ Once the configuration file is ready, run the training:
 
      --path-data path/to/bids/data
 
+If you set the "command", "path_output", and "path_data" arguments in your config file, you do not need to pass the CLI flags:
+
+.. code-block:: bash
+
+   ivadomed -c config.json
+
 .. note::
 
    If a `compatible GPU <https://pytorch.org/get-started/locally/>`_ is available, it will be used by default.
@@ -176,6 +219,19 @@ To test the trained model on the testing sub-dataset and compute evaluation metr
 .. code-block:: bash
 
    ivadomed --test -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
+
+If you prefer to use config files over CLI flags, set "command" to the following in you config file:
+. code-block:: bash
+
+   "command": "test"
+
+You can also set "path_output", and "path_data" arguments in your config file.
+
+Then run:
+
+.. code-block:: bash
+
+   ivadomed -c config.json
 
 The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
 The resulting segmentation is saved for each image in the ``<PATH_TO_OUT_DIR>/pred_masks`` while a csv file,
