@@ -907,7 +907,11 @@ class BidsDataframe:
         return self.df[~self.df['path'].str.contains('derivatives')]['filename'].to_list()
 
     def get_deriv_fnames(self):
-        """Return the list of derivative filenames in dataframe."""
+        """Get the list of derivative filenames in dataframe.
+        
+        Returns:
+            list: derivative filenames.
+        """
         return self.df[self.df['path'].str.contains('derivatives')]['filename'].tolist()
 
     def get_derivatives(self, subject_fname, deriv_fnames):
