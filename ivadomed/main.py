@@ -123,7 +123,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     if command != "segment":
         train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
                                                                                          context['loader_parameters']
-                                                                                         ['bids_path'],
+                                                                                         ['path_data'],
                                                                                          path_output,
                                                                                          context["loader_parameters"]
                                                                                          ['subject_selection'])
@@ -338,14 +338,14 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                          postprocessing=context['postprocessing'])
 
         # RUN EVALUATION
-        df_results = imed_evaluation.evaluate(bids_path=loader_params['bids_path'],
+        df_results = imed_evaluation.evaluate(path_data=loader_params['path_data'],
                                               path_output=path_output,
                                               target_suffix=loader_params["target_suffix"],
                                               eval_params=context["evaluation_parameters"])
         return df_results, pred_metrics
 
     if command == 'segment':
-        bids_ds = bids.BIDS(context["loader_parameters"]["bids_path"])
+        bids_ds = bids.BIDS(context["loader_parameters"]["path_data"])
         df = bids_ds.participants.content
         subj_lst = df['participant_id'].tolist()
         bids_subjects = [s for s in bids_ds.get_subjects() if s.record["subject_id"] in subj_lst]
@@ -398,7 +398,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
 def create_dataset_and_ivadomed_version_log(context):
 
-    dataset_paths = context['loader_parameters']['bids_path']
+    dataset_paths = context['loader_parameters']['path_data']
 
     ivadomed_version = imed_utils._version_string()
     datasets_version = []
@@ -478,7 +478,7 @@ def run_main():
     
     context["command"] = imed_utils.get_command(args, context)
     context["path_output"] = imed_utils.get_path_output(args, context)
-    context['loader_parameters']["path_data"] = imed_utils.get_path_data(args, context)
+    context["loader_parameters"]["path_data"] = imed_utils.get_path_data(args, context)
 
     # Run command
     run_command(context=context,

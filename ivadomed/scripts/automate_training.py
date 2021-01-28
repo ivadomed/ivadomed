@@ -231,7 +231,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     # Split dataset if not already done
     if fixed_split and (initial_config.get("split_path") is None):
         train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_split(
-            path_folder=initial_config["loader_parameters"]["bids_path"],
+            path_folder=initial_config["loader_parameters"]["path_data"],
             center_test=initial_config["split_dataset"]["center_test"],
             split_method=initial_config["split_dataset"]["method"],
             random_seed=initial_config["split_dataset"]["random_seed"],

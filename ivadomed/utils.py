@@ -351,8 +351,8 @@ def get_path_data(args, context):
     else:
         logger.info("CLI flag --path-data not used to specify BIDS data directory. Will check config file for directory...")
         try:
-            if context["path_data"]:
-                return context["path_data"]
+            if context["loader_parameters"]["path_data"]:
+                return context["loader_parameters"]["path_data"]
         except AttributeError:
             logger.error("Have not specified a path-data argument via CLI nor config file.")
 

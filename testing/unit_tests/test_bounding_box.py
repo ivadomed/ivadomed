@@ -65,7 +65,7 @@ def test_bounding_box(train_lst, target_lst, config):
         "data_list": train_lst,
         "dataset_type": "training",
         "requires_undo": False,
-        "bids_path": __data_testing_dir__,
+        "path_data": __data_testing_dir__,
         "target_suffix": target_lst,
         "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
         "slice_axis": "axial"

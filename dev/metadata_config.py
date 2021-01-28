@@ -24,7 +24,7 @@ def run_main(context):
     metadata_dct = {}
     for subset in ['train', 'validation', 'test']:
         metadata_dct[subset] = {}
-        for bids_ds in tqdm(context["bids_path_" + subset], desc="Loading " + subset + " set"):
+        for bids_ds in tqdm(context["path_data_" + subset], desc="Loading " + subset + " set"):
             ds = imed_loader.BidsDataset(bids_ds,
                                          contrast_lst=context["contrast_train_validation"]
                                          if subset != "test" else context["contrast_test"],

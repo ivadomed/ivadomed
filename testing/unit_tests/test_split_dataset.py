@@ -6,7 +6,7 @@ import numpy as np
 from ivadomed.loader import utils as imed_loader_utils
 from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __tmp_dir__
 
-BIDS_PATH = os.path.join(__tmp_dir__, 'bids')
+PATH_DATA = os.path.join(__tmp_dir__, 'bids')
 LOG_PATH = os.path.join(__tmp_dir__, 'log')
 N = 200
 N_CENTERS = 5
@@ -39,7 +39,7 @@ def load_dataset(split_params):
     if not os.path.isdir(LOG_PATH):
         os.mkdir(LOG_PATH)
 
-    train, val, test = imed_loader_utils.get_subdatasets_subjects_list(split_params, BIDS_PATH,
+    train, val, test = imed_loader_utils.get_subdatasets_subjects_list(split_params, PATH_DATA,
                                                                        LOG_PATH)
     return train, val, test, patient_mapping
 
@@ -173,8 +173,8 @@ def test_per_center_balance(split_params):
 
 def create_tsvfile():
     # Create bids path
-    if not os.path.isdir(BIDS_PATH):
-        os.mkdir(BIDS_PATH)
+    if not os.path.isdir(PATH_DATA):
+        os.mkdir(PATH_DATA)
 
     patient_mapping = {}
 
@@ -195,7 +195,7 @@ def create_tsvfile():
         patient_mapping[patient_id]['center'] = center_id
         participants.append(row_participants)
 
-    with open(os.path.join(BIDS_PATH, "participants.tsv"), 'w') as tsv_file:
+    with open(os.path.join(PATH_DATA, "participants.tsv"), 'w') as tsv_file:
         tsv_writer = csv.writer(tsv_file, delimiter='\t', lineterminator='\n')
         tsv_writer.writerow(["participant_id", "disability", "institution_id"])
         for item in sorted(participants):
@@ -211,7 +211,7 @@ def create_jsonfile():
     dataset_description[u'Name'] = 'Test'
     dataset_description[u'BIDSVersion'] = '1.2.1'
 
-    with open(os.path.join(BIDS_PATH, "dataset_description.json"), 'w') as outfile:
+    with open(os.path.join(PATH_DATA, "dataset_description.json"), 'w') as outfile:
         outfile.write(json.dumps(dataset_description, indent=2, sort_keys=True))
         outfile.close()
 

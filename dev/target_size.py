@@ -58,7 +58,7 @@ def plot_distrib(arr, label, xlim, fname_out):
 def run_main(args):
     context = imed_config_manager.ConfigurationManager(args.c).get_config()
 
-    path_folder = os.path.join(context['bids_path'], 'derivatives', 'labels')
+    path_folder = os.path.join(context['path_data'], 'derivatives', 'labels')
 
     bin_struct = generate_binary_structure(3, 2)  # 18-connectivity
 

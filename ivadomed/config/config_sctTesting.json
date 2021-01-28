@@ -5,7 +5,7 @@
     "model_name": "seg_lesion_t2_t2star",
     "debugging": false,
     "loader_parameters": {
-        "bids_path": "../duke/sct_testing/large/",
+        "path_data": "../duke/sct_testing/large/",
         "target_suffix": ["_lesion-manual"],
         "roi_params": {
             "suffix": "_seg-manual",

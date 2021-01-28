@@ -299,12 +299,12 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
     return train_lst, valid_lst, test_lst
 
 
-def get_subdatasets_subjects_list(split_params, bids_path, path_output, subject_selection=None):
+def get_subdatasets_subjects_list(split_params, path_data, path_output, subject_selection=None):
     """Get lists of subjects for each sub-dataset between training / validation / testing.
 
     Args:
         split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
-        bids_path (str): Path to the BIDS dataset.
+        path_data (str): Path to the BIDS dataset.
         path_output (str): Output folder.
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
@@ -316,7 +316,7 @@ def get_subdatasets_subjects_list(split_params, bids_path, path_output, subject_
         old_split = joblib.load(split_params["fname_split"])
         train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
     else:
-        train_lst, valid_lst, test_lst = get_new_subject_split(path_folder=bids_path,
+        train_lst, valid_lst, test_lst = get_new_subject_split(path_folder=path_data,
                                                                center_test=split_params['center_test'],
                                                                split_method=split_params['method'],
                                                                random_seed=split_params['random_seed'],
@@ -723,7 +723,7 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
 
 
 def create_bids_dataframe(loader_params, derivatives):
-    """Create a dataframe containing all BIDS image files in a bids_path and their metadata.
+    """Create a dataframe containing all BIDS image files in a path_data and their metadata.
 
     Args:
         loader_params (dict): Loader parameters, see :doc:`configuration_file` for more details.
@@ -733,8 +733,8 @@ def create_bids_dataframe(loader_params, derivatives):
         df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
     """
 
-    # Get bids_path, bids_config, target_suffix, extensions and contrast_lst from loader parameters
-    bids_path = loader_params['bids_path']
+    # Get path_data, bids_config, target_suffix, extensions and contrast_lst from loader parameters
+    path_data = loader_params['path_data']
     bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
     target_suffix = loader_params['target_suffix']
     # If `target_suffix` is a list of lists convert to list
@@ -758,14 +758,14 @@ def create_bids_dataframe(loader_params, derivatives):
     # TODO: remove force indexing of microscopy files after BEP microscopy is merged in BIDS
     ext_microscopy = ('.png', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
     force_index = ['samples.tsv', 'samples.json']
-    if not bids_path.endswith("/"):
-        bids_path = bids_path + "/"
-    for root, dirs, files in os.walk(bids_path):
+    if not path_data.endswith("/"):
+        path_data = path_data + "/"
+    for root, dirs, files in os.walk(path_data):
         for file in files:
-            if file.endswith(ext_microscopy) and (root.replace(bids_path, '').startswith("sub")):
-                force_index.append(os.path.join(root.replace(bids_path, '')))
+            if file.endswith(ext_microscopy) and (root.replace(path_data, '').startswith("sub")):
+                force_index.append(os.path.join(root.replace(path_data, '')))
     indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
-    layout = pybids.BIDSLayout(bids_path, config=bids_config, indexer=indexer, derivatives=derivatives)
+    layout = pybids.BIDSLayout(path_data, config=bids_config, indexer=indexer, derivatives=derivatives)
 
     # Transform layout to dataframe with all entities and json metadata
     # As per pybids, derivatives don't include parsed entities, only the "path" column
@@ -801,7 +801,7 @@ def create_bids_dataframe(loader_params, derivatives):
     # TODO: use pybids function after BEP microscopy is merged in BIDS
     if 'sample' in df:
         df['sample_id'] = "sample-" + df['sample']
-    fname_samples = os.path.join(bids_path, "samples.tsv")
+    fname_samples = os.path.join(path_data, "samples.tsv")
     if os.path.exists(fname_samples):
         df_samples = pd.read_csv(fname_samples, sep='\t')
         df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None), how='left')
@@ -817,7 +817,7 @@ def create_bids_dataframe(loader_params, derivatives):
     # TODO: use pybids function after BEP microscopy is merged in BIDS
     # TODO: verify merge behavior with EEG and DWI scans files, tested with anat and microscopy only
     df_scans = pd.DataFrame()
-    for root, dirs, files in os.walk(bids_path):
+    for root, dirs, files in os.walk(path_data):
         for file in files:
             if file.endswith("scans.tsv"):
                 df_temp = pd.read_csv(os.path.join(root, file), sep='\t')

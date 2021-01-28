@@ -62,7 +62,7 @@ def run_main(context):
     metadata_dct = {}
     for subset in ['train', 'valid', 'test']:
         metadata_dct[subset] = {}
-        ds = imed_loader.BidsDataset(context["bids_path"],
+        ds = imed_loader.BidsDataset(context["path_data"],
                                      subject_lst=split_dct[subset],
                                      contrast_lst=context["contrast_train_validation"]
                                      if subset != "test" else context["contrast_test"],
