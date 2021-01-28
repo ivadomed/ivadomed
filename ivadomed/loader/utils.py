@@ -827,31 +827,10 @@ class BidsDataframe:
         # TODO: check if other files are needed for EEG and DWI
 
         # If indexing of derivatives is true
-        # Get list of subject files with available derivatives
         if self.derivatives:
-            subject_fnames = self.get_subject_fnames()
-            deriv_fnames = self.get_deriv_fnames()
-            has_deriv = []
-            deriv = []
 
-            for subject_fname in subject_fnames:
-                available = self.get_derivatives(subject_fname, deriv_fnames)
-                if available:
-                    if self.roi_suffix is not None:
-                        if self.roi_suffix in ('|'.join(available)):
-                            has_deriv.append(subject_fname)
-                            deriv.extend(available)
-                        else:
-                            logger.warning("Missing roi_suffix {} for {}. Skipping."
-                                           .format(self.roi_suffix, subject_fname))
-                    else:
-                        has_deriv.append(subject_fname)
-                        deriv.extend(available)
-                    for target in self.target_suffix:
-                        if target not in str(available) and target != self.roi_suffix:
-                            logger.warning("Missing target_suffix {} for {}".format(target, subject_fname))
-                else:
-                    logger.warning("Missing derivatives for {}. Skipping.".format(subject_fname))
+            # Get list of subject files with available derivatives
+            has_deriv, deriv = self.get_subjects_with_derivatives()
 
             # Filter dataframe to keep subjects files with available derivatives only
             if has_deriv:
@@ -911,6 +890,38 @@ class BidsDataframe:
         if not df_scans.empty:
             df_scans['filename'] = df_scans['filename'].apply(os.path.basename)
             self.df = pd.merge(self.df, df_scans, on=['filename'], suffixes=("_x", None), how='left')
+
+    def get_subjects_with_derivatives(self):
+        """Get lists of subject filenames with available derivatives.
+
+        Returns:
+            list, list: subject filenames having derivatives, available derivatives filenames.
+        """
+        subject_fnames = self.get_subject_fnames()
+        deriv_fnames = self.get_deriv_fnames()
+        has_deriv = []
+        deriv = []
+
+        for subject_fname in subject_fnames:
+            available = self.get_derivatives(subject_fname, deriv_fnames)
+            if available:
+                if self.roi_suffix is not None:
+                    if self.roi_suffix in ('|'.join(available)):
+                        has_deriv.append(subject_fname)
+                        deriv.extend(available)
+                    else:
+                        logger.warning("Missing roi_suffix {} for {}. Skipping."
+                                       .format(self.roi_suffix, subject_fname))
+                else:
+                    has_deriv.append(subject_fname)
+                    deriv.extend(available)
+                for target in self.target_suffix:
+                    if target not in str(available) and target != self.roi_suffix:
+                        logger.warning("Missing target_suffix {} for {}".format(target, subject_fname))
+            else:
+                logger.warning("Missing derivatives for {}. Skipping.".format(subject_fname))
+
+        return has_deriv, deriv
 
     def get_subject_fnames(self):
         """Get the list of subject filenames in dataframe.
