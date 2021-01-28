@@ -19,8 +19,8 @@ terminal:
 
     ``--segment``: segment a entire dataset using a trained model. Note that you may only specify one command flag at a time.
 
-Note that the command CLI flag is optional and can be specified instead via the config file (see :ref:`configuration_file:Configuration File` ). 
-If not set via CLI, then you MUST specify this field in the config file.
+Note that the command CLI flag is optional and can be specified instead via the configuration file (see :ref:`configuration_file:Configuration File` ). 
+If not set via CLI, then you MUST specify this field in the configuration file.
 
 ``config_file.json`` is a configuration file, which parameters are
 described in the :ref:`configuration_file:Configuration File`. This flag is *required*.
@@ -30,7 +30,7 @@ should conform to the BIDS standard. Modify the path so it points to the locatio
 
 ``path/to/output/directory`` is the folder name that will contain the output files (e.g., trained model, predictions, results)
 
-Note that both path CLI flags are optional and can be specified instead via the config file. 
-If not set via CLI, then you MUST specify this field in the config file.
+Note that both path CLI flags are optional and can be specified instead via the configuration file. 
+If not set via CLI, then you MUST specify this field in the configuration file.
 
 Please see section ``TUTORIALS`` to run this command on an example dataset.

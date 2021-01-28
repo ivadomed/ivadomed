@@ -107,7 +107,8 @@ Make sure to run the CLI command with the "--train" flag, and to point to the lo
    ivadomed --train -c config.json --path-data path/to/bids/data --path-output path/to/output/directory -t 0.01 -g 1
 
 If you prefer to use config files over CLI flags, set "command" to the following in you config file:
-. code-block:: bash
+
+.. code-block:: bash
 
    "command": "train"
 

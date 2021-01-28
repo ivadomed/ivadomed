@@ -51,7 +51,7 @@ segmentation training.
 
      "command": "train"
 
-  Note that you can also pass this argument via CLI (see :ref:`Usage <Usage>`)
+Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
   
   .. code-block:: bash
 
@@ -63,7 +63,7 @@ segmentation training.
 
      "path_output": "spineGeneric"
 
-  Note that you can also pass this argument via CLI (see :ref:`Usage <Usage>`)
+Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
   
   .. code-block:: bash
 
@@ -76,7 +76,7 @@ segmentation training.
 
      "path_data": "data_example_spinegeneric"
 
-   Note that you can also pass this argument via CLI (see :ref:`Usage <Usage>`)
+Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
   
   .. code-block:: bash
 
@@ -150,7 +150,7 @@ Once the configuration file is ready, run the training:
 
      --path-data path/to/bids/data
 
-If you set the "command", "path_output", and "path_data" arguments in your config file, you do not need to pass the CLI flags:
+- If you set the "command", "path_output", and "path_data" arguments in your config file, you do not need to pass the CLI flags:
 
 .. code-block:: bash
 
