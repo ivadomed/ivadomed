@@ -142,7 +142,7 @@ Loader Parameters
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "bids_path",
+        "title": "data_path",
         "description": "Path of the BIDS folder.",
         "type": "string"
     }
@@ -153,7 +153,7 @@ Loader Parameters
 
     {
         "loader_parameters": {
-            "bids_path": "path/to/data_example_spinegeneric"
+            "data_path": "path/to/data_example_spinegeneric"
         }
     }
 

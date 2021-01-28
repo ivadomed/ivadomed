@@ -32,7 +32,7 @@ First off, copy this configuration file in your local directory to avoid modifyi
    cp <PATH_TO_IVADOMED>/ivadomed/config/config.json .
 
 Then, open it with a text editor. As described in the tutorial :doc:`../tutorials/one_class_segmentation_2d_unet`, make
-sure the ``command`` is set to "train" and ``bids_path`` point to the location of the dataset. Below, we will discuss
+sure the ``command`` is set to "train" and ``data_path`` point to the location of the dataset. Below, we will discuss
 some of the key parameters to use cascaded models.
 
 - ``debugging``: Boolean, create extended verbosity and intermediate outputs. Here we will look at the intermediate predictions

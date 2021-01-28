@@ -29,7 +29,7 @@ First off, copy this configuration file in your local directory (to avoid modify
 Please open it with a text editor.
 The configuration file will be modified to be the same as the one used for
 :ref:`Technical features <Uncertainty-measures>`. As described in the tutorial
-:doc:`../tutorials/one_class_segmentation_2d_unet`, make sure ``bids_path`` point to the location of the dataset.
+:doc:`../tutorials/one_class_segmentation_2d_unet`, make sure ``data_path`` point to the location of the dataset.
 The parameters that are specific to this tutorial are:
 
 - ``path_output``: Location of the directory containing the trained model. To avoid having to train a model from
