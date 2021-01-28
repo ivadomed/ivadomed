@@ -32,7 +32,11 @@ def get_parser():
 
     # MANDATORY ARGUMENTS
     mandatory_args = parser.add_argument_group('MANDATORY ARGUMENTS')
-    command_group = mandatory_args.add_mutually_exclusive_group(required=True)
+    
+    # OPTIONAL ARGUMENTS
+    optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
+
+    command_group = optional_args.add_mutually_exclusive_group(required=False)
     
     command_group.add_argument("--train", dest='train', action='store_true', 
                                 help="Perform training on data.")
@@ -42,13 +46,10 @@ def get_parser():
                                 help="Perform segmentation on data.")
     mandatory_args.add_argument("-c", "--config", required=True, type=str,
                                 help="Path to configuration file.")
-    mandatory_args.add_argument("-pd", "--path-data", required=True, type=str,
+    optional_args.add_argument("-pd", "--path-data", required=False, type=str,
                                 help="Path to data in BIDs format.")
-    mandatory_args.add_argument("-po", "--path-output", required=True, type=str,
+    optional_args.add_argument("-po", "--path-output", required=False, type=str,
                                 help="Path to output log directory.")
-
-    # OPTIONAL ARGUMENTS
-    optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
     optional_args.add_argument('-g', '--gif', required=False, type=int, default=0,
                                help='Number of GIF files to output. Each GIF file corresponds to a 2D slice showing the '
                                     'prediction over epochs (one frame per epoch). The prediction is run on the '
