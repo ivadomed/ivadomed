@@ -51,7 +51,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
             best_validation_loss.
     """
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(path_output=path_output)
+    writer = SummaryWriter(log_dir=path_output)
 
     # BALANCE SAMPLES AND PYTORCH LOADER
     conditions = all([training_params["balance_samples"]["applied"], model_params["name"] != "HeMIS"])
