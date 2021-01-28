@@ -915,6 +915,9 @@ class BidsDataframe:
         Args:
             subject_fname (str): Subject filename.
             deriv_fnames (list of str): List of derivative filenames.
+
+        Returns:
+            list: derivative filenames
         """
         prefix_fname = subject_fname.split('.')[0]
         return [d for d in deriv_fnames if prefix_fname in d]
