@@ -100,6 +100,8 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             for name, layer in model.named_parameters():
                 if not 'generator.linear' in name:
                     layer.requires_grad = False
+                else:
+                    layer.reset_parameters()
             return model
 
         model = freeze_all_but_film(old_model_path, map_location=device)
