@@ -90,7 +90,7 @@ def train_worker(config, thr_incr):
         logging.info("Unexpected error:", sys.exc_info()[0])
         raise
 
-    # Save config file in log directory
+    # Save config file in output path
     config_copy = open(config["path_output"] + "/config_file.json", "w")
     json.dump(config, config_copy, indent=4)
 

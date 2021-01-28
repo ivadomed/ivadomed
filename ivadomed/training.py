@@ -40,7 +40,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
         n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
             parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
-            predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
+            predictions of a given slice from the validation sub-dataset. They are saved within the output path.
         resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the path_output) for resume
                                 training. This training state is saved everytime a new best model is saved in the log
                                 directory.
@@ -51,7 +51,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
             best_validation_loss.
     """
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(log_dir=path_output)
+    writer = SummaryWriter(path_output=path_output)
 
     # BALANCE SAMPLES AND PYTORCH LOADER
     conditions = all([training_params["balance_samples"]["applied"], model_params["name"] != "HeMIS"])
@@ -331,7 +331,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     if 'film_layers' in model_params and any(model_params['film_layers']) and debugging:
         save_film_params(gammas_dict, betas_dict, metadata_values_lst, model_params["depth"], path_output)
 
-    # Save best model in log directory
+    # Save best model in output path
     if os.path.isfile(resume_path):
         state = torch.load(resume_path)
         model_path = os.path.join(path_output, "best_model.pt")

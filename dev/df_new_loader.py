@@ -48,13 +48,13 @@ path_csv = "test_df_new_loader.csv"
 df.to_csv(path_csv, index=False)
 print(df)
 
-# CREATE LOG DIRECTORY
+# CREATE OUTPUT PATH
 path_output = context["path_output"]
 if not os.path.isdir(path_output):
-    print('Creating log directory: {}'.format(path_output))
+    print('Creating output path: {}'.format(path_output))
     os.makedirs(path_output)
 else:
-    print('Log directory already exists: {}'.format(path_output))
+    print('Output path already exists: {}'.format(path_output))
 
 # SPLIT TRAIN/VALID/TEST (with "new" functions)
 train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list_new(context["split_dataset"],

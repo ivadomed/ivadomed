@@ -124,7 +124,7 @@ on training and validation sets at every epoch. To know more about the meaning o
 
 .. code-block:: console
 
-   Creating log directory: spineGeneric
+   Creating output path: spineGeneric
    Using GPU number 0
 
    Selected transformations for the training dataset:
@@ -184,7 +184,7 @@ on the evaluation metrics, see :mod:`ivadomed.metrics`.
 
 .. code-block:: console
 
-   Log directory already exists: spineGeneric
+   Output path already exists: spineGeneric
    Using GPU number 0
 
    Selected architecture: Unet, with the following parameters:

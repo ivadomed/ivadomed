@@ -49,11 +49,11 @@ def get_parser():
     optional_args.add_argument("-pd", "--path-data", required=False, type=str,
                                 help="Path to data in BIDs format.")
     optional_args.add_argument("-po", "--path-output", required=False, type=str,
-                                help="Path to output log directory.")
+                                help="Path to output directory.")
     optional_args.add_argument('-g', '--gif', required=False, type=int, default=0,
                                help='Number of GIF files to output. Each GIF file corresponds to a 2D slice showing the '
                                     'prediction over epochs (one frame per epoch). The prediction is run on the '
-                                    'validation dataset. GIF files are saved in the log directory.')
+                                    'validation dataset. GIF files are saved in the output path.')
     optional_args.add_argument('-t', '--thr-increment', dest="thr_increment", required=False, type=float,
                                help='A threshold analysis is performed at the end of the training using the trained '
                                     'model and the training+validation sub-datasets to find the optimal binarization '
@@ -90,7 +90,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             :doc:`configuration_file` for more details.
         n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
             parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
-            predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
+            predictions of a given slice from the validation sub-dataset. They are saved within the output path.
         thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
             the training + validation sub-dataset to find the optimal binarization threshold. The specified value
             indicates the increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
@@ -108,10 +108,10 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     command = copy.deepcopy(context["command"])
     path_output = copy.deepcopy(context["path_output"])
     if not os.path.isdir(path_output):
-        print('Creating log directory: {}'.format(path_output))
+        print('Creating output path: {}'.format(path_output))
         os.makedirs(path_output)
     else:
-        print('Log directory already exists: {}'.format(path_output))
+        print('Output path already exists: {}'.format(path_output))
 
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
     create_dataset_and_ivadomed_version_log(context)
