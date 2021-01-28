@@ -91,10 +91,10 @@ def train_worker(config, thr_incr):
         raise
 
     # Save config file in log directory
-    config_copy = open(config["log_directory"] + "/config_file.json", "w")
+    config_copy = open(config["path_output"] + "/config_file.json", "w")
     json.dump(config, config_copy, indent=4)
 
-    return config["log_directory"], best_training_dice, best_training_loss, best_validation_dice, \
+    return config["path_output"], best_training_dice, best_training_loss, best_validation_dice, \
         best_validation_loss
 
 
@@ -118,7 +118,7 @@ def test_worker(config):
         logging.info("Unexpected error:", sys.exc_info()[0])
         raise
 
-    return config["log_directory"], test_dice, df_results
+    return config["path_output"], test_dice, df_results
 
 
 def make_category(base_item, keys, values, is_all_combin=False, multiple_params=False):
@@ -237,7 +237,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             random_seed=initial_config["split_dataset"]["random_seed"],
             train_frac=initial_config["split_dataset"]["train_fraction"],
             test_frac=initial_config["split_dataset"]["test_fraction"],
-            log_directory="./",
+            path_output="./",
             balance=initial_config["split_dataset"]['balance'] if 'balance' in initial_config["split_dataset"] else None)
 
         # save the subject distribution
@@ -262,7 +262,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             for i, param in enumerate(combination):
                 value = combination[param]
                 new_config[param] = value
-                new_config["log_directory"] = new_config["log_directory"] + names[idx][i]
+                new_config["path_output"] = new_config["path_output"] + names[idx][i]
 
             config_list.append(copy.deepcopy(new_config))
     elif multiple_params:
@@ -272,7 +272,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             for param in param_dict:
                 new_config[param] = param_dict[param][config_idx]
                 config_name += names_dict[param][config_idx]
-            new_config["log_directory"] = initial_config["log_directory"] + config_name
+            new_config["path_output"] = initial_config["path_output"] + config_name
             config_list.append(copy.deepcopy(new_config))
 
     # Change a single parameter for each test
@@ -281,7 +281,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
             new_config = copy.deepcopy(initial_config)
             for value, name in zip(param_dict[param], names_dict[param]):
                 new_config[param] = value
-                new_config["log_directory"] = initial_config["log_directory"] + name
+                new_config["path_output"] = initial_config["path_output"] + name
                 config_list.append(copy.deepcopy(new_config))
 
     if output_dir and not os.path.exists(output_dir):
@@ -309,30 +309,30 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                     config["split_dataset"]["random_seed"] = seed
                     if all_logs:
                         if i:
-                            config["log_directory"] = config["log_directory"].replace("_n=" + str(i - 1).zfill(2),
+                            config["path_output"] = config["path_output"].replace("_n=" + str(i - 1).zfill(2),
                                                                                       "_n=" + str(i).zfill(2))
                         else:
-                            config["log_directory"] += "_n=" + str(i).zfill(2)
+                            config["path_output"] += "_n=" + str(i).zfill(2)
 
                 validation_scores = pool.map(partial(train_worker, thr_incr=thr_increment), config_list)
 
             val_df = pd.DataFrame(validation_scores, columns=[
-                'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
+                'path_output', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
                 'best_validation_loss'])
 
             if run_test:
                 new_config_list = []
                 for config in config_list:
                     # Delete path_pred
-                    path_pred = os.path.join(config['log_directory'], 'pred_masks')
+                    path_pred = os.path.join(config['path_output'], 'pred_masks')
                     if os.path.isdir(path_pred) and n_iterations > 1:
                         try:
                             shutil.rmtree(path_pred)
                         except OSError as e:
                             logging.info("Error: %s - %s." % (e.filename, e.strerror))
 
-                    # Take the config file within the log_directory because binarize_prediction may have been updated
-                    json_path = os.path.join(config['log_directory'], 'config_file.json')
+                    # Take the config file within the path_output because binarize_prediction may have been updated
+                    json_path = os.path.join(config['path_output'], 'config_file.json')
                     new_config = imed_config_manager.ConfigurationManager(json_path).get_config()
                     new_config["gpu_ids"] = config["gpu_ids"]
                     new_config_list.append(new_config)
@@ -366,8 +366,8 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
                 # Init or add eval results to dataframe
                 eval_df = pd.concat(df_lst, sort=False, axis=1)
 
-                test_df = pd.DataFrame(test_results, columns=['log_directory', 'test_dice'])
-                combined_df = val_df.set_index('log_directory').join(test_df.set_index('log_directory'))
+                test_df = pd.DataFrame(test_results, columns=['path_output', 'test_dice'])
+                combined_df = val_df.set_index('path_output').join(test_df.set_index('path_output'))
                 combined_df = combined_df.reset_index()
 
             else:
@@ -380,10 +380,10 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     # Merge config and results in a df
     config_df = pd.DataFrame.from_dict(config_list)
     keep = list(param_dict.keys())
-    keep.append("log_directory")
+    keep.append("path_output")
     config_df = config_df[keep]
 
-    results_df = config_df.set_index('log_directory').join(results_df.set_index('log_directory'))
+    results_df = config_df.set_index('path_output').join(results_df.set_index('path_output'))
     results_df = results_df.reset_index()
     results_df = results_df.sort_values(by=['best_validation_loss'])
 

@@ -242,7 +242,7 @@ def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast
     bounding_box_dict = {}
     if object_detection_params is None or object_detection_params['object_detection_path'] is None:
         return bounding_box_dict
-    bounding_box_path = os.path.join(object_detection_params['log_directory'], 'bounding_boxes.json')
+    bounding_box_path = os.path.join(object_detection_params['path_output'], 'bounding_boxes.json')
     if os.path.exists(bounding_box_path):
         with open(bounding_box_path, 'r') as fp:
             bounding_box_dict = json.load(fp)
@@ -250,7 +250,7 @@ def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast
             os.path.exists(object_detection_params['object_detection_path']):
         bounding_box_dict = generate_bounding_box_file(subjects,
                                                        object_detection_params['object_detection_path'],
-                                                       object_detection_params['log_directory'],
+                                                       object_detection_params['path_output'],
                                                        object_detection_params['gpu'],
                                                        slice_axis,
                                                        constrast_lst,

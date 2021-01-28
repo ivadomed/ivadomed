@@ -57,7 +57,7 @@ def run_main(context):
         imed_transforms.NormalizeInstance(),
     ])
 
-    out_dir = context["log_directory"]
+    out_dir = context["path_output"]
     split_dct = joblib.load(os.path.join(out_dir, "split_datasets.joblib"))
     metadata_dct = {}
     for subset in ['train', 'valid', 'test']:

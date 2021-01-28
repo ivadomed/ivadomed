@@ -65,7 +65,7 @@ General Parameters
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "log_directory",
+        "title": "path_output",
         "description": "Folder name that will contain the output files (e.g., trained model,
             predictions, results).",
         "type": "string"
@@ -77,7 +77,7 @@ General Parameters
 .. code-block:: JSON
 
     {
-        "log_directory": "tmp/spineGeneric"
+        "path_output": "tmp/spineGeneric"
     }
 
 
@@ -95,7 +95,7 @@ possible, the folder name will follow the following convention:
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "model_name",
         "description": "Folder name containing the trained model (ONNX format) and its configuration
-            file, located within ``log_directory/``",
+            file, located within ``path_output/``",
         "type": "string"
     }
 
@@ -103,8 +103,8 @@ possible, the folder name will follow the following convention:
 
 .. code-block:: sh
 
-    "log_directory/seg_gm_t2star/seg_gm_t2star.onnx"
-    "log_directory/seg_gm_t2star/seg_gm_t2star.json"
+    "path_output/seg_gm_t2star/seg_gm_t2star.onnx"
+    "path_output/seg_gm_t2star/seg_gm_t2star.json"
 
 When possible, the folder name will follow the following convention:
 

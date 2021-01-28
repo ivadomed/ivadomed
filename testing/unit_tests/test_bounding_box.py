@@ -25,7 +25,7 @@ def setup_function():
         "object_detection_params": {
             "object_detection_path": "object_detection",
             "safety_factor": [1.0, 1.0, 1.0],
-            "log_directory": LOG_DIR
+            "path_output": LOG_DIR
         },
         "transforms_params": {
             "NumpyToTensor": {}},
@@ -37,7 +37,7 @@ def setup_function():
         "object_detection_params": {
             "object_detection_path": "object_detection",
             "safety_factor": [1.0, 1.0, 1.0],
-            "log_directory": LOG_DIR
+            "path_output": LOG_DIR
         },
         "transforms_params": {"NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},

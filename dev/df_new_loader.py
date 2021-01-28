@@ -49,17 +49,17 @@ df.to_csv(path_csv, index=False)
 print(df)
 
 # CREATE LOG DIRECTORY
-log_directory = context["log_directory"]
-if not os.path.isdir(log_directory):
-    print('Creating log directory: {}'.format(log_directory))
-    os.makedirs(log_directory)
+path_output = context["path_output"]
+if not os.path.isdir(path_output):
+    print('Creating log directory: {}'.format(path_output))
+    os.makedirs(path_output)
 else:
-    print('Log directory already exists: {}'.format(log_directory))
+    print('Log directory already exists: {}'.format(path_output))
 
 # SPLIT TRAIN/VALID/TEST (with "new" functions)
 train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list_new(context["split_dataset"],
                                                                                      df2,
-                                                                                     log_directory,
+                                                                                     path_output,
                                                                                      context["loader_parameters"]
                                                                                      ['subject_selection'])
 print("Train:", train_lst)

@@ -25,7 +25,7 @@ cudnn.benchmark = True
 logger = logging.getLogger(__name__)
 
 
-def train(model_params, dataset_train, dataset_val, training_params, log_directory, device,
+def train(model_params, dataset_train, dataset_val, training_params, path_output, device,
           cuda_available=True, metric_fns=None, n_gif=0, resume_training=False, debugging=False):
     """Main command to train the network.
 
@@ -34,14 +34,14 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         dataset_train (imed_loader): Training dataset.
         dataset_val (imed_loader): Validation dataset.
         training_params (dict):
-        log_directory (str): Folder where log files, best and final models are saved.
+        path_output (str): Folder where log files, best and final models are saved.
         device (str): Indicates the CPU or GPU ID.
         cuda_available (bool): If True, CUDA is available.
         metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
         n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
             parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
             predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
-        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume
+        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the path_output) for resume
                                 training. This training state is saved everytime a new best model is saved in the log
                                 directory.
         debugging (bool): If True, extended verbosity and intermediate outputs.
@@ -51,7 +51,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             best_validation_loss.
     """
     # Write the metrics, images, etc to TensorBoard format
-    writer = SummaryWriter(log_dir=log_directory)
+    writer = SummaryWriter(log_dir=path_output)
 
     # BALANCE SAMPLES AND PYTORCH LOADER
     conditions = all([training_params["balance_samples"]["applied"], model_params["name"] != "HeMIS"])
@@ -122,7 +122,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
 
     # Resume
     start_epoch = 1
-    resume_path = os.path.join(log_directory, "checkpoint.pth.tar")
+    resume_path = os.path.join(path_output, "checkpoint.pth.tar")
     if resume_training:
         model, optimizer, gif_dict, start_epoch, val_loss_total_avg, scheduler, patience_count = load_checkpoint(
             model=model,
@@ -173,7 +173,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             # MIXUP
             if training_params["mixup_alpha"]:
                 input_samples, gt_samples = imed_mixup.mixup(input_samples, gt_samples, training_params["mixup_alpha"],
-                                                             debugging and epoch == 1, log_directory)
+                                                             debugging and epoch == 1, path_output)
 
             # RUN MODEL
             if model_params["name"] == "HeMISUnet" or \
@@ -309,7 +309,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                 torch.save(state, resume_path)
 
                 # Save best model file
-                model_path = os.path.join(log_directory, "best_model.pt")
+                model_path = os.path.join(path_output, "best_model.pt")
                 torch.save(model, model_path)
 
                 # Update best scores
@@ -326,32 +326,32 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                     break
 
     # Save final model
-    final_model_path = os.path.join(log_directory, "final_model.pt")
+    final_model_path = os.path.join(path_output, "final_model.pt")
     torch.save(model, final_model_path)
     if 'film_layers' in model_params and any(model_params['film_layers']) and debugging:
-        save_film_params(gammas_dict, betas_dict, metadata_values_lst, model_params["depth"], log_directory)
+        save_film_params(gammas_dict, betas_dict, metadata_values_lst, model_params["depth"], path_output)
 
     # Save best model in log directory
     if os.path.isfile(resume_path):
         state = torch.load(resume_path)
-        model_path = os.path.join(log_directory, "best_model.pt")
+        model_path = os.path.join(path_output, "best_model.pt")
         model.load_state_dict(state['state_dict'])
         torch.save(model, model_path)
         # Save best model as ONNX in the model directory
         try:
             # Convert best model to ONNX and save it in model directory
-            best_model_path = os.path.join(log_directory, model_params["folder_name"],
+            best_model_path = os.path.join(path_output, model_params["folder_name"],
                                            model_params["folder_name"] + ".onnx")
             imed_utils.save_onnx_model(model, input_samples, best_model_path)
         except:
             # Save best model in model directory
-            best_model_path = os.path.join(log_directory, model_params["folder_name"],
+            best_model_path = os.path.join(path_output, model_params["folder_name"],
                                            model_params["folder_name"] + ".pt")
             torch.save(model, best_model_path)
             logger.warning("Failed to save the model as '.onnx', saved it as '.pt': {}".format(best_model_path))
 
     # Save GIFs
-    gif_folder = os.path.join(log_directory, "gifs")
+    gif_folder = os.path.join(path_output, "gifs")
     if n_gif > 0 and not os.path.isdir(gif_folder):
         os.makedirs(gif_folder)
     for i_gif in range(n_gif):
@@ -514,7 +514,7 @@ def save_film_params(gammas, betas, metadata_values, depth, ofolder):
     gammas_dict = {i: np.array(gammas[i]) for i in range(1, 2 * depth + 3)}
     betas_dict = {i: np.array(betas[i]) for i in range(1, 2 * depth + 3)}
 
-    # Save the numpy arrays for gammas/betas inside files.npy in log_directory
+    # Save the numpy arrays for gammas/betas inside files.npy in path_output
     for i in range(1, 2 * depth + 3):
         gamma_layer_path = os.path.join(ofolder, "gamma_layer_{}.npy".format(i))
         np.save(gamma_layer_path, gammas_dict[i])

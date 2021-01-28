@@ -187,19 +187,19 @@ def save_tensorboard_img(writer, epoch, dataset_type, input_samples, gt_samples,
         writer.add_image(dataset_type + '/Ground Truth', grid_img, epoch)
 
 
-def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_axis):
+def save_feature_map(batch, layer_name, path_output, model, test_input, slice_axis):
     """Save model feature maps.
 
     Args:
         batch (dict):
         layer_name (str):
-        log_directory (str): Output folder.
+        path_output (str): Output folder.
         model (nn.Module): Network.
         test_input (Tensor):
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
     """
-    if not os.path.exists(os.path.join(log_directory, layer_name)):
-        os.mkdir(os.path.join(log_directory, layer_name))
+    if not os.path.exists(os.path.join(path_output, layer_name)):
+        os.mkdir(os.path.join(path_output, layer_name))
 
     # Save for subject in batch
     for i in range(batch['input'].size(0)):
@@ -216,7 +216,7 @@ def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_
         path = batch["input_metadata"][0][i]["input_filenames"]
 
         basename = path.split('/')[-1]
-        save_directory = os.path.join(log_directory, layer_name, basename)
+        save_directory = os.path.join(path_output, layer_name, basename)
 
         # Write the attentions to a nifti image
         nib_ref = nib.load(path)
@@ -227,7 +227,7 @@ def save_feature_map(batch, layer_name, log_directory, model, test_input, slice_
         nib.save(nib_pred, save_directory)
 
         basename = basename.split(".")[0] + "_att.nii.gz"
-        save_directory = os.path.join(log_directory, layer_name, basename)
+        save_directory = os.path.join(path_output, layer_name, basename)
         attention_map = imed_loader_utils.reorient_image(upsampled_attention[0, 0, :, :, :], slice_axis, nib_ref, nib_ref_can)
         nib_pred = nib.Nifti1Image(attention_map, nib_ref.affine)
 

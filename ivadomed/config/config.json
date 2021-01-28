@@ -1,7 +1,7 @@
 {
     "command": "train",
     "gpu_ids": [0],
-    "log_directory": "spineGeneric",
+    "path_output": "spineGeneric",
     "model_name": "my_model",
     "debugging": false,
     "object_detection_params": {

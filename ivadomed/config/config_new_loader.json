@@ -1,7 +1,7 @@
 {
     "command": "train",
     "gpu_ids": [0],
-    "log_directory": "log_directory/new_loader",
+    "path_output": "path_output/new_loader",
     "model_name": "model_name",
     "debugging": true,
     "object_detection_params": {

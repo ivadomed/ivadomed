@@ -15,23 +15,23 @@ FP_COLOUR = 2
 FN_COLOUR = 3
 
 
-def evaluate(bids_path, log_directory, target_suffix, eval_params):
+def evaluate(bids_path, path_output, target_suffix, eval_params):
     """Evaluate predictions from inference step.
 
     Args:
         bids_path (str): Folder where raw data is stored.
-        log_directory (str): Folder where the output folder "results_eval" is be created.
+        path_output (str): Folder where the output folder "results_eval" is be created.
         target_suffix (list): List of suffixes that indicates the target mask(s).
         eval_params (dict): Evaluation parameters.
 
     Returns:
         pd.Dataframe: results for each image.
     """
-    path_preds = os.path.join(log_directory, 'pred_masks')
+    path_preds = os.path.join(path_output, 'pred_masks')
     print('\nRun Evaluation on {}\n'.format(path_preds))
 
     # OUTPUT RESULT FOLDER
-    path_results = os.path.join(log_directory, 'results_eval')
+    path_results = os.path.join(path_output, 'results_eval')
     if not os.path.isdir(path_results):
         os.makedirs(path_results)
 

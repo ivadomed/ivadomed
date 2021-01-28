@@ -160,11 +160,11 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
 
 
 def get_new_subject_split(path_folder, center_test, split_method, random_seed,
-                          train_frac, test_frac, log_directory, balance, subject_selection=None):
+                          train_frac, test_frac, path_output, balance, subject_selection=None):
     """Randomly split dataset between training / validation / testing.
 
     Randomly split dataset between training / validation / testing\
-        and save it in log_directory + "/split_datasets.joblib".
+        and save it in path_output + "/split_datasets.joblib".
 
     Args:
         path_folder (string): Dataset folder.
@@ -173,7 +173,7 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
         random_seed (int): Random seed.
         train_frac (float): Training dataset proportion, between 0 and 1.
         test_frac (float): Testing dataset proportionm between 0 and 1.
-        log_directory (string): Output folder.
+        path_output (string): Output folder.
         balance (string): Metadata contained in "participants.tsv" file with categorical values.
             Each category will be evenly distributed in the training, validation and testing
             datasets.
@@ -223,18 +223,18 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
 
     # save the subject distribution
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    split_path = os.path.join(log_directory, "split_datasets.joblib")
+    split_path = os.path.join(path_output, "split_datasets.joblib")
     joblib.dump(split_dct, split_path)
 
     return train_lst, valid_lst, test_lst
 
 
 def get_new_subject_split_new(df, split_method, data_testing, random_seed,
-                              train_frac, test_frac, log_directory, balance, subject_selection=None):
+                              train_frac, test_frac, path_output, balance, subject_selection=None):
     """Randomly split dataset between training / validation / testing.
 
     Randomly split dataset between training / validation / testing\
-        and save it in log_directory + "/split_datasets.joblib".
+        and save it in path_output + "/split_datasets.joblib".
 
     Args:
         df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
@@ -243,7 +243,7 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
         random_seed (int): Random seed.
         train_frac (float): Training dataset proportion, between 0 and 1.
         test_frac (float): Testing dataset proportionm between 0 and 1.
-        log_directory (str): Output folder.
+        path_output (str): Output folder.
         balance (str): Metadata contained in "participants.tsv" file with categorical values. Each category will be
         evenly distributed in the training, validation and testing datasets.
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
@@ -293,19 +293,19 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
 
     # save the subject distribution
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    split_path = os.path.join(log_directory, "split_datasets.joblib")
+    split_path = os.path.join(path_output, "split_datasets.joblib")
     joblib.dump(split_dct, split_path)
 
     return train_lst, valid_lst, test_lst
 
 
-def get_subdatasets_subjects_list(split_params, bids_path, log_directory, subject_selection=None):
+def get_subdatasets_subjects_list(split_params, bids_path, path_output, subject_selection=None):
     """Get lists of subjects for each sub-dataset between training / validation / testing.
 
     Args:
         split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
         bids_path (str): Path to the BIDS dataset.
-        log_directory (str): Output folder.
+        path_output (str): Output folder.
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
     Returns:
@@ -322,20 +322,20 @@ def get_subdatasets_subjects_list(split_params, bids_path, log_directory, subjec
                                                                random_seed=split_params['random_seed'],
                                                                train_frac=split_params['train_fraction'],
                                                                test_frac=split_params['test_fraction'],
-                                                               log_directory=log_directory,
+                                                               path_output=path_output,
                                                                balance=split_params['balance']
                                                                if 'balance' in split_params else None,
                                                                subject_selection=subject_selection)
     return train_lst, valid_lst, test_lst
 
 
-def get_subdatasets_subjects_list_new(split_params, df, log_directory, subject_selection=None):
+def get_subdatasets_subjects_list_new(split_params, df, path_output, subject_selection=None):
     """Get lists of subjects for each sub-dataset between training / validation / testing.
 
     Args:
         split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
         df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
-        log_directory (str): Output folder.
+        path_output (str): Output folder.
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
     Returns:
@@ -352,7 +352,7 @@ def get_subdatasets_subjects_list_new(split_params, df, log_directory, subject_s
                                                                    random_seed=split_params['random_seed'],
                                                                    train_frac=split_params['train_fraction'],
                                                                    test_frac=split_params['test_fraction'],
-                                                                   log_directory=log_directory,
+                                                                   path_output=path_output,
                                                                    balance=split_params['balance']
                                                                    if 'balance' in split_params else None,
                                                                    subject_selection=subject_selection)

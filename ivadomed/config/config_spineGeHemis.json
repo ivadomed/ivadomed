@@ -1,7 +1,7 @@
 {
     "command": "train",
     "gpu_ids": [0],
-    "log_directory": "HeMIS",
+    "path_output": "HeMIS",
     "model_name": "seg_tumor_t2_t1",
     "debugging": false,
     "loader_parameters": {

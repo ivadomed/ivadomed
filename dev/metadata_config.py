@@ -20,7 +20,7 @@ def run_main(context):
         imed_transforms.NormalizeInstance(),
     ])
 
-    out_dir = context["log_directory"]
+    out_dir = context["path_output"]
     metadata_dct = {}
     for subset in ['train', 'validation', 'test']:
         metadata_dct[subset] = {}

@@ -1,7 +1,7 @@
 {
     "command": "train",
     "gpu_ids": [0],
-    "log_directory": "tumor_segmentation",
+    "path_output": "tumor_segmentation",
     "model_name": "seg_tumor_t2",
     "debugging": true,
     "object_detection_params": {

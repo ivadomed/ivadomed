@@ -251,7 +251,7 @@ def run_main(args):
     if not os.path.isdir(ofolder):
         os.makedirs(ofolder)
 
-    pred_folder = os.path.join(context['log_directory'], 'pred_masks')
+    pred_folder = os.path.join(context['path_output'], 'pred_masks')
     if not os.path.isdir(pred_folder):
         imed.cmd_test(context)
 

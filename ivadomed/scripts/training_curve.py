@@ -57,7 +57,7 @@ def plot_curve(data_list, y_label, fig_ax, subplot_title, y_lim=None):
     """Plot curve of metrics or losses for each epoch.
 
     Args:
-        data_list (list): list of pd.DataFrame, one for each log_directory
+        data_list (list): list of pd.DataFrame, one for each path_output
         y_label (str): Label for the y-axis.
         fig_ax (plt.subplot):
         subplot_title (str): Title of the subplot
@@ -157,12 +157,12 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
             input_folder_list = [input_folder]
 
         events_df_list = []
-        for log_directory in input_folder_list:
+        for path_output in input_folder_list:
             # Find tf folders
-            check_events_numbers(log_directory)
+            check_events_numbers(path_output)
 
             # Get data as dataframe
-            events_vals_df = tensorboard_retrieve_event(log_directory)
+            events_vals_df = tensorboard_retrieve_event(path_output)
 
             # Store data
             events_df_list.append(events_vals_df)
@@ -194,11 +194,11 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         plt_dict[fname_out].savefig(fname_out)
 
 
-def tensorboard_retrieve_event(log_directory):
+def tensorboard_retrieve_event(path_output):
     """Retrieve data from tensorboard summary event.
 
     Args:
-        log_directory (str): log directory where the event files are located
+        path_output (str): log directory where the event files are located
 
     Returns:
         df: a panda dataframe where the columns are the metric or loss and the row are the epochs.
@@ -213,7 +213,7 @@ def tensorboard_retrieve_event(log_directory):
 
     # Each element in the summary iterator represent an element (e.g., scalars, images..)
     # stored in the summary for all epochs in the form of event.
-    summary_iterators = [EventAccumulator(os.path.join(log_directory, dname)).Reload() for dname in os.listdir(log_directory)]
+    summary_iterators = [EventAccumulator(os.path.join(path_output, dname)).Reload() for dname in os.listdir(path_output)]
 
     metrics = defaultdict(list)
     num_metrics = 0
