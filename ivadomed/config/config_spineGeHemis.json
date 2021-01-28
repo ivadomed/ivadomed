@@ -1,8 +1,11 @@
 {
+    "command": "train",
     "gpu_ids": [0],
+    "log_directory": "HeMIS",
     "model_name": "seg_tumor_t2_t1",
     "debugging": false,
     "loader_parameters": {
+        "bids_path": "/home/andreanne/Documents/dataset/toy_dataset",
         "target_suffix": ["_seg-tumor"],
         "roi_params": {
             "suffix": null,

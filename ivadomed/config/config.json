@@ -1,5 +1,7 @@
 {
+    "command": "train",
     "gpu_ids": [0],
+    "log_directory": "spineGeneric",
     "model_name": "my_model",
     "debugging": false,
     "object_detection_params": {
@@ -7,6 +9,7 @@
         "safety_factor": [1.0, 1.0, 1.0]
     },
     "loader_parameters": {
+        "bids_path": "data_example_spinegeneric",
         "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": ["_seg-manual"],
         "roi_params": {
