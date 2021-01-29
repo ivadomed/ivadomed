@@ -37,6 +37,8 @@ def get_parser():
     parser.add_argument("-p", "--params", required=True,
                         help="JSON file where hyperparameters to experiment are listed.",
                         metavar=imed_utils.Metavar.file)
+    parser.add_argument("-pd", "--path-data", required=False, help="Path to BIDS data.",
+                        metavar=imed_utils.Metavar.int)
     parser.add_argument("-n", "--n-iterations", dest="n_iterations", default=1,
                         type=int, help="Number of times to run each config.",
                         metavar=imed_utils.Metavar.int)
@@ -163,7 +165,7 @@ def make_category(base_item, keys, values, is_all_combin=False, multiple_params=
     return items, names
 
 
-def automate_training(config, param, fixed_split, all_combin, n_iterations=1, run_test=False,
+def automate_training(config, param, fixed_split, all_combin, path_data=None, n_iterations=1, run_test=False,
                       all_logs=False, thr_increment=None, multiple_params=False,
                       output_dir=None):
     """Automate multiple training processes on multiple GPUs.
@@ -215,6 +217,9 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     # Load initial config
     initial_config = imed_config_manager.ConfigurationManager(config).get_config()
 
+    if path_data is not None:
+        initial_config["loader_parameters"]["path_data"] = path_data
+
     # Hyperparameters values to experiment
     with open(param, "r") as fhandle:
         hyperparams = json.load(fhandle)
@@ -231,7 +236,7 @@ def automate_training(config, param, fixed_split, all_combin, n_iterations=1, ru
     # Split dataset if not already done
     if fixed_split and (initial_config.get("split_path") is None):
         train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_split(
-            path_folder=initial_config["loader_parameters"]["path_data"],
+            path_folder=path_data if path_data is not None else initial_config["loader_parameters"]["path_data"],
             center_test=initial_config["split_dataset"]["center_test"],
             split_method=initial_config["split_dataset"]["method"],
             random_seed=initial_config["split_dataset"]["random_seed"],
@@ -409,6 +414,7 @@ def main(args=None):
                       param=args.params,
                       fixed_split=bool(args.fixed_split),
                       all_combin=bool(args.all_combin),
+                      path_data=args.path_data if args.path_data is not None else None,
                       n_iterations=int(args.n_iterations),
                       run_test=bool(args.run_test),
                       all_logs=args.all_logs,
