@@ -30,13 +30,7 @@ MODEL_LIST = ['Modified3DUNet', 'HeMISUnet', 'FiLMedUnet', 'resnet18', 'densenet
 def get_parser():
     parser = argparse.ArgumentParser(add_help=False)
 
-    # MANDATORY ARGUMENTS
-    mandatory_args = parser.add_argument_group('MANDATORY ARGUMENTS')
-    
-    # OPTIONAL ARGUMENTS
-    optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
-
-    command_group = optional_args.add_mutually_exclusive_group(required=False)
+    command_group = parser.add_mutually_exclusive_group(required=False)
     
     command_group.add_argument("--train", dest='train', action='store_true', 
                                 help="Perform training on data.")
@@ -44,8 +38,13 @@ def get_parser():
                                 help="Perform testing on trained model.")
     command_group.add_argument("--segment", dest='segment', action='store_true', 
                                 help="Perform segmentation on data.")
-    mandatory_args.add_argument("-c", "--config", required=True, type=str,
+    
+    parser.add_argument("-c", "--config", required=True, type=str,
                                 help="Path to configuration file.")
+                                
+    # OPTIONAL ARGUMENTS
+    optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
+    
     optional_args.add_argument("-pd", "--path-data", required=False, type=str,
                                 help="Path to data in BIDs format.")
     optional_args.add_argument("-po", "--path-output", required=False, type=str,
