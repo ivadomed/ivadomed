@@ -35,10 +35,9 @@ def get_parser():
     # OPTIONAL ARGUMENTS
     optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
     optional_args.add_argument('-g', '--gif', required=False, type=int, default=0,
-                               help='Generates a GIF of during training, one frame per epoch for a given slice.'
-                                    ' The parameter indicates the number of 2D slices used to generate GIFs, one GIF '
-                                    'per slice. A GIF shows predictions of a given slice from the validation '
-                                    'sub-dataset. They are saved within the log directory.')
+                               help='Number of GIF files to output. Each GIF file corresponds to a 2D slice showing the '
+                                    'prediction over epochs (one frame per epoch). The prediction is run on the '
+                                    'validation dataset. GIF files are saved in the log directory.')
     optional_args.add_argument('-t', '--thr-increment', dest="thr_increment", required=False, type=float,
                                help='A threshold analysis is performed at the end of the training using the trained '
                                     'model and the training+validation sub-datasets to find the optimal binarization '
@@ -54,6 +53,15 @@ def get_parser():
                                help='Shows function documentation.')
 
     return parser
+
+
+def save_config_file(context, log_directory):
+    # Save config file within log_directory and log_directory/model_name
+    # Done after the threshold_analysis to propate this info in the config files
+    with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
+        json.dump(context, fp, indent=4)
+    with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
+        json.dump(context, fp, indent=4)
 
 
 def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
@@ -233,6 +241,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         else:
             print('Model directory already exists: {}'.format(path_model))
 
+        save_config_file(context, log_directory)
+
         # RUN TRAINING
         best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
             model_params=model_params,
@@ -278,15 +288,9 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
         # Update threshold in config file
         context["postprocessing"]["binarize_prediction"] = {"thr": thr}
+        save_config_file(context, log_directory)
 
     if command == 'train':
-        # Save config file within log_directory and log_directory/model_name
-        # Done after the threshold_analysis to propagate this info in the config files
-        with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
-            json.dump(context, fp, indent=4)
-        with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
-            json.dump(context, fp, indent=4)
-
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
 
     if command == 'test':

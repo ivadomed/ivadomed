@@ -484,7 +484,8 @@ Dict. Remove small objects from the prediction. An object is defined as a group 
 neighbors are connected to the center, diagonally-connected elements are not considered neighbors.
 
 - ``unit``: String. Either "vox" for voxels or "mm3". Indicates the unit used to define the minimal object size.
-- ``thr``: Int. Minimal object size.
+- ``thr``: Int or list. Minimal object size. If a list of thresholds is chosen, the length should match the number of
+  predicted classes.
 
 threshold\_uncertainty
 ^^^^^^^^^^^^^^^^^^^^^^

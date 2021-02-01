@@ -127,20 +127,30 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
     # Load model training config
     context = imed_config_manager.ConfigurationManager(fname_model_metadata).get_config()
 
-    if options is not None and any(pp in options for pp in ['thr', 'largest', ' fill_holes', 'remove_small']):
+    postpro_list = ['binarize_prediction', 'keep_largest', ' fill_holes', 'remove_small']
+    if options is not None and any(pp in options for pp in postpro_list):
         postpro = {}
-        if 'thr' in options:
-            postpro['binarize_prediction'] = {"thr": options['thr']}
-        if 'largest' in options and options['largest']:
-            postpro['keep_largest'] = {}
-        if 'fill_holes' in options and options['fill_holes']:
-            postpro['fill_holes'] = {}
-        if 'remove_small' in options and ('mm' in options['remove_small'] or 'vox' in options['remove_small']):
-            unit = 'mm3' if 'mm3' in options['remove_small'] else 'vox'
-            thr = int(options['remove_small'].replace(unit, ""))
+        if 'binarize_prediction' in options and options['binarize_prediction']:
+            postpro['binarize_prediction'] = {"thr": options['binarize_prediction']}
+        if 'keep_largest' in options and options['keep_largest'] is not None:
+            if options['keep_largest']:
+                postpro['keep_largest'] = {}
+            # Remove key in context if value set to 0
+            elif 'keep_largest' in context['postprocessing']:
+                del context['postprocessing']['keep_largest']
+        if 'fill_holes' in options and options['fill_holes'] is not None:
+            if options['fill_holes']:
+                postpro['fill_holes'] = {}
+            # Remove key in context if value set to 0
+            elif 'fill_holes' in context['postprocessing']:
+                del context['postprocessing']['fill_holes']
+        if 'remove_small' in options and options['remove_small'] and \
+                ('mm' in options['remove_small'][-1] or 'vox' in options['remove_small'][-1]):
+            unit = 'mm3' if 'mm3' in options['remove_small'][-1] else 'vox'
+            thr = [int(t.replace(unit, "")) for t in options['remove_small']]
             postpro['remove_small'] = {"unit": unit, "thr": thr}
 
-        context['postprocessing'] = postpro
+        context['postprocessing'].update(postpro)
 
     # LOADER
     loader_params = context["loader_parameters"]
@@ -164,7 +174,8 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
 
         if 'object_detection_params' in context and \
                 context['object_detection_params']['object_detection_path'] is not None:
-            imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis)
+            imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis,
+                                               context['object_detection_params']['safety_factor'])
             metadata = [metadata] * len(fname_images)
 
     # Compose transforms

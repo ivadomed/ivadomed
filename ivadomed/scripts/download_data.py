@@ -22,7 +22,7 @@ DICT_URL = {
         "description": "10 randomly picked subject from "
                        "`Spine Generic <https://github.com/spine-generic/data-multi-subject>`_. "
                        "Used for Tutorial and example in Ivadomed."},
-    "data_testing": {"url": ["https://github.com/ivadomed/data-testing/archive/r20201020.zip"],
+    "data_testing": {"url": ["https://github.com/ivadomed/data-testing/archive/r20201221.zip"],
                      "description": "Data Used for integration/unit test in Ivadomed."},
     "t2_tumor": {"url": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
                  "description": "Cord tumor segmentation model, trained on T2-weighted contrast."},
@@ -246,6 +246,7 @@ def install_data(url, dest_folder, keep=False):
             shutil.copy(srcpath, dstpath)
 
     logger.info("Removing temporary folders...")
+    logger.info("Folder Created: {}".format(dest_folder))
     shutil.rmtree(os.path.dirname(tmp_file))
     shutil.rmtree(extraction_folder)
 
