@@ -1,6 +1,6 @@
 import pytest
-
-from ivadomed.scripts.automate_training import make_category, make_config_list
+from ivadomed.scripts.automate_training import make_config_list, get_param_list, \
+    HyperparameterOption
 import logging
 from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir
 logger = logging.getLogger(__name__)
@@ -20,115 +20,8 @@ initial_config = {
         'depth': 3,
         'is_2d': True
     },
-    'log_directory': './tmp/'
-}
-
-expected_items_simple = [
-    {
-        'name': 'Unet',
-        'dropout_rate': 0.3,
-        'bn_momentum': 0.9,
-        'depth': 2,
-        'is_2d': True
-    },
-    {
-        'name': 'Unet',
-        'dropout_rate': 0.3,
-        'bn_momentum': 0.9,
-        'depth': 3,
-        'is_2d': True
-    },
-    {
-        'name': 'Unet',
-        'dropout_rate': 0.3,
-        'bn_momentum': 0.9,
-        'depth': 4,
-        'is_2d': True
-    }]
-
-expected_names_simple = ['-depth=2', '-depth=3', '-depth=4']
-
-expected_items_complex_neither = [
-    {
-        'batch_size': 2,
-        'loss': {'name': 'DiceLoss'},
-        'scheduler': {'initial_lr': 0.001}
-    },
-    {
-        'batch_size': 64,
-        'loss': {'name': 'DiceLoss'},
-        'scheduler': {'initial_lr': 0.001}
-    },
-    {
-        'batch_size': 18,
-        'loss': {'name': 'DiceLoss'},
-        'scheduler': {'initial_lr': 0.001}
-    },
-    {
-        'batch_size': 18,
-        'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
-        'scheduler': {'initial_lr': 0.001}
-    }
-]
-
-expected_names_complex_neither = [
-    '-batch_size=2',
-    '-batch_size=64',
-    "-loss={'name': 'DiceLoss'}",
-    "-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}"
-]
-
-expected_items_complex_all_combin = [
-    {
-        'batch_size': 2,
-        'loss': {'name': 'DiceLoss'},
-        'scheduler': {'initial_lr': 0.001}
-    },
-    {
-        'batch_size': 2,
-        'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
-        'scheduler': {'initial_lr': 0.001}
-    },
-    {
-        'batch_size': 64,
-        'loss': {'name': 'DiceLoss'},
-        'scheduler': {'initial_lr': 0.001}
-    },
-    {
-        'batch_size': 64,
-        'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
-        'scheduler': {'initial_lr': 0.001}
-    }
-]
-
-expected_items_complex_multi_param = [
-    {
-        'batch_size': 2,
-        'loss': {'name': 'DiceLoss'},
-        'scheduler': {'initial_lr': 0.001}
-    },
-    {
-        'batch_size': 64,
-        'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
-        'scheduler': {'initial_lr': 0.001}
-    }
-]
-
-expected_names_complex_all_combin = [
-    "-batch_size=2-loss={'name': 'DiceLoss'}",
-    "-batch_size=2-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}",
-    "-batch_size=64-loss={'name': 'DiceLoss'}",
-    "-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}"
-]
-
-expected_names_complex_multi_param = [
-    "-batch_size=2-loss={'name': 'DiceLoss'}",
-    "-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}"
-]
-
-param_dict = {
-    'training_parameters': expected_items_complex_all_combin,
-    'default_model': expected_items_simple
+    'log_directory': './tmp/',
+    'gpu_ids': [1]
 }
 
 expected_config_list_all_combin = [
@@ -141,7 +34,9 @@ expected_config_list_all_combin = [
                           'bn_momentum': 0.9,
                           'depth': 2,
                           'is_2d': True},
-        'log_directory': "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=2"},
+        'gpu_ids': [2],
+        'log_directory': "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[2]"
+    },
     {
         'training_parameters': {
             'batch_size': 2,
@@ -153,16 +48,21 @@ expected_config_list_all_combin = [
                           'bn_momentum': 0.9,
                           'depth': 3,
                           'is_2d': True},
-        'log_directory': "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=3"},
-    {'training_parameters': {'batch_size': 2,
-                             'loss': {'name': 'DiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
+        'gpu_ids': [2],
+        'log_directory': "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=3-gpu_ids=[2]"
+    },
+    {
+        'training_parameters': {'batch_size': 2,
+                                'loss': {'name': 'DiceLoss'},
+                                'scheduler': {'initial_lr': 0.001}},
         'default_model': {'name': 'Unet',
                           'dropout_rate': 0.3,
                           'bn_momentum': 0.9,
                           'depth': 4,
                           'is_2d': True},
-        'log_directory': "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=4"},
+        'gpu_ids': [2],
+        'log_directory': "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=4-gpu_ids=[2]"
+    },
     {'training_parameters': {'batch_size': 2,
                              'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
                              'scheduler': {'initial_lr': 0.001}},
@@ -171,7 +71,9 @@ expected_config_list_all_combin = [
                           'bn_momentum': 0.9,
                           'depth': 2,
                           'is_2d': True},
-        'log_directory': "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=2"},
+        'gpu_ids': [2],
+        'log_directory': "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=2-gpu_ids=[2]"
+    },
     {'training_parameters': {'batch_size': 2,
                              'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
                              'scheduler': {'initial_lr': 0.001}},
@@ -180,7 +82,9 @@ expected_config_list_all_combin = [
                           'bn_momentum': 0.9,
                           'depth': 3,
                           'is_2d': True},
-        'log_directory': "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=3"},
+        'gpu_ids': [2],
+        'log_directory': "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=3-gpu_ids=[2]"
+    },
     {'training_parameters': {'batch_size': 2,
                              'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
                              'scheduler': {'initial_lr': 0.001}},
@@ -189,7 +93,9 @@ expected_config_list_all_combin = [
                           'bn_momentum': 0.9,
                           'depth': 4,
                           'is_2d': True},
-        'log_directory': "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=4"},
+        'gpu_ids': [2],
+        'log_directory': "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=4-gpu_ids=[2]"
+    },
     {'training_parameters': {'batch_size': 64,
                              'loss': {'name': 'DiceLoss'},
                              'scheduler': {'initial_lr': 0.001}},
@@ -198,7 +104,9 @@ expected_config_list_all_combin = [
                           'bn_momentum': 0.9,
                           'depth': 2,
                           'is_2d': True},
-        'log_directory': "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=2"},
+        'gpu_ids': [2],
+        'log_directory': "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[2]"
+    },
     {'training_parameters': {'batch_size': 64,
                              'loss': {'name': 'DiceLoss'},
                              'scheduler': {'initial_lr': 0.001}},
@@ -207,7 +115,9 @@ expected_config_list_all_combin = [
                           'bn_momentum': 0.9,
                           'depth': 3,
                           'is_2d': True},
-        'log_directory': "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=3"},
+        'gpu_ids': [2],
+        'log_directory': "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=3-gpu_ids=[2]"
+    },
     {'training_parameters': {'batch_size': 64,
                              'loss': {'name': 'DiceLoss'},
                              'scheduler': {'initial_lr': 0.001}},
@@ -216,7 +126,9 @@ expected_config_list_all_combin = [
                           'bn_momentum': 0.9,
                           'depth': 4,
                           'is_2d': True},
-        'log_directory': "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=4"},
+        'gpu_ids': [2],
+        'log_directory': "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=4-gpu_ids=[2]"
+    },
     {'training_parameters': {'batch_size': 64,
                              'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
                              'scheduler': {'initial_lr': 0.001}},
@@ -225,8 +137,11 @@ expected_config_list_all_combin = [
                           'bn_momentum': 0.9,
                           'depth': 2,
                           'is_2d': True},
-        'log_directory': "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=2"},
-    {'training_parameters': {'batch_size': 64,
+        'gpu_ids': [2],
+        'log_directory': "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=2-gpu_ids=[2]"
+    },
+    {
+        'training_parameters': {'batch_size': 64,
                              'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
                              'scheduler': {'initial_lr': 0.001}},
         'default_model': {'name': 'Unet',
@@ -234,7 +149,9 @@ expected_config_list_all_combin = [
                           'bn_momentum': 0.9,
                           'depth': 3,
                           'is_2d': True},
-        'log_directory': "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=3"},
+        'gpu_ids': [2],
+        'log_directory': "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=3-gpu_ids=[2]"
+    },
     {
         'training_parameters': {
             'batch_size': 64,
@@ -245,7 +162,153 @@ expected_config_list_all_combin = [
                           'bn_momentum': 0.9,
                           'depth': 4,
                           'is_2d': True},
-        'log_directory': "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=4"}
+        'gpu_ids': [2],
+        'log_directory': "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=4-gpu_ids=[2]"
+    },
+    {
+        'training_parameters': {'batch_size': 2,
+                                'loss': {'name': 'DiceLoss'},
+                                'scheduler': {'initial_lr': 0.001}},
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 2,
+                          'is_2d': True},
+        'gpu_ids': [5],
+        'log_directory': "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[5]"
+    },
+    {
+        'training_parameters': {
+            'batch_size': 2,
+            'loss': {'name': 'DiceLoss'},
+            'scheduler': {'initial_lr': 0.001}
+        },
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 3,
+                          'is_2d': True},
+        'gpu_ids': [5],
+        'log_directory': "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=3-gpu_ids=[5]"
+    },
+    {
+        'training_parameters': {'batch_size': 2,
+                                'loss': {'name': 'DiceLoss'},
+                                'scheduler': {'initial_lr': 0.001}},
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 4,
+                          'is_2d': True},
+        'gpu_ids': [5],
+        'log_directory': "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=4-gpu_ids=[5]"
+    },
+    {
+        'training_parameters': {'batch_size': 2,
+                                'loss': {'name': 'FocalLoss',
+                                         'params': {'gamma': 0.2, 'alpha': 0.5}},
+                                'scheduler': {'initial_lr': 0.001}},
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 2,
+                          'is_2d': True},
+        'gpu_ids': [5],
+        'log_directory': "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=2-gpu_ids=[5]"
+    },
+    {
+        'training_parameters': {'batch_size': 2,
+                                'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
+                                'scheduler': {'initial_lr': 0.001}},
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 3,
+                          'is_2d': True},
+        'gpu_ids': [5],
+        'log_directory': "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=3-gpu_ids=[5]"
+    },
+    {'training_parameters': {'batch_size': 2,
+                             'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
+                             'scheduler': {'initial_lr': 0.001}},
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 4,
+                          'is_2d': True},
+        'gpu_ids': [5],
+        'log_directory': "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=4-gpu_ids=[5]"
+    },
+    {'training_parameters': {'batch_size': 64,
+                             'loss': {'name': 'DiceLoss'},
+                             'scheduler': {'initial_lr': 0.001}},
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 2,
+                          'is_2d': True},
+        'gpu_ids': [5],
+        'log_directory': "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[5]"
+    },
+    {'training_parameters': {'batch_size': 64,
+                             'loss': {'name': 'DiceLoss'},
+                             'scheduler': {'initial_lr': 0.001}},
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 3,
+                          'is_2d': True},
+        'gpu_ids': [5],
+        'log_directory': "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=3-gpu_ids=[5]"
+    },
+    {'training_parameters': {'batch_size': 64,
+                             'loss': {'name': 'DiceLoss'},
+                             'scheduler': {'initial_lr': 0.001}},
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 4,
+                          'is_2d': True},
+        'gpu_ids': [5],
+        'log_directory': "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=4-gpu_ids=[5]"
+    },
+    {
+        'training_parameters': {'batch_size': 64,
+                                'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
+                                'scheduler': {'initial_lr': 0.001}},
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 2,
+                          'is_2d': True},
+        'gpu_ids': [5],
+        'log_directory': "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=2-gpu_ids=[5]"
+    },
+    {
+        'training_parameters': {'batch_size': 64,
+                             'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
+                             'scheduler': {'initial_lr': 0.001}},
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 3,
+                          'is_2d': True},
+        'gpu_ids': [5],
+        'log_directory': "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=3-gpu_ids=[5]"
+    },
+    {
+        'training_parameters': {
+            'batch_size': 64,
+            'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
+            'scheduler': {'initial_lr': 0.001}},
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 4,
+                          'is_2d': True},
+        'gpu_ids': [5],
+        'log_directory': "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=4-gpu_ids=[5]"
+    }
 ]
 
 
@@ -263,7 +326,8 @@ expected_config_list_neither = [
             'depth': 3,
             'is_2d': True
         },
-        'log_directory': './tmp/-batch_size=2'
+        'log_directory': './tmp/-batch_size=2',
+        'gpu_ids': [1]
     },
     {
         'training_parameters': {
@@ -278,18 +342,26 @@ expected_config_list_neither = [
             'depth': 3,
             'is_2d': True
         },
-        'log_directory': './tmp/-batch_size=64'
+        'log_directory': './tmp/-batch_size=64',
+        'gpu_ids': [1]
     },
 
-    {'training_parameters': {'batch_size': 18,
-                             'loss': {'name': 'DiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-     'default_model': {'name': 'Unet',
-                       'dropout_rate': 0.3,
-                       'bn_momentum': 0.9,
-                       'depth': 3,
-                       'is_2d': True},
-     'log_directory': "./tmp/-loss={'name': 'DiceLoss'}"},
+    {
+        'training_parameters': {
+            'batch_size': 18,
+            'loss': {'name': 'DiceLoss'},
+            'scheduler': {'initial_lr': 0.001}
+        },
+        'default_model': {
+            'name': 'Unet',
+            'dropout_rate': 0.3,
+            'bn_momentum': 0.9,
+            'depth': 3,
+            'is_2d': True
+            },
+        'log_directory': "./tmp/-loss={'name': 'DiceLoss'}",
+        'gpu_ids': [1]
+    },
     {'training_parameters': {'batch_size': 18,
                              'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
                              'scheduler': {'initial_lr': 0.001}},
@@ -298,7 +370,9 @@ expected_config_list_neither = [
                        'bn_momentum': 0.9,
                        'depth': 3,
                        'is_2d': True},
-     'log_directory': "./tmp/-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}"},
+     'log_directory': "./tmp/-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}",
+     'gpu_ids': [1]
+     },
     {'training_parameters': {'batch_size': 18,
                              'loss': {'name': 'DiceLoss'},
                              'scheduler': {'initial_lr': 0.001}},
@@ -307,16 +381,21 @@ expected_config_list_neither = [
                        'bn_momentum': 0.9,
                        'depth': 2,
                        'is_2d': True},
-     'log_directory': './tmp/-depth=2'},
-    {'training_parameters': {'batch_size': 18,
+     'log_directory': './tmp/-depth=2',
+     'gpu_ids': [1]
+     },
+    {
+        'training_parameters': {'batch_size': 18,
                              'loss': {'name': 'DiceLoss'},
                              'scheduler': {'initial_lr': 0.001}},
-     'default_model': {'name': 'Unet',
+        'default_model': {'name': 'Unet',
                        'dropout_rate': 0.3,
                        'bn_momentum': 0.9,
                        'depth': 3,
                        'is_2d': True},
-     'log_directory': './tmp/-depth=3'},
+        'log_directory': './tmp/-depth=3',
+        'gpu_ids': [1]
+    },
     {
         'training_parameters': {'batch_size': 18,
                                 'loss': {'name': 'DiceLoss'},
@@ -326,13 +405,11 @@ expected_config_list_neither = [
                           'bn_momentum': 0.9,
                           'depth': 4,
                           'is_2d': True},
-        'log_directory': './tmp/-depth=4'
-    }
-]
-
-expected_config_list_multi_param = [
+        'log_directory': './tmp/-depth=4',
+        'gpu_ids': [1]
+    },
     {
-        'training_parameters': {'batch_size': 2,
+        'training_parameters': {'batch_size': 18,
                                 'loss': {'name': 'DiceLoss'},
                                 'scheduler': {'initial_lr': 0.001}},
         'default_model': {'name': 'Unet',
@@ -340,8 +417,34 @@ expected_config_list_multi_param = [
                           'bn_momentum': 0.9,
                           'depth': 3,
                           'is_2d': True},
-        'log_directory': "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}"
+        'log_directory': './tmp/-gpu_ids=[2]',
+        'gpu_ids': [2]
     },
+    {
+        'training_parameters': {'batch_size': 18,
+                                'loss': {'name': 'DiceLoss'},
+                                'scheduler': {'initial_lr': 0.001}},
+        'default_model': {'name': 'Unet',
+                          'dropout_rate': 0.3,
+                          'bn_momentum': 0.9,
+                          'depth': 3,
+                          'is_2d': True},
+        'log_directory': './tmp/-gpu_ids=[5]',
+        'gpu_ids': [5]
+    }
+]
+
+expected_config_list_multi_param = [
+    {'training_parameters': {'batch_size': 2,
+                             'loss': {'name': 'DiceLoss'},
+                             'scheduler': {'initial_lr': 0.001}},
+     'default_model': {'name': 'Unet',
+                       'dropout_rate': 0.3,
+                       'bn_momentum': 0.9,
+                       'depth': 2,
+                       'is_2d': True},
+     'log_directory': "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[2]",
+     'gpu_ids': [2]},
     {'training_parameters': {'batch_size': 64,
                              'loss': {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}},
                              'scheduler': {'initial_lr': 0.001}},
@@ -350,34 +453,24 @@ expected_config_list_multi_param = [
                        'bn_momentum': 0.9,
                        'depth': 3,
                        'is_2d': True},
-     'log_directory': "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}"},
-    {'training_parameters': {'batch_size': 18,
-                             'loss': {'name': 'DiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-     'default_model': {'name': 'Unet',
-                       'dropout_rate': 0.3,
-                       'bn_momentum': 0.9,
-                       'depth': 2,
-                       'is_2d': True},
-     'log_directory': './tmp/-depth=2'},
-    {'training_parameters': {'batch_size': 18,
-                             'loss': {'name': 'DiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-     'default_model': {'name': 'Unet',
-                       'dropout_rate': 0.3,
-                       'bn_momentum': 0.9,
-                       'depth': 3,
-                       'is_2d': True},
-     'log_directory': './tmp/-depth=3'},
-    {'training_parameters': {'batch_size': 18,
-                             'loss': {'name': 'DiceLoss'},
-                             'scheduler': {'initial_lr': 0.001}},
-     'default_model': {'name': 'Unet',
-                       'dropout_rate': 0.3,
-                       'bn_momentum': 0.9,
-                       'depth': 4,
-                       'is_2d': True},
-     'log_directory': './tmp/-depth=4'}
+     "log_directory": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}-depth=3-gpu_ids=[5]",
+     'gpu_ids': [5]}
+
+]
+
+expected_param_list = [
+    HyperparameterOption('batch_size', {'training_parameters': {'batch_size': 2}}, 2),
+    HyperparameterOption('batch_size', {'training_parameters': {'batch_size': 64}}, 64),
+    HyperparameterOption('loss', {'training_parameters': {'loss': {'name': 'DiceLoss'}}},
+                         {'name': 'DiceLoss'}),
+    HyperparameterOption('loss', {'training_parameters': {'loss': {'name': 'FocalLoss',
+                                  'params': {'gamma': 0.2, 'alpha': 0.5}}}},
+                         {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}),
+    HyperparameterOption('depth', {'default_model': {'depth': 2}}, 2),
+    HyperparameterOption('depth', {'default_model': {'depth': 3}}, 3),
+    HyperparameterOption('depth', {'default_model': {'depth': 4}}, 4),
+    HyperparameterOption('gpu_ids', {'gpu_ids': [2]}, [2]),
+    HyperparameterOption('gpu_ids', {'gpu_ids': [5]}, [5])
 ]
 
 
@@ -385,150 +478,67 @@ def setup_function():
     create_tmp_dir()
 
 
-@pytest.mark.parametrize("category_init", [
+@pytest.mark.parametrize("config_hyper", [
     {
-        'name': 'Unet',
-        'dropout_rate': 0.3,
-        'bn_momentum': 0.9,
-        'depth': 3,
-        'is_2d': True}
-    ])
-@pytest.mark.parametrize("category_hyper", [{'depth': [2, 3, 4]}])
-@pytest.mark.parametrize(
-    "is_all_combin,multiple_params,expected_items,expected_names",
-    [
-        pytest.param(
-            True, True, expected_items_simple, expected_names_simple, id="is_all_combin_multi_param"
-        ),
-        pytest.param(
-            False, False, expected_items_simple, expected_names_simple, id="neither"
-        ),
-        pytest.param(
-            True, False, expected_items_simple, expected_names_simple, id="is_all_combin"
-        ),
-        pytest.param(
-            False, True, expected_items_simple, expected_names_simple, id="multi_param"
-        )
-    ]
-)
-def test_make_category_simple(category_init, category_hyper, is_all_combin, multiple_params,
-                              expected_items, expected_names):
-    items, names = make_category(category_init, category_hyper, is_all_combin,
-                                 multiple_params)
-    assert items == expected_items
-    assert names == expected_names
-
-
-@pytest.mark.parametrize("category_init", [
-    {
-        'batch_size': 18,
-        'loss': {'name': 'DiceLoss'},
-        'scheduler': {
-            'initial_lr': 0.001
-        }
-    }
-    ])
-@pytest.mark.parametrize("category_hyper", [
-    {
-        'batch_size': [2, 64],
-        'loss': [
-            {'name': 'DiceLoss'},
-            {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}
-         ]
+        'training_parameters': {
+            'batch_size': [2, 64],
+            'loss': [
+                {'name': 'DiceLoss'},
+                {'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}
+             ]
+        },
+        'default_model': {
+            'depth': [2, 3, 4]
+        },
+        'gpu_ids': [[2], [5]]
     }
 ])
 @pytest.mark.parametrize(
-    "is_all_combin,multiple_params,expected_items,expected_names",
+    "expected_param_list",
     [
         pytest.param(
-            True, True, expected_items_complex_all_combin,
-            expected_names_complex_all_combin, id="is_all_combin_multi_param"
-        ),
-        pytest.param(
-            False, False, expected_items_complex_neither,
-            expected_names_complex_neither, id="neither"
-        ),
-        pytest.param(
-            True, False, expected_items_complex_all_combin,
-            expected_names_complex_all_combin, id="is_all_combin"
-        ),
-        pytest.param(
-            False, True, expected_items_complex_multi_param,
-            expected_names_complex_multi_param, id="multi_param"
+            expected_param_list
         )
     ]
 )
-def test_make_category_complex(category_init, category_hyper, is_all_combin, multiple_params,
-                               expected_items, expected_names):
-    items, names = make_category(category_init, category_hyper, is_all_combin,
-                                 multiple_params)
-    assert items == expected_items
-    assert names == expected_names
+def test_get_param_list(config_hyper, expected_param_list):
+    param_list = get_param_list(config_hyper, [], [])
+    assert param_list == expected_param_list
 
 
 @pytest.mark.parametrize("initial_config", [initial_config])
 @pytest.mark.parametrize(
-    "is_all_combin,multiple_params,param_dict,names_dict,expected_config_list",
+    "all_combin,multiple_params,param_list,expected_config_list",
     [
         pytest.param(
-            True, True,
-            {
-                'training_parameters': expected_items_complex_all_combin,
-                'default_model': expected_items_simple
-            },
-            {
-                'training_parameters': expected_names_complex_all_combin,
-                'default_model': expected_names_simple
-            },
-            expected_config_list_all_combin,
-            id="is_all_combin_multi_param"
-        ),
-        pytest.param(
             False, False,
-            {
-                'training_parameters': expected_items_complex_neither,
-                'default_model': expected_items_simple
-            },
-            {
-                'training_parameters': expected_names_complex_neither,
-                'default_model': expected_names_simple
-            },
+            expected_param_list,
             expected_config_list_neither,
             id="neither"
         ),
         pytest.param(
             True, False,
-            {
-                'training_parameters': expected_items_complex_all_combin,
-                'default_model': expected_items_simple
-            },
-            {
-                'training_parameters': expected_names_complex_all_combin,
-                'default_model': expected_names_simple
-            },
+            expected_param_list,
             expected_config_list_all_combin,
-            id="is_all_combin"
+            id="all_combin"
         ),
         pytest.param(
             False, True,
-            {
-                'training_parameters': expected_items_complex_multi_param,
-                'default_model': expected_items_simple
-            },
-            {
-                'training_parameters': expected_names_complex_multi_param,
-                'default_model': expected_names_simple
-            },
+            expected_param_list,
             expected_config_list_multi_param,
             id="multi_param"
-        ),
+        )
     ]
 )
-def test_make_config_list(initial_config, is_all_combin, multiple_params, param_dict, names_dict,
+def test_make_config_list(initial_config, all_combin, multiple_params, param_list,
                           expected_config_list):
-    config_list = make_config_list(names_dict, param_dict, initial_config, is_all_combin,
-                                   multiple_params)
-    assert config_list == expected_config_list
+    config_list = make_config_list(param_list, initial_config, all_combin, multiple_params)
+    assert len(config_list) == len(expected_config_list)
+    for config_option in config_list:
+        print(config_option)
+        assert config_option in expected_config_list
+    for config_option in expected_config_list:
+        assert config_option in config_list
 
 
 def teardown_function():

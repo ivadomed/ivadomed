@@ -9,16 +9,19 @@
 
 import argparse
 import copy
+import itertools
 from functools import partial
 import json
 import logging
 import os
 import random
+import collections.abc
 import shutil
 import sys
 from itertools import product
 import joblib
 import pandas as pd
+import numpy as np
 import torch.multiprocessing as mp
 from ivadomed import main as ivado
 from ivadomed import config_manager as imed_config_manager
@@ -120,57 +123,6 @@ def test_worker(config):
     return config["log_directory"], test_dice, df_results
 
 
-def make_category(category_init, category_hyper, is_all_combin=False, multiple_params=False):
-    """
-    """
-    items = []
-    names = []
-    keys = list(category_hyper.keys())
-    values = list(category_hyper.values())
-
-    if is_all_combin:
-        for combination in product(*values):
-            new_item = copy.deepcopy(category_init)
-            name_str = ""
-            for i in range(len(keys)):
-                new_item[keys[i]] = combination[i]
-                name_str += create_name_str(keys[i], combination[i])
-
-            items.append(new_item)
-            names.append(name_str)
-    elif multiple_params:
-        value_len = set()
-        for value in values:
-            value_len.add(len(value))
-        if len(value_len) != 1:
-            raise ValueError("To use flag --multi-params or -m, all hyperparameter lists need to be the same size.")
-
-        for v_idx in range(len(values[0])):
-            name_str = ""
-            new_item = copy.deepcopy(category_init)
-            for k_idx, key in enumerate(keys):
-                new_item[key] = values[k_idx][v_idx]
-                name_str += create_name_str(key, values[k_idx][v_idx])
-
-            items.append(new_item)
-            names.append(name_str)
-    else:
-        for value_list, key in zip(values, keys):
-            for value in value_list:
-                new_item = copy.deepcopy(category_init)
-                new_item[key] = value
-                items.append(new_item)
-                # replace / by _ to avoid creating new paths
-                names.append(create_name_str(key, value))
-
-    return items, names
-
-
-def create_name_str(key, value):
-    name_str = "-" + str(key) + "=" + str(value).replace("/", "_")
-    return name_str
-
-
 def split_dataset(initial_config):
     train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_split(
         path_folder=initial_config["loader_parameters"]["bids_path"],
@@ -192,52 +144,11 @@ def split_dataset(initial_config):
     return initial_config
 
 
-def make_config_list(names_dict, param_dict, initial_config, all_combin, multiple_params):
+def make_config_list(param_list, initial_config, all_combin, multi_params):
     """Create a list of config dictionaries corresponding to different hyperparameters.
 
     Args:
-        names_dict (dict)(list)(str): A dictionary containing a list of names corresponding
-            to each category.
-
-            .. code-block:: JSON
-
-                {
-                    "training_parameters": [
-                        "-batch_size=2-loss={'name': 'DiceLoss'}",
-                        "-batch_size=64-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}"
-                    ],
-                    "default_model": ["-depth=2", "-depth=3", "-depth=4"]
-                }
-        param_dict (dict)(list)(dict): A dictionary containing a list of parameter dictionaries
-            corresponding to each category.
-
-            .. code-block:: JSON
-
-                {
-                    "training_parameters": [
-                        {
-                            "batch_size": 2,
-                            "loss": {"name": "DiceLoss"},
-                        },
-                        {
-                            "batch_size": 64,
-                            "loss": {"name": "FocalLoss", "params": {"gamma": 0.2, "alpha": 0.5}
-                        }
-                    ],
-                    "default_model": [
-                        {
-                            "name": "Unet",
-                            "depth": 2
-                        },
-                        {
-                            "name": "Unet",
-                            "depth": 3
-                        },
-                        {
-                            "name": "Unet",
-                            "depth": 4
-                        }
-                }
+        param_list (list)(HyperparameterOption): A list of the different hyperparameter options.
         initial_config (dict): The original config file, which we use as a basis from which
             to modify our hyperparameters.
 
@@ -261,57 +172,112 @@ def make_config_list(names_dict, param_dict, initial_config, all_combin, multipl
                     "log_directory": "./tmp/"
                 }
         all_combin (bool): If true, combine the hyperparameters combinatorically.
-        multiple_params (bool): This doesn't actually make a difference for this function, TODO:
-            figure that out.
+        multiple_params (bool): If true, combine the hyperparameters by index in the list, i.e.
+            all the first elements, then all the second elements, etc.
 
     """
     config_list = []
-    # Test all combinations (change multiple parameters for each test)
     if all_combin:
-
-        # Cartesian product (all combinations)
-        combinations = (dict(zip(param_dict.keys(), values))
-                        for values in product(*param_dict.values()))
-        names = list(product(*names_dict.values()))
-
-        for idx, combination in enumerate(combinations):
-
+        keys = set([hyper_option.base_key for hyper_option in param_list])
+        for combination in list(itertools.combinations(param_list, len(keys))):
+            if keys_are_unique(combination):
+                new_config = copy.deepcopy(initial_config)
+                log_dir = new_config['log_directory']
+                for hyper_option in combination:
+                    new_config = update_dict(new_config, hyper_option.option, hyper_option.base_key)
+                    log_dir = log_dir + hyper_option.name
+                new_config['log_directory'] = log_dir
+                config_list.append(new_config)
+    elif multi_params:
+        base_keys = get_base_keys(param_list)
+        base_key_dict = {key: [] for key in base_keys}
+        for hyper_option in param_list:
+            base_key_dict[hyper_option.base_key].append(hyper_option)
+        max_length = np.min([len(base_key_dict[base_key]) for base_key in base_key_dict.keys()])
+        for i in range(0, max_length):
             new_config = copy.deepcopy(initial_config)
-
-            for i, param in enumerate(combination):
-                value = combination[param]
-                new_config[param] = value
-                new_config["log_directory"] = new_config["log_directory"] + names[idx][i]
-
-            config_list.append(copy.deepcopy(new_config))
-
-    # Note: This code doesn't work, names is not defined
-    # elif multiple_params:
-    #     for config_idx in range(len(names)):
-    #         new_config = copy.deepcopy(initial_config)
-    #         config_name = ""
-    #         for param in param_dict:
-    #             new_config[param] = param_dict[param][config_idx]
-    #             config_name += names_dict[param][config_idx]
-    #         new_config["log_directory"] = initial_config["log_directory"] + config_name
-    #         config_list.append(copy.deepcopy(new_config))
-
-    # Change a single parameter for each test
+            log_dir = new_config['log_directory']
+            for key in base_key_dict.keys():
+                hyper_option = base_key_dict[key][i]
+                new_config = update_dict(new_config, hyper_option.option, hyper_option.base_key)
+                log_dir = log_dir + hyper_option.name
+            new_config['log_directory'] = log_dir
+            config_list.append(new_config)
     else:
-        for param in param_dict:
+        for hyper_option in param_list:
             new_config = copy.deepcopy(initial_config)
-            for value, name in zip(param_dict[param], names_dict[param]):
-                new_config[param] = value
-                new_config["log_directory"] = initial_config["log_directory"] + name
-                config_list.append(copy.deepcopy(new_config))
+            update_dict(new_config, hyper_option.option, hyper_option.base_key)
+            new_config['log_directory'] = initial_config["log_directory"] + hyper_option.name
+            config_list.append(new_config)
+
     return config_list
 
 
-def format_results(results_df, config_list, param_dict):
+class HyperparameterOption:
+    def __init__(self, base_key=None, option=None, base_option=None):
+        self.base_key = base_key
+        self.option = option
+        self.base_option = base_option
+        self.name = None
+        self.create_name_str()
+
+    def __eq__(self, other):
+        return self.base_key == other.base_key and self.option == other.option
+
+    def create_name_str(self):
+        self.name = "-" + str(self.base_key) + "=" + str(self.base_option).replace("/", "_")
+
+
+def get_param_list(my_dict, param_list, superkeys):
+    for key, value in my_dict.items():
+        if type(value) is list:
+            for element in value:
+                dict_prev = {key: element}
+                for superkey in reversed(superkeys):
+                    dict_new = {}
+                    dict_new[superkey] = dict_prev
+                if len(superkeys) == 0:
+                    dict_new = dict_prev
+                hyper_option = HyperparameterOption(base_key=key, option=dict_new,
+                                                    base_option=element)
+                param_list.append(hyper_option)
+        else:
+            param_list = get_param_list(value, param_list, superkeys + [key])
+    return param_list
+
+
+def update_dict(d, u, base_key):
+    for k, v in u.items():
+        if k == base_key:
+            d[k] = v
+        elif isinstance(v, collections.abc.Mapping):
+            d[k] = update_dict(d.get(k, {}), v, base_key)
+        else:
+            d[k] = v
+    return d
+
+
+def keys_are_unique(combination):
+    keys = [item.base_key for item in combination]
+    keys = set(keys)
+    return len(keys) == len(combination)
+
+
+def get_base_keys(param_list):
+    base_keys_all = [hyper_option.base_key for hyper_option in param_list]
+    base_keys = []
+    for base_key in base_keys_all:
+        if base_key not in base_keys:
+            base_keys.append(base_key)
+    return base_keys
+
+
+def format_results(results_df, config_list, param_list):
     """Merge config and results in a df."""
 
     config_df = pd.DataFrame.from_dict(config_list)
-    keep = list(param_dict.keys())
+    print(config_df)
+    keep = list(set([list(hyper_option.option.keys())[0] for hyper_option in param_list]))
     keep.append("log_directory")
     config_df = config_df[keep]
 
@@ -364,11 +330,14 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
             }
 
     Hyperparameter Config File:
-        The hyperparameter config file must have keys corresponding to the ``category`` keys in
-        the config file. Each ``category`` is a dictionary, containing ``key, list`` pairs.
-        The lists contain the different values we would like to try. So, in the example below,
-        we are going to try a ``batch_size`` of 2 and 64. How we implement this depends on 3
-        options: ``all_combin``, ``multi_param``, or the default.
+        The hyperparameter config file should have the same layout as the config file. To select
+        a hyperparameter you would like to vary, just list the different options under the
+        appropriate key, which we call the ``base_key``. In the example below, we want to vary the
+        ``batch_size``, ``loss``, and ``depth``; these are our 3 ``base_keys``. As you can see,
+        we have listed our different options for these keys. For ``batch_size``, we have listed
+        ``2`` and ``64`` as our different options.
+        How we implement this depends on 3 settings: ``all_combin``, ``multi_param``,
+        or the default.
 
         .. code-block:: JSON
 
@@ -469,11 +438,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
         .. code-block::
 
             batch_size = 2, loss = DiceLoss, depth = 2
-            batch_size = 64, loss = FocalLoss, depth = 2
-            batch_size = 2, loss = DiceLoss, depth = 3
             batch_size = 64, loss = FocalLoss, depth = 3
-            batch_size = 2, loss = DiceLoss, depth = 4
-            batch_size = 64, loss = FocalLoss, depth = 4
 
 
     Args:
@@ -507,33 +472,24 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
             applied, then all the second, etc.
         output_dir (str): Path to where the results will be saved.
     """
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    if not output_dir:
+        output_dir = ""
+
     # Load initial config
     initial_config = imed_config_manager.ConfigurationManager(file_config).get_config()
-
-    # Hyperparameters values to experiment
-    with open(file_config_hyper, "r") as fhandle:
-        config_hyper = json.load(fhandle)
-
-    param_dict, names_dict = {}, {}
-    for category_name, category_hyper in config_hyper.items():
-        assert category_name in initial_config
-        category_init = initial_config[category_name]
-        new_parameters, names = make_category(category_init, category_hyper, all_combin,
-                                              multiple_params)
-        param_dict[category_name] = new_parameters
-        names_dict[category_name] = names
 
     # Split dataset if not already done
     if fixed_split and (initial_config.get("split_path") is None):
         initial_config = split_dataset(initial_config)
 
-    config_list = make_config_list(names_dict, param_dict, initial_config, all_combin,
-                                   multiple_params)
+    # Hyperparameters values to experiment
+    with open(file_config_hyper, "r") as fhandle:
+        config_hyper = json.load(fhandle)
 
-    if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    if not output_dir:
-        output_dir = ""
+    param_list = get_param_list(config_hyper, [], [])
+    config_list = make_config_list(param_list, initial_config, all_combin, multiple_params)
 
     # CUDA problem when forking process
     # https://github.com/pytorch/pytorch/issues/2517
@@ -623,7 +579,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
             results_df.to_csv(os.path.join(output_dir, "temporary_results.csv"))
             eval_df.to_csv(os.path.join(output_dir, "average_eval.csv"))
 
-    results_df = format_results(results_df, config_list, param_dict)
+    results_df = format_results(results_df, config_list, param_list)
     results_df.to_csv(os.path.join(output_dir, "detailed_results.csv"))
 
     logging.info("Detailed results")
@@ -641,8 +597,8 @@ def main(args=None):
 
     thr_increment = args.thr_increment if args.thr_increment else None
 
-    automate_training(config=args.config,
-                      param=args.params,
+    automate_training(file_config=args.config,
+                      file_config_hyper=args.params,
                       fixed_split=bool(args.fixed_split),
                       all_combin=bool(args.all_combin),
                       n_iterations=int(args.n_iterations),
