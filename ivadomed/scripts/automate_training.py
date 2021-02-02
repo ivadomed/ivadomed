@@ -40,7 +40,7 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", required=True, help="Base config file path.",
                         metavar=imed_utils.Metavar.file)
-    parser.add_argument("-p", "--params", required=True,
+    parser.add_argument("-ch", "--config-hyper", dest="config_hyper", required=True,
                         help="JSON file where hyperparameters to experiment are listed.",
                         metavar=imed_utils.Metavar.file)
     parser.add_argument("-n", "--n-iterations", dest="n_iterations", default=1,
@@ -127,6 +127,31 @@ def test_worker(config):
 
 
 def split_dataset(initial_config):
+    """
+    Args:
+        initial_config (dict): The original config file, which we use as a basis from which
+            to modify our hyperparameters.
+
+            .. code-block:: JSON
+
+                {
+                    "training_parameters": {
+                        "batch_size": 18,
+                        "loss": {"name": "DiceLoss"},
+                        "scheduler": {
+                            "initial_lr": 0.001
+                        }
+                    },
+                    "default_model":     {
+                        "name": "Unet",
+                        "dropout_rate": 0.3,
+                        "bn_momentum": 0.9,
+                        "depth": 3,
+                        "is_2d": true
+                    },
+                    "log_directory": "./tmp/"
+                }
+    """
     train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_split(
         path_folder=initial_config["loader_parameters"]["bids_path"],
         center_test=initial_config["split_dataset"]["center_test"],
@@ -250,6 +275,58 @@ def get_param_list(my_dict, param_list, superkeys):
 
 
 def update_dict(d, u, base_key):
+    """Update a given dictionary recursively with a new sub-dictionary.
+
+    Example 1:
+
+    .. code-block:: python
+
+        d = {
+            'foo': {
+                'bar': 'some example text',
+                'baz': {'zag': 5}
+            }
+        }
+        u = {'foo': {'baz': {'zag': 7}}}
+        base_key = 'zag'
+
+    >>> print(update_dict(d, u, base_key))
+    {
+        'foo': {
+            'bar': 'some example text',
+            'baz': {'zag': 7}
+        }
+    }
+
+    Example 2:
+
+    .. code-block:: python
+
+        d = {
+            'foo': {
+                'bar': 'some example text',
+                'baz': {'zag': 5}
+            }
+        }
+        u = {'foo': {'baz': {'zag': 7}}}
+        base_key = 'foo'
+
+    >>> print(update_dict(d, u, base_key))
+    {
+        'foo': {
+            'baz': {'zag': 7}
+        }
+    }
+
+    Args:
+        d (dict): A dictionary to update.
+        u (dict): A subdictionary to update the original one with.
+        base_key (str): the string indicating which level to update.
+
+    Returns:
+        dict: An updated dictionary.
+
+    """
     for k, v in u.items():
         if k == base_key:
             d[k] = v
@@ -301,7 +378,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
     Results are collected for each combination and reported into a dataframe to allow their
     comparison. The script efficiently allocates each training to one of the available GPUs.
 
-    Usage example::
+    Usage Example::
 
         ivadomed_automate_training -c config.json -p config_hyper.json -n n_iterations
 
@@ -309,6 +386,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
        :file: ../../images/detailed_results.csv
 
     Config File:
+
         The config file is the standard config file used in ``ivadomed`` functions. We use this
         as the basis. We call a key of this config file a ``category``. In the example below,
         we would say that ``training_parameters``, ``default_model``, and ``log_directory`` are
@@ -329,16 +407,18 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
                     "dropout_rate": 0.3,
                     "depth": 3
                 },
+                "model_name": "seg_tumor_t2",
                 "log_directory": "./tmp/"
             }
 
     Hyperparameter Config File:
+
         The hyperparameter config file should have the same layout as the config file. To select
         a hyperparameter you would like to vary, just list the different options under the
         appropriate key, which we call the ``base_key``. In the example below, we want to vary the
-        ``batch_size``, ``loss``, and ``depth``; these are our 3 ``base_keys``. As you can see,
-        we have listed our different options for these keys. For ``batch_size``, we have listed
-        ``2`` and ``64`` as our different options.
+        ``loss``, ``depth``, and ``model_name``; these are our 3 ``base_keys``. As you can see,
+        we have listed our different options for these keys. For ``depth``, we have listed
+        ``2``, ``3``, and ``4`` as our different options.
         How we implement this depends on 3 settings: ``all_combin``, ``multi_param``,
         or the default.
 
@@ -346,16 +426,17 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
 
             {
               "training_parameters": {
-                "batch_size": [2, 64],
                 "loss": [
                   {"name": "DiceLoss"},
                   {"name": "FocalLoss", "params": {"gamma": 0.2, "alpha" : 0.5}}
                 ],
               },
-              "default_model": {"depth": [2, 3, 4]}
+              "default_model": {"depth": [2, 3, 4]},
+              "model_name": ["seg_sc_t2star", "find_disc_t1"]
             }
 
     Default:
+
         The default option is to change only one parameter at a time relative to the base
         config file. We then create a list of config options, called ``config_list``.
         Using the examples above, we would have 2 + 2 + 3 = 7 different config options:
@@ -363,36 +444,6 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
         .. code-block:: python
 
             config_list = [
-                {
-                    "training_parameters": {
-                        "batch_size": 2,
-                        "loss": {"name": "DiceLoss"},
-                        "scheduler": {
-                            "initial_lr": 0.001
-                        }
-                    },
-                    "default_model":     {
-                        "name": "Unet",
-                        "dropout_rate": 0.3,
-                        "depth": 3
-                    },
-                    "log_directory": "./tmp/"
-                },
-                {
-                    "training_parameters": {
-                        "batch_size": 64,
-                        "loss": {"name": "DiceLoss"},
-                        "scheduler": {
-                            "initial_lr": 0.001
-                        }
-                    },
-                    "default_model":     {
-                        "name": "Unet",
-                        "dropout_rate": 0.3,
-                        "depth": 3
-                    },
-                    "log_directory": "./tmp/"
-                },
                 {
                     "training_parameters": {
                         "batch_size": 18,
@@ -406,42 +457,77 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
                         "dropout_rate": 0.3,
                         "depth": 3
                     },
-                    "log_directory": "./tmp/"
+                    "model_name": "seg_tumor_t2",
+                    "log_directory": "./tmp/-loss={'name': 'DiceLoss'}"
+                },
+                {
+                    "training_parameters": {
+                        "batch_size": 18,
+                        "loss": {"name": "FocalLoss", "params": {"gamma": 0.2, "alpha": 0.5}},
+                        "scheduler": {
+                            "initial_lr": 0.001
+                        }
+                    },
+                    "default_model":     {
+                        "name": "Unet",
+                        "dropout_rate": 0.3,
+                        "depth": 3
+                    },
+                    "model_name": "seg_tumor_t2",
+                    "log_directory": "./tmp/-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}"
+                },
+                {
+                    "training_parameters": {
+                        "batch_size": 18,
+                        "loss": {"name": "DiceLoss"},
+                        "scheduler": {
+                            "initial_lr": 0.001
+                        }
+                    },
+                    "default_model":     {
+                        "name": "Unet",
+                        "dropout_rate": 0.3,
+                        "depth": 2
+                    },
+                    "model_name": "seg_tumor_t2",
+                    "log_directory": "./tmp/-depth=2"
                 },
                 # etc ...
             ]
 
 
     All Combinations:
+
         If we select the ``all_combin`` option, we will create a list of configuration options
-        combinatorically. Using the config examples above, we would have 2 * 2 * 3 = 12 different
-        config options. I'm not going to write out the whole ``config_list`` because it's
+        combinatorically. Using the config examples above, we would have ``2 * 3 * 2 = 12``
+        different config options. I'm not going to write out the whole ``config_list`` because it's
         quite long, but here are the combinations:
 
         .. code-block::
 
-            batch_size = 2, loss = DiceLoss, depth = 2
-            batch_size = 2, loss = FocalLoss, depth = 2
-            batch_size = 2, loss = DiceLoss, depth = 3
-            batch_size = 2, loss = FocalLoss, depth = 3
-            batch_size = 2, loss = DiceLoss, depth = 4
-            batch_size = 2, loss = FocalLoss, depth = 4
-            batch_size = 64, loss = DiceLoss, depth = 2
-            batch_size = 64, loss = FocalLoss, depth = 2
-            batch_size = 64, loss = DiceLoss, depth = 3
-            batch_size = 64, loss = FocalLoss, depth = 3
-            batch_size = 64, loss = DiceLoss, depth = 4
-            batch_size = 64, loss = FocalLoss, depth = 4
+            loss = DiceLoss, depth = 2, model_name = "seg_sc_t2star"
+            loss = FocalLoss, depth = 2, model_name = "seg_sc_t2star"
+            loss = DiceLoss, depth = 3, model_name = "seg_sc_t2star"
+            loss = FocalLoss, depth = 3, model_name = "seg_sc_t2star"
+            loss = DiceLoss, depth = 4, model_name = "seg_sc_t2star"
+            loss = FocalLoss, depth = 4, model_name = "seg_sc_t2star"
+            loss = DiceLoss, depth = 2, model_name = "find_disc_t1"
+            loss = FocalLoss, depth = 2, model_name = "find_disc_t1"
+            loss = DiceLoss, depth = 3, model_name = "find_disc_t1"
+            loss = FocalLoss, depth = 3, model_name = "find_disc_t1"
+            loss = DiceLoss, depth = 4, model_name = "find_disc_t1"
+            loss = FocalLoss, depth = 4, model_name = "find_disc_t1"
 
     Multiple Parameters:
         The ``multi_params`` option entails changing all the first elements from the list,
-        then all the second parameters from the list, etc. This requires the parameter lists
-        within a ``category`` to be the same length. In our example above:
+        then all the second parameters from the list, etc. If the lists are different lengths,
+        we will just use the first ``n`` elements. In our example above, the lists are of length
+        2 or 3, so we will only use the first 2 elements:
 
         .. code-block::
 
-            batch_size = 2, loss = DiceLoss, depth = 2
-            batch_size = 64, loss = FocalLoss, depth = 3
+            loss = DiceLoss, depth = 2, model_name = "seg_sc_t2star"
+            loss = FocalLoss, depth = 3, model_name = "find_disc_t1"
 
 
     Args:
@@ -601,7 +687,7 @@ def main(args=None):
     thr_increment = args.thr_increment if args.thr_increment else None
 
     automate_training(file_config=args.config,
-                      file_config_hyper=args.params,
+                      file_config_hyper=args.config_hyper,
                       fixed_split=bool(args.fixed_split),
                       all_combin=bool(args.all_combin),
                       n_iterations=int(args.n_iterations),

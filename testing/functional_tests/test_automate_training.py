@@ -11,13 +11,13 @@ def setup_function():
 
 @pytest.mark.script_launch_mode('subprocess')
 def test_automate_training(script_runner):
-    config_file = os.path.join(__data_testing_dir__, 'automate_training_config.json')
-    param_file = os.path.join(__data_testing_dir__,
-                              'automate_training_hyperparameter_opt.json')
+    file_config = os.path.join(__data_testing_dir__, 'automate_training_config.json')
+    file_config_hyper = os.path.join(__data_testing_dir__,
+                                     'automate_training_hyperparameter_opt.json')
     __output_dir__ = os.path.join(__tmp_dir__, 'results')
 
-    ret = script_runner.run('ivadomed_automate_training', '--config', f'{config_file}',
-                            '--params', f'{param_file}',
+    ret = script_runner.run('ivadomed_automate_training', '--config', f'{file_config}',
+                            '--config-hyper', f'{file_config_hyper}',
                             '--output_dir', f'{__output_dir__}')
     print(f"{ret.stdout}")
     print(f"{ret.stderr}")
@@ -29,13 +29,13 @@ def test_automate_training(script_runner):
 
 @pytest.mark.script_launch_mode('subprocess')
 def test_automate_training_run_test(script_runner):
-    config_file = os.path.join(__data_testing_dir__, 'automate_training_config.json')
-    param_file = os.path.join(__data_testing_dir__,
-                              'automate_training_hyperparameter_opt.json')
+    file_config = os.path.join(__data_testing_dir__, 'automate_training_config.json')
+    file_config_hyper = os.path.join(__data_testing_dir__,
+                                     'automate_training_hyperparameter_opt.json')
     __output_dir__ = os.path.join(__tmp_dir__, 'results')
 
-    ret = script_runner.run('ivadomed_automate_training', '--config', f'{config_file}',
-                            '--params', f'{param_file}',
+    ret = script_runner.run('ivadomed_automate_training', '--config', f'{file_config}',
+                            '--config-hyper', f'{file_config_hyper}',
                             '--output_dir', f'{__output_dir__}',
                             '--run-test')
     print(f"{ret.stdout}")
