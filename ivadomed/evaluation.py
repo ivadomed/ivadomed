@@ -136,10 +136,10 @@ class Evaluation3DMetrics(object):
         self.postprocessing_dict = {}
         self.size_min = 0
 
-        if "targetSize" in params:
+        if "target_size" in params:
             self.size_rng_lst, self.size_suffix_lst = \
-                self._get_size_ranges(thr_lst=params["targetSize"]["thr"],
-                                      unit=params["targetSize"]["unit"])
+                self._get_size_ranges(thr_lst=params["target_size"]["thr"],
+                                      unit=params["target_size"]["unit"])
             self.label_size_lst = []
             self.data_gt_per_size = np.zeros(self.data_gt.shape)
             self.data_pred_per_size = np.zeros(self.data_gt.shape)

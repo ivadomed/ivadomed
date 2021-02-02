@@ -5,11 +5,11 @@ from torch.utils.data import DataLoader
 
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
-from t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 0
+GPU_ID = 0
 BATCH_SIZE = 1
 
 
@@ -49,7 +49,7 @@ def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_
     if "ROICrop" in transforms_dict and roi_params["suffix"] is None:
         return
 
-    cuda_available, device = imed_utils.define_device(GPU_NUMBER)
+    cuda_available, device = imed_utils.define_device(GPU_ID)
 
     loader_params = {
         "transforms_params": transforms_dict,

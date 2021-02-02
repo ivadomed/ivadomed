@@ -4,7 +4,7 @@ import json
 import pytest
 import numpy as np
 from ivadomed.loader import utils as imed_loader_utils
-from t_utils import remove_tmp_dir, create_tmp_dir,  __tmp_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __tmp_dir__
 
 BIDS_PATH = os.path.join(__tmp_dir__, 'bids')
 LOG_PATH = os.path.join(__tmp_dir__, 'log')
