@@ -508,7 +508,7 @@ def test_get_param_list(config_hyper, expected_param_list):
 
 @pytest.mark.parametrize("initial_config", [initial_config])
 @pytest.mark.parametrize(
-    "all_combin,multiple_params,param_list,expected_config_list",
+    "all_combin,multi_params,param_list,expected_config_list",
     [
         pytest.param(
             False, False,
@@ -530,9 +530,9 @@ def test_get_param_list(config_hyper, expected_param_list):
         )
     ]
 )
-def test_make_config_list(initial_config, all_combin, multiple_params, param_list,
+def test_make_config_list(initial_config, all_combin, multi_params, param_list,
                           expected_config_list):
-    config_list = make_config_list(param_list, initial_config, all_combin, multiple_params)
+    config_list = make_config_list(param_list, initial_config, all_combin, multi_params)
     assert len(config_list) == len(expected_config_list)
     for config_option in config_list:
         print(config_option)

@@ -1,11 +1,15 @@
 #!/usr/bin/env python
-##############################################################
-#
-# This script enables training and comparison of models on multiple GPUs.
-#
-# Usage: python scripts/automate_training.py -c path/to/config.json -p path/to/config_hyper.json -n number_of_iterations --all-combin
-#
-##############################################################
+"""
+This script enables training and comparison of models on multiple GPUs.
+
+Usage:
+
+```
+python scripts/automate_training.py -c path/to/config.json -p path/to/config_hyper.json \
+-n number_of_iterations --all-combin
+```
+
+"""
 
 import argparse
 import copy
@@ -18,7 +22,6 @@ import random
 import collections.abc
 import shutil
 import sys
-from itertools import product
 import joblib
 import pandas as pd
 import numpy as np
@@ -172,7 +175,7 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
                     "log_directory": "./tmp/"
                 }
         all_combin (bool): If true, combine the hyperparameters combinatorically.
-        multiple_params (bool): If true, combine the hyperparameters by index in the list, i.e.
+        multi_params (bool): If true, combine the hyperparameters by index in the list, i.e.
             all the first elements, then all the second elements, etc.
 
     """
@@ -288,7 +291,7 @@ def format_results(results_df, config_list, param_list):
 
 
 def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n_iterations=1,
-                      run_test=False, all_logs=False, thr_increment=None, multiple_params=False,
+                      run_test=False, all_logs=False, thr_increment=None, multi_params=False,
                       output_dir=None):
     """Automate multiple training processes on multiple GPUs.
 
@@ -467,7 +470,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
             using the trained model and the validation sub-dataset to find the optimal binarization
             threshold. The specified value indicates the increment between 0 and 1 used during the
             ROC analysis (e.g. 0.1). Flag: ``-t``, ``--thr-increment``
-        multiple_params (bool): If True, more than one parameter will be change at the time from
+        multi_params (bool): If True, more than one parameter will be change at the time from
             the hyperparameters. All the first elements from the hyperparameters list will be
             applied, then all the second, etc.
         output_dir (str): Path to where the results will be saved.
@@ -489,7 +492,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
         config_hyper = json.load(fhandle)
 
     param_list = get_param_list(config_hyper, [], [])
-    config_list = make_config_list(param_list, initial_config, all_combin, multiple_params)
+    config_list = make_config_list(param_list, initial_config, all_combin, multi_params)
 
     # CUDA problem when forking process
     # https://github.com/pytorch/pytorch/issues/2517
@@ -605,7 +608,7 @@ def main(args=None):
                       run_test=bool(args.run_test),
                       all_logs=args.all_logs,
                       thr_increment=thr_increment,
-                      multiple_params=bool(args.multi_params),
+                      multi_params=bool(args.multi_params),
                       output_dir=args.output_dir
                       )
 
