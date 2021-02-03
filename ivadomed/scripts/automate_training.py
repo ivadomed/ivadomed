@@ -137,18 +137,14 @@ def split_dataset(initial_config):
                 {
                     "training_parameters": {
                         "batch_size": 18,
-                        "loss": {"name": "DiceLoss"},
-                        "scheduler": {
-                            "initial_lr": 0.001
-                        }
+                        "loss": {"name": "DiceLoss"}
                     },
                     "default_model":     {
                         "name": "Unet",
                         "dropout_rate": 0.3,
-                        "bn_momentum": 0.9,
-                        "depth": 3,
-                        "is_2d": true
+                        "depth": 3
                     },
+                    "model_name": "seg_tumor_t2",
                     "log_directory": "./tmp/"
                 }
     """
@@ -185,23 +181,54 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
                 {
                     "training_parameters": {
                         "batch_size": 18,
-                        "loss": {"name": "DiceLoss"},
-                        "scheduler": {
-                            "initial_lr": 0.001
-                        }
+                        "loss": {"name": "DiceLoss"}
                     },
                     "default_model":     {
                         "name": "Unet",
                         "dropout_rate": 0.3,
-                        "bn_momentum": 0.9,
-                        "depth": 3,
-                        "is_2d": true
+                        "depth": 3
                     },
+                    "model_name": "seg_tumor_t2",
                     "log_directory": "./tmp/"
                 }
         all_combin (bool): If true, combine the hyperparameters combinatorically.
         multi_params (bool): If true, combine the hyperparameters by index in the list, i.e.
             all the first elements, then all the second elements, etc.
+
+    Returns:
+        list, dict: A list of configuration dictionaries, modified by the hyperparameters.
+
+        .. code-block:: python
+
+            config_list = [
+                {
+                    "training_parameters": {
+                        "batch_size": 18,
+                        "loss": {"name": "DiceLoss"}
+                    },
+                    "default_model":     {
+                        "name": "Unet",
+                        "dropout_rate": 0.3,
+                        "depth": 3
+                    },
+                    "model_name": "seg_tumor_t2",
+                    "log_directory": "./tmp/-loss={'name': 'DiceLoss'}"
+                },
+                {
+                    "training_parameters": {
+                        "batch_size": 18,
+                        "loss": {"name": "FocalLoss", "gamma": 0.2, "alpha": 0.5}
+                    },
+                    "default_model":     {
+                        "name": "Unet",
+                        "dropout_rate": 0.3,
+                        "depth": 3
+                    },
+                    "model_name": "seg_tumor_t2",
+                    "log_directory": "./tmp/-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}"
+                },
+                # etc...
+            ]
 
     """
     config_list = []
@@ -257,6 +284,13 @@ class HyperparameterOption:
 
 
 def get_param_list(my_dict, param_list, superkeys):
+    """Recursively create the list of hyperparameter options.
+
+    Args:
+        my_dict (dict): A dictionary of parameters.
+        param_list (list)(HyperparameterOption): A list of HyperparameterOption objects.
+        superkeys (list)(str): TODO
+    """
     for key, value in my_dict.items():
         if type(value) is list:
             for element in value:
@@ -397,10 +431,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
             {
                 "training_parameters": {
                     "batch_size": 18,
-                    "loss": {"name": "DiceLoss"},
-                    "scheduler": {
-                        "initial_lr": 0.001
-                    }
+                    "loss": {"name": "DiceLoss"}
                 },
                 "default_model":     {
                     "name": "Unet",
@@ -428,7 +459,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
               "training_parameters": {
                 "loss": [
                   {"name": "DiceLoss"},
-                  {"name": "FocalLoss", "params": {"gamma": 0.2, "alpha" : 0.5}}
+                  {"name": "FocalLoss", "gamma": 0.2, "alpha" : 0.5}
                 ],
               },
               "default_model": {"depth": [2, 3, 4]},
@@ -439,7 +470,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
 
         The default option is to change only one parameter at a time relative to the base
         config file. We then create a list of config options, called ``config_list``.
-        Using the examples above, we would have 2 + 2 + 3 = 7 different config options:
+        Using the examples above, we would have ``2 + 2 + 3 = 7`` different config options:
 
         .. code-block:: python
 
@@ -447,10 +478,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
                 {
                     "training_parameters": {
                         "batch_size": 18,
-                        "loss": {"name": "DiceLoss"},
-                        "scheduler": {
-                            "initial_lr": 0.001
-                        }
+                        "loss": {"name": "DiceLoss"}
                     },
                     "default_model":     {
                         "name": "Unet",
@@ -463,10 +491,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
                 {
                     "training_parameters": {
                         "batch_size": 18,
-                        "loss": {"name": "FocalLoss", "params": {"gamma": 0.2, "alpha": 0.5}},
-                        "scheduler": {
-                            "initial_lr": 0.001
-                        }
+                        "loss": {"name": "FocalLoss", "gamma": 0.2, "alpha": 0.5}
                     },
                     "default_model":     {
                         "name": "Unet",
@@ -474,15 +499,12 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
                         "depth": 3
                     },
                     "model_name": "seg_tumor_t2",
-                    "log_directory": "./tmp/-loss={'name': 'FocalLoss', 'params': {'gamma': 0.2, 'alpha': 0.5}}"
+                    "log_directory": "./tmp/-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}"
                 },
                 {
                     "training_parameters": {
                         "batch_size": 18,
-                        "loss": {"name": "DiceLoss"},
-                        "scheduler": {
-                            "initial_lr": 0.001
-                        }
+                        "loss": {"name": "DiceLoss"}
                     },
                     "default_model":     {
                         "name": "Unet",
@@ -519,6 +541,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
             loss = FocalLoss, depth = 4, model_name = "find_disc_t1"
 
     Multiple Parameters:
+
         The ``multi_params`` option entails changing all the first elements from the list,
         then all the second parameters from the list, etc. If the lists are different lengths,
         we will just use the first ``n`` elements. In our example above, the lists are of length
@@ -537,7 +560,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
             Flag: ``--config``, ``-c``
         file_config_hyper (string): json file containing parameters configurations to compare.
             Parameter "keys" of this file need to match the parameter "keys" of `config` file.
-            Parameter "values" are in a list. Flag: ``--param``, ``-p``
+            Parameter "values" are in a list. Flag: ``--config-hyper``, ``-ch``
 
             Example::
 
