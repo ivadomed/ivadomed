@@ -25,7 +25,8 @@ def setup_function():
         "testing": [],
         "balance": {}
     }}])
-def test_bids_df_microscopy_png(loader_parameters):
+@pytest.mark.parametrize('log_directory', [os.path.join(__data_testing_dir__, "microscopy_png", "log_directory")])
+def test_bids_df_microscopy_png(loader_parameters, log_directory):
     """
     Test for microscopy png file format
     Test for _sessions.tsv and _scans.tsv files
@@ -37,7 +38,8 @@ def test_bids_df_microscopy_png(loader_parameters):
     loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
     bids_path = loader_params["bids_path"]
     derivatives = True
-    df_test = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
+    bids_df = imed_loader_utils.BidsDataframe(loader_params, derivatives, log_directory)
+    df_test = bids_df.df
     df_test = df_test.drop(columns=['path', 'parent_path'])
     # TODO: modify df_ref.csv file in data-testing dataset to include "participant_id"
     # "sample_id" and "ivadomed_id" columns, then delete next line
@@ -63,7 +65,8 @@ def test_bids_df_microscopy_png(loader_parameters):
         "testing": [],
         "balance": {}
     }}])
-def test_bids_df_anat(loader_parameters):
+@pytest.mark.parametrize('log_directory', [os.path.join(__data_testing_dir__, "log_directory")])
+def test_bids_df_anat(loader_parameters, log_directory):
     """
     Test for MRI anat nii.gz file format
     Test for when no file extensions are provided
@@ -75,7 +78,8 @@ def test_bids_df_anat(loader_parameters):
     loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
     bids_path = loader_params["bids_path"]
     derivatives = True
-    df_test = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
+    bids_df = imed_loader_utils.BidsDataframe(loader_params, derivatives, log_directory)
+    df_test = bids_df.df
     df_test = df_test.drop(columns=['path', 'parent_path'])
     # TODO: modify df_ref.csv file in data-testing dataset to include "participant_id"
     # and "ivadomed_id" columns then delete next line

@@ -33,11 +33,17 @@ loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_param
 # {"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}
 derivatives = True
 
-# CREATE DATAFRAME
-df = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
+# CREATE LOG DIRECTORY
+log_directory = context["log_directory"]
+if not os.path.isdir(log_directory):
+    print('Creating log directory: {}'.format(log_directory))
+    os.makedirs(log_directory)
+else:
+    print('Log directory already exists: {}'.format(log_directory))
 
-# COPY DATAFRAME TO TEST get_subdatasets_subjects_list_new FUNCTION (BELOW)
-df2 = df
+# CREATE BIDSDataframe OBJECT
+bids_df = imed_loader_utils.BidsDataframe(loader_params, derivatives, log_directory)
+df = bids_df.df
 
 # DROP "path" AND "parent_path" COLUMNS AND SORT BY FILENAME FOR TESTING PURPOSES WITH data-testing
 df = df.drop(columns=['path', 'parent_path'])
@@ -48,17 +54,9 @@ path_csv = "test_df_new_loader.csv"
 df.to_csv(path_csv, index=False)
 print(df)
 
-# CREATE LOG DIRECTORY
-log_directory = context["log_directory"]
-if not os.path.isdir(log_directory):
-    print('Creating log directory: {}'.format(log_directory))
-    os.makedirs(log_directory)
-else:
-    print('Log directory already exists: {}'.format(log_directory))
-
 # SPLIT TRAIN/VALID/TEST (with "new" functions)
 train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list_new(context["split_dataset"],
-                                                                                     df2,
+                                                                                     bids_df.df,
                                                                                      log_directory,
                                                                                      context["loader_parameters"]
                                                                                      ['subject_selection'])

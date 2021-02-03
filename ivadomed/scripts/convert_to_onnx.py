@@ -5,13 +5,16 @@ from ivadomed import utils as imed_utils
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--model", dest="model", required=True, type=str, help="Path to .pt model.")
+    parser.add_argument("-m", "--model", dest="model", required=True, type=str,
+                        help="Path to .pt model.", metavar=imed_utils.Metavar.file)
     parser.add_argument("-d", "--dimension", dest="dimension", required=True,
-                        type=int, help="Input dimension (2 for 2D inputs, 3 for 3D inputs).")
+                        type=int, help="Input dimension (2 for 2D inputs, 3 for 3D inputs).",
+                        metavar=imed_utils.Metavar.int)
     parser.add_argument("-n", "--n_channels", dest="n_channels", default=1, type=int,
-                        help="Number of input channels of the model.")
+                        help="Number of input channels of the model.",
+                        metavar=imed_utils.Metavar.int)
     parser.add_argument("-g", "--gpu_id", dest="gpu_id", default=0, type=str,
-                        help="GPU ID to use, if available.")
+                        help="GPU number if available.", metavar=imed_utils.Metavar.int)
     return parser
 
 
