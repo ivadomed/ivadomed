@@ -217,3 +217,68 @@ def get_film_metadata_models(ds_train, metadata_type, debugging=False):
                                                        True)
 
     return ds_train, train_onehotencoder, metadata_clustering_models
+
+
+def store_film_params(gammas, betas, metadata_values, metadata, model, film_layers, depth, film_metadata):
+    """Store FiLM params.
+
+    Args:
+        gammas (dict):
+        betas (dict):
+        metadata_values (list): list of the batch sample's metadata values (e.g., T2w, astrocytoma)
+        metadata (list):
+        model (nn.Module):
+        film_layers (list):
+        depth (int):
+        film_metadata (str): Metadata of interest used to modulate the network (e.g., contrast, tumor_type).
+
+    Returns:
+        dict, dict: gammas, betas
+    """
+    new_input = [metadata[k][0][film_metadata] for k in range(len(metadata))]
+    metadata_values.append(new_input)
+    # Fill the lists of gammas and betas
+    for idx in [i for i, x in enumerate(film_layers) if x]:
+        if idx < depth:
+            layer_cur = model.encoder.down_path[idx * 3 + 1]
+        elif idx == depth:
+            layer_cur = model.encoder.film_bottom
+        elif idx == depth * 2 + 1:
+            layer_cur = model.decoder.last_film
+        else:
+            layer_cur = model.decoder.up_path[(idx - depth - 1) * 2 + 1]
+
+        gammas[idx + 1].append(layer_cur.gammas[:, :, 0, 0].cpu().numpy())
+        betas[idx + 1].append(layer_cur.betas[:, :, 0, 0].cpu().numpy())
+    return gammas, betas, metadata_values
+
+
+def save_film_params(gammas, betas, metadata_values, depth, ofolder):
+    """Save FiLM params as npy files.
+
+    These parameters can be further used for visualisation purposes. They are saved in the `ofolder` with `.npy` format.
+
+    Args:
+        gammas (dict):
+        betas (dict):
+        metadata_values (list): list of the batch sample's metadata values (eg T2w, T1w, if metadata type used is
+        contrast)
+        depth (int):
+        ofolder (str):
+
+    """
+    # Convert list of gammas/betas into numpy arrays
+    gammas_dict = {i: np.array(gammas[i]) for i in range(1, 2 * depth + 3)}
+    betas_dict = {i: np.array(betas[i]) for i in range(1, 2 * depth + 3)}
+
+    # Save the numpy arrays for gammas/betas inside files.npy in log_directory
+    for i in range(1, 2 * depth + 3):
+        gamma_layer_path = os.path.join(ofolder, "gamma_layer_{}.npy".format(i))
+        np.save(gamma_layer_path, gammas_dict[i])
+        beta_layer_path = os.path.join(ofolder, "beta_layer_{}.npy".format(i))
+        np.save(beta_layer_path, betas_dict[i])
+
+    # Convert into numpy and save the metadata_values of all batch images
+    metadata_values = np.array(metadata_values)
+    contrast_path = os.path.join(ofolder, "metadata_values.npy")
+    np.save(contrast_path, metadata_values)
