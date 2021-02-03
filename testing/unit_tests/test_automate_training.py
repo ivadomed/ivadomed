@@ -205,7 +205,7 @@ expected_config_list_all_combin = [
     },
     {
         'training_parameters': {'batch_size': 2,
-                                'loss': {'name': 'FocalLoss' 'gamma': 0.2, 'alpha': 0.5},
+                                'loss': {'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5},
                                 'scheduler': {'initial_lr': 0.001}},
         'default_model': {'name': 'Unet',
                           'dropout_rate': 0.3,
