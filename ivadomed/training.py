@@ -114,12 +114,6 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                                                     num_epochs)
     print("\nScheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
 
-    # Create dict containing gammas and betas after each FiLM layer.
-    if 'film_layers' in model_params and any(model_params['film_layers']):
-        gammas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
-        betas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
-        metadata_values_lst = []
-
     # Resume
     start_epoch = 1
     resume_path = os.path.join(log_directory, "checkpoint.pth.tar")
@@ -266,17 +260,6 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                     imed_visualize.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
                                                         is_three_dim=not model_params['is_2d'])
 
-                last_epoch = epoch == num_epochs or \
-                             (patience_count + 1) >= training_params["training_time"]["early_stopping_patience"]
-                if 'film_layers' in model_params and any(model_params['film_layers']) and debugging and last_epoch:
-                    # Store the values of gammas and betas after the last epoch for each batch
-                    gammas_dict, betas_dict, metadata_values_lst = store_film_params(gammas_dict, betas_dict,
-                                                                                     metadata_values_lst,
-                                                                                     batch['input_metadata'], model,
-                                                                                     model_params["film_layers"],
-                                                                                     model_params["depth"],
-                                                                                     model_params['metadata'])
-
             # METRICS COMPUTATION FOR CURRENT EPOCH
             val_loss_total_avg_old = val_loss_total_avg if epoch > 1 else None
             metrics_dict = metric_mgr.get_results()
@@ -328,8 +311,6 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     # Save final model
     final_model_path = os.path.join(log_directory, "final_model.pt")
     torch.save(model, final_model_path)
-    if 'film_layers' in model_params and any(model_params['film_layers']) and debugging:
-        save_film_params(gammas_dict, betas_dict, metadata_values_lst, model_params["depth"], log_directory)
 
     # Save best model in log directory
     if os.path.isfile(resume_path):
@@ -460,71 +441,6 @@ def get_metadata(metadata, model_params):
     else:
         return [model_params["film_onehotencoder"].transform([metadata[k][0]['film_input']]).tolist()[0]
                 for k in range(len(metadata))]
-
-
-def store_film_params(gammas, betas, metadata_values, metadata, model, film_layers, depth, film_metadata):
-    """Store FiLM params.
-
-    Args:
-        gammas (dict):
-        betas (dict):
-        metadata_values (list): list of the batch sample's metadata values (e.g., T2w, astrocytoma)
-        metadata (list):
-        model (nn.Module):
-        film_layers (list):
-        depth (int):
-        film_metadata (str): Metadata of interest used to modulate the network (e.g., contrast, tumor_type).
-
-    Returns:
-        dict, dict: gammas, betas
-    """
-    new_input = [metadata[k][0][film_metadata] for k in range(len(metadata))]
-    metadata_values.append(new_input)
-    # Fill the lists of gammas and betas
-    for idx in [i for i, x in enumerate(film_layers) if x]:
-        if idx < depth:
-            layer_cur = model.encoder.down_path[idx * 3 + 1]
-        elif idx == depth:
-            layer_cur = model.encoder.film_bottom
-        elif idx == depth * 2 + 1:
-            layer_cur = model.decoder.last_film
-        else:
-            layer_cur = model.decoder.up_path[(idx - depth - 1) * 2 + 1]
-
-        gammas[idx + 1].append(layer_cur.gammas[:, :, 0, 0].cpu().numpy())
-        betas[idx + 1].append(layer_cur.betas[:, :, 0, 0].cpu().numpy())
-    return gammas, betas, metadata_values
-
-
-def save_film_params(gammas, betas, metadata_values, depth, ofolder):
-    """Save FiLM params as npy files.
-
-    These parameters can be further used for visualisation purposes. They are saved in the `ofolder` with `.npy` format.
-
-    Args:
-        gammas (dict):
-        betas (dict):
-        metadata_values (list): list of the batch sample's metadata values (eg T2w, T1w, if metadata type used is
-        contrast)
-        depth (int):
-        ofolder (str):
-
-    """
-    # Convert list of gammas/betas into numpy arrays
-    gammas_dict = {i: np.array(gammas[i]) for i in range(1, 2 * depth + 3)}
-    betas_dict = {i: np.array(betas[i]) for i in range(1, 2 * depth + 3)}
-
-    # Save the numpy arrays for gammas/betas inside files.npy in log_directory
-    for i in range(1, 2 * depth + 3):
-        gamma_layer_path = os.path.join(ofolder, "gamma_layer_{}.npy".format(i))
-        np.save(gamma_layer_path, gammas_dict[i])
-        beta_layer_path = os.path.join(ofolder, "beta_layer_{}.npy".format(i))
-        np.save(beta_layer_path, betas_dict[i])
-
-    # Convert into numpy and save the metadata_values of all batch images
-    metadata_values = np.array(metadata_values)
-    contrast_path = os.path.join(ofolder, "metadata_values.npy")
-    np.save(contrast_path, metadata_values)
 
 
 def load_checkpoint(model, optimizer, gif_dict, scheduler, fname):
