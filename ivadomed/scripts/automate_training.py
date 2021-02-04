@@ -32,11 +32,14 @@ logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config", required=True, help="Base config file path.")
+    parser.add_argument("-c", "--config", required=True, help="Base config file path.",
+                        metavar=imed_utils.Metavar.file)
     parser.add_argument("-p", "--params", required=True,
-                        help="JSON file where hyperparameters to experiment are listed.")
+                        help="JSON file where hyperparameters to experiment are listed.",
+                        metavar=imed_utils.Metavar.file)
     parser.add_argument("-n", "--n-iterations", dest="n_iterations", default=1,
-                        type=int, help="Number of times to run each config.")
+                        type=int, help="Number of times to run each config.",
+                        metavar=imed_utils.Metavar.int)
     parser.add_argument("--all-combin", dest='all_combin', action='store_true',
                         help="To run all combinations of config"),
     parser.add_argument("-m", "--multi-params", dest="multi_params", action='store_true',
@@ -48,11 +51,11 @@ def get_parser():
     parser.add_argument("-l", "--all-logs", dest="all_logs", action='store_true',
                         help="Keep all log directories for each iteration.")
     parser.add_argument('-t', '--thr-increment', dest="thr_increment", required=False, type=float,
-                        help="""A threshold analysis is performed at the end of the training
-                                using the trained model and the validation sub-dataset to find
-                                the optimal binarization threshold. The specified value indicates
-                                the increment between 0 and 1 used during the analysis
-                                (e.g. 0.1).""")
+                        help="""A threshold analysis is performed at the end of the training using
+                                the trained model and the validation sub-dataset to find the optimal
+                                binarization threshold. The specified value indicates the increment
+                                between 0 and 1 used during the analysis (e.g. 0.1).""",
+                        metavar=imed_utils.Metavar.float)
     parser.add_argument("-o", "--output_dir", required=False,
                         help="Output Folder.")
 
