@@ -171,7 +171,9 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
             data_class_obj_mc = []
             for i_mc in range(len(fname_lst)):
                 # Get index of the structure of interest in the MC sample labeled
-                i_mc_label = np.max(data_hard_labeled_class_obj * mc_dict["mc_labeled"][i_mc][i_class])
+                i_mc_labels, i_mc_counts = np.unique(data_hard_labeled_class_obj * mc_dict["mc_labeled"][i_mc][i_class],
+                                                     return_counts=True)
+                i_mc_label = i_mc_labels[np.argmax(i_mc_counts[1:]) + 1] if len(i_mc_counts) > 1 else 0
 
                 data_tmp = np.zeros(mc_dict["mc_data"][i_mc][i_class].shape)
                 # If i_mc_label is zero, it means the structure is not present in this mc_sample
