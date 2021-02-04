@@ -21,7 +21,7 @@ from ivadomed.postprocessing import threshold_predictions
 cudnn.benchmark = True
 
 
-def test(model_params, dataset_test, testing_params, log_directory, device, cuda_available=True,
+def test(model_params, dataset_test, testing_params, path_output, device, cuda_available=True,
          metric_fns=None, postprocessing=None):
     """Main command to test the network.
 
@@ -29,7 +29,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
         model_params (dict): Model's parameters.
         dataset_test (imed_loader): Testing dataset.
         testing_params (dict): Testing parameters.
-        log_directory (str): Folder where predictions are saved.
+        path_output (str): Folder where predictions are saved.
         device (torch.device): Indicates the CPU or GPU ID.
         cuda_available (bool): If True, CUDA is available.
         metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
@@ -45,7 +45,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
                              num_workers=0)
 
     # LOAD TRAIN MODEL
-    fname_model = os.path.join(log_directory, "best_model.pt")
+    fname_model = os.path.join(path_output, "best_model.pt")
     print('\nLoading model: {}'.format(fname_model))
     model = torch.load(fname_model, map_location=device)
     if cuda_available:
@@ -53,7 +53,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
     model.eval()
 
     # CREATE OUTPUT FOLDER
-    path_3Dpred = os.path.join(log_directory, 'pred_masks')
+    path_3Dpred = os.path.join(path_output, 'pred_masks')
     if not os.path.isdir(path_3Dpred):
         os.makedirs(path_3Dpred)
 

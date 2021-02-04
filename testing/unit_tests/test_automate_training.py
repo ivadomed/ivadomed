@@ -18,7 +18,7 @@ For testing, we are using the initial ``config``:
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "log_directory": "./tmp/",
+        "path_output": "./tmp/",
         "gpu_ids": [1]
     }
 
@@ -106,7 +106,7 @@ initial_config = {
         "dropout_rate": 0.3,
         "depth": 3
     },
-    "log_directory": "./tmp/",
+    "path_output": "./tmp/",
     "gpu_ids": [1]
 }
 
@@ -123,7 +123,7 @@ expected_config_list_all_combin = [
             "depth": 2
         },
         "gpu_ids": [2],
-        "log_directory": "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[2]"
+        "path_output": "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[2]"
     },
     {
         "training_parameters": {
@@ -137,7 +137,7 @@ expected_config_list_all_combin = [
             "depth": 3
         },
         "gpu_ids": [2],
-        "log_directory": "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=3-gpu_ids=[2]"
+        "path_output": "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=3-gpu_ids=[2]"
     },
     {
         "training_parameters": {
@@ -151,7 +151,7 @@ expected_config_list_all_combin = [
             "depth": 4
         },
         "gpu_ids": [2],
-        "log_directory": "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=4-gpu_ids=[2]"
+        "path_output": "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=4-gpu_ids=[2]"
     },
     {
         "training_parameters": {
@@ -165,7 +165,7 @@ expected_config_list_all_combin = [
             "depth": 2
         },
         "gpu_ids": [2],
-        "log_directory": "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=2-gpu_ids=[2]"
+        "path_output": "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=2-gpu_ids=[2]"
     },
     {
         "training_parameters": {
@@ -179,7 +179,7 @@ expected_config_list_all_combin = [
             "depth": 3
         },
         "gpu_ids": [2],
-        "log_directory": "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=3-gpu_ids=[2]"
+        "path_output": "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=3-gpu_ids=[2]"
     },
     {
         "training_parameters": {
@@ -193,7 +193,7 @@ expected_config_list_all_combin = [
             "depth": 4
         },
         "gpu_ids": [2],
-        "log_directory": "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=4-gpu_ids=[2]"
+        "path_output": "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=4-gpu_ids=[2]"
     },
     {
         "training_parameters": {
@@ -207,7 +207,7 @@ expected_config_list_all_combin = [
             "depth": 2
         },
         "gpu_ids": [2],
-        "log_directory": "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[2]"
+        "path_output": "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[2]"
     },
     {
         "training_parameters": {
@@ -221,7 +221,7 @@ expected_config_list_all_combin = [
             "depth": 3
         },
         "gpu_ids": [2],
-        "log_directory": "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=3-gpu_ids=[2]"
+        "path_output": "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=3-gpu_ids=[2]"
     },
     {
         "training_parameters": {
@@ -235,7 +235,7 @@ expected_config_list_all_combin = [
             "depth": 4
         },
         "gpu_ids": [2],
-        "log_directory": "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=4-gpu_ids=[2]"
+        "path_output": "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=4-gpu_ids=[2]"
     },
     {
         "training_parameters": {
@@ -249,7 +249,7 @@ expected_config_list_all_combin = [
             "depth": 2
         },
         "gpu_ids": [2],
-        "log_directory": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=2-gpu_ids=[2]"
+        "path_output": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=2-gpu_ids=[2]"
     },
     {
         "training_parameters": {
@@ -263,7 +263,7 @@ expected_config_list_all_combin = [
             "depth": 3
         },
         "gpu_ids": [2],
-        "log_directory": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=3-gpu_ids=[2]"
+        "path_output": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=3-gpu_ids=[2]"
     },
     {
         "training_parameters": {
@@ -277,7 +277,7 @@ expected_config_list_all_combin = [
             "depth": 4
         },
         "gpu_ids": [2],
-        "log_directory": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=4-gpu_ids=[2]"
+        "path_output": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=4-gpu_ids=[2]"
     },
     {
         "training_parameters": {
@@ -291,7 +291,7 @@ expected_config_list_all_combin = [
             "depth": 2
         },
         "gpu_ids": [5],
-        "log_directory": "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[5]"
+        "path_output": "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[5]"
     },
     {
         "training_parameters": {
@@ -305,7 +305,7 @@ expected_config_list_all_combin = [
             "depth": 3
         },
         "gpu_ids": [5],
-        "log_directory": "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=3-gpu_ids=[5]"
+        "path_output": "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=3-gpu_ids=[5]"
     },
     {
         "training_parameters": {
@@ -319,7 +319,7 @@ expected_config_list_all_combin = [
             "depth": 4
         },
         "gpu_ids": [5],
-        "log_directory": "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=4-gpu_ids=[5]"
+        "path_output": "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=4-gpu_ids=[5]"
     },
     {
         "training_parameters": {
@@ -333,7 +333,7 @@ expected_config_list_all_combin = [
             "depth": 2
         },
         "gpu_ids": [5],
-        "log_directory": "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=2-gpu_ids=[5]"
+        "path_output": "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=2-gpu_ids=[5]"
     },
     {
         "training_parameters": {
@@ -347,7 +347,7 @@ expected_config_list_all_combin = [
             "depth": 3
         },
         "gpu_ids": [5],
-        "log_directory": "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=3-gpu_ids=[5]"
+        "path_output": "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=3-gpu_ids=[5]"
     },
     {
         "training_parameters": {
@@ -361,7 +361,7 @@ expected_config_list_all_combin = [
             "depth": 4
         },
         "gpu_ids": [5],
-        "log_directory": "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=4-gpu_ids=[5]"
+        "path_output": "./tmp/-batch_size=2-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=4-gpu_ids=[5]"
     },
     {
         "training_parameters": {
@@ -375,7 +375,7 @@ expected_config_list_all_combin = [
             "depth": 2
         },
         "gpu_ids": [5],
-        "log_directory": "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[5]"
+        "path_output": "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[5]"
     },
     {
         "training_parameters": {
@@ -389,7 +389,7 @@ expected_config_list_all_combin = [
             "depth": 3
         },
         "gpu_ids": [5],
-        "log_directory": "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=3-gpu_ids=[5]"
+        "path_output": "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=3-gpu_ids=[5]"
     },
     {
         "training_parameters": {
@@ -403,7 +403,7 @@ expected_config_list_all_combin = [
             "depth": 4
         },
         "gpu_ids": [5],
-        "log_directory": "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=4-gpu_ids=[5]"
+        "path_output": "./tmp/-batch_size=64-loss={'name': 'DiceLoss'}-depth=4-gpu_ids=[5]"
     },
     {
         "training_parameters": {
@@ -417,7 +417,7 @@ expected_config_list_all_combin = [
             "depth": 2
         },
         "gpu_ids": [5],
-        "log_directory": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=2-gpu_ids=[5]"
+        "path_output": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=2-gpu_ids=[5]"
     },
     {
         "training_parameters": {
@@ -431,7 +431,7 @@ expected_config_list_all_combin = [
             "depth": 3
         },
         "gpu_ids": [5],
-        "log_directory": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=3-gpu_ids=[5]"
+        "path_output": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=3-gpu_ids=[5]"
     },
     {
         "training_parameters": {
@@ -445,7 +445,7 @@ expected_config_list_all_combin = [
             "depth": 4
         },
         "gpu_ids": [5],
-        "log_directory": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=4-gpu_ids=[5]"
+        "path_output": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=4-gpu_ids=[5]"
     }
 ]
 
@@ -462,7 +462,7 @@ expected_config_list_neither = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "log_directory": "./tmp/-batch_size=2",
+        "path_output": "./tmp/-batch_size=2",
         "gpu_ids": [1]
     },
     {
@@ -476,7 +476,7 @@ expected_config_list_neither = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "log_directory": "./tmp/-batch_size=64",
+        "path_output": "./tmp/-batch_size=64",
         "gpu_ids": [1]
     },
 
@@ -491,7 +491,7 @@ expected_config_list_neither = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "log_directory": "./tmp/-loss={'name': 'DiceLoss'}",
+        "path_output": "./tmp/-loss={'name': 'DiceLoss'}",
         "gpu_ids": [1]
     },
     {
@@ -505,7 +505,7 @@ expected_config_list_neither = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "log_directory": "./tmp/-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}",
+        "path_output": "./tmp/-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}",
         "gpu_ids": [1]
      },
     {
@@ -519,7 +519,7 @@ expected_config_list_neither = [
             "dropout_rate": 0.3,
             "depth": 2
         },
-        "log_directory": "./tmp/-depth=2",
+        "path_output": "./tmp/-depth=2",
         "gpu_ids": [1]
     },
     {
@@ -533,7 +533,7 @@ expected_config_list_neither = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "log_directory": "./tmp/-depth=3",
+        "path_output": "./tmp/-depth=3",
         "gpu_ids": [1]
     },
     {
@@ -547,7 +547,7 @@ expected_config_list_neither = [
             "dropout_rate": 0.3,
             "depth": 4
         },
-        "log_directory": "./tmp/-depth=4",
+        "path_output": "./tmp/-depth=4",
         "gpu_ids": [1]
     },
     {
@@ -561,7 +561,7 @@ expected_config_list_neither = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "log_directory": "./tmp/-gpu_ids=[2]",
+        "path_output": "./tmp/-gpu_ids=[2]",
         "gpu_ids": [2]
     },
     {
@@ -575,7 +575,7 @@ expected_config_list_neither = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "log_directory": "./tmp/-gpu_ids=[5]",
+        "path_output": "./tmp/-gpu_ids=[5]",
         "gpu_ids": [5]
     }
 ]
@@ -592,7 +592,7 @@ expected_config_list_multi_params = [
             "dropout_rate": 0.3,
             "depth": 2
         },
-        "log_directory": "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[2]",
+        "path_output": "./tmp/-batch_size=2-loss={'name': 'DiceLoss'}-depth=2-gpu_ids=[2]",
         "gpu_ids": [2]
     },
     {
@@ -606,7 +606,7 @@ expected_config_list_multi_params = [
             "dropout_rate": 0.3,
             "depth": 3
         },
-        "log_directory": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=3-gpu_ids=[5]",
+        "path_output": "./tmp/-batch_size=64-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}-depth=3-gpu_ids=[5]",
         "gpu_ids": [5]
     }
 ]

@@ -43,6 +43,8 @@ def get_parser():
     parser.add_argument("-ch", "--config-hyper", dest="config_hyper", required=True,
                         help="JSON file where hyperparameters to experiment are listed.",
                         metavar=imed_utils.Metavar.file)
+    parser.add_argument("-pd", "--path-data", required=False, help="Path to BIDS data.",
+                        metavar=imed_utils.Metavar.int)
     parser.add_argument("-n", "--n-iterations", dest="n_iterations", default=1,
                         type=int, help="Number of times to run each config.",
                         metavar=imed_utils.Metavar.int)
@@ -87,6 +89,7 @@ def train_worker(config, thr_incr):
     # Call ivado cmd_train
     try:
         # Save best validation score
+        config["command"] = "train"
         best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = \
             ivado.run_command(config, thr_increment=thr_incr)
 
@@ -95,11 +98,11 @@ def train_worker(config, thr_incr):
         logging.info("Unexpected error:", sys.exc_info()[0])
         raise
 
-    # Save config file in log directory
-    config_copy = open(config["log_directory"] + "/config_file.json", "w")
+    # Save config file in output path
+    config_copy = open(config["path_output"] + "/config_file.json", "w")
     json.dump(config, config_copy, indent=4)
 
-    return config["log_directory"], best_training_dice, best_training_loss, best_validation_dice, \
+    return config["path_output"], best_training_dice, best_training_loss, best_validation_dice, \
         best_validation_loss
 
 
@@ -123,7 +126,7 @@ def test_worker(config):
         logging.info("Unexpected error:", sys.exc_info()[0])
         raise
 
-    return config["log_directory"], test_dice, df_results
+    return config["path_output"], test_dice, df_results
 
 
 def split_dataset(initial_config):
@@ -145,17 +148,17 @@ def split_dataset(initial_config):
                         "depth": 3
                     },
                     "model_name": "seg_tumor_t2",
-                    "log_directory": "./tmp/"
+                    "path_output": "./tmp/"
                 }
     """
     train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_split(
-        path_folder=initial_config["loader_parameters"]["bids_path"],
+        path_folder=initial_config["loader_parameters"]["path_data"],
         center_test=initial_config["split_dataset"]["center_test"],
         split_method=initial_config["split_dataset"]["method"],
         random_seed=initial_config["split_dataset"]["random_seed"],
         train_frac=initial_config["split_dataset"]["train_fraction"],
         test_frac=initial_config["split_dataset"]["test_fraction"],
-        log_directory="./",
+        path_output="./",
         balance=initial_config["split_dataset"]['balance'] \
         if 'balance' in initial_config["split_dataset"] else None
     )
@@ -189,7 +192,7 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
                         "depth": 3
                     },
                     "model_name": "seg_tumor_t2",
-                    "log_directory": "./tmp/"
+                    "path_output": "./tmp/"
                 }
         all_combin (bool): If true, combine the hyperparameters combinatorically.
         multi_params (bool): If true, combine the hyperparameters by index in the list, i.e.
@@ -212,7 +215,7 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
                         "depth": 3
                     },
                     "model_name": "seg_tumor_t2",
-                    "log_directory": "./tmp/-loss={'name': 'DiceLoss'}"
+                    "path_output": "./tmp/-loss={'name': 'DiceLoss'}"
                 },
                 {
                     "training_parameters": {
@@ -225,7 +228,7 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
                         "depth": 3
                     },
                     "model_name": "seg_tumor_t2",
-                    "log_directory": "./tmp/-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}"
+                    "path_output": "./tmp/-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}"
                 },
                 # etc...
             ]
@@ -237,11 +240,11 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
         for combination in list(itertools.combinations(param_list, len(keys))):
             if keys_are_unique(combination):
                 new_config = copy.deepcopy(initial_config)
-                log_dir = new_config['log_directory']
+                path_output = new_config["path_output"]
                 for hyper_option in combination:
                     new_config = update_dict(new_config, hyper_option.option, hyper_option.base_key)
-                    log_dir = log_dir + hyper_option.name
-                new_config['log_directory'] = log_dir
+                    path_output = path_output + hyper_option.name
+                new_config["path_output"] = path_output
                 config_list.append(new_config)
     elif multi_params:
         base_keys = get_base_keys(param_list)
@@ -251,18 +254,18 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
         max_length = np.min([len(base_key_dict[base_key]) for base_key in base_key_dict.keys()])
         for i in range(0, max_length):
             new_config = copy.deepcopy(initial_config)
-            log_dir = new_config['log_directory']
+            path_output = new_config["path_output"]
             for key in base_key_dict.keys():
                 hyper_option = base_key_dict[key][i]
                 new_config = update_dict(new_config, hyper_option.option, hyper_option.base_key)
-                log_dir = log_dir + hyper_option.name
-            new_config['log_directory'] = log_dir
+                path_output = path_output + hyper_option.name
+            new_config["path_output"] = path_output
             config_list.append(new_config)
     else:
         for hyper_option in param_list:
             new_config = copy.deepcopy(initial_config)
             update_dict(new_config, hyper_option.option, hyper_option.base_key)
-            new_config['log_directory'] = initial_config["log_directory"] + hyper_option.name
+            new_config["path_output"] = initial_config["path_output"] + hyper_option.name
             config_list.append(new_config)
 
     return config_list
@@ -408,20 +411,19 @@ def format_results(results_df, config_list, param_list):
     """Merge config and results in a df."""
 
     config_df = pd.DataFrame.from_dict(config_list)
-    print(config_df)
     keep = list(set([list(hyper_option.option.keys())[0] for hyper_option in param_list]))
-    keep.append("log_directory")
+    keep.append("path_output")
     config_df = config_df[keep]
 
-    results_df = config_df.set_index('log_directory').join(results_df.set_index('log_directory'))
+    results_df = config_df.set_index('path_output').join(results_df.set_index('path_output'))
     results_df = results_df.reset_index()
     results_df = results_df.sort_values(by=['best_validation_loss'])
     return results_df
 
 
-def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n_iterations=1,
-                      run_test=False, all_logs=False, thr_increment=None, multi_params=False,
-                      output_dir=None):
+def automate_training(file_config, file_config_hyper, fixed_split, all_combin, path_data=None,
+                      n_iterations=1, run_test=False, all_logs=False, thr_increment=None,
+                      multi_params=False, output_dir=None):
     """Automate multiple training processes on multiple GPUs.
 
     Hyperparameter optimization of models is tedious and time-consuming. This function automatizes
@@ -441,7 +443,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
 
         The config file is the standard config file used in ``ivadomed`` functions. We use this
         as the basis. We call a key of this config file a ``category``. In the example below,
-        we would say that ``training_parameters``, ``default_model``, and ``log_directory`` are
+        we would say that ``training_parameters``, ``default_model``, and ``path_output`` are
         ``categories``.
 
         .. code-block:: JSON
@@ -457,7 +459,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
                     "depth": 3
                 },
                 "model_name": "seg_tumor_t2",
-                "log_directory": "./tmp/"
+                "path_output": "./tmp/"
             }
 
     Hyperparameter Config File:
@@ -504,7 +506,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
                         "depth": 3
                     },
                     "model_name": "seg_tumor_t2",
-                    "log_directory": "./tmp/-loss={'name': 'DiceLoss'}"
+                    "path_output": "./tmp/-loss={'name': 'DiceLoss'}"
                 },
                 {
                     "training_parameters": {
@@ -517,7 +519,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
                         "depth": 3
                     },
                     "model_name": "seg_tumor_t2",
-                    "log_directory": "./tmp/-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}"
+                    "path_output": "./tmp/-loss={'name': 'FocalLoss', 'gamma': 0.2, 'alpha': 0.5}"
                 },
                 {
                     "training_parameters": {
@@ -530,7 +532,7 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
                         "depth": 2
                     },
                     "model_name": "seg_tumor_t2",
-                    "log_directory": "./tmp/-depth=2"
+                    "path_output": "./tmp/-depth=2"
                 },
                 # etc ...
             ]
@@ -610,6 +612,9 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
     # Load initial config
     initial_config = imed_config_manager.ConfigurationManager(file_config).get_config()
 
+    if path_data is not None:
+        initial_config["loader_parameters"]["path_data"] = path_data
+
     # Split dataset if not already done
     if fixed_split and (initial_config.get("split_path") is None):
         initial_config = split_dataset(initial_config)
@@ -641,30 +646,30 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
                     config["split_dataset"]["random_seed"] = seed
                     if all_logs:
                         if i:
-                            config["log_directory"] = config["log_directory"].replace("_n=" + str(i - 1).zfill(2),
+                            config["path_output"] = config["path_output"].replace("_n=" + str(i - 1).zfill(2),
                                                                                       "_n=" + str(i).zfill(2))
                         else:
-                            config["log_directory"] += "_n=" + str(i).zfill(2)
+                            config["path_output"] += "_n=" + str(i).zfill(2)
 
                 validation_scores = pool.map(partial(train_worker, thr_incr=thr_increment), config_list)
 
             val_df = pd.DataFrame(validation_scores, columns=[
-                'log_directory', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
+                'path_output', 'best_training_dice', 'best_training_loss', 'best_validation_dice',
                 'best_validation_loss'])
 
             if run_test:
                 new_config_list = []
                 for config in config_list:
                     # Delete path_pred
-                    path_pred = os.path.join(config['log_directory'], 'pred_masks')
+                    path_pred = os.path.join(config['path_output'], 'pred_masks')
                     if os.path.isdir(path_pred) and n_iterations > 1:
                         try:
                             shutil.rmtree(path_pred)
                         except OSError as e:
                             logging.info("Error: %s - %s." % (e.filename, e.strerror))
 
-                    # Take the config file within the log_directory because binarize_prediction may have been updated
-                    json_path = os.path.join(config['log_directory'], 'config_file.json')
+                    # Take the config file within the path_output because binarize_prediction may have been updated
+                    json_path = os.path.join(config['path_output'], 'config_file.json')
                     new_config = imed_config_manager.ConfigurationManager(json_path).get_config()
                     new_config["gpu_ids"] = config["gpu_ids"]
                     new_config_list.append(new_config)
@@ -698,8 +703,8 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, n
                 # Init or add eval results to dataframe
                 eval_df = pd.concat(df_lst, sort=False, axis=1)
 
-                test_df = pd.DataFrame(test_results, columns=['log_directory', 'test_dice'])
-                combined_df = val_df.set_index('log_directory').join(test_df.set_index('log_directory'))
+                test_df = pd.DataFrame(test_results, columns=['path_output', 'test_dice'])
+                combined_df = val_df.set_index('path_output').join(test_df.set_index('path_output'))
                 combined_df = combined_df.reset_index()
 
             else:
@@ -731,6 +736,7 @@ def main(args=None):
                       file_config_hyper=args.config_hyper,
                       fixed_split=bool(args.fixed_split),
                       all_combin=bool(args.all_combin),
+                      path_data=args.path_data if args.path_data is not None else None,
                       n_iterations=int(args.n_iterations),
                       run_test=bool(args.run_test),
                       all_logs=args.all_logs,

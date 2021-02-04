@@ -30,40 +30,51 @@ MODEL_LIST = ['Modified3DUNet', 'HeMISUnet', 'FiLMedUnet', 'resnet18', 'densenet
 def get_parser():
     parser = argparse.ArgumentParser(add_help=False)
 
-    # MANDATORY ARGUMENTS
-    mandatory_args = parser.add_argument_group('MANDATORY ARGUMENTS')
-    mandatory_args.add_argument("-c", "--config", required=True, type=str,
+    command_group = parser.add_mutually_exclusive_group(required=False)
+    
+    command_group.add_argument("--train", dest='train', action='store_true', 
+                                help="Perform training on data.")
+    command_group.add_argument("--test", dest='test', action='store_true', 
+                                help="Perform testing on trained model.")
+    command_group.add_argument("--segment", dest='segment', action='store_true', 
+                                help="Perform segmentation on data.")
+    
+    parser.add_argument("-c", "--config", required=True, type=str,
                                 help="Path to configuration file.")
-
+                                
     # OPTIONAL ARGUMENTS
     optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
+    
+    optional_args.add_argument("-pd", "--path-data", required=False, type=str,
+                                help="Path to data in BIDs format.")
+    optional_args.add_argument("-po", "--path-output", required=False, type=str,
+                                help="Path to output directory.")
     optional_args.add_argument('-g', '--gif', required=False, type=int, default=0,
                                help='Number of GIF files to output. Each GIF file corresponds to a 2D slice showing the '
                                     'prediction over epochs (one frame per epoch). The prediction is run on the '
-                                    'validation dataset. GIF files are saved in the log directory.')
+                                    'validation dataset. GIF files are saved in the output path.')
     optional_args.add_argument('-t', '--thr-increment', dest="thr_increment", required=False, type=float,
                                help='A threshold analysis is performed at the end of the training using the trained '
                                     'model and the training+validation sub-datasets to find the optimal binarization '
                                     'threshold. The specified value indicates the increment between 0 and 1 used during '
-                                    'the analysis (e.g. 0.1). Plot is saved under "log_directory/thr.png" and the '
-                                    'optimal threshold in "log_directory/config_file.json as "binarize_prediction" '
+                                    'the analysis (e.g. 0.1). Plot is saved under "[PATH_OUTPUT]/thr.png" and the '
+                                    'optimal threshold in "[PATH_OUTPUT]/config_file.json as "binarize_prediction" '
                                     'parameter.')
     optional_args.add_argument('--resume-training', dest="resume_training", required=False, action='store_true',
-                               help='Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume '
-                                    'training. This training state is saved everytime a new best model is saved in the'
-                                    'log directory.')
+                               help='Load a saved model ("checkpoint.pth.tar" in the output directory specified either with flag "--path-output" or via the config file "output_path" argument)  '
+                                    'for resume training. This training state is saved everytime a new best model is saved in the output directory specified with flag "--path-output"')
     optional_args.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS,
                                help='Shows function documentation.')
 
     return parser
 
 
-def save_config_file(context, log_directory):
-    # Save config file within log_directory and log_directory/model_name
+def save_config_file(context, path_output):
+    # Save config file within path_output and path_output/model_name
     # Done after the threshold_analysis to propate this info in the config files
-    with open(os.path.join(log_directory, "config_file.json"), 'w') as fp:
+    with open(os.path.join(path_output, "config_file.json"), 'w') as fp:
         json.dump(context, fp, indent=4)
-    with open(os.path.join(log_directory, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
+    with open(os.path.join(path_output, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
         json.dump(context, fp, indent=4)
 
 
@@ -78,13 +89,12 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             :doc:`configuration_file` for more details.
         n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
             parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
-            predictions of a given slice from the validation sub-dataset. They are saved within the log directory.
+            predictions of a given slice from the validation sub-dataset. They are saved within the output path.
         thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
             the training + validation sub-dataset to find the optimal binarization threshold. The specified value
             indicates the increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
-        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the log_directory) for resume training.
-            This training state is saved everytime a new best model is saved in the log
-            directory.
+        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the output directory specified with flag "--path-output" or via the config file "output_path" '            This training state is saved everytime a new best model is saved in the log
+            argument) for resume training directory.
 
     Returns:
         float or pandas.DataFrame or None:
@@ -95,12 +105,12 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
     """
     command = copy.deepcopy(context["command"])
-    log_directory = copy.deepcopy(context["log_directory"])
-    if not os.path.isdir(log_directory):
-        print('Creating log directory: {}'.format(log_directory))
-        os.makedirs(log_directory)
+    path_output = copy.deepcopy(context["path_output"])
+    if not os.path.isdir(path_output):
+        print('Creating output path: {}'.format(path_output))
+        os.makedirs(path_output)
     else:
-        print('Log directory already exists: {}'.format(log_directory))
+        print('Output path already exists: {}'.format(path_output))
 
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
     create_dataset_and_ivadomed_version_log(context)
@@ -108,12 +118,12 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     # Define device
     cuda_available, device = imed_utils.define_device(context['gpu_ids'][0])
 
-    # Get subject lists. "segment" command uses all participants of BIDS path, hence no need to split
+    # Get subject lists. "segment" command uses all participants of data path, hence no need to split
     if command != "segment":
         train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
                                                                                          context['loader_parameters']
-                                                                                         ['bids_path'],
-                                                                                         log_directory,
+                                                                                         ['path_data'],
+                                                                                         path_output,
                                                                                          context["loader_parameters"]
                                                                                          ['subject_selection'])
 
@@ -169,7 +179,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     if 'object_detection_params' in context:
         object_detection_params = context['object_detection_params']
         object_detection_params.update({"gpu_ids": context['gpu_ids'][0],
-                                        "log_directory": context['log_directory']})
+                                        "path_output": context['path_output']})
         loader_params.update({"object_detection_params": object_detection_params})
 
     loader_params.update({"model_params": model_params})
@@ -227,11 +237,11 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                                     model_params['metadata'])
             model_params.update({"film_onehotencoder": train_onehotencoder,
                                  "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
-            joblib.dump(metadata_clustering_models, "./" + log_directory + "/clustering_models.joblib")
-            joblib.dump(train_onehotencoder, "./" + log_directory + "/one_hot_encoder.joblib")
+            joblib.dump(metadata_clustering_models, "./" + path_output + "/clustering_models.joblib")
+            joblib.dump(train_onehotencoder, "./" + path_output + "/one_hot_encoder.joblib")
 
         # Model directory
-        path_model = os.path.join(log_directory, context["model_name"])
+        path_model = os.path.join(path_output, context["model_name"])
         if not os.path.isdir(path_model):
             print('Creating model directory: {}'.format(path_model))
             os.makedirs(path_model)
@@ -244,7 +254,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         else:
             print('Model directory already exists: {}'.format(path_model))
 
-        save_config_file(context, log_directory)
+        save_config_file(context, path_output)
 
         # RUN TRAINING
         best_training_dice, best_training_loss, best_validation_dice, best_validation_loss = imed_training.train(
@@ -252,7 +262,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             dataset_train=ds_train,
             dataset_val=ds_valid,
             training_params=context["training_parameters"],
-            log_directory=log_directory,
+            path_output=path_output,
             device=device,
             cuda_available=cuda_available,
             metric_fns=metric_fns,
@@ -278,7 +288,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         # Choice of optimisation metric
         metric = "recall_specificity" if model_params["name"] in imed_utils.CLASSIFIER_LIST else "dice"
         # Model path
-        model_path = os.path.join(log_directory, "best_model.pt")
+        model_path = os.path.join(path_output, "best_model.pt")
         # Run analysis
         thr = imed_testing.threshold_analysis(model_path=model_path,
                                               ds_lst=[ds_train, ds_valid],
@@ -286,12 +296,12 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                               testing_params=testing_params,
                                               metric=metric,
                                               increment=thr_increment,
-                                              fname_out=os.path.join(log_directory, "roc.png"),
+                                              fname_out=os.path.join(path_output, "roc.png"),
                                               cuda_available=cuda_available)
 
         # Update threshold in config file
         context["postprocessing"]["binarize_prediction"] = {"thr": thr}
-        save_config_file(context, log_directory)
+        save_config_file(context, path_output)
 
     if command == 'train':
         return best_training_dice, best_training_loss, best_validation_dice, best_validation_loss
@@ -307,9 +317,9 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         metric_fns = imed_metrics.get_metric_fns(ds_test.task)
 
         if 'film_layers' in model_params and any(model_params['film_layers']):
-            clustering_path = os.path.join(log_directory, "clustering_models.joblib")
+            clustering_path = os.path.join(path_output, "clustering_models.joblib")
             metadata_clustering_models = joblib.load(clustering_path)
-            ohe_path = os.path.join(log_directory, "one_hot_encoder.joblib")
+            ohe_path = os.path.join(path_output, "one_hot_encoder.joblib")
             one_hot_encoder = joblib.load(ohe_path)
             ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"],
                                                    model_params['metadata'])
@@ -320,27 +330,27 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         pred_metrics = imed_testing.test(model_params=model_params,
                                          dataset_test=ds_test,
                                          testing_params=testing_params,
-                                         log_directory=log_directory,
+                                         path_output=path_output,
                                          device=device,
                                          cuda_available=cuda_available,
                                          metric_fns=metric_fns,
                                          postprocessing=context['postprocessing'])
 
         # RUN EVALUATION
-        df_results = imed_evaluation.evaluate(bids_path=loader_params['bids_path'],
-                                              log_directory=log_directory,
+        df_results = imed_evaluation.evaluate(path_data=loader_params['path_data'],
+                                              path_output=path_output,
                                               target_suffix=loader_params["target_suffix"],
                                               eval_params=context["evaluation_parameters"])
         return df_results, pred_metrics
 
     if command == 'segment':
-        bids_ds = bids.BIDS(context["loader_parameters"]["bids_path"])
+        bids_ds = bids.BIDS(context["loader_parameters"]["path_data"])
         df = bids_ds.participants.content
         subj_lst = df['participant_id'].tolist()
         bids_subjects = [s for s in bids_ds.get_subjects() if s.record["subject_id"] in subj_lst]
 
         # Add postprocessing to packaged model
-        path_model = os.path.join(context['log_directory'], context['model_name'])
+        path_model = os.path.join(context['path_output'], context['model_name'])
         path_model_config = os.path.join(path_model, context['model_name'] + ".json")
         model_config = imed_config_manager.load_json(path_model_config)
         model_config['postprocessing'] = context['postprocessing']
@@ -375,7 +385,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                                                    fname_images=fname_img,
                                                                    gpu_id=context['gpu_ids'][0],
                                                                    options=options)
-            pred_path = os.path.join(context['log_directory'], "pred_masks")
+            pred_path = os.path.join(context['path_output'], "pred_masks")
             if not os.path.exists(pred_path):
                 os.makedirs(pred_path)
 
@@ -387,7 +397,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
 def create_dataset_and_ivadomed_version_log(context):
 
-    dataset_paths = context['loader_parameters']['bids_path']
+    dataset_paths = context['loader_parameters']['path_data']
 
     ivadomed_version = imed_utils._version_string()
     datasets_version = []
@@ -398,7 +408,7 @@ def create_dataset_and_ivadomed_version_log(context):
         for Dataset in dataset_paths:
             datasets_version.append(imed_utils.__get_commit(path_to_git_folder=Dataset))
 
-    log_file = os.path.join(context['log_directory'], 'version_info.log')
+    log_file = os.path.join(context['path_output'], 'version_info.log')
 
     try:
         f = open(log_file, "w")
@@ -464,6 +474,10 @@ def run_main():
     # Get context from configuration file
     path_config_file = args.config
     context = imed_config_manager.ConfigurationManager(path_config_file).get_config()
+    
+    context["command"] = imed_utils.get_command(args, context)
+    context["path_output"] = imed_utils.get_path_output(args, context)
+    context["loader_parameters"]["path_data"] = imed_utils.get_path_data(args, context)
 
     # Run command
     run_command(context=context,
