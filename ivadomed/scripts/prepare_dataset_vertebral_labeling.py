@@ -1,5 +1,5 @@
 import argparse
-import ivadomed.utils as imed_utils
+from ivadomed import utils as imed_utils
 import ivadomed.preprocessing as imed_preprocessing
 import nibabel as nib
 import numpy as np
@@ -96,12 +96,16 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", dest="path", required=True, type=str,
-                        help="Path to bids folder")
-    parser.add_argument("-s", "--suffix", dest="suffix", required=True,
-                        type=str, help="Suffix of the input file as in sub-xxxSUFFIX.nii.gz (E.g., _T2w)")
+                        help="Path to bids folder",
+                        metavar=imed_utils.Metavar.file)
+    parser.add_argument("-s", "--suffix", dest="suffix", required=True, type=str,
+                        help="""Suffix of the input file as in
+                                sub-xxxSUFFIX.nii.gz (E.g., _T2w)""",
+                        metavar=imed_utils.Metavar.str)
     parser.add_argument("-a", "--aim", dest="aim", default=-1, type=int,
-                        help="-1 or positive int. If set to any positive int,"
-                             " only label with this value will be taken into account ")
+                        help="""-1 or positive int. If set to any positive int,
+                                only label with this value will be taken into account""",
+                        metavar=imed_utils.Metavar.int)
     return parser
 
 
@@ -112,5 +116,6 @@ def main(args=None):
     extract_mid_slice_and_convert_coordinates_to_heatmaps(path=args.path, suffix=args.suffix,
                                                           aim=args.aim)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()

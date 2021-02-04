@@ -11,30 +11,38 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
 import argparse
 import textwrap
-from ivadomed.utils import init_ivadomed, get_arguments
+
+from ivadomed import utils as imed_utils
 
 
 DICT_URL = {
     "data_example_spinegeneric": {
         "url": ["https://github.com/ivadomed/data_example_spinegeneric/archive/r20200825.zip"],
-        "description": "10 randomly picked subject from "
-                       "`Spine Generic <https://github.com/spine-generic/data-multi-subject>`_. "
-                       "Used for Tutorial and example in Ivadomed."},
-    "data_testing": {"url": ["https://github.com/ivadomed/data-testing/archive/r20210114.zip"],
-                     "description": "Data Used for integration/unit test in Ivadomed."},
-    "t2_tumor": {"url": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
-                 "description": "Cord tumor segmentation model, trained on T2-weighted contrast."},
-    "t2star_sc": {"url": ["https://github.com/ivadomed/t2star_sc/archive/r20200622.zip"],
-                  "description": "spinal cord segmentation model, trained on T2-star contrast."},
-    "mice_uqueensland_gm": {"url": ["https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip"],
-                            "description": "Gray matter segmentation model on "
-                                           "mouse MRI. Data from University of Queensland."},
-    "mice_uqueensland_sc": {"url": ["https://github.com/ivadomed/mice_uqueensland_sc/archive/r20200622.zip"],
-                            "description": "Cord segmentation model on mouse MRI. Data from University of Queensland."},
-    "findcord_tumor": {"url": ["https://github.com/ivadomed/findcord_tumor/archive/r20200621.zip"],
-                       "description": "Cord localisation model, trained on T2-weighted images with tumor."},
-    "model_find_disc_t1": {"url": ["https://github.com/ivadomed/model_find_disc_t1/archive/r20201013.zip"],
-                           "description": "Intervertebral disc detection model trained on T1-weighted images."},
+        "description": """10 randomly picked subject from
+            `Spine Generic <https://github.com/spine-generic/data-multi-subject>`_.
+            Used for Tutorial and example in Ivadomed."""},
+    "data_testing": {
+        "url": ["https://github.com/ivadomed/data-testing/archive/r20210114.zip"],
+        "description": "Data Used for integration/unit test in Ivadomed."},
+    "t2_tumor": {
+        "url": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
+        "description": "Cord tumor segmentation model, trained on T2-weighted contrast."},
+    "t2star_sc": {
+        "url": ["https://github.com/ivadomed/t2star_sc/archive/r20200622.zip"],
+        "description": "spinal cord segmentation model, trained on T2-star contrast."},
+    "mice_uqueensland_gm": {
+        "url": ["https://github.com/ivadomed/mice_uqueensland_gm/archive/r20200622.zip"],
+        "description": """Gray matter segmentation model on mouse MRI. Data from University of
+            Queensland."""},
+    "mice_uqueensland_sc": {
+        "url": ["https://github.com/ivadomed/mice_uqueensland_sc/archive/r20200622.zip"],
+        "description": "Cord segmentation model on mouse MRI. Data from University of Queensland."},
+    "findcord_tumor": {
+        "url": ["https://github.com/ivadomed/findcord_tumor/archive/r20200621.zip"],
+        "description": "Cord localisation model, trained on T2-weighted images with tumor."},
+    "model_find_disc_t1": {
+        "url": ["https://github.com/ivadomed/model_find_disc_t1/archive/r20201013.zip"],
+        "description": "Intervertebral disc detection model trained on T1-weighted images."},
     "model_find_disc_t2": {
         "url": ["https://github.com/ivadomed/model_find_disc_t2/archive/r20200928.zip"],
         "description": "Intervertebral disc detection model trained on T2-weighted images."},
@@ -50,11 +58,11 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", required=True,
                         choices=(sorted(DICT_URL)),
-                        help="Data to download")
-    parser.add_argument("-k", "--keep", required=False, default=False,
+                        help="Data to download", metavar=imed_utils.Metavar.str)
+    parser.add_argument("-k", "--keep", action="store_true",
                         help="Keep existing data in destination directory")
     parser.add_argument("-o", "--output", required=False,
-                        help="Output Folder.")
+                        help="Output Folder.", metavar=imed_utils.Metavar.file)
     return parser
 
 
@@ -75,7 +83,7 @@ def download_data(urls):
         urls = [urls]
 
     exceptions = []
-    # loop through URLs
+
     for url in urls:
         try:
             logger.info('Trying URL: %s' % url)
@@ -134,7 +142,7 @@ def unzip(compressed, dest_folder):
 
     try:
         open(compressed).extractall(dest_folder)
-    except:
+    except Exception:
         print('ERROR: ZIP package corrupted. Please try downloading again.')
         raise
 
@@ -143,6 +151,7 @@ def _format_bundles():
     def format_bundle(name, values):
         return f'`{name} <{values["url"]}>`_ : {values["description"]}'
     return str.join("\n", ["* %s" % format_bundle(name, values) for name, values in DICT_URL.items()])
+
 
 def install_data(url, dest_folder, keep=False):
     """
@@ -258,18 +267,18 @@ def install_data(url, dest_folder, keep=False):
 # cannot be done in the function directly.
 # `create_string()` is a custom function that converts our dict into a string
 # which is easier to add in the documentation.
-install_data.__doc__=install_data.__doc__.format(BUNDLES=textwrap.indent(_format_bundles(), ' '*6))
+install_data.__doc__ = install_data.__doc__.format(BUNDLES=textwrap.indent(_format_bundles(), ' '*6))
 
 
 def main(args=None):
-    init_ivadomed()
+    imed_utils.init_ivadomed()
 
     # Dictionary containing list of URLs for data names.
     # Mirror servers are listed in order of decreasing priority.
     # If exists, favour release artifact straight from github
 
     parser = get_parser()
-    arguments = get_arguments(parser, args)
+    arguments = imed_utils.get_arguments(parser, args)
 
     data_name = arguments.d
 
@@ -279,7 +288,7 @@ def main(args=None):
         dest_folder = arguments.output
 
     url = DICT_URL[data_name]["url"]
-    install_data(url, dest_folder, keep=arguments.keep)
+    install_data(url, dest_folder, keep=bool(arguments.keep))
     return 0
 
 
