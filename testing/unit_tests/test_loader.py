@@ -12,7 +12,7 @@ def setup_function():
 
 
 @pytest.mark.parametrize('loader_parameters', [{
-    "bids_path": os.path.join(__data_testing_dir__, "microscopy_png"),
+    "path_data": os.path.join(__data_testing_dir__, "microscopy_png"),
     "bids_config": "ivadomed/config/config_bids.json",
     "target_suffix": [["_seg-myelin-manual", "_seg-axon-manual"]],
     "extensions": [".png"],
@@ -36,7 +36,7 @@ def test_bids_df_microscopy_png(loader_parameters, log_directory):
 
     loader_params = loader_parameters
     loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
-    bids_path = loader_params["bids_path"]
+    path_data = loader_params["path_data"]
     derivatives = True
     bids_df = imed_loader_utils.BidsDataframe(loader_params, derivatives, log_directory)
     df_test = bids_df.df
@@ -45,15 +45,15 @@ def test_bids_df_microscopy_png(loader_parameters, log_directory):
     # "sample_id" and "ivadomed_id" columns, then delete next line
     df_test = df_test.drop(columns=['participant_id', 'sample_id', 'ivadomed_id'])
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
-    csv_ref = os.path.join(bids_path, "df_ref.csv")
-    csv_test = os.path.join(bids_path, "df_test.csv")
+    csv_ref = os.path.join(path_data, "df_ref.csv")
+    csv_test = os.path.join(path_data, "df_test.csv")
     df_test.to_csv(csv_test, index=False)
     diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
     assert diff == {'added': [], 'removed': [], 'changed': [], 'columns_added': [], 'columns_removed': []}
 
 
 @pytest.mark.parametrize('loader_parameters', [{
-    "bids_path": __data_testing_dir__,
+    "path_data": __data_testing_dir__,
     "target_suffix": ["_seg-manual"],
     "extensions": [],
     "roi_params": {
@@ -76,7 +76,7 @@ def test_bids_df_anat(loader_parameters, log_directory):
 
     loader_params = loader_parameters
     loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
-    bids_path = loader_params["bids_path"]
+    path_data = loader_params["path_data"]
     derivatives = True
     bids_df = imed_loader_utils.BidsDataframe(loader_params, derivatives, log_directory)
     df_test = bids_df.df
@@ -85,8 +85,8 @@ def test_bids_df_anat(loader_parameters, log_directory):
     # and "ivadomed_id" columns then delete next line
     df_test = df_test.drop(columns=['participant_id', 'ivadomed_id'])
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
-    csv_ref = os.path.join(bids_path, "df_ref.csv")
-    csv_test = os.path.join(bids_path, "df_test.csv")
+    csv_ref = os.path.join(path_data, "df_ref.csv")
+    csv_test = os.path.join(path_data, "df_test.csv")
     df_test.to_csv(csv_test, index=False)
     diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
     assert diff == {'added': [], 'removed': [], 'changed': [],

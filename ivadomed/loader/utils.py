@@ -160,11 +160,11 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
 
 
 def get_new_subject_split(path_folder, center_test, split_method, random_seed,
-                          train_frac, test_frac, log_directory, balance, subject_selection=None):
+                          train_frac, test_frac, path_output, balance, subject_selection=None):
     """Randomly split dataset between training / validation / testing.
 
     Randomly split dataset between training / validation / testing\
-        and save it in log_directory + "/split_datasets.joblib".
+        and save it in path_output + "/split_datasets.joblib".
 
     Args:
         path_folder (string): Dataset folder.
@@ -173,7 +173,7 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
         random_seed (int): Random seed.
         train_frac (float): Training dataset proportion, between 0 and 1.
         test_frac (float): Testing dataset proportionm between 0 and 1.
-        log_directory (string): Output folder.
+        path_output (string): Output folder.
         balance (string): Metadata contained in "participants.tsv" file with categorical values.
             Each category will be evenly distributed in the training, validation and testing
             datasets.
@@ -223,18 +223,18 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
 
     # save the subject distribution
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    split_path = os.path.join(log_directory, "split_datasets.joblib")
+    split_path = os.path.join(path_output, "split_datasets.joblib")
     joblib.dump(split_dct, split_path)
 
     return train_lst, valid_lst, test_lst
 
 
 def get_new_subject_split_new(df, split_method, data_testing, random_seed,
-                              train_frac, test_frac, log_directory, balance, subject_selection=None):
+                              train_frac, test_frac, path_output, balance, subject_selection=None):
     """Randomly split dataset between training / validation / testing.
 
     Randomly split dataset between training / validation / testing\
-        and save it in log_directory + "/split_datasets.joblib".
+        and save it in path_output + "/split_datasets.joblib".
 
     Args:
         df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
@@ -243,7 +243,7 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
         random_seed (int): Random seed.
         train_frac (float): Training dataset proportion, between 0 and 1.
         test_frac (float): Testing dataset proportionm between 0 and 1.
-        log_directory (str): Output folder.
+        path_output (str): Output folder.
         balance (str): Metadata contained in "participants.tsv" file with categorical values. Each category will be
         evenly distributed in the training, validation and testing datasets.
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
@@ -293,19 +293,19 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
 
     # save the subject distribution
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    split_path = os.path.join(log_directory, "split_datasets.joblib")
+    split_path = os.path.join(path_output, "split_datasets.joblib")
     joblib.dump(split_dct, split_path)
 
     return train_lst, valid_lst, test_lst
 
 
-def get_subdatasets_subjects_list(split_params, bids_path, log_directory, subject_selection=None):
+def get_subdatasets_subjects_list(split_params, path_data, path_output, subject_selection=None):
     """Get lists of subjects for each sub-dataset between training / validation / testing.
 
     Args:
         split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
-        bids_path (str): Path to the BIDS dataset.
-        log_directory (str): Output folder.
+        path_data (str): Path to the BIDS dataset.
+        path_output (str): Output folder.
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
     Returns:
@@ -316,26 +316,26 @@ def get_subdatasets_subjects_list(split_params, bids_path, log_directory, subjec
         old_split = joblib.load(split_params["fname_split"])
         train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
     else:
-        train_lst, valid_lst, test_lst = get_new_subject_split(path_folder=bids_path,
+        train_lst, valid_lst, test_lst = get_new_subject_split(path_folder=path_data,
                                                                center_test=split_params['center_test'],
                                                                split_method=split_params['method'],
                                                                random_seed=split_params['random_seed'],
                                                                train_frac=split_params['train_fraction'],
                                                                test_frac=split_params['test_fraction'],
-                                                               log_directory=log_directory,
+                                                               path_output=path_output,
                                                                balance=split_params['balance']
                                                                if 'balance' in split_params else None,
                                                                subject_selection=subject_selection)
     return train_lst, valid_lst, test_lst
 
 
-def get_subdatasets_subjects_list_new(split_params, df, log_directory, subject_selection=None):
+def get_subdatasets_subjects_list_new(split_params, df, path_output, subject_selection=None):
     """Get lists of subjects for each sub-dataset between training / validation / testing.
 
     Args:
         split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
         df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
-        log_directory (str): Output folder.
+        path_output (str): Output folder.
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
     Returns:
@@ -352,7 +352,7 @@ def get_subdatasets_subjects_list_new(split_params, df, log_directory, subject_s
                                                                    random_seed=split_params['random_seed'],
                                                                    train_frac=split_params['train_fraction'],
                                                                    test_frac=split_params['test_fraction'],
-                                                                   log_directory=log_directory,
+                                                                   path_output=path_output,
                                                                    balance=split_params['balance']
                                                                    if 'balance' in split_params else None,
                                                                    subject_selection=subject_selection)
@@ -724,15 +724,15 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
 
 class BidsDataframe:
     """
-    This class aims to create a dataframe containing all BIDS image files in a bids_path and their metadata.
+    This class aims to create a dataframe containing all BIDS image files in a path_data and their metadata.
 
     Args:
         loader_params (dict): Loader parameters, see :doc:`configuration_file` for more details.
         derivatives (bool): If True, derivatives are indexed.
-        log_directory (str): Output folder.
+        path_output (str): Output folder.
 
     Attributes:
-        bids_path (str): Path to the BIDS dataset.
+        path_data (str): Path to the BIDS dataset.
         bids_config (str): Path to the custom BIDS configuration file.
         target_suffix (list of str): List of suffix of targetted structures.
         roi_suffix (str): List of suffix of ROI masks.
@@ -742,10 +742,10 @@ class BidsDataframe:
         df (pd.DataFrame): Dataframe containing dataset information
     """
 
-    def __init__(self, loader_params, derivatives, log_directory):
+    def __init__(self, loader_params, derivatives, path_output):
 
-        # bids_path from loader parameters
-        self.bids_path = os.path.join(loader_params['bids_path'], '')
+        # path_data from loader parameters
+        self.path_data = os.path.join(loader_params['path_data'], '')
 
         # bids_config from loader parameters
         self.bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
@@ -773,7 +773,7 @@ class BidsDataframe:
         self.create_bids_dataframe()
 
         # Save dataframe as csv file
-        self.save(os.path.join(log_directory, "bids_dataframe.csv"))
+        self.save(os.path.join(path_output, "bids_dataframe.csv"))
 
     def create_bids_dataframe(self):
         """Generate the dataframe."""
@@ -789,12 +789,12 @@ class BidsDataframe:
         # TODO: remove force indexing of microscopy files after BEP microscopy is merged in BIDS
         ext_microscopy = ('.png', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
         force_index = ['samples.tsv', 'samples.json']
-        for root, dirs, files in os.walk(self.bids_path):
+        for root, dirs, files in os.walk(self.path_data):
             for file in files:
-                if file.endswith(ext_microscopy) and (root.replace(self.bids_path, '').startswith("sub")):
-                    force_index.append(os.path.join(root.replace(self.bids_path, '')))
+                if file.endswith(ext_microscopy) and (root.replace(self.path_data, '').startswith("sub")):
+                    force_index.append(os.path.join(root.replace(self.path_data, '')))
         indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
-        layout = pybids.BIDSLayout(self.bids_path, config=self.bids_config, indexer=indexer,
+        layout = pybids.BIDSLayout(self.path_data, config=self.bids_config, indexer=indexer,
                                    derivatives=self.derivatives)
 
         # Transform layout to dataframe with all entities and json metadata
@@ -850,7 +850,7 @@ class BidsDataframe:
 
         """Add tsv files metadata to dataframe.
         Args:
-            layout (BIDSLayout): pybids BIDSLayout of the indexed files of the bids_path
+            layout (BIDSLayout): pybids BIDSLayout of the indexed files of the path_data
         """
 
         # Add participant_id column, and metadata from participants.tsv file if present
@@ -865,7 +865,7 @@ class BidsDataframe:
         # TODO: use pybids function after BEP microscopy is merged in BIDS
         if 'sample' in self.df:
             self.df['sample_id'] = "sample-" + self.df['sample']
-        fname_samples = os.path.join(self.bids_path, "samples.tsv")
+        fname_samples = os.path.join(self.path_data, "samples.tsv")
         if os.path.exists(fname_samples):
             df_samples = pd.read_csv(fname_samples, sep='\t')
             self.df = pd.merge(self.df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None),
@@ -882,7 +882,7 @@ class BidsDataframe:
         # TODO: use pybids function after BEP microscopy is merged in BIDS
         # TODO: verify merge behavior with EEG and DWI scans files, tested with anat and microscopy only
         df_scans = pd.DataFrame()
-        for root, dirs, files in os.walk(self.bids_path):
+        for root, dirs, files in os.walk(self.path_data):
             for file in files:
                 if file.endswith("scans.tsv"):
                     df_temp = pd.read_csv(os.path.join(root, file), sep='\t')

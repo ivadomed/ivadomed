@@ -61,7 +61,7 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_pa
         "dataset_type": "testing",
         "requires_undo": True,
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
-        "bids_path": __data_testing_dir__,
+        "path_data": __data_testing_dir__,
         "target_suffix": target_lst,
         "roi_params": roi_params,
         "slice_filter_params": {

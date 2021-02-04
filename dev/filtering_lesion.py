@@ -251,14 +251,14 @@ def run_main(args):
     if not os.path.isdir(ofolder):
         os.makedirs(ofolder)
 
-    pred_folder = os.path.join(context['log_directory'], 'pred_masks')
+    pred_folder = os.path.join(context['path_output'], 'pred_masks')
     if not os.path.isdir(pred_folder):
         imed.cmd_test(context)
 
     subj_acq_lst = list(set([f.split('_pred')[0] for f in os.listdir(pred_folder)
                              if f.endswith('.nii.gz') and '_pred' in f]))
     # subj_acq_lst = [subj_acq_lst[0]]
-    gt_folder = os.path.join(context['bids_path'], 'derivatives', 'labels')
+    gt_folder = os.path.join(context['path_data'], 'derivatives', 'labels')
 
     if thrPred is None:
         for exp in exp_dct.keys():

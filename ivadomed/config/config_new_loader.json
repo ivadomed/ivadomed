@@ -1,7 +1,7 @@
 {
     "command": "train",
     "gpu_ids": [0],
-    "log_directory": "log_directory/new_loader",
+    "path_output": "path_output/new_loader",
     "model_name": "model_name",
     "debugging": true,
     "object_detection_params": {
@@ -9,7 +9,7 @@
         "safety_factor": [1.0, 1.0, 1.0]
     },
     "loader_parameters": {
-        "bids_path": "data_example_spinegeneric",
+        "path_data": "data_example_spinegeneric",
         "bids_config": "ivadomed/config/config_bids.json",
         "target_suffix": ["_seg-manual", "_seg-axon-manual"],
         "extensions": [".nii.gz", ".png"],

@@ -56,8 +56,8 @@ def compute_statistics(dataframe, n_iterations, run_test=True, csv_out='comparis
             either on the training/validation subdatasets. Flag: ``--run_test``
         csv_out (string): Output csv name to store computed value (e.g., df.csv). Default value is model_comparison.csv. Flag ``-o``, ``--output``
     """
-    avg = dataframe.groupby(['log_directory']).mean()
-    std = dataframe.groupby(['log_directory']).std()
+    avg = dataframe.groupby(['path_output']).mean()
+    std = dataframe.groupby(['path_output']).std()
 
     print("Average dataframe")
     print(avg)

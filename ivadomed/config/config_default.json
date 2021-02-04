@@ -1,7 +1,7 @@
 {
     "command": "train",
     "gpu_ids": [0],
-    "log_directory": "log_directory",
+    "path_output": "path_output",
     "model_name": "my_model",
     "debugging": false,
     "object_detection_params": {
@@ -9,7 +9,7 @@
         "safety_factor": [1.0, 1.0, 1.0]
     },
     "loader_parameters": {
-        "bids_path": "bids_path",
+        "path_data": "path_data",
         "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": [],
         "extensions": [],
