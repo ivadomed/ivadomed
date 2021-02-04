@@ -158,9 +158,12 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
         # Hard segmentation of the i_class that has been labeled
         data_hard_labeled_class = data_hard_labeled[i_class]
         # Get number of objects in
-        n_obj = np.count_nonzero(np.unique(data_hard_labeled_class))
+        l, l_count = np.unique(data_hard_labeled_class, return_counts=True)
+
+        # Get all non zero labels and exclude structure of 1 pixel
+        labels = l[l_count != 1][1:]
         # Loop across objects
-        for i_obj in range(1, n_obj + 1):
+        for i_obj in labels:
             # select the current structure, remaining voxels are set to zero
             data_hard_labeled_class_obj = (np.array(data_hard_labeled_class) == i_obj).astype(np.int)
 
