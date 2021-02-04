@@ -936,8 +936,8 @@ being used for the segmentation task).
                "type": "float",
                "$$description": [
                     "Defines the importance of the running average: (1 - `bn_momentum`). A large running\n",
-                    "average factor will lead to a slow and smooth learning. See `PyTorch's BatchNorm classes for\n",
-                    "more details. <https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html>`__ for more details."
+                    "average factor will lead to a slow and smooth learning.\n",
+                    "See `PyTorch's BatchNorm classes for more details. <https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html>`__ for more details.\n"
                ]
 
            },
@@ -950,15 +950,14 @@ being used for the segmentation task).
                "type": "string",
                "required": "false",
                "$$description": [
-                   "Final activation layer. Options: ``sigmoid`` (default), ``relu``\n",
-                   "(normalized ReLU), or ``softmax``."
+                   "Final activation layer. Options: ``sigmoid`` (default), ``relu``(normalized ReLU), or ``softmax``."
                ]
            },
            "is_2d": {
                "type": "boolean",
                "$$description": [
                    "Indicates if the model is 2d, if not the model is 3d. If ``is_2d`` is ``False``, then parameters\n",
-                   "``length_3D`` and ``stride_3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`).)."
+                   "``length_3D`` and ``stride_3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`)."
                ]
            }
        }
