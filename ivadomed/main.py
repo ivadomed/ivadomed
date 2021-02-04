@@ -5,6 +5,9 @@ import copy
 import joblib
 import torch.backends.cudnn as cudnn
 import nibabel as nib
+import sys
+import platform
+import multiprocessing
 
 from bids_neuropoly import bids
 from ivadomed.utils import logger
@@ -35,10 +38,9 @@ def get_parser():
     # OPTIONAL ARGUMENTS
     optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
     optional_args.add_argument('-g', '--gif', required=False, type=int, default=0,
-                               help='Generates a GIF of during training, one frame per epoch for a given slice.'
-                                    ' The parameter indicates the number of 2D slices used to generate GIFs, one GIF '
-                                    'per slice. A GIF shows predictions of a given slice from the validation '
-                                    'sub-dataset. They are saved within the log directory.')
+                               help='Number of GIF files to output. Each GIF file corresponds to a 2D slice showing the '
+                                    'prediction over epochs (one frame per epoch). The prediction is run on the '
+                                    'validation dataset. GIF files are saved in the log directory.')
     optional_args.add_argument('-t', '--thr-increment', dest="thr_increment", required=False, type=float,
                                help='A threshold analysis is performed at the end of the training using the trained '
                                     'model and the training+validation sub-datasets to find the optimal binarization '
@@ -68,8 +70,8 @@ def save_config_file(context, log_directory):
 def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     """Run main command.
 
-    This function is central in the ivadomed project as training / testing / evaluation commands are run via this
-    function. All the process parameters are defined in the config.
+    This function is central in the ivadomed project as training / testing / evaluation commands
+    are run via this function. All the process parameters are defined in the config.
 
     Args:
         context (dict): Dictionary containing all parameters that are needed for a given process. See
@@ -85,11 +87,12 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
             directory.
 
     Returns:
-        Float or pandas Dataframe:
-        If "train" command: Returns floats: best loss score for both training and validation.
-        If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of the testing
-            sub dataset and return the prediction metrics before evaluation.
-        If "segment" command: No return value.
+        float or pandas.DataFrame or None:
+            * If "train" command: Returns floats: best loss score for both training and validation.
+            * If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of
+              the testing sub-dataset and return the prediction metrics before evaluation.
+            * If "segment" command: No return value.
+
     """
     command = copy.deepcopy(context["command"])
     log_directory = copy.deepcopy(context["log_directory"])
@@ -99,8 +102,11 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     else:
         print('Log directory already exists: {}'.format(log_directory))
 
+    # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
+    create_dataset_and_ivadomed_version_log(context)
+
     # Define device
-    cuda_available, device = imed_utils.define_device(context['gpu'])
+    cuda_available, device = imed_utils.define_device(context['gpu_ids'][0])
 
     # Get subject lists. "segment" command uses all participants of BIDS path, hence no need to split
     if command != "segment":
@@ -162,7 +168,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     # Update loader params
     if 'object_detection_params' in context:
         object_detection_params = context['object_detection_params']
-        object_detection_params.update({"gpu": context['gpu'],
+        object_detection_params.update({"gpu_ids": context['gpu_ids'][0],
                                         "log_directory": context['log_directory']})
         loader_params.update({"object_detection_params": object_detection_params})
 
@@ -367,7 +373,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                 options = {'metadata': metadata}
             pred_list, target_list = imed_inference.segment_volume(path_model,
                                                                    fname_images=fname_img,
-                                                                   gpu_number=context['gpu'],
+                                                                   gpu_id=context['gpu_ids'][0],
                                                                    options=options)
             pred_path = os.path.join(context['log_directory'], "pred_masks")
             if not os.path.exists(pred_path):
@@ -377,6 +383,76 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                 filename = subject.record['subject_id'] + "_" + subject.record['modality'] + target + "_pred" + \
                            ".nii.gz"
                 nib.save(pred, os.path.join(pred_path, filename))
+
+
+def create_dataset_and_ivadomed_version_log(context):
+
+    dataset_paths = context['loader_parameters']['bids_path']
+
+    ivadomed_version = imed_utils._version_string()
+    datasets_version = []
+
+    if isinstance(dataset_paths, str):
+        datasets_version = [imed_utils.__get_commit(path_to_git_folder=dataset_paths)]
+    elif type(dataset_paths)==type([]):  # Bad
+        for Dataset in dataset_paths:
+            datasets_version.append(imed_utils.__get_commit(path_to_git_folder=Dataset))
+
+    log_file = os.path.join(context['log_directory'], 'version_info.log')
+
+    try:
+        f = open(log_file, "w")
+    except OSError as err:
+        print("OS error: {0}".format(err))
+        raise Exception("Have you selected a log folder, and do you have write permissions for that folder?")
+
+    # IVADOMED
+    f.write('IVADOMED TOOLBOX\n----------------\n(' + ivadomed_version + ')')
+
+    # DATASETS
+    f.write('\n\n\nDATASET VERSION\n---------------\n')
+    if len(datasets_version) == 1:
+        f.write('A single BIDS dataset was used for training.\n' + dataset_paths)
+        if datasets_version[0] != '?!?':  # This is what was returned from _version_string when no git is present
+            f.write(' - Dataset Annex version: ' + datasets_version[0] + '\n\n')
+        else:
+            f.write(' - Dataset is not Annexed.\n')
+    else:
+        f.write('The following BIDS datasets were used for training.\n')
+
+        for iDataset in len(dataset_paths):
+            if len(datasets_version[0]) != 0:
+                f.write(str(iDataset+1) + '. ' + dataset_paths[iDataset] + ' - Dataset Annex version: ' + datasets_version[0] + '\n')
+            else:
+                f.write('\n')
+
+    # SYSTEM INFO
+    f.write('\n\nSYSTEM INFO\n-------------\n')
+    platform_running = sys.platform
+    if platform_running.find('darwin') != -1:
+        os_running = 'osx'
+    elif platform_running.find('linux') != -1:
+        os_running = 'linux'
+    elif platform_running.find('win32') or platform_running.find('win64'):
+        os_running = 'windows'
+    else:
+        os_running = 'NA'
+
+    f.write('OS: ' + os_running + ' (' + platform.platform() + ')\n')
+
+    # Display number of CPU cores
+    f.write('CPU cores: Available: {}\n\n\n\n\n'.format(multiprocessing.cpu_count()))
+
+    # USER INPUTS
+    f.write('CONFIG INPUTS\n-------------\n')
+    if sys.version_info[0] > 2:
+        for k, v in context.items():
+            f.write(str(k) + ': ' + str(v) + '\n')  # Making sure all numbers are converted to strings
+    else:
+        for k, v in context.viewitems():  # Python2
+            f.write(str(k) + ': ' + str(v) + '\n')
+
+    f.close()
 
 
 def run_main():

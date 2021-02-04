@@ -40,8 +40,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         dataset_type (str): Choice between "training", "validation" or "testing".
         requires_undo (bool): If True, the transformations without undo_transform will be discarded.
         object_detection_params (dict): Object dection parameters.
-        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
-            (to save memory).
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
     Returns:
         BidsDataset
 
@@ -125,8 +125,6 @@ class SegmentationPair(object):
         cache (bool): If the data should be cached in memory or not.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
         prepro_transforms (dict): Output of get_preprocessing_transforms.
-        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
-             (to save memory).
 
     Attributes:
         input_filenames (list): List of input filenames.
@@ -244,11 +242,10 @@ class SegmentationPair(object):
             gt_data = None
         for gt in self.gt_handle:
             if gt is not None:
-                data_type = np.float32 if self.soft_gt else np.uint8
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
                     hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
                                                                     self.slice_axis)
-                    gt_data.append(hwd_oriented.astype(data_type))
+                    gt_data.append(hwd_oriented)
                 else:  # this tissue has annotation from several raters
                     hwd_oriented_list = [
                         imed_loader_utils.orient_img_hwd(gt_rater.get_fdata(cache_mode, dtype=np.float32),
@@ -356,13 +353,12 @@ class SegmentationPair(object):
             gt_slices = []
             for gt_obj in gt_dataobj:
                 if gt_type == "segmentation":
-                    data_type = np.float32 if self.soft_gt else np.uint8
                     if not isinstance(gt_obj, list):  # annotation from only one rater
                         gt_slices.append(np.asarray(gt_obj[..., slice_index],
-                                                    dtype=data_type))
+                                                    dtype=np.float32))
                     else:  # annotations from several raters
                         gt_slices.append([np.asarray(gt_obj_rater[..., slice_index],
-                                                     dtype=data_type) for gt_obj_rater in gt_obj])
+                                                     dtype=np.float32) for gt_obj_rater in gt_obj])
                 else:
                     if not isinstance(gt_obj, list):  # annotation from only one rater
                         gt_slices.append(np.asarray(int(np.any(gt_obj[..., slice_index]))))
@@ -392,9 +388,8 @@ class MRI2DSegmentationDataset(Dataset):
         task (str): choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
-        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
-            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
-            space.
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
 
     Attributes:
         indexes (list): List of indices corresponding to each slice or subvolume in the dataset.
@@ -409,9 +404,8 @@ class MRI2DSegmentationDataset(Dataset):
         has_bounding_box (bool): True if bounding box in all metadata, else False.
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
-        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
-            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
-            space.
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
         slice_filter_roi (bool): Indicates whether a slice filtering is done based on ROI data.
         roi_thr (int): If the ROI mask contains less than this number of non-zero voxels, the slice will be discarded
             from the dataset.
@@ -521,7 +515,7 @@ class MRI2DSegmentationDataset(Dataset):
                                                    data_type="gt")
             # Make sure stack_gt is binarized
             if stack_gt is not None and not self.soft_gt:
-                stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5)
+                stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5).astype(np.uint8)
 
         else:
             # Force no transformation on labels for classification task
@@ -557,9 +551,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         length (tuple): Size of each dimensions of the subvolumes, length equals 3.
         stride (tuple): Size of the overlapping per subvolume and dimensions, length equals 3.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
-        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
-            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
-            space.
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
     """
 
     def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
@@ -675,7 +668,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                                data_type="gt")
         # Make sure stack_gt is binarized
         if stack_gt is not None and not self.soft_gt:
-            stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5)
+            stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5).astype(np.uint8)
 
         shape_x = coord["x_max"] - coord["x_min"]
         shape_y = coord["y_max"] - coord["y_min"]
@@ -768,8 +761,8 @@ class BidsDataset(MRI2DSegmentationDataset):
         object_detection_params (dict): Object dection parameters.
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
-        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
-            (to save memory).
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
 
     Attributes:
         bids_ds (BIDS): BIDS dataset.

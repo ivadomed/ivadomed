@@ -1,8 +1,8 @@
 {
     "command": "train",
-    "gpu": 0,
+    "gpu_ids": [0],
     "log_directory": "spineGeneric",
-    "model_name": "seg_sc_t1-t2-t2s-mt",
+    "model_name": "my_model",
     "debugging": false,
     "object_detection_params": {
         "object_detection_path": null,
@@ -71,6 +71,7 @@
         "name": "Unet",
         "dropout_rate": 0.3,
         "bn_momentum": 0.1,
+        "final_activation": "sigmoid",
         "depth": 3
     },
     "FiLMedUnet": {
@@ -99,7 +100,7 @@
         "remove_small": {"unit": "vox", "thr": 3}
     },
     "evaluation_parameters": {
-        "targetSize": {"unit": "vox", "thr": [20, 100]},
+        "target_size": {"unit": "vox", "thr": [20, 100]},
         "overlap": {"unit": "vox", "thr": 3}
     },
     "transformation": {

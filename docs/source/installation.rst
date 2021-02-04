@@ -1,13 +1,32 @@
 Installation
 ============
 
-``ivadomed`` requires Python >= 3.6 and <3.9  as well as PyTorch == 1.5.0. We recommend
+Supported OS
+------------
+
+Currently, we only support ``MacOS`` and ``Linux`` operating systems. ``Windows``
+users have the possibility to install and use ``ivadomed`` via
+`Windows Subsystem for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/>`_.
+
+Python
+------
+
+``ivadomed`` requires Python >= 3.6 and <3.9. We recommend
 working under a virtual environment, which could be set as follows:
 
 ::
 
     virtualenv venv-ivadomed
     source venv-ivadomed/bin/activate
+
+.. warning::
+   If the default Python version installed in your system does not fit the version requirements, you might need to specify a version of Python associated with your virtual environment:
+
+   ::
+
+     virtualenv venv-ivadomed --python=python3.6
+
+
 
 Install from release (recommended)
 ----------------------------------
@@ -31,4 +50,3 @@ on Github. Installation procedure is the following:
     git clone https://github.com/neuropoly/ivadomed.git
     cd ivadomed
     pip install -e .
-

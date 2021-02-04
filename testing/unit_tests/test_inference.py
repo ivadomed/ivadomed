@@ -11,26 +11,30 @@ from ivadomed import utils as imed_utils
 from ivadomed import testing as imed_testing
 from ivadomed import models as imed_models
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+import logging
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
+logger = logging.getLogger(__name__)
 
 cudnn.benchmark = True
 
-GPU_NUMBER = 0
+GPU_ID = 0
 BATCH_SIZE = 8
 DROPOUT = 0.4
 BN = 0.1
 SLICE_AXIS = "axial"
-PATH_BIDS = 'testing_data'
-PATH_OUT = 'tmp'
+__output_dir__ = os.path.join(__tmp_dir__, "output_inference")
+
+
+def setup_function():
+    create_tmp_dir()
 
 
 @pytest.mark.parametrize('transforms_dict', [{
-        "Resample":
-            {
+        "Resample": {
                 "wspace": 0.75,
                 "hspace": 0.75
             },
-        "CenterCrop":
-            {
+        "CenterCrop": {
                 "size": [48, 48]
             },
         "NumpyToTensor": {},
@@ -48,7 +52,7 @@ PATH_OUT = 'tmp'
         "n_it": 0
     }}])
 def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_params):
-    cuda_available, device = imed_utils.define_device(GPU_NUMBER)
+    cuda_available, device = imed_utils.define_device(GPU_ID)
 
     model_params = {"name": "Unet", "is_2d": True}
     loader_params = {
@@ -57,7 +61,7 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_pa
         "dataset_type": "testing",
         "requires_undo": True,
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
-        "bids_path": PATH_BIDS,
+        "bids_path": __data_testing_dir__,
         "target_suffix": target_lst,
         "roi_params": roi_params,
         "slice_filter_params": {
@@ -103,18 +107,21 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_pa
 
     metric_mgr = imed_metrics.MetricManager(metric_fns)
 
-    if not os.path.isdir(PATH_OUT):
-        os.makedirs(PATH_OUT)
+    if not os.path.isdir(__output_dir__):
+        os.makedirs(__output_dir__)
 
     preds_npy, gt_npy = imed_testing.run_inference(test_loader=test_loader,
                                                    model=model,
                                                    model_params=model_params,
                                                    testing_params=testing_params,
-                                                   ofolder=PATH_OUT,
+                                                   ofolder=__output_dir__,
                                                    cuda_available=cuda_available)
 
     metric_mgr(preds_npy, gt_npy)
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
     print(metrics_dict)
-    shutil.rmtree(PATH_OUT)
+
+
+def teardown_function():
+    remove_tmp_dir()

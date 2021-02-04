@@ -78,7 +78,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
             random_metadata = dict(dataset_val[indexes_gif[i_gif]]["input_metadata"][0])
             gif_dict["image_path"].append(random_metadata['input_filenames'])
             gif_dict["slice_id"].append(random_metadata['slice_index'])
-            gif_obj = imed_utils.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].numpy()[0].shape)
+            gif_obj = imed_visualize.AnimatedGif(size=dataset_val[indexes_gif[i_gif]]["input"].numpy()[0].shape)
             gif_dict["gif"].append(copy.copy(gif_obj))
 
     # GET MODEL
@@ -90,7 +90,7 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
         fraction = training_params["transfer_learning"]['retrain_fraction']
         if 'reset' in training_params["transfer_learning"]:
             reset = training_params["transfer_learning"]['reset']
-        else :
+        else:
             reset = True
         # Freeze first layers and reset last layers
         model = imed_models.set_model_for_retrain(old_model_path, retrain_fraction=fraction, map_location=device,
@@ -113,12 +113,6 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     scheduler, step_scheduler_batch = get_scheduler(copy.copy(training_params["scheduler"]["lr_scheduler"]), optimizer,
                                                     num_epochs)
     print("\nScheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
-
-    # Create dict containing gammas and betas after each FiLM layer.
-    if 'film_layers' in model_params and any(model_params['film_layers']):
-        gammas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
-        betas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
-        contrast_list = []
 
     # Resume
     start_epoch = 1
@@ -266,14 +260,6 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
                     imed_visualize.save_tensorboard_img(writer, epoch, "Validation", input_samples, gt_samples, preds,
                                                         is_three_dim=not model_params['is_2d'])
 
-                if 'film_layers' in model_params and any(model_params['film_layers']) and debugging and \
-                        epoch == num_epochs and i < int(len(dataset_val) / training_params["batch_size"]) + 1:
-                    # Store the values of gammas and betas after the last epoch for each batch
-                    gammas_dict, betas_dict, contrast_list = store_film_params(gammas_dict, betas_dict, contrast_list,
-                                                                               batch['input_metadata'], model,
-                                                                               model_params["film_layers"],
-                                                                               model_params["depth"])
-
             # METRICS COMPUTATION FOR CURRENT EPOCH
             val_loss_total_avg_old = val_loss_total_avg if epoch > 1 else None
             metrics_dict = metric_mgr.get_results()
@@ -325,8 +311,6 @@ def train(model_params, dataset_train, dataset_val, training_params, log_directo
     # Save final model
     final_model_path = os.path.join(log_directory, "final_model.pt")
     torch.save(model, final_model_path)
-    if 'film_layers' in model_params and any(model_params['film_layers']) and debugging:
-        save_film_params(gammas_dict, betas_dict, contrast_list, model_params["depth"], log_directory)
 
     # Save best model in log directory
     if os.path.isfile(resume_path):
@@ -433,7 +417,8 @@ def get_loss_function(params):
                                "BinaryCrossEntropyLoss", "TverskyLoss", "FocalTverskyLoss", "AdapWingLoss", "L2loss",
                                "LossCombination"]
     if loss_name not in loss_function_available:
-        raise ValueError("Unknown Loss function: {}, please choose between {}".format(loss_name, loss_function_available))
+        raise ValueError(
+            "Unknown Loss function: {}, please choose between {}".format(loss_name, loss_function_available))
 
     loss_class = getattr(imed_losses, loss_name)
     loss_fct = loss_class(**params)
@@ -456,69 +441,6 @@ def get_metadata(metadata, model_params):
     else:
         return [model_params["film_onehotencoder"].transform([metadata[k][0]['film_input']]).tolist()[0]
                 for k in range(len(metadata))]
-
-
-def store_film_params(gammas, betas, contrasts, metadata, model, film_layers, depth):
-    """Store FiLM params.
-
-    Args:
-        gammas (dict):
-        betas (dict):
-        contrasts (list): list of the batch sample's contrasts (eg T2w, T1w)
-        metadata (list):
-        model (nn.Module):
-        film_layers (list):
-        depth (int):
-
-    Returns:
-        dict, dict: gammas, betas
-    """
-    new_contrast = [metadata[0][k]['contrast'] for k in range(len(metadata[0]))]
-    contrasts.append(new_contrast)
-    # Fill the lists of gammas and betas
-    for idx in [i for i, x in enumerate(film_layers) if x]:
-        if idx < depth:
-            layer_cur = model.encoder.down_path[idx * 3 + 1]
-        elif idx == depth:
-            layer_cur = model.encoder.film_bottom
-        elif idx == depth * 2 + 1:
-            layer_cur = model.decoder.last_film
-        else:
-            layer_cur = model.decoder.up_path[(idx - depth - 1) * 2 + 1]
-
-        gammas[idx + 1].append(layer_cur.gammas[:, :, 0, 0].cpu().numpy())
-        betas[idx + 1].append(layer_cur.betas[:, :, 0, 0].cpu().numpy())
-    return gammas, betas, contrasts
-
-
-def save_film_params(gammas, betas, contrasts, depth, ofolder):
-    """Save FiLM params as npy files.
-
-    These parameters can be further used for visualisation purposes. They are saved in the `ofolder` with `.npy` format.
-
-    Args:
-        gammas (dict):
-        betas (dict):
-        contrasts (list): list of the batch sample's contrasts (eg T2w, T1w)
-        depth (int):
-        ofolder (str):
-
-    """
-    # Convert list of gammas/betas into numpy arrays
-    gammas_dict = {i: np.array(gammas[i]) for i in range(1, 2 * depth + 3)}
-    betas_dict = {i: np.array(betas[i]) for i in range(1, 2 * depth + 3)}
-
-    # Save the numpy arrays for gammas/betas inside files.npy in log_directory
-    for i in range(1, 2 * depth + 3):
-        gamma_layer_path = os.path.join(ofolder, "gamma_layer_{}.npy".format(i))
-        np.save(gamma_layer_path, gammas_dict[i])
-        beta_layer_path = os.path.join(ofolder, "beta_layer_{}.npy".format(i))
-        np.save(beta_layer_path, betas_dict[i])
-
-    # Convert into numpy and save the contrasts of all batch images
-    contrast_images = np.array(contrasts)
-    contrast_path = os.path.join(ofolder, "contrast_image.npy")
-    np.save(contrast_path, contrast_images)
 
 
 def load_checkpoint(model, optimizer, gif_dict, scheduler, fname):

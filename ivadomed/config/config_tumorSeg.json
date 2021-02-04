@@ -1,6 +1,6 @@
 {
     "command": "train",
-    "gpu": 0,
+    "gpu_ids": [0],
     "log_directory": "tumor_segmentation",
     "model_name": "seg_tumor_t2",
     "debugging": true,
@@ -88,7 +88,7 @@
         "remove_small": {"unit": "vox", "thr": 3}
     },
     "evaluation_parameters": {
-        "targetSize": {"unit": "vox", "thr": [20, 100]},
+        "target_size": {"unit": "vox", "thr": [20, 100]},
         "overlap": {"unit": "vox", "thr": 3}
     },
     "transformation": {

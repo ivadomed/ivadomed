@@ -6,10 +6,16 @@ import shutil
 
 from ivadomed.loader import loader as imed_loader
 from ivadomed.object_detection import utils as imed_obj_detect
+import logging
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
+logger = logging.getLogger(__name__)
 
-PATH_BIDS = 'testing_data'
 BATCH_SIZE = 8
-LOG_DIR = "log"
+LOG_DIR = os.path.join(__tmp_dir__, "log")
+
+
+def setup_function():
+    create_tmp_dir()
 
 
 @pytest.mark.parametrize('train_lst', [['sub-unf01']])
@@ -59,7 +65,7 @@ def test_bounding_box(train_lst, target_lst, config):
         "data_list": train_lst,
         "dataset_type": "training",
         "requires_undo": False,
-        "bids_path": PATH_BIDS,
+        "bids_path": __data_testing_dir__,
         "target_suffix": target_lst,
         "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
         "slice_axis": "axial"
@@ -76,7 +82,7 @@ def test_bounding_box(train_lst, target_lst, config):
     current_dir = os.getcwd()
     sub = train_lst[0]
     contrast = config['contrast_params']['contrast_lst'][0]
-    bb_path = os.path.join(current_dir, PATH_BIDS, sub, "anat", sub + "_" + contrast + ".nii.gz")
+    bb_path = os.path.join(current_dir, __data_testing_dir__, sub, "anat", sub + "_" + contrast + ".nii.gz")
     bounding_box_dict[bb_path] = coord
     with open(bounding_box_path, 'w') as fp:
         json.dump(bounding_box_dict, fp, indent=4)
@@ -96,15 +102,17 @@ def test_bounding_box(train_lst, target_lst, config):
     shutil.rmtree(LOG_DIR)
 
 
-# testing adjust bb size
 def test_adjust_bb_size():
     test_coord = (0, 10, 0, 10, 0, 10)
     res = imed_obj_detect.adjust_bb_size(test_coord, (2, 2, 2), True)
     assert(res == [0, 20, 0, 20, 0, 20])
 
 
-# testing bb statistic.
-# We just check wether or it is running as it not returning anything
 def test_compute_bb_statistics():
-    imed_obj_detect.compute_bb_statistics("testing_data/bounding_box_dict.json")
+    """Check to make sure compute_bb_statistics runs."""
+    imed_obj_detect.compute_bb_statistics(os.path.join(__data_testing_dir__,
+                                                       "bounding_box_dict.json"))
 
+
+def teardown_function():
+    remove_tmp_dir()
