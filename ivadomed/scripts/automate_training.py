@@ -272,6 +272,41 @@ def make_config_list(param_list, initial_config, all_combin, multi_params):
 
 
 class HyperparameterOption:
+    """Hyperparameter option to edit config dictionary.
+
+    This class is used to edit a standard config file. For example, say we want to edit the
+    following config file:
+
+    .. code-block:: JSON
+
+        {
+            "training_parameters": {
+                "batch_size": 18,
+                "loss": {"name": "DiceLoss"}
+            },
+            "default_model":     {
+                "name": "Unet",
+                "dropout_rate": 0.3,
+                "depth": 3
+            },
+            "model_name": "seg_tumor_t2",
+            "path_output": "./tmp/"
+        }
+
+    Say we want to change the ``loss``. We could have:
+
+    .. code-block::
+
+        base_key = "loss"
+        base_option = {"name": "FocalLoss", "gamma": 0.5}
+        option = {"training_parameters": {"loss": {"name": "FocalLoss", "gamma": 0.5}}}
+
+    Attributes:
+        base_key (str): the key whose value you want to edit.
+        option (dict): the full tree path to the value you want to insert.
+        base_option (dict): the value you want to insert.
+        name (str): the name to be used for the output folder.
+    """
     def __init__(self, base_key=None, option=None, base_option=None):
         self.base_key = base_key
         self.option = option
@@ -293,6 +328,9 @@ def get_param_list(my_dict, param_list, superkeys):
         my_dict (dict): A dictionary of parameters.
         param_list (list)(HyperparameterOption): A list of HyperparameterOption objects.
         superkeys (list)(str): TODO
+
+    Returns:
+        list, HyperparameterOption: A list of HyperparameterOption objects.
     """
     for key, value in my_dict.items():
         if type(value) is list:
