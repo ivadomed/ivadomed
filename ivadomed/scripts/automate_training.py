@@ -371,14 +371,32 @@ def update_dict(d, u, base_key):
     return d
 
 
-def keys_are_unique(combination):
-    keys = [item.base_key for item in combination]
+def keys_are_unique(hyperparam_list):
+    """Check if the ``base_keys`` in a list of ``HyperparameterOption`` objects are unique.
+
+    Args:
+        hyperparam_list (list)(HyperparameterOption): a list of hyperparameter options.
+
+    Returns:
+        bool: True if all the ``base_keys`` are unique, otherwise False.
+
+    """
+    keys = [item.base_key for item in hyperparam_list]
     keys = set(keys)
-    return len(keys) == len(combination)
+    return len(keys) == len(hyperparam_list)
 
 
-def get_base_keys(param_list):
-    base_keys_all = [hyper_option.base_key for hyper_option in param_list]
+def get_base_keys(hyperparam_list):
+    """Get a list of base_keys from a param_list.
+
+    Args:
+        hyperparam_list (list)(HyperparameterOption): a list of hyperparameter options.
+
+    Returns:
+        base_keys (list)(str): a list of base_keys.
+
+    """
+    base_keys_all = [hyper_option.base_key for hyper_option in hyperparam_list]
     base_keys = []
     for base_key in base_keys_all:
         if base_key not in base_keys:
