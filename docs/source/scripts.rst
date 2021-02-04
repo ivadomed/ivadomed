@@ -23,9 +23,9 @@ ivadomed_automate_training
 
 .. autofunction:: ivadomed.scripts.automate_training.automate_training
 
-.. autofunction:: ivadomed.scripts.automate_training.make_category
-
 .. autofunction:: ivadomed.scripts.automate_training.make_config_list
+
+.. autofunction:: ivadomed.scripts.automate_training.update_dict
 
 ivadomed_compare_models
 """""""""""""""""""""""

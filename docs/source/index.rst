@@ -52,6 +52,7 @@ Home
    tutorials/one_class_segmentation_2d_unet.rst
    tutorials/cascaded_architecture.rst
    tutorials/uncertainty.rst
+   tutorials/automate_training.rst
 
 .. toctree::
    :maxdepth: 1
