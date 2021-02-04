@@ -111,6 +111,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
     # Create dict containing gammas and betas after each FiLM layer.
     if 'film_layers' in model_params and any(model_params['film_layers']):
+        # 2 * model_params["depth"] + 2 is the number of FiLM layers. 1 is added since the range starts at one.
         gammas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
         betas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
         metadata_values_lst = []
