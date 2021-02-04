@@ -14,6 +14,7 @@ from ivadomed import inference as imed_inference
 from ivadomed import uncertainty as imed_uncertainty
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
+from ivadomed.loader.film import store_film_params, save_film_params
 from ivadomed.training import get_metadata
 from ivadomed.postprocessing import threshold_predictions
 
@@ -108,6 +109,13 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     volume = None
     weight_matrix = None
 
+    # Create dict containing gammas and betas after each FiLM layer.
+    if 'film_layers' in model_params and any(model_params['film_layers']):
+        # 2 * model_params["depth"] + 2 is the number of FiLM layers. 1 is added since the range starts at one.
+        gammas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
+        betas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
+        metadata_values_lst = []
+
     for i, batch in enumerate(tqdm(test_loader, desc="Inference - Iteration " + str(i_monte_carlo))):
         with torch.no_grad():
             # GET SAMPLES
@@ -141,6 +149,15 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         if model_params["name"] == "Modified3DUNet" and model_params["attention"] and ofolder:
             imed_visualize.save_feature_map(batch, "attentionblock2", os.path.dirname(ofolder), model, input_samples,
                                             slice_axis=test_loader.dataset.slice_axis)
+
+        if 'film_layers' in model_params and any(model_params['film_layers']):
+            # Store the values of gammas and betas after the last epoch for each batch
+            gammas_dict, betas_dict, metadata_values_lst = store_film_params(gammas_dict, betas_dict,
+                                                                             metadata_values_lst,
+                                                                             batch['input_metadata'], model,
+                                                                             model_params["film_layers"],
+                                                                             model_params["depth"],
+                                                                             model_params['metadata'])
 
         # PREDS TO CPU
         preds_cpu = preds.cpu()
@@ -259,6 +276,9 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                                                      fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                                                      slice_axis)
 
+    if 'film_layers' in model_params and any(model_params['film_layers']):
+        save_film_params(gammas_dict, betas_dict, metadata_values_lst, model_params["depth"],
+                         ofolder.replace("pred_masks", ""))
     return preds_npy_list, gt_npy_list
 
 
