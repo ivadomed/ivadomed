@@ -5,26 +5,32 @@ import shutil
 import argparse
 import numpy as np
 import pandas as pd
-
-from ivadomed.utils import init_ivadomed
+from ivadomed import utils as imed_utils
 
 EXCLUDED_SUBJECT = ["sub-mniPilot1"]
+
 
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True,
-                        help="Input BIDS folder.")
+                        help="Input BIDS folder.", metavar=imed_utils.Metavar.file)
     parser.add_argument("-n", "--number", required=False, default=1,
-                        help="Number of subjects.")
+                        help="Number of subjects.", metavar=imed_utils.Metavar.int)
     parser.add_argument("-c", "--contrasts", required=False,
-                        help="Contrast list.")
+                        help="Contrast list.", metavar=imed_utils.Metavar.list)
     parser.add_argument("-o", "--output", required=True,
-                        help="Output BIDS Folder.")
+                        help="Output BIDS Folder.", metavar=imed_utils.Metavar.file)
     parser.add_argument("-s", "--seed", required=False, default=-1,
-                        help="Set np.random.RandomState to ensure reproducibility: the same subjects will be selected "
-                             "if the script is run several times on the same dataset. Set to -1 (default) otherwise.")
-    parser.add_argument("-d", "--derivatives", required=False, default=1,
-                        help="1: Include derivatives/labels content. 0: Do not include derivatives/labels content.")
+                        help="""Set np.random.RandomState to ensure reproducibility: the same
+                                subjects will be selected if the script is run several times on the
+                                same dataset. Set to -1 (default) otherwise.""",
+                        metavar=imed_utils.Metavar.int)
+    parser.add_argument("-d", "--derivatives",
+                        dest="derivatives",
+                        default=1,
+                        help="""If true, include derivatives/labels content.
+                                1 = true, 0 = false""",
+                        metavar=imed_utils.Metavar.int)
     return parser
 
 
@@ -43,26 +49,28 @@ def remove_some_contrasts(folder, subject_list, good_contrast_list):
         os.remove(ff)
 
 
-def extract_small_dataset(input, output, n=10, contrast_list=None, include_derivatives=True, seed=-1):
+def extract_small_dataset(input, output, n=10, contrast_list=None, include_derivatives=True,
+                          seed=-1):
     """Extract small BIDS dataset from a larger BIDS dataset.
 
     Example::
 
-         ivadomed_extract_small_dataset -i path/to/BIDS/dataset -o path/of/small/BIDS/dataset -n 10 -c T1w,T2w -d 0 -s 1234
+         ivadomed_extract_small_dataset -i path/to/BIDS/dataset -o path/of/small/BIDS/dataset \
+            -n 10 -c T1w,T2w -d 0 -s 1234
 
     Args:
         input (str): Input BIDS folder. Flag: ``--input``, ``-i``
         output (str): Output folder. Flag: ``--output``, ``-o``
         n (int): Number of subjects in the output folder. Flag: ``--number``, ``-n``
-        contrast_list (list): List of image contrasts to include. If set to None, then all available contrasts are
-            included. Flag: ``--contrasts``, ``-c``
-        include_derivatives (bool): If True, derivatives/labels/ content is also copied, only the raw images otherwise.
-                                    Flag: ``--derivatives``, ``-d``
-        seed (int): Set np.random.RandomState to ensure reproducibility: the same subjects will be selected if the
-            function is run several times on the same dataset. If set to -1, each function run is independent.
-            Flag: ``--seed``, ``-s``.
+        contrast_list (list): List of image contrasts to include. If set to None, then all
+            available contrasts are included. Flag: ``--contrasts``, ``-c``
+        include_derivatives (bool): If True, derivatives/labels/ content is also copied,
+            only the raw images otherwise. Flag: ``--derivatives``, ``-d``
+        seed (int): Set np.random.RandomState to ensure reproducibility: the same subjects will be
+            selected if the function is run several times on the same dataset. If set to -1,
+            each function run is independent. Flag: ``--seed``, ``-s``.
     """
-    # Create o folders
+    # Create output folders
     if not os.path.isdir(output):
         os.makedirs(output)
     if include_derivatives:
@@ -76,14 +84,16 @@ def extract_small_dataset(input, output, n=10, contrast_list=None, include_deriv
 
     # Get subject list
     subject_list = [s for s in os.listdir(input)
-                    if s.startswith("sub-") and os.path.isdir(os.path.join(input, s)) and not s in EXCLUDED_SUBJECT]
+                    if s.startswith("sub-") and os.path.isdir(os.path.join(input, s))
+                    and s not in EXCLUDED_SUBJECT]
+
     # Randomly select subjects
     if seed != -1:
         # Reproducibility
         r = np.random.RandomState(seed)
         subject_random_list = list(r.choice(subject_list, n))
     else:
-        subject_random_list = list(np.random.choice(subject_list, n))
+        subject_random_list = list(np.random.choice(subject_list, n, replace=False))
 
     # Loop across subjects
     for subject in subject_random_list:
@@ -111,7 +121,8 @@ def extract_small_dataset(input, output, n=10, contrast_list=None, include_deriv
     if contrast_list:
         remove_some_contrasts(output, subject_random_list, contrast_list)
         if include_derivatives:
-            remove_some_contrasts(os.path.join(output, "derivatives", "labels"), subject_random_list, contrast_list)
+            remove_some_contrasts(os.path.join(output, "derivatives", "labels"),
+                                  subject_random_list, contrast_list)
 
     # Copy dataset_description.json
     idatasetjson = os.path.join(input, "dataset_description.json")
@@ -131,13 +142,16 @@ def extract_small_dataset(input, output, n=10, contrast_list=None, include_deriv
     df.to_csv(oparticipantstsv, sep='\t', index=False)
 
 
-def main():
-    init_ivadomed()
-
+def main(args=None):
+    imed_utils.init_ivadomed()
     parser = get_parser()
-    args = parser.parse_args()
-    # Run script
-    extract_small_dataset(args.input, args.output, int(args.number), args.contrasts.split(","),
+    args = imed_utils.get_arguments(parser, args)
+    if args.contrasts is not None:
+        contrast_list = args.contrasts.split(",")
+    else:
+        contrast_list = None
+
+    extract_small_dataset(args.input, args.output, int(args.number), contrast_list,
                           bool(int(args.derivatives)), int(args.seed))
 
 

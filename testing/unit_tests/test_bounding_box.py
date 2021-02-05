@@ -6,10 +6,16 @@ import shutil
 
 from ivadomed.loader import loader as imed_loader
 from ivadomed.object_detection import utils as imed_obj_detect
+import logging
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
+logger = logging.getLogger(__name__)
 
-PATH_BIDS = 'testing_data'
 BATCH_SIZE = 8
-LOG_DIR = "log"
+PATH_OUTPUT = os.path.join(__tmp_dir__, "log")
+
+
+def setup_function():
+    create_tmp_dir()
 
 
 @pytest.mark.parametrize('train_lst', [['sub-unf01']])
@@ -19,7 +25,7 @@ LOG_DIR = "log"
         "object_detection_params": {
             "object_detection_path": "object_detection",
             "safety_factor": [1.0, 1.0, 1.0],
-            "log_directory": LOG_DIR
+            "path_output": PATH_OUTPUT
         },
         "transforms_params": {
             "NumpyToTensor": {}},
@@ -31,7 +37,7 @@ LOG_DIR = "log"
         "object_detection_params": {
             "object_detection_path": "object_detection",
             "safety_factor": [1.0, 1.0, 1.0],
-            "log_directory": LOG_DIR
+            "path_output": PATH_OUTPUT
         },
         "transforms_params": {"NumpyToTensor": {}},
         "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
@@ -59,7 +65,7 @@ def test_bounding_box(train_lst, target_lst, config):
         "data_list": train_lst,
         "dataset_type": "training",
         "requires_undo": False,
-        "bids_path": PATH_BIDS,
+        "path_data": __data_testing_dir__,
         "target_suffix": target_lst,
         "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
         "slice_axis": "axial"
@@ -70,13 +76,13 @@ def test_bounding_box(train_lst, target_lst, config):
         config['model_params'].update(config["Modified3DUNet"])
 
     bounding_box_dict = {}
-    bounding_box_path = os.path.join(LOG_DIR, 'bounding_boxes.json')
-    if not os.path.exists(LOG_DIR):
-        os.mkdir(LOG_DIR)
+    bounding_box_path = os.path.join(PATH_OUTPUT, 'bounding_boxes.json')
+    if not os.path.exists(PATH_OUTPUT):
+        os.mkdir(PATH_OUTPUT)
     current_dir = os.getcwd()
     sub = train_lst[0]
     contrast = config['contrast_params']['contrast_lst'][0]
-    bb_path = os.path.join(current_dir, PATH_BIDS, sub, "anat", sub + "_" + contrast + ".nii.gz")
+    bb_path = os.path.join(current_dir, __data_testing_dir__, sub, "anat", sub + "_" + contrast + ".nii.gz")
     bounding_box_dict[bb_path] = coord
     with open(bounding_box_path, 'w') as fp:
         json.dump(bounding_box_dict, fp, indent=4)
@@ -93,18 +99,20 @@ def test_bounding_box(train_lst, target_lst, config):
         else:
             assert seg_pair['input'][0].shape[-2:] == (mx2 - mx1, my2 - my1)
 
-    shutil.rmtree(LOG_DIR)
+    shutil.rmtree(PATH_OUTPUT)
 
 
-# testing adjust bb size
 def test_adjust_bb_size():
     test_coord = (0, 10, 0, 10, 0, 10)
     res = imed_obj_detect.adjust_bb_size(test_coord, (2, 2, 2), True)
     assert(res == [0, 20, 0, 20, 0, 20])
 
 
-# testing bb statistic.
-# We just check wether or it is running as it not returning anything
 def test_compute_bb_statistics():
-    imed_obj_detect.compute_bb_statistics("testing_data/bounding_box_dict.json")
+    """Check to make sure compute_bb_statistics runs."""
+    imed_obj_detect.compute_bb_statistics(os.path.join(__data_testing_dir__,
+                                                       "bounding_box_dict.json"))
 
+
+def teardown_function():
+    remove_tmp_dir()

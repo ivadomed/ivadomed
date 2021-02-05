@@ -16,7 +16,7 @@ from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adapt
 from ivadomed.object_detection import utils as imed_obj_detect
 
 
-def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
+def load_dataset(data_list, path_data, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
                  dataset_type="training", requires_undo=False, metadata_type=None,
                  object_detection_params=None, soft_gt=False, device=None,
@@ -58,7 +58,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         roi_params["slice_filter_roi"] = None
 
     if model_params["name"] == "Modified3DUNet" or ('is_2d' in model_params and not model_params['is_2d']):
-        dataset = Bids3DDataset(bids_path,
+        dataset = Bids3DDataset(path_data,
                                 subject_lst=data_list,
                                 target_suffix=target_suffix,
                                 roi_params=roi_params,
@@ -72,7 +72,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                 soft_gt=soft_gt)
 
     elif model_params["name"] == "HeMISUnet":
-        dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
+        dataset = imed_adaptative.HDF5Dataset(root_dir=path_data,
                                               subject_lst=data_list,
                                               model_params=model_params,
                                               contrast_params=contrast_params,
@@ -90,7 +90,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         # Task selection
         task = imed_utils.get_task(model_params["name"])
 
-        dataset = BidsDataset(bids_path,
+        dataset = BidsDataset(path_data,
                               subject_lst=data_list,
                               target_suffix=target_suffix,
                               roi_params=roi_params,
@@ -896,6 +896,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                     if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
                                 self.metadata.keys()]):
                         continue
+
                 elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
                     # add custom data to metadata
                     subject_id = subject.record["subject_id"]

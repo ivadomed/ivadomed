@@ -496,8 +496,8 @@ class ROICrop(Crop):
 class DilateGT(ImedTransform):
     """Randomly dilate a ground-truth tensor.
 
-    .. image:: ../../images/dilate-gt.png
-        :width: 600px
+    .. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/technical_features/dilate-gt.png
+        :width: 500px
         :align: center
 
     Args:

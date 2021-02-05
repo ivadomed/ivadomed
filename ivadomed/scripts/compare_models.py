@@ -13,22 +13,24 @@
 import argparse
 import numpy as np
 import pandas as pd
-
-from ivadomed.utils import init_ivadomed
-
+from ivadomed import utils as imed_utils
 from scipy.stats import ttest_ind_from_stats
 
 
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-df", "--dataframe", required=True,
-                        help="Path to saved dataframe (csv file).")
+                        help="Path to saved dataframe (csv file).",
+                        metavar=imed_utils.Metavar.file)
     parser.add_argument("-n", "--n-iterations", required=True, dest="n_iterations",
-                        type=int, help="Number of times each config was run .")
+                        type=int, help="Number of times each config was run .",
+                        metavar=imed_utils.Metavar.int)
     parser.add_argument("--run_test", dest='run_test', action='store_true',
-                        help="Evaluate the trained model on the testing sub-set instead of validation.")
+                        help="""Evaluate the trained model on the testing sub-set instead of
+                                validation.""")
     parser.add_argument("-o", "--output", dest='out', default="comparison_models.csv",
-                        help="if defined will represents the output csv file.")
+                        help="if defined will represents the output csv file.",
+                        metavar=imed_utils.Metavar.file)
     return parser
 
 
@@ -54,8 +56,8 @@ def compute_statistics(dataframe, n_iterations, run_test=True, csv_out='comparis
             either on the training/validation subdatasets. Flag: ``--run_test``
         csv_out (string): Output csv name to store computed value (e.g., df.csv). Default value is model_comparison.csv. Flag ``-o``, ``--output``
     """
-    avg = dataframe.groupby(['log_directory']).mean()
-    std = dataframe.groupby(['log_directory']).std()
+    avg = dataframe.groupby(['path_output']).mean()
+    std = dataframe.groupby(['path_output']).std()
 
     print("Average dataframe")
     print(avg)
@@ -93,13 +95,11 @@ def compute_statistics(dataframe, n_iterations, run_test=True, csv_out='comparis
         df_concat.to_csv(csv_out)
 
 
-def main():
-    init_ivadomed()
-
+def main(args=None):
+    imed_utils.init_ivadomed()
     parser = get_parser()
-    args = parser.parse_args()
+    args = imed_utils.get_arguments(parser, args)
     df = pd.read_csv(args.dataframe)
-    # Compute statistics
     compute_statistics(df, int(args.n_iterations), bool(args.run_test), args.out)
 
 

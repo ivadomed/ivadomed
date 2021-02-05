@@ -95,10 +95,12 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     return nib_pred
 
 
-def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
+def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
     """Segment an image.
+
     Segment an image (`fname_image`) using a pre-trained model (`folder_model`). If provided, a region of interest
     (`fname_roi`) is used to crop the image prior to segment it.
+
     Args:
         folder_model (str): foldername which contains
             (1) the model ('folder_model/folder_model.pt') to use
@@ -106,12 +108,13 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
             see https://github.com/neuropoly/ivadomed/wiki/configuration-file
         fname_images (list): list of image filenames (e.g. .nii.gz) to segment. Multichannel models require multiple
             images to segment, e.i., len(fname_images) > 1.
-        gpu_number (int): Number representing gpu number if available.
+        gpu_id (int): Number representing gpu number if available.
         options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename
             (e.g., .nii.gz) containing processing information (e.i., spinal cord segmentation, spinal location or MS
             lesion classification)
             e.g., spinal cord centerline, used to crop the image prior to segment it if provided.
             The segmentation is not performed on the slices that are empty in this image.
+
     Returns:
         list: List of nibabel objects containing the soft segmentation(s), one per prediction class.
         list: List of target suffix associated with each prediction in `pred_list`
@@ -119,7 +122,7 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
     """
     # Define device
     cuda_available = torch.cuda.is_available()
-    device = torch.device("cpu") if not cuda_available else torch.device("cuda:" + str(gpu_number))
+    device = torch.device("cpu") if not cuda_available else torch.device("cuda:" + str(gpu_id))
 
     # Check if model folder exists and get filenames
     fname_model, fname_model_metadata = imed_models.get_model_filenames(folder_model)
@@ -302,7 +305,7 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
 
 def split_classes(nib_prediction):
     """Split a 4D nibabel multi-class segmentation file in multiple 3D nibabel binary segmentation files.
-    
+
     Args:
         nib_prediction (nibabelObject): 4D nibabel object.
     Returns:
