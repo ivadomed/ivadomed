@@ -344,7 +344,6 @@ def get_path_output(args, context):
             logger.error("Have not specified a path-output argument via CLI nor config file.")
 
 
-
 def get_path_data(args, context):
     if args.path_data:
         return args.path_data
