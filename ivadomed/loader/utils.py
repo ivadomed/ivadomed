@@ -183,48 +183,7 @@ def get_new_subject_split(path_folders, center_test, split_method, random_seed,
         list, list list: Training, validation and testing subjects lists.
     """
 
-    if isinstance(path_folders, str):
-        raise TypeError("'bids_path' in the config file should be a list")
-    elif len(path_folders) == 1:
-        # read participants.tsv as pandas dataframe
-        df = bids.BIDS(path_folders[0]).participants.content
-        # Append a new column to show which dataset the Subjects belong to (this will be used later for loading)
-        df['bids_path'] = [path_folders[0]]*len(df)
-    elif path_folders == []:
-        raise Exception("No dataset folder selected")
-    else:
-        # Merge multiple .tsv files into the same dataframe
-        df = pd.read_table(os.path.join(path_folders[0], 'participants.tsv'), encoding="ISO-8859-1")
-        # Convert to string to get rid of potential TypeError during merging within the same column
-        df = df.astype(str)
-
-        # Add the Bids_path to the dataframe
-        df['bids_path'] = [path_folders[0]]*len(df)
-
-        for iFolder in range(1, len(path_folders)):
-            df_next = pd.read_table(os.path.join(path_folders[iFolder], 'participants.tsv'), encoding="ISO-8859-1")
-            df_next = df_next.astype(str)
-            df_next['bids_path'] = [path_folders[iFolder]]*len(df_next)
-            # Merge the .tsv files (This keeps also non-overlapping fields)
-            df = pd.merge(left=df, right=df_next, how='outer')
-
-    # Get rid of duplicate entries based on the field "participant_id" (the same subject could have in theory be
-    # included in both datasets). The assumption here is that the two datasets contain identical copies of the subject
-    # folders, if that's not the case, we lose information
-
-    logical_keep_first_encounter = []
-    indicesOfDuplicates = []
-    used = set()  # For debugging
-
-    for iEntry in range(len(df)):
-        if df['participant_id'][iEntry] not in used:
-            used.add(df['participant_id'][iEntry])  # For debugging
-            logical_keep_first_encounter.append(iEntry)
-        else:
-            indicesOfDuplicates.append(iEntry)  # For debugging
-    # Just keep the dataframe with unique participant_id
-    df = df.iloc[logical_keep_first_encounter, :]
-
+    df = merge_bids_datasets(path_folders)
 
     if subject_selection is not None:
         # Verify subject_selection format
@@ -765,6 +724,69 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
     # apply transformation
     return nib.orientations.apply_orientation(arr_ras, trans_orient)
+
+
+def merge_bids_datasets(BIDS_dataset_paths_list):
+    """Read the participants.tsv from several BIDS folders and merge them into a single dataframe.
+    Args:
+        BIDS_dataset_paths_list (list): BIDS folders paths
+
+    Returns:
+        df: dataframe with merged subjects and columns
+    """
+    if isinstance(BIDS_dataset_paths_list, str):
+        raise TypeError("'BIDS_dataset_paths_list' should be a list")
+    elif len(BIDS_dataset_paths_list) == 1:
+        # read participants.tsv as pandas dataframe
+        df = bids.BIDS(BIDS_dataset_paths_list[0]).participants.content
+        # Append a new column to show which dataset the Subjects belong to (this will be used later for loading)
+        df['path_output'] = [BIDS_dataset_paths_list[0]] * len(df)
+    elif BIDS_dataset_paths_list == []:
+        raise Exception("No dataset folder selected")
+    else:
+        # Merge multiple .tsv files into the same dataframe
+        df = pd.read_table(os.path.join(BIDS_dataset_paths_list[0], 'participants.tsv'), encoding="ISO-8859-1")
+        # Convert to string to get rid of potential TypeError during merging within the same column
+        df = df.astype(str)
+
+        # Add the Bids_path to the dataframe
+        df['path_output'] = [BIDS_dataset_paths_list[0]] * len(df)
+
+        for iFolder in range(1, len(BIDS_dataset_paths_list)):
+            df_next = pd.read_table(os.path.join(BIDS_dataset_paths_list[iFolder], 'participants.tsv'),
+                                    encoding="ISO-8859-1")
+            df_next = df_next.astype(str)
+            df_next['path_output'] = [BIDS_dataset_paths_list[iFolder]] * len(df_next)
+            # Merge the .tsv files (This keeps also non-overlapping fields)
+            df = pd.merge(left=df, right=df_next, how='outer')
+
+    # Get rid of duplicate entries based on the field "participant_id" (the same subject could have in theory be
+    # included in both datasets). The assumption here is that if the two datasets contain the same subject,
+    # identical sessions of the subjects are contained within the two folder so only the files within the first folder
+    # will be kept.
+    logical_keep_first_encounter = []
+    indicesOfDuplicates = []
+    used = set()  # For debugging
+
+    for iEntry in range(len(df)):
+        if df['participant_id'][iEntry] not in used:
+            used.add(df['participant_id'][iEntry])  # For debugging
+            logical_keep_first_encounter.append(iEntry)
+        else:
+            indicesOfDuplicates.append(iEntry)  # For debugging
+    # Just keep the dataframe with unique participant_id
+    df = df.iloc[logical_keep_first_encounter, :]
+
+    # Rearrange the bids paths to be last column of the dataframe
+    cols = list(df.columns.values)
+    cols.remove("path_output")
+    cols.append("path_output")
+    df = df[cols]
+
+    # Substitute NaNs with string: "-". This helps with metadata selection
+    df = df.fillna("-")
+
+    return df
 
 
 class BidsDataframe:

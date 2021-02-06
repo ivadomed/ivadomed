@@ -118,9 +118,12 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     # Define device
     cuda_available, device = imed_utils.define_device(context['gpu_ids'][0])
 
-    # If bids_path is string, assign to list - Do this here so it propagates to all functions
-    if isinstance(context['loader_parameters']['bids_path'], str):
-        context['loader_parameters']['bids_path'] = [context['loader_parameters']['path_output']]
+    # BACKWARDS COMPATIBILITY: If bids_path is string, assign to list - Do this here so it propagates to all functions
+    if isinstance(context['loader_parameters']['path_data'], str):
+        context['loader_parameters']['path_data'] = [context['loader_parameters']['path_data']]
+    # Merge the participants.tsv and save the merged version on the output folder
+    participants_df = imed_loader_utils.merge_bids_datasets(context['loader_parameters']['path_data'])
+    participants_df.to_csv(os.path.join(path_output, "participants.tsv"))
 
     # Get subject lists. "segment" command uses all participants of data path, hence no need to split
     if command != "segment":
@@ -323,7 +326,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         if 'film_layers' in model_params and any(model_params['film_layers']):
             clustering_path = os.path.join(path_output, "clustering_models.joblib")
             metadata_clustering_models = joblib.load(clustering_path)
-            ohe_path = os.path.join(path_output, "one_hot_encoder.joblib")
+            # Model directory
+            ohe_path = os.path.join(path_output, context["model_name"], "one_hot_encoder.joblib")
             one_hot_encoder = joblib.load(ohe_path)
             ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"],
                                                    model_params['metadata'])
@@ -434,7 +438,7 @@ def create_dataset_and_ivadomed_version_log(context):
     else:
         f.write('The following BIDS datasets were used for training.\n')
 
-        for iDataset in len(dataset_paths):
+        for iDataset in range(len(dataset_paths)):
             if len(datasets_version[0]) != 0:
                 f.write(str(iDataset+1) + '. ' + dataset_paths[iDataset] + ' - Dataset Annex version: ' + datasets_version[0] + '\n')
             else:

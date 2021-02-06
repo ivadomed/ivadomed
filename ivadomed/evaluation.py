@@ -37,7 +37,7 @@ def evaluate(path_data, path_output, target_suffix, eval_params):
 
     # Load participants.tsv from the output folder - This will be used to get the BIDS folder that each subject was
     # derived from - Not using the path_data input anymore - remove dependency
-    df_participantsTSV = pd.read_table(os.path.join(log_directory, 'participants.tsv'), encoding="ISO-8859-1")
+    df_participantsTSV = pd.read_table(os.path.join(path_output, 'participants.tsv'), sep=",", encoding="ISO-8859-1")
 
     # INIT DATA FRAME
     df_results = pd.DataFrame()
@@ -52,7 +52,7 @@ def evaluate(path_data, path_output, target_suffix, eval_params):
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
 
         # Use the path that is stored on the .tsv file for retrieving the derivative
-        the_BIDS_path = df_participantsTSV[df_participantsTSV['participant_id'] == subj]['bids_path'].tolist()
+        the_BIDS_path = df_participantsTSV[df_participantsTSV['participant_id'] == subj]['path_output'].tolist()
         the_BIDS_path = the_BIDS_path[0]
 
         fname_gt = [os.path.join(the_BIDS_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')

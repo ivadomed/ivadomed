@@ -176,7 +176,7 @@ class BIDStoHDF5:
     """Converts a BIDS dataset to a HDF5 file.
 
     Args:
-        root_dir (str): Path to the BIDS dataset.
+        root_BIDS_list (list): List with paths to the BIDS dataset(s).
         subject_lst (list): Subject names list.
         target_suffix (list): List of suffixes for target masks.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
@@ -203,13 +203,21 @@ class BIDStoHDF5:
         slice_filter_fn (SliceFilter): Object that filters slices according to their content.
     """
 
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, path_hdf5, contrast_balance=None,
+    def __init__(self, root_BIDS_list, subject_lst, target_suffix, contrast_lst, path_hdf5, contrast_balance=None,
                  slice_axis=2, metadata_choice=False, slice_filter_fn=None, roi_params=None, transform=None,
                  object_detection_params=None, soft_gt=False):
         print("Starting conversion")
+
         # Getting all patients id
-        self.bids_ds = bids.BIDS(root_dir)
-        bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
+        self.bids_ds = []
+        for BIDSFolder in root_BIDS_list:
+            self.bids_ds.append(bids.BIDS(BIDSFolder))
+        # Append subjects from all BIDSdatasets into a list
+        bids_subjects = [s for s in self.bids_ds[0].get_subjects() if s.record["subject_id"] in subject_lst]
+        for iBIDSFolder in range(1, len(root_BIDS_list)):
+            bids_subjects += [s for s in self.bids_ds[iBIDSFolder].get_subjects() if
+                              s.record["subject_id"] in subject_lst]
+
         self.soft_gt = soft_gt
         self.dt = h5py.special_dtype(vlen=str)
         # opening an hdf5 file with write access and writing metadata
@@ -236,9 +244,14 @@ class BIDStoHDF5:
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
 
+        # Append get_subjects()
+        get_subjects_all = self.bids_ds[0].get_subjects()
+        for iBIDSFolder in range(1, len(self.bids_ds)):
+            get_subjects_all.extend(self.bids_ds[iBIDSFolder].get_subjects())
+
         self.has_bounding_box = True
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
-                                                                self.bids_ds.get_subjects(),
+                                                                get_subjects_all,
                                                                 slice_axis,
                                                                 contrast_lst)
 

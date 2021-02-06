@@ -778,7 +778,6 @@ class BidsDataset(MRI2DSegmentationDataset):
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 
-        #self.bids_ds = bids.BIDS(root_BIDS_list)
         self.bids_ds = []
         for BIDSFolder in root_BIDS_list:
             self.bids_ds.append(bids.BIDS(BIDSFolder))
@@ -819,21 +818,15 @@ class BidsDataset(MRI2DSegmentationDataset):
                                                "roi_filename": None,
                                                "metadata": [None] * num_contrast} for subject in subject_lst}
 
-
-
-        ###############################################################
-
-        # TAKE CARE OF BOUNDING BOX AFTER CHANGES - WARNING - TEST THIS
-
+        # Append get_subjects()
+        get_subjects_all = self.bids_ds[0].get_subjects()
+        for iBIDSFolder in range(1, len(self.bids_ds)):
+            get_subjects_all.extend(self.bids_ds[iBIDSFolder].get_subjects())
 
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
-                                                                    self.bids_ds[0].get_subjects(),
+                                                                    get_subjects_all,
                                                                     slice_axis,
                                                                     contrast_params["contrast_lst"])
-
-
-        ###############################################################
-
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_params["contrast_lst"]:
@@ -879,18 +872,9 @@ class BidsDataset(MRI2DSegmentationDataset):
                 # add contrast to metadata
                 metadata['contrast'] = subject.record["modality"]
 
-
-
-                #########################################################################################
-                # TAKE CARE OF BOUNDING BOX - NOT TESTED YET
-
                 if len(bounding_box_dict):
                     # Take only one bounding box for cropping
                     metadata['bounding_box'] = bounding_box_dict[str(subject.record["absolute_path"])][0]
-
-                #########################################################################################
-
-
 
                 if metadata_choice == 'mri_params':
                     if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
@@ -901,20 +885,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                     # add custom data to metadata
                     subject_id = subject.record["subject_id"]
 
-                    # Merge multiple .tsv files into the same dataframe
-                    df = pd.read_table(os.path.join(root_BIDS_list[0], 'participants.tsv'), encoding="ISO-8859-1")
-                    # Convert to string to get rid of potential TypeError during merging within the same column
-                    df = df.astype(str)
-                    # Add the Bids_path to the dataframe
-                    df['bids_path'] = [root_BIDS_list[0]] * len(df)
-
-                    for iFolder in range(1, len(root_BIDS_list)):
-                        df_next = pd.read_table(os.path.join(root_BIDS_list[iFolder], 'participants.tsv'), encoding="ISO-8859-1")
-                        df_next = df_next.astype(str)
-                        df_next['bids_path'] = [root_BIDS_list[iFolder]] * len(df_next)
-                        # Merge the .tsv files (This keeps also non-overlapping fields)
-                        df = pd.merge(left=df, right=df_next, how='outer')
-                    #df = bids.BIDS(root_dir).participants.content
+                    df = imed_loader_utils.merge_bids_datasets(root_BIDS_list)
 
                     if metadata_choice not in df.columns:
                         raise ValueError("The following metadata cannot be found in participants.tsv file: {}. "
