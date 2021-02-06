@@ -78,7 +78,7 @@ General Parameters
 .. code-block:: JSON
 
     {
-        "log_directory": "tmp/spineGeneric"
+        "path_output": "tmp/spineGeneric"
     }
 
 
@@ -143,8 +143,8 @@ Loader Parameters
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "path_data",
-        "description": "Path of the BIDS folder.",
-        "type": "string"
+        "description": "Path(s) of the BIDS folder(s).",
+        "type": "list"
     }
 
 
@@ -153,7 +153,7 @@ Loader Parameters
 
     {
         "loader_parameters": {
-            "path_data": "path/to/data_example_spinegeneric"
+            "path_data": ["path/to/data_example_spinegeneric"]
         }
     }
 
