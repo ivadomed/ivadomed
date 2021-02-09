@@ -19,6 +19,7 @@ authors:
   - name: Lucas Rouhier
     affiliation: 1
   - name: Marie-Helene Bourget
+    orcid: 0000-0001-9786-9332
     affiliation: 1
   - name: Anthime Bucquet
     affiliation: 1
