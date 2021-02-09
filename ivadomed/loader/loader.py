@@ -708,7 +708,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
     """ BIDS specific dataset loader for 3D dataset.
 
     Args:
-        root_dir (str): Path to the BIDS dataset.
+        root_dirs (list)(str): List of paths to BIDS datasets.
         subject_lst (list): Subject names list.
         target_suffix (list): List of suffixes for target masks.
         model_params (dict): Dictionary containing model parameters.
@@ -724,10 +724,10 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         object_detection_params (dict): Object dection parameters.
     """
 
-    def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
+    def __init__(self, root_dirs, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
-        dataset = BidsDataset(root_dir,
+        dataset = BidsDataset(root_dirs=root_dirs,
                               subject_lst=subject_lst,
                               target_suffix=target_suffix,
                               roi_params=roi_params,
@@ -774,12 +774,12 @@ class BidsDataset(MRI2DSegmentationDataset):
 
     """
 
-    def __init__(self, root_BIDS_list, subject_lst, target_suffix, contrast_params, slice_axis=2,
+    def __init__(self, root_dirs, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 
         self.bids_ds = []
-        for BIDSFolder in root_BIDS_list:
+        for BIDSFolder in root_dirs:
             self.bids_ds.append(bids.BIDS(BIDSFolder))
 
         self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
@@ -791,7 +791,7 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         # Append subjects from all BIDSdatasets into a list
         bids_subjects = [s for s in self.bids_ds[0].get_subjects() if s.record["subject_id"] in subject_lst]
-        for iBIDSFolder in range(1, len(root_BIDS_list)):
+        for iBIDSFolder in range(1, len(root_dirs)):
             bids_subjects += [s for s in self.bids_ds[iBIDSFolder].get_subjects() if s.record["subject_id"] in subject_lst]
 
         # Create a list with the filenames for all contrasts and subjects
@@ -885,7 +885,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                     # add custom data to metadata
                     subject_id = subject.record["subject_id"]
 
-                    df = imed_loader_utils.merge_bids_datasets(root_BIDS_list)
+                    df = imed_loader_utils.merge_bids_datasets(root_dirs)
 
                     if metadata_choice not in df.columns:
                         raise ValueError("The following metadata cannot be found in participants.tsv file: {}. "
