@@ -9,13 +9,13 @@ tags:
 authors:
   - name: Charley Gros
     orcid: 0000-0003-4318-0024
-    affiliation: "1, 3"
+    affiliation: "1, 2"
   - name: Andreanne Lemay
     orcid: 0000-0001-8581-2929
-    affiliation: "1, 3"
+    affiliation: "1, 2"
   - name: Olivier Vincent
     orcid: 0000-0002-5554-8108
-    affiliation: "1, 3"
+    affiliation: "1, 2"
   - name: Lucas Rouhier
     affiliation: 1
   - name: Marie-Helene Bourget
@@ -26,13 +26,13 @@ authors:
     affiliation: "2, 3"
   - name: Julien Cohen-Adad
     orcid: 0000-0003-3662-9532
-    affiliation: "1, 3, 4"
+    affiliation: "1, 2, 4"
 affiliations:
  - name: NeuroPoly Lab, Institute of Biomedical Engineering, Polytechnique Montreal, Montreal, Canada
    index: 1
- - name: AIMI, Stanford University, Stanford, CA, USA
-   index: 2
  - name: Mila, Quebec AI Institute, Montreal, QC, Canada
+   index: 2
+ - name: AIMI, Stanford University, Stanford, CA, USA
    index: 3
  - name:  Functional Neuroimaging Unit, CRIUGM, Université de Montréal, Montreal, QC, Canada
    index: 4
