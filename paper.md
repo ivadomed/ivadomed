@@ -83,6 +83,6 @@ Past and ongoing research projects using `ivadomed` are listed [here](https://iv
 
 # Acknowledgements
 
-The authors thank Ainsleigh Hill, Giselle Martel, Alexandru Jora, Nick Guenther, Christian Perone, Konstantinos Nasiotis, Valentine Louis-Lucas, Benoît Sauty-De-Chalon, Alexandru Foias and Leander Van Eekelen for their useful contributions, and Guillaume Dumas for proof-reading the manuscript. Funded by IVADO, the Canada Research Chair in Quantitative Magnetic Resonance Imaging [950-230815], CIHR [FDN-143263], CFI [32454, 34824], FRQS [28826], NSERC [RGPIN-2019-07244], FRQNT [2020‐RS4‐265502 UNIQUE] and TransMedTech. C.G. has a fellowship from IVADO [EX-2018-4], A.L. has a fellowship from NSERC and FRQNT, O.V. has a fellowship from NSERC, FRQNT and UNIQUE.
+The authors thank Ainsleigh Hill, Giselle Martel, Alexandru Jora, Nick Guenther, Christian Perone, Konstantinos Nasiotis, Valentine Louis-Lucas, Benoît Sauty-De-Chalon, Alexandru Foias and Leander Van Eekelen for their useful contributions, and Guillaume Dumas for proof-reading the manuscript. Funded by IVADO, the Canada Research Chair in Quantitative Magnetic Resonance Imaging [950-230815, 950-233166], CIHR [FDN-143263], CFI [32454, 34824], FRQS [28826], NSERC [RGPIN-2019-07244], FRQNT [2020‐RS4‐265502 UNIQUE] and TransMedTech. C.G. has a fellowship from IVADO [EX-2018-4], A.L. has a fellowship from NSERC and FRQNT, O.V. has a fellowship from NSERC, FRQNT and UNIQUE.
 
 # References
