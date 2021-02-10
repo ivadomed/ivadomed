@@ -50,4 +50,7 @@ def test_film_generator():
     model = imed_model.FiLMgenerator(64, 1)
     inf = model(inp)
     assert (type(inf[0]) == torch.Tensor)
-    assert (type(inf[1]) == torch.nn.parameter.Parameter)
+    assert (type(inf[1]) == list)
+    assert (len(inf[1]) == 2)
+    assert (type(inf[1][0]) == torch.nn.parameter.Parameter)
+    assert (type(inf[1][1]) == torch.nn.parameter.Parameter)
