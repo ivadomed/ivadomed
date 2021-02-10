@@ -6,6 +6,7 @@
 [![publish package](https://github.com/ivadomed/ivadomed/workflows/Publish%20Package/badge.svg)](https://github.com/ivadomed/ivadomed/actions?query=workflow%3A%22Publish+Package%22)
 [![Documentation Status](https://readthedocs.org/projects/ivado-medical-imaging/badge/?version=stable)](https://ivadomed.org/en/stable/?badge=stable)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4527802.svg)](https://doi.org/10.5281/zenodo.4527802)
 [![Twitter Follow](https://img.shields.io/twitter/follow/ivadomed.svg?style=social&label=Follow)](https://twitter.com/ivadomed)
 
 `ivadomed` is an integrated framework for medical image analysis with deep learning.
