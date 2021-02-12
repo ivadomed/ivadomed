@@ -26,7 +26,7 @@ def load_dataset(data_list, path_data, transforms_params, model_params, target_s
 
     Args:
         data_list (list): Subject names list.
-        bids_path (list): Path to the BIDS dataset(s).
+        path_data (list) or (str): Path to the BIDS dataset(s).
         transforms_params (dict): Dictionary containing transformations for "training", "validation", "testing" (keys),
             eg output of imed_transforms.get_subdatasets_transforms.
         model_params (dict): Dictionary containing model parameters.
@@ -705,10 +705,10 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
-    """ BIDS specific dataset loader for 3D dataset.
+    """BIDS specific dataset loader for 3D dataset.
 
     Args:
-        root_dirs (list)(str): List of paths to BIDS datasets.
+        path_data (list) or (str): List of Paths to the BIDS datasets.
         subject_lst (list): Subject names list.
         target_suffix (list): List of suffixes for target masks.
         model_params (dict): Dictionary containing model parameters.
@@ -724,10 +724,10 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         object_detection_params (dict): Object dection parameters.
     """
 
-    def __init__(self, root_dirs, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
+    def __init__(self, path_data, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
-        dataset = BidsDataset(root_dirs=root_dirs,
+        dataset = BidsDataset(path_data=path_data,
                               subject_lst=subject_lst,
                               target_suffix=target_suffix,
                               roi_params=roi_params,
@@ -746,7 +746,7 @@ class BidsDataset(MRI2DSegmentationDataset):
     """ BIDS specific dataset loader.
 
     Args:
-        root_dirs (list): List of Paths to the BIDS datasets.
+        path_data (list) or (str): List of Paths to the BIDS datasets.
         subject_lst (list): Subject names list.
         target_suffix (list): List of suffixes for target masks.
         contrast_params (dict): Contains image contrasts related parameters.
@@ -774,12 +774,13 @@ class BidsDataset(MRI2DSegmentationDataset):
 
     """
 
-    def __init__(self, root_dirs, subject_lst, target_suffix, contrast_params, slice_axis=2,
+    def __init__(self, path_data, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 
         self.bids_ds = []
-        for BIDSFolder in root_dirs:
+        path_data = imed_utils.format_path_data(path_data)
+        for BIDSFolder in path_data:
             self.bids_ds.append(bids.BIDS(BIDSFolder))
 
         self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
@@ -791,7 +792,7 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         # Append subjects from all BIDSdatasets into a list
         bids_subjects = [s for s in self.bids_ds[0].get_subjects() if s.record["subject_id"] in subject_lst]
-        for i_bids_folder in range(1, len(root_dirs)):
+        for i_bids_folder in range(1, len(path_data)):
             bids_subjects += [s for s in self.bids_ds[i_bids_folder].get_subjects() if s.record["subject_id"] in subject_lst]
 
         # Create a list with the filenames for all contrasts and subjects
@@ -885,7 +886,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                     # add custom data to metadata
                     subject_id = subject.record["subject_id"]
 
-                    df = imed_loader_utils.merge_bids_datasets(root_dirs)
+                    df = imed_loader_utils.merge_bids_datasets(path_data)
 
                     if metadata_choice not in df.columns:
                         raise ValueError("The following metadata cannot be found in participants.tsv file: {}. "
