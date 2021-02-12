@@ -791,8 +791,8 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         # Append subjects from all BIDSdatasets into a list
         bids_subjects = [s for s in self.bids_ds[0].get_subjects() if s.record["subject_id"] in subject_lst]
-        for iBIDSFolder in range(1, len(root_dirs)):
-            bids_subjects += [s for s in self.bids_ds[iBIDSFolder].get_subjects() if s.record["subject_id"] in subject_lst]
+        for i_bids_folder in range(1, len(root_dirs)):
+            bids_subjects += [s for s in self.bids_ds[i_bids_folder].get_subjects() if s.record["subject_id"] in subject_lst]
 
         # Create a list with the filenames for all contrasts and subjects
         subjects_tot = []
@@ -820,8 +820,8 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         # Append get_subjects()
         get_subjects_all = self.bids_ds[0].get_subjects()
-        for iBIDSFolder in range(1, len(self.bids_ds)):
-            get_subjects_all.extend(self.bids_ds[iBIDSFolder].get_subjects())
+        for i_bids_folder in range(1, len(self.bids_ds)):
+            get_subjects_all.extend(self.bids_ds[i_bids_folder].get_subjects())
 
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
                                                                     get_subjects_all,

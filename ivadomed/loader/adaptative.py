@@ -214,8 +214,8 @@ class BIDStoHDF5:
             self.bids_ds.append(bids.BIDS(BIDSFolder))
         # Append subjects from all BIDSdatasets into a list
         bids_subjects = [s for s in self.bids_ds[0].get_subjects() if s.record["subject_id"] in subject_lst]
-        for iBIDSFolder in range(1, len(root_BIDS_list)):
-            bids_subjects += [s for s in self.bids_ds[iBIDSFolder].get_subjects() if
+        for i_bids_folder in range(1, len(root_BIDS_list)):
+            bids_subjects += [s for s in self.bids_ds[i_bids_folder].get_subjects() if
                               s.record["subject_id"] in subject_lst]
 
         self.soft_gt = soft_gt
@@ -246,8 +246,8 @@ class BIDStoHDF5:
 
         # Append get_subjects()
         get_subjects_all = self.bids_ds[0].get_subjects()
-        for iBIDSFolder in range(1, len(self.bids_ds)):
-            get_subjects_all.extend(self.bids_ds[iBIDSFolder].get_subjects())
+        for i_bids_folder in range(1, len(self.bids_ds)):
+            get_subjects_all.extend(self.bids_ds[i_bids_folder].get_subjects())
 
         self.has_bounding_box = True
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
