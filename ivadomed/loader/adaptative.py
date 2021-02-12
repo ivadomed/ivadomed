@@ -177,7 +177,7 @@ class BIDStoHDF5:
     """Converts a BIDS dataset to a HDF5 file.
 
     Args:
-        path_data (list) or (str): List with paths to the BIDS dataset(s).
+        path_data (list) or (str): Path(s) to BIDS datasets
         subject_lst (list): Subject names list.
         target_suffix (list): List of suffixes for target masks.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
@@ -482,7 +482,7 @@ class HDF5Dataset:
     """HDF5 dataset object.
 
     Args:
-        path_data (list) or (str): Path of bids and data.
+        path_data (list) or (str): Path(s) to BIDS datasets
         subject_lst (list of str): List of subjects.
         model_params (dict): Dictionary containing model parameters.
         target_suffix (list of str): List of suffixes of the target structures.
