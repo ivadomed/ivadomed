@@ -99,23 +99,27 @@ class ConfigurationManager(object):
         Returns:
             dict: Updated configuration dict.
         """
-        self.change_keys(self.context)
+        self.change_keys(self.context, list(self.context.keys()))
         self.updated_config = update(self.default_config, self.context)
         if self.updated_config['debugging']:
             self._display_differing_keys()
 
         return self.updated_config
 
-    def change_keys(self, context):
-        for k, v in context.items():
-            if isinstance(v, collections.abc.Mapping):
-                self.change_keys(v)
-            else:
-                for key in self.key_change_dict:
-                    if key in context:
-                        context[self.key_change_dict[key]] = context[key]
-                        del context[key]
-
+    def change_keys(self, context, keys):
+        for k in keys:
+            # Verify if key is still in the dict
+            if k in context:
+                v = context[k]
+                # Verify if value is a dictionary
+                if isinstance(v, collections.abc.Mapping):
+                    self.change_keys(v, list(v.keys()))
+                else:
+                    # Change keys from the key_change_dict
+                    for key in self.key_change_dict:
+                        if key in context:
+                            context[self.key_change_dict[key]] = context[key]
+                            del context[key]
 
     def _display_differing_keys(self):
         """Display differences between dictionaries.
