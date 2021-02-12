@@ -70,7 +70,8 @@
     "default_model": {
         "name": "Unet",
         "dropout_rate": 0.3,
-        "bn_momentum": 0.9,
+        "bn_momentum": 0.1,
+        "final_activation": "sigmoid",
         "depth": 3
     },
     "FiLMedUnet": {

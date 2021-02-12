@@ -932,26 +932,31 @@ being used for the segmentation task).
            "dropout_rate": {
                "type": "float"
            },
-           "batch_norm_momentum": {
-               "type": "float"
+           "bn_momentum": {
+               "type": "float",
+               "$$description": [
+                    "Defines the importance of the running average: (1 - `bn_momentum`). A large running\n",
+                    "average factor will lead to a slow and smooth learning.\n",
+                    "See `PyTorch's BatchNorm classes for more details. <https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html>`__ for more details.\n"
+               ]
+
            },
            "depth": {
                "type": "int",
                "range": "(0, inf)",
                "description": "Number of down-sampling operations."
            },
-           "relu": {
-               "type": "boolean",
+           "final_activation": {
+               "type": "string",
                "required": "false",
                "$$description": [
-                   "Sets final activation to normalized ReLU (relu between 0 and 1), instead of\n",
-                   "sigmoid. Only available when `is_2D=True`."
+                   "Final activation layer. Options: ``sigmoid`` (default), ``relu``(normalized ReLU), or ``softmax``."
                ]
            },
-           "is_dim": {
+           "is_2d": {
                "type": "boolean",
                "$$description": [
-                   "Indicates dimensionality of model (2D or 3D). If ``is_dim`` is ``False``, then parameters\n",
+                   "Indicates if the model is 2d, if not the model is 3d. If ``is_2d`` is ``False``, then parameters\n",
                    "``length_3D`` and ``stride_3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`)."
                ]
            }
@@ -1158,18 +1163,10 @@ Cascaded Architecture Features
 Transformations
 ---------------
 
-Transformations applied during data augmentation. Transformations are
-sorted in the order they are applied to the image samples. For each
-transformation, the following parameters are customizable: -
-``applied_to``: list betweem ``"im", "gt", "roi"``. If not specified,
-then the transformation is applied to all loaded samples. Otherwise,
-only applied to the specified types: eg ``["gt"]`` implies that this
-transformation is only applied to the ground-truth data. -
-``dataset_type``: list between ``"training", "validation", "testing"``.
-If not specified, then the transformation is applied to the three
-sub-datasets. Otherwise, only applied to the specified subdatasets: eg
-``["testing"]`` implies that this transformation is only applied to the
-testing sub-dataset.
+Transformations applied during data augmentation. Transformations are sorted in the order they are applied to the image samples. For each transformation, the following parameters are customizable: 
+
+- ``applied_to``: list between ``"im", "gt", "roi"``. If not specified, then the transformation is applied to all loaded samples. Otherwise, only applied to the specified types: Example: ``["gt"]`` implies that this transformation is only applied to the ground-truth data.
+- ``dataset_type``: list between ``"training", "validation", "testing"``. If not specified, then the transformation is applied to the three sub-datasets. Otherwise, only applied to the specified subdatasets. Example: ``["testing"]`` implies that this transformation is only applied to the testing sub-dataset.
 
 Available Transformations:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
