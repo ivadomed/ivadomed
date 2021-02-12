@@ -159,7 +159,7 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
     return X_train, X_val, X_test
 
 
-def get_new_subject_split(path_folders, center_test, split_method, random_seed,
+def get_new_subject_split(path_data, center_test, split_method, random_seed,
                           train_frac, test_frac, path_output, balance, subject_selection=None):
     """Randomly split dataset between training / validation / testing.
 
@@ -167,7 +167,7 @@ def get_new_subject_split(path_folders, center_test, split_method, random_seed,
         and save it in path_output + "/split_datasets.joblib".
 
     Args:
-        path_folders (list): Dataset folders.
+        path_data (list) or (str): Dataset folders.
         center_test (list): List of centers to include in the testing set.
         split_method (string): See imed_loader_utils.split_dataset.
         random_seed (int): Random seed.
@@ -183,7 +183,7 @@ def get_new_subject_split(path_folders, center_test, split_method, random_seed,
         list, list list: Training, validation and testing subjects lists.
     """
 
-    df = merge_bids_datasets(path_folders)
+    df = merge_bids_datasets(path_data)
 
     if subject_selection is not None:
         # Verify subject_selection format
@@ -320,7 +320,7 @@ def get_subdatasets_subjects_list(split_params, path_data, path_output, subject_
         old_split = joblib.load(split_params["fname_split"])
         train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
     else:
-        train_lst, valid_lst, test_lst = get_new_subject_split(path_folders=path_data,
+        train_lst, valid_lst, test_lst = get_new_subject_split(path_data=path_data,
                                                                center_test=split_params['center_test'],
                                                                split_method=split_params['method'],
                                                                random_seed=split_params['random_seed'],
