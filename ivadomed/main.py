@@ -437,9 +437,9 @@ def create_dataset_and_ivadomed_version_log(context):
     else:
         f.write('The following BIDS datasets were used for training.\n')
 
-        for iDataset in range(len(dataset_paths)):
+        for i_dataset in range(len(dataset_paths)):
             if len(datasets_version[0]) != 0:
-                f.write(str(iDataset+1) + '. ' + dataset_paths[iDataset] + ' - Dataset Annex version: ' + datasets_version[0] + '\n')
+                f.write(str(i_dataset+1) + '. ' + dataset_paths[i_dataset] + ' - Dataset Annex version: ' + datasets_version[0] + '\n')
             else:
                 f.write('\n')
 
