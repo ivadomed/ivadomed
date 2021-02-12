@@ -404,15 +404,15 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
 def create_dataset_and_ivadomed_version_log(context):
 
-    dataset_paths = context['loader_parameters']['path_data']
+    path_data = context['loader_parameters']['path_data']
 
     ivadomed_version = imed_utils._version_string()
     datasets_version = []
 
-    if isinstance(dataset_paths, str):
-        datasets_version = [imed_utils.__get_commit(path_to_git_folder=dataset_paths)]
-    elif isinstance(dataset_paths, list):
-        for Dataset in dataset_paths:
+    if isinstance(path_data, str):
+        datasets_version = [imed_utils.__get_commit(path_to_git_folder=path_data)]
+    elif isinstance(path_data, list):
+        for Dataset in path_data:
             datasets_version.append(imed_utils.__get_commit(path_to_git_folder=Dataset))
 
     log_file = os.path.join(context['path_output'], 'version_info.log')
@@ -427,21 +427,17 @@ def create_dataset_and_ivadomed_version_log(context):
     f.write('IVADOMED TOOLBOX\n----------------\n(' + ivadomed_version + ')')
 
     # DATASETS
+    path_data = imed_utils.format_path_data(path_data)
     f.write('\n\n\nDATASET VERSION\n---------------\n')
-    if len(datasets_version) == 1:
-        f.write('A single BIDS dataset was used for training.\n' + dataset_paths)
-        if datasets_version[0] != '?!?':  # This is what was returned from _version_string when no git is present
-            f.write(' - Dataset Annex version: ' + datasets_version[0] + '\n\n')
-        else:
-            f.write(' - Dataset is not Annexed.\n')
-    else:
-        f.write('The following BIDS datasets were used for training.\n')
 
-        for i_dataset in range(len(dataset_paths)):
-            if len(datasets_version[0]) != 0:
-                f.write(str(i_dataset+1) + '. ' + dataset_paths[i_dataset] + ' - Dataset Annex version: ' + datasets_version[0] + '\n')
-            else:
-                f.write('\n')
+    f.write('The following BIDS dataset(s) were used for training.\n')
+
+    for i_dataset in range(len(path_data)):
+        if datasets_version[i_dataset] not in ['', '?!?']:
+            f.write(str(i_dataset+1) + '. ' + path_data[i_dataset] + ' - Dataset Annex version: ' + datasets_version[i_dataset] + '\n')
+        else:
+            f.write(str(i_dataset+1) + '. ' + path_data[i_dataset] + ' - Dataset is not Annexed.\n')
+    f.close()
 
     # SYSTEM INFO
     f.write('\n\nSYSTEM INFO\n-------------\n')
