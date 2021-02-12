@@ -14,11 +14,11 @@ from ivadomed import utils as imed_utils
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True, type=str,
-                        help="""Input log directory. If using --multiple, this parameter indicates
+                        help="""Input path. If using --multiple, this parameter indicates
                                 the suffix path of all log directories of interest. To compare
                                 trainings or set of trainings (using ``--multiple``) with subplots,
                                 please list the paths by separating them with commas, e.g.
-                                path_log_dir1,path_logdir2.""",
+                                path_output1,path_output2.""",
                         metavar=imed_utils.Metavar.str)
     parser.add_argument("--multiple", required=False, dest="multiple", action='store_true',
                         help="""Multiple log directories are considered: all available folders
@@ -57,7 +57,7 @@ def plot_curve(data_list, y_label, fig_ax, subplot_title, y_lim=None):
     """Plot curve of metrics or losses for each epoch.
 
     Args:
-        data_list (list): list of pd.DataFrame, one for each log_directory
+        data_list (list): list of pd.DataFrame, one for each path_output
         y_label (str): Label for the y-axis.
         fig_ax (plt.subplot):
         subplot_title (str): Title of the subplot
@@ -95,7 +95,7 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         - the training against the validation loss
         - the metrics computed on the validation sub-dataset.
 
-    It could consider one log directory at a time, for example:
+    It could consider one output path at a time, for example:
 
     .. image:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/scripts/plot_loss_single.png
         :width: 600px
@@ -116,10 +116,10 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         :align: center
 
     Args:
-        input_folder (str): Log directory name. Flag: ``--input``, ``-i``. If using ``--multiple``,
+        input_folder (str): Input path name. Flag: ``--input``, ``-i``. If using ``--multiple``,
             this parameter indicates the suffix path of all log directories of interest. To compare
             trainings or set of trainings (using ``--multiple``) with subplots, please list the
-            paths by separating them with commas, e.g. path_log_dir1, path_logdir2
+            paths by separating them with commas, e.g. path_output1, path_output2
         output_folder (str): Output folder. Flag: ``--output``, ``-o``.
         multiple_training (bool): Indicates if multiple log directories are considered (``True``)
             or not (``False``). Flag: ``--multiple``. All available folders with ``-i`` as prefix
@@ -157,12 +157,12 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
             input_folder_list = [input_folder]
 
         events_df_list = []
-        for log_directory in input_folder_list:
+        for path_output in input_folder_list:
             # Find tf folders
-            check_events_numbers(log_directory)
+            check_events_numbers(path_output)
 
             # Get data as dataframe
-            events_vals_df = tensorboard_retrieve_event(log_directory)
+            events_vals_df = tensorboard_retrieve_event(path_output)
 
             # Store data
             events_df_list.append(events_vals_df)
@@ -194,11 +194,11 @@ def run_plot_training_curves(input_folder, output_folder, multiple_training=Fals
         plt_dict[fname_out].savefig(fname_out)
 
 
-def tensorboard_retrieve_event(log_directory):
+def tensorboard_retrieve_event(path_output):
     """Retrieve data from tensorboard summary event.
 
     Args:
-        log_directory (str): log directory where the event files are located
+        path_output (str): output path where the event files are located
 
     Returns:
         df: a panda dataframe where the columns are the metric or loss and the row are the epochs.
@@ -213,7 +213,7 @@ def tensorboard_retrieve_event(log_directory):
 
     # Each element in the summary iterator represent an element (e.g., scalars, images..)
     # stored in the summary for all epochs in the form of event.
-    summary_iterators = [EventAccumulator(os.path.join(log_directory, dname)).Reload() for dname in os.listdir(log_directory)]
+    summary_iterators = [EventAccumulator(os.path.join(path_output, dname)).Reload() for dname in os.listdir(path_output)]
 
     metrics = defaultdict(list)
     num_metrics = 0

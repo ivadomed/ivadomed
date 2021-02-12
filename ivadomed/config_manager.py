@@ -2,6 +2,7 @@ import json
 import os
 import collections.abc
 from ivadomed import utils as imed_utils
+import copy
 
 
 def update(d, u):
@@ -65,7 +66,7 @@ def load_json(config_path):
 
 
 # To ensure retrocompatibility for parameter changes in configuration file
-KEY_CHANGE_DICT = {'UNet3D': 'Modified3DUNet'}
+KEY_CHANGE_DICT = {'UNet3D': 'Modified3DUNet', 'bids_path': 'path_data', 'log_directory': 'path_output'}
 
 
 class ConfigurationManager(object):
@@ -88,6 +89,8 @@ class ConfigurationManager(object):
         default_config_path = os.path.join(imed_utils.__ivadomed_dir__, "ivadomed", "config", "config_default.json")
         self.default_config = load_json(default_config_path)
         self.context = load_json(context_path)
+        # Required to obtain differences
+        self.context_original = copy.deepcopy(self.context)
         self.updated_config = {}
 
     def get_config(self):
@@ -96,24 +99,29 @@ class ConfigurationManager(object):
         Returns:
             dict: Updated configuration dict.
         """
-        self.change_keys()
+        self.change_keys(self.context)
         self.updated_config = update(self.default_config, self.context)
         if self.updated_config['debugging']:
             self._display_differing_keys()
 
         return self.updated_config
 
-    def change_keys(self):
-        for key in self.key_change_dict:
-            if key in self.context:
-                self.context[self.key_change_dict[key]] = self.context[key]
-                del self.context[key]
+    def change_keys(self, context):
+        for k, v in context.items():
+            if isinstance(v, collections.abc.Mapping):
+                self.change_keys(v)
+            else:
+                for key in self.key_change_dict:
+                    if key in context:
+                        context[self.key_change_dict[key]] = context[key]
+                        del context[key]
+
 
     def _display_differing_keys(self):
         """Display differences between dictionaries.
         """
         print('Adding the following keys to the configuration file')
-        deep_dict_compare(self.context, self.updated_config)
+        deep_dict_compare(self.context_original, self.updated_config)
         print('\n')
 
     def _validate_path(self):

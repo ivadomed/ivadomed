@@ -18,6 +18,7 @@ def test_automate_training(script_runner):
 
     ret = script_runner.run('ivadomed_automate_training', '--config', f'{config_file}',
                             '--params', f'{param_file}',
+                            '--path-data', f'{__data_testing_dir__}',
                             '--output_dir', f'{__output_dir__}')
     print(f"{ret.stdout}")
     print(f"{ret.stderr}")
@@ -36,6 +37,7 @@ def test_automate_training_run_test(script_runner):
 
     ret = script_runner.run('ivadomed_automate_training', '--config', f'{config_file}',
                             '--params', f'{param_file}',
+                            '--path-data', f'{__data_testing_dir__}',
                             '--output_dir', f'{__output_dir__}',
                             '--run-test')
     print(f"{ret.stdout}")
