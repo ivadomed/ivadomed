@@ -726,37 +726,37 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     return nib.orientations.apply_orientation(arr_ras, trans_orient)
 
 
-def merge_bids_datasets(BIDS_dataset_paths_list):
+def merge_bids_datasets(path_data):
     """Read the participants.tsv from several BIDS folders and merge them into a single dataframe.
     Args:
-        BIDS_dataset_paths_list (list): BIDS folders paths
+        path_data (list) or (str): BIDS folders paths
 
     Returns:
         df: dataframe with merged subjects and columns
     """
-    if isinstance(BIDS_dataset_paths_list, str):
-        raise TypeError("'BIDS_dataset_paths_list' should be a list")
-    elif len(BIDS_dataset_paths_list) == 1:
+    path_data = imed_utils.format_path_data(path_data)
+
+    if len(path_data) == 1:
         # read participants.tsv as pandas dataframe
-        df = bids.BIDS(BIDS_dataset_paths_list[0]).participants.content
+        df = bids.BIDS(path_data[0]).participants.content
         # Append a new column to show which dataset the Subjects belong to (this will be used later for loading)
-        df['path_output'] = [BIDS_dataset_paths_list[0]] * len(df)
-    elif BIDS_dataset_paths_list == []:
+        df['path_output'] = [path_data[0]] * len(df)
+    elif path_data == []:
         raise Exception("No dataset folder selected")
     else:
         # Merge multiple .tsv files into the same dataframe
-        df = pd.read_table(os.path.join(BIDS_dataset_paths_list[0], 'participants.tsv'), encoding="ISO-8859-1")
+        df = pd.read_table(os.path.join(path_data[0], 'participants.tsv'), encoding="ISO-8859-1")
         # Convert to string to get rid of potential TypeError during merging within the same column
         df = df.astype(str)
 
         # Add the Bids_path to the dataframe
-        df['path_output'] = [BIDS_dataset_paths_list[0]] * len(df)
+        df['path_output'] = [path_data[0]] * len(df)
 
-        for iFolder in range(1, len(BIDS_dataset_paths_list)):
-            df_next = pd.read_table(os.path.join(BIDS_dataset_paths_list[iFolder], 'participants.tsv'),
+        for iFolder in range(1, len(path_data)):
+            df_next = pd.read_table(os.path.join(path_data[iFolder], 'participants.tsv'),
                                     encoding="ISO-8859-1")
             df_next = df_next.astype(str)
-            df_next['path_output'] = [BIDS_dataset_paths_list[iFolder]] * len(df_next)
+            df_next['path_output'] = [path_data[iFolder]] * len(df_next)
             # Merge the .tsv files (This keeps also non-overlapping fields)
             df = pd.merge(left=df, right=df_next, how='outer')
 
