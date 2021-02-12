@@ -144,16 +144,26 @@ Loader Parameters
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "path_data",
         "description": "Path(s) of the BIDS folder(s).",
-        "type": "list"
+        "type": "list or str"
     }
-
 
 
 .. code-block:: JSON
 
     {
         "loader_parameters": {
-            "path_data": ["path/to/data_example_spinegeneric"]
+            "path_data": ["path/to/data_example_spinegeneric", "path/to/other_data_example"]
+        }
+    }
+
+Alternatively:
+
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "path_data": "path/to/data_example_spinegeneric"
         }
     }
 
