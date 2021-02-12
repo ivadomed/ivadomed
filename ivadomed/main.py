@@ -437,7 +437,6 @@ def create_dataset_and_ivadomed_version_log(context):
             f.write(str(i_dataset+1) + '. ' + path_data[i_dataset] + ' - Dataset Annex version: ' + datasets_version[i_dataset] + '\n')
         else:
             f.write(str(i_dataset+1) + '. ' + path_data[i_dataset] + ' - Dataset is not Annexed.\n')
-    f.close()
 
     # SYSTEM INFO
     f.write('\n\nSYSTEM INFO\n-------------\n')
