@@ -33,22 +33,22 @@ def get_parser():
     command_group = parser.add_mutually_exclusive_group(required=False)
 
     command_group.add_argument("--train", dest='train', action='store_true',
-                                help="Perform training on data.")
+                               help="Perform training on data.")
     command_group.add_argument("--test", dest='test', action='store_true',
-                                help="Perform testing on trained model.")
+                               help="Perform testing on trained model.")
     command_group.add_argument("--segment", dest='segment', action='store_true',
-                                help="Perform segmentation on data.")
+                               help="Perform segmentation on data.")
 
     parser.add_argument("-c", "--config", required=True, type=str,
-                                help="Path to configuration file.")
+                        help="Path to configuration file.")
 
     # OPTIONAL ARGUMENTS
     optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
 
     optional_args.add_argument("-pd", "--path-data", required=False, type=str,
-                                help="Path to data in BIDs format.")
+                               help="Path to data in BIDs format.")
     optional_args.add_argument("-po", "--path-output", required=False, type=str,
-                                help="Path to output directory.")
+                               help="Path to output directory.")
     optional_args.add_argument('-g', '--gif', required=False, type=int, default=0,
                                help='Number of GIF files to output. Each GIF file corresponds to a 2D slice showing the '
                                     'prediction over epochs (one frame per epoch). The prediction is run on the '
@@ -115,12 +115,11 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
     create_dataset_and_ivadomed_version_log(context)
 
-    # Define device
     cuda_available, device = imed_utils.define_device(context['gpu_ids'][0])
 
     # BACKWARDS COMPATIBILITY: If bids_path is string, assign to list - Do this here so it propagates to all functions
-    if isinstance(context['loader_parameters']['path_data'], str):
-        context['loader_parameters']['path_data'] = [context['loader_parameters']['path_data']]
+    context['loader_parameters']['path_data'] = imed_utils.format_path_data(context['loader_parameters']['path_data'])
+
     # Merge the participants.tsv and save the merged version on the output folder
     participants_df = imed_loader_utils.merge_bids_datasets(context['loader_parameters']['path_data'])
     participants_df.to_csv(os.path.join(path_output, "participants.tsv"))
@@ -412,7 +411,7 @@ def create_dataset_and_ivadomed_version_log(context):
 
     if isinstance(dataset_paths, str):
         datasets_version = [imed_utils.__get_commit(path_to_git_folder=dataset_paths)]
-    elif type(dataset_paths)==type([]):  # Bad
+    elif isinstance(dataset_paths, list):
         for Dataset in dataset_paths:
             datasets_version.append(imed_utils.__get_commit(path_to_git_folder=Dataset))
 
