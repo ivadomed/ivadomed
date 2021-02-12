@@ -45,9 +45,11 @@ def get_parser():
     # OPTIONAL ARGUMENTS
     optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
 
-    optional_args.add_argument("-pd", "--path-data", required=False, type=str,
-                               help="Path to data in BIDs format.")
-    optional_args.add_argument("-po", "--path-output", required=False, type=str,
+    optional_args.add_argument("-pd", "--path-data", dest="path_data", required=False, type=str,
+                               nargs="*", help="""Path to data in BIDs format. You may list one
+                               or more paths; separate each path with a space, e.g.
+                               --path-data some/path/a some/path/b""")
+    optional_args.add_argument("-po", "--path-output", required=False, type=str, dest="path_output",
                                help="Path to output directory.")
     optional_args.add_argument('-g', '--gif', required=False, type=int, default=0,
                                help='Number of GIF files to output. Each GIF file corresponds to a 2D slice showing the '
