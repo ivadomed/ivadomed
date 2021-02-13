@@ -44,7 +44,7 @@ def test_hdf5():
 
     roi_params = {"suffix": "_seg-manual", "slice_filter_roi": None}
 
-    bids_to_hdf5 = imed_adaptative.BIDStoHDF5(__data_testing_dir__,
+    bids_to_hdf5 = imed_adaptative.BIDStoHDF5(path_data=[__data_testing_dir__],
                                               subject_lst=train_lst,
                                               path_hdf5=os.path.join(__data_testing_dir__, 'mytestfile.hdf5'),
                                               target_suffix=["_lesion-manual"],
@@ -106,7 +106,7 @@ def test_hdf5():
             "balance": {}
         }
 
-        dataset = imed_adaptative.HDF5Dataset(root_dir=__data_testing_dir__,
+        dataset = imed_adaptative.HDF5Dataset(path_data=[__data_testing_dir__],
                                               subject_lst=train_lst,
                                               target_suffix="_lesion-manual",
                                               slice_axis=2,
