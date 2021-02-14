@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         if: steps.cache-pip-dependencies.cache-hit != 'true'
         run: |
-          pip install '-e .' && pre-commit install
+          'pip install -e . && pre-commit install'
       - name: Run pre-commit large file check
         run: pre-commit run --all-files check-added-large-files
       - name: Run pre-commit YAML check # for GitHub Actions configs
