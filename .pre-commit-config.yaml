@@ -3,8 +3,5 @@ repos:
     rev: v2.3.0
     hooks:
     -   id: check-yaml
-    -   id: check-json
-    -   id: check-merge-conflict
-    -   id: check-ast #check if files are valid python
     -   id: check-added-large-files
         args: [--maxkb=500]
