@@ -28,9 +28,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
       - name: Install dependencies
-        if: steps.cache-pip-dependencies.cache-hit != 'true'
         run: |
-          'pip install -e . && pre-commit install'
+              python -m pip install --upgrade pip
+              if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+              pip install -e .
+              pre-commit install
       - name: Run pre-commit large file check
         run: pre-commit run --all-files check-added-large-files
       - name: Run pre-commit YAML check # for GitHub Actions configs
