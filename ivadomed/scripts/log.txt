@@ -1,0 +1,16 @@
+INFO:ivadomed.utils:
+ivadomed (git-master-94f0797cae794b84457525e794be985aa252eb6e)
+
+INFO:root:[0]
+ERROR:root:Got exception on main handler
+Traceback (most recent call last):
+  File "/home/nas/PycharmProjects/ivadomed/ivadomed/scripts/automate_training.py", line 88, in train_worker
+    ivado.run_command(config, thr_increment=thr_incr)
+  File "/home/nas/PycharmProjects/ivadomed/ivadomed/main.py", line 116, in run_command
+    create_dataset_and_ivadomed_version_log(context)
+  File "/home/nas/PycharmProjects/ivadomed/ivadomed/main.py", line 433, in create_dataset_and_ivadomed_version_log
+    for iDataset in len(dataset_paths):
+TypeError: 'int' object is not iterable
+INFO:ivadomed.utils:
+ivadomed (git-master-94f0797cae794b84457525e794be985aa252eb6e)
+

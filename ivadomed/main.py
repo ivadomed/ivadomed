@@ -122,10 +122,6 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     # BACKWARDS COMPATIBILITY: If bids_path is string, assign to list - Do this here so it propagates to all functions
     context['loader_parameters']['path_data'] = imed_utils.format_path_data(context['loader_parameters']['path_data'])
 
-    # Merge the participants.tsv and save the merged version on the output folder
-    participants_df = imed_loader_utils.merge_bids_datasets(context['loader_parameters']['path_data'])
-    participants_df.to_csv(os.path.join(path_output, "participants.tsv"))
-
     # Get subject lists. "segment" command uses all participants of data path, hence no need to split
     if command != "segment":
         train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
