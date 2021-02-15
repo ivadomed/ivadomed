@@ -33,7 +33,7 @@ Home
 
 .. toctree::
    :maxdepth: 1
-   :caption: Getting started
+   :caption: Getting Started
 
    installation.rst
    data.rst
@@ -53,9 +53,16 @@ Home
    tutorials/cascaded_architecture.rst
    tutorials/uncertainty.rst
 
+.. _learning:
+.. toctree::
+  :maxdepth: 1
+  :caption: Learning & Background
+
+  neural_networks.rst
+
 .. toctree::
    :maxdepth: 1
-   :caption: Developer section
+   :caption: Developer Section
 
    contributing.rst
    api_ref.rst

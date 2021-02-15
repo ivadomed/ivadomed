@@ -33,3 +33,11 @@ table.docutils th>p {
 }
 
 div#purpose table{text-align: center;}
+
+.example p {
+    margin-bottom: 10px;
+}
+
+.rst-content .example.admonition .admonition-title:before {
+    content: "";
+}
