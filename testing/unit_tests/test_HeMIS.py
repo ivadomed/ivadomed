@@ -78,7 +78,7 @@ def test_HeMIS(p=0.0001):
         "contrast_lst": ['T1w', 'T2w', 'T2star'],
         "balance": {}
     }
-    dataset = imed_adaptative.HDF5Dataset(root_dir=__data_testing_dir__,
+    dataset = imed_adaptative.HDF5Dataset(path_data=__data_testing_dir__,
                                           subject_lst=train_lst,
                                           model_params=model_params,
                                           contrast_params=contrast_params,

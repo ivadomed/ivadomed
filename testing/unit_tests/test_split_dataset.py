@@ -39,7 +39,7 @@ def load_dataset(split_params):
     if not os.path.isdir(LOG_PATH):
         os.mkdir(LOG_PATH)
 
-    train, val, test = imed_loader_utils.get_subdatasets_subjects_list(split_params, PATH_DATA,
+    train, val, test = imed_loader_utils.get_subdatasets_subjects_list(split_params, [PATH_DATA],
                                                                        LOG_PATH)
     return train, val, test, patient_mapping
 
