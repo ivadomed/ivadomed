@@ -812,7 +812,7 @@ class BidsDataframe:
     def __init__(self, loader_params, derivatives, path_output):
 
         # path_data from loader parameters
-        self.path_data = os.path.join(loader_params['path_data'], '')
+        self.paths_data = imed_utils.format_path_data(loader_params['path_data'])
 
         # bids_config from loader parameters
         self.bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
@@ -850,70 +850,73 @@ class BidsDataframe:
         # TODO: when reaching version 0.14.0, remove the following line
         pybids.config.set_option('extension_initial_dot', True)
 
-        # Initialize BIDSLayoutIndexer and BIDSLayout
-        # validate=True by default for both indexer and layout, BIDS-validator is not skipped
-        # Force index for samples tsv and json files, and for subject subfolders containing microscopy files based on extensions.
-        # TODO: remove force indexing of microscopy files after BEP microscopy is merged in BIDS
-        ext_microscopy = ('.png', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
-        force_index = ['samples.tsv', 'samples.json']
-        for root, dirs, files in os.walk(self.path_data):
-            for file in files:
-                if file.endswith(ext_microscopy) and (root.replace(self.path_data, '').startswith("sub")):
-                    force_index.append(os.path.join(root.replace(self.path_data, '')))
-        indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
-        layout = pybids.BIDSLayout(self.path_data, config=self.bids_config, indexer=indexer,
-                                   derivatives=self.derivatives)
+        for path_data in self.paths_data:
+            path_data = os.path.join(path_data, '')
 
-        # Transform layout to dataframe with all entities and json metadata
-        # As per pybids, derivatives don't include parsed entities, only the "path" column
-        self.df = layout.to_df(metadata=True)
+            # Initialize BIDSLayoutIndexer and BIDSLayout
+            # validate=True by default for both indexer and layout, BIDS-validator is not skipped
+            # Force index for samples tsv and json files, and for subject subfolders containing microscopy files based on extensions.
+            # TODO: remove force indexing of microscopy files after BEP microscopy is merged in BIDS
+            ext_microscopy = ('.png', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
+            force_index = ['samples.tsv', 'samples.json']
+            for root, dirs, files in os.walk(path_data):
+                for file in files:
+                    if file.endswith(ext_microscopy) and (root.replace(path_data, '').startswith("sub")):
+                        force_index.append(os.path.join(root.replace(path_data, '')))
+            indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
+            layout = pybids.BIDSLayout(path_data, config=self.bids_config, indexer=indexer,
+                                       derivatives=self.derivatives)
 
-        # Add filename and parent_path columns
-        self.df['filename'] = self.df['path'].apply(os.path.basename)
-        self.df['parent_path'] = self.df['path'].apply(os.path.dirname)
+            # Transform layout to dataframe with all entities and json metadata
+            # As per pybids, derivatives don't include parsed entities, only the "path" column
+            self.df = layout.to_df(metadata=True)
 
-        # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
-        self.df = self.df[~self.df['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
+            # Add filename and parent_path columns
+            self.df['filename'] = self.df['path'].apply(os.path.basename)
+            self.df['parent_path'] = self.df['path'].apply(os.path.dirname)
 
-        # Add ivadomed_id column corresponding to filename minus modality and extension for files that are not derivatives.
-        for index, row in self.df.iterrows():
-            if isinstance(row['suffix'], str):
-                self.df.loc[index, 'ivadomed_id'] = re.sub(r'_' + row['suffix'] + '.*', '', row['filename'])
+            # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
+            self.df = self.df[~self.df['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
 
-        # Update dataframe with subject files of chosen contrasts and extensions,
-        # and with derivative files of chosen target_suffix from loader parameters
-        self.df = self.df[(~self.df['path'].str.contains('derivatives')
-                           & self.df['suffix'].str.contains('|'.join(self.contrast_lst))
-                           & self.df['extension'].str.contains('|'.join(self.extensions)))
-                           | (self.df['path'].str.contains('derivatives')
-                           & self.df['filename'].str.contains('|'.join(self.target_suffix)))]
+            # Add ivadomed_id column corresponding to filename minus modality and extension for files that are not derivatives.
+            for index, row in self.df.iterrows():
+                if isinstance(row['suffix'], str):
+                    self.df.loc[index, 'ivadomed_id'] = re.sub(r'_' + row['suffix'] + '.*', '', row['filename'])
 
-        # Add tsv files metadata to dataframe
-        self.add_tsv_metadata(layout)
+            # Update dataframe with subject files of chosen contrasts and extensions,
+            # and with derivative files of chosen target_suffix from loader parameters
+            self.df = self.df[(~self.df['path'].str.contains('derivatives')
+                               & self.df['suffix'].str.contains('|'.join(self.contrast_lst))
+                               & self.df['extension'].str.contains('|'.join(self.extensions)))
+                               | (self.df['path'].str.contains('derivatives')
+                               & self.df['filename'].str.contains('|'.join(self.target_suffix)))]
 
-        # TODO: check if other files are needed for EEG and DWI
+            # Add tsv files metadata to dataframe
+            self.add_tsv_metadata(path_data, layout)
 
-        # If indexing of derivatives is true
-        if self.derivatives:
+            # TODO: check if other files are needed for EEG and DWI
 
-            # Get list of subject files with available derivatives
-            has_deriv, deriv = self.get_subjects_with_derivatives()
+            # If indexing of derivatives is true
+            if self.derivatives:
 
-            # Filter dataframe to keep subjects files with available derivatives only
-            if has_deriv:
-                self.df = self.df[self.df['filename'].str.contains('|'.join(has_deriv))
-                                  | self.df['filename'].str.contains('|'.join(deriv))]
-            else:
-                # Raise error and exit if no derivatives are found for any subject files
-                raise RuntimeError("Derivatives not found.")
+                # Get list of subject files with available derivatives
+                has_deriv, deriv = self.get_subjects_with_derivatives()
 
-        # Reset index
-        self.df.reset_index(drop=True, inplace=True)
+                # Filter dataframe to keep subjects files with available derivatives only
+                if has_deriv:
+                    self.df = self.df[self.df['filename'].str.contains('|'.join(has_deriv))
+                                      | self.df['filename'].str.contains('|'.join(deriv))]
+                else:
+                    # Raise error and exit if no derivatives are found for any subject files
+                    raise RuntimeError("Derivatives not found.")
 
-        # Drop columns with all null values
-        self.df.dropna(axis=1, inplace=True, how='all')
+            # Reset index
+            self.df.reset_index(drop=True, inplace=True)
 
-    def add_tsv_metadata(self, layout):
+            # Drop columns with all null values
+            self.df.dropna(axis=1, inplace=True, how='all')
+
+    def add_tsv_metadata(self, path_data, layout):
 
         """Add tsv files metadata to dataframe.
         Args:
@@ -932,7 +935,7 @@ class BidsDataframe:
         # TODO: use pybids function after BEP microscopy is merged in BIDS
         if 'sample' in self.df:
             self.df['sample_id'] = "sample-" + self.df['sample']
-        fname_samples = os.path.join(self.path_data, "samples.tsv")
+        fname_samples = os.path.join(path_data, "samples.tsv")
         if os.path.exists(fname_samples):
             df_samples = pd.read_csv(fname_samples, sep='\t')
             self.df = pd.merge(self.df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None),
@@ -949,7 +952,7 @@ class BidsDataframe:
         # TODO: use pybids function after BEP microscopy is merged in BIDS
         # TODO: verify merge behavior with EEG and DWI scans files, tested with anat and microscopy only
         df_scans = pd.DataFrame()
-        for root, dirs, files in os.walk(self.path_data):
+        for root, dirs, files in os.walk(path_data):
             for file in files:
                 if file.endswith("scans.tsv"):
                     df_temp = pd.read_csv(os.path.join(root, file), sep='\t')
