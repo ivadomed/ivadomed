@@ -861,6 +861,9 @@ class BidsDataframe:
                 if file.endswith(ext_microscopy) and (root.replace(self.path_data, '').startswith("sub")):
                     force_index.append(os.path.join(root.replace(self.path_data, '')))
         indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
+        
+        write_derivatives_dataset_description()
+        
         layout = pybids.BIDSLayout(self.path_data, config=self.bids_config, indexer=indexer,
                                    derivatives=self.derivatives)
 
@@ -1028,3 +1031,18 @@ class BidsDataframe:
             print("Dataframe has been saved at {}.".format(path))
         except FileNotFoundError:
             print("Wrong path.")
+
+    def write_derivatives_dataset_description(self):
+        """Writes default dataset_description.json file if not found in path_data/derivatives folder
+        """
+        
+        # check that dataset_description.json file is in path_data/derivatives 
+        if self.derivatives:
+            filename = 'dataset_description'
+            deriv_desc_file = '{}/derivatives/{}'.format(self.path_data, filename)
+            label_desc_file = '{}/derivatives/labels/{}'.format(self.path_data, filename)
+            # need to write default dataset_description.json file if not found
+            if not os.path.isfile(deriv_desc_file) and not os.path.isfile(label_desc_file):
+                f = open(deriv_desc_file, 'w')
+                f.write('{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
+                f.close()
