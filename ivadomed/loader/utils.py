@@ -895,6 +895,8 @@ class BidsDataframe:
             # Add tsv files metadata to dataframe
             df_next = self.add_tsv_metadata(df_next, path_data, layout)
 
+            # TODO: check if other files are needed for EEG and DWI
+
             # Merge dataframes
             self.df = pd.concat([self.df, df_next], join='outer', ignore_index=True)
 
@@ -905,11 +907,12 @@ class BidsDataframe:
         columns.remove('parent_path')
         self.df = self.df[~(self.df.astype(str).duplicated(subset=columns, keep='first'))]
 
-        # TODO: check if other files are needed for EEG and DWI
         # If indexing of derivatives is true
         if self.derivatives:
+
             # Get list of subject files with available derivatives
             has_deriv, deriv = self.get_subjects_with_derivatives()
+
             # Filter dataframe to keep subjects files with available derivatives only
             if has_deriv:
                 self.df = self.df[self.df['filename'].str.contains('|'.join(has_deriv))
