@@ -37,7 +37,7 @@ def evaluate(path_data, path_output, target_suffix, eval_params):
 
     # Load participants.tsv from the output folder - This will be used to get the BIDS folder that each subject was
     # derived from - Not using the path_data input anymore - remove dependency
-    df_participants_tsv = pd.read_table(os.path.join(path_output, 'participants.tsv'), sep=",", encoding="ISO-8859-1")
+    df_participants_tsv = pd.read_table(os.path.join(path_output, 'participants.tsv'), encoding="ISO-8859-1")
 
     # INIT DATA FRAME
     df_results = pd.DataFrame()
