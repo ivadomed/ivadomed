@@ -898,6 +898,13 @@ class BidsDataframe:
             # Merge dataframes
             self.df = pd.concat([self.df, df_next], join='outer', ignore_index=True)
 
+        # Drop duplicated rows based on all columns except 'path and 'parent_path'
+        # Keep first occurence
+        columns = self.df.columns.to_list()
+        columns.remove('path')
+        columns.remove('parent_path')
+        self.df = self.df[~(self.df.astype(str).duplicated(subset=columns, keep='first'))]
+
         # TODO: check if other files are needed for EEG and DWI
         # If indexing of derivatives is true
         if self.derivatives:
