@@ -40,6 +40,7 @@ setup(
             'sphinx<2',
             'sphinx-rtd-theme<0.5',
         ],
+        'dev': ["pre-commit>=2.10.0"]
     },
     entry_points={
         'console_scripts': [
