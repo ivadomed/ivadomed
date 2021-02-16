@@ -70,41 +70,46 @@ KEY_CHANGE_DICT = {'UNet3D': 'Modified3DUNet', 'bids_path': 'path_data', 'log_di
 
 
 class ConfigurationManager(object):
-    """Configuration file manager
+    """Configuration file manager.
 
     Args:
-        context_path (str): Path to configuration file.
-
+        path_context (str): Path to configuration file.
     Attributes:
-        context_path (str): Path to configuration file.
-        default_config (dict): Default configuration file.
-        context (dict): Provided configuration file.
-        updated_config (dict): Update configuration file.
-
+        path_context (str): Path to configuration file.
+        config_default (dict): Default configuration file from ``ivadomed`` package.
+        context_original (dict): Provided configuration file.
+        config_updated (dict): Updated configuration file.
     """
-    def __init__(self, context_path):
-        self.context_path = context_path
+    def __init__(self, path_context):
+        self.path_context = path_context
         self.key_change_dict = KEY_CHANGE_DICT
         self._validate_path()
         default_config_path = os.path.join(imed_utils.__ivadomed_dir__, "ivadomed", "config", "config_default.json")
-        self.default_config = load_json(default_config_path)
-        self.context = load_json(context_path)
-        # Required to obtain differences
-        self.context_original = copy.deepcopy(self.context)
-        self.updated_config = {}
+        self.config_default = load_json(default_config_path)
+        self.context_original = load_json(path_context)
+        self.config_updated = {}
+
+    @property
+    def config_updated(self):
+        return self._config_updated
+
+    @config_updated.setter
+    def config_updated(self, config_updated):
+        if config_updated == {}:
+            context = copy.deepcopy(self.context_original)
+            self.change_keys(context, list(context.keys()))
+            config_updated = update(self.config_default, context)
+
+        self._config_updated = config_updated
+        if config_updated['debugging']:
+            self._display_differing_keys()
 
     def get_config(self):
         """Get updated configuration file with all parameters from the default config file.
-
         Returns:
             dict: Updated configuration dict.
         """
-        self.change_keys(self.context, list(self.context.keys()))
-        self.updated_config = update(self.default_config, self.context)
-        if self.updated_config['debugging']:
-            self._display_differing_keys()
-
-        return self.updated_config
+        return self.config_updated
 
     def change_keys(self, context, keys):
         for k in keys:
@@ -125,12 +130,12 @@ class ConfigurationManager(object):
         """Display differences between dictionaries.
         """
         print('Adding the following keys to the configuration file')
-        deep_dict_compare(self.context_original, self.updated_config)
+        deep_dict_compare(self.context_original, self.config_updated)
         print('\n')
 
     def _validate_path(self):
         """Ensure validity of configuration file path.
         """
-        if not os.path.isfile(self.context_path) or not self.context_path.endswith('.json'):
+        if not os.path.isfile(self.path_context) or not self.path_context.endswith('.json'):
             raise ValueError(
-                "\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(self.context_path))
+                "\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(self.path_context))
