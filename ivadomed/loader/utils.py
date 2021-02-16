@@ -1035,8 +1035,6 @@ class BidsDataframe:
     def write_derivatives_dataset_description(self):
         """Writes default dataset_description.json file if not found in path_data/derivatives folder
         """
-        
-        # check that dataset_description.json file is in path_data/derivatives 
         if self.derivatives:
             filename = 'dataset_description'
             deriv_desc_file = '{}/derivatives/{}'.format(self.path_data, filename)
