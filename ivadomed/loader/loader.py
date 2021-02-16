@@ -3,6 +3,8 @@ import random
 import nibabel as nib
 import numpy as np
 import torch
+import pandas as pd
+import os
 from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
@@ -14,7 +16,7 @@ from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adapt
 from ivadomed.object_detection import utils as imed_obj_detect
 
 
-def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
+def load_dataset(data_list, path_data, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
                  dataset_type="training", requires_undo=False, metadata_type=None,
                  object_detection_params=None, soft_gt=False, device=None,
@@ -24,7 +26,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
 
     Args:
         data_list (list): Subject names list.
-        bids_path (str): Path to the BIDS dataset.
+        path_data (list) or (str): Path to the BIDS dataset(s).
         transforms_params (dict): Dictionary containing transformations for "training", "validation", "testing" (keys),
             eg output of imed_transforms.get_subdatasets_transforms.
         model_params (dict): Dictionary containing model parameters.
@@ -40,8 +42,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         dataset_type (str): Choice between "training", "validation" or "testing".
         requires_undo (bool): If True, the transformations without undo_transform will be discarded.
         object_detection_params (dict): Object dection parameters.
-        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
-            (to save memory).
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
     Returns:
         BidsDataset
 
@@ -56,7 +58,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         roi_params["slice_filter_roi"] = None
 
     if model_params["name"] == "Modified3DUNet" or ('is_2d' in model_params and not model_params['is_2d']):
-        dataset = Bids3DDataset(bids_path,
+        dataset = Bids3DDataset(path_data,
                                 subject_lst=data_list,
                                 target_suffix=target_suffix,
                                 roi_params=roi_params,
@@ -70,7 +72,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                 soft_gt=soft_gt)
 
     elif model_params["name"] == "HeMISUnet":
-        dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
+        dataset = imed_adaptative.HDF5Dataset(path_data=path_data,
                                               subject_lst=data_list,
                                               model_params=model_params,
                                               contrast_params=contrast_params,
@@ -88,7 +90,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         # Task selection
         task = imed_utils.get_task(model_params["name"])
 
-        dataset = BidsDataset(bids_path,
+        dataset = BidsDataset(path_data,
                               subject_lst=data_list,
                               target_suffix=target_suffix,
                               roi_params=roi_params,
@@ -125,8 +127,6 @@ class SegmentationPair(object):
         cache (bool): If the data should be cached in memory or not.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
         prepro_transforms (dict): Output of get_preprocessing_transforms.
-        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
-             (to save memory).
 
     Attributes:
         input_filenames (list): List of input filenames.
@@ -244,11 +244,10 @@ class SegmentationPair(object):
             gt_data = None
         for gt in self.gt_handle:
             if gt is not None:
-                data_type = np.float32 if self.soft_gt else np.uint8
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
                     hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
                                                                     self.slice_axis)
-                    gt_data.append(hwd_oriented.astype(data_type))
+                    gt_data.append(hwd_oriented)
                 else:  # this tissue has annotation from several raters
                     hwd_oriented_list = [
                         imed_loader_utils.orient_img_hwd(gt_rater.get_fdata(cache_mode, dtype=np.float32),
@@ -391,9 +390,8 @@ class MRI2DSegmentationDataset(Dataset):
         task (str): choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
-        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
-            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
-            space.
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
 
     Attributes:
         indexes (list): List of indices corresponding to each slice or subvolume in the dataset.
@@ -408,9 +406,8 @@ class MRI2DSegmentationDataset(Dataset):
         has_bounding_box (bool): True if bounding box in all metadata, else False.
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
-        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
-            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
-            space.
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
         slice_filter_roi (bool): Indicates whether a slice filtering is done based on ROI data.
         roi_thr (int): If the ROI mask contains less than this number of non-zero voxels, the slice will be discarded
             from the dataset.
@@ -520,7 +517,7 @@ class MRI2DSegmentationDataset(Dataset):
                                                    data_type="gt")
             # Make sure stack_gt is binarized
             if stack_gt is not None and not self.soft_gt:
-                stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5)
+                stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5).astype(np.uint8)
 
         else:
             # Force no transformation on labels for classification task
@@ -556,9 +553,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         length (tuple): Size of each dimensions of the subvolumes, length equals 3.
         stride (tuple): Size of the overlapping per subvolume and dimensions, length equals 3.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
-        soft_gt (bool): If True, ground truths are expected to be non-binarized images encoded in float32 and will be
-            fed as is to the network. Otherwise, ground truths are converted to uint8 and binarized to save memory
-            space.
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
     """
 
     def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
@@ -674,7 +670,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                                data_type="gt")
         # Make sure stack_gt is binarized
         if stack_gt is not None and not self.soft_gt:
-            stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5)
+            stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5).astype(np.uint8)
 
         shape_x = coord["x_max"] - coord["x_min"]
         shape_y = coord["y_max"] - coord["y_min"]
@@ -709,10 +705,10 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
-    """ BIDS specific dataset loader for 3D dataset.
+    """BIDS specific dataset loader for 3D dataset.
 
     Args:
-        root_dir (str): Path to the BIDS dataset.
+        path_data (list) or (str): List of Paths to the BIDS datasets.
         subject_lst (list): Subject names list.
         target_suffix (list): List of suffixes for target masks.
         model_params (dict): Dictionary containing model parameters.
@@ -728,10 +724,10 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         object_detection_params (dict): Object dection parameters.
     """
 
-    def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
+    def __init__(self, path_data, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
-        dataset = BidsDataset(root_dir,
+        dataset = BidsDataset(path_data=path_data,
                               subject_lst=subject_lst,
                               target_suffix=target_suffix,
                               roi_params=roi_params,
@@ -750,7 +746,7 @@ class BidsDataset(MRI2DSegmentationDataset):
     """ BIDS specific dataset loader.
 
     Args:
-        root_dir (str): Path to the BIDS dataset.
+        path_data (list) or (str): List of Paths to the BIDS datasets.
         subject_lst (list): Subject names list.
         target_suffix (list): List of suffixes for target masks.
         contrast_params (dict): Contains image contrasts related parameters.
@@ -767,8 +763,8 @@ class BidsDataset(MRI2DSegmentationDataset):
         object_detection_params (dict): Object dection parameters.
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
-        soft_gt (bool): If True, ground truths will be converted to float32, otherwise to uint8 and binarized
-            (to save memory).
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+        truths are thresholded (0.5) after the data augmentation operations.
 
     Attributes:
         bids_ds (BIDS): BIDS dataset.
@@ -778,11 +774,15 @@ class BidsDataset(MRI2DSegmentationDataset):
 
     """
 
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
+    def __init__(self, path_data, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 
-        self.bids_ds = bids.BIDS(root_dir)
+        self.bids_ds = []
+        path_data = imed_utils.format_path_data(path_data)
+        for BIDSFolder in path_data:
+            self.bids_ds.append(bids.BIDS(BIDSFolder))
+
         self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
         self.soft_gt = soft_gt
         self.filename_pairs = []
@@ -790,7 +790,10 @@ class BidsDataset(MRI2DSegmentationDataset):
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
 
-        bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
+        # Append subjects from all BIDSdatasets into a list
+        bids_subjects = []
+        for i_bids_folder in range(0, len(path_data)):
+            bids_subjects += [s for s in self.bids_ds[i_bids_folder].get_subjects() if s.record["subject_id"] in subject_lst]
 
         # Create a list with the filenames for all contrasts and subjects
         subjects_tot = []
@@ -816,10 +819,15 @@ class BidsDataset(MRI2DSegmentationDataset):
                                                "roi_filename": None,
                                                "metadata": [None] * num_contrast} for subject in subject_lst}
 
+        # Append get_subjects()
+        get_subjects_all = self.bids_ds[0].get_subjects()
+        for i_bids_folder in range(1, len(self.bids_ds)):
+            get_subjects_all.extend(self.bids_ds[i_bids_folder].get_subjects())
+
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
-                                                                self.bids_ds.get_subjects(),
-                                                                slice_axis,
-                                                                contrast_params["contrast_lst"])
+                                                                    get_subjects_all,
+                                                                    slice_axis,
+                                                                    contrast_params["contrast_lst"])
 
         for subject in tqdm(bids_subjects, desc="Loading dataset"):
             if subject.record["modality"] in contrast_params["contrast_lst"]:
@@ -877,7 +885,9 @@ class BidsDataset(MRI2DSegmentationDataset):
                 elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
                     # add custom data to metadata
                     subject_id = subject.record["subject_id"]
-                    df = bids.BIDS(root_dir).participants.content
+
+                    df = imed_loader_utils.merge_bids_datasets(path_data)
+
                     if metadata_choice not in df.columns:
                         raise ValueError("The following metadata cannot be found in participants.tsv file: {}. "
                                          "Invalid metadata choice.".format(metadata_choice))
@@ -911,6 +921,9 @@ class BidsDataset(MRI2DSegmentationDataset):
                 if None not in subject["absolute_paths"]:
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
+
+        if self.filename_pairs == []:
+            raise Exception('No subjects were selected - check selection of parameters on config.json (e.g. center selected + target_suffix)')
 
         super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
                          self.soft_gt)

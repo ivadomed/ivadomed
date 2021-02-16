@@ -86,7 +86,7 @@ def resize_to_multiple(shape, multiple, length):
     return new_dim
 
 
-def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, slice_axis=0, contrast_lst=None,
+def generate_bounding_box_file(subject_list, model_path, path_output, gpu_id=0, slice_axis=0, contrast_lst=None,
                                keep_largest_only=True, safety_factor=None):
     """Creates json file containing the bounding box dimension for each images. The file has the following format:
     {"path/to/img.nii.gz": [[x1_min, x1_max, y1_min, y1_max, z1_min, z1_max],
@@ -96,8 +96,8 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
     Args:
         subject_list (list): List of all subjects in the BIDS directory.
         model_path (string): Path to object detection model.
-        log_dir (string): Log directory.
-        gpu_number (int): If available, GPU number.
+        path_output (string): Output path.
+        gpu_id (int): If available, GPU number.
         slice_axis (int): Slice axis (0: sagittal, 1: coronal, 2: axial).
         contrast_lst (list): Contrasts.
         keep_largest_only (bool): Boolean representing if only the largest object of the prediction is kept.
@@ -113,12 +113,12 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
     for subject in subject_list:
         if subject.record["modality"] in contrast_lst:
             subject_path = str(subject.record["absolute_path"])
-            object_mask, _ = imed_inference.segment_volume(model_path, [subject_path], gpu_number=gpu_number)
+            object_mask, _ = imed_inference.segment_volume(model_path, [subject_path], gpu_id=gpu_id)
             object_mask = object_mask[0]
             if keep_largest_only:
                 object_mask = imed_postpro.keep_largest_object(object_mask)
 
-            mask_path = os.path.join(log_dir, "detection_mask")
+            mask_path = os.path.join(path_output, "detection_mask")
             if not os.path.exists(mask_path):
                 os.mkdir(mask_path)
             nib.save(object_mask, os.path.join(mask_path, subject_path.split("/")[-1]))
@@ -127,7 +127,7 @@ def generate_bounding_box_file(subject_list, model_path, log_dir, gpu_number=0, 
             bounding_boxes = get_bounding_boxes(hwd_orientation)
             bounding_box_dict[subject_path] = [adjust_bb_size(bb, safety_factor) for bb in bounding_boxes]
 
-    file_path = os.path.join(log_dir, 'bounding_boxes.json')
+    file_path = os.path.join(path_output, 'bounding_boxes.json')
     with open(file_path, 'w') as fp:
         json.dump(bounding_box_dict, fp, indent=4)
     return bounding_box_dict
@@ -226,7 +226,7 @@ def adjust_undo_transforms(transforms, seg_pair, index=0):
 
 
 def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast_lst):
-    """Verifies if bounding_box.json exists in the log directory, if so loads the data, else generates the file if a
+    """Verifies if bounding_box.json exists in the output path, if so loads the data, else generates the file if a
     valid detection model path exists.
 
     Args:
@@ -242,7 +242,7 @@ def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast
     bounding_box_dict = {}
     if object_detection_params is None or object_detection_params['object_detection_path'] is None:
         return bounding_box_dict
-    bounding_box_path = os.path.join(object_detection_params['log_directory'], 'bounding_boxes.json')
+    bounding_box_path = os.path.join(object_detection_params['path_output'], 'bounding_boxes.json')
     if os.path.exists(bounding_box_path):
         with open(bounding_box_path, 'r') as fp:
             bounding_box_dict = json.load(fp)
@@ -250,7 +250,7 @@ def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast
             os.path.exists(object_detection_params['object_detection_path']):
         bounding_box_dict = generate_bounding_box_file(subjects,
                                                        object_detection_params['object_detection_path'],
-                                                       object_detection_params['log_directory'],
+                                                       object_detection_params['path_output'],
                                                        object_detection_params['gpu'],
                                                        slice_axis,
                                                        constrast_lst,
@@ -281,7 +281,7 @@ def verify_metadata(metadata, has_bounding_box):
     return has_bounding_box
 
 
-def bounding_box_prior(fname_mask, metadata, slice_axis):
+def bounding_box_prior(fname_mask, metadata, slice_axis, safety_factor=None):
     """
     Computes prior steps to a model requiring bounding box crop. This includes loading a mask of the ROI, orienting the
     given mask into the following dimensions: (height, width, depth), extracting the bounding boxes and storing the
@@ -291,6 +291,7 @@ def bounding_box_prior(fname_mask, metadata, slice_axis):
         fname_mask (str): Filename containing the mask of the ROI
         metadata (dict): Dictionary containing the image metadata
         slice_axis (int): Slice axis (0: sagittal, 1: coronal, 2: axial)
+        safety_factor (list or tuple): Factors to multiply each dimension of the bounding box.
 
     """
     nib_prior = nib.load(fname_mask)
@@ -298,8 +299,11 @@ def bounding_box_prior(fname_mask, metadata, slice_axis):
     nib_ras = nib.as_closest_canonical(nib_prior)
     np_mask = nib_ras.get_fdata()[..., 0] if len(nib_ras.get_fdata().shape) == 4 else nib_ras.get_fdata()
     np_mask = imed_loader_utils.orient_img_hwd(np_mask, slice_axis)
-    bounding_box = get_bounding_boxes(np_mask)
-    metadata['bounding_box'] = bounding_box[0]
+    # Extract the bounding box from the list
+    bounding_box = get_bounding_boxes(np_mask)[0]
+    if safety_factor:
+        bounding_box = adjust_bb_size(bounding_box, safety_factor)
+    metadata['bounding_box'] = bounding_box
 
 
 def compute_bb_statistics(bounding_box_path):

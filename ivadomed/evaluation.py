@@ -15,25 +15,29 @@ FP_COLOUR = 2
 FN_COLOUR = 3
 
 
-def evaluate(bids_path, log_directory, target_suffix, eval_params):
+def evaluate(path_data, path_output, target_suffix, eval_params):
     """Evaluate predictions from inference step.
 
     Args:
-        bids_path (str): Folder where raw data is stored.
-        log_directory (str): Folder where the output folder "results_eval" is be created.
+        path_data (str): Folder where raw data is stored.
+        path_output (str): Folder where the output folder "results_eval" is be created.
         target_suffix (list): List of suffixes that indicates the target mask(s).
         eval_params (dict): Evaluation parameters.
 
     Returns:
         pd.Dataframe: results for each image.
     """
-    path_preds = os.path.join(log_directory, 'pred_masks')
+    path_preds = os.path.join(path_output, 'pred_masks')
     print('\nRun Evaluation on {}\n'.format(path_preds))
 
     # OUTPUT RESULT FOLDER
-    path_results = os.path.join(log_directory, 'results_eval')
+    path_results = os.path.join(path_output, 'results_eval')
     if not os.path.isdir(path_results):
         os.makedirs(path_results)
+
+    # Load participants.tsv from the output folder - This will be used to get the BIDS folder that each subject was
+    # derived from - Not using the path_data input anymore - remove dependency
+    df_participants_tsv = pd.read_table(os.path.join(path_output, 'participants.tsv'), encoding="ISO-8859-1")
 
     # INIT DATA FRAME
     df_results = pd.DataFrame()
@@ -46,8 +50,14 @@ def evaluate(bids_path, log_directory, target_suffix, eval_params):
         # Fnames of pred and ground-truth
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
-        fname_gt = [os.path.join(bids_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
+
+        # Use the path that is stored on the .tsv file for retrieving the derivative
+        the_BIDS_path = df_participants_tsv[df_participants_tsv['participant_id'] == subj]['path_output'].tolist()
+        the_BIDS_path = the_BIDS_path[0]
+
+        fname_gt = [os.path.join(the_BIDS_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
+
         # Uncertainty
         data_uncertainty = None
 
@@ -136,10 +146,10 @@ class Evaluation3DMetrics(object):
         self.postprocessing_dict = {}
         self.size_min = 0
 
-        if "targetSize" in params:
+        if "target_size" in params:
             self.size_rng_lst, self.size_suffix_lst = \
-                self._get_size_ranges(thr_lst=params["targetSize"]["thr"],
-                                      unit=params["targetSize"]["unit"])
+                self._get_size_ranges(thr_lst=params["target_size"]["thr"],
+                                      unit=params["target_size"]["unit"])
             self.label_size_lst = []
             self.data_gt_per_size = np.zeros(self.data_gt.shape)
             self.data_pred_per_size = np.zeros(self.data_gt.shape)

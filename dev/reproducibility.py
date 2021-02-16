@@ -14,7 +14,7 @@ from ivadomed import main as ivado
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--log-directory", dest="logdir", required=True, nargs="+",
-                        help="Log directory of trained model.")
+                        help="Output path of trained model.")
     parser.add_argument("-b", "--bids-path", dest="bids",
                         required=True, type=str, help="Bids path where are located the GT.")
     parser.add_argument("-n", "--iterations", default=10, type=int, help="Number of Monte Carlo iterations.")
@@ -26,7 +26,7 @@ def get_parser():
 
 def get_results(context):
     context["command"] = "test"
-    pred_mask_path = os.path.join(context["log_directory"], "pred_masks")
+    pred_mask_path = os.path.join(context["path_output"], "pred_masks")
     if os.path.exists(pred_mask_path):
         shutil.rmtree(pred_mask_path)
 

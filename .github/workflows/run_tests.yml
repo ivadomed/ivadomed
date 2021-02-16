@@ -39,14 +39,15 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
-      env: 
+      env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
         COVERALLS_PARALLEL: true
       run: |
-         ivadomed_download_data -d data_testing -o testing_data
+         ivadomed_download_data -d data_testing -o data_testing
+         ivadomed_download_data -d data_functional_testing -o data_functional_testing
          pytest --cov=./ --cov-report term-missing
-         coveralls
+         coveralls --service=github
 
   coveralls:
     needs: test

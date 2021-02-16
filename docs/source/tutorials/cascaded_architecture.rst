@@ -32,7 +32,7 @@ First off, copy this configuration file in your local directory to avoid modifyi
    cp <PATH_TO_IVADOMED>/ivadomed/config/config.json .
 
 Then, open it with a text editor. As described in the tutorial :doc:`../tutorials/one_class_segmentation_2d_unet`, make
-sure the ``command`` is set to "train" and ``bids_path`` point to the location of the dataset. Below, we will discuss
+sure the ``command`` is set to "train" and ``path_data`` point to the location of the dataset. Below, we will discuss
 some of the key parameters to use cascaded models.
 
 - ``debugging``: Boolean, create extended verbosity and intermediate outputs. Here we will look at the intermediate predictions
@@ -100,9 +100,25 @@ To help visualize the training, the flag ``--gif`` or ``-g`` can be used. The fl
 slices by epoch to visualize. For example, ``-g 2`` will generate 2 GIFs of 2 randomly selected slices from the
 validation set.
 
+Make sure to run the CLI command with the "--train" flag, and to point to the location of the dataset via the flag "--path-data path/to/bids/data ". 
+
 .. code-block:: bash
 
-   ivadomed -c config.json -t 0.01 -g 1
+   ivadomed --train -c config.json --path-data path/to/bids/data --path-output path/to/output/directory -t 0.01 -g 1
+
+If you prefer to use config files over CLI flags, set "command" to the following in you config file:
+
+.. code-block:: bash
+
+   "command": "train"
+
+You can also set "path_output", and "path_data" arguments in your config file.
+
+Then run:
+
+.. code-block:: bash
+
+   ivadomed -c config.json
 
 At the end of the training, the optimal threshold will be indicated:
 
@@ -115,8 +131,8 @@ At the end of the training, the optimal threshold will be indicated:
 
 Visualize training data
 -----------------------
-If the flag ``--gif`` or ``-g`` was used, the training can be visualized through gifs located in the folder
-<LOG_DIRECTORY>/gifs.
+If the flag ``--gif`` or ``-g`` was used, the training can be visualized through gifs located in the folder specified by the --path-output flag
+<PATH_TO_OUT_DIR>/gifs.
 
 .. figure:: https://raw.githubusercontent.com/ivadomed/doc-figures/main/tutorials/cascaded_architecture/training.gif
    :width: 300
@@ -130,7 +146,7 @@ use the following command-line:
 
 .. code-block:: bash
 
-   tensorboard --logdir <PATH_TO_LOG_DIRECTORY>
+   tensorboard --logdir <PATH_TO_OUT_DIR>
 
 The following should be displayed in the terminal:
 

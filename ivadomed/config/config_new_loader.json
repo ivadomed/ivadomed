@@ -1,7 +1,7 @@
 {
     "command": "train",
-    "gpu": 0,
-    "log_directory": "log_directory/new_loader",
+    "gpu_ids": [0],
+    "path_output": "path_output/new_loader",
     "model_name": "model_name",
     "debugging": true,
     "object_detection_params": {
@@ -9,7 +9,7 @@
         "safety_factor": [1.0, 1.0, 1.0]
     },
     "loader_parameters": {
-        "bids_path": "data_example_microscopy_sem",
+        "path_data": ["data_example_spinegeneric"],
         "bids_config": "ivadomed/config/config_bids.json",
         "target_suffix": ["_seg-manual", "_seg-axon-manual"],
         "extensions": [".nii.gz", ".png"],
@@ -18,7 +18,7 @@
             "slice_filter_roi": null
         },
         "contrast_params": {
-            "training_validation": ["T1w", "SEM"],
+            "training_validation": ["T1w", "T2w", "SEM"],
             "testing": [],
             "balance": {}
         },
@@ -32,9 +32,9 @@
     },
     "split_dataset": {
         "fname_split": null,
-        "random_seed": 6,
-        "center_test": [],
-        "method": "per_patient",
+        "random_seed": 500,
+        "split_method" : "participant_id",
+        "data_testing": {"data_type": "institution_id", "data_value":["oxfordFmrib"]},
         "balance": null,
         "train_fraction": 0.6,
         "test_fraction": 0.2

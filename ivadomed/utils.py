@@ -1,12 +1,11 @@
 import logging
 import os
+import sys
 import subprocess
-import joblib
-
 import matplotlib
 import matplotlib.pyplot as plt
 import torch
-import torch.nn as nn
+from enum import Enum
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -14,6 +13,20 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 CLASSIFIER_LIST = ['resnet18', 'densenet121']
 
 logger = logging.getLogger(__name__)
+
+
+class Metavar(Enum):
+    """This class is used to display intuitive input types via the metavar field of argparse."""
+
+    file = "<file>"
+    str = "<str>"
+    folder = "<folder>"
+    int = "<int>"
+    list = "<list>"
+    float = "<float>"
+
+    def __str__(self):
+        return self.value
 
 
 def get_task(model_name):
@@ -90,9 +103,9 @@ def define_device(gpu_id):
         print("Working on {}.".format(device))
     if cuda_available:
         # Set the GPU
-        gpu_number = int(gpu_id)
-        torch.cuda.set_device(gpu_number)
-        print("Using GPU number {}".format(gpu_number))
+        gpu_id = int(gpu_id)
+        torch.cuda.set_device(gpu_id)
+        print(f"Using GPU ID {gpu_id}")
     return cuda_available, device
 
 
@@ -207,6 +220,29 @@ def check_exe(name):
     return None
 
 
+class ArgParseException(Exception):
+    pass
+
+
+def get_arguments(parser, args):
+    """Get arguments from function input or command line.
+
+    Arguments:
+        parser (argparse.ArgumentParser): ArgumentParser object
+        args (list): either a list of arguments or None. The list
+            should be formatted like this:
+            ["-d", "SOME_ARG", "--model", "SOME_ARG"]
+    """
+    try:
+        if args:
+            args = parser.parse_args(args)
+        else:
+            args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    except SystemExit:
+        raise ArgParseException('Error parsing args')
+    return args
+
+
 def __get_commit(path_to_git_folder=None):
     """Get GIT ivadomed commit.
 
@@ -275,6 +311,63 @@ def _version_string():
 
 __ivadomed_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 __version__ = _version_string()
+
+
+def get_command(args, context):
+    if args.train:
+        return "train"
+    elif args.test:
+        return "test"
+    elif args.segment:
+        return "segment"
+    else:
+        logger.info("No CLI argument given for command: ( --train | --test | --segment ). Will check config file for command...")
+
+        try:
+            if context["command"] == "train" or context["command"] == "test" or context["command"] == "segment":
+                return context["command"]
+            else:
+                logger.error("Specified invalid command argument in config file.")
+        except AttributeError:
+            logger.error("Have not specified a command argument via CLI nor config file.")
+
+
+def get_path_output(args, context):
+    if args.path_output:
+        return args.path_output
+    else:
+        logger.info("CLI flag --path-output not used to specify output directory. Will check config file for directory...")
+        try:
+            if context["path_output"]:
+                return context["path_output"]
+        except AttributeError:
+            logger.error("Have not specified a path-output argument via CLI nor config file.")
+
+
+def get_path_data(args, context):
+    if args.path_data:
+        return args.path_data
+    else:
+        logger.info("CLI flag --path-data not used to specify BIDS data directory. Will check config file for directory...")
+        try:
+            if context["loader_parameters"]["path_data"]:
+                return context["loader_parameters"]["path_data"]
+        except AttributeError:
+            logger.error("Have not specified a path-data argument via CLI nor config file.")
+
+
+def format_path_data(path_data):
+    """
+    Args:
+        path_data (list or str): Either a list of paths, or just one path.
+
+    Returns:
+        list: A list of paths
+    """
+    assert isinstance(path_data, str) or isinstance(path_data, list)
+    if isinstance(path_data, str):
+        path_data = [path_data]
+    return path_data
 
 
 def init_ivadomed():
