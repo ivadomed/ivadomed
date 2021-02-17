@@ -159,7 +159,7 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
     return X_train, X_val, X_test
 
 
-def get_new_subject_split(path_folder, center_test, split_method, random_seed,
+def get_new_subject_split(path_data, center_test, split_method, random_seed,
                           train_frac, test_frac, path_output, balance, subject_selection=None):
     """Randomly split dataset between training / validation / testing.
 
@@ -167,7 +167,7 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
         and save it in path_output + "/split_datasets.joblib".
 
     Args:
-        path_folder (string): Dataset folder.
+        path_data (list) or (str): Dataset folders.
         center_test (list): List of centers to include in the testing set.
         split_method (string): See imed_loader_utils.split_dataset.
         random_seed (int): Random seed.
@@ -182,8 +182,12 @@ def get_new_subject_split(path_folder, center_test, split_method, random_seed,
     Returns:
         list, list list: Training, validation and testing subjects lists.
     """
-    # read participants.tsv as pandas dataframe
-    df = bids.BIDS(path_folder).participants.content
+
+    df = merge_bids_datasets(path_data)
+
+    # Save a new merged .tsv on the output folder to be used during evaluation
+    df.to_csv(os.path.join(path_output, 'participants.tsv'), sep='\t', index=False)
+
     if subject_selection is not None:
         # Verify subject_selection format
         if not (len(subject_selection["metadata"]) == len(subject_selection["n"]) == len(subject_selection["value"])):
@@ -304,7 +308,7 @@ def get_subdatasets_subjects_list(split_params, path_data, path_output, subject_
 
     Args:
         split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
-        path_data (str): Path to the BIDS dataset.
+        path_data (list): Path to the BIDS dataset(s).
         path_output (str): Output folder.
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
@@ -316,7 +320,7 @@ def get_subdatasets_subjects_list(split_params, path_data, path_output, subject_
         old_split = joblib.load(split_params["fname_split"])
         train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
     else:
-        train_lst, valid_lst, test_lst = get_new_subject_split(path_folder=path_data,
+        train_lst, valid_lst, test_lst = get_new_subject_split(path_data=path_data,
                                                                center_test=split_params['center_test'],
                                                                split_method=split_params['method'],
                                                                random_seed=split_params['random_seed'],
@@ -641,13 +645,13 @@ class SliceFilter(object):
         filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
         filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
         filter_absent_class (bool): If True, samples where all voxel labels are zero for one or more classes are discarded.
-        filter_classification (bool): If True, samples where all images fail a custom classifier filter are discarded. 
+        filter_classification (bool): If True, samples where all images fail a custom classifier filter are discarded.
 
     Attributes:
         filter_empty_mask (bool): If True, samples where all voxel labels are zeros are discarded.
         filter_empty_input (bool): If True, samples where all voxel intensities are zeros are discarded.
         filter_absent_class (bool): If True, samples where all voxel labels are zero for one or more classes are discarded.
-        filter_classification (bool): If True, samples where all images fail a custom classifier filter are discarded. 
+        filter_classification (bool): If True, samples where all images fail a custom classifier filter are discarded.
 
     """
 
@@ -720,6 +724,69 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     trans_orient = nib.orientations.ornt_transform(ras_orientation, ref_orientation)
     # apply transformation
     return nib.orientations.apply_orientation(arr_ras, trans_orient)
+
+
+def merge_bids_datasets(path_data):
+    """Read the participants.tsv from several BIDS folders and merge them into a single dataframe.
+    Args:
+        path_data (list) or (str): BIDS folders paths
+
+    Returns:
+        df: dataframe with merged subjects and columns
+    """
+    path_data = imed_utils.format_path_data(path_data)
+
+    if len(path_data) == 1:
+        # read participants.tsv as pandas dataframe
+        df = bids.BIDS(path_data[0]).participants.content
+        # Append a new column to show which dataset the Subjects belong to (this will be used later for loading)
+        df['path_output'] = [path_data[0]] * len(df)
+    elif path_data == []:
+        raise Exception("No dataset folder selected")
+    else:
+        # Merge multiple .tsv files into the same dataframe
+        df = pd.read_table(os.path.join(path_data[0], 'participants.tsv'), encoding="ISO-8859-1")
+        # Convert to string to get rid of potential TypeError during merging within the same column
+        df = df.astype(str)
+
+        # Add the Bids_path to the dataframe
+        df['path_output'] = [path_data[0]] * len(df)
+
+        for iFolder in range(1, len(path_data)):
+            df_next = pd.read_table(os.path.join(path_data[iFolder], 'participants.tsv'),
+                                    encoding="ISO-8859-1")
+            df_next = df_next.astype(str)
+            df_next['path_output'] = [path_data[iFolder]] * len(df_next)
+            # Merge the .tsv files (This keeps also non-overlapping fields)
+            df = pd.merge(left=df, right=df_next, how='outer')
+
+    # Get rid of duplicate entries based on the field "participant_id" (the same subject could have in theory be
+    # included in both datasets). The assumption here is that if the two datasets contain the same subject,
+    # identical sessions of the subjects are contained within the two folder so only the files within the first folder
+    # will be kept.
+    logical_keep_first_encounter = []
+    indicesOfDuplicates = []
+    used = set()  # For debugging
+
+    for iEntry in range(len(df)):
+        if df['participant_id'][iEntry] not in used:
+            used.add(df['participant_id'][iEntry])  # For debugging
+            logical_keep_first_encounter.append(iEntry)
+        else:
+            indicesOfDuplicates.append(iEntry)  # For debugging
+    # Just keep the dataframe with unique participant_id
+    df = df.iloc[logical_keep_first_encounter, :]
+
+    # Rearrange the bids paths to be last column of the dataframe
+    cols = list(df.columns.values)
+    cols.remove("path_output")
+    cols.append("path_output")
+    df = df[cols]
+
+    # Substitute NaNs with string: "-". This helps with metadata selection
+    df = df.fillna("-")
+
+    return df
 
 
 class BidsDataframe:
@@ -925,7 +992,7 @@ class BidsDataframe:
 
     def get_subject_fnames(self):
         """Get the list of subject filenames in dataframe.
-        
+
         Returns:
             list: subject filenames.
         """
@@ -933,7 +1000,7 @@ class BidsDataframe:
 
     def get_deriv_fnames(self):
         """Get the list of derivative filenames in dataframe.
-        
+
         Returns:
             list: derivative filenames.
         """

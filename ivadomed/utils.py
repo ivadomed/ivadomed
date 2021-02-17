@@ -344,7 +344,6 @@ def get_path_output(args, context):
             logger.error("Have not specified a path-output argument via CLI nor config file.")
 
 
-
 def get_path_data(args, context):
     if args.path_data:
         return args.path_data
@@ -355,6 +354,20 @@ def get_path_data(args, context):
                 return context["loader_parameters"]["path_data"]
         except AttributeError:
             logger.error("Have not specified a path-data argument via CLI nor config file.")
+
+
+def format_path_data(path_data):
+    """
+    Args:
+        path_data (list or str): Either a list of paths, or just one path.
+
+    Returns:
+        list: A list of paths
+    """
+    assert isinstance(path_data, str) or isinstance(path_data, list)
+    if isinstance(path_data, str):
+        path_data = [path_data]
+    return path_data
 
 
 def init_ivadomed():

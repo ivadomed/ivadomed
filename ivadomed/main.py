@@ -31,24 +31,26 @@ def get_parser():
     parser = argparse.ArgumentParser(add_help=False)
 
     command_group = parser.add_mutually_exclusive_group(required=False)
-    
-    command_group.add_argument("--train", dest='train', action='store_true', 
-                                help="Perform training on data.")
-    command_group.add_argument("--test", dest='test', action='store_true', 
-                                help="Perform testing on trained model.")
-    command_group.add_argument("--segment", dest='segment', action='store_true', 
-                                help="Perform segmentation on data.")
-    
+
+    command_group.add_argument("--train", dest='train', action='store_true',
+                               help="Perform training on data.")
+    command_group.add_argument("--test", dest='test', action='store_true',
+                               help="Perform testing on trained model.")
+    command_group.add_argument("--segment", dest='segment', action='store_true',
+                               help="Perform segmentation on data.")
+
     parser.add_argument("-c", "--config", required=True, type=str,
-                                help="Path to configuration file.")
-                                
+                        help="Path to configuration file.")
+
     # OPTIONAL ARGUMENTS
     optional_args = parser.add_argument_group('OPTIONAL ARGUMENTS')
-    
-    optional_args.add_argument("-pd", "--path-data", required=False, type=str,
-                                help="Path to data in BIDs format.")
-    optional_args.add_argument("-po", "--path-output", required=False, type=str,
-                                help="Path to output directory.")
+
+    optional_args.add_argument("-pd", "--path-data", dest="path_data", required=False, type=str,
+                               nargs="*", help="""Path to data in BIDs format. You may list one
+                               or more paths; separate each path with a space, e.g.
+                               --path-data some/path/a some/path/b""")
+    optional_args.add_argument("-po", "--path-output", required=False, type=str, dest="path_output",
+                               help="Path to output directory.")
     optional_args.add_argument('-g', '--gif', required=False, type=int, default=0,
                                help='Number of GIF files to output. Each GIF file corresponds to a 2D slice showing the '
                                     'prediction over epochs (one frame per epoch). The prediction is run on the '
@@ -115,8 +117,10 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
     create_dataset_and_ivadomed_version_log(context)
 
-    # Define device
     cuda_available, device = imed_utils.define_device(context['gpu_ids'][0])
+
+    # BACKWARDS COMPATIBILITY: If bids_path is string, assign to list - Do this here so it propagates to all functions
+    context['loader_parameters']['path_data'] = imed_utils.format_path_data(context['loader_parameters']['path_data'])
 
     # Get subject lists. "segment" command uses all participants of data path, hence no need to split
     if command != "segment":
@@ -237,8 +241,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                                     model_params['metadata'])
             model_params.update({"film_onehotencoder": train_onehotencoder,
                                  "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
-            joblib.dump(metadata_clustering_models, "./" + path_output + "/clustering_models.joblib")
-            joblib.dump(train_onehotencoder, "./" + path_output + "/one_hot_encoder.joblib")
+            joblib.dump(metadata_clustering_models, os.path.join(path_output, "clustering_models.joblib"))
+            joblib.dump(train_onehotencoder, os.path.join(path_output + "one_hot_encoder.joblib"))
 
         # Model directory
         path_model = os.path.join(path_output, context["model_name"])
@@ -319,7 +323,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         if 'film_layers' in model_params and any(model_params['film_layers']):
             clustering_path = os.path.join(path_output, "clustering_models.joblib")
             metadata_clustering_models = joblib.load(clustering_path)
-            ohe_path = os.path.join(path_output, "one_hot_encoder.joblib")
+            # Model directory
+            ohe_path = os.path.join(path_output, context["model_name"], "one_hot_encoder.joblib")
             one_hot_encoder = joblib.load(ohe_path)
             ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"],
                                                    model_params['metadata'])
@@ -344,10 +349,20 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         return df_results, pred_metrics
 
     if command == 'segment':
-        bids_ds = bids.BIDS(context["loader_parameters"]["path_data"])
-        df = bids_ds.participants.content
+
+        bids_ds = []
+        path_data = imed_utils.format_path_data(context["loader_parameters"]["path_data"])
+        for bids_folder in path_data:
+            bids_ds.append(bids.BIDS(bids_folder))
+
+        # Get the merged df from all dataset paths
+        df = imed_loader_utils.merge_bids_datasets(path_data)
         subj_lst = df['participant_id'].tolist()
-        bids_subjects = [s for s in bids_ds.get_subjects() if s.record["subject_id"] in subj_lst]
+
+        # Append subjects from all BIDSdatasets into a list
+        bids_subjects = []
+        for i_bids_folder in range(0, len(path_data)):
+            bids_subjects += [s for s in bids_ds[i_bids_folder].get_subjects() if s.record["subject_id"] in subj_lst]
 
         # Add postprocessing to packaged model
         path_model = os.path.join(context['path_output'], context['model_name'])
@@ -397,15 +412,15 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
 def create_dataset_and_ivadomed_version_log(context):
 
-    dataset_paths = context['loader_parameters']['path_data']
+    path_data = context['loader_parameters']['path_data']
 
     ivadomed_version = imed_utils._version_string()
     datasets_version = []
 
-    if isinstance(dataset_paths, str):
-        datasets_version = [imed_utils.__get_commit(path_to_git_folder=dataset_paths)]
-    elif type(dataset_paths)==type([]):  # Bad
-        for Dataset in dataset_paths:
+    if isinstance(path_data, str):
+        datasets_version = [imed_utils.__get_commit(path_to_git_folder=path_data)]
+    elif isinstance(path_data, list):
+        for Dataset in path_data:
             datasets_version.append(imed_utils.__get_commit(path_to_git_folder=Dataset))
 
     log_file = os.path.join(context['path_output'], 'version_info.log')
@@ -420,21 +435,16 @@ def create_dataset_and_ivadomed_version_log(context):
     f.write('IVADOMED TOOLBOX\n----------------\n(' + ivadomed_version + ')')
 
     # DATASETS
+    path_data = imed_utils.format_path_data(path_data)
     f.write('\n\n\nDATASET VERSION\n---------------\n')
-    if len(datasets_version) == 1:
-        f.write('A single BIDS dataset was used for training.\n' + dataset_paths)
-        if datasets_version[0] != '?!?':  # This is what was returned from _version_string when no git is present
-            f.write(' - Dataset Annex version: ' + datasets_version[0] + '\n\n')
-        else:
-            f.write(' - Dataset is not Annexed.\n')
-    else:
-        f.write('The following BIDS datasets were used for training.\n')
 
-        for iDataset in len(dataset_paths):
-            if len(datasets_version[0]) != 0:
-                f.write(str(iDataset+1) + '. ' + dataset_paths[iDataset] + ' - Dataset Annex version: ' + datasets_version[0] + '\n')
-            else:
-                f.write('\n')
+    f.write('The following BIDS dataset(s) were used for training.\n')
+
+    for i_dataset in range(len(path_data)):
+        if datasets_version[i_dataset] not in ['', '?!?']:
+            f.write(str(i_dataset+1) + '. ' + path_data[i_dataset] + ' - Dataset Annex version: ' + datasets_version[i_dataset] + '\n')
+        else:
+            f.write(str(i_dataset+1) + '. ' + path_data[i_dataset] + ' - Dataset is not Annexed.\n')
 
     # SYSTEM INFO
     f.write('\n\nSYSTEM INFO\n-------------\n')
@@ -474,7 +484,7 @@ def run_main():
     # Get context from configuration file
     path_config_file = args.config
     context = imed_config_manager.ConfigurationManager(path_config_file).get_config()
-    
+
     context["command"] = imed_utils.get_command(args, context)
     context["path_output"] = imed_utils.get_path_output(args, context)
     context["loader_parameters"]["path_data"] = imed_utils.get_path_data(args, context)

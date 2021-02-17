@@ -50,3 +50,15 @@ on Github. Installation procedure is the following:
     git clone https://github.com/neuropoly/ivadomed.git
     cd ivadomed
     pip install -e .
+
+
+Install pre-commit hooks for development
+----------------------------------------
+
+We use ``pre-commit`` to enforce a limit on file size.
+After you've installed ``ivadomed``, install the hooks:
+
+::
+
+    pre-commit install
+

@@ -35,6 +35,10 @@ def evaluate(path_data, path_output, target_suffix, eval_params):
     if not os.path.isdir(path_results):
         os.makedirs(path_results)
 
+    # Load participants.tsv from the output folder - This will be used to get the BIDS folder that each subject was
+    # derived from - Not using the path_data input anymore - remove dependency
+    df_participants_tsv = pd.read_table(os.path.join(path_output, 'participants.tsv'), encoding="ISO-8859-1")
+
     # INIT DATA FRAME
     df_results = pd.DataFrame()
 
@@ -46,8 +50,14 @@ def evaluate(path_data, path_output, target_suffix, eval_params):
         # Fnames of pred and ground-truth
         subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
-        fname_gt = [os.path.join(path_data, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
+
+        # Use the path that is stored on the .tsv file for retrieving the derivative
+        the_BIDS_path = df_participants_tsv[df_participants_tsv['participant_id'] == subj]['path_output'].tolist()
+        the_BIDS_path = the_BIDS_path[0]
+
+        fname_gt = [os.path.join(the_BIDS_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
                     for suffix in target_suffix]
+
         # Uncertainty
         data_uncertainty = None
 

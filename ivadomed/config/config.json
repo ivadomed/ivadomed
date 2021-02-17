@@ -9,7 +9,7 @@
         "safety_factor": [1.0, 1.0, 1.0]
     },
     "loader_parameters": {
-        "path_data": "data_example_spinegeneric",
+        "path_data": ["data_example_spinegeneric"],
         "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": ["_seg-manual"],
         "roi_params": {
@@ -70,7 +70,8 @@
     "default_model": {
         "name": "Unet",
         "dropout_rate": 0.3,
-        "bn_momentum": 0.9,
+        "bn_momentum": 0.1,
+        "final_activation": "sigmoid",
         "depth": 3
     },
     "FiLMedUnet": {

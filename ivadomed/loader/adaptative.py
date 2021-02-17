@@ -12,6 +12,7 @@ from tqdm import tqdm
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
+from ivadomed import utils as imed_utils
 
 
 class Dataframe:
@@ -176,7 +177,7 @@ class BIDStoHDF5:
     """Converts a BIDS dataset to a HDF5 file.
 
     Args:
-        root_dir (str): Path to the BIDS dataset.
+        path_data (list) or (str): Path(s) to BIDS datasets
         subject_lst (list): Subject names list.
         target_suffix (list): List of suffixes for target masks.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
@@ -203,13 +204,22 @@ class BIDStoHDF5:
         slice_filter_fn (SliceFilter): Object that filters slices according to their content.
     """
 
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_lst, path_hdf5, contrast_balance=None,
+    def __init__(self, path_data, subject_lst, target_suffix, contrast_lst, path_hdf5, contrast_balance=None,
                  slice_axis=2, metadata_choice=False, slice_filter_fn=None, roi_params=None, transform=None,
                  object_detection_params=None, soft_gt=False):
         print("Starting conversion")
+
         # Getting all patients id
-        self.bids_ds = bids.BIDS(root_dir)
-        bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
+        self.bids_ds = []
+        path_data = imed_utils.format_path_data(path_data)
+        for bids_folder in path_data:
+            self.bids_ds.append(bids.BIDS(bids_folder))
+        # Append subjects from all BIDSdatasets into a list
+        bids_subjects = [s for s in self.bids_ds[0].get_subjects() if s.record["subject_id"] in subject_lst]
+        for i_bids_folder in range(1, len(path_data)):
+            bids_subjects += [s for s in self.bids_ds[i_bids_folder].get_subjects() if
+                              s.record["subject_id"] in subject_lst]
+
         self.soft_gt = soft_gt
         self.dt = h5py.special_dtype(vlen=str)
         # opening an hdf5 file with write access and writing metadata
@@ -236,9 +246,14 @@ class BIDStoHDF5:
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
 
+        # Append get_subjects()
+        get_subjects_all = self.bids_ds[0].get_subjects()
+        for i_bids_folder in range(1, len(self.bids_ds)):
+            get_subjects_all.extend(self.bids_ds[i_bids_folder].get_subjects())
+
         self.has_bounding_box = True
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
-                                                                self.bids_ds.get_subjects(),
+                                                                get_subjects_all,
                                                                 slice_axis,
                                                                 contrast_lst)
 
@@ -467,7 +482,7 @@ class HDF5Dataset:
     """HDF5 dataset object.
 
     Args:
-        root_dir (path): Path of bids and data.
+        path_data (list) or (str): Path(s) to BIDS datasets
         subject_lst (list of str): List of subjects.
         model_params (dict): Dictionary containing model parameters.
         target_suffix (list of str): List of suffixes of the target structures.
@@ -493,7 +508,7 @@ class HDF5Dataset:
 
     """
 
-    def __init__(self, root_dir, subject_lst, model_params, target_suffix, contrast_params,
+    def __init__(self, path_data, subject_lst, model_params, target_suffix, contrast_params,
                  slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
                  slice_filter_fn=None, roi_params=None, object_detection_params=None, soft_gt=False):
         self.cst_lst = copy.deepcopy(contrast_params["contrast_lst"])
@@ -508,19 +523,20 @@ class HDF5Dataset:
         # Getting HDS5 dataset file
         if not os.path.exists(model_params["path_hdf5"]):
             print("Computing hdf5 file of the data")
-            bids_to_hdf5 = BIDStoHDF5(root_dir,
-                                        subject_lst=subject_lst,
-                                        path_hdf5=model_params["path_hdf5"],
-                                        target_suffix=target_suffix,
-                                        roi_params=self.roi_params,
-                                        contrast_lst=self.cst_lst,
-                                        metadata_choice=metadata_choice,
-                                        contrast_balance=contrast_params["balance"],
-                                        slice_axis=slice_axis,
-                                        slice_filter_fn=slice_filter_fn,
-                                        transform=transform,
-                                        object_detection_params=object_detection_params,
-                                        soft_gt=soft_gt)
+            bids_to_hdf5 = BIDStoHDF5(path_data=path_data,
+                                      subject_lst=subject_lst,
+                                      path_hdf5=model_params["path_hdf5"],
+                                      target_suffix=target_suffix,
+                                      roi_params=self.roi_params,
+                                      contrast_lst=self.cst_lst,
+                                      metadata_choice=metadata_choice,
+                                      contrast_balance=contrast_params["balance"],
+                                      slice_axis=slice_axis,
+                                      slice_filter_fn=slice_filter_fn,
+                                      transform=transform,
+                                      object_detection_params=object_detection_params,
+                                      soft_gt=soft_gt)
+
             self.path_hdf5 = bids_to_hdf5.path_hdf5
         else:
             self.path_hdf5 = model_params["path_hdf5"]
