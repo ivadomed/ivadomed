@@ -34,14 +34,14 @@ The parameters that are specific to this tutorial are:
 
 - ``path_output``: Location of the directory containing the trained model. To avoid having to train a model from
   scratch, in the downloaded dataset, there is a trained model for spinal cord segmentation in the folder `trained_model`.
-  Modify the path so it points to the location of the trained model. 
+  Modify the path so it points to the location of the trained model.
 
   .. code-block:: xml
 
      "path_output": "<PATH_TO_DATASET>/data_example_spinegeneric/trained_model"
 
-  Note that you can also pass this argument via CLI (see :ref:`Usage <Usage>`)
-  
+  Note that you can also pass this argument via CLI (see :ref:`Usage <usage>`)
+
   .. code-block:: bash
 
     ivadomed -c path/to/config --path-output path/to/output/directory
@@ -53,8 +53,8 @@ The parameters that are specific to this tutorial are:
 
      "command": "test"
 
-  Note that you can also pass this argument via CLI (see :ref:`Usage <Usage>`)
-  
+  Note that you can also pass this argument via CLI (see :ref:`Usage <usage>`)
+
   .. code-block:: bash
 
     ivadomed --test -c path/to/config
@@ -74,8 +74,8 @@ The parameters that are specific to this tutorial are:
 
 
 - ``transformation``: Data augmentation transformation. If you have selected the aleatoric uncertainty, the data
-  augmentation that will be performed is the same as the one performed for the training. Note that only transformations 
-  for which a ``undo_transform`` (i.e. inverse transformation) is available will be performed since these inverse 
+  augmentation that will be performed is the same as the one performed for the training. Note that only transformations
+  for which a ``undo_transform`` (i.e. inverse transformation) is available will be performed since these inverse
   transformations are required to reconstruct the predicted volume.
 
 
