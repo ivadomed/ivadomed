@@ -791,8 +791,8 @@ class BidsDataset(MRI2DSegmentationDataset):
                              "EchoTime": [], "Manufacturer": []}
 
         # Append subjects from all BIDSdatasets into a list
-        bids_subjects = [s for s in self.bids_ds[0].get_subjects() if s.record["subject_id"] in subject_lst]
-        for i_bids_folder in range(1, len(path_data)):
+        bids_subjects = []
+        for i_bids_folder in range(0, len(path_data)):
             bids_subjects += [s for s in self.bids_ds[i_bids_folder].get_subjects() if s.record["subject_id"] in subject_lst]
 
         # Create a list with the filenames for all contrasts and subjects

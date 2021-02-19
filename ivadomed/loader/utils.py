@@ -185,6 +185,9 @@ def get_new_subject_split(path_data, center_test, split_method, random_seed,
 
     df = merge_bids_datasets(path_data)
 
+    # Save a new merged .tsv on the output folder to be used during evaluation
+    df.to_csv(os.path.join(path_output, 'participants.tsv'), sep='\t', index=False)
+
     if subject_selection is not None:
         # Verify subject_selection format
         if not (len(subject_selection["metadata"]) == len(subject_selection["n"]) == len(subject_selection["value"])):
@@ -296,9 +299,6 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
     split_path = os.path.join(path_output, "split_datasets.joblib")
     joblib.dump(split_dct, split_path)
-
-    # Save the newly created .tsv on the output folder to be used during evaluation
-    df.to_csv(os.path.join(path_output, 'participants.tsv'), sep='\t', index=False)
 
     return train_lst, valid_lst, test_lst
 
