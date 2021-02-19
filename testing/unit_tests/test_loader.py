@@ -93,5 +93,8 @@ def test_bids_df_anat(loader_parameters, path_output):
                     'columns_added': [], 'columns_removed': []}
 
 
+# TODO: add a test to ensure the loader can read in multiple entries in path_data
+
+
 def teardown_function():
     remove_tmp_dir()
