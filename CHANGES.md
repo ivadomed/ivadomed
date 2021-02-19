@@ -1,3 +1,30 @@
+## v2.7.2 (2021-02-19)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.7.1...v2.7.2)
+
+**BUG**
+
+ - Multiclass ignored during inference if n_input and n_output are different.  [View pull request](https://github.com/ivadomed/ivadomed/pull/688)
+ - Merged participants.tsv file saving bug correction.  [View pull request](https://github.com/ivadomed/ivadomed/pull/684)
+ - Make change_keys method from ConfigurationManager compatible with python3.8.  [View pull request](https://github.com/ivadomed/ivadomed/pull/681)
+
+**DOCUMENTATION**
+
+ - Add DOI JOSS.  [View pull request](https://github.com/ivadomed/ivadomed/pull/683)
+ - Adding Zenodo DOI.  [View pull request](https://github.com/ivadomed/ivadomed/pull/677)
+
+**ENHANCEMENT**
+
+ - Add pre-commit hooks to limit file size to 500KB .  [View pull request](https://github.com/ivadomed/ivadomed/pull/682)
+ - Shared weights for the two first FiLM generator layers.  [View pull request](https://github.com/ivadomed/ivadomed/pull/679)
+ - Allow for non-dictionary hyperparameters in automate_training.  [View pull request](https://github.com/ivadomed/ivadomed/pull/661)
+
+**FEATURE**
+
+ - Enable the pipeline to run with inputs from multiple BIDS datasets.  [View pull request](https://github.com/ivadomed/ivadomed/pull/588)
+
+## v2.7.1 (2021-02-09)
+[View change](https://github.com/ivadomed/ivadomed/pull/676)
+
 ## v2.7.0 (2021-02-09)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.6.1...v2.7.0)
 
