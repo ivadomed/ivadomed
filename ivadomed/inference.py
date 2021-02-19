@@ -277,7 +277,7 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
             else:
                 # undo transformations
                 preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
-                                                             batch["input_metadata"][i_slice],
+                                                             batch["gt_metadata"][i_slice],
                                                              data_type='gt')
 
                 # Add new segmented slice to preds_list
