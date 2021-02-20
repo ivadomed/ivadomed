@@ -791,7 +791,7 @@ def merge_bids_datasets(path_data):
 
 class BidsDataframe:
     """
-    This class aims to create a dataframe containing all BIDS image files in a path_data and their metadata.
+    This class aims to create a dataframe containing all BIDS image files in a list of path_data and their metadata.
 
     Args:
         loader_params (dict): Loader parameters, see :doc:`configuration_file` for more details.
@@ -799,7 +799,7 @@ class BidsDataframe:
         path_output (str): Output folder.
 
     Attributes:
-        path_data (str): Path to the BIDS dataset.
+        path_data (list): Paths to the BIDS datasets.
         bids_config (str): Path to the custom BIDS configuration file.
         target_suffix (list of str): List of suffix of targetted structures.
         roi_suffix (str): List of suffix of ROI masks.
@@ -811,7 +811,8 @@ class BidsDataframe:
 
     def __init__(self, loader_params, derivatives, path_output):
 
-        # path_data from loader parameters
+        # paths_data from loader parameters
+        # TODO: when integrating in pipeline, remove format_path_data here (done before in main)
         self.paths_data = imed_utils.format_path_data(loader_params['path_data'])
 
         # bids_config from loader parameters
