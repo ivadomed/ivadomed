@@ -14,6 +14,7 @@ import nibabel as nib
 import bids as pybids  # "bids" is already taken by bids_neuropoly
 import itertools
 import random
+import copy
 
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
@@ -819,7 +820,7 @@ class BidsDataframe:
         self.bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
 
         # target_suffix and roi_suffix from loader parameters
-        self.target_suffix = loader_params['target_suffix']
+        self.target_suffix = copy.deepcopy(loader_params['target_suffix'])
         # If `target_suffix` is a list of lists convert to list
         if any(isinstance(t, list) for t in self.target_suffix):
             self.target_suffix = list(itertools.chain.from_iterable(self.target_suffix))
