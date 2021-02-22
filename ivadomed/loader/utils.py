@@ -811,7 +811,7 @@ class BidsDataframe:
     def __init__(self, loader_params, derivatives, path_output):
 
         # path_data from loader parameters
-        self.path_data = os.path.join(loader_params['path_data'], '')
+        self.path_data = os.path.join(loader_params['path_data'][0], '')
 
         # bids_config from loader parameters
         self.bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
@@ -834,9 +834,6 @@ class BidsDataframe:
 
         # derivatives
         self.derivatives = derivatives
-
-        if self.derivatives:
-            self.write_derivatives_dataset_description()
 
         # Create dataframe
         self.create_bids_dataframe()
@@ -864,6 +861,9 @@ class BidsDataframe:
                     force_index.append(os.path.join(root.replace(self.path_data, '')))
         indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
         
+        if self.derivatives:
+            self.write_derivatives_dataset_description()
+
         layout = pybids.BIDSLayout(self.path_data, config=self.bids_config, indexer=indexer,
                                    derivatives=self.derivatives)
 
@@ -907,7 +907,7 @@ class BidsDataframe:
                 self.df = self.df[self.df['filename'].str.contains('|'.join(has_deriv))
                                   | self.df['filename'].str.contains('|'.join(deriv))]
             else:
-                # Raise error and exit if no derivatives are found for any subject files
+                 # Raise error and exit if no derivatives are found for any subject files
                 raise RuntimeError("Derivatives not found.")
 
         # Reset index
@@ -1036,8 +1036,8 @@ class BidsDataframe:
         """Writes default dataset_description.json file if not found in path_data/derivatives folder
         """
         filename = 'dataset_description'
-        deriv_desc_file = '{}/derivatives/{}'.format(self.path_data, filename)
-        label_desc_file = '{}/derivatives/labels/{}'.format(self.path_data, filename)
+        deriv_desc_file = '{}/derivatives/{}.json'.format(self.path_data, filename)
+        label_desc_file = '{}/derivatives/labels/{}.json'.format(self.path_data, filename)
         # need to write default dataset_description.json file if not found
         if not os.path.isfile(deriv_desc_file) and not os.path.isfile(label_desc_file):
             f = open(deriv_desc_file, 'w')
