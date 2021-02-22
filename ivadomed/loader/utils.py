@@ -835,9 +835,6 @@ class BidsDataframe:
         # derivatives
         self.derivatives = derivatives
 
-        if self.derivatives:
-            self.write_derivatives_dataset_description()
-
         # Create dataframe
         self.df = pd.DataFrame()
         self.create_bids_dataframe()
@@ -867,6 +864,10 @@ class BidsDataframe:
                     if file.endswith(ext_microscopy) and (root.replace(path_data, '').startswith("sub")):
                         force_index.append(os.path.join(root.replace(path_data, '')))
             indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
+
+            if self.derivatives:
+                self.write_derivatives_dataset_description(path_data)
+
             layout = pybids.BIDSLayout(path_data, config=self.bids_config, indexer=indexer,
                                        derivatives=self.derivatives)
 
@@ -1047,12 +1048,12 @@ class BidsDataframe:
         except FileNotFoundError:
             print("Wrong path.")
 
-    def write_derivatives_dataset_description(self):
+    def write_derivatives_dataset_description(self, path_data):
         """Writes default dataset_description.json file if not found in path_data/derivatives folder
         """
         filename = 'dataset_description'
-        deriv_desc_file = '{}/derivatives/{}.json'.format(self.path_data, filename)
-        label_desc_file = '{}/derivatives/labels/{}.json'.format(self.path_data, filename)
+        deriv_desc_file = '{}/derivatives/{}.json'.format(path_data, filename)
+        label_desc_file = '{}/derivatives/labels/{}.json'.format(path_data, filename)
         # need to write default dataset_description.json file if not found
         if not os.path.isfile(deriv_desc_file) and not os.path.isfile(label_desc_file):
             f = open(deriv_desc_file, 'w')
