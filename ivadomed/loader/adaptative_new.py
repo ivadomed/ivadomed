@@ -10,8 +10,10 @@ from bids_neuropoly import bids
 from tqdm import tqdm
 
 from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
-from ivadomed.object_detection import utils as imed_obj_detect
+# Here imed_loader refers temporarily to the loader_new.py, to fix when integrating in pipeline
+from ivadomed.loader import utils as imed_loader_utils, loader_new as imed_loader, film as imed_film
+# Here imed_obj_detect refers temporarily to the utils_new.py, to fix when integrating in pipeline
+from ivadomed.object_detection import utils_new as imed_obj_detect
 from ivadomed import utils as imed_utils
 
 
@@ -210,16 +212,15 @@ class BIDStoHDF5:
                  object_detection_params=None, soft_gt=False):
         print("Starting conversion")
 
-        # Getting all patients id
-        self.bids_ds = []
         path_data = imed_utils.format_path_data(path_data)
-        for bids_folder in path_data:
-            self.bids_ds.append(bids.BIDS(bids_folder))
-        # Append subjects from all BIDSdatasets into a list
-        bids_subjects = [s for s in self.bids_ds[0].get_subjects() if s.record["subject_id"] in subject_lst]
-        for i_bids_folder in range(1, len(path_data)):
-            bids_subjects += [s for s in self.bids_ds[i_bids_folder].get_subjects() if
-                              s.record["subject_id"] in subject_lst]
+
+        # TODO: Change output of split dataset to filename instead of ivadomed_id,
+        # then update df_subjects and subjects below
+
+        # Create a sub-dataframe from bids_df containing only subjects from subject_lst
+        df_subjects = bids_df.df[bids_df.df['ivadomed_id'].isin(subject_lst)]
+        # Append subjects from subject list into a list of filenames
+        subjects = df_subjects['filename'].to_list()
 
         self.soft_gt = soft_gt
         self.dt = h5py.special_dtype(vlen=str)
@@ -235,79 +236,71 @@ class BIDStoHDF5:
                              "EchoTime": [], "Manufacturer": []}
 
         self.prepro_transforms, self.transform = transform
-        # Create a list with the filenames for all contrasts and subjects
-        subjects_tot = []
-        for subject in bids_subjects:
-            subjects_tot.append(str(subject.record["absolute_path"]))
 
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
-        tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast])
+        tot = {contrast: df_subjects['suffix'].str.fullmatch(contrast).value_counts()[True]
                for contrast in contrast_balance.keys()}
 
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
 
-        # Append get_subjects()
-        get_subjects_all = self.bids_ds[0].get_subjects()
-        for i_bids_folder in range(1, len(self.bids_ds)):
-            get_subjects_all.extend(self.bids_ds[i_bids_folder].get_subjects())
 
+        # Get all subjects path from bids_df for bounding box
+        get_all_subj_path = bids_df.df[bids_df.df['filename']
+                                .str.contains('|'.join(bids_df.get_subject_fnames()))]['path'].to_list()
+
+        # Load bounding box from list of path
         self.has_bounding_box = True
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
-                                                                get_subjects_all,
+                                                                get_all_subj_path,
                                                                 slice_axis,
                                                                 contrast_lst)
 
-        for subject in tqdm(bids_subjects, desc="Loading dataset"):
+        # Get all derivatives filenames from bids_df
+        all_deriv = bids_df.get_deriv_fnames()
 
-            if subject.record["modality"] in contrast_lst:
+        for subject in tqdm(subjects, desc="Loading dataset"):
 
-                # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
-                if subject.record["modality"] in contrast_balance.keys():
-                    c[subject.record["modality"]] = c[subject.record["modality"]] + 1
-                    if c[subject.record["modality"]] / tot[subject.record["modality"]] \
-                            > contrast_balance[subject.record["modality"]]:
-                        continue
+            df_sub = df_subjects.loc[df_subjects['filename'] == subject]
 
-                if not subject.has_derivative("labels"):
-                    print("Subject without derivative, skipping.")
-                    continue
-                derivatives = subject.get_derivatives("labels")
-
-                target_filename, roi_filename = [None] * len(target_suffix), None
-
-                for deriv in derivatives:
-                    for idx, suffix in enumerate(target_suffix):
-                        if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
-                            target_filename[idx] = deriv
-
-                    if not (roi_params["suffix"] is None) and \
-                            deriv.endswith(subject.record["modality"] + roi_params["suffix"] + ".nii.gz"):
-                        roi_filename = [deriv]
-
-                if (not any(target_filename)) or (not (roi_params["suffix"] is None) and (roi_filename is None)):
+            # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
+            contrast = df_sub['suffix'].values[0]
+            if contrast in (contrast_balance.keys()):
+                c[contrast] = c[contrast] + 1
+                if c[contrast] / tot[contrast] > contrast_balance[contrast]:
                     continue
 
-                if not subject.has_metadata():
-                    print("Subject without metadata.")
-                    metadata = {}
-                else:
-                    metadata = subject.metadata()
-                    # add contrast to metadata
-                metadata['contrast'] = subject.record["modality"]
+            target_filename, roi_filename = [None] * len(target_suffix), None
 
-                if metadata_choice == 'mri_params':
-                    if not all([imed_film.check_isMRIparam(m, metadata) for m in self.metadata.keys()]):
-                        continue
+            derivatives = bids_df.df[bids_df.df['filename']
+                          .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
 
-                if len(bounding_box_dict):
-                    # Take only one bounding box for cropping
-                    metadata['bounding_box'] = bounding_box_dict[str(subject.record["absolute_path"])][0]
+            for deriv in derivatives:
+                for idx, suffix in enumerate(target_suffix):
+                    if suffix in deriv:
+                        target_filename[idx] = deriv
+                if not (roi_params["suffix"] is None) and roi_params["suffix"] in deriv:
+                    roi_filename = [deriv]
 
-                self.filename_pairs.append((subject.record["subject_id"], [subject.record.absolute_path],
+            if (not any(target_filename)) or (not (roi_params["suffix"] is None) and (roi_filename is None)):
+                continue
+
+            metadata = df_sub.to_dict(orient='records')[0]
+            metadata['contrast'] = contrast
+
+            if len(bounding_box_dict):
+                # Take only one bounding box for cropping
+                metadata['bounding_box'] = bounding_box_dict[str(df_sub['path'].values[0])][0]
+
+            if metadata_choice == 'mri_params':
+                if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
+                            self.metadata.keys()]):
+                    continue
+
+            # TODO: Create ivadomed_id here from filename
+            self.filename_pairs.append((df_sub['ivadomed_id'].values[0], [df_sub['path'].values[0]],
                                             target_filename, roi_filename, [metadata]))
-
-                list_patients.append(subject.record["subject_id"])
+            list_patients.append(df_sub['ivadomed_id'].values[0])
 
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn

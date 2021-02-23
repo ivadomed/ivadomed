@@ -12,7 +12,8 @@ from tqdm import tqdm
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
-from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
+# Here imed_adaptative refers temporarily to the adaptative_new.py, to fix when integrating in pipeline
+from ivadomed.loader import utils as imed_loader_utils, adaptative_new as imed_adaptative, film as imed_film
 # Here imed_obj_detect refers temporarily to the utils_new.py, to fix when integrating in pipeline
 from ivadomed.object_detection import utils_new as imed_obj_detect
 
@@ -808,6 +809,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
         tot = {contrast: df_subjects['suffix'].str.fullmatch(contrast).value_counts()[True]
                for contrast in contrast_params["balance"].keys()}
+
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_params["balance"].keys()}
 
