@@ -772,13 +772,15 @@ class BidsDataset(MRI2DSegmentationDataset):
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
-        truths are thresholded (0.5) after the data augmentation operations.
+            truths are thresholded (0.5) after the data augmentation operations.
 
     Attributes:
-        bids_ds (BIDS): BIDS dataset.
         filename_pairs (list): A list of tuples in the format (input filename list containing all modalities,ground \
             truth filename, ROI filename, metadata).
         metadata (dict): Dictionary containing FiLM metadata.
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+            truths are thresholded (0.5) after the data augmentation operations.
+        roi_params (dict): Dictionary containing parameters related to ROI image processing.
 
     """
 
@@ -787,7 +789,6 @@ class BidsDataset(MRI2DSegmentationDataset):
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 
         path_data = imed_utils.format_path_data(path_data)
-        self.bids_df = bids_df
         self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
         self.soft_gt = soft_gt
         self.filename_pairs = []
@@ -799,7 +800,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         # then update df_subjects and subjects below
 
         # Create a sub-dataframe from bids_df containing only subjects from subject_lst
-        df_subjects = self.bids_df.df[self.bids_df.df['ivadomed_id'].isin(subject_lst)]
+        df_subjects = bids_df.df[bids_df.df['ivadomed_id'].isin(subject_lst)]
         # Append subjects from subject list into a list of filenames
         subjects = df_subjects['filename'].to_list()
 
@@ -824,8 +825,8 @@ class BidsDataset(MRI2DSegmentationDataset):
                                                "metadata": [None] * num_contrast} for subject in subject_lst}
 
         # Get all subjects path from bids_df for bounding box
-        get_all_subj_path = self.bids_df.df[self.bids_df.df['filename']
-                                .str.contains('|'.join(self.bids_df.get_subject_fnames()))]['path'].to_list()
+        get_all_subj_path = bids_df.df[bids_df.df['filename']
+                                .str.contains('|'.join(bids_df.get_subject_fnames()))]['path'].to_list()
 
         # Load bounding box from list of path
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
@@ -834,7 +835,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                                                                 contrast_params["contrast_lst"])
 
         # Get all derivatives filenames from bids_df
-        all_deriv = self.bids_df.get_deriv_fnames()
+        all_deriv = bids_df.get_deriv_fnames()
 
         # Create filename_pairs
         for subject in tqdm(subjects, desc="Loading dataset"):
@@ -852,8 +853,8 @@ class BidsDataset(MRI2DSegmentationDataset):
             else:
                 target_filename, roi_filename = [[] for _ in range(len(target_suffix))], None
 
-            derivatives = self.bids_df.df[self.bids_df.df['filename']
-                          .str.contains('|'.join(self.bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
+            derivatives = bids_df.df[bids_df.df['filename']
+                          .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
 
             for deriv in derivatives:
                 for idx, suffix_list in enumerate(target_suffix):
@@ -889,7 +890,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                                      "Invalid metadata choice.".format(metadata_choice))
                 metadata[metadata_choice] = df_sub[metadata_choice].values[0]
                 # Create metadata dict for OHE
-                data_lst = sorted(set(self.bids_df.df[metadata_choice].dropna().values))
+                data_lst = sorted(set(bids_df.df[metadata_choice].dropna().values))
                 metadata_dict = {}
                 for idx, data in enumerate(data_lst):
                     metadata_dict[data] = idx
