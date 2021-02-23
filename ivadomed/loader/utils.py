@@ -479,7 +479,6 @@ def orient_shapes_hwd(data, slice_axis):
     elif slice_axis == 2:
         return np.array(data)
 
-
 class SampleMetadata(object):
     """Metadata class to help update, get and set metadata values.
 
@@ -867,6 +866,10 @@ class BidsDataframe:
                     if file.endswith(ext_microscopy) and (root.replace(path_data, '').startswith("sub")):
                         force_index.append(os.path.join(root.replace(path_data, '')))
             indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
+
+            if self.derivatives:
+                self.write_derivatives_dataset_description(path_data)
+
             layout = pybids.BIDSLayout(path_data, config=self.bids_config, indexer=indexer,
                                        derivatives=self.derivatives)
 
@@ -920,7 +923,7 @@ class BidsDataframe:
                 self.df = self.df[self.df['filename'].str.contains('|'.join(has_deriv))
                                   | self.df['filename'].str.contains('|'.join(deriv))]
             else:
-                # Raise error and exit if no derivatives are found for any subject files
+                 # Raise error and exit if no derivatives are found for any subject files
                 raise RuntimeError("Derivatives not found.")
 
         # Reset index
@@ -1046,3 +1049,15 @@ class BidsDataframe:
             print("Dataframe has been saved at {}.".format(path))
         except FileNotFoundError:
             print("Wrong path.")
+
+    def write_derivatives_dataset_description(self, path_data):
+        """Writes default dataset_description.json file if not found in path_data/derivatives folder
+        """
+        filename = 'dataset_description'
+        deriv_desc_file = '{}/derivatives/{}.json'.format(path_data, filename)
+        label_desc_file = '{}/derivatives/labels/{}.json'.format(path_data, filename)
+        # need to write default dataset_description.json file if not found
+        if not os.path.isfile(deriv_desc_file) and not os.path.isfile(label_desc_file):
+            f = open(deriv_desc_file, 'w')
+            f.write('{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
+            f.close()
