@@ -354,6 +354,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         if 'film_layers' in model_params and any(model_params['film_layers']):
             model_params, ds_train, ds_valid, train_onehotencoder = \
                 film_normalize_data(context, model_params, ds_train, ds_valid, path_output)
+        else:
+            train_onehotencoder = None
 
         # Model directory
         create_path_model(context, model_params, ds_train, path_output, train_onehotencoder)
