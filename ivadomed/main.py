@@ -89,10 +89,10 @@ def check_multiple_raters(is_train, loader_params):
         print(
             "\nAnnotations from multiple raters will be used during model training, one annotation from one rater "
             "randomly selected at each iteration.\n")
-    if not is_train:
-        print(
-            "\nERROR: Please provide only one annotation per class in 'target_suffix' when not training a model.\n")
-        exit()
+        if not is_train:
+            print(
+                "\nERROR: Please provide only one annotation per class in 'target_suffix' when not training a model.\n")
+            exit()
 
 def film_normalize_data(context, model_params, ds_train, ds_valid, path_output):
     # Normalize metadata before sending to the FiLM network
