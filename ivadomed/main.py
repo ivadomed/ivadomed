@@ -416,7 +416,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         metric_fns = imed_metrics.get_metric_fns(ds_test.task)
 
         if 'film_layers' in model_params and any(model_params['film_layers']):
-            ds_test, model_params = update_model_params(context, ds_test, model_params, path_output)
+            ds_test, model_params = update_film_model_params(context, ds_test, model_params, path_output)
 
         # RUN INFERENCE
         pred_metrics = imed_testing.test(model_params=model_params,
