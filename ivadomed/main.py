@@ -70,6 +70,51 @@ def get_parser():
 
     return parser
 
+def create_path_model(context, model_params, ds_train, path_output, train_onehotencoder):
+    path_model = os.path.join(path_output, context["model_name"])
+    if not os.path.isdir(path_model):
+        print('Creating model directory: {}'.format(path_model))
+        os.makedirs(path_model)
+        if 'film_layers' in model_params and any(model_params['film_layers']):
+            joblib.dump(train_onehotencoder, os.path.join(path_model, "one_hot_encoder.joblib"))
+            if 'metadata_dict' in ds_train[0]['input_metadata'][0]:
+                metadata_dict = ds_train[0]['input_metadata'][0]['metadata_dict']
+                joblib.dump(metadata_dict, os.path.join(path_model, "metadata_dict.joblib"))
+
+    else:
+        print('Model directory already exists: {}'.format(path_model))
+
+def check_multiple_raters(is_train, loader_params):
+    if any([isinstance(class_suffix, list) for class_suffix in loader_params["target_suffix"]]):
+        print(
+            "\nAnnotations from multiple raters will be used during model training, one annotation from one rater "
+            "randomly selected at each iteration.\n")
+    if not is_train:
+        print(
+            "\nERROR: Please provide only one annotation per class in 'target_suffix' when not training a model.\n")
+        exit()
+
+def film_normalize_data(context, model_params, ds_train, ds_valid, path_output):
+    # Normalize metadata before sending to the FiLM network
+    results = imed_film.get_film_metadata_models(ds_train=ds_train,
+                                                    metadata_type=model_params['metadata'],
+                                                    debugging=context["debugging"])
+    ds_train, train_onehotencoder, metadata_clustering_models = results
+    ds_valid = imed_film.normalize_metadata(ds_valid, metadata_clustering_models, context["debugging"],
+                                            model_params['metadata'])
+    model_params.update({"film_onehotencoder": train_onehotencoder,
+                            "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
+    joblib.dump(metadata_clustering_models, os.path.join(path_output, "clustering_models.joblib"))
+    joblib.dump(train_onehotencoder, os.path.join(path_output + "one_hot_encoder.joblib"))
+    
+    return model_params, ds_train, ds_valid, train_onehotencoder
+
+def get_dataset(loader_params, data_lst, transform_params, cuda_available, device, ds_type):
+    ds = imed_loader.load_dataset(**{**loader_params,
+                                            **{'data_list': data_lst, 'transforms_params': transform_params,
+                                                'dataset_type': ds_type}}, device=device,
+                                        cuda_available=cuda_available)
+    return ds
 
 def save_config_file(context, path_output):
     # Save config file within path_output and path_output/model_name
@@ -79,77 +124,22 @@ def save_config_file(context, path_output):
     with open(os.path.join(path_output, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
         json.dump(context, fp, indent=4)
 
-
-def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
-    """Run main command.
-
-    This function is central in the ivadomed project as training / testing / evaluation commands
-    are run via this function. All the process parameters are defined in the config.
-
-    Args:
-        context (dict): Dictionary containing all parameters that are needed for a given process. See
-            :doc:`configuration_file` for more details.
-        n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
-            parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
-            predictions of a given slice from the validation sub-dataset. They are saved within the output path.
-        thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
-            the training + validation sub-dataset to find the optimal binarization threshold. The specified value
-            indicates the increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
-        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the output directory specified with flag "--path-output" or via the config file "output_path" '            This training state is saved everytime a new best model is saved in the log
-            argument) for resume training directory.
-
-    Returns:
-        float or pandas.DataFrame or None:
-            * If "train" command: Returns floats: best loss score for both training and validation.
-            * If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of
-              the testing sub-dataset and return the prediction metrics before evaluation.
-            * If "segment" command: No return value.
-
-    """
-    command = copy.deepcopy(context["command"])
-    path_output = copy.deepcopy(context["path_output"])
-    if not os.path.isdir(path_output):
-        print('Creating output path: {}'.format(path_output))
-        os.makedirs(path_output)
-    else:
-        print('Output path already exists: {}'.format(path_output))
-
-    # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
-    create_dataset_and_ivadomed_version_log(context)
-
-    cuda_available, device = imed_utils.define_device(context['gpu_ids'][0])
-
-    # BACKWARDS COMPATIBILITY: If bids_path is string, assign to list - Do this here so it propagates to all functions
-    context['loader_parameters']['path_data'] = imed_utils.format_path_data(context['loader_parameters']['path_data'])
-
-    # Get subject lists. "segment" command uses all participants of data path, hence no need to split
-    if command != "segment":
-        train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
-                                                                                         context['loader_parameters']
-                                                                                         ['path_data'],
-                                                                                         path_output,
-                                                                                         context["loader_parameters"]
-                                                                                         ['subject_selection'])
-
-    # Loader params
+def set_loader_params(context, is_train):
     loader_params = copy.deepcopy(context["loader_parameters"])
-    if command == "train":
+    if is_train:
         loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
     else:
         loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["testing"]
     if "FiLMedUnet" in context and context["FiLMedUnet"]["applied"]:
         loader_params.update({"metadata_type": context["FiLMedUnet"]["metadata"]})
-
+    
     # Load metadata necessary to balance the loader
     if context['training_parameters']['balance_samples']['applied'] and \
             context['training_parameters']['balance_samples']['type'] != 'gt':
         loader_params.update({"metadata_type": context['training_parameters']['balance_samples']['type']})
+    return loader_params
 
-    # Get transforms for each subdataset
-    transform_train_params, transform_valid_params, transform_test_params = \
-        imed_transforms.get_subdatasets_transforms(context["transformation"])
-
-    # MODEL PARAMETERS
+def set_model_params(context, loader_params):
     model_params = copy.deepcopy(context["default_model"])
     model_params["folder_name"] = copy.deepcopy(context["model_name"])
     model_context_list = [model_name for model_name in MODEL_LIST
@@ -188,6 +178,149 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
     loader_params.update({"model_params": model_params})
 
+    return model_params, loader_params
+
+def set_output_path(context):
+    path_output = copy.deepcopy(context["path_output"])
+    if not os.path.isdir(path_output):
+        print('Creating output path: {}'.format(path_output))
+        os.makedirs(path_output)
+    else:
+        print('Output path already exists: {}'.format(path_output))
+    
+    return path_output
+
+def update_model_params(context, ds_test, model_params, path_output):
+    clustering_path = os.path.join(path_output, "clustering_models.joblib")
+    metadata_clustering_models = joblib.load(clustering_path)
+    # Model directory
+    ohe_path = os.path.join(path_output, context["model_name"], "one_hot_encoder.joblib")
+    one_hot_encoder = joblib.load(ohe_path)
+    ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"],
+                                            model_params['metadata'])
+    model_params.update({"film_onehotencoder": one_hot_encoder,
+                            "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
+
+    return ds_test, model_params
+
+def run_segment_command(context, model_params):
+    bids_ds = []
+    path_data = imed_utils.format_path_data(context["loader_parameters"]["path_data"])
+    for bids_folder in path_data:
+        bids_ds.append(bids.BIDS(bids_folder))
+
+    # Get the merged df from all dataset paths
+    df = imed_loader_utils.merge_bids_datasets(path_data)
+    subj_lst = df['participant_id'].tolist()
+
+    # Append subjects from all BIDSdatasets into a list
+    bids_subjects = []
+    for i_bids_folder in range(0, len(path_data)):
+        bids_subjects += [s for s in bids_ds[i_bids_folder].get_subjects() if s.record["subject_id"] in subj_lst]
+
+    # Add postprocessing to packaged model
+    path_model = os.path.join(context['path_output'], context['model_name'])
+    path_model_config = os.path.join(path_model, context['model_name'] + ".json")
+    model_config = imed_config_manager.load_json(path_model_config)
+    model_config['postprocessing'] = context['postprocessing']
+    with open(path_model_config, 'w') as fp:
+        json.dump(model_config, fp, indent=4)
+
+    options = None
+    for subject in bids_subjects:
+        if context['loader_parameters']['multichannel']:
+            fname_img = []
+            provided_contrasts = []
+            contrasts = context['loader_parameters']['contrast_params']['testing']
+            # Keep contrast order
+            for c in contrasts:
+                for s in bids_subjects:
+                    if subject.record['subject_id'] == s.record['subject_id'] and s.record['modality'] == c:
+                        provided_contrasts.append(c)
+                        fname_img.append(s.record['absolute_path'])
+                        bids_subjects.remove(s)
+            if len(fname_img) != len(contrasts):
+                logger.warning("Missing contrast for subject {}. {} were provided but {} are required. Skipping "
+                                "subject.".format(subject.record['subject_id'], provided_contrasts, contrasts))
+                continue
+        else:
+            fname_img = [subject.record['absolute_path']]
+
+        if 'film_layers' in model_params and any(model_params['film_layers']) and model_params['metadata']:
+            subj_id = subject.record['subject_id']
+            metadata = df[df['participant_id'] == subj_id][model_params['metadata']].values[0]
+            options = {'metadata': metadata}
+        pred_list, target_list = imed_inference.segment_volume(path_model,
+                                                                fname_images=fname_img,
+                                                                gpu_id=context['gpu_ids'][0],
+                                                                options=options)
+        pred_path = os.path.join(context['path_output'], "pred_masks")
+        if not os.path.exists(pred_path):
+            os.makedirs(pred_path)
+
+        for pred, target in zip(pred_list, target_list):
+            filename = subject.record['subject_id'] + "_" + subject.record['modality'] + target + "_pred" + \
+                        ".nii.gz"
+            nib.save(pred, os.path.join(pred_path, filename))
+
+def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
+    """Run main command.
+
+    This function is central in the ivadomed project as training / testing / evaluation commands
+    are run via this function. All the process parameters are defined in the config.
+
+    Args:
+        context (dict): Dictionary containing all parameters that are needed for a given process. See
+            :doc:`configuration_file` for more details.
+        n_gif (int): Generates a GIF during training if larger than zero, one frame per epoch for a given slice. The
+            parameter indicates the number of 2D slices used to generate GIFs, one GIF per slice. A GIF shows
+            predictions of a given slice from the validation sub-dataset. They are saved within the output path.
+        thr_increment (float): A threshold analysis is performed at the end of the training using the trained model and
+            the training + validation sub-dataset to find the optimal binarization threshold. The specified value
+            indicates the increment between 0 and 1 used during the ROC analysis (e.g. 0.1).
+        resume_training (bool): Load a saved model ("checkpoint.pth.tar" in the output directory specified with flag "--path-output" or via the config file "output_path" '            This training state is saved everytime a new best model is saved in the log
+            argument) for resume training directory.
+
+    Returns:
+        float or pandas.DataFrame or None:
+            * If "train" command: Returns floats: best loss score for both training and validation.
+            * If "test" command: Returns a pandas Dataframe: of metrics computed for each subject of
+              the testing sub-dataset and return the prediction metrics before evaluation.
+            * If "segment" command: No return value.
+
+    """
+    command = copy.deepcopy(context["command"])
+    path_output = set_output_path(context)
+
+    # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
+    create_dataset_and_ivadomed_version_log(context)
+
+    cuda_available, device = imed_utils.define_device(context['gpu_ids'][0])
+
+    # BACKWARDS COMPATIBILITY: If bids_path is string, assign to list - Do this here so it propagates to all functions
+    context['loader_parameters']['path_data'] = imed_utils.format_path_data(context['loader_parameters']['path_data'])
+
+    # Loader params
+    loader_params = set_loader_params(context, command == "train")
+
+    # Get transforms for each subdataset
+    transform_train_params, transform_valid_params, transform_test_params = \
+        imed_transforms.get_subdatasets_transforms(context["transformation"])
+
+    # MODEL PARAMETERS
+    model_params, loader_params = set_model_params(context, loader_params)
+
+    if command == 'segment':
+        run_segment_command(context, model_params)
+        return
+    
+    # Get subject lists. "segment" command uses all participants of data path, hence no need to split
+    train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
+                                                                                        context['loader_parameters']
+                                                                                        ['path_data'],
+                                                                                        path_output,
+                                                                                         context["loader_parameters"]
+                                                                                         ['subject_selection'])
     # TESTING PARAMS
     # Aleatoric uncertainty
     if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
@@ -199,6 +332,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     testing_params.update({'uncertainty': context["uncertainty"]})
     testing_params.update({'target_suffix': loader_params["target_suffix"], 'undo_transforms': undo_transforms,
                            'slice_axis': loader_params['slice_axis']})
+
     if command == "train":
         imed_utils.display_selected_transfoms(transform_train_params, dataset_type=["training"])
         imed_utils.display_selected_transfoms(transform_valid_params, dataset_type=["validation"])
@@ -206,57 +340,23 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         imed_utils.display_selected_transfoms(transformation_dict, dataset_type=["testing"])
 
     # Check if multiple raters
-    if any([isinstance(class_suffix, list) for class_suffix in loader_params["target_suffix"]]):
-        print(
-            "\nAnnotations from multiple raters will be used during model training, one annotation from one rater "
-            "randomly selected at each iteration.\n")
-        if command != "train":
-            print(
-                "\nERROR: Please provide only one annotation per class in 'target_suffix' when not training a model.\n")
-            exit()
+    check_multiple_raters(command != "train", loader_params)
 
     if command == 'train':
-        # LOAD DATASET
         # Get Validation dataset
-        ds_valid = imed_loader.load_dataset(**{**loader_params,
-                                               **{'data_list': valid_lst, 'transforms_params': transform_valid_params,
-                                                  'dataset_type': 'validation'}}, device=device,
-                                            cuda_available=cuda_available)
+        ds_valid = get_dataset(loader_params, valid_lst, transform_valid_params, cuda_available, device, 'validation')
+        
         # Get Training dataset
-        ds_train = imed_loader.load_dataset(**{**loader_params,
-                                               **{'data_list': train_lst, 'transforms_params': transform_train_params,
-                                                  'dataset_type': 'training'}}, device=device,
-                                            cuda_available=cuda_available)
-
+        ds_train = get_dataset(loader_params, train_lst, transform_train_params, cuda_available, device, 'training')
         metric_fns = imed_metrics.get_metric_fns(ds_train.task)
 
         # If FiLM, normalize data
         if 'film_layers' in model_params and any(model_params['film_layers']):
-            # Normalize metadata before sending to the FiLM network
-            results = imed_film.get_film_metadata_models(ds_train=ds_train,
-                                                         metadata_type=model_params['metadata'],
-                                                         debugging=context["debugging"])
-            ds_train, train_onehotencoder, metadata_clustering_models = results
-            ds_valid = imed_film.normalize_metadata(ds_valid, metadata_clustering_models, context["debugging"],
-                                                    model_params['metadata'])
-            model_params.update({"film_onehotencoder": train_onehotencoder,
-                                 "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
-            joblib.dump(metadata_clustering_models, os.path.join(path_output, "clustering_models.joblib"))
-            joblib.dump(train_onehotencoder, os.path.join(path_output + "one_hot_encoder.joblib"))
+            model_params, ds_train, ds_valid, train_onehotencoder = \
+                film_normalize_data(context, model_params, ds_train, ds_valid, path_output)
 
         # Model directory
-        path_model = os.path.join(path_output, context["model_name"])
-        if not os.path.isdir(path_model):
-            print('Creating model directory: {}'.format(path_model))
-            os.makedirs(path_model)
-            if 'film_layers' in model_params and any(model_params['film_layers']):
-                joblib.dump(train_onehotencoder, os.path.join(path_model, "one_hot_encoder.joblib"))
-                if 'metadata_dict' in ds_train[0]['input_metadata'][0]:
-                    metadata_dict = ds_train[0]['input_metadata'][0]['metadata_dict']
-                    joblib.dump(metadata_dict, os.path.join(path_model, "metadata_dict.joblib"))
-
-        else:
-            print('Model directory already exists: {}'.format(path_model))
+        create_path_model(context, model_params, ds_train, path_output, train_onehotencoder)
 
         save_config_file(context, path_output)
 
@@ -278,16 +378,9 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         # LOAD DATASET
         if command != 'train':  # If command == train, then ds_valid already load
             # Get Validation dataset
-            ds_valid = imed_loader.load_dataset(**{**loader_params,
-                                                   **{'data_list': valid_lst,
-                                                      'transforms_params': transform_valid_params,
-                                                      'dataset_type': 'validation'}}, device=device,
-                                                cuda_available=cuda_available)
+            ds_valid = get_dataset(loader_params, valid_lst, transform_valid_params, cuda_available, device, 'validation')
         # Get Training dataset with no Data Augmentation
-        ds_train = imed_loader.load_dataset(**{**loader_params,
-                                               **{'data_list': train_lst, 'transforms_params': transform_valid_params,
-                                                  'dataset_type': 'training'}}, device=device,
-                                            cuda_available=cuda_available)
+        ds_train = get_dataset(loader_params, train_lst, transform_valid_params, cuda_available, device, 'training')
 
         # Choice of optimisation metric
         metric = "recall_specificity" if model_params["name"] in imed_utils.CLASSIFIER_LIST else "dice"
@@ -321,15 +414,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         metric_fns = imed_metrics.get_metric_fns(ds_test.task)
 
         if 'film_layers' in model_params and any(model_params['film_layers']):
-            clustering_path = os.path.join(path_output, "clustering_models.joblib")
-            metadata_clustering_models = joblib.load(clustering_path)
-            # Model directory
-            ohe_path = os.path.join(path_output, context["model_name"], "one_hot_encoder.joblib")
-            one_hot_encoder = joblib.load(ohe_path)
-            ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"],
-                                                   model_params['metadata'])
-            model_params.update({"film_onehotencoder": one_hot_encoder,
-                                 "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
+            ds_test, model_params = update_model_params(context, ds_test, model_params, path_output)
 
         # RUN INFERENCE
         pred_metrics = imed_testing.test(model_params=model_params,
@@ -347,67 +432,6 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                               target_suffix=loader_params["target_suffix"],
                                               eval_params=context["evaluation_parameters"])
         return df_results, pred_metrics
-
-    if command == 'segment':
-
-        bids_ds = []
-        path_data = imed_utils.format_path_data(context["loader_parameters"]["path_data"])
-        for bids_folder in path_data:
-            bids_ds.append(bids.BIDS(bids_folder))
-
-        # Get the merged df from all dataset paths
-        df = imed_loader_utils.merge_bids_datasets(path_data)
-        subj_lst = df['participant_id'].tolist()
-
-        # Append subjects from all BIDSdatasets into a list
-        bids_subjects = []
-        for i_bids_folder in range(0, len(path_data)):
-            bids_subjects += [s for s in bids_ds[i_bids_folder].get_subjects() if s.record["subject_id"] in subj_lst]
-
-        # Add postprocessing to packaged model
-        path_model = os.path.join(context['path_output'], context['model_name'])
-        path_model_config = os.path.join(path_model, context['model_name'] + ".json")
-        model_config = imed_config_manager.load_json(path_model_config)
-        model_config['postprocessing'] = context['postprocessing']
-        with open(path_model_config, 'w') as fp:
-            json.dump(model_config, fp, indent=4)
-
-        options = None
-        for subject in bids_subjects:
-            if context['loader_parameters']['multichannel']:
-                fname_img = []
-                provided_contrasts = []
-                contrasts = context['loader_parameters']['contrast_params']['testing']
-                # Keep contrast order
-                for c in contrasts:
-                    for s in bids_subjects:
-                        if subject.record['subject_id'] == s.record['subject_id'] and s.record['modality'] == c:
-                            provided_contrasts.append(c)
-                            fname_img.append(s.record['absolute_path'])
-                            bids_subjects.remove(s)
-                if len(fname_img) != len(contrasts):
-                    logger.warning("Missing contrast for subject {}. {} were provided but {} are required. Skipping "
-                                   "subject.".format(subject.record['subject_id'], provided_contrasts, contrasts))
-                    continue
-            else:
-                fname_img = [subject.record['absolute_path']]
-
-            if 'film_layers' in model_params and any(model_params['film_layers']) and model_params['metadata']:
-                subj_id = subject.record['subject_id']
-                metadata = df[df['participant_id'] == subj_id][model_params['metadata']].values[0]
-                options = {'metadata': metadata}
-            pred_list, target_list = imed_inference.segment_volume(path_model,
-                                                                   fname_images=fname_img,
-                                                                   gpu_id=context['gpu_ids'][0],
-                                                                   options=options)
-            pred_path = os.path.join(context['path_output'], "pred_masks")
-            if not os.path.exists(pred_path):
-                os.makedirs(pred_path)
-
-            for pred, target in zip(pred_list, target_list):
-                filename = subject.record['subject_id'] + "_" + subject.record['modality'] + target + "_pred" + \
-                           ".nii.gz"
-                nib.save(pred, os.path.join(pred_path, filename))
 
 
 def create_dataset_and_ivadomed_version_log(context):
