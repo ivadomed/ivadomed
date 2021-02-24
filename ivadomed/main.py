@@ -190,7 +190,7 @@ def set_output_path(context):
     
     return path_output
 
-def update_model_params(context, ds_test, model_params, path_output):
+def update_film_model_params(context, ds_test, model_params, path_output):
     clustering_path = os.path.join(path_output, "clustering_models.joblib")
     metadata_clustering_models = joblib.load(clustering_path)
     # Model directory
