@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from bids_neuropoly import bids
 from tqdm import tqdm
+import re
 
 from ivadomed import transforms as imed_transforms
 # Here imed_loader refers temporarily to the loader_new.py, to fix when integrating in pipeline
@@ -181,7 +182,7 @@ class BIDStoHDF5:
     Args:
         bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         path_data (list) or (str): Path(s) to BIDS datasets
-        subject_lst (list): Subject names list.
+        subject_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
         contrast_lst (list): List of the contrasts.
@@ -194,7 +195,6 @@ class BIDStoHDF5:
         object_detection_params (dict): Object detection parameters.
 
     Attributes:
-        bids_ds (BIDS): BIDS dataset.
         dt (dtype): hdf5 special dtype.
         path_hdf5 (str): path to hdf5 file containing dataset information.
         filename_pairs (list): A list of tuples in the format (input filename list containing all modalities,ground \
@@ -214,13 +214,8 @@ class BIDStoHDF5:
 
         path_data = imed_utils.format_path_data(path_data)
 
-        # TODO: Change output of split dataset to filename instead of ivadomed_id,
-        # then update df_subjects and subjects below
-
         # Create a sub-dataframe from bids_df containing only subjects from subject_lst
-        df_subjects = bids_df.df[bids_df.df['ivadomed_id'].isin(subject_lst)]
-        # Append subjects from subject list into a list of filenames
-        subjects = df_subjects['filename'].to_list()
+        df_subjects = bids_df.df[bids_df.df['filename'].isin(subject_lst)]
 
         self.soft_gt = soft_gt
         self.dt = h5py.special_dtype(vlen=str)
@@ -259,7 +254,7 @@ class BIDStoHDF5:
         # Get all derivatives filenames from bids_df
         all_deriv = bids_df.get_deriv_fnames()
 
-        for subject in tqdm(subjects, desc="Loading dataset"):
+        for subject in tqdm(subject_lst, desc="Loading dataset"):
 
             df_sub = df_subjects.loc[df_subjects['filename'] == subject]
 
@@ -297,10 +292,12 @@ class BIDStoHDF5:
                             self.metadata.keys()]):
                     continue
 
-            # TODO: Create ivadomed_id here from filename
-            self.filename_pairs.append((df_sub['ivadomed_id'].values[0], [df_sub['path'].values[0]],
+            # Get subj_id (prefix filename without modality suffix and extension)
+            subj_id = re.sub(r'_' + df_sub['suffix'].values[0] + '.*', '', subject)
+
+            self.filename_pairs.append((subj_id, [df_sub['path'].values[0]],
                                             target_filename, roi_filename, [metadata]))
-            list_patients.append(df_sub['ivadomed_id'].values[0])
+            list_patients.append(subj_id)
 
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
@@ -478,7 +475,7 @@ class HDF5Dataset:
     Args:
         bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         path_data (list) or (str): Path(s) to BIDS datasets
-        subject_lst (list of str): List of subjects.
+        subject_lst (list of str): List of subject filenames.
         model_params (dict): Dictionary containing model parameters.
         target_suffix (list of str): List of suffixes of the target structures.
         contrast_params (dict): Dictionary containing contrast parameters.
