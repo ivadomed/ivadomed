@@ -802,6 +802,10 @@ class BidsDataset(MRI2DSegmentationDataset):
         # Sort subject_lst and create a sub-dataframe from bids_df containing only subjects from subject_lst
         subject_lst = sorted(subject_lst)
         df_subjects = bids_df.df[bids_df.df['filename'].isin(subject_lst)]
+        # Backward compatibility for subject_lst containing participant_ids instead of filenames
+        if df_subjects.empty:
+            df_subjects = bids_df.df[bids_df.df['participant_id'].isin(subject_lst)]
+            subject_lst = sorted(df_subjects['filename'].to_list())
 
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
         tot = {contrast: df_subjects['suffix'].str.fullmatch(contrast).value_counts()[True]
