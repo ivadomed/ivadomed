@@ -884,11 +884,6 @@ class BidsDataframe:
             # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
             df_next = df_next[~df_next['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
 
-            # Add ivadomed_id column corresponding to filename minus modality and extension for files that are not derivatives.
-            for index, row in df_next.iterrows():
-                if isinstance(row['suffix'], str):
-                    df_next.loc[index, 'ivadomed_id'] = re.sub(r'_' + row['suffix'] + '.*', '', row['filename'])
-
             # Update dataframe with subject files of chosen contrasts and extensions,
             # and with derivative files of chosen target_suffix from loader parameters
             df_next = df_next[(~df_next['path'].str.contains('derivatives')
