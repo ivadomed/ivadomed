@@ -110,7 +110,7 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
         train_frac (float): Between 0 and 1. Represents the train set proportion.
         test_frac (float): Between 0 and 1. Represents the test set proportion.
     Returns:
-        list, list, list: Train, validation and test data_type list.
+        list, list, list: Train, validation and test filenames lists.
     """
 
     # Get data_type and data_value from split parameters
@@ -134,7 +134,7 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
         data_value = sorted(df[data_type].unique().tolist())
         test_frac = test_frac if test_frac >= 1 / len(data_value) else 1 / len(data_value)
         data_value, _ = train_test_split(data_value, train_size=test_frac, random_state=random_seed)
-    X_test = df[df[data_type].isin(data_value)]['ivadomed_id'].unique().tolist()
+    X_test = df[df[data_type].isin(data_value)]['filename'].unique().tolist()
     X_remain = df[~df[data_type].isin(data_value)][split_method].unique().tolist()
 
     # List dataset unique values according to split_method
@@ -148,9 +148,9 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
     # Split remainder in TRAIN and VALID sets according to train_frac_update using sklearn function
     X_train, X_val = train_test_split(X_remain, train_size=train_frac_update, random_state=random_seed)
 
-    # Convert train and valid sets from list of "split_method" to list of "ivadomed_id"
-    X_train = df[df[split_method].isin(X_train)]['ivadomed_id'].unique().tolist()
-    X_val = df[df[split_method].isin(X_val)]['ivadomed_id'].unique().tolist()
+    # Convert train and valid sets from list of "split_method" to list of "filename"
+    X_train = df[df[split_method].isin(X_train)]['filename'].unique().tolist()
+    X_val = df[df[split_method].isin(X_val)]['filename'].unique().tolist()
 
     # Make sure that test dataset is unseen during training
     # (in cases where there are multiple "data_type" for a same "split_method")
@@ -254,7 +254,7 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
     Returns:
-        list, list list: Training, validation and testing subjects lists.
+        list, list list: Training, validation and testing filenames lists.
     """
     if subject_selection is not None:
         # Verify subject_selection format
@@ -344,7 +344,7 @@ def get_subdatasets_subjects_list_new(split_params, df, path_output, subject_sel
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
     Returns:
-        list, list list: Training, validation and testing subjects lists.
+        list, list list: Training, validation and testing filenames lists.
     """
     if split_params["fname_split"]:
         # Load subjects lists
