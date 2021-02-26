@@ -877,9 +877,8 @@ class BidsDataframe:
             # As per pybids, derivatives don't include parsed entities, only the "path" column
             df_next = layout.to_df(metadata=True)
 
-            # Add filename and parent_path columns
+            # Add filename column
             df_next['filename'] = df_next['path'].apply(os.path.basename)
-            df_next['parent_path'] = df_next['path'].apply(os.path.dirname)
 
             # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
             df_next = df_next[~df_next['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
@@ -900,11 +899,10 @@ class BidsDataframe:
             # Merge dataframes
             self.df = pd.concat([self.df, df_next], join='outer', ignore_index=True)
 
-        # Drop duplicated rows based on all columns except 'path and 'parent_path'
+        # Drop duplicated rows based on all columns except 'path'
         # Keep first occurence
         columns = self.df.columns.to_list()
         columns.remove('path')
-        columns.remove('parent_path')
         self.df = self.df[~(self.df.astype(str).duplicated(subset=columns, keep='first'))]
 
         # If indexing of derivatives is true
