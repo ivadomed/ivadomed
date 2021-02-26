@@ -42,8 +42,8 @@ def test_bids_df_microscopy_png(loader_parameters, path_output):
     df_test = bids_df.df
     df_test = df_test.drop(columns=['path', 'parent_path'])
     # TODO: modify df_ref.csv file in data-testing dataset to include "participant_id"
-    # "sample_id" and "ivadomed_id" columns, then delete next line
-    df_test = df_test.drop(columns=['participant_id', 'sample_id', 'ivadomed_id'])
+    # and "sample_id" columns, then delete next line
+    df_test = df_test.drop(columns=['participant_id', 'sample_id'])
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
     csv_ref = os.path.join(path_data[0], "df_ref.csv")
     csv_test = os.path.join(path_data[0], "df_test.csv")
@@ -82,8 +82,8 @@ def test_bids_df_anat(loader_parameters, path_output):
     df_test = bids_df.df
     df_test = df_test.drop(columns=['path', 'parent_path'])
     # TODO: modify df_ref.csv file in data-testing dataset to include "participant_id"
-    # and "ivadomed_id" columns then delete next line
-    df_test = df_test.drop(columns=['participant_id', 'ivadomed_id'])
+    # column then delete next line
+    df_test = df_test.drop(columns=['participant_id'])
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
     csv_ref = os.path.join(path_data[0], "df_ref.csv")
     csv_test = os.path.join(path_data[0], "df_test.csv")
