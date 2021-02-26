@@ -8,6 +8,7 @@ import os
 from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
+import re
 
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
@@ -717,7 +718,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
     Args:
         bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         path_data (list) or (str): List of Paths to the BIDS datasets.
-        subject_lst (list): Subject names list.
+        subject_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         model_params (dict): Dictionary containing model parameters.
         contrast_params (dict): Contains image contrasts related parameters.
@@ -757,7 +758,7 @@ class BidsDataset(MRI2DSegmentationDataset):
     Args:
         bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         path_data (list) or (str): List of Paths to the BIDS datasets.
-        subject_lst (list): Subject names list.
+        subject_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         contrast_params (dict): Contains image contrasts related parameters.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
@@ -798,13 +799,8 @@ class BidsDataset(MRI2DSegmentationDataset):
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
 
-        # TODO: Change output of split dataset to filename instead of ivadomed_id,
-        # then update df_subjects and subjects below
-
         # Create a sub-dataframe from bids_df containing only subjects from subject_lst
-        df_subjects = bids_df.df[bids_df.df['ivadomed_id'].isin(subject_lst)]
-        # Append subjects from subject list into a list of filenames
-        subjects = df_subjects['filename'].to_list()
+        df_subjects = bids_df.df[bids_df.df['filename'].isin(subject_lst)]
 
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
         tot = {contrast: df_subjects['suffix'].str.fullmatch(contrast).value_counts()[True]
@@ -813,9 +809,14 @@ class BidsDataset(MRI2DSegmentationDataset):
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_params["balance"].keys()}
 
-        # Create multichannel_subjects dictionary
-        # subject_lst must be ivadomed_id
-        # TODO: Create ivadomed_id here from list of filenames
+        # Get a list of subject_ids for multichannel_subjects (prefix filename without modality suffix and extension)
+        subject_ids = []
+        for subject in subject_lst:
+            suffix = df_subjects.loc[df_subjects['filename'] == subject]['suffix'].values[0]
+            subject_ids.append(re.sub(r'_' + suffix + '.*', '', subject))
+        subject_ids = list(set(subject_ids))
+
+        # Create multichannel_subjects dictionary for each subject_id
         multichannel_subjects = {}
         if multichannel:
             num_contrast = len(contrast_params["contrast_lst"])
@@ -825,7 +826,7 @@ class BidsDataset(MRI2DSegmentationDataset):
             multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
                                                "deriv_path": None,
                                                "roi_filename": None,
-                                               "metadata": [None] * num_contrast} for subject in subject_lst}
+                                               "metadata": [None] * num_contrast} for subject in subject_ids}
 
         # Get all subjects path from bids_df for bounding box
         get_all_subj_path = bids_df.df[bids_df.df['filename']
@@ -841,7 +842,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         all_deriv = bids_df.get_deriv_fnames()
 
         # Create filename_pairs
-        for subject in tqdm(subjects, desc="Loading dataset"):
+        for subject in tqdm(subject_lst, desc="Loading dataset"):
 
             df_sub = df_subjects.loc[df_subjects['filename'] == subject]
 
@@ -886,6 +887,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                 if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
                             self.metadata.keys()]):
                     continue
+
             elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
                 # add custom data to metadata
                 if metadata_choice not in df_sub.columns:
@@ -900,11 +902,10 @@ class BidsDataset(MRI2DSegmentationDataset):
                 metadata['metadata_dict'] = metadata_dict
 
             # Fill multichannel dictionary
-            # subj_id is ivadomed_id
-            # TODO: Create ivadomed_id here from filename
+            # subj_id is the filename without modality suffix and extension
             if multichannel:
                 idx = idx_dict[df_sub['suffix'].values[0]]
-                subj_id = df_sub['ivadomed_id'].values[0]
+                subj_id = re.sub(r'_' + df_sub['suffix'].values[0] + '.*', '', subject)
                 multichannel_subjects[subj_id]["absolute_paths"][idx] = df_sub['path'].values[0]
                 multichannel_subjects[subj_id]["deriv_path"] = target_filename
                 multichannel_subjects[subj_id]["metadata"][idx] = metadata
