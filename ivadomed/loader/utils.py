@@ -891,13 +891,23 @@ class BidsDataframe:
                                | (df_next['path'].str.contains('derivatives')
                                & df_next['filename'].str.contains('|'.join(self.target_suffix)))]
 
-            # Add tsv files metadata to dataframe
-            df_next = self.add_tsv_metadata(df_next, path_data, layout)
+            if df_next[~df_next['path'].str.contains('derivatives')].empty:
+                # Warning if no subject files are found in path_data
+                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(path_data))
 
-            # TODO: check if other files are needed for EEG and DWI
+            else:
+                # Add tsv files metadata to dataframe
+                df_next = self.add_tsv_metadata(df_next, path_data, layout)
 
-            # Merge dataframes
-            self.df = pd.concat([self.df, df_next], join='outer', ignore_index=True)
+                # TODO: check if other files are needed for EEG and DWI
+
+                # Merge dataframes
+                self.df = pd.concat([self.df, df_next], join='outer', ignore_index=True)
+
+        if self.df.empty:
+            # Raise error and exit if no subject files are found in any path data
+            raise RuntimeError("No subject files found. Check selection of parameters in config.json"
+                               " and datasets compliance with BIDS specification.")
 
         # Drop duplicated rows based on all columns except 'path'
         # Keep first occurence
