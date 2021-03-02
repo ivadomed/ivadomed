@@ -628,8 +628,8 @@ class BidsDataframe:
 
     Args:
         loader_params (dict): Loader parameters, see :doc:`configuration_file` for more details.
-        derivatives (bool): If True, derivatives are indexed.
         path_output (str): Output folder.
+        derivatives (bool): If True, derivatives are indexed.
 
     Attributes:
         path_data (list): Paths to the BIDS datasets.
@@ -642,7 +642,7 @@ class BidsDataframe:
         df (pd.DataFrame): Dataframe containing dataset information
     """
 
-    def __init__(self, loader_params, derivatives, path_output):
+    def __init__(self, loader_params, path_output, derivatives):
 
         # paths_data from loader parameters
         # TODO: when integrating in pipeline, remove format_path_data here (done before in main)
