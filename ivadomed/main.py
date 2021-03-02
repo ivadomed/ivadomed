@@ -109,11 +109,11 @@ def film_normalize_data(context, model_params, ds_train, ds_valid, path_output):
     
     return model_params, ds_train, ds_valid, train_onehotencoder
 
-def get_dataset(loader_params, data_lst, transform_params, cuda_available, device, ds_type):
-    ds = imed_loader.load_dataset(**{**loader_params,
-                                            **{'data_list': data_lst, 'transforms_params': transform_params,
-                                                'dataset_type': ds_type}}, device=device,
-                                        cuda_available=cuda_available)
+def get_dataset(bids_df, loader_params, data_lst, transform_params, cuda_available, device, ds_type):
+    ds = imed_loader.load_dataset(bids_df, **{**loader_params, **{'data_list': data_lst,
+                                                                  'transforms_params': transform_params,
+                                                                  'dataset_type': ds_type}}, device=device,
+                                  cuda_available=cuda_available)
     return ds
 
 def save_config_file(context, path_output):
@@ -346,10 +346,10 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
     if command == 'train':
         # Get Validation dataset
-        ds_valid = get_dataset(loader_params, valid_lst, transform_valid_params, cuda_available, device, 'validation')
+        ds_valid = get_dataset(bids_df, loader_params, valid_lst, transform_valid_params, cuda_available, device, 'validation')
         
         # Get Training dataset
-        ds_train = get_dataset(loader_params, train_lst, transform_train_params, cuda_available, device, 'training')
+        ds_train = get_dataset(bids_df, loader_params, train_lst, transform_train_params, cuda_available, device, 'training')
         metric_fns = imed_metrics.get_metric_fns(ds_train.task)
 
         # If FiLM, normalize data
@@ -382,9 +382,9 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         # LOAD DATASET
         if command != 'train':  # If command == train, then ds_valid already load
             # Get Validation dataset
-            ds_valid = get_dataset(loader_params, valid_lst, transform_valid_params, cuda_available, device, 'validation')
+            ds_valid = get_dataset(bids_df, loader_params, valid_lst, transform_valid_params, cuda_available, device, 'validation')
         # Get Training dataset with no Data Augmentation
-        ds_train = get_dataset(loader_params, train_lst, transform_valid_params, cuda_available, device, 'training')
+        ds_train = get_dataset(bids_df, loader_params, train_lst, transform_valid_params, cuda_available, device, 'training')
 
         # Choice of optimisation metric
         metric = "recall_specificity" if model_params["name"] in imed_utils.CLASSIFIER_LIST else "dice"
