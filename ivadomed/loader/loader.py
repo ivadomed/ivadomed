@@ -8,6 +8,7 @@ import os
 from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
+import re
 
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
@@ -16,7 +17,7 @@ from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adapt
 from ivadomed.object_detection import utils as imed_obj_detect
 
 
-def load_dataset(data_list, path_data, transforms_params, model_params, target_suffix, roi_params,
+def load_dataset(bids_df, data_list, path_data, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
                  dataset_type="training", requires_undo=False, metadata_type=None,
                  object_detection_params=None, soft_gt=False, device=None,
@@ -25,6 +26,7 @@ def load_dataset(data_list, path_data, transforms_params, model_params, target_s
     BidsDataset for 2D data and HDF5Dataset for HeMIS.
 
     Args:
+        bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         data_list (list): Subject names list.
         path_data (list) or (str): Path to the BIDS dataset(s).
         transforms_params (dict): Dictionary containing transformations for "training", "validation", "testing" (keys),
@@ -50,6 +52,7 @@ def load_dataset(data_list, path_data, transforms_params, model_params, target_s
     Note: For more details on the parameters transform_params, target_suffix, roi_params, contrast_params,
     slice_filter_params and object_detection_params see :doc:`configuration_file`.
     """
+
     # Compose transforms
     tranform_lst, _ = imed_transforms.prepare_transforms(copy.deepcopy(transforms_params), requires_undo)
 
@@ -58,7 +61,8 @@ def load_dataset(data_list, path_data, transforms_params, model_params, target_s
         roi_params["slice_filter_roi"] = None
 
     if model_params["name"] == "Modified3DUNet" or ('is_2d' in model_params and not model_params['is_2d']):
-        dataset = Bids3DDataset(path_data,
+        dataset = Bids3DDataset(bids_df,
+                                path_data,
                                 subject_lst=data_list,
                                 target_suffix=target_suffix,
                                 roi_params=roi_params,
@@ -72,7 +76,8 @@ def load_dataset(data_list, path_data, transforms_params, model_params, target_s
                                 soft_gt=soft_gt)
 
     elif model_params["name"] == "HeMISUnet":
-        dataset = imed_adaptative.HDF5Dataset(path_data=path_data,
+        dataset = imed_adaptative.HDF5Dataset(bids_df,
+                                              path_data=path_data,
                                               subject_lst=data_list,
                                               model_params=model_params,
                                               contrast_params=contrast_params,
@@ -90,7 +95,8 @@ def load_dataset(data_list, path_data, transforms_params, model_params, target_s
         # Task selection
         task = imed_utils.get_task(model_params["name"])
 
-        dataset = BidsDataset(path_data,
+        dataset = BidsDataset(bids_df,
+                              path_data,
                               subject_lst=data_list,
                               target_suffix=target_suffix,
                               roi_params=roi_params,
@@ -708,8 +714,9 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
     """BIDS specific dataset loader for 3D dataset.
 
     Args:
+        bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         path_data (list) or (str): List of Paths to the BIDS datasets.
-        subject_lst (list): Subject names list.
+        subject_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         model_params (dict): Dictionary containing model parameters.
         contrast_params (dict): Contains image contrasts related parameters.
@@ -724,10 +731,11 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         object_detection_params (dict): Object dection parameters.
     """
 
-    def __init__(self, path_data, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
+    def __init__(self, bids_df, path_data, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
-        dataset = BidsDataset(path_data=path_data,
+        dataset = BidsDataset(bids_df=bids_df,
+                              path_data=path_data,
                               subject_lst=subject_lst,
                               target_suffix=target_suffix,
                               roi_params=roi_params,
@@ -746,8 +754,9 @@ class BidsDataset(MRI2DSegmentationDataset):
     """ BIDS specific dataset loader.
 
     Args:
+        bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         path_data (list) or (str): List of Paths to the BIDS datasets.
-        subject_lst (list): Subject names list.
+        subject_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         contrast_params (dict): Contains image contrasts related parameters.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
@@ -764,25 +773,23 @@ class BidsDataset(MRI2DSegmentationDataset):
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
-        truths are thresholded (0.5) after the data augmentation operations.
+            truths are thresholded (0.5) after the data augmentation operations.
 
     Attributes:
-        bids_ds (BIDS): BIDS dataset.
         filename_pairs (list): A list of tuples in the format (input filename list containing all modalities,ground \
             truth filename, ROI filename, metadata).
         metadata (dict): Dictionary containing FiLM metadata.
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+            truths are thresholded (0.5) after the data augmentation operations.
+        roi_params (dict): Dictionary containing parameters related to ROI image processing.
 
     """
 
-    def __init__(self, path_data, subject_lst, target_suffix, contrast_params, slice_axis=2,
+    def __init__(self, bids_df, path_data, subject_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 
-        self.bids_ds = []
         path_data = imed_utils.format_path_data(path_data)
-        for BIDSFolder in path_data:
-            self.bids_ds.append(bids.BIDS(BIDSFolder))
-
         self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
         self.soft_gt = soft_gt
         self.filename_pairs = []
@@ -790,24 +797,29 @@ class BidsDataset(MRI2DSegmentationDataset):
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
 
-        # Append subjects from all BIDSdatasets into a list
-        bids_subjects = []
-        for i_bids_folder in range(0, len(path_data)):
-            bids_subjects += [s for s in self.bids_ds[i_bids_folder].get_subjects() if s.record["subject_id"] in subject_lst]
-
-        # Create a list with the filenames for all contrasts and subjects
-        subjects_tot = []
-        for subject in bids_subjects:
-            subjects_tot.append(str(subject.record["absolute_path"]))
+        # Sort subject_lst and create a sub-dataframe from bids_df containing only subjects from subject_lst
+        subject_lst = sorted(subject_lst)
+        df_subjects = bids_df.df[bids_df.df['filename'].isin(subject_lst)]
+        # Backward compatibility for subject_lst containing participant_ids instead of filenames
+        if df_subjects.empty:
+            df_subjects = bids_df.df[bids_df.df['participant_id'].isin(subject_lst)]
+            subject_lst = sorted(df_subjects['filename'].to_list())
 
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
-
-        tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast])
+        tot = {contrast: df_subjects['suffix'].str.fullmatch(contrast).value_counts()[True]
                for contrast in contrast_params["balance"].keys()}
 
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_params["balance"].keys()}
 
+        # Get a list of subject_ids for multichannel_subjects (prefix filename without modality suffix and extension)
+        subject_ids = []
+        for subject in subject_lst:
+            suffix = df_subjects.loc[df_subjects['filename'] == subject]['suffix'].values[0]
+            subject_ids.append(re.sub(r'_' + suffix + '.*', '', subject))
+        subject_ids = list(set(subject_ids))
+
+        # Create multichannel_subjects dictionary for each subject_id
         multichannel_subjects = {}
         if multichannel:
             num_contrast = len(contrast_params["contrast_lst"])
@@ -817,104 +829,94 @@ class BidsDataset(MRI2DSegmentationDataset):
             multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
                                                "deriv_path": None,
                                                "roi_filename": None,
-                                               "metadata": [None] * num_contrast} for subject in subject_lst}
+                                               "metadata": [None] * num_contrast} for subject in subject_ids}
 
-        # Append get_subjects()
-        get_subjects_all = self.bids_ds[0].get_subjects()
-        for i_bids_folder in range(1, len(self.bids_ds)):
-            get_subjects_all.extend(self.bids_ds[i_bids_folder].get_subjects())
+        # Get all subjects path from bids_df for bounding box
+        get_all_subj_path = bids_df.df[bids_df.df['filename']
+                                .str.contains('|'.join(bids_df.get_subject_fnames()))]['path'].to_list()
 
+        # Load bounding box from list of path
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
-                                                                    get_subjects_all,
-                                                                    slice_axis,
-                                                                    contrast_params["contrast_lst"])
+                                                                get_all_subj_path,
+                                                                slice_axis,
+                                                                contrast_params["contrast_lst"])
 
-        for subject in tqdm(bids_subjects, desc="Loading dataset"):
-            if subject.record["modality"] in contrast_params["contrast_lst"]:
-                # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
-                if subject.record["modality"] in contrast_params["balance"].keys():
-                    c[subject.record["modality"]] = c[subject.record["modality"]] + 1
-                    if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_params["balance"][
-                        subject.record["modality"]]:
-                        continue
+        # Get all derivatives filenames from bids_df
+        all_deriv = bids_df.get_deriv_fnames()
 
-                if not subject.has_derivative("labels"):
-                    print("Subject without derivative, skipping.")
+        # Create filename_pairs
+        for subject in tqdm(subject_lst, desc="Loading dataset"):
+
+            df_sub = df_subjects.loc[df_subjects['filename'] == subject]
+
+            # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
+            contrast = df_sub['suffix'].values[0]
+            if contrast in (contrast_params["balance"].keys()):
+                c[contrast] = c[contrast] + 1
+                if c[contrast] / tot[contrast] > contrast_params["balance"][contrast]:
                     continue
-                derivatives = subject.get_derivatives("labels")
-                if isinstance(target_suffix[0], str):
-                    target_filename, roi_filename = [None] * len(target_suffix), None
-                else:
-                    target_filename, roi_filename = [[] for _ in range(len(target_suffix))], None
+            if isinstance(target_suffix[0], str):
+                target_filename, roi_filename = [None] * len(target_suffix), None
+            else:
+                target_filename, roi_filename = [[] for _ in range(len(target_suffix))], None
 
-                for deriv in derivatives:
-                    for idx, suffix_list in enumerate(target_suffix):
-                        # If suffix_list is a string, then only one rater annotation per class is available.
-                        # Otherwise, multiple raters segmented the same class.
-                        if isinstance(suffix_list, list):
-                            for suffix in suffix_list:
-                                if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
-                                    target_filename[idx].append(deriv)
-                        elif deriv.endswith(subject.record["modality"] + suffix_list + ".nii.gz"):
-                            target_filename[idx] = deriv
+            derivatives = bids_df.df[bids_df.df['filename']
+                          .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
 
-                    if not (self.roi_params["suffix"] is None) and \
-                            deriv.endswith(subject.record["modality"] + self.roi_params["suffix"] + ".nii.gz"):
-                        roi_filename = [deriv]
+            for deriv in derivatives:
+                for idx, suffix_list in enumerate(target_suffix):
+                    # If suffix_list is a string, then only one rater annotation per class is available.
+                    # Otherwise, multiple raters segmented the same class.
+                    if isinstance(suffix_list, list):
+                        for suffix in suffix_list:
+                            if suffix in deriv:
+                                target_filename[idx].append(deriv)
+                    elif suffix_list in deriv:
+                        target_filename[idx] = deriv
+                if not (self.roi_params["suffix"] is None) and self.roi_params["suffix"] in deriv:
+                    roi_filename = [deriv]
 
-                if (not any(target_filename)) or (not (self.roi_params["suffix"] is None) and (roi_filename is None)):
+            if (not any(target_filename)) or (not (self.roi_params["suffix"] is None) and (roi_filename is None)):
+                continue
+
+            metadata = df_sub.to_dict(orient='records')[0]
+            metadata['contrast'] = contrast
+
+            if len(bounding_box_dict):
+                # Take only one bounding box for cropping
+                metadata['bounding_box'] = bounding_box_dict[str(df_sub['path'].values[0])][0]
+
+            if metadata_choice == 'mri_params':
+                if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
+                            self.metadata.keys()]):
                     continue
 
-                if not subject.has_metadata():
-                    metadata = {}
-                else:
-                    metadata = subject.metadata()
+            elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
+                # add custom data to metadata
+                if metadata_choice not in df_sub.columns:
+                    raise ValueError("The following metadata cannot be found: {}. "
+                                     "Invalid metadata choice.".format(metadata_choice))
+                metadata[metadata_choice] = df_sub[metadata_choice].values[0]
+                # Create metadata dict for OHE
+                data_lst = sorted(set(bids_df.df[metadata_choice].dropna().values))
+                metadata_dict = {}
+                for idx, data in enumerate(data_lst):
+                    metadata_dict[data] = idx
+                metadata['metadata_dict'] = metadata_dict
 
-                # add contrast to metadata
-                metadata['contrast'] = subject.record["modality"]
-
-                if len(bounding_box_dict):
-                    # Take only one bounding box for cropping
-                    metadata['bounding_box'] = bounding_box_dict[str(subject.record["absolute_path"])][0]
-
-                if metadata_choice == 'mri_params':
-                    if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
-                                self.metadata.keys()]):
-                        continue
-
-                elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
-                    # add custom data to metadata
-                    subject_id = subject.record["subject_id"]
-
-                    df = imed_loader_utils.merge_bids_datasets(path_data)
-
-                    if metadata_choice not in df.columns:
-                        raise ValueError("The following metadata cannot be found in participants.tsv file: {}. "
-                                         "Invalid metadata choice.".format(metadata_choice))
-
-                    metadata[metadata_choice] = df[df['participant_id'] == subject_id][metadata_choice].values[0]
-
-                    # Create metadata dict for OHE
-                    data_lst = sorted(set(df[metadata_choice].values))
-                    metadata_dict = {}
-                    for idx, data in enumerate(data_lst):
-                        metadata_dict[data] = idx
-
-                    metadata['metadata_dict'] = metadata_dict
-
-                # Fill multichannel dictionary
-                if multichannel:
-                    idx = idx_dict[subject.record["modality"]]
-                    subj_id = subject.record["subject_id"]
-                    multichannel_subjects[subj_id]["absolute_paths"][idx] = subject.record.absolute_path
-                    multichannel_subjects[subj_id]["deriv_path"] = target_filename
-                    multichannel_subjects[subj_id]["metadata"][idx] = metadata
-                    if roi_filename:
-                        multichannel_subjects[subj_id]["roi_filename"] = roi_filename
-
-                else:
-                    self.filename_pairs.append(([subject.record.absolute_path],
-                                                target_filename, roi_filename, [metadata]))
+            # Fill multichannel dictionary
+            # subj_id is the filename without modality suffix and extension
+            if multichannel:
+                idx = idx_dict[df_sub['suffix'].values[0]]
+                subj_id = re.sub(r'_' + df_sub['suffix'].values[0] + '.*', '', subject)
+                multichannel_subjects[subj_id]["absolute_paths"][idx] = df_sub['path'].values[0]
+                multichannel_subjects[subj_id]["deriv_path"] = target_filename
+                multichannel_subjects[subj_id]["metadata"][idx] = metadata
+                if roi_filename:
+                    multichannel_subjects[subj_id]["roi_filename"] = roi_filename
+            else:
+                self.filename_pairs.append(([df_sub['path'].values[0]],
+                                            target_filename, roi_filename, [metadata]))
 
         if multichannel:
             for subject in multichannel_subjects.values():
