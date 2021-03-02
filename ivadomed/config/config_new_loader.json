@@ -11,14 +11,14 @@
     "loader_parameters": {
         "path_data": ["data_example_spinegeneric"],
         "bids_config": "ivadomed/config/config_bids.json",
-        "target_suffix": ["_seg-manual", "_seg-axon-manual"],
-        "extensions": [".nii.gz", ".png"],
+        "target_suffix": ["_seg-manual"],
+        "extensions": [".nii.gz"],
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
         },
         "contrast_params": {
-            "training_validation": ["T1w", "T2w", "SEM"],
+            "training_validation": ["T1w", "T2w"],
             "testing": [],
             "balance": {}
         },
@@ -32,9 +32,9 @@
     },
     "split_dataset": {
         "fname_split": null,
-        "random_seed": 500,
+        "random_seed": 6,
         "split_method" : "participant_id",
-        "data_testing": {"data_type": "institution_id", "data_value":["oxfordFmrib"]},
+        "data_testing": {"data_type": null, "data_value":[]},
         "balance": null,
         "train_fraction": 0.6,
         "test_fraction": 0.2

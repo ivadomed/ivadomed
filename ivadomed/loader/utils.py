@@ -14,6 +14,7 @@ import nibabel as nib
 import bids as pybids  # "bids" is already taken by bids_neuropoly
 import itertools
 import random
+import copy
 
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
@@ -109,7 +110,7 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
         train_frac (float): Between 0 and 1. Represents the train set proportion.
         test_frac (float): Between 0 and 1. Represents the test set proportion.
     Returns:
-        list, list, list: Train, validation and test data_type list.
+        list, list, list: Train, validation and test filenames lists.
     """
 
     # Get data_type and data_value from split parameters
@@ -133,7 +134,7 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
         data_value = sorted(df[data_type].unique().tolist())
         test_frac = test_frac if test_frac >= 1 / len(data_value) else 1 / len(data_value)
         data_value, _ = train_test_split(data_value, train_size=test_frac, random_state=random_seed)
-    X_test = df[df[data_type].isin(data_value)]['ivadomed_id'].unique().tolist()
+    X_test = df[df[data_type].isin(data_value)]['filename'].unique().tolist()
     X_remain = df[~df[data_type].isin(data_value)][split_method].unique().tolist()
 
     # List dataset unique values according to split_method
@@ -147,9 +148,9 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
     # Split remainder in TRAIN and VALID sets according to train_frac_update using sklearn function
     X_train, X_val = train_test_split(X_remain, train_size=train_frac_update, random_state=random_seed)
 
-    # Convert train and valid sets from list of "split_method" to list of "ivadomed_id"
-    X_train = df[df[split_method].isin(X_train)]['ivadomed_id'].unique().tolist()
-    X_val = df[df[split_method].isin(X_val)]['ivadomed_id'].unique().tolist()
+    # Convert train and valid sets from list of "split_method" to list of "filename"
+    X_train = df[df[split_method].isin(X_train)]['filename'].unique().tolist()
+    X_val = df[df[split_method].isin(X_val)]['filename'].unique().tolist()
 
     # Make sure that test dataset is unseen during training
     # (in cases where there are multiple "data_type" for a same "split_method")
@@ -253,7 +254,7 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
     Returns:
-        list, list list: Training, validation and testing subjects lists.
+        list, list list: Training, validation and testing filenames lists.
     """
     if subject_selection is not None:
         # Verify subject_selection format
@@ -343,7 +344,7 @@ def get_subdatasets_subjects_list_new(split_params, df, path_output, subject_sel
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
     Returns:
-        list, list list: Training, validation and testing subjects lists.
+        list, list list: Training, validation and testing filenames lists.
     """
     if split_params["fname_split"]:
         # Load subjects lists
@@ -790,7 +791,7 @@ def merge_bids_datasets(path_data):
 
 class BidsDataframe:
     """
-    This class aims to create a dataframe containing all BIDS image files in a path_data and their metadata.
+    This class aims to create a dataframe containing all BIDS image files in a list of path_data and their metadata.
 
     Args:
         loader_params (dict): Loader parameters, see :doc:`configuration_file` for more details.
@@ -798,7 +799,7 @@ class BidsDataframe:
         path_output (str): Output folder.
 
     Attributes:
-        path_data (str): Path to the BIDS dataset.
+        path_data (list): Paths to the BIDS datasets.
         bids_config (str): Path to the custom BIDS configuration file.
         target_suffix (list of str): List of suffix of targetted structures.
         roi_suffix (str): List of suffix of ROI masks.
@@ -810,14 +811,15 @@ class BidsDataframe:
 
     def __init__(self, loader_params, derivatives, path_output):
 
-        # path_data from loader parameters
+        # paths_data from loader parameters
+        # TODO: when integrating in pipeline, remove format_path_data here (done before in main)
         self.paths_data = imed_utils.format_path_data(loader_params['path_data'])
 
         # bids_config from loader parameters
         self.bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
 
         # target_suffix and roi_suffix from loader parameters
-        self.target_suffix = loader_params['target_suffix']
+        self.target_suffix = copy.deepcopy(loader_params['target_suffix'])
         # If `target_suffix` is a list of lists convert to list
         if any(isinstance(t, list) for t in self.target_suffix):
             self.target_suffix = list(itertools.chain.from_iterable(self.target_suffix))
@@ -875,17 +877,11 @@ class BidsDataframe:
             # As per pybids, derivatives don't include parsed entities, only the "path" column
             df_next = layout.to_df(metadata=True)
 
-            # Add filename and parent_path columns
+            # Add filename column
             df_next['filename'] = df_next['path'].apply(os.path.basename)
-            df_next['parent_path'] = df_next['path'].apply(os.path.dirname)
 
             # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
             df_next = df_next[~df_next['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
-
-            # Add ivadomed_id column corresponding to filename minus modality and extension for files that are not derivatives.
-            for index, row in df_next.iterrows():
-                if isinstance(row['suffix'], str):
-                    df_next.loc[index, 'ivadomed_id'] = re.sub(r'_' + row['suffix'] + '.*', '', row['filename'])
 
             # Update dataframe with subject files of chosen contrasts and extensions,
             # and with derivative files of chosen target_suffix from loader parameters
@@ -895,19 +891,28 @@ class BidsDataframe:
                                | (df_next['path'].str.contains('derivatives')
                                & df_next['filename'].str.contains('|'.join(self.target_suffix)))]
 
-            # Add tsv files metadata to dataframe
-            df_next = self.add_tsv_metadata(df_next, path_data, layout)
+            if df_next[~df_next['path'].str.contains('derivatives')].empty:
+                # Warning if no subject files are found in path_data
+                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(path_data))
 
-            # TODO: check if other files are needed for EEG and DWI
+            else:
+                # Add tsv files metadata to dataframe
+                df_next = self.add_tsv_metadata(df_next, path_data, layout)
 
-            # Merge dataframes
-            self.df = pd.concat([self.df, df_next], join='outer', ignore_index=True)
+                # TODO: check if other files are needed for EEG and DWI
 
-        # Drop duplicated rows based on all columns except 'path and 'parent_path'
+                # Merge dataframes
+                self.df = pd.concat([self.df, df_next], join='outer', ignore_index=True)
+
+        if self.df.empty:
+            # Raise error and exit if no subject files are found in any path data
+            raise RuntimeError("No subject files found. Check selection of parameters in config.json"
+                               " and datasets compliance with BIDS specification.")
+
+        # Drop duplicated rows based on all columns except 'path'
         # Keep first occurence
         columns = self.df.columns.to_list()
         columns.remove('path')
-        columns.remove('parent_path')
         self.df = self.df[~(self.df.astype(str).duplicated(subset=columns, keep='first'))]
 
         # If indexing of derivatives is true
