@@ -314,13 +314,15 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         run_segment_command(context, model_params)
         return
     
+    # BIDSDataframe of all image files
+    bids_df = imed_loader_utils.BidsDataframe(loader_params, path_output, derivatives=True)
+
     # Get subject lists. "segment" command uses all participants of data path, hence no need to split
     train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
-                                                                                        context['loader_parameters']
-                                                                                        ['path_data'],
-                                                                                        path_output,
-                                                                                         context["loader_parameters"]
-                                                                                         ['subject_selection'])
+                                                                                     bids_df.df,
+                                                                                     path_output,
+                                                                                     context["loader_parameters"]
+                                                                                     ['subject_selection'])
     # TESTING PARAMS
     # Aleatoric uncertainty
     if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
