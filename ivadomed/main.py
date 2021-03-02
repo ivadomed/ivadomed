@@ -409,10 +409,10 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
     if command == 'test':
         # LOAD DATASET
-        ds_test = imed_loader.load_dataset(**{**loader_params, **{'data_list': test_lst,
-                                                                  'transforms_params': transformation_dict,
-                                                                  'dataset_type': 'testing',
-                                                                  'requires_undo': True}}, device=device,
+        ds_test = imed_loader.load_dataset(bids_df, **{**loader_params, **{'data_list': test_lst,
+                                                                           'transforms_params': transformation_dict,
+                                                                           'dataset_type': 'testing',
+                                                                           'requires_undo': True}}, device=device,
                                            cuda_available=cuda_available)
 
         metric_fns = imed_metrics.get_metric_fns(ds_test.task)
