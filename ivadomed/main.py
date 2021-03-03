@@ -431,8 +431,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                          postprocessing=context['postprocessing'])
 
         # RUN EVALUATION
-        df_results = imed_evaluation.evaluate(path_data=loader_params['path_data'],
-                                              path_output=path_output,
+        df_results = imed_evaluation.evaluate(bids_df, path_output=path_output,
                                               target_suffix=loader_params["target_suffix"],
                                               eval_params=context["evaluation_parameters"])
         return df_results, pred_metrics
