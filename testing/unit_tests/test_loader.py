@@ -37,8 +37,7 @@ def test_bids_df_microscopy_png(loader_parameters, path_output):
     loader_params = loader_parameters
     loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
     path_data = loader_params["path_data"]
-    derivatives = True
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, derivatives, path_output)
+    bids_df = imed_loader_utils.BidsDataframe(loader_params, path_output, derivatives = True)
     df_test = bids_df.df
     df_test = df_test.drop(columns=['path'])
     # TODO: modify df_ref.csv file in data-testing dataset to include "participant_id"
@@ -77,8 +76,7 @@ def test_bids_df_anat(loader_parameters, path_output):
     loader_params = loader_parameters
     loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["training_validation"]
     path_data = loader_params["path_data"]
-    derivatives = True
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, derivatives, path_output)
+    bids_df = imed_loader_utils.BidsDataframe(loader_params, path_output, derivatives = True)
     df_test = bids_df.df
     df_test = df_test.drop(columns=['path'])
     # TODO: modify df_ref.csv file in data-testing dataset to include "participant_id"
