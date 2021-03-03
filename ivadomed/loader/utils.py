@@ -665,7 +665,8 @@ class BidsDataframe:
         self.extensions = loader_params['extensions']
 
         # contrast_lst from loader parameters
-        self.contrast_lst = loader_params["contrast_params"]["contrast_lst"]
+        self.contrast_lst = [] if 'contrast_lst' not in loader_params['contrast_params'] \
+                            else loader_params['contrast_params']['contrast_lst']
 
         # derivatives
         self.derivatives = derivatives
