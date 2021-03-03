@@ -8,6 +8,7 @@ import nibabel as nib
 import sys
 import platform
 import multiprocessing
+import re
 
 from bids_neuropoly import bids
 from ivadomed.utils import logger
@@ -204,19 +205,13 @@ def update_film_model_params(context, ds_test, model_params, path_output):
     return ds_test, model_params
 
 def run_segment_command(context, model_params):
-    bids_ds = []
-    path_data = imed_utils.format_path_data(context["loader_parameters"]["path_data"])
-    for bids_folder in path_data:
-        bids_ds.append(bids.BIDS(bids_folder))
 
-    # Get the merged df from all dataset paths
-    df = imed_loader_utils.merge_bids_datasets(path_data)
-    subj_lst = df['participant_id'].tolist()
+    # BIDSDataframe of all image files
+    # Indexing of derivatives is False for command segment
+    bids_df = imed_loader_utils.BidsDataframe(context['loader_parameters'], context['path_output'], derivatives=False)
 
-    # Append subjects from all BIDSdatasets into a list
-    bids_subjects = []
-    for i_bids_folder in range(0, len(path_data)):
-        bids_subjects += [s for s in bids_ds[i_bids_folder].get_subjects() if s.record["subject_id"] in subj_lst]
+    # Append subjects filenames into a list
+    bids_subjects = sorted(bids_df.df['filename'].to_list())
 
     # Add postprocessing to packaged model
     path_model = os.path.join(context['path_output'], context['model_name'])
@@ -225,43 +220,56 @@ def run_segment_command(context, model_params):
     model_config['postprocessing'] = context['postprocessing']
     with open(path_model_config, 'w') as fp:
         json.dump(model_config, fp, indent=4)
-
     options = None
+
+    # Initialize a list of already seen subject ids for multichannel
+    seen_subj_ids = []
+
     for subject in bids_subjects:
         if context['loader_parameters']['multichannel']:
-            fname_img = []
-            provided_contrasts = []
-            contrasts = context['loader_parameters']['contrast_params']['testing']
-            # Keep contrast order
-            for c in contrasts:
-                for s in bids_subjects:
-                    if subject.record['subject_id'] == s.record['subject_id'] and s.record['modality'] == c:
+            # Get subject_id for multichannel
+            df_sub = bids_df.df.loc[bids_df.df['filename'] == subject]
+            subj_id = re.sub(r'_' + df_sub['suffix'].values[0] + '.*', '', subject)
+            if subj_id not in seen_subj_ids:
+                # if subj_id has not been seen yet
+                fname_img = []
+                provided_contrasts = []
+                contrasts = context['loader_parameters']['contrast_params']['testing']
+                # Keep contrast order
+                for c in contrasts:
+                    df_tmp = bids_df.df[bids_df.df['filename'].str.contains(subj_id) & bids_df.df['suffix'].str.contains(c)]
+                    if ~df_tmp.empty:
                         provided_contrasts.append(c)
-                        fname_img.append(s.record['absolute_path'])
-                        bids_subjects.remove(s)
-            if len(fname_img) != len(contrasts):
-                logger.warning("Missing contrast for subject {}. {} were provided but {} are required. Skipping "
-                                "subject.".format(subject.record['subject_id'], provided_contrasts, contrasts))
-                continue
+                        fname_img.append(df_tmp['path'].values[0])
+                seen_subj_ids.append(subj_id)
+                if len(fname_img) != len(contrasts):
+                    logger.warning("Missing contrast for subject {}. {} were provided but {} are required. Skipping "
+                                    "subject.".format(subj_id, provided_contrasts, contrasts))
+                    continue
+            else:
+                # Returns an empty list for subj_id already seen
+                fname_img = []
         else:
-            fname_img = [subject.record['absolute_path']]
+            fname_img = bids_df.df[bids_df.df['filename'] == subject]['path'].to_list()
 
         if 'film_layers' in model_params and any(model_params['film_layers']) and model_params['metadata']:
-            subj_id = subject.record['subject_id']
-            metadata = df[df['participant_id'] == subj_id][model_params['metadata']].values[0]
+            metadata = bids_df.df[bids_df.df['filename'] == subject][model_params['metadata']].values[0]
             options = {'metadata': metadata}
-        pred_list, target_list = imed_inference.segment_volume(path_model,
-                                                                fname_images=fname_img,
-                                                                gpu_id=context['gpu_ids'][0],
-                                                                options=options)
-        pred_path = os.path.join(context['path_output'], "pred_masks")
-        if not os.path.exists(pred_path):
-            os.makedirs(pred_path)
 
-        for pred, target in zip(pred_list, target_list):
-            filename = subject.record['subject_id'] + "_" + subject.record['modality'] + target + "_pred" + \
-                        ".nii.gz"
-            nib.save(pred, os.path.join(pred_path, filename))
+        if fname_img:
+            pred_list, target_list = imed_inference.segment_volume(path_model,
+                                                                    fname_images=fname_img,
+                                                                    gpu_id=context['gpu_ids'][0],
+                                                                    options=options)
+            pred_path = os.path.join(context['path_output'], "pred_masks")
+            if not os.path.exists(pred_path):
+                os.makedirs(pred_path)
+
+            for pred, target in zip(pred_list, target_list):
+                filename = subject.split('.')[0] + target + "_pred" + \
+                            ".nii.gz"
+                nib.save(pred, os.path.join(pred_path, filename))
+
 
 def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     """Run main command.
@@ -315,6 +323,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         return
     
     # BIDSDataframe of all image files
+    # Indexing of derivatives is True for command train and test
     bids_df = imed_loader_utils.BidsDataframe(loader_params, path_output, derivatives=True)
 
     # Get subject lists. "segment" command uses all participants of data path, hence no need to split
