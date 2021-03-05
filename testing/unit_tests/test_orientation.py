@@ -1,3 +1,4 @@
+import pytest
 import nibabel as nib
 import numpy as np
 import torch
@@ -7,7 +8,7 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
-from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__, __tmp_dir__
 
 logger = logging.getLogger(__name__)
 
@@ -18,12 +19,25 @@ def setup_function():
     create_tmp_dir()
 
 
-def test_image_orientation():
+@pytest.mark.parametrize('loader_parameters', [{
+    "path_data": [__data_testing_dir__],
+    "target_suffix": ["_seg-manual"],
+    "extensions": [".nii.gz"],
+    "roi_params": {"suffix": None, "slice_filter_roi": None},
+    "contrast_params": {"contrast_lst": ['T1w'],  "balance": {}}
+    }])
+def test_image_orientation(loader_parameters):
     device = torch.device("cuda:" + str(GPU_ID) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if cuda_available:
         torch.cuda.set_device(device)
         print("Using GPU ID {}".format(device))
+
+    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+
+    contrast_params = loader_parameters["contrast_params"]
+    target_suffix = loader_parameters["target_suffix"]
+    roi_params = loader_parameters["roi_params"]
 
     train_lst = ['sub-unf01']
 
@@ -56,17 +70,14 @@ def test_image_orientation():
             "attention": False,
             "n_filters": 8
         }
-    contrast_params = {
-        "contrast_lst": ['T1w'],
-        "balance": {}
-    }
 
     for dim in ['2d', '3d']:
         for slice_axis in [0, 1, 2]:
             if dim == '2d':
-                ds = imed_loader.BidsDataset(path_data=[__data_testing_dir__],
+                ds = imed_loader.BidsDataset(bids_df,
+                                             path_data=[__data_testing_dir__],
                                              subject_lst=train_lst,
-                                             target_suffix=["_seg-manual"],
+                                             target_suffix=target_suffix,
                                              contrast_params=contrast_params,
                                              metadata_choice=False,
                                              slice_axis=slice_axis,
@@ -74,9 +85,10 @@ def test_image_orientation():
                                              multichannel=False)
                 ds.load_filenames()
             else:
-                ds = imed_loader.Bids3DDataset(path_data=[__data_testing_dir__],
+                ds = imed_loader.Bids3DDataset(bids_df,
+                                               path_data=[__data_testing_dir__],
                                                subject_lst=train_lst,
-                                               target_suffix=["_seg-manual"],
+                                               target_suffix=target_suffix,
                                                model_params=model_params,
                                                contrast_params=contrast_params,
                                                metadata_choice=False,
