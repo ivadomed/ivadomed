@@ -645,8 +645,7 @@ class BidsDataframe:
     def __init__(self, loader_params, path_output, derivatives):
 
         # paths_data from loader parameters
-        # TODO: when integrating in pipeline, remove format_path_data here (done before in main)
-        self.paths_data = imed_utils.format_path_data(loader_params['path_data'])
+        self.paths_data = loader_params['path_data']
 
         # bids_config from loader parameters
         self.bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
