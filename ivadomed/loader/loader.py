@@ -8,7 +8,6 @@ import os
 from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
-import re
 
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
@@ -814,9 +813,8 @@ class BidsDataset(MRI2DSegmentationDataset):
         # Get a list of subject_ids for multichannel_subjects (prefix filename without modality suffix and extension)
         subject_ids = []
         for subject in subject_lst:
-            suffix = df_subjects.loc[df_subjects['filename'] == subject]['suffix'].values[0]
-            subject_ids.append(re.sub(r'_' + suffix + '.*', '', subject))
-        subject_ids = list(set(subject_ids))
+            subject_ids.append(subject.split('.')[0].split('_')[0])
+        subject_ids = sorted(list(set(subject_ids)))
 
         # Create multichannel_subjects dictionary for each subject_id
         multichannel_subjects = {}
@@ -907,7 +905,7 @@ class BidsDataset(MRI2DSegmentationDataset):
             # subj_id is the filename without modality suffix and extension
             if multichannel:
                 idx = idx_dict[df_sub['suffix'].values[0]]
-                subj_id = re.sub(r'_' + df_sub['suffix'].values[0] + '.*', '', subject)
+                subj_id = subject.split('.')[0].split('_')[0]
                 multichannel_subjects[subj_id]["absolute_paths"][idx] = df_sub['path'].values[0]
                 multichannel_subjects[subj_id]["deriv_path"] = target_filename
                 multichannel_subjects[subj_id]["metadata"][idx] = metadata

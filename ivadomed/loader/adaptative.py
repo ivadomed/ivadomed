@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 from bids_neuropoly import bids
 from tqdm import tqdm
-import re
 
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
@@ -294,7 +293,7 @@ class BIDStoHDF5:
                     continue
 
             # Get subj_id (prefix filename without modality suffix and extension)
-            subj_id = re.sub(r'_' + df_sub['suffix'].values[0] + '.*', '', subject)
+            subj_id = subject.split('.')[0].split('_')[0]
 
             self.filename_pairs.append((subj_id, [df_sub['path'].values[0]],
                                             target_filename, roi_filename, [metadata]))
