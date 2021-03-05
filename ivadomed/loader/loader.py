@@ -789,7 +789,6 @@ class BidsDataset(MRI2DSegmentationDataset):
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 
-        path_data = imed_utils.format_path_data(path_data)
         self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
         self.soft_gt = soft_gt
         self.filename_pairs = []
