@@ -88,6 +88,17 @@
         "attention": false,
         "n_filters": 8
     },
+    "HeMISUnet": {
+        "applied": false,
+        "missing_probability": 0.00001,
+        "missing_probability_growth": 0.9,
+        "contrasts": ["T1w", "T2w"],
+        "ram": true,
+        "path_hdf5": "new_loader/HeMIS.hdf5",
+        "csv_path": "new_loader/HeMIS.csv",
+        "target_lst": ["T2w"],
+        "roi_lst": null
+    },
     "uncertainty": {
         "epistemic": false,
         "aleatoric": false,
