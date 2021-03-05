@@ -882,9 +882,9 @@ class BidsDataframe:
         """
         try:
             self.df.to_csv(path, index=False)
-            print("Dataframe has been saved at {}.".format(path))
+            print("Dataframe has been saved in {}.".format(path))
         except FileNotFoundError:
-            print("Wrong path.")
+            print("Wrong path, bids_dataframe.csv could not be saved in {}.".format(path))
 
     def write_derivatives_dataset_description(self, path_data):
         """Writes default dataset_description.json file if not found in path_data/derivatives folder
