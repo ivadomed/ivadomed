@@ -5,7 +5,6 @@ import numpy as np
 import torch
 import pandas as pd
 import os
-from bids_neuropoly import bids
 from torch.utils.data import Dataset
 from tqdm import tqdm
 

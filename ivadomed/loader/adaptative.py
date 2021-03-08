@@ -6,7 +6,6 @@ import h5py
 import nibabel as nib
 import numpy as np
 import pandas as pd
-from bids_neuropoly import bids
 from tqdm import tqdm
 
 from ivadomed import transforms as imed_transforms

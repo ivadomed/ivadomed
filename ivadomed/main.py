@@ -10,7 +10,6 @@ import platform
 import multiprocessing
 import re
 
-from bids_neuropoly import bids
 from ivadomed.utils import logger
 from ivadomed import evaluation as imed_evaluation
 from ivadomed import config_manager as imed_config_manager
