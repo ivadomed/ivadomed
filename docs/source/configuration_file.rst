@@ -1062,7 +1062,7 @@ being used for the segmentation task).
             "missing_probability_growth": 0.9,
             "contrasts": ["T1w", "T2w"],
             "ram": true,
-            "hdf5_path": "/path/to/HeMIS.hdf5",
+            "path_hdf5": "/path/to/HeMIS.hdf5",
             "csv_path": "/path/to/HeMIS.csv",
             "target_lst": ["T2w"],
             "roi_lst": null
