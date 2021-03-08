@@ -85,6 +85,14 @@ def split_dataset(df, split_method, data_testing, random_seed, train_frac=0.8, t
     # Split remainder in TRAIN and VALID sets according to train_frac_update using sklearn function
     X_train, X_val = train_test_split(X_remain, train_size=train_frac_update, random_state=random_seed)
 
+    # Print the real train, validation and test fractions after splitting
+    real_train_frac = len(X_train)/len(data)
+    real_valid_frac = len(X_val)/len(data)
+    real_test_frac = 1 - real_train_frac - real_valid_frac
+    logger.warning("After splitting: train, validation and test fractions are respectively {}, {} and {}"
+                   " of {}.".format(round(real_train_frac, 3), round(real_valid_frac, 3),
+                   round(real_test_frac, 3), split_method))
+
     # Convert train and valid sets from list of "split_method" to list of "filename"
     X_train = df[df[split_method].isin(X_train)]['filename'].unique().tolist()
     X_val = df[df[split_method].isin(X_val)]['filename'].unique().tolist()
