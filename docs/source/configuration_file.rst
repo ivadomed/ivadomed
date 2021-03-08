@@ -279,7 +279,7 @@ will be randomly chosen.
 
     {
         "loader_parameters": {
-            "extensions": [".nii.gz", ".png"]
+            "extensions": [".nii.gz"]
         }
     }
 
