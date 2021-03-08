@@ -585,9 +585,9 @@ Split Dataset
             },
             "data_value": {
                 "$$description": [
-					"(Optional) List of metadata values from the data_type columns to include in the\n",
-                    "testing dataset. If specified, the testing set contains only files from the data_value\n",
-                    "list and the ``test_fraction`` is not used."
+					"(Optional) List of metadata values from the ``data_type`` column to include in\n",
+                    "the testing dataset. If specified, the testing set contains only files from the\n",
+                    "``data_value`` list and the ``test_fraction`` is not used."
                 ],
                 "type": "list"
             }
