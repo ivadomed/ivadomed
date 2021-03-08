@@ -503,12 +503,14 @@ Split Dataset
         "title": "fname_split",
         "$$description": [
             "File name of the log (`joblib <https://joblib.readthedocs.io/en/latest/>`__)\n",
-            "that contains the list of training/validation/testing subjects. This file can later\n",
+            "that contains the list of training/validation/testing filenames. This file can later\n",
             "be used to re-train a model using the same data splitting scheme. If ``null``,\n",
-            "a new splitting scheme is performed."
+            "a new splitting scheme is performed. If specified, the .joblib file data splitting scheme\n",
+            "bypasses all the other split dataset parameters."
         ],
         "type": "string"
     }
+
 
 .. code-block:: JSON
 
@@ -526,7 +528,7 @@ Split Dataset
         "title": "random_seed",
         "$$description": [
             "Seed used by the random number generator to split the dataset between\n",
-            "training/validation/testing. The use of the same seed ensures the same split between\n",
+            "training/validation/testing sets. The use of the same seed ensures the same split between\n",
             "the sub-datasets, which is useful for reproducibility."
         ],
         "type": "int"
@@ -545,26 +547,49 @@ Split Dataset
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "method",
+        "title": "split_method",
         "$$description": [
-            "Seed used by the random number generator to split the dataset between\n",
-            "training/validation/testing. The use of the same seed ensures the same split between\n",
-            "the sub-datasets, which is useful for reproducibility."
+            "Metadata contained in a BIDS tabular file on which the files are shuffled, then split\n",
+            "between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
+            "For example, ``participant_id`` from the ``participants.tsv`` file will shuffle all participants,\n",
+            "then split between train/validation/test sets."
         ],
-        "type": "string",
+        "type": "string"
+    }
+
+.. code-block:: JSON
+
+    {
+        "split_dataset": {
+            "split_method": "participant_id"
+        }
+    }
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "data_testing",
+        "$$description": ["(Optional) Used to specify a custom metadata to only include in the testing dataset (not validation).\n",
+            "For example, to not mix participants from different institutions between the train/validation set and the test set,\n",
+			"use the column ``institution_id`` from ``participants.tsv`` in ``data_type``.\n"
+		],
+        "type": "dict",
         "options": {
-            "per_patient": {
+            "data_type": {
                 "$$description": [
-                    "all subjects are shuffled, then split between train/validation/test\n",
-                    "according to ``train_fraction`` and ``test_fraction``, regardless of their institution"
-                ]
+					"Metadata to include in the testing dataset.\n",
+					"If specified, the ``test_fraction`` is applied to this metadata."
+                ],
+                "type": "string"
             },
-            "per_center": {
+            "data_value": {
                 "$$description": [
-                    "all subjects are split so as not to mix institutions between the\n",
-                    "train/validation/test sets according to ``train_fraction`` and ``center_test``.\n",
-                    "The latter option enables the user to ensure the model is working across domains (institutions)."
-                ]
+					"(Optional) List of metadata values from the data_type columns to include in the testing dataset.\n",
+                    "If specified, the testing set contains only files from the data_value list\n",
+                    "and the ``test_fraction`` is not used."
+                ],
+                "type": "list"
             }
         }
     }
@@ -573,14 +598,9 @@ Split Dataset
 
     {
         "split_dataset": {
-            "method": "per_center"
+            "data_testing": {"data_type": "institution_id", "data_value":[]}
         }
     }
-
-.. note::
-    The institution information is contained within the ``institution_id`` column in the
-    ``participants.tsv`` file.
-
 
 .. jsonschema::
 
@@ -602,7 +622,6 @@ Split Dataset
             "balance": null
         }
     }
-
 
 .. jsonschema::
 
@@ -628,8 +647,7 @@ Split Dataset
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "test_fraction",
         "$$description": [
-            "Fraction of the dataset used as testing set. This parameter is only used if the\n",
-            "``method`` is ``per_patient``"
+            "Fraction of the dataset used as testing set.\n"
         ],
         "type": "float",
         "range": "[0, 1]"
@@ -642,30 +660,6 @@ Split Dataset
             "test_fraction": 0.2
         }
     }
-
-
-.. jsonschema::
-
-    {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "center_test",
-        "$$description": [
-            "Each string corresponds to an institution/center to only include in the testing\n",
-            "dataset (not validation). This parameter is only used if the ``method`` is ``per_center``\n",
-            "If used, the file ``bids_dataset/participants.tsv`` needs to contain a column\n",
-            "``institution_id``, which associates a subject with an institution/center."
-        ],
-        "type": "list, string"
-    }
-
-.. code-block:: JSON
-
-    {
-        "split_dataset": {
-            "center_test": []
-        }
-    }
-
 
 
 Training Parameters
