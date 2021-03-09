@@ -76,7 +76,7 @@ def test_image_orientation(loader_parameters):
             if dim == '2d':
                 ds = imed_loader.BidsDataset(bids_df,
                                              path_data=[__data_testing_dir__],
-                                             subject_lst=train_lst,
+                                             subject_file_lst=train_lst,
                                              target_suffix=target_suffix,
                                              contrast_params=contrast_params,
                                              metadata_choice=False,
@@ -87,7 +87,7 @@ def test_image_orientation(loader_parameters):
             else:
                 ds = imed_loader.Bids3DDataset(bids_df,
                                                path_data=[__data_testing_dir__],
-                                               subject_lst=train_lst,
+                                               subject_file_lst=train_lst,
                                                target_suffix=target_suffix,
                                                model_params=model_params,
                                                contrast_params=contrast_params,

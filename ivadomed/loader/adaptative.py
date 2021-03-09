@@ -178,7 +178,7 @@ class BIDStoHDF5:
     Args:
         bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         path_data (list) or (str): Path(s) to BIDS datasets
-        subject_lst (list): Subject filenames list.
+        subject_file_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
         contrast_lst (list): List of the contrasts.
@@ -203,18 +203,18 @@ class BIDStoHDF5:
         slice_filter_fn (SliceFilter): Object that filters slices according to their content.
     """
 
-    def __init__(self, bids_df, path_data, subject_lst, target_suffix, contrast_lst, path_hdf5, contrast_balance=None,
+    def __init__(self, bids_df, path_data, subject_file_lst, target_suffix, contrast_lst, path_hdf5, contrast_balance=None,
                  slice_axis=2, metadata_choice=False, slice_filter_fn=None, roi_params=None, transform=None,
                  object_detection_params=None, soft_gt=False):
         print("Starting conversion")
 
-        # Sort subject_lst and create a sub-dataframe from bids_df containing only subjects from subject_lst
-        subject_lst = sorted(subject_lst)
-        df_subjects = bids_df.df[bids_df.df['filename'].isin(subject_lst)]
-        # Backward compatibility for subject_lst containing participant_ids instead of filenames
+        # Sort subject_file_lst and create a sub-dataframe from bids_df containing only subjects from subject_file_lst
+        subject_file_lst = sorted(subject_file_lst)
+        df_subjects = bids_df.df[bids_df.df['filename'].isin(subject_file_lst)]
+        # Backward compatibility for subject_file_lst containing participant_ids instead of filenames
         if df_subjects.empty:
-            df_subjects = bids_df.df[bids_df.df['participant_id'].isin(subject_lst)]
-            subject_lst = sorted(df_subjects['filename'].to_list())
+            df_subjects = bids_df.df[bids_df.df['participant_id'].isin(subject_file_lst)]
+            subject_file_lst = sorted(df_subjects['filename'].to_list())
 
         self.soft_gt = soft_gt
         self.dt = h5py.special_dtype(vlen=str)
@@ -253,7 +253,7 @@ class BIDStoHDF5:
         # Get all derivatives filenames from bids_df
         all_deriv = bids_df.get_deriv_fnames()
 
-        for subject in tqdm(subject_lst, desc="Loading dataset"):
+        for subject in tqdm(subject_file_lst, desc="Loading dataset"):
 
             df_sub = df_subjects.loc[df_subjects['filename'] == subject]
 
@@ -474,7 +474,7 @@ class HDF5Dataset:
     Args:
         bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         path_data (list) or (str): Path(s) to BIDS datasets
-        subject_lst (list of str): List of subject filenames.
+        subject_file_lst (list of str): List of subject filenames.
         model_params (dict): Dictionary containing model parameters.
         target_suffix (list of str): List of suffixes of the target structures.
         contrast_params (dict): Dictionary containing contrast parameters.
@@ -499,7 +499,7 @@ class HDF5Dataset:
 
     """
 
-    def __init__(self, bids_df, path_data, subject_lst, model_params, target_suffix, contrast_params,
+    def __init__(self, bids_df, path_data, subject_file_lst, model_params, target_suffix, contrast_params,
                  slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
                  slice_filter_fn=None, roi_params=None, object_detection_params=None, soft_gt=False):
         self.cst_lst = copy.deepcopy(contrast_params["contrast_lst"])
@@ -516,7 +516,7 @@ class HDF5Dataset:
             print("Computing hdf5 file of the data")
             bids_to_hdf5 = BIDStoHDF5(bids_df=bids_df,
                                       path_data=path_data,
-                                      subject_lst=subject_lst,
+                                      subject_file_lst=subject_file_lst,
                                       path_hdf5=model_params["path_hdf5"],
                                       target_suffix=target_suffix,
                                       roi_params=self.roi_params,

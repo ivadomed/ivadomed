@@ -59,7 +59,7 @@ def test_hdf5(loader_parameters):
 
     bids_to_hdf5 = imed_adaptative.BIDStoHDF5(bids_df,
                                               path_data=[__data_testing_dir__],
-                                              subject_lst=train_lst,
+                                              subject_file_lst=train_lst,
                                               path_hdf5=os.path.join(__data_testing_dir__, 'mytestfile.hdf5'),
                                               target_suffix=target_suffix,
                                               roi_params=roi_params,
@@ -118,7 +118,7 @@ def test_hdf5(loader_parameters):
 
         dataset = imed_adaptative.HDF5Dataset(bids_df,
                                               path_data=[__data_testing_dir__],
-                                              subject_lst=train_lst,
+                                              subject_file_lst=train_lst,
                                               target_suffix=target_suffix,
                                               slice_axis=2,
                                               model_params=model_params,

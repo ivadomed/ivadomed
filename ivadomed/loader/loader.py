@@ -61,7 +61,7 @@ def load_dataset(bids_df, data_list, path_data, transforms_params, model_params,
     if model_params["name"] == "Modified3DUNet" or ('is_2d' in model_params and not model_params['is_2d']):
         dataset = Bids3DDataset(bids_df,
                                 path_data,
-                                subject_lst=data_list,
+                                subject_file_lst=data_list,
                                 target_suffix=target_suffix,
                                 roi_params=roi_params,
                                 contrast_params=contrast_params,
@@ -76,7 +76,7 @@ def load_dataset(bids_df, data_list, path_data, transforms_params, model_params,
     elif model_params["name"] == "HeMISUnet":
         dataset = imed_adaptative.HDF5Dataset(bids_df,
                                               path_data=path_data,
-                                              subject_lst=data_list,
+                                              subject_file_lst=data_list,
                                               model_params=model_params,
                                               contrast_params=contrast_params,
                                               target_suffix=target_suffix,
@@ -95,7 +95,7 @@ def load_dataset(bids_df, data_list, path_data, transforms_params, model_params,
 
         dataset = BidsDataset(bids_df,
                               path_data,
-                              subject_lst=data_list,
+                              subject_file_lst=data_list,
                               target_suffix=target_suffix,
                               roi_params=roi_params,
                               contrast_params=contrast_params,
@@ -714,7 +714,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
     Args:
         bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         path_data (list) or (str): List of Paths to the BIDS datasets.
-        subject_lst (list): Subject filenames list.
+        subject_file_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         model_params (dict): Dictionary containing model parameters.
         contrast_params (dict): Contains image contrasts related parameters.
@@ -729,12 +729,12 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         object_detection_params (dict): Object dection parameters.
     """
 
-    def __init__(self, bids_df, path_data, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
+    def __init__(self, bids_df, path_data, subject_file_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
         dataset = BidsDataset(bids_df=bids_df,
                               path_data=path_data,
-                              subject_lst=subject_lst,
+                              subject_file_lst=subject_file_lst,
                               target_suffix=target_suffix,
                               roi_params=roi_params,
                               contrast_params=contrast_params,
@@ -754,7 +754,7 @@ class BidsDataset(MRI2DSegmentationDataset):
     Args:
         bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         path_data (list) or (str): List of Paths to the BIDS datasets.
-        subject_lst (list): Subject filenames list.
+        subject_file_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         contrast_params (dict): Contains image contrasts related parameters.
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
@@ -783,7 +783,7 @@ class BidsDataset(MRI2DSegmentationDataset):
 
     """
 
-    def __init__(self, bids_df, path_data, subject_lst, target_suffix, contrast_params, slice_axis=2,
+    def __init__(self, bids_df, path_data, subject_file_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 
@@ -794,13 +794,13 @@ class BidsDataset(MRI2DSegmentationDataset):
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
 
-        # Sort subject_lst and create a sub-dataframe from bids_df containing only subjects from subject_lst
-        subject_lst = sorted(subject_lst)
-        df_subjects = bids_df.df[bids_df.df['filename'].isin(subject_lst)]
-        # Backward compatibility for subject_lst containing participant_ids instead of filenames
+        # Sort subject_file_lst and create a sub-dataframe from bids_df containing only subjects from subject_file_lst
+        subject_file_lst = sorted(subject_file_lst)
+        df_subjects = bids_df.df[bids_df.df['filename'].isin(subject_file_lst)]
+        # Backward compatibility for subject_file_lst containing participant_ids instead of filenames
         if df_subjects.empty:
-            df_subjects = bids_df.df[bids_df.df['participant_id'].isin(subject_lst)]
-            subject_lst = sorted(df_subjects['filename'].to_list())
+            df_subjects = bids_df.df[bids_df.df['participant_id'].isin(subject_file_lst)]
+            subject_file_lst = sorted(df_subjects['filename'].to_list())
 
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
         tot = {contrast: df_subjects['suffix'].str.fullmatch(contrast).value_counts()[True]
@@ -811,7 +811,7 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         # Get a list of subject_ids for multichannel_subjects (prefix filename without modality suffix and extension)
         subject_ids = []
-        for subject in subject_lst:
+        for subject in subject_file_lst:
             subject_ids.append(subject.split('.')[0].split('_')[0])
         subject_ids = sorted(list(set(subject_ids)))
 
@@ -841,7 +841,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         all_deriv = bids_df.get_deriv_fnames()
 
         # Create filename_pairs
-        for subject in tqdm(subject_lst, desc="Loading dataset"):
+        for subject in tqdm(subject_file_lst, desc="Loading dataset"):
 
             df_sub = df_subjects.loc[df_subjects['filename'] == subject]
 
