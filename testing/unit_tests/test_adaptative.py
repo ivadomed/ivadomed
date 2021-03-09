@@ -57,8 +57,7 @@ def test_hdf5(loader_parameters):
     }
     transform_lst, _ = imed_transforms.prepare_transforms(training_transform_dict)
 
-    bids_to_hdf5 = imed_adaptative.BIDStoHDF5(bids_df,
-                                              path_data=[__data_testing_dir__],
+    bids_to_hdf5 = imed_adaptative.BIDStoHDF5(bids_df=bids_df,
                                               subject_file_lst=train_lst,
                                               path_hdf5=os.path.join(__data_testing_dir__, 'mytestfile.hdf5'),
                                               target_suffix=target_suffix,
@@ -116,8 +115,7 @@ def test_hdf5(loader_parameters):
                 "roi_lst": ["T2w"]
             }
 
-        dataset = imed_adaptative.HDF5Dataset(bids_df,
-                                              path_data=[__data_testing_dir__],
+        dataset = imed_adaptative.HDF5Dataset(bids_df=bids_df,
                                               subject_file_lst=train_lst,
                                               target_suffix=target_suffix,
                                               slice_axis=2,

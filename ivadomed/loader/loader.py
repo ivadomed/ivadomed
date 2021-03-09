@@ -15,7 +15,7 @@ from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adapt
 from ivadomed.object_detection import utils as imed_obj_detect
 
 
-def load_dataset(bids_df, data_list, path_data, transforms_params, model_params, target_suffix, roi_params,
+def load_dataset(bids_df, data_list, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
                  dataset_type="training", requires_undo=False, metadata_type=None,
                  object_detection_params=None, soft_gt=False, device=None,
@@ -26,7 +26,6 @@ def load_dataset(bids_df, data_list, path_data, transforms_params, model_params,
     Args:
         bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         data_list (list): Subject names list.
-        path_data (list) or (str): Path to the BIDS dataset(s).
         transforms_params (dict): Dictionary containing transformations for "training", "validation", "testing" (keys),
             eg output of imed_transforms.get_subdatasets_transforms.
         model_params (dict): Dictionary containing model parameters.
@@ -59,8 +58,7 @@ def load_dataset(bids_df, data_list, path_data, transforms_params, model_params,
         roi_params["slice_filter_roi"] = None
 
     if model_params["name"] == "Modified3DUNet" or ('is_2d' in model_params and not model_params['is_2d']):
-        dataset = Bids3DDataset(bids_df,
-                                path_data,
+        dataset = Bids3DDataset(bids_df=bids_df,
                                 subject_file_lst=data_list,
                                 target_suffix=target_suffix,
                                 roi_params=roi_params,
@@ -74,8 +72,7 @@ def load_dataset(bids_df, data_list, path_data, transforms_params, model_params,
                                 soft_gt=soft_gt)
 
     elif model_params["name"] == "HeMISUnet":
-        dataset = imed_adaptative.HDF5Dataset(bids_df,
-                                              path_data=path_data,
+        dataset = imed_adaptative.HDF5Dataset(bids_df=bids_df,
                                               subject_file_lst=data_list,
                                               model_params=model_params,
                                               contrast_params=contrast_params,
@@ -93,8 +90,7 @@ def load_dataset(bids_df, data_list, path_data, transforms_params, model_params,
         # Task selection
         task = imed_utils.get_task(model_params["name"])
 
-        dataset = BidsDataset(bids_df,
-                              path_data,
+        dataset = BidsDataset(bids_df=bids_df,
                               subject_file_lst=data_list,
                               target_suffix=target_suffix,
                               roi_params=roi_params,
@@ -713,7 +709,6 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
 
     Args:
         bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
-        path_data (list) or (str): List of Paths to the BIDS datasets.
         subject_file_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         model_params (dict): Dictionary containing model parameters.
@@ -729,11 +724,10 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         object_detection_params (dict): Object dection parameters.
     """
 
-    def __init__(self, bids_df, path_data, subject_file_lst, target_suffix, model_params, contrast_params, slice_axis=2,
+    def __init__(self, bids_df, subject_file_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
         dataset = BidsDataset(bids_df=bids_df,
-                              path_data=path_data,
                               subject_file_lst=subject_file_lst,
                               target_suffix=target_suffix,
                               roi_params=roi_params,
@@ -753,7 +747,6 @@ class BidsDataset(MRI2DSegmentationDataset):
 
     Args:
         bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
-        path_data (list) or (str): List of Paths to the BIDS datasets.
         subject_file_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         contrast_params (dict): Contains image contrasts related parameters.
@@ -783,7 +776,7 @@ class BidsDataset(MRI2DSegmentationDataset):
 
     """
 
-    def __init__(self, bids_df, path_data, subject_file_lst, target_suffix, contrast_params, slice_axis=2,
+    def __init__(self, bids_df, subject_file_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
 

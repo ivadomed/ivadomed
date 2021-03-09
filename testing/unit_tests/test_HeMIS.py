@@ -85,8 +85,7 @@ def test_HeMIS(loader_parameters, p=0.0001):
             "target_lst": ["T2w"],
             "roi_lst": ["T2w"]
         }
-    dataset = imed_adaptative.HDF5Dataset(bids_df,
-                                          path_data=__data_testing_dir__,
+    dataset = imed_adaptative.HDF5Dataset(bids_df=bids_df,
                                           subject_file_lst=train_lst,
                                           model_params=model_params,
                                           contrast_params=contrast_params,
