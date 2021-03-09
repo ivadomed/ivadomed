@@ -704,7 +704,8 @@ class BidsDataframe:
             force_index = ['samples.tsv', 'samples.json']
             for root, dirs, files in os.walk(path_data):
                 for file in files:
-                    if file.endswith(ext_microscopy) and (root.replace(path_data, '').startswith("sub")):
+                    if file.endswith(ext_microscopy) and os.path.basename(root) == "microscopy" and \
+                    (root.replace(path_data, '').startswith("sub")):
                         force_index.append(os.path.join(root.replace(path_data, '')))
             indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
 
