@@ -105,8 +105,8 @@ def split_dataset(df, split_method, data_testing, random_seed, train_frac=0.8, t
     return X_train, X_val, X_test
 
 
-def get_new_subject_split(df, split_method, data_testing, random_seed,
-                          train_frac, test_frac, path_output, balance, subject_selection=None):
+def get_new_subject_file_split(df, split_method, data_testing, random_seed,
+                               train_frac, test_frac, path_output, balance, subject_selection=None):
     """Randomly split dataset between training / validation / testing.
 
     Randomly split dataset between training / validation / testing\
@@ -175,8 +175,8 @@ def get_new_subject_split(df, split_method, data_testing, random_seed,
     return train_lst, valid_lst, test_lst
 
 
-def get_subdatasets_subjects_list(split_params, df, path_output, subject_selection=None):
-    """Get lists of subjects for each sub-dataset between training / validation / testing.
+def get_subdatasets_subject_files_list(split_params, df, path_output, subject_selection=None):
+    """Get lists of subject filenames for each sub-dataset between training / validation / testing.
 
     Args:
         split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
@@ -192,16 +192,16 @@ def get_subdatasets_subjects_list(split_params, df, path_output, subject_selecti
         old_split = joblib.load(split_params["fname_split"])
         train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
     else:
-        train_lst, valid_lst, test_lst = get_new_subject_split(df=df,
-                                                               split_method=split_params['split_method'],
-                                                               data_testing=split_params['data_testing'],
-                                                               random_seed=split_params['random_seed'],
-                                                               train_frac=split_params['train_fraction'],
-                                                               test_frac=split_params['test_fraction'],
-                                                               path_output=path_output,
-                                                               balance=split_params['balance']
-                                                               if 'balance' in split_params else None,
-                                                               subject_selection=subject_selection)
+        train_lst, valid_lst, test_lst = get_new_subject_file_split(df=df,
+                                                                    split_method=split_params['split_method'],
+                                                                    data_testing=split_params['data_testing'],
+                                                                    random_seed=split_params['random_seed'],
+                                                                    train_frac=split_params['train_fraction'],
+                                                                    test_frac=split_params['test_fraction'],
+                                                                    path_output=path_output,
+                                                                    balance=split_params['balance']
+                                                                    if 'balance' in split_params else None,
+                                                                    subject_selection=subject_selection)
     return train_lst, valid_lst, test_lst
 
 

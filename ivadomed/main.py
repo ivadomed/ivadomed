@@ -325,12 +325,12 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     # Indexing of derivatives is True for command train and test
     bids_df = imed_loader_utils.BidsDataframe(loader_params, path_output, derivatives=True)
 
-    # Get subject lists. "segment" command uses all participants of data path, hence no need to split
-    train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
-                                                                                     bids_df.df,
-                                                                                     path_output,
-                                                                                     context["loader_parameters"]
-                                                                                     ['subject_selection'])
+    # Get subject filenames lists. "segment" command uses all participants of data path, hence no need to split
+    train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subject_files_list(context["split_dataset"],
+                                                                                          bids_df.df,
+                                                                                          path_output,
+                                                                                          context["loader_parameters"]
+                                                                                          ['subject_selection'])
     # TESTING PARAMS
     # Aleatoric uncertainty
     if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:

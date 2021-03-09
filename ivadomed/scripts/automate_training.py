@@ -161,7 +161,7 @@ def split_dataset(initial_config):
 
     bids_df = imed_loader_utils.BidsDataframe(loader_parameters, path_output, derivatives=True)
 
-    train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_split(
+    train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_file_split(
         df=bids_df.df,
         data_testing=initial_config["split_dataset"]["data_testing"],
         split_method=initial_config["split_dataset"]["split_method"],

@@ -27,7 +27,7 @@ def load_dataset(split_params):
 
     df = pd.read_csv(os.path.join(PATH_DATA, "participants.tsv"), sep='\t')
     df['filename'] = df["participant_id"]
-    train, val, test = imed_loader_utils.get_subdatasets_subjects_list(split_params, df, LOG_PATH)
+    train, val, test = imed_loader_utils.get_subdatasets_subject_files_list(split_params, df, LOG_PATH)
     return train, val, test, patient_mapping
 
 
