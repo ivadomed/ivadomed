@@ -492,6 +492,29 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
         }
     }
 
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "is_input_dropout",
+        "$$description": [
+            "Indicates if input-level dropout should be applied during training.\n",
+            "This option trains a model to be robust to missing modalities by setting \n",
+            "to zero one channel. If a modality is already missing, it will only drop \n",
+            "this modality. This option is always disabled at test time."
+        ],
+        "type": "boolean"
+    }
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "is_input_dropout": true
+        }
+    }
+
+
 
 Split Dataset
 -------------
