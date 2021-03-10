@@ -1,6 +1,7 @@
 import sys
 import os
 import shutil
+import pytest
 from ivadomed.utils import init_ivadomed, __ivadomed_dir__
 from ivadomed.scripts import download_data as ivadomed_download_data
 
@@ -108,3 +109,11 @@ def create_tmp_dir(copy_data_testing_dir=True):
 def remove_tmp_dir():
     """Recursively remove the ``tmp`` directory if it exists."""
     shutil.rmtree(__tmp_dir__, ignore_errors=True)
+
+
+@pytest.fixture(scope='session')
+def get_functional_test_files():
+    """
+    This fixture will attempt to download test data file if there are not present.
+    """
+    download_dataset(__data_testing_dir__)
