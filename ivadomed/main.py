@@ -70,6 +70,7 @@ def get_parser():
 
     return parser
 
+
 def create_path_model(context, model_params, ds_train, path_output, train_onehotencoder):
     path_model = os.path.join(path_output, context["model_name"])
     if not os.path.isdir(path_model):
@@ -84,6 +85,7 @@ def create_path_model(context, model_params, ds_train, path_output, train_onehot
     else:
         print('Model directory already exists: {}'.format(path_model))
 
+
 def check_multiple_raters(is_train, loader_params):
     if any([isinstance(class_suffix, list) for class_suffix in loader_params["target_suffix"]]):
         print(
@@ -94,27 +96,30 @@ def check_multiple_raters(is_train, loader_params):
                 "\nERROR: Please provide only one annotation per class in 'target_suffix' when not training a model.\n")
             exit()
 
+
 def film_normalize_data(context, model_params, ds_train, ds_valid, path_output):
     # Normalize metadata before sending to the FiLM network
     results = imed_film.get_film_metadata_models(ds_train=ds_train,
-                                                    metadata_type=model_params['metadata'],
-                                                    debugging=context["debugging"])
+                                                 metadata_type=model_params['metadata'],
+                                                 debugging=context["debugging"])
     ds_train, train_onehotencoder, metadata_clustering_models = results
     ds_valid = imed_film.normalize_metadata(ds_valid, metadata_clustering_models, context["debugging"],
                                             model_params['metadata'])
     model_params.update({"film_onehotencoder": train_onehotencoder,
-                            "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
+                         "n_metadata": len([ll for l in train_onehotencoder.categories_ for ll in l])})
     joblib.dump(metadata_clustering_models, os.path.join(path_output, "clustering_models.joblib"))
     joblib.dump(train_onehotencoder, os.path.join(path_output + "one_hot_encoder.joblib"))
-    
+
     return model_params, ds_train, ds_valid, train_onehotencoder
+
 
 def get_dataset(loader_params, data_lst, transform_params, cuda_available, device, ds_type):
     ds = imed_loader.load_dataset(**{**loader_params,
-                                            **{'data_list': data_lst, 'transforms_params': transform_params,
-                                                'dataset_type': ds_type}}, device=device,
-                                        cuda_available=cuda_available)
+                                     **{'data_list': data_lst, 'transforms_params': transform_params,
+                                        'dataset_type': ds_type}}, device=device,
+                                  cuda_available=cuda_available)
     return ds
+
 
 def save_config_file(context, path_output):
     # Save config file within path_output and path_output/model_name
@@ -124,6 +129,7 @@ def save_config_file(context, path_output):
     with open(os.path.join(path_output, context["model_name"], context["model_name"] + ".json"), 'w') as fp:
         json.dump(context, fp, indent=4)
 
+
 def set_loader_params(context, is_train):
     loader_params = copy.deepcopy(context["loader_parameters"])
     if is_train:
@@ -132,12 +138,13 @@ def set_loader_params(context, is_train):
         loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_params"]["testing"]
     if "FiLMedUnet" in context and context["FiLMedUnet"]["applied"]:
         loader_params.update({"metadata_type": context["FiLMedUnet"]["metadata"]})
-    
+
     # Load metadata necessary to balance the loader
     if context['training_parameters']['balance_samples']['applied'] and \
             context['training_parameters']['balance_samples']['type'] != 'gt':
         loader_params.update({"metadata_type": context['training_parameters']['balance_samples']['type']})
     return loader_params
+
 
 def set_model_params(context, loader_params):
     model_params = copy.deepcopy(context["default_model"])
@@ -180,6 +187,7 @@ def set_model_params(context, loader_params):
 
     return model_params, loader_params
 
+
 def set_output_path(context):
     path_output = copy.deepcopy(context["path_output"])
     if not os.path.isdir(path_output):
@@ -187,8 +195,9 @@ def set_output_path(context):
         os.makedirs(path_output)
     else:
         print('Output path already exists: {}'.format(path_output))
-    
+
     return path_output
+
 
 def update_film_model_params(context, ds_test, model_params, path_output):
     clustering_path = os.path.join(path_output, "clustering_models.joblib")
@@ -197,11 +206,12 @@ def update_film_model_params(context, ds_test, model_params, path_output):
     ohe_path = os.path.join(path_output, context["model_name"], "one_hot_encoder.joblib")
     one_hot_encoder = joblib.load(ohe_path)
     ds_test = imed_film.normalize_metadata(ds_test, metadata_clustering_models, context["debugging"],
-                                            model_params['metadata'])
+                                           model_params['metadata'])
     model_params.update({"film_onehotencoder": one_hot_encoder,
-                            "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
+                         "n_metadata": len([ll for l in one_hot_encoder.categories_ for ll in l])})
 
     return ds_test, model_params
+
 
 def run_segment_command(context, model_params):
     bids_ds = []
@@ -241,7 +251,7 @@ def run_segment_command(context, model_params):
                         bids_subjects.remove(s)
             if len(fname_img) != len(contrasts):
                 logger.warning("Missing contrast for subject {}. {} were provided but {} are required. Skipping "
-                                "subject.".format(subject.record['subject_id'], provided_contrasts, contrasts))
+                               "subject.".format(subject.record['subject_id'], provided_contrasts, contrasts))
                 continue
         else:
             fname_img = [subject.record['absolute_path']]
@@ -251,17 +261,18 @@ def run_segment_command(context, model_params):
             metadata = df[df['participant_id'] == subj_id][model_params['metadata']].values[0]
             options = {'metadata': metadata}
         pred_list, target_list = imed_inference.segment_volume(path_model,
-                                                                fname_images=fname_img,
-                                                                gpu_id=context['gpu_ids'][0],
-                                                                options=options)
+                                                               fname_images=fname_img,
+                                                               gpu_id=context['gpu_ids'][0],
+                                                               options=options)
         pred_path = os.path.join(context['path_output'], "pred_masks")
         if not os.path.exists(pred_path):
             os.makedirs(pred_path)
 
         for pred, target in zip(pred_list, target_list):
             filename = subject.record['subject_id'] + "_" + subject.record['modality'] + target + "_pred" + \
-                        ".nii.gz"
+                       ".nii.gz"
             nib.save(pred, os.path.join(pred_path, filename))
+
 
 def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     """Run main command.
@@ -313,14 +324,14 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     if command == 'segment':
         run_segment_command(context, model_params)
         return
-    
+
     # Get subject lists. "segment" command uses all participants of data path, hence no need to split
     train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subjects_list(context["split_dataset"],
-                                                                                        context['loader_parameters']
-                                                                                        ['path_data'],
-                                                                                        path_output,
-                                                                                         context["loader_parameters"]
-                                                                                         ['subject_selection'])
+                                                                                     context['loader_parameters']
+                                                                                     ['path_data'],
+                                                                                     path_output,
+                                                                                     context["loader_parameters"]
+                                                                                     ['subject_selection'])
     # TESTING PARAMS
     # Aleatoric uncertainty
     if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:
@@ -345,7 +356,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     if command == 'train':
         # Get Validation dataset
         ds_valid = get_dataset(loader_params, valid_lst, transform_valid_params, cuda_available, device, 'validation')
-        
+
         # Get Training dataset
         ds_train = get_dataset(loader_params, train_lst, transform_train_params, cuda_available, device, 'training')
         metric_fns = imed_metrics.get_metric_fns(ds_train.task)
@@ -380,7 +391,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         # LOAD DATASET
         if command != 'train':  # If command == train, then ds_valid already load
             # Get Validation dataset
-            ds_valid = get_dataset(loader_params, valid_lst, transform_valid_params, cuda_available, device, 'validation')
+            ds_valid = get_dataset(loader_params, valid_lst, transform_valid_params, cuda_available, device,
+                                   'validation')
         # Get Training dataset with no Data Augmentation
         ds_train = get_dataset(loader_params, train_lst, transform_valid_params, cuda_available, device, 'training')
 
@@ -437,7 +449,6 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
 
 def create_dataset_and_ivadomed_version_log(context):
-
     path_data = context['loader_parameters']['path_data']
 
     ivadomed_version = imed_utils._version_string()
@@ -468,9 +479,10 @@ def create_dataset_and_ivadomed_version_log(context):
 
     for i_dataset in range(len(path_data)):
         if datasets_version[i_dataset] not in ['', '?!?']:
-            f.write(str(i_dataset+1) + '. ' + path_data[i_dataset] + ' - Dataset Annex version: ' + datasets_version[i_dataset] + '\n')
+            f.write(str(i_dataset + 1) + '. ' + path_data[i_dataset] + ' - Dataset Annex version: ' + datasets_version[
+                i_dataset] + '\n')
         else:
-            f.write(str(i_dataset+1) + '. ' + path_data[i_dataset] + ' - Dataset is not Annexed.\n')
+            f.write(str(i_dataset + 1) + '. ' + path_data[i_dataset] + ' - Dataset is not Annexed.\n')
 
     # SYSTEM INFO
     f.write('\n\nSYSTEM INFO\n-------------\n')
