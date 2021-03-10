@@ -71,6 +71,11 @@ def split_dataset(df, split_method, data_testing, random_seed, train_frac=0.8, t
         data_value = sorted(df[data_type].unique().tolist())
         test_frac = test_frac if test_frac >= 1 / len(data_value) else 1 / len(data_value)
         data_value, _ = train_test_split(data_value, train_size=test_frac, random_state=random_seed)
+    if len(data_value) != 0:
+        for value in data_value:
+            if value not in df[data_type].values:
+                    logger.warning("No data_value '{}' was found in '{}'. Not taken into account "
+                                   "to split the dataset.".format(value, data_type))
     X_test = df[df[data_type].isin(data_value)]['filename'].unique().tolist()
     X_remain = df[~df[data_type].isin(data_value)][split_method].unique().tolist()
 
