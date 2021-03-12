@@ -248,7 +248,7 @@ def load_bounding_boxes(object_detection_params, subject_path_list, slice_axis, 
         bounding_box_dict = generate_bounding_box_file(subject_path_list,
                                                        object_detection_params['object_detection_path'],
                                                        object_detection_params['path_output'],
-                                                       object_detection_params['gpu'],
+                                                       object_detection_params['gpu_ids'],
                                                        slice_axis,
                                                        constrast_lst,
                                                        safety_factor=object_detection_params['safety_factor'])
