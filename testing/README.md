@@ -26,7 +26,7 @@ or
 cd ivadomed
 pytest testing/functional_tests/
 pytest testing/unit_tests/
-pytets testing/functional_tests/test_example.py
+pytest testing/functional_tests/test_example.py
 ```
 
 ## Wiki
