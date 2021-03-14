@@ -16,14 +16,12 @@ cd ivadomed  # root of the repo
 ivadomed_download_data -d data_testing -o data_testing  # for unit tests
 ivadomed_download_data -d data_functional_testing -o data_functional_testing  # for functional tests
 ```
-2. Use `pytest` to run:
+2. To run all tests:
 ```
-cd ivadomed
 pytest
 ```
-or
+or, to run specific tests:
 ```
-cd ivadomed
 pytest testing/functional_tests/
 pytest testing/unit_tests/
 pytest testing/functional_tests/test_example.py
