@@ -86,7 +86,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
                                               nib_ref.header['pixdim'][1:4],
                                               fname_prefix)
         arr_pred_ref_space = postpro.apply()
-    nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
+    nib_pred = nib.Nifti1Image(arr_pred_ref_space, None, nib_ref.header.copy())
 
     # save as nifti file
     if fname_out is not None:
