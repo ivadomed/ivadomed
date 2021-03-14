@@ -86,7 +86,16 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
                                               nib_ref.header['pixdim'][1:4],
                                               fname_prefix)
         arr_pred_ref_space = postpro.apply()
-    nib_pred = nib.Nifti1Image(arr_pred_ref_space, None, nib_ref.header.copy())
+    if arr_pred_ref_space.shape == nib_ref.get_fdata().shape:
+        # Here we prefer to copy the header (rather than just the affine matrix), in order to preserve the qform_code.
+        # See: https://github.com/ivadomed/ivadomed/issues/711
+        nib_pred = nib.Nifti1Image(arr_pred_ref_space, None, nib_ref.header.copy())
+    else:
+        # In case a new nibabel object needs to be created with different dimensions as the reference image, we cannot
+        # copy the header, otherwise the following error is produced:
+        # https://github.com/ivadomed/ivadomed/pull/714/checks?check_run_id=2108027002#step:6:141
+        # So in this case, we just copy the affine matrix from the original data.
+        nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
 
     # save as nifti file
     if fname_out is not None:
