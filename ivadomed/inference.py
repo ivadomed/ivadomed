@@ -36,7 +36,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         postprocessing (dict): Contains postprocessing steps to be applied.
 
     Returns:
-        NibabelObject: Object containing the Network prediction.
+        nibabel.Nifti1Image: NiBabel object containing the Network prediction.
     """
     # Load reference nibabel object
     nib_ref = nib.load(fname_ref)
@@ -46,7 +46,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         # complete missing z with zeros
         tmp_lst = []
         for z in range(nib_ref_can.header.get_data_shape()[slice_axis]):
-            if not z in z_lst:
+            if z not in z_lst:
                 tmp_lst.append(np.zeros(data_lst[0].shape))
             else:
                 tmp_lst.append(data_lst[z_lst.index(z)])
@@ -67,7 +67,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     if len(arr_pred_ref_space.shape) == 4:
         for i in range(n_channel):
             oriented_volumes.append(
-                imed_loader_utils.reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
+                imed_loader_utils.reorient_image(arr_pred_ref_space[i, ], slice_axis, nib_ref, nib_ref_can))
         # transpose to locate the channel dimension at the end to properly see image on viewer
         arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
     else:
@@ -96,13 +96,20 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     if arr_pred_ref_space.shape[0:3] == nib_ref.get_fdata().shape[0:3]:
         # Here we prefer to copy the header (rather than just the affine matrix), in order to preserve the qform_code.
         # See: https://github.com/ivadomed/ivadomed/issues/711
-        nib_pred = nib.Nifti1Image(arr_pred_ref_space, None, nib_ref.header.copy())
+        nib_pred = nib.Nifti1Image(
+            dataobj=arr_pred_ref_space,
+            affine=None,
+            header=nib_ref.header.copy()
+        )
     else:
         # In case a new nibabel object needs to be created with different dimensions as the reference image, we cannot
         # copy the header, otherwise the following error is produced:
         # https://github.com/ivadomed/ivadomed/pull/714/checks?check_run_id=2108027002#step:6:141
         # So in this case, we just copy the affine matrix from the original data.
-        nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
+        nib_pred = nib.Nifti1Image(
+            dataobj=arr_pred_ref_space,
+            affine=nib_ref.affine
+        )
 
     # save as nifti file
     if fname_out is not None:
