@@ -704,13 +704,25 @@ class BidsDataframe:
             # Initialize BIDSLayoutIndexer and BIDSLayout
             # validate=True by default for both indexer and layout, BIDS-validator is not skipped
             # Force index for samples tsv and json files, and for subject subfolders containing microscopy files based on extensions.
+            # Force index of subject subfolders containing CT-scan files under "anat" or "ct" folder based on extensions and modality suffix.
             # TODO: remove force indexing of microscopy files after BEP microscopy is merged in BIDS
+            # TODO: remove force indexing of CT-scan files after BEP CT-scan is merged in BIDS
             ext_microscopy = ('.png', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
-            force_index = ['samples.tsv', 'samples.json']
+            ext_ct = ('.nii.gz', '.nii')
+            suffix_ct = ('ct', 'CT')
+            force_index = []
             for root, dirs, files in os.walk(path_data):
                 for file in files:
-                    if file.endswith(ext_microscopy) and os.path.basename(root) == "microscopy" and \
-                    (root.replace(path_data, '').startswith("sub")):
+                    # Microscopy
+                    if file == "samples.tsv" or file == "samples.json":
+                        force_index.append(file)
+                    if (file.endswith(ext_microscopy) and os.path.basename(root) == "microscopy" and
+                            (root.replace(path_data, '').startswith("sub"))):
+                        force_index.append(os.path.join(root.replace(path_data, '')))
+                    # CT-scan
+                    if (file.endswith(ext_ct) and file.split('.')[0].endswith(suffix_ct) and
+                            (os.path.basename(root) == "anat" or os.path.basename(root) == "ct") and
+                            (root.replace(path_data, '').startswith("sub"))):
                         force_index.append(os.path.join(root.replace(path_data, '')))
             indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
 
