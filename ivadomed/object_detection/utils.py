@@ -86,7 +86,7 @@ def resize_to_multiple(shape, multiple, length):
     return new_dim
 
 
-def generate_bounding_box_file(subject_list, model_path, path_output, gpu_id=0, slice_axis=0, contrast_lst=None,
+def generate_bounding_box_file(subject_path_list, model_path, path_output, gpu_id=0, slice_axis=0, contrast_lst=None,
                                keep_largest_only=True, safety_factor=None):
     """Creates json file containing the bounding box dimension for each images. The file has the following format:
     {"path/to/img.nii.gz": [[x1_min, x1_max, y1_min, y1_max, z1_min, z1_max],
@@ -94,7 +94,7 @@ def generate_bounding_box_file(subject_list, model_path, path_output, gpu_id=0, 
     where each list represents the coordinates of an object on the image (2 instance of a given object in this example).
 
     Args:
-        subject_list (list): List of all subjects in the BIDS directory.
+        subject_path_list (list): List of all subjects in all the BIDS directories.
         model_path (string): Path to object detection model.
         path_output (string): Output path.
         gpu_id (int): If available, GPU number.
@@ -110,22 +110,19 @@ def generate_bounding_box_file(subject_list, model_path, path_output, gpu_id=0, 
     bounding_box_dict = {}
     if safety_factor is None:
         safety_factor = [1.0, 1.0, 1.0]
-    for subject in subject_list:
-        if subject.record["modality"] in contrast_lst:
-            subject_path = str(subject.record["absolute_path"])
-            object_mask, _ = imed_inference.segment_volume(model_path, [subject_path], gpu_id=gpu_id)
-            object_mask = object_mask[0]
-            if keep_largest_only:
-                object_mask = imed_postpro.keep_largest_object(object_mask)
-
-            mask_path = os.path.join(path_output, "detection_mask")
-            if not os.path.exists(mask_path):
-                os.mkdir(mask_path)
-            nib.save(object_mask, os.path.join(mask_path, subject_path.split("/")[-1]))
-            ras_orientation = nib.as_closest_canonical(object_mask)
-            hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata(), slice_axis)
-            bounding_boxes = get_bounding_boxes(hwd_orientation)
-            bounding_box_dict[subject_path] = [adjust_bb_size(bb, safety_factor) for bb in bounding_boxes]
+    for subject_path in subject_path_list:
+        object_mask, _ = imed_inference.segment_volume(model_path, [subject_path], gpu_id=gpu_id)
+        object_mask = object_mask[0]
+        if keep_largest_only:
+            object_mask = imed_postpro.keep_largest_object(object_mask)
+        mask_path = os.path.join(path_output, "detection_mask")
+        if not os.path.exists(mask_path):
+            os.mkdir(mask_path)
+        nib.save(object_mask, os.path.join(mask_path, subject_path.split("/")[-1]))
+        ras_orientation = nib.as_closest_canonical(object_mask)
+        hwd_orientation = imed_loader_utils.orient_img_hwd(ras_orientation.get_fdata(), slice_axis)
+        bounding_boxes = get_bounding_boxes(hwd_orientation)
+        bounding_box_dict[subject_path] = [adjust_bb_size(bb, safety_factor) for bb in bounding_boxes]
 
     file_path = os.path.join(path_output, 'bounding_boxes.json')
     with open(file_path, 'w') as fp:
@@ -225,13 +222,13 @@ def adjust_undo_transforms(transforms, seg_pair, index=0):
             transforms.transform[img_type].transforms.insert(resample_idx + 1, transform_obj)
 
 
-def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast_lst):
+def load_bounding_boxes(object_detection_params, subject_path_list, slice_axis, constrast_lst):
     """Verifies if bounding_box.json exists in the output path, if so loads the data, else generates the file if a
     valid detection model path exists.
 
     Args:
         object_detection_params (dict): Object detection parameters.
-        subjects (list): List of all subjects in the BIDS directory.
+        subject_path_list (list): List of all subjects in all the BIDS directories.
         slice_axis (int): Slice axis (0: sagittal, 1: coronal, 2: axial).
         constrast_lst (list): Contrasts.
 
@@ -248,10 +245,10 @@ def load_bounding_boxes(object_detection_params, subjects, slice_axis, constrast
             bounding_box_dict = json.load(fp)
     elif object_detection_params['object_detection_path'] is not None and \
             os.path.exists(object_detection_params['object_detection_path']):
-        bounding_box_dict = generate_bounding_box_file(subjects,
+        bounding_box_dict = generate_bounding_box_file(subject_path_list,
                                                        object_detection_params['object_detection_path'],
                                                        object_detection_params['path_output'],
-                                                       object_detection_params['gpu'],
+                                                       object_detection_params['gpu_ids'],
                                                        slice_axis,
                                                        constrast_lst,
                                                        safety_factor=object_detection_params['safety_factor'])

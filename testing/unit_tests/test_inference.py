@@ -63,6 +63,7 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_pa
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
         "path_data": [__data_testing_dir__],
         "target_suffix": target_lst,
+        "extensions": [".nii.gz"],
         "roi_params": roi_params,
         "slice_filter_params": {
             "filter_empty_mask": False,
@@ -73,8 +74,10 @@ def test_inference(transforms_dict, test_lst, target_lst, roi_params, testing_pa
     }
     loader_params.update({"model_params": model_params})
 
+    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+
     # Get Testing dataset
-    ds_test = imed_loader.load_dataset(**loader_params)
+    ds_test = imed_loader.load_dataset(bids_df, **loader_params)
     test_loader = DataLoader(ds_test, batch_size=BATCH_SIZE,
                              shuffle=False, pin_memory=True,
                              collate_fn=imed_loader_utils.imed_collate,
