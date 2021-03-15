@@ -151,10 +151,20 @@ def split_dataset(initial_config):
                     "path_output": "./tmp/"
                 }
     """
-    train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_split(
-        path_folder=initial_config["loader_parameters"]["path_data"],
-        center_test=initial_config["split_dataset"]["center_test"],
-        split_method=initial_config["split_dataset"]["method"],
+    loader_parameters = initial_config["loader_parameters"]
+    path_output = initial_config["path_output"]
+    if not os.path.isdir(path_output):
+        print('Creating output path: {}'.format(path_output))
+        os.makedirs(path_output)
+    else:
+        print('Output path already exists: {}'.format(path_output))
+
+    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, path_output, derivatives=True)
+
+    train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_file_split(
+        df=bids_df.df,
+        data_testing=initial_config["split_dataset"]["data_testing"],
+        split_method=initial_config["split_dataset"]["split_method"],
         random_seed=initial_config["split_dataset"]["random_seed"],
         train_frac=initial_config["split_dataset"]["train_fraction"],
         test_frac=initial_config["split_dataset"]["test_fraction"],

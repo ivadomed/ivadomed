@@ -5,6 +5,7 @@ import json
 import shutil
 
 from ivadomed.loader import loader as imed_loader
+from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 import logging
 from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
@@ -67,6 +68,7 @@ def test_bounding_box(train_lst, target_lst, config):
         "requires_undo": False,
         "path_data": [__data_testing_dir__],
         "target_suffix": target_lst,
+        "extensions": [".nii.gz"],
         "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
         "slice_axis": "axial"
     }
@@ -89,7 +91,10 @@ def test_bounding_box(train_lst, target_lst, config):
 
     # Update loader_params with config
     loader_params.update(config)
-    ds = imed_loader.load_dataset(**loader_params)
+
+    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+
+    ds = imed_loader.load_dataset(bids_df, **loader_params)
 
     handler = ds.handlers if "Modified3DUNet" in config else ds.indexes
     for index in handler:
