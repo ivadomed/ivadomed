@@ -10,7 +10,7 @@ from ivadomed import losses as imed_losses
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
-from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
+from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__, __tmp_dir__
 
 cudnn.benchmark = True
 
@@ -97,13 +97,15 @@ def test_unet_time(train_lst, target_lst, config):
         "requires_undo": False,
         "path_data": [__data_testing_dir__],
         "target_suffix": target_lst,
+        "extensions": [".nii.gz"],
         "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
         "slice_axis": "axial"
     }
     # Update loader_params with config
     loader_params.update(config)
     # Get Training dataset
-    ds_train = imed_loader.load_dataset(**loader_params)
+    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    ds_train = imed_loader.load_dataset(bids_df, **loader_params)
 
     # Loader
     train_loader = DataLoader(ds_train,

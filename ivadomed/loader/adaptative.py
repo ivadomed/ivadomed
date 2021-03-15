@@ -6,7 +6,6 @@ import h5py
 import nibabel as nib
 import numpy as np
 import pandas as pd
-from bids_neuropoly import bids
 from tqdm import tqdm
 
 from ivadomed import transforms as imed_transforms
@@ -177,8 +176,8 @@ class BIDStoHDF5:
     """Converts a BIDS dataset to a HDF5 file.
 
     Args:
-        path_data (list) or (str): Path(s) to BIDS datasets
-        subject_lst (list): Subject names list.
+        bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
+        subject_file_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
         contrast_lst (list): List of the contrasts.
@@ -191,7 +190,6 @@ class BIDStoHDF5:
         object_detection_params (dict): Object detection parameters.
 
     Attributes:
-        bids_ds (BIDS): BIDS dataset.
         dt (dtype): hdf5 special dtype.
         path_hdf5 (str): path to hdf5 file containing dataset information.
         filename_pairs (list): A list of tuples in the format (input filename list containing all modalities,ground \
@@ -204,21 +202,18 @@ class BIDStoHDF5:
         slice_filter_fn (SliceFilter): Object that filters slices according to their content.
     """
 
-    def __init__(self, path_data, subject_lst, target_suffix, contrast_lst, path_hdf5, contrast_balance=None,
+    def __init__(self, bids_df, subject_file_lst, target_suffix, contrast_lst, path_hdf5, contrast_balance=None,
                  slice_axis=2, metadata_choice=False, slice_filter_fn=None, roi_params=None, transform=None,
                  object_detection_params=None, soft_gt=False):
         print("Starting conversion")
 
-        # Getting all patients id
-        self.bids_ds = []
-        path_data = imed_utils.format_path_data(path_data)
-        for bids_folder in path_data:
-            self.bids_ds.append(bids.BIDS(bids_folder))
-        # Append subjects from all BIDSdatasets into a list
-        bids_subjects = [s for s in self.bids_ds[0].get_subjects() if s.record["subject_id"] in subject_lst]
-        for i_bids_folder in range(1, len(path_data)):
-            bids_subjects += [s for s in self.bids_ds[i_bids_folder].get_subjects() if
-                              s.record["subject_id"] in subject_lst]
+        # Sort subject_file_lst and create a sub-dataframe from bids_df containing only subjects from subject_file_lst
+        subject_file_lst = sorted(subject_file_lst)
+        df_subjects = bids_df.df[bids_df.df['filename'].isin(subject_file_lst)]
+        # Backward compatibility for subject_file_lst containing participant_ids instead of filenames
+        if df_subjects.empty:
+            df_subjects = bids_df.df[bids_df.df['participant_id'].isin(subject_file_lst)]
+            subject_file_lst = sorted(df_subjects['filename'].to_list())
 
         self.soft_gt = soft_gt
         self.dt = h5py.special_dtype(vlen=str)
@@ -234,79 +229,73 @@ class BIDStoHDF5:
                              "EchoTime": [], "Manufacturer": []}
 
         self.prepro_transforms, self.transform = transform
-        # Create a list with the filenames for all contrasts and subjects
-        subjects_tot = []
-        for subject in bids_subjects:
-            subjects_tot.append(str(subject.record["absolute_path"]))
 
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
-        tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast])
+        tot = {contrast: df_subjects['suffix'].str.fullmatch(contrast).value_counts()[True]
                for contrast in contrast_balance.keys()}
 
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_balance.keys()}
 
-        # Append get_subjects()
-        get_subjects_all = self.bids_ds[0].get_subjects()
-        for i_bids_folder in range(1, len(self.bids_ds)):
-            get_subjects_all.extend(self.bids_ds[i_bids_folder].get_subjects())
 
+        # Get all subjects path from bids_df for bounding box
+        get_all_subj_path = bids_df.df[bids_df.df['filename']
+                                .str.contains('|'.join(bids_df.get_subject_fnames()))]['path'].to_list()
+
+        # Load bounding box from list of path
         self.has_bounding_box = True
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
-                                                                get_subjects_all,
+                                                                get_all_subj_path,
                                                                 slice_axis,
                                                                 contrast_lst)
 
-        for subject in tqdm(bids_subjects, desc="Loading dataset"):
+        # Get all derivatives filenames from bids_df
+        all_deriv = bids_df.get_deriv_fnames()
 
-            if subject.record["modality"] in contrast_lst:
+        for subject in tqdm(subject_file_lst, desc="Loading dataset"):
 
-                # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
-                if subject.record["modality"] in contrast_balance.keys():
-                    c[subject.record["modality"]] = c[subject.record["modality"]] + 1
-                    if c[subject.record["modality"]] / tot[subject.record["modality"]] \
-                            > contrast_balance[subject.record["modality"]]:
-                        continue
+            df_sub = df_subjects.loc[df_subjects['filename'] == subject]
 
-                if not subject.has_derivative("labels"):
-                    print("Subject without derivative, skipping.")
-                    continue
-                derivatives = subject.get_derivatives("labels")
-
-                target_filename, roi_filename = [None] * len(target_suffix), None
-
-                for deriv in derivatives:
-                    for idx, suffix in enumerate(target_suffix):
-                        if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
-                            target_filename[idx] = deriv
-
-                    if not (roi_params["suffix"] is None) and \
-                            deriv.endswith(subject.record["modality"] + roi_params["suffix"] + ".nii.gz"):
-                        roi_filename = [deriv]
-
-                if (not any(target_filename)) or (not (roi_params["suffix"] is None) and (roi_filename is None)):
+            # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
+            contrast = df_sub['suffix'].values[0]
+            if contrast in (contrast_balance.keys()):
+                c[contrast] = c[contrast] + 1
+                if c[contrast] / tot[contrast] > contrast_balance[contrast]:
                     continue
 
-                if not subject.has_metadata():
-                    print("Subject without metadata.")
-                    metadata = {}
-                else:
-                    metadata = subject.metadata()
-                    # add contrast to metadata
-                metadata['contrast'] = subject.record["modality"]
+            target_filename, roi_filename = [None] * len(target_suffix), None
 
-                if metadata_choice == 'mri_params':
-                    if not all([imed_film.check_isMRIparam(m, metadata) for m in self.metadata.keys()]):
-                        continue
+            derivatives = bids_df.df[bids_df.df['filename']
+                          .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
 
-                if len(bounding_box_dict):
-                    # Take only one bounding box for cropping
-                    metadata['bounding_box'] = bounding_box_dict[str(subject.record["absolute_path"])][0]
+            for deriv in derivatives:
+                for idx, suffix in enumerate(target_suffix):
+                    if suffix in deriv:
+                        target_filename[idx] = deriv
+                if not (roi_params["suffix"] is None) and roi_params["suffix"] in deriv:
+                    roi_filename = [deriv]
 
-                self.filename_pairs.append((subject.record["subject_id"], [subject.record.absolute_path],
+            if (not any(target_filename)) or (not (roi_params["suffix"] is None) and (roi_filename is None)):
+                continue
+
+            metadata = df_sub.to_dict(orient='records')[0]
+            metadata['contrast'] = contrast
+
+            if len(bounding_box_dict):
+                # Take only one bounding box for cropping
+                metadata['bounding_box'] = bounding_box_dict[str(df_sub['path'].values[0])][0]
+
+            if metadata_choice == 'mri_params':
+                if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
+                            self.metadata.keys()]):
+                    continue
+
+            # Get subj_id (prefix filename without modality suffix and extension)
+            subj_id = subject.split('.')[0].split('_')[0]
+
+            self.filename_pairs.append((subj_id, [df_sub['path'].values[0]],
                                             target_filename, roi_filename, [metadata]))
-
-                list_patients.append(subject.record["subject_id"])
+            list_patients.append(subj_id)
 
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
@@ -482,8 +471,8 @@ class HDF5Dataset:
     """HDF5 dataset object.
 
     Args:
-        path_data (list) or (str): Path(s) to BIDS datasets
-        subject_lst (list of str): List of subjects.
+        bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
+        subject_file_lst (list of str): List of subject filenames.
         model_params (dict): Dictionary containing model parameters.
         target_suffix (list of str): List of suffixes of the target structures.
         contrast_params (dict): Dictionary containing contrast parameters.
@@ -508,7 +497,7 @@ class HDF5Dataset:
 
     """
 
-    def __init__(self, path_data, subject_lst, model_params, target_suffix, contrast_params,
+    def __init__(self, bids_df, subject_file_lst, model_params, target_suffix, contrast_params,
                  slice_axis=2, transform=None, metadata_choice=False, dim=2, complet=True,
                  slice_filter_fn=None, roi_params=None, object_detection_params=None, soft_gt=False):
         self.cst_lst = copy.deepcopy(contrast_params["contrast_lst"])
@@ -523,8 +512,8 @@ class HDF5Dataset:
         # Getting HDS5 dataset file
         if not os.path.exists(model_params["path_hdf5"]):
             print("Computing hdf5 file of the data")
-            bids_to_hdf5 = BIDStoHDF5(path_data=path_data,
-                                      subject_lst=subject_lst,
+            bids_to_hdf5 = BIDStoHDF5(bids_df=bids_df,
+                                      subject_file_lst=subject_file_lst,
                                       path_hdf5=model_params["path_hdf5"],
                                       target_suffix=target_suffix,
                                       roi_params=self.roi_params,

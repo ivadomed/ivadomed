@@ -1,7 +1,7 @@
 {
     "command": "train",
     "gpu_ids": [0],
-    "path_output": "path_output/new_loader",
+    "path_output": "new_loader",
     "model_name": "model_name",
     "debugging": true,
     "object_detection_params": {
@@ -11,6 +11,7 @@
     "loader_parameters": {
         "path_data": ["data_example_spinegeneric"],
         "bids_config": "ivadomed/config/config_bids.json",
+        "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": ["_seg-manual"],
         "extensions": [".nii.gz"],
         "roi_params": {
@@ -19,7 +20,7 @@
         },
         "contrast_params": {
             "training_validation": ["T1w", "T2w"],
-            "testing": [],
+            "testing": ["T1w", "T2w"],
             "balance": {}
         },
         "slice_filter_params": {
@@ -45,7 +46,7 @@
             "name": "DiceLoss"
         },
         "training_time": {
-            "num_epochs": 100,
+            "num_epochs": 1,
             "early_stopping_patience": 50,
             "early_stopping_epsilon": 0.001
         },
@@ -71,18 +72,74 @@
     "default_model": {
         "name": "Unet",
         "dropout_rate": 0.3,
-        "bn_momentum": 0.9,
-        "depth": 3,
-        "is_2d": true
+        "bn_momentum": 0.1,
+        "final_activation": "sigmoid",
+        "depth": 3
+    },
+    "FiLMedUnet": {
+        "applied": false,
+        "metadata": "contrasts",
+        "film_layers": [0, 1, 0, 0, 0, 0, 0, 0]
+    },
+    "Modified3DUNet": {
+        "applied": false,
+        "length_3D": [128, 128, 16],
+        "stride_3D": [128, 128, 16],
+        "attention": false,
+        "n_filters": 8
+    },
+    "HeMISUnet": {
+        "applied": false,
+        "missing_probability": 0.00001,
+        "missing_probability_growth": 0.9,
+        "contrasts": ["T1w", "T2w"],
+        "ram": true,
+        "path_hdf5": "new_loader/HeMIS.hdf5",
+        "csv_path": "new_loader/HeMIS.csv",
+        "target_lst": ["T2w"],
+        "roi_lst": null
     },
     "uncertainty": {
         "epistemic": false,
         "aleatoric": false,
         "n_it": 0
     },
-    "postprocessing": {},
+    "postprocessing": {
+        "remove_noise": {"thr": -1},
+        "keep_largest": {},
+        "binarize_prediction": {"thr": 0.5},
+        "uncertainty": {"thr": -1, "suffix": "_unc-vox.nii.gz"},
+        "fill_holes": {},
+        "remove_small": {"unit": "vox", "thr": 3}
+    },
     "evaluation_parameters": {
+        "target_size": {"unit": "vox", "thr": [20, 100]},
+        "overlap": {"unit": "vox", "thr": 3}
     },
     "transformation": {
+        "Resample":
+        {
+            "wspace": 0.75,
+            "hspace": 0.75,
+            "dspace": 1
+        },
+        "CenterCrop": {
+            "size": [128, 128]},
+        "RandomAffine": {
+            "degrees": 5,
+            "scale": [0.1, 0.1],
+            "translate": [0.03, 0.03],
+            "applied_to": ["im", "gt"],
+            "dataset_type": ["training"]
+        },
+        "ElasticTransform": {
+            "alpha_range": [28.0, 30.0],
+            "sigma_range":  [3.5, 4.5],
+            "p": 0.1,
+            "applied_to": ["im", "gt"],
+            "dataset_type": ["training"]
+        },
+      "NumpyToTensor": {},
+      "NormalizeInstance": {"applied_to": ["im"]}
     }
 }
