@@ -737,7 +737,7 @@ class BidsDataframe:
             df_next = layout.to_df(metadata=True)
 
             # Add filename column
-            df_next['filename'] = df_next['path'].apply(os.path.basename)
+            df_next.insert(1,'filename', df_next['path'].apply(os.path.basename))
 
             # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
             df_next = df_next[~df_next['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
