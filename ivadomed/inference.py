@@ -86,7 +86,14 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
                                               nib_ref.header['pixdim'][1:4],
                                               fname_prefix)
         arr_pred_ref_space = postpro.apply()
-    if arr_pred_ref_space.shape == nib_ref.get_fdata().shape:
+    # TODO: remove the "[0:3]" in the test if test below. The reason I needed to add it is because in some cases, the
+    #  prediction has the shape (nx, ny, nz, 1) while the inpute image is (nx, ny, nz), even for a one-channel
+    #  prediction. Consequently, the if check below goes to the "else" case, and
+    #  issue https://github.com/ivadomed/ivadomed/issues/711 is still happening.
+    #  I'm afraid this [0:3] hack will break for 2D data. Also, we might want to make sure the output arr_pred_ref_space
+    #  always has the same shape as the input image. For multiple class prediction, maybe we can find another way
+    #  to store the predictions (e.g. list of np arrays?).
+    if arr_pred_ref_space.shape[0:3] == nib_ref.get_fdata().shape[0:3]:
         # Here we prefer to copy the header (rather than just the affine matrix), in order to preserve the qform_code.
         # See: https://github.com/ivadomed/ivadomed/issues/711
         nib_pred = nib.Nifti1Image(arr_pred_ref_space, None, nib_ref.header.copy())
