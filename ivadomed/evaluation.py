@@ -15,11 +15,11 @@ FP_COLOUR = 2
 FN_COLOUR = 3
 
 
-def evaluate(path_data, path_output, target_suffix, eval_params):
+def evaluate(bids_df, path_output, target_suffix, eval_params):
     """Evaluate predictions from inference step.
 
     Args:
-        path_data (str): Folder where raw data is stored.
+        bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         path_output (str): Folder where the output folder "results_eval" is be created.
         target_suffix (list): List of suffixes that indicates the target mask(s).
         eval_params (dict): Evaluation parameters.
@@ -35,28 +35,21 @@ def evaluate(path_data, path_output, target_suffix, eval_params):
     if not os.path.isdir(path_results):
         os.makedirs(path_results)
 
-    # Load participants.tsv from the output folder - This will be used to get the BIDS folder that each subject was
-    # derived from - Not using the path_data input anymore - remove dependency
-    df_participants_tsv = pd.read_table(os.path.join(path_output, 'participants.tsv'), encoding="ISO-8859-1")
-
     # INIT DATA FRAME
     df_results = pd.DataFrame()
 
     # LIST PREDS
     subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(path_preds) if f.endswith('_pred.nii.gz')]
 
+    # Get all derivatives filenames
+    all_deriv = bids_df.get_deriv_fnames()
+
     # LOOP ACROSS PREDS
     for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
         # Fnames of pred and ground-truth
-        subj, acq = subj_acq.split('_')[0], '_'.join(subj_acq.split('_')[1:])
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
-
-        # Use the path that is stored on the .tsv file for retrieving the derivative
-        the_BIDS_path = df_participants_tsv[df_participants_tsv['participant_id'] == subj]['path_output'].tolist()
-        the_BIDS_path = the_BIDS_path[0]
-
-        fname_gt = [os.path.join(the_BIDS_path, 'derivatives', 'labels', subj, 'anat', subj_acq + suffix + '.nii.gz')
-                    for suffix in target_suffix]
+        fname_gt = bids_df.df[bids_df.df['filename']
+                          .str.contains('|'.join(bids_df.get_derivatives(subj_acq, all_deriv)))]['path'].to_list()
 
         # Uncertainty
         data_uncertainty = None

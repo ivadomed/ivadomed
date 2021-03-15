@@ -34,9 +34,23 @@ def setup_function():
     create_tmp_dir()
 
 
+@pytest.mark.parametrize('loader_parameters', [{
+    "path_data": [__data_testing_dir__],
+    "target_suffix": ["_lesion-manual"],
+    "extensions": [".nii.gz"],
+    "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": None},
+    "contrast_params": {"contrast_lst": ['T1w', 'T2w', 'T2star']
+    }}])
 @pytest.mark.run(order=1)
-def test_HeMIS(p=0.0001):
+def test_HeMIS(loader_parameters, p=0.0001):
     print('[INFO]: Starting test ... \n')
+
+    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+
+    contrast_params = loader_parameters["contrast_params"]
+    target_suffix = loader_parameters["target_suffix"]
+    roi_params = loader_parameters["roi_params"]
+
     training_transform_dict = {
         "Resample":
             {
@@ -52,10 +66,7 @@ def test_HeMIS(p=0.0001):
 
     transform_lst, _ = imed_transforms.prepare_transforms(training_transform_dict)
 
-    roi_params = {"suffix": "_seg-manual", "slice_filter_roi": None}
-
     train_lst = ['sub-unf01']
-    contrasts = ['T1w', 'T2w', 'T2star']
 
     print('[INFO]: Creating dataset ...\n')
     model_params = {
@@ -74,15 +85,11 @@ def test_HeMIS(p=0.0001):
             "target_lst": ["T2w"],
             "roi_lst": ["T2w"]
         }
-    contrast_params = {
-        "contrast_lst": ['T1w', 'T2w', 'T2star'],
-        "balance": {}
-    }
-    dataset = imed_adaptative.HDF5Dataset(path_data=__data_testing_dir__,
-                                          subject_lst=train_lst,
+    dataset = imed_adaptative.HDF5Dataset(bids_df=bids_df,
+                                          subject_file_lst=train_lst,
                                           model_params=model_params,
                                           contrast_params=contrast_params,
-                                          target_suffix=["_lesion-manual"],
+                                          target_suffix=target_suffix,
                                           slice_axis=2,
                                           transform=transform_lst,
                                           metadata_choice=False,
@@ -106,7 +113,7 @@ def test_HeMIS(p=0.0001):
                               collate_fn=imed_loader_utils.imed_collate,
                               num_workers=1)
 
-    model = models.HeMISUnet(contrasts=contrasts,
+    model = models.HeMISUnet(contrasts=contrast_params["contrast_lst"],
                              depth=3,
                              drop_rate=DROPOUT,
                              bn_momentum=BN)
