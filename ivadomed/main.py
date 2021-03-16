@@ -433,7 +433,10 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
     if command == 'test':
         # LOAD DATASET
-        loader_params['is_input_dropout'] = False  # Disable input-level dropout at test time
+        # Warn user that the input-level dropout is set during inference
+        if loader_params['is_input_dropout']:
+            logger.warning("Input-level dropout is set during testing. To turn this option off, set 'is_input_dropout'"
+                           "to 'false' in the configuration file.")
         ds_test = imed_loader.load_dataset(bids_df, **{**loader_params, **{'data_list': test_lst,
                                                                            'transforms_params': transformation_dict,
                                                                            'dataset_type': 'testing',
