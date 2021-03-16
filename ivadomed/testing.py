@@ -1,5 +1,6 @@
 import os
 import copy
+import logging
 import nibabel as nib
 import numpy as np
 import torch
@@ -19,6 +20,8 @@ from ivadomed.training import get_metadata
 from ivadomed.postprocessing import threshold_predictions
 
 cudnn.benchmark = True
+
+logger = logging.getLogger(__name__)
 
 
 def test(model_params, dataset_test, testing_params, path_output, device, cuda_available=True,
@@ -217,11 +220,14 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
                     output_nii_shape = output_nii.get_fdata().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1 and ofolder:
-                        imed_visualize.save_color_labels(np.stack(pred_tmp_lst, -1),
-                                                     False,
-                                                     fname_tmp,
-                                                     fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                     imed_utils.AXIS_DCT[testing_params['slice_axis']])
+                        logger.warning('No color labels saved due to a temporary issue. For more details see:'
+                                       'https://github.com/ivadomed/ivadomed/issues/720')
+                        # TODO: put back the code below. See #720
+                        # imed_visualize.save_color_labels(np.stack(pred_tmp_lst, -1),
+                        #                              False,
+                        #                              fname_tmp,
+                        #                              fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                        #                              imed_utils.AXIS_DCT[testing_params['slice_axis']])
 
                     # re-init pred_stack_lst
                     pred_tmp_lst, z_tmp_lst = [], []
@@ -270,11 +276,14 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     # Save merged labels with color
 
                     if pred_undo.shape[0] > 1 and ofolder:
-                        imed_visualize.save_color_labels(pred_undo,
-                                                     False,
-                                                     batch['input_metadata'][smp_idx][0]['input_filenames'],
-                                                     fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                     slice_axis)
+                        logger.warning('No color labels saved due to a temporary issue. For more details see:'
+                                       'https://github.com/ivadomed/ivadomed/issues/720')
+                        # TODO: put back the code below. See #720
+                        # imed_visualize.save_color_labels(pred_undo,
+                        #                              False,
+                        #                              batch['input_metadata'][smp_idx][0]['input_filenames'],
+                        #                              fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                        #                              slice_axis)
 
     if 'film_layers' in model_params and any(model_params['film_layers']):
         save_film_params(gammas_dict, betas_dict, metadata_values_lst, model_params["depth"],
