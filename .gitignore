@@ -1,17 +1,26 @@
 prepare_data/parameters.sh
-ivadomed.egg-info/
+*.egg-info/
 ivadomed/__init__.pyc
-ivadomed/__pycache__/
-ivadomed/loader/__pycache__/
-ivadomed/FiLM/__pycache__/
-ivadomed/object_detection/__pycache__/
-ivadomed/scripts/__pycache__/
-dev/.bin/
-dev/__pycache__/
-testing/__pycache__/
-testing_data/*
-docs/build
+
+# All build folders
+build/
+
+# All Bin/.Bin
+.bin/
+bin/
+
+# All __pycache__
+__pycache__/
 
 # Pycharm stuff
 .idea
 
+# Pytest Cache, anywhere:
+.pytest_cache/
+
+# IvadoMed pytest downloaded data file, anywhere:
+data_testing/
+data_functional_testing/
+
+# OS Specific hidden file
+.DS_Store

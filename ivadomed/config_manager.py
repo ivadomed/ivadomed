@@ -67,6 +67,7 @@ def load_json(config_path):
 
 # To ensure retrocompatibility for parameter changes in configuration file
 KEY_CHANGE_DICT = {'UNet3D': 'Modified3DUNet', 'bids_path': 'path_data', 'log_directory': 'path_output'}
+KEY_SPLIT_DATASET_CHANGE_LST = ['method', 'center_test']
 
 
 class ConfigurationManager(object):
@@ -83,6 +84,7 @@ class ConfigurationManager(object):
     def __init__(self, path_context):
         self.path_context = path_context
         self.key_change_dict = KEY_CHANGE_DICT
+        self.key_split_dataset_change_lst = KEY_SPLIT_DATASET_CHANGE_LST
         self._validate_path()
         default_config_path = os.path.join(imed_utils.__ivadomed_dir__, "ivadomed", "config", "config_default.json")
         self.config_default = load_json(default_config_path)
@@ -99,6 +101,7 @@ class ConfigurationManager(object):
             context = copy.deepcopy(self.context_original)
             self.change_keys(context, list(context.keys()))
             config_updated = update(self.config_default, context)
+            self.change_keys_values(config_updated['split_dataset'], config_updated['split_dataset'].keys())
 
         self._config_updated = config_updated
         if config_updated['debugging']:
@@ -125,6 +128,17 @@ class ConfigurationManager(object):
                         if key in context:
                             context[self.key_change_dict[key]] = context[key]
                             del context[key]
+
+    def change_keys_values(self, config_updated, keys):
+        for k in self.key_split_dataset_change_lst:
+            if k in keys:
+                value = config_updated[k]
+                if k == 'method' and value == "per_center":
+                    config_updated['data_testing']['data_type'] = "institution_id"
+                if k == 'center_test' and config_updated['data_testing']['data_type'] == "institution_id" and \
+                value is not None:
+                    config_updated['data_testing']['data_value'] = value
+                del config_updated[k]
 
     def _display_differing_keys(self):
         """Display differences between dictionaries.
