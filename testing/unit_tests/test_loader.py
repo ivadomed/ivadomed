@@ -87,5 +87,29 @@ def test_bids_df_multi(loader_parameters):
                     'columns_added': [], 'columns_removed': []}
 
 
+@pytest.mark.parametrize('loader_parameters', [{
+    "path_data": [os.path.join(__data_testing_dir__, "ct_scan")],
+    "bids_config": "ivadomed/config/config_bids.json",
+    "target_suffix": ["_seg-manual"],
+    "extensions": [".nii.gz"],
+    "roi_params": {"suffix": None, "slice_filter_roi": None},
+    "contrast_params": {"contrast_lst": ["ct"]}
+    }])
+def test_bids_df_ctscan(loader_parameters):
+    """
+    Test for ct-scan
+    Test for when dataset_description.json is not present in derivatives folder
+    """
+
+    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    df_test = bids_df.df.drop(columns=['path'])
+    df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
+    csv_ref = os.path.join(loader_parameters["path_data"][0], "df_ref.csv")
+    csv_test = os.path.join(loader_parameters["path_data"][0], "df_test.csv")
+    df_test.to_csv(csv_test, index=False)
+    diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
+    assert diff == {'added': [], 'removed': [], 'changed': [], 'columns_added': [], 'columns_removed': []}
+
+
 def teardown_function():
     remove_tmp_dir()
