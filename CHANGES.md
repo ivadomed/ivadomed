@@ -1,3 +1,11 @@
+## v2.7.4 (2021-03-15)
+
+See `2.7.3`. We had to re-release because the GitHub Action didn't get triggered to push the release
+to `PyPI` as it started as a draft. See here for more details:
+
+[GitHub Actions Bug](https://github.community/t/workflow-set-for-on-release-not-triggering-not-showing-up/16286)
+
+
 ## v2.7.3 (2021-03-15)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.7.2...release)
 
