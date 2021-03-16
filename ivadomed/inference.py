@@ -18,13 +18,17 @@ from ivadomed import training as imed_training
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
                 discard_noise=True, postprocessing=None):
-    """Save the network predictions as nibabel object.
+    """Save the neural network predictions as ``NiBabel`` object.
 
-    Based on the header of `fname_ref` image, it creates a nibabel object from the Network predictions (`data_lst`).
+    Based on the header of ``fname_ref`` image, it creates a nibabel object from the Network predictions (``data_lst``).
 
     Args:
-        data_lst (list of np arrays): Predictions, either 2D slices either 3D patches.
-        z_lst (list of ints): Slice indexes to reconstruct a 3D volume for 2D slices.
+        data_lst (list of np arrays): Predictions, either 2D slices or 3D patches.
+            2D: D x H x W
+                list of D np.arrays, where D = depth of original image ``fname_ref``
+                each array is an image slice of dimension H x W
+                each element is a float in [0, 1]
+        z_lst (list of int): Slice indexes to reconstruct a 3D volume for 2D slices.
         fname_ref (str): Filename of the input image: its header is copied to the output nibabel object.
         fname_out (str): If not None, then the generated nibabel object is saved with this filename.
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
@@ -36,7 +40,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         postprocessing (dict): Contains postprocessing steps to be applied.
 
     Returns:
-        nibabel.Nifti1Image: NiBabel object containing the Network prediction.
+        nibabel.Nifti1Image: NiBabel object containing the neural network prediction.
     """
     # Load reference nibabel object
     nib_ref = nib.load(fname_ref)
