@@ -17,10 +17,17 @@ def setup_function():
 
 @pytest.mark.parametrize('kernel_dim', ['2d'])
 @pytest.mark.parametrize('slice_axis', [0, 1, 2])
-@pytest.mark.parametrize('qform', [
-    
+@pytest.mark.parametrize('qform_affine', [
+    None,
+    np.array([
+        [2., 0., 0., 0.],
+        [0., 3., 0., 0.],
+        [0., 0., 4., 0.],
+        [0., 0., 0., 1.]
+    ])
 ])
-def test_pred_to_nib(kernel_dim, slice_axis, header):
+@pytest.mark.parametrize('qform_code', [None, 0, 1, 2, 3, 4])
+def test_pred_to_nib(kernel_dim, slice_axis, qform_affine, qform_code):
     arr = np.array(
         [[[0, 1.0, 1.0],
           [0, 0, 1.0]],
@@ -30,6 +37,9 @@ def test_pred_to_nib(kernel_dim, slice_axis, header):
         dataobj=arr,
         affine=None,
         header=None
+    )
+    img_original.set_qform(
+        qform_affine, qform_code
     )
     nib.save(img_original, os.path.join(__data_testing_dir__, "image_ref.nii.gz"))
     data_lst = [
@@ -51,9 +61,22 @@ def test_pred_to_nib(kernel_dim, slice_axis, header):
         postprocessing=None
     )
     assert os.path.exists(os.path.join(__output_dir__, "nib_image.nii.gz"))
-    print(nib_pred.get_qform(coded=True))
-    print(nib_pred.get_sform(coded=True))
+    qform = nib_pred.get_qform(coded=True)
+    if qform_affine is None:
+        if qform_code is None:
+            assert qform[0] is None
+        else:
+            affine = np.array([
+                    [1., 0., 0., 0.],
+                    [0., 1., 0., 0.],
+                    [0., 0., 1., 0.],
+                    [0., 0., 0., 1.]
+                ])
+            assert (qform[0] == affine).all()
+    else:
+        assert (qform[0] == qform_affine).all()
+    assert qform[1] == qform_code
 
 
-# def teardown_function():
-#     remove_tmp_dir()
+def teardown_function():
+    remove_tmp_dir()
