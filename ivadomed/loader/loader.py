@@ -46,7 +46,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         object_detection_params (dict): Object dection parameters.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
-        is_input_dropout (bool): Return input with a missing modality.
+        is_input_dropout (bool): Return input with missing modalities.
 
     Returns:
         BidsDataset
@@ -440,6 +440,7 @@ class MRI2DSegmentationDataset(Dataset):
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
+        is_input_dropout (bool): Return input with missing modalities.
 
     Attributes:
         indexes (list): List of indices corresponding to each slice or subvolume in the dataset.
@@ -459,7 +460,7 @@ class MRI2DSegmentationDataset(Dataset):
         slice_filter_roi (bool): Indicates whether a slice filtering is done based on ROI data.
         roi_thr (int): If the ROI mask contains less than this number of non-zero voxels, the slice will be discarded
             from the dataset.
-        is_input_dropout (bool): Return input with a missing modality.
+        is_input_dropout (bool): Return input with missing modalities.
 
     """
 
@@ -609,7 +610,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
-        is_input_dropout (bool): Return input with a missing modality.
+        is_input_dropout (bool): Return input with missing modalities.
     """
 
     def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
@@ -781,7 +782,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
         object_detection_params (dict): Object dection parameters.
-        is_input_dropout (bool): Return input with a missing modality.
+        is_input_dropout (bool): Return input with missing modalities.
     """
 
     def __init__(self, bids_df, subject_file_lst, target_suffix, model_params, contrast_params, slice_axis=2,
@@ -828,7 +829,7 @@ class BidsDataset(MRI2DSegmentationDataset):
             If segmentation: GT is binary mask.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
-        is_input_dropout (bool): Return input with a missing modality.
+        is_input_dropout (bool): Return input with missing modalities.
 
     Attributes:
         filename_pairs (list): A list of tuples in the format (input filename list containing all modalities,ground \
