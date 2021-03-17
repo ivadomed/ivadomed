@@ -500,8 +500,8 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
         "$$description": [
             "Indicates if input-level dropout should be applied during training.\n",
             "This option trains a model to be robust to missing modalities by setting \n",
-            "to zero one channel. If a modality is already missing, it will only drop \n",
-            "this modality. This option is always disabled at test time."
+            "to zero one or more channels. Always at least one channel will be kept. If one \n",
+            "or more modalities are already missing, it will be considered as dropped."
         ],
         "type": "boolean"
     }
