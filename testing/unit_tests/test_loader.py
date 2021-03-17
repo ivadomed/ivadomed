@@ -87,9 +87,8 @@ def test_dropout_input(seg_pair):
 
     # If multichannel
     if n_channels > 1:
-        # Verify that at least one channel is set to zero, but there is still at least one channel left
+        # Verify that there is still at least one channel remaining
         assert sum(empty_channels) <= n_channels
-        assert sum(empty_channels) >= 1
     else:
         assert sum(empty_channels) == 0
 

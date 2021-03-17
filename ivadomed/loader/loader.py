@@ -122,7 +122,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
 
 
 def dropout_input(seg_pair):
-    """Applies input-level dropout: one to all channels minus one will be randomly set to zeros. This function verifies
+    """Applies input-level dropout: zero to all channels minus one will be randomly set to zeros. This function verifies
     if some channels are already empty. Always at least one input channel will be kept.
 
     Args:
@@ -138,8 +138,8 @@ def dropout_input(seg_pair):
         n_unique_values = [len(torch.unique(input_data)) > 1 for input_data in seg_pair['input']]
         idx_empty = np.where(np.invert(n_unique_values))[0]
 
-        # Select how many channels will be dropped between 1 and n_channels - 1 (keep at least one input)
-        n_dropped = random.randint(1, n_channels - 1)
+        # Select how many channels will be dropped between 0 and n_channels - 1 (keep at least one input)
+        n_dropped = random.randint(0, n_channels - 1)
 
         if n_dropped > len(idx_empty):
             # Remove empty channel to the number of channels to drop
