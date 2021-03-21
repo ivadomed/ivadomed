@@ -1,3 +1,28 @@
+## v2.7.4 (2021-03-15)
+
+See `2.7.3`. We had to re-release because the GitHub Action didn't get triggered to push the release
+to `PyPI` as it started as a draft. See here for more details:
+
+[GitHub Actions Bug](https://github.community/t/workflow-set-for-on-release-not-triggering-not-showing-up/16286)
+
+
+## v2.7.3 (2021-03-15)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.7.2...release)
+
+**BUG**
+
+ - Copy nibabel header when creating output prediction.  [View pull request](https://github.com/ivadomed/ivadomed/pull/714)
+ - Dynamically write dataset_description.json file to suppress pybids warning.  [View pull request](https://github.com/ivadomed/ivadomed/pull/690)
+
+**DOCUMENTATION**
+
+ - Change archive links to repository links for pre-trained models.  [View pull request](https://github.com/ivadomed/ivadomed/pull/700)
+
+**ENHANCEMENT**
+
+ - New loader: Refactor BidsDataset classes.  [View pull request](https://github.com/ivadomed/ivadomed/pull/691)
+
+
 ## v2.7.2 (2021-02-19)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.7.1...v2.7.2)
 
@@ -195,7 +220,7 @@
 
  - Version format.  [View pull request](https://github.com/ivadomed/ivadomed/pull/481)
 
-## v2.3.0 (2020-10-19) 
+## v2.3.0 (2020-10-19)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.2.1...v2.3.0)
 
 **BUG**

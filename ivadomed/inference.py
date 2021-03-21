@@ -36,7 +36,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         postprocessing (dict): Contains postprocessing steps to be applied.
 
     Returns:
-        NibabelObject: Object containing the Network prediction.
+        nibabel.Nifti1Image: NiBabel object containing the Network prediction.
     """
     # Load reference nibabel object
     nib_ref = nib.load(fname_ref)
@@ -46,7 +46,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         # complete missing z with zeros
         tmp_lst = []
         for z in range(nib_ref_can.header.get_data_shape()[slice_axis]):
-            if not z in z_lst:
+            if z not in z_lst:
                 tmp_lst.append(np.zeros(data_lst[0].shape))
             else:
                 tmp_lst.append(data_lst[z_lst.index(z)])
@@ -67,7 +67,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     if len(arr_pred_ref_space.shape) == 4:
         for i in range(n_channel):
             oriented_volumes.append(
-                imed_loader_utils.reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
+                imed_loader_utils.reorient_image(arr_pred_ref_space[i, ], slice_axis, nib_ref, nib_ref_can))
         # transpose to locate the channel dimension at the end to properly see image on viewer
         arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
     else:
@@ -86,8 +86,14 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
                                               nib_ref.header['pixdim'][1:4],
                                               fname_prefix)
         arr_pred_ref_space = postpro.apply()
-    nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
 
+    # Here we prefer to copy the header (rather than just the affine matrix), in order to preserve the qform_code.
+    # See: https://github.com/ivadomed/ivadomed/issues/711
+    nib_pred = nib.Nifti1Image(
+        dataobj=arr_pred_ref_space,
+        affine=None,
+        header=nib_ref.header.copy()
+    )
     # save as nifti file
     if fname_out is not None:
         nib.save(nib_pred, fname_out)
@@ -314,7 +320,7 @@ def split_classes(nib_prediction):
     pred = nib_prediction.get_fdata()
     pred_list = []
     for c in range(pred.shape[-1]):
-        class_pred = nib.Nifti1Image(pred[..., c].astype('float32'), nib_prediction.affine)
+        class_pred = nib.Nifti1Image(pred[..., c].astype('float32'), None, nib_prediction.header.copy())
         pred_list.append(class_pred)
     return pred_list
 
