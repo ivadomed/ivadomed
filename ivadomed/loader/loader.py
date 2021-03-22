@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import pandas as pd
 import os
+import imageio
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
@@ -204,7 +205,7 @@ class SegmentationPair(object):
 
         # loop over the filenames (list)
         for input_file in self.input_filenames:
-            input_img = nib.load(input_file)
+            input_img = self.read_file(input_file)
             self.input_handle.append(input_img)
             if len(input_img.shape) > 3:
                 raise RuntimeError("4-dimensional volumes not supported.")
@@ -219,9 +220,9 @@ class SegmentationPair(object):
             for gt in self.gt_filenames:
                 if gt is not None:
                     if isinstance(gt, str):  # this tissue has annotation from only one rater
-                        self.gt_handle.append(nib.load(gt))
+                        self.gt_handle.append(self.read_file(gt))
                     else:  # this tissue has annotation from several raters
-                        self.gt_handle.append([nib.load(gt_rater) for gt_rater in gt])
+                        self.gt_handle.append([self.read_file(gt_rater) for gt_rater in gt])
                 else:
                     self.gt_handle.append(None)
 
@@ -425,6 +426,22 @@ class SegmentationPair(object):
         }
 
         return dreturn
+
+    def read_file(self, filename):
+        """Read file according to file type.
+        Args:
+            filename (str): Subject filename.
+        """
+        if "nii" in self.extension:
+            # Returns 'nibabel.nifti1.Nifti1Image' object
+            # For 'nii' and 'nii.gz' extentions
+            return nib.load(filename)
+        elif self.extension == "png":
+            # Returns data from file as a 3D numpy array
+            # Behavior for grayscale png only, behavior TBD for RGB or RBGA png
+            return np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
+        else:
+            raise RuntimeError('Input file type not supported')
 
 
 class MRI2DSegmentationDataset(Dataset):
