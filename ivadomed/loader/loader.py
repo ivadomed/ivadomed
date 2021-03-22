@@ -326,7 +326,7 @@ class SegmentationPair(object):
             if gt is not None:
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
                     gt_meta_dict.append(imed_loader_utils.SampleMetadata({
-                        "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
+                        "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(gt), self.slice_axis),
                         "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(gt), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"],
                         "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
@@ -336,7 +336,7 @@ class SegmentationPair(object):
                     }))
                 else:
                     gt_meta_dict.append([imed_loader_utils.SampleMetadata({
-                        "zooms": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_zooms(), self.slice_axis),
+                        "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(gt_rater), self.slice_axis),
                         "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(gt), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"][idx_class][idx_rater],
                         "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
@@ -357,7 +357,7 @@ class SegmentationPair(object):
         input_meta_dict = []
         for handle in self.input_handle:
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
-                "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
+                "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(handle), self.slice_axis),
                 "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(handle), self.slice_axis),
                 "data_type": 'im',
                 "crop_params": {}
@@ -467,6 +467,25 @@ class SegmentationPair(object):
             return data.header.get_data_shape()
         if self.extension == "png":
             return data.shape
+
+    def get_voxel_size(self, data):
+        """Returns voxel sizes in mm according to file type.
+        Args:
+            data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
+                for nifti and png file respectively.
+        Returns:
+            tuple: Voxel size in mm
+        """
+        if "nii" in self.extension:
+            # Read zooms metadata from nifti file header
+            return data.header.get_zooms()
+        if self.extension == "png":
+            # Voxel size for PNG is extracted from PixelSize metadata (from BIDS JSON sidecar)
+            # PixelSize definition in example dataset is a scalar in micrometers (BIDS BEP031 v 0.0.2)
+            # PixelSize definition will change, 2D (XY) or 3D (XYZ) array in micrometers (BIDS BEP031 v 0.0.3)
+            # Behavior will have to be ajusted here to follow BEP development
+            pixel_size_in_mm = self.metadata[0]['PixelSize'] / 1000
+            return (pixel_size_in_mm, pixel_size_in_mm, 0)
 
 
 class MRI2DSegmentationDataset(Dataset):
