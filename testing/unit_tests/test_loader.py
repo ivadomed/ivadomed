@@ -99,7 +99,7 @@ def test_bids_df_multi(loader_parameters):
     }])
 def test_bids_df_ctscan(loader_parameters):
     """
-    Test for ct-scan
+    Test for ct-scan nii.gz file format
     Test for when dataset_description.json is not present in derivatives folder
     """
 
@@ -111,6 +111,7 @@ def test_bids_df_ctscan(loader_parameters):
     df_test.to_csv(csv_test, index=False)
     diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
     assert diff == {'added': [], 'removed': [], 'changed': [], 'columns_added': [], 'columns_removed': []}
+
 
 @pytest.mark.parametrize('seg_pair', [
     {"input": torch.rand((2, 5, 5))},
