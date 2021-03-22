@@ -185,6 +185,7 @@ class SegmentationPair(object):
         prepro_transforms (dict): Transforms to be applied before training.
         input_handle (list): List of input nifty data.
         gt_handle (list): List of gt nifty data.
+        extension (str): File extension of input files
     """
 
     def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None,
@@ -197,6 +198,7 @@ class SegmentationPair(object):
         self.slice_axis = slice_axis
         self.soft_gt = soft_gt
         self.prepro_transforms = prepro_transforms
+        self.extension = input_filenames[0].split('.', 1)[1]
         # list of the images
         self.input_handle = []
 
