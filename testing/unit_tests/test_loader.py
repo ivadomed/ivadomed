@@ -2,8 +2,10 @@ import os
 import pytest
 import csv_diff
 import logging
+import torch
 from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
 from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader import loader as imed_loader
 logger = logging.getLogger(__name__)
 
 
@@ -109,6 +111,25 @@ def test_bids_df_ctscan(loader_parameters):
     df_test.to_csv(csv_test, index=False)
     diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
     assert diff == {'added': [], 'removed': [], 'changed': [], 'columns_added': [], 'columns_removed': []}
+
+@pytest.mark.parametrize('seg_pair', [
+    {"input": torch.rand((2, 5, 5))},
+    {"input": torch.rand((1, 5, 5))},
+    {"input": torch.rand((5, 5, 5, 5))},
+    {"input": (torch.rand((5, 5, 5, 3)) * torch.tensor([1, 0, 1], dtype=torch.float)).transpose(0, -1)},
+    {"input": (torch.rand((7, 7, 4)) * torch.tensor([1, 0, 0, 0], dtype=torch.float)).transpose(0, -1)}
+])
+def test_dropout_input(seg_pair):
+    n_channels = seg_pair['input'].size(0)
+    seg_pair = imed_loader.dropout_input(seg_pair)
+    empty_channels = [len(torch.unique(input_data)) == 1 for input_data in seg_pair['input']]
+
+    # If multichannel
+    if n_channels > 1:
+        # Verify that there is still at least one channel remaining
+        assert sum(empty_channels) <= n_channels
+    else:
+        assert sum(empty_channels) == 0
 
 
 def teardown_function():
