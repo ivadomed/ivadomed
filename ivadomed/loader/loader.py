@@ -335,7 +335,7 @@ class SegmentationPair(object):
                 else:
                     gt_meta_dict.append([imed_loader_utils.SampleMetadata({
                         "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(gt_rater), self.slice_axis),
-                        "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(gt), self.slice_axis),
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(gt_rater), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"][idx_class][idx_rater],
                         "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
                             0] else None,
