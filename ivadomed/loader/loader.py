@@ -1,5 +1,6 @@
 import copy
 import random
+import logging
 import nibabel as nib
 import numpy as np
 import torch
@@ -14,12 +15,14 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
 
+logger = logging.getLogger(__name__)
+
 
 def load_dataset(bids_df, data_list, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
                  dataset_type="training", requires_undo=False, metadata_type=None,
                  object_detection_params=None, soft_gt=False, device=None,
-                 cuda_available=None, **kwargs):
+                 cuda_available=None, is_input_dropout=False, **kwargs):
     """Get loader appropriate loader according to model type. Available loaders are Bids3DDataset for 3D data,
     BidsDataset for 2D data and HDF5Dataset for HeMIS.
 
@@ -43,6 +46,8 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         object_detection_params (dict): Object dection parameters.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
+        is_input_dropout (bool): Return input with missing modalities.
+
     Returns:
         BidsDataset
 
@@ -69,7 +74,8 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                                 multichannel=multichannel,
                                 model_params=model_params,
                                 object_detection_params=object_detection_params,
-                                soft_gt=soft_gt)
+                                soft_gt=soft_gt,
+                                is_input_dropout=is_input_dropout)
 
     elif model_params["name"] == "HeMISUnet":
         dataset = imed_adaptative.HDF5Dataset(bids_df=bids_df,
@@ -103,7 +109,8 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                                                                             cuda_available=cuda_available),
                               soft_gt=soft_gt,
                               object_detection_params=object_detection_params,
-                              task=task)
+                              task=task,
+                              is_input_dropout=is_input_dropout)
         dataset.load_filenames()
 
     if model_params["name"] != "Modified3DUNet":
@@ -112,6 +119,47 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         print("Loaded {} volumes of size {} for the {} set.".format(len(dataset), slice_axis, dataset_type))
 
     return dataset
+
+
+def dropout_input(seg_pair):
+    """Applies input-level dropout: zero to all channels minus one will be randomly set to zeros. This function verifies
+    if some channels are already empty. Always at least one input channel will be kept.
+
+    Args:
+        seg_pair (dict): Batch containing torch tensors (input and gt) and metadata.
+
+    Return:
+        seg_pair (dict): Batch containing torch tensors (input and gt) and metadata with channel(s) dropped.
+    """
+    n_channels = seg_pair['input'].size(0)
+    # Verify if the input is multichannel
+    if n_channels > 1:
+        # Verify if some channels are already empty
+        n_unique_values = [len(torch.unique(input_data)) > 1 for input_data in seg_pair['input']]
+        idx_empty = np.where(np.invert(n_unique_values))[0]
+
+        # Select how many channels will be dropped between 0 and n_channels - 1 (keep at least one input)
+        n_dropped = random.randint(0, n_channels - 1)
+
+        if n_dropped > len(idx_empty):
+            # Remove empty channel to the number of channels to drop
+            n_dropped = n_dropped - len(idx_empty)
+            # Select which channels will be dropped
+            idx_dropped = []
+            while len(idx_dropped) != n_dropped:
+                idx = random.randint(0, n_channels - 1)
+                # Don't include the empty channel in the dropped channels
+                if idx not in idx_empty:
+                    idx_dropped.append(idx)
+        else:
+            idx_dropped = idx_empty
+
+        seg_pair['input'][idx_dropped] = torch.zeros_like(seg_pair['input'][idx_dropped])
+
+    else:
+        logger.warning("\n Impossible to apply input-level dropout since input is not multi-channel.")
+
+    return seg_pair
 
 
 class SegmentationPair(object):
@@ -392,6 +440,7 @@ class MRI2DSegmentationDataset(Dataset):
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
+        is_input_dropout (bool): Return input with missing modalities.
 
     Attributes:
         indexes (list): List of indices corresponding to each slice or subvolume in the dataset.
@@ -411,11 +460,12 @@ class MRI2DSegmentationDataset(Dataset):
         slice_filter_roi (bool): Indicates whether a slice filtering is done based on ROI data.
         roi_thr (int): If the ROI mask contains less than this number of non-zero voxels, the slice will be discarded
             from the dataset.
+        is_input_dropout (bool): Return input with missing modalities.
 
     """
 
     def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None,
-                 task="segmentation", roi_params=None, soft_gt=False):
+                 task="segmentation", roi_params=None, soft_gt=False, is_input_dropout=False):
         self.indexes = []
         self.filename_pairs = filename_pairs
         self.prepro_transforms, self.transform = transform
@@ -430,6 +480,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.soft_gt = soft_gt
         self.has_bounding_box = True
         self.task = task
+        self.is_input_dropout = is_input_dropout
 
     def load_filenames(self):
         """Load preprocessed pair data (input and gt) in handler."""
@@ -534,6 +585,10 @@ class MRI2DSegmentationDataset(Dataset):
             'roi_metadata': metadata_roi
         }
 
+        # Input-level dropout to train with missing modalities
+        if self.is_input_dropout:
+            data_dict = dropout_input(data_dict)
+
         return data_dict
 
 
@@ -555,11 +610,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
+        is_input_dropout (bool): Return input with missing modalities.
     """
 
     def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
-                 task="segmentation",
-                 soft_gt=False):
+                 task="segmentation", soft_gt=False, is_input_dropout=False):
         self.filename_pairs = filename_pairs
         self.handlers = []
         self.indexes = []
@@ -570,6 +625,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         self.has_bounding_box = True
         self.task = task
         self.soft_gt = soft_gt
+        self.is_input_dropout = is_input_dropout
 
         self._load_filenames()
         self._prepare_indices()
@@ -694,6 +750,10 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                   coord['y_min']:coord['y_max'],
                                   coord['z_min']:coord['z_max']]
 
+        # Input-level dropout to train with missing modalities
+        if self.is_input_dropout:
+            subvolumes = dropout_input(subvolumes)
+
         if stack_gt is not None:
             for _ in range(len(stack_gt)):
                 subvolumes['gt'] = stack_gt[:,
@@ -722,11 +782,13 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
         object_detection_params (dict): Object dection parameters.
+        is_input_dropout (bool): Return input with missing modalities.
     """
 
     def __init__(self, bids_df, subject_file_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_params=None,
-                 multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
+                 multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False,
+                 is_input_dropout=False):
         dataset = BidsDataset(bids_df=bids_df,
                               subject_file_lst=subject_file_lst,
                               target_suffix=target_suffix,
@@ -736,10 +798,12 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               slice_axis=slice_axis,
                               transform=transform,
                               multichannel=multichannel,
-                              object_detection_params=object_detection_params)
+                              object_detection_params=object_detection_params,
+                              is_input_dropout=is_input_dropout)
 
         super().__init__(dataset.filename_pairs, length=model_params["length_3D"], stride=model_params["stride_3D"],
-                         transform=transform, slice_axis=slice_axis, task=task, soft_gt=soft_gt)
+                         transform=transform, slice_axis=slice_axis, task=task, soft_gt=soft_gt,
+                         is_input_dropout=is_input_dropout)
 
 
 class BidsDataset(MRI2DSegmentationDataset):
@@ -764,7 +828,8 @@ class BidsDataset(MRI2DSegmentationDataset):
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
-            truths are thresholded (0.5) after the data augmentation operations.
+        truths are thresholded (0.5) after the data augmentation operations.
+        is_input_dropout (bool): Return input with missing modalities.
 
     Attributes:
         filename_pairs (list): A list of tuples in the format (input filename list containing all modalities,ground \
@@ -778,7 +843,8 @@ class BidsDataset(MRI2DSegmentationDataset):
 
     def __init__(self, bids_df, subject_file_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
-                 multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
+                 multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False,
+                 is_input_dropout=False):
 
         self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
         self.soft_gt = soft_gt
@@ -913,8 +979,9 @@ class BidsDataset(MRI2DSegmentationDataset):
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
 
-        if self.filename_pairs == []:
-            raise Exception('No subjects were selected - check selection of parameters on config.json (e.g. center selected + target_suffix)')
+        if not self.filename_pairs:
+            raise Exception('No subjects were selected - check selection of parameters on config.json (e.g. center '
+                            'selected + target_suffix)')
 
         super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
-                         self.soft_gt)
+                         self.soft_gt, is_input_dropout)
