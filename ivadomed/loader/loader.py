@@ -439,7 +439,7 @@ class SegmentationPair(object):
             # Behavior for grayscale png only, behavior TBD for RGB or RBGA png
             return np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
         else:
-            raise RuntimeError('Input file type not supported')
+            raise RuntimeError("Input file type '{}' not supported".format(self.extension))
 
     def apply_canonical(self, data):
         """Apply nibabel as_closest_canonical function to nifti data only.
