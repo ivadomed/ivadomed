@@ -450,7 +450,7 @@ class SegmentationPair(object):
         if "nii" in self.extension:
             # Returns 'nibabel.nifti1.Nifti1Image' object
             return nib.as_closest_canonical(data)
-        if self.extension == "png":
+        elif self.extension == "png":
             # Returns data as is in numpy array
             return data
 
@@ -464,7 +464,7 @@ class SegmentationPair(object):
         """
         if "nii" in self.extension:
             return data.header.get_data_shape()
-        if self.extension == "png":
+        elif self.extension == "png":
             return data.shape
 
     def get_voxel_size(self, data):
@@ -478,7 +478,7 @@ class SegmentationPair(object):
         if "nii" in self.extension:
             # Read zooms metadata from nifti file header
             return data.header.get_zooms()
-        if self.extension == "png":
+        elif self.extension == "png":
             # Voxel size for PNG is extracted from PixelSize metadata (from BIDS JSON sidecar)
             # PixelSize definition in example dataset is a scalar in micrometers (BIDS BEP031 v 0.0.2)
             # PixelSize definition will change, 2D (XY) or 3D (XYZ) array in micrometers (BIDS BEP031 v 0.0.3)
@@ -498,7 +498,7 @@ class SegmentationPair(object):
         if "nii" in self.extension:
             # Load data from file as numpy array
             return data.get_fdata(cache_mode, dtype=np.float32)
-        if self.extension == "png":
+        elif self.extension == "png":
             # Returns data as is in numpy array
             return data
 
