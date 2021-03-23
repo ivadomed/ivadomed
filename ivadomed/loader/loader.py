@@ -38,7 +38,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         contrast_params (dict): Contains image contrasts related parameters.
         slice_filter_params (dict): Contains slice_filter parameters, see :doc:`configuration_file` for more details.
         slice_axis (string): Choice between "axial", "sagittal", "coronal" ; controls the axis used to extract the 2D
-            data.
+            data from 3D nifti files. 2D png files use default "axial.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
         metadata_type (str): Choice between None, "mri_params", "contrasts".
@@ -55,7 +55,6 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
     Note: For more details on the parameters transform_params, target_suffix, roi_params, contrast_params,
     slice_filter_params and object_detection_params see :doc:`configuration_file`.
     """
-
     # Compose transforms
     tranform_lst, _ = imed_transforms.prepare_transforms(copy.deepcopy(transforms_params), requires_undo)
 
@@ -174,7 +173,8 @@ class SegmentationPair(object):
         metadata (list): Metadata list with each item corresponding to an image (contrast) in input_filenames.
             For single channel, the list will contain metadata related to one image.
         cache (bool): If the data should be cached in memory or not.
-        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png files use default "axial": 2.
         prepro_transforms (dict): Output of get_preprocessing_transforms.
 
     Attributes:
@@ -182,10 +182,11 @@ class SegmentationPair(object):
         gt_filenames (list): List of ground truth filenames.
         metadata (dict): Dictionary containing metadata of input and gt.
         cache (bool): If the data should be cached in memory or not.
-        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png files use default "axial": 2.
         prepro_transforms (dict): Transforms to be applied before training.
-        input_handle (list): List of input nifty data.
-        gt_handle (list): List of gt nifty data.
+        input_handle (list): List of input nifty data as 'nibabel.nifti1.Nifti1Image' object or png data as 'ndarray'
+        gt_handle (list): List of gt nifty data as 'nibabel.nifti1.Nifti1Image' object or png data as 'ndarray'
         extension (str): File extension of input files
     """
 
@@ -508,7 +509,8 @@ class MRI2DSegmentationDataset(Dataset):
     Args:
         filename_pairs (list): a list of tuples in the format (input filename list containing all modalities,ground \
             truth filename, ROI filename, metadata).
-        slice_axis (int): axis to make the slicing (default axial).
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png files use default "axial": 2.
         cache (bool): if the data should be cached in memory or not.
         transform (torchvision.Compose): transformations to apply.
         slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
@@ -526,7 +528,8 @@ class MRI2DSegmentationDataset(Dataset):
         prepro_transforms (Compose): Transformations to apply before training.
         transform (Compose): Transformations to apply during training.
         cache (bool): Tf the data should be cached in memory or not.
-        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png files use default "axial": 2.
         slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
         n_contrasts (int): Number of input contrasts.
         has_bounding_box (bool): True if bounding box in all metadata, else False.
@@ -891,7 +894,8 @@ class BidsDataset(MRI2DSegmentationDataset):
         subject_file_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         contrast_params (dict): Contains image contrasts related parameters.
-        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png files use default "axial": 2.
         cache (bool): If the data should be cached in memory or not.
         transform (list): Transformation list (length 2) composed of preprocessing transforms (Compose) and transforms
             to apply during training (Compose).
