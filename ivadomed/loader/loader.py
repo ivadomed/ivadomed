@@ -434,10 +434,12 @@ class SegmentationPair(object):
             # Returns 'nibabel.nifti1.Nifti1Image' object
             # For 'nii' and 'nii.gz' extentions
             return nib.load(filename)
+
         elif self.extension == "png":
             # Returns data from file as a 3D numpy array
             # Behavior for grayscale png only, behavior TBD for RGB or RBGA png
             return np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
+
         else:
             raise RuntimeError("Input file type '{}' not supported".format(self.extension))
 
@@ -450,6 +452,7 @@ class SegmentationPair(object):
         if "nii" in self.extension:
             # Returns 'nibabel.nifti1.Nifti1Image' object
             return nib.as_closest_canonical(data)
+
         elif self.extension == "png":
             # Returns data as is in numpy array
             return data
@@ -464,6 +467,7 @@ class SegmentationPair(object):
         """
         if "nii" in self.extension:
             return data.header.get_data_shape()
+
         elif self.extension == "png":
             return data.shape
 
@@ -478,13 +482,28 @@ class SegmentationPair(object):
         if "nii" in self.extension:
             # Read zooms metadata from nifti file header
             return data.header.get_zooms()
+
         elif self.extension == "png":
             # Voxel size for PNG is extracted from PixelSize metadata (from BIDS JSON sidecar)
             # PixelSize definition in example dataset is a scalar in micrometers (BIDS BEP031 v 0.0.2)
-            # PixelSize definition will change, 2D (XY) or 3D (XYZ) array in micrometers (BIDS BEP031 v 0.0.3)
-            # Behavior will have to be ajusted here to follow BEP development
-            pixel_size_in_mm = self.metadata[0]['PixelSize'] / 1000
-            return (pixel_size_in_mm, pixel_size_in_mm, 0)
+            # PixelSize definition may change for 2D [X, Y] and 3D [X, Y, Z] arrays in micrometers (BIDS BEP031 v 0.0.3)
+            # This method supports both behaviors.
+            # TODO: Update behavior to follow BEP microscopy development
+            # TODO: Review beahvior when implementing inference with PNG files (no BIDS metadata)
+            if 'PixelSize' in self.metadata[0]:
+                ps_in_um = self.metadata[0]['PixelSize']
+                if isinstance(ps_in_um, list) and (len(ps_in_um) == 2 or len(ps_in_um) == 3):
+                    ps_in_um = np.asarray(ps_in_um)
+                    ps_in_um.resize(3)
+                elif isinstance(ps_in_um, float):
+                    ps_in_um = np.asarray([ps_in_um, ps_in_um, 0])
+                else:
+                    raise RuntimeError("'PixelSize' metadata type is not supported. Format must be 2D [X, Y] list, "
+                                       "3D [X, Y, Z] list or float.")
+                ps_in_mm = tuple(ps_in_um / 1000)
+            else:
+                raise RuntimeError("'PixelSize' is missing from metadata")
+            return ps_in_mm
 
     def get_data(self, data, cache_mode):
         """Get nifti file data.
@@ -498,6 +517,7 @@ class SegmentationPair(object):
         if "nii" in self.extension:
             # Load data from file as numpy array
             return data.get_fdata(cache_mode, dtype=np.float32)
+
         elif self.extension == "png":
             # Returns data as is in numpy array
             return data
