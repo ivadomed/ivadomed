@@ -253,49 +253,8 @@ class BIDStoHDF5:
         all_deriv = bids_df.get_deriv_fnames()
 
         for subject in tqdm(subject_file_lst, desc="Loading dataset"):
-
-            df_sub = df_subjects.loc[df_subjects['filename'] == subject]
-
-            # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
-            contrast = df_sub['suffix'].values[0]
-            if contrast in (contrast_balance.keys()):
-                c[contrast] = c[contrast] + 1
-                if c[contrast] / tot[contrast] > contrast_balance[contrast]:
-                    continue
-
-            target_filename, roi_filename = [None] * len(target_suffix), None
-
-            derivatives = bids_df.df[bids_df.df['filename']
-                          .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
-
-            for deriv in derivatives:
-                for idx, suffix in enumerate(target_suffix):
-                    if suffix in deriv:
-                        target_filename[idx] = deriv
-                if not (roi_params["suffix"] is None) and roi_params["suffix"] in deriv:
-                    roi_filename = [deriv]
-
-            if (not any(target_filename)) or (not (roi_params["suffix"] is None) and (roi_filename is None)):
-                continue
-
-            metadata = df_sub.to_dict(orient='records')[0]
-            metadata['contrast'] = contrast
-
-            if len(bounding_box_dict):
-                # Take only one bounding box for cropping
-                metadata['bounding_box'] = bounding_box_dict[str(df_sub['path'].values[0])][0]
-
-            if metadata_choice == 'mri_params':
-                if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
-                            self.metadata.keys()]):
-                    continue
-
-            # Get subj_id (prefix filename without modality suffix and extension)
-            subj_id = subject.split('.')[0].split('_')[0]
-
-            self.filename_pairs.append((subj_id, [df_sub['path'].values[0]],
-                                            target_filename, roi_filename, [metadata]))
-            list_patients.append(subj_id)
+            self.process_subject( bids_df, subject, df_subjects, c, tot, contrast_balance, target_suffix, 
+                                all_deriv, roi_params, bounding_box_dict, metadata_choice, list_patients)
 
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
@@ -311,6 +270,57 @@ class BIDStoHDF5:
         # Save images into HDF5 file
         self._load_filenames()
         print("Files loaded.")
+
+    def process_subject(self, bids_df, subject, df_subjects, c, tot, contrast_balance, target_suffix, 
+                        all_deriv, roi_params, bounding_box_dict, metadata_choice, list_patients):
+        df_sub = df_subjects.loc[df_subjects['filename'] == subject]
+
+        # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
+        contrast = df_sub['suffix'].values[0]
+        is_over_thresh = self.is_contrast_over_threshold(c, tot, contrast, contrast_balance)
+        
+        if(not is_over_thresh):
+            target_filename, roi_filename = self.get_filenames(bids_df, subject, all_deriv, target_suffix, roi_params)
+
+            if (not any(target_filename)) or (not (roi_params["suffix"] is None) and (roi_filename is None)):
+                return
+
+            metadata = df_sub.to_dict(orient='records')[0]
+            metadata['contrast'] = contrast
+
+            if len(bounding_box_dict):
+                # Take only one bounding box for cropping
+                metadata['bounding_box'] = bounding_box_dict[str(df_sub['path'].values[0])][0]
+
+            are_mri_params = all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in self.metadata.keys()])
+            if metadata_choice == 'mri_params'and not are_mri_params:
+                return
+
+            # Get subj_id (prefix filename without modality suffix and extension)
+            subj_id = subject.split('.')[0].split('_')[0]
+
+            self.filename_pairs.append((subj_id, [df_sub['path'].values[0]],
+                                            target_filename, roi_filename, [metadata]))
+            list_patients.append(subj_id)
+    
+    def is_contrast_over_threshold(self, c, tot, contrast, contrast_balance):
+        if contrast in (contrast_balance.keys()):
+            c[contrast] = c[contrast] + 1
+            return c[contrast] / tot[contrast] > contrast_balance[contrast]
+    
+    def get_filenames(self, bids_df, subject, all_deriv, target_suffix, roi_params):
+        target_filename, roi_filename = [None] * len(target_suffix), None
+        derivatives = bids_df.df[bids_df.df['filename']
+                    .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
+
+        for deriv in derivatives:
+            for idx, suffix in enumerate(target_suffix):
+                if suffix in deriv:
+                    target_filename[idx] = deriv
+            if not (roi_params["suffix"] is None) and roi_params["suffix"] in deriv:
+                roi_filename = [deriv]
+        
+        return target_filename, roi_filename
 
     def _load_filenames(self):
         """Load preprocessed pair data (input and gt) in handler."""
