@@ -359,12 +359,12 @@ class BIDStoHDF5:
     def create_metadata(self, grp, key, metadata):        
         grp[key].attrs['data_type'] = metadata['data_type']
 
-        if "zooms" in metadata.keys():
-            grp[key].attrs["zooms"] = metadata['zooms']
-        if "data_shape" in metadata.keys():
-            grp[key].attrs["data_shape"] = metadata['data_shape']
-        if "bounding_box" in metadata.keys():
-            grp[key].attrs["bounding_box"] = metadata['bounding_box']
+        if 'zooms' in metadata.keys():
+            grp[key].attrs['zooms'] = metadata['zooms']
+        if 'data_shape' in metadata.keys():
+            grp[key].attrs['data_shape'] = metadata['data_shape']
+        if  'bounding_box' in metadata.keys() and metadata['bounding_box'] is not None:
+            grp[key].attrs['bounding_box'] = metadata['bounding_box']
 
     def add_grp_contrast(self, grp, contrast):
         if grp.attrs.__contains__('contrast'):
