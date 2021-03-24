@@ -312,6 +312,70 @@ class BIDStoHDF5:
         self._load_filenames()
         print("Files loaded.")
 
+    def _slice_seg_pair(self, idx_pair_slice, seg_pair, roi_pair, useful_slices, input_volumes, gt_volume, roi_volume):
+        """ Helper function to slice segmentation pair at load time """
+        slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
+
+        self.has_bounding_box = imed_obj_detect.verify_metadata(slice_seg_pair, self.has_bounding_box)
+        if self.has_bounding_box:
+            imed_obj_detect.adjust_transforms(self.prepro_transforms, slice_seg_pair)
+
+        # keeping idx of slices with gt
+        if self.slice_filter_fn:
+            filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
+        if self.slice_filter_fn and filter_fn_ret_seg:
+            useful_slices.append(idx_pair_slice)
+
+        roi_pair_slice = roi_pair.get_pair_slice(idx_pair_slice)
+        slice_seg_pair, roi_pair_slice = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                                                                                        slice_seg_pair,
+                                                                                        roi_pair_slice)
+
+        input_volumes.append(slice_seg_pair["input"][0])
+
+        # Handle unlabeled data
+        if not len(slice_seg_pair["gt"]):
+            gt_volume = []
+        else:
+            gt_volume.append((slice_seg_pair["gt"][0] * 255).astype(np.uint8) / 255.)
+
+        # Handle data with no ROI provided
+        if not len(roi_pair_slice["gt"]):
+            roi_volume = []
+        else:
+            roi_volume.append((roi_pair_slice["gt"][0] * 255).astype(np.uint8) / 255.)
+
+        return slice_seg_pair, roi_pair_slice
+
+    def create_subgrp_metadata(self, grp_key, grp, contrast):
+        if grp[grp_key].attrs.__contains__('contrast'):
+            attr = grp[grp_key].attrs['contrast']
+            new_attr = [c for c in attr]
+            new_attr.append(contrast)
+            grp[grp_key].attrs.create('contrast', new_attr, dtype=self.dt)
+        else:
+            grp[grp_key].attrs.create('contrast', [contrast], dtype=self.dt)
+
+    def create_metadata(self, grp, key, metadata):        
+        grp[key].attrs['data_type'] = metadata['data_type']
+
+        if "zooms" in metadata.keys():
+            grp[key].attrs["zooms"] = metadata['zooms']
+        if "data_shape" in metadata.keys():
+            grp[key].attrs["data_shape"] = metadata['data_shape']
+        if "bounding_box" in metadata.keys():
+            grp[key].attrs["bounding_box"] = metadata['bounding_box']
+
+    def add_grp_contrast(self, grp, contrast):
+        if grp.attrs.__contains__('contrast'):
+            attr = grp.attrs['contrast']
+            new_attr = [c for c in attr]
+            new_attr.append(contrast)
+            grp.attrs.create('contrast', new_attr, dtype=self.dt)
+
+        else:
+            grp.attrs.create('contrast', [contrast], dtype=self.dt)
+
     def _load_filenames(self):
         """Load preprocessed pair data (input and gt) in handler."""
         with h5py.File(self.path_hdf5, "a") as hdf5_file:
@@ -336,37 +400,8 @@ class BIDStoHDF5:
                 roi_volume = []
 
                 for idx_pair_slice in range(input_data_shape[-1]):
-
-                    slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
-
-                    self.has_bounding_box = imed_obj_detect.verify_metadata(slice_seg_pair, self.has_bounding_box)
-                    if self.has_bounding_box:
-                        imed_obj_detect.adjust_transforms(self.prepro_transforms, slice_seg_pair)
-
-                    # keeping idx of slices with gt
-                    if self.slice_filter_fn:
-                        filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
-                    if self.slice_filter_fn and filter_fn_ret_seg:
-                        useful_slices.append(idx_pair_slice)
-
-                    roi_pair_slice = roi_pair.get_pair_slice(idx_pair_slice)
-                    slice_seg_pair, roi_pair_slice = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
-                                                                                                    slice_seg_pair,
-                                                                                                    roi_pair_slice)
-
-                    input_volumes.append(slice_seg_pair["input"][0])
-
-                    # Handle unlabeled data
-                    if not len(slice_seg_pair["gt"]):
-                        gt_volume = []
-                    else:
-                        gt_volume.append((slice_seg_pair["gt"][0] * 255).astype(np.uint8) / 255.)
-
-                    # Handle data with no ROI provided
-                    if not len(roi_pair_slice["gt"]):
-                        roi_volume = []
-                    else:
-                        roi_volume.append((roi_pair_slice["gt"][0] * 255).astype(np.uint8) / 255.)
+                    slice_seg_pair, roi_pair_slice = self._slice_seg_pair(idx_pair_slice, seg_pair, roi_pair, 
+                                                                        useful_slices, input_volumes, gt_volume, roi_volume)
 
                 # Getting metadata using the one from the last slice
                 input_metadata = slice_seg_pair['input_metadata'][0]
@@ -380,6 +415,7 @@ class BIDStoHDF5:
 
                 # Creating datasets and metadata
                 contrast = input_metadata['contrast']
+                
                 # Inputs
                 print(len(input_volumes))
                 print("grp= ", str(subject_id))
@@ -389,82 +425,36 @@ class BIDStoHDF5:
                     print("list empty")
                     continue
                 grp.create_dataset(key, data=input_volumes)
+                
                 # Sub-group metadata
-                if grp['inputs'].attrs.__contains__('contrast'):
-                    attr = grp['inputs'].attrs['contrast']
-                    new_attr = [c for c in attr]
-                    new_attr.append(contrast)
-                    grp['inputs'].attrs.create('contrast', new_attr, dtype=self.dt)
-
-                else:
-                    grp['inputs'].attrs.create('contrast', [contrast], dtype=self.dt)
+                self.create_subgrp_metadata('inputs', grp, contrast)
 
                 # dataset metadata
                 grp[key].attrs['input_filenames'] = input_metadata['input_filenames']
-                grp[key].attrs['data_type'] = input_metadata['data_type']
-
-                if "zooms" in input_metadata.keys():
-                    grp[key].attrs["zooms"] = input_metadata['zooms']
-                if "data_shape" in input_metadata.keys():
-                    grp[key].attrs["data_shape"] = input_metadata['data_shape']
-                if "bounding_box" in input_metadata.keys():
-                    grp[key].attrs["bounding_box"] = input_metadata['bounding_box']
+                self.create_metadata(grp, key, input_metadata)
 
                 # GT
                 key = "gt/{}".format(contrast)
                 grp.create_dataset(key, data=gt_volume)
                 # Sub-group metadata
-                if grp['gt'].attrs.__contains__('contrast'):
-                    attr = grp['gt'].attrs['contrast']
-                    new_attr = [c for c in attr]
-                    new_attr.append(contrast)
-                    grp['gt'].attrs.create('contrast', new_attr, dtype=self.dt)
-
-                else:
-                    grp['gt'].attrs.create('contrast', [contrast], dtype=self.dt)
+                self.create_subgrp_metadata('gt', grp, contrast)
 
                 # dataset metadata
                 grp[key].attrs['gt_filenames'] = input_metadata['gt_filenames']
-                grp[key].attrs['data_type'] = gt_metadata['data_type']
-
-                if "zooms" in gt_metadata.keys():
-                    grp[key].attrs["zooms"] = gt_metadata['zooms']
-                if "data_shape" in gt_metadata.keys():
-                    grp[key].attrs["data_shape"] = gt_metadata['data_shape']
-                if gt_metadata['bounding_box'] is not None:
-                    grp[key].attrs["bounding_box"] = gt_metadata['bounding_box']
+                self.create_metadata(grp, key, gt_metadata)
 
                 # ROI
                 key = "roi/{}".format(contrast)
                 grp.create_dataset(key, data=roi_volume)
                 # Sub-group metadata
-                if grp['roi'].attrs.__contains__('contrast'):
-                    attr = grp['roi'].attrs['contrast']
-                    new_attr = [c for c in attr]
-                    new_attr.append(contrast)
-                    grp['roi'].attrs.create('contrast', new_attr, dtype=self.dt)
-
-                else:
-                    grp['roi'].attrs.create('contrast', [contrast], dtype=self.dt)
+                self.create_subgrp_metadata('roi', grp, contrast)
 
                 # dataset metadata
                 grp[key].attrs['roi_filename'] = roi_metadata['gt_filenames']
-                grp[key].attrs['data_type'] = roi_metadata['data_type']
-
-                if "zooms" in roi_metadata.keys():
-                    grp[key].attrs["zooms"] = roi_metadata['zooms']
-                if "data_shape" in roi_metadata.keys():
-                    grp[key].attrs["data_shape"] = roi_metadata['data_shape']
+                self.create_metadata(grp, key, roi_metadata)
 
                 # Adding contrast to group metadata
-                if grp.attrs.__contains__('contrast'):
-                    attr = grp.attrs['contrast']
-                    new_attr = [c for c in attr]
-                    new_attr.append(contrast)
-                    grp.attrs.create('contrast', new_attr, dtype=self.dt)
-
-                else:
-                    grp.attrs.create('contrast', [contrast], dtype=self.dt)
+                self.add_grp_contrast(grp, contrast)
 
 
 class HDF5Dataset:
