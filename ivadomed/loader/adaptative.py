@@ -98,7 +98,7 @@ class Dataframe:
         inputs = grp[key]
         for contrast in inputs.attrs['contrast']:
             if key == 'inputs' and contrast in col_names:
-                    line[contrast] = '{}/inputs/{}'.format(subject, contrast)
+                line[contrast] = '{}/inputs/{}'.format(subject, contrast)
             elif key == 'inputs' and contrast not in col_names:
                 continue
             else:
@@ -112,7 +112,7 @@ class Dataframe:
 
     def process_line(self, df, grp, line, subject, col_names):
         # inputs
-        line = self.process_key('input', grp, line, subject, col_names)
+        line = self.process_key('inputs', grp, line, subject, col_names)
         
         # GT
         line = self.process_key('gt', grp, line, subject, col_names)
