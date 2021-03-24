@@ -97,12 +97,12 @@ class Dataframe:
         assert key in grp.keys()
         inputs = grp[key]
         for contrast in inputs.attrs['contrast']:
-            if key == "inputs" and contrast in col_names:
+            if key == 'inputs' and contrast in col_names:
                     line[contrast] = '{}/inputs/{}'.format(subject, contrast)
-            elif key == "inputs" and contrast not in col_names:
+            elif key == 'inputs' and contrast not in col_names:
                 continue
             else:
-                key_contrast = key + contrast
+                key_contrast = key + '/' + contrast
                 for col in col_names:
                     if key_contrast in col:
                         line[col] = '{}/{}/{}'.format(subject, key, contrast)
@@ -112,24 +112,23 @@ class Dataframe:
 
     def process_line(self, df, grp, line, subject, col_names):
         # inputs
-        line = self.process_key("input", grp, line, subject, col_names)
+        line = self.process_key('input', grp, line, subject, col_names)
         
         # GT
-        line = self.process_key("gt", grp, line, subject, col_names)
+        line = self.process_key('gt', grp, line, subject, col_names)
 
         # ROI
-        line = self.process_key("roi", grp, line, subject, col_names)
+        line = self.process_key('roi', grp, line, subject, col_names)
 
         # Adding slices & removing useless slices if loading in ram
         line['Slices'] = np.array(grp.attrs['slices'])
 
         # If the number of dimension is 2, we separate the slices
-        if self.dim == 2:
-            if self.filter:
-                for n in line['Slices']:
-                    line_slice = copy.deepcopy(line)
-                    line_slice['Slices'] = n
-                    df = df.append(line_slice, ignore_index=True)
+        if self.dim == 2 and self.filter:
+            for n in line['Slices']:
+                line_slice = copy.deepcopy(line)
+                line_slice['Slices'] = n
+                df = df.append(line_slice, ignore_index=True)
 
         else:
             df = df.append(line, ignore_index=True)
