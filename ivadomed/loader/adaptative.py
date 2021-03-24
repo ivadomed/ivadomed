@@ -223,6 +223,7 @@ class BIDStoHDF5:
         list_patients = []
 
         self.filename_pairs = []
+        self.metadata = {}
 
         if metadata_choice == 'mri_params':
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
@@ -253,8 +254,8 @@ class BIDStoHDF5:
         all_deriv = bids_df.get_deriv_fnames()
 
         for subject in tqdm(subject_file_lst, desc="Loading dataset"):
-            self.process_subject( bids_df, subject, df_subjects, c, tot, contrast_balance, target_suffix, 
-                                all_deriv, roi_params, bounding_box_dict, metadata_choice, list_patients)
+            self.process_subject(bids_df, subject, df_subjects, c, tot, contrast_balance, target_suffix, all_deriv,
+                                roi_params, bounding_box_dict, metadata_choice, list_patients)
 
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
@@ -271,8 +272,8 @@ class BIDStoHDF5:
         self._load_filenames()
         print("Files loaded.")
 
-    def process_subject(self, bids_df, subject, df_subjects, c, tot, contrast_balance, target_suffix, 
-                        all_deriv, roi_params, bounding_box_dict, metadata_choice, list_patients):
+    def process_subject(self, bids_df, subject, df_subjects, c, tot, contrast_balance, target_suffix, all_deriv,
+                        roi_params, bounding_box_dict, metadata_choice, list_patients):
         df_sub = df_subjects.loc[df_subjects['filename'] == subject]
 
         # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
@@ -293,7 +294,7 @@ class BIDStoHDF5:
                 metadata['bounding_box'] = bounding_box_dict[str(df_sub['path'].values[0])][0]
 
             are_mri_params = all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in self.metadata.keys()])
-            if metadata_choice == 'mri_params'and not are_mri_params:
+            if metadata_choice == 'mri_params' and not are_mri_params:
                 return
 
             # Get subj_id (prefix filename without modality suffix and extension)
