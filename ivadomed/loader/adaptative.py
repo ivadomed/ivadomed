@@ -92,6 +92,50 @@ class Dataframe:
             print("Dataframe has been saved at {}.".format(path))
         except FileNotFoundError:
             print("Wrong path.")
+    
+    def process_key(self, key, grp, line, subject, col_names):
+        assert key in grp.keys()
+        inputs = grp[key]
+        for contrast in inputs.attrs['contrast']:
+            if key == "inputs" and contrast in col_names:
+                    line[contrast] = '{}/inputs/{}'.format(subject, contrast)
+            elif key == "inputs" and contrast not in col_names:
+                continue
+            else:
+                key_contrast = key + contrast
+                for col in col_names:
+                    if key_contrast in col:
+                        line[col] = '{}/{}/{}'.format(subject, key, contrast)
+                    else:
+                        continue
+        return line
+
+    def process_line(self, df, grp, line, subject, col_names):
+        # inputs
+        line = self.process_key("input", grp, line, subject, col_names)
+        
+        # GT
+        line = self.process_key("gt", grp, line, subject, col_names)
+
+        # ROI
+        line = self.process_key("roi", grp, line, subject, col_names)
+
+        # Adding slices & removing useless slices if loading in ram
+        line['Slices'] = np.array(grp.attrs['slices'])
+
+        # If the number of dimension is 2, we separate the slices
+        if self.dim == 2:
+            if self.filter:
+                for n in line['Slices']:
+                    line_slice = copy.deepcopy(line)
+                    line_slice['Slices'] = n
+                    df = df.append(line_slice, ignore_index=True)
+
+        else:
+            df = df.append(line, ignore_index=True)
+
+        return df, line
+
 
     def create_df(self, hdf5_file):
         """Generate the Data frame using the hdf5 file.
@@ -115,48 +159,7 @@ class Dataframe:
             line = copy.deepcopy(empty_line)
             line['Subjects'] = subject
 
-            # inputs
-            assert 'inputs' in grp.keys()
-            inputs = grp['inputs']
-            for c in inputs.attrs['contrast']:
-                if c in col_names:
-                    line[c] = '{}/inputs/{}'.format(subject, c)
-                else:
-                    continue
-            # GT
-            assert 'gt' in grp.keys()
-            inputs = grp['gt']
-            for c in inputs.attrs['contrast']:
-                key = 'gt/' + c
-                for col in col_names:
-                    if key in col:
-                        line[col] = '{}/gt/{}'.format(subject, c)
-                    else:
-                        continue
-            # ROI
-            assert 'roi' in grp.keys()
-            inputs = grp['roi']
-            for c in inputs.attrs['contrast']:
-                key = 'roi/' + c
-                for col in col_names:
-                    if key in col:
-                        line[col] = '{}/roi/{}'.format(subject, c)
-                    else:
-                        continue
-
-            # Adding slices & removing useless slices if loading in ram
-            line['Slices'] = np.array(grp.attrs['slices'])
-
-            # If the number of dimension is 2, we separate the slices
-            if self.dim == 2:
-                if self.filter:
-                    for n in line['Slices']:
-                        line_slice = copy.deepcopy(line)
-                        line_slice['Slices'] = n
-                        df = df.append(line_slice, ignore_index=True)
-
-            else:
-                df = df.append(line, ignore_index=True)
+            df, line = self.process_line(df, grp, line, subject, col_names)
 
         self.df = df
 
