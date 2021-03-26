@@ -38,7 +38,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         contrast_params (dict): Contains image contrasts related parameters.
         slice_filter_params (dict): Contains slice_filter parameters, see :doc:`configuration_file` for more details.
         slice_axis (string): Choice between "axial", "sagittal", "coronal" ; controls the axis used to extract the 2D
-            data from 3D nifti files. 2D png files use default "axial.
+            data from 3D nifti files. 2D png/tif/jpg files use default "axial.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
         metadata_type (str): Choice between None, "mri_params", "contrasts".
@@ -174,7 +174,7 @@ class SegmentationPair(object):
             For single channel, the list will contain metadata related to one image.
         cache (bool): If the data should be cached in memory or not.
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png files use default "axial": 2.
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
         prepro_transforms (dict): Output of get_preprocessing_transforms.
 
     Attributes:
@@ -183,10 +183,10 @@ class SegmentationPair(object):
         metadata (dict): Dictionary containing metadata of input and gt.
         cache (bool): If the data should be cached in memory or not.
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png files use default "axial": 2.
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
         prepro_transforms (dict): Transforms to be applied before training.
-        input_handle (list): List of input nifty data as 'nibabel.nifti1.Nifti1Image' object or png data as 'ndarray'
-        gt_handle (list): List of gt nifty data as 'nibabel.nifti1.Nifti1Image' object or png data as 'ndarray'
+        input_handle (list): List of input nifty data as 'nibabel.nifti1.Nifti1Image' object or png/tif/jpg data as 'ndarray'
+        gt_handle (list): List of gt nifty data as 'nibabel.nifti1.Nifti1Image' object or png/tif/jpg data as 'ndarray'
         extension (str): File extension of input files
     """
 
@@ -449,14 +449,14 @@ class SegmentationPair(object):
         else:
             # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
             # Returns data from file as a 3D numpy array
-            # Behavior for grayscale png only, behavior TBD for RGB or RBGA
+            # Behavior for grayscale only, behavior TBD for RGB or RBGA
             return np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
 
     def apply_canonical(self, data):
         """Apply nibabel as_closest_canonical function to nifti data only.
         Args:
             data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
-                for nifti or png file respectively.
+                for nifti or png/tif/jpg file respectively.
         """
         if "nii" in self.extension:
             # For '.nii' and '.nii.gz' extentions
@@ -472,7 +472,7 @@ class SegmentationPair(object):
         """Returns data shape according to file type.
         Args:
             data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
-                for nifti or png file respectively.
+                for nifti or png/tif/jpg file respectively.
         Returns:
             ndarray: Data shape.
         """
@@ -488,7 +488,7 @@ class SegmentationPair(object):
         """Returns voxel sizes in mm according to file type.
         Args:
             data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
-                for nifti and png file respectively.
+                for nifti and png/tif/jpg file respectively.
         Returns:
             tuple: Voxel size in mm
         """
@@ -525,7 +525,7 @@ class SegmentationPair(object):
         """Get nifti file data.
         Args:
             data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
-                for nifti and png file respectively.
+                for nifti and png/tif/jpg file respectively.
             cache_mode (str): cache mode for nifti files
         Returns:
             ndarray: File data.
@@ -548,7 +548,7 @@ class MRI2DSegmentationDataset(Dataset):
         filename_pairs (list): a list of tuples in the format (input filename list containing all modalities,ground \
             truth filename, ROI filename, metadata).
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png files use default "axial": 2.
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
         cache (bool): if the data should be cached in memory or not.
         transform (torchvision.Compose): transformations to apply.
         slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
@@ -567,7 +567,7 @@ class MRI2DSegmentationDataset(Dataset):
         transform (Compose): Transformations to apply during training.
         cache (bool): Tf the data should be cached in memory or not.
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png files use default "axial": 2.
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
         slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
         n_contrasts (int): Number of input contrasts.
         has_bounding_box (bool): True if bounding box in all metadata, else False.
@@ -933,7 +933,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         target_suffix (list): List of suffixes for target masks.
         contrast_params (dict): Contains image contrasts related parameters.
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png files use default "axial": 2.
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
         cache (bool): If the data should be cached in memory or not.
         transform (list): Transformation list (length 2) composed of preprocessing transforms (Compose) and transforms
             to apply during training (Compose).
