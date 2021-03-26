@@ -445,7 +445,9 @@ class SegmentationPair(object):
             # For '.nii' and '.nii.gz' extentions
             # Returns 'nibabel.nifti1.Nifti1Image' object
             return nib.load(filename)
+
         # TODO: (#739) implement OMETIFF behavior (elif "ome" in self.extension)
+
         else:
             # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
             # Returns data from file as a 3D numpy array
@@ -462,7 +464,9 @@ class SegmentationPair(object):
             # For '.nii' and '.nii.gz' extentions
             # Returns 'nibabel.nifti1.Nifti1Image' object
             return nib.as_closest_canonical(data)
+
         # TODO: (#739)  implement OMETIFF behavior (elif "ome" in self.extension)
+
         else:
             # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
             # Returns data as is in numpy array
@@ -479,7 +483,9 @@ class SegmentationPair(object):
         if "nii" in self.extension:
             # For '.nii' and '.nii.gz' extentions
             return data.header.get_data_shape()
+
         # TODO: (#739) implement OMETIFF behavior (elif "ome" in self.extension)
+
         else:
             # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
             return data.shape
@@ -496,7 +502,9 @@ class SegmentationPair(object):
             # For '.nii' and '.nii.gz' extentions
             # Read zooms metadata from nifti file header
             return data.header.get_zooms()
+
         # TODO: (#739) implement OMETIFF behavior (elif "ome" in self.extension)
+
         else:
             # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
             # Voxel size is extracted from PixelSize metadata (from BIDS JSON sidecar)
@@ -504,17 +512,20 @@ class SegmentationPair(object):
             # PixelSize definition may change for 2D [X, Y] and 3D [X, Y, Z] arrays in micrometers (BIDS BEP031 v 0.0.3)
             # This method supports both behaviors.
             # TODO: Update behavior to follow BEP microscopy development (#301)
+
+            array_length = [2, 3]        # Accepted array length for 'PixelSize' metadata
+            conversion_factor = 0.001    # Conversion factor from um to mm
             if 'PixelSize' in self.metadata[0]:
                 ps_in_um = self.metadata[0]['PixelSize']
-                if isinstance(ps_in_um, list) and (len(ps_in_um) == 2 or len(ps_in_um) == 3):
+                if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
                     ps_in_um = np.asarray(ps_in_um)
                     ps_in_um.resize(3)
                 elif isinstance(ps_in_um, float):
                     ps_in_um = np.asarray([ps_in_um, ps_in_um, 0])
                 else:
-                    raise RuntimeError("'PixelSize' metadata type is not supported. Format must be 2D [X, Y] list, "
-                                       "3D [X, Y, Z] list or float.")
-                ps_in_mm = tuple(ps_in_um / 1000)
+                    raise RuntimeError("'PixelSize' metadata type is not supported. Format must be 2D [X, Y] array, "
+                                       "3D [X, Y, Z] array or float.")
+                ps_in_mm = tuple(ps_in_um * conversion_factor)
             else:
                 # TODO: Fix behavior for run_segment_command and inference, no BIDS metadata (#306)
                 raise RuntimeError("'PixelSize' is missing from metadata")
@@ -533,7 +544,9 @@ class SegmentationPair(object):
             # For '.nii' and '.nii.gz' extentions
             # Load data from file as numpy array
             return data.get_fdata(cache_mode, dtype=np.float32)
+
         # TODO: (#739) implement OME-TIFF behavior (elif "ome" in self.extension)
+
         else:
             # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
             # Returns data as is in numpy array
