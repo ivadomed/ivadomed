@@ -200,9 +200,19 @@ class SegmentationPair(object):
         self.slice_axis = slice_axis
         self.soft_gt = soft_gt
         self.prepro_transforms = prepro_transforms
-        self.extension = input_filenames[0].split('.', 1)[1]
         # list of the images
         self.input_handle = []
+
+        # Ordered list of supported file extensions
+        ext_lst = [".nii", ".nii.gz", ".tif", ".tiff", ".png", ".jpg", ".jpeg"]
+
+        # TODO: add the following items between ".nii" and ".tif" in ext_lst when implementing OME-TIFF support:
+        # [".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf"]
+
+        # Returns the first match from the list
+        self.extension = next((ext for ext in ext_lst if input_filenames[0].endswith(ext)), None)
+        if not self.extension:
+            raise RuntimeError("Input file type of '{}' not supported".format(input_filenames[0]))
 
         # loop over the filenames (list)
         for input_file in self.input_filenames:
@@ -439,9 +449,6 @@ class SegmentationPair(object):
             # Returns data from file as a 3D numpy array
             # Behavior for grayscale png only, behavior TBD for RGB or RBGA png
             return np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
-
-        else:
-            raise RuntimeError("Input file type '{}' not supported".format(self.extension))
 
     def apply_canonical(self, data):
         """Apply nibabel as_closest_canonical function to nifti data only.
