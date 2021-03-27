@@ -4,6 +4,10 @@ from os import path
 
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
+    requirements = [r for r in requirements if not r.startswith("-")] # drop embedded pip flags;
+                                                                      # they are not supported by setuptools
+                                                                      # but must be copied manually by
+                                                                      # the user when running pip.
 
 # Get README
 this_directory = path.abspath(path.dirname(__file__))
@@ -33,6 +37,13 @@ setup(
     python_requires='>=3.6, <3.9',
     packages=find_packages(exclude=['docs', 'tests']),
     include_package_data=True,
+    setup_requires=[
+        # we don't actually need these to build
+        # but apparently some of our dependencies might: https://github.com/ivadomed/ivadomed/issues/728
+        # so until they are fixed to declare these themselves, we have to.
+        'cython',
+        'numpy',
+    ],
     install_requires=requirements,
     extras_require={
         'docs': [  # pin sphinx to match what RTD uses:
