@@ -452,7 +452,11 @@ class SegmentationPair(object):
             # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
             # Returns data from file as a 3D numpy array
             # Behavior for grayscale only, behavior TBD for RGB or RBGA
-            return np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
+            if "tif" in self.extension:
+                return np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1)
+            else:
+                return np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
+
 
     def apply_canonical(self, data):
         """Apply nibabel as_closest_canonical function to nifti data only.
