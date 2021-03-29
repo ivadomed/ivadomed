@@ -14,7 +14,9 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed import training as imed_training
 import logging
-from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, get_data_testing_test_files
+from testing.common_testing_util import remove_tmp_dir
+
 logger = logging.getLogger(__name__)
 
 cudnn.benchmark = True
@@ -40,9 +42,9 @@ def setup_function():
     "extensions": [".nii.gz"],
     "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": ['T1w', 'T2w', 'T2star']
-    }}])
+                        }}])
 @pytest.mark.run(order=1)
-def test_HeMIS(loader_parameters, p=0.0001):
+def test_HeMIS(get_data_testing_test_files, loader_parameters, p=0.0001, ):
     print('[INFO]: Starting test ... \n')
 
     bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
@@ -70,21 +72,21 @@ def test_HeMIS(loader_parameters, p=0.0001):
 
     print('[INFO]: Creating dataset ...\n')
     model_params = {
-            "name": "HeMISUnet",
-            "dropout_rate": 0.3,
-            "bn_momentum": 0.9,
-            "depth": 2,
-            "in_channel": 1,
-            "out_channel": 1,
-            "missing_probability": 0.00001,
-            "missing_probability_growth": 0.9,
-            "contrasts": ["T1w", "T2w"],
-            "ram": False,
-            "path_hdf5": __path_hdf5__,
-            "csv_path": __path_csv__,
-            "target_lst": ["T2w"],
-            "roi_lst": ["T2w"]
-        }
+        "name": "HeMISUnet",
+        "dropout_rate": 0.3,
+        "bn_momentum": 0.9,
+        "depth": 2,
+        "in_channel": 1,
+        "out_channel": 1,
+        "missing_probability": 0.00001,
+        "missing_probability_growth": 0.9,
+        "contrasts": ["T1w", "T2w"],
+        "ram": False,
+        "path_hdf5": __path_hdf5__,
+        "csv_path": __path_csv__,
+        "target_lst": ["T2w"],
+        "roi_lst": ["T2w"]
+    }
     dataset = imed_adaptative.HDF5Dataset(bids_df=bids_df,
                                           subject_file_lst=train_lst,
                                           model_params=model_params,
@@ -95,8 +97,8 @@ def test_HeMIS(loader_parameters, p=0.0001):
                                           metadata_choice=False,
                                           dim=2,
                                           slice_filter_fn=imed_loader_utils.SliceFilter(
-                                            filter_empty_input=True,
-                                            filter_empty_mask=True),
+                                              filter_empty_input=True,
+                                              filter_empty_mask=True),
                                           roi_params=roi_params)
 
     dataset.load_into_ram(['T1w', 'T2w', 'T2star'])
@@ -224,7 +226,7 @@ def test_HeMIS(loader_parameters, p=0.0001):
 
 
 @pytest.mark.run(order=2)
-def test_hdf5_bids():
+def test_hdf5_bids(get_data_testing_test_files):
     __output_dir__ = os.path.join(__tmp_dir__, "test_adap_bids")
     os.makedirs(__output_dir__)
     imed_adaptative.HDF5ToBIDS(

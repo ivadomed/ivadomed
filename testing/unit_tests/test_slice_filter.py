@@ -5,7 +5,8 @@ from torch.utils.data import DataLoader
 
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
-from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__, __tmp_dir__
+from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, get_data_testing_test_files
+from testing.common_testing_util import remove_tmp_dir
 
 cudnn.benchmark = True
 
@@ -45,7 +46,7 @@ def _cmpt_slice(ds_loader):
 @pytest.mark.parametrize('roi_params', [
     {"suffix": "_seg-manual", "slice_filter_roi": 10},
     {"suffix": None, "slice_filter_roi": 0}])
-def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_filter_params):
+def test_slice_filter(get_data_testing_test_files, transforms_dict, train_lst, target_lst, roi_params, slice_filter_params):
     if "ROICrop" in transforms_dict and roi_params["suffix"] is None:
         return
 
