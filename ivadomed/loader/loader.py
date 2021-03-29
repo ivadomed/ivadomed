@@ -211,7 +211,7 @@ class SegmentationPair(object):
                    ".tiff", ".png", ".jpg", ".jpeg"]
 
         # Returns the first match from the list
-        self.extension = next((ext for ext in ext_lst if input_filenames[0].endswith(ext)), None)
+        self.extension = next((ext for ext in ext_lst if input_filenames[0].lower().endswith(ext)), None)
         # TODO: remove "ome" from condition when implementing OMETIFF support (#739)
         if (not self.extension) or ("ome" in self.extension):
             raise RuntimeError("The input file type of '{}' is not supported".format(input_filenames[0]))
