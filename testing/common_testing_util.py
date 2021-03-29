@@ -19,8 +19,8 @@ path_unit_tests: str = str(path_repo_root / "testing" / "unit_tests")
 path_data_testing_source: str = str(path_repo_root / "data_testing")
 path_data_testing_tmp: str = str(path_repo_root / "tmp" / Path(path_data_testing_source).name)
 
-path_functional_tests: str = str(path_repo_root / "testing" / "unit_tests")
-path_data_functional_source: str = str(path_repo_root / "data_functional")
+path_functional_tests: str = str(path_repo_root / "testing" / "functional_tests")
+path_data_functional_source: str = str(path_repo_root / "data_functional_testing")
 path_data_functional_tmp: str = str(path_repo_root / "tmp" / Path(path_data_functional_source).name)
 
 
