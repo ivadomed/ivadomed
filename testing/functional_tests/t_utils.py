@@ -17,7 +17,7 @@ def get_functional_test_files():
     """
     This fixture will attempt to download test data file if there are not present.
     """
-    download_dataset("data_functional")
+    download_dataset("data_functional_testing")
 
 
 def create_tmp_dir(copy_data_testing_dir=True):
