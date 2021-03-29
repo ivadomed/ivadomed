@@ -204,16 +204,17 @@ class SegmentationPair(object):
         self.input_handle = []
 
         # Ordered list of supported file extensions
-        ext_lst = [".nii", ".nii.gz", ".tif", ".tiff", ".png", ".jpg", ".jpeg"]
-
-        # TODO: add the following items between ".nii" and ".tif" in ext_lst when implementing OMETIFF support (#739)
+        # TODO: Implement support of the following OMETIFF formats (#739):
         # [".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf"]
+        # They are included in the list to avoid a ".ome.tif" or ".ome.tiff" following the ".tif" or ".tiff" pipeline
+        ext_lst = [".nii", ".nii.gz", ".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf", ".tif",
+                   ".tiff", ".png", ".jpg", ".jpeg"]
 
         # Returns the first match from the list
         self.extension = next((ext for ext in ext_lst if input_filenames[0].endswith(ext)), None)
         # TODO: remove "ome" from condition when implementing OMETIFF support (#739)
         if (not self.extension) or ("ome" in self.extension):
-            raise RuntimeError("Input file type of '{}' not supported".format(input_filenames[0]))
+            raise RuntimeError("The input file type of '{}' is not supported".format(input_filenames[0]))
 
         # loop over the filenames (list)
         for input_file in self.input_filenames:
