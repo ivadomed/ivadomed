@@ -56,7 +56,8 @@ Names and Files:
 
 import logging
 import os
-from t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
+from testing.functional_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__
+from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
 

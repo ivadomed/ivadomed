@@ -1,7 +1,8 @@
 import logging
 import os
 import pytest
-from functional_tests.t_utils import remove_tmp_dir, __tmp_dir__, create_tmp_dir, __data_testing_dir__
+from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir, __data_testing_dir__, get_functional_test_files
+from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
 
@@ -10,7 +11,7 @@ def setup_function():
 
 
 @pytest.mark.script_launch_mode('subprocess')
-def test_automate_training(script_runner):
+def test_automate_training(get_functional_test_files, script_runner):
     file_config = os.path.join(__data_testing_dir__, 'automate_training_config.json')
     file_config_hyper = os.path.join(__data_testing_dir__,
                                      'automate_training_hyperparameter_opt.json')
