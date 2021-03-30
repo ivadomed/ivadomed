@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import torch
 import joblib
-from bids_neuropoly import bids
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
 from ivadomed import utils as imed_utils
