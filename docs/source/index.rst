@@ -7,7 +7,7 @@
 learning, based on `PyTorch <https://pytorch.org/>`_. The name is a portmanteau between *IVADO* (The `Institute for data
 valorization <https://ivado.ca/en/>`_) and *Medical*.
 
-If you use ``ivadomed`` for your research, please cite:
+If you use ``ivadomed`` for your research, please cite `our paper <https://joss.theoj.org/papers/10.21105/joss.02868>`_:
 
 .. code::
 
