@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import torch
 import joblib
-from bids_neuropoly import bids
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
 from ivadomed import utils as imed_utils
@@ -14,6 +13,7 @@ import nibabel as nib
 import bids as pybids  # "bids" is already taken by bids_neuropoly
 import itertools
 import random
+import copy
 
 __numpy_type_map = {
     'float64': torch.DoubleTensor,
@@ -32,70 +32,7 @@ TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 're
 logger = logging.getLogger(__name__)
 
 
-def split_dataset(df, center_test_lst, split_method, random_seed, train_frac=0.8, test_frac=0.1):
-    """Splits list of subject into training, validation and testing datasets either according to their center or per
-    patient. In the 'per_center' option the centers associated the subjects are split according the train, test and
-    validation fraction whereas in the 'per_patient', the patients are directly separated according to these fractions.
-
-    Args:
-        df (pd.DataFrame): Dataframe containing "participants.tsv" file information.
-        center_test_lst (list): list of centers to include in the testing set. Must be
-            float.
-        split_method (str): Between 'per_center' or 'per_person'. If 'per_center' the separation fraction are
-            applied to centers, if 'per_person' they are applied to the subject list.
-        random_seed (int): Random seed to ensure reproducible splits.
-        train_frac (float): Between 0 and 1. Represents the train set proportion.
-        test_frac (float): Between 0 and 1. Represents the test set proportion.
-    Returns:
-        list, list, list: Train, validation and test subjects list.
-    """
-    # Init output lists
-    X_train, X_val, X_test = [], [], []
-
-    # Split_method cases
-    if split_method == 'per_center':
-        # make sure that subjects coming from some centers are unseen during training
-        if len(center_test_lst) == 0:
-            centers = sorted(df['institution_id'].unique().tolist())
-            test_frac = test_frac if test_frac >= 1 / len(centers) else 1 / len(centers)
-            center_test_lst, _ = train_test_split(centers, train_size=test_frac, random_state=random_seed)
-
-        X_test = df[df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
-        X_remain = df[~df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
-
-        # split using sklearn function
-        X_train, X_tmp = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
-        if len(X_test):  # X_test contains data from centers unseen during the training, eg SpineGeneric
-            X_val = X_tmp
-        else:  # X_test contains data from centers seen during the training, eg gm_challenge
-            X_val, X_test = train_test_split(X_tmp, train_size=0.5, random_state=random_seed)
-
-    elif split_method == 'per_patient':
-        # Separate dataset in test, train and validation using sklearn function
-        # In case we want to use the entire dataset for testing purposes
-        X_remain = df['participant_id'].tolist()
-        if len(center_test_lst):
-            X_test = df[df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
-            X_remain = df[~df['institution_id'].isin(center_test_lst)]['participant_id'].tolist()
-
-        if test_frac == 1 and not len(center_test_lst):
-            X_test = df['participant_id'].tolist()
-        else:
-            X_train, X_remain = train_test_split(X_remain, train_size=train_frac, random_state=random_seed)
-            # In case the entire dataset is used to train / validate the model
-            if test_frac == 0 or len(center_test_lst):
-                X_val = X_remain
-            else:
-                X_test, X_val = train_test_split(X_remain, train_size=test_frac / (1 - train_frac),
-                                                 random_state=random_seed)
-
-    else:
-        print(" {split_method} is not a supported split method")
-
-    return X_train, X_val, X_test
-
-
-def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.8, test_frac=0.1):
+def split_dataset(df, split_method, data_testing, random_seed, train_frac=0.8, test_frac=0.1):
     """Splits dataset into training, validation and testing sets by applying train, test and validation fractions
     according to the split_method.
     The "data_testing" parameter can be used to specify the data_type and data_value to include in the testing set,
@@ -109,7 +46,7 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
         train_frac (float): Between 0 and 1. Represents the train set proportion.
         test_frac (float): Between 0 and 1. Represents the test set proportion.
     Returns:
-        list, list, list: Train, validation and test data_type list.
+        list, list, list: Train, validation and test filenames lists.
     """
 
     # Get data_type and data_value from split parameters
@@ -133,7 +70,12 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
         data_value = sorted(df[data_type].unique().tolist())
         test_frac = test_frac if test_frac >= 1 / len(data_value) else 1 / len(data_value)
         data_value, _ = train_test_split(data_value, train_size=test_frac, random_state=random_seed)
-    X_test = df[df[data_type].isin(data_value)]['ivadomed_id'].unique().tolist()
+    if len(data_value) != 0:
+        for value in data_value:
+            if value not in df[data_type].values:
+                    logger.warning("No data_value '{}' was found in '{}'. Not taken into account "
+                                   "to split the dataset.".format(value, data_type))
+    X_test = df[df[data_type].isin(data_value)]['filename'].unique().tolist()
     X_remain = df[~df[data_type].isin(data_value)][split_method].unique().tolist()
 
     # List dataset unique values according to split_method
@@ -147,9 +89,17 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
     # Split remainder in TRAIN and VALID sets according to train_frac_update using sklearn function
     X_train, X_val = train_test_split(X_remain, train_size=train_frac_update, random_state=random_seed)
 
-    # Convert train and valid sets from list of "split_method" to list of "ivadomed_id"
-    X_train = df[df[split_method].isin(X_train)]['ivadomed_id'].unique().tolist()
-    X_val = df[df[split_method].isin(X_val)]['ivadomed_id'].unique().tolist()
+    # Print the real train, validation and test fractions after splitting
+    real_train_frac = len(X_train)/len(data)
+    real_valid_frac = len(X_val)/len(data)
+    real_test_frac = 1 - real_train_frac - real_valid_frac
+    logger.warning("After splitting: train, validation and test fractions are respectively {}, {} and {}"
+                   " of {}.".format(round(real_train_frac, 3), round(real_valid_frac, 3),
+                   round(real_test_frac, 3), split_method))
+
+    # Convert train and valid sets from list of "split_method" to list of "filename"
+    X_train = df[df[split_method].isin(X_train)]['filename'].unique().tolist()
+    X_val = df[df[split_method].isin(X_val)]['filename'].unique().tolist()
 
     # Make sure that test dataset is unseen during training
     # (in cases where there are multiple "data_type" for a same "split_method")
@@ -159,82 +109,8 @@ def split_dataset_new(df, split_method, data_testing, random_seed, train_frac=0.
     return X_train, X_val, X_test
 
 
-def get_new_subject_split(path_data, center_test, split_method, random_seed,
-                          train_frac, test_frac, path_output, balance, subject_selection=None):
-    """Randomly split dataset between training / validation / testing.
-
-    Randomly split dataset between training / validation / testing\
-        and save it in path_output + "/split_datasets.joblib".
-
-    Args:
-        path_data (list) or (str): Dataset folders.
-        center_test (list): List of centers to include in the testing set.
-        split_method (string): See imed_loader_utils.split_dataset.
-        random_seed (int): Random seed.
-        train_frac (float): Training dataset proportion, between 0 and 1.
-        test_frac (float): Testing dataset proportionm between 0 and 1.
-        path_output (string): Output folder.
-        balance (string): Metadata contained in "participants.tsv" file with categorical values.
-            Each category will be evenly distributed in the training, validation and testing
-            datasets.
-        subject_selection (dict): Used to specify a custom subject selection from a dataset.
-
-    Returns:
-        list, list list: Training, validation and testing subjects lists.
-    """
-
-    df = merge_bids_datasets(path_data)
-
-    # Save a new merged .tsv on the output folder to be used during evaluation
-    df.to_csv(os.path.join(path_output, 'participants.tsv'), sep='\t', index=False)
-
-    if subject_selection is not None:
-        # Verify subject_selection format
-        if not (len(subject_selection["metadata"]) == len(subject_selection["n"]) == len(subject_selection["value"])):
-            raise ValueError("All lists in subject_selection parameter should have the same length.")
-
-        sampled_dfs = []
-        for m, n, v in zip(subject_selection["metadata"], subject_selection["n"], subject_selection["value"]):
-            sampled_dfs.append(df[df[m] == v].sample(n=n, random_state=random_seed))
-
-        if len(sampled_dfs) != 0:
-            df = pd.concat(sampled_dfs)
-
-    # If balance, then split the dataframe for each categorical value of the "balance" column
-    if balance:
-        if balance in df.keys():
-            df_list = [df[df[balance] == k] for k in df[balance].unique().tolist()]
-        else:
-            logger.warning(f"""No column named '{balance}' was found in 'participants.tsv' file.
-                               Not taken into account to split the dataset.""")
-            df_list = [df]
-    else:
-        df_list = [df]
-
-    train_lst, valid_lst, test_lst = [], [], []
-    for df_tmp in df_list:
-        # Split dataset on each section of subjects
-        train_tmp, valid_tmp, test_tmp = split_dataset(df=df_tmp,
-                                                       center_test_lst=center_test,
-                                                       split_method=split_method,
-                                                       random_seed=random_seed,
-                                                       train_frac=train_frac,
-                                                       test_frac=test_frac)
-        # Update the dataset lists
-        train_lst += train_tmp
-        valid_lst += valid_tmp
-        test_lst += test_tmp
-
-    # save the subject distribution
-    split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    split_path = os.path.join(path_output, "split_datasets.joblib")
-    joblib.dump(split_dct, split_path)
-
-    return train_lst, valid_lst, test_lst
-
-
-def get_new_subject_split_new(df, split_method, data_testing, random_seed,
-                              train_frac, test_frac, path_output, balance, subject_selection=None):
+def get_new_subject_file_split(df, split_method, data_testing, random_seed,
+                               train_frac, test_frac, path_output, balance, subject_selection=None):
     """Randomly split dataset between training / validation / testing.
 
     Randomly split dataset between training / validation / testing\
@@ -253,7 +129,7 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
     Returns:
-        list, list list: Training, validation and testing subjects lists.
+        list, list list: Training, validation and testing filenames lists.
     """
     if subject_selection is not None:
         # Verify subject_selection format
@@ -284,12 +160,12 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
     train_lst, valid_lst, test_lst = [], [], []
     for df_tmp in df_list:
         # Split dataset on each section of subjects
-        train_tmp, valid_tmp, test_tmp = split_dataset_new(df=df_tmp,
-                                                           split_method=split_method,
-                                                           data_testing=data_testing,
-                                                           random_seed=random_seed,
-                                                           train_frac=train_frac,
-                                                           test_frac=test_frac)
+        train_tmp, valid_tmp, test_tmp = split_dataset(df=df_tmp,
+                                                       split_method=split_method,
+                                                       data_testing=data_testing,
+                                                       random_seed=random_seed,
+                                                       train_frac=train_frac,
+                                                       test_frac=test_frac)
         # Update the dataset lists
         train_lst += train_tmp
         valid_lst += valid_tmp
@@ -303,38 +179,8 @@ def get_new_subject_split_new(df, split_method, data_testing, random_seed,
     return train_lst, valid_lst, test_lst
 
 
-def get_subdatasets_subjects_list(split_params, path_data, path_output, subject_selection=None):
-    """Get lists of subjects for each sub-dataset between training / validation / testing.
-
-    Args:
-        split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
-        path_data (list): Path to the BIDS dataset(s).
-        path_output (str): Output folder.
-        subject_selection (dict): Used to specify a custom subject selection from a dataset.
-
-    Returns:
-        list, list list: Training, validation and testing subjects lists.
-    """
-    if split_params["fname_split"]:
-        # Load subjects lists
-        old_split = joblib.load(split_params["fname_split"])
-        train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
-    else:
-        train_lst, valid_lst, test_lst = get_new_subject_split(path_data=path_data,
-                                                               center_test=split_params['center_test'],
-                                                               split_method=split_params['method'],
-                                                               random_seed=split_params['random_seed'],
-                                                               train_frac=split_params['train_fraction'],
-                                                               test_frac=split_params['test_fraction'],
-                                                               path_output=path_output,
-                                                               balance=split_params['balance']
-                                                               if 'balance' in split_params else None,
-                                                               subject_selection=subject_selection)
-    return train_lst, valid_lst, test_lst
-
-
-def get_subdatasets_subjects_list_new(split_params, df, path_output, subject_selection=None):
-    """Get lists of subjects for each sub-dataset between training / validation / testing.
+def get_subdatasets_subject_files_list(split_params, df, path_output, subject_selection=None):
+    """Get lists of subject filenames for each sub-dataset between training / validation / testing.
 
     Args:
         split_params (dict): Split parameters, see :doc:`configuration_file` for more details.
@@ -343,23 +189,23 @@ def get_subdatasets_subjects_list_new(split_params, df, path_output, subject_sel
         subject_selection (dict): Used to specify a custom subject selection from a dataset.
 
     Returns:
-        list, list list: Training, validation and testing subjects lists.
+        list, list list: Training, validation and testing filenames lists.
     """
     if split_params["fname_split"]:
         # Load subjects lists
         old_split = joblib.load(split_params["fname_split"])
         train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
     else:
-        train_lst, valid_lst, test_lst = get_new_subject_split_new(df=df,
-                                                                   split_method=split_params['split_method'],
-                                                                   data_testing=split_params['data_testing'],
-                                                                   random_seed=split_params['random_seed'],
-                                                                   train_frac=split_params['train_fraction'],
-                                                                   test_frac=split_params['test_fraction'],
-                                                                   path_output=path_output,
-                                                                   balance=split_params['balance']
-                                                                   if 'balance' in split_params else None,
-                                                                   subject_selection=subject_selection)
+        train_lst, valid_lst, test_lst = get_new_subject_file_split(df=df,
+                                                                    split_method=split_params['split_method'],
+                                                                    data_testing=split_params['data_testing'],
+                                                                    random_seed=split_params['random_seed'],
+                                                                    train_frac=split_params['train_fraction'],
+                                                                    test_frac=split_params['test_fraction'],
+                                                                    path_output=path_output,
+                                                                    balance=split_params['balance']
+                                                                    if 'balance' in split_params else None,
+                                                                    subject_selection=subject_selection)
     return train_lst, valid_lst, test_lst
 
 
@@ -477,7 +323,6 @@ def orient_shapes_hwd(data, slice_axis):
         return np.array(data)[[2, 0, 1]]
     elif slice_axis == 2:
         return np.array(data)
-
 
 class SampleMetadata(object):
     """Metadata class to help update, get and set metadata values.
@@ -726,80 +571,17 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     return nib.orientations.apply_orientation(arr_ras, trans_orient)
 
 
-def merge_bids_datasets(path_data):
-    """Read the participants.tsv from several BIDS folders and merge them into a single dataframe.
-    Args:
-        path_data (list) or (str): BIDS folders paths
-
-    Returns:
-        df: dataframe with merged subjects and columns
-    """
-    path_data = imed_utils.format_path_data(path_data)
-
-    if len(path_data) == 1:
-        # read participants.tsv as pandas dataframe
-        df = bids.BIDS(path_data[0]).participants.content
-        # Append a new column to show which dataset the Subjects belong to (this will be used later for loading)
-        df['path_output'] = [path_data[0]] * len(df)
-    elif path_data == []:
-        raise Exception("No dataset folder selected")
-    else:
-        # Merge multiple .tsv files into the same dataframe
-        df = pd.read_table(os.path.join(path_data[0], 'participants.tsv'), encoding="ISO-8859-1")
-        # Convert to string to get rid of potential TypeError during merging within the same column
-        df = df.astype(str)
-
-        # Add the Bids_path to the dataframe
-        df['path_output'] = [path_data[0]] * len(df)
-
-        for iFolder in range(1, len(path_data)):
-            df_next = pd.read_table(os.path.join(path_data[iFolder], 'participants.tsv'),
-                                    encoding="ISO-8859-1")
-            df_next = df_next.astype(str)
-            df_next['path_output'] = [path_data[iFolder]] * len(df_next)
-            # Merge the .tsv files (This keeps also non-overlapping fields)
-            df = pd.merge(left=df, right=df_next, how='outer')
-
-    # Get rid of duplicate entries based on the field "participant_id" (the same subject could have in theory be
-    # included in both datasets). The assumption here is that if the two datasets contain the same subject,
-    # identical sessions of the subjects are contained within the two folder so only the files within the first folder
-    # will be kept.
-    logical_keep_first_encounter = []
-    indicesOfDuplicates = []
-    used = set()  # For debugging
-
-    for iEntry in range(len(df)):
-        if df['participant_id'][iEntry] not in used:
-            used.add(df['participant_id'][iEntry])  # For debugging
-            logical_keep_first_encounter.append(iEntry)
-        else:
-            indicesOfDuplicates.append(iEntry)  # For debugging
-    # Just keep the dataframe with unique participant_id
-    df = df.iloc[logical_keep_first_encounter, :]
-
-    # Rearrange the bids paths to be last column of the dataframe
-    cols = list(df.columns.values)
-    cols.remove("path_output")
-    cols.append("path_output")
-    df = df[cols]
-
-    # Substitute NaNs with string: "-". This helps with metadata selection
-    df = df.fillna("-")
-
-    return df
-
-
 class BidsDataframe:
     """
-    This class aims to create a dataframe containing all BIDS image files in a path_data and their metadata.
+    This class aims to create a dataframe containing all BIDS image files in a list of path_data and their metadata.
 
     Args:
         loader_params (dict): Loader parameters, see :doc:`configuration_file` for more details.
-        derivatives (bool): If True, derivatives are indexed.
         path_output (str): Output folder.
+        derivatives (bool): If True, derivatives are indexed.
 
     Attributes:
-        path_data (str): Path to the BIDS dataset.
+        path_data (list): Paths to the BIDS datasets.
         bids_config (str): Path to the custom BIDS configuration file.
         target_suffix (list of str): List of suffix of targetted structures.
         roi_suffix (str): List of suffix of ROI masks.
@@ -809,16 +591,16 @@ class BidsDataframe:
         df (pd.DataFrame): Dataframe containing dataset information
     """
 
-    def __init__(self, loader_params, derivatives, path_output):
+    def __init__(self, loader_params, path_output, derivatives):
 
-        # path_data from loader parameters
-        self.path_data = os.path.join(loader_params['path_data'], '')
+        # paths_data from loader parameters
+        self.paths_data = loader_params['path_data']
 
         # bids_config from loader parameters
         self.bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
 
         # target_suffix and roi_suffix from loader parameters
-        self.target_suffix = loader_params['target_suffix']
+        self.target_suffix = copy.deepcopy(loader_params['target_suffix'])
         # If `target_suffix` is a list of lists convert to list
         if any(isinstance(t, list) for t in self.target_suffix):
             self.target_suffix = list(itertools.chain.from_iterable(self.target_suffix))
@@ -831,12 +613,14 @@ class BidsDataframe:
         self.extensions = loader_params['extensions']
 
         # contrast_lst from loader parameters
-        self.contrast_lst = loader_params["contrast_params"]["contrast_lst"]
+        self.contrast_lst = [] if 'contrast_lst' not in loader_params['contrast_params'] \
+                            else loader_params['contrast_params']['contrast_lst']
 
         # derivatives
         self.derivatives = derivatives
 
         # Create dataframe
+        self.df = pd.DataFrame()
         self.create_bids_dataframe()
 
         # Save dataframe as csv file
@@ -850,48 +634,81 @@ class BidsDataframe:
         # TODO: when reaching version 0.14.0, remove the following line
         pybids.config.set_option('extension_initial_dot', True)
 
-        # Initialize BIDSLayoutIndexer and BIDSLayout
-        # validate=True by default for both indexer and layout, BIDS-validator is not skipped
-        # Force index for samples tsv and json files, and for subject subfolders containing microscopy files based on extensions.
-        # TODO: remove force indexing of microscopy files after BEP microscopy is merged in BIDS
-        ext_microscopy = ('.png', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
-        force_index = ['samples.tsv', 'samples.json']
-        for root, dirs, files in os.walk(self.path_data):
-            for file in files:
-                if file.endswith(ext_microscopy) and (root.replace(self.path_data, '').startswith("sub")):
-                    force_index.append(os.path.join(root.replace(self.path_data, '')))
-        indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
-        layout = pybids.BIDSLayout(self.path_data, config=self.bids_config, indexer=indexer,
-                                   derivatives=self.derivatives)
+        for path_data in self.paths_data:
+            path_data = os.path.join(path_data, '')
 
-        # Transform layout to dataframe with all entities and json metadata
-        # As per pybids, derivatives don't include parsed entities, only the "path" column
-        self.df = layout.to_df(metadata=True)
+            # Initialize BIDSLayoutIndexer and BIDSLayout
+            # validate=True by default for both indexer and layout, BIDS-validator is not skipped
+            # Force index for samples tsv and json files, and for subject subfolders containing microscopy files based on extensions.
+            # Force index of subject subfolders containing CT-scan files under "anat" or "ct" folder based on extensions and modality suffix.
+            # TODO: remove force indexing of microscopy files after BEP microscopy is merged in BIDS
+            # TODO: remove force indexing of CT-scan files after BEP CT-scan is merged in BIDS
+            ext_microscopy = ('.png', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
+            ext_ct = ('.nii.gz', '.nii')
+            suffix_ct = ('ct', 'CT')
+            force_index = []
+            for root, dirs, files in os.walk(path_data):
+                for file in files:
+                    # Microscopy
+                    if file == "samples.tsv" or file == "samples.json":
+                        force_index.append(file)
+                    if (file.endswith(ext_microscopy) and os.path.basename(root) == "microscopy" and
+                            (root.replace(path_data, '').startswith("sub"))):
+                        force_index.append(os.path.join(root.replace(path_data, '')))
+                    # CT-scan
+                    if (file.endswith(ext_ct) and file.split('.')[0].endswith(suffix_ct) and
+                            (os.path.basename(root) == "anat" or os.path.basename(root) == "ct") and
+                            (root.replace(path_data, '').startswith("sub"))):
+                        force_index.append(os.path.join(root.replace(path_data, '')))
+            indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
 
-        # Add filename and parent_path columns
-        self.df['filename'] = self.df['path'].apply(os.path.basename)
-        self.df['parent_path'] = self.df['path'].apply(os.path.dirname)
+            if self.derivatives:
+                self.write_derivatives_dataset_description(path_data)
 
-        # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
-        self.df = self.df[~self.df['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
+            layout = pybids.BIDSLayout(path_data, config=self.bids_config, indexer=indexer,
+                                       derivatives=self.derivatives)
 
-        # Add ivadomed_id column corresponding to filename minus modality and extension for files that are not derivatives.
-        for index, row in self.df.iterrows():
-            if isinstance(row['suffix'], str):
-                self.df.loc[index, 'ivadomed_id'] = re.sub(r'_' + row['suffix'] + '.*', '', row['filename'])
+            # Transform layout to dataframe with all entities and json metadata
+            # As per pybids, derivatives don't include parsed entities, only the "path" column
+            df_next = layout.to_df(metadata=True)
 
-        # Update dataframe with subject files of chosen contrasts and extensions,
-        # and with derivative files of chosen target_suffix from loader parameters
-        self.df = self.df[(~self.df['path'].str.contains('derivatives')
-                           & self.df['suffix'].str.contains('|'.join(self.contrast_lst))
-                           & self.df['extension'].str.contains('|'.join(self.extensions)))
-                           | (self.df['path'].str.contains('derivatives')
-                           & self.df['filename'].str.contains('|'.join(self.target_suffix)))]
+            # Add filename column
+            df_next.insert(1, 'filename', df_next['path'].apply(os.path.basename))
 
-        # Add tsv files metadata to dataframe
-        self.add_tsv_metadata(layout)
+            # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
+            df_next = df_next[~df_next['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
 
-        # TODO: check if other files are needed for EEG and DWI
+            # Update dataframe with subject files of chosen contrasts and extensions,
+            # and with derivative files of chosen target_suffix from loader parameters
+            df_next = df_next[(~df_next['path'].str.contains('derivatives')
+                               & df_next['suffix'].str.contains('|'.join(self.contrast_lst))
+                               & df_next['extension'].str.contains('|'.join(self.extensions)))
+                               | (df_next['path'].str.contains('derivatives')
+                               & df_next['filename'].str.contains('|'.join(self.target_suffix)))]
+
+            if df_next[~df_next['path'].str.contains('derivatives')].empty:
+                # Warning if no subject files are found in path_data
+                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(path_data))
+
+            else:
+                # Add tsv files metadata to dataframe
+                df_next = self.add_tsv_metadata(df_next, path_data, layout)
+
+                # TODO: check if other files are needed for EEG and DWI
+
+                # Merge dataframes
+                self.df = pd.concat([self.df, df_next], join='outer', ignore_index=True)
+
+        if self.df.empty:
+            # Raise error and exit if no subject files are found in any path data
+            raise RuntimeError("No subject files found. Check selection of parameters in config.json"
+                               " and datasets compliance with BIDS specification.")
+
+        # Drop duplicated rows based on all columns except 'path'
+        # Keep first occurence
+        columns = self.df.columns.to_list()
+        columns.remove('path')
+        self.df = self.df[~(self.df.astype(str).duplicated(subset=columns, keep='first'))]
 
         # If indexing of derivatives is true
         if self.derivatives:
@@ -904,7 +721,7 @@ class BidsDataframe:
                 self.df = self.df[self.df['filename'].str.contains('|'.join(has_deriv))
                                   | self.df['filename'].str.contains('|'.join(deriv))]
             else:
-                # Raise error and exit if no derivatives are found for any subject files
+                 # Raise error and exit if no derivatives are found for any subject files
                 raise RuntimeError("Derivatives not found.")
 
         # Reset index
@@ -913,7 +730,7 @@ class BidsDataframe:
         # Drop columns with all null values
         self.df.dropna(axis=1, inplace=True, how='all')
 
-    def add_tsv_metadata(self, layout):
+    def add_tsv_metadata(self, df, path_data, layout):
 
         """Add tsv files metadata to dataframe.
         Args:
@@ -922,20 +739,20 @@ class BidsDataframe:
 
         # Add participant_id column, and metadata from participants.tsv file if present
         # Uses pybids function
-        self.df['participant_id'] = "sub-" + self.df['subject']
+        df['participant_id'] = "sub-" + df['subject']
         if layout.get_collections(level='dataset'):
             df_participants = layout.get_collections(level='dataset', merge=True).to_df()
             df_participants.drop(['suffix'], axis=1, inplace=True)
-            self.df = pd.merge(self.df, df_participants, on='subject', suffixes=("_x", None), how='left')
+            df = pd.merge(df, df_participants, on='subject', suffixes=("_x", None), how='left')
 
         # Add sample_id column if sample column exists, and add metadata from samples.tsv file if present
         # TODO: use pybids function after BEP microscopy is merged in BIDS
-        if 'sample' in self.df:
-            self.df['sample_id'] = "sample-" + self.df['sample']
-        fname_samples = os.path.join(self.path_data, "samples.tsv")
+        if 'sample' in df:
+            df['sample_id'] = "sample-" + df['sample']
+        fname_samples = os.path.join(path_data, "samples.tsv")
         if os.path.exists(fname_samples):
             df_samples = pd.read_csv(fname_samples, sep='\t')
-            self.df = pd.merge(self.df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None),
+            df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None),
                                how='left')
 
         # Add metadata from all _sessions.tsv files, if present
@@ -943,20 +760,22 @@ class BidsDataframe:
         if layout.get_collections(level='subject'):
             df_sessions = layout.get_collections(level='subject', merge=True).to_df()
             df_sessions.drop(['suffix'], axis=1, inplace=True)
-            self.df = pd.merge(self.df, df_sessions, on=['subject', 'session'], suffixes=("_x", None), how='left')
+            df = pd.merge(df, df_sessions, on=['subject', 'session'], suffixes=("_x", None), how='left')
 
         # Add metadata from all _scans.tsv files, if present
         # TODO: use pybids function after BEP microscopy is merged in BIDS
         # TODO: verify merge behavior with EEG and DWI scans files, tested with anat and microscopy only
         df_scans = pd.DataFrame()
-        for root, dirs, files in os.walk(self.path_data):
+        for root, dirs, files in os.walk(path_data):
             for file in files:
                 if file.endswith("scans.tsv"):
                     df_temp = pd.read_csv(os.path.join(root, file), sep='\t')
                     df_scans = pd.concat([df_scans, df_temp], ignore_index=True)
         if not df_scans.empty:
             df_scans['filename'] = df_scans['filename'].apply(os.path.basename)
-            self.df = pd.merge(self.df, df_scans, on=['filename'], suffixes=("_x", None), how='left')
+            df = pd.merge(df, df_scans, on=['filename'], suffixes=("_x", None), how='left')
+
+        return df
 
     def get_subjects_with_derivatives(self):
         """Get lists of subject filenames with available derivatives.
@@ -1025,6 +844,18 @@ class BidsDataframe:
         """
         try:
             self.df.to_csv(path, index=False)
-            print("Dataframe has been saved at {}.".format(path))
+            print("Dataframe has been saved in {}.".format(path))
         except FileNotFoundError:
-            print("Wrong path.")
+            print("Wrong path, bids_dataframe.csv could not be saved in {}.".format(path))
+
+    def write_derivatives_dataset_description(self, path_data):
+        """Writes default dataset_description.json file if not found in path_data/derivatives folder
+        """
+        filename = 'dataset_description'
+        deriv_desc_file = '{}/derivatives/{}.json'.format(path_data, filename)
+        label_desc_file = '{}/derivatives/labels/{}.json'.format(path_data, filename)
+        # need to write default dataset_description.json file if not found
+        if not os.path.isfile(deriv_desc_file) and not os.path.isfile(label_desc_file):
+            f = open(deriv_desc_file, 'w')
+            f.write('{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
+            f.close()

@@ -1,3 +1,56 @@
+## v2.7.4 (2021-03-15)
+
+See `2.7.3`. We had to re-release because the GitHub Action didn't get triggered to push the release
+to `PyPI` as it started as a draft. See here for more details:
+
+[GitHub Actions Bug](https://github.community/t/workflow-set-for-on-release-not-triggering-not-showing-up/16286)
+
+
+## v2.7.3 (2021-03-15)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.7.2...release)
+
+**BUG**
+
+ - Copy nibabel header when creating output prediction.  [View pull request](https://github.com/ivadomed/ivadomed/pull/714)
+ - Dynamically write dataset_description.json file to suppress pybids warning.  [View pull request](https://github.com/ivadomed/ivadomed/pull/690)
+
+**DOCUMENTATION**
+
+ - Change archive links to repository links for pre-trained models.  [View pull request](https://github.com/ivadomed/ivadomed/pull/700)
+
+**ENHANCEMENT**
+
+ - New loader: Refactor BidsDataset classes.  [View pull request](https://github.com/ivadomed/ivadomed/pull/691)
+
+
+## v2.7.2 (2021-02-19)
+[View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.7.1...v2.7.2)
+
+**BUG**
+
+ - Multiclass ignored during inference if n_input and n_output are different.  [View pull request](https://github.com/ivadomed/ivadomed/pull/688)
+ - Merged participants.tsv file saving bug correction.  [View pull request](https://github.com/ivadomed/ivadomed/pull/684)
+ - Make change_keys method from ConfigurationManager compatible with python3.8.  [View pull request](https://github.com/ivadomed/ivadomed/pull/681)
+
+**DOCUMENTATION**
+
+ - Add DOI JOSS.  [View pull request](https://github.com/ivadomed/ivadomed/pull/683)
+ - Adding Zenodo DOI.  [View pull request](https://github.com/ivadomed/ivadomed/pull/677)
+
+**ENHANCEMENT**
+
+ - New loader: input from multiple BIDS datasets.  [View pull request](https://github.com/ivadomed/ivadomed/pull/687)
+ - Add pre-commit hooks to limit file size to 500KB .  [View pull request](https://github.com/ivadomed/ivadomed/pull/682)
+ - Shared weights for the two first FiLM generator layers.  [View pull request](https://github.com/ivadomed/ivadomed/pull/679)
+ - Allow for non-dictionary hyperparameters in automate_training.  [View pull request](https://github.com/ivadomed/ivadomed/pull/661)
+
+**FEATURE**
+
+ - Enable the pipeline to run with inputs from multiple BIDS datasets.  [View pull request](https://github.com/ivadomed/ivadomed/pull/588)
+
+## v2.7.1 (2021-02-09)
+[View change](https://github.com/ivadomed/ivadomed/pull/676)
+
 ## v2.7.0 (2021-02-09)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.6.1...v2.7.0)
 
@@ -167,7 +220,7 @@
 
  - Version format.  [View pull request](https://github.com/ivadomed/ivadomed/pull/481)
 
-## v2.3.0 (2020-10-19) 
+## v2.3.0 (2020-10-19)
 [View detailed changelog](https://github.com/ivadomed/ivadomed/compare/v2.2.1...v2.3.0)
 
 **BUG**

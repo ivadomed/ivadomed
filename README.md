@@ -53,3 +53,5 @@ This project results from a collaboration between the [NeuroPoly Lab](https://ww
 and the [Mila](https://mila.quebec/en/). The main funding source is [IVADO](https://ivado.ca/en/).
 
 [List of contributors](https://github.com/neuropoly/ivadomed/graphs/contributors)
+
+## Consult our Wiki(https://github.com/ivadomed/ivadomed/wiki) here for more help

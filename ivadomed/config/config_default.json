@@ -28,13 +28,14 @@
         },
         "slice_axis": "axial",
         "multichannel": false,
-        "soft_gt": false
+        "soft_gt": false,
+        "is_input_dropout": false
     },
     "split_dataset": {
         "fname_split": null,
         "random_seed": 6,
-        "center_test": [],
-        "method": "per_patient",
+        "split_method" : "participant_id",
+        "data_testing": {"data_type": null, "data_value":[]},
         "balance": null,
         "train_fraction": 0.6,
         "test_fraction": 0.2
