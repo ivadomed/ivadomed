@@ -134,5 +134,41 @@ def test_dropout_input(seg_pair):
         assert sum(empty_channels) == 0
 
 
+@pytest.mark.parametrize('loader_parameters', [{
+    "path_data": [os.path.join(__data_testing_dir__, "microscopy_png")],
+    "bids_config": "ivadomed/config/config_bids.json",
+    "target_suffix": ["_seg-myelin-manual"],
+    "extensions": [".png"],
+    "roi_params": {"suffix": None, "slice_filter_roi": None},
+    "contrast_params": {"contrast_lst": [], "balance": {}},
+    "slice_axis": "axial",
+    "slice_filter_params": {"filter_empty_mask": False, "filter_empty_input": True},
+    "multichannel": False
+    }])
+@pytest.mark.parametrize('model_parameters', [{
+        "name": "Unet",
+        "dropout_rate": 0.3,
+        "bn_momentum": 0.1,
+        "final_activation": "sigmoid",
+        "depth": 3
+    }])
+@pytest.mark.parametrize('transform_parameters', [{
+    "NumpyToTensor": {},
+    }])
+def test_load_dataset_2d_png(loader_parameters, model_parameters, transform_parameters):
+    """
+    Test to make sure load_dataset runs with 2D PNG data.
+    """
+    loader_parameters.update({"model_params": model_parameters})
+    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    data_lst = ['sub-rat3_ses-01_sample-data9_SEM.png']
+    ds = imed_loader.load_dataset(bids_df,
+                                  **{**loader_parameters, **{'data_list': data_lst,
+                                                             'transforms_params': transform_parameters,
+                                                             'dataset_type': 'training'}})
+    assert ds[0]['input'].shape == (1, 756, 764)
+    assert ds[0]['gt'].shape == (1, 756, 764)
+
+
 def teardown_function():
     remove_tmp_dir()
