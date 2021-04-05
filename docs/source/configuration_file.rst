@@ -363,7 +363,7 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "slice_axis",
-        "description": "Sets the slice orientation for on which the model will be used.",
+        "description": "Sets the slice orientation for 3D NIfTI files on which the model will be used.",
         "type": "string",
         "options": {"sagittal": "plane dividing body into left/right",
                     "coronal": "plane dividing body into front/back",

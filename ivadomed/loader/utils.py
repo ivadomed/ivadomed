@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import torch
 import joblib
-from bids_neuropoly import bids
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
 from ivadomed import utils as imed_utils
@@ -572,69 +571,6 @@ def reorient_image(arr, slice_axis, nib_ref, nib_ref_canonical):
     return nib.orientations.apply_orientation(arr_ras, trans_orient)
 
 
-def merge_bids_datasets(path_data):
-    """Read the participants.tsv from several BIDS folders and merge them into a single dataframe.
-    Args:
-        path_data (list) or (str): BIDS folders paths
-
-    Returns:
-        df: dataframe with merged subjects and columns
-    """
-    path_data = imed_utils.format_path_data(path_data)
-
-    if len(path_data) == 1:
-        # read participants.tsv as pandas dataframe
-        df = bids.BIDS(path_data[0]).participants.content
-        # Append a new column to show which dataset the Subjects belong to (this will be used later for loading)
-        df['path_output'] = [path_data[0]] * len(df)
-    elif path_data == []:
-        raise Exception("No dataset folder selected")
-    else:
-        # Merge multiple .tsv files into the same dataframe
-        df = pd.read_table(os.path.join(path_data[0], 'participants.tsv'), encoding="ISO-8859-1")
-        # Convert to string to get rid of potential TypeError during merging within the same column
-        df = df.astype(str)
-
-        # Add the Bids_path to the dataframe
-        df['path_output'] = [path_data[0]] * len(df)
-
-        for iFolder in range(1, len(path_data)):
-            df_next = pd.read_table(os.path.join(path_data[iFolder], 'participants.tsv'),
-                                    encoding="ISO-8859-1")
-            df_next = df_next.astype(str)
-            df_next['path_output'] = [path_data[iFolder]] * len(df_next)
-            # Merge the .tsv files (This keeps also non-overlapping fields)
-            df = pd.merge(left=df, right=df_next, how='outer')
-
-    # Get rid of duplicate entries based on the field "participant_id" (the same subject could have in theory be
-    # included in both datasets). The assumption here is that if the two datasets contain the same subject,
-    # identical sessions of the subjects are contained within the two folder so only the files within the first folder
-    # will be kept.
-    logical_keep_first_encounter = []
-    indicesOfDuplicates = []
-    used = set()  # For debugging
-
-    for iEntry in range(len(df)):
-        if df['participant_id'][iEntry] not in used:
-            used.add(df['participant_id'][iEntry])  # For debugging
-            logical_keep_first_encounter.append(iEntry)
-        else:
-            indicesOfDuplicates.append(iEntry)  # For debugging
-    # Just keep the dataframe with unique participant_id
-    df = df.iloc[logical_keep_first_encounter, :]
-
-    # Rearrange the bids paths to be last column of the dataframe
-    cols = list(df.columns.values)
-    cols.remove("path_output")
-    cols.append("path_output")
-    df = df[cols]
-
-    # Substitute NaNs with string: "-". This helps with metadata selection
-    df = df.fillna("-")
-
-    return df
-
-
 class BidsDataframe:
     """
     This class aims to create a dataframe containing all BIDS image files in a list of path_data and their metadata.
@@ -737,7 +673,7 @@ class BidsDataframe:
             df_next = layout.to_df(metadata=True)
 
             # Add filename column
-            df_next['filename'] = df_next['path'].apply(os.path.basename)
+            df_next.insert(1, 'filename', df_next['path'].apply(os.path.basename))
 
             # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
             df_next = df_next[~df_next['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
