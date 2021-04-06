@@ -447,7 +447,7 @@ class Decoder(Module):
             # For float values, 0/0=nan. So, we can handle zero division (without checking data!) by setting nans to 0.
             preds[torch.isnan(preds)] = 0.
             # If model multiclass
-            if preds.shape[1] > 1:
+            if self.out_channel > 1:
                 class_sum = preds.sum(dim=1).unsqueeze(1)
                 # Avoid division by zero
                 class_sum[class_sum == 0] = 1
@@ -455,6 +455,7 @@ class Decoder(Module):
         else:
             preds = torch.sigmoid(x)
 
+        # If model multiclass
         if self.out_channel > 1:
             # Remove background class
             preds = preds[:, 1:, ]
