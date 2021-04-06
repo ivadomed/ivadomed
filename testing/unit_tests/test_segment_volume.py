@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from ivadomed import models as imed_models
 from ivadomed import inference as imed_inference
-from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, get_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 
 BATCH_SIZE = 1
@@ -26,7 +26,7 @@ ROI_PATH = os.path.join(__data_testing_dir__, "derivatives", "labels", "sub-unf0
                         "sub-unf01_T1w_seg-manual.nii.gz")
 
 
-def test_segment_volume_2d(get_data_testing_test_files):
+def test_segment_volume_2d(download_data_testing_test_files):
     model = imed_models.Unet(in_channel=1,
                              out_channel=1,
                              depth=2,
@@ -79,7 +79,7 @@ def test_segment_volume_2d(get_data_testing_test_files):
     shutil.rmtree(PATH_MODEL)
 
 
-def test_segment_volume_3d(get_data_testing_test_files):
+def test_segment_volume_3d(download_data_testing_test_files):
     model = imed_models.Modified3DUNet(in_channel=1,
                                        out_channel=1,
                                        base_n_filter=1)

@@ -9,7 +9,7 @@ import pytest
 import scipy
 import os
 from ivadomed import postprocessing as imed_postpro
-from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, get_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 
 
@@ -166,7 +166,7 @@ def test_mask_predictions(nii_seg):
     assert nii_seg_proc.dataobj[coord] == 0
 
 
-def test_label_file_from_coordinates(get_data_testing_test_files):
+def test_label_file_from_coordinates(download_data_testing_test_files):
     # create fake coordinate
     coord = [[0, 0, 0]]
     # load test image

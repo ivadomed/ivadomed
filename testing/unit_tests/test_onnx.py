@@ -7,7 +7,7 @@ import logging
 from ivadomed import utils as imed_utils
 from ivadomed import inference as imed_inference
 from ivadomed import models as imed_models
-from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, get_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ PATH_MODEL_PT = PATH_MODEL_ONNX.replace('onnx', 'pt')
 LENGTH_3D = (112, 112, 112)
 
 
-def test_onnx(get_data_testing_test_files):
+def test_onnx(download_data_testing_test_files):
     model = imed_models.Modified3DUNet(1, 1)
     if not os.path.exists(PATH_MODEL):
         os.mkdir(PATH_MODEL)

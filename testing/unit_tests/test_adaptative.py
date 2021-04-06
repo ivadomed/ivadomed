@@ -8,7 +8,7 @@ import ivadomed.transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 import logging
-from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, get_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ def setup_function():
     "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": ['T1w', 'T2w', 'T2star']}
     }])
-def test_hdf5(get_data_testing_test_files, loader_parameters):
+def test_hdf5(download_data_testing_test_files, loader_parameters):
     print('[INFO]: Starting test ... \n')
 
     bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)

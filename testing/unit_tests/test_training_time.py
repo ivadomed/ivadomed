@@ -10,7 +10,7 @@ from ivadomed import losses as imed_losses
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
-from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, get_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 
 cudnn.benchmark = True
@@ -89,7 +89,7 @@ def setup_function():
                          "stride_3D": [96, 96, 16]},
     }
 ])
-def test_unet_time(get_data_testing_test_files, train_lst, target_lst, config):
+def test_unet_time(download_data_testing_test_files, train_lst, target_lst, config):
     cuda_available, device = imed_utils.define_device(GPU_ID)
 
     loader_params = {

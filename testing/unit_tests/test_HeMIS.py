@@ -14,7 +14,8 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed import training as imed_training
 import logging
-from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, get_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, \
+    download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 
 logger = logging.getLogger(__name__)
@@ -41,10 +42,10 @@ def setup_function():
     "target_suffix": ["_lesion-manual"],
     "extensions": [".nii.gz"],
     "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": None},
-    "contrast_params": {"contrast_lst": ['T1w', 'T2w', 'T2star']
-                        }}])
+    "contrast_params": {"contrast_lst": ['T1w', 'T2w', 'T2star']}}
+    ])
 @pytest.mark.run(order=1)
-def test_HeMIS(get_data_testing_test_files, loader_parameters, p=0.0001, ):
+def test_HeMIS(download_data_testing_test_files, loader_parameters, p=0.0001):
     print('[INFO]: Starting test ... \n')
 
     bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
@@ -226,7 +227,7 @@ def test_HeMIS(get_data_testing_test_files, loader_parameters, p=0.0001, ):
 
 
 @pytest.mark.run(order=2)
-def test_hdf5_bids(get_data_testing_test_files):
+def test_hdf5_bids(download_data_testing_test_files):
     __output_dir__ = os.path.join(__tmp_dir__, "test_adap_bids")
     os.makedirs(__output_dir__)
     imed_adaptative.HDF5ToBIDS(
