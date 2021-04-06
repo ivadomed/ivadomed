@@ -1,6 +1,7 @@
 import logging
 import os
-from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir, __data_testing_dir__
+from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir, __data_testing_dir__, \
+    download_functional_test_files
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed.scripts import extract_small_dataset
 logger = logging.getLogger(__name__)
@@ -10,7 +11,7 @@ def setup_function():
     create_tmp_dir()
 
 
-def test_extract_small_dataset_default_n():
+def test_extract_small_dataset_default_n(download_functional_test_files):
     __output_dir__ = os.path.join(__tmp_dir__, 'output_extract_small_dataset')
     extract_small_dataset.main(args=['--input', __data_testing_dir__,
                                      '--output', __output_dir__])
@@ -24,7 +25,7 @@ def test_extract_small_dataset_default_n():
         'sub-unf03' in output_dir_list
 
 
-def test_extract_small_dataset_n_2():
+def test_extract_small_dataset_n_2(download_functional_test_files):
     __output_dir__ = os.path.join(__tmp_dir__, 'output_extract_small_dataset_2')
     extract_small_dataset.main(args=['--input', __data_testing_dir__,
                                      '--output', __output_dir__,
@@ -42,7 +43,7 @@ def test_extract_small_dataset_n_2():
         'sub-unf03' not in output_dir_list
 
 
-def test_extract_small_dataset_no_derivatives():
+def test_extract_small_dataset_no_derivatives(download_functional_test_files):
     __output_dir__ = os.path.join(__tmp_dir__, 'output_extract_small_dataset_3')
     extract_small_dataset.main(args=['--input', __data_testing_dir__,
                                      '--output', __output_dir__,
@@ -57,7 +58,7 @@ def test_extract_small_dataset_no_derivatives():
         'sub-unf03' in output_dir_list
 
 
-def test_extract_small_dataset_contrast_list():
+def test_extract_small_dataset_contrast_list(download_functional_test_files):
     __output_dir__ = os.path.join(__tmp_dir__, 'output_extract_small_dataset_4')
     extract_small_dataset.main(args=['--input', __data_testing_dir__,
                                      '--output', __output_dir__,

@@ -1,6 +1,6 @@
 import logging
 import os
-from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir, get_functional_test_files
+from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir, download_functional_test_files
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed.scripts import visualize_transforms
 
@@ -11,7 +11,7 @@ def setup_function():
     create_tmp_dir()
 
 
-def test_visualize_transforms_n_1(get_functional_test_files):
+def test_visualize_transforms_n_1(download_functional_test_files):
     __data_testing_dir__ = os.path.join(__tmp_dir__, "data_functional_testing")
     __input_file__ = os.path.join(__data_testing_dir__, 'sub-unf01/anat/sub-unf01_T1w.nii.gz')
     __output_dir__ = os.path.join(__tmp_dir__, "output_visualize_transforms_n_1")
@@ -31,7 +31,7 @@ def test_visualize_transforms_n_1(get_functional_test_files):
         assert ".png" in output_file
 
 
-def test_visualize_transforms_n_2(get_functional_test_files):
+def test_visualize_transforms_n_2(download_functional_test_files):
     __data_testing_dir__ = os.path.join(__tmp_dir__, "data_functional_testing")
     __input_file__ = os.path.join(__data_testing_dir__, 'sub-unf01/anat/sub-unf01_T1w.nii.gz')
     __output_dir__ = os.path.join(__tmp_dir__, "output_visualize_transforms_n_2")

@@ -1,6 +1,6 @@
 import logging
 import os
-from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir, get_functional_test_files
+from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir, download_functional_test_files
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed.scripts import training_curve
 logger = logging.getLogger(__name__)
@@ -10,7 +10,7 @@ def setup_function():
     create_tmp_dir()
 
 
-def test_training_curve(get_functional_test_files):
+def test_training_curve(download_functional_test_files):
     __data_testing_dir__ = os.path.join(__tmp_dir__, "data_functional_testing")
     __input_dir__ = os.path.join(__data_testing_dir__, 'tensorboard_events')
     __output_dir__ = os.path.join(__tmp_dir__, 'output_training_curve')

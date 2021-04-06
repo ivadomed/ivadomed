@@ -13,7 +13,7 @@ init_ivadomed()
 
 
 @pytest.fixture(scope='session')
-def get_functional_test_files():
+def download_functional_test_files():
     """
     This fixture will attempt to download test data file if there are not present.
     """
