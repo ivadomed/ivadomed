@@ -55,10 +55,8 @@ def remove_dataset(dataset: str = 'data_testing', verbose=True):
         dataset (str): the name of the dataset to remove
         verbose (bool): whether or not to print
     """
-    if os.path.exists(path_temp):
-        path_dataset = os.path.join(path_temp, dataset)
-    else:
-        path_dataset = os.path.join(path_temp, dataset)
+
+    path_dataset = os.path.join(path_temp, dataset)
 
     printv("rm -rf %s" % (path_dataset), verbose=verbose, type="code")
 
