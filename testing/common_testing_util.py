@@ -28,6 +28,7 @@ def download_dataset(dataset: str = 'data_testing', verbose=True):
     """Download testing data from internet.
 
     Args:
+        dataset (str): the name of the dataset to download
         verbose (bool): whether or not to print
     """
 
@@ -51,6 +52,7 @@ def remove_dataset(dataset: str = 'data_testing', verbose=True):
     """Recursively remove the data_testing folder.
 
     Args:
+        dataset (str): the name of the dataset to remove
         verbose (bool): whether or not to print
     """
     if os.path.exists(path_temp):
