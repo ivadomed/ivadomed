@@ -69,18 +69,26 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
     """
     # collect all MC simulations
     mc_data = np.array([nib.load(fname).get_fdata() for fname in fname_lst])
-    affine = nib.load(fname_lst[0]).affine
+    header = nib.load(fname_lst[0]).header
 
     # average over all the MC simulations
     data_prob = np.mean(mc_data, axis=0)
     # save prob segmentation
-    nib_prob = nib.Nifti1Image(data_prob, affine)
+    nib_prob = nib.Nifti1Image(
+        dataobj=data_prob,
+        affine=None,
+        header=header.copy()
+    )
     nib.save(nib_prob, fname_prob)
 
     # argmax operator
     data_hard = imed_postpro.threshold_predictions(data_prob, thr=thr).astype(np.uint8)
     # save hard segmentation
-    nib_hard = nib.Nifti1Image(data_hard, affine)
+    nib_hard = nib.Nifti1Image(
+        dataobj=data_hard,
+        affine=None,
+        header=header.copy()
+    )
     nib.save(nib_hard, fname_hard)
 
 

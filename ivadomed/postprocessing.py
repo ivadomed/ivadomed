@@ -24,7 +24,11 @@ def nifti_capable(wrapped):
     @functools.wraps(wrapped)
     def wrapper(data, *args, **kwargs):
         if isinstance(data, nib.Nifti1Image):
-            return nib.Nifti1Image(wrapper(np.copy(np.asanyarray(data.dataobj)), *args, **kwargs), data.affine)
+            return nib.Nifti1Image(
+                dataobj=wrapper(np.copy(np.asanyarray(data.dataobj)), *args, **kwargs),
+                affine=None,
+                header=data.header.copy()
+            )
         return wrapped(data, *args, **kwargs)
 
     return wrapper
