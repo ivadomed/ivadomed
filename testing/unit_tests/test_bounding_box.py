@@ -8,7 +8,8 @@ from ivadomed.loader import loader as imed_loader
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 import logging
-from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
+from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
 BATCH_SIZE = 8
@@ -53,7 +54,7 @@ def setup_function():
         "multichannel": False,
         "model_params": {"name": "Unet"},
     }])
-def test_bounding_box(train_lst, target_lst, config):
+def test_bounding_box(download_data_testing_test_files, train_lst, target_lst, config):
     # Create mask
     mask_coord = [20, 40, 20, 90, 0, 25]
     mx1, mx2, my1, my2, mz1, mz2 = mask_coord
@@ -113,7 +114,7 @@ def test_adjust_bb_size():
     assert(res == [0, 20, 0, 20, 0, 20])
 
 
-def test_compute_bb_statistics():
+def test_compute_bb_statistics(download_data_testing_test_files):
     """Check to make sure compute_bb_statistics runs."""
     imed_obj_detect.compute_bb_statistics(os.path.join(__data_testing_dir__,
                                                        "bounding_box_dict.json"))
