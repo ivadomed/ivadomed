@@ -62,8 +62,9 @@ jobs:
       # Step 3: install additional pytest/dev related dependencies
       - name: Install dev dependencies
         run: |
-          pip install flake8 pytest coverage coveralls pytest-cov
-          pip install -e .
+          python3 -m pip install flake8 pytest coverage coveralls pytest-cov
+          python3 -m pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+          python3 -m pip install -e .
 
       # Step 3: Lint.
       - name: Lint with flake8
@@ -71,7 +72,7 @@ jobs:
           # stop the build if there are Python syntax errors or undefined names
           #flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          python3 -m flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       # Step 4: Full Pytest
       - name: Test with pytest
@@ -80,8 +81,8 @@ jobs:
           COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
           COVERALLS_PARALLEL: true
         run: |
-          pytest --cov=./ --cov-report term-missing
-          coveralls --service=github
+          python3 -m pytest --cov=./ --cov-report term-missing
+          python3 -m coveralls --service=github
 
   # This step is MANDATORY and used to indicate matrix completion to coveralls.io
   # See here: https://coveralls-python.readthedocs.io/en/latest/usage/configuration.html#github-actions-support
@@ -95,5 +96,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pip3 install --upgrade coveralls
-          coveralls --finish
+          python3 -m coveralls --finish
 
