@@ -101,6 +101,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                               target_suffix=target_suffix,
                               roi_params=roi_params,
                               contrast_params=contrast_params,
+                              model_params=model_params,
                               metadata_choice=metadata_type,
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                               transform=tranform_lst,
@@ -929,6 +930,7 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               target_suffix=target_suffix,
                               roi_params=roi_params,
                               contrast_params=contrast_params,
+                              model_params=model_params,
                               metadata_choice=metadata_choice,
                               slice_axis=slice_axis,
                               transform=transform,
@@ -949,6 +951,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         subject_file_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         contrast_params (dict): Contains image contrasts related parameters.
+        model_params (dict): Dictionary containing model parameters.
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
             "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
         cache (bool): If the data should be cached in memory or not.
@@ -977,7 +980,7 @@ class BidsDataset(MRI2DSegmentationDataset):
 
     """
 
-    def __init__(self, bids_df, subject_file_lst, target_suffix, contrast_params, slice_axis=2,
+    def __init__(self, bids_df, subject_file_lst, target_suffix, contrast_params, model_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
                  multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False,
                  is_input_dropout=False):
