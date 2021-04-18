@@ -565,6 +565,8 @@ class MRI2DSegmentationDataset(Dataset):
     Args:
         filename_pairs (list): a list of tuples in the format (input filename list containing all modalities,ground \
             truth filename, ROI filename, metadata).
+        length (tuple): Size of each dimensions of the subimages, length equals 2.
+        stride (tuple): Size of the overlapping per subimage and dimensions, length equals 2.
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
             "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
         cache (bool): if the data should be cached in memory or not.
@@ -581,6 +583,8 @@ class MRI2DSegmentationDataset(Dataset):
         indexes (list): List of indices corresponding to each slice or subvolume in the dataset.
         filename_pairs (list): List of tuples in the format (input filename list containing all modalities,ground \
             truth filename, ROI filename, metadata).
+        length (tuple): Size of each dimensions of the subimages, length equals 2.
+        stride (tuple): Size of the overlapping per subimage and dimensions, length equals 2.
         prepro_transforms (Compose): Transformations to apply before training.
         transform (Compose): Transformations to apply during training.
         cache (bool): Tf the data should be cached in memory or not.
@@ -600,10 +604,12 @@ class MRI2DSegmentationDataset(Dataset):
 
     """
 
-    def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None,
-                 task="segmentation", roi_params=None, soft_gt=False, is_input_dropout=False):
+    def __init__(self, filename_pairs, length=None, stride=None, slice_axis=2, cache=True, transform=None,
+                 slice_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False, is_input_dropout=False):
         self.indexes = []
         self.filename_pairs = filename_pairs
+        self.length = length
+        self.stride = stride
         self.prepro_transforms, self.transform = transform
         self.cache = cache
         self.slice_axis = slice_axis
@@ -1122,5 +1128,8 @@ class BidsDataset(MRI2DSegmentationDataset):
             raise Exception('No subjects were selected - check selection of parameters on config.json (e.g. center '
                             'selected + target_suffix)')
 
-        super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
+        length = model_params["length_2D"] if "length_2D" in model_params else None
+        stride = model_params["stride_2D"] if "stride_2D" in model_params else None
+
+        super().__init__(self.filename_pairs, length, stride, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
                          self.soft_gt, is_input_dropout)
