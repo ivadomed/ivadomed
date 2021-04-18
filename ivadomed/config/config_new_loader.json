@@ -74,7 +74,9 @@
         "dropout_rate": 0.3,
         "bn_momentum": 0.1,
         "final_activation": "sigmoid",
-        "depth": 3
+        "depth": 3,
+        "length_2D": [64, 64],
+        "stride_2D": [32, 32]
     },
     "FiLMedUnet": {
         "applied": false,
