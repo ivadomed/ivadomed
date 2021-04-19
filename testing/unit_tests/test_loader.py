@@ -3,7 +3,8 @@ import pytest
 import csv_diff
 import logging
 import torch
-from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__, __tmp_dir__
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files, path_repo_root
+from testing.common_testing_util import remove_tmp_dir
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader import loader as imed_loader
 logger = logging.getLogger(__name__)
@@ -15,13 +16,13 @@ def setup_function():
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [os.path.join(__data_testing_dir__, "microscopy_png")],
-    "bids_config": "ivadomed/config/config_bids.json",
+    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": [["_seg-myelin-manual", "_seg-axon-manual"]],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": []}
     }])
-def test_bids_df_microscopy_png(loader_parameters):
+def test_bids_df_microscopy_png(download_data_testing_test_files, loader_parameters):
     """
     Test for microscopy png file format
     Test for _sessions.tsv and _scans.tsv files
@@ -46,7 +47,7 @@ def test_bids_df_microscopy_png(loader_parameters):
     "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": ["T1w", "T2w"]}
     }])
-def test_bids_df_anat(loader_parameters):
+def test_bids_df_anat(download_data_testing_test_files, loader_parameters):
     """
     Test for MRI anat nii.gz file format
     Test for when no file extensions are provided
@@ -67,13 +68,13 @@ def test_bids_df_anat(loader_parameters):
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [__data_testing_dir__, os.path.join(__data_testing_dir__, "microscopy_png")],
-    "bids_config": "ivadomed/config/config_bids.json",
+    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-manual", "seg-axon-manual"],
     "extensions": [".nii.gz", ".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": ["T1w", "T2w", "SEM"]}
     }])
-def test_bids_df_multi(loader_parameters):
+def test_bids_df_multi(download_data_testing_test_files, loader_parameters):
     """
     Test for multiple folders in path_data
     """
@@ -91,13 +92,13 @@ def test_bids_df_multi(loader_parameters):
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [os.path.join(__data_testing_dir__, "ct_scan")],
-    "bids_config": "ivadomed/config/config_bids.json",
+    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-manual"],
     "extensions": [".nii.gz"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": ["ct"]}
     }])
-def test_bids_df_ctscan(loader_parameters):
+def test_bids_df_ctscan(download_data_testing_test_files, loader_parameters):
     """
     Test for ct-scan nii.gz file format
     Test for when dataset_description.json is not present in derivatives folder
@@ -154,7 +155,8 @@ def test_dropout_input(seg_pair):
 @pytest.mark.parametrize('transform_parameters', [{
     "NumpyToTensor": {},
     }])
-def test_load_dataset_2d_png(loader_parameters, model_parameters, transform_parameters):
+def test_load_dataset_2d_png(download_data_testing_test_files,
+                             loader_parameters, model_parameters, transform_parameters):
     """
     Test to make sure load_dataset runs with 2D PNG data.
     """

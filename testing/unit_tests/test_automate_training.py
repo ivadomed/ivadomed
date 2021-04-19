@@ -90,7 +90,8 @@ import pytest
 from ivadomed.scripts.automate_training import make_config_list, get_param_list, \
     HyperparameterOption
 import logging
-from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir
+from testing.unit_tests.t_utils import create_tmp_dir
+from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
 initial_config = {

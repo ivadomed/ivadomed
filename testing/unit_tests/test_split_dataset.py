@@ -5,7 +5,8 @@ import pytest
 import numpy as np
 import pandas as pd
 from ivadomed.loader import utils as imed_loader_utils
-from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __tmp_dir__
+from testing.unit_tests.t_utils import create_tmp_dir, __tmp_dir__
+from testing.common_testing_util import remove_tmp_dir
 
 PATH_DATA = os.path.join(__tmp_dir__, 'bids')
 LOG_PATH = os.path.join(__tmp_dir__, 'log')
@@ -32,15 +33,14 @@ def load_dataset(split_params):
 
 
 @pytest.mark.parametrize('split_params', [{
-        "fname_split": None,
-        "random_seed": 6,
-        "split_method" : "participant_id",
-        "data_testing": {"data_type": "institution_id", "data_value":[0]},
-        "train_fraction": 0.6,
-        "test_fraction": 0.2
-    }])
+    "fname_split": None,
+    "random_seed": 6,
+    "split_method": "participant_id",
+    "data_testing": {"data_type": "institution_id", "data_value": [0]},
+    "train_fraction": 0.6,
+    "test_fraction": 0.2
+}])
 def test_per_center_testcenter_0(split_params):
-
     train, val, test, patient_mapping = load_dataset(split_params)
 
     # Verify split proportion
@@ -52,13 +52,13 @@ def test_per_center_testcenter_0(split_params):
 
 
 @pytest.mark.parametrize('split_params', [{
-        "fname_split": None,
-        "random_seed": 6,
-        "split_method" : "participant_id",
-        "data_testing": {"data_type": "institution_id", "data_value":[]},
-        "train_fraction": 0.2,
-        "test_fraction": 0.4
-    }])
+    "fname_split": None,
+    "random_seed": 6,
+    "split_method": "participant_id",
+    "data_testing": {"data_type": "institution_id", "data_value": []},
+    "train_fraction": 0.2,
+    "test_fraction": 0.4
+}])
 def test_per_center_without_testcenter(split_params):
     train, val, test, patient_mapping = load_dataset(split_params)
 
@@ -79,13 +79,13 @@ def test_per_center_without_testcenter(split_params):
 
 
 @pytest.mark.parametrize('split_params', [{
-        "fname_split": None,
-        "random_seed": 6,
-        "split_method" : "participant_id",
-        "data_testing": {"data_type": None, "data_value":[]},
-        "train_fraction": 0.45,
-        "test_fraction": 0.35
-    }])
+    "fname_split": None,
+    "random_seed": 6,
+    "split_method": "participant_id",
+    "data_testing": {"data_type": None, "data_value": []},
+    "train_fraction": 0.45,
+    "test_fraction": 0.35
+}])
 def test_per_patient(split_params):
     train, val, test, patient_mapping = load_dataset(split_params)
 
@@ -94,13 +94,13 @@ def test_per_patient(split_params):
 
 
 @pytest.mark.parametrize('split_params', [{
-        "fname_split": None,
-        "random_seed": 6,
-        "split_method" : "participant_id",
-        "data_testing": {"data_type": None, "data_value":[]},
-        "train_fraction": 0.6,
-        "test_fraction": 0
-    }])
+    "fname_split": None,
+    "random_seed": 6,
+    "split_method": "participant_id",
+    "data_testing": {"data_type": None, "data_value": []},
+    "train_fraction": 0.6,
+    "test_fraction": 0
+}])
 def test_per_patient_2(split_params):
     train, val, test, patient_mapping = load_dataset(split_params)
 
@@ -121,15 +121,15 @@ def check_balance(train, val, test, patient_mapping):
 
 
 @pytest.mark.parametrize('split_params', [{
-        "fname_split": None,
-        "random_seed": 6,
-        "center_test": [],
-        "balance": "disability",
-        "split_method" : "participant_id",
-        "data_testing": {"data_type": None, "data_value":[]},
-        "train_fraction": 0.45,
-        "test_fraction": 0.35
-    }])
+    "fname_split": None,
+    "random_seed": 6,
+    "center_test": [],
+    "balance": "disability",
+    "split_method": "participant_id",
+    "data_testing": {"data_type": None, "data_value": []},
+    "train_fraction": 0.45,
+    "test_fraction": 0.35
+}])
 def test_per_patient_balance(split_params):
     train, val, test, patient_mapping = load_dataset(split_params)
 
@@ -139,14 +139,14 @@ def test_per_patient_balance(split_params):
 
 
 @pytest.mark.parametrize('split_params', [{
-        "fname_split": None,
-        "random_seed": 6,
-        "balance": "disability",
-        "split_method" : "participant_id",
-        "data_testing": {"data_type": "institution_id", "data_value":[0]},
-        "train_fraction": 0.4,
-        "test_fraction": 0.2
-    }])
+    "fname_split": None,
+    "random_seed": 6,
+    "balance": "disability",
+    "split_method": "participant_id",
+    "data_testing": {"data_type": "institution_id", "data_value": [0]},
+    "train_fraction": 0.4,
+    "test_fraction": 0.2
+}])
 def test_per_center_balance(split_params):
     train, val, test, patient_mapping = load_dataset(split_params)
 
