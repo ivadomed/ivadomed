@@ -37,6 +37,42 @@ def get_parser():
     return parser
 
 
+def onclick(event, df, metric, metadata):
+    #33click = event.xdata, event.ydata
+    click = event.ind
+
+    thisline = event.artist
+    #xdata = thisline.get_xdata()
+    #ydata = thisline.get_ydata()
+    ind = event.ind
+
+
+
+    '''
+    dataX = df[metric][df['EvaluationModel'] ==
+                       os.path.basename(os.path.normpath(combinedFolders[i][0]))]
+    dataY = df[metric][df['EvaluationModel'] ==
+                       os.path.basename(os.path.normpath(combinedFolders[i][1]))]
+    '''
+
+    if None not in click:  # clicking outside the plot area produces a coordinate of None, so we filter those out.
+        #print('x = {}, y = {}'.format(*click))
+        print(click)
+        #print(dataX)
+        frame = plt.text(0.6, 0.7, "hello world!", size=50,
+                         ha="center", va="center",
+                         )
+        matplotlib.artist.Artist.remove(frame)
+        # To show the artist
+        matplotlib.artist.Artist.set_visible(frame, True)
+
+        #plt.text(event.xdata, event.ydata, 'Success')
+        plt.show()
+
+
+
+
+
 def visualize_and_compare_models(logfolders, metric, metadata):
     """This function allows violinplots visualization of multiple evaluation models simultaneously and performs a
        Kolmogorov–Smirnov significance test between each combination of models.
@@ -58,7 +94,7 @@ def visualize_and_compare_models(logfolders, metric, metadata):
         metric (str):      column of "results_eval/evaluation_3Dmetrics.csv" to be used on the plots (default: dice_class0),
                            Flag: ``--metric``
         metadata (list) - Optional:   Allows visualization of violinplots only from subjects that match the metadata criteria.
-                           2 elements - (1) column label of the participants.tsv metadata so only subjects that belong to
+                           2 elements - (1) column label of the dataframe.csv metadata so only subjects that belong to
                            that category will be used and (2) string to be matched, Flag: ``--metadata``
             Example::
 
@@ -77,21 +113,22 @@ def visualize_and_compare_models(logfolders, metric, metadata):
         if not os.path.exists(os.path.join(folder, 'results_eval', 'evaluation_3Dmetrics.csv')):
             print('evaluation_3Dmetrics.csv file is not present within ' + os.path.join(folder, 'results_eval'))
             raise Exception('evaluation_3Dmetrics.csv missing')
-        if not os.path.exists(os.path.join(folder, 'participants.tsv')):
-            print('participants.tsv file is not present within ' + folder)
-            raise Exception('participants.tsv missing')
+        if not os.path.exists(os.path.join(folder, 'bids_dataframe.csv')):
+            print('bids_dataframe.csv file is not present within ' + folder)
+            raise Exception('bids_dataframe.csv missing')
 
     if len(logfolders) < 1:
         raise Exception('No folders were selected - Nothing to show')
 
-    columnNames = ["EvaluationModel", metric]
+    columnNames = ["EvaluationModel", metric, 'subject']
     df = pd.DataFrame([], columns=columnNames)
 
+    ii = 0
     for folder in logfolders:
         result = pd.read_csv(os.path.join(folder, 'results_eval', 'evaluation_3Dmetrics.csv'))
 
         if metadata:
-            participant_metadata = pd.read_table(os.path.join(folder, 'participants.tsv'), encoding="ISO-8859-1")
+            participant_metadata = pd.read_table(os.path.join(folder, 'bids_dataframe.csv'), sep=',')
             # Select only the subjects that satisfy the --metadata input
             selected_subjects = participant_metadata[participant_metadata[metadata[0]] == metadata[1]]["participant_id"].tolist()
 
@@ -105,9 +142,13 @@ def visualize_and_compare_models(logfolders, metric, metadata):
                 print('No subject meet the selected criteria - skipping plot for: ' + folder)
 
         if not result.empty:
-            scores = result[metric]
+            scores = result[metric]                                                         + ii
+
+            ii = ii + 1
+
             folders = [os.path.basename(os.path.normpath(folder))] * len(scores)
-            combined = np.column_stack((folders, scores.astype(np.object, folders))).T
+            subject_id = result["image_id"]
+            combined = np.column_stack((folders, scores.astype(np.object, folders), subject_id)).T
             singleFolderDF = pd.DataFrame(combined, columnNames).T
             df = df.append(singleFolderDF, ignore_index=True)
 
@@ -121,15 +162,15 @@ def visualize_and_compare_models(logfolders, metric, metadata):
     if not df.empty:
 
         # Plot all violinplots
-        sns.violinplot(x="EvaluationModel", y=metric, data=df, color="0.8", inner='quartile')
-        sns.stripplot(x="EvaluationModel", y=metric, data=df, jitter=True, zorder=1)
+        plt1 = sns.violinplot(x="EvaluationModel", y=metric, data=df, color="0.8", inner='quartile', picker=True, pickradius=1)
+        plt2 = sns.stripplot(x="EvaluationModel", y=metric, data=df, jitter=True, zorder=1, picker=True, pickradius=1)
 
         # Display the mean performance on top of every violinplot
         for i in range(len(logfolders)):
             # This will be used to plot the mean value on top of each individual violinplot
             temp = df[metric][df['EvaluationModel'] == os.path.basename(os.path.normpath(logfolders[i]))]
             plt.text(i, df[metric].max() + 0.07, str((100 * temp.mean()).round() / 100), ha='center', va='top',
-                     color='r')
+                     color='r', picker=True)
 
         if len(logfolders) > 1:
             # Perform a Kolmogorov–Smirnov test for all combinations of results & connect the corresponding Violinplots
@@ -144,23 +185,27 @@ def visualize_and_compare_models(logfolders, metric, metadata):
                 x1, x2 = combinedNumbers[i]
 
                 y, h, col = df[metric].min() - 0.06 - 0.03 * i, -0.01, 'k'
-                plt.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=1.5, c=col)
+                plt.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=1.5, c=col, picker=True)
 
                 # Show if the differentiation of the distributions is :
                 # Not significant: ns, significant: *, very significant: ***
                 if KStest.pvalue >= 0.5:
-                    plt.text((x1 + x2) * .5, y + h, "ns", ha='center', va='bottom', color=col)
+                    plt.text((x1 + x2) * .5, y + h, "ns", ha='center', va='bottom', color=col, picker=True)
                 elif 0.5 > KStest.pvalue >= 0.01:
-                    plt.text((x1 + x2) * .5, y + h, "*", ha='center', va='bottom', color='r')
+                    plt.text((x1 + x2) * .5, y + h, "*", ha='center', va='bottom', color='r', picker=True)
                 elif KStest.pvalue < 0.01:
-                    plt.text((x1 + x2) * .5, y + h, "***", ha='center', va='bottom', color='r')
+                    plt.text((x1 + x2) * .5, y + h, "***", ha='center', va='bottom', color='r', picker=True)
 
         if metadata:
-            plt.title("Metric:  " + metric + "\nMetadata:  " + metadata[0] + ":" + metadata[1])
+            plt.title("Metric:  " + metric + "\nMetadata:  " + metadata[0] + ":" + metadata[1], picker=True)
         else:
-            plt.title("Metric:  " + metric)
+            plt.title("Metric:  " + metric, picker=True)
 
         plt.grid()
+        #click = plt.gca().figure.canvas.mpl_connect('button_press_event', onclick)
+        click = plt.gca().figure.canvas.mpl_connect('pick_event', lambda event: onclick(event, df, metric, metadata))
+        #click = plt.gca().figure.canvas.mpl_connect('key_press_event', lambda event: onclick(event, plt1, plt2, plt3))
+
         plt.show(block=True)
 
         print('success')
