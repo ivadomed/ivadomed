@@ -641,7 +641,8 @@ class MRI2DSegmentationDataset(Dataset):
             for idx_pair_slice in range(input_data_shape[-1]):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice, gt_type=self.task)
                 self.has_bounding_box = imed_obj_detect.verify_metadata(slice_seg_pair, self.has_bounding_box)
-                # TODO: check if adjust_transforms need length and stride
+
+                # TODO: Add length_2D and stride_2D to bounding box option
                 if self.has_bounding_box:
                     self.prepro_transforms = imed_obj_detect.adjust_transforms(self.prepro_transforms, slice_seg_pair)
 
@@ -678,7 +679,7 @@ class MRI2DSegmentationDataset(Dataset):
             input_img = self.handlers[i][0]['input']
             shape = input_img[0].shape
 
-            # TODO: verif dimensions, stride and length
+            # TODO: verif stride <= length <= shape
 
             for x in range(0, (shape[0] - self.length[0] + self.stride[0]), self.stride[0]):
                 if x + self.length[0] > shape[0]:
