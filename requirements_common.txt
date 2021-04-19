@@ -1,0 +1,14 @@
+csv-diff>=1.0
+h5py==2.10.0
+joblib
+matplotlib>=3.3.0
+nibabel
+onnxruntime==1.7.0
+pandas
+pillow>=7.0.0
+pybids>=0.12.4
+scikit-learn>=0.20.3
+scikit-image
+seaborn
+tensorboard
+tqdm>=4.30
