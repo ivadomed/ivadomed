@@ -3,7 +3,7 @@
 # This script makes a figure with violinplots and significance values to compare between models
 #
 #        python3 visualize_and_compare_testing_models.py --logfolders path/to/logfolder1 path/to/logfolder2
-#                              --metric metric/to/use --metadata metadata/label string/to/match
+#                              --metric metric_to_use --metadata metadata_label string_to_match
 ###########################################################################################################
 
 
@@ -19,7 +19,7 @@ from ivadomed.utils import init_ivadomed
 import argparse
 matplotlib.use('TkAgg')  # This is needed for plotting through a CLI call
 
-# Konstantinos Nasiotis 2020
+# Konstantinos Nasiotis 2021
 #
 # Dependency: sudo apt-get install python3-tk
 # - needed for matplotlib visualization through a CLI call
@@ -37,40 +37,39 @@ def get_parser():
     return parser
 
 
-def onclick(event, df, metric, metadata):
-    #33click = event.xdata, event.ydata
-    click = event.ind
+def onclick(event, df):
 
-    thisline = event.artist
-    #xdata = thisline.get_xdata()
-    #ydata = thisline.get_ydata()
-    ind = event.ind
+    # Get the index of the selected violinplot datapoint
+    # WARNING: More than one can be selected if they are very close to each other
+    #          If that's the case, all will be displayed
+    clicked_index = event.ind
 
+    fig = plt.gca()
+    if None not in clicked_index:  # clicking outside the plot area produces a coordinate of None, so we filter those out.
+        output_folders = df["EvaluationModel"].unique()
 
+        # Remove the previously displayed subject(s)
+        # This also takes care of the case where more than one subjects are displayed
+        while len(fig.texts) > len(list(itertools.permutations(range(len(output_folders))))):
+            fig.texts.pop()
 
-    '''
-    dataX = df[metric][df['EvaluationModel'] ==
-                       os.path.basename(os.path.normpath(combinedFolders[i][0]))]
-    dataY = df[metric][df['EvaluationModel'] ==
-                       os.path.basename(os.path.normpath(combinedFolders[i][1]))]
-    '''
+        # This is a hack to find the index of the Violinplot - There should be another way to get this from the
+        # figure object
+        bins = np.linspace(-1, 1, len(output_folders) + 1)
+        i_output_folder = np.where(bins < event.mouseevent.xdata)
+        i_output_folder = i_output_folder[-1][0]
+        selected_output_folder = df[df["EvaluationModel"] == output_folders[i_output_folder]]
 
-    if None not in click:  # clicking outside the plot area produces a coordinate of None, so we filter those out.
-        #print('x = {}, y = {}'.format(*click))
-        print(click)
-        #print(dataX)
-        frame = plt.text(0.6, 0.7, "hello world!", size=50,
-                         ha="center", va="center",
-                         )
-        matplotlib.artist.Artist.remove(frame)
-        # To show the artist
-        matplotlib.artist.Artist.set_visible(frame, True)
+        for iSubject in range(0, len(clicked_index.tolist())):
+            frame = plt.text(event.mouseevent.xdata, -0.08 - 0.08*iSubject + event.mouseevent.ydata,
+                             selected_output_folder["subject"][clicked_index[iSubject]], size=10,
+                             ha="center", va="center",
+                             bbox=dict(facecolor='red', alpha=0.5)
+                             )
+            # To show the artist
+            matplotlib.artist.Artist.set_visible(frame, True)
 
-        #plt.text(event.xdata, event.ydata, 'Success')
         plt.show()
-
-
-
 
 
 def visualize_and_compare_models(logfolders, metric, metadata):
@@ -101,7 +100,6 @@ def visualize_and_compare_models(logfolders, metric, metadata):
                 --metadata pathology ms
     """
 
-
     # access CLI options
     print("logfolders: %r" % logfolders)
     print("metric: %r" % metric)
@@ -123,28 +121,24 @@ def visualize_and_compare_models(logfolders, metric, metadata):
     columnNames = ["EvaluationModel", metric, 'subject']
     df = pd.DataFrame([], columns=columnNames)
 
-    ii = 0
     for folder in logfolders:
         result = pd.read_csv(os.path.join(folder, 'results_eval', 'evaluation_3Dmetrics.csv'))
 
         if metadata:
             participant_metadata = pd.read_table(os.path.join(folder, 'bids_dataframe.csv'), sep=',')
             # Select only the subjects that satisfy the --metadata input
-            selected_subjects = participant_metadata[participant_metadata[metadata[0]] == metadata[1]]["participant_id"].tolist()
+            selected_subjects = participant_metadata[participant_metadata[metadata[0]] == metadata[1]]["filename"].tolist()
+            selected_subjects = [i.replace(".nii.gz", "") for i in selected_subjects]
 
             # Now select only the scores from these subjects
             result_subject_ids = result["image_id"]
-            result_subject_ids = [i.split('_', 1)[0] for i in result_subject_ids]  # Get rid of _T1w, _T2w etc.
-
             result = result.iloc[[i for i in range(len(result_subject_ids)) if result_subject_ids[i] in selected_subjects]]
 
             if result.empty:
                 print('No subject meet the selected criteria - skipping plot for: ' + folder)
 
         if not result.empty:
-            scores = result[metric]                                                         + ii
-
-            ii = ii + 1
+            scores = result[metric]
 
             folders = [os.path.basename(os.path.normpath(folder))] * len(scores)
             subject_id = result["image_id"]
@@ -162,8 +156,8 @@ def visualize_and_compare_models(logfolders, metric, metadata):
     if not df.empty:
 
         # Plot all violinplots
-        plt1 = sns.violinplot(x="EvaluationModel", y=metric, data=df, color="0.8", inner='quartile', picker=True, pickradius=1)
-        plt2 = sns.stripplot(x="EvaluationModel", y=metric, data=df, jitter=True, zorder=1, picker=True, pickradius=1)
+        plt1 = sns.violinplot(x="EvaluationModel", y=metric, data=df, palette="muted", saturation=0.3, inner='quartile', picker=True, pickradius=1)
+        plt2 = sns.stripplot(x="EvaluationModel", y=metric, data=df, linewidth=0.5, edgecolor="black", jitter=True, zorder=1, picker=True, pickradius=1)
 
         # Display the mean performance on top of every violinplot
         for i in range(len(logfolders)):
@@ -202,13 +196,11 @@ def visualize_and_compare_models(logfolders, metric, metadata):
             plt.title("Metric:  " + metric, picker=True)
 
         plt.grid()
-        #click = plt.gca().figure.canvas.mpl_connect('button_press_event', onclick)
-        click = plt.gca().figure.canvas.mpl_connect('pick_event', lambda event: onclick(event, df, metric, metadata))
-        #click = plt.gca().figure.canvas.mpl_connect('key_press_event', lambda event: onclick(event, plt1, plt2, plt3))
+        plt.text(0, 0, " ")  # One empty entry is introduced here so it is popped in the function
+        plt.gca().figure.canvas.mpl_connect('pick_event',
+                                            lambda event: onclick(event, df))
 
         plt.show(block=True)
-
-        print('success')
 
     else:
         print('No subjects meet the criteria selected for any model. '
