@@ -3,7 +3,8 @@ import numpy as np
 import pytest
 import os
 import logging
-from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __tmp_dir__
+from testing.unit_tests.t_utils import create_tmp_dir,  __tmp_dir__
+from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
 

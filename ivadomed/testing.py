@@ -1,6 +1,7 @@
 import os
 import copy
 import logging
+from pathlib import Path
 import nibabel as nib
 import numpy as np
 import torch
@@ -196,7 +197,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool) and task != "classification":
                     # save the completely processed file as a nifti file
                     if ofolder:
-                        fname_pred = os.path.join(ofolder, fname_tmp.split('/')[-1])
+                        fname_pred = os.path.join(ofolder, Path(fname_tmp).name)
                         fname_pred = fname_pred.rsplit("_", 1)[0] + '_pred.nii.gz'
                         # If Uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
