@@ -24,7 +24,7 @@ matplotlib.rcParams['toolbar'] = 'None'  # Remove buttons
 #
 # Dependency: sudo apt-get install python3-tk
 # - needed for matplotlib visualization through a CLI call
-# ----------------------------------------------------------------------------------------------------------------------#
+# ---------------------------------------------------------------------------------------------------------------------#
 
 
 def get_parser():
@@ -47,7 +47,8 @@ def onclick(event, df):
     clicked_index = event.ind
 
     fig = plt.gca()
-    if None not in clicked_index:  # clicking outside the plot area produces a coordinate of None, so we filter those out.
+    # clicking outside the plot area produces a coordinate of None, so we filter those out.
+    if None not in clicked_index:
         output_folders = df["EvaluationModel"].unique()
 
         # Remove the previously displayed subject(s)
@@ -158,8 +159,10 @@ def visualize_and_compare_models(logfolders, metric, metadata):
     if not df.empty:
 
         # Plot all violinplots
-        plt1 = sns.violinplot(x="EvaluationModel", y=metric, data=df, palette="muted", saturation=0.3, inner='quartile', picker=True, pickradius=1)
-        plt2 = sns.stripplot(x="EvaluationModel", y=metric, data=df, linewidth=0.5, edgecolor="black", jitter=True, zorder=1, picker=True, pickradius=1)
+        plt1 = sns.violinplot(x="EvaluationModel", y=metric, data=df, palette="muted", saturation=0.3,
+                              inner='quartile', picker=True, pickradius=1)
+        plt2 = sns.stripplot(x="EvaluationModel", y=metric, data=df, linewidth=0.5, edgecolor="black",
+                             jitter=True, zorder=1, picker=True, pickradius=1)
 
         # Display the mean performance on top of every violinplot
         for i in range(len(logfolders)):
@@ -168,7 +171,7 @@ def visualize_and_compare_models(logfolders, metric, metadata):
             plt.text(i, df[metric].max() + 0.07, str((100 * temp.mean()).round() / 100), ha='center', va='top',
                      color='r', picker=True)
 
-        if len(logfolders) > 1:
+        if len(logfolders) > 1 and len(logfolders) < 5:
             # Perform a Kolmogorov–Smirnov test for all combinations of results & connect the corresponding Violinplots
             for i in range(len(combinedNumbers)):
                 dataX = df[metric][df['EvaluationModel'] ==
@@ -209,7 +212,7 @@ def visualize_and_compare_models(logfolders, metric, metadata):
               'Probably you need to change the --metadata / --metric selection')
 
 
-def main(args=None):
+def main():
     init_ivadomed()
 
     parser = get_parser()
