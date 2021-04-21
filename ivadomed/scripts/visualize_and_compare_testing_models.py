@@ -16,7 +16,10 @@ import seaborn as sns
 from scipy.stats import ks_2samp
 from ivadomed.utils import init_ivadomed
 import argparse
-matplotlib.use('TkAgg')
+import sys
+# Hack to let the readthedocs display the function properly on github where python is running in headless mode
+if not sys.stdin.isatty():
+    matplotlib.use('TkAgg')
 matplotlib.rcParams['toolbar'] = 'None'  # Remove buttons
 import matplotlib.pyplot as plt  # Pyplot needs to loaded AFTER matplotlib.use('TkAgg')
 
