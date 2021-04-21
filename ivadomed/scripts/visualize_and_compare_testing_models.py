@@ -17,7 +17,8 @@ import seaborn as sns
 from scipy.stats import ks_2samp
 from ivadomed.utils import init_ivadomed
 import argparse
-matplotlib.use('TkAgg')  # This is needed for plotting through a CLI call
+matplotlib.use('TkAgg')
+matplotlib.rcParams['toolbar'] = 'None'  # Remove buttons
 
 # Konstantinos Nasiotis 2021
 #
@@ -33,7 +34,8 @@ def get_parser():
     parser.add_argument("--metric", default='dice_class0', nargs=1, type=str, dest="metric",
                         help="Metric from evaluation_3Dmetrics.csv to base the plots on.")
     parser.add_argument("--metadata", required=False,  nargs=2, type=str, dest="metadata",
-                        help="Selection based on metadata from participants.tsv: (1) Label from column (2) string to match")
+                        help="Selection based on metadata from participants.tsv:"
+                             "(1) Label from column (2) string to match")
     return parser
 
 
@@ -90,13 +92,13 @@ def visualize_and_compare_models(logfolders, metric, metadata):
 
     Args:
         logfolders (list): list of folders that contain the logs of the models to be compared, Flag: ``--logfolders``
-        metric (str):      column of "results_eval/evaluation_3Dmetrics.csv" to be used on the plots (default: dice_class0),
-                           Flag: ``--metric``
-        metadata (list) - Optional:   Allows visualization of violinplots only from subjects that match the metadata criteria.
+        metric (str):      column of "results_eval/evaluation_3Dmetrics.csv" to be used on the plots
+                           (default: dice_class0), Flag: ``--metric``
+        metadata (list) - Optional:   Allows visualization of violinplots only from subjects that match the
+                           metadata criteria.
                            2 elements - (1) column label of the dataframe.csv metadata so only subjects that belong to
                            that category will be used and (2) string to be matched, Flag: ``--metadata``
-            Example::
-
+        Example::
                 --metadata pathology ms
     """
 
