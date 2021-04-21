@@ -8,7 +8,6 @@
 
 
 import matplotlib
-import matplotlib.pyplot as plt
 import pandas as pd
 import os
 import numpy as np
@@ -19,6 +18,8 @@ from ivadomed.utils import init_ivadomed
 import argparse
 matplotlib.use('TkAgg')
 matplotlib.rcParams['toolbar'] = 'None'  # Remove buttons
+import matplotlib.pyplot as plt  # Pyplot needs to loaded AFTER matplotlib.use('TkAgg')
+
 
 # Konstantinos Nasiotis 2021
 #
