@@ -4,8 +4,9 @@
 #
 #        python3 visualize_and_compare_testing_models.py --ofolders path/to/ofolder1 path/to/ofolder2
 #                              --metric metric_to_use --metadata metadata_label string_to_match
-###########################################################################################################
 
+# Konstantinos Nasiotis 2021
+###########################################################################################################
 
 import matplotlib
 import pandas as pd
@@ -30,11 +31,6 @@ for gui in gui_env:
         continue
 print("Using:", matplotlib.get_backend() + " gui")
 
-
-# Konstantinos Nasiotis 2021
-#
-# Dependency: sudo apt-get install python3-tk
-# - needed for matplotlib visualization through a CLI call
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
@@ -88,10 +84,16 @@ def onclick(event, df):
 
 
 def visualize_and_compare_models(ofolders, metric, metadata):
-    """This function allows violinplots visualization of multiple evaluation models simultaneously and performs a
-       Kolmogorov–Smirnov significance test between each combination of models.
+    """This function allows violinplots visualization of multiple evaluation models simultaneously and performs a Kolmogorov–Smirnov significance test between each combination of models.
 
     If only one model is selected as input, only the Violinplot will be presented (no test will be superimposed)
+
+    The datapoints within each violinplot are interactive. The subject_id and MRI sequence of each point are displayed
+    when clicked (as shown on the violinplot to the right of the example figure below).
+
+    .. note::
+        If more than 4 model outputs are selected to be compared, the significance tests are not displayed since the
+        figure becomes very busy
 
     Usage example::
 
@@ -110,9 +112,7 @@ def visualize_and_compare_models(ofolders, metric, metadata):
         metadata (list) - Optional:   Allows visualization of violinplots only from subjects that match the
                            metadata criteria.
                            2 elements - (1) column label of the dataframe.csv metadata so only subjects that belong to
-                           that category will be used and (2) string to be matched, Flag: ``--metadata``
-        Example::
-                --metadata pathology ms
+                           that category will be used and (2) string to be matched, Flag: ``--metadata``, Example: "--metadata pathology ms"
     """
 
     # access CLI options
