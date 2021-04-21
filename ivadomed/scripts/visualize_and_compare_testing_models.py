@@ -209,7 +209,7 @@ def visualize_and_compare_models(logfolders, metric, metadata):
               'Probably you need to change the --metadata / --metric selection')
 
 
-def main():
+def main(args=None):
     init_ivadomed()
 
     parser = get_parser()
