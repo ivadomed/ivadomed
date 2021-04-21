@@ -1,17 +1,18 @@
 {
     "command": "train",
-    "gpu": 0,
-    "log_directory": "spineGeneric",
-    "model_name": "seg_sc_t1-t2-t2s-mt",
+    "gpu_ids": [0],
+    "path_output": "spineGeneric",
+    "model_name": "my_model",
     "debugging": false,
     "object_detection_params": {
         "object_detection_path": null,
         "safety_factor": [1.0, 1.0, 1.0]
     },
     "loader_parameters": {
-        "bids_path": "data_example_spinegeneric",
+        "path_data": ["data_example_spinegeneric"],
         "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": ["_seg-manual"],
+        "extensions": [".nii.gz"],
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
@@ -32,8 +33,8 @@
     "split_dataset": {
         "fname_split": null,
         "random_seed": 6,
-        "center_test": [],
-        "method": "per_patient",
+        "split_method" : "participant_id",
+        "data_testing": {"data_type": null, "data_value":[]},
         "balance": null,
         "train_fraction": 0.6,
         "test_fraction": 0.2
@@ -70,7 +71,8 @@
     "default_model": {
         "name": "Unet",
         "dropout_rate": 0.3,
-        "bn_momentum": 0.9,
+        "bn_momentum": 0.1,
+        "final_activation": "sigmoid",
         "depth": 3
     },
     "FiLMedUnet": {
@@ -99,7 +101,7 @@
         "remove_small": {"unit": "vox", "thr": 3}
     },
     "evaluation_parameters": {
-        "targetSize": {"unit": "vox", "thr": [20, 100]},
+        "target_size": {"unit": "vox", "thr": [20, 100]},
         "overlap": {"unit": "vox", "thr": 3}
     },
     "transformation": {

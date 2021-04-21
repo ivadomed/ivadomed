@@ -322,9 +322,17 @@ class Postprocessing(object):
 
         Args:
             unit (str): Indicates the units of the objects: "mm3" or "vox"
-            thr (int): Minimal object size to keep in input data.
+            thr (int or list): Minimal object size to keep in input data.
 
         """
+        if isinstance(thr, list) and (self.n_classes != len(thr)):
+            raise ValueError("Length mismatch for remove small object postprocessing step: threshold length of {} "
+                             "while the number of predicted class is {}.".format(len(thr), self.n_classes))
+
+        # Convert thr to list
+        if isinstance(thr, int):
+            thr = [thr] * self.n_classes
+
         if unit == 'vox':
             size_min = thr
         elif unit == 'mm3':
@@ -336,7 +344,7 @@ class Postprocessing(object):
         for idx in range(self.n_classes):
             self.data_pred[..., idx] = remove_small_objects(data=self.data_pred[..., idx],
                                                             bin_structure=self.bin_struct,
-                                                            size_min=size_min)
+                                                            size_min=size_min[idx])
 
     def fill_holes(self):
         """Fill holes in the predictions

@@ -2,4 +2,34 @@
 .wy-side-nav-search>div.version{color:#000000;} a:visited{color:#0285b0;}
 .wy-menu-vertical a:visited{color:#d9d9d9;}
 .wy-menu-vertical p.caption{color:#fc5656;}
-.wy-nav-content {max-width: none;}
+
+/* .wy-nav-content {max-width: none;} */
+
+
+html.writer-html5 .rst-content table.docutils td>p, html.writer-html5 .rst-content
+table.docutils th>p {
+    line-height: 1.5rem;
+    margin-bottom: 0;
+    font-size: .9rem;
+}
+
+.rst-content table.docutils td, .rst-content table.docutils th, .rst-content table.field-list td,
+.rst-content table.field-list th, .wy-table td, .wy-table th {
+    font-size: 90%;
+    margin: 0;
+    overflow: visible;
+    padding: 4px 16px;
+}
+
+.wy-nav-content {
+    padding: 1.618em 3.236em;
+    height: 100%;
+    max-width: 1000px;
+    margin: 30px;
+}
+
+.wy-nav-content-wrap {
+    background-color: #fcfcfc;
+}
+
+div#purpose table{text-align: center;}

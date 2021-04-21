@@ -51,18 +51,36 @@ segmentation training.
 
      "command": "train"
 
-- ``log_directory``: Folder name that will contain the output files (e.g., trained model, predictions, results).
+Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
+  
+  .. code-block:: bash
+
+    ivadomed --train -c path/to/config
+
+- ``path_output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
 
   .. code-block:: xml
 
-     "log_directory":"spineGeneric"
+     "path_output": "spineGeneric"
 
-- ``loader_parameters:bids_path``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
+Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
+  
+  .. code-block:: bash
+
+    ivadomed -c path/to/config --path-output path/to/output/directory
+
+- ``loader_parameters:path_data``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
   should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
 
   .. code-block:: xml
 
-     "bids_path": "<PATH_TO_DATASET>/data_example_spinegeneric"
+     "path_data": "data_example_spinegeneric"
+
+Note that you can also pass this argument via CLI (see `Usage <../usage.html>`__)
+  
+  .. code-block:: bash
+
+    ivadomed -c path/to/config --path-data path/to/bids/data
 
 - ``loader_parameters:target_suffix``: Suffix of the ground truth segmentation. The ground truth is located
   under the ``DATASET/derivatives/labels`` folder. In our case, the suffix is ``_seg-manual``:
@@ -114,6 +132,28 @@ Once the configuration file is ready, run the training:
 
 .. code-block:: bash
 
+   ivadomed --train -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
+
+- We can pass other flags to execute different commands (training, testing, segmentation), see `Usage <../usage.html>`__.
+ 
+
+- ``--path-output``: Folder name that will contain the output files (e.g., trained model, predictions, results).
+
+  .. code-block:: bash
+
+     --path-output path/to/output/directory
+
+- ``--path-data``: Location of the dataset. As discussed in `Data <../data.html>`__, the dataset
+  should conform to the BIDS standard. Modify the path so it points to the location of the downloaded dataset.
+
+  .. code-block:: bash
+
+     --path-data path/to/bids/data
+
+- If you set the "command", "path_output", and "path_data" arguments in your config file, you do not need to pass the CLI flags:
+
+.. code-block:: bash
+
    ivadomed -c config.json
 
 .. note::
@@ -127,7 +167,7 @@ on training and validation sets at every epoch. To know more about the meaning o
 
 .. code-block:: console
 
-   Creating log directory: spineGeneric
+   Creating output path: spineGeneric
    Using GPU number 0
 
    Selected transformations for the training dataset:
@@ -174,12 +214,18 @@ be ~90%.
 Evaluate model
 --------------
 
-To test the trained model on the testing sub-dataset and compute evaluation metrics, open your config file and
-set ``command`` to ``test``:
+To test the trained model on the testing sub-dataset and compute evaluation metrics, run:
 
 .. code-block:: bash
 
+   ivadomed --test -c config.json --path-data path/to/bids/data --path-output path/to/output/directory
+
+If you prefer to use config files over CLI flags, set "command" to the following in you config file:
+. code-block:: bash
+
    "command": "test"
+
+You can also set "path_output", and "path_data" arguments in your config file.
 
 Then run:
 
@@ -188,13 +234,13 @@ Then run:
    ivadomed -c config.json
 
 The model's parameters will be displayed in the terminal, followed by a preview of the results for each image.
-The resulting segmentation is saved for each image in the ``<log_directory>/pred_masks`` while a csv file,
-saved in ``<log_directory>/results_eval/evaluation_3Dmetrics.csv``, contains all the evaluation metrics. For more details
+The resulting segmentation is saved for each image in the ``<PATH_TO_OUT_DIR>/pred_masks`` while a csv file,
+saved in ``<PATH_TO_OUT_DIR>/results_eval/evaluation_3Dmetrics.csv``, contains all the evaluation metrics. For more details
 on the evaluation metrics, see :mod:`ivadomed.metrics`.
 
 .. code-block:: console
 
-   Log directory already exists: spineGeneric
+   Output path already exists: spineGeneric
    Using GPU number 0
 
    Selected architecture: Unet, with the following parameters:
@@ -219,14 +265,14 @@ on the evaluation metrics, see :mod:`ivadomed.metrics`.
    [5 rows x 16 columns]
 
 
-The test image segmentations are stored in ``<log_directory>/pred_masks/`` and have the same name as the input image
+The test image segmentations are stored in ``<PATH_TO_OUT_DIR>/pred_masks/`` and have the same name as the input image
 with the suffix ``_pred``. To visualize the segmentation of a given subject, you can use any Nifti image viewer.
-For `FSLeyes <https://users.fmrib.ox.ac.uk/~paulmc/fsleyes/userdoc/latest/>`_ user, this command will open the
-input image with the overlaid prediction (segmentation):
+For `FSLeyes <https://users.fmrib.ox.ac.uk/~paulmc/fsleyes/userdoc/latest/>`_ users, this command will open the
+input image with the overlaid prediction (segmentation) for one of the test subject:
 
 .. code-block:: bash
 
-   fsleyes path/to/input/image.nii.gz path/to/pred_masks/subject_id_contrast_pred.nii.gz -cm red -a 0.5
+   fsleyes "<PATH_TO_BIDS_DATA>/sub-hamburg01/anat/sub-hamburg01_T2w.nii.gz <PATH_TO_OUT_DIR>/pred_masks/sub-hamburg01_T2w_pred.nii.gz -cm red
 
 After the training for 100 epochs, the segmentations should be similar to the one presented in the following image.
 The output and ground truth segmentations of the spinal cord are presented in red (subject ``sub-hamburg01`` with

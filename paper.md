@@ -9,14 +9,17 @@ tags:
 authors:
   - name: Charley Gros
     orcid: 0000-0003-4318-0024
-    affiliation: 1
+    affiliation: "1, 2"
   - name: Andreanne Lemay
     orcid: 0000-0001-8581-2929
-    affiliation: 1
+    affiliation: "1, 2"
   - name: Olivier Vincent
     orcid: 0000-0002-5554-8108
-    affiliation: 1
+    affiliation: "1, 2"
   - name: Lucas Rouhier
+    affiliation: 1
+  - name: Marie-Helene Bourget
+    orcid: 0000-0001-9786-9332
     affiliation: 1
   - name: Anthime Bucquet
     affiliation: 1
@@ -24,13 +27,13 @@ authors:
     affiliation: "2, 3"
   - name: Julien Cohen-Adad
     orcid: 0000-0003-3662-9532
-    affiliation: "1, 4"
+    affiliation: "1, 2, 4"
 affiliations:
  - name: NeuroPoly Lab, Institute of Biomedical Engineering, Polytechnique Montreal, Montreal, Canada
    index: 1
- - name: AIMI, Stanford University, Stanford, CA, USA
-   index: 2
  - name: Mila, Quebec AI Institute, Montreal, QC, Canada
+   index: 2
+ - name: AIMI, Stanford University, Stanford, CA, USA
    index: 3
  - name:  Functional Neuroimaging Unit, CRIUGM, Université de Montréal, Montreal, QC, Canada
    index: 4
@@ -81,6 +84,6 @@ Past and ongoing research projects using `ivadomed` are listed [here](https://iv
 
 # Acknowledgements
 
-The authors thank Alexandru Jora, Nick Guenther, Christian Perone, Valentine Louis-Lucas, Benoît Sauty-De-Chalon, Alexandru Foias, Marie-Hélène Bourget and Leander Van Eekelen for their useful contributions, and Guillaume Dumas for proof-reading the manuscript. Funded by IVADO, the Canada Research Chair in Quantitative Magnetic Resonance Imaging [950-230815], CIHR [FDN-143263], CFI [32454, 34824], FRQS [28826], NSERC [RGPIN-2019-07244], FRQNT [2020‐RS4‐265502 UNIQUE] and TransMedTech. C.G. has a fellowship from IVADO [EX-2018-4], A.L. has a fellowship from NSERC and FRQNT, O.V. has a fellowship from NSERC, FRQNT and UNIQUE.
+The authors thank Ainsleigh Hill, Giselle Martel, Alexandru Jora, Nick Guenther, Joshua Newton, Christian Perone, Konstantinos Nasiotis, Valentine Louis-Lucas, Benoît Sauty-De-Chalon, Alexandru Foias and Leander Van Eekelen for their useful contributions, and Guillaume Dumas for proof-reading the manuscript. Funded by IVADO, the Canada Research Chair in Quantitative Magnetic Resonance Imaging [950-230815, 950-233166], CIHR [FDN-143263], CFI [32454, 34824], FRQS [28826], NSERC [RGPIN-2019-07244], FRQNT [2020‐RS4‐265502 UNIQUE] and TransMedTech. C.G. has a fellowship from IVADO [EX-2018-4], A.L. has a fellowship from NSERC, FRQNT and UNIQUE, O.V. has a fellowship from NSERC, FRQNT and UNIQUE, M.H.B. has a fellowship from IVADO and FRQNT.
 
 # References

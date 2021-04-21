@@ -1,0 +1,96 @@
+# -*- coding: utf-8 -*-
+"""Template for Unit Tests
+
+This file is a template for writing unit tests. It will not be run during testing, but you
+can use it as a guide for writing your tests.
+
+GitHub Tests:
+    In the file ``ivadomed/.github/workflows/run_tests.yml``, you will find how the tests are
+    run when you submit a pull request.
+    1. ``ivadomed_download_data -d data_testing -o data_testing``
+    2. ``pytest --cov=./ --cov-report term-missing``
+
+Running Locally:
+    To run tests locally, you will need to download the testing folder and then run the tests:
+    1. ``ivadomed_download_data -d data_testing -o data_testing``
+    2. ``pytest``
+
+    You can also run just one folder, or just one file:
+    ``pytest testing/unit_tests/``
+    ``pytest testing/unit_tests/test_example.py``
+
+Folder Structure:
+    After downloading the ``data_testing`` folder, your directory should look like this:
+    ::
+
+        ivadomed/
+        | --- data_testing/
+        | --- testing/
+        |     | --- unit_tests/
+        |     | --- functional_tests/
+
+    When you call ``create_tmp_dir`` in the ``setup_function``, you will copy ``data_testing``
+    to a new ``tmp`` folder:
+    ::
+
+        ivadomed/
+        | --- data_testing/
+        | --- testing/
+        |     | --- unit_tests/
+        |     | --- functional_tests/
+        | --- tmp/
+        |     | --- data_testing/
+
+    At the end of each test, the ``tmp`` folder is removed by ``remove_tmp_dir`` in the
+    ``teardown_function``. Note that only ``tmp/data_testing`` is removed, not ``data_testing``;
+    this is so that you don't need to keep downloading it each time.
+
+    ``__data_testing_dir__``: ``tmp/data_testing``
+    ``__tmp_dir__``: ``tmp``
+
+Names and Files:
+    Generally speaking, one test file should correspond to one file in the ``ivadomed`` package.
+    Tests files should be named: ``test_my_file.py``.
+
+"""
+
+import logging
+import os
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__
+from testing.common_testing_util import remove_tmp_dir
+logger = logging.getLogger(__name__)
+
+
+def setup_function():
+    """Function which is run before each test in this file.
+
+    ``create_tmp_dir`` will do the following:
+    1. Create a directory called ``tmp`` (overwrite if already exists)
+    2. Copy ``data_testing`` -> ``tmp/data_testing``
+
+    Add any other things for setup here.
+    """
+    create_tmp_dir()
+
+
+def test_template():
+    # Test Input Files: all test input files should be in tmp/data_testing aka __data_testing_dir__
+    logger.info(os.listdir(__data_testing_dir__))
+
+    # Test Output Files: put your output files in tmp folder
+    os.mkdir(os.path.join(__tmp_dir__, 'my_output_dir'))
+
+    assert 1 == 1
+
+
+def teardown_function():
+    """Function which is run after each test in this file.
+
+    ``remove_tmp_dir`` will do the following:
+    1. Delete the directory called ``tmp`` (if already exists)
+
+    Add any other things for teardown here.
+    Note: this function gets run after each test, so files/data will not be saved
+        in between tests.
+    """
+    remove_tmp_dir()

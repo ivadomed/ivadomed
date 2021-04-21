@@ -4,21 +4,25 @@
 |
 
 ``ivadomed`` is an integrated framework for medical image analysis with deep
-learning. The name is a portmanteau between *IVADO* (The `Institute for data
+learning, based on `PyTorch <https://pytorch.org/>`_. The name is a portmanteau between *IVADO* (The `Institute for data
 valorization <https://ivado.ca/en/>`_) and *Medical*.
 
-If you use ``ivadomed`` for your research, please cite:
+If you use ``ivadomed`` for your research, please cite `our paper <https://joss.theoj.org/papers/10.21105/joss.02868>`_:
 
 .. code::
 
-  @misc{gros2020ivadomed,
-      title={ivadomed: A Medical Imaging Deep Learning Toolbox}, 
-      author={Charley Gros and Andreanne Lemay and Olivier Vincent and Lucas Rouhier and Anthime Bucquet and Joseph Paul Cohen and Julien Cohen-Adad},
-      year={2020},
-      eprint={2010.09984},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV}
-  }
+    @article{gros2021ivadomed,
+      doi = {10.21105/joss.02868},
+      url = {https://doi.org/10.21105/joss.02868},
+      year = {2021},
+      publisher = {The Open Journal},
+      volume = {6},
+      number = {58},
+      pages = {2868},
+      author = {Charley Gros and Andreanne Lemay and Olivier Vincent and Lucas Rouhier and Marie-Helene Bourget and Anthime Bucquet and Joseph Paul Cohen and Julien Cohen-Adad},
+      title = {ivadomed: A Medical Imaging Deep Learning Toolbox},
+      journal = {Journal of Open Source Software}
+    }
 
 Home
 ====
@@ -42,6 +46,7 @@ Home
    architectures.rst
    pretrained_models.rst
    scripts.rst
+   help.rst
 
 .. _tutorials:
 .. toctree::
@@ -51,6 +56,7 @@ Home
    tutorials/one_class_segmentation_2d_unet.rst
    tutorials/cascaded_architecture.rst
    tutorials/uncertainty.rst
+   tutorials/automate_training.rst
 
 .. toctree::
    :maxdepth: 1

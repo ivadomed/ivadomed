@@ -2,16 +2,19 @@
 ##############################################################
 #
 # This script is used to test the dataframe of the new loader
+# This script is used to generate the df_ref for data-testing
 #
 # Usage: python dev/df_new_loader.py
 #
 ##############################################################
 
+
 # IMPORTS
 import os
-import pandas as pd
+
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
+
 
 # GET LOADER PARAMETERS FROM IVADOMED CONFIG FILE
 # The loader parameters have 2 new fields: "bids_config" and "extensions".
@@ -30,10 +33,23 @@ loader_params["contrast_params"]["contrast_lst"] = loader_params["contrast_param
 # {"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}
 derivatives = True
 
-# CREATE DATAFRAME
-df = imed_loader_utils.create_bids_dataframe(loader_params, derivatives)
+# CREATE OUTPUT PATH
+path_output = context["path_output"]
+if not os.path.isdir(path_output):
+    print('Creating output path: {}'.format(path_output))
+    os.makedirs(path_output)
+else:
+    print('Output path already exists: {}'.format(path_output))
 
-# SAVE DATAFRAME TO CSV FILE
+# CREATE BIDSDataframe OBJECT
+bids_df = imed_loader_utils.BidsDataframe(loader_params, path_output, derivatives)
+df = bids_df.df
+
+# DROP "path" COLUMN AND SORT BY FILENAME FOR TESTING PURPOSES WITH data-testing
+df = df.drop(columns=['path'])
+df = df.sort_values(by=['filename']).reset_index(drop=True)
+
+# SAVE DATAFRAME TO CSV FILE FOR data-testing
 path_csv = "test_df_new_loader.csv"
-df.to_csv(path_csv)
+df.to_csv(path_csv, index=False)
 print(df)

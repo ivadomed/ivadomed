@@ -1,11 +1,13 @@
   
 ![ivadomed Overview](https://raw.githubusercontent.com/ivadomed/doc-figures/main/index/overview_title.png)
 
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.02868/status.svg)](https://doi.org/10.21105/joss.02868)
 [![Coverage Status](https://coveralls.io/repos/github/ivadomed/ivadomed/badge.svg?branch=master)](https://coveralls.io/github/ivadomed/ivadomed?branch=master)
 [![test status](https://github.com/ivadomed/ivadomed/workflows/Run%20tests/badge.svg)](https://github.com/ivadomed/ivadomed/actions?query=workflow%3A%22Run+tests%22)
 [![publish package](https://github.com/ivadomed/ivadomed/workflows/Publish%20Package/badge.svg)](https://github.com/ivadomed/ivadomed/actions?query=workflow%3A%22Publish+Package%22)
 [![Documentation Status](https://readthedocs.org/projects/ivado-medical-imaging/badge/?version=stable)](https://ivadomed.org/en/stable/?badge=stable)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+[![Twitter Follow](https://img.shields.io/twitter/follow/ivadomed.svg?style=social&label=Follow)](https://twitter.com/ivadomed)
 
 `ivadomed` is an integrated framework for medical image analysis with deep learning.
 
@@ -16,7 +18,7 @@ The technical documentation is available [here](https://ivadomed.org).
 ``ivadomed`` requires Python >= 3.6 and < 3.9 as well as PyTorch == 1.5.0. We recommend working under a virtual environment, which could be set as follows:
 
 ```bash
-virtualenv venv-ivadomed --python=python3.6
+virtualenv venv-ivadomed
 source venv-ivadomed/bin/activate
 ```
 
@@ -51,3 +53,5 @@ This project results from a collaboration between the [NeuroPoly Lab](https://ww
 and the [Mila](https://mila.quebec/en/). The main funding source is [IVADO](https://ivado.ca/en/).
 
 [List of contributors](https://github.com/neuropoly/ivadomed/graphs/contributors)
+
+## Consult our Wiki(https://github.com/ivadomed/ivadomed/wiki) here for more help

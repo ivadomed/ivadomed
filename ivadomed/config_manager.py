@@ -2,6 +2,7 @@ import json
 import os
 import collections.abc
 from ivadomed import utils as imed_utils
+import copy
 
 
 def update(d, u):
@@ -65,60 +66,90 @@ def load_json(config_path):
 
 
 # To ensure retrocompatibility for parameter changes in configuration file
-KEY_CHANGE_DICT = {'UNet3D': 'Modified3DUNet'}
+KEY_CHANGE_DICT = {'UNet3D': 'Modified3DUNet', 'bids_path': 'path_data', 'log_directory': 'path_output'}
+KEY_SPLIT_DATASET_CHANGE_LST = ['method', 'center_test']
 
 
 class ConfigurationManager(object):
-    """Configuration file manager
+    """Configuration file manager.
 
     Args:
-        context_path (str): Path to configuration file.
-
+        path_context (str): Path to configuration file.
     Attributes:
-        context_path (str): Path to configuration file.
-        default_config (dict): Default configuration file.
-        context (dict): Provided configuration file.
-        updated_config (dict): Update configuration file.
-
+        path_context (str): Path to configuration file.
+        config_default (dict): Default configuration file from ``ivadomed`` package.
+        context_original (dict): Provided configuration file.
+        config_updated (dict): Updated configuration file.
     """
-    def __init__(self, context_path):
-        self.context_path = context_path
+    def __init__(self, path_context):
+        self.path_context = path_context
         self.key_change_dict = KEY_CHANGE_DICT
+        self.key_split_dataset_change_lst = KEY_SPLIT_DATASET_CHANGE_LST
         self._validate_path()
         default_config_path = os.path.join(imed_utils.__ivadomed_dir__, "ivadomed", "config", "config_default.json")
-        self.default_config = load_json(default_config_path)
-        self.context = load_json(context_path)
-        self.updated_config = {}
+        self.config_default = load_json(default_config_path)
+        self.context_original = load_json(path_context)
+        self.config_updated = {}
+
+    @property
+    def config_updated(self):
+        return self._config_updated
+
+    @config_updated.setter
+    def config_updated(self, config_updated):
+        if config_updated == {}:
+            context = copy.deepcopy(self.context_original)
+            self.change_keys(context, list(context.keys()))
+            config_updated = update(self.config_default, context)
+            self.change_keys_values(config_updated['split_dataset'], config_updated['split_dataset'].keys())
+
+        self._config_updated = config_updated
+        if config_updated['debugging']:
+            self._display_differing_keys()
 
     def get_config(self):
         """Get updated configuration file with all parameters from the default config file.
-
         Returns:
             dict: Updated configuration dict.
         """
-        self.change_keys()
-        self.updated_config = update(self.default_config, self.context)
-        if self.updated_config['debugging']:
-            self._display_differing_keys()
+        return self.config_updated
 
-        return self.updated_config
+    def change_keys(self, context, keys):
+        for k in keys:
+            # Verify if key is still in the dict
+            if k in context:
+                v = context[k]
+                # Verify if value is a dictionary
+                if isinstance(v, collections.abc.Mapping):
+                    self.change_keys(v, list(v.keys()))
+                else:
+                    # Change keys from the key_change_dict
+                    for key in self.key_change_dict:
+                        if key in context:
+                            context[self.key_change_dict[key]] = context[key]
+                            del context[key]
 
-    def change_keys(self):
-        for key in self.key_change_dict:
-            if key in self.context:
-                self.context[self.key_change_dict[key]] = self.context[key]
-                del self.context[key]
+    def change_keys_values(self, config_updated, keys):
+        for k in self.key_split_dataset_change_lst:
+            if k in keys:
+                value = config_updated[k]
+                if k == 'method' and value == "per_center":
+                    config_updated['data_testing']['data_type'] = "institution_id"
+                if k == 'center_test' and config_updated['data_testing']['data_type'] == "institution_id" and \
+                value is not None:
+                    config_updated['data_testing']['data_value'] = value
+                del config_updated[k]
 
     def _display_differing_keys(self):
         """Display differences between dictionaries.
         """
         print('Adding the following keys to the configuration file')
-        deep_dict_compare(self.context, self.updated_config)
+        deep_dict_compare(self.context_original, self.config_updated)
         print('\n')
 
     def _validate_path(self):
         """Ensure validity of configuration file path.
         """
-        if not os.path.isfile(self.context_path) or not self.context_path.endswith('.json'):
+        if not os.path.isfile(self.path_context) or not self.path_context.endswith('.json'):
             raise ValueError(
-                "\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(self.context_path))
+                "\nERROR: The provided configuration file path (.json) is invalid: {}\n".format(self.path_context))

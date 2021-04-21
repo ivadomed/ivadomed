@@ -30,6 +30,7 @@ setup(
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 3',
     ],
+    python_requires='>=3.6, <3.9',
     packages=find_packages(exclude=['docs', 'tests']),
     include_package_data=True,
     install_requires=requirements,
@@ -39,6 +40,7 @@ setup(
             'sphinx<2',
             'sphinx-rtd-theme<0.5',
         ],
+        'dev': ["pre-commit>=2.10.0"]
     },
     entry_points={
         'console_scripts': [

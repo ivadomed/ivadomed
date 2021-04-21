@@ -1,5 +1,7 @@
 import os
 import copy
+import logging
+from pathlib import Path
 import nibabel as nib
 import numpy as np
 import torch
@@ -14,13 +16,16 @@ from ivadomed import inference as imed_inference
 from ivadomed import uncertainty as imed_uncertainty
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
+from ivadomed.loader.film import store_film_params, save_film_params
 from ivadomed.training import get_metadata
 from ivadomed.postprocessing import threshold_predictions
 
 cudnn.benchmark = True
 
+logger = logging.getLogger(__name__)
 
-def test(model_params, dataset_test, testing_params, log_directory, device, cuda_available=True,
+
+def test(model_params, dataset_test, testing_params, path_output, device, cuda_available=True,
          metric_fns=None, postprocessing=None):
     """Main command to test the network.
 
@@ -28,7 +33,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
         model_params (dict): Model's parameters.
         dataset_test (imed_loader): Testing dataset.
         testing_params (dict): Testing parameters.
-        log_directory (str): Folder where predictions are saved.
+        path_output (str): Folder where predictions are saved.
         device (torch.device): Indicates the CPU or GPU ID.
         cuda_available (bool): If True, CUDA is available.
         metric_fns (list): List of metrics, see :mod:`ivadomed.metrics`.
@@ -44,7 +49,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
                              num_workers=0)
 
     # LOAD TRAIN MODEL
-    fname_model = os.path.join(log_directory, "best_model.pt")
+    fname_model = os.path.join(path_output, "best_model.pt")
     print('\nLoading model: {}'.format(fname_model))
     model = torch.load(fname_model, map_location=device)
     if cuda_available:
@@ -52,7 +57,7 @@ def test(model_params, dataset_test, testing_params, log_directory, device, cuda
     model.eval()
 
     # CREATE OUTPUT FOLDER
-    path_3Dpred = os.path.join(log_directory, 'pred_masks')
+    path_3Dpred = os.path.join(path_output, 'pred_masks')
     if not os.path.isdir(path_3Dpred):
         os.makedirs(path_3Dpred)
 
@@ -108,6 +113,13 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     volume = None
     weight_matrix = None
 
+    # Create dict containing gammas and betas after each FiLM layer.
+    if 'film_layers' in model_params and any(model_params['film_layers']):
+        # 2 * model_params["depth"] + 2 is the number of FiLM layers. 1 is added since the range starts at one.
+        gammas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
+        betas_dict = {i: [] for i in range(1, 2 * model_params["depth"] + 3)}
+        metadata_values_lst = []
+
     for i, batch in enumerate(tqdm(test_loader, desc="Inference - Iteration " + str(i_monte_carlo))):
         with torch.no_grad():
             # GET SAMPLES
@@ -141,6 +153,15 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         if model_params["name"] == "Modified3DUNet" and model_params["attention"] and ofolder:
             imed_visualize.save_feature_map(batch, "attentionblock2", os.path.dirname(ofolder), model, input_samples,
                                             slice_axis=test_loader.dataset.slice_axis)
+
+        if 'film_layers' in model_params and any(model_params['film_layers']):
+            # Store the values of gammas and betas after the last epoch for each batch
+            gammas_dict, betas_dict, metadata_values_lst = store_film_params(gammas_dict, betas_dict,
+                                                                             metadata_values_lst,
+                                                                             batch['input_metadata'], model,
+                                                                             model_params["film_layers"],
+                                                                             model_params["depth"],
+                                                                             model_params['metadata'])
 
         # PREDS TO CPU
         preds_cpu = preds.cpu()
@@ -176,7 +197,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool) and task != "classification":
                     # save the completely processed file as a nifti file
                     if ofolder:
-                        fname_pred = os.path.join(ofolder, fname_tmp.split('/')[-1])
+                        fname_pred = os.path.join(ofolder, Path(fname_tmp).name)
                         fname_pred = fname_pred.rsplit("_", 1)[0] + '_pred.nii.gz'
                         # If Uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
@@ -200,11 +221,14 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
                     output_nii_shape = output_nii.get_fdata().shape
                     if len(output_nii_shape) == 4 and output_nii_shape[-1] > 1 and ofolder:
-                        imed_visualize.save_color_labels(np.stack(pred_tmp_lst, -1),
-                                                     False,
-                                                     fname_tmp,
-                                                     fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                     imed_utils.AXIS_DCT[testing_params['slice_axis']])
+                        logger.warning('No color labels saved due to a temporary issue. For more details see:'
+                                       'https://github.com/ivadomed/ivadomed/issues/720')
+                        # TODO: put back the code below. See #720
+                        # imed_visualize.save_color_labels(np.stack(pred_tmp_lst, -1),
+                        #                              False,
+                        #                              fname_tmp,
+                        #                              fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                        #                              imed_utils.AXIS_DCT[testing_params['slice_axis']])
 
                     # re-init pred_stack_lst
                     pred_tmp_lst, z_tmp_lst = [], []
@@ -253,12 +277,18 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     # Save merged labels with color
 
                     if pred_undo.shape[0] > 1 and ofolder:
-                        imed_visualize.save_color_labels(pred_undo,
-                                                     False,
-                                                     batch['input_metadata'][smp_idx][0]['input_filenames'],
-                                                     fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                                                     slice_axis)
+                        logger.warning('No color labels saved due to a temporary issue. For more details see:'
+                                       'https://github.com/ivadomed/ivadomed/issues/720')
+                        # TODO: put back the code below. See #720
+                        # imed_visualize.save_color_labels(pred_undo,
+                        #                              False,
+                        #                              batch['input_metadata'][smp_idx][0]['input_filenames'],
+                        #                              fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                        #                              slice_axis)
 
+    if 'film_layers' in model_params and any(model_params['film_layers']):
+        save_film_params(gammas_dict, betas_dict, metadata_values_lst, model_params["depth"],
+                         ofolder.replace("pred_masks", ""))
     return preds_npy_list, gt_npy_list
 
 

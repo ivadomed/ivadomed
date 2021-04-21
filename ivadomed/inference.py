@@ -36,7 +36,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         postprocessing (dict): Contains postprocessing steps to be applied.
 
     Returns:
-        NibabelObject: Object containing the Network prediction.
+        nibabel.Nifti1Image: NiBabel object containing the Network prediction.
     """
     # Load reference nibabel object
     nib_ref = nib.load(fname_ref)
@@ -46,7 +46,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
         # complete missing z with zeros
         tmp_lst = []
         for z in range(nib_ref_can.header.get_data_shape()[slice_axis]):
-            if not z in z_lst:
+            if z not in z_lst:
                 tmp_lst.append(np.zeros(data_lst[0].shape))
             else:
                 tmp_lst.append(data_lst[z_lst.index(z)])
@@ -67,7 +67,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     if len(arr_pred_ref_space.shape) == 4:
         for i in range(n_channel):
             oriented_volumes.append(
-                imed_loader_utils.reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
+                imed_loader_utils.reorient_image(arr_pred_ref_space[i, ], slice_axis, nib_ref, nib_ref_can))
         # transpose to locate the channel dimension at the end to properly see image on viewer
         arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
     else:
@@ -86,8 +86,14 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
                                               nib_ref.header['pixdim'][1:4],
                                               fname_prefix)
         arr_pred_ref_space = postpro.apply()
-    nib_pred = nib.Nifti1Image(arr_pred_ref_space, nib_ref.affine)
 
+    # Here we prefer to copy the header (rather than just the affine matrix), in order to preserve the qform_code.
+    # See: https://github.com/ivadomed/ivadomed/issues/711
+    nib_pred = nib.Nifti1Image(
+        dataobj=arr_pred_ref_space,
+        affine=None,
+        header=nib_ref.header.copy()
+    )
     # save as nifti file
     if fname_out is not None:
         nib.save(nib_pred, fname_out)
@@ -95,10 +101,12 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     return nib_pred
 
 
-def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
+def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
     """Segment an image.
+
     Segment an image (`fname_image`) using a pre-trained model (`folder_model`). If provided, a region of interest
     (`fname_roi`) is used to crop the image prior to segment it.
+
     Args:
         folder_model (str): foldername which contains
             (1) the model ('folder_model/folder_model.pt') to use
@@ -106,12 +114,13 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
             see https://github.com/neuropoly/ivadomed/wiki/configuration-file
         fname_images (list): list of image filenames (e.g. .nii.gz) to segment. Multichannel models require multiple
             images to segment, e.i., len(fname_images) > 1.
-        gpu_number (int): Number representing gpu number if available.
+        gpu_id (int): Number representing gpu number if available.
         options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename
             (e.g., .nii.gz) containing processing information (e.i., spinal cord segmentation, spinal location or MS
             lesion classification)
             e.g., spinal cord centerline, used to crop the image prior to segment it if provided.
             The segmentation is not performed on the slices that are empty in this image.
+
     Returns:
         list: List of nibabel objects containing the soft segmentation(s), one per prediction class.
         list: List of target suffix associated with each prediction in `pred_list`
@@ -119,7 +128,7 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
     """
     # Define device
     cuda_available = torch.cuda.is_available()
-    device = torch.device("cpu") if not cuda_available else torch.device("cuda:" + str(gpu_number))
+    device = torch.device("cpu") if not cuda_available else torch.device("cuda:" + str(gpu_id))
 
     # Check if model folder exists and get filenames
     fname_model, fname_model_metadata = imed_models.get_model_filenames(folder_model)
@@ -127,20 +136,30 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
     # Load model training config
     context = imed_config_manager.ConfigurationManager(fname_model_metadata).get_config()
 
-    if options is not None and any(pp in options for pp in ['thr', 'largest', ' fill_holes', 'remove_small']):
+    postpro_list = ['binarize_prediction', 'keep_largest', ' fill_holes', 'remove_small']
+    if options is not None and any(pp in options for pp in postpro_list):
         postpro = {}
-        if 'thr' in options:
-            postpro['binarize_prediction'] = {"thr": options['thr']}
-        if 'largest' in options and options['largest']:
-            postpro['keep_largest'] = {}
-        if 'fill_holes' in options and options['fill_holes']:
-            postpro['fill_holes'] = {}
-        if 'remove_small' in options and ('mm' in options['remove_small'] or 'vox' in options['remove_small']):
-            unit = 'mm3' if 'mm3' in options['remove_small'] else 'vox'
-            thr = int(options['remove_small'].replace(unit, ""))
+        if 'binarize_prediction' in options and options['binarize_prediction']:
+            postpro['binarize_prediction'] = {"thr": options['binarize_prediction']}
+        if 'keep_largest' in options and options['keep_largest'] is not None:
+            if options['keep_largest']:
+                postpro['keep_largest'] = {}
+            # Remove key in context if value set to 0
+            elif 'keep_largest' in context['postprocessing']:
+                del context['postprocessing']['keep_largest']
+        if 'fill_holes' in options and options['fill_holes'] is not None:
+            if options['fill_holes']:
+                postpro['fill_holes'] = {}
+            # Remove key in context if value set to 0
+            elif 'fill_holes' in context['postprocessing']:
+                del context['postprocessing']['fill_holes']
+        if 'remove_small' in options and options['remove_small'] and \
+                ('mm' in options['remove_small'][-1] or 'vox' in options['remove_small'][-1]):
+            unit = 'mm3' if 'mm3' in options['remove_small'][-1] else 'vox'
+            thr = [int(t.replace(unit, "")) for t in options['remove_small']]
             postpro['remove_small'] = {"unit": unit, "thr": thr}
 
-        context['postprocessing'] = postpro
+        context['postprocessing'].update(postpro)
 
     # LOADER
     loader_params = context["loader_parameters"]
@@ -164,7 +183,8 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
 
         if 'object_detection_params' in context and \
                 context['object_detection_params']['object_detection_path'] is not None:
-            imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis)
+            imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis,
+                                               context['object_detection_params']['safety_factor'])
             metadata = [metadata] * len(fname_images)
 
     # Compose transforms
@@ -263,7 +283,7 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
             else:
                 # undo transformations
                 preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
-                                                             batch["input_metadata"][i_slice],
+                                                             batch["gt_metadata"][i_slice],
                                                              data_type='gt')
 
                 # Add new segmented slice to preds_list
@@ -291,7 +311,7 @@ def segment_volume(folder_model, fname_images, gpu_number=0, options=None):
 
 def split_classes(nib_prediction):
     """Split a 4D nibabel multi-class segmentation file in multiple 3D nibabel binary segmentation files.
-    
+
     Args:
         nib_prediction (nibabelObject): 4D nibabel object.
     Returns:
@@ -300,7 +320,7 @@ def split_classes(nib_prediction):
     pred = nib_prediction.get_fdata()
     pred_list = []
     for c in range(pred.shape[-1]):
-        class_pred = nib.Nifti1Image(pred[..., c].astype('float32'), nib_prediction.affine)
+        class_pred = nib.Nifti1Image(pred[..., c].astype('float32'), None, nib_prediction.header.copy())
         pred_list.append(class_pred)
     return pred_list
 
