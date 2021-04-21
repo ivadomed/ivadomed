@@ -16,12 +16,19 @@ import seaborn as sns
 from scipy.stats import ks_2samp
 from ivadomed.utils import init_ivadomed
 import argparse
-import sys
-# Hack to let the readthedocs display the function properly on github where python is running in headless mode
-if not sys.stdin.isatty():
-    matplotlib.use('TkAgg')
 matplotlib.rcParams['toolbar'] = 'None'  # Remove buttons
-import matplotlib.pyplot as plt  # Pyplot needs to loaded AFTER matplotlib.use('TkAgg')
+
+gui_env = ['TKAgg', 'GTKAgg', 'Qt4Agg', 'WXAgg']
+selected_gui_env = []
+for gui in gui_env:
+    try:
+        matplotlib.use(gui)
+        from matplotlib import pyplot as plt
+        selected_gui_env = gui
+        break
+    except:
+        continue
+print("Using:", matplotlib.get_backend() + " gui")
 
 
 # Konstantinos Nasiotis 2021
