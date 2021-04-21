@@ -56,3 +56,10 @@ ivadomed_download_data
 """"""""""""""""""""""
 
 .. autofunction:: ivadomed.scripts.download_data.install_data
+
+ivadomed_merge_bids_datasets
+"""""""""""""""""""""""""""""""""""""""""""""
+
+.. autofunction:: ivadomed.scripts.merge_bids_datasets.run_merging
+
+
