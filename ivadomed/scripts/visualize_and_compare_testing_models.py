@@ -2,7 +2,7 @@
 #
 # This script makes a figure with violinplots and significance values to compare between models
 #
-#        python3 visualize_and_compare_testing_models.py --logfolders path/to/logfolder1 path/to/logfolder2
+#        python3 visualize_and_compare_testing_models.py --ofolders path/to/ofolder1 path/to/ofolder2
 #                              --metric metric_to_use --metadata metadata_label string_to_match
 ###########################################################################################################
 
@@ -29,7 +29,7 @@ matplotlib.rcParams['toolbar'] = 'None'  # Remove buttons
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--logfolders", required=True, nargs="*", dest="logfolders",
+    parser.add_argument("--ofolders", required=True, nargs="*", dest="ofolders",
                         help="List of log folders from different models.")
     parser.add_argument("--metric", default='dice_class0', nargs=1, type=str, dest="metric",
                         help="Metric from evaluation_3Dmetrics.csv to base the plots on.")
@@ -50,10 +50,11 @@ def onclick(event, df):
     # clicking outside the plot area produces a coordinate of None, so we filter those out.
     if None not in clicked_index:
         output_folders = df["EvaluationModel"].unique()
+        nfolders = len(output_folders)
 
         # Remove the previously displayed subject(s)
         # This also takes care of the case where more than one subjects are displayed
-        while len(fig.texts) > len(list(itertools.permutations(range(len(output_folders))))):
+        while len(fig.texts) > nfolders+np.math.factorial(nfolders)/(np.math.factorial(2)*np.math.factorial(nfolders-2)):
             fig.texts.pop()
 
         # This is a hack to find the index of the Violinplot - There should be another way to get this from the
@@ -75,7 +76,7 @@ def onclick(event, df):
         plt.show()
 
 
-def visualize_and_compare_models(logfolders, metric, metadata):
+def visualize_and_compare_models(ofolders, metric, metadata):
     """This function allows violinplots visualization of multiple evaluation models simultaneously and performs a
        Kolmogorov–Smirnov significance test between each combination of models.
 
@@ -83,7 +84,7 @@ def visualize_and_compare_models(logfolders, metric, metadata):
 
     Usage example::
 
-        visualize_and_compare_testing_models.py --logfolders ~/logs/logs_T1w ~/logs/logs_T2w
+        visualize_and_compare_testing_models.py --ofolders ~/logs/logs_T1w ~/logs/logs_T2w
                                                 --metric dice_class0 --metadata pathology ms
 
     .. image:: ../../images/visualize_and_compare_models.png
@@ -92,7 +93,7 @@ def visualize_and_compare_models(logfolders, metric, metadata):
 
 
     Args:
-        logfolders (list): list of folders that contain the logs of the models to be compared, Flag: ``--logfolders``
+        ofolders (list): list of folders that contain the outputs of the models to be compared, Flag: ``--ofolders``
         metric (str):      column of "results_eval/evaluation_3Dmetrics.csv" to be used on the plots
                            (default: dice_class0), Flag: ``--metric``
         metadata (list) - Optional:   Allows visualization of violinplots only from subjects that match the
@@ -104,13 +105,13 @@ def visualize_and_compare_models(logfolders, metric, metadata):
     """
 
     # access CLI options
-    print("logfolders: %r" % logfolders)
+    print("ofolders: %r" % ofolders)
     print("metric: %r" % metric)
     if metadata:
         print("metadata: %r" % metadata)
 
     # Do a quick check that all the required files are present
-    for folder in logfolders:
+    for folder in ofolders:
         if not os.path.exists(os.path.join(folder, 'results_eval', 'evaluation_3Dmetrics.csv')):
             print('evaluation_3Dmetrics.csv file is not present within ' + os.path.join(folder, 'results_eval'))
             raise Exception('evaluation_3Dmetrics.csv missing')
@@ -118,13 +119,13 @@ def visualize_and_compare_models(logfolders, metric, metadata):
             print('bids_dataframe.csv file is not present within ' + folder)
             raise Exception('bids_dataframe.csv missing')
 
-    if len(logfolders) < 1:
+    if len(ofolders) < 1:
         raise Exception('No folders were selected - Nothing to show')
 
     columnNames = ["EvaluationModel", metric, 'subject']
     df = pd.DataFrame([], columns=columnNames)
 
-    for folder in logfolders:
+    for folder in ofolders:
         result = pd.read_csv(os.path.join(folder, 'results_eval', 'evaluation_3Dmetrics.csv'))
 
         if metadata:
@@ -149,9 +150,9 @@ def visualize_and_compare_models(logfolders, metric, metadata):
             singleFolderDF = pd.DataFrame(combined, columnNames).T
             df = df.append(singleFolderDF, ignore_index=True)
 
-    nFolders = len(logfolders)
+    nFolders = len(ofolders)
     combinedNumbers = list(itertools.combinations(range(nFolders), 2))
-    combinedFolders = list(itertools.combinations(logfolders, 2))
+    combinedFolders = list(itertools.combinations(ofolders, 2))
 
     # Pandas annoying issues
     df[metric] = df[metric].astype('float64')
@@ -165,13 +166,13 @@ def visualize_and_compare_models(logfolders, metric, metadata):
                              jitter=True, zorder=1, picker=True, pickradius=1)
 
         # Display the mean performance on top of every violinplot
-        for i in range(len(logfolders)):
+        for i in range(len(ofolders)):
             # This will be used to plot the mean value on top of each individual violinplot
-            temp = df[metric][df['EvaluationModel'] == os.path.basename(os.path.normpath(logfolders[i]))]
+            temp = df[metric][df['EvaluationModel'] == os.path.basename(os.path.normpath(ofolders[i]))]
             plt.text(i, df[metric].max() + 0.07, str((100 * temp.mean()).round() / 100), ha='center', va='top',
                      color='r', picker=True)
 
-        if len(logfolders) > 1 and len(logfolders) < 5:
+        if len(ofolders) > 1 and len(ofolders) < 5:
             # Perform a Kolmogorov–Smirnov test for all combinations of results & connect the corresponding Violinplots
             for i in range(len(combinedNumbers)):
                 dataX = df[metric][df['EvaluationModel'] ==
@@ -179,7 +180,7 @@ def visualize_and_compare_models(logfolders, metric, metadata):
                 dataY = df[metric][df['EvaluationModel'] ==
                                         os.path.basename(os.path.normpath(combinedFolders[i][1]))]
 
-                KStest = ks_2samp(dataX, dataY)
+                ks_test = ks_2samp(dataX, dataY)
 
                 x1, x2 = combinedNumbers[i]
 
@@ -188,11 +189,11 @@ def visualize_and_compare_models(logfolders, metric, metadata):
 
                 # Show if the differentiation of the distributions is :
                 # Not significant: ns, significant: *, very significant: ***
-                if KStest.pvalue >= 0.5:
+                if ks_test.pvalue >= 0.5:
                     plt.text((x1 + x2) * .5, y + h, "ns", ha='center', va='bottom', color=col, picker=True)
-                elif 0.5 > KStest.pvalue >= 0.01:
+                elif 0.5 > ks_test.pvalue >= 0.01:
                     plt.text((x1 + x2) * .5, y + h, "*", ha='center', va='bottom', color='r', picker=True)
-                elif KStest.pvalue < 0.01:
+                elif ks_test.pvalue < 0.01:
                     plt.text((x1 + x2) * .5, y + h, "***", ha='center', va='bottom', color='r', picker=True)
 
         if metadata:
@@ -219,7 +220,7 @@ def main():
     args = parser.parse_args()
 
     # Run automate training
-    visualize_and_compare_models(args.logfolders, args.metric, args.metadata)
+    visualize_and_compare_models(args.ofolders, args.metric, args.metadata)
 
 
 if __name__ == '__main__':
