@@ -83,8 +83,11 @@ def onclick(event, df):
         plt.show()
 
 
-def visualize_and_compare_models(ofolders, metric, metadata):
-    """This function allows violinplots visualization of multiple evaluation models simultaneously and performs a Kolmogorov–Smirnov significance test between each combination of models.
+def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=[]):
+    """
+    This function allows violinplots visualization of multiple evaluation models simultaneously and performs a
+    Kolmogorov–Smirnov significance test between each combination of models. The mean values of the datapoints for each
+    violinplot is superimposed on the top.
 
     If only one model is selected as input, only the Violinplot will be presented (no test will be superimposed)
 

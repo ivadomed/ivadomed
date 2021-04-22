@@ -26,6 +26,7 @@ import joblib
 import pandas as pd
 import numpy as np
 import torch.multiprocessing as mp
+import ivadomed.scripts.visualize_and_compare_testing_models as violin_plots
 from ivadomed import main as ivado
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
@@ -771,6 +772,11 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, p
     # Compute avg, std, p-values
     if n_iterations > 1:
         compute_statistics(results_df, n_iterations, run_test)
+
+    # If the test is selected, also show the violinplots
+    if run_test:
+        output_folders = [config_list[i]["path_output"] for i in range(len(config_list))]
+        violin_plots.visualize_and_compare_models(ofolders=output_folders)
 
 
 def main(args=None):
