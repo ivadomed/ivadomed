@@ -640,7 +640,8 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, p
         all_combin (bool): If True, all parameters combinations are run. Flag: ``--all-combin``
         n_iterations (int): Controls the number of time that each experiment (ie set of parameter)
             are run. Flag: ``--n-iteration``, ``-n``
-        run_test (bool): If True, the trained model is also run on the testing subdataset.
+        run_test (bool): If True, the trained model is also run on the testing subdataset and violiplots are displayed
+            with the dicescores for each new output folder created.
             Flag: ``--run-test``
         all_logs (bool): If True, all the log directories are kept for every iteration.
             Flag: ``--all-logs``, ``-l``
