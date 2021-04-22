@@ -29,7 +29,12 @@ for gui in gui_env:
         break
     except:
         continue
-print("Using:", matplotlib.get_backend() + " gui")
+# If none works
+if selected_gui_env == []:
+    from matplotlib import pyplot as plt
+    print("No backend can be used - Visualization will fail")
+else:
+    print("Using:", matplotlib.get_backend() + " gui")
 
 # ---------------------------------------------------------------------------------------------------------------------#
 
