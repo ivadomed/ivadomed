@@ -100,6 +100,33 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
     return nib_pred
 
+def set_option(options, postpro, context, key):
+    if options[key]:
+        postpro[key] = {}
+    # Remove key in context if value set to 0
+    elif key in context['postprocessing']:
+        del context['postprocessing'][key]
+    return postpro
+
+def set_postprocessing_options(options, context):
+    postpro = {}
+
+    if 'binarize_prediction' in options and options['binarize_prediction']:
+        postpro['binarize_prediction'] = {"thr": options['binarize_prediction']}
+
+    if 'keep_largest' in options and options['keep_largest'] is not None:
+        postpro = set_option(options, postpro, context, 'keep_largest')
+
+    if 'fill_holes' in options and options['fill_holes'] is not None:
+        postpro = set_option(options, postpro, context, 'fill_holes')
+
+    if 'remove_small' in options and options['remove_small'] and \
+            ('mm' in options['remove_small'][-1] or 'vox' in options['remove_small'][-1]):
+        unit = 'mm3' if 'mm3' in options['remove_small'][-1] else 'vox'
+        thr = [int(t.replace(unit, "")) for t in options['remove_small']]
+        postpro['remove_small'] = {"unit": unit, "thr": thr}
+
+    context['postprocessing'].update(postpro)
 
 def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
     """Segment an image.
@@ -138,28 +165,7 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
 
     postpro_list = ['binarize_prediction', 'keep_largest', ' fill_holes', 'remove_small']
     if options is not None and any(pp in options for pp in postpro_list):
-        postpro = {}
-        if 'binarize_prediction' in options and options['binarize_prediction']:
-            postpro['binarize_prediction'] = {"thr": options['binarize_prediction']}
-        if 'keep_largest' in options and options['keep_largest'] is not None:
-            if options['keep_largest']:
-                postpro['keep_largest'] = {}
-            # Remove key in context if value set to 0
-            elif 'keep_largest' in context['postprocessing']:
-                del context['postprocessing']['keep_largest']
-        if 'fill_holes' in options and options['fill_holes'] is not None:
-            if options['fill_holes']:
-                postpro['fill_holes'] = {}
-            # Remove key in context if value set to 0
-            elif 'fill_holes' in context['postprocessing']:
-                del context['postprocessing']['fill_holes']
-        if 'remove_small' in options and options['remove_small'] and \
-                ('mm' in options['remove_small'][-1] or 'vox' in options['remove_small'][-1]):
-            unit = 'mm3' if 'mm3' in options['remove_small'][-1] else 'vox'
-            thr = [int(t.replace(unit, "")) for t in options['remove_small']]
-            postpro['remove_small'] = {"unit": unit, "thr": thr}
-
-        context['postprocessing'].update(postpro)
+        set_postprocessing_options(options, context)
 
     # LOADER
     loader_params = context["loader_parameters"]
