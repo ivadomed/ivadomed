@@ -1037,8 +1037,9 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         # Create filename_pairs
         for subject in tqdm(subject_file_lst, desc="Loading dataset"):
-            self.create_filename_pair(subject, c, tot, multichannel, df_subjects, contrast_params, target_suffix, all_deriv, 
-                                bids_df, bounding_box_dict, idx_dict, metadata_choice)
+            multichannel_subjects = self.create_filename_pair(multichannel_subjects, subject, c, tot, multichannel, 
+                                                                df_subjects, contrast_params, target_suffix, all_deriv, 
+                                                                bids_df, bounding_box_dict, idx_dict, metadata_choice)
 
         if multichannel:
             for subject in multichannel_subjects.values():
@@ -1063,8 +1064,8 @@ class BidsDataset(MRI2DSegmentationDataset):
                         target_filename[idx].append(derivative)
             elif suffix_list in derivative:
                 target_filename[idx] = derivative
-        if not (self.roi_params["suffix"] is None) and self.roi_params["suffix"] in derivative:
-            roi_filename = [derivative]
+            
+            return target_filename
 
     def create_metadata_dict(self, metadata_choice, df_sub, bids_df):
         # add custom data to metadata
@@ -1079,7 +1080,7 @@ class BidsDataset(MRI2DSegmentationDataset):
             metadata_dict[data] = idx
         metadata['metadata_dict'] = metadata_dict
 
-    def fill_multichannel_dict(self, subject, idx_dict, df_sub, roi_filename, target_filename, metadata):
+    def fill_multichannel_dict(self, multichannel_subjects, subject, idx_dict, df_sub, roi_filename, target_filename, metadata):
         idx = idx_dict[df_sub['suffix'].values[0]]
         subj_id = subject.split('.')[0].split('_')[0]
         multichannel_subjects[subj_id]["absolute_paths"][idx] = df_sub['path'].values[0]
@@ -1087,10 +1088,11 @@ class BidsDataset(MRI2DSegmentationDataset):
         multichannel_subjects[subj_id]["metadata"][idx] = metadata
         if roi_filename:
             multichannel_subjects[subj_id]["roi_filename"] = roi_filename
+        return multichannel_subjects
 
 
-    def create_filename_pair(self, subject, c, tot, multichannel, df_subjects, contrast_params, target_suffix, all_deriv, 
-                            bids_df, bounding_box_dict, idx_dict, metadata_choice):
+    def create_filename_pair(self, multichannel_subjects, subject, c, tot, multichannel, df_subjects, contrast_params, 
+                            target_suffix, all_deriv, bids_df, bounding_box_dict, idx_dict, metadata_choice):
         df_sub = df_subjects.loc[df_subjects['filename'] == subject]
 
         # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
@@ -1108,7 +1110,9 @@ class BidsDataset(MRI2DSegmentationDataset):
                         .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
 
         for derivative in derivatives:
-            self.annotate_raters(target_suffix, target_filename, derivative)
+            target_filename = self.annotate_raters(target_suffix, target_filename, derivative)
+            if not (self.roi_params["suffix"] is None) and self.roi_params["suffix"] in derivative:
+                roi_filename = [derivative]
 
         if (not any(target_filename)) or (not (self.roi_params["suffix"] is None) and (roi_filename is None)):
             return
@@ -1131,7 +1135,9 @@ class BidsDataset(MRI2DSegmentationDataset):
         # Fill multichannel dictionary
         # subj_id is the filename without modality suffix and extension
         if multichannel:
-            self.fill_multichannel_dict(subject, idx_dict, df_sub, roi_filename, target_filename, metadata)
+            multichannel_subjects = self.fill_multichannel_dict(multichannel_subjects, subject, idx_dict, df_sub, 
+                                                                roi_filename, target_filename, metadata)
         else:
             self.filename_pairs.append(([df_sub['path'].values[0]],
                                         target_filename, roi_filename, [metadata]))
+        return multichannel_subjects
