@@ -1012,9 +1012,9 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         # Create multichannel_subjects dictionary for each subject_id
         multichannel_subjects = {}
+        idx_dict = {}
         if multichannel:
             num_contrast = len(contrast_params["contrast_lst"])
-            idx_dict = {}
             for idx, contrast in enumerate(contrast_params["contrast_lst"]):
                 idx_dict[contrast] = idx
             multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
