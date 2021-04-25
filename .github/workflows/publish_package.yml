@@ -21,17 +21,21 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    
     - name: Set up Python
       uses: actions/setup-python@v1
       with:
         python-version: '3.6'
+        
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install build wheel
+        
     - name: Build
       run: |
           python -m build --wheel --sdist
+          
     - name: Publish to Github
       uses: softprops/action-gh-release@v1
       with:
@@ -40,6 +44,7 @@ jobs:
         tag_name: ${{ github.event.inputs.version }} # in the workflow_dispatch case, make a new tag from the given input; in the published release case, this will be empty and will fall back to updating that release.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
