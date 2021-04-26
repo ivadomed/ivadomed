@@ -309,7 +309,9 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     command = copy.deepcopy(context["command"])
     path_output = set_output_path(context)
     log_file = context['log_file']
+    logger.remove()
     logger.add(log_file, format="{time} {level} {message}", level="INFO")
+    logger.add(sys.stdout, format="{time} {level} {message}", level="INFO")
 
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
     create_dataset_and_ivadomed_version_log(context)
