@@ -1,7 +1,8 @@
 import logging
 import pytest
 import os
-from functional_tests.t_utils import remove_dataset, __tmp_dir__, create_tmp_dir, remove_tmp_dir
+from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir
+from testing.common_testing_util import remove_dataset, remove_tmp_dir
 from ivadomed.scripts import download_data
 from ivadomed.utils import ArgParseException
 logger = logging.getLogger(__name__)
