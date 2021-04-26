@@ -12,3 +12,4 @@ scikit-image
 seaborn
 tensorboard
 tqdm>=4.30
+scipy
