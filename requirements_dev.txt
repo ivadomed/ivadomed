@@ -1,9 +1,13 @@
-# Common Requirements
--r requirements_common.txt
+# CPU Compatible Requirements
+-r requirements.txt
 
 # Dev:
+# Development, documentation, testing related dependencies.
 pytest
 pytest-ordering
+sphinx
+pypandoc
+sphinx_rtd_theme
 sphinx-jsonschema
 pytest-console-scripts
 pre-commit==2.10.1
