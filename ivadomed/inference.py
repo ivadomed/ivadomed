@@ -5,6 +5,7 @@ import onnxruntime
 import torch
 import joblib
 
+from loguru import logger
 from torch.utils.data import DataLoader
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import models as imed_models
@@ -52,9 +53,9 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
                 tmp_lst.append(data_lst[z_lst.index(z)])
 
         if debug:
-            print("Len {}".format(len(tmp_lst)))
+            logger.info("Len {}".format(len(tmp_lst)))
             for arr in tmp_lst:
-                print("Shape element lst {}".format(arr.shape))
+                logger.info("Shape element lst {}".format(arr.shape))
 
         # create data and stack on depth dimension
         arr_pred_ref_space = np.stack(tmp_lst, axis=-1)
@@ -173,7 +174,7 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
         # TRANSFORMATIONS
         # If ROI is not provided then force center cropping
         if fname_roi is None and 'ROICrop' in context["transformation"].keys():
-            print(
+            logger.info(
                 "\n WARNING: fname_roi has not been specified, then a cropping around the center of the image is "
                 "performed instead of a cropping around a Region of Interest.")
 
@@ -194,7 +195,7 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
 
     # Force filter_empty_mask to False if fname_roi = None
     if fname_roi is None and 'filter_empty_mask' in loader_params["slice_filter_params"]:
-        print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
+        logger.info("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
     filename_pairs = [(fname_images, None, fname_roi, metadata if isinstance(metadata, list) else [metadata])]
@@ -216,10 +217,10 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
         ds.load_filenames()
 
     if kernel_3D:
-        print("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
+        logger.info("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
                                                            context['Modified3DUNet']['length_3D']))
     else:
-        print("\nLoaded {} {} slices.".format(len(ds), loader_params['slice_axis']))
+        logger.info("\nLoaded {} {} slices.".format(len(ds), loader_params['slice_axis']))
 
     model_params = {}
     if 'FiLMedUnet' in context and context['FiLMedUnet']['applied']:

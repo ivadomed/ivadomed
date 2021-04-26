@@ -1,6 +1,7 @@
 csv-diff>=1.0
 h5py==2.10.0
 joblib
+loguru
 matplotlib>=3.3.0
 nibabel
 onnxruntime==1.4.0

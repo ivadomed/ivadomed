@@ -10,6 +10,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from torch.autograd import Variable
+from loguru import logger
 from ivadomed.loader import utils as imed_loader_utils
 
 
@@ -271,13 +272,13 @@ class HookBasedFeatureExtractor(nn.Module):
         self.inputs = [i[index].data.clone() for index in range(len(i))]
         self.inputs_size = [input.size() for input in self.inputs]
 
-        print('Input Array Size: ', self.inputs_size)
+        logger.info('Input Array Size: ', self.inputs_size)
 
     def get_output_array(self, m, i, o):
         assert (isinstance(i, tuple))
         self.outputs = [o[index].data.clone() for index in range(len(o))]
         self.outputs_size = [output.size() for output in self.outputs]
-        print('Output Array Size: ', self.outputs_size)
+        logger.info('Output Array Size: ', self.outputs_size)
 
     def forward(self, x):
         target_layer = self.submodule._modules.get(self.layername)
