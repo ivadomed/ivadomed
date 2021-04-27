@@ -1,7 +1,8 @@
 import logging
 import pytest
 import os
-from testing.functional_tests.t_utils import create_tmp_dir, __data_testing_dir__, download_functional_test_files
+from testing.functional_tests.t_utils import create_tmp_dir, __data_testing_dir__, download_functional_test_files, \
+    generate_labels
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed.scripts import convert_to_onnx
 from ivadomed.utils import ArgParseException
@@ -13,6 +14,7 @@ __model_path__ = os.path.join(__data_testing_dir__, 'spinegeneric_model.pt')
 
 def setup_function():
     create_tmp_dir()
+    generate_labels()
 
 
 def test_convert_to_onnx(download_functional_test_files):

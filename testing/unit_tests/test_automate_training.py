@@ -90,7 +90,7 @@ import pytest
 from ivadomed.scripts.automate_training import make_config_list, get_param_list, \
     HyperparameterOption
 import logging
-from testing.unit_tests.t_utils import create_tmp_dir
+from testing.unit_tests.t_utils import create_tmp_dir, generate_labels
 from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
@@ -630,6 +630,7 @@ expected_param_list = [
 
 def setup_function():
     create_tmp_dir()
+    generate_labels()
 
 
 @pytest.mark.parametrize("config_hyper", [

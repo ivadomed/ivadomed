@@ -1,14 +1,15 @@
 import logging
 import os
 import pytest
-from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir, __data_testing_dir__, download_functional_test_files
+from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir, __data_testing_dir__, download_functional_test_files, \
+    generate_labels
 from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
 
 def setup_function():
     create_tmp_dir()
-
+    generate_labels()
 
 @pytest.mark.script_launch_mode('subprocess')
 def test_automate_training(download_functional_test_files, script_runner):

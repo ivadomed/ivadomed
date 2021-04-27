@@ -8,7 +8,8 @@ from ivadomed.loader import loader as imed_loader
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 import logging
-from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files, \
+    generate_labels
 from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ PATH_OUTPUT = os.path.join(__tmp_dir__, "log")
 
 def setup_function():
     create_tmp_dir()
+    generate_labels()
 
 
 @pytest.mark.parametrize('train_lst', [['sub-unf01']])

@@ -10,7 +10,8 @@ from ivadomed import testing as imed_testing
 from ivadomed import models as imed_models
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
 import logging
-from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files, \
+    generate_labels
 from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ __output_dir__ = os.path.join(__tmp_dir__, "output_inference")
 
 def setup_function():
     create_tmp_dir()
+    generate_labels()
 
 
 @pytest.mark.parametrize('transforms_dict', [{

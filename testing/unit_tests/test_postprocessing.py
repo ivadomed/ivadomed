@@ -9,12 +9,14 @@ import pytest
 import scipy
 import os
 from ivadomed import postprocessing as imed_postpro
-from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, download_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, download_data_testing_test_files, \
+    generate_labels
 from testing.common_testing_util import remove_tmp_dir
 
 
 def setup_function():
     create_tmp_dir()
+    generate_labels()
 
 
 def nii_dummy_seg(size_arr=(15, 15, 9), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',

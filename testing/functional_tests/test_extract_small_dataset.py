@@ -1,7 +1,7 @@
 import logging
 import os
 from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir, __data_testing_dir__, \
-    download_functional_test_files
+    download_functional_test_files, generate_labels
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed.scripts import extract_small_dataset
 logger = logging.getLogger(__name__)
@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 def setup_function():
     create_tmp_dir()
+    generate_labels()
 
 
 def test_extract_small_dataset_default_n(download_functional_test_files):

@@ -3,7 +3,8 @@ import torch
 import torch.backends.cudnn as cudnn
 import os
 from ivadomed import models as imed_models
-from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, download_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, download_data_testing_test_files, \
+    generate_labels
 from testing.common_testing_util import remove_tmp_dir
 
 cudnn.benchmark = True
@@ -15,6 +16,7 @@ INITIAL_LR = 0.001
 
 def setup_function():
     create_tmp_dir()
+    generate_labels()
 
 
 @pytest.mark.parametrize('fraction', [0.1, 0.2, 0.3])

@@ -7,13 +7,15 @@ import logging
 from ivadomed import utils as imed_utils
 from ivadomed import inference as imed_inference
 from ivadomed import models as imed_models
-from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, download_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, download_data_testing_test_files, \
+    generate_labels
 from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
 
 def setup_function():
     create_tmp_dir()
+    generate_labels()
 
 
 IMAGE_PATH = os.path.join(__data_testing_dir__, "sub-unf01", "anat", "sub-unf01_T1w.nii.gz")
