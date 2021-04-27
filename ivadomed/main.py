@@ -308,7 +308,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     """
     command = copy.deepcopy(context["command"])
     path_output = set_output_path(context)
-    log_file = context['log_file']
+    log_file = os.path.join(context['path_output'], context['log_file'])
     logger.remove()
     logger.add(log_file, format="{time} {level} {message}", level="INFO")
     logger.add(sys.stdout, format="{time} {level} {message}", level="INFO")

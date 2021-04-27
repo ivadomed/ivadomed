@@ -195,7 +195,7 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
 
     # Force filter_empty_mask to False if fname_roi = None
     if fname_roi is None and 'filter_empty_mask' in loader_params["slice_filter_params"]:
-        logger.info("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
+        logger.warning("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
     filename_pairs = [(fname_images, None, fname_roi, metadata if isinstance(metadata, list) else [metadata])]

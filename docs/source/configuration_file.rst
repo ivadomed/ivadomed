@@ -135,6 +135,24 @@ When possible, the folder name will follow the following convention:
     }
 
 
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "log_file",
+        "description": "Name of the file to be logged to, located within ``log_directory/``",
+        "type": "string"
+    }
+
+
+
+.. code-block:: JSON
+
+    {
+        "log_file": "log"
+    }
+
+
 Loader Parameters
 -----------------
 

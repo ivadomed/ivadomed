@@ -92,7 +92,7 @@ class Dataframe:
             self.df.to_csv(path, index=False)
             logger.info("Dataframe has been saved at {}.".format(path))
         except FileNotFoundError:
-            logger.info("Wrong path.")
+            logger.error("Wrong path.")
     
     def process_key(self, key, grp, line, subject, col_names):
         assert key in grp.keys()
