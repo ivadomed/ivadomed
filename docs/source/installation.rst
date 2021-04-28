@@ -11,7 +11,7 @@ users have the possibility to install and use ``ivadomed`` via
 
     vim ~/.bashrc(.zshrc if you are using zsh shell)
     (write in the .bashrc file => export HDF5_USE_FILE_LOCKING='FALSE')
-    source .bashrc
+    source ~/.bashrc
 
 Python
 ------
