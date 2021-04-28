@@ -682,7 +682,13 @@ class MRI2DSegmentationDataset(Dataset):
             input_img = self.handlers[i][0]['input']
             shape = input_img[0].shape
 
-            # TODO: verif stride <= length <= shape
+            if len(self.length) != 2 or len(self.stride) != 2:
+                raise RuntimeError('"length_2D" and "stride_2D" must be of length 2.')
+            for length, stride, size in zip(self.length, self.stride, shape):
+                if stride > length:
+                    raise RuntimeError('"stride_2D" must be smaller or equal to "length_2D".')
+                if length > size:
+                    raise RuntimeError('"length_2D" must be smaller or equal to image dimensions.')
 
             for x in range(0, (shape[0] - self.length[0] + self.stride[0]), self.stride[0]):
                 if x + self.length[0] > shape[0]:
