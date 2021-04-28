@@ -565,8 +565,8 @@ class MRI2DSegmentationDataset(Dataset):
     Args:
         filename_pairs (list): a list of tuples in the format (input filename list containing all modalities,ground \
             truth filename, ROI filename, metadata).
-        length (tuple): Size of each dimensions of the subimages, length equals 2.
-        stride (tuple): Size of the overlapping per subimage and dimensions, length equals 2.
+        length (list): Size of each dimensions of the patches, length equals 0 (no patching) or 2 (2d patching).
+        stride (list): Size of the pixels' shift between patches, length equals 0 (no patching) or 2 (2d patching).
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
             "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
         cache (bool): if the data should be cached in memory or not.
@@ -580,12 +580,13 @@ class MRI2DSegmentationDataset(Dataset):
         is_input_dropout (bool): Return input with missing modalities.
 
     Attributes:
-        indexes (list): List of indices corresponding to each slice or subimage in the dataset.
-        handlers (list): List of indices corresponding to each slice in the dataset, used for indexing subimages.
+        indexes (list): List of indices corresponding to each slice or patch in the dataset.
+        handlers (list): List of indices corresponding to each slice in the dataset, used for indexing patches.
         filename_pairs (list): List of tuples in the format (input filename list containing all modalities,ground \
             truth filename, ROI filename, metadata).
-        length (tuple): Size of each dimensions of the subimages, length equals 2.
-        stride (tuple): Size of the overlapping per subimage and dimensions, length equals 2.
+        length (list): Size of each dimensions of the patches, length equals 0 (no patching) or 2 (2d patching).
+        stride (list): Size of the pixels' shift between patches, length equals 0 (no patching) or 2 (2d patching).
+        is_2d_patch (bool): True if length in model params.
         prepro_transforms (Compose): Transformations to apply before training.
         transform (Compose): Transformations to apply during training.
         cache (bool): Tf the data should be cached in memory or not.
@@ -612,6 +613,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.filename_pairs = filename_pairs
         self.length = length
         self.stride = stride
+        self.is_2d_patch = True if self.length else False
         self.prepro_transforms, self.transform = transform
         self.cache = cache
         self.slice_axis = slice_axis
@@ -625,6 +627,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.has_bounding_box = True
         self.task = task
         self.is_input_dropout = is_input_dropout
+
 
     def load_filenames(self):
         """Load preprocessed pair data (input and gt) in handler."""
@@ -659,8 +662,8 @@ class MRI2DSegmentationDataset(Dataset):
                                                                       slice_seg_pair,
                                                                       slice_roi_pair)
 
-                # If self.length in model_params, create handlers list for indexing subimages
-                if self.length:
+                # If is_2d_patch, create handlers list for indexing patch
+                if self.is_2d_patch:
                     for metadata in item[0]['input_metadata']:
                         metadata['index_shape'] = item[0]['input'][0].shape
                     self.handlers.append((item))
@@ -668,12 +671,12 @@ class MRI2DSegmentationDataset(Dataset):
                 else:
                     self.indexes.append(item)
 
-        # If self.length in model_params, prepare indices of subimages
-        if self.length:
+        # If is_2d_patch, prepare indices of patches
+        if self.is_2d_patch:
             self.prepare_indices()
 
     def prepare_indices(self):
-        """Stores coordinates of subimages for training."""
+        """Stores coordinates of 2d patches for training."""
         for i in range(0, len(self.handlers)):
 
             input_img = self.handlers[i][0]['input']
@@ -707,8 +710,7 @@ class MRI2DSegmentationDataset(Dataset):
             index (int): Slice index.
         """
 
-        # If self.length in model_params, extract pair slices subimages from handlers
-        if self.length:
+        if self.is_2d_patch:
             coord = self.indexes[index]
             seg_pair_slice, roi_pair_slice = self.handlers[coord['handler_index']]
         else:
@@ -726,7 +728,7 @@ class MRI2DSegmentationDataset(Dataset):
 
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
-        # Use copy to have different coordinates for reconstruction for a given handler with subimages
+        # Use copy to have different coordinates for reconstruction for a given handler with patch
         metadata_input = imed_loader_utils.clean_metadata(copy.deepcopy(seg_pair_slice['input_metadata']))
         metadata_roi = imed_loader_utils.clean_metadata(copy.deepcopy(roi_pair_slice['gt_metadata']))
         metadata_gt = imed_loader_utils.clean_metadata(copy.deepcopy(seg_pair_slice['gt_metadata']))
@@ -763,8 +765,8 @@ class MRI2DSegmentationDataset(Dataset):
             # "expand(1)" is necessary to be compatible with segmentation convention: n_labelxhxwxd
             stack_gt = torch.from_numpy(seg_pair_slice["gt"][0]).expand(1)
 
-        # If self.length in model_params, add coordinates to metadata to reconstruct image
-        if self.length:
+        # If is_2d_patch, add coordinates to metadata to reconstruct image
+        if self.is_2d_patch:
             shape_x = coord["x_max"] - coord["x_min"]
             shape_y = coord["y_max"] - coord["y_min"]
 
