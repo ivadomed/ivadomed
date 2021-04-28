@@ -606,7 +606,7 @@ class MRI2DSegmentationDataset(Dataset):
 
     """
 
-    def __init__(self, filename_pairs, length=None, stride=None, slice_axis=2, cache=True, transform=None,
+    def __init__(self, filename_pairs, length=[], stride=[], slice_axis=2, cache=True, transform=None,
                  slice_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False, is_input_dropout=False):
         self.indexes = []
         self.handlers = []
@@ -1210,8 +1210,8 @@ class BidsDataset(MRI2DSegmentationDataset):
             raise Exception('No subjects were selected - check selection of parameters on config.json (e.g. center '
                             'selected + target_suffix)')
 
-        length = model_params["length_2D"] if "length_2D" in model_params else None
-        stride = model_params["stride_2D"] if "stride_2D" in model_params else None
+        length = model_params["length_2D"] if "length_2D" in model_params else []
+        stride = model_params["stride_2D"] if "stride_2D" in model_params else []
 
         super().__init__(self.filename_pairs, length, stride, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
                          self.soft_gt, is_input_dropout)
