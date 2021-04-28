@@ -6,7 +6,12 @@ Supported OS
 
 Currently, we only support ``MacOS`` and ``Linux`` operating systems. ``Windows``
 users have the possibility to install and use ``ivadomed`` via
-`Windows Subsystem for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/>`_.
+`Windows Subsystem for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/>`_. For MacOs users, we strongly recommend to follow the bellow steps before the installation.
+::
+
+    vim ~/.bashrc(.zshrc if you are using zsh shell)
+    (write in the .bashrc file => export HDF5_USE_FILE_LOCKING='FALSE')
+    source .bashrc
 
 Python
 ------
