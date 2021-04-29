@@ -92,6 +92,49 @@ class Dataframe:
             print("Dataframe has been saved at {}.".format(path))
         except FileNotFoundError:
             print("Wrong path.")
+    
+    def process_key(self, key, grp, line, subject, col_names):
+        assert key in grp.keys()
+        inputs = grp[key]
+        for contrast in inputs.attrs['contrast']:
+            if key == 'inputs' and contrast in col_names:
+                line[contrast] = '{}/inputs/{}'.format(subject, contrast)
+            elif key == 'inputs' and contrast not in col_names:
+                continue
+            else:
+                key_contrast = key + '/' + contrast
+                for col in col_names:
+                    if key_contrast in col:
+                        line[col] = '{}/{}/{}'.format(subject, key, contrast)
+                    else:
+                        continue
+        return line
+
+    def process_line(self, df, grp, line, subject, col_names):
+        # inputs
+        line = self.process_key('inputs', grp, line, subject, col_names)
+        
+        # GT
+        line = self.process_key('gt', grp, line, subject, col_names)
+
+        # ROI
+        line = self.process_key('roi', grp, line, subject, col_names)
+
+        # Adding slices & removing useless slices if loading in ram
+        line['Slices'] = np.array(grp.attrs['slices'])
+
+        # If the number of dimension is 2, we separate the slices
+        if self.dim == 2 and self.filter:
+            for n in line['Slices']:
+                line_slice = copy.deepcopy(line)
+                line_slice['Slices'] = n
+                df = df.append(line_slice, ignore_index=True)
+
+        else:
+            df = df.append(line, ignore_index=True)
+
+        return df, line
+
 
     def create_df(self, hdf5_file):
         """Generate the Data frame using the hdf5 file.
@@ -115,48 +158,7 @@ class Dataframe:
             line = copy.deepcopy(empty_line)
             line['Subjects'] = subject
 
-            # inputs
-            assert 'inputs' in grp.keys()
-            inputs = grp['inputs']
-            for c in inputs.attrs['contrast']:
-                if c in col_names:
-                    line[c] = '{}/inputs/{}'.format(subject, c)
-                else:
-                    continue
-            # GT
-            assert 'gt' in grp.keys()
-            inputs = grp['gt']
-            for c in inputs.attrs['contrast']:
-                key = 'gt/' + c
-                for col in col_names:
-                    if key in col:
-                        line[col] = '{}/gt/{}'.format(subject, c)
-                    else:
-                        continue
-            # ROI
-            assert 'roi' in grp.keys()
-            inputs = grp['roi']
-            for c in inputs.attrs['contrast']:
-                key = 'roi/' + c
-                for col in col_names:
-                    if key in col:
-                        line[col] = '{}/roi/{}'.format(subject, c)
-                    else:
-                        continue
-
-            # Adding slices & removing useless slices if loading in ram
-            line['Slices'] = np.array(grp.attrs['slices'])
-
-            # If the number of dimension is 2, we separate the slices
-            if self.dim == 2:
-                if self.filter:
-                    for n in line['Slices']:
-                        line_slice = copy.deepcopy(line)
-                        line_slice['Slices'] = n
-                        df = df.append(line_slice, ignore_index=True)
-
-            else:
-                df = df.append(line, ignore_index=True)
+            df, line = self.process_line(df, grp, line, subject, col_names)
 
         self.df = df
 
@@ -223,6 +225,7 @@ class BIDStoHDF5:
         list_patients = []
 
         self.filename_pairs = []
+        self.metadata = {}
 
         if metadata_choice == 'mri_params':
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
@@ -253,49 +256,8 @@ class BIDStoHDF5:
         all_deriv = bids_df.get_deriv_fnames()
 
         for subject in tqdm(subject_file_lst, desc="Loading dataset"):
-
-            df_sub = df_subjects.loc[df_subjects['filename'] == subject]
-
-            # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
-            contrast = df_sub['suffix'].values[0]
-            if contrast in (contrast_balance.keys()):
-                c[contrast] = c[contrast] + 1
-                if c[contrast] / tot[contrast] > contrast_balance[contrast]:
-                    continue
-
-            target_filename, roi_filename = [None] * len(target_suffix), None
-
-            derivatives = bids_df.df[bids_df.df['filename']
-                          .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
-
-            for deriv in derivatives:
-                for idx, suffix in enumerate(target_suffix):
-                    if suffix in deriv:
-                        target_filename[idx] = deriv
-                if not (roi_params["suffix"] is None) and roi_params["suffix"] in deriv:
-                    roi_filename = [deriv]
-
-            if (not any(target_filename)) or (not (roi_params["suffix"] is None) and (roi_filename is None)):
-                continue
-
-            metadata = df_sub.to_dict(orient='records')[0]
-            metadata['contrast'] = contrast
-
-            if len(bounding_box_dict):
-                # Take only one bounding box for cropping
-                metadata['bounding_box'] = bounding_box_dict[str(df_sub['path'].values[0])][0]
-
-            if metadata_choice == 'mri_params':
-                if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
-                            self.metadata.keys()]):
-                    continue
-
-            # Get subj_id (prefix filename without modality suffix and extension)
-            subj_id = subject.split('.')[0].split('_')[0]
-
-            self.filename_pairs.append((subj_id, [df_sub['path'].values[0]],
-                                            target_filename, roi_filename, [metadata]))
-            list_patients.append(subj_id)
+            self.process_subject(bids_df, subject, df_subjects, c, tot, contrast_balance, target_suffix, all_deriv,
+                                roi_params, bounding_box_dict, metadata_choice, list_patients)
 
         self.slice_axis = slice_axis
         self.slice_filter_fn = slice_filter_fn
@@ -311,6 +273,121 @@ class BIDStoHDF5:
         # Save images into HDF5 file
         self._load_filenames()
         print("Files loaded.")
+
+    def process_subject(self, bids_df, subject, df_subjects, c, tot, contrast_balance, target_suffix, all_deriv,
+                        roi_params, bounding_box_dict, metadata_choice, list_patients):
+        df_sub = df_subjects.loc[df_subjects['filename'] == subject]
+
+        # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
+        contrast = df_sub['suffix'].values[0]
+        is_over_thresh = self.is_contrast_over_threshold(c, tot, contrast, contrast_balance)
+        
+        if(not is_over_thresh):
+            target_filename, roi_filename = self.get_filenames(bids_df, subject, all_deriv, target_suffix, roi_params)
+
+            if (not any(target_filename)) or (not (roi_params["suffix"] is None) and (roi_filename is None)):
+                return
+
+            metadata = df_sub.to_dict(orient='records')[0]
+            metadata['contrast'] = contrast
+
+            if len(bounding_box_dict):
+                # Take only one bounding box for cropping
+                metadata['bounding_box'] = bounding_box_dict[str(df_sub['path'].values[0])][0]
+
+            are_mri_params = all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in self.metadata.keys()])
+            if metadata_choice == 'mri_params' and not are_mri_params:
+                return
+
+            # Get subj_id (prefix filename without modality suffix and extension)
+            subj_id = subject.split('.')[0].split('_')[0]
+
+            self.filename_pairs.append((subj_id, [df_sub['path'].values[0]],
+                                            target_filename, roi_filename, [metadata]))
+            list_patients.append(subj_id)
+    
+    def is_contrast_over_threshold(self, c, tot, contrast, contrast_balance):
+        if contrast in (contrast_balance.keys()):
+            c[contrast] = c[contrast] + 1
+            return c[contrast] / tot[contrast] > contrast_balance[contrast]
+    
+    def get_filenames(self, bids_df, subject, all_deriv, target_suffix, roi_params):
+        target_filename, roi_filename = [None] * len(target_suffix), None
+        derivatives = bids_df.df[bids_df.df['filename']
+                    .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
+
+        for deriv in derivatives:
+            for idx, suffix in enumerate(target_suffix):
+                if suffix in deriv:
+                    target_filename[idx] = deriv
+            if not (roi_params["suffix"] is None) and roi_params["suffix"] in deriv:
+                roi_filename = [deriv]
+        
+        return target_filename, roi_filename
+
+    def _slice_seg_pair(self, idx_pair_slice, seg_pair, roi_pair, useful_slices, input_volumes, gt_volume, roi_volume):
+        """ Helper function to slice segmentation pair at load time """
+        slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
+
+        self.has_bounding_box = imed_obj_detect.verify_metadata(slice_seg_pair, self.has_bounding_box)
+        if self.has_bounding_box:
+            imed_obj_detect.adjust_transforms(self.prepro_transforms, slice_seg_pair)
+
+        # keeping idx of slices with gt
+        if self.slice_filter_fn:
+            filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
+        if self.slice_filter_fn and filter_fn_ret_seg:
+            useful_slices.append(idx_pair_slice)
+
+        roi_pair_slice = roi_pair.get_pair_slice(idx_pair_slice)
+        slice_seg_pair, roi_pair_slice = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
+                                                                                        slice_seg_pair,
+                                                                                        roi_pair_slice)
+
+        input_volumes.append(slice_seg_pair["input"][0])
+
+        # Handle unlabeled data
+        if not len(slice_seg_pair["gt"]):
+            gt_volume = []
+        else:
+            gt_volume.append((slice_seg_pair["gt"][0] * 255).astype(np.uint8) / 255.)
+
+        # Handle data with no ROI provided
+        if not len(roi_pair_slice["gt"]):
+            roi_volume = []
+        else:
+            roi_volume.append((roi_pair_slice["gt"][0] * 255).astype(np.uint8) / 255.)
+
+        return slice_seg_pair, roi_pair_slice
+
+    def create_subgrp_metadata(self, grp_key, grp, contrast):
+        if grp[grp_key].attrs.__contains__('contrast'):
+            attr = grp[grp_key].attrs['contrast']
+            new_attr = [c for c in attr]
+            new_attr.append(contrast)
+            grp[grp_key].attrs.create('contrast', new_attr, dtype=self.dt)
+        else:
+            grp[grp_key].attrs.create('contrast', [contrast], dtype=self.dt)
+
+    def create_metadata(self, grp, key, metadata):        
+        grp[key].attrs['data_type'] = metadata['data_type']
+
+        if 'zooms' in metadata.keys():
+            grp[key].attrs['zooms'] = metadata['zooms']
+        if 'data_shape' in metadata.keys():
+            grp[key].attrs['data_shape'] = metadata['data_shape']
+        if  'bounding_box' in metadata.keys() and metadata['bounding_box'] is not None:
+            grp[key].attrs['bounding_box'] = metadata['bounding_box']
+
+    def add_grp_contrast(self, grp, contrast):
+        if grp.attrs.__contains__('contrast'):
+            attr = grp.attrs['contrast']
+            new_attr = [c for c in attr]
+            new_attr.append(contrast)
+            grp.attrs.create('contrast', new_attr, dtype=self.dt)
+
+        else:
+            grp.attrs.create('contrast', [contrast], dtype=self.dt)
 
     def _load_filenames(self):
         """Load preprocessed pair data (input and gt) in handler."""
@@ -336,37 +413,8 @@ class BIDStoHDF5:
                 roi_volume = []
 
                 for idx_pair_slice in range(input_data_shape[-1]):
-
-                    slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice)
-
-                    self.has_bounding_box = imed_obj_detect.verify_metadata(slice_seg_pair, self.has_bounding_box)
-                    if self.has_bounding_box:
-                        imed_obj_detect.adjust_transforms(self.prepro_transforms, slice_seg_pair)
-
-                    # keeping idx of slices with gt
-                    if self.slice_filter_fn:
-                        filter_fn_ret_seg = self.slice_filter_fn(slice_seg_pair)
-                    if self.slice_filter_fn and filter_fn_ret_seg:
-                        useful_slices.append(idx_pair_slice)
-
-                    roi_pair_slice = roi_pair.get_pair_slice(idx_pair_slice)
-                    slice_seg_pair, roi_pair_slice = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
-                                                                                                    slice_seg_pair,
-                                                                                                    roi_pair_slice)
-
-                    input_volumes.append(slice_seg_pair["input"][0])
-
-                    # Handle unlabeled data
-                    if not len(slice_seg_pair["gt"]):
-                        gt_volume = []
-                    else:
-                        gt_volume.append((slice_seg_pair["gt"][0] * 255).astype(np.uint8) / 255.)
-
-                    # Handle data with no ROI provided
-                    if not len(roi_pair_slice["gt"]):
-                        roi_volume = []
-                    else:
-                        roi_volume.append((roi_pair_slice["gt"][0] * 255).astype(np.uint8) / 255.)
+                    slice_seg_pair, roi_pair_slice = self._slice_seg_pair(idx_pair_slice, seg_pair, roi_pair, 
+                                                                        useful_slices, input_volumes, gt_volume, roi_volume)
 
                 # Getting metadata using the one from the last slice
                 input_metadata = slice_seg_pair['input_metadata'][0]
@@ -380,6 +428,7 @@ class BIDStoHDF5:
 
                 # Creating datasets and metadata
                 contrast = input_metadata['contrast']
+                
                 # Inputs
                 print(len(input_volumes))
                 print("grp= ", str(subject_id))
@@ -389,82 +438,36 @@ class BIDStoHDF5:
                     print("list empty")
                     continue
                 grp.create_dataset(key, data=input_volumes)
+                
                 # Sub-group metadata
-                if grp['inputs'].attrs.__contains__('contrast'):
-                    attr = grp['inputs'].attrs['contrast']
-                    new_attr = [c for c in attr]
-                    new_attr.append(contrast)
-                    grp['inputs'].attrs.create('contrast', new_attr, dtype=self.dt)
-
-                else:
-                    grp['inputs'].attrs.create('contrast', [contrast], dtype=self.dt)
+                self.create_subgrp_metadata('inputs', grp, contrast)
 
                 # dataset metadata
                 grp[key].attrs['input_filenames'] = input_metadata['input_filenames']
-                grp[key].attrs['data_type'] = input_metadata['data_type']
-
-                if "zooms" in input_metadata.keys():
-                    grp[key].attrs["zooms"] = input_metadata['zooms']
-                if "data_shape" in input_metadata.keys():
-                    grp[key].attrs["data_shape"] = input_metadata['data_shape']
-                if "bounding_box" in input_metadata.keys():
-                    grp[key].attrs["bounding_box"] = input_metadata['bounding_box']
+                self.create_metadata(grp, key, input_metadata)
 
                 # GT
                 key = "gt/{}".format(contrast)
                 grp.create_dataset(key, data=gt_volume)
                 # Sub-group metadata
-                if grp['gt'].attrs.__contains__('contrast'):
-                    attr = grp['gt'].attrs['contrast']
-                    new_attr = [c for c in attr]
-                    new_attr.append(contrast)
-                    grp['gt'].attrs.create('contrast', new_attr, dtype=self.dt)
-
-                else:
-                    grp['gt'].attrs.create('contrast', [contrast], dtype=self.dt)
+                self.create_subgrp_metadata('gt', grp, contrast)
 
                 # dataset metadata
                 grp[key].attrs['gt_filenames'] = input_metadata['gt_filenames']
-                grp[key].attrs['data_type'] = gt_metadata['data_type']
-
-                if "zooms" in gt_metadata.keys():
-                    grp[key].attrs["zooms"] = gt_metadata['zooms']
-                if "data_shape" in gt_metadata.keys():
-                    grp[key].attrs["data_shape"] = gt_metadata['data_shape']
-                if gt_metadata['bounding_box'] is not None:
-                    grp[key].attrs["bounding_box"] = gt_metadata['bounding_box']
+                self.create_metadata(grp, key, gt_metadata)
 
                 # ROI
                 key = "roi/{}".format(contrast)
                 grp.create_dataset(key, data=roi_volume)
                 # Sub-group metadata
-                if grp['roi'].attrs.__contains__('contrast'):
-                    attr = grp['roi'].attrs['contrast']
-                    new_attr = [c for c in attr]
-                    new_attr.append(contrast)
-                    grp['roi'].attrs.create('contrast', new_attr, dtype=self.dt)
-
-                else:
-                    grp['roi'].attrs.create('contrast', [contrast], dtype=self.dt)
+                self.create_subgrp_metadata('roi', grp, contrast)
 
                 # dataset metadata
                 grp[key].attrs['roi_filename'] = roi_metadata['gt_filenames']
-                grp[key].attrs['data_type'] = roi_metadata['data_type']
-
-                if "zooms" in roi_metadata.keys():
-                    grp[key].attrs["zooms"] = roi_metadata['zooms']
-                if "data_shape" in roi_metadata.keys():
-                    grp[key].attrs["data_shape"] = roi_metadata['data_shape']
+                self.create_metadata(grp, key, roi_metadata)
 
                 # Adding contrast to group metadata
-                if grp.attrs.__contains__('contrast'):
-                    attr = grp.attrs['contrast']
-                    new_attr = [c for c in attr]
-                    new_attr.append(contrast)
-                    grp.attrs.create('contrast', new_attr, dtype=self.dt)
-
-                else:
-                    grp.attrs.create('contrast', [contrast], dtype=self.dt)
+                self.add_grp_contrast(grp, contrast)
 
 
 class HDF5Dataset:

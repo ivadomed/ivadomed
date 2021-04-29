@@ -8,7 +8,8 @@ from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
-from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__, __tmp_dir__
+from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
+from testing.common_testing_util import remove_tmp_dir
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ def setup_function():
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": ['T1w'],  "balance": {}}
     }])
-def test_image_orientation(loader_parameters):
+def test_image_orientation(download_data_testing_test_files, loader_parameters):
     device = torch.device("cuda:" + str(GPU_ID) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if cuda_available:
