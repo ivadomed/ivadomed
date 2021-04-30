@@ -989,8 +989,8 @@ being used for the segmentation task).
             "stride_2D": {
                 "type": "[int, int]",
                 "$$description": [
-                    "(Optional) Voxels' shift over the input matrix to create patches. Ex: Stride of [1, 2]\n",
-                    "will cause a patch translation of 1 voxel in the 1st dimension and 2 voxels in\n",
+                    "(Optional) Pixels' shift over the input matrix to create 2D patches. Ex: Stride of [1, 2]\n",
+                    "will cause a patch translation of 1 pixel in the 1st dimension and 2 pixels in\n",
                     "the 2nd dimension at every iteration until the whole input matrix is covered."
                 ],
                 "required": "false"
@@ -998,7 +998,7 @@ being used for the segmentation task).
            "is_2d": {
                "type": "boolean",
                "$$description": [
-                   "Indicates if the model is 2d, if not the model is 3d. If ``is_2d`` is ``False``, then parameters\n",
+                   "Indicates if the model is 2D, if not the model is 3D. If ``is_2d`` is ``False``, then parameters\n",
                    "``length_3D`` and ``stride_3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`)."
                ]
            }
