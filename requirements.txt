@@ -19,3 +19,4 @@ pytest-ordering~=0.6
 sphinx-jsonschema~=1.16
 pytest-console-scripts~=1.1
 pre-commit==2.10.1
+scipy

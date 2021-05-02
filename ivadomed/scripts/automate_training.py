@@ -26,6 +26,7 @@ import joblib
 import pandas as pd
 import numpy as np
 import torch.multiprocessing as mp
+import ivadomed.scripts.visualize_and_compare_testing_models as violin_plots
 from ivadomed import main as ivado
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import utils as imed_loader_utils
@@ -639,7 +640,8 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, p
         all_combin (bool): If True, all parameters combinations are run. Flag: ``--all-combin``
         n_iterations (int): Controls the number of time that each experiment (ie set of parameter)
             are run. Flag: ``--n-iteration``, ``-n``
-        run_test (bool): If True, the trained model is also run on the testing subdataset.
+        run_test (bool): If True, the trained model is also run on the testing subdataset and violiplots are displayed
+            with the dicescores for each new output folder created.
             Flag: ``--run-test``
         all_logs (bool): If True, all the log directories are kept for every iteration.
             Flag: ``--all-logs``, ``-l``
@@ -771,6 +773,11 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, p
     # Compute avg, std, p-values
     if n_iterations > 1:
         compute_statistics(results_df, n_iterations, run_test)
+
+    # If the test is selected, also show the violinplots
+    if run_test:
+        output_folders = [config_list[i]["path_output"] for i in range(len(config_list))]
+        violin_plots.visualize_and_compare_models(ofolders=output_folders)
 
 
 def main(args=None):
