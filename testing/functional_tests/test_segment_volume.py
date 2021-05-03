@@ -145,3 +145,4 @@ def test_segment_volume_3d(download_functional_test_files):
 
 def teardown_function():
     remove_tmp_dir()
+
