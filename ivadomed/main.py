@@ -9,7 +9,6 @@ import sys
 import platform
 import multiprocessing
 import re
-import hashlib
 
 from ivadomed.utils import logger
 from ivadomed import evaluation as imed_evaluation
@@ -120,22 +119,6 @@ def get_dataset(bids_df, loader_params, data_lst, transform_params, cuda_availab
                                                                   'dataset_type': ds_type}}, device=device,
                                   cuda_available=cuda_available)
     return ds
-
-
-def generate_sha_256(context, bids_df, file_lst):
-    # generating sha256 for list of data
-    context['training_sha256'] = {}
-    # file_list is a list of filename strings
-    for file in file_lst:
-        # bids_df is a dataframe with column values path...filename...
-        # so df_sub is the row with matching filename=file
-        df_sub = bids_df.df.loc[bids_df.df['filename'] == file]
-        file_path = df_sub['path'].values[0]
-        sha256_hash = hashlib.sha256()
-        with open(file_path, "rb") as f:
-            for byte_block in iter(lambda: f.read(4096), b""):
-                sha256_hash.update(byte_block)
-            context['training_sha256'][file] = sha256_hash.hexdigest()
 
 
 def save_config_file(context, path_output):
@@ -360,7 +343,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                                                                           ['subject_selection'])
 
     # Generating sha256 for the training files
-    generate_sha_256(context, bids_df, train_lst)
+    imed_utils.generate_sha_256(context, bids_df.df, train_lst)
 
     # TESTING PARAMS
     # Aleatoric uncertainty
