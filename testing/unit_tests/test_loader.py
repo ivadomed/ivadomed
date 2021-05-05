@@ -136,7 +136,7 @@ def test_dropout_input(seg_pair):
 
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [os.path.join(__data_testing_dir__, "microscopy_png")],
-    "bids_config": "ivadomed/config/config_bids.json",
+    "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual"],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
