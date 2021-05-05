@@ -174,7 +174,7 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
         # TRANSFORMATIONS
         # If ROI is not provided then force center cropping
         if fname_roi is None and 'ROICrop' in context["transformation"].keys():
-            logger.info(
+            logger.warning(
                 "\n WARNING: fname_roi has not been specified, then a cropping around the center of the image is "
                 "performed instead of a cropping around a Region of Interest.")
 

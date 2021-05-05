@@ -567,7 +567,7 @@ class HDF5Dataset:
         with h5py.File(self.path_hdf5, "r") as hdf5_file:
             for ct in contrast_lst:
                 if ct not in keys:
-                    logger.info("Key error: status has no key {}".format(ct))
+                    logger.error("Key error: status has no key {}".format(ct))
                     continue
                 if self.status[ct]:
                     logger.info("Contrast {} already in RAM".format(ct))
