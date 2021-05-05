@@ -24,6 +24,7 @@ class Metavar(Enum):
     int = "<int>"
     list = "<list>"
     float = "<float>"
+    bool = "<boolean>"
 
     def __str__(self):
         return self.value
