@@ -2,5 +2,6 @@
 -r requirements_common.txt
 
 # Torch CPU Version
---find-links https://download.pytorch.org/whl/torch_stable.html torch==1.5.0+cpu
---find-links https://download.pytorch.org/whl/torch_stable.html torchvision==0.6.0+cpu
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==1.5.0+cpu
+torchvision==0.6.0+cpu
