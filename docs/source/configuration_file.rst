@@ -989,8 +989,8 @@ being used for the segmentation task).
             "stride_2D": {
                 "type": "[int, int]",
                 "$$description": [
-                    "(Optional) Pixels' shift over the input matrix to create 2D patches. Ex: Stride of [1, 2]\n",
-                    "will cause a patch translation of 1 pixel in the 1st dimension and 2 pixels in\n",
+                    "(Optional) Strictly positive integers: Pixels' shift over the input matrix to create 2D patches.\n",
+                    "Ex: Stride of [1, 2] will cause a patch translation of 1 pixel in the 1st dimension and 2 pixels in\n",
                     "the 2nd dimension at every iteration until the whole input matrix is covered."
                 ],
                 "required": "false"
