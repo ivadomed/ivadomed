@@ -1,6 +1,7 @@
   
 ![ivadomed Overview](https://raw.githubusercontent.com/ivadomed/doc-figures/main/index/overview_title.png)
 
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.02868/status.svg)](https://doi.org/10.21105/joss.02868)
 [![Coverage Status](https://coveralls.io/repos/github/ivadomed/ivadomed/badge.svg?branch=master)](https://coveralls.io/github/ivadomed/ivadomed?branch=master)
 [![test status](https://github.com/ivadomed/ivadomed/workflows/Run%20tests/badge.svg)](https://github.com/ivadomed/ivadomed/actions?query=workflow%3A%22Run+tests%22)
 [![publish package](https://github.com/ivadomed/ivadomed/workflows/Publish%20Package/badge.svg)](https://github.com/ivadomed/ivadomed/actions?query=workflow%3A%22Publish+Package%22)
@@ -52,3 +53,5 @@ This project results from a collaboration between the [NeuroPoly Lab](https://ww
 and the [Mila](https://mila.quebec/en/). The main funding source is [IVADO](https://ivado.ca/en/).
 
 [List of contributors](https://github.com/neuropoly/ivadomed/graphs/contributors)
+
+## Consult our Wiki(https://github.com/ivadomed/ivadomed/wiki) here for more help

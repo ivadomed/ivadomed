@@ -5,7 +5,8 @@ from torch.utils.data import DataLoader
 
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
-from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __data_testing_dir__
+from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
+from testing.common_testing_util import remove_tmp_dir
 
 cudnn.benchmark = True
 
@@ -45,7 +46,7 @@ def _cmpt_slice(ds_loader):
 @pytest.mark.parametrize('roi_params', [
     {"suffix": "_seg-manual", "slice_filter_roi": 10},
     {"suffix": None, "slice_filter_roi": 0}])
-def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_filter_params):
+def test_slice_filter(download_data_testing_test_files, transforms_dict, train_lst, target_lst, roi_params, slice_filter_params):
     if "ROICrop" in transforms_dict and roi_params["suffix"] is None:
         return
 
@@ -57,8 +58,9 @@ def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_
         "dataset_type": "training",
         "requires_undo": False,
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
-        "bids_path": __data_testing_dir__,
+        "path_data": [__data_testing_dir__],
         "target_suffix": target_lst,
+        "extensions": [".nii.gz"],
         "roi_params": roi_params,
         "model_params": {"name": "Unet"},
         "slice_filter_params": slice_filter_params,
@@ -66,7 +68,8 @@ def test_slice_filter(transforms_dict, train_lst, target_lst, roi_params, slice_
         "multichannel": False
     }
     # Get Training dataset
-    ds_train = imed_loader.load_dataset(**loader_params)
+    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    ds_train = imed_loader.load_dataset(bids_df, **loader_params)
 
     print('\tNumber of loaded slices: {}'.format(len(ds_train)))
 

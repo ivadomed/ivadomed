@@ -1,12 +1,13 @@
 {
     "command": "train",
     "gpu_ids": [6],
-    "log_directory": "classification_lesion_ax",
+    "path_output": "classification_lesion_ax",
     "model_name": "label_lesion_t2_t2star",
     "debugging": false,
     "loader_parameters": {
-        "bids_path": "../duke/sct_testing/large/",
+        "path_data": ["../duke/sct_testing/large/"],
         "target_suffix": ["_lesion-manual"],
+        "extensions": [".nii.gz"],
         "roi_params": {
             "suffix": "_seg-manual",
             "slice_filter_roi": 10
@@ -27,8 +28,8 @@
     "split_dataset": {
         "fname_split": null,
         "random_seed": 6,
-        "center_test": [],
-        "method": "per_patient",
+        "split_method" : "participant_id",
+        "data_testing": {"data_type": null, "data_value":[]},
         "balance": null,
         "train_fraction": 0.6,
         "test_fraction": 0.2

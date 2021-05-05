@@ -1,4 +1,5 @@
 import os
+import pytest
 import h5py
 import torch
 from torch.utils.data import DataLoader
@@ -7,7 +8,8 @@ import ivadomed.transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 import logging
-from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir, __data_testing_dir__
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
+from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
 GPU_ID = 0
@@ -24,8 +26,22 @@ def setup_function():
     create_tmp_dir()
 
 
-def test_hdf5():
+@pytest.mark.parametrize('loader_parameters', [{
+    "path_data": [__data_testing_dir__],
+    "target_suffix": ["_lesion-manual"],
+    "extensions": [".nii.gz"],
+    "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": None},
+    "contrast_params": {"contrast_lst": ['T1w', 'T2w', 'T2star']}
+    }])
+def test_hdf5(download_data_testing_test_files, loader_parameters):
     print('[INFO]: Starting test ... \n')
+
+    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+
+    contrast_params = loader_parameters["contrast_params"]
+    target_suffix = loader_parameters["target_suffix"]
+    roi_params = loader_parameters["roi_params"]
+
     train_lst = ['sub-unf01']
 
     training_transform_dict = {
@@ -42,14 +58,12 @@ def test_hdf5():
     }
     transform_lst, _ = imed_transforms.prepare_transforms(training_transform_dict)
 
-    roi_params = {"suffix": "_seg-manual", "slice_filter_roi": None}
-
-    bids_to_hdf5 = imed_adaptative.BIDStoHDF5(__data_testing_dir__,
-                                              subject_lst=train_lst,
+    bids_to_hdf5 = imed_adaptative.BIDStoHDF5(bids_df=bids_df,
+                                              subject_file_lst=train_lst,
                                               path_hdf5=os.path.join(__data_testing_dir__, 'mytestfile.hdf5'),
-                                              target_suffix=["_lesion-manual"],
+                                              target_suffix=target_suffix,
                                               roi_params=roi_params,
-                                              contrast_lst=['T1w', 'T2w', 'T2star'],
+                                              contrast_lst=contrast_params["contrast_lst"],
                                               metadata_choice="contrast",
                                               transform=transform_lst,
                                               contrast_balance={},
@@ -101,14 +115,10 @@ def test_hdf5():
                 "target_lst": ["T2w"],
                 "roi_lst": ["T2w"]
             }
-        contrast_params = {
-            "contrast_lst": ['T1w', 'T2w', 'T2star'],
-            "balance": {}
-        }
 
-        dataset = imed_adaptative.HDF5Dataset(root_dir=__data_testing_dir__,
-                                              subject_lst=train_lst,
-                                              target_suffix="_lesion-manual",
+        dataset = imed_adaptative.HDF5Dataset(bids_df=bids_df,
+                                              subject_file_lst=train_lst,
+                                              target_suffix=target_suffix,
                                               slice_axis=2,
                                               model_params=model_params,
                                               contrast_params=contrast_params,

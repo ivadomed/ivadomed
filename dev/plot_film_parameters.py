@@ -123,21 +123,21 @@ def run_main(context):
 
     :param context: this is a dictionary with all data from the
                     configuration file from which we only use:
-                        - 'log_directory': folder name where log files are saved
+                        - 'path_output': folder name where log files are saved
     """
-    log_dir = context["log_directory"]
+    path_output = context["path_output"]
 
     gammas = {}
     betas = {}
     for i in range(1, 9):
-        if np.load(log_dir + f"/gamma_layer_{i}.npy", allow_pickle=True).size != 0:
-            gammas[i] = np.load(log_dir + f"/gamma_layer_{i}.npy", allow_pickle=True)
-        if np.load(log_dir + f"/beta_layer_{i}.npy", allow_pickle=True).size != 0:
-            betas[i] = np.load(log_dir + f"/beta_layer_{i}.npy", allow_pickle=True)
+        if np.load(path_output + f"/gamma_layer_{i}.npy", allow_pickle=True).size != 0:
+            gammas[i] = np.load(path_output + f"/gamma_layer_{i}.npy", allow_pickle=True)
+        if np.load(path_output + f"/beta_layer_{i}.npy", allow_pickle=True).size != 0:
+            betas[i] = np.load(path_output + f"/beta_layer_{i}.npy", allow_pickle=True)
 
-    metadata_values = np.load(log_dir + "/metadata_values.npy", allow_pickle=True)
+    metadata_values = np.load(path_output + "/metadata_values.npy", allow_pickle=True)
 
-    out_dir = context["log_directory"] + "/film-parameters-visualization"
+    out_dir = context["path_output"] + "/film-parameters-visualization"
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
 

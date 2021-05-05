@@ -23,6 +23,15 @@ ivadomed_automate_training
 
 .. autofunction:: ivadomed.scripts.automate_training.automate_training
 
+.. autofunction:: ivadomed.scripts.automate_training.HyperparameterOption
+
+.. autofunction:: ivadomed.scripts.automate_training.get_param_list
+
+.. autofunction:: ivadomed.scripts.automate_training.make_config_list
+
+.. autofunction:: ivadomed.scripts.automate_training.update_dict
+
+
 ivadomed_compare_models
 """""""""""""""""""""""
 
@@ -48,5 +57,7 @@ ivadomed_download_data
 
 .. autofunction:: ivadomed.scripts.download_data.install_data
 
+ivadomed_visualize_and_compare_testing_models
+"""""""""""""""""""""""""""""""""""""""""""""
 
-
+.. autofunction:: ivadomed.scripts.visualize_and_compare_testing_models.visualize_and_compare_models

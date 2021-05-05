@@ -78,7 +78,7 @@ General Parameters
 .. code-block:: JSON
 
     {
-        "log_directory": "tmp/spineGeneric"
+        "path_output": "tmp/spineGeneric"
     }
 
 
@@ -142,18 +142,28 @@ Loader Parameters
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "bids_path",
-        "description": "Path of the BIDS folder.",
-        "type": "string"
+        "title": "path_data",
+        "description": "Path(s) of the BIDS folder(s).",
+        "type": "list or str"
     }
-
 
 
 .. code-block:: JSON
 
     {
         "loader_parameters": {
-            "bids_path": "path/to/data_example_spinegeneric"
+            "path_data": ["path/to/data_example_spinegeneric", "path/to/other_data_example"]
+        }
+    }
+
+Alternatively:
+
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "path_data": "path/to/data_example_spinegeneric"
         }
     }
 
@@ -269,7 +279,7 @@ will be randomly chosen.
 
     {
         "loader_parameters": {
-            "extensions": [".nii.gz", ".png"]
+            "extensions": [".nii.gz"]
         }
     }
 
@@ -353,7 +363,7 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "slice_axis",
-        "description": "Sets the slice orientation for on which the model will be used.",
+        "description": "Sets the slice orientation for 3D NIfTI files on which the model will be used.",
         "type": "string",
         "options": {"sagittal": "plane dividing body into left/right",
                     "coronal": "plane dividing body into front/back",
@@ -482,6 +492,30 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
         }
     }
 
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "is_input_dropout",
+        "$$description": [
+            "Indicates if input-level dropout should be applied during training.\n",
+            "This option trains a model to be robust to missing modalities by setting \n",
+            "to zero input channels (from 0 to all channels - 1). Always at least one \n".
+            "channel will remain. If one or more modalities are already missing, they will \n",
+            "be considered as dropped."
+        ],
+        "type": "boolean"
+    }
+
+.. code-block:: JSON
+
+    {
+        "loader_parameters": {
+            "is_input_dropout": true
+        }
+    }
+
+
 
 Split Dataset
 -------------
@@ -493,12 +527,14 @@ Split Dataset
         "title": "fname_split",
         "$$description": [
             "File name of the log (`joblib <https://joblib.readthedocs.io/en/latest/>`__)\n",
-            "that contains the list of training/validation/testing subjects. This file can later\n",
+            "that contains the list of training/validation/testing filenames. This file can later\n",
             "be used to re-train a model using the same data splitting scheme. If ``null``,\n",
-            "a new splitting scheme is performed."
+            "a new splitting scheme is performed. If specified, the .joblib file data splitting scheme\n",
+            "bypasses all the other split dataset parameters."
         ],
         "type": "string"
     }
+
 
 .. code-block:: JSON
 
@@ -516,7 +552,7 @@ Split Dataset
         "title": "random_seed",
         "$$description": [
             "Seed used by the random number generator to split the dataset between\n",
-            "training/validation/testing. The use of the same seed ensures the same split between\n",
+            "training/validation/testing sets. The use of the same seed ensures the same split between\n",
             "the sub-datasets, which is useful for reproducibility."
         ],
         "type": "int"
@@ -535,26 +571,49 @@ Split Dataset
 
     {
         "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "method",
+        "title": "split_method",
         "$$description": [
-            "Seed used by the random number generator to split the dataset between\n",
-            "training/validation/testing. The use of the same seed ensures the same split between\n",
-            "the sub-datasets, which is useful for reproducibility."
+            "Metadata contained in a BIDS tabular file on which the files are shuffled, then split\n",
+            "between train/validation/test, according to ``train_fraction`` and ``test_fraction``.\n",
+            "For example, ``participant_id`` from the ``participants.tsv`` file will shuffle all participants,\n",
+            "then split between train/validation/test sets."
         ],
-        "type": "string",
+        "type": "string"
+    }
+
+.. code-block:: JSON
+
+    {
+        "split_dataset": {
+            "split_method": "participant_id"
+        }
+    }
+
+.. jsonschema::
+
+    {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "title": "data_testing",
+        "$$description": ["(Optional) Used to specify a custom metadata to only include in the testing dataset (not validation).\n",
+            "For example, to not mix participants from different institutions between the train/validation set and the test set,\n",
+			"use the column ``institution_id`` from ``participants.tsv`` in ``data_type``.\n"
+		],
+        "type": "dict",
         "options": {
-            "per_patient": {
+            "data_type": {
                 "$$description": [
-                    "all subjects are shuffled, then split between train/validation/test\n",
-                    "according to ``train_fraction`` and ``test_fraction``, regardless of their institution"
-                ]
+					"Metadata to include in the testing dataset.\n",
+					"If specified, the ``test_fraction`` is applied to this metadata."
+                ],
+                "type": "string"
             },
-            "per_center": {
+            "data_value": {
                 "$$description": [
-                    "all subjects are split so as not to mix institutions between the\n",
-                    "train/validation/test sets according to ``train_fraction`` and ``center_test``.\n",
-                    "The latter option enables the user to ensure the model is working across domains (institutions)."
-                ]
+					"(Optional) List of metadata values from the ``data_type`` column to include in\n",
+                    "the testing dataset. If specified, the testing set contains only files from the\n",
+                    "``data_value`` list and the ``test_fraction`` is not used."
+                ],
+                "type": "list"
             }
         }
     }
@@ -563,14 +622,9 @@ Split Dataset
 
     {
         "split_dataset": {
-            "method": "per_center"
+            "data_testing": {"data_type": "institution_id", "data_value":[]}
         }
     }
-
-.. note::
-    The institution information is contained within the ``institution_id`` column in the
-    ``participants.tsv`` file.
-
 
 .. jsonschema::
 
@@ -592,7 +646,6 @@ Split Dataset
             "balance": null
         }
     }
-
 
 .. jsonschema::
 
@@ -618,8 +671,7 @@ Split Dataset
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "test_fraction",
         "$$description": [
-            "Fraction of the dataset used as testing set. This parameter is only used if the\n",
-            "``method`` is ``per_patient``"
+            "Fraction of the dataset used as testing set.\n"
         ],
         "type": "float",
         "range": "[0, 1]"
@@ -632,30 +684,6 @@ Split Dataset
             "test_fraction": 0.2
         }
     }
-
-
-.. jsonschema::
-
-    {
-        "$schema": "http://json-schema.org/draft-04/schema#",
-        "title": "center_test",
-        "$$description": [
-            "Each string corresponds to an institution/center to only include in the testing\n",
-            "dataset (not validation). This parameter is only used if the ``method`` is ``per_center``\n",
-            "If used, the file ``bids_dataset/participants.tsv`` needs to contain a column\n",
-            "``institution_id``, which associates a subject with an institution/center."
-        ],
-        "type": "list, string"
-    }
-
-.. code-block:: JSON
-
-    {
-        "split_dataset": {
-            "center_test": []
-        }
-    }
-
 
 
 Training Parameters
@@ -932,26 +960,31 @@ being used for the segmentation task).
            "dropout_rate": {
                "type": "float"
            },
-           "batch_norm_momentum": {
-               "type": "float"
+           "bn_momentum": {
+               "type": "float",
+               "$$description": [
+                    "Defines the importance of the running average: (1 - `bn_momentum`). A large running\n",
+                    "average factor will lead to a slow and smooth learning.\n",
+                    "See `PyTorch's BatchNorm classes for more details. <https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm2d.html>`__ for more details.\n"
+               ]
+
            },
            "depth": {
                "type": "int",
                "range": "(0, inf)",
                "description": "Number of down-sampling operations."
            },
-           "relu": {
-               "type": "boolean",
+           "final_activation": {
+               "type": "string",
                "required": "false",
                "$$description": [
-                   "Sets final activation to normalized ReLU (relu between 0 and 1), instead of\n",
-                   "sigmoid. Only available when `is_2D=True`."
+                   "Final activation layer. Options: ``sigmoid`` (default), ``relu``(normalized ReLU), or ``softmax``."
                ]
            },
-           "is_dim": {
+           "is_2d": {
                "type": "boolean",
                "$$description": [
-                   "Indicates dimensionality of model (2D or 3D). If ``is_dim`` is ``False``, then parameters\n",
+                   "Indicates if the model is 2d, if not the model is 3d. If ``is_2d`` is ``False``, then parameters\n",
                    "``length_3D`` and ``stride_3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`)."
                ]
            }
@@ -1053,7 +1086,7 @@ being used for the segmentation task).
             "missing_probability_growth": 0.9,
             "contrasts": ["T1w", "T2w"],
             "ram": true,
-            "hdf5_path": "/path/to/HeMIS.hdf5",
+            "path_hdf5": "/path/to/HeMIS.hdf5",
             "csv_path": "/path/to/HeMIS.csv",
             "target_lst": ["T2w"],
             "roi_lst": null
@@ -1158,18 +1191,10 @@ Cascaded Architecture Features
 Transformations
 ---------------
 
-Transformations applied during data augmentation. Transformations are
-sorted in the order they are applied to the image samples. For each
-transformation, the following parameters are customizable: -
-``applied_to``: list betweem ``"im", "gt", "roi"``. If not specified,
-then the transformation is applied to all loaded samples. Otherwise,
-only applied to the specified types: eg ``["gt"]`` implies that this
-transformation is only applied to the ground-truth data. -
-``dataset_type``: list between ``"training", "validation", "testing"``.
-If not specified, then the transformation is applied to the three
-sub-datasets. Otherwise, only applied to the specified subdatasets: eg
-``["testing"]`` implies that this transformation is only applied to the
-testing sub-dataset.
+Transformations applied during data augmentation. Transformations are sorted in the order they are applied to the image samples. For each transformation, the following parameters are customizable: 
+
+- ``applied_to``: list between ``"im", "gt", "roi"``. If not specified, then the transformation is applied to all loaded samples. Otherwise, only applied to the specified types: Example: ``["gt"]`` implies that this transformation is only applied to the ground-truth data.
+- ``dataset_type``: list between ``"training", "validation", "testing"``. If not specified, then the transformation is applied to the three sub-datasets. Otherwise, only applied to the specified subdatasets. Example: ``["testing"]`` implies that this transformation is only applied to the testing sub-dataset.
 
 Available Transformations:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

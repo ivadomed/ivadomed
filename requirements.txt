@@ -1,4 +1,3 @@
-bids-neuropoly>=0.2
 csv-diff>=1.0
 h5py==2.10.0
 joblib
@@ -19,3 +18,5 @@ tqdm>=4.30
 pytest-ordering
 sphinx-jsonschema
 pytest-console-scripts
+pre-commit==2.10.1
+scipy

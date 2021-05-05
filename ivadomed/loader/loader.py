@@ -1,9 +1,12 @@
 import copy
 import random
+import logging
 import nibabel as nib
 import numpy as np
 import torch
-from bids_neuropoly import bids
+import pandas as pd
+import os
+import imageio
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
@@ -13,18 +16,20 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
 
+logger = logging.getLogger(__name__)
 
-def load_dataset(data_list, bids_path, transforms_params, model_params, target_suffix, roi_params,
+
+def load_dataset(bids_df, data_list, transforms_params, model_params, target_suffix, roi_params,
                  contrast_params, slice_filter_params, slice_axis, multichannel,
                  dataset_type="training", requires_undo=False, metadata_type=None,
                  object_detection_params=None, soft_gt=False, device=None,
-                 cuda_available=None, **kwargs):
+                 cuda_available=None, is_input_dropout=False, **kwargs):
     """Get loader appropriate loader according to model type. Available loaders are Bids3DDataset for 3D data,
     BidsDataset for 2D data and HDF5Dataset for HeMIS.
 
     Args:
+        bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
         data_list (list): Subject names list.
-        bids_path (str): Path to the BIDS dataset.
         transforms_params (dict): Dictionary containing transformations for "training", "validation", "testing" (keys),
             eg output of imed_transforms.get_subdatasets_transforms.
         model_params (dict): Dictionary containing model parameters.
@@ -33,7 +38,7 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         contrast_params (dict): Contains image contrasts related parameters.
         slice_filter_params (dict): Contains slice_filter parameters, see :doc:`configuration_file` for more details.
         slice_axis (string): Choice between "axial", "sagittal", "coronal" ; controls the axis used to extract the 2D
-            data.
+            data from 3D nifti files. 2D png/tif/jpg files use default "axial.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
         metadata_type (str): Choice between None, "mri_params", "contrasts".
@@ -42,6 +47,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         object_detection_params (dict): Object dection parameters.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
+        is_input_dropout (bool): Return input with missing modalities.
+
     Returns:
         BidsDataset
 
@@ -56,8 +63,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         roi_params["slice_filter_roi"] = None
 
     if model_params["name"] == "Modified3DUNet" or ('is_2d' in model_params and not model_params['is_2d']):
-        dataset = Bids3DDataset(bids_path,
-                                subject_lst=data_list,
+        dataset = Bids3DDataset(bids_df=bids_df,
+                                subject_file_lst=data_list,
                                 target_suffix=target_suffix,
                                 roi_params=roi_params,
                                 contrast_params=contrast_params,
@@ -67,11 +74,12 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                 multichannel=multichannel,
                                 model_params=model_params,
                                 object_detection_params=object_detection_params,
-                                soft_gt=soft_gt)
+                                soft_gt=soft_gt,
+                                is_input_dropout=is_input_dropout)
 
     elif model_params["name"] == "HeMISUnet":
-        dataset = imed_adaptative.HDF5Dataset(root_dir=bids_path,
-                                              subject_lst=data_list,
+        dataset = imed_adaptative.HDF5Dataset(bids_df=bids_df,
+                                              subject_file_lst=data_list,
                                               model_params=model_params,
                                               contrast_params=contrast_params,
                                               target_suffix=target_suffix,
@@ -88,8 +96,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         # Task selection
         task = imed_utils.get_task(model_params["name"])
 
-        dataset = BidsDataset(bids_path,
-                              subject_lst=data_list,
+        dataset = BidsDataset(bids_df=bids_df,
+                              subject_file_lst=data_list,
                               target_suffix=target_suffix,
                               roi_params=roi_params,
                               contrast_params=contrast_params,
@@ -101,7 +109,8 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
                                                                             cuda_available=cuda_available),
                               soft_gt=soft_gt,
                               object_detection_params=object_detection_params,
-                              task=task)
+                              task=task,
+                              is_input_dropout=is_input_dropout)
         dataset.load_filenames()
 
     if model_params["name"] != "Modified3DUNet":
@@ -110,6 +119,47 @@ def load_dataset(data_list, bids_path, transforms_params, model_params, target_s
         print("Loaded {} volumes of size {} for the {} set.".format(len(dataset), slice_axis, dataset_type))
 
     return dataset
+
+
+def dropout_input(seg_pair):
+    """Applies input-level dropout: zero to all channels minus one will be randomly set to zeros. This function verifies
+    if some channels are already empty. Always at least one input channel will be kept.
+
+    Args:
+        seg_pair (dict): Batch containing torch tensors (input and gt) and metadata.
+
+    Return:
+        seg_pair (dict): Batch containing torch tensors (input and gt) and metadata with channel(s) dropped.
+    """
+    n_channels = seg_pair['input'].size(0)
+    # Verify if the input is multichannel
+    if n_channels > 1:
+        # Verify if some channels are already empty
+        n_unique_values = [len(torch.unique(input_data)) > 1 for input_data in seg_pair['input']]
+        idx_empty = np.where(np.invert(n_unique_values))[0]
+
+        # Select how many channels will be dropped between 0 and n_channels - 1 (keep at least one input)
+        n_dropped = random.randint(0, n_channels - 1)
+
+        if n_dropped > len(idx_empty):
+            # Remove empty channel to the number of channels to drop
+            n_dropped = n_dropped - len(idx_empty)
+            # Select which channels will be dropped
+            idx_dropped = []
+            while len(idx_dropped) != n_dropped:
+                idx = random.randint(0, n_channels - 1)
+                # Don't include the empty channel in the dropped channels
+                if idx not in idx_empty:
+                    idx_dropped.append(idx)
+        else:
+            idx_dropped = idx_empty
+
+        seg_pair['input'][idx_dropped] = torch.zeros_like(seg_pair['input'][idx_dropped])
+
+    else:
+        logger.warning("\n Impossible to apply input-level dropout since input is not multi-channel.")
+
+    return seg_pair
 
 
 class SegmentationPair(object):
@@ -123,7 +173,8 @@ class SegmentationPair(object):
         metadata (list): Metadata list with each item corresponding to an image (contrast) in input_filenames.
             For single channel, the list will contain metadata related to one image.
         cache (bool): If the data should be cached in memory or not.
-        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
         prepro_transforms (dict): Output of get_preprocessing_transforms.
 
     Attributes:
@@ -131,10 +182,12 @@ class SegmentationPair(object):
         gt_filenames (list): List of ground truth filenames.
         metadata (dict): Dictionary containing metadata of input and gt.
         cache (bool): If the data should be cached in memory or not.
-        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
         prepro_transforms (dict): Transforms to be applied before training.
-        input_handle (list): List of input nifty data.
-        gt_handle (list): List of gt nifty data.
+        input_handle (list): List of input nifty data as 'nibabel.nifti1.Nifti1Image' object or png/tif/jpg data as 'ndarray'
+        gt_handle (list): List of gt nifty data as 'nibabel.nifti1.Nifti1Image' object or png/tif/jpg data as 'ndarray'
+        extension (str): File extension of input files
     """
 
     def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None,
@@ -150,9 +203,22 @@ class SegmentationPair(object):
         # list of the images
         self.input_handle = []
 
+        # Ordered list of supported file extensions
+        # TODO: Implement support of the following OMETIFF formats (#739):
+        # [".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf"]
+        # They are included in the list to avoid a ".ome.tif" or ".ome.tiff" following the ".tif" or ".tiff" pipeline
+        ext_lst = [".nii", ".nii.gz", ".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf", ".tif",
+                   ".tiff", ".png", ".jpg", ".jpeg"]
+
+        # Returns the first match from the list
+        self.extension = next((ext for ext in ext_lst if input_filenames[0].lower().endswith(ext)), None)
+        # TODO: remove "ome" from condition when implementing OMETIFF support (#739)
+        if (not self.extension) or ("ome" in self.extension):
+            raise RuntimeError("The input file type of '{}' is not supported".format(input_filenames[0]))
+
         # loop over the filenames (list)
         for input_file in self.input_filenames:
-            input_img = nib.load(input_file)
+            input_img = self.read_file(input_file)
             self.input_handle.append(input_img)
             if len(input_img.shape) > 3:
                 raise RuntimeError("4-dimensional volumes not supported.")
@@ -167,9 +233,9 @@ class SegmentationPair(object):
             for gt in self.gt_filenames:
                 if gt is not None:
                     if isinstance(gt, str):  # this tissue has annotation from only one rater
-                        self.gt_handle.append(nib.load(gt))
+                        self.gt_handle.append(self.read_file(gt))
                     else:  # this tissue has annotation from several raters
-                        self.gt_handle.append([nib.load(gt_rater) for gt_rater in gt])
+                        self.gt_handle.append([self.read_file(gt_rater) for gt_rater in gt])
                 else:
                     self.gt_handle.append(None)
 
@@ -181,16 +247,16 @@ class SegmentationPair(object):
                 raise RuntimeError('Input and ground truth with different dimensions.')
 
         for idx, handle in enumerate(self.input_handle):
-            self.input_handle[idx] = nib.as_closest_canonical(handle)
+            self.input_handle[idx] = self.apply_canonical(handle)
 
         # Labeled data (ie not inference time)
         if self.gt_filenames is not None:
             for idx, gt in enumerate(self.gt_handle):
                 if gt is not None:
                     if not isinstance(gt, list):  # this tissue has annotation from only one rater
-                        self.gt_handle[idx] = nib.as_closest_canonical(gt)
+                        self.gt_handle[idx] = self.apply_canonical(gt)
                     else:  # this tissue has annotation from several raters
-                        self.gt_handle[idx] = [nib.as_closest_canonical(gt_rater) for gt_rater in gt]
+                        self.gt_handle[idx] = [self.apply_canonical(gt_rater) for gt_rater in gt]
 
         # If binary classification, then extract labels from GT mask
 
@@ -205,7 +271,7 @@ class SegmentationPair(object):
         """Return the tuple (input, ground truth) representing both the input and ground truth shapes."""
         input_shape = []
         for handle in self.input_handle:
-            shape = imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis)
+            shape = imed_loader_utils.orient_shapes_hwd(self.get_shape(handle), self.slice_axis)
             input_shape.append(tuple(shape))
 
             if not len(set(input_shape)):
@@ -218,7 +284,7 @@ class SegmentationPair(object):
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
                     gt = [gt]
                 for gt_rater in gt:
-                    shape = imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis)
+                    shape = imed_loader_utils.orient_shapes_hwd(self.get_shape(gt_rater), self.slice_axis)
                     gt_shape.append(tuple(shape))
 
                 if not len(set(gt_shape)):
@@ -232,8 +298,7 @@ class SegmentationPair(object):
 
         input_data = []
         for handle in self.input_handle:
-            hwd_oriented = imed_loader_utils.orient_img_hwd(handle.get_fdata(cache_mode, dtype=np.float32),
-                                                            self.slice_axis)
+            hwd_oriented = imed_loader_utils.orient_img_hwd(self.get_data(handle, cache_mode), self.slice_axis)
             input_data.append(hwd_oriented)
 
         gt_data = []
@@ -243,12 +308,11 @@ class SegmentationPair(object):
         for gt in self.gt_handle:
             if gt is not None:
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
-                    hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32),
-                                                                    self.slice_axis)
+                    hwd_oriented = imed_loader_utils.orient_img_hwd(self.get_data(gt, cache_mode), self.slice_axis)
                     gt_data.append(hwd_oriented)
                 else:  # this tissue has annotation from several raters
                     hwd_oriented_list = [
-                        imed_loader_utils.orient_img_hwd(gt_rater.get_fdata(cache_mode, dtype=np.float32),
+                        imed_loader_utils.orient_img_hwd(self.get_data(gt_rater, cache_mode),
                                                          self.slice_axis) for gt_rater in gt]
                     gt_data.append([hwd_oriented.astype(data_type) for hwd_oriented in hwd_oriented_list])
             else:
@@ -273,8 +337,8 @@ class SegmentationPair(object):
             if gt is not None:
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
                     gt_meta_dict.append(imed_loader_utils.SampleMetadata({
-                        "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
-                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
+                        "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(gt), self.slice_axis),
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(gt), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"],
                         "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
                             0] else None,
@@ -283,9 +347,8 @@ class SegmentationPair(object):
                     }))
                 else:
                     gt_meta_dict.append([imed_loader_utils.SampleMetadata({
-                        "zooms": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_zooms(), self.slice_axis),
-                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(),
-                                                                          self.slice_axis),
+                        "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(gt_rater), self.slice_axis),
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(gt_rater), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"][idx_class][idx_rater],
                         "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
                             0] else None,
@@ -305,8 +368,8 @@ class SegmentationPair(object):
         input_meta_dict = []
         for handle in self.input_handle:
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
-                "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
-                "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis),
+                "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(handle), self.slice_axis),
+                "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(handle), self.slice_axis),
                 "data_type": 'im',
                 "crop_params": {}
             }))
@@ -374,6 +437,126 @@ class SegmentationPair(object):
 
         return dreturn
 
+    def read_file(self, filename):
+        """Read file according to file type.
+        Args:
+            filename (str): Subject filename.
+        """
+        if "nii" in self.extension:
+            # For '.nii' and '.nii.gz' extentions
+            # Returns 'nibabel.nifti1.Nifti1Image' object
+            return nib.load(filename)
+
+        # TODO: (#739) implement OMETIFF behavior (elif "ome" in self.extension)
+
+        else:
+            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
+            # Returns data from file as a 3D numpy array
+            # Behavior for grayscale only, behavior TBD for RGB or RBGA
+            if "tif" in self.extension:
+                return np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1)
+            else:
+                return np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
+
+
+    def apply_canonical(self, data):
+        """Apply nibabel as_closest_canonical function to nifti data only.
+        Args:
+            data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
+                for nifti or png/tif/jpg file respectively.
+        """
+        if "nii" in self.extension:
+            # For '.nii' and '.nii.gz' extentions
+            # Returns 'nibabel.nifti1.Nifti1Image' object
+            return nib.as_closest_canonical(data)
+
+        # TODO: (#739)  implement OMETIFF behavior (elif "ome" in self.extension)
+
+        else:
+            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
+            # Returns data as is in numpy array
+            return data
+
+    def get_shape(self, data):
+        """Returns data shape according to file type.
+        Args:
+            data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
+                for nifti or png/tif/jpg file respectively.
+        Returns:
+            ndarray: Data shape.
+        """
+        if "nii" in self.extension:
+            # For '.nii' and '.nii.gz' extentions
+            return data.header.get_data_shape()
+
+        # TODO: (#739) implement OMETIFF behavior (elif "ome" in self.extension)
+
+        else:
+            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
+            return data.shape
+
+    def get_voxel_size(self, data):
+        """Returns voxel sizes in mm according to file type.
+        Args:
+            data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
+                for nifti and png/tif/jpg file respectively.
+        Returns:
+            tuple: Voxel size in mm
+        """
+        if "nii" in self.extension:
+            # For '.nii' and '.nii.gz' extentions
+            # Read zooms metadata from nifti file header
+            return data.header.get_zooms()
+
+        # TODO: (#739) implement OMETIFF behavior (elif "ome" in self.extension)
+
+        else:
+            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
+            # Voxel size is extracted from PixelSize metadata (from BIDS JSON sidecar)
+            # PixelSize definition in example dataset is a scalar in micrometers (BIDS BEP031 v 0.0.2)
+            # PixelSize definition may change for 2D [X, Y] and 3D [X, Y, Z] arrays in micrometers (BIDS BEP031 v 0.0.3)
+            # This method supports both behaviors.
+            # TODO: Update behavior to follow BEP microscopy development (#301)
+
+            array_length = [2, 3]        # Accepted array length for 'PixelSize' metadata
+            conversion_factor = 0.001    # Conversion factor from um to mm
+            if 'PixelSize' in self.metadata[0]:
+                ps_in_um = self.metadata[0]['PixelSize']
+                if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
+                    ps_in_um = np.asarray(ps_in_um)
+                    ps_in_um.resize(3)
+                elif isinstance(ps_in_um, float):
+                    ps_in_um = np.asarray([ps_in_um, ps_in_um, 0])
+                else:
+                    raise RuntimeError("'PixelSize' metadata type is not supported. Format must be 2D [X, Y] array, "
+                                       "3D [X, Y, Z] array or float.")
+                ps_in_mm = tuple(ps_in_um * conversion_factor)
+            else:
+                # TODO: Fix behavior for run_segment_command and inference, no BIDS metadata (#306)
+                raise RuntimeError("'PixelSize' is missing from metadata")
+            return ps_in_mm
+
+    def get_data(self, data, cache_mode):
+        """Get nifti file data.
+        Args:
+            data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
+                for nifti and png/tif/jpg file respectively.
+            cache_mode (str): cache mode for nifti files
+        Returns:
+            ndarray: File data.
+        """
+        if "nii" in self.extension:
+            # For '.nii' and '.nii.gz' extentions
+            # Load data from file as numpy array
+            return data.get_fdata(cache_mode, dtype=np.float32)
+
+        # TODO: (#739) implement OME-TIFF behavior (elif "ome" in self.extension)
+
+        else:
+            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
+            # Returns data as is in numpy array
+            return data
+
 
 class MRI2DSegmentationDataset(Dataset):
     """Generic class for 2D (slice-wise) segmentation dataset.
@@ -381,7 +564,8 @@ class MRI2DSegmentationDataset(Dataset):
     Args:
         filename_pairs (list): a list of tuples in the format (input filename list containing all modalities,ground \
             truth filename, ROI filename, metadata).
-        slice_axis (int): axis to make the slicing (default axial).
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
         cache (bool): if the data should be cached in memory or not.
         transform (torchvision.Compose): transformations to apply.
         slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
@@ -390,6 +574,7 @@ class MRI2DSegmentationDataset(Dataset):
         roi_params (dict): Dictionary containing parameters related to ROI image processing.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
+        is_input_dropout (bool): Return input with missing modalities.
 
     Attributes:
         indexes (list): List of indices corresponding to each slice or subvolume in the dataset.
@@ -398,7 +583,8 @@ class MRI2DSegmentationDataset(Dataset):
         prepro_transforms (Compose): Transformations to apply before training.
         transform (Compose): Transformations to apply during training.
         cache (bool): Tf the data should be cached in memory or not.
-        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
         slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
         n_contrasts (int): Number of input contrasts.
         has_bounding_box (bool): True if bounding box in all metadata, else False.
@@ -409,11 +595,12 @@ class MRI2DSegmentationDataset(Dataset):
         slice_filter_roi (bool): Indicates whether a slice filtering is done based on ROI data.
         roi_thr (int): If the ROI mask contains less than this number of non-zero voxels, the slice will be discarded
             from the dataset.
+        is_input_dropout (bool): Return input with missing modalities.
 
     """
 
     def __init__(self, filename_pairs, slice_axis=2, cache=True, transform=None, slice_filter_fn=None,
-                 task="segmentation", roi_params=None, soft_gt=False):
+                 task="segmentation", roi_params=None, soft_gt=False, is_input_dropout=False):
         self.indexes = []
         self.filename_pairs = filename_pairs
         self.prepro_transforms, self.transform = transform
@@ -428,6 +615,7 @@ class MRI2DSegmentationDataset(Dataset):
         self.soft_gt = soft_gt
         self.has_bounding_box = True
         self.task = task
+        self.is_input_dropout = is_input_dropout
 
     def load_filenames(self):
         """Load preprocessed pair data (input and gt) in handler."""
@@ -532,6 +720,10 @@ class MRI2DSegmentationDataset(Dataset):
             'roi_metadata': metadata_roi
         }
 
+        # Input-level dropout to train with missing modalities
+        if self.is_input_dropout:
+            data_dict = dropout_input(data_dict)
+
         return data_dict
 
 
@@ -553,11 +745,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
+        is_input_dropout (bool): Return input with missing modalities.
     """
 
     def __init__(self, filename_pairs, transform=None, length=(64, 64, 64), stride=(0, 0, 0), slice_axis=0,
-                 task="segmentation",
-                 soft_gt=False):
+                 task="segmentation", soft_gt=False, is_input_dropout=False):
         self.filename_pairs = filename_pairs
         self.handlers = []
         self.indexes = []
@@ -568,6 +760,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         self.has_bounding_box = True
         self.task = task
         self.soft_gt = soft_gt
+        self.is_input_dropout = is_input_dropout
 
         self._load_filenames()
         self._prepare_indices()
@@ -692,6 +885,10 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                                   coord['y_min']:coord['y_max'],
                                   coord['z_min']:coord['z_max']]
 
+        # Input-level dropout to train with missing modalities
+        if self.is_input_dropout:
+            subvolumes = dropout_input(subvolumes)
+
         if stack_gt is not None:
             for _ in range(len(stack_gt)):
                 subvolumes['gt'] = stack_gt[:,
@@ -703,11 +900,11 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
 
 
 class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
-    """ BIDS specific dataset loader for 3D dataset.
+    """BIDS specific dataset loader for 3D dataset.
 
     Args:
-        root_dir (str): Path to the BIDS dataset.
-        subject_lst (list): Subject names list.
+        bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
+        subject_file_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         model_params (dict): Dictionary containing model parameters.
         contrast_params (dict): Contains image contrasts related parameters.
@@ -720,13 +917,15 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
         object_detection_params (dict): Object dection parameters.
+        is_input_dropout (bool): Return input with missing modalities.
     """
 
-    def __init__(self, root_dir, subject_lst, target_suffix, model_params, contrast_params, slice_axis=2,
+    def __init__(self, bids_df, subject_file_lst, target_suffix, model_params, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, roi_params=None,
-                 multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
-        dataset = BidsDataset(root_dir,
-                              subject_lst=subject_lst,
+                 multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False,
+                 is_input_dropout=False):
+        dataset = BidsDataset(bids_df=bids_df,
+                              subject_file_lst=subject_file_lst,
                               target_suffix=target_suffix,
                               roi_params=roi_params,
                               contrast_params=contrast_params,
@@ -734,21 +933,24 @@ class Bids3DDataset(MRI3DSubVolumeSegmentationDataset):
                               slice_axis=slice_axis,
                               transform=transform,
                               multichannel=multichannel,
-                              object_detection_params=object_detection_params)
+                              object_detection_params=object_detection_params,
+                              is_input_dropout=is_input_dropout)
 
         super().__init__(dataset.filename_pairs, length=model_params["length_3D"], stride=model_params["stride_3D"],
-                         transform=transform, slice_axis=slice_axis, task=task, soft_gt=soft_gt)
+                         transform=transform, slice_axis=slice_axis, task=task, soft_gt=soft_gt,
+                         is_input_dropout=is_input_dropout)
 
 
 class BidsDataset(MRI2DSegmentationDataset):
     """ BIDS specific dataset loader.
 
     Args:
-        root_dir (str): Path to the BIDS dataset.
-        subject_lst (list): Subject names list.
+        bids_df (BidsDataframe): Object containing dataframe with all BIDS image files and their metadata.
+        subject_file_lst (list): Subject filenames list.
         target_suffix (list): List of suffixes for target masks.
         contrast_params (dict): Contains image contrasts related parameters.
-        slice_axis (int): Indicates the axis used to extract slices: "axial": 2, "sagittal": 0, "coronal": 1.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
         cache (bool): If the data should be cached in memory or not.
         transform (list): Transformation list (length 2) composed of preprocessing transforms (Compose) and transforms
             to apply during training (Compose).
@@ -763,20 +965,23 @@ class BidsDataset(MRI2DSegmentationDataset):
             If segmentation: GT is binary mask.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
+        is_input_dropout (bool): Return input with missing modalities.
 
     Attributes:
-        bids_ds (BIDS): BIDS dataset.
         filename_pairs (list): A list of tuples in the format (input filename list containing all modalities,ground \
             truth filename, ROI filename, metadata).
         metadata (dict): Dictionary containing FiLM metadata.
+        soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
+            truths are thresholded (0.5) after the data augmentation operations.
+        roi_params (dict): Dictionary containing parameters related to ROI image processing.
 
     """
 
-    def __init__(self, root_dir, subject_lst, target_suffix, contrast_params, slice_axis=2,
+    def __init__(self, bids_df, subject_file_lst, target_suffix, contrast_params, slice_axis=2,
                  cache=True, transform=None, metadata_choice=False, slice_filter_fn=None, roi_params=None,
-                 multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False):
+                 multichannel=False, object_detection_params=None, task="segmentation", soft_gt=False,
+                 is_input_dropout=False):
 
-        self.bids_ds = bids.BIDS(root_dir)
         self.roi_params = roi_params if roi_params is not None else {"suffix": None, "slice_filter_roi": None}
         self.soft_gt = soft_gt
         self.filename_pairs = []
@@ -784,21 +989,28 @@ class BidsDataset(MRI2DSegmentationDataset):
             self.metadata = {"FlipAngle": [], "RepetitionTime": [],
                              "EchoTime": [], "Manufacturer": []}
 
-        bids_subjects = [s for s in self.bids_ds.get_subjects() if s.record["subject_id"] in subject_lst]
-
-        # Create a list with the filenames for all contrasts and subjects
-        subjects_tot = []
-        for subject in bids_subjects:
-            subjects_tot.append(str(subject.record["absolute_path"]))
+        # Sort subject_file_lst and create a sub-dataframe from bids_df containing only subjects from subject_file_lst
+        subject_file_lst = sorted(subject_file_lst)
+        df_subjects = bids_df.df[bids_df.df['filename'].isin(subject_file_lst)]
+        # Backward compatibility for subject_file_lst containing participant_ids instead of filenames
+        if df_subjects.empty:
+            df_subjects = bids_df.df[bids_df.df['participant_id'].isin(subject_file_lst)]
+            subject_file_lst = sorted(df_subjects['filename'].to_list())
 
         # Create a dictionary with the number of subjects for each contrast of contrast_balance
-
-        tot = {contrast: len([s for s in bids_subjects if s.record["modality"] == contrast])
+        tot = {contrast: df_subjects['suffix'].str.fullmatch(contrast).value_counts()[True]
                for contrast in contrast_params["balance"].keys()}
 
         # Create a counter that helps to balance the contrasts
         c = {contrast: 0 for contrast in contrast_params["balance"].keys()}
 
+        # Get a list of subject_ids for multichannel_subjects (prefix filename without modality suffix and extension)
+        subject_ids = []
+        for subject in subject_file_lst:
+            subject_ids.append(subject.split('.')[0].split('_')[0])
+        subject_ids = sorted(list(set(subject_ids)))
+
+        # Create multichannel_subjects dictionary for each subject_id
         multichannel_subjects = {}
         if multichannel:
             num_contrast = len(contrast_params["contrast_lst"])
@@ -808,97 +1020,94 @@ class BidsDataset(MRI2DSegmentationDataset):
             multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
                                                "deriv_path": None,
                                                "roi_filename": None,
-                                               "metadata": [None] * num_contrast} for subject in subject_lst}
+                                               "metadata": [None] * num_contrast} for subject in subject_ids}
 
+        # Get all subjects path from bids_df for bounding box
+        get_all_subj_path = bids_df.df[bids_df.df['filename']
+                                .str.contains('|'.join(bids_df.get_subject_fnames()))]['path'].to_list()
+
+        # Load bounding box from list of path
         bounding_box_dict = imed_obj_detect.load_bounding_boxes(object_detection_params,
-                                                                self.bids_ds.get_subjects(),
+                                                                get_all_subj_path,
                                                                 slice_axis,
                                                                 contrast_params["contrast_lst"])
 
-        for subject in tqdm(bids_subjects, desc="Loading dataset"):
-            if subject.record["modality"] in contrast_params["contrast_lst"]:
-                # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
-                if subject.record["modality"] in contrast_params["balance"].keys():
-                    c[subject.record["modality"]] = c[subject.record["modality"]] + 1
-                    if c[subject.record["modality"]] / tot[subject.record["modality"]] > contrast_params["balance"][
-                        subject.record["modality"]]:
-                        continue
+        # Get all derivatives filenames from bids_df
+        all_deriv = bids_df.get_deriv_fnames()
 
-                if not subject.has_derivative("labels"):
-                    print("Subject without derivative, skipping.")
+        # Create filename_pairs
+        for subject in tqdm(subject_file_lst, desc="Loading dataset"):
+
+            df_sub = df_subjects.loc[df_subjects['filename'] == subject]
+
+            # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
+            contrast = df_sub['suffix'].values[0]
+            if contrast in (contrast_params["balance"].keys()):
+                c[contrast] = c[contrast] + 1
+                if c[contrast] / tot[contrast] > contrast_params["balance"][contrast]:
                     continue
-                derivatives = subject.get_derivatives("labels")
-                if isinstance(target_suffix[0], str):
-                    target_filename, roi_filename = [None] * len(target_suffix), None
-                else:
-                    target_filename, roi_filename = [[] for _ in range(len(target_suffix))], None
+            if isinstance(target_suffix[0], str):
+                target_filename, roi_filename = [None] * len(target_suffix), None
+            else:
+                target_filename, roi_filename = [[] for _ in range(len(target_suffix))], None
 
-                for deriv in derivatives:
-                    for idx, suffix_list in enumerate(target_suffix):
-                        # If suffix_list is a string, then only one rater annotation per class is available.
-                        # Otherwise, multiple raters segmented the same class.
-                        if isinstance(suffix_list, list):
-                            for suffix in suffix_list:
-                                if deriv.endswith(subject.record["modality"] + suffix + ".nii.gz"):
-                                    target_filename[idx].append(deriv)
-                        elif deriv.endswith(subject.record["modality"] + suffix_list + ".nii.gz"):
-                            target_filename[idx] = deriv
+            derivatives = bids_df.df[bids_df.df['filename']
+                          .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
 
-                    if not (self.roi_params["suffix"] is None) and \
-                            deriv.endswith(subject.record["modality"] + self.roi_params["suffix"] + ".nii.gz"):
-                        roi_filename = [deriv]
+            for deriv in derivatives:
+                for idx, suffix_list in enumerate(target_suffix):
+                    # If suffix_list is a string, then only one rater annotation per class is available.
+                    # Otherwise, multiple raters segmented the same class.
+                    if isinstance(suffix_list, list):
+                        for suffix in suffix_list:
+                            if suffix in deriv:
+                                target_filename[idx].append(deriv)
+                    elif suffix_list in deriv:
+                        target_filename[idx] = deriv
+                if not (self.roi_params["suffix"] is None) and self.roi_params["suffix"] in deriv:
+                    roi_filename = [deriv]
 
-                if (not any(target_filename)) or (not (self.roi_params["suffix"] is None) and (roi_filename is None)):
+            if (not any(target_filename)) or (not (self.roi_params["suffix"] is None) and (roi_filename is None)):
+                continue
+
+            metadata = df_sub.to_dict(orient='records')[0]
+            metadata['contrast'] = contrast
+
+            if len(bounding_box_dict):
+                # Take only one bounding box for cropping
+                metadata['bounding_box'] = bounding_box_dict[str(df_sub['path'].values[0])][0]
+
+            if metadata_choice == 'mri_params':
+                if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
+                            self.metadata.keys()]):
                     continue
 
-                if not subject.has_metadata():
-                    metadata = {}
-                else:
-                    metadata = subject.metadata()
+            elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
+                # add custom data to metadata
+                if metadata_choice not in df_sub.columns:
+                    raise ValueError("The following metadata cannot be found: {}. "
+                                     "Invalid metadata choice.".format(metadata_choice))
+                metadata[metadata_choice] = df_sub[metadata_choice].values[0]
+                # Create metadata dict for OHE
+                data_lst = sorted(set(bids_df.df[metadata_choice].dropna().values))
+                metadata_dict = {}
+                for idx, data in enumerate(data_lst):
+                    metadata_dict[data] = idx
+                metadata['metadata_dict'] = metadata_dict
 
-                # add contrast to metadata
-                metadata['contrast'] = subject.record["modality"]
-
-                if len(bounding_box_dict):
-                    # Take only one bounding box for cropping
-                    metadata['bounding_box'] = bounding_box_dict[str(subject.record["absolute_path"])][0]
-
-                if metadata_choice == 'mri_params':
-                    if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
-                                self.metadata.keys()]):
-                        continue
-
-                elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
-                    # add custom data to metadata
-                    subject_id = subject.record["subject_id"]
-                    df = bids.BIDS(root_dir).participants.content
-                    if metadata_choice not in df.columns:
-                        raise ValueError("The following metadata cannot be found in participants.tsv file: {}. "
-                                         "Invalid metadata choice.".format(metadata_choice))
-
-                    metadata[metadata_choice] = df[df['participant_id'] == subject_id][metadata_choice].values[0]
-
-                    # Create metadata dict for OHE
-                    data_lst = sorted(set(df[metadata_choice].values))
-                    metadata_dict = {}
-                    for idx, data in enumerate(data_lst):
-                        metadata_dict[data] = idx
-
-                    metadata['metadata_dict'] = metadata_dict
-
-                # Fill multichannel dictionary
-                if multichannel:
-                    idx = idx_dict[subject.record["modality"]]
-                    subj_id = subject.record["subject_id"]
-                    multichannel_subjects[subj_id]["absolute_paths"][idx] = subject.record.absolute_path
-                    multichannel_subjects[subj_id]["deriv_path"] = target_filename
-                    multichannel_subjects[subj_id]["metadata"][idx] = metadata
-                    if roi_filename:
-                        multichannel_subjects[subj_id]["roi_filename"] = roi_filename
-
-                else:
-                    self.filename_pairs.append(([subject.record.absolute_path],
-                                                target_filename, roi_filename, [metadata]))
+            # Fill multichannel dictionary
+            # subj_id is the filename without modality suffix and extension
+            if multichannel:
+                idx = idx_dict[df_sub['suffix'].values[0]]
+                subj_id = subject.split('.')[0].split('_')[0]
+                multichannel_subjects[subj_id]["absolute_paths"][idx] = df_sub['path'].values[0]
+                multichannel_subjects[subj_id]["deriv_path"] = target_filename
+                multichannel_subjects[subj_id]["metadata"][idx] = metadata
+                if roi_filename:
+                    multichannel_subjects[subj_id]["roi_filename"] = roi_filename
+            else:
+                self.filename_pairs.append(([df_sub['path'].values[0]],
+                                            target_filename, roi_filename, [metadata]))
 
         if multichannel:
             for subject in multichannel_subjects.values():
@@ -906,5 +1115,9 @@ class BidsDataset(MRI2DSegmentationDataset):
                     self.filename_pairs.append((subject["absolute_paths"], subject["deriv_path"],
                                                 subject["roi_filename"], subject["metadata"]))
 
+        if not self.filename_pairs:
+            raise Exception('No subjects were selected - check selection of parameters on config.json (e.g. center '
+                            'selected + target_suffix)')
+
         super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
-                         self.soft_gt)
+                         self.soft_gt, is_input_dropout)

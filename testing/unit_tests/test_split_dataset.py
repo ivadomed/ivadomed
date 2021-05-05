@@ -3,10 +3,12 @@ import csv
 import json
 import pytest
 import numpy as np
+import pandas as pd
 from ivadomed.loader import utils as imed_loader_utils
-from unit_tests.t_utils import remove_tmp_dir, create_tmp_dir,  __tmp_dir__
+from testing.unit_tests.t_utils import create_tmp_dir, __tmp_dir__
+from testing.common_testing_util import remove_tmp_dir
 
-BIDS_PATH = os.path.join(__tmp_dir__, 'bids')
+PATH_DATA = os.path.join(__tmp_dir__, 'bids')
 LOG_PATH = os.path.join(__tmp_dir__, 'log')
 N = 200
 N_CENTERS = 5
@@ -16,21 +18,6 @@ def setup_function():
     create_tmp_dir()
 
 
-@pytest.mark.parametrize('split_params', [{
-        "fname_split": None,
-        "random_seed": 6,
-        "center_test": [0],
-        "method": "per_center",
-        "train_fraction": 0.6,
-        "test_fraction": 0.2
-    }, {
-        "fname_split": None,
-        "random_seed": 6,
-        "center_test": [],
-        "method": "per_center",
-        "train_fraction": 0.75,
-        "test_fraction": 0.25
-    }])
 def load_dataset(split_params):
     patient_mapping = create_tsvfile()
     create_jsonfile()
@@ -39,24 +26,25 @@ def load_dataset(split_params):
     if not os.path.isdir(LOG_PATH):
         os.mkdir(LOG_PATH)
 
-    train, val, test = imed_loader_utils.get_subdatasets_subjects_list(split_params, BIDS_PATH,
-                                                                       LOG_PATH)
+    df = pd.read_csv(os.path.join(PATH_DATA, "participants.tsv"), sep='\t')
+    df['filename'] = df["participant_id"]
+    train, val, test = imed_loader_utils.get_subdatasets_subject_files_list(split_params, df, LOG_PATH)
     return train, val, test, patient_mapping
 
 
 @pytest.mark.parametrize('split_params', [{
-        "fname_split": None,
-        "random_seed": 6,
-        "center_test": [0],
-        "method": "per_center",
-        "train_fraction": 0.6,
-        "test_fraction": 0.2
-    }])
+    "fname_split": None,
+    "random_seed": 6,
+    "split_method": "participant_id",
+    "data_testing": {"data_type": "institution_id", "data_value": [0]},
+    "train_fraction": 0.6,
+    "test_fraction": 0.2
+}])
 def test_per_center_testcenter_0(split_params):
     train, val, test, patient_mapping = load_dataset(split_params)
 
     # Verify split proportion
-    assert len(train) == round(0.6 * (N - len(test)))
+    assert len(train) == round(0.6 * N)
 
     # Verify there is only the test center selected
     for sub in test:
@@ -64,13 +52,13 @@ def test_per_center_testcenter_0(split_params):
 
 
 @pytest.mark.parametrize('split_params', [{
-        "fname_split": None,
-        "random_seed": 6,
-        "center_test": [],
-        "method": "per_center",
-        "train_fraction": 0.2,
-        "test_fraction": 0.4
-    }])
+    "fname_split": None,
+    "random_seed": 6,
+    "split_method": "participant_id",
+    "data_testing": {"data_type": "institution_id", "data_value": []},
+    "train_fraction": 0.2,
+    "test_fraction": 0.4
+}])
 def test_per_center_without_testcenter(split_params):
     train, val, test, patient_mapping = load_dataset(split_params)
 
@@ -91,13 +79,13 @@ def test_per_center_without_testcenter(split_params):
 
 
 @pytest.mark.parametrize('split_params', [{
-        "fname_split": None,
-        "random_seed": 6,
-        "center_test": [],
-        "method": "per_patient",
-        "train_fraction": 0.45,
-        "test_fraction": 0.35
-    }])
+    "fname_split": None,
+    "random_seed": 6,
+    "split_method": "participant_id",
+    "data_testing": {"data_type": None, "data_value": []},
+    "train_fraction": 0.45,
+    "test_fraction": 0.35
+}])
 def test_per_patient(split_params):
     train, val, test, patient_mapping = load_dataset(split_params)
 
@@ -106,13 +94,13 @@ def test_per_patient(split_params):
 
 
 @pytest.mark.parametrize('split_params', [{
-        "fname_split": None,
-        "random_seed": 6,
-        "center_test": [],
-        "method": "per_patient",
-        "train_fraction": 0.6,
-        "test_fraction": 0
-    }])
+    "fname_split": None,
+    "random_seed": 6,
+    "split_method": "participant_id",
+    "data_testing": {"data_type": None, "data_value": []},
+    "train_fraction": 0.6,
+    "test_fraction": 0
+}])
 def test_per_patient_2(split_params):
     train, val, test, patient_mapping = load_dataset(split_params)
 
@@ -133,14 +121,15 @@ def check_balance(train, val, test, patient_mapping):
 
 
 @pytest.mark.parametrize('split_params', [{
-        "fname_split": None,
-        "random_seed": 6,
-        "center_test": [],
-        "balance": "disability",
-        "method": "per_patient",
-        "train_fraction": 0.45,
-        "test_fraction": 0.35
-    }])
+    "fname_split": None,
+    "random_seed": 6,
+    "center_test": [],
+    "balance": "disability",
+    "split_method": "participant_id",
+    "data_testing": {"data_type": None, "data_value": []},
+    "train_fraction": 0.45,
+    "test_fraction": 0.35
+}])
 def test_per_patient_balance(split_params):
     train, val, test, patient_mapping = load_dataset(split_params)
 
@@ -150,19 +139,19 @@ def test_per_patient_balance(split_params):
 
 
 @pytest.mark.parametrize('split_params', [{
-        "fname_split": None,
-        "random_seed": 6,
-        "center_test": [0],
-        "balance": "disability",
-        "method": "per_center",
-        "train_fraction": 0.4,
-        "test_fraction": 0.2
-    }])
+    "fname_split": None,
+    "random_seed": 6,
+    "balance": "disability",
+    "split_method": "participant_id",
+    "data_testing": {"data_type": "institution_id", "data_value": [0]},
+    "train_fraction": 0.4,
+    "test_fraction": 0.2
+}])
 def test_per_center_balance(split_params):
     train, val, test, patient_mapping = load_dataset(split_params)
 
     # Verify split proportion
-    assert np.isclose(len(train), round(0.4 * (N - len(test))), atol=1)
+    assert np.isclose(len(train), round(0.4 * N), atol=2)
 
     # Verify there is only the test center selected
     for sub in test:
@@ -172,9 +161,9 @@ def test_per_center_balance(split_params):
 
 
 def create_tsvfile():
-    # Create bids path
-    if not os.path.isdir(BIDS_PATH):
-        os.mkdir(BIDS_PATH)
+    # Create data path
+    if not os.path.isdir(PATH_DATA):
+        os.mkdir(PATH_DATA)
 
     patient_mapping = {}
 
@@ -195,7 +184,7 @@ def create_tsvfile():
         patient_mapping[patient_id]['center'] = center_id
         participants.append(row_participants)
 
-    with open(os.path.join(BIDS_PATH, "participants.tsv"), 'w') as tsv_file:
+    with open(os.path.join(PATH_DATA, "participants.tsv"), 'w') as tsv_file:
         tsv_writer = csv.writer(tsv_file, delimiter='\t', lineterminator='\n')
         tsv_writer.writerow(["participant_id", "disability", "institution_id"])
         for item in sorted(participants):
@@ -211,7 +200,7 @@ def create_jsonfile():
     dataset_description[u'Name'] = 'Test'
     dataset_description[u'BIDSVersion'] = '1.2.1'
 
-    with open(os.path.join(BIDS_PATH, "dataset_description.json"), 'w') as outfile:
+    with open(os.path.join(PATH_DATA, "dataset_description.json"), 'w') as outfile:
         outfile.write(json.dumps(dataset_description, indent=2, sort_keys=True))
         outfile.close()
 

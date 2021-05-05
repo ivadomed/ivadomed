@@ -1,12 +1,13 @@
 {
     "command": "test",
     "gpu_ids": [2],
-    "log_directory": "spineGeneric_small",
+    "path_output": "spineGeneric_small",
     "model_name": "seg_sc_t2star",
     "debugging": false,
     "loader_parameters": {
-        "bids_path": "../duke/projects/ivadomed/spineGeneric_201907041011/result/",
+        "path_data": ["../duke/projects/ivadomed/spineGeneric_201907041011/result/"],
         "target_suffix": ["_seg-manual"],
+        "extensions": [".nii.gz"],
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
@@ -27,8 +28,8 @@
     "split_dataset": {
         "fname_split": null,
         "random_seed": 6,
-        "center_test": ["amu"],
-        "method": "per_center",
+        "split_method" : "participant_id",
+        "data_testing": {"data_type": "institution_id", "data_value":["amu"]},
         "balance": null,
         "train_fraction": 0.6,
         "test_fraction": 0.2

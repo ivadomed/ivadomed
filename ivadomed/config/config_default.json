@@ -1,7 +1,7 @@
 {
     "command": "train",
     "gpu_ids": [0],
-    "log_directory": "log_directory",
+    "path_output": "path_output",
     "model_name": "my_model",
     "debugging": false,
     "object_detection_params": {
@@ -9,7 +9,7 @@
         "safety_factor": [1.0, 1.0, 1.0]
     },
     "loader_parameters": {
-        "bids_path": "bids_path",
+        "path_data": ["path_data"],
         "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": [],
         "extensions": [],
@@ -28,13 +28,14 @@
         },
         "slice_axis": "axial",
         "multichannel": false,
-        "soft_gt": false
+        "soft_gt": false,
+        "is_input_dropout": false
     },
     "split_dataset": {
         "fname_split": null,
         "random_seed": 6,
-        "center_test": [],
-        "method": "per_patient",
+        "split_method" : "participant_id",
+        "data_testing": {"data_type": null, "data_value":[]},
         "balance": null,
         "train_fraction": 0.6,
         "test_fraction": 0.2
@@ -71,7 +72,7 @@
     "default_model": {
         "name": "Unet",
         "dropout_rate": 0.3,
-        "bn_momentum": 0.9,
+        "bn_momentum": 0.1,
         "depth": 3,
         "is_2d": true
     },

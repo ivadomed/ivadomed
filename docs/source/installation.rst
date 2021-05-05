@@ -6,7 +6,26 @@ Supported OS
 
 Currently, we only support ``MacOS`` and ``Linux`` operating systems. ``Windows``
 users have the possibility to install and use ``ivadomed`` via
-`Windows Subsystem for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/>`_.
+`Windows Subsystem for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/>`_.For MacOs users, we strongly recommend to follow the bellow steps before the installation.
+
+Open your bash/zsh script file with editor on your computer.
+
+    If you are using bash shell
+    ::
+
+        vim ~/.bashrc
+
+    If you are using zsh shell
+    ::
+        vim ~/.zshrc
+
+Write in your .bashrc/.zshrc file with following line.
+
+::
+
+    export HDF5_USE_FILE_LOCKING='FALSE'
+
+Save this change and restart your terminal to apply the change.
 
 Python
 ------
@@ -50,3 +69,15 @@ on Github. Installation procedure is the following:
     git clone https://github.com/neuropoly/ivadomed.git
     cd ivadomed
     pip install -e .
+
+
+Install pre-commit hooks for development
+----------------------------------------
+
+We use ``pre-commit`` to enforce a limit on file size.
+After you've installed ``ivadomed``, install the hooks:
+
+::
+
+    pre-commit install
+
