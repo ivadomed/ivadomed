@@ -12,6 +12,9 @@ sphinx:
 python:
   version: 3.7
   install:
+    # Ensure the Find External Link PyTorch version is installed
+    - requirements: requirements.txt
+    # Install IvadoMed package via setup.py content
     - method: pip
       path: .
       extra_requirements:
