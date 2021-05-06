@@ -500,7 +500,7 @@ See details in both ``train_validation`` and ``test`` for the contrasts that are
         "$$description": [
             "Indicates if input-level dropout should be applied during training.\n",
             "This option trains a model to be robust to missing modalities by setting \n",
-            "to zero input channels (from 0 to all channels - 1). Always at least one \n".
+            "to zero input channels (from 0 to all channels - 1). Always at least one \n",
             "channel will remain. If one or more modalities are already missing, they will \n",
             "be considered as dropped."
         ],
@@ -981,10 +981,24 @@ being used for the segmentation task).
                    "Final activation layer. Options: ``sigmoid`` (default), ``relu``(normalized ReLU), or ``softmax``."
                ]
            },
+           "length_2D": {
+                "type": "[int, int]",
+                "description": "(Optional) Size of the 2D patches used as model's input tensors.",
+                "required": "false"
+            },
+            "stride_2D": {
+                "type": "[int, int]",
+                "$$description": [
+                    "(Optional) Strictly positive integers: Pixels' shift over the input matrix to create 2D patches.\n",
+                    "Ex: Stride of [1, 2] will cause a patch translation of 1 pixel in the 1st dimension and 2 pixels in\n",
+                    "the 2nd dimension at every iteration until the whole input matrix is covered."
+                ],
+                "required": "false"
+            },
            "is_2d": {
                "type": "boolean",
                "$$description": [
-                   "Indicates if the model is 2d, if not the model is 3d. If ``is_2d`` is ``False``, then parameters\n",
+                   "Indicates if the model is 2D, if not the model is 3D. If ``is_2d`` is ``False``, then parameters\n",
                    "``length_3D`` and ``stride_3D`` for 3D loader need to be specified (see :ref:`Modified3DUNet <Modified3DUNet>`)."
                ]
            }
@@ -1104,7 +1118,7 @@ being used for the segmentation task).
         "required": "false",
         "options": {
             "length_3D": {
-                "type": "(int, int, int)",
+                "type": "[int, int, int]",
                 "description": "Size of the 3D patches used as model's input tensors."
             },
             "stride_3D": {
