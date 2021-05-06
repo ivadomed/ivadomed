@@ -168,9 +168,22 @@ on training and validation sets at every epoch. To know more about the meaning o
 .. code-block:: console
 
    Creating output path: spineGeneric
-   Using GPU number 0
+   Cuda is not available.
+   Working on cpu.
 
-   Selected transformations for the training dataset:
+   Selected architecture: Unet, with the following parameters:
+   dropout_rate: 0.3
+   bn_momentum: 0.1
+   depth: 3
+   is_2d: True
+   final_activation: sigmoid
+   folder_name: my_model
+   in_channel: 1
+   out_channel: 1
+   Dataframe has been saved in spineGeneric\bids_dataframe.csv.
+   After splitting: train, validation and test fractions are respectively 0.6, 0.2 and 0.2 of participant_id.
+
+   Selected transformations for the ['training'] dataset:
    Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1}
    CenterCrop: {'size': [128, 128]}
    RandomAffine: {'degrees': 5, 'scale': [0.1, 0.1], 'translate': [0.03, 0.03], 'applied_to': ['im', 'gt']}
@@ -178,33 +191,26 @@ on training and validation sets at every epoch. To know more about the meaning o
    NumpyToTensor: {}
    NormalizeInstance: {'applied_to': ['im']}
 
-   Selected transformations for the validation dataset:
+   Selected transformations for the ['validation'] dataset:
    Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1}
    CenterCrop: {'size': [128, 128]}
    NumpyToTensor: {}
    NormalizeInstance: {'applied_to': ['im']}
-
-   Selected architecture: Unet, with the following parameters:
-   dropout_rate: 0.3
-   bn_momentum: 0.9
-   depth: 4
-   folder_name: seg_sc_t1_t2_t2s_mt
-   in_channel: 1
-   out_channel: 1
-   Loading dataset: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 6/6 [00:00<00:00, 1854.79it/s]
-   Loaded 93 axial slices for the validation set.
-   Loading dataset: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 18/18 [00:00<00:00, 1815.06it/s]
-   Loaded 291 axial slices for the training set.
-   Creating model directory: spineGeneric/seg_sc_t1_t2_t2s_mt
+   Loading dataset: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 6/6 [00:00<00:00, 383.65it/s]
+   Loaded 92 axial slices for the validation set.
+   Loading dataset: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 17/17 [00:00<00:00, 282.10it/s]
+   Loaded 276 axial slices for the training set.
+   Creating model directory: spineGeneric\my_model
 
    Initialising model's weights from scratch.
 
-   Scheduler parameters: {'base_lr': 1e-05, 'max_lr': 0.01}
+   Scheduler parameters: {'name': 'CosineAnnealingLR', 'base_lr': 1e-05, 'max_lr': 0.01}
 
    Selected Loss: DiceLoss
    with the parameters: []
-   Epoch 1 training loss: -0.0420.
-   Epoch 1 validation loss: -0.0507.
+   Epoch 1 training loss: -0.0336.
+   Epoch 1 validation loss: -0.0382.
+
 
 After 100 epochs (see ``"num_epochs"`` in the configuration file), the Dice score on the validation set should
 be ~90%.
@@ -241,33 +247,51 @@ on the evaluation metrics, see :mod:`ivadomed.metrics`.
 .. code-block:: console
 
    Output path already exists: spineGeneric
-   Using GPU number 0
+   Cuda is not available.
+   Working on cpu.
 
    Selected architecture: Unet, with the following parameters:
    dropout_rate: 0.3
-   bn_momentum: 0.9
-   depth: 4
-   folder_name: seg_sc_t1_t2_t2s_mt
+   bn_momentum: 0.1
+   depth: 3
+   is_2d: True
+   final_activation: sigmoid
+   folder_name: my_model
    in_channel: 1
    out_channel: 1
+   Dataframe has been saved in spineGeneric\bids_dataframe.csv.
+   After splitting: train, validation and test fractions are respectively 0.6, 0.2 and 0.2 of participant_id.
 
-   Run Evaluation on spineGeneric/pred_masks
+   Selected transformations for the ['testing'] dataset:
+   Resample: {'wspace': 0.75, 'hspace': 0.75, 'dspace': 1}
+   CenterCrop: {'size': [128, 128]}
+   NumpyToTensor: {}
+   NormalizeInstance: {'applied_to': ['im']}
+   Loading dataset: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 6/6 [00:00<00:00, 373.59it/s]
+   Loaded 94 axial slices for the testing set.
 
-   Evaluation: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5/5 [00:06<00:00,  1.33s/it]
-                             avd_class0  dice_class0  lfdr_101-INFvox_class0  lfdr_class0          ...            specificity_class0  vol_gt_class0  vol_pred_class0  lfdr_21-100vox_class0
-   image_id                                                                                       ...
-   sub-strasbourg04_T2w       0.047510     0.921796                     0.0          0.0          ...                      0.999939         4920.0          4686.25                    NaN
-   sub-hamburg01_T2w          0.013496     0.943535                     0.0          0.0          ...                      0.999934         5650.0          5573.75                    NaN
-   sub-hamburg01_T1w          0.103540     0.902706                     0.0          0.0          ...                      0.999946         5650.0          5065.00                    NaN
-   sub-strasbourg04_T2star    0.082561     0.917791                     0.0          0.0          ...                      0.999852         4315.0          4671.25                    NaN
-   sub-strasbourg04_T1w       0.437246     0.697122                     0.5          0.5          ...                      0.999979         4920.0          2768.75                    NaN
+   Loading model: spineGeneric\best_model.pt
+   Inference - Iteration 0: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 6/6 [00:29<00:00,  4.86s/it]
+   {'dice_score': 0.9334570551249012, 'multi_class_dice_score': 0.9334570551249012, 'precision_score': 0.925126264682505, 'recall_score': 0.9428409070673442, 'specificity_score': 0.9999025807354961, 'intersection_over_union': 0.8756498644456311, 'accu
+   racy_score': 0.9998261755671077, 'hausdorff_score': 0.05965616760384793}
+
+   Run Evaluation on spineGeneric\pred_masks
+
+   Evaluation: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 6/6 [00:05<00:00,  1.04it/s]
+                     avd_class0  dice_class0  lfdr_101-INFvox_class0  lfdr_class0  ltpr_101-INFvox_class0  ltpr_class0  mse_class0  ...  n_pred_class0  precision_class0  recall_class0  rvd_class0  specificity_class0  vol_gt_class0  vol_pred_class0
+   image_id                                                                                                                            ...
+   sub-mpicbs06_T1w       0.086296     0.940116                     0.0          0.0                     1.0          1.0    0.002292  ...            1.0          0.902774       0.980680   -0.086296            0.999879    4852.499537      5271.249497
+   sub-mpicbs06_T2star    0.038346     0.909164                     0.0          0.0                     1.0          1.0    0.003195  ...            1.0          0.892377       0.926595   -0.038346            0.999871    4563.749565      4738.749548
+   sub-mpicbs06_T2w       0.032715     0.947155                     0.0          0.0                     1.0          1.0    0.001971  ...            1.0          0.932153       0.962648   -0.032715            0.999920    4852.499537      5011.249522
+   sub-unf01_T1w          0.020288     0.954007                     0.0          0.0                     1.0          1.0    0.002164  ...            1.0          0.944522       0.963684   -0.020288            0.999917    6161.249412      6286.249400
+   sub-unf01_T2star       0.001517     0.935124                     0.0          0.0                     1.0          1.0    0.002831  ...            1.0          0.934416       0.935834   -0.001517            0.999904    5766.249450      5774.999449
 
    [5 rows x 16 columns]
 
 
 The test image segmentations are stored in ``<PATH_TO_OUT_DIR>/pred_masks/`` and have the same name as the input image
 with the suffix ``_pred``. To visualize the segmentation of a given subject, you can use any Nifti image viewer.
-For `FSLeyes <https://users.fmrib.ox.ac.uk/~paulmc/fsleyes/userdoc/latest/>`_ users, this command will open the
+For `FSLeyes <https://open.win.ox.ac.uk/pages/fsl/fsleyes/fsleyes/userdoc/>`_ users, this command will open the
 input image with the overlaid prediction (segmentation) for one of the test subject:
 
 .. code-block:: bash
