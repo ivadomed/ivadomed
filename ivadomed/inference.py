@@ -222,6 +222,9 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
     if kernel_3D:
         print("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
                                                            context['Modified3DUNet']['length_3D']))
+    elif length_2D:
+        print("\nLoaded {} {} patches of shape {}.".format(len(ds), loader_params['slice_axis'],
+                                                           length_2D))
     else:
         print("\nLoaded {} {} slices.".format(len(ds), loader_params['slice_axis']))
 
