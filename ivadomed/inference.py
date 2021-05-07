@@ -207,7 +207,11 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
                                                            length=context["Modified3DUNet"]["length_3D"],
                                                            stride=context["Modified3DUNet"]["stride_3D"])
     else:
+        length_2D = context["default_model"]["length_2D"] if "length_2D" in context["default_model"] else []
+        stride_2D = context["default_model"]["stride_2D"] if "stride_2D" in context["default_model"] else []
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
+                                                  length=length_2D,
+                                                  stride=stride_2D,
                                                   slice_axis=slice_axis,
                                                   cache=True,
                                                   transform=tranform_lst,
@@ -250,7 +254,7 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
 
     # Loop across batches
     preds_list, slice_idx_list = [], []
-    last_sample_bool, volume, weight_matrix = False, None, None
+    last_sample_bool, image, volume, weight_matrix = False, None, None, None
     for i_batch, batch in enumerate(data_loader):
         with torch.no_grad():
             img = imed_utils.cuda(batch['input'], cuda_available=cuda_available)
@@ -281,15 +285,25 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
                     volume_reconstruction(batch, preds, undo_transforms, i_slice, volume, weight_matrix)
                 preds_list = [np.array(preds_undo)]
             else:
-                # undo transformations
-                preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
-                                                             batch["gt_metadata"][i_slice],
-                                                             data_type='gt')
-
-                # Add new segmented slice to preds_list
-                preds_list.append(np.array(preds_i_undo))
-                # Store the slice index of preds_i_undo in the original 3D image
-                slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
+                if length_2D:
+                    # undo transformations for patch and reconstruct slice
+                    preds_i_undo, metadata_idx, last_patch_bool, image, weight_matrix = \
+                        image_reconstruction(batch, preds, undo_transforms, i_slice, image, weight_matrix)
+                    # If last patch of the slice
+                    if last_patch_bool:
+                        # Add new segmented slice to preds_list
+                        preds_list.append(np.array(preds_i_undo))
+                        # Store the slice index of preds_i_undo in the original 3D image
+                        slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
+                else:
+                    # undo transformations for slice
+                    preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
+                                                                 batch["gt_metadata"][i_slice],
+                                                                 data_type='gt')
+                    # Add new segmented slice to preds_list
+                    preds_list.append(np.array(preds_i_undo))
+                    # Store the slice index of preds_i_undo in the original 3D image
+                    slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
 
             # If last batch and last sample of this batch, then reconstruct 3D object
             if (i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1) or last_sample_bool:
@@ -375,28 +389,28 @@ def image_reconstruction(batch, pred, undo_transforms, smp_idx, image=None, weig
         weight_matrix (tensor): Weights containing the number of predictions for each pixel
 
     Returns:
-        tensor, dict, bool, tensor, tensor: undone patch, metadata, boolean representing if its the last sample to
+        tensor, dict, bool, tensor, tensor: undone patch, metadata, boolean representing if its the last patch to
         process, reconstructed image, weight matrix
     """
     x_min, x_max, y_min, y_max = batch['input_metadata'][smp_idx][0]['coord']
     num_pred = pred[smp_idx].shape[0]
 
-    first_sample_bool = not any([x_min, y_min])
+    first_patch_bool = not any([x_min, y_min])
     x, y = batch['input_metadata'][smp_idx][0]['index_shape']
-    if first_sample_bool:
+    if first_patch_bool:
         image = torch.zeros((num_pred, x, y))
         weight_matrix = torch.zeros((num_pred, x, y))
 
-    last_sample_bool = x_max == x and y_max == y
+    last_patch_bool = x_max == x and y_max == y
 
     # Average predictions
     image[:, x_min:x_max, y_min:y_max] += pred[smp_idx]
     weight_matrix[:, x_min:x_max, y_min:y_max] += 1
-    if last_sample_bool:
+    if last_patch_bool:
         image /= weight_matrix
 
     pred_undo, metadata = undo_transforms(image, batch['gt_metadata'][smp_idx], data_type='gt')
-    return pred_undo, metadata, last_sample_bool, image, weight_matrix
+    return pred_undo, metadata, last_patch_bool, image, weight_matrix
 
 
 def onnx_inference(model_path, inputs):
