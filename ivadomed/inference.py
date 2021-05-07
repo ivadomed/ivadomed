@@ -363,6 +363,42 @@ def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, we
     return pred_undo, metadata, last_sample_bool, volume, weight_matrix
 
 
+def image_reconstruction(batch, pred, undo_transforms, smp_idx, image=None, weight_matrix=None):
+    """
+    Reconstructs image prediction from patches used during training
+    Args:
+        batch (dict): Dictionary containing input, gt and metadata
+        pred (tensor): Patch prediction
+        undo_transforms (UndoCompose): Undo transforms so prediction match original image resolution and shape
+        smp_idx (int): Batch index
+        image (tensor): Reconstructed image
+        weight_matrix (tensor): Weights containing the number of predictions for each pixel
+
+    Returns:
+        tensor, dict, bool, tensor, tensor: undone patch, metadata, boolean representing if its the last sample to
+        process, reconstructed image, weight matrix
+    """
+    x_min, x_max, y_min, y_max = batch['input_metadata'][smp_idx][0]['coord']
+    num_pred = pred[smp_idx].shape[0]
+
+    first_sample_bool = not any([x_min, y_min])
+    x, y = batch['input_metadata'][smp_idx][0]['index_shape']
+    if first_sample_bool:
+        image = torch.zeros((num_pred, x, y))
+        weight_matrix = torch.zeros((num_pred, x, y))
+
+    last_sample_bool = x_max == x and y_max == y
+
+    # Average predictions
+    image[:, x_min:x_max, y_min:y_max] += pred[smp_idx]
+    weight_matrix[:, x_min:x_max, y_min:y_max] += 1
+    if last_sample_bool:
+        image /= weight_matrix
+
+    pred_undo, metadata = undo_transforms(image, batch['gt_metadata'][smp_idx], data_type='gt')
+    return pred_undo, metadata, last_sample_bool, image, weight_matrix
+
+
 def onnx_inference(model_path, inputs):
     """Run ONNX inference
 
