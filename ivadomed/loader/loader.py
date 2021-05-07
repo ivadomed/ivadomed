@@ -115,9 +115,10 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         dataset.load_filenames()
 
     if model_params["name"] == "Modified3DUNet":
-        print("Loaded {} volumes of size {} for the {} set.".format(len(dataset), slice_axis, dataset_type))
+        print("Loaded {} volumes of shape {} for the {} set.".format(len(dataset), dataset.length, dataset_type))
     elif model_params["name"] != "HeMISUnet" and dataset.length:
-        print("Loaded {} {} patches for the {} set.".format(len(dataset), slice_axis, dataset_type))
+        print("Loaded {} {} patches of shape {} for the {} set.".format(len(dataset), slice_axis, dataset.length,
+                                                                       dataset_type))
     else:
         print("Loaded {} {} slices for the {} set.".format(len(dataset), slice_axis, dataset_type))
 
