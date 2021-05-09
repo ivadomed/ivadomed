@@ -8,8 +8,11 @@ on:
       - master
 
 jobs:
+  strategy:
+      matrix:
+        os: [ "macos-latest", "windows-latest", "ubuntu-18.04", "ubuntu-20.04",  "macos-10.15"]
   pre-commit-checks:
-    runs-on: 'ubuntu-latest'
+    runs-on: ${{ matrix.os }}
     steps:
 
       - name: Checkout repo
