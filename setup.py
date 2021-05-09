@@ -2,7 +2,9 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-with open('requirements.txt') as f:
+# Manually specified, more generic version of the software.
+# See: https://stackoverflow.com/a/49684835
+with open('requirements_common.txt') as f:
     requirements = f.read().splitlines()
 
 # Get README

@@ -8,51 +8,44 @@ on:
   push:
     branches:
       - master
+  # Trigger the workflow on pull requests, but reveal no secrets, do not use pull_request_target, see:
+  # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request_target
   pull_request:
 
 env:
+  # Even when given -y, apt will still sometimes hang at a prompt if a package
+  # has clarifications to ask; DEBIAN_FRONTEND=noninteractive prevents that,
+  # This will be defined for non-debian platforms below too, but there's no harm in that.
+  # (TravisCI quietly defined this on all their platforms, but we have to give it manually on GithubCI.)
   DEBIAN_FRONTEND: 'noninteractive'
 
 jobs:
-  test-linux:
+  ultra_matrix_test:
+    name: Matrix Test of Python ${{ matrix.python-version }} on ${{ matrix.os }}
 
-    
+    # Matrix driven OS
+    runs-on: ${{ matrix.os }}
+
+    # Default shell for ALL subsequent steps.
+    defaults:
+      run:
+        shell: bash {0}
+
+    # Defining matrix for OS and Python
     strategy:
+
+      # Ensure exhaustive testing of all scenarios to gather maximum amount of information
+      fail-fast: false
+
       matrix:
-        os: [ubuntu-20.04, ubuntu-18.04, macos-10.15, windows-latest]
+        os: [ "ubuntu-latest", "macos-latest", "windows-latest", "ubuntu-18.04", "ubuntu-20.04",  "macos-10.15"]
         python-version: [3.6, 3.7, 3.8]
         test-name:
           - integration-test
     runs-on: ${{ matrix.os }}
 
+    # Main steps for the test to be reproduced across OS x Python
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8 pytest coverage coveralls pytest-cov
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install -e .
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        #flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
-        COVERALLS_PARALLEL: true
-      run: |
-         ivadomed_download_data -d data_testing -o data_testing
-         ivadomed_download_data -d data_functional_testing -o data_functional_testing
-         pytest --cov=./ --cov-report term-missing
-         coveralls --service=github
 
   # test-windows:
 
@@ -104,3 +97,55 @@ jobs:
   #       coveralls --finish
   #     env:
   #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Step 0: Checkout code.
+      - uses: actions/checkout@v2
+
+      # Step 1: Setup python version
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Step 2: Install requirement dependencies.
+      - name: Install dependencies
+        uses: py-actions/py-dependency-install@v2
+
+      # Step 3: install additional pytest/dev related dependencies
+      - name: Install dev dependencies
+        run: |
+          pip install flake8 pytest coverage coveralls pytest-cov
+          pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+          pip install -e .
+
+      # Step 3: Lint.
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          #flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      # Step 4: Full Pytest
+      - name: Test with pytest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
+          COVERALLS_PARALLEL: true
+        run: |
+          pytest . -v --cov ivadomed/ --cov-report term-missing
+          coveralls --service=github
+
+  # This step is MANDATORY and used to indicate matrix completion to coveralls.io
+  # See here: https://coveralls-python.readthedocs.io/en/latest/usage/configuration.html#github-actions-support
+  coveralls:
+    needs: ultra_matrix_test
+    runs-on: ubuntu-latest
+    container: python:3-slim
+    steps:
+      - name: Finished
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pip3 install --upgrade coveralls
+          coveralls --finish
+

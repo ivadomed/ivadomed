@@ -1,0 +1,6 @@
+venv/
+.github
+.pytest_cache
+data_functional_testing
+data_testing
+ivadomed.egg-info

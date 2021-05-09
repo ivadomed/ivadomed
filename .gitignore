@@ -24,3 +24,6 @@ data_functional_testing/
 
 # OS Specific hidden file
 .DS_Store
+
+# venv
+venv/
