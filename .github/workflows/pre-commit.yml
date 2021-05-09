@@ -44,6 +44,7 @@ jobs:
               if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
               pip install -e .
               pre-commit install
+        shell: bash
 
       - name: Run pre-commit large file check
         run: pre-commit run --all-files check-added-large-files
