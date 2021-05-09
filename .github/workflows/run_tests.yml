@@ -42,7 +42,6 @@ jobs:
         python-version: [3.6, 3.7, 3.8]
         test-name:
           - integration-test
-    runs-on: ${{ matrix.os }}
 
     # Main steps for the test to be reproduced across OS x Python
     steps:
