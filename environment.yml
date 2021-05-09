@@ -6,8 +6,5 @@ dependencies:
   - python>=3.6, < 3.9
   - anaconda
   - pip
-  - pytorch==1.5.0
-  - torchvision==0.6.0
-  - cpuonly
   - pip:
-      -  -r file: requirements_common.txt"
+      - --requirement requirements.txt

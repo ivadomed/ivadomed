@@ -1,7 +1,13 @@
 # Common Requirements
 -r requirements_common.txt
 
-# Torch CPU Version
+# Find older pytorch pip wheel from PyTorch Org website
 --find-links https://download.pytorch.org/whl/torch_stable.html
-torch==1.5.0+cpu
-torchvision==0.6.0+cpu
+
+# Torch CPU Version Windows/Linux
+torch==1.5.0+cpu; platform_system == "linux" or platform_system == "windows"
+torchvision==0.6.0+cpu; platform_system == "linux" or platform_system == "windows"
+
+# Torch CPU Version macOS (macOS has no CPU/GPU version separation)
+torch==1.5.0; platform_system == "darwin"
+torchvision==0.6.0; platform_system == "darwin"
