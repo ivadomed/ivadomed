@@ -5,8 +5,8 @@
 --find-links https://download.pytorch.org/whl/torch_stable.html
 
 # Torch CPU Version Windows/Linux
-torch==1.5.0+cpu; platform_system == "linux" or platform_system == "windows"
-torchvision==0.6.0+cpu; platform_system == "linux" or platform_system == "windows"
+torch==1.5.0+cpu; platform_system != "darwin"
+torchvision==0.6.0+cpu; platform_system != "darwin"
 
 # Torch CPU Version macOS (macOS has no CPU/GPU version separation)
 torch==1.5.0; platform_system == "darwin"
