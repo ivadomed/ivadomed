@@ -81,7 +81,7 @@ jobs:
           COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
           COVERALLS_PARALLEL: true
         run: |
-          pytest --cov=./ --cov-report term-missing
+          pytest . -v --cov ivadomed/ --cov-report term-missing
           coveralls --service=github
 
   # This step is MANDATORY and used to indicate matrix completion to coveralls.io
