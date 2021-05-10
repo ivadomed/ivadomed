@@ -92,7 +92,7 @@ from ivadomed.scripts.automate_training import make_config_list, get_param_list,
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.utils import generate_sha_256
 import logging
-from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
@@ -697,7 +697,7 @@ def test_make_config_list(initial_config, all_combin, multi_params, param_list,
 
 
 @pytest.mark.parametrize("initial_config", [initial_config])
-def test_config_sha256(initial_config):
+def test_config_sha256(download_data_testing_test_files, initial_config):
     file_lst = ["sub-unf01_T2w.nii.gz"]
     loader_params = {
         "transforms_params": {},
