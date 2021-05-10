@@ -74,6 +74,10 @@ def test_dice_plot():
     dice_list = [0.6, 0.7, 0.8, 0.75]
     __output_file__ = os.path.join(__tmp_dir__, "test_dice.png")
     imed_metrics.plot_dice_thr(thr_list, dice_list, 2, __output_file__)
+    # Force plot off
+    from matplotlib import pyplot as plt
+    plt.ioff()
+    plt.close()
     assert os.path.isfile(__output_file__)
 
 
