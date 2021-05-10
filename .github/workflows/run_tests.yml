@@ -18,6 +18,7 @@ env:
   # This will be defined for non-debian platforms below too, but there's no harm in that.
   # (TravisCI quietly defined this on all their platforms, but we have to give it manually on GithubCI.)
   DEBIAN_FRONTEND: 'noninteractive'
+  HDF5_USE_FILE_LOCKING: 'FALSE'
 
 jobs:
   ultra_matrix_test:
