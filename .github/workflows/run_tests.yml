@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.7, 3.8]
         test-name:
           - integration-test
 
@@ -30,8 +30,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest coverage coveralls pytest-cov
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install -e .
+        pip install -f https://download.pytorch.org/whl/cpu/torch_stable.html -e .
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names

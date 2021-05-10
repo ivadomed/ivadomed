@@ -39,7 +39,7 @@ on Github. Installation procedure is the following:
 ```bash
 git clone https://github.com/neuropoly/ivadomed.git
 cd ivadomed
-pip install -e .
+pip install -f https://download.pytorch.org/whl/cpu/torch_stable.html -e .
 ```
 
 ## Contributors
