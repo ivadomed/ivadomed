@@ -27,11 +27,11 @@ def evaluate(path_data, path_output, target_suffix, eval_params):
     Returns:
         pd.Dataframe: results for each image.
     """
-    path_preds = os.path.join(path_output, 'pred_masks')
+    path_preds = os.path.join(path_output, 'pred_classunc_masks')
     print('\nRun Evaluation on {}\n'.format(path_preds))
 
     # OUTPUT RESULT FOLDER
-    path_results = os.path.join(path_output, 'results_eval')
+    path_results = os.path.join(path_output, 'results_classunc_eval')
     if not os.path.isdir(path_results):
         os.makedirs(path_results)
 

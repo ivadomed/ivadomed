@@ -53,7 +53,7 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
     model.eval()
 
     # CREATE OUTPUT FOLDER
-    path_3Dpred = os.path.join(path_output, 'pred_masks')
+    path_3Dpred = os.path.join(path_output, 'pred_classunc_masks')
     if not os.path.isdir(path_3Dpred):
         os.makedirs(path_3Dpred)
 
