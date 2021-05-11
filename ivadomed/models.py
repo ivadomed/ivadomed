@@ -442,9 +442,12 @@ class Decoder(Module):
         if hasattr(self, "final_activation") and self.final_activation == "softmax":
             preds = self.softmax(x)
         elif hasattr(self, "final_activation") and self.final_activation == "relu":
-            preds = nn.ReLU()(x) / nn.ReLU()(x).max() if bool(nn.ReLU()(x).max()) else nn.ReLU()(x)
+            preds = nn.ReLU()(x) / nn.ReLU()(x).max()
+            # If nn.ReLU()(x).max()==0, then nn.ReLU()(x) will also ==0. So, here any zero division will always be 0/0.
+            # For float values, 0/0=nan. So, we can handle zero division (without checking data!) by setting nans to 0.
+            preds[torch.isnan(preds)] = 0.
             # If model multiclass
-            if preds.shape[1] > 1:
+            if self.out_channel > 1:
                 class_sum = preds.sum(dim=1).unsqueeze(1)
                 # Avoid division by zero
                 class_sum[class_sum == 0] = 1
@@ -452,6 +455,7 @@ class Decoder(Module):
         else:
             preds = torch.sigmoid(x)
 
+        # If model multiclass
         if self.out_channel > 1:
             # Remove background class
             preds = preds[:, 1:, ]

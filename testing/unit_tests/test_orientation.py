@@ -79,6 +79,7 @@ def test_image_orientation(download_data_testing_test_files, loader_parameters):
                                              subject_file_lst=train_lst,
                                              target_suffix=target_suffix,
                                              contrast_params=contrast_params,
+                                             model_params=model_params,
                                              metadata_choice=False,
                                              slice_axis=slice_axis,
                                              transform=tranform_lst,
