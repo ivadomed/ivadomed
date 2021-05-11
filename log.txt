@@ -1,0 +1,66 @@
+INFO:ivadomed.utils:
+ivadomed (git-gm/refactor_bidsdataset_init-6f0b35f380d10dccbd04b9ba20a2ff31351a08af)
+
+INFO:root:[7]
+INFO:numexpr.utils:NumExpr defaulting to 4 threads.
+WARNING:ivadomed.loader.utils:After splitting: train, validation and test fractions are respectively 0.333, 0.333 and 0.333 of participant_id.
+ERROR:root:Got exception on main handler
+Traceback (most recent call last):
+  File "/Users/gisellemartel/ivadomed/ivadomed/scripts/automate_training.py", line 95, in train_worker
+    ivado.run_command(config, thr_increment=thr_incr)
+  File "/Users/gisellemartel/ivadomed/ivadomed/main.py", line 368, in run_command
+    ds_valid = get_dataset(bids_df, loader_params, valid_lst, transform_valid_params, cuda_available, device,
+  File "/Users/gisellemartel/ivadomed/ivadomed/main.py", line 117, in get_dataset
+    ds = imed_loader.load_dataset(bids_df, **{**loader_params, **{'data_list': data_lst,
+  File "/Users/gisellemartel/ivadomed/ivadomed/loader/loader.py", line 99, in load_dataset
+    dataset = BidsDataset(bids_df=bids_df,
+  File "/Users/gisellemartel/ivadomed/ivadomed/loader/loader.py", line 1052, in __init__
+    target_filename, roi_filename, [metadata]))
+NameError: name 'metadata' is not defined
+WARNING:ivadomed.loader.utils:After splitting: train, validation and test fractions are respectively 0.333, 0.333 and 0.333 of participant_id.
+ERROR:root:Got exception on main handler
+Traceback (most recent call last):
+  File "/Users/gisellemartel/ivadomed/ivadomed/scripts/automate_training.py", line 95, in train_worker
+    ivado.run_command(config, thr_increment=thr_incr)
+  File "/Users/gisellemartel/ivadomed/ivadomed/main.py", line 368, in run_command
+    ds_valid = get_dataset(bids_df, loader_params, valid_lst, transform_valid_params, cuda_available, device,
+  File "/Users/gisellemartel/ivadomed/ivadomed/main.py", line 117, in get_dataset
+    ds = imed_loader.load_dataset(bids_df, **{**loader_params, **{'data_list': data_lst,
+  File "/Users/gisellemartel/ivadomed/ivadomed/loader/loader.py", line 99, in load_dataset
+    dataset = BidsDataset(bids_df=bids_df,
+  File "/Users/gisellemartel/ivadomed/ivadomed/loader/loader.py", line 1052, in __init__
+    target_filename, roi_filename, [metadata]))
+NameError: name 'metadata' is not defined
+INFO:ivadomed.utils:
+ivadomed (git-gm/refactor_bidsdataset_init-6f0b35f380d10dccbd04b9ba20a2ff31351a08af)
+
+INFO:root:[7]
+INFO:numexpr.utils:NumExpr defaulting to 4 threads.
+WARNING:ivadomed.loader.utils:After splitting: train, validation and test fractions are respectively 0.333, 0.333 and 0.333 of participant_id.
+ERROR:root:Got exception on main handler
+Traceback (most recent call last):
+  File "/Users/gisellemartel/ivadomed/ivadomed/scripts/automate_training.py", line 95, in train_worker
+    ivado.run_command(config, thr_increment=thr_incr)
+  File "/Users/gisellemartel/ivadomed/ivadomed/main.py", line 368, in run_command
+    ds_valid = get_dataset(bids_df, loader_params, valid_lst, transform_valid_params, cuda_available, device,
+  File "/Users/gisellemartel/ivadomed/ivadomed/main.py", line 117, in get_dataset
+    ds = imed_loader.load_dataset(bids_df, **{**loader_params, **{'data_list': data_lst,
+  File "/Users/gisellemartel/ivadomed/ivadomed/loader/loader.py", line 99, in load_dataset
+    dataset = BidsDataset(bids_df=bids_df,
+  File "/Users/gisellemartel/ivadomed/ivadomed/loader/loader.py", line 1052, in __init__
+    target_filename, roi_filename, [metadata]))
+NameError: name 'metadata' is not defined
+WARNING:ivadomed.loader.utils:After splitting: train, validation and test fractions are respectively 0.333, 0.333 and 0.333 of participant_id.
+ERROR:root:Got exception on main handler
+Traceback (most recent call last):
+  File "/Users/gisellemartel/ivadomed/ivadomed/scripts/automate_training.py", line 95, in train_worker
+    ivado.run_command(config, thr_increment=thr_incr)
+  File "/Users/gisellemartel/ivadomed/ivadomed/main.py", line 368, in run_command
+    ds_valid = get_dataset(bids_df, loader_params, valid_lst, transform_valid_params, cuda_available, device,
+  File "/Users/gisellemartel/ivadomed/ivadomed/main.py", line 117, in get_dataset
+    ds = imed_loader.load_dataset(bids_df, **{**loader_params, **{'data_list': data_lst,
+  File "/Users/gisellemartel/ivadomed/ivadomed/loader/loader.py", line 99, in load_dataset
+    dataset = BidsDataset(bids_df=bids_df,
+  File "/Users/gisellemartel/ivadomed/ivadomed/loader/loader.py", line 1052, in __init__
+    target_filename, roi_filename, [metadata]))
+NameError: name 'metadata' is not defined

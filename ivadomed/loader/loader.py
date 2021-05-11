@@ -1037,7 +1037,7 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         # Create filename_pairs
         for subject in tqdm(subject_file_lst, desc="Loading dataset"):
-            df_sub, roi_filename, target_filename = self.create_filename_pair(multichannel_subjects, subject, 
+            df_sub, roi_filename, target_filename, metadata = self.create_filename_pair(multichannel_subjects, subject, 
                                                                                 c, tot, multichannel, df_subjects, 
                                                                                 contrast_params, target_suffix, 
                                                                                 all_deriv, bids_df, bounding_box_dict, 
@@ -1142,4 +1142,4 @@ class BidsDataset(MRI2DSegmentationDataset):
         elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
             self.create_metadata_dict(metadata_choice, df_sub, bids_df)
         
-        return df_sub, roi_filename, target_filename
+        return df_sub, roi_filename, target_filename, metadata
