@@ -1037,9 +1037,19 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         # Create filename_pairs
         for subject in tqdm(subject_file_lst, desc="Loading dataset"):
-            multichannel_subjects = self.create_filename_pair(multichannel_subjects, subject, c, tot, multichannel, 
-                                                                df_subjects, contrast_params, target_suffix, all_deriv, 
-                                                                bids_df, bounding_box_dict, idx_dict, metadata_choice)
+            df_sub, roi_filename, target_filename = self.create_filename_pair(multichannel_subjects, subject, 
+                                                                                c, tot, multichannel, df_subjects, 
+                                                                                contrast_params, target_suffix, 
+                                                                                all_deriv, bids_df, bounding_box_dict, 
+                                                                                idx_dict, metadata_choice)
+            # Fill multichannel dictionary
+            # subj_id is the filename without modality suffix and extension
+            if multichannel:
+                multichannel_subjects = self.fill_multichannel_dict(multichannel_subjects, subject, idx_dict, df_sub, 
+                                                                roi_filename, target_filename, metadata)
+            else:
+                self.filename_pairs.append(([df_sub['path'].values[0]],
+                                        target_filename, roi_filename, [metadata]))
 
         if multichannel:
             for subject in multichannel_subjects.values():
@@ -1054,7 +1064,7 @@ class BidsDataset(MRI2DSegmentationDataset):
         super().__init__(self.filename_pairs, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
                          self.soft_gt, is_input_dropout)
 
-    def annotate_raters(self, target_suffix, target_filename, derivative):
+    def get_target_filename(self, target_suffix, target_filename, derivative):
         for idx, suffix_list in enumerate(target_suffix):
             # If suffix_list is a string, then only one rater annotation per class is available.
             # Otherwise, multiple raters segmented the same class.
@@ -1065,7 +1075,7 @@ class BidsDataset(MRI2DSegmentationDataset):
             elif suffix_list in derivative:
                 target_filename[idx] = derivative
             
-            return target_filename
+        return target_filename
 
     def create_metadata_dict(self, metadata_choice, df_sub, bids_df):
         # add custom data to metadata
@@ -1110,7 +1120,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                         .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
 
         for derivative in derivatives:
-            target_filename = self.annotate_raters(target_suffix, target_filename, derivative)
+            target_filename = self.get_target_filename(target_suffix, target_filename, derivative)
             if not (self.roi_params["suffix"] is None) and self.roi_params["suffix"] in derivative:
                 roi_filename = [derivative]
 
@@ -1132,12 +1142,4 @@ class BidsDataset(MRI2DSegmentationDataset):
         elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
             self.create_metadata_dict(metadata_choice, df_sub, bids_df)
         
-        # Fill multichannel dictionary
-        # subj_id is the filename without modality suffix and extension
-        if multichannel:
-            multichannel_subjects = self.fill_multichannel_dict(multichannel_subjects, subject, idx_dict, df_sub, 
-                                                                roi_filename, target_filename, metadata)
-        else:
-            self.filename_pairs.append(([df_sub['path'].values[0]],
-                                        target_filename, roi_filename, [metadata]))
-        return multichannel_subjects
+        return df_sub, roi_filename, target_filename
