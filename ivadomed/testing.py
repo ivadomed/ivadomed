@@ -48,7 +48,7 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
 
     # LOAD TRAIN MODEL
     fname_model = os.path.join(path_output, "best_model.pt")
-    logger.info('\nLoading model: {}'.format(fname_model))
+    logger.info('Loading model: {}'.format(fname_model))
     model = torch.load(fname_model, map_location=device)
     if cuda_available:
         model.cuda()
@@ -67,7 +67,7 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
             testing_params['uncertainty']['n_it'] > 0:
         n_monteCarlo = testing_params['uncertainty']['n_it'] + 1
         testing_params['uncertainty']['applied'] = True
-        logger.info('\nComputing model uncertainty over {} iterations.'.format(n_monteCarlo - 1))
+        logger.info('Computing model uncertainty over {} iterations.'.format(n_monteCarlo - 1))
     else:
         testing_params['uncertainty']['applied'] = False
         n_monteCarlo = 1
@@ -340,7 +340,7 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
                                       ofolder=None,
                                       cuda_available=cuda_available)
 
-    logger.info('\nRunning threshold analysis to find optimal threshold')
+    logger.info('Running threshold analysis to find optimal threshold')
     # Make sure the GT is binarized
     gt_npy = [threshold_predictions(gt, thr=0.5) for gt in gt_npy]
     # Move threshold

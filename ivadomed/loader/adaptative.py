@@ -80,7 +80,7 @@ class Dataframe:
             self.df = pd.read_csv(path)
             logger.info("Dataframe has been correctly loaded from {}.".format(path))
         except FileNotFoundError:
-            logger.info("No csv file found")
+            logger.error("No csv file found")
 
     def save(self, path):
         """Save the dataframe into a csv file.
@@ -436,7 +436,7 @@ class BIDStoHDF5:
                 key = "inputs/{}".format(contrast)
                 logger.info("key = ", key)
                 if len(input_volumes) < 1:
-                    logger.info("list empty")
+                    logger.warning("list empty")
                     continue
                 grp.create_dataset(key, data=input_volumes)
                 
@@ -567,7 +567,7 @@ class HDF5Dataset:
         with h5py.File(self.path_hdf5, "r") as hdf5_file:
             for ct in contrast_lst:
                 if ct not in keys:
-                    logger.error("Key error: status has no key {}".format(ct))
+                    logger.warning("Key error: status has no key {}".format(ct))
                     continue
                 if self.status[ct]:
                     logger.info("Contrast {} already in RAM".format(ct))

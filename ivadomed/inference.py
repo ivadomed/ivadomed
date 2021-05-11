@@ -175,7 +175,7 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
         # If ROI is not provided then force center cropping
         if fname_roi is None and 'ROICrop' in context["transformation"].keys():
             logger.warning(
-                "\n WARNING: fname_roi has not been specified, then a cropping around the center of the image is "
+                "fname_roi has not been specified, then a cropping around the center of the image is "
                 "performed instead of a cropping around a Region of Interest.")
 
             context["transformation"] = dict((key, value) if key != 'ROICrop'
@@ -195,7 +195,7 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
 
     # Force filter_empty_mask to False if fname_roi = None
     if fname_roi is None and 'filter_empty_mask' in loader_params["slice_filter_params"]:
-        logger.warning("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
+        logger.warning("fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
     filename_pairs = [(fname_images, None, fname_roi, metadata if isinstance(metadata, list) else [metadata])]
@@ -217,10 +217,10 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
         ds.load_filenames()
 
     if kernel_3D:
-        logger.info("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
+        logger.info("Loaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
                                                            context['Modified3DUNet']['length_3D']))
     else:
-        logger.info("\nLoaded {} {} slices.".format(len(ds), loader_params['slice_axis']))
+        logger.info("Loaded {} {} slices.".format(len(ds), loader_params['slice_axis']))
 
     model_params = {}
     if 'FiLMedUnet' in context and context['FiLMedUnet']['applied']:

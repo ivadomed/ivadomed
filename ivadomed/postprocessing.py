@@ -339,7 +339,7 @@ class Postprocessing(object):
         elif unit == 'mm3':
             size_min = np.round(thr / (self.px * self.py * self.pz))
         else:
-            logger.info('Please choose a different unit for removeSmall. Choices: vox or mm3')
+            logger.error('Please choose a different unit for removeSmall. Choices: vox or mm3')
             exit()
 
         for idx in range(self.n_classes):

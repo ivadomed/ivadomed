@@ -89,11 +89,11 @@ def create_path_model(context, model_params, ds_train, path_output, train_onehot
 def check_multiple_raters(is_train, loader_params):
     if any([isinstance(class_suffix, list) for class_suffix in loader_params["target_suffix"]]):
         logger.info(
-            "\nAnnotations from multiple raters will be used during model training, one annotation from one rater "
+            "Annotations from multiple raters will be used during model training, one annotation from one rater "
             "randomly selected at each iteration.\n")
         if not is_train:
-            logger.info(
-                "\nERROR: Please provide only one annotation per class in 'target_suffix' when not training a model.\n")
+            logger.error(
+                "Please provide only one annotation per class in 'target_suffix' when not training a model.\n")
             exit()
 
 

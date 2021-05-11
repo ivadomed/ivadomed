@@ -82,7 +82,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
 
     # GET MODEL
     if training_params["transfer_learning"]["retrain_model"]:
-        logger.info("\nLoading pretrained model's weights: {}.")
+        logger.info("Loading pretrained model's weights: {}.")
         logger.info("\tFreezing the {}% first layers.".format(
             100 - training_params["transfer_learning"]['retrain_fraction'] * 100.))
         old_model_path = training_params["transfer_learning"]["retrain_model"]
@@ -95,7 +95,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         model = imed_models.set_model_for_retrain(old_model_path, retrain_fraction=fraction, map_location=device,
                                                   reset=reset)
     else:
-        logger.info("\nInitialising model's weights from scratch.")
+        logger.info("Initialising model's weights from scratch.")
         model_class = getattr(imed_models, model_params["name"])
         model = model_class(**model_params)
     if cuda_available:
@@ -111,7 +111,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
     scheduler, step_scheduler_batch = get_scheduler(copy.copy(training_params["scheduler"]["lr_scheduler"]), optimizer,
                                                     num_epochs)
-    logger.info("\nScheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
+    logger.info("Scheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
 
     # Resume
     start_epoch = 1
@@ -131,7 +131,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                     state[k] = v.to(device)
 
     # LOSS
-    logger.info("\nSelected Loss: {}".format(training_params["loss"]["name"]))
+    logger.info("Selected Loss: {}".format(training_params["loss"]["name"]))
     logger.info("\twith the parameters: {}".format(
         [training_params["loss"][k] for k in training_params["loss"] if k != "name"]))
     loss_fct = get_loss_function(copy.copy(training_params["loss"]))
@@ -275,12 +275,10 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
             if training_params["loss"]["name"] != "DiceLoss":
                 msg += "\tDice validation loss: {:.4f}.".format(val_dice_loss_total_avg)
             logger.info(msg)
-            tqdm.write(msg)
             end_time = time.time()
             total_time = end_time - start_time
-            msg = "Epoch {} took {:.2f} seconds.".format(epoch, total_time)
-            logger.info(msg)
-            tqdm.write(msg)
+            msg_epoch = "Epoch {} took {:.2f} seconds.".format(epoch, total_time)
+            logger.info(msg_epoch)
 
             # UPDATE BEST RESULTS
             if val_loss_total_avg < best_validation_loss:
@@ -465,7 +463,7 @@ def load_checkpoint(model, optimizer, gif_dict, scheduler, fname):
     validation_loss = 0
     patience_count = 0
     try:
-        logger.info("\nLoading checkpoint: {}".format(fname))
+        logger.info("Loading checkpoint: {}".format(fname))
         checkpoint = torch.load(fname)
         start_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['state_dict'])

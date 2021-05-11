@@ -113,7 +113,7 @@ def display_selected_model_spec(params):
     Args:
         params (dict): Keys are param names and values are param values.
     """
-    logger.info('\nSelected architecture: {}, with the following parameters:'.format(params["name"]))
+    logger.info('Selected architecture: {}, with the following parameters:'.format(params["name"]))
     for k in list(params.keys()):
         if k != "name":
             logger.info('\t{}: {}'.format(k, params[k]))
@@ -126,7 +126,7 @@ def display_selected_transfoms(params, dataset_type):
         params (dict):
         dataset_type (list): e.g. ['testing'] or ['training', 'validation']
     """
-    logger.info('\nSelected transformations for the {} dataset:'.format(dataset_type))
+    logger.info('Selected transformations for the {} dataset:'.format(dataset_type))
     for k in list(params.keys()):
         logger.info('\t{}: {}'.format(k, params[k]))
 
