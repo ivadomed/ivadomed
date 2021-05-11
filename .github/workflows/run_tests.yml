@@ -46,7 +46,6 @@ jobs:
 
     # Main steps for the test to be reproduced across OS x Python
     steps:
-
       # Step 0: Checkout code.
       - uses: actions/checkout@v2
 

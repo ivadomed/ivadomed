@@ -8,8 +8,14 @@ on:
       - master
 
 jobs:
+
   pre-commit-checks:
-    runs-on: 'ubuntu-latest'
+    strategy:
+      matrix:
+        os: [ "macos-latest", "windows-latest", "ubuntu-18.04", "ubuntu-20.04",  "macos-10.15"]
+        python-version: [3.6, 3.7, 3.8]
+        
+    runs-on: ${{ matrix.os }}
     steps:
 
       - name: Checkout repo
@@ -18,7 +24,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v1
         with:
-          python-version: '3.6'
+          python-version: ${{ matrix.python-version }}
 
       - name: Cache pip dependencies
         id: cache-pip-dependencies
@@ -37,6 +43,7 @@ jobs:
               if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
               pip install -e .
               pre-commit install
+        shell: bash
 
       - name: Run pre-commit large file check
         run: pre-commit run --all-files check-added-large-files
