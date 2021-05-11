@@ -51,7 +51,7 @@ def run_uncertainty(ifolder):
         fname_unc_struct = os.path.join(ifolder, subj_acq + '_unc.nii.gz')
         if not os.path.isfile(os.path.join(ifolder, subj_acq + '_unc-cv.nii.gz')):
             # compute structure-wise uncertainty
-            structurewise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
+            classwise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
 
 
 def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
@@ -104,11 +104,98 @@ def voxelwise_uncertainty(fname_lst, fname_out, eps=1e-5):
     unc = -np.sum(np.mean(unc, 0) * np.log(np.mean(unc, 0) + eps), -1)
 
     # Clip values to 0
-    unc[unc < 0] = 0
+
+    unc[unc < 0.5] = 0
 
     # save uncertainty map
     nib_unc = nib.Nifti1Image(unc, affine)
     nib.save(nib_unc, fname_out)
+
+
+def classwise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
+    """Estimate structure wise uncertainty.
+
+    Structure-wise uncertainty from N MC probability maps (`fname_lst`) and saved in `fname_out` with the following
+    suffixes:
+
+        * '-cv.nii.gz': coefficient of variation
+        * '-iou.nii.gz': intersection over union
+        * '-avgUnc.nii.gz': average voxel-wise uncertainty within the structure.
+
+    Args:
+        fname_lst (list of str): List of the Monte Carlo samples.
+        fname_hard (str): Filename of the hard segmentation, which is used to compute the `avgUnc` by providing a mask
+            of the structures.
+        fname_unc_vox (str): Filename of the voxel-wise uncertainty, which is used to compute the `avgUnc`.
+        fname_out (str): Output filename.
+    """
+    # load hard segmentation
+    nib_hard = nib.load(fname_hard)
+    data_hard = nib_hard.get_fdata()
+
+    # load all MC simulations (in mc_dict["mc_data"]) and label them (in mc_dict["mc_labeled"])
+    mc_dict = {"mc_data": [], "mc_labeled": []}
+    for fname in fname_lst:
+        data = nib.load(fname).get_fdata()
+        mc_dict["mc_data"].append([data[..., i_class] for i_class in range(data.shape[-1])])
+
+    # load uncertainty map
+    data_uncVox = nib.load(fname_unc_vox).get_fdata()
+
+    # Init output arrays
+    data_iou, data_cv, data_avgUnc = np.zeros(data_hard.shape), np.zeros(data_hard.shape), np.zeros(data_hard.shape)
+
+    # Loop across classes
+    for i_class in range(data_hard.shape[-1]):
+        # Hard segmentation of the i_class that has been labeled
+        data_hard_labeled_class = data_hard[..., i_class]
+        xx_obj, yy_obj, zz_obj = np.where(data_hard_labeled_class)
+
+        # Loop across the MC samples and mask the structure of interest
+        data_class_obj_mc = []
+        for i_mc in range(len(fname_lst)):
+            data_class_obj_mc.append(mc_dict['mc_data'][i_mc][i_class] > 0.5)
+
+        # COMPUTE IoU
+        # Init intersection and union
+        intersection = np.logical_and(data_class_obj_mc[0], data_class_obj_mc[1])
+        union = np.logical_or(data_class_obj_mc[0], data_class_obj_mc[1])
+        # Loop across remaining MC samples
+        for i_mc in range(2, len(data_class_obj_mc)):
+            intersection = np.logical_and(intersection, data_class_obj_mc[i_mc])
+            union = np.logical_or(union, data_class_obj_mc[i_mc])
+        # Compute float
+        iou = np.sum(intersection) * 1. / np.sum(union)
+        # assign uncertainty value to the structure
+        data_iou[xx_obj, yy_obj, zz_obj, i_class] = iou
+
+        # COMPUTE COEFFICIENT OF VARIATION
+        # List of volumes for each MC sample
+        vol_mc_lst = [np.sum(data_class_obj_mc[i_mc]) for i_mc in range(len(data_class_obj_mc))]
+        # Mean volume
+        mu_mc = np.mean(vol_mc_lst)
+        # STD volume
+        sigma_mc = np.std(vol_mc_lst)
+        # Coefficient of variation
+        cv = sigma_mc / mu_mc
+        # assign uncertainty value to the structure
+        data_cv[xx_obj, yy_obj, zz_obj, i_class] = cv
+
+        # COMPUTE AVG VOXEL WISE UNC
+        avgUnc = np.mean(data_uncVox[xx_obj, yy_obj, zz_obj, i_class])
+        # assign uncertainty value to the structure
+        data_avgUnc[xx_obj, yy_obj, zz_obj, i_class] = avgUnc
+
+    # save nifti files
+    fname_iou = fname_out.split('.nii.gz')[0] + '-iou.nii.gz'
+    fname_cv = fname_out.split('.nii.gz')[0] + '-cv.nii.gz'
+    fname_avgUnc = fname_out.split('.nii.gz')[0] + '-avgUnc.nii.gz'
+    nib_iou = nib.Nifti1Image(data_iou, nib_hard.affine)
+    nib_cv = nib.Nifti1Image(data_cv, nib_hard.affine)
+    nib_avgUnc = nib.Nifti1Image(data_avgUnc, nib_hard.affine)
+    nib.save(nib_iou, fname_iou)
+    nib.save(nib_cv, fname_cv)
+    nib.save(nib_avgUnc, fname_avgUnc)
 
 
 def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
