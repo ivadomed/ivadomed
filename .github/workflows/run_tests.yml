@@ -63,7 +63,7 @@ jobs:
       # Step 3: install additional pytest/dev related dependencies
       - name: Install dev dependencies
         run: |
-          pip install flake8 pytest coverage coveralls pytest-cov
+          pip install flake8 pytest coverage coveralls pytest-cov pytest-console-scripts pytest-ordering
           pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
           pip install -e .
 
