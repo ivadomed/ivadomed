@@ -175,10 +175,19 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                 metadata = get_metadata(batch["input_metadata"], model_params)
                 preds = model(input_samples, metadata)
             else:
-                preds = model(input_samples)
-
+                if model_params["name"] == "HourglassNet":
+                    preds = model(input_samples)[-1]
+                else:
+                    preds = model(input_samples)
+                  
             # LOSS
-            loss = loss_fct(preds, gt_samples)
+            if model_params["name"] == "HourglassNet":
+                jvis = [batch["gt_metadata"][k][0]["jvis"] for k in range(len(batch["gt_metadata"]))]
+                jvis = torch.Tensor(jvis).view(len(jvis), -1)
+                jvis = imed_utils.cuda(jvis, cuda_available, non_blocking=True)
+                loss = loss_fct(preds, (gt_samples, jvis))  # jvis is passed as `target_weight` for JointsMSELoss
+            else:
+                loss = loss_fct(preds, gt_samples)
             train_loss_total += loss.item()
             train_dice_loss_total += loss_dice_fct(preds, gt_samples).item()
 
@@ -232,17 +241,30 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                         metadata = get_metadata(batch["input_metadata"], model_params)
                         preds = model(input_samples, metadata)
                     else:
-                        preds = model(input_samples)
+                        if model_params["name"] == "HourglassNet":
+                            preds = model(input_samples)[-1]
+                        else:
+                            preds = model(input_samples)
 
                     # LOSS
-                    loss = loss_fct(preds, gt_samples)
+                    if model_params["name"] == "HourglassNet":
+                        jvis = [batch["gt_metadata"][k][0]["jvis"] for k in range(len(batch["gt_metadata"]))]
+                        jvis = torch.Tensor(jvis).view(len(jvis), -1)
+                        jvis = imed_utils.cuda(jvis, cuda_available, non_blocking=True)
+                        loss = loss_fct(preds, (gt_samples, jvis))  # jvis is passed as `target_weight` for JointsMSELoss
+                    else:
+                        loss = loss_fct(preds, gt_samples)    
                     val_loss_total += loss.item()
                     val_dice_loss_total += loss_dice_fct(preds, gt_samples).item()
 
                     # Add frame to GIF
                     for i_ in range(len(input_samples)):
-                        im, pr, met = input_samples[i_].cpu().numpy()[0], preds[i_].cpu().numpy()[0], \
-                                      batch["input_metadata"][i_][0]
+                        im = input_samples[i_].cpu().numpy()[0]
+                        met = batch["input_metadata"][i_][0]
+                        if model_params["name"] == "HourglassNet":
+                            pr = np.sum(preds[i_].cpu().numpy(), axis=0)
+                        else:
+                            pr = preds[i_].cpu().numpy()[0]
                         for i_gif in range(n_gif):
                             if gif_dict["image_path"][i_gif] == met.__getitem__('input_filenames') and \
                                     gif_dict["slice_id"][i_gif] == met.__getitem__('slice_index'):
@@ -250,7 +272,6 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                                 gif_dict["gif"][i_gif].add(overlap, label=str(epoch))
 
                 num_steps += 1
-
                 # METRICS COMPUTATION
                 gt_npy = gt_samples.cpu().numpy()
                 preds_npy = preds.data.cpu().numpy()
@@ -415,7 +436,7 @@ def get_loss_function(params):
     # Check if implemented
     loss_function_available = ["DiceLoss", "FocalLoss", "GeneralizedDiceLoss", "FocalDiceLoss", "MultiClassDiceLoss",
                                "BinaryCrossEntropyLoss", "TverskyLoss", "FocalTverskyLoss", "AdapWingLoss", "L2loss",
-                               "LossCombination"]
+                               "LossCombination", "JointsMSELoss"]
     if loss_name not in loss_function_available:
         raise ValueError(
             "Unknown Loss function: {}, please choose between {}".format(loss_name, loss_function_available))

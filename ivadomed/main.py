@@ -24,7 +24,7 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 cudnn.benchmark = True
 
 # List of not-default available models i.e. different from Unet
-MODEL_LIST = ['Modified3DUNet', 'HeMISUnet', 'FiLMedUnet', 'resnet18', 'densenet121', 'Countception']
+MODEL_LIST = ['Modified3DUNet', 'HeMISUnet', 'FiLMedUnet', 'resnet18', 'densenet121', 'Countception', 'HourglassNet']
 
 
 def get_parser():
@@ -535,7 +535,6 @@ def create_dataset_and_ivadomed_version_log(context):
 
 def run_main():
     imed_utils.init_ivadomed()
-
     parser = get_parser()
     args = parser.parse_args()
 

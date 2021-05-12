@@ -6,7 +6,7 @@ import numpy as np
 import os
 import ivadomed.maths as imed_maths
 import ivadomed.loader.utils as imed_loader_utils
-
+import textwrap
 
 def mask2label(path_label, aim=0):
     """Retrieve points coordinates and value from a label file containing singl voxel label.
@@ -41,6 +41,23 @@ def mask2label(path_label, aim=0):
     return list_label_image
 
 
+def rotate_nifti(X):
+    """ Rotate the nifti image to be upright.
+    Args:
+        X (nifti): nifti image 
+
+    Returns:
+        nifti: rotated nifti image
+
+    """
+    X2 = X.get_fdata()[0]
+    X2 = np.flip(X2, axis = 0)
+    X2 = np.flip(X2, axis = 1)
+    X2 = np.expand_dims(X2, axis = 0)
+    img   = nib.Nifti1Image(X2, np.eye(4))
+    return img
+
+
 def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
     """
     This function takes as input a path to a dataset  and generates a set of images:
@@ -68,7 +85,8 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
     for i in range(len(t)):
         sub = t[i]
         path_image = os.path.join(path, t[i], 'anat', t[i] + suffix + '.nii.gz')
-        if os.path.isfile(path_image):
+        print('Applying pre-process on patient '+sub)
+        if os.path.isfile(path_image):     
             path_label = os.path.join(path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
                     '_labels-disc-manual.nii.gz')
             list_points = mask2label(path_label, aim=aim)
@@ -76,7 +94,8 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
             nib_ref_can = nib.as_closest_canonical(image_ref)
             imsh = np.array(nib_ref_can.dataobj).shape
             mid_nifti = imed_preprocessing.get_midslice_average(path_image, list_points[0][0], slice_axis=0)
-            nib.save(mid_nifti, os.path.join(path, t[i], 'anat', t[i] + suffix + '_mid.nii.gz'))
+            mid_nifti = rotate_nifti(mid_nifti)
+            nib.save(mid_nifti, os.path.join(path, t[i], 'anat', t[i] +'_rec-mid'+ suffix + '.nii.gz'))
             lab = nib.load(path_label)
             nib_ref_can = nib.as_closest_canonical(lab)
             label_array = np.zeros(imsh[1:])
@@ -87,14 +106,28 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
             heatmap = imed_maths.heatmap_generation(label_array[:, :], 10)
             arr_pred_ref_space = imed_loader_utils.reorient_image(np.expand_dims(heatmap[:, :], axis=0), 2, lab, nib_ref_can)
             nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
-            nib.save(nib_pred, os.path.join(path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
-                                            '_mid_heatmap' + str(aim) + '.nii.gz'))
+            nib_pred = rotate_nifti(nib_pred)
+            nib.save(nib_pred, os.path.join(path, 'derivatives', 'labels', t[i], 'anat', t[i]+'_rec-mid' +suffix+ '_heatmap'+str(aim)
+                                            + '.nii.gz'))
         else:
             pass
 
 
 def get_parser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class = argparse.RawDescriptionHelpFormatter,
+        description = textwrap.dedent("""
+            This function takes as input a path to a dataset and generates a set of images:
+                (i) mid-sagittal image and
+                (ii) heatmap of disc labels associated with the mid-sagittal image. Please refer to for more details. 
+            
+            Example:
+                python3 prepare_dataset_vertebral_labeling.py --path /data/data-multi-subject/ -s _T2w
+            
+            Reference:
+                https://github.com/neuropoly/vertebral-labeling-deep-learning
+                """)
+    )
     parser.add_argument("-p", "--path", dest="path", required=True, type=str,
                         help="Path to bids folder",
                         metavar=imed_utils.Metavar.file)
@@ -111,11 +144,11 @@ def get_parser():
 
 def main(args=None):
     imed_utils.init_ivadomed()
+
     parser = get_parser()
     args = imed_utils.get_arguments(parser, args)
     extract_mid_slice_and_convert_coordinates_to_heatmaps(path=args.path, suffix=args.suffix,
                                                           aim=args.aim)
 
-
-if __name__ == '__main__':
+if __name__=='__main__':
     main()

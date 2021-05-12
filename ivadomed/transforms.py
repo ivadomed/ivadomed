@@ -12,6 +12,7 @@ from scipy.ndimage.interpolation import map_coordinates, affine_transform
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 from skimage.exposure import equalize_adapthist
+from skimage import measure
 from torchvision import transforms as torchvision_transforms
 
 from ivadomed.loader import utils as imed_loader_utils
@@ -219,10 +220,11 @@ class Resample(ImedTransform):
         interpolation_order (int): Order of spline interpolation. Set to 0 for label data. Default=2.
     """
 
-    def __init__(self, hspace, wspace, dspace=1.):
+    def __init__(self, hspace, wspace, dspace=1., flag_pixel = False):
         self.hspace = hspace
         self.wspace = wspace
         self.dspace = dspace
+        self.flag_pixel = flag_pixel
 
     @multichannel_capable
     @two_dim_compatible
@@ -262,9 +264,14 @@ class Resample(ImedTransform):
         if len(zooms) == 2:
             zooms += [1.0]
 
-        hfactor = zooms[0] / self.hspace
-        wfactor = zooms[1] / self.wspace
-        dfactor = zooms[2] / self.dspace
+        if self.flag_pixel:
+            hfactor = self.hspace / sample.shape[0]
+            wfactor = self.wspace / sample.shape[1]
+            dfactor = self.dspace / sample.shape[2]
+        else:     
+            hfactor = zooms[0] / self.hspace
+            wfactor = zooms[1] / self.wspace
+            dfactor = zooms[2] / self.dspace
         params_resample = (hfactor, wfactor, dfactor) if not is_2d else (hfactor, wfactor, 1.0)
 
         # Run resampling
@@ -275,6 +282,50 @@ class Resample(ImedTransform):
         # Data type
         data_out = data_out.astype(sample.dtype)
 
+        return data_out, metadata
+
+
+class VertebralSplitting(ImedTransform):
+    """Create an intervertebral disk masks for pose estimation model .
+    NB: This transform is not multichannel capable. It is meant to be used
+    to *create* a multichannel image from a single-channel image.
+    """
+
+    def __init__(self, max_joint=11):
+        self.max_joint = max_joint
+
+    def undo_transform(self, sample, metadata=None):
+        return sample, metadata
+
+    def get_posedata(self, msk, num_ch):
+        ys = msk.shape
+        ys_ch = [np.zeros([ys[0], ys[1]])] * num_ch
+        msk_uint = np.uint8(np.where(msk>0.2, 1, 0))
+        
+        labels_im, num_labels = measure.label(msk_uint, background=0, return_num=True)
+        try:
+            # the <0> label is the background
+            for i in range(1, num_labels+1):
+                y_i = msk * np.where(labels_im == i, 1, 0)
+                ys_ch[i-1] = y_i
+        except:
+            pass
+
+        vis = np.zeros((num_ch, 1))
+        vis[:num_labels] = 1
+        return ys_ch, vis
+
+    def __call__(self, sample, metadata=None):
+        """
+        Args:
+            sample: List with a single 2D ndarray (i.e. a single-channel GT mask).
+            metadata: List with a single SampleMetadata object.
+        Returns:
+            data_out: List with `max_joint` # of 2D ndarrays (i.e. a multi-channel GT mask).
+            metadata: List with a single SampleMetadata object, updated with 'jvis'.
+        """
+        data_out, jvis = self.get_posedata(sample[0], self.max_joint)
+        metadata[0]['jvis'] = jvis
         return data_out, metadata
 
 
@@ -1072,7 +1123,7 @@ def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
     stack_input, metadata_input = transforms(sample=seg_pair["input"],
                                              metadata=metadata_input,
                                              data_type="im")
-    # Run transforms on images
+    # Run transforms on gt
     metadata_gt = imed_loader_utils.update_metadata(metadata_input, seg_pair['gt_metadata'])
     stack_gt, metadata_gt = transforms(sample=seg_pair["gt"],
                                        metadata=metadata_gt,
