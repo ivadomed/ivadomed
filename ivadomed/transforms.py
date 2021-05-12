@@ -12,6 +12,8 @@ from scipy.ndimage.interpolation import map_coordinates, affine_transform
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 from skimage.exposure import equalize_adapthist
+from skimage.transform import resize
+import cv2
 from torchvision import transforms as torchvision_transforms
 
 from ivadomed.loader import utils as imed_loader_utils
@@ -205,6 +207,7 @@ class NumpyToTensor(ImedTransform):
         sample = np.array(sample)
         # Use np.ascontiguousarray to avoid axes permutations issues
         arr_contig = np.ascontiguousarray(sample, dtype=sample.dtype)
+
         return torch.from_numpy(arr_contig), metadata
 
 
@@ -275,6 +278,102 @@ class Resample(ImedTransform):
         # Data type
         data_out = data_out.astype(sample.dtype)
 
+        return data_out, metadata
+
+
+class Resize(ImedTransform):
+    """
+    Resize image to a given resolution.
+
+    Args:
+        height (int): Resolution along the first axis, in pixel.
+        width  (int): Resolution along the second axis, in pixel.
+        interpolation_order (int): different strategies for interpolation. 
+    """
+
+    def __init__(self, height, width, interpolation=None):
+        self.height = height
+        self.width  = width
+
+    @multichannel_capable
+    @two_dim_compatible
+    def undo_transform(self, sample, metadata=None):
+        """Resize to original resolution."""
+        assert "data_shape" in metadata
+        
+        # Get params
+        original_shape = metadata["preresize_shape"]
+        current_shape = sample.shape
+        
+        # Undo resampling
+        data_out = resize(sample, original_shape[:2])
+
+        # Data type
+        data_out = data_out.astype(sample.dtype)
+
+        return data_out, metadata
+
+    @multichannel_capable
+    @multichannel_capable  # for multiple raters during training/preprocessing
+    @two_dim_compatible
+    def __call__(self, sample, metadata=None):
+        """Resize to a given resolution, in pixel."""
+        # Get params
+        # Voxel dimension in mm
+        is_2d = sample.shape[-1] == 1
+        metadata['preresize_shape'] = sample.shape
+        
+        # Run resizing
+        data_out = resize(sample, (self.height, self.width))
+
+        # Data type
+        data_out = data_out.astype(sample.dtype)
+        return data_out, metadata
+
+
+class VertebralSplitting(ImedTransform):
+    """Create an intervertebral disk masks for pose estimation model .
+    Args:
+        max_joint (int): Maximum number of joints in the input gt mask 
+    """
+
+    def __init__(self, max_joint=11):
+        self.max_joint = max_joint
+
+    @multichannel_capable
+    def undo_transform(self, sample, metadata=None):
+        # Nothing
+        # data_out = np.sum(sample, axis=-1)
+        return data_out, metadata
+
+    def get_posedata(self, msk, num_ch):
+        # msk = np.flip(msk, axis=1)
+        # msk = np.flip(msk, axis=0)
+
+        # msk = self.rotate_img(msk)
+        ys = msk.shape
+        ys_ch = np.zeros([ys[0], ys[1], num_ch])
+        msk_uint = np.uint8(np.where(msk>0.2, 1, 0))
+        
+        num_labels, labels_im = cv2.connectedComponents(msk_uint)
+        try:
+            # the <0> label is the background
+            for i in range(1, num_labels):
+                y_i = msk * np.where(labels_im == i, 1, 0)
+                ys_ch[:,:, i-1] = y_i
+        except:
+            pass
+            
+        # ys_ch = np.rot90(ys_ch)
+        # ys_ch = np.flip(ys_ch, axis=1)
+        vis = np.zeros((num_ch, 1))
+        vis[:num_labels-1] = 1
+        return ys_ch, vis
+
+    @multichannel_capable
+    def __call__(self, sample, metadata=None):
+        data_out, jvis = self.get_posedata(sample, self.max_joint)
+        metadata['jvis'] = jvis
         return data_out, metadata
 
 
@@ -1039,7 +1138,7 @@ def get_preprocessing_transforms(transforms):
     original_transforms = copy.deepcopy(transforms)
     preprocessing_transforms = copy.deepcopy(transforms)
     for idx, tr in enumerate(original_transforms):
-        if tr == "Resample" or tr == "CenterCrop" or tr == "ROICrop":
+        if tr == "Resample" or tr == "Resize" or tr == "CenterCrop" or tr == "ROICrop":
             del transforms[tr]
         else:
             del preprocessing_transforms[tr]
@@ -1059,6 +1158,7 @@ def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
     Returns:
         tuple: Segmentation pair and roi pair.
     """
+
     if transforms is None:
         return (seg_pair, roi_pair)
 
@@ -1072,7 +1172,7 @@ def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
     stack_input, metadata_input = transforms(sample=seg_pair["input"],
                                              metadata=metadata_input,
                                              data_type="im")
-    # Run transforms on images
+    # Run transforms on gt
     metadata_gt = imed_loader_utils.update_metadata(metadata_input, seg_pair['gt_metadata'])
     stack_gt, metadata_gt = transforms(sample=seg_pair["gt"],
                                        metadata=metadata_gt,
