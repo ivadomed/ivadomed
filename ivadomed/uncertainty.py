@@ -104,8 +104,7 @@ def voxelwise_uncertainty(fname_lst, fname_out, eps=1e-5):
     unc = -np.sum(np.mean(unc, 0) * np.log(np.mean(unc, 0) + eps), -1)
 
     # Clip values to 0
-
-    unc[unc < 0.5] = 0
+    unc[unc < 0] = 0
 
     # save uncertainty map
     nib_unc = nib.Nifti1Image(unc, affine)
