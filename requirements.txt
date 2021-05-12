@@ -20,3 +20,4 @@ sphinx-jsonschema
 pytest-console-scripts
 pre-commit==2.10.1
 scipy
+python-opencv
