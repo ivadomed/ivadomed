@@ -405,6 +405,47 @@ class AdapWingLoss(nn.Module):
 
         return mean_loss
 
+class JointsMSELoss(nn.Module):
+    """
+    Joint MSE loss for pose estimation method.
+    .. seealso::
+        Alejandro Newell et al. "Stacked Hourglass Networks for Human Pose Estimation."
+        Proceedings of the European Conference on Computer Vision. 2016.
+    Args:
+        output (tensor): prediction mask mask
+        target_and_weights (list): list as follows:
+          -- ground truth mask (Tensor): estimated mask by the pose model
+          -- target_weight (Tensor): visibility of the intervertebral disc to control the loss value for the training process
+
+    returns:
+            tensor: sum of losses computed on (mask, target) with the params
+    """    
+    def __init__(self, use_target_weight=True):
+        super(JointsMSELoss, self).__init__()
+        self.criterion = nn.MSELoss(reduction='mean')
+        self.use_target_weight = use_target_weight
+
+    def forward(self, output, target_and_weights):
+        target, target_weight = target_and_weights
+
+        batch_size = output.size(0)
+        num_joints = output.size(1)
+        heatmaps_pred = output.reshape((batch_size, num_joints, -1)).split(1, 1)
+        heatmaps_gt = target.reshape((batch_size, num_joints, -1)).split(1, 1)
+        loss = 0
+
+        for idx in range(num_joints):
+            heatmap_pred = heatmaps_pred[idx].squeeze()
+            heatmap_gt = heatmaps_gt[idx].squeeze()
+            if self.use_target_weight:
+                loss += 0.5 * self.criterion(
+                    heatmap_pred.mul(target_weight[:, idx]),
+                    heatmap_gt.mul(target_weight[:, idx])
+                )
+            else:
+                loss += 0.5 * self.criterion(heatmap_pred, heatmap_gt)
+
+        return loss / num_joints
 
 class LossCombination(nn.Module):
     """
