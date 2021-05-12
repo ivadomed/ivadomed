@@ -24,7 +24,7 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 cudnn.benchmark = True
 
 # List of not-default available models i.e. different from Unet
-MODEL_LIST = ['Modified3DUNet', 'HeMISUnet', 'FiLMedUnet', 'resnet18', 'densenet121', 'Countception']
+MODEL_LIST = ['Modified3DUNet', 'HeMISUnet', 'FiLMedUnet', 'resnet18', 'densenet121', 'Countception', 'HourglassNet']
 
 
 def get_parser():
@@ -111,6 +111,9 @@ def film_normalize_data(context, model_params, ds_train, ds_valid, path_output):
     joblib.dump(train_onehotencoder, os.path.join(path_output + "one_hot_encoder.joblib"))
 
     return model_params, ds_train, ds_valid, train_onehotencoder
+
+
+
 
 
 def get_dataset(bids_df, loader_params, data_lst, transform_params, cuda_available, device, ds_type):
@@ -532,7 +535,6 @@ def create_dataset_and_ivadomed_version_log(context):
 
 def run_main():
     imed_utils.init_ivadomed()
-
     parser = get_parser()
     args = parser.parse_args()
 
@@ -552,4 +554,6 @@ def run_main():
 
 
 if __name__ == "__main__":
+
+
     run_main()
