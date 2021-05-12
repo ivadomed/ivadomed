@@ -30,7 +30,7 @@ class Metavar(Enum):
 
 
 def get_task(model_name):
-    return "classification" if model_name in CLASSIFIER_LIST else "segmentation"
+    return "classification" if model_name in CLASSIFIER_LIST else "pose_estimation" if "hourglass" in model_name.lower() else"segmentation"
 
 
 def cuda(input_var, cuda_available=True, non_blocking=False):
