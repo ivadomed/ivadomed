@@ -4,8 +4,12 @@ import sys
 import subprocess
 import matplotlib
 import matplotlib.pyplot as plt
+import pandas as pd
 import torch
+import hashlib
 from enum import Enum
+
+from typing import List
 
 AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
@@ -66,6 +70,29 @@ def unstack_tensors(sample):
     for i in range(sample.shape[1]):
         list_tensor.append(sample[:, i, ].unsqueeze(1))
     return list_tensor
+
+
+def generate_sha_256(context: dict, df: pd.DataFrame, file_lst: List[str]) -> None:
+    """generate sha256 for a training file
+
+    Args:
+        context (dict): configuration context.
+        df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
+        file_lst (List[str]): list of strings containing training files
+    """
+    # generating sha256 for list of data
+    context['training_sha256'] = {}
+    # file_list is a list of filename strings
+    for file in file_lst:
+        # bids_df is a dataframe with column values path...filename...
+        # so df_sub is the row with matching filename=file
+        df_sub = df.loc[df['filename'] == file]
+        file_path = df_sub['path'].values[0]
+        sha256_hash = hashlib.sha256()
+        with open(file_path, "rb") as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+            context['training_sha256'][file] = sha256_hash.hexdigest()
 
 
 def save_onnx_model(model, inputs, model_path):
