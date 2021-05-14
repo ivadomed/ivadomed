@@ -285,8 +285,9 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
                 modality['data_type'] = 'gt'
 
         # Reconstruct 3D object
-        pred_list, target_list = reconstruct_3d_object(context, batch, undo_transforms, preds, kernel_3D, volume_reconstruction, 
-                                                        slice_axis, slice_idx_list, data_loader, fname_images, i_batch)
+        pred_list, target_list = reconstruct_3d_object(context, batch, undo_transforms, preds, preds_list, kernel_3D, volume, 
+                                                        volume_reconstruction, weight_matrix, slice_axis, slice_idx_list, 
+                                                        data_loader, fname_images, i_batch, last_sample_bool)
 
     return pred_list, target_list
 
@@ -306,8 +307,11 @@ def split_classes(nib_prediction):
         pred_list.append(class_pred)
     return pred_list
 
-def reconstruct_3d_object(context, batch, undo_transforms, preds, kernel_3D, volume_reconstruction, slice_axis, 
-                            slice_idx_list, data_loader, fname_images, i_batch):
+def reconstruct_3d_object(context, batch, undo_transforms, preds, preds_list, kernel_3D, volume, 
+                            volume_reconstruction, weight_matrix, slice_axis, slice_idx_list, 
+                            data_loader, fname_images, i_batch, last_sample_bool):
+    pred_list = []
+    target_list = []
     for i_slice in range(len(preds)):
         if "bounding_box" in batch['input_metadata'][i_slice][0]:
             imed_obj_detect.adjust_undo_transforms(undo_transforms.transforms, batch, i_slice)
@@ -343,7 +347,7 @@ def reconstruct_3d_object(context, batch, undo_transforms, preds, kernel_3D, vol
             pred_list = split_classes(pred_nib)
             target_list = context['loader_parameters']['target_suffix']
 
-        return pred_list, target_list
+    return pred_list, target_list
 
 def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, weight_matrix=None):
     """
