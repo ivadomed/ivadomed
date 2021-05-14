@@ -248,16 +248,7 @@ def test_get_target_filename_list(loader_parameters, model_parameters, transform
                                                              'transforms_params': transform_parameters,
                                                              'dataset_type': 'training'}})
 
-    test_subject = 'sub-rat3_ses-01_sample-data9_SEM.png'
-
-    all_deriv = bids_df.get_deriv_fnames()
-    test_derivatives = bids_df.df[bids_df.df['filename']
-                .str.contains('|'.join(bids_df.get_derivatives(test_subject, all_deriv)))]['path'].to_list()
-
-    target_filename = [None] * len(loader_parameters["target_suffix"])
-
-    for test_deriv in test_derivatives:
-        test_ds.get_target_filename(loader_parameters["target_suffix"], target_filename, test_deriv)
+    target_filename = test_ds.filename_pairs[0][1]
     
     assert len(target_filename) == len(loader_parameters["target_suffix"])
 
