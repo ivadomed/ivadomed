@@ -1176,7 +1176,6 @@ class BidsDataset(MRI2DSegmentationDataset):
             elif suffix_list in derivative:
                 target_filename[idx] = derivative
             
-        return target_filename
 
     def create_metadata_dict(self, metadata_choice, df_sub, bids_df):
         # add custom data to metadata
