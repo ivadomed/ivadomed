@@ -219,7 +219,7 @@ def test_2d_patches(download_data_testing_test_files,
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [os.path.join(__data_testing_dir__, "microscopy_png")],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-    "target_suffix": ["_seg_myelin_manual", "_seg-axon-manual"],
+    "target_suffix": ["_seg-myelin-manual", "_seg-axon-manual"],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": [], "balance": {}},
