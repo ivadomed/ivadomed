@@ -219,7 +219,7 @@ def test_2d_patches(download_data_testing_test_files,
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [os.path.join(__data_testing_dir__, "microscopy_png")],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
-    "target_suffix": ["_seg-myelin-manual"],
+    "target_suffix": ["_seg_myelin_manual", "_seg-axon-manual"],
     "extensions": [".png"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": [], "balance": {}},
@@ -248,16 +248,16 @@ def test_get_target_filename_list(loader_parameters, model_parameters, transform
                                                              'transforms_params': transform_parameters,
                                                              'dataset_type': 'training'}})
 
-    test_subject = 'sub-unf02_T2star.nii.gz'
+    test_subject = 'sub-rat3_ses-01_sample-data9_SEM.png'
 
     all_deriv = bids_df.get_deriv_fnames()
     test_derivatives = bids_df.df[bids_df.df['filename']
                 .str.contains('|'.join(bids_df.get_derivatives(test_subject, all_deriv)))]['path'].to_list()
 
-    target_filename = [None]
+    target_filename = [None] * len(loader_parameters["target_suffix"])
 
     for test_deriv in test_derivatives:
-        target_filename = test_ds.get_target_filename(loader_parameters["target_suffix"], target_filename, test_deriv)
+        test_ds.get_target_filename(loader_parameters["target_suffix"], target_filename, test_deriv)
     
     assert len(target_filename) == len(loader_parameters["target_suffix"])
 
