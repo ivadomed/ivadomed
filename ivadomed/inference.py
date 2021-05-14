@@ -16,6 +16,31 @@ from ivadomed import utils as imed_utils
 from ivadomed import training as imed_training
 
 
+def get_preds(context, model, fname_model, onnx_inference, model_params, cuda_available, batch):
+    with torch.no_grad():
+        img = imed_utils.cuda(batch['input'], cuda_available=cuda_available)
+
+        if ('FiLMedUnet' in context and context['FiLMedUnet']['applied']) or \
+                ('HeMISUnet' in context and context['HeMISUnet']['applied']):
+            metadata = imed_training.get_metadata(batch["input_metadata"], model_params)
+            preds = model(img, metadata)
+
+        else:
+            preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
+
+        preds = preds.cpu()
+    return preds
+
+def get_onehotencoder(context, folder_model, options, ds):
+    metadata_dict = joblib.load(os.path.join(folder_model, 'metadata_dict.joblib'))
+    for idx in ds.indexes:
+        for i in range(len(idx)):
+            idx[i]['input_metadata'][0][context['FiLMedUnet']['metadata']] = options['metadata']
+            idx[i]['input_metadata'][0]['metadata_dict'] = metadata_dict
+
+    ds = imed_film.normalize_metadata(ds, None, context["debugging"], context['FiLMedUnet']['metadata'])
+    return joblib.load(os.path.join(folder_model, 'one_hot_encoder.joblib'))
+
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
                 discard_noise=True, postprocessing=None):
     """Save the network predictions as nibabel object.
@@ -100,6 +125,25 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
     return nib_pred
 
+def process_transformations(context, fname_roi, fname_prior, metadata, slice_axis, fname_images):
+    # If ROI is not provided then force center cropping
+    if fname_roi is None and 'ROICrop' in context["transformation"].keys():
+        print(
+            "\n WARNING: fname_roi has not been specified, then a cropping around the center of the image is "
+            "performed instead of a cropping around a Region of Interest.")
+
+        context["transformation"] = dict((key, value) if key != 'ROICrop'
+                                            else ('CenterCrop', value)
+                                            for (key, value) in context["transformation"].items())
+
+    if 'object_detection_params' in context and \
+            context['object_detection_params']['object_detection_path'] is not None:
+        imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis,
+                                            context['object_detection_params']['safety_factor'])
+        metadata = [metadata] * len(fname_images)
+    
+    return metadata
+
 def set_option(options, postpro, context, key):
     if options[key]:
         postpro[key] = {}
@@ -177,21 +221,7 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
         if 'roi_params' in loader_params and loader_params['roi_params']['suffix'] is not None:
             fname_roi = fname_prior
         # TRANSFORMATIONS
-        # If ROI is not provided then force center cropping
-        if fname_roi is None and 'ROICrop' in context["transformation"].keys():
-            print(
-                "\n WARNING: fname_roi has not been specified, then a cropping around the center of the image is "
-                "performed instead of a cropping around a Region of Interest.")
-
-            context["transformation"] = dict((key, value) if key != 'ROICrop'
-                                             else ('CenterCrop', value)
-                                             for (key, value) in context["transformation"].items())
-
-        if 'object_detection_params' in context and \
-                context['object_detection_params']['object_detection_path'] is not None:
-            imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis,
-                                               context['object_detection_params']['safety_factor'])
-            metadata = [metadata] * len(fname_images)
+        metadata = process_transformations(context, fname_roi, fname_prior, metadata, slice_axis, fname_images)
 
     # Compose transforms
     _, _, transform_test_params = imed_transforms.get_subdatasets_transforms(context["transformation"])
@@ -212,6 +242,8 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
                                                            transform=tranform_lst,
                                                            length=context["Modified3DUNet"]["length_3D"],
                                                            stride=context["Modified3DUNet"]["stride_3D"])
+        print("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
+                                                           context['Modified3DUNet']['length_3D']))
     else:
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
                                                   slice_axis=slice_axis,
@@ -220,27 +252,14 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
                                                   slice_filter_fn=imed_loader_utils.SliceFilter(
                                                       **loader_params["slice_filter_params"]))
         ds.load_filenames()
-
-    if kernel_3D:
-        print("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
-                                                           context['Modified3DUNet']['length_3D']))
-    else:
         print("\nLoaded {} {} slices.".format(len(ds), loader_params['slice_axis']))
 
     model_params = {}
     if 'FiLMedUnet' in context and context['FiLMedUnet']['applied']:
-        metadata_dict = joblib.load(os.path.join(folder_model, 'metadata_dict.joblib'))
-        for idx in ds.indexes:
-            for i in range(len(idx)):
-                idx[i]['input_metadata'][0][context['FiLMedUnet']['metadata']] = options['metadata']
-                idx[i]['input_metadata'][0]['metadata_dict'] = metadata_dict
-
-        ds = imed_film.normalize_metadata(ds, None, context["debugging"], context['FiLMedUnet']['metadata'])
-        onehotencoder = joblib.load(os.path.join(folder_model, 'one_hot_encoder.joblib'))
-
+        onehotencoder = get_onehotencoder(context, folder_model, options, ds)
         model_params.update({"name": 'FiLMedUnet',
-                             "film_onehotencoder": onehotencoder,
-                             "n_metadata": len([ll for l in onehotencoder.categories_ for ll in l])})
+                        "film_onehotencoder": onehotencoder,
+                        "n_metadata": len([ll for l in onehotencoder.categories_ for ll in l])})
 
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["training_parameters"]["batch_size"],
@@ -258,18 +277,7 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
     preds_list, slice_idx_list = [], []
     last_sample_bool, volume, weight_matrix = False, None, None
     for i_batch, batch in enumerate(data_loader):
-        with torch.no_grad():
-            img = imed_utils.cuda(batch['input'], cuda_available=cuda_available)
-
-            if ('FiLMedUnet' in context and context['FiLMedUnet']['applied']) or \
-                    ('HeMISUnet' in context and context['HeMISUnet']['applied']):
-                metadata = imed_training.get_metadata(batch["input_metadata"], model_params)
-                preds = model(img, metadata)
-
-            else:
-                preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
-
-            preds = preds.cpu()
+        preds = get_preds(context, model, fname_model, onnx_inference, model_params, cuda_available, batch)
 
         # Set datatype to gt since prediction should be processed the same way as gt
         for b in batch['input_metadata']:
@@ -277,40 +285,8 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
                 modality['data_type'] = 'gt'
 
         # Reconstruct 3D object
-        for i_slice in range(len(preds)):
-            if "bounding_box" in batch['input_metadata'][i_slice][0]:
-                imed_obj_detect.adjust_undo_transforms(undo_transforms.transforms, batch, i_slice)
-
-            batch['gt_metadata'] = [[metadata[0]] * preds.shape[1] for metadata in batch['input_metadata']]
-            if kernel_3D:
-                preds_undo, metadata, last_sample_bool, volume, weight_matrix = \
-                    volume_reconstruction(batch, preds, undo_transforms, i_slice, volume, weight_matrix)
-                preds_list = [np.array(preds_undo)]
-            else:
-                # undo transformations
-                preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
-                                                             batch["gt_metadata"][i_slice],
-                                                             data_type='gt')
-
-                # Add new segmented slice to preds_list
-                preds_list.append(np.array(preds_i_undo))
-                # Store the slice index of preds_i_undo in the original 3D image
-                slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
-
-            # If last batch and last sample of this batch, then reconstruct 3D object
-            if (i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1) or last_sample_bool:
-                pred_nib = pred_to_nib(data_lst=preds_list,
-                                       fname_ref=fname_images[0],
-                                       fname_out=None,
-                                       z_lst=slice_idx_list,
-                                       slice_axis=slice_axis,
-                                       kernel_dim='3d' if kernel_3D else '2d',
-                                       debug=False,
-                                       bin_thr=-1,
-                                       postprocessing=context['postprocessing'])
-
-                pred_list = split_classes(pred_nib)
-                target_list = context['loader_parameters']['target_suffix']
+        pred_list, target_list = reconstruct_3d_object(context, batch, undo_transforms, preds, kernel_3D, volume_reconstruction, 
+                                                        slice_axis, slice_idx_list, data_loader, fname_images, i_batch)
 
     return pred_list, target_list
 
@@ -330,6 +306,44 @@ def split_classes(nib_prediction):
         pred_list.append(class_pred)
     return pred_list
 
+def reconstruct_3d_object(context, batch, undo_transforms, preds, kernel_3D, volume_reconstruction, slice_axis, 
+                            slice_idx_list, data_loader, fname_images, i_batch):
+    for i_slice in range(len(preds)):
+        if "bounding_box" in batch['input_metadata'][i_slice][0]:
+            imed_obj_detect.adjust_undo_transforms(undo_transforms.transforms, batch, i_slice)
+
+        batch['gt_metadata'] = [[metadata[0]] * preds.shape[1] for metadata in batch['input_metadata']]
+        if kernel_3D:
+            preds_undo, metadata, last_sample_bool, volume, weight_matrix = \
+                volume_reconstruction(batch, preds, undo_transforms, i_slice, volume, weight_matrix)
+            preds_list = [np.array(preds_undo)]
+        else:
+            # undo transformations
+            preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
+                                                            batch["gt_metadata"][i_slice],
+                                                            data_type='gt')
+
+            # Add new segmented slice to preds_list
+            preds_list.append(np.array(preds_i_undo))
+            # Store the slice index of preds_i_undo in the original 3D image
+            slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
+
+        # If last batch and last sample of this batch, then reconstruct 3D object
+        if (i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1) or last_sample_bool:
+            pred_nib = pred_to_nib(data_lst=preds_list,
+                                    fname_ref=fname_images[0],
+                                    fname_out=None,
+                                    z_lst=slice_idx_list,
+                                    slice_axis=slice_axis,
+                                    kernel_dim='3d' if kernel_3D else '2d',
+                                    debug=False,
+                                    bin_thr=-1,
+                                    postprocessing=context['postprocessing'])
+
+            pred_list = split_classes(pred_nib)
+            target_list = context['loader_parameters']['target_suffix']
+
+        return pred_list, target_list
 
 def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, weight_matrix=None):
     """
