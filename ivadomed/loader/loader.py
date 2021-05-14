@@ -1221,7 +1221,7 @@ class BidsDataset(MRI2DSegmentationDataset):
                         .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
 
         for derivative in derivatives:
-            target_filename = self.get_target_filename(target_suffix, target_filename, derivative)
+            self.get_target_filename(target_suffix, target_filename, derivative)
             if not (self.roi_params["suffix"] is None) and self.roi_params["suffix"] in derivative:
                 roi_filename = [derivative]
 
