@@ -1136,18 +1136,18 @@ class BidsDataset(MRI2DSegmentationDataset):
         # Create filename_pairs
         for subject in tqdm(subject_file_lst, desc="Loading dataset"):
             df_sub, roi_filename, target_filename, metadata = self.create_filename_pair(multichannel_subjects, subject, 
-                                                                                c, tot, multichannel, df_subjects, 
-                                                                                contrast_params, target_suffix, 
-                                                                                all_deriv, bids_df, bounding_box_dict, 
-                                                                                idx_dict, metadata_choice)
+                                                                                        c, tot, multichannel, df_subjects, 
+                                                                                        contrast_params, target_suffix, 
+                                                                                        all_deriv, bids_df, bounding_box_dict, 
+                                                                                        idx_dict, metadata_choice)
             # Fill multichannel dictionary
             # subj_id is the filename without modality suffix and extension
             if multichannel:
                 multichannel_subjects = self.fill_multichannel_dict(multichannel_subjects, subject, idx_dict, df_sub, 
-                                                                roi_filename, target_filename, metadata)
+                                                                    roi_filename, target_filename, metadata)
             else:
                 self.filename_pairs.append(([df_sub['path'].values[0]],
-                                        target_filename, roi_filename, [metadata]))
+                                            target_filename, roi_filename, [metadata]))
 
         if multichannel:
             for subject in multichannel_subjects.values():
