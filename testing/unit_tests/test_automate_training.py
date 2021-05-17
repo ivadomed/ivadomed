@@ -89,8 +89,10 @@ For ``mult_params``:
 import pytest
 from ivadomed.scripts.automate_training import make_config_list, get_param_list, \
     HyperparameterOption
+from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.utils import generate_sha_256
 import logging
-from testing.unit_tests.t_utils import create_tmp_dir
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
@@ -692,6 +694,33 @@ def test_make_config_list(initial_config, all_combin, multi_params, param_list,
         assert config_option in expected_config_list
     for config_option in expected_config_list:
         assert config_option in config_list
+
+
+@pytest.mark.parametrize("initial_config", [initial_config])
+def test_config_sha256(download_data_testing_test_files, initial_config):
+    file_lst = ["sub-unf01_T2w.nii.gz"]
+    loader_params = {
+        "transforms_params": {},
+        "data_list": ['sub-unf01'],
+        "dataset_type": "testing",
+        "requires_undo": True,
+        "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
+        "path_data": [__data_testing_dir__],
+        "target_suffix": ["_lesion-manual"],
+        "extensions": [".nii.gz"],
+        "roi_params": {"suffix": "_seg-manual", "slice_filter_roi": 10},
+        "slice_filter_params": {
+            "filter_empty_mask": False,
+            "filter_empty_input": True
+        },
+        "slice_axis": "axial",
+        "multichannel": False
+    }
+
+    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    generate_sha_256(initial_config, bids_df.df, file_lst)
+    assert(initial_config['training_sha256']['sub-unf01_T2w.nii.gz'] ==
+           'f020b368fea15399fa112badd28b2df69e044dba5d23b3fe1646d12d7d3d39ac')
 
 
 def teardown_function():

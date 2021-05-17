@@ -2,6 +2,7 @@ import os
 import pytest
 import shutil
 from ivadomed.utils import init_ivadomed
+from ivadomed import config_manager as imed_config_manager
 from testing.common_testing_util import remove_tmp_dir, path_repo_root, path_temp, path_data_functional_source, \
     path_data_functional_tmp, download_dataset
 
@@ -18,6 +19,22 @@ def download_functional_test_files():
     This fixture will attempt to download test data file if there are not present.
     """
     download_dataset("data_functional_testing")
+
+
+def check_sha256(file_config):
+    """
+    This function checks if sha256 is generated in according to config file
+    """
+    initial_config = imed_config_manager.ConfigurationManager(file_config).get_config()
+    result = []
+    name = "config_file.json"
+    for root, dirs, files in os.walk(os.path.dirname(initial_config["path_output"])):
+        if name in files:
+            result.append(os.path.join(root, name))
+    assert result != []
+    for generated_config in result:
+        config = imed_config_manager.ConfigurationManager(generated_config).get_config()
+        assert 'training_sha256' in config
 
 
 def create_tmp_dir(copy_data_testing_dir=True):
