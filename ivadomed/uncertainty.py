@@ -76,7 +76,7 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
     # save prob segmentation
     nib_prob = nib.Nifti1Image(
         dataobj=data_prob,
-        affine=None,
+        affine=header.get_best_affine(),
         header=header.copy()
     )
     nib.save(nib_prob, fname_prob)
@@ -86,7 +86,7 @@ def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
     # save hard segmentation
     nib_hard = nib.Nifti1Image(
         dataobj=data_hard,
-        affine=None,
+        affine=header.get_best_affine(),
         header=header.copy()
     )
     nib.save(nib_hard, fname_hard)
@@ -104,7 +104,7 @@ def voxelwise_uncertainty(fname_lst, fname_out, eps=1e-5):
     """
     # collect all MC simulations
     mc_data = np.array([nib.load(fname).get_fdata() for fname in fname_lst])
-    affine = nib.load(fname_lst[0]).affine
+    affine = nib.load(fname_lst[0]).header.get_best_affine()
 
     # entropy
     unc = np.repeat(np.expand_dims(mc_data, -1), 2, -1)  # n_it, x, y, z, 2
@@ -227,9 +227,9 @@ def structurewise_uncertainty(fname_lst, fname_hard, fname_unc_vox, fname_out):
     fname_iou = fname_out.split('.nii.gz')[0] + '-iou.nii.gz'
     fname_cv = fname_out.split('.nii.gz')[0] + '-cv.nii.gz'
     fname_avgUnc = fname_out.split('.nii.gz')[0] + '-avgUnc.nii.gz'
-    nib_iou = nib.Nifti1Image(data_iou, nib_hard.affine)
-    nib_cv = nib.Nifti1Image(data_cv, nib_hard.affine)
-    nib_avgUnc = nib.Nifti1Image(data_avgUnc, nib_hard.affine)
+    nib_iou = nib.Nifti1Image(data_iou, nib_hard.header.get_best_affine())
+    nib_cv = nib.Nifti1Image(data_cv, nib_hard.header.get_best_affine())
+    nib_avgUnc = nib.Nifti1Image(data_avgUnc, nib_hard.header.get_best_affine())
     nib.save(nib_iou, fname_iou)
     nib.save(nib_cv, fname_cv)
     nib.save(nib_avgUnc, fname_avgUnc)

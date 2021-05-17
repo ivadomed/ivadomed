@@ -35,7 +35,7 @@ def get_midslice_average(path_im, ind, slice_axis=0):
                                                    image_can).astype('float32')
     nib_pred = nib.Nifti1Image(
         dataobj=arr_pred_ref_space,
-        affine=None,
+        affine=image.header.get_best_affine(),
         header=image.header.copy()
     )
 

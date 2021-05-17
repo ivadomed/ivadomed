@@ -81,7 +81,7 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
         fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
         nib_painted = nib.Nifti1Image(
             dataobj=data_painted,
-            affine=None,
+            affine=nib_pred.header.get_best_affine(),
             header=nib_pred.header.copy()
         )
         nib.save(nib_painted, fname_paint)
