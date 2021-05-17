@@ -86,7 +86,7 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
 
             heatmap = imed_maths.heatmap_generation(label_array[:, :], 10)
             arr_pred_ref_space = imed_loader_utils.reorient_image(np.expand_dims(heatmap[:, :], axis=0), 2, lab, nib_ref_can)
-            nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
+            nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.header.get_best_affine())
             nib.save(nib_pred, os.path.join(path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
                                             '_mid_heatmap' + str(aim) + '.nii.gz'))
         else:
