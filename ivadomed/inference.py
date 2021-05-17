@@ -5,7 +5,9 @@ import onnxruntime
 import torch
 import joblib
 
+from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
+from ivadomed.transforms import UndoCompose
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
@@ -32,12 +34,12 @@ def onnx_inference(model_path, inputs):
     ort_outs = ort_session.run(None, ort_inputs)
     return torch.tensor(ort_outs[0])
 
-def get_preds(context: dict, model: Any, fname_model: str, model_params: dict, cuda_available: bool, batch: dict):
+def get_preds(context: dict, model, fname_model: str, model_params: dict, cuda_available: bool, batch: dict):
     """Returns the predictions from the given model.
 
     Args:
         context (dict): configuration dict.
-        model (Any): model used to obtain predictions.
+        model: model used to obtain predictions.
         fname_model (str): name of file containing model.
         model_params (dict): dictionary containing model parameters.
         cuda_available (bool): true if cuda is available.
@@ -45,7 +47,7 @@ def get_preds(context: dict, model: Any, fname_model: str, model_params: dict, c
 
 
     Returns:
-        tensor: predictions from the model.
+        Tensor: predictions from the model.
     """
     with torch.no_grad():
         img = imed_utils.cuda(batch['input'], cuda_available=cuda_available)
@@ -61,14 +63,14 @@ def get_preds(context: dict, model: Any, fname_model: str, model_params: dict, c
         preds = preds.cpu()
     return preds
 
-def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: MRI2DSegmentationDataset):
+def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Dataset):
     """Returns one hot encoder which is needed to update the model parameters when FiLMedUnet is applied.
 
     Args:
         context (dict): configuration dict.
         folder_model (str): foldername which contains trained model and its configuration file.
         options (dict): contains postprocessing steps and prior filename containing processing information
-        ds (MRI2DSegmentationDataset): dataset used for the segmentation.
+        ds (Dataset): dataset used for the segmentation.
 
     Returns:
         dict: onehotencoder used in the model params.
@@ -382,7 +384,7 @@ def split_classes(nib_prediction):
         pred_list.append(class_pred)
     return pred_list
 
-def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: tensor, preds_list: list, 
+def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: torch.Tensor, preds_list: list, 
                             kernel_3D: bool, slice_axis: int, slice_idx_list: list, data_loader: DataLoader, 
                             fname_images: list, i_batch: int):
     """Reconstructs the 3D object from the current batch, and returns the list of predictions and
@@ -392,7 +394,7 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         context (dict): configuration dict.
         batch (dict): Dictionary containing input, gt and metadata
         undo_transforms (UndoCompose): Undo transforms so prediction match original image resolution and shap
-        pred (tensor): Subvolume prediction
+        pred (Tensor): Subvolume prediction
         preds_list (list of tensor): list of subvolume predictions.
         kernel_3D (bool): true when using 3D kernel.
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
