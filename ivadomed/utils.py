@@ -2,10 +2,6 @@ import logging
 import os
 import sys
 import subprocess
-import matplotlib
-import matplotlib.pyplot as plt
-import pandas as pd
-import torch
 import hashlib
 from enum import Enum
 
@@ -72,7 +68,7 @@ def unstack_tensors(sample):
     return list_tensor
 
 
-def generate_sha_256(context: dict, df: pd.DataFrame, file_lst: List[str]) -> None:
+def generate_sha_256(context: dict, df, file_lst: List[str]) -> None:
     """generate sha256 for a training file
 
     Args:
@@ -80,6 +76,9 @@ def generate_sha_256(context: dict, df: pd.DataFrame, file_lst: List[str]) -> No
         df (pd.DataFrame): Dataframe containing all BIDS image files indexed and their metadata.
         file_lst (List[str]): list of strings containing training files
     """
+    from pandas import DataFrame
+    assert isinstance(df, DataFrame)
+
     # generating sha256 for list of data
     context['training_sha256'] = {}
     # file_list is a list of filename strings
@@ -103,6 +102,7 @@ def save_onnx_model(model, inputs, model_path):
         inputs (Tensor): Tensor, used to inform shape and axes.
         model_path (str): Output filename for the ONNX model.
     """
+    import torch
     model.eval()
     dynamic_axes = {0: 'batch', 1: 'num_channels', 2: 'height', 3: 'width', 4: 'depth'}
     if len(inputs.shape) == 4:
@@ -123,6 +123,7 @@ def define_device(gpu_id):
     Returns:
         Bool, device: True if cuda is available.
     """
+    import torch
     device = torch.device("cuda:" + str(gpu_id) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
@@ -170,6 +171,8 @@ def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="je
         fname_out (str): Output filename where the plot is saved if provided.
         cmap (str): Matplotlib colour map.
     """
+    import matplotlib
+    import matplotlib.pyplot as plt
     if len(list_title) == 0:
         list_title = ['Sample before transform', 'Sample after transform']
 
