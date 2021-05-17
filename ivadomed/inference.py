@@ -91,8 +91,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     # See: https://github.com/ivadomed/ivadomed/issues/711
     nib_pred = nib.Nifti1Image(
         dataobj=arr_pred_ref_space,
-        affine=None,
-        header=nib_ref.header.copy()
+        affine=nib_ref.header.get_best_affine()
     )
     # save as nifti file
     if fname_out is not None:
