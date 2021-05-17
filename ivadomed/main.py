@@ -310,8 +310,8 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     path_output = set_output_path(context)
     log_file = os.path.join(context['path_output'], context['log_file'])
     logger.remove()
-    logger.add(log_file, format="{time} {level} {message}", level="INFO")
-    logger.add(sys.stdout, format="{time} {level} {message}", level="INFO")
+    logger.add(log_file)
+    logger.add(sys.stdout)
 
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
     create_dataset_and_ivadomed_version_log(context)
