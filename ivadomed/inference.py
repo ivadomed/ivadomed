@@ -16,7 +16,37 @@ from ivadomed import utils as imed_utils
 from ivadomed import training as imed_training
 
 
-def get_preds(context, model, fname_model, onnx_inference, model_params, cuda_available, batch):
+def onnx_inference(model_path, inputs):
+    """Run ONNX inference
+
+    Args:
+        model_path (str): Path to the ONNX model.
+        inputs (Tensor): Batch of input image.
+
+    Returns:
+        Tensor: Network output.
+    """
+    inputs = np.array(inputs.cpu())
+    ort_session = onnxruntime.InferenceSession(model_path)
+    ort_inputs = {ort_session.get_inputs()[0].name: inputs}
+    ort_outs = ort_session.run(None, ort_inputs)
+    return torch.tensor(ort_outs[0])
+
+def get_preds(context: dict, model: Any, fname_model: str, model_params: dict, cuda_available: bool, batch: dict):
+    """Returns the predictions from the given model.
+
+    Args:
+        context (dict): configuration dict.
+        model (Any): model used to obtain predictions.
+        fname_model (str): name of file containing model.
+        model_params (dict): dictionary containing model parameters.
+        cuda_available (bool): true if cuda is available.
+        batch (dict): dictionary containing input, gt and metadata
+
+
+    Returns:
+        tensor: predictions from the model.
+    """
     with torch.no_grad():
         img = imed_utils.cuda(batch['input'], cuda_available=cuda_available)
 
@@ -31,7 +61,18 @@ def get_preds(context, model, fname_model, onnx_inference, model_params, cuda_av
         preds = preds.cpu()
     return preds
 
-def get_onehotencoder(context, folder_model, options, ds):
+def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: MRI2DSegmentationDataset):
+    """Returns one hot encoder which is needed to update the model parameters when FiLMedUnet is applied.
+
+    Args:
+        context (dict): configuration dict.
+        folder_model (str): foldername which contains trained model and its configuration file.
+        options (dict): contains postprocessing steps and prior filename containing processing information
+        ds (MRI2DSegmentationDataset): dataset used for the segmentation.
+
+    Returns:
+        dict: onehotencoder used in the model params.
+    """
     metadata_dict = joblib.load(os.path.join(folder_model, 'metadata_dict.joblib'))
     for idx in ds.indexes:
         for i in range(len(idx)):
@@ -39,6 +80,7 @@ def get_onehotencoder(context, folder_model, options, ds):
             idx[i]['input_metadata'][0]['metadata_dict'] = metadata_dict
 
     ds = imed_film.normalize_metadata(ds, None, context["debugging"], context['FiLMedUnet']['metadata'])
+
     return joblib.load(os.path.join(folder_model, 'one_hot_encoder.joblib'))
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
@@ -125,8 +167,22 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
     return nib_pred
 
-def process_transformations(context, fname_roi, fname_prior, metadata, slice_axis, fname_images):
-    # If ROI is not provided then force center cropping
+def process_transformations(context: dict, fname_roi: str, fname_prior: str, metadata: dict, slice_axis: int, 
+                            fname_images: list):
+    """Sets the transformation based on context parameters. When ROI is not provided center-cropping is applied.
+       If there is an object_detection_path, then we modify the metadata to store transformation data.
+
+    Args:
+        context (dict): configuration dictionary.
+        fname_roi (str): filename containing region for cropping image prior to segmentation.
+        fname_prior (str): prior image filename.
+        metadata (dict): metadata used in setting bounding box when we have object_detection_params.
+        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
+        fname_images (list): list of image filenames (e.g. .nii.gz) to segment.
+
+    Returns:
+        dict: metadata.
+    """
     if fname_roi is None and 'ROICrop' in context["transformation"].keys():
         print(
             "\n WARNING: fname_roi has not been specified, then a cropping around the center of the image is "
@@ -144,7 +200,20 @@ def process_transformations(context, fname_roi, fname_prior, metadata, slice_axi
     
     return metadata
 
-def set_option(options, postpro, context, key):
+def set_option(options: dict, postpro: dict, context: dict, key: str):
+    """Generalized function that sets postprocessing option based on given list of options.
+       When given key already exists in options, we initialize the key value for the postprocessing dictionary
+       Otherwise, when the key is already found in the postprocessing attritute of the context, we remove it
+
+    Args:
+        options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename.
+        postpro (dict): postprocessing settings.
+        context (dict): Configuration dict.
+        key (str): The key of the postprocessing option we wish to set.
+
+    Returns:
+        dict: postprocessing settings.
+    """
     if options[key]:
         postpro[key] = {}
     # Remove key in context if value set to 0
@@ -152,7 +221,14 @@ def set_option(options, postpro, context, key):
         del context['postprocessing'][key]
     return postpro
 
-def set_postprocessing_options(options, context):
+def set_postprocessing_options(options: dict, context: dict):
+    """Updates the postprocessing options based on existing settings found in options.
+
+    Args:
+        options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename.
+        context (dict): Configuration dict.
+
+    """
     postpro = {}
 
     if 'binarize_prediction' in options and options['binarize_prediction']:
@@ -275,9 +351,9 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
 
     # Loop across batches
     preds_list, slice_idx_list = [], []
-    last_sample_bool, volume, weight_matrix = False, None, None
+
     for i_batch, batch in enumerate(data_loader):
-        preds = get_preds(context, model, fname_model, onnx_inference, model_params, cuda_available, batch)
+        preds = get_preds(context, model, fname_model, model_params, cuda_available, batch)
 
         # Set datatype to gt since prediction should be processed the same way as gt
         for b in batch['input_metadata']:
@@ -285,9 +361,8 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
                 modality['data_type'] = 'gt'
 
         # Reconstruct 3D object
-        pred_list, target_list = reconstruct_3d_object(context, batch, undo_transforms, preds, preds_list, kernel_3D, volume, 
-                                                        volume_reconstruction, weight_matrix, slice_axis, slice_idx_list, 
-                                                        data_loader, fname_images, i_batch, last_sample_bool)
+        pred_list, target_list = reconstruct_3d_object(context, batch, undo_transforms, preds, preds_list, kernel_3D, 
+                                                        slice_axis, slice_idx_list, data_loader, fname_images, i_batch)
 
     return pred_list, target_list
 
@@ -307,9 +382,29 @@ def split_classes(nib_prediction):
         pred_list.append(class_pred)
     return pred_list
 
-def reconstruct_3d_object(context, batch, undo_transforms, preds, preds_list, kernel_3D, volume, 
-                            volume_reconstruction, weight_matrix, slice_axis, slice_idx_list, 
-                            data_loader, fname_images, i_batch, last_sample_bool):
+def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: tensor, preds_list: list, 
+                            kernel_3D: bool, slice_axis: int, slice_idx_list: list, data_loader: DataLoader, 
+                            fname_images: list, i_batch: int):
+    """Reconstructs the 3D object from the current batch, and returns the list of predictions and
+       targets.
+
+    Args:
+        context (dict): configuration dict.
+        batch (dict): Dictionary containing input, gt and metadata
+        undo_transforms (UndoCompose): Undo transforms so prediction match original image resolution and shap
+        pred (tensor): Subvolume prediction
+        preds_list (list of tensor): list of subvolume predictions.
+        kernel_3D (bool): true when using 3D kernel.
+        slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
+        slice_idx_list (list of int): list of indices for the axis slices.
+        data_loader (DataLoader): DataLoader object containing batches using in object construction.
+        fname_images (list): list of image filenames (e.g. .nii.gz) to segment.
+        i_batch (int): index of current batch.
+
+    Returns:
+        pred_list, target_list.
+    """
+    last_sample_bool, weight_matrix, volume = False, None, None
     pred_list = []
     target_list = []
     for i_slice in range(len(preds)):
@@ -385,20 +480,3 @@ def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, we
                                           batch['gt_metadata'][smp_idx],
                                           data_type='gt')
     return pred_undo, metadata, last_sample_bool, volume, weight_matrix
-
-
-def onnx_inference(model_path, inputs):
-    """Run ONNX inference
-
-    Args:
-        model_path (str): Path to the ONNX model.
-        inputs (Tensor): Batch of input image.
-
-    Returns:
-        Tensor: Network output.
-    """
-    inputs = np.array(inputs.cpu())
-    ort_session = onnxruntime.InferenceSession(model_path)
-    ort_inputs = {ort_session.get_inputs()[0].name: inputs}
-    ort_outs = ort_session.run(None, ort_inputs)
-    return torch.tensor(ort_outs[0])
