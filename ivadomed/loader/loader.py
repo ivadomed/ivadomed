@@ -1110,9 +1110,9 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         # Create multichannel_subjects dictionary for each subject_id
         multichannel_subjects = {}
+        idx_dict = {}
         if multichannel:
             num_contrast = len(contrast_params["contrast_lst"])
-            idx_dict = {}
             for idx, contrast in enumerate(contrast_params["contrast_lst"]):
                 idx_dict[contrast] = idx
             multichannel_subjects = {subject: {"absolute_paths": [None] * num_contrast,
@@ -1135,74 +1135,16 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         # Create filename_pairs
         for subject in tqdm(subject_file_lst, desc="Loading dataset"):
-
-            df_sub = df_subjects.loc[df_subjects['filename'] == subject]
-
-            # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
-            contrast = df_sub['suffix'].values[0]
-            if contrast in (contrast_params["balance"].keys()):
-                c[contrast] = c[contrast] + 1
-                if c[contrast] / tot[contrast] > contrast_params["balance"][contrast]:
-                    continue
-            if isinstance(target_suffix[0], str):
-                target_filename, roi_filename = [None] * len(target_suffix), None
-            else:
-                target_filename, roi_filename = [[] for _ in range(len(target_suffix))], None
-
-            derivatives = bids_df.df[bids_df.df['filename']
-                          .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
-
-            for deriv in derivatives:
-                for idx, suffix_list in enumerate(target_suffix):
-                    # If suffix_list is a string, then only one rater annotation per class is available.
-                    # Otherwise, multiple raters segmented the same class.
-                    if isinstance(suffix_list, list):
-                        for suffix in suffix_list:
-                            if suffix in deriv:
-                                target_filename[idx].append(deriv)
-                    elif suffix_list in deriv:
-                        target_filename[idx] = deriv
-                if not (self.roi_params["suffix"] is None) and self.roi_params["suffix"] in deriv:
-                    roi_filename = [deriv]
-
-            if (not any(target_filename)) or (not (self.roi_params["suffix"] is None) and (roi_filename is None)):
-                continue
-
-            metadata = df_sub.to_dict(orient='records')[0]
-            metadata['contrast'] = contrast
-
-            if len(bounding_box_dict):
-                # Take only one bounding box for cropping
-                metadata['bounding_box'] = bounding_box_dict[str(df_sub['path'].values[0])][0]
-
-            if metadata_choice == 'mri_params':
-                if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
-                            self.metadata.keys()]):
-                    continue
-
-            elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
-                # add custom data to metadata
-                if metadata_choice not in df_sub.columns:
-                    raise ValueError("The following metadata cannot be found: {}. "
-                                     "Invalid metadata choice.".format(metadata_choice))
-                metadata[metadata_choice] = df_sub[metadata_choice].values[0]
-                # Create metadata dict for OHE
-                data_lst = sorted(set(bids_df.df[metadata_choice].dropna().values))
-                metadata_dict = {}
-                for idx, data in enumerate(data_lst):
-                    metadata_dict[data] = idx
-                metadata['metadata_dict'] = metadata_dict
-
+            df_sub, roi_filename, target_filename, metadata = self.create_filename_pair(multichannel_subjects, subject, 
+                                                                                        c, tot, multichannel, df_subjects, 
+                                                                                        contrast_params, target_suffix, 
+                                                                                        all_deriv, bids_df, bounding_box_dict, 
+                                                                                        idx_dict, metadata_choice)
             # Fill multichannel dictionary
             # subj_id is the filename without modality suffix and extension
             if multichannel:
-                idx = idx_dict[df_sub['suffix'].values[0]]
-                subj_id = subject.split('.')[0].split('_')[0]
-                multichannel_subjects[subj_id]["absolute_paths"][idx] = df_sub['path'].values[0]
-                multichannel_subjects[subj_id]["deriv_path"] = target_filename
-                multichannel_subjects[subj_id]["metadata"][idx] = metadata
-                if roi_filename:
-                    multichannel_subjects[subj_id]["roi_filename"] = roi_filename
+                multichannel_subjects = self.fill_multichannel_dict(multichannel_subjects, subject, idx_dict, df_sub, 
+                                                                    roi_filename, target_filename, metadata)
             else:
                 self.filename_pairs.append(([df_sub['path'].values[0]],
                                             target_filename, roi_filename, [metadata]))
@@ -1222,3 +1164,82 @@ class BidsDataset(MRI2DSegmentationDataset):
 
         super().__init__(self.filename_pairs, length, stride, slice_axis, cache, transform, slice_filter_fn, task, self.roi_params,
                          self.soft_gt, is_input_dropout)
+
+    def get_target_filename(self, target_suffix, target_filename, derivative):
+        for idx, suffix_list in enumerate(target_suffix):
+            # If suffix_list is a string, then only one rater annotation per class is available.
+            # Otherwise, multiple raters segmented the same class.
+            if isinstance(suffix_list, list):
+                for suffix in suffix_list:
+                    if suffix in derivative:
+                        target_filename[idx].append(derivative)
+            elif suffix_list in derivative:
+                target_filename[idx] = derivative
+            
+
+    def create_metadata_dict(self, metadata_choice, df_sub, bids_df):
+        # add custom data to metadata
+        if metadata_choice not in df_sub.columns:
+            raise ValueError("The following metadata cannot be found: {}. "
+                                "Invalid metadata choice.".format(metadata_choice))
+        metadata[metadata_choice] = df_sub[metadata_choice].values[0]
+        # Create metadata dict for OHE
+        data_lst = sorted(set(bids_df.df[metadata_choice].dropna().values))
+        metadata_dict = {}
+        for idx, data in enumerate(data_lst):
+            metadata_dict[data] = idx
+        metadata['metadata_dict'] = metadata_dict
+
+    def fill_multichannel_dict(self, multichannel_subjects, subject, idx_dict, df_sub, roi_filename, target_filename, metadata):
+        idx = idx_dict[df_sub['suffix'].values[0]]
+        subj_id = subject.split('.')[0].split('_')[0]
+        multichannel_subjects[subj_id]["absolute_paths"][idx] = df_sub['path'].values[0]
+        multichannel_subjects[subj_id]["deriv_path"] = target_filename
+        multichannel_subjects[subj_id]["metadata"][idx] = metadata
+        if roi_filename:
+            multichannel_subjects[subj_id]["roi_filename"] = roi_filename
+        return multichannel_subjects
+
+
+    def create_filename_pair(self, multichannel_subjects, subject, c, tot, multichannel, df_subjects, contrast_params, 
+                            target_suffix, all_deriv, bids_df, bounding_box_dict, idx_dict, metadata_choice):
+        df_sub = df_subjects.loc[df_subjects['filename'] == subject]
+
+        # Training & Validation: do not consider the contrasts over the threshold contained in contrast_balance
+        contrast = df_sub['suffix'].values[0]
+        if contrast in (contrast_params["balance"].keys()):
+            c[contrast] = c[contrast] + 1
+            if c[contrast] / tot[contrast] > contrast_params["balance"][contrast]:
+                return
+        if isinstance(target_suffix[0], str):
+            target_filename, roi_filename = [None] * len(target_suffix), None
+        else:
+            target_filename, roi_filename = [[] for _ in range(len(target_suffix))], None
+
+        derivatives = bids_df.df[bids_df.df['filename']
+                        .str.contains('|'.join(bids_df.get_derivatives(subject, all_deriv)))]['path'].to_list()
+
+        for derivative in derivatives:
+            self.get_target_filename(target_suffix, target_filename, derivative)
+            if not (self.roi_params["suffix"] is None) and self.roi_params["suffix"] in derivative:
+                roi_filename = [derivative]
+
+        if (not any(target_filename)) or (not (self.roi_params["suffix"] is None) and (roi_filename is None)):
+            return
+
+        metadata = df_sub.to_dict(orient='records')[0]
+        metadata['contrast'] = contrast
+
+        if len(bounding_box_dict):
+            # Take only one bounding box for cropping
+            metadata['bounding_box'] = bounding_box_dict[str(df_sub['path'].values[0])][0]
+
+        if metadata_choice == 'mri_params':
+            if not all([imed_film.check_isMRIparam(m, metadata, subject, self.metadata) for m in
+                        self.metadata.keys()]):
+                return
+
+        elif metadata_choice and metadata_choice != 'contrasts' and metadata_choice is not None:
+            self.create_metadata_dict(metadata_choice, df_sub, bids_df)
+        
+        return df_sub, roi_filename, target_filename, metadata
