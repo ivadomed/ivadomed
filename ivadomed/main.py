@@ -345,6 +345,9 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
                                                                                           context["loader_parameters"]
                                                                                           ['subject_selection'])
 
+    # Generating sha256 for the training files
+    imed_utils.generate_sha_256(context, bids_df.df, train_lst)
+
     # TESTING PARAMS
     # Aleatoric uncertainty
     if context['uncertainty']['aleatoric'] and context['uncertainty']['n_it'] > 0:

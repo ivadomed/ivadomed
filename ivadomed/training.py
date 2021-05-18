@@ -258,10 +258,12 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
 
                     # Add frame to GIF
                     for i_ in range(len(input_samples)):
-                        im, pr, met = input_samples[i_].cpu().numpy()[0], preds[i_].cpu().numpy()[0], \
-                                      batch["input_metadata"][i_][0]
-                        if model_params["name"] == "HourglassNet":                           
-                           pr = np.sum(preds[i_].cpu().numpy(), axis=0) 
+                        im = input_samples[i_].cpu().numpy()[0]
+                        met = batch["input_metadata"][i_][0]
+                        if model_params["name"] == "HourglassNet":
+                            pr = np.sum(preds[i_].cpu().numpy(), axis=0)
+                        else:
+                            pr = preds[i_].cpu().numpy()[0]
                         for i_gif in range(n_gif):
                             if gif_dict["image_path"][i_gif] == met.__getitem__('input_filenames') and \
                                     gif_dict["slice_id"][i_gif] == met.__getitem__('slice_index'):
