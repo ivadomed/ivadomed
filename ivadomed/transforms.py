@@ -3,7 +3,6 @@ import functools
 import math
 import numbers
 import random
-
 import numpy as np
 import torch
 from scipy.ndimage import zoom
@@ -13,7 +12,7 @@ from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 from skimage.exposure import equalize_adapthist
 from skimage.transform import resize
-import cv2
+from skimage import measure
 from torchvision import transforms as torchvision_transforms
 
 from ivadomed.loader import utils as imed_loader_utils
@@ -342,32 +341,26 @@ class VertebralSplitting(ImedTransform):
 
     @multichannel_capable
     def undo_transform(self, sample, metadata=None):
-        # Nothing
-        # data_out = np.sum(sample, axis=-1)
+
         return data_out, metadata
 
     def get_posedata(self, msk, num_ch):
-        # msk = np.flip(msk, axis=1)
-        # msk = np.flip(msk, axis=0)
 
-        # msk = self.rotate_img(msk)
         ys = msk.shape
         ys_ch = np.zeros([ys[0], ys[1], num_ch])
         msk_uint = np.uint8(np.where(msk>0.2, 1, 0))
         
-        num_labels, labels_im = cv2.connectedComponents(msk_uint)
+        labels_im, num_labels = measure.label(msk_uint, background=0, return_num=True)
         try:
             # the <0> label is the background
-            for i in range(1, num_labels):
+            for i in range(1, num_labels+1):
                 y_i = msk * np.where(labels_im == i, 1, 0)
                 ys_ch[:,:, i-1] = y_i
         except:
             pass
-            
-        # ys_ch = np.rot90(ys_ch)
-        # ys_ch = np.flip(ys_ch, axis=1)
+
         vis = np.zeros((num_ch, 1))
-        vis[:num_labels-1] = 1
+        vis[:num_labels] = 1
         return ys_ch, vis
 
     @multichannel_capable
