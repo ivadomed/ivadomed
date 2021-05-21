@@ -5,7 +5,7 @@ from os import path
 # Manually specified, more generic version of the software.
 # See: https://stackoverflow.com/a/49684835
 with open('requirements_common.txt') as f:
-    requirements = f.read().splitlines()
+    requirements = f.readlines()
 
 # Get README
 this_directory = path.abspath(path.dirname(__file__))

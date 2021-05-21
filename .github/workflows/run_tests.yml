@@ -58,15 +58,15 @@ jobs:
       # Step 2: Install requirement dependencies.
       - name: Install dependencies
         uses: py-actions/py-dependency-install@v2
+        with:
+          path: "requirements_dev.txt"
 
       # Step 3: install additional pytest/dev related dependencies
-      - name: Install dev dependencies
+      - name: Install IvadoMed Main Modules
         run: |
-          pip install flake8 pytest coverage coveralls pytest-cov pytest-console-scripts pytest-ordering
-          pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
           pip install -e .
 
-      # Step 3: Lint.
+      # Step 4: Lint.
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
@@ -74,7 +74,7 @@ jobs:
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-      # Step 4: Full Pytest
+      # Step 5: Full Pytest
       - name: Test with pytest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

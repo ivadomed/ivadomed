@@ -27,7 +27,7 @@ Write in your .bashrc/.zshrc file with following line.
 
 Save this change and restart your terminal to apply the change.
 
-There are fundamentally two different approaches to install IvadoMed:
+There are fundamentally two different approaches to install ``IvadoMed``:
 
 1) Install via Conda
     This is the easiest way for personal computers.

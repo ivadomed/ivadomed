@@ -40,7 +40,7 @@ jobs:
       - name: Install dependencies
         run: |
               python -m pip install --upgrade pip
-              if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
+              if [[ -f requirements_dev.txt ]]; then pip install -r requirements_dev.txt; fi
               pip install -e .
               pre-commit install
         shell: bash

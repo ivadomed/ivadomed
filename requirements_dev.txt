@@ -4,10 +4,15 @@
 # Dev:
 # Development, documentation, testing related dependencies.
 pytest
+pytest-cov
+pytest-console-scripts
 pytest-ordering
 sphinx
+flake8
+coverage
+coveralls
 pypandoc
 sphinx_rtd_theme
-sphinx-jsonschema
-pytest-console-scripts
+sphinx-jsonschema~=1.16
+pytest-console-scripts~=1.1
 pre-commit==2.10.1
