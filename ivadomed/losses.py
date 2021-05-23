@@ -427,7 +427,7 @@ class JointsMSELoss(nn.Module):
 
     def forward(self, output, target_and_weights):
         target, target_weight = target_and_weights
-
+        target = target.float()
         batch_size = output.size(0)
         num_joints = output.size(1)
         heatmaps_pred = output.reshape((batch_size, num_joints, -1)).split(1, 1)
