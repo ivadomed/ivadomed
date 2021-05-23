@@ -221,10 +221,11 @@ class Resample(ImedTransform):
         interpolation_order (int): Order of spline interpolation. Set to 0 for label data. Default=2.
     """
 
-    def __init__(self, hspace, wspace, dspace=1.):
+    def __init__(self, hspace, wspace, dspace=1., flag_pixel = False):
         self.hspace = hspace
         self.wspace = wspace
         self.dspace = dspace
+        self.flag_pixel = flag_pixel
 
     @multichannel_capable
     @two_dim_compatible
@@ -263,70 +264,23 @@ class Resample(ImedTransform):
 
         if len(zooms) == 2:
             zooms += [1.0]
-
-        hfactor = zooms[0] / self.hspace
-        wfactor = zooms[1] / self.wspace
-        dfactor = zooms[2] / self.dspace
+        if self.flag_pixel:
+            hfactor = self.hspace / sample.shape[0]
+            wfactor = self.wspace / sample.shape[1]
+            dfactor = self.dspace / sample.shape[2]
+        else:     
+            hfactor = zooms[0] / self.hspace
+            wfactor = zooms[1] / self.wspace
+            dfactor = zooms[2] / self.dspace
         params_resample = (hfactor, wfactor, dfactor) if not is_2d else (hfactor, wfactor, 1.0)
 
         # Run resampling
         data_out = zoom(sample,
                         zoom=params_resample,
                         order=1 if metadata['data_type'] == 'gt' else 2)
-
         # Data type
         data_out = data_out.astype(sample.dtype)
 
-        return data_out, metadata
-
-
-class Resize(ImedTransform):
-    """
-    Resize image to a given resolution.
-
-    Args:
-        height (int): Resolution along the first axis, in pixel.
-        width  (int): Resolution along the second axis, in pixel.
-        interpolation_order (int): different strategies for interpolation. 
-    """
-
-    def __init__(self, height, width, interpolation=None):
-        self.height = height
-        self.width  = width
-
-    @multichannel_capable
-    @two_dim_compatible
-    def undo_transform(self, sample, metadata=None):
-        """Resize to original resolution."""
-        assert "data_shape" in metadata
-        
-        # Get params
-        original_shape = metadata["preresize_shape"]
-        current_shape = sample.shape
-        
-        # Undo resampling
-        data_out = resize(sample, original_shape[:2])
-
-        # Data type
-        data_out = data_out.astype(sample.dtype)
-
-        return data_out, metadata
-
-    @multichannel_capable
-    @multichannel_capable  # for multiple raters during training/preprocessing
-    @two_dim_compatible
-    def __call__(self, sample, metadata=None):
-        """Resize to a given resolution, in pixel."""
-        # Get params
-        # Voxel dimension in mm
-        is_2d = sample.shape[-1] == 1
-        metadata['preresize_shape'] = sample.shape
-        
-        # Run resizing
-        data_out = resize(sample, (self.height, self.width))
-
-        # Data type
-        data_out = data_out.astype(sample.dtype)
         return data_out, metadata
 
 
