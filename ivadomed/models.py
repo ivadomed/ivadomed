@@ -1434,7 +1434,7 @@ class HGBottleneck(nn.Module):
     """Bottleneck of the Hourglass Network.
        Hourglass network is an auto-encoder decoder architecture for the task of pose estimation. In this architecture, 
        Features are processed across all scales and consolidated to best capture the various spatial relationships associated with the pose.
-
+       code from: https://github.com/bearpaw/pytorch-pose/blob/master/pose/models/hourglass.py 
     .. seealso::
         Alejandro Newell et al. "Stacked Hourglass Networks for Human Pose Estimation."
         Proceedings of the European Conference on Computer Vision. 2016.
@@ -1486,7 +1486,7 @@ class Hourglass(nn.Module):
     """Stacked Hourglass Networks.
        Hourglass network is an auto-encoder decoder architecture for the task of pose estimation. In this architecture, 
        Features are processed across all scales and consolidated to best capture the various spatial relationships associated with the pose.
-
+       code from: https://github.com/bearpaw/pytorch-pose/blob/master/pose/models/hourglass.py 
     .. seealso::
         Alejandro Newell et al. "Stacked Hourglass Networks for Human Pose Estimation."
         Proceedings of the European Conference on Computer Vision. 2016.
@@ -1510,10 +1510,11 @@ class Hourglass(nn.Module):
         return nn.Sequential(*layers)
 
     def _make_hour_glass(self, block, num_blocks, planes, depth):
+        branch = 3
         hg = []
         for i in range(depth):
             res = []
-            for j in range(3):
+            for j in range(branch):
                 res.append(self._make_residual(block, num_blocks, planes))
             if i == 0:
                 res.append(self._make_residual(block, num_blocks, planes))
@@ -1542,7 +1543,7 @@ class HourglassNet(nn.Module):
     """Stacked Hourglass Networks.
        Hourglass network is an auto-encoder decoder architecture for the task of pose estimation. In this architecture, 
        Features are processed across all scales and consolidated to best capture the various spatial relationships associated with the pose.
-
+       code from: https://github.com/bearpaw/pytorch-pose/blob/master/pose/models/hourglass.py  
     .. seealso::
         Alejandro Newell et al. "Stacked Hourglass Networks for Human Pose Estimation."
         Proceedings of the European Conference on Computer Vision. 2016.
@@ -1573,7 +1574,7 @@ class HourglassNet(nn.Module):
         ch = self.num_feats*block.expansion
         hg, res, fc, score, fc_, score_ = [], [], [], [], [], []
         for i in range(num_stacks):
-            hg.append(Hourglass(block, num_blocks, self.num_feats, 4))
+            hg.append(Hourglass(block, num_blocks, self.num_feats, depth= 4))
             res.append(self._make_residual(block, self.num_feats, num_blocks))
             fc.append(self._make_fc(ch, ch))
             score.append(nn.Conv2d(ch, num_classes, kernel_size=1, bias=True))
