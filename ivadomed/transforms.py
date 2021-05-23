@@ -301,7 +301,7 @@ class VertebralSplitting(ImedTransform):
     def get_posedata(self, msk, num_ch):
 
         ys = msk.shape
-        ys_ch = np.zeros([ys[0], ys[1], num_ch])
+        ys_ch = np.zeros([num_ch, ys[0], ys[1]])
         msk_uint = np.uint8(np.where(msk>0.2, 1, 0))
         
         labels_im, num_labels = measure.label(msk_uint, background=0, return_num=True)
@@ -309,7 +309,7 @@ class VertebralSplitting(ImedTransform):
             # the <0> label is the background
             for i in range(1, num_labels+1):
                 y_i = msk * np.where(labels_im == i, 1, 0)
-                ys_ch[:,:, i-1] = y_i
+                ys_ch[i-1, :,:] = y_i
         except:
             pass
 
