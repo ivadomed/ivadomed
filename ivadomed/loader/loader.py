@@ -768,7 +768,8 @@ class MRI2DSegmentationDataset(Dataset):
             if stack_gt is not None and not self.soft_gt:
                 stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5).astype(np.uint8)
             if self.task == "pose_estimation":
-                stack_gt = torch.moveaxis(torch.squeeze(stack_gt), -1, 0)
+                stack_gt = torch.squeeze(stack_gt)
+                
 
 
         else:
