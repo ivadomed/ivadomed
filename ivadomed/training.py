@@ -181,7 +181,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                    jvis = [batch["gt_metadata"][k][0]["jvis"] for k in range(len(batch["gt_metadata"]))]
                    jvis = torch.Tensor(jvis).view(len(jvis), -1)
                    jvis = imed_utils.cuda(jvis, cuda_available, non_blocking=True)
-                   gt_samples = (gt_samples.float(), jvis)
+                   gt_samples = (gt_samples, jvis)
             # LOSS
 
             loss = loss_fct(preds, gt_samples)
