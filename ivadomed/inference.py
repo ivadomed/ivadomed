@@ -315,6 +315,10 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
 
     kernel_3D = bool('Modified3DUNet' in context and context['Modified3DUNet']['applied']) or \
                 not context['default_model']['is_2d']
+    length_2D = context["default_model"]["length_2D"] if "length_2D" in context["default_model"] else []
+    stride_2D = context["default_model"]["stride_2D"] if "stride_2D" in context["default_model"] else []
+    is_2d_patch = bool(length_2D)
+
     if kernel_3D:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                            transform=tranform_lst,
@@ -323,8 +327,6 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
         print("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
                                                            context['Modified3DUNet']['length_3D']))
     else:
-        length_2D = context["default_model"]["length_2D"] if "length_2D" in context["default_model"] else []
-        stride_2D = context["default_model"]["stride_2D"] if "stride_2D" in context["default_model"] else []
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
                                                   length=length_2D,
                                                   stride=stride_2D,
@@ -334,7 +336,7 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
                                                   slice_filter_fn=imed_loader_utils.SliceFilter(
                                                       **loader_params["slice_filter_params"]))
         ds.load_filenames()
-        if length_2D:
+        if is_2d_patch:
             print("\nLoaded {} {} patches of shape {}.".format(len(ds), loader_params['slice_axis'],
                                                                length_2D))
         else:
@@ -372,7 +374,8 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
 
         # Reconstruct 3D object
         pred_list, target_list = reconstruct_3d_object(context, batch, undo_transforms, preds, preds_list, kernel_3D, 
-                                                        slice_axis, slice_idx_list, data_loader, fname_images, i_batch)
+                                                       is_2d_patch, slice_axis, slice_idx_list, data_loader,
+                                                       fname_images, i_batch)
 
     return pred_list, target_list
 
@@ -392,9 +395,9 @@ def split_classes(nib_prediction):
         pred_list.append(class_pred)
     return pred_list
 
-def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: torch.Tensor, preds_list: list, 
-                            kernel_3D: bool, slice_axis: int, slice_idx_list: list, data_loader: DataLoader, 
-                            fname_images: list, i_batch: int):
+def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: torch.Tensor,
+                          preds_list: list, kernel_3D: bool, is_2d_patch: bool, slice_axis: int, slice_idx_list: list,
+                          data_loader: DataLoader, fname_images: list, i_batch: int):
     """Reconstructs the 3D object from the current batch, and returns the list of predictions and
        targets.
 
@@ -405,6 +408,7 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         pred (Tensor): Subvolume prediction
         preds_list (list of tensor): list of subvolume predictions.
         kernel_3D (bool): true when using 3D kernel.
+        is_2d_patch (bool): True if length in default model params.
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
         slice_idx_list (list of int): list of indices for the axis slices.
         data_loader (DataLoader): DataLoader object containing batches using in object construction.
@@ -427,7 +431,7 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
                 volume_reconstruction(batch, preds, undo_transforms, i_slice, volume, weight_matrix)
             preds_list = [np.array(preds_undo)]
         else:
-            if length_2D:
+            if is_2d_patch:
                 # undo transformations for patch and reconstruct slice
                 preds_i_undo, metadata_idx, last_patch_bool, image, weight_matrix = \
                     image_reconstruction(batch, preds, undo_transforms, i_slice, image, weight_matrix)
