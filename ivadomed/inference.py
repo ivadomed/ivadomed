@@ -34,6 +34,7 @@ def onnx_inference(model_path, inputs):
     ort_outs = ort_session.run(None, ort_inputs)
     return torch.tensor(ort_outs[0])
 
+
 def get_preds(context: dict, model, fname_model: str, model_params: dict, cuda_available: bool, batch: dict):
     """Returns the predictions from the given model.
 
@@ -63,6 +64,7 @@ def get_preds(context: dict, model, fname_model: str, model_params: dict, cuda_a
         preds = preds.cpu()
     return preds
 
+
 def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Dataset):
     """Returns one hot encoder which is needed to update the model parameters when FiLMedUnet is applied.
 
@@ -84,6 +86,7 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
     ds = imed_film.normalize_metadata(ds, None, context["debugging"], context['FiLMedUnet']['metadata'])
 
     return joblib.load(os.path.join(folder_model, 'one_hot_encoder.joblib'))
+
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
                 discard_noise=True, postprocessing=None):
@@ -169,6 +172,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
     return nib_pred
 
+
 def process_transformations(context: dict, fname_roi: str, fname_prior: str, metadata: dict, slice_axis: int, 
                             fname_images: list):
     """Sets the transformation based on context parameters. When ROI is not provided center-cropping is applied.
@@ -202,6 +206,7 @@ def process_transformations(context: dict, fname_roi: str, fname_prior: str, met
     
     return metadata
 
+
 def set_option(options: dict, postpro: dict, context: dict, key: str):
     """Generalized function that sets postprocessing option based on given list of options.
        When given key already exists in options, we initialize the key value for the postprocessing dictionary
@@ -222,6 +227,7 @@ def set_option(options: dict, postpro: dict, context: dict, key: str):
     elif key in context['postprocessing']:
         del context['postprocessing'][key]
     return postpro
+
 
 def set_postprocessing_options(options: dict, context: dict):
     """Updates the postprocessing options based on existing settings found in options.
@@ -249,6 +255,7 @@ def set_postprocessing_options(options: dict, context: dict):
         postpro['remove_small'] = {"unit": unit, "thr": thr}
 
     context['postprocessing'].update(postpro)
+
 
 def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
     """Segment an image.
@@ -395,6 +402,7 @@ def split_classes(nib_prediction):
         pred_list.append(class_pred)
     return pred_list
 
+
 def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: torch.Tensor,
                           preds_list: list, kernel_3D: bool, is_2d_patch: bool, slice_axis: int, slice_idx_list: list,
                           data_loader: DataLoader, fname_images: list, i_batch: int):
@@ -467,6 +475,7 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
             target_list = context['loader_parameters']['target_suffix']
 
     return pred_list, target_list
+
 
 def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, weight_matrix=None):
     """
