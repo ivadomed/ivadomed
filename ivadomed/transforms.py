@@ -11,7 +11,6 @@ from scipy.ndimage.interpolation import map_coordinates, affine_transform
 from scipy.ndimage.measurements import label, center_of_mass
 from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_closing
 from skimage.exposure import equalize_adapthist
-from skimage.transform import resize
 from skimage import measure
 from torchvision import transforms as torchvision_transforms
 
