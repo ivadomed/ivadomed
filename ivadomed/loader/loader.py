@@ -301,7 +301,7 @@ class SegmentationPair(object):
 
         input_data = []
         for handle in self.input_handle:
-            hwd_oriented = imed_loader_utils.orient_img_hwd(self.get_data(handle, cache_mode), self.slice_axis)
+            hwd_oriented = imed_loader_utils.orient_img_hwd(handle.get_fdata(cache_mode, dtype=np.float32), self.slice_axis)
             input_data.append(hwd_oriented)
 
         gt_data = []
@@ -311,11 +311,11 @@ class SegmentationPair(object):
         for gt in self.gt_handle:
             if gt is not None:
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
-                    hwd_oriented = imed_loader_utils.orient_img_hwd(self.get_data(gt, cache_mode), self.slice_axis)
+                    hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32), self.slice_axis)
                     gt_data.append(hwd_oriented)
                 else:  # this tissue has annotation from several raters
                     hwd_oriented_list = [
-                        imed_loader_utils.orient_img_hwd(self.get_data(gt_rater, cache_mode),
+                        imed_loader_utils.orient_img_hwd(gt_rater.get_fdata(cache_mode, dtype=np.float32),
                                                          self.slice_axis) for gt_rater in gt]
                     gt_data.append([hwd_oriented.astype(data_type) for hwd_oriented in hwd_oriented_list])
             else:
@@ -460,27 +460,6 @@ class SegmentationPair(object):
                 return np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1)
             else:
                 return np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
-
-    def get_data(self, data, cache_mode):
-        """Get nifti file data.
-        Args:
-            data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
-                for nifti and png/tif/jpg file respectively.
-            cache_mode (str): cache mode for nifti files
-        Returns:
-            ndarray: File data.
-        """
-        if "nii" in self.extension:
-            # For '.nii' and '.nii.gz' extentions
-            # Load data from file as numpy array
-            return data.get_fdata(cache_mode, dtype=np.float32)
-
-        # TODO: (#739) implement OME-TIFF behavior (elif "ome" in self.extension)
-
-        else:
-            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
-            # Returns data as is in numpy array
-            return data
 
 
 class MRI2DSegmentationDataset(Dataset):
