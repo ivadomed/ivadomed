@@ -466,6 +466,27 @@ class SegmentationPair(object):
             # Convert numpy array to Nifti1Image object with 4x4 identity affine matrix
             img = nib.Nifti1Image(img, affine=np.eye(4))
 
+            # Get pixel size in um from json metadata and convert to mm
+            array_length = [2, 3]        # Accepted array length for 'PixelSize' metadata
+            conversion_factor = 0.001    # Conversion factor from um to mm
+            if 'PixelSize' in self.metadata[0]:
+                ps_in_um = self.metadata[0]['PixelSize']
+                if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
+                    ps_in_um = np.asarray(ps_in_um)
+                    ps_in_um.resize(3)
+                elif isinstance(ps_in_um, float):
+                    ps_in_um = np.asarray([ps_in_um, ps_in_um, 0])
+                else:
+                    raise RuntimeError("'PixelSize' metadata type is not supported. Format must be 2D [X, Y] array, "
+                                       "3D [X, Y, Z] array or float.")
+                ps_in_mm = tuple(ps_in_um * conversion_factor)
+            else:
+                # TODO: Fix behavior for run_segment_command and inference, no BIDS metadata (#306)
+                raise RuntimeError("'PixelSize' is missing from metadata")
+
+            # Set "pixdim" (zooms) in Nifti1Image object header
+            img.header.set_zooms((ps_in_mm))
+
             return img
 
 
