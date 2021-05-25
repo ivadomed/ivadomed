@@ -188,8 +188,8 @@ class SegmentationPair(object):
         slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
             "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
         prepro_transforms (dict): Transforms to be applied before training.
-        input_handle (list): List of input nifty data as 'nibabel.nifti1.Nifti1Image' object or png/tif/jpg data as 'ndarray'
-        gt_handle (list): List of gt nifty data as 'nibabel.nifti1.Nifti1Image' object or png/tif/jpg data as 'ndarray'
+        input_handle (list): List of input nifty data as 'nibabel.nifti1.Nifti1Image' object
+        gt_handle (list): List of gt nifty data as 'nibabel.nifti1.Nifti1Image' object
         extension (str): File extension of input files
     """
 
@@ -441,25 +441,32 @@ class SegmentationPair(object):
         return dreturn
 
     def read_file(self, filename):
-        """Read file according to file type.
+        """Read file according to file extension and convert to 'nibabel.nifti1.Nifti1Image' object
+
         Args:
             filename (str): Subject filename.
+
+        Returns:
+            'nibabel.nifti1.Nifti1Image' object
         """
         if "nii" in self.extension:
             # For '.nii' and '.nii.gz' extentions
-            # Returns 'nibabel.nifti1.Nifti1Image' object
             return nib.load(filename)
 
         # TODO: (#739) implement OMETIFF behavior (elif "ome" in self.extension)
 
         else:
             # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
-            # Returns data from file as a 3D numpy array
-            # Behavior for grayscale only, behavior TBD for RGB or RBGA
+            # Read image as numpy array (behavior for grayscale only, behavior TBD for RGB or RBGA)
             if "tif" in self.extension:
-                return np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1)
+                img = np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1)
             else:
-                return np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
+                img = np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
+
+            # Convert numpy array to Nifti1Image object with 4x4 identity affine matrix
+            img = nib.Nifti1Image(img, affine=np.eye(4))
+
+            return img
 
 
 class MRI2DSegmentationDataset(Dataset):
