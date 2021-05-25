@@ -7,6 +7,7 @@ import joblib
 
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
+from torch import tensor
 from ivadomed.transforms import UndoCompose
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import models as imed_models
@@ -16,6 +17,7 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
 from ivadomed import training as imed_training
+from loguru import logger
 
 
 def onnx_inference(model_path, inputs):
@@ -34,34 +36,56 @@ def onnx_inference(model_path, inputs):
     ort_outs = ort_session.run(None, ort_inputs)
     return torch.tensor(ort_outs[0])
 
-def get_preds(context: dict, model, fname_model: str, model_params: dict, cuda_available: bool, batch: dict):
+
+def get_preds(context: dict, path_model_file: str, model_params: dict, gpu_id: int, batch: dict):
     """Returns the predictions from the given model.
 
     Args:
         context (dict): configuration dict.
-        model: model used to obtain predictions.
-        fname_model (str): name of file containing model.
+        path_model_file (str): name of file containing model.
         model_params (dict): dictionary containing model parameters.
-        cuda_available (bool): true if cuda is available.
+        gpu_id (int): Number representing gpu number if available. Currently does NOT support multiple GPU segmentation.
         batch (dict): dictionary containing input, gt and metadata
-
 
     Returns:
         Tensor: predictions from the model.
     """
+    # Define device
+    cuda_available = torch.cuda.is_available()
+    logger.debug(f"Cuda Status: {cuda_available}")
+    device = torch.device("cpu") if not cuda_available else torch.device("cuda:" + str(gpu_id))
+
     with torch.no_grad():
+
+        # Load the Input
         img = imed_utils.cuda(batch['input'], cuda_available=cuda_available)
 
-        if ('FiLMedUnet' in context and context['FiLMedUnet']['applied']) or \
-                ('HeMISUnet' in context and context['HeMISUnet']['applied']):
-            metadata = imed_training.get_metadata(batch["input_metadata"], model_params)
-            preds = model(img, metadata)
+        # Load the PyTorch model and evaluate if model files exist.
+        if path_model_file.lower().endswith('.pt'):
+            logger.info(f"PyTorch model detected at: {path_model_file}")
+            logger.info(f"Loading model from: {path_model_file}")
+            model = torch.load(path_model_file, map_location=device)
+            # Inference time
+            logger.info(f"Evaluating model: {path_model_file}")
+            model.eval()
 
+            # Films/Hemis based prediction require meta data load
+            if ('FiLMedUnet' in context and context['FiLMedUnet']['applied']) or \
+                    ('HeMISUnet' in context and context['HeMISUnet']['applied']):
+                # Load meta data before prediction
+                metadata = imed_training.get_metadata(batch["input_metadata"], model_params)
+                preds = model(img, metadata)
+            else:
+                preds = model(img)
+        # Otherwise, Onnex Inference (PyTorch can't load .onnx)
         else:
-            preds = model(img) if fname_model.endswith('.pt') else onnx_inference(fname_model, img)
+            preds = onnx_inference(path_model_file, img)
 
+        # Move prediction to CPU
         preds = preds.cpu()
+
     return preds
+
 
 def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Dataset):
     """Returns one hot encoder which is needed to update the model parameters when FiLMedUnet is applied.
@@ -84,6 +108,7 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
     ds = imed_film.normalize_metadata(ds, None, context["debugging"], context['FiLMedUnet']['metadata'])
 
     return joblib.load(os.path.join(folder_model, 'one_hot_encoder.joblib'))
+
 
 def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
                 discard_noise=True, postprocessing=None):
@@ -136,7 +161,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     if len(arr_pred_ref_space.shape) == 4:
         for i in range(n_channel):
             oriented_volumes.append(
-                imed_loader_utils.reorient_image(arr_pred_ref_space[i, ], slice_axis, nib_ref, nib_ref_can))
+                imed_loader_utils.reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
         # transpose to locate the channel dimension at the end to properly see image on viewer
         arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
     else:
@@ -169,7 +194,8 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
     return nib_pred
 
-def process_transformations(context: dict, fname_roi: str, fname_prior: str, metadata: dict, slice_axis: int, 
+
+def process_transformations(context: dict, fname_roi: str, fname_prior: str, metadata: dict, slice_axis: int,
                             fname_images: list):
     """Sets the transformation based on context parameters. When ROI is not provided center-cropping is applied.
        If there is an object_detection_path, then we modify the metadata to store transformation data.
@@ -191,16 +217,17 @@ def process_transformations(context: dict, fname_roi: str, fname_prior: str, met
             "performed instead of a cropping around a Region of Interest.")
 
         context["transformation"] = dict((key, value) if key != 'ROICrop'
-                                            else ('CenterCrop', value)
-                                            for (key, value) in context["transformation"].items())
+                                         else ('CenterCrop', value)
+                                         for (key, value) in context["transformation"].items())
 
     if 'object_detection_params' in context and \
             context['object_detection_params']['object_detection_path'] is not None:
         imed_obj_detect.bounding_box_prior(fname_prior, metadata, slice_axis,
-                                            context['object_detection_params']['safety_factor'])
+                                           context['object_detection_params']['safety_factor'])
         metadata = [metadata] * len(fname_images)
-    
+
     return metadata
+
 
 def set_option(options: dict, postpro: dict, context: dict, key: str):
     """Generalized function that sets postprocessing option based on given list of options.
@@ -222,6 +249,7 @@ def set_option(options: dict, postpro: dict, context: dict, key: str):
     elif key in context['postprocessing']:
         del context['postprocessing'][key]
     return postpro
+
 
 def set_postprocessing_options(options: dict, context: dict):
     """Updates the postprocessing options based on existing settings found in options.
@@ -250,7 +278,8 @@ def set_postprocessing_options(options: dict, context: dict):
 
     context['postprocessing'].update(postpro)
 
-def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
+
+def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, options: dict = None):
     """Segment an image.
 
     Segment an image (`fname_image`) using a pre-trained model (`folder_model`). If provided, a region of interest
@@ -263,7 +292,7 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
             see https://github.com/neuropoly/ivadomed/wiki/configuration-file
         fname_images (list): list of image filenames (e.g. .nii.gz) to segment. Multichannel models require multiple
             images to segment, e.i., len(fname_images) > 1.
-        gpu_id (int): Number representing gpu number if available.
+        gpu_id (int): Number representing gpu number if available. Currently does NOT support multiple GPU segmentation.
         options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename
             (e.g., .nii.gz) containing processing information (e.i., spinal cord segmentation, spinal location or MS
             lesion classification)
@@ -275,15 +304,14 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
         list: List of target suffix associated with each prediction in `pred_list`
 
     """
-    # Define device
-    cuda_available = torch.cuda.is_available()
-    device = torch.device("cpu") if not cuda_available else torch.device("cuda:" + str(gpu_id))
 
-    # Check if model folder exists and get filenames
-    fname_model, fname_model_metadata = imed_models.get_model_filenames(folder_model)
+    # Check if model folder exists and get filenames to be stored as string
+    path_model_file: str
+    path_model_metadata_file: str
+    path_model_file, path_model_metadata_file = imed_models.get_model_filenames(folder_model)
 
     # Load model training config
-    context = imed_config_manager.ConfigurationManager(fname_model_metadata).get_config()
+    context = imed_config_manager.ConfigurationManager(path_model_metadata_file).get_config()
 
     postpro_list = ['binarize_prediction', 'keep_largest', ' fill_holes', 'remove_small']
     if options is not None and any(pp in options for pp in postpro_list):
@@ -336,8 +364,8 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
     if 'FiLMedUnet' in context and context['FiLMedUnet']['applied']:
         onehotencoder = get_onehotencoder(context, folder_model, options, ds)
         model_params.update({"name": 'FiLMedUnet',
-                        "film_onehotencoder": onehotencoder,
-                        "n_metadata": len([ll for l in onehotencoder.categories_ for ll in l])})
+                             "film_onehotencoder": onehotencoder,
+                             "n_metadata": len([ll for l in onehotencoder.categories_ for ll in l])})
 
     # Data Loader
     data_loader = DataLoader(ds, batch_size=context["training_parameters"]["batch_size"],
@@ -345,17 +373,11 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
                              collate_fn=imed_loader_utils.imed_collate,
                              num_workers=0)
 
-    # MODEL
-    if fname_model.endswith('.pt'):
-        model = torch.load(fname_model, map_location=device)
-        # Inference time
-        model.eval()
-
     # Loop across batches
     preds_list, slice_idx_list = [], []
-
+    last_sample_bool, weight_matrix, volume = False, None, None
     for i_batch, batch in enumerate(data_loader):
-        preds = get_preds(context, model, fname_model, model_params, cuda_available, batch)
+        preds = get_preds(context, path_model_file, model_params, gpu_id, batch)
 
         # Set datatype to gt since prediction should be processed the same way as gt
         for b in batch['input_metadata']:
@@ -363,8 +385,9 @@ def segment_volume(folder_model, fname_images, gpu_id=0, options=None):
                 modality['data_type'] = 'gt'
 
         # Reconstruct 3D object
-        pred_list, target_list = reconstruct_3d_object(context, batch, undo_transforms, preds, preds_list, kernel_3D, 
-                                                        slice_axis, slice_idx_list, data_loader, fname_images, i_batch)
+        pred_list, target_list, last_sample_bool = reconstruct_3d_object(context, batch, undo_transforms, preds, preds_list, kernel_3D,
+                                                       slice_axis, slice_idx_list, data_loader, fname_images, i_batch,
+                                                       last_sample_bool, weight_matrix, volume)
 
     return pred_list, target_list
 
@@ -384,13 +407,20 @@ def split_classes(nib_prediction):
         pred_list.append(class_pred)
     return pred_list
 
-def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: torch.Tensor, preds_list: list, 
-                            kernel_3D: bool, slice_axis: int, slice_idx_list: list, data_loader: DataLoader, 
-                            fname_images: list, i_batch: int):
+
+def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: torch.Tensor,
+                          preds_list: list,
+                          kernel_3D: bool, slice_axis: int, slice_idx_list: list, data_loader: DataLoader,
+                          fname_images: list, i_batch: int,
+                          last_sample_bool: bool,
+                          weight_matrix: tensor,
+                          volume: tensor,
+                          ):
     """Reconstructs the 3D object from the current batch, and returns the list of predictions and
        targets.
 
     Args:
+
         context (dict): configuration dict.
         batch (dict): Dictionary containing input, gt and metadata
         undo_transforms (UndoCompose): Undo transforms so prediction match original image resolution and shap
@@ -403,10 +433,14 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         fname_images (list): list of image filenames (e.g. .nii.gz) to segment.
         i_batch (int): index of current batch.
 
+        last_sample_bool:
+        weight_matrix:
+        volume:
+
     Returns:
         pred_list, target_list.
     """
-    last_sample_bool, weight_matrix, volume = False, None, None
+
     pred_list = []
     target_list = []
     for i_slice in range(len(preds)):
@@ -421,8 +455,8 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         else:
             # undo transformations
             preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
-                                                            batch["gt_metadata"][i_slice],
-                                                            data_type='gt')
+                                                         batch["gt_metadata"][i_slice],
+                                                         data_type='gt')
 
             # Add new segmented slice to preds_list
             preds_list.append(np.array(preds_i_undo))
@@ -432,19 +466,20 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         # If last batch and last sample of this batch, then reconstruct 3D object
         if (i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1) or last_sample_bool:
             pred_nib = pred_to_nib(data_lst=preds_list,
-                                    fname_ref=fname_images[0],
-                                    fname_out=None,
-                                    z_lst=slice_idx_list,
-                                    slice_axis=slice_axis,
-                                    kernel_dim='3d' if kernel_3D else '2d',
-                                    debug=False,
-                                    bin_thr=-1,
-                                    postprocessing=context['postprocessing'])
+                                   fname_ref=fname_images[0],
+                                   fname_out=None,
+                                   z_lst=slice_idx_list,
+                                   slice_axis=slice_axis,
+                                   kernel_dim='3d' if kernel_3D else '2d',
+                                   debug=False,
+                                   bin_thr=-1,
+                                   postprocessing=context['postprocessing'])
 
             pred_list = split_classes(pred_nib)
             target_list = context['loader_parameters']['target_suffix']
 
-    return pred_list, target_list
+    return pred_list, target_list, last_sample_bool
+
 
 def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, weight_matrix=None):
     """
