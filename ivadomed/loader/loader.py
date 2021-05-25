@@ -317,7 +317,7 @@ class SegmentationPair(object):
                     hwd_oriented_list = [
                         imed_loader_utils.orient_img_hwd(self.get_data(gt_rater, cache_mode),
                                                          self.slice_axis) for gt_rater in gt]
-                    gt_data.append([hwd_oriented.astype(data_type) for hwd_oriented in hwd_oriented_list])
+                    gt_data.append([hwd_oriented for hwd_oriented in hwd_oriented_list])
             else:
                 gt_data.append(
                     np.zeros(imed_loader_utils.orient_shapes_hwd(self.input_handle[0].shape, self.slice_axis),
