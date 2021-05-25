@@ -3,6 +3,7 @@ import os
 import shutil
 import nibabel as nib
 import numpy as np
+import pytest
 import torch
 from ivadomed import models as imed_models
 from ivadomed import inference as imed_inference
@@ -80,7 +81,8 @@ def test_segment_volume_2d(download_functional_test_files):
     shutil.rmtree(PATH_MODEL)
 
 
-def test_segment_volume_2d_with_patches(download_functional_test_files):
+@pytest.mark.parametrize("center_crop", [[200, 200], LENGTH_2D])
+def test_segment_volume_2d_with_patches(download_functional_test_files, center_crop):
     model = imed_models.Unet(in_channel=1,
                              out_channel=1,
                              depth=2,
@@ -109,7 +111,7 @@ def test_segment_volume_2d_with_patches(download_functional_test_files):
         },
         "transformation": {
             "Resample": {"wspace": 0.75, "hspace": 0.75},
-            "CenterCrop": {"size": [200, 200]},
+            "CenterCrop": {"size": center_crop},
             "RandomTranslation": {
                 "translate": [0.03, 0.03],
                 "applied_to": ["im", "gt"],
