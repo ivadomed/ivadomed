@@ -250,16 +250,16 @@ class SegmentationPair(object):
                 raise RuntimeError('Input and ground truth with different dimensions.')
 
         for idx, handle in enumerate(self.input_handle):
-            self.input_handle[idx] = self.apply_canonical(handle)
+            self.input_handle[idx] = nib.as_closest_canonical(handle)
 
         # Labeled data (ie not inference time)
         if self.gt_filenames is not None:
             for idx, gt in enumerate(self.gt_handle):
                 if gt is not None:
                     if not isinstance(gt, list):  # this tissue has annotation from only one rater
-                        self.gt_handle[idx] = self.apply_canonical(gt)
+                        self.gt_handle[idx] = nib.as_closest_canonical(gt)
                     else:  # this tissue has annotation from several raters
-                        self.gt_handle[idx] = [self.apply_canonical(gt_rater) for gt_rater in gt]
+                        self.gt_handle[idx] = [nib.as_closest_canonical(gt_rater) for gt_rater in gt]
 
         # If binary classification, then extract labels from GT mask
 
@@ -461,24 +461,6 @@ class SegmentationPair(object):
             else:
                 return np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
 
-
-    def apply_canonical(self, data):
-        """Apply nibabel as_closest_canonical function to nifti data only.
-        Args:
-            data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
-                for nifti or png/tif/jpg file respectively.
-        """
-        if "nii" in self.extension:
-            # For '.nii' and '.nii.gz' extentions
-            # Returns 'nibabel.nifti1.Nifti1Image' object
-            return nib.as_closest_canonical(data)
-
-        # TODO: (#739)  implement OMETIFF behavior (elif "ome" in self.extension)
-
-        else:
-            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
-            # Returns data as is in numpy array
-            return data
 
     def get_shape(self, data):
         """Returns data shape according to file type.
