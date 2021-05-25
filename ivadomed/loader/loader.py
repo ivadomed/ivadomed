@@ -274,7 +274,7 @@ class SegmentationPair(object):
         """Return the tuple (input, ground truth) representing both the input and ground truth shapes."""
         input_shape = []
         for handle in self.input_handle:
-            shape = imed_loader_utils.orient_shapes_hwd(self.get_shape(handle), self.slice_axis)
+            shape = imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis)
             input_shape.append(tuple(shape))
 
             if not len(set(input_shape)):
@@ -287,7 +287,7 @@ class SegmentationPair(object):
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
                     gt = [gt]
                 for gt_rater in gt:
-                    shape = imed_loader_utils.orient_shapes_hwd(self.get_shape(gt_rater), self.slice_axis)
+                    shape = imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis)
                     gt_shape.append(tuple(shape))
 
                 if not len(set(gt_shape)):
@@ -341,7 +341,7 @@ class SegmentationPair(object):
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
                     gt_meta_dict.append(imed_loader_utils.SampleMetadata({
                         "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
-                        "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(gt), self.slice_axis),
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"],
                         "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
                             0] else None,
@@ -351,7 +351,7 @@ class SegmentationPair(object):
                 else:
                     gt_meta_dict.append([imed_loader_utils.SampleMetadata({
                         "zooms": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_zooms(), self.slice_axis),
-                        "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(gt_rater), self.slice_axis),
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"][idx_class][idx_rater],
                         "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
                             0] else None,
@@ -372,7 +372,7 @@ class SegmentationPair(object):
         for handle in self.input_handle:
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
                 "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
-                "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(handle), self.slice_axis),
+                "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis),
                 "data_type": 'im',
                 "crop_params": {}
             }))
@@ -460,25 +460,6 @@ class SegmentationPair(object):
                 return np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1)
             else:
                 return np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
-
-
-    def get_shape(self, data):
-        """Returns data shape according to file type.
-        Args:
-            data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
-                for nifti or png/tif/jpg file respectively.
-        Returns:
-            ndarray: Data shape.
-        """
-        if "nii" in self.extension:
-            # For '.nii' and '.nii.gz' extentions
-            return data.header.get_data_shape()
-
-        # TODO: (#739) implement OMETIFF behavior (elif "ome" in self.extension)
-
-        else:
-            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
-            return data.shape
 
     def get_data(self, data, cache_mode):
         """Get nifti file data.
