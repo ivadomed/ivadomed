@@ -340,7 +340,7 @@ class SegmentationPair(object):
             if gt is not None:
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
                     gt_meta_dict.append(imed_loader_utils.SampleMetadata({
-                        "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(gt), self.slice_axis),
+                        "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
                         "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(gt), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"],
                         "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
@@ -350,7 +350,7 @@ class SegmentationPair(object):
                     }))
                 else:
                     gt_meta_dict.append([imed_loader_utils.SampleMetadata({
-                        "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(gt_rater), self.slice_axis),
+                        "zooms": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_zooms(), self.slice_axis),
                         "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(gt_rater), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"][idx_class][idx_rater],
                         "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
@@ -371,7 +371,7 @@ class SegmentationPair(object):
         input_meta_dict = []
         for handle in self.input_handle:
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
-                "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(handle), self.slice_axis),
+                "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
                 "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(handle), self.slice_axis),
                 "data_type": 'im',
                 "crop_params": {}
@@ -479,47 +479,6 @@ class SegmentationPair(object):
         else:
             # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
             return data.shape
-
-    def get_voxel_size(self, data):
-        """Returns voxel sizes in mm according to file type.
-        Args:
-            data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
-                for nifti and png/tif/jpg file respectively.
-        Returns:
-            tuple: Voxel size in mm
-        """
-        if "nii" in self.extension:
-            # For '.nii' and '.nii.gz' extentions
-            # Read zooms metadata from nifti file header
-            return data.header.get_zooms()
-
-        # TODO: (#739) implement OMETIFF behavior (elif "ome" in self.extension)
-
-        else:
-            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
-            # Voxel size is extracted from PixelSize metadata (from BIDS JSON sidecar)
-            # PixelSize definition in example dataset is a scalar in micrometers (BIDS BEP031 v 0.0.2)
-            # PixelSize definition may change for 2D [X, Y] and 3D [X, Y, Z] arrays in micrometers (BIDS BEP031 v 0.0.3)
-            # This method supports both behaviors.
-            # TODO: Update behavior to follow BEP microscopy development (#301)
-
-            array_length = [2, 3]        # Accepted array length for 'PixelSize' metadata
-            conversion_factor = 0.001    # Conversion factor from um to mm
-            if 'PixelSize' in self.metadata[0]:
-                ps_in_um = self.metadata[0]['PixelSize']
-                if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
-                    ps_in_um = np.asarray(ps_in_um)
-                    ps_in_um.resize(3)
-                elif isinstance(ps_in_um, float):
-                    ps_in_um = np.asarray([ps_in_um, ps_in_um, 0])
-                else:
-                    raise RuntimeError("'PixelSize' metadata type is not supported. Format must be 2D [X, Y] array, "
-                                       "3D [X, Y, Z] array or float.")
-                ps_in_mm = tuple(ps_in_um * conversion_factor)
-            else:
-                # TODO: Fix behavior for run_segment_command and inference, no BIDS metadata (#306)
-                raise RuntimeError("'PixelSize' is missing from metadata")
-            return ps_in_mm
 
     def get_data(self, data, cache_mode):
         """Get nifti file data.
