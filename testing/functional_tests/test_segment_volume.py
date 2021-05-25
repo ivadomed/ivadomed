@@ -44,7 +44,7 @@ def test_segment_volume_2d(download_functional_test_files):
                 "filter_empty_input": False
             },
             "roi_params": {
-                "suffix": None,
+                "suffix": "_seg-manual",
                 "slice_filter_roi": 10
             },
             "slice_axis": "axial"
@@ -70,7 +70,7 @@ def test_segment_volume_2d(download_functional_test_files):
     with open(PATH_CONFIG, 'w') as fp:
         json.dump(config, fp)
 
-    nib_lst, _ = imed_inference.segment_volume(PATH_MODEL, [IMAGE_PATH], ROI_PATH)
+    nib_lst, _ = imed_inference.segment_volume(PATH_MODEL, [IMAGE_PATH], options={'fname_prior': ROI_PATH})
     nib_img = nib_lst[0]
     assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
     assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
