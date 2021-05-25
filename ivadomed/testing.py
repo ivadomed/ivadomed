@@ -386,7 +386,7 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
 
 def get_gt(filenames):
     """Get ground truth data as numpy array.
-    
+
     Args:
         filenames (list): List of ground truth filenames, one per class.
     Returns:
