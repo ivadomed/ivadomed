@@ -109,7 +109,7 @@ def test_segment_volume_2d_with_patches(download_functional_test_files):
         },
         "transformation": {
             "Resample": {"wspace": 0.75, "hspace": 0.75},
-            "CenterCrop": {"size": LENGTH_2D},
+            "CenterCrop": {"size": [200, 200]},
             "RandomTranslation": {
                 "translate": [0.03, 0.03],
                 "applied_to": ["im", "gt"],
