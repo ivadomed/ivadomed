@@ -80,8 +80,8 @@ def test_segment_volume_2d(download_functional_test_files):
     shutil.rmtree(PATH_MODEL)
 
 
-@pytest.mark.parametrize("length_3d", [[192, 192, 16], LENGTH_3D, ])
-def test_segment_volume_3d(download_functional_test_files, length_3d):
+@pytest.mark.parametrize("center_crop", [[192, 192, 16], LENGTH_3D, ])
+def test_segment_volume_3d(download_functional_test_files, center_crop):
     model = imed_models.Modified3DUNet(in_channel=1,
                                        out_channel=1,
                                        base_n_filter=1)
@@ -116,7 +116,7 @@ def test_segment_volume_3d(download_functional_test_files, length_3d):
                     "dspace": 2
                 },
             "CenterCrop": {
-                "size": length_3d
+                "size": center_crop
                 },
             "RandomTranslation": {
                 "translate": [0.03, 0.03],
