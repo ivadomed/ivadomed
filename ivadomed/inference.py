@@ -55,9 +55,7 @@ def get_preds(context: dict, path_model_file: str, model_params: dict, gpu_id: i
         tensor: predictions from the model.
     """
     # Define device
-    cuda_available = torch.cuda.is_available()
-    logger.debug(f"CUDA Status: {cuda_available}")
-    device = torch.device("cpu") if not cuda_available else torch.device("cuda:" + str(gpu_id))
+    cuda_available, device = imed_utils.define_device(gpu_id)
 
     with torch.no_grad():
 
@@ -87,7 +85,7 @@ def get_preds(context: dict, path_model_file: str, model_params: dict, gpu_id: i
             logger.debug(f"Conduct ONNX model inference... ")
             preds = onnx_inference(path_model_file, img)
 
-        logger.debug("Sending ONNX model to CPU")
+        logger.debug("Sending predictions to CPU")
         # Move prediction to CPU
         preds = preds.cpu()
 
