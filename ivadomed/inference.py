@@ -4,6 +4,7 @@ import numpy as np
 import onnxruntime
 import torch
 import joblib
+from typing import List
 
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
@@ -17,10 +18,13 @@ from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, f
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
 from ivadomed import training as imed_training
-from loguru import logger
+
+# To be replaced in upcoming PR by loguru update
+import logging
+logger = logging.getLogger()
 
 
-def onnx_inference(model_path, inputs):
+def onnx_inference(model_path: str, inputs: tensor) -> tensor:
     """Run ONNX inference
 
     Args:
@@ -37,7 +41,7 @@ def onnx_inference(model_path, inputs):
     return torch.tensor(ort_outs[0])
 
 
-def get_preds(context: dict, path_model_file: str, model_params: dict, gpu_id: int, batch: dict):
+def get_preds(context: dict, path_model_file: str, model_params: dict, gpu_id: int, batch: dict) -> tensor:
     """Returns the predictions from the given model.
 
     Args:
@@ -48,11 +52,11 @@ def get_preds(context: dict, path_model_file: str, model_params: dict, gpu_id: i
         batch (dict): dictionary containing input, gt and metadata
 
     Returns:
-        Tensor: predictions from the model.
+        tensor: predictions from the model.
     """
     # Define device
     cuda_available = torch.cuda.is_available()
-    logger.debug(f"Cuda Status: {cuda_available}")
+    logger.debug(f"CUDA Status: {cuda_available}")
     device = torch.device("cpu") if not cuda_available else torch.device("cuda:" + str(gpu_id))
 
     with torch.no_grad():
@@ -62,11 +66,11 @@ def get_preds(context: dict, path_model_file: str, model_params: dict, gpu_id: i
 
         # Load the PyTorch model and evaluate if model files exist.
         if path_model_file.lower().endswith('.pt'):
-            logger.info(f"PyTorch model detected at: {path_model_file}")
-            logger.info(f"Loading model from: {path_model_file}")
+            logger.debug(f"PyTorch model detected at: {path_model_file}")
+            logger.debug(f"Loading model from: {path_model_file}")
             model = torch.load(path_model_file, map_location=device)
             # Inference time
-            logger.info(f"Evaluating model: {path_model_file}")
+            logger.debug(f"Evaluating model: {path_model_file}")
             model.eval()
 
             # Films/Hemis based prediction require meta data load
@@ -79,15 +83,18 @@ def get_preds(context: dict, path_model_file: str, model_params: dict, gpu_id: i
                 preds = model(img)
         # Otherwise, Onnex Inference (PyTorch can't load .onnx)
         else:
+            logger.debug(f"Likely ONNX model detected at: {path_model_file}")
+            logger.debug(f"Conduct ONNX model inference... ")
             preds = onnx_inference(path_model_file, img)
 
+        logger.debug("Sending ONNX model to CPU")
         # Move prediction to CPU
         preds = preds.cpu()
 
     return preds
 
 
-def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Dataset):
+def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Dataset) -> dict:
     """Returns one hot encoder which is needed to update the model parameters when FiLMedUnet is applied.
 
     Args:
@@ -110,8 +117,9 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
     return joblib.load(os.path.join(folder_model, 'one_hot_encoder.joblib'))
 
 
-def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, kernel_dim='2d', bin_thr=0.5,
-                discard_noise=True, postprocessing=None):
+def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fname_out: str, slice_axis: int,
+                debug: bool = False, kernel_dim='2d', bin_thr=0.5, discard_noise: bool = True,
+                postprocessing: dict = None) -> nib.Nifti1Image:
     """Save the network predictions as nibabel object.
 
     Based on the header of `fname_ref` image, it creates a nibabel object from the Network predictions (`data_lst`).
@@ -146,9 +154,9 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
                 tmp_lst.append(data_lst[z_lst.index(z)])
 
         if debug:
-            print("Len {}".format(len(tmp_lst)))
+            logger.debug(f"Len {len(tmp_lst)}")
             for arr in tmp_lst:
-                print("Shape element lst {}".format(arr.shape))
+                logger.debug(f"Shape element lst {arr.shape}")
 
         # create data and stack on depth dimension
         arr_pred_ref_space = np.stack(tmp_lst, axis=-1)
@@ -161,7 +169,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
     if len(arr_pred_ref_space.shape) == 4:
         for i in range(n_channel):
             oriented_volumes.append(
-                imed_loader_utils.reorient_image(arr_pred_ref_space[i,], slice_axis, nib_ref, nib_ref_can))
+                imed_loader_utils.reorient_image(arr_pred_ref_space[i, ], slice_axis, nib_ref, nib_ref_can))
         # transpose to locate the channel dimension at the end to properly see image on viewer
         arr_pred_ref_space = np.asarray(oriented_volumes).transpose((1, 2, 3, 0))
     else:
@@ -196,7 +204,7 @@ def pred_to_nib(data_lst, z_lst, fname_ref, fname_out, slice_axis, debug=False, 
 
 
 def process_transformations(context: dict, fname_roi: str, fname_prior: str, metadata: dict, slice_axis: int,
-                            fname_images: list):
+                            fname_images: list) -> dict:
     """Sets the transformation based on context parameters. When ROI is not provided center-cropping is applied.
        If there is an object_detection_path, then we modify the metadata to store transformation data.
 
@@ -212,8 +220,8 @@ def process_transformations(context: dict, fname_roi: str, fname_prior: str, met
         dict: metadata.
     """
     if fname_roi is None and 'ROICrop' in context["transformation"].keys():
-        print(
-            "\n WARNING: fname_roi has not been specified, then a cropping around the center of the image is "
+        logger.warning(
+            "fname_roi has not been specified, then a cropping around the center of the image is "
             "performed instead of a cropping around a Region of Interest.")
 
         context["transformation"] = dict((key, value) if key != 'ROICrop'
@@ -248,7 +256,6 @@ def set_option(options: dict, postpro: dict, context: dict, key: str):
     # Remove key in context if value set to 0
     elif key in context['postprocessing']:
         del context['postprocessing'][key]
-    return postpro
 
 
 def set_postprocessing_options(options: dict, context: dict):
@@ -257,7 +264,6 @@ def set_postprocessing_options(options: dict, context: dict):
     Args:
         options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename.
         context (dict): Configuration dict.
-
     """
     postpro = {}
 
@@ -265,10 +271,10 @@ def set_postprocessing_options(options: dict, context: dict):
         postpro['binarize_prediction'] = {"thr": options['binarize_prediction']}
 
     if 'keep_largest' in options and options['keep_largest'] is not None:
-        postpro = set_option(options, postpro, context, 'keep_largest')
+        set_option(options, postpro, context, 'keep_largest')
 
     if 'fill_holes' in options and options['fill_holes'] is not None:
-        postpro = set_option(options, postpro, context, 'fill_holes')
+        set_option(options, postpro, context, 'fill_holes')
 
     if 'remove_small' in options and options['remove_small'] and \
             ('mm' in options['remove_small'][-1] or 'vox' in options['remove_small'][-1]):
@@ -336,7 +342,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
 
     # Force filter_empty_mask to False if fname_roi = None
     if fname_roi is None and 'filter_empty_mask' in loader_params["slice_filter_params"]:
-        print("\nWARNING: fname_roi has not been specified, then the entire volume is processed.")
+        logger.warning("fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
     filename_pairs = [(fname_images, None, fname_roi, metadata if isinstance(metadata, list) else [metadata])]
@@ -348,8 +354,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                                                            transform=tranform_lst,
                                                            length=context["Modified3DUNet"]["length_3D"],
                                                            stride=context["Modified3DUNet"]["stride_3D"])
-        print("\nLoaded {} {} volumes of shape {}.".format(len(ds), loader_params['slice_axis'],
-                                                           context['Modified3DUNet']['length_3D']))
+        logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} volumes of shape "
+                     f"{context['Modified3DUNet']['length_3D']}.")
     else:
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
                                                   slice_axis=slice_axis,
@@ -358,7 +364,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                                                   slice_filter_fn=imed_loader_utils.SliceFilter(
                                                       **loader_params["slice_filter_params"]))
         ds.load_filenames()
-        print("\nLoaded {} {} slices.".format(len(ds), loader_params['slice_axis']))
+        logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} slices.")
 
     model_params = {}
     if 'FiLMedUnet' in context and context['FiLMedUnet']['applied']:
@@ -385,9 +391,10 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                 modality['data_type'] = 'gt'
 
         # Reconstruct 3D object
-        pred_list, target_list, last_sample_bool = reconstruct_3d_object(context, batch, undo_transforms, preds, preds_list, kernel_3D,
-                                                       slice_axis, slice_idx_list, data_loader, fname_images, i_batch,
-                                                       last_sample_bool, weight_matrix, volume)
+        pred_list, target_list, last_sample_bool, weight_matrix, volume = reconstruct_3d_object(
+            context, batch, undo_transforms, preds, preds_list, kernel_3D, slice_axis, slice_idx_list, data_loader,
+            fname_images, i_batch, last_sample_bool, weight_matrix, volume
+        )
 
     return pred_list, target_list
 
@@ -408,14 +415,10 @@ def split_classes(nib_prediction):
     return pred_list
 
 
-def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: torch.Tensor,
-                          preds_list: list,
-                          kernel_3D: bool, slice_axis: int, slice_idx_list: list, data_loader: DataLoader,
-                          fname_images: list, i_batch: int,
-                          last_sample_bool: bool,
-                          weight_matrix: tensor,
-                          volume: tensor,
-                          ):
+def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: torch.tensor,
+                          preds_list: list, kernel_3D: bool, slice_axis: int, slice_idx_list: list,
+                          data_loader: DataLoader, fname_images: list, i_batch: int, last_sample_bool: bool,
+                          weight_matrix: tensor, volume: tensor):
     """Reconstructs the 3D object from the current batch, and returns the list of predictions and
        targets.
 
@@ -423,8 +426,8 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
 
         context (dict): configuration dict.
         batch (dict): Dictionary containing input, gt and metadata
-        undo_transforms (UndoCompose): Undo transforms so prediction match original image resolution and shap
-        pred (Tensor): Subvolume prediction
+        undo_transforms (UndoCompose): Undo transforms so prediction match original image resolution and shape
+        preds (tensor): Subvolume predictions
         preds_list (list of tensor): list of subvolume predictions.
         kernel_3D (bool): true when using 3D kernel.
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
@@ -434,11 +437,16 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         i_batch (int): index of current batch.
 
         last_sample_bool:
-        weight_matrix:
-        volume:
+        weight_matrix (tensor): the weight matrix
+        volume (tensor): the volume tensor that is being partially reconstructed through the loop
 
     Returns:
-        pred_list, target_list.
+        pred_list (list): list of predictions
+        target_list (list): list of targets
+        last_sample_bool (bool): flag to indicate whether this is the last sample in the 3D volume
+        weight_matrix (tensor): the weight matrix. Must be returned as passing tensor by reference is NOT reliable.
+        volume (tensor): the volume tensor that is being partially reconstructed through the loop. Must be returned
+         as passing tensor by reference is NOT reliable.
     """
 
     pred_list = []
@@ -478,10 +486,11 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
             pred_list = split_classes(pred_nib)
             target_list = context['loader_parameters']['target_suffix']
 
-    return pred_list, target_list, last_sample_bool
+    return pred_list, target_list, last_sample_bool, weight_matrix, volume
 
 
-def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, weight_matrix=None):
+def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompose, smp_idx: int,
+                          volume: tensor = None, weight_matrix: tensor = None):
     """
     Reconstructs volume prediction from subvolumes used during training
     Args:
@@ -493,15 +502,24 @@ def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, we
         weight_matrix (tensor): Weights containing the number of predictions for each voxel
 
     Returns:
-        tensor, dict, bool, tensor, tensor: undone subvolume, metadata, boolean representing if its the last sample to
-        process, reconstructed volume, weight matrix
+        pred_undo (tensor), undone subvolume,
+        metadata (dict), metadata,
+        last_sample_bool (bool), boolean representing if its the last sample of the volume
+        volume (tensor), representing the volume reconstructed
+        weight_matrix (tensor), weight matrix
     """
     x_min, x_max, y_min, y_max, z_min, z_max = batch['input_metadata'][smp_idx][0]['coord']
     num_pred = pred[smp_idx].shape[0]
 
-    first_sample_bool = not any([x_min, y_min, z_min])
+    # A boolean flag indicate whether the current volume is the VERY first subvolume of the entire 3D volume/space.
+    # Formed by check if x_min/y_min/z_min are all NOT zero.
+    first_sample: bool = (x_min == 0 and y_min == 0 and z_min == 0)
+
+    # Get the Dimension
     x, y, z = batch['input_metadata'][smp_idx][0]['index_shape']
-    if first_sample_bool:
+
+    # If this is the first sample, instantiate a ZERO tensor based on the dimension
+    if first_sample:
         volume = torch.zeros((num_pred, x, y, z))
         weight_matrix = torch.zeros((num_pred, x, y, z))
 
@@ -510,6 +528,7 @@ def volume_reconstruction(batch, pred, undo_transforms, smp_idx, volume=None, we
     # Average predictions
     volume[:, x_min:x_max, y_min:y_max, z_min:z_max] += pred[smp_idx]
     weight_matrix[:, x_min:x_max, y_min:y_max, z_min:z_max] += 1
+
     if last_sample_bool:
         volume /= weight_matrix
 
