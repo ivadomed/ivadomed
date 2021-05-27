@@ -719,9 +719,9 @@ class MRI2DSegmentationDataset(Dataset):
 
         if self.is_2d_patch:
             coord = self.indexes[index]
-            seg_pair_slice, roi_pair_slice = self.handlers[coord['handler_index']]
+            seg_pair_slice, roi_pair_slice = copy.deepcopy(self.handlers[coord['handler_index']])
         else:
-            seg_pair_slice, roi_pair_slice = self.indexes[index]
+            seg_pair_slice, roi_pair_slice = copy.deepcopy(self.indexes[index])
 
         # In case multiple raters
         if seg_pair_slice['gt'] is not None and isinstance(seg_pair_slice['gt'][0], list):
@@ -736,9 +736,9 @@ class MRI2DSegmentationDataset(Dataset):
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
         # Use copy to have different coordinates for reconstruction for a given handler with patch
-        metadata_input = imed_loader_utils.clean_metadata(copy.deepcopy(seg_pair_slice['input_metadata']))
-        metadata_roi = imed_loader_utils.clean_metadata(copy.deepcopy(roi_pair_slice['gt_metadata']))
-        metadata_gt = imed_loader_utils.clean_metadata(copy.deepcopy(seg_pair_slice['gt_metadata']))
+        metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
+        metadata_roi = imed_loader_utils.clean_metadata(roi_pair_slice['gt_metadata'])
+        metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
 
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
@@ -926,7 +926,7 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
             index (int): Subvolume index.
         """
         coord = self.indexes[index]
-        seg_pair, _ = self.handlers[coord['handler_index']]
+        seg_pair, _ = copy.deepcopy(self.handlers[coord['handler_index']])
 
         # In case multiple raters
         if seg_pair['gt'] is not None and isinstance(seg_pair['gt'][0], list):
@@ -941,8 +941,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         # Clean transforms params from previous transforms
         # i.e. remove params from previous iterations so that the coming transforms are different
         # Use copy to have different coordinates for reconstruction for a given handler
-        metadata_input = imed_loader_utils.clean_metadata(copy.deepcopy(seg_pair['input_metadata']))
-        metadata_gt = imed_loader_utils.clean_metadata(copy.deepcopy(seg_pair['gt_metadata']))
+        metadata_input = imed_loader_utils.clean_metadata(seg_pair['input_metadata'])
+        metadata_gt = imed_loader_utils.clean_metadata(seg_pair['gt_metadata'])
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=seg_pair['input'],
