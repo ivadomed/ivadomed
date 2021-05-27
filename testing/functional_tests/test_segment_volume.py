@@ -80,7 +80,7 @@ def test_segment_volume_2d(download_functional_test_files):
     shutil.rmtree(PATH_MODEL)
 
 
-@pytest.mark.parametrize("center_crop", [[192, 192, 16], LENGTH_3D, ])
+@pytest.mark.parametrize("center_crop", [[192, 192, 16]])
 def test_segment_volume_3d(download_functional_test_files, center_crop):
     model = imed_models.Modified3DUNet(in_channel=1,
                                        out_channel=1,

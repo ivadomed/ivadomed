@@ -116,7 +116,7 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
 
 
 def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fname_out: str, slice_axis: int,
-                debug: bool = False, kernel_dim='2d', bin_thr=0.5, discard_noise: bool = True,
+                debug: bool = False, kernel_dim: str='2d', bin_thr: float=0.5, discard_noise: bool = True,
                 postprocessing: dict = None) -> nib.Nifti1Image:
     """Save the network predictions as nibabel object.
 
@@ -310,12 +310,12 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     """
 
     # Check if model folder exists and get filenames to be stored as string
-    path_model_file: str
-    path_model_metadata_file: str
-    path_model_file, path_model_metadata_file = imed_models.get_model_filenames(folder_model)
+    fname_model: str
+    fname_model_metadata: str
+    fname_model, fname_model_metadata = imed_models.get_model_filenames(folder_model)
 
     # Load model training config
-    context = imed_config_manager.ConfigurationManager(path_model_metadata_file).get_config()
+    context = imed_config_manager.ConfigurationManager(fname_model_metadata).get_config()
 
     postpro_list = ['binarize_prediction', 'keep_largest', ' fill_holes', 'remove_small']
     if options is not None and any(pp in options for pp in postpro_list):
@@ -381,7 +381,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     preds_list, slice_idx_list = [], []
     last_sample_bool, weight_matrix, volume = False, None, None
     for i_batch, batch in enumerate(data_loader):
-        preds = get_preds(context, path_model_file, model_params, gpu_id, batch)
+        preds = get_preds(context, fname_model, model_params, gpu_id, batch)
 
         # Set datatype to gt since prediction should be processed the same way as gt
         for b in batch['input_metadata']:
@@ -434,7 +434,7 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         fname_images (list): list of image filenames (e.g. .nii.gz) to segment.
         i_batch (int): index of current batch.
 
-        last_sample_bool:
+        last_sample_bool: : flag to indicate whether this is the last sample in the 3D volume
         weight_matrix (tensor): the weight matrix
         volume (tensor): the volume tensor that is being partially reconstructed through the loop
 
@@ -500,11 +500,11 @@ def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompos
         weight_matrix (tensor): Weights containing the number of predictions for each voxel
 
     Returns:
-        pred_undo (tensor), undone subvolume,
-        metadata (dict), metadata,
-        last_sample_bool (bool), boolean representing if its the last sample of the volume
-        volume (tensor), representing the volume reconstructed
-        weight_matrix (tensor), weight matrix
+        pred_undo (tensor): undone subvolume,
+        metadata (dict): metadata,
+        last_sample_bool (bool): boolean representing if its the last sample of the volume
+        volume (tensor): representing the volume reconstructed
+        weight_matrix (tensor): weight matrix
     """
     x_min, x_max, y_min, y_max, z_min, z_max = batch['input_metadata'][smp_idx][0]['coord']
     num_pred = pred[smp_idx].shape[0]
