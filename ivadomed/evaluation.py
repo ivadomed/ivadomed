@@ -27,7 +27,7 @@ def evaluate(path_data, path_output, target_suffix, eval_params):
     Returns:
         pd.Dataframe: results for each image.
     """
-    path_preds = os.path.join(path_output, 'pred_classunc_masks')
+    path_preds = os.path.join(path_output, 'pred_masks')
     print('\nRun Evaluation on {}\n'.format(path_preds))
 
     # OUTPUT RESULT FOLDER

@@ -53,7 +53,7 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
     model.eval()
 
     # CREATE OUTPUT FOLDER
-    path_3Dpred = os.path.join(path_output, 'pred_classunc_masks')
+    path_3Dpred = os.path.join(path_output, 'pred_masks')
     if not os.path.isdir(path_3Dpred):
         os.makedirs(path_3Dpred)
 
@@ -132,6 +132,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
             if testing_params['uncertainty']['applied'] and testing_params['uncertainty']['epistemic']:
                 for m in model.modules():
                     if m.__class__.__name__.startswith('Dropout'):
+                        m.p = 0.1
                         m.train()
 
             # RUN MODEL

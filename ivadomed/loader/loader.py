@@ -250,7 +250,7 @@ class SegmentationPair(object):
                     hwd_oriented_list = [
                         imed_loader_utils.orient_img_hwd(gt_rater.get_fdata(cache_mode, dtype=np.float32),
                                                          self.slice_axis) for gt_rater in gt]
-                    gt_data.append([hwd_oriented.astype(data_type) for hwd_oriented in hwd_oriented_list])
+                    gt_data.append([hwd_oriented for hwd_oriented in hwd_oriented_list])
             else:
                 gt_data.append(
                     np.zeros(imed_loader_utils.orient_shapes_hwd(self.input_handle[0].shape, self.slice_axis),
@@ -473,7 +473,7 @@ class MRI2DSegmentationDataset(Dataset):
         Args:
             index (int): Slice index.
         """
-        seg_pair_slice, roi_pair_slice = self.indexes[index]
+        seg_pair_slice, roi_pair_slice = copy.deepcopy(self.indexes[index])
 
         # In case multiple raters
         if seg_pair_slice['gt'] is not None and isinstance(seg_pair_slice['gt'][0], list):
