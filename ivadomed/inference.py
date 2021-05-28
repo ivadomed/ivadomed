@@ -39,12 +39,12 @@ def onnx_inference(model_path: str, inputs: tensor) -> tensor:
     return torch.tensor(ort_outs[0])
 
 
-def get_preds(context: dict, path_model_file: str, model_params: dict, gpu_id: int, batch: dict) -> tensor:
+def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, batch: dict) -> tensor:
     """Returns the predictions from the given model.
 
     Args:
         context (dict): configuration dict.
-        path_model_file (str): name of file containing model.
+        fname_model (str): name of file containing model.
         model_params (dict): dictionary containing model parameters.
         gpu_id (int): Number representing gpu number if available. Currently does NOT support multiple GPU segmentation.
         batch (dict): dictionary containing input, gt and metadata
@@ -61,12 +61,12 @@ def get_preds(context: dict, path_model_file: str, model_params: dict, gpu_id: i
         img = imed_utils.cuda(batch['input'], cuda_available=cuda_available)
 
         # Load the PyTorch model and evaluate if model files exist.
-        if path_model_file.lower().endswith('.pt'):
-            logger.debug(f"PyTorch model detected at: {path_model_file}")
-            logger.debug(f"Loading model from: {path_model_file}")
-            model = torch.load(path_model_file, map_location=device)
+        if fname_model.lower().endswith('.pt'):
+            logger.debug(f"PyTorch model detected at: {fname_model}")
+            logger.debug(f"Loading model from: {fname_model}")
+            model = torch.load(fname_model, map_location=device)
             # Inference time
-            logger.debug(f"Evaluating model: {path_model_file}")
+            logger.debug(f"Evaluating model: {fname_model}")
             model.eval()
 
             # Films/Hemis based prediction require meta data load
@@ -79,9 +79,9 @@ def get_preds(context: dict, path_model_file: str, model_params: dict, gpu_id: i
                 preds = model(img)
         # Otherwise, Onnex Inference (PyTorch can't load .onnx)
         else:
-            logger.debug(f"Likely ONNX model detected at: {path_model_file}")
+            logger.debug(f"Likely ONNX model detected at: {fname_model}")
             logger.debug(f"Conduct ONNX model inference... ")
-            preds = onnx_inference(path_model_file, img)
+            preds = onnx_inference(fname_model, img)
 
         logger.debug("Sending predictions to CPU")
         # Move prediction to CPU
