@@ -46,7 +46,7 @@ def test_segment_volume_2d(download_functional_test_files):
                 "filter_empty_input": False
             },
             "roi_params": {
-                "suffix": None,
+                "suffix": "_seg-manual",
                 "slice_filter_roi": 10
             },
             "slice_axis": "axial"
@@ -72,7 +72,7 @@ def test_segment_volume_2d(download_functional_test_files):
     with open(PATH_CONFIG, 'w') as fp:
         json.dump(config, fp)
 
-    nib_lst, _ = imed_inference.segment_volume(PATH_MODEL, [IMAGE_PATH], ROI_PATH)
+    nib_lst, _ = imed_inference.segment_volume(PATH_MODEL, [IMAGE_PATH], options={'fname_prior': ROI_PATH})
     nib_img = nib_lst[0]
     assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
     assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
@@ -139,7 +139,8 @@ def test_segment_volume_2d_with_patches(download_functional_test_files, center_c
     shutil.rmtree(PATH_MODEL)
 
 
-def test_segment_volume_3d(download_functional_test_files):
+@pytest.mark.parametrize("center_crop", [[192, 192, 16]])
+def test_segment_volume_3d(download_functional_test_files, center_crop):
     model = imed_models.Modified3DUNet(in_channel=1,
                                        out_channel=1,
                                        base_n_filter=1)
@@ -174,7 +175,7 @@ def test_segment_volume_3d(download_functional_test_files):
                     "dspace": 2
                 },
             "CenterCrop": {
-                "size": LENGTH_3D
+                "size": center_crop
                 },
             "RandomTranslation": {
                 "translate": [0.03, 0.03],

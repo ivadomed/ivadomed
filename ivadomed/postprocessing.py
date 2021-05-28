@@ -5,6 +5,7 @@ import os
 
 import nibabel as nib
 import numpy as np
+from loguru import logger
 from scipy.ndimage import label, generate_binary_structure
 from scipy.ndimage.morphology import binary_fill_holes
 from skimage.feature import peak_local_max
@@ -338,7 +339,7 @@ class Postprocessing(object):
         elif unit == 'mm3':
             size_min = np.round(thr / (self.px * self.py * self.pz))
         else:
-            print('Please choose a different unit for removeSmall. Choices: vox or mm3')
+            logger.error('Please choose a different unit for removeSmall. Choices: vox or mm3')
             exit()
 
         for idx in range(self.n_classes):
