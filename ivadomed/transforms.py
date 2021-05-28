@@ -6,6 +6,7 @@ import random
 
 import numpy as np
 import torch
+from loguru import logger
 from scipy.ndimage import zoom
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.interpolation import map_coordinates, affine_transform
@@ -126,7 +127,7 @@ class Compose(object):
             # check if undo_transform method is implemented
             if requires_undo:
                 if not hasattr(transform_obj, 'undo_transform'):
-                    print('{} transform not included since no undo_transform available for it.'.format(transform))
+                    logger.info('{} transform not included since no undo_transform available for it.'.format(transform))
                     continue
 
             if "im" in list_applied_to:

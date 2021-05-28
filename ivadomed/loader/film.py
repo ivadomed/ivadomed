@@ -3,6 +3,7 @@ import os
 from copy import deepcopy
 
 import numpy as np
+from loguru import logger
 from scipy.signal import argrelextrema
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KernelDensity
@@ -48,17 +49,17 @@ def normalize_metadata(ds_in, clustering_models, debugging, metadata_type, train
                 p = clustering_models[m].predict(v)
                 s_out["input_metadata"][m] = p
                 if debugging:
-                    print("{}: {} --> {}".format(m, v, p))
+                    logger.info("{}: {} --> {}".format(m, v, p))
 
             # categorize manufacturer info based on the MANUFACTURER_CATEGORY dictionary
             manufacturer = subject["input_metadata"]["Manufacturer"]
             if manufacturer in MANUFACTURER_CATEGORY:
                 s_out["input_metadata"]["Manufacturer"] = MANUFACTURER_CATEGORY[manufacturer]
                 if debugging:
-                    print("Manufacturer: {} --> {}".format(manufacturer,
+                    logger.info("Manufacturer: {} --> {}".format(manufacturer,
                                                            MANUFACTURER_CATEGORY[manufacturer]))
             else:
-                print("{} with unknown manufacturer.".format(subject))
+                logger.info("{} with unknown manufacturer.".format(subject))
                 # if unknown manufacturer, then value set to -1
                 s_out["input_metadata"]["Manufacturer"] = -1
 
@@ -174,7 +175,7 @@ def check_isMRIparam(mri_param_type, mri_param, subject, metadata):
         bool: True if `mri_param_type` is part of `mri_param`.
     """
     if mri_param_type not in mri_param:
-        print("{} without {}, skipping.".format(subject, mri_param_type))
+        logger.info("{} without {}, skipping.".format(subject, mri_param_type))
         return False
     else:
         if mri_param_type == "Manufacturer":
