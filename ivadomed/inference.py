@@ -254,7 +254,6 @@ def set_option(options: dict, postpro: dict, context: dict, key: str):
         del context['postprocessing'][key]
 
 
-
 def set_postprocessing_options(options: dict, context: dict):
     """Updates the postprocessing options based on existing settings found in options.
 
@@ -367,7 +366,6 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                                                   slice_filter_fn=imed_loader_utils.SliceFilter(
                                                       **loader_params["slice_filter_params"]))
         ds.load_filenames()
-
         if is_2d_patch:
             logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} patches of shape {length_2D}.")
         else:
