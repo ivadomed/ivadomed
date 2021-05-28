@@ -558,7 +558,8 @@ def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompos
     return pred_undo, metadata, last_sample_bool, volume, weight_matrix
 
 
-def image_reconstruction(batch, pred, undo_transforms, smp_idx, image=None, weight_matrix=None):
+def image_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompose, smp_idx: int,
+                        image: tensor = None, weight_matrix: tensor = None):
     """
     Reconstructs image prediction from patches used during training
     Args:
@@ -570,15 +571,24 @@ def image_reconstruction(batch, pred, undo_transforms, smp_idx, image=None, weig
         weight_matrix (tensor): Weights containing the number of predictions for each pixel
 
     Returns:
-        tensor, dict, bool, tensor, tensor: undone patch, metadata, boolean representing if its the last patch to
-        process, reconstructed image, weight matrix
+        pred_undo (tensor): undone patch,
+        metadata (dict): metadata,
+        last_sample_bool (bool): boolean representing if its the last patch of the image
+        image (tensor): representing the image reconstructed
+        weight_matrix (tensor): weight matrix
     """
     x_min, x_max, y_min, y_max = batch['input_metadata'][smp_idx][0]['coord']
     num_pred = pred[smp_idx].shape[0]
 
-    first_patch_bool = not any([x_min, y_min])
+    # A boolean flag indicate whether the current patch is the VERY first patch of the entire 2D image.
+    # Formed by check if x_min/y_min are all NOT zero
+    first_patch: bool = (x_min == 0 and y_min == 0)
+
+    # Get the Dimension
     x, y = batch['input_metadata'][smp_idx][0]['index_shape']
-    if first_patch_bool:
+
+    # If this is the first sample, instantiate a ZERO tensor based on the dimension
+    if first_patch:
         image = torch.zeros((num_pred, x, y))
         weight_matrix = torch.zeros((num_pred, x, y))
 
