@@ -1,11 +1,11 @@
 import os
 import copy
-import logging
 from pathlib import Path
 import nibabel as nib
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
+from loguru import logger
 from torch.utils.data import DataLoader, ConcatDataset
 from tqdm import tqdm
 
@@ -21,8 +21,6 @@ from ivadomed.training import get_metadata
 from ivadomed.postprocessing import threshold_predictions
 
 cudnn.benchmark = True
-
-logger = logging.getLogger(__name__)
 
 
 def test(model_params, dataset_test, testing_params, path_output, device, cuda_available=True,
@@ -50,7 +48,7 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
 
     # LOAD TRAIN MODEL
     fname_model = os.path.join(path_output, "best_model.pt")
-    print('\nLoading model: {}'.format(fname_model))
+    logger.info('Loading model: {}'.format(fname_model))
     model = torch.load(fname_model, map_location=device)
     if cuda_available:
         model.cuda()
@@ -69,7 +67,7 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
             testing_params['uncertainty']['n_it'] > 0:
         n_monteCarlo = testing_params['uncertainty']['n_it'] + 1
         testing_params['uncertainty']['applied'] = True
-        print('\nComputing model uncertainty over {} iterations.'.format(n_monteCarlo - 1))
+        logger.info('Computing model uncertainty over {} iterations.'.format(n_monteCarlo - 1))
     else:
         testing_params['uncertainty']['applied'] = False
         n_monteCarlo = 1
@@ -86,7 +84,7 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
-    print(metrics_dict)
+    logger.info(metrics_dict)
     return metrics_dict
 
 
@@ -342,7 +340,7 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
                                       ofolder=None,
                                       cuda_available=cuda_available)
 
-    print('\nRunning threshold analysis to find optimal threshold')
+    logger.info('Running threshold analysis to find optimal threshold')
     # Make sure the GT is binarized
     gt_npy = [threshold_predictions(gt, thr=0.5) for gt in gt_npy]
     # Move threshold
@@ -366,10 +364,10 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
 
     optimal_idx = np.max(np.where(diff_list == np.max(diff_list)))
     optimal_threshold = thr_list[optimal_idx]
-    print('\tOptimal threshold: {}'.format(optimal_threshold))
+    logger.info('\tOptimal threshold: {}'.format(optimal_threshold))
 
     # Save plot
-    print('\tSaving plot: {}'.format(fname_out))
+    logger.info('\tSaving plot: {}'.format(fname_out))
     if metric == "dice":
         # Run plot
         imed_metrics.plot_dice_thr(thr_list, dice_list, optimal_idx, fname_out)

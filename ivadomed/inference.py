@@ -6,6 +6,7 @@ import torch
 import joblib
 from typing import List
 
+from loguru import logger
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from torch import tensor
@@ -19,9 +20,6 @@ from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
 from ivadomed import training as imed_training
 
-# To be replaced in upcoming PR by loguru update
-import logging
-logger = logging.getLogger()
 
 
 def onnx_inference(model_path: str, inputs: tensor) -> tensor:
