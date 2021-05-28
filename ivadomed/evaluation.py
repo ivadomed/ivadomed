@@ -3,6 +3,7 @@ import os
 import nibabel as nib
 import numpy as np
 import pandas as pd
+from loguru import logger
 from scipy.ndimage import label, generate_binary_structure
 from tqdm import tqdm
 
@@ -28,7 +29,7 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
         pd.Dataframe: results for each image.
     """
     path_preds = os.path.join(path_output, 'pred_masks')
-    print('\nRun Evaluation on {}\n'.format(path_preds))
+    logger.info('\nRun Evaluation on {}\n'.format(path_preds))
 
     # OUTPUT RESULT FOLDER
     path_results = os.path.join(path_output, 'results_eval')
@@ -84,7 +85,7 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
     df_results = df_results.set_index('image_id')
     df_results.to_csv(os.path.join(path_results, 'evaluation_3Dmetrics.csv'))
 
-    print(df_results.head(5))
+    logger.info(df_results.head(5))
     return df_results
 
 

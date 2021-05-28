@@ -1,11 +1,11 @@
 import collections.abc
 import re
 import os
-import logging
 import numpy as np
 import pandas as pd
 import torch
 import joblib
+from loguru import logger
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
 from ivadomed import utils as imed_utils
@@ -28,8 +28,6 @@ __numpy_type_map = {
 
 TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 'reverse',
                     'translation', 'gaussian_noise']
-
-logger = logging.getLogger(__name__)
 
 
 def split_dataset(df, split_method, data_testing, random_seed, train_frac=0.8, test_frac=0.1):
@@ -844,9 +842,9 @@ class BidsDataframe:
         """
         try:
             self.df.to_csv(path, index=False)
-            print("Dataframe has been saved in {}.".format(path))
+            logger.info("Dataframe has been saved in {}.".format(path))
         except FileNotFoundError:
-            print("Wrong path, bids_dataframe.csv could not be saved in {}.".format(path))
+            logger.error("Wrong path, bids_dataframe.csv could not be saved in {}.".format(path))
 
     def write_derivatives_dataset_description(self, path_data):
         """Writes default dataset_description.json file if not found in path_data/derivatives folder
