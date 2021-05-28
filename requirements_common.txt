@@ -1,6 +1,6 @@
 csv-diff>=1.0
 h5py==2.10.0
-logurus~=0.5
+loguru~=0.5
 joblib~=1.0
 matplotlib>=3.3.0
 nibabel~=3.2
