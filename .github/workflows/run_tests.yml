@@ -30,7 +30,7 @@ jobs:
     # Default shell for ALL subsequent steps.
     defaults:
       run:
-        shell: bash {0}
+        shell: bash
 
     # Defining matrix for OS and Python
     strategy:
