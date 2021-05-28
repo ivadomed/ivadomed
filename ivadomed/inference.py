@@ -388,7 +388,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
 
     # Loop across batches
     preds_list, slice_idx_list = [], []
-    last_sample_bool, weight_matrix, volume = False, None, None
+    last_sample_bool, weight_matrix, volume, image = False, None, None, None
     for i_batch, batch in enumerate(data_loader):
         preds = get_preds(context, fname_model, model_params, gpu_id, batch)
 
@@ -398,9 +398,10 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                 modality['data_type'] = 'gt'
 
         # Reconstruct 3D object
-        pred_list, target_list, last_sample_bool, weight_matrix, volume = reconstruct_3d_object(
+        pred_list, target_list, last_sample_bool, weight_matrix, volume, image = reconstruct_3d_object(
             context, batch, undo_transforms, preds, preds_list, kernel_3D, is_2d_patch, slice_axis,
-            slice_idx_list, data_loader, fname_images, i_batch, last_sample_bool, weight_matrix, volume
+            slice_idx_list, data_loader, fname_images, i_batch, last_sample_bool, weight_matrix,
+            volume, image
         )
 
     return pred_list, target_list
@@ -425,7 +426,7 @@ def split_classes(nib_prediction):
 def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: torch.tensor,
                           preds_list: list, kernel_3D: bool, is_2d_patch: bool, slice_axis: int, slice_idx_list: list,
                           data_loader: DataLoader, fname_images: list, i_batch: int, last_sample_bool: bool,
-                          weight_matrix: tensor, volume: tensor):
+                          weight_matrix: tensor, volume: tensor, image: tensor):
     """Reconstructs the 3D object from the current batch, and returns the list of predictions and
        targets.
 
@@ -443,10 +444,10 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         data_loader (DataLoader): DataLoader object containing batches using in object construction.
         fname_images (list): list of image filenames (e.g. .nii.gz) to segment.
         i_batch (int): index of current batch.
-
         last_sample_bool: : flag to indicate whether this is the last sample in the 3D volume
         weight_matrix (tensor): the weight matrix
         volume (tensor): the volume tensor that is being partially reconstructed through the loop
+        image (tensor): the image tensor that is being partially reconstructed through the loop
 
     Returns:
         pred_list (list): list of predictions
@@ -454,6 +455,8 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         last_sample_bool (bool): flag to indicate whether this is the last sample in the 3D volume
         weight_matrix (tensor): the weight matrix. Must be returned as passing tensor by reference is NOT reliable.
         volume (tensor): the volume tensor that is being partially reconstructed through the loop. Must be returned
+         as passing tensor by reference is NOT reliable.
+        image (tensor): the vimage tensor that is being partially reconstructed through the loop. Must be returned
          as passing tensor by reference is NOT reliable.
     """
     pred_list = []
@@ -503,7 +506,7 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
             pred_list = split_classes(pred_nib)
             target_list = context['loader_parameters']['target_suffix']
 
-    return pred_list, target_list, last_sample_bool, weight_matrix, volume
+    return pred_list, target_list, last_sample_bool, weight_matrix, volume, image
 
 
 def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompose, smp_idx: int,
