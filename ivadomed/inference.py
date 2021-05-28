@@ -399,8 +399,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
 
         # Reconstruct 3D object
         pred_list, target_list, last_sample_bool, weight_matrix, volume = reconstruct_3d_object(
-            context, batch, undo_transforms, preds, preds_list, kernel_3D, slice_axis, slice_idx_list, data_loader,
-            fname_images, i_batch, last_sample_bool, weight_matrix, volume
+            context, batch, undo_transforms, preds, preds_list, kernel_3D, is_2d_patch, slice_axis,
+            slice_idx_list, data_loader, fname_images, i_batch, last_sample_bool, weight_matrix, volume
         )
 
     return pred_list, target_list
@@ -423,7 +423,7 @@ def split_classes(nib_prediction):
 
 
 def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: torch.tensor,
-                          preds_list: list, kernel_3D: bool, slice_axis: int, slice_idx_list: list,
+                          preds_list: list, kernel_3D: bool, is_2d_patch: bool, slice_axis: int, slice_idx_list: list,
                           data_loader: DataLoader, fname_images: list, i_batch: int, last_sample_bool: bool,
                           weight_matrix: tensor, volume: tensor):
     """Reconstructs the 3D object from the current batch, and returns the list of predictions and
