@@ -149,6 +149,8 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
         if model_params["name"] == "HeMISUnet":
             # Reconstruct image with only one modality
             input_samples = batch['input'][0]
+        elif model_params["name"] == "HourglassNet":
+                   preds = torch.sum(preds[-1], axis=1, keepdim =True)   
 
         if model_params["name"] == "Modified3DUNet" and model_params["attention"] and ofolder:
             imed_visualize.save_feature_map(batch, "attentionblock2", os.path.dirname(ofolder), model, input_samples,
