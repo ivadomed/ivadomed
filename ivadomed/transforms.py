@@ -294,8 +294,7 @@ class VertebralSplitting(ImedTransform):
 
     @multichannel_capable
     def undo_transform(self, sample, metadata=None):
-
-        return data_out, metadata
+        return sample, metadata
 
     def get_posedata(self, msk, num_ch):
 
