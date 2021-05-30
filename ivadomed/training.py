@@ -175,19 +175,19 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                 metadata = get_metadata(batch["input_metadata"], model_params)
                 preds = model(input_samples, metadata)
             else:
-                preds = model(input_samples)
                 if model_params["name"] == "HourglassNet":
-                   preds = preds[-1] 
-                   jvis = [batch["gt_metadata"][k][0]["jvis"] for k in range(len(batch["gt_metadata"]))]
-                   jvis = torch.Tensor(jvis).view(len(jvis), -1)
-                   jvis = imed_utils.cuda(jvis, cuda_available, non_blocking=True)
-                   gt_samples = (gt_samples, jvis)
+                    preds = model(input_samples)[-1]
+                else:
+                    preds = model(input_samples)
+                  
             # LOSS
-
-            loss = loss_fct(preds, gt_samples)
             if model_params["name"] == "HourglassNet":
-                gt_samples = gt_samples[0]
-
+                jvis = [batch["gt_metadata"][k][0]["jvis"] for k in range(len(batch["gt_metadata"]))]
+                jvis = torch.Tensor(jvis).view(len(jvis), -1)
+                jvis = imed_utils.cuda(jvis, cuda_available, non_blocking=True)
+                loss = loss_fct(preds, (gt_samples, jvis))  # jvis is passed as `target_weight` for JointsMSELoss
+            else:
+                loss = loss_fct(preds, gt_samples)
             train_loss_total += loss.item()
             train_dice_loss_total += loss_dice_fct(preds, gt_samples).item()
 
