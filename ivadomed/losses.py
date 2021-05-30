@@ -420,13 +420,19 @@ class JointsMSELoss(nn.Module):
     returns:
             tensor: sum of losses computed on (mask, target) with the params
     """    
-    def __init__(self, use_target_weight=True):
+    def __init__(self):
         super(JointsMSELoss, self).__init__()
         self.criterion = nn.MSELoss(reduction='mean')
-        self.use_target_weight = use_target_weight
 
     def forward(self, output, target_and_weights):
-        target, target_weight = target_and_weights
+        if len(target_and_weights) == 2 and all(isinstance(n, torch.Tensor) for n in target_and_weights):
+            target, target_weight = target_and_weights
+            use_target_weight = True
+        elif isinstance(target_and_weights, torch.Tensor):
+            target, target_weight = target_and_weights, None
+            use_target_weight = False
+        else:
+            raise ValueError("Input must either a Tensor (target) or a list of 2 Tensors (target, weights).")
         target = target.float()
         batch_size = output.size(0)
         num_joints = output.size(1)
@@ -437,7 +443,7 @@ class JointsMSELoss(nn.Module):
         for idx in range(num_joints):
             heatmap_pred = heatmaps_pred[idx].squeeze()
             heatmap_gt = heatmaps_gt[idx].squeeze()
-            if self.use_target_weight:
+            if use_target_weight:
                 loss += 0.5 * self.criterion(
                     heatmap_pred.mul(target_weight[:, idx:idx+1]),
                     heatmap_gt.mul(target_weight[:, idx:idx+1])
