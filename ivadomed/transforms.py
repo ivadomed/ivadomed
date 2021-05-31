@@ -295,7 +295,6 @@ class VertebralSplitting(ImedTransform):
         return sample, metadata
 
     def get_posedata(self, msk, num_ch):
-        msk = np.array(msk)
         ys = msk.shape
         ys_ch = [np.zeros([ys[0], ys[1]])] * num_ch
         msk_uint = np.uint8(np.where(msk>0.2, 1, 0))
