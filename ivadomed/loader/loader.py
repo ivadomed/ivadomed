@@ -417,7 +417,7 @@ class SegmentationPair(object):
         else:
             gt_slices = []
             for gt_obj in gt_dataobj:
-                if gt_type in ["segmentation", "pose_estimation"]:
+                if gt_type == "segmentation":
                     if not isinstance(gt_obj, list):  # annotation from only one rater
                         gt_slices.append(np.asarray(gt_obj[..., slice_index],
                                                     dtype=np.float32))
@@ -759,7 +759,7 @@ class MRI2DSegmentationDataset(Dataset):
 
 
 
-        if self.task in ["segmentation", "pose_estimation"]:
+        if self.task == "segmentation":
             # Run transforms on images
             stack_gt, metadata_gt = self.transform(sample=seg_pair_slice["gt"],
                                                    metadata=metadata_gt,
@@ -767,8 +767,6 @@ class MRI2DSegmentationDataset(Dataset):
             # Make sure stack_gt is binarized
             if stack_gt is not None and not self.soft_gt:
                 stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5).astype(np.uint8)
-            if self.task == "pose_estimation":
-                stack_gt = torch.squeeze(stack_gt)
                 
 
 
