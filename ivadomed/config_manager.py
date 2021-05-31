@@ -1,6 +1,7 @@
 import json
 import os
 import collections.abc
+from loguru import logger
 from ivadomed import utils as imed_utils
 import copy
 
@@ -39,7 +40,7 @@ def deep_dict_compare(source_dict, dest_dict, keyname=None):
     for key in dest_dict:
         if key not in source_dict:
             key_str = key if keyname is None else keyname + key
-            print(f'    {key_str}: {dest_dict[key]}')
+            logger.info(f'    {key_str}: {dest_dict[key]}')
 
         else:
             if isinstance(dest_dict[key], collections.abc.Mapping):
@@ -143,9 +144,9 @@ class ConfigurationManager(object):
     def _display_differing_keys(self):
         """Display differences between dictionaries.
         """
-        print('Adding the following keys to the configuration file')
+        logger.info('Adding the following keys to the configuration file')
         deep_dict_compare(self.context_original, self.config_updated)
-        print('\n')
+        logger.info('\n')
 
     def _validate_path(self):
         """Ensure validity of configuration file path.

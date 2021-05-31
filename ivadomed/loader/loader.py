@@ -1,12 +1,12 @@
 import copy
 import random
-import logging
 import nibabel as nib
 import numpy as np
 import torch
 import pandas as pd
 import os
 import imageio
+from loguru import logger
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
@@ -15,8 +15,6 @@ from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
-
-logger = logging.getLogger(__name__)
 
 
 def load_dataset(bids_df, data_list, transforms_params, model_params, target_suffix, roi_params,
@@ -115,11 +113,11 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         dataset.load_filenames()
 
     if model_params["name"] == "Modified3DUNet":
-        print("Loaded {} volumes of size {} for the {} set.".format(len(dataset), slice_axis, dataset_type))
+        logger.info("Loaded {} volumes of size {} for the {} set.".format(len(dataset), slice_axis, dataset_type))
     elif model_params["name"] != "HeMISUnet" and dataset.length:
-        print("Loaded {} {} patches for the {} set.".format(len(dataset), slice_axis, dataset_type))
+        logger.info("Loaded {} {} patches for the {} set.".format(len(dataset), slice_axis, dataset_type))
     else:
-        print("Loaded {} {} slices for the {} set.".format(len(dataset), slice_axis, dataset_type))
+        logger.info("Loaded {} {} slices for the {} set.".format(len(dataset), slice_axis, dataset_type))
 
     return dataset
 

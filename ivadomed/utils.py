@@ -1,4 +1,3 @@
-import logging
 import os
 import sys
 import subprocess
@@ -8,6 +7,7 @@ import pandas as pd
 import torch
 import hashlib
 from enum import Enum
+from loguru import logger
 
 from typing import List
 
@@ -15,8 +15,6 @@ AXIS_DCT = {'sagittal': 0, 'coronal': 1, 'axial': 2}
 
 # List of classification models (ie not segmentation output)
 CLASSIFIER_LIST = ['resnet18', 'densenet121']
-
-logger = logging.getLogger(__name__)
 
 
 class Metavar(Enum):
@@ -126,13 +124,13 @@ def define_device(gpu_id):
     device = torch.device("cuda:" + str(gpu_id) if torch.cuda.is_available() else "cpu")
     cuda_available = torch.cuda.is_available()
     if not cuda_available:
-        print("Cuda is not available.")
-        print("Working on {}.".format(device))
+        logger.info("Cuda is not available.")
+        logger.info("Working on {}.".format(device))
     if cuda_available:
         # Set the GPU
         gpu_id = int(gpu_id)
         torch.cuda.set_device(gpu_id)
-        print(f"Using GPU ID {gpu_id}")
+        logger.info(f"Using GPU ID {gpu_id}")
     return cuda_available, device
 
 
@@ -142,10 +140,10 @@ def display_selected_model_spec(params):
     Args:
         params (dict): Keys are param names and values are param values.
     """
-    print('\nSelected architecture: {}, with the following parameters:'.format(params["name"]))
+    logger.info('Selected architecture: {}, with the following parameters:'.format(params["name"]))
     for k in list(params.keys()):
         if k != "name":
-            print('\t{}: {}'.format(k, params[k]))
+            logger.info('\t{}: {}'.format(k, params[k]))
 
 
 def display_selected_transfoms(params, dataset_type):
@@ -155,9 +153,9 @@ def display_selected_transfoms(params, dataset_type):
         params (dict):
         dataset_type (list): e.g. ['testing'] or ['training', 'validation']
     """
-    print('\nSelected transformations for the {} dataset:'.format(dataset_type))
+    logger.info('Selected transformations for the {} dataset:'.format(dataset_type))
     for k in list(params.keys()):
-        print('\t{}: {}'.format(k, params[k]))
+        logger.info('\t{}: {}'.format(k, params[k]))
 
 
 def plot_transformed_sample(before, after, list_title=[], fname_out="", cmap="jet"):

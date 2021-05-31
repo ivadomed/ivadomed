@@ -4,6 +4,7 @@
     "path_output": "path_output",
     "model_name": "my_model",
     "debugging": false,
+    "log_file": "log",
     "object_detection_params": {
         "object_detection_path": null,
         "safety_factor": [1.0, 1.0, 1.0]

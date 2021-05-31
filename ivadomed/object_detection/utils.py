@@ -4,6 +4,7 @@ import statistics
 
 import nibabel as nib
 import numpy as np
+from loguru import logger
 from scipy import ndimage
 
 from ivadomed import postprocessing as imed_postpro
@@ -320,7 +321,7 @@ def compute_bb_statistics(bounding_box_path):
         d.append(z_max - z_min)
         v.append((x_max - x_min) * (y_max - y_min) * (z_max - z_min))
 
-    print('Mean height: {} +/- {}, min: {}, max: {}'.format(statistics.mean(h), statistics.stdev(h), min(h), max(h)))
-    print('Mean width: {} +/- {}, min: {}, max: {}'.format(statistics.mean(w), statistics.stdev(w), min(w), max(w)))
-    print('Mean depth: {} +/- {}, min: {}, max: {}'.format(statistics.mean(d), statistics.stdev(d), min(d), max(d)))
-    print('Mean volume: {} +/- {}, min: {}, max: {}'.format(statistics.mean(v), statistics.stdev(v), min(v), max(v)))
+    logger.info('Mean height: {} +/- {}, min: {}, max: {}'.format(statistics.mean(h), statistics.stdev(h), min(h), max(h)))
+    logger.info('Mean width: {} +/- {}, min: {}, max: {}'.format(statistics.mean(w), statistics.stdev(w), min(w), max(w)))
+    logger.info('Mean depth: {} +/- {}, min: {}, max: {}'.format(statistics.mean(d), statistics.stdev(d), min(d), max(d)))
+    logger.info('Mean volume: {} +/- {}, min: {}, max: {}'.format(statistics.mean(v), statistics.stdev(v), min(v), max(v)))
