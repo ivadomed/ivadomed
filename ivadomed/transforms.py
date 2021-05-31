@@ -260,7 +260,6 @@ class Resample(ImedTransform):
         is_2d = sample.shape[-1] == 1
         metadata['preresample_shape'] = sample.shape
         zooms = list(metadata["zooms"])
-
         if len(zooms) == 2:
             zooms += [1.0]
         if self.flag_pixel:
@@ -285,21 +284,20 @@ class Resample(ImedTransform):
 
 class VertebralSplitting(ImedTransform):
     """Create an intervertebral disk masks for pose estimation model .
-    Args:
-        max_joint (int): Maximum number of joints in the input gt mask 
+    NB: This transform is not multichannel capable. It is meant to be used
+    to *create* a multichannel image from a single-channel image.
     """
 
     def __init__(self, max_joint=11):
         self.max_joint = max_joint
 
-    @multichannel_capable
     def undo_transform(self, sample, metadata=None):
         return sample, metadata
 
     def get_posedata(self, msk, num_ch):
-
+        msk = np.array(msk)
         ys = msk.shape
-        ys_ch = np.zeros([num_ch, ys[0], ys[1]])
+        ys_ch = [np.zeros([ys[0], ys[1]])] * num_ch
         msk_uint = np.uint8(np.where(msk>0.2, 1, 0))
         
         labels_im, num_labels = measure.label(msk_uint, background=0, return_num=True)
@@ -307,7 +305,7 @@ class VertebralSplitting(ImedTransform):
             # the <0> label is the background
             for i in range(1, num_labels+1):
                 y_i = msk * np.where(labels_im == i, 1, 0)
-                ys_ch[i-1, :,:] = y_i
+                ys_ch[i-1] = y_i
         except:
             pass
 
@@ -315,10 +313,17 @@ class VertebralSplitting(ImedTransform):
         vis[:num_labels] = 1
         return ys_ch, vis
 
-    @multichannel_capable
     def __call__(self, sample, metadata=None):
-        data_out, jvis = self.get_posedata(sample, self.max_joint)
-        metadata['jvis'] = jvis
+        """
+        Args:
+            sample: List with a single 2D ndarray (i.e. a single-channel GT mask).
+            metadata: List with a single SampleMetadata object.
+        Returns:
+            data_out: List with `max_joint` # of 2D ndarrays (i.e. a multi-channel GT mask).
+            metadata: List with a single SampleMetadata object, updated with 'jvis'.
+        """
+        data_out, jvis = self.get_posedata(sample[0], self.max_joint)
+        metadata[0]['jvis'] = jvis
         return data_out, metadata
 
 
