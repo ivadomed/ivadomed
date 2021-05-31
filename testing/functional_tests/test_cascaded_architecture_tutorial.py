@@ -3,7 +3,7 @@ import os
 import pytest
 from pytest_console_scripts import script_runner
 from testing.functional_tests.t_utils import __data_testing_dir__
-from testing.common_testing_util import download_dataset
+from testing.common_testing_util import download_dataset, path_repo_root
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,8 @@ def test_cascaded_architecture_tutorial(script_runner):
 
     ret = script_runner.run('ivadomed', '-c', f'{file_config}',
                             '-t', '0.01',
-                            '-g', '1')
+                            '-g', '1',
+                            cwd=path_repo_root)
 
     print(f"{ret.stdout}")
     print(f"{ret.stderr}")
