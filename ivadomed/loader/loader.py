@@ -715,6 +715,9 @@ class MRI2DSegmentationDataset(Dataset):
             index (int): Slice index.
         """
 
+        # copy.deepcopy is used to have different coordinates for reconstruction for a given handler with patch,
+        # to allow a different rater at each iteration of training, and to clean transforms params from previous
+        # transforms i.e. remove params from previous iterations so that the coming transforms are different
         if self.is_2d_patch:
             coord = self.indexes[index]
             seg_pair_slice, roi_pair_slice = copy.deepcopy(self.handlers[coord['handler_index']])
@@ -731,12 +734,9 @@ class MRI2DSegmentationDataset(Dataset):
                 seg_pair_slice['gt'][idx_class] = seg_pair_slice['gt'][idx_class][idx_rater]
                 seg_pair_slice['gt_metadata'][idx_class] = seg_pair_slice['gt_metadata'][idx_class][idx_rater]
 
-        # Clean transforms params from previous transforms
-        # i.e. remove params from previous iterations so that the coming transforms are different
-        # Use copy to have different coordinates for reconstruction for a given handler with patch
-        metadata_input = imed_loader_utils.clean_metadata(seg_pair_slice['input_metadata'])
-        metadata_roi = imed_loader_utils.clean_metadata(roi_pair_slice['gt_metadata'])
-        metadata_gt = imed_loader_utils.clean_metadata(seg_pair_slice['gt_metadata'])
+        metadata_input = seg_pair_slice['input_metadata']
+        metadata_roi = roi_pair_slice['gt_metadata']
+        metadata_gt = seg_pair_slice['gt_metadata']
 
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
