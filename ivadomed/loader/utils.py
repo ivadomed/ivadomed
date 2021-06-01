@@ -619,6 +619,9 @@ class BidsDataframe:
         # derivatives
         self.derivatives = derivatives
 
+        # Multichannel
+        self.multichannel = loader_params['multichannel']
+
         # Create dataframe
         self.df = pd.DataFrame()
         self.create_bids_dataframe()
@@ -835,7 +838,51 @@ class BidsDataframe:
             list: derivative filenames
         """
         prefix_fname = subject_fname.split('.')[0]
-        return [d for d in deriv_fnames if prefix_fname in d]
+        output = [d for d in deriv_fnames if prefix_fname in d]
+
+        #
+        if self.multichannel and not output:
+            # First check - look for GT of other contrasts
+            for contrast in self.contrast_lst:
+                prefix_fname = subject_fname.split('_')[0] + "_" + contrast
+                output = [d for d in deriv_fnames if prefix_fname in d]
+                if output:
+                    break
+            if not output:
+                if "_ses-" in subject_fname:
+                    subject = subject_fname.split('_')[0]
+                    sess_id = subject_fname.split('_')[1]
+                    contrast_id = subject_fname.split('_')[-1].split(".")[0]
+                    all_subject_deriv = [d for d in deriv_fnames if subject in d]
+
+                    # Second check - in case of ses-* file structure, check for the derivatives in the sessions folder
+                    session_list = np.unique([d.split("_")[1] for d in all_subject_deriv])
+                    # Session list is reordered to first check for the same contrast-type in the other sessions
+                    if len(session_list) > 1:
+                        re_ordered_session_lst = [sess_id] + session_list.remove(sess_id)
+                    else:
+                        re_ordered_session_lst = session_list
+                    for session in re_ordered_session_lst:
+                        # Contrast list is reordered to first check for the same contrast-type in the other sessions
+                        if len(self.contrast_lst) > 1:
+                            re_ordered_contrast_lst = [contrast_id] + self.contrast_lst.remove(contrast_id)
+                        else:
+                            re_ordered_contrast_lst = self.contrast_lst
+                        for contrast in re_ordered_contrast_lst:
+                            new_prefix_fname = subject_fname.split('.')[0].split('_')[0] + \
+                                               "_" + session + "_" + contrast
+                            output = [d for d in deriv_fnames if new_prefix_fname in d]
+                            if output:
+                                logger.info(
+                                    "Multichannel training: No derivative found for {} "
+                                    "- Assigning derivatives from {}".format(
+                                        subject_fname,
+                                        np.unique(["_".join([x.split("_")[0], x.split("_")[1], contrast])
+                                                   for x in output])[0])
+                                )
+                                break
+
+        return output
 
     def save(self, path):
         """Save the dataframe into a csv file.
