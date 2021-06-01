@@ -1505,7 +1505,7 @@ class Hourglass(nn.Module):
 
     def _make_residual(self, block, num_blocks, planes):
         layers = []
-        for i in range(0, num_blocks):
+        for i in range(num_blocks):
             layers.append(block(planes*block.expansion, planes))
         return nn.Sequential(*layers)
 
