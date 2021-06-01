@@ -923,6 +923,10 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         Args:
             index (int): Subvolume index.
         """
+
+        # copy.deepcopy is used to have different coordinates for reconstruction for a given handler,
+        # to allow a different rater at each iteration of training, and to clean transforms params from previous
+        # transforms i.e. remove params from previous iterations so that the coming transforms are different
         coord = self.indexes[index]
         seg_pair, _ = copy.deepcopy(self.handlers[coord['handler_index']])
 
@@ -936,11 +940,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 seg_pair['gt'][idx_class] = seg_pair['gt'][idx_class][idx_rater]
                 seg_pair['gt_metadata'][idx_class] = seg_pair['gt_metadata'][idx_class][idx_rater]
 
-        # Clean transforms params from previous transforms
-        # i.e. remove params from previous iterations so that the coming transforms are different
-        # Use copy to have different coordinates for reconstruction for a given handler
-        metadata_input = imed_loader_utils.clean_metadata(seg_pair['input_metadata'])
-        metadata_gt = imed_loader_utils.clean_metadata(seg_pair['gt_metadata'])
+        metadata_input = seg_pair['input_metadata']
+        metadata_gt = seg_pair['gt_metadata']
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=seg_pair['input'],
