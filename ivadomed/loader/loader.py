@@ -752,7 +752,7 @@ class MRI2DSegmentationDataset(Dataset):
                                                      metadata=metadata_input,
                                                      data_type="im")
 
-        # Update metadata_input with metadata_roi
+        # Update metadata_gt with metadata_input
         metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
 
         if self.task == "segmentation":
