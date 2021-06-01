@@ -1133,9 +1133,6 @@ class BidsDataset(MRI2DSegmentationDataset):
         # Get all derivatives filenames from bids_df
         all_deriv = bids_df.get_deriv_fnames()
 
-        filename_pairs_singlechannel = []
-        filename_pairs_multichannel = []
-
         # Create filename_pairs
         for subject in tqdm(subject_file_lst, desc="Loading dataset"):
             df_sub, roi_filename, target_filename, metadata = self.create_filename_pair(multichannel_subjects, subject, 
@@ -1148,11 +1145,6 @@ class BidsDataset(MRI2DSegmentationDataset):
             if multichannel:
                 multichannel_subjects = self.fill_multichannel_dict(multichannel_subjects, subject, idx_dict, df_sub, 
                                                                     roi_filename, target_filename, metadata)
-
-                filename_pairs_singlechannel.append(([df_sub['path'].values[0]],
-                                            target_filename, roi_filename, [metadata]))
-                filename_pairs_multichannel.append(([df_sub['path'].values[0]],
-                                                     target_filename, roi_filename, [metadata]))
             else:
                 self.filename_pairs.append(([df_sub['path'].values[0]],
                                             target_filename, roi_filename, [metadata]))
