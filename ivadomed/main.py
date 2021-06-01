@@ -113,9 +113,6 @@ def film_normalize_data(context, model_params, ds_train, ds_valid, path_output):
     return model_params, ds_train, ds_valid, train_onehotencoder
 
 
-
-
-
 def get_dataset(bids_df, loader_params, data_lst, transform_params, cuda_available, device, ds_type):
     ds = imed_loader.load_dataset(bids_df, **{**loader_params, **{'data_list': data_lst,
                                                                   'transforms_params': transform_params,
