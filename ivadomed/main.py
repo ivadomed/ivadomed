@@ -368,7 +368,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         imed_utils.display_selected_transfoms(transformation_dict, dataset_type=["testing"])
 
     # Check if multiple raters
-    check_multiple_raters(command != "train", loader_params)
+    check_multiple_raters(command == "train", loader_params)
 
     if command == 'train':
         # Get Validation dataset

@@ -435,28 +435,6 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         return self.num_samples
 
 
-def clean_metadata(metadata_lst):
-    """Remove keys from metadata. The keys to be deleted are stored in a list.
-
-    Args:
-        metadata_lst (list): List of SampleMetadata.
-
-    Returns:
-        list: List of SampleMetadata with removed keys.
-    """
-    metadata_out = []
-
-    if metadata_lst is not None:
-        TRANSFORM_PARAMS.remove('crop_params')
-        for metadata_cur in metadata_lst:
-            for key_ in list(metadata_cur.keys()):
-                if key_ in TRANSFORM_PARAMS:
-                    del metadata_cur.metadata[key_]
-            metadata_out.append(metadata_cur)
-        TRANSFORM_PARAMS.append('crop_params')
-    return metadata_out
-
-
 def update_metadata(metadata_src_lst, metadata_dest_lst):
     """Update metadata keys with a reference metadata.
 
