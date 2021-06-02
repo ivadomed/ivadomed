@@ -735,9 +735,9 @@ class MRI2DSegmentationDataset(Dataset):
                 seg_pair_slice['gt'][idx_class] = seg_pair_slice['gt'][idx_class][idx_rater]
                 seg_pair_slice['gt_metadata'][idx_class] = seg_pair_slice['gt_metadata'][idx_class][idx_rater]
 
-        metadata_input = seg_pair_slice['input_metadata']
-        metadata_roi = roi_pair_slice['gt_metadata']
-        metadata_gt = seg_pair_slice['gt_metadata']
+        metadata_input = seg_pair_slice['input_metadata'] if seg_pair_slice['input_metadata'] is not None else []
+        metadata_roi = roi_pair_slice['gt_metadata'] if roi_pair_slice['gt_metadata'] is not None else []
+        metadata_gt = seg_pair_slice['gt_metadata'] if seg_pair_slice['gt_metadata'] is not None else []
 
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
@@ -941,8 +941,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 seg_pair['gt'][idx_class] = seg_pair['gt'][idx_class][idx_rater]
                 seg_pair['gt_metadata'][idx_class] = seg_pair['gt_metadata'][idx_class][idx_rater]
 
-        metadata_input = seg_pair['input_metadata']
-        metadata_gt = seg_pair['gt_metadata']
+        metadata_input = seg_pair['input_metadata'] if seg_pair['input_metadata'] is not None else []
+        metadata_gt = seg_pair['gt_metadata'] if seg_pair['gt_metadata'] is not None else []
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=seg_pair['input'],
