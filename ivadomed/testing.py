@@ -108,6 +108,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     # INIT STORAGE VARIABLES
     preds_npy_list, gt_npy_list, filenames = [], [], []
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
+    image = None
     volume = None
     weight_matrix = None
 
@@ -180,16 +181,34 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 imed_obj_detect.adjust_undo_transforms(testing_params["undo_transforms"].transforms, batch, smp_idx)
 
             if model_params["is_2d"]:
+                preds_idx_arr = None
                 last_sample_bool = (last_batch_bool and smp_idx == len(preds_cpu) - 1)
-                # undo transformations
-                preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
-                                                                                 batch['gt_metadata'][smp_idx],
-                                                                                 data_type='gt')
-                # preds_idx_undo is a list n_label arrays
-                preds_idx_arr = np.array(preds_idx_undo)
 
-                # TODO: gt_filenames should not be a list
-                fname_ref = list(filter(None, metadata_idx[0]['gt_filenames']))[0]
+                length_2D = model_params["length_2D"] if "length_2D" in model_params else []
+                stride_2D = model_params["stride_2D"] if "stride_2D" in model_params else []
+                if length_2D:
+                    # undo transformations for patch and reconstruct slice
+                    preds_idx_undo, metadata_idx, last_patch_bool, image, weight_matrix = \
+                        imed_inference.image_reconstruction(batch, preds_cpu, testing_params['undo_transforms'],
+                                                            smp_idx, image, weight_matrix)
+                    # If last patch of the slice
+                    if last_patch_bool:
+                        # preds_idx_undo is a list n_label arrays
+                        preds_idx_arr = np.array(preds_idx_undo)
+
+                        # TODO: gt_filenames should not be a list
+                        fname_ref = list(filter(None, metadata_idx[0]['gt_filenames']))[0]
+
+                else:
+                    # undo transformations for slice
+                    preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
+                                                                                     batch['gt_metadata'][smp_idx],
+                                                                                     data_type='gt')
+                    # preds_idx_undo is a list n_label arrays
+                    preds_idx_arr = np.array(preds_idx_undo)
+
+                    # TODO: gt_filenames should not be a list
+                    fname_ref = list(filter(None, metadata_idx[0]['gt_filenames']))[0]
 
                 # NEW COMPLETE VOLUME
                 if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool) and task != "classification":
@@ -231,13 +250,14 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     # re-init pred_stack_lst
                     pred_tmp_lst, z_tmp_lst = [], []
 
-                # add new sample to pred_tmp_lst, of size n_label X h X w ...
-                pred_tmp_lst.append(preds_idx_arr)
+                if preds_idx_arr is not None:
+                    # add new sample to pred_tmp_lst, of size n_label X h X w ...
+                    pred_tmp_lst.append(preds_idx_arr)
 
-                # TODO: slice_index should be stored in gt_metadata as well
-                z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
-                fname_tmp = fname_ref
-                filenames = metadata_idx[0]['gt_filenames']
+                    # TODO: slice_index should be stored in gt_metadata as well
+                    z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
+                    fname_tmp = fname_ref
+                    filenames = metadata_idx[0]['gt_filenames']
 
             else:
                 pred_undo, metadata, last_sample_bool, volume, weight_matrix = \

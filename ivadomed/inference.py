@@ -39,12 +39,12 @@ def onnx_inference(model_path: str, inputs: tensor) -> tensor:
     return torch.tensor(ort_outs[0])
 
 
-def get_preds(context: dict, path_model_file: str, model_params: dict, gpu_id: int, batch: dict) -> tensor:
+def get_preds(context: dict, fname_model: str, model_params: dict, gpu_id: int, batch: dict) -> tensor:
     """Returns the predictions from the given model.
 
     Args:
         context (dict): configuration dict.
-        path_model_file (str): name of file containing model.
+        fname_model (str): name of file containing model.
         model_params (dict): dictionary containing model parameters.
         gpu_id (int): Number representing gpu number if available. Currently does NOT support multiple GPU segmentation.
         batch (dict): dictionary containing input, gt and metadata
@@ -61,12 +61,12 @@ def get_preds(context: dict, path_model_file: str, model_params: dict, gpu_id: i
         img = imed_utils.cuda(batch['input'], cuda_available=cuda_available)
 
         # Load the PyTorch model and evaluate if model files exist.
-        if path_model_file.lower().endswith('.pt'):
-            logger.debug(f"PyTorch model detected at: {path_model_file}")
-            logger.debug(f"Loading model from: {path_model_file}")
-            model = torch.load(path_model_file, map_location=device)
+        if fname_model.lower().endswith('.pt'):
+            logger.debug(f"PyTorch model detected at: {fname_model}")
+            logger.debug(f"Loading model from: {fname_model}")
+            model = torch.load(fname_model, map_location=device)
             # Inference time
-            logger.debug(f"Evaluating model: {path_model_file}")
+            logger.debug(f"Evaluating model: {fname_model}")
             model.eval()
 
             # Films/Hemis based prediction require meta data load
@@ -79,9 +79,9 @@ def get_preds(context: dict, path_model_file: str, model_params: dict, gpu_id: i
                 preds = model(img)
         # Otherwise, Onnex Inference (PyTorch can't load .onnx)
         else:
-            logger.debug(f"Likely ONNX model detected at: {path_model_file}")
+            logger.debug(f"Likely ONNX model detected at: {fname_model}")
             logger.debug(f"Conduct ONNX model inference... ")
-            preds = onnx_inference(path_model_file, img)
+            preds = onnx_inference(fname_model, img)
 
         logger.debug("Sending predictions to CPU")
         # Move prediction to CPU
@@ -345,6 +345,10 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
 
     kernel_3D = bool('Modified3DUNet' in context and context['Modified3DUNet']['applied']) or \
                 not context['default_model']['is_2d']
+    length_2D = context["default_model"]["length_2D"] if "length_2D" in context["default_model"] else []
+    stride_2D = context["default_model"]["stride_2D"] if "stride_2D" in context["default_model"] else []
+    is_2d_patch = bool(length_2D)
+
     if kernel_3D:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
                                                            transform=tranform_lst,
@@ -354,13 +358,18 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                      f"{context['Modified3DUNet']['length_3D']}.")
     else:
         ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
+                                                  length=length_2D,
+                                                  stride=stride_2D,
                                                   slice_axis=slice_axis,
                                                   cache=True,
                                                   transform=tranform_lst,
                                                   slice_filter_fn=imed_loader_utils.SliceFilter(
                                                       **loader_params["slice_filter_params"]))
         ds.load_filenames()
-        logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} slices.")
+        if is_2d_patch:
+            logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} patches of shape {length_2D}.")
+        else:
+            logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} slices.")
 
     model_params = {}
     if 'FiLMedUnet' in context and context['FiLMedUnet']['applied']:
@@ -377,7 +386,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
 
     # Loop across batches
     preds_list, slice_idx_list = [], []
-    last_sample_bool, weight_matrix, volume = False, None, None
+    last_sample_bool, weight_matrix, volume, image = False, None, None, None
     for i_batch, batch in enumerate(data_loader):
         preds = get_preds(context, fname_model, model_params, gpu_id, batch)
 
@@ -387,9 +396,10 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                 modality['data_type'] = 'gt'
 
         # Reconstruct 3D object
-        pred_list, target_list, last_sample_bool, weight_matrix, volume = reconstruct_3d_object(
-            context, batch, undo_transforms, preds, preds_list, kernel_3D, slice_axis, slice_idx_list, data_loader,
-            fname_images, i_batch, last_sample_bool, weight_matrix, volume
+        pred_list, target_list, last_sample_bool, weight_matrix, volume, image = reconstruct_3d_object(
+            context, batch, undo_transforms, preds, preds_list, kernel_3D, is_2d_patch, slice_axis,
+            slice_idx_list, data_loader, fname_images, i_batch, last_sample_bool, weight_matrix,
+            volume, image
         )
 
     return pred_list, target_list
@@ -412,9 +422,9 @@ def split_classes(nib_prediction):
 
 
 def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompose, preds: torch.tensor,
-                          preds_list: list, kernel_3D: bool, slice_axis: int, slice_idx_list: list,
+                          preds_list: list, kernel_3D: bool, is_2d_patch: bool, slice_axis: int, slice_idx_list: list,
                           data_loader: DataLoader, fname_images: list, i_batch: int, last_sample_bool: bool,
-                          weight_matrix: tensor, volume: tensor):
+                          weight_matrix: tensor, volume: tensor, image: tensor):
     """Reconstructs the 3D object from the current batch, and returns the list of predictions and
        targets.
 
@@ -426,15 +436,16 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         preds (tensor): Subvolume predictions
         preds_list (list of tensor): list of subvolume predictions.
         kernel_3D (bool): true when using 3D kernel.
+        is_2d_patch (bool): True if length in default model params.
         slice_axis (int): Indicates the axis used for the 2D slice extraction: Sagittal: 0, Coronal: 1, Axial: 2.
         slice_idx_list (list of int): list of indices for the axis slices.
         data_loader (DataLoader): DataLoader object containing batches using in object construction.
         fname_images (list): list of image filenames (e.g. .nii.gz) to segment.
         i_batch (int): index of current batch.
-
         last_sample_bool: : flag to indicate whether this is the last sample in the 3D volume
         weight_matrix (tensor): the weight matrix
         volume (tensor): the volume tensor that is being partially reconstructed through the loop
+        image (tensor): the image tensor that is being partially reconstructed through the loop
 
     Returns:
         pred_list (list): list of predictions
@@ -443,8 +454,9 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
         weight_matrix (tensor): the weight matrix. Must be returned as passing tensor by reference is NOT reliable.
         volume (tensor): the volume tensor that is being partially reconstructed through the loop. Must be returned
          as passing tensor by reference is NOT reliable.
+        image (tensor): the vimage tensor that is being partially reconstructed through the loop. Must be returned
+         as passing tensor by reference is NOT reliable.
     """
-
     pred_list = []
     target_list = []
     for i_slice in range(len(preds)):
@@ -457,15 +469,25 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
                 volume_reconstruction(batch, preds, undo_transforms, i_slice, volume, weight_matrix)
             preds_list = [np.array(preds_undo)]
         else:
-            # undo transformations
-            preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
-                                                         batch["gt_metadata"][i_slice],
-                                                         data_type='gt')
-
-            # Add new segmented slice to preds_list
-            preds_list.append(np.array(preds_i_undo))
-            # Store the slice index of preds_i_undo in the original 3D image
-            slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
+            if is_2d_patch:
+                # undo transformations for patch and reconstruct slice
+                preds_i_undo, metadata_idx, last_patch_bool, image, weight_matrix = \
+                    image_reconstruction(batch, preds, undo_transforms, i_slice, image, weight_matrix)
+                # If last patch of the slice
+                if last_patch_bool:
+                    # Add new segmented slice to preds_list
+                    preds_list.append(np.array(preds_i_undo))
+                    # Store the slice index of preds_i_undo in the original 3D image
+                    slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
+            else:
+                # undo transformations for slice
+                preds_i_undo, metadata_idx = undo_transforms(preds[i_slice],
+                                                             batch["gt_metadata"][i_slice],
+                                                             data_type='gt')
+                # Add new segmented slice to preds_list
+                preds_list.append(np.array(preds_i_undo))
+                # Store the slice index of preds_i_undo in the original 3D image
+                slice_idx_list.append(int(batch['input_metadata'][i_slice][0]['slice_index']))
 
         # If last batch and last sample of this batch, then reconstruct 3D object
         if (i_batch == len(data_loader) - 1 and i_slice == len(batch['gt']) - 1) or last_sample_bool:
@@ -482,7 +504,7 @@ def reconstruct_3d_object(context: dict, batch: dict, undo_transforms: UndoCompo
             pred_list = split_classes(pred_nib)
             target_list = context['loader_parameters']['target_suffix']
 
-    return pred_list, target_list, last_sample_bool, weight_matrix, volume
+    return pred_list, target_list, last_sample_bool, weight_matrix, volume, image
 
 
 def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompose, smp_idx: int,
@@ -532,3 +554,49 @@ def volume_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompos
                                           batch['gt_metadata'][smp_idx],
                                           data_type='gt')
     return pred_undo, metadata, last_sample_bool, volume, weight_matrix
+
+
+def image_reconstruction(batch: dict, pred: tensor, undo_transforms: UndoCompose, smp_idx: int,
+                        image: tensor = None, weight_matrix: tensor = None):
+    """
+    Reconstructs image prediction from patches used during training
+    Args:
+        batch (dict): Dictionary containing input, gt and metadata
+        pred (tensor): Patch prediction
+        undo_transforms (UndoCompose): Undo transforms so prediction match original image resolution and shape
+        smp_idx (int): Batch index
+        image (tensor): Reconstructed image
+        weight_matrix (tensor): Weights containing the number of predictions for each pixel
+
+    Returns:
+        pred_undo (tensor): undone patch,
+        metadata (dict): metadata,
+        last_sample_bool (bool): boolean representing if its the last patch of the image
+        image (tensor): representing the image reconstructed
+        weight_matrix (tensor): weight matrix
+    """
+    x_min, x_max, y_min, y_max = batch['input_metadata'][smp_idx][0]['coord']
+    num_pred = pred[smp_idx].shape[0]
+
+    # A boolean flag indicate whether the current patch is the VERY first patch of the entire 2D image.
+    # Formed by check if x_min/y_min are all NOT zero
+    first_patch: bool = (x_min == 0 and y_min == 0)
+
+    # Get the Dimension
+    x, y = batch['input_metadata'][smp_idx][0]['index_shape']
+
+    # If this is the first sample, instantiate a ZERO tensor based on the dimension
+    if first_patch:
+        image = torch.zeros((num_pred, x, y))
+        weight_matrix = torch.zeros((num_pred, x, y))
+
+    last_patch_bool = x_max == x and y_max == y
+
+    # Average predictions
+    image[:, x_min:x_max, y_min:y_max] += pred[smp_idx]
+    weight_matrix[:, x_min:x_max, y_min:y_max] += 1
+    if last_patch_bool:
+        image /= weight_matrix
+
+    pred_undo, metadata = undo_transforms(image, batch['gt_metadata'][smp_idx], data_type='gt')
+    return pred_undo, metadata, last_patch_bool, image, weight_matrix
