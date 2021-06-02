@@ -41,6 +41,22 @@ def mask2label(path_label, aim=0):
     return list_label_image
 
 
+
+
+
+
+
+def rotate_nifti(X):
+    X2    = X.get_fdata()[0]
+    #X2 = np.rot90(X2)
+    X2 = np.flip(X2, axis = 0)
+    X2 = np.flip(X2, axis = 1)
+    X2 = np.expand_dims(X2, axis = 0)
+    img   = nib.Nifti1Image(X2, np.eye(4))
+    return img
+    
+
+
 def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
     """
     This function takes as input a path to a dataset  and generates a set of images:
@@ -66,9 +82,11 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
     t.remove('derivatives')
 
     for i in range(len(t)):
+
         sub = t[i]
         path_image = os.path.join(path, t[i], 'anat', t[i] + suffix + '.nii.gz')
-        if os.path.isfile(path_image):
+
+        if os.path.isfile(path_image):     
             path_label = os.path.join(path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
                     '_labels-disc-manual.nii.gz')
             list_points = mask2label(path_label, aim=aim)
@@ -76,7 +94,11 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
             nib_ref_can = nib.as_closest_canonical(image_ref)
             imsh = np.array(nib_ref_can.dataobj).shape
             mid_nifti = imed_preprocessing.get_midslice_average(path_image, list_points[0][0], slice_axis=0)
-            nib.save(mid_nifti, os.path.join(path, t[i], 'anat', t[i] + suffix + '_mid.nii.gz'))
+
+            mid_nifti = rotate_nifti(mid_nifti)
+
+
+            nib.save(mid_nifti, os.path.join(path, t[i], 'anat', t[i] +'_rec-mid'+ suffix + '.nii.gz'))
             lab = nib.load(path_label)
             nib_ref_can = nib.as_closest_canonical(lab)
             label_array = np.zeros(imsh[1:])
@@ -87,35 +109,36 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
             heatmap = imed_maths.heatmap_generation(label_array[:, :], 10)
             arr_pred_ref_space = imed_loader_utils.reorient_image(np.expand_dims(heatmap[:, :], axis=0), 2, lab, nib_ref_can)
             nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
-            nib.save(nib_pred, os.path.join(path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
-                                            '_mid_heatmap' + str(aim) + '.nii.gz'))
+            nib_pred = rotate_nifti(nib_pred)
+            nib.save(nib_pred, os.path.join(path, 'derivatives', 'labels', t[i], 'anat', t[i]+'_rec-mid' +suffix+ '_heatmap'+str(aim)
+                                            + '.nii.gz'))
         else:
             pass
 
 
+
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--path", dest="path", required=True, type=str,
-                        help="Path to bids folder",
-                        metavar=imed_utils.Metavar.file)
-    parser.add_argument("-s", "--suffix", dest="suffix", required=True, type=str,
-                        help="""Suffix of the input file as in
-                                sub-xxxSUFFIX.nii.gz (E.g., _T2w)""",
-                        metavar=imed_utils.Metavar.str)
-    parser.add_argument("-a", "--aim", dest="aim", default=-1, type=int,
-                        help="""-1 or positive int. If set to any positive int,
-                                only label with this value will be taken into account""",
-                        metavar=imed_utils.Metavar.int)
+    parser.add_argument("-p", "--path", dest="path", required=False, type=str,default="/data/data/data-multi-subject/",
+                        help="Path to bids folder")
+    parser.add_argument("-s", "--suffix", dest="suffix", required=False,default="_T1w",
+                        type=str, help="Suffix of the input file as in sub-xxxSUFFIX.nii.gz (E.g., _T2w)")
+    parser.add_argument("-a", "--aim", dest="aim", default=0, type=int,
+                        help="-1 or positive int. If set to any positive int,"
+                             " only label with this value will be taken into account ")
     return parser
 
 
-def main(args=None):
+def main():
     imed_utils.init_ivadomed()
+
     parser = get_parser()
-    args = imed_utils.get_arguments(parser, args)
-    extract_mid_slice_and_convert_coordinates_to_heatmaps(path=args.path, suffix=args.suffix,
-                                                          aim=args.aim)
+    args = parser.parse_args()
+    bids_path = args.path
+    suffix = args.suffix
+    aim = args.aim
+    # Run Script
+    extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim)
 
-
-if __name__ == '__main__':
+if __name__=='__main__':
     main()
