@@ -148,6 +148,9 @@ class Compose(object):
             return None, None
         else:
             for tr in self.transform[data_type].transforms:
+                if isinstance(tr, NormalizeInstance):
+                    numpy_to_tensor = NumpyToTensor()
+                    sample, metadata = numpy_to_tensor(sample, metadata)
                 sample, metadata = tr(sample, metadata)
             return sample, metadata
 
