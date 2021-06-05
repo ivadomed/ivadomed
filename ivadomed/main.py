@@ -11,6 +11,7 @@ import multiprocessing
 import re
 import numpy as np
 
+import ivadomed.loader.tools.bids_dataframe
 from ivadomed import evaluation as imed_evaluation
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import testing as imed_testing
@@ -19,7 +20,8 @@ from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed import metrics as imed_metrics
 from ivadomed import inference as imed_inference
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
+from ivadomed.loader import loader as imed_loader, film as imed_film
+from ivadomed.loader.tools import utils as imed_loader_utils
 from loguru import logger
 
 cudnn.benchmark = True
@@ -217,7 +219,7 @@ def update_film_model_params(context, ds_test, model_params, path_output):
 def run_segment_command(context, model_params):
     # BIDSDataframe of all image files
     # Indexing of derivatives is False for command segment
-    bids_df = imed_loader_utils.BidsDataframe(context['loader_parameters'], context['path_output'], derivatives=False)
+    bids_df = ivadomed.loader.tools.bids_dataframe.BidsDataframe(context['loader_parameters'], context['path_output'], derivatives=False)
 
     # Append subjects filenames into a list
     bids_subjects = sorted(bids_df.df['filename'].to_list())
@@ -362,7 +364,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
 
     # BIDSDataframe of all image files
     # Indexing of derivatives is True for command train and test
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, path_output, derivatives=True)
+    bids_df = ivadomed.loader.tools.bids_dataframe.BidsDataframe(loader_params, path_output, derivatives=True)
 
     # Get subject filenames lists. "segment" command uses all participants of data path, hence no need to split
     train_lst, valid_lst, test_lst = imed_loader_utils.get_subdatasets_subject_files_list(context["split_dataset"],

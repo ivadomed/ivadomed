@@ -3,14 +3,16 @@ import pytest
 import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 
+import ivadomed.loader.tools.bids_dataframe
 from ivadomed import metrics as imed_metrics
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed import testing as imed_testing
 from ivadomed import models as imed_models
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader
+from ivadomed.loader import loader as imed_loader
+from ivadomed.loader.tools import utils as imed_loader_utils
 import logging
-from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__
 from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
@@ -73,7 +75,7 @@ def test_inference(download_data_testing_test_files, transforms_dict, test_lst, 
     }
     loader_params.update({"model_params": model_params})
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    bids_df = ivadomed.loader.tools.bids_dataframe.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
 
     # Get Testing dataset
     ds_test = imed_loader.load_dataset(bids_df, **loader_params)

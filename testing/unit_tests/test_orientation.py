@@ -4,11 +4,14 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 import logging
+
+import ivadomed.loader.tools.bids_dataframe
 from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
-from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
-from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
+from ivadomed.loader import loader as imed_loader
+from ivadomed.loader.tools import utils as imed_loader_utils
+from testing.unit_tests.t_utils import create_tmp_dir,  __data_testing_dir__, __tmp_dir__
 from testing.common_testing_util import remove_tmp_dir
 
 logger = logging.getLogger(__name__)
@@ -34,7 +37,7 @@ def test_image_orientation(download_data_testing_test_files, loader_parameters):
         torch.cuda.set_device(device)
         print("Using GPU ID {}".format(device))
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
+    bids_df = ivadomed.loader.tools.bids_dataframe.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
 
     contrast_params = loader_parameters["contrast_params"]
     target_suffix = loader_parameters["target_suffix"]

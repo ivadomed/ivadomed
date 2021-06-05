@@ -9,10 +9,11 @@ import pandas as pd
 from loguru import logger
 from tqdm import tqdm
 
+import ivadomed.loader.tools.sample_metadata
 from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
+from ivadomed.loader import loader as imed_loader, film as imed_film
+from ivadomed.loader.tools import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
-from ivadomed import utils as imed_utils
 
 
 class Dataframe:
@@ -616,8 +617,8 @@ class HDF5Dataset:
 
                 input_tensors.append(input_tensor)
                 # input Metadata
-                metadata = imed_loader_utils.SampleMetadata({key: value for key, value in f['{}/inputs/{}'
-                                                            .format(line['Subjects'], ct)].attrs.items()})
+                metadata = ivadomed.loader.tools.sample_metadata.SampleMetadata({key: value for key, value in f['{}/inputs/{}'
+                                                                                .format(line['Subjects'], ct)].attrs.items()})
                 metadata['slice_index'] = line["Slices"]
                 metadata['missing_mod'] = missing_modalities
                 metadata['crop_params'] = {}
@@ -634,8 +635,8 @@ class HDF5Dataset:
 
                 gt_data = gt_data.astype(np.uint8)
                 gt_img.append(gt_data)
-                gt_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
-                                                                     f[line['gt/' + gt]].attrs.items()}))
+                gt_metadata.append(ivadomed.loader.tools.sample_metadata.SampleMetadata({key: value for key, value in
+                                                                                         f[line['gt/' + gt]].attrs.items()}))
                 gt_metadata[idx]['crop_params'] = {}
 
             # ROI
@@ -650,8 +651,8 @@ class HDF5Dataset:
                 roi_data = roi_data.astype(np.uint8)
                 roi_img.append(roi_data)
 
-                roi_metadata.append(imed_loader_utils.SampleMetadata({key: value for key, value in
-                                                                      f[
+                roi_metadata.append(ivadomed.loader.tools.sample_metadata.SampleMetadata({key: value for key, value in
+                                                                                          f[
                                                                           line['roi/' + self.roi_lst[0]]].attrs.items()}))
                 roi_metadata[0]['crop_params'] = {}
 

@@ -9,9 +9,8 @@ from scipy import ndimage
 
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
-from ivadomed import utils as imed_utils
 from ivadomed import inference as imed_inference
-from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.tools import utils as imed_loader_utils
 
 
 def get_bounding_boxes(mask):

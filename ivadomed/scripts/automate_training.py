@@ -26,10 +26,12 @@ import joblib
 import pandas as pd
 import numpy as np
 import torch.multiprocessing as mp
+
+import ivadomed.loader.tools.bids_dataframe
 import ivadomed.scripts.visualize_and_compare_testing_models as violin_plots
 from ivadomed import main as ivado
 from ivadomed import config_manager as imed_config_manager
-from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.tools import utils as imed_loader_utils
 from ivadomed.scripts.compare_models import compute_statistics
 from ivadomed import utils as imed_utils
 
@@ -160,7 +162,7 @@ def split_dataset(initial_config):
     else:
         print('Output path already exists: {}'.format(path_output))
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_parameters, path_output, derivatives=True)
+    bids_df = ivadomed.loader.tools.bids_dataframe.BidsDataframe(loader_parameters, path_output, derivatives=True)
 
     train_lst, valid_lst, test_lst = imed_loader_utils.get_new_subject_file_split(
         df=bids_df.df,

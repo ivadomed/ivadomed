@@ -3,17 +3,18 @@ import random
 import nibabel as nib
 import numpy as np
 import torch
-import pandas as pd
-import os
 import imageio
 from loguru import logger
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
+import ivadomed.loader.tools.sample_metadata
+import ivadomed.loader.tools.slice_filter
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
-from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
+from ivadomed.loader import adaptative as imed_adaptative, film as imed_film
+from ivadomed.loader.tools import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 
 
@@ -84,9 +85,9 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                                               transform=tranform_lst,
                                               metadata_choice=metadata_type,
-                                              slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params,
-                                                                                            device=device,
-                                                                                            cuda_available=cuda_available),
+                                              slice_filter_fn=ivadomed.loader.tools.slice_filter.SliceFilter(**slice_filter_params,
+                                                                                                             device=device,
+                                                                                                             cuda_available=cuda_available),
                                               roi_params=roi_params,
                                               object_detection_params=object_detection_params,
                                               soft_gt=soft_gt)
@@ -104,8 +105,8 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
                               slice_axis=imed_utils.AXIS_DCT[slice_axis],
                               transform=tranform_lst,
                               multichannel=multichannel,
-                              slice_filter_fn=imed_loader_utils.SliceFilter(**slice_filter_params, device=device,
-                                                                            cuda_available=cuda_available),
+                              slice_filter_fn=ivadomed.loader.tools.slice_filter.SliceFilter(**slice_filter_params, device=device,
+                                                                                             cuda_available=cuda_available),
                               soft_gt=soft_gt,
                               object_detection_params=object_detection_params,
                               task=task,
@@ -338,7 +339,7 @@ class SegmentationPair(object):
         for idx_class, gt in enumerate(self.gt_handle):
             if gt is not None:
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
-                    gt_meta_dict.append(imed_loader_utils.SampleMetadata({
+                    gt_meta_dict.append(ivadomed.loader.tools.sample_metadata.SampleMetadata({
                         "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(gt), self.slice_axis),
                         "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(gt), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"],
@@ -348,7 +349,7 @@ class SegmentationPair(object):
                         "crop_params": {}
                     }))
                 else:
-                    gt_meta_dict.append([imed_loader_utils.SampleMetadata({
+                    gt_meta_dict.append([ivadomed.loader.tools.sample_metadata.SampleMetadata({
                         "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(gt_rater), self.slice_axis),
                         "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(gt_rater), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"][idx_class][idx_rater],
@@ -369,7 +370,7 @@ class SegmentationPair(object):
 
         input_meta_dict = []
         for handle in self.input_handle:
-            input_meta_dict.append(imed_loader_utils.SampleMetadata({
+            input_meta_dict.append(ivadomed.loader.tools.sample_metadata.SampleMetadata({
                 "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(handle), self.slice_axis),
                 "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(handle), self.slice_axis),
                 "data_type": 'im',

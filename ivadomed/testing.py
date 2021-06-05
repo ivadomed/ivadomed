@@ -14,7 +14,7 @@ from ivadomed import utils as imed_utils
 from ivadomed import visualize as imed_visualize
 from ivadomed import inference as imed_inference
 from ivadomed import uncertainty as imed_uncertainty
-from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.tools import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed.loader.film import store_film_params, save_film_params
 from ivadomed.training import get_metadata

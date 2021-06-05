@@ -4,11 +4,11 @@ import json
 from tqdm import tqdm
 from torchvision import transforms as torch_transforms
 
+import ivadomed.loader.tools.slice_filter
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import loader as imed_loader
-from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.tools import utils as imed_loader_utils
 from ivadomed import transforms as imed_transforms
-from ivadomed import utils as imed_utils
 
 metadata_type = ['FlipAngle', 'EchoTime', 'RepetitionTime']
 
@@ -29,7 +29,7 @@ def run_main(context):
                                          contrast_lst=context["contrast_train_validation"]
                                          if subset != "test" else context["contrast_test"],
                                          transform=no_transform,
-                                         slice_filter_fn=imed_loader_utils.SliceFilter())
+                                         slice_filter_fn=ivadomed.loader.tools.slice_filter.SliceFilter())
 
             for m in metadata_type:
                 if m in metadata_dct:

@@ -87,12 +87,14 @@ For ``mult_params``:
 """
 
 import pytest
+
+import ivadomed.loader.tools.bids_dataframe
 from ivadomed.scripts.automate_training import make_config_list, get_param_list, \
     HyperparameterOption
-from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.tools import utils as imed_loader_utils
 from ivadomed.utils import generate_sha_256
 import logging
-from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__
 from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
@@ -717,7 +719,7 @@ def test_config_sha256(download_data_testing_test_files, initial_config):
         "multichannel": False
     }
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    bids_df = ivadomed.loader.tools.bids_dataframe.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
     generate_sha_256(initial_config, bids_df.df, file_lst)
     assert(initial_config['training_sha256']['sub-unf01_T2w.nii.gz'] ==
            'f020b368fea15399fa112badd28b2df69e044dba5d23b3fe1646d12d7d3d39ac')

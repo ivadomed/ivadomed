@@ -4,7 +4,7 @@ import json
 import pytest
 import numpy as np
 import pandas as pd
-from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.tools import utils as imed_loader_utils
 from testing.unit_tests.t_utils import create_tmp_dir, __tmp_dir__
 from testing.common_testing_util import remove_tmp_dir
 

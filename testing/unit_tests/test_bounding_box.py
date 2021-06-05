@@ -4,11 +4,12 @@ import os
 import json
 import shutil
 
+import ivadomed.loader.tools.bids_dataframe
 from ivadomed.loader import loader as imed_loader
-from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.tools import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 import logging
-from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__
 from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
@@ -93,7 +94,7 @@ def test_bounding_box(download_data_testing_test_files, train_lst, target_lst, c
     # Update loader_params with config
     loader_params.update(config)
 
-    bids_df = imed_loader_utils.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
+    bids_df = ivadomed.loader.tools.bids_dataframe.BidsDataframe(loader_params, __tmp_dir__, derivatives=True)
 
     ds = imed_loader.load_dataset(bids_df, **loader_params)
 

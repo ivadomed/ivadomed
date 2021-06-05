@@ -10,12 +10,15 @@ from loguru import logger
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from torch import tensor
+
+import ivadomed.loader.tools.slice_filter
 from ivadomed.transforms import UndoCompose
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
+from ivadomed.loader import loader as imed_loader, film as imed_film
+from ivadomed.loader.tools import utils as imed_loader_utils
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
 from ivadomed import training as imed_training
@@ -363,7 +366,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                                                   slice_axis=slice_axis,
                                                   cache=True,
                                                   transform=tranform_lst,
-                                                  slice_filter_fn=imed_loader_utils.SliceFilter(
+                                                  slice_filter_fn=ivadomed.loader.tools.slice_filter.SliceFilter(
                                                       **loader_params["slice_filter_params"]))
         ds.load_filenames()
         if is_2d_patch:

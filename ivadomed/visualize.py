@@ -11,7 +11,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 from torch.autograd import Variable
 from loguru import logger
-from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.tools import utils as imed_loader_utils
 
 
 def overlap_im_seg(img, seg):

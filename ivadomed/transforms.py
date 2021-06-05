@@ -15,7 +15,7 @@ from scipy.ndimage.morphology import binary_dilation, binary_fill_holes, binary_
 from skimage.exposure import equalize_adapthist
 from torchvision import transforms as torchvision_transforms
 
-from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.tools import utils as imed_loader_utils
 
 
 def multichannel_capable(wrapped):

@@ -5,7 +5,7 @@ import nibabel as nib
 import numpy as np
 import os
 import ivadomed.maths as imed_maths
-import ivadomed.loader.utils as imed_loader_utils
+import ivadomed.loader.tools.utils as imed_loader_utils
 
 
 def mask2label(path_label, aim=0):

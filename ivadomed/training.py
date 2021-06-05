@@ -13,13 +13,14 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
+import ivadomed.loader.tools.balanced_sampler
 from ivadomed import losses as imed_losses
 from ivadomed import mixup as imed_mixup
 from ivadomed import metrics as imed_metrics
 from ivadomed import models as imed_models
 from ivadomed import utils as imed_utils
 from ivadomed import visualize as imed_visualize
-from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.tools import utils as imed_loader_utils
 
 cudnn.benchmark = True
 
@@ -366,7 +367,7 @@ def get_sampler(ds, balance_bool, metadata):
         Otherwise: Returns None and True.
     """
     if balance_bool:
-        return imed_loader_utils.BalancedSampler(ds, metadata), False
+        return ivadomed.loader.tools.balanced_sampler.BalancedSampler(ds, metadata), False
     else:
         return None, True
 

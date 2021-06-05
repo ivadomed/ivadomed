@@ -1,7 +1,7 @@
 # Transformation to perform on image before network processing
 import nibabel as nib
 import numpy as np
-import ivadomed.loader.utils as imed_loader_utils
+import ivadomed.loader.tools.utils as imed_loader_utils
 
 
 def get_midslice_average(path_im, ind, slice_axis=0):
