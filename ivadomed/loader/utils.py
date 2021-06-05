@@ -1,11 +1,11 @@
 import collections.abc
 import re
 import os
-import logging
 import numpy as np
 import pandas as pd
 import torch
 import joblib
+from loguru import logger
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
 from ivadomed import utils as imed_utils
@@ -28,8 +28,6 @@ __numpy_type_map = {
 
 TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 'reverse',
                     'translation', 'gaussian_noise']
-
-logger = logging.getLogger(__name__)
 
 
 def split_dataset(df, split_method, data_testing, random_seed, train_frac=0.8, test_frac=0.1):
@@ -435,28 +433,6 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
 
     def __len__(self):
         return self.num_samples
-
-
-def clean_metadata(metadata_lst):
-    """Remove keys from metadata. The keys to be deleted are stored in a list.
-
-    Args:
-        metadata_lst (list): List of SampleMetadata.
-
-    Returns:
-        list: List of SampleMetadata with removed keys.
-    """
-    metadata_out = []
-
-    if metadata_lst is not None:
-        TRANSFORM_PARAMS.remove('crop_params')
-        for metadata_cur in metadata_lst:
-            for key_ in list(metadata_cur.keys()):
-                if key_ in TRANSFORM_PARAMS:
-                    del metadata_cur.metadata[key_]
-            metadata_out.append(metadata_cur)
-        TRANSFORM_PARAMS.append('crop_params')
-    return metadata_out
 
 
 def update_metadata(metadata_src_lst, metadata_dest_lst):
@@ -891,9 +867,9 @@ class BidsDataframe:
         """
         try:
             self.df.to_csv(path, index=False)
-            print("Dataframe has been saved in {}.".format(path))
+            logger.info("Dataframe has been saved in {}.".format(path))
         except FileNotFoundError:
-            print("Wrong path, bids_dataframe.csv could not be saved in {}.".format(path))
+            logger.error("Wrong path, bids_dataframe.csv could not be saved in {}.".format(path))
 
     def write_derivatives_dataset_description(self, path_data):
         """Writes default dataset_description.json file if not found in path_data/derivatives folder

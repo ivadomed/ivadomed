@@ -1,12 +1,12 @@
 import copy
 import random
-import logging
 import nibabel as nib
 import numpy as np
 import torch
 import pandas as pd
 import os
 import imageio
+from loguru import logger
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
@@ -15,8 +15,6 @@ from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
-
-logger = logging.getLogger(__name__)
 
 
 def load_dataset(bids_df, data_list, transforms_params, model_params, target_suffix, roi_params,
@@ -115,11 +113,12 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         dataset.load_filenames()
 
     if model_params["name"] == "Modified3DUNet":
-        print("Loaded {} volumes of size {} for the {} set.".format(len(dataset), slice_axis, dataset_type))
+        logger.info("Loaded {} volumes of shape {} for the {} set.".format(len(dataset), dataset.length, dataset_type))
     elif model_params["name"] != "HeMISUnet" and dataset.length:
-        print("Loaded {} {} patches for the {} set.".format(len(dataset), slice_axis, dataset_type))
+        logger.info("Loaded {} {} patches of shape {} for the {} set.".format(len(dataset), slice_axis, dataset.length,
+                                                                              dataset_type))
     else:
-        print("Loaded {} {} slices for the {} set.".format(len(dataset), slice_axis, dataset_type))
+        logger.info("Loaded {} {} slices for the {} set.".format(len(dataset), slice_axis, dataset_type))
 
     return dataset
 
@@ -317,7 +316,7 @@ class SegmentationPair(object):
                     hwd_oriented_list = [
                         imed_loader_utils.orient_img_hwd(self.get_data(gt_rater, cache_mode),
                                                          self.slice_axis) for gt_rater in gt]
-                    gt_data.append([hwd_oriented.astype(data_type) for hwd_oriented in hwd_oriented_list])
+                    gt_data.append([hwd_oriented for hwd_oriented in hwd_oriented_list])
             else:
                 gt_data.append(
                     np.zeros(imed_loader_utils.orient_shapes_hwd(self.input_handle[0].shape, self.slice_axis),
@@ -717,11 +716,14 @@ class MRI2DSegmentationDataset(Dataset):
             index (int): Slice index.
         """
 
+        # copy.deepcopy is used to have different coordinates for reconstruction for a given handler with patch,
+        # to allow a different rater at each iteration of training, and to clean transforms params from previous
+        # transforms i.e. remove params from previous iterations so that the coming transforms are different
         if self.is_2d_patch:
             coord = self.indexes[index]
-            seg_pair_slice, roi_pair_slice = self.handlers[coord['handler_index']]
+            seg_pair_slice, roi_pair_slice = copy.deepcopy(self.handlers[coord['handler_index']])
         else:
-            seg_pair_slice, roi_pair_slice = self.indexes[index]
+            seg_pair_slice, roi_pair_slice = copy.deepcopy(self.indexes[index])
 
         # In case multiple raters
         if seg_pair_slice['gt'] is not None and isinstance(seg_pair_slice['gt'][0], list):
@@ -733,12 +735,9 @@ class MRI2DSegmentationDataset(Dataset):
                 seg_pair_slice['gt'][idx_class] = seg_pair_slice['gt'][idx_class][idx_rater]
                 seg_pair_slice['gt_metadata'][idx_class] = seg_pair_slice['gt_metadata'][idx_class][idx_rater]
 
-        # Clean transforms params from previous transforms
-        # i.e. remove params from previous iterations so that the coming transforms are different
-        # Use copy to have different coordinates for reconstruction for a given handler with patch
-        metadata_input = imed_loader_utils.clean_metadata(copy.deepcopy(seg_pair_slice['input_metadata']))
-        metadata_roi = imed_loader_utils.clean_metadata(copy.deepcopy(roi_pair_slice['gt_metadata']))
-        metadata_gt = imed_loader_utils.clean_metadata(copy.deepcopy(seg_pair_slice['gt_metadata']))
+        metadata_input = seg_pair_slice['input_metadata'] if seg_pair_slice['input_metadata'] is not None else []
+        metadata_roi = roi_pair_slice['gt_metadata'] if roi_pair_slice['gt_metadata'] is not None else []
+        metadata_gt = seg_pair_slice['gt_metadata'] if seg_pair_slice['gt_metadata'] is not None else []
 
         # Run transforms on ROI
         # ROI goes first because params of ROICrop are needed for the followings
@@ -754,7 +753,7 @@ class MRI2DSegmentationDataset(Dataset):
                                                      metadata=metadata_input,
                                                      data_type="im")
 
-        # Update metadata_input with metadata_roi
+        # Update metadata_gt with metadata_input
         metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
 
         if self.task == "segmentation":
@@ -925,8 +924,12 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
         Args:
             index (int): Subvolume index.
         """
+
+        # copy.deepcopy is used to have different coordinates for reconstruction for a given handler,
+        # to allow a different rater at each iteration of training, and to clean transforms params from previous
+        # transforms i.e. remove params from previous iterations so that the coming transforms are different
         coord = self.indexes[index]
-        seg_pair, _ = self.handlers[coord['handler_index']]
+        seg_pair, _ = copy.deepcopy(self.handlers[coord['handler_index']])
 
         # In case multiple raters
         if seg_pair['gt'] is not None and isinstance(seg_pair['gt'][0], list):
@@ -938,11 +941,8 @@ class MRI3DSubVolumeSegmentationDataset(Dataset):
                 seg_pair['gt'][idx_class] = seg_pair['gt'][idx_class][idx_rater]
                 seg_pair['gt_metadata'][idx_class] = seg_pair['gt_metadata'][idx_class][idx_rater]
 
-        # Clean transforms params from previous transforms
-        # i.e. remove params from previous iterations so that the coming transforms are different
-        # Use copy to have different coordinates for reconstruction for a given handler
-        metadata_input = imed_loader_utils.clean_metadata(copy.deepcopy(seg_pair['input_metadata']))
-        metadata_gt = imed_loader_utils.clean_metadata(copy.deepcopy(seg_pair['gt_metadata']))
+        metadata_input = seg_pair['input_metadata'] if seg_pair['input_metadata'] is not None else []
+        metadata_gt = seg_pair['gt_metadata'] if seg_pair['gt_metadata'] is not None else []
 
         # Run transforms on images
         stack_input, metadata_input = self.transform(sample=seg_pair['input'],

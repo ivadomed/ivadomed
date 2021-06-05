@@ -11,7 +11,6 @@ import multiprocessing
 import re
 import numpy as np
 
-from ivadomed.utils import logger
 from ivadomed import evaluation as imed_evaluation
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import testing as imed_testing
@@ -21,6 +20,7 @@ from ivadomed import utils as imed_utils
 from ivadomed import metrics as imed_metrics
 from ivadomed import inference as imed_inference
 from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
+from loguru import logger
 
 cudnn.benchmark = True
 
@@ -75,7 +75,7 @@ def get_parser():
 def create_path_model(context, model_params, ds_train, path_output, train_onehotencoder):
     path_model = os.path.join(path_output, context["model_name"])
     if not os.path.isdir(path_model):
-        print('Creating model directory: {}'.format(path_model))
+        logger.info('Creating model directory: {}'.format(path_model))
         os.makedirs(path_model)
         if 'film_layers' in model_params and any(model_params['film_layers']):
             joblib.dump(train_onehotencoder, os.path.join(path_model, "one_hot_encoder.joblib"))
@@ -84,17 +84,17 @@ def create_path_model(context, model_params, ds_train, path_output, train_onehot
                 joblib.dump(metadata_dict, os.path.join(path_model, "metadata_dict.joblib"))
 
     else:
-        print('Model directory already exists: {}'.format(path_model))
+        logger.info('Model directory already exists: {}'.format(path_model))
 
 
 def check_multiple_raters(is_train, loader_params):
     if any([isinstance(class_suffix, list) for class_suffix in loader_params["target_suffix"]]):
-        print(
-            "\nAnnotations from multiple raters will be used during model training, one annotation from one rater "
+        logger.info(
+            "Annotations from multiple raters will be used during model training, one annotation from one rater "
             "randomly selected at each iteration.\n")
         if not is_train:
-            print(
-                "\nERROR: Please provide only one annotation per class in 'target_suffix' when not training a model.\n")
+            logger.error(
+                "Please provide only one annotation per class in 'target_suffix' when not training a model.\n")
             exit()
 
 
@@ -160,7 +160,7 @@ def set_model_params(context, loader_params):
         for i in range(len(model_context_list)):
             model_params.update(context[model_context_list[i]])
     elif len(model_context_list) > 1:
-        print('ERROR: Several models are selected in the configuration file: {}.'
+        logger.error('ERROR: Several models are selected in the configuration file: {}.'
               'Please select only one (i.e. only one where: "applied": true).'.format(model_context_list))
         exit()
 
@@ -192,10 +192,10 @@ def set_model_params(context, loader_params):
 def set_output_path(context):
     path_output = copy.deepcopy(context["path_output"])
     if not os.path.isdir(path_output):
-        print('Creating output path: {}'.format(path_output))
+        logger.info('Creating output path: {}'.format(path_output))
         os.makedirs(path_output)
     else:
-        print('Output path already exists: {}'.format(path_output))
+        logger.info('Output path already exists: {}'.format(path_output))
 
     return path_output
 
@@ -333,6 +333,10 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
     """
     command = copy.deepcopy(context["command"])
     path_output = set_output_path(context)
+    log_file = os.path.join(context['path_output'], context['log_file'])
+    logger.remove()
+    logger.add(log_file)
+    logger.add(sys.stdout)
 
     # Create a log with the version of the Ivadomed software and the version of the Annexed dataset (if present)
     create_dataset_and_ivadomed_version_log(context)
@@ -389,7 +393,7 @@ def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
         imed_utils.display_selected_transfoms(transformation_dict, dataset_type=["testing"])
 
     # Check if multiple raters
-    check_multiple_raters(command != "train", loader_params)
+    check_multiple_raters(command == "train", loader_params)
 
     if command == 'train':
         # Get Validation dataset
@@ -510,7 +514,7 @@ def create_dataset_and_ivadomed_version_log(context):
     try:
         f = open(log_file, "w")
     except OSError as err:
-        print("OS error: {0}".format(err))
+        logger.error("OS error: {0}".format(err))
         raise Exception("Have you selected a log folder, and do you have write permissions for that folder?")
 
     # IVADOMED

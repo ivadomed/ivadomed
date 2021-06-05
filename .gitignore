@@ -12,6 +12,12 @@ bin/
 # All __pycache__
 __pycache__/
 
+# All test output folders
+tmp/
+
+# Logs
+log.txt
+
 # Pycharm stuff
 .idea
 
@@ -24,3 +30,6 @@ data_functional_testing/
 
 # OS Specific hidden file
 .DS_Store
+
+# venv
+venv/

@@ -1,11 +1,11 @@
 import os
 import copy
-import logging
 from pathlib import Path
 import nibabel as nib
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
+from loguru import logger
 from torch.utils.data import DataLoader, ConcatDataset
 from tqdm import tqdm
 
@@ -21,8 +21,6 @@ from ivadomed.training import get_metadata
 from ivadomed.postprocessing import threshold_predictions
 
 cudnn.benchmark = True
-
-logger = logging.getLogger(__name__)
 
 
 def test(model_params, dataset_test, testing_params, path_output, device, cuda_available=True,
@@ -50,7 +48,7 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
 
     # LOAD TRAIN MODEL
     fname_model = os.path.join(path_output, "best_model.pt")
-    print('\nLoading model: {}'.format(fname_model))
+    logger.info('Loading model: {}'.format(fname_model))
     model = torch.load(fname_model, map_location=device)
     if cuda_available:
         model.cuda()
@@ -69,7 +67,7 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
             testing_params['uncertainty']['n_it'] > 0:
         n_monteCarlo = testing_params['uncertainty']['n_it'] + 1
         testing_params['uncertainty']['applied'] = True
-        print('\nComputing model uncertainty over {} iterations.'.format(n_monteCarlo - 1))
+        logger.info('Computing model uncertainty over {} iterations.'.format(n_monteCarlo - 1))
     else:
         testing_params['uncertainty']['applied'] = False
         n_monteCarlo = 1
@@ -86,7 +84,7 @@ def test(model_params, dataset_test, testing_params, path_output, device, cuda_a
 
     metrics_dict = metric_mgr.get_results()
     metric_mgr.reset()
-    print(metrics_dict)
+    logger.info(metrics_dict)
     return metrics_dict
 
 
@@ -110,6 +108,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     # INIT STORAGE VARIABLES
     preds_npy_list, gt_npy_list, filenames = [], [], []
     pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
+    image = None
     volume = None
     weight_matrix = None
 
@@ -182,16 +181,34 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                 imed_obj_detect.adjust_undo_transforms(testing_params["undo_transforms"].transforms, batch, smp_idx)
 
             if model_params["is_2d"]:
+                preds_idx_arr = None
                 last_sample_bool = (last_batch_bool and smp_idx == len(preds_cpu) - 1)
-                # undo transformations
-                preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
-                                                                                 batch['gt_metadata'][smp_idx],
-                                                                                 data_type='gt')
-                # preds_idx_undo is a list n_label arrays
-                preds_idx_arr = np.array(preds_idx_undo)
 
-                # TODO: gt_filenames should not be a list
-                fname_ref = list(filter(None, metadata_idx[0]['gt_filenames']))[0]
+                length_2D = model_params["length_2D"] if "length_2D" in model_params else []
+                stride_2D = model_params["stride_2D"] if "stride_2D" in model_params else []
+                if length_2D:
+                    # undo transformations for patch and reconstruct slice
+                    preds_idx_undo, metadata_idx, last_patch_bool, image, weight_matrix = \
+                        imed_inference.image_reconstruction(batch, preds_cpu, testing_params['undo_transforms'],
+                                                            smp_idx, image, weight_matrix)
+                    # If last patch of the slice
+                    if last_patch_bool:
+                        # preds_idx_undo is a list n_label arrays
+                        preds_idx_arr = np.array(preds_idx_undo)
+
+                        # TODO: gt_filenames should not be a list
+                        fname_ref = list(filter(None, metadata_idx[0]['gt_filenames']))[0]
+
+                else:
+                    # undo transformations for slice
+                    preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
+                                                                                     batch['gt_metadata'][smp_idx],
+                                                                                     data_type='gt')
+                    # preds_idx_undo is a list n_label arrays
+                    preds_idx_arr = np.array(preds_idx_undo)
+
+                    # TODO: gt_filenames should not be a list
+                    fname_ref = list(filter(None, metadata_idx[0]['gt_filenames']))[0]
 
                 # NEW COMPLETE VOLUME
                 if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool) and task != "classification":
@@ -233,13 +250,14 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     # re-init pred_stack_lst
                     pred_tmp_lst, z_tmp_lst = [], []
 
-                # add new sample to pred_tmp_lst, of size n_label X h X w ...
-                pred_tmp_lst.append(preds_idx_arr)
+                if preds_idx_arr is not None:
+                    # add new sample to pred_tmp_lst, of size n_label X h X w ...
+                    pred_tmp_lst.append(preds_idx_arr)
 
-                # TODO: slice_index should be stored in gt_metadata as well
-                z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
-                fname_tmp = fname_ref
-                filenames = metadata_idx[0]['gt_filenames']
+                    # TODO: slice_index should be stored in gt_metadata as well
+                    z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
+                    fname_tmp = fname_ref
+                    filenames = metadata_idx[0]['gt_filenames']
 
             else:
                 pred_undo, metadata, last_sample_bool, volume, weight_matrix = \
@@ -342,7 +360,7 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
                                       ofolder=None,
                                       cuda_available=cuda_available)
 
-    print('\nRunning threshold analysis to find optimal threshold')
+    logger.info('Running threshold analysis to find optimal threshold')
     # Make sure the GT is binarized
     gt_npy = [threshold_predictions(gt, thr=0.5) for gt in gt_npy]
     # Move threshold
@@ -366,10 +384,10 @@ def threshold_analysis(model_path, ds_lst, model_params, testing_params, metric=
 
     optimal_idx = np.max(np.where(diff_list == np.max(diff_list)))
     optimal_threshold = thr_list[optimal_idx]
-    print('\tOptimal threshold: {}'.format(optimal_threshold))
+    logger.info('\tOptimal threshold: {}'.format(optimal_threshold))
 
     # Save plot
-    print('\tSaving plot: {}'.format(fname_out))
+    logger.info('\tSaving plot: {}'.format(fname_out))
     if metric == "dice":
         # Run plot
         imed_metrics.plot_dice_thr(thr_list, dice_list, optimal_idx, fname_out)
