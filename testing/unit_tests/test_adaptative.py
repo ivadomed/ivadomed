@@ -11,7 +11,7 @@ from ivadomed import utils as imed_utils
 from ivadomed.loader import adaptative as imed_adaptative
 from ivadomed.loader.tools import utils as imed_loader_utils
 import logging
-from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 

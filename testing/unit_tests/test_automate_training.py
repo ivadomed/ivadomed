@@ -94,7 +94,7 @@ from ivadomed.scripts.automate_training import make_config_list, get_param_list,
 from ivadomed.loader.tools import utils as imed_loader_utils
 from ivadomed.utils import generate_sha_256
 import logging
-from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__
+from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 logger = logging.getLogger(__name__)
 
