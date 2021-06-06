@@ -1,5 +1,6 @@
 csv-diff>=1.0
-h5py==3.2.1
+h5py==2.10.0 ; python_version < '3.9'
+h5py==3.2.1 ; python_version == '3.9'
 loguru~=0.5
 joblib~=1.0
 matplotlib>=3.3.0
