@@ -4,6 +4,7 @@ import json
 from tqdm import tqdm
 from torchvision import transforms as torch_transforms
 
+import ivadomed.loader.bids_dataset
 import ivadomed.loader.tools.slice_filter
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import loader as imed_loader
@@ -25,11 +26,11 @@ def run_main(context):
     for subset in ['train', 'validation', 'test']:
         metadata_dct[subset] = {}
         for bids_ds in tqdm(context["path_data_" + subset], desc="Loading " + subset + " set"):
-            ds = imed_loader.BidsDataset(bids_ds,
-                                         contrast_lst=context["contrast_train_validation"]
+            ds = ivadomed.loader.bids_dataset.BidsDataset(bids_ds,
+                                                          contrast_lst=context["contrast_train_validation"]
                                          if subset != "test" else context["contrast_test"],
-                                         transform=no_transform,
-                                         slice_filter_fn=ivadomed.loader.tools.slice_filter.SliceFilter())
+                                                          transform=no_transform,
+                                                          slice_filter_fn=ivadomed.loader.tools.slice_filter.SliceFilter())
 
             for m in metadata_type:
                 if m in metadata_dct:

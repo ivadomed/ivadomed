@@ -5,6 +5,9 @@ import torch
 from torch.utils.data import DataLoader
 import logging
 
+import ivadomed.loader.bids3d_dataset
+import ivadomed.loader.bids_dataset
+import ivadomed.loader.semgnetation_pair
 import ivadomed.loader.tools.bids_dataframe
 from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
@@ -78,26 +81,26 @@ def test_image_orientation(download_data_testing_test_files, loader_parameters):
     for dim in ['2d', '3d']:
         for slice_axis in [0, 1, 2]:
             if dim == '2d':
-                ds = imed_loader.BidsDataset(bids_df=bids_df,
-                                             subject_file_lst=train_lst,
-                                             target_suffix=target_suffix,
-                                             contrast_params=contrast_params,
-                                             model_params=model_params,
-                                             metadata_choice=False,
-                                             slice_axis=slice_axis,
-                                             transform=tranform_lst,
-                                             multichannel=False)
+                ds = ivadomed.loader.bids_dataset.BidsDataset(bids_df=bids_df,
+                                                              subject_file_lst=train_lst,
+                                                              target_suffix=target_suffix,
+                                                              contrast_params=contrast_params,
+                                                              model_params=model_params,
+                                                              metadata_choice=False,
+                                                              slice_axis=slice_axis,
+                                                              transform=tranform_lst,
+                                                              multichannel=False)
                 ds.load_filenames()
             else:
-                ds = imed_loader.Bids3DDataset(bids_df=bids_df,
-                                               subject_file_lst=train_lst,
-                                               target_suffix=target_suffix,
-                                               model_params=model_params,
-                                               contrast_params=contrast_params,
-                                               metadata_choice=False,
-                                               slice_axis=slice_axis,
-                                               transform=tranform_lst,
-                                               multichannel=False)
+                ds = ivadomed.loader.bids3d_dataset.Bids3DDataset(bids_df=bids_df,
+                                                                  subject_file_lst=train_lst,
+                                                                  target_suffix=target_suffix,
+                                                                  model_params=model_params,
+                                                                  contrast_params=contrast_params,
+                                                                  metadata_choice=False,
+                                                                  slice_axis=slice_axis,
+                                                                  transform=tranform_lst,
+                                                                  multichannel=False)
 
             loader = DataLoader(ds, batch_size=1,
                                 shuffle=True, pin_memory=True,
@@ -105,8 +108,8 @@ def test_image_orientation(download_data_testing_test_files, loader_parameters):
                                 num_workers=1)
 
             input_filename, gt_filename, roi_filename, metadata = ds.filename_pairs[0]
-            segpair = imed_loader.SegmentationPair(input_filename, gt_filename, metadata=metadata,
-                                                   slice_axis=slice_axis)
+            segpair = ivadomed.loader.semgnetation_pair.SegmentationPair(input_filename, gt_filename, metadata=metadata,
+                                                                         slice_axis=slice_axis)
             nib_original = nib.load(gt_filename[0])
             # Get image with original, ras and hwd orientations
             input_init = nib_original.get_fdata()

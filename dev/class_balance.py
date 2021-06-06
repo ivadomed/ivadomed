@@ -14,6 +14,7 @@
 import argparse
 import numpy as np
 
+import ivadomed.loader.bids_dataset
 import ivadomed.loader.tools.slice_filter
 from ivadomed import config_manager as imed_config_manager
 from ivadomed.loader import loader as imed_loader
@@ -55,15 +56,15 @@ def run_main(args):
     balance_dct = {}
     for ds_lst, ds_name in zip([train_lst, valid_lst, test_lst], ['train', 'valid', 'test']):
         print("\nLoading {} set.\n".format(ds_name))
-        ds = imed_loader.BidsDataset(context["path_data"],
-                                     subject_lst=ds_lst,
-                                     target_suffix=context["target_suffix"],
-                                     contrast_lst=context["contrast_test"] if ds_name == 'test'
+        ds = ivadomed.loader.bids_dataset.BidsDataset(context["path_data"],
+                                                      subject_lst=ds_lst,
+                                                      target_suffix=context["target_suffix"],
+                                                      contrast_lst=context["contrast_test"] if ds_name == 'test'
                                      else context["contrast_train_validation"],
-                                     metadata_choice=context["metadata"],
-                                     contrast_balance=context["contrast_balance"],
-                                     transform=transform_lst,
-                                     slice_filter_fn=ivadomed.loader.tools.slice_filter.SliceFilter())
+                                                      metadata_choice=context["metadata"],
+                                                      contrast_balance=context["contrast_balance"],
+                                                      transform=transform_lst,
+                                                      slice_filter_fn=ivadomed.loader.tools.slice_filter.SliceFilter())
 
         print("Loaded {} axial slices for the {} set.".format(len(ds), ds_name))
         ds_loader = DataLoader(ds, batch_size=1,

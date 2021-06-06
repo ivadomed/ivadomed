@@ -6,6 +6,28 @@ import bids as pybids
 import numpy as np
 import pandas as pd
 from loguru import logger
+from typing import List
+from ivadomed.keywords import LoaderParamsKW, ROIParamsKW, ContrastParamsKW
+from ivadomed.loader.tools.subject_aggregation import SubjectAggregation
+
+def write_derivatives_dataset_description(path_data: str):
+    """Writes default dataset_description.json file if not found in path_data/derivatives folder
+
+    Args:
+        path_data (str): Path of the data
+
+    Returns:
+
+    """
+    filename = "dataset_description"
+    deriv_desc_file = f"{path_data}/derivatives/{filename}.json"
+    label_desc_file = f"{path_data}/derivatives/labels/{filename}.json"
+
+    # need to write default dataset_description.json file if not found
+    if not os.path.isfile(deriv_desc_file) and not os.path.isfile(label_desc_file):
+        f = open(deriv_desc_file, 'w')
+        f.write('{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
+        f.close()
 
 
 class BidsDataframe:
@@ -25,42 +47,51 @@ class BidsDataframe:
         extensions (list of str): List of file extensions of interest.
         contrast_lst (list of str): List of the contrasts of interest.
         derivatives (bool): If True, derivatives are indexed.
+        multichannel (bool): If True, we are deading with multi channel data.
         df (pd.DataFrame): Dataframe containing dataset information
     """
 
-    def __init__(self, loader_params, path_output, derivatives):
+    def __init__(self, loader_params: dict, path_output: str, derivatives: bool):
 
         # paths_data from loader parameters
-        self.paths_data = loader_params['path_data']
+        self.paths_data: list = loader_params[LoaderParamsKW.PATH_DATA]
 
-        # bids_config from loader parameters
-        self.bids_config = None if 'bids_config' not in loader_params else loader_params['bids_config']
+        # Get bids_config from loader parameters
+        if LoaderParamsKW.BIDS_CONFIG not in loader_params:
+            self.bids_config = None
+        else:
+            self.bids_config: str = loader_params[LoaderParamsKW.BIDS_CONFIG]
 
         # target_suffix and roi_suffix from loader parameters
-        self.target_suffix = copy.deepcopy(loader_params['target_suffix'])
+        self.target_suffix: List[str] = copy.deepcopy(loader_params[LoaderParamsKW.TARGET_SUFFIX])
+
         # If `target_suffix` is a list of lists convert to list
         if any(isinstance(t, list) for t in self.target_suffix):
             self.target_suffix = list(itertools.chain.from_iterable(self.target_suffix))
-        self.roi_suffix = loader_params['roi_params']['suffix']
+
+        self.roi_suffix: str = loader_params[LoaderParamsKW.ROI_PARAMS][ROIParamsKW.SUFFIX]
+
         # If `roi_suffix` is not None, add to target_suffix
         if self.roi_suffix is not None:
             self.target_suffix.append(self.roi_suffix)
 
         # extensions from loader parameters
-        self.extensions = loader_params['extensions']
+        self.extensions: List[str] = loader_params[LoaderParamsKW.EXTENSIONS]
 
         # contrast_lst from loader parameters
-        self.contrast_lst = [] if 'contrast_lst' not in loader_params['contrast_params'] \
-                            else loader_params['contrast_params']['contrast_lst']
+        if ContrastParamsKW.CONTRAST_LIST not in loader_params[LoaderParamsKW.CONTRAST_PARAMS]:
+            self.contrast_lst: List[str] = []
+        else:
+            self.contrast_lst: List[str] = loader_params[LoaderParamsKW.CONTRAST_PARAMS][ContrastParamsKW.CONTRAST_LIST]
 
         # derivatives
-        self.derivatives = derivatives
+        self.derivatives: bool = derivatives
 
         # Multichannel
-        self.multichannel = loader_params['multichannel']
+        self.multichannel: bool = loader_params[LoaderParamsKW.MULTICHANNEL]
 
         # Create dataframe
-        self.df = pd.DataFrame()
+        self.df: pd.DataFrame = pd.DataFrame()
         self.create_bids_dataframe()
 
         # Save dataframe as csv file
@@ -103,7 +134,7 @@ class BidsDataframe:
             indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
 
             if self.derivatives:
-                self.write_derivatives_dataset_description(path_data)
+                write_derivatives_dataset_description(path_data)
 
             layout = pybids.BIDSLayout(path_data, config=self.bids_config, indexer=indexer,
                                        derivatives=self.derivatives)
@@ -257,7 +288,7 @@ class BidsDataframe:
         """
         return self.df[~self.df['path'].str.contains('derivatives')]['filename'].to_list()
 
-    def get_deriv_fnames(self):
+    def get_deriv_fnames(self) -> list:
         """Get the list of derivative filenames in dataframe.
 
         Returns:
@@ -265,63 +296,93 @@ class BidsDataframe:
         """
         return self.df[self.df['path'].str.contains('derivatives')]['filename'].tolist()
 
-    def get_derivatives(self, subject_fname, deriv_fnames):
-        """Return list of available derivative filenames for a subject filename.
+    def get_derivatives(self, subject_fname: str, deriv_fnames: List[str]) -> List[str]:
+        """Given a subject fname full path information, return list of AVAILABLE derivative filenames for the subject
         Args:
-            subject_fname (str): Subject filename.
+            subject_fname (str): Subject filename, NOT a full path.
             deriv_fnames (list of str): List of derivative filenames.
 
         Returns:
-            list: derivative filenames
+            list: a list of all the derivative filenames for that particular subject
         """
-        prefix_fname = subject_fname.split('.')[0]
-        output = [d for d in deriv_fnames if prefix_fname in d]
+        subject: SubjectAggregation = SubjectAggregation.instantiate(subject_fname)
 
-        #
-        if self.multichannel and not output:
-            # First check - look for GT of other contrasts
-            for contrast in self.contrast_lst:
-                prefix_fname = subject_fname.split('_')[0] + "_" + contrast
-                output = [d for d in deriv_fnames if prefix_fname in d]
-                if output:
+        # Obtain the list of files that are directly matching the subject fname.
+        # Could be empty.
+        list_derived_matching_subject_fname = list(filter(lambda a_file_name: subject.stem in a_file_name, deriv_fnames))
+
+        # If multichannel is not used
+        if not self.multichannel:
+            return list_derived_matching_subject_fname
+
+        # If derivative found, return?
+        if not list_derived_matching_subject_fname:
+            return list_derived_matching_subject_fname
+
+        # First check - look for ground truth of other contrasts
+        for contrast in self.contrast_lst:
+            prefix_fname = subject_fname.split('_')[0] + "_" + contrast
+            list_derived_matching_subject_fname = list(filter(lambda a_file_name: prefix_fname in a_file_name, deriv_fnames))
+            if list_derived_matching_subject_fname:
+                break
+
+        # Return if found.
+        if list_derived_matching_subject_fname:
+            return list_derived_matching_subject_fname
+
+        # Early return if no session information found in file name.
+        if "_ses-" not in subject_fname:
+            return list_derived_matching_subject_fname
+
+        # This point onward, the file is GUARNTEED to have "_ses-" in the file name.
+        # Get Subject name?
+        subject = subject_fname.split('_')[0]
+
+        # Get Session ID
+        sess_id = subject_fname.split('_')[1]
+
+        # Get the last bit BEFORE the extension?
+        # e.g. sub-unf01_T1w_lesion-manual.nii.gz
+        # would return lesion-manual
+        # e.g. sub-unf01_T1w_ses-01.nii.gz
+        # would return ses-01
+        # sub-X_ses-1_acq-Y_T1w.nii.gz
+        # sub-X_ses-1_acq-Z_T1w.nii.gz
+        contrast_id = subject_fname.split('_')[-1].split(".")[0]
+
+        all_subject_deriv = [d for d in deriv_fnames if subject in d]
+
+        # Second check - in case of ses-* file structure, check for the derivatives in the sessions folder
+        session_list = np.unique([d.split("_")[1] for d in all_subject_deriv])
+
+        # Session list is reordered to first check for the same contrast-type in the other sessions
+        if len(session_list) > 1:
+            re_ordered_session_lst = [sess_id] + session_list.remove(sess_id)
+        else:
+            re_ordered_session_lst = session_list
+        for session in re_ordered_session_lst:
+            # Contrast list is reordered to first check for the same contrast-type in the other sessions
+            if len(self.contrast_lst) > 1:
+                re_ordered_contrast_lst = [contrast_id] + self.contrast_lst.remove(contrast_id)
+            else:
+                re_ordered_contrast_lst = self.contrast_lst
+            for contrast in re_ordered_contrast_lst:
+                new_prefix_fname = subject_fname.split('.')[0].split('_')[0] + \
+                                   "_" + session + "_" + contrast
+                list_derived_matching_subject_fname = [d for d in deriv_fnames if new_prefix_fname in d]
+                if list_derived_matching_subject_fname:
+                    logger.info(
+                        "Multichannel training: No derivative found for {} "
+                        "- Assigning derivatives from {}".format(
+                            subject_fname,
+                            np.unique(["_".join([x.split("_")[0], x.split("_")[1], contrast])
+                                       for x in list_derived_matching_subject_fname])[0])
+                    )
                     break
-            if not output:
-                if "_ses-" in subject_fname:
-                    subject = subject_fname.split('_')[0]
-                    sess_id = subject_fname.split('_')[1]
-                    contrast_id = subject_fname.split('_')[-1].split(".")[0]
-                    all_subject_deriv = [d for d in deriv_fnames if subject in d]
 
-                    # Second check - in case of ses-* file structure, check for the derivatives in the sessions folder
-                    session_list = np.unique([d.split("_")[1] for d in all_subject_deriv])
-                    # Session list is reordered to first check for the same contrast-type in the other sessions
-                    if len(session_list) > 1:
-                        re_ordered_session_lst = [sess_id] + session_list.remove(sess_id)
-                    else:
-                        re_ordered_session_lst = session_list
-                    for session in re_ordered_session_lst:
-                        # Contrast list is reordered to first check for the same contrast-type in the other sessions
-                        if len(self.contrast_lst) > 1:
-                            re_ordered_contrast_lst = [contrast_id] + self.contrast_lst.remove(contrast_id)
-                        else:
-                            re_ordered_contrast_lst = self.contrast_lst
-                        for contrast in re_ordered_contrast_lst:
-                            new_prefix_fname = subject_fname.split('.')[0].split('_')[0] + \
-                                               "_" + session + "_" + contrast
-                            output = [d for d in deriv_fnames if new_prefix_fname in d]
-                            if output:
-                                logger.info(
-                                    "Multichannel training: No derivative found for {} "
-                                    "- Assigning derivatives from {}".format(
-                                        subject_fname,
-                                        np.unique(["_".join([x.split("_")[0], x.split("_")[1], contrast])
-                                                   for x in output])[0])
-                                )
-                                break
+        return list_derived_matching_subject_fname
 
-        return output
-
-    def save(self, path):
+    def save(self, path: str):
         """Save the dataframe into a csv file.
         Args:
             path (str): Path to csv file.
@@ -331,15 +392,3 @@ class BidsDataframe:
             logger.info("Dataframe has been saved in {}.".format(path))
         except FileNotFoundError:
             logger.error("Wrong path, bids_dataframe.csv could not be saved in {}.".format(path))
-
-    def write_derivatives_dataset_description(self, path_data):
-        """Writes default dataset_description.json file if not found in path_data/derivatives folder
-        """
-        filename = 'dataset_description'
-        deriv_desc_file = '{}/derivatives/{}.json'.format(path_data, filename)
-        label_desc_file = '{}/derivatives/labels/{}.json'.format(path_data, filename)
-        # need to write default dataset_description.json file if not found
-        if not os.path.isfile(deriv_desc_file) and not os.path.isfile(label_desc_file):
-            f = open(deriv_desc_file, 'w')
-            f.write('{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
-            f.close()

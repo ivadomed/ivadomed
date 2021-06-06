@@ -1,14 +1,13 @@
 import os
 import pytest
 import csv_diff
-import logging
 import torch
-
 import ivadomed.loader.tools.bids_dataframe
+import ivadomed.loader.tools.utils
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, path_repo_root, download_data_testing_test_files
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed.loader import loader as imed_loader
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 def setup_function():
@@ -124,7 +123,7 @@ def test_bids_df_ctscan(download_data_testing_test_files, loader_parameters):
 ])
 def test_dropout_input(seg_pair):
     n_channels = seg_pair['input'].size(0)
-    seg_pair = imed_loader.dropout_input(seg_pair)
+    seg_pair = ivadomed.loader.tools.utils.dropout_input(seg_pair)
     empty_channels = [len(torch.unique(input_data)) == 1 for input_data in seg_pair['input']]
 
     # If multichannel
