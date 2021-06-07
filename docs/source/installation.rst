@@ -83,7 +83,7 @@ Step 2: Install PyTorch 1.5 and TorchVision (CPU)
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 ::
 
-    pip install requirements.txt
+    pip install -r requirements.txt
 
 
 (Optional) Alternative Step 2: Install PyTorch 1.5 and TorchVision (GPU)
@@ -92,7 +92,7 @@ If you have a GPU and it has CUDA already setup etc, do the follow or use whatev
 
 ::
 
-    pip install requirements_gpu.txt
+    pip install -r requirements_gpu.txt
 
 
 Step 3: Install from release (recommended)
@@ -127,5 +127,5 @@ After you've installed ``ivadomed``, install the hooks:
 
 ::
 
-    pip install requirements_dev.txt
+    pip install -r requirements_dev.txt
     pre-commit install
