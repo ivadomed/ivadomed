@@ -41,20 +41,21 @@ def mask2label(path_label, aim=0):
     return list_label_image
 
 
-
-
-
-
-
 def rotate_nifti(X):
-    X2    = X.get_fdata()[0]
-    #X2 = np.rot90(X2)
+    """ Rotate the nifti image to be upright.
+    Args:
+        X (nifti): nifti image 
+
+    Returns:
+        nifti: rotated nifti image
+
+    """
+    X2 = X.get_fdata()[0]
     X2 = np.flip(X2, axis = 0)
     X2 = np.flip(X2, axis = 1)
     X2 = np.expand_dims(X2, axis = 0)
     img   = nib.Nifti1Image(X2, np.eye(4))
     return img
-    
 
 
 def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
@@ -94,10 +95,7 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
             nib_ref_can = nib.as_closest_canonical(image_ref)
             imsh = np.array(nib_ref_can.dataobj).shape
             mid_nifti = imed_preprocessing.get_midslice_average(path_image, list_points[0][0], slice_axis=0)
-
             mid_nifti = rotate_nifti(mid_nifti)
-
-
             nib.save(mid_nifti, os.path.join(path, t[i], 'anat', t[i] +'_rec-mid'+ suffix + '.nii.gz'))
             lab = nib.load(path_label)
             nib_ref_can = nib.as_closest_canonical(lab)
@@ -119,9 +117,9 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--path", dest="path", required=False, type=str,default="/data/data/data-multi-subject/",
+    parser.add_argument("-p", "--path", dest="path", required=False, type=str,
                         help="Path to bids folder")
-    parser.add_argument("-s", "--suffix", dest="suffix", required=False,default="_T1w",
+    parser.add_argument("-s", "--suffix", dest="suffix", required=False,
                         type=str, help="Suffix of the input file as in sub-xxxSUFFIX.nii.gz (E.g., _T2w)")
     parser.add_argument("-a", "--aim", dest="aim", default=0, type=int,
                         help="-1 or positive int. If set to any positive int,"
