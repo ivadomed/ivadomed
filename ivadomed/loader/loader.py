@@ -36,7 +36,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         contrast_params (dict): Contains image contrasts related parameters.
         slice_filter_params (dict): Contains slice_filter parameters, see :doc:`configuration_file` for more details.
         slice_axis (string): Choice between "axial", "sagittal", "coronal" ; controls the axis used to extract the 2D
-            data from 3D nifti files. 2D png/tif/jpg files use default "axial.
+            data from 3D NifTI files. 2D PNG/TIF/JPG files use default "axial.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
         metadata_type (str): Choice between None, "mri_params", "contrasts".
@@ -175,8 +175,8 @@ class SegmentationPair(object):
         metadata (list): Metadata list with each item corresponding to an image (contrast) in input_filenames.
             For single channel, the list will contain metadata related to one image.
         cache (bool): If the data should be cached in memory or not.
-        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         prepro_transforms (dict): Output of get_preprocessing_transforms.
 
     Attributes:
@@ -184,11 +184,11 @@ class SegmentationPair(object):
         gt_filenames (list): List of ground truth filenames.
         metadata (dict): Dictionary containing metadata of input and gt.
         cache (bool): If the data should be cached in memory or not.
-        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         prepro_transforms (dict): Transforms to be applied before training.
-        input_handle (list): List of input nifty data as 'nibabel.nifti1.Nifti1Image' object
-        gt_handle (list): List of gt nifty data as 'nibabel.nifti1.Nifti1Image' object
+        input_handle (list): List of input NifTI data as 'nibabel.nifti1.Nifti1Image' object
+        gt_handle (list): List of gt (ground truth) NifTI data as 'nibabel.nifti1.Nifti1Image' object
         extension (str): File extension of input files
     """
 
@@ -440,7 +440,9 @@ class SegmentationPair(object):
         return dreturn
 
     def read_file(self, filename):
-        """Read file according to file extension and convert to 'nibabel.nifti1.Nifti1Image' object
+        """Read file according to file extension and returns 'nibabel.nifti1.Nifti1Image' object.
+        If different from NifTI file, convert to 'nibabel.nifti1.Nifti1Image' object, set zooms in object
+        with PixelSize from metadata and write NifTI file.
 
         Args:
             filename (str): Subject filename.
@@ -473,18 +475,26 @@ class SegmentationPair(object):
                 if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
                     ps_in_um = np.asarray(ps_in_um)
                     ps_in_um.resize(3)
+                    ps_in_um[np.where(ps_in_um == 0)] = ps_in_um[0]
                 elif isinstance(ps_in_um, float):
-                    ps_in_um = np.asarray([ps_in_um, ps_in_um, 0])
+                    ps_in_um = np.asarray([ps_in_um, ps_in_um, ps_in_um])
                 else:
-                    raise RuntimeError("'PixelSize' metadata type is not supported. Format must be 2D [X, Y] array, "
-                                       "3D [X, Y, Z] array or float.")
+                    raise RuntimeError("'PixelSize' metadata type is not supported. Format must be 2D [X, Y] array,"
+                                       " 3D [X, Y, Z] array or float.")
                 ps_in_mm = tuple(ps_in_um * conversion_factor)
             else:
                 # TODO: Fix behavior for run_segment_command and inference, no BIDS metadata (#306)
                 raise RuntimeError("'PixelSize' is missing from metadata")
 
             # Set "pixdim" (zooms) in Nifti1Image object header
+            # Note: pixdim[1,2,3] must be non-zero in Nifti objects even if there is only one slice.
+            # Above, when ps_in_um[2] (pixdim[3]) is 0, we assign the same PixelSize as ps_in_um[0] (pixdim[1])
             img.header.set_zooms((ps_in_mm))
+
+            # if it doesn't already exist, save NifTI file in path_data alongside PNG file
+            fname_out = filename.split('.')[0] + ".nii.gz"
+            if not os.path.exists(fname_out):
+                nib.save(img, fname_out)
 
             return img
 
@@ -497,8 +507,8 @@ class MRI2DSegmentationDataset(Dataset):
             truth filename, ROI filename, metadata).
         length (list): Size of each dimensions of the patches, length equals 0 (no patching) or 2 (2d patching).
         stride (list): Size of the pixels' shift between patches, length equals 0 (no patching) or 2 (2d patching).
-        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         cache (bool): if the data should be cached in memory or not.
         transform (torchvision.Compose): transformations to apply.
         slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
@@ -520,8 +530,8 @@ class MRI2DSegmentationDataset(Dataset):
         prepro_transforms (Compose): Transformations to apply before training.
         transform (Compose): Transformations to apply during training.
         cache (bool): Tf the data should be cached in memory or not.
-        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
         n_contrasts (int): Number of input contrasts.
         has_bounding_box (bool): True if bounding box in all metadata, else False.
@@ -975,8 +985,8 @@ class BidsDataset(MRI2DSegmentationDataset):
         target_suffix (list): List of suffixes for target masks.
         contrast_params (dict): Contains image contrasts related parameters.
         model_params (dict): Dictionary containing model parameters.
-        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         cache (bool): If the data should be cached in memory or not.
         transform (list): Transformation list (length 2) composed of preprocessing transforms (Compose) and transforms
             to apply during training (Compose).
