@@ -676,18 +676,20 @@ class BidsDataframe:
             # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
             df_next = df_next[~df_next['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
 
-            # Update dataframe with subject files of chosen contrasts and extensions,
-            # and with derivative files of chosen target_suffix from loader parameters
+            # Update dataframe with subject files of chosen contrasts
+            # and with derivative files of chosen target_suffix
             df_next = df_next[(~df_next['path'].str.contains('derivatives')
-                               & df_next['suffix'].str.contains('|'.join(self.contrast_lst))
-                               & df_next['extension'].str.contains('|'.join(self.extensions)))
+                               & df_next['suffix'].str.contains('|'.join(self.contrast_lst)))
                                | (df_next['path'].str.contains('derivatives')
                                & df_next['filename'].str.contains('|'.join(self.target_suffix)))]
 
-            if df_next[~df_next['path'].str.contains('derivatives')].empty:
-                # Warning if no subject files are found in path_data
-                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(path_data))
+            # Update dataframe with files of chosen extensions if present
+            if self.extensions:
+                df_next = df_next[df_next['filename'].str.endswith(tuple(self.extensions))]
 
+            # Warning if no subject files are found in path_data
+            if df_next[~df_next['path'].str.contains('derivatives')].empty:
+                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(path_data))
             else:
                 # Add tsv files metadata to dataframe
                 df_next = self.add_tsv_metadata(df_next, path_data, layout)
