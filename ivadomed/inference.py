@@ -136,6 +136,10 @@ def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fn
     Returns:
         nibabel.Nifti1Image: NiBabel object containing the Network prediction.
     """
+
+    # Check fname_ref extention and update path if not NifTI
+    fname_ref = imed_loader_utils.update_filename_to_nifti(fname_ref)
+
     # Load reference nibabel object
     nib_ref = nib.load(fname_ref)
     nib_ref_can = nib.as_closest_canonical(nib_ref)
@@ -192,7 +196,7 @@ def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fn
         affine=None,
         header=nib_ref.header.copy()
     )
-    # save as nifti file
+    # save as NifTI file
     if fname_out is not None:
         nib.save(nib_pred, fname_out)
 
@@ -341,6 +345,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         logger.warning("fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
+    # TODO: Add PixelSize from options to filename_pairs metadata for microscopy inference (issue #306)
     filename_pairs = [(fname_images, None, fname_roi, metadata if isinstance(metadata, list) else [metadata])]
 
     kernel_3D = bool('Modified3DUNet' in context and context['Modified3DUNet']['applied']) or \
