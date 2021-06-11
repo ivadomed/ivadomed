@@ -287,7 +287,7 @@ will be randomly chosen.
         "$schema": "http://json-schema.org/draft-04/schema#",
         "title": "extensions",
         "description": "Used to specify a list of file extensions to be selected for
-            training/testing.",
+            training/testing. Extensions are required when different from `.nii` or `.nii.gz`",
         "type": "list, string"
     }
 
@@ -297,7 +297,7 @@ will be randomly chosen.
 
     {
         "loader_parameters": {
-            "extensions": [".nii.gz"]
+            "extensions": [".png"]
         }
     }
 
