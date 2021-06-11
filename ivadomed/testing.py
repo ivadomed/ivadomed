@@ -212,7 +212,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
                 # NEW COMPLETE VOLUME
                 if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool) and task != "classification":
-                    # save the completely processed file as a nifti file
+                    # save the completely processed file as a NifTI file
                     if ofolder:
                         fname_pred = os.path.join(ofolder, Path(fname_tmp).name)
                         fname_pred = fname_pred.rsplit("_", 1)[0] + '_pred.nii.gz'
@@ -410,6 +410,9 @@ def get_gt(filenames):
     Returns:
         ndarray: 4D numpy array.
     """
+    # Check filenames extentions and update paths if not NifTI
+    filenames = [imed_loader_utils.update_filename_to_nifti(fname) for fname in filenames]
+
     gt_lst = []
     for gt in filenames:
         # For multi-label, if all labels are not in every image
