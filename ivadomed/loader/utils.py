@@ -29,6 +29,13 @@ __numpy_type_map = {
 TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 'reverse',
                     'translation', 'gaussian_noise']
 
+# Ordered list of supported file extensions
+# TODO: Implement support of the following OMETIFF formats (#739):
+# [".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf"]
+# They are included in the list to avoid a ".ome.tif" or ".ome.tiff" following the ".tif" or ".tiff" pipeline
+EXT_LST = [".nii", ".nii.gz", ".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf", ".tif",
+           ".tiff", ".png", ".jpg", ".jpeg"]
+
 
 def split_dataset(df, split_method, data_testing, random_seed, train_frac=0.8, test_frac=0.1):
     """Splits dataset into training, validation and testing sets by applying train, test and validation fractions
@@ -859,3 +866,21 @@ class BidsDataframe:
             f = open(deriv_desc_file, 'w')
             f.write('{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
             f.close()
+
+
+def get_file_extension(filename):
+    """ Get file extension if it is supported
+    Args:
+        filename (str): Path of the file.
+
+    Returns:
+        str: File extension
+    """
+    # Find the first match from the list of supported file extensions
+    extension = next((ext for ext in EXT_LST if filename.lower().endswith(ext)), None)
+
+    # TODO: remove "ome" from condition when implementing OMETIFF support (#739)
+    if (not extension) or ("ome" in extension):
+        raise RuntimeError("The input file type of '{}' is not supported".format(filename))
+
+    return extension

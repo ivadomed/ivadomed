@@ -189,7 +189,6 @@ class SegmentationPair(object):
         prepro_transforms (dict): Transforms to be applied before training.
         input_handle (list): List of input NifTI data as 'nibabel.nifti1.Nifti1Image' object
         gt_handle (list): List of gt (ground truth) NifTI data as 'nibabel.nifti1.Nifti1Image' object
-        extension (str): File extension of input files
     """
 
     def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None,
@@ -204,19 +203,6 @@ class SegmentationPair(object):
         self.prepro_transforms = prepro_transforms
         # list of the images
         self.input_handle = []
-
-        # Ordered list of supported file extensions
-        # TODO: Implement support of the following OMETIFF formats (#739):
-        # [".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf"]
-        # They are included in the list to avoid a ".ome.tif" or ".ome.tiff" following the ".tif" or ".tiff" pipeline
-        ext_lst = [".nii", ".nii.gz", ".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf", ".tif",
-                   ".tiff", ".png", ".jpg", ".jpeg"]
-
-        # Returns the first match from the list
-        self.extension = next((ext for ext in ext_lst if input_filenames[0].lower().endswith(ext)), None)
-        # TODO: remove "ome" from condition when implementing OMETIFF support (#739)
-        if (not self.extension) or ("ome" in self.extension):
-            raise RuntimeError("The input file type of '{}' is not supported".format(input_filenames[0]))
 
         # loop over the filenames (list)
         for input_file in self.input_filenames:
@@ -450,16 +436,18 @@ class SegmentationPair(object):
         Returns:
             'nibabel.nifti1.Nifti1Image' object
         """
-        if "nii" in self.extension:
+        extension = imed_loader_utils.get_file_extension(filename)
+
+        if "nii" in extension:
             # For '.nii' and '.nii.gz' extentions
             return nib.load(filename)
 
-        # TODO: (#739) implement OMETIFF behavior (elif "ome" in self.extension)
+        # TODO: (#739) implement OMETIFF behavior (elif "ome" in extension)
 
         else:
             # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
             # Read image as numpy array (behavior for grayscale only, behavior TBD for RGB or RBGA)
-            if "tif" in self.extension:
+            if "tif" in extension:
                 img = np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1)
             else:
                 img = np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
