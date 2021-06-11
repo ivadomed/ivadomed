@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
+from ivadomed.loader import utils as imed_loader_utils
 
 # labels of paint_objects method
 TP_COLOUR = 1
@@ -51,6 +52,9 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
         fname_gt = bids_df.df[bids_df.df['filename']
                           .str.contains('|'.join(bids_df.get_derivatives(subj_acq, all_deriv)))]['path'].to_list()
+
+        # Check fname_gt extentions and update paths if not NifTI
+        fname_gt = [imed_loader_utils.update_filename_to_nifti(fname) for fname in fname_gt]
 
         # Uncertainty
         data_uncertainty = None
