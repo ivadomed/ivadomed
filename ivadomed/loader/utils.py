@@ -884,3 +884,18 @@ def get_file_extension(filename):
         raise RuntimeError("The input file type of '{}' is not supported".format(filename))
 
     return extension
+
+
+def update_filename_to_nifti(filename):
+    """ Update filename extension to 'nii.gz' if not NifTI file.
+
+    Args:
+        filename (str): Path of original file.
+
+    Returns:
+        str: Path of the corresponding NifTI file.
+    """
+    extension = get_file_extension(filename)
+    if not "nii" in extension:
+        filename.replace(extension, ".nii.gz")
+    return filename
