@@ -59,7 +59,6 @@ def test_segment_volume_2d(download_functional_test_files):
                 "applied_to": ["im", "gt"],
                 "dataset_type": ["training"]
             },
-            "NumpyToTensor": {},
             "NormalizeInstance": {"applied_to": ["im"]}
         },
         "postprocessing": {},
@@ -117,7 +116,6 @@ def test_segment_volume_2d_with_patches(download_functional_test_files, center_c
                 "applied_to": ["im", "gt"],
                 "dataset_type": ["training"]
             },
-            "NumpyToTensor": {},
             "NormalizeInstance": {"applied_to": ["im"]}
         },
         "postprocessing": {},
@@ -182,7 +180,6 @@ def test_segment_volume_3d(download_functional_test_files, center_crop):
                 "applied_to": ["im", "gt"],
                 "dataset_type": ["training"]
                 },
-            "NumpyToTensor": {},
             "NormalizeInstance": {"applied_to": ["im"]}
         },
         "postprocessing": {},
