@@ -897,5 +897,5 @@ def update_filename_to_nifti(filename):
     """
     extension = get_file_extension(filename)
     if not "nii" in extension:
-        filename.replace(extension, ".nii.gz")
+        filename = filename.replace(extension, ".nii.gz")
     return filename
