@@ -593,7 +593,7 @@ class BidsDataframe:
             self.target_suffix.append(self.roi_suffix)
 
         # extensions from loader parameters
-        self.extensions = loader_params['extensions']
+        self.extensions = loader_params['extensions'] if loader_params['extensions'] else [".nii", ".nii.gz"]
 
         # contrast_lst from loader parameters
         self.contrast_lst = [] if 'contrast_lst' not in loader_params['contrast_params'] \
