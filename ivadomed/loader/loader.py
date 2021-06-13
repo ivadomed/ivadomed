@@ -466,21 +466,22 @@ class SegmentationPair(object):
                 ps_in_um = self.metadata[0]['PixelSize']
                 if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
                     ps_in_um = np.asarray(ps_in_um)
-                    ps_in_um.resize(3)
-                    ps_in_um[np.where(ps_in_um == 0)] = ps_in_um[0]
                 elif isinstance(ps_in_um, float):
-                    ps_in_um = np.asarray([ps_in_um, ps_in_um, ps_in_um])
+                    ps_in_um = np.asarray([ps_in_um, ps_in_um])
                 else:
                     raise RuntimeError("'PixelSize' metadata type is not supported. Format must be 2D [X, Y] array,"
                                        " 3D [X, Y, Z] array or float.")
+                # Note: pixdim[1,2,3] must be non-zero in Nifti objects even if there is only one slice.
+                # When ps_in_um[2] (pixdim[3]) is not present or 0, we assign the same PixelSize as ps_in_um[0] (pixdim[1])
+                ps_in_um.resize(3)
+                if ps_in_um[2] == 0:
+                    ps_in_um[2] = ps_in_um[0]
                 ps_in_mm = tuple(ps_in_um * conversion_factor)
             else:
                 # TODO: Fix behavior for run_segment_command and inference, no BIDS metadata (#306)
                 raise RuntimeError("'PixelSize' is missing from metadata")
 
             # Set "pixdim" (zooms) in Nifti1Image object header
-            # Note: pixdim[1,2,3] must be non-zero in Nifti objects even if there is only one slice.
-            # Above, when ps_in_um[2] (pixdim[3]) is 0, we assign the same PixelSize as ps_in_um[0] (pixdim[1])
             img.header.set_zooms((ps_in_mm))
 
             # if it doesn't already exist, save NifTI file in path_data alongside PNG/TIF/JPG file
