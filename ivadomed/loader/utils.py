@@ -859,7 +859,13 @@ def get_file_extension(filename):
 
 
 def update_filename_to_nifti(filename):
-    """ Update filename extension to 'nii.gz' if not NifTI file.
+    """ 
+    Update filename extension to 'nii.gz' if not a NifTI file.
+    
+    This function is used to help make non-NifTI files (e.g. PNG/TIF/JPG)
+    compatible with NifTI-only pipelines. The expectation is that a NifTI
+    version of the file has been created alongside the original file, which
+    allows the extension to be cleanly swapped for a `.nii.gz` extension.
 
     Args:
         filename (str): Path of original file.
