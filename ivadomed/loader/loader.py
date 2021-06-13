@@ -427,8 +427,6 @@ class SegmentationPair(object):
 
     def read_file(self, filename):
         """Read file according to file extension and returns 'nibabel.nifti1.Nifti1Image' object.
-        If different from NifTI file, convert to 'nibabel.nifti1.Nifti1Image' object, set zooms in object
-        with PixelSize from metadata and write NifTI file.
 
         Args:
             filename (str): Subject filename.
