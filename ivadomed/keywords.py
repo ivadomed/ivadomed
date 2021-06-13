@@ -8,13 +8,13 @@ class LoaderParamsKW:
     TARGET_SUFFIX = "target_suffix"
     ROI_PARAMS = "roi_params"
     CONTRAST_PARAMS = "contrast_params"
-    MULTICHANNEL = "multichannel"
+    MULTICHANNEL = "multichannel" # boolean key that is used to change the configuration file ever slightly.
     EXTENSIONS = "extensions"
 
 
 @dataclass
 class ContrastParamsKW:
-    CONTRAST_LIST = "contrast_lst"
+    CONTRAST_LIST = "contrast_lst"  # The list help determine the number of model parameter inputs.
     BALANCE = "balance"
 
 
@@ -73,7 +73,7 @@ class FileStemKW:
     list_sample = ["sample-"]
     list_session = ["ses-", "session-"]
     list_run = ["run-"]
-    list_contrasts = ["t1w", "t2w", "t2star", "ct", "sem"]
+    list_contrasts = ["t1w", "t2w", "t2star", "ct", "sem", "flair"]
     list_derivative = ["lesion-", "seg-", "labels-"]
     list_location = ["mid"]
     list_stats = ["heatmap"]

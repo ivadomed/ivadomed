@@ -7,6 +7,10 @@ from loguru import logger
 
 
 class SubjectAggregation:
+    """
+    Obsolete class and PyBids can already extract these compliant information from the file name.
+    """
+
     def __init__(self):
         self.subject: str = ""
         self.acq: str = ""

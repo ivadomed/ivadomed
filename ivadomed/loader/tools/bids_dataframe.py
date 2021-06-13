@@ -353,13 +353,15 @@ class BidsDataframe:
         all_subject_deriv = [d for d in deriv_fnames if subject in d]
 
         # Second check - in case of ses-* file structure, check for the derivatives in the sessions folder
-        session_list = np.unique([d.split("_")[1] for d in all_subject_deriv])
+        session_list: np.ndarray = np.unique([d.split("_")[1] for d in all_subject_deriv])
 
         # Session list is reordered to first check for the same contrast-type in the other sessions
         if len(session_list) > 1:
-            re_ordered_session_lst = [sess_id] + session_list.remove(sess_id)
+            re_ordered_session_lst: list = [sess_id] + session_list.remove(sess_id)
         else:
-            re_ordered_session_lst = session_list
+            re_ordered_session_lst: list = session_list
+
+        # For Each session in the re-ordered session list.
         for session in re_ordered_session_lst:
             # Contrast list is reordered to first check for the same contrast-type in the other sessions
             if len(self.contrast_lst) > 1:
