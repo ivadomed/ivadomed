@@ -483,8 +483,8 @@ class SegmentationPair(object):
             # Above, when ps_in_um[2] (pixdim[3]) is 0, we assign the same PixelSize as ps_in_um[0] (pixdim[1])
             img.header.set_zooms((ps_in_mm))
 
-            # if it doesn't already exist, save NifTI file in path_data alongside PNG file
-            fname_out = filename.split('.')[0] + ".nii.gz"
+            # if it doesn't already exist, save NifTI file in path_data alongside PNG/TIF/JPG file
+            fname_out = imed_loader_utils.update_filename_to_nifti(filename)
             if not os.path.exists(fname_out):
                 nib.save(img, fname_out)
 
