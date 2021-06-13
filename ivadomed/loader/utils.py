@@ -668,9 +668,8 @@ class BidsDataframe:
                                | (df_next['path'].str.contains('derivatives')
                                & df_next['filename'].str.contains('|'.join(self.target_suffix)))]
 
-            # Update dataframe with files of chosen extensions if present
-            if self.extensions:
-                df_next = df_next[df_next['filename'].str.endswith(tuple(self.extensions))]
+            # Update dataframe with files of chosen extensions
+            df_next = df_next[df_next['filename'].str.endswith(tuple(self.extensions))]
 
             # Warning if no subject files are found in path_data
             if df_next[~df_next['path'].str.contains('derivatives')].empty:
