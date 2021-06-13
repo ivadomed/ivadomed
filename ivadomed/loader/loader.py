@@ -493,7 +493,7 @@ class SegmentationPair(object):
                                    " 3D [X, Y, Z] array or float.")
             # Note: pixdim[1,2,3] must be non-zero in Nifti objects even if there is only one slice.
             # When ps_in_um[2] (pixdim[3]) is not present or 0, we assign the same PixelSize as ps_in_um[0] (pixdim[1])
-            ps_in_um.resize(3)
+            ps_in_um = np.resize(ps_in_um, 3)
             if ps_in_um[2] == 0:
                 ps_in_um[2] = ps_in_um[0]
             ps_in_mm = tuple(ps_in_um * conversion_factor)
