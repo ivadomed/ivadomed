@@ -437,59 +437,79 @@ class SegmentationPair(object):
             'nibabel.nifti1.Nifti1Image' object
         """
         extension = imed_loader_utils.get_file_extension(filename)
-
         # TODO: remove "ome" from condition when implementing OMETIFF support (#739)
         if (not extension) or ("ome" in extension):
             raise RuntimeError("The input file type of '{}' is not supported".format(filename))
 
         if "nii" in extension:
             # For '.nii' and '.nii.gz' extentions
-            return nib.load(filename)
-
-        # TODO: (#739) implement OMETIFF behavior (elif "ome" in extension)
-
+            img = nib.load(filename)
         else:
-            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
-            # Read image as numpy array (behavior for grayscale only, behavior TBD for RGB or RBGA)
-            if "tif" in extension:
-                img = np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1)
+            img = self.convert_file_to_nifti(filename, extension)
+        return img
+
+    def convert_file_to_nifti(self, filename, extension):
+        """
+        Convert a non-NifTI image into a 'nibabel.nifti1.Nifti1Image' object and save to a file.
+        This method is especially relevant for making microscopy data compatible with NifTI-only
+        pipelines.
+
+        The implementation of this method is dependent on the development of the corresponding
+        microscopy BEP (github.com/ivadomed/ivadomed/issues/301, bids.neuroimaging.io/bep031):
+        * "pixdim" (zooms) for Nifti1Image object is extracted from PixelSize metadata (from BIDS JSON sidecar)
+        * PixelSize definition in example dataset is a scalar in micrometers (BIDS BEP031 v0.0.2)
+        * PixelSize definition may change for 2D [X, Y] and 3D [X, Y, Z] arrays in micrometers (BIDS BEP031 v0.0.3)
+
+        TODO: (#739) implement OMETIFF behavior (if "ome" in extension)
+
+        Args:
+            filename (str): Subject filename.
+            extension (str): File extension.
+
+        Returns:
+            'nibabel.nifti1.Nifti1Image' object
+        """
+        # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
+        # Read image as grayscale in numpy array (behavior TBD in ivadomed for RGB or RBGA)
+        if "tif" in extension:
+            img = np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1)
+        else:
+            img = np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
+
+        # Convert numpy array to Nifti1Image object with 4x4 identity affine matrix
+        img = nib.Nifti1Image(img, affine=np.eye(4))
+
+        # Get pixel size in um from json metadata and convert to mm
+        array_length = [2, 3]        # Accepted array length for 'PixelSize' metadata
+        conversion_factor = 0.001    # Conversion factor from um to mm
+        if 'PixelSize' in self.metadata[0]:
+            ps_in_um = self.metadata[0]['PixelSize']
+            if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
+                ps_in_um = np.asarray(ps_in_um)
+            elif isinstance(ps_in_um, float):
+                ps_in_um = np.asarray([ps_in_um, ps_in_um])
             else:
-                img = np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
+                raise RuntimeError("'PixelSize' metadata type is not supported. Format must be 2D [X, Y] array,"
+                                   " 3D [X, Y, Z] array or float.")
+            # Note: pixdim[1,2,3] must be non-zero in Nifti objects even if there is only one slice.
+            # When ps_in_um[2] (pixdim[3]) is not present or 0, we assign the same PixelSize as ps_in_um[0] (pixdim[1])
+            ps_in_um.resize(3)
+            if ps_in_um[2] == 0:
+                ps_in_um[2] = ps_in_um[0]
+            ps_in_mm = tuple(ps_in_um * conversion_factor)
+        else:
+            # TODO: Fix behavior for run_segment_command and inference, no BIDS metadata (#306)
+            raise RuntimeError("'PixelSize' is missing from metadata")
 
-            # Convert numpy array to Nifti1Image object with 4x4 identity affine matrix
-            img = nib.Nifti1Image(img, affine=np.eye(4))
+        # Set "pixdim" (zooms) in Nifti1Image object header
+        img.header.set_zooms((ps_in_mm))
 
-            # Get pixel size in um from json metadata and convert to mm
-            array_length = [2, 3]        # Accepted array length for 'PixelSize' metadata
-            conversion_factor = 0.001    # Conversion factor from um to mm
-            if 'PixelSize' in self.metadata[0]:
-                ps_in_um = self.metadata[0]['PixelSize']
-                if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
-                    ps_in_um = np.asarray(ps_in_um)
-                elif isinstance(ps_in_um, float):
-                    ps_in_um = np.asarray([ps_in_um, ps_in_um])
-                else:
-                    raise RuntimeError("'PixelSize' metadata type is not supported. Format must be 2D [X, Y] array,"
-                                       " 3D [X, Y, Z] array or float.")
-                # Note: pixdim[1,2,3] must be non-zero in Nifti objects even if there is only one slice.
-                # When ps_in_um[2] (pixdim[3]) is not present or 0, we assign the same PixelSize as ps_in_um[0] (pixdim[1])
-                ps_in_um.resize(3)
-                if ps_in_um[2] == 0:
-                    ps_in_um[2] = ps_in_um[0]
-                ps_in_mm = tuple(ps_in_um * conversion_factor)
-            else:
-                # TODO: Fix behavior for run_segment_command and inference, no BIDS metadata (#306)
-                raise RuntimeError("'PixelSize' is missing from metadata")
+        # If it doesn't already exist, save NifTI file in path_data alongside PNG/TIF/JPG file
+        fname_out = imed_loader_utils.update_filename_to_nifti(filename)
+        if not os.path.exists(fname_out):
+            nib.save(img, fname_out)
 
-            # Set "pixdim" (zooms) in Nifti1Image object header
-            img.header.set_zooms((ps_in_mm))
-
-            # if it doesn't already exist, save NifTI file in path_data alongside PNG/TIF/JPG file
-            fname_out = imed_loader_utils.update_filename_to_nifti(filename)
-            if not os.path.exists(fname_out):
-                nib.save(img, fname_out)
-
-            return img
+        return img
 
 
 class MRI2DSegmentationDataset(Dataset):
