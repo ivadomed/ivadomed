@@ -438,6 +438,10 @@ class SegmentationPair(object):
         """
         extension = imed_loader_utils.get_file_extension(filename)
 
+        # TODO: remove "ome" from condition when implementing OMETIFF support (#739)
+        if (not extension) or ("ome" in extension):
+            raise RuntimeError("The input file type of '{}' is not supported".format(filename))
+
         if "nii" in extension:
             # For '.nii' and '.nii.gz' extentions
             return nib.load(filename)

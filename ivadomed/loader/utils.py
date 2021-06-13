@@ -856,11 +856,6 @@ def get_file_extension(filename):
     """
     # Find the first match from the list of supported file extensions
     extension = next((ext for ext in EXT_LST if filename.lower().endswith(ext)), None)
-
-    # TODO: remove "ome" from condition when implementing OMETIFF support (#739)
-    if (not extension) or ("ome" in extension):
-        raise RuntimeError("The input file type of '{}' is not supported".format(filename))
-
     return extension
 
 
