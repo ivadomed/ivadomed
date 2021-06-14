@@ -1,7 +1,11 @@
 import os
 import csv_diff
+import numpy as np
+import pandas as pd
+
 import ivadomed.loader.tools.bids_dataframe
 import ivadomed.loader.tools.utils
+from ivadomed.loader.bids_dataset import get_unique_session_list
 from testing.unit_tests.t_utils import path_temp, download_data_multi_sessions_contrasts_test_files
 from testing.common_testing_util import remove_tmp_dir, path_data_multi_sessions_contrasts_source, path_data_multi_sessions_contrasts_tmp
 from pytest_cases import parametrize_with_cases
@@ -18,6 +22,12 @@ def setup_function():
         shutil.copytree(path_data_multi_sessions_contrasts_source,
                         path_data_multi_sessions_contrasts_tmp,
                         ignore=shutil.ignore_patterns(str(path_data_multi_sessions_contrasts_source / '.git')))
+
+
+def test_get_unique_session_list():
+    data = {"filename": ["ses-aaa_aaa", "ses-aaa_bbb", "aa", "ses-aaa_aaa"], "aa": [1, 2, 3, 4]}
+    df = pd.DataFrame(data=data)
+    assert np.array_equal(get_unique_session_list(df), ["aaa", "bbb"])
 
 
 @parametrize_with_cases("loader_parameters", cases=case_data_multi_session_contrast)
