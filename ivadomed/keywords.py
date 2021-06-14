@@ -83,7 +83,7 @@ class FileStemKW:
     list_sample = ["sample-"]
     list_session = ["ses-", "session-"]
     list_run = ["run-"]
-    list_contrasts = ["t1w", "t2w", "t2star", "ct", "sem", "flair"]
+    list_contrasts = ["T1w", "T2w", "T2star", "ct", "sem", "FLAIR"]
     list_derivative = ["lesion-", "seg-", "labels-"]
     list_location = ["mid"]
     list_stats = ["heatmap"]

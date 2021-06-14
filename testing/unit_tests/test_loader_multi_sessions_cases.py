@@ -9,7 +9,7 @@ def case_data_multi_session_contrast():
         LoaderParamsKW.EXTENSIONS: [".nii", ".nii.gz"],
         "roi_params": {"suffix": None, "slice_filter_roi": None},
         LoaderParamsKW.CONTRAST_PARAMS: {
-            ContrastParamsKW.CONTRAST_LIST: ["t1w", "t2w", "flair", "pd"]
+            ContrastParamsKW.CONTRAST_LIST: ["T1w", "T2w", "FLAIR", "PD"]
         }
     }
 
