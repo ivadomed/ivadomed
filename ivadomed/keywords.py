@@ -33,6 +33,7 @@ class SubjectDictKW:
     METADATA = "metadata"
     EXTENSIONS = "extensions"
 
+
 @dataclass
 class SubjectDataFrameKW:
     FILENAME = "filename"
@@ -40,15 +41,24 @@ class SubjectDataFrameKW:
 
 @dataclass
 class BidsDataFrameKW:
-    FILENAME = "filename"
-    PARTICIPANT_ID = "participant_id"
-    SUFFIX = "suffix"
-    PATH = "path"
+    # bids layout converted to dataframe during bids dataset creation
+    PATH = "path"   # full path.
+    FILENAME = "filename"  # the actual file's name (base)
+    PARTICIPANT_ID = "participant_id"  # i.e.    sub-unf01
+
+    SUBJECT = "subject"  # i.e.  unf01
+    SUFFIX = "suffix"   # T1w
+
+    EXTENSION = "extension"   # .nii.gz
+    DERIVATIVES = "derivatives"
+
+
 
 
 @dataclass
 class ROIParamsKW:
     SUFFIX = "suffix"
+    SLICE_FILTER_ROI = "slice_filter_roi"
 
 
 @dataclass

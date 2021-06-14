@@ -7,8 +7,9 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 from typing import List
-from ivadomed.keywords import LoaderParamsKW, ROIParamsKW, ContrastParamsKW
-from ivadomed.loader.tools.subject_aggregation import SubjectAggregation
+from ivadomed.keywords import LoaderParamsKW, ROIParamsKW, ContrastParamsKW, BidsDataFrameKW
+from pathlib import Path
+
 
 def write_derivatives_dataset_description(path_data: str):
     """Writes default dataset_description.json file if not found in path_data/derivatives folder
@@ -20,8 +21,10 @@ def write_derivatives_dataset_description(path_data: str):
 
     """
     filename = "dataset_description"
-    deriv_desc_file = f"{path_data}/derivatives/{filename}.json"
-    label_desc_file = f"{path_data}/derivatives/labels/{filename}.json"
+    # Convert path_data to Path object for cross platform compatibility
+    fname_data = Path(path_data)
+    deriv_desc_file = str(fname_data / "derivatives" / f"{filename}.json")
+    label_desc_file = str(fname_data / "derivatives" / "labels" / f"{filename}.json")
 
     # need to write default dataset_description.json file if not found
     if not os.path.isfile(deriv_desc_file) and not os.path.isfile(label_desc_file):
@@ -87,10 +90,10 @@ class BidsDataframe:
         # derivatives
         self.derivatives: bool = derivatives
 
-        # Multichannel
-        self.multichannel: bool = loader_params[LoaderParamsKW.MULTICHANNEL]
+        # Multichannel, if key not present, it is assumed to be false.
+        self.multichannel: bool = bool(loader_params.get(LoaderParamsKW.MULTICHANNEL))
 
-        # Create dataframe
+        # Create dataframe, which contain much information like file path, base file, extensions. etc
         self.df: pd.DataFrame = pd.DataFrame()
         self.create_bids_dataframe()
 
@@ -98,7 +101,9 @@ class BidsDataframe:
         self.save(os.path.join(path_output, "bids_dataframe.csv"))
 
     def create_bids_dataframe(self):
-        """Generate the dataframe."""
+        """Generate the dataframe by first walk through the self.path_data to build the pybids.BIDSLayoutIndexer before
+        converting that bids layout into a DATAFRAME which we add several custom columns
+        """
 
         # Suppress a Future Warning from pybids about leading dot included in 'extension' from version 0.14.0
         # The config_bids.json file used matches the future behavior
@@ -144,22 +149,28 @@ class BidsDataframe:
             df_next = layout.to_df(metadata=True)
 
             # Add filename column
-            df_next.insert(1, 'filename', df_next['path'].apply(os.path.basename))
+            df_next.insert(1, BidsDataFrameKW.FILENAME, df_next[BidsDataFrameKW.PATH].apply(os.path.basename))
 
             # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
-            df_next = df_next[~df_next['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
+            df_next = df_next[~df_next[BidsDataFrameKW.FILENAME].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
 
-            # Update dataframe with subject files of chosen contrasts and extensions,
-            # and with derivative files of chosen target_suffix from loader parameters
-            df_next = df_next[(~df_next['path'].str.contains('derivatives')
-                               & df_next['suffix'].str.contains('|'.join(self.contrast_lst))
-                               & df_next['extension'].str.contains('|'.join(self.extensions)))
-                               | (df_next['path'].str.contains('derivatives')
-                               & df_next['filename'].str.contains('|'.join(self.target_suffix)))]
+            # Update dataframe with 1) subject files of chosen contrasts and extensions,
+            # and with 2) derivative files of chosen target_suffix from loader parameters
+            filter_subject_files_of_chosen_contrasts_and_extensions = (
+                    ~df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
+                    & df_next[BidsDataFrameKW.SUFFIX].str.contains('|'.join(self.contrast_lst))
+                    & df_next[BidsDataFrameKW.EXTENSION].str.contains('|'.join(self.extensions))
+            )
+            filter_derivative_files_of_chosen_target_suffix = (
+                    df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
+                    & df_next[BidsDataFrameKW.FILENAME].str.contains('|'.join(self.target_suffix))
+            )
+            df_next = df_next[filter_subject_files_of_chosen_contrasts_and_extensions
+                              | filter_derivative_files_of_chosen_target_suffix]
 
-            if df_next[~df_next['path'].str.contains('derivatives')].empty:
+            if df_next[~df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)].empty:
                 # Warning if no subject files are found in path_data
-                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(path_data))
+                logger.warning(f"No subject files were found in '{path_data}' dataset. Skipping dataset.")
 
             else:
                 # Add tsv files metadata to dataframe
@@ -167,7 +178,7 @@ class BidsDataframe:
 
                 # TODO: check if other files are needed for EEG and DWI
 
-                # Merge dataframes
+                # Merge dataframes with outer join: i.e. avoid duplicates.
                 self.df = pd.concat([self.df, df_next], join='outer', ignore_index=True)
 
         if self.df.empty:
@@ -176,7 +187,7 @@ class BidsDataframe:
                                " and datasets compliance with BIDS specification.")
 
         # Drop duplicated rows based on all columns except 'path'
-        # Keep first occurence
+        # Keep first occurrence
         columns = self.df.columns.to_list()
         columns.remove('path')
         self.df = self.df[~(self.df.astype(str).duplicated(subset=columns, keep='first'))]
@@ -184,15 +195,17 @@ class BidsDataframe:
         # If indexing of derivatives is true
         if self.derivatives:
 
-            # Get list of subject files with available derivatives
+            # Get
+            # list of subjects that has derivatives
+            # list of ALL the available derivatives (all subjects, flat list)
             has_deriv, deriv = self.get_subjects_with_derivatives()
 
-            # Filter dataframe to keep subjects files with available derivatives only
+            # Filter dataframe to keep 1) subjects files and 2) all known derivatives only
             if has_deriv:
-                self.df = self.df[self.df['filename'].str.contains('|'.join(has_deriv))
-                                  | self.df['filename'].str.contains('|'.join(deriv))]
+                self.df = self.df[self.df[BidsDataFrameKW.FILENAME].str.contains('|'.join(has_deriv))
+                                  | self.df[BidsDataFrameKW.FILENAME].str.contains('|'.join(deriv))]
             else:
-                 # Raise error and exit if no derivatives are found for any subject files
+                # Raise error and exit if no derivatives are found for any subject files
                 raise RuntimeError("Derivatives not found.")
 
         # Reset index
@@ -248,39 +261,45 @@ class BidsDataframe:
 
         return df
 
-    def get_subjects_with_derivatives(self):
+    def get_subjects_with_derivatives(self) -> (list, list):
         """Get lists of subject filenames with available derivatives.
 
         Returns:
             list, list: subject filenames having derivatives, available derivatives filenames.
         """
-        subject_fnames = self.get_subject_fnames()
-        deriv_fnames = self.get_deriv_fnames()
-        has_deriv = []
-        deriv = []
+        subject_fnames: list = self.get_subject_fnames()  # all known subjects' fnames
+        deriv_fnames: list = self.get_deriv_fnames()  # all known derivatives
+        has_deriv = []  # subject filenames having derivatives
+        deriv = []  # the available derivatives filenames from ALL subjects... not coindexed with has_deriv???
 
         for subject_fname in subject_fnames:
-            available = self.get_derivatives(subject_fname, deriv_fnames)
-            if available:
-                if self.roi_suffix is not None:
-                    if self.roi_suffix in ('|'.join(available)):
-                        has_deriv.append(subject_fname)
-                        deriv.extend(available)
-                    else:
-                        logger.warning("Missing roi_suffix {} for {}. Skipping."
-                                       .format(self.roi_suffix, subject_fname))
-                else:
+            # For the current subject, get its list of subject specific available derivatives
+            list_subject_available_derivatives: list = self.get_derivatives(subject_fname, deriv_fnames)
+
+            # Early stop if no derivatives found. Go to next subject.
+            if not list_subject_available_derivatives:
+                logger.warning(f"Missing derivatives for {subject_fname}. Skipping.")
+                continue
+
+            # Handle subject specific roi_suffix related filtering?
+            if self.roi_suffix is not None:
+                if self.roi_suffix in ('|'.join(list_subject_available_derivatives)):
                     has_deriv.append(subject_fname)
-                    deriv.extend(available)
-                for target in self.target_suffix:
-                    if target not in str(available) and target != self.roi_suffix:
-                        logger.warning("Missing target_suffix {} for {}".format(target, subject_fname))
+                    deriv.extend(list_subject_available_derivatives)
+                else:
+                    logger.warning(f"Missing roi_suffix {self.roi_suffix} for {subject_fname}. Skipping.")
             else:
-                logger.warning("Missing derivatives for {}. Skipping.".format(subject_fname))
+                has_deriv.append(subject_fname)
+                deriv.extend(list_subject_available_derivatives)
+
+            # Warn about when there is a missing derivative
+            for target in self.target_suffix:
+                if target not in str(list_subject_available_derivatives) and target != self.roi_suffix:
+                    logger.warning(f"Missing target_suffix {target} for {subject_fname}")
 
         return has_deriv, deriv
 
-    def get_subject_fnames(self):
+    def get_subject_fnames(self) -> list:
         """Get the list of subject filenames in dataframe.
 
         Returns:
@@ -305,17 +324,16 @@ class BidsDataframe:
         Returns:
             list: a list of all the derivative filenames for that particular subject
         """
-        subject: SubjectAggregation = SubjectAggregation.instantiate(subject_fname)
-
+        prefix_fname = subject_fname.split('.')[0]
         # Obtain the list of files that are directly matching the subject fname.
         # Could be empty.
-        list_derived_matching_subject_fname = list(filter(lambda a_file_name: subject.stem in a_file_name, deriv_fnames))
+        list_derived_matching_subject_fname = list(filter(lambda a_file_name: prefix_fname in a_file_name, deriv_fnames))
 
-        # If multichannel is not used
+        # If multichannel is not used, just do the simple filtering for that particular subject.
         if not self.multichannel:
             return list_derived_matching_subject_fname
 
-        # If derivative found, return?
+        # If no derivative found, return empty list.
         if not list_derived_matching_subject_fname:
             return list_derived_matching_subject_fname
 

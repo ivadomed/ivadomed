@@ -23,6 +23,8 @@ path_functional_tests: str = str(path_repo_root / "testing" / "functional_tests"
 path_data_functional_source: str = str(path_repo_root / "data_functional_testing")
 path_data_functional_tmp: str = str(path_repo_root / "tmp" / Path(path_data_functional_source).name)
 
+path_data_multi_sessions_contrasts_source: Path = path_repo_root / "data_multi_sessions_contrasts_testing"
+path_data_multi_sessions_contrasts_tmp: Path = path_repo_root / "tmp" / Path(path_data_functional_source).name
 
 def download_dataset(dataset: str = 'data_testing', verbose=True):
     """Download testing data from internet.
