@@ -265,6 +265,7 @@ def run_segment_command(context, model_params):
             metadata = bids_df.df[bids_df.df['filename'] == subject][model_params['metadata']].values[0]
             options = {'metadata': metadata}
 
+        # TODO: Add PixelSize to options for microscopy inference (issue #306)
         if fname_img:
             pred_list, target_list = imed_inference.segment_volume(path_model,
                                                                    fname_images=fname_img,
