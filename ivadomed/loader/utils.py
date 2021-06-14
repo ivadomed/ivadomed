@@ -596,7 +596,7 @@ class BidsDataframe:
         self.derivatives = derivatives
 
         # Multichannel
-        self.multichannel = loader_params['multichannel']
+        self.multichannel = bool(loader_params.get('multichannel'))
 
         # Create dataframe
         self.df = pd.DataFrame()
