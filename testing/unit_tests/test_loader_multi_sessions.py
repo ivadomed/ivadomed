@@ -1,17 +1,13 @@
 import os
-import pytest
 import csv_diff
-import torch
 import ivadomed.loader.tools.bids_dataframe
 import ivadomed.loader.tools.utils
-from testing.unit_tests.t_utils import create_tmp_dir, path_repo_root, path_temp, \
-    download_data_testing_test_files, download_data_multi_sessions_contrasts_test_files
+from testing.unit_tests.t_utils import path_temp, download_data_multi_sessions_contrasts_test_files
 from testing.common_testing_util import remove_tmp_dir, path_data_multi_sessions_contrasts_source, path_data_multi_sessions_contrasts_tmp
-from ivadomed.loader import loader as imed_loader
-from loguru import logger
 from pytest_cases import parametrize_with_cases
 import shutil
 from testing.unit_tests.test_loader_multi_sessions_cases import case_data_multi_session_contrast
+from loguru import logger
 
 
 def setup_function():
@@ -20,7 +16,8 @@ def setup_function():
     os.mkdir(path_temp)
     if os.path.exists(path_data_multi_sessions_contrasts_source):
         shutil.copytree(path_data_multi_sessions_contrasts_source,
-                        path_data_multi_sessions_contrasts_tmp)
+                        path_data_multi_sessions_contrasts_tmp,
+                        ignore=shutil.ignore_patterns(str(path_data_multi_sessions_contrasts_source / '.git')))
 
 
 @parametrize_with_cases("loader_parameters", cases=case_data_multi_session_contrast)
@@ -44,3 +41,9 @@ def test_bids_multi_session_contrast_df_anat(download_data_multi_sessions_contra
     assert diff == {'added': [], 'removed': [], 'changed': [],
                     'columns_added': [], 'columns_removed': []}
 
+
+def test_shutil():
+    wild_card = str(path_data_multi_sessions_contrasts_source / '.*')
+    shutil.copytree(path_data_multi_sessions_contrasts_source,
+                    path_data_multi_sessions_contrasts_tmp,
+                    ignore=shutil.ignore_patterns(wild_card))
