@@ -259,7 +259,7 @@ class BidsDataframe:
                         & df_next[BidsDataFrameKW.EXTENSION].str.contains('|'.join(self.extensions))
                 )
 
-        # and with 2) derivative files of chosen target_suffix from loader parameters
+            # and with 2) derivative files of chosen target_suffix from loader parameters
             filter_derivative_files_of_chosen_target_suffix = (
                     df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
                     & df_next[BidsDataFrameKW.FILENAME].str.contains('|'.join(self.target_suffix))
@@ -268,6 +268,33 @@ class BidsDataframe:
             # Combine them together.
             df_next = df_next[filter_subject_files_of_chosen_contrasts_and_extensions
                               | filter_derivative_files_of_chosen_target_suffix]
+
+            # Exclude subject with missing sessions or missing modalities
+            exclude_subject_list = []
+            for subject in df_next[BidsDataFrameKW.SUBJECT].dropna().unique().tolist():
+                df_subject = df_next[df_next[BidsDataFrameKW.SUBJECT] == subject]
+                sessions = df_subject[BidsDataFrameKW.SESSION].unique().tolist()
+                if not set(list(map(int, self.target_sessions))).issubset(set(list(map(int, sessions)))):
+                    exclude_subject_list.append(subject)
+                else:
+                    for session in sessions:
+                        df_session = df_subject[df_subject[BidsDataFrameKW.SESSION] == session]
+                        suffixes = df_session[BidsDataFrameKW.SUFFIX].unique().tolist()
+                        if not set(self.contrast_lst).issubset(set(suffixes)):
+                            exclude_subject_list.append(subject)
+                            break
+
+            if exclude_subject_list:
+                filter_subject_exclude_subject_list = (
+                    ~df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
+                    & ~df_next[BidsDataFrameKW.SUBJECT].str.contains('|'.join(exclude_subject_list), na=False)
+                )
+                filter_derivative_exclude_subject_list = (
+                    df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
+                    & ~df_next[BidsDataFrameKW.FILENAME].str.contains('|'.join(exclude_subject_list))
+                )
+                df_next = df_next[filter_derivative_exclude_subject_list
+                                  | filter_subject_exclude_subject_list]
 
             if df_next[~df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)].empty:
                 # Warning if no subject files are found in path_data

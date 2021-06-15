@@ -10,7 +10,7 @@ from testing.unit_tests.t_utils import path_temp, download_data_multi_sessions_c
 from testing.common_testing_util import remove_tmp_dir, path_data_multi_sessions_contrasts_source, path_data_multi_sessions_contrasts_tmp
 from pytest_cases import parametrize_with_cases
 import shutil
-from testing.unit_tests.test_loader_multi_sessions_cases import case_data_target_specific_session_contrast, case_data_multi_session_contrast
+from testing.unit_tests.test_loader_multi_sessions_cases import *
 from loguru import logger
 
 
@@ -30,17 +30,7 @@ def test_get_unique_session_list():
     assert np.array_equal(get_unique_session_list(df), ["aaa", "bbb"])
 
 
-@parametrize_with_cases("loader_parameters, target_csv", cases=[
-    case_data_target_specific_session_contrast,
-    case_data_multi_session_contrast
-])
-def test_bids_multi_sessions_contrasts_dataframe_anat(download_data_multi_sessions_contrasts_test_files,
-                                                      loader_parameters,
-                                                      target_csv):
-    """
-    Test for when multi-sessions and multi-contrasts, how the filtering and ground truth identification process works.
-    """
-
+def bids_multi_sessions_contrasts_dataframe_anat_helper(loader_parameters, target_csv):
     bids_df = ivadomed.loader.tools.bids_dataframe.BidsDataframe(loader_parameters,
                                                                  str(path_data_multi_sessions_contrasts_tmp),
                                                                  derivatives=True)
@@ -52,6 +42,54 @@ def test_bids_multi_sessions_contrasts_dataframe_anat(download_data_multi_sessio
     diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
     assert diff == {'added': [], 'removed': [], 'changed': [],
                     'columns_added': [], 'columns_removed': []}
+
+
+@parametrize_with_cases("loader_parameters, target_csv", cases=[
+    case_data_target_specific_session_contrast,
+    case_data_multi_session_contrast,
+    case_3
+])
+def test_bids_multi_sessions_contrasts_dataframe_anat(download_data_multi_sessions_contrasts_test_files,
+                                                      loader_parameters,
+                                                      target_csv):
+    """
+    Test for when multi-sessions and multi-contrasts, how the filtering and ground truth identification process works.
+    """
+    bids_multi_sessions_contrasts_dataframe_anat_helper(loader_parameters, target_csv)
+
+
+@parametrize_with_cases("loader_parameters, target_csv", cases=[
+    case_data_multi_session_contrast_missing_modality,
+])
+def test_bids_multi_sessions_contrasts_dataframe_anat_missing_modality(download_data_multi_sessions_contrasts_test_files,
+                                                                       loader_parameters,
+                                                                       target_csv):
+    """
+    Test for when multi-sessions and multi-contrasts, how the filtering and ground truth identification process works.
+    """
+    file_1 = os.path.join(path_data_multi_sessions_contrasts_tmp, "sub-ms01", "ses-01", "anat", "sub-ms01_ses-01_T1w.nii")
+    file_2 = os.path.join(path_data_multi_sessions_contrasts_tmp, "sub-ms02", "ses-01", "anat", "sub-ms02_ses-01_T2w.nii")
+
+    os.remove(file_1)
+    os.remove(file_2)
+
+    bids_multi_sessions_contrasts_dataframe_anat_helper(loader_parameters, target_csv)
+
+
+@parametrize_with_cases("loader_parameters, target_csv", cases=[
+    case_data_multi_session_contrast_missing_session,
+])
+def test_bids_multi_sessions_contrasts_dataframe_anat_missing_session(download_data_multi_sessions_contrasts_test_files,
+                                                                      loader_parameters,
+                                                                      target_csv):
+    """
+    Test for when multi-sessions and multi-contrasts, how the filtering and ground truth identification process works.
+    """
+    dir = os.path.join(path_data_multi_sessions_contrasts_tmp, "sub-ms01", "ses-01")
+
+    shutil.rmtree(dir)
+
+    bids_multi_sessions_contrasts_dataframe_anat_helper(loader_parameters, target_csv)
 
 
 def test_shutil():
