@@ -8,9 +8,10 @@ class LoaderParamsKW:
     TARGET_SUFFIX = "target_suffix"
     ROI_PARAMS = "roi_params"
     CONTRAST_PARAMS = "contrast_params"
-    MULTICHANNEL = "multichannel" # boolean key that is used to change the configuration file ever slightly.
+    MULTICHANNEL = "multichannel"  # boolean key that is used to change the configuration file ever slightly.
     EXTENSIONS = "extensions"
-    TARGET_GROUNDTRUTH = "target_groundtruth"
+    TARGET_GROUND_TRUTH = "target_ground_truth"
+    TARGET_SESSIONS = "target_sessions"  # the sessions to focus the analyses on
 
 
 @dataclass
@@ -49,7 +50,7 @@ class BidsDataFrameKW:
 
     SUBJECT = "subject"  # i.e.  unf01
     SUFFIX = "suffix"   # T1w
-
+    SESSION = "session"  # session field (single int) in Bids DataFrame
     EXTENSION = "extension"   # .nii.gz
     DERIVATIVES = "derivatives"
 

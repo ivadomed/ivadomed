@@ -73,9 +73,6 @@ class BidsDataframe:
         if any(isinstance(t, list) for t in self.target_suffix):
             self.target_suffix = list(itertools.chain.from_iterable(self.target_suffix))
 
-        # The single source of ground truth, a string to look for in file name
-        self.target_groundtruth: str = loader_params[LoaderParamsKW.TARGET_GROUNDTRUTH]
-
         self.roi_suffix: str = loader_params[LoaderParamsKW.ROI_PARAMS][ROIParamsKW.SUFFIX]
 
         # If `roi_suffix` is not None, add to target_suffix
@@ -97,6 +94,28 @@ class BidsDataframe:
         # Multichannel, if key not present, it is assumed to be false.
         self.multichannel: bool = bool(loader_params.get(LoaderParamsKW.MULTICHANNEL))
 
+        # The single source of ground truth, a string to look for in file name
+        self.target_ground_truth: str = loader_params.get(LoaderParamsKW.TARGET_GROUND_TRUTH)
+        if not self.target_ground_truth:
+            raise ValueError(f'Loader parameters "{LoaderParamsKW.TARGET_GROUND_TRUTH}" is '
+                             f"missing and the pattern string must be EXPLICITLY specified to identify the ground"
+                             f"truth.")
+
+
+
+        self.target_sessions: List[int] = loader_params.get(LoaderParamsKW.TARGET_SESSIONS)
+
+        if not self.target_sessions:
+            self.target_sessions = []
+            raise ValueError(f"Loader parameters {LoaderParamsKW.TARGET_SESSIONS} is missing. At least one session"
+                             f'needs to be specified: e.g. {LoaderParamsKW.TARGET_SESSIONS}: [1, 2]')
+        else:
+            # Convert them all to string
+            self.target_sessions = list(map(str, self.target_sessions))
+
+
+
+
         # Create dataframe, which contain much information like file path, base file, extensions. etc
         self.df: pd.DataFrame = pd.DataFrame()
         self.create_bids_dataframe()
@@ -114,6 +133,70 @@ class BidsDataframe:
         # TODO: when reaching version 0.14.0, remove the following line
         pybids.config.set_option('extension_initial_dot', True)
 
+        # First pass over the data to create the self.df
+        # Filter for those files that has
+        # 1) subject files of chosen contrasts and extensions,
+        # 2) derivative files of chosen target_suffix from loader parameters
+        self.df = self.first_pass_data_frame_creation()
+
+        if self.df.empty:
+            # Raise error and exit if no subject files are found in any path data
+            raise RuntimeError("No subject files found. Check selection of parameters in config.json"
+                               " and datasets compliance with BIDS specification.")
+
+        # Drop duplicated rows based on all columns except 'path'
+        # Keep first occurrence
+        columns = self.df.columns.to_list()
+        columns.remove('path')
+        self.df = self.df[~(self.df.astype(str).duplicated(subset=columns, keep='first'))]
+
+        # If indexing of derivatives is true, do a second pass to filter for ONLY data that has self target_ground truth
+        if self.derivatives:
+            self.df = self.second_pass_dataframe_creation()
+
+        # Reset index
+        self.df.reset_index(drop=True, inplace=True)
+
+        # Drop columns with all null values
+        self.df.dropna(axis=1, inplace=True, how='all')
+
+    def second_pass_dataframe_creation(self) -> pd.DataFrame:
+        """
+        Further filtering the dataframes based on those that has the appropriate target ground truth derivatives.
+
+        """
+        # Get:
+        # list of subjects that has derivatives
+        # list of ALL the available derivatives (all subjects, flat list)
+        has_deriv, deriv = self.get_subjects_with_derivatives()
+
+        second_pass_dataframe: pd.DataFrame = pd.DataFrame()
+
+        # Filter dataframe to keep
+        if has_deriv:
+            second_pass_dataframe = self.df[
+                # 1) subjects files and
+                self.df[BidsDataFrameKW.FILENAME].str.contains('|'.join(has_deriv))
+                # 2) all known derivatives only
+                | self.df[BidsDataFrameKW.FILENAME].str.contains('|'.join(deriv))
+                ]
+        else:
+            # Raise error and exit if no derivatives are found for any subject files
+            raise RuntimeError("Derivatives not found.")
+
+        return second_pass_dataframe
+
+    def first_pass_data_frame_creation(self) -> pd.DataFrame:
+        """
+        First pass through the data and create a BIDS DataFrame.
+
+        Returns: the first past BIDS Dataframe.
+        """
+
+        # Avoid using side effect to update the self.df and force explicit assignment.
+        first_pass_data_frame: pd.DataFrame = pd.DataFrame()
+
+        # For path data objects that is included:
         for path_data in self.paths_data:
             path_data = os.path.join(path_data, '')
 
@@ -158,17 +241,31 @@ class BidsDataframe:
             # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
             df_next = df_next[~df_next[BidsDataFrameKW.FILENAME].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
 
-            # Update dataframe with 1) subject files of chosen contrasts and extensions,
-            # and with 2) derivative files of chosen target_suffix from loader parameters
-            filter_subject_files_of_chosen_contrasts_and_extensions = (
-                    ~df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
-                    & df_next[BidsDataFrameKW.SUFFIX].str.contains('|'.join(self.contrast_lst))
-                    & df_next[BidsDataFrameKW.EXTENSION].str.contains('|'.join(self.extensions))
-            )
+            # Update dataframe with
+            # 1) subject files of chosen contrasts and extensions (single session version, no session filtering)
+            if not self.target_sessions:
+                filter_subject_files_of_chosen_contrasts_and_extensions = (
+                        ~df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
+                        & df_next[BidsDataFrameKW.SUFFIX].str.contains('|'.join(self.contrast_lst))
+                        & df_next[BidsDataFrameKW.EXTENSION].str.contains('|'.join(self.extensions))
+                )
+            # 1) subject files of chosen contrasts and extensions (multi-session version, filter for data that are only
+            # within the relevant session)
+            else:
+                filter_subject_files_of_chosen_contrasts_and_extensions = (
+                        ~df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
+                        & df_next[BidsDataFrameKW.SUFFIX].str.contains('|'.join(self.contrast_lst))
+                        & df_next[BidsDataFrameKW.SESSION].str.contains('|'.join(self.target_sessions))
+                        & df_next[BidsDataFrameKW.EXTENSION].str.contains('|'.join(self.extensions))
+                )
+
+        # and with 2) derivative files of chosen target_suffix from loader parameters
             filter_derivative_files_of_chosen_target_suffix = (
                     df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
                     & df_next[BidsDataFrameKW.FILENAME].str.contains('|'.join(self.target_suffix))
             )
+
+            # Combine them together.
             df_next = df_next[filter_subject_files_of_chosen_contrasts_and_extensions
                               | filter_derivative_files_of_chosen_target_suffix]
 
@@ -183,40 +280,9 @@ class BidsDataframe:
                 # TODO: check if other files are needed for EEG and DWI
 
                 # Merge dataframes with outer join: i.e. avoid duplicates.
-                self.df = pd.concat([self.df, df_next], join='outer', ignore_index=True)
+                first_pass_data_frame = pd.concat([first_pass_data_frame, df_next], join='outer', ignore_index=True)
 
-        if self.df.empty:
-            # Raise error and exit if no subject files are found in any path data
-            raise RuntimeError("No subject files found. Check selection of parameters in config.json"
-                               " and datasets compliance with BIDS specification.")
-
-        # Drop duplicated rows based on all columns except 'path'
-        # Keep first occurrence
-        columns = self.df.columns.to_list()
-        columns.remove('path')
-        self.df = self.df[~(self.df.astype(str).duplicated(subset=columns, keep='first'))]
-
-        # If indexing of derivatives is true
-        if self.derivatives:
-
-            # Get
-            # list of subjects that has derivatives
-            # list of ALL the available derivatives (all subjects, flat list)
-            has_deriv, deriv = self.get_subjects_with_derivatives()
-
-            # Filter dataframe to keep 1) subjects files and 2) all known derivatives only
-            if has_deriv:
-                self.df = self.df[self.df[BidsDataFrameKW.FILENAME].str.contains('|'.join(has_deriv))
-                                  | self.df[BidsDataFrameKW.FILENAME].str.contains('|'.join(deriv))]
-            else:
-                # Raise error and exit if no derivatives are found for any subject files
-                raise RuntimeError("Derivatives not found.")
-
-        # Reset index
-        self.df.reset_index(drop=True, inplace=True)
-
-        # Drop columns with all null values
-        self.df.dropna(axis=1, inplace=True, how='all')
+        return first_pass_data_frame
 
     def add_tsv_metadata(self, df, path_data, layout):
 
@@ -307,7 +373,7 @@ class BidsDataframe:
         """
         if len(list_subject_available_derivatives) > 1:
             logger.warning(f"When evaluating {subject_filename},"
-                           f"more than one ground truth matching '{self.target_groundtruth}' found. "
+                           f"more than one ground truth matching '{self.target_ground_truth}' found. "
                            f"Expected ONE ground truth per subject ACROSS sessions/modalities:\n"
                            f"{pformat(list_subject_available_derivatives)}")
             logger.critical(f"First one is chosen: {list_subject_available_derivatives[0]}")
@@ -334,7 +400,7 @@ class BidsDataframe:
             ))
             if len(list_roi_derivatives) > 1:
                 logger.warning(f"When evaluating {subject_filename},"
-                                f"more than one ROI ground truth matching {self.target_groundtruth} found. "
+                                f"more than one ROI ground truth matching {self.target_ground_truth} found. "
                                 f"Expect ONE ground truth per subject ACROSS sessions/modalities.\n"
                                 f"{pformat(list_roi_derivatives)}")
                 logger.critical(f"First one is chosen: {list_roi_derivatives[0]}")
@@ -390,7 +456,7 @@ class BidsDataframe:
             lambda a_file_name:
             # as long as 1) the subject_id and 2) the ground truth target string is in the file name,
             # we consider that a valid ground truth/derivatives
-            subject_id in a_file_name and self.target_groundtruth in a_file_name,
+            subject_id in a_file_name and self.target_ground_truth in a_file_name,
             # apply to the entire list of deriv_filenames
             deriv_filenames
         ))
