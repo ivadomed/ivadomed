@@ -9,18 +9,18 @@
         "safety_factor": [1.0, 1.0, 1.0]
     },
     "loader_parameters": {
-        "path_data": ["data_example_spinegeneric"],
+        "path_data": ["data_example_microscopy_sem"],
         "bids_config": "ivadomed/config/config_bids.json",
         "subject_selection": {"n": [], "metadata": [], "value": []},
-        "target_suffix": ["_seg-manual"],
-        "extensions": [],
+        "target_suffix": ["_seg-axon-manual", "_seg-myelin-manual"],
+        "extensions": [".png"],
         "roi_params": {
             "suffix": null,
             "slice_filter_roi": null
         },
         "contrast_params": {
-            "training_validation": ["T2w"],
-            "testing": ["T2w"],
+            "training_validation": ["SEM"],
+            "testing": ["SEM"],
             "balance": {}
         },
         "slice_filter_params": {
@@ -34,11 +34,11 @@
     "split_dataset": {
         "fname_split": null,
         "random_seed": 6,
-        "split_method" : "participant_id",
+        "split_method" : "sample_id",
         "data_testing": {"data_type": null, "data_value":[]},
         "balance": null,
-        "train_fraction": 0.1,
-        "test_fraction": 0.8
+        "train_fraction": 0.2,
+        "test_fraction": 0.2
     },
     "training_parameters": {
         "batch_size": 18,
@@ -46,7 +46,7 @@
             "name": "DiceLoss"
         },
         "training_time": {
-            "num_epochs": 1,
+            "num_epochs": 5,
             "early_stopping_patience": 50,
             "early_stopping_epsilon": 0.001
         },
@@ -75,8 +75,8 @@
         "bn_momentum": 0.1,
         "final_activation": "sigmoid",
         "depth": 3,
-        "length_2D": [50, 50],
-        "stride_2D": [45, 45]
+        "length_2D": [],
+        "stride_2D": []
     },
     "FiLMedUnet": {
         "applied": false,
@@ -85,7 +85,8 @@
     },
     "transformation": {
       "CenterCrop": {
-            "size": [128, 128]},
+            "size": [256, 256]
+      },
       "NumpyToTensor": {},
       "NormalizeInstance": {"applied_to": ["im"]}
     }

@@ -29,6 +29,13 @@ __numpy_type_map = {
 TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 'reverse',
                     'translation', 'gaussian_noise']
 
+# Ordered list of supported file extensions
+# TODO: Implement support of the following OMETIFF formats (#739):
+# [".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf"]
+# They are included in the list to avoid a ".ome.tif" or ".ome.tiff" following the ".tif" or ".tiff" pipeline
+EXT_LST = [".nii", ".nii.gz", ".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf", ".tif",
+           ".tiff", ".png", ".jpg", ".jpeg"]
+
 
 def split_dataset(df, split_method, data_testing, random_seed, train_frac=0.8, test_frac=0.1):
     """Splits dataset into training, validation and testing sets by applying train, test and validation fractions
@@ -586,7 +593,7 @@ class BidsDataframe:
             self.target_suffix.append(self.roi_suffix)
 
         # extensions from loader parameters
-        self.extensions = loader_params['extensions']
+        self.extensions = loader_params['extensions'] if loader_params['extensions'] else [".nii", ".nii.gz"]
 
         # contrast_lst from loader parameters
         self.contrast_lst = [] if 'contrast_lst' not in loader_params['contrast_params'] \
@@ -619,7 +626,7 @@ class BidsDataframe:
             # Force index of subject subfolders containing CT-scan files under "anat" or "ct" folder based on extensions and modality suffix.
             # TODO: remove force indexing of microscopy files after BEP microscopy is merged in BIDS
             # TODO: remove force indexing of CT-scan files after BEP CT-scan is merged in BIDS
-            ext_microscopy = ('.png', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
+            ext_microscopy = ('.png', '.tif', '.tiff', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
             ext_ct = ('.nii.gz', '.nii')
             suffix_ct = ('ct', 'CT')
             force_index = []
@@ -654,18 +661,19 @@ class BidsDataframe:
             # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
             df_next = df_next[~df_next['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
 
-            # Update dataframe with subject files of chosen contrasts and extensions,
-            # and with derivative files of chosen target_suffix from loader parameters
+            # Update dataframe with subject files of chosen contrasts
+            # and with derivative files of chosen target_suffix
             df_next = df_next[(~df_next['path'].str.contains('derivatives')
-                               & df_next['suffix'].str.contains('|'.join(self.contrast_lst))
-                               & df_next['extension'].str.contains('|'.join(self.extensions)))
+                               & df_next['suffix'].str.contains('|'.join(self.contrast_lst)))
                                | (df_next['path'].str.contains('derivatives')
                                & df_next['filename'].str.contains('|'.join(self.target_suffix)))]
 
-            if df_next[~df_next['path'].str.contains('derivatives')].empty:
-                # Warning if no subject files are found in path_data
-                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(path_data))
+            # Update dataframe with files of chosen extensions
+            df_next = df_next[df_next['filename'].str.endswith(tuple(self.extensions))]
 
+            # Warning if no subject files are found in path_data
+            if df_next[~df_next['path'].str.contains('derivatives')].empty:
+                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(path_data))
             else:
                 # Add tsv files metadata to dataframe
                 df_next = self.add_tsv_metadata(df_next, path_data, layout)
@@ -835,3 +843,37 @@ class BidsDataframe:
             f = open(deriv_desc_file, 'w')
             f.write('{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
             f.close()
+
+
+def get_file_extension(filename):
+    """ Get file extension if it is supported
+    Args:
+        filename (str): Path of the file.
+
+    Returns:
+        str: File extension
+    """
+    # Find the first match from the list of supported file extensions
+    extension = next((ext for ext in EXT_LST if filename.lower().endswith(ext)), None)
+    return extension
+
+
+def update_filename_to_nifti(filename):
+    """ 
+    Update filename extension to 'nii.gz' if not a NifTI file.
+    
+    This function is used to help make non-NifTI files (e.g. PNG/TIF/JPG)
+    compatible with NifTI-only pipelines. The expectation is that a NifTI
+    version of the file has been created alongside the original file, which
+    allows the extension to be cleanly swapped for a `.nii.gz` extension.
+
+    Args:
+        filename (str): Path of original file.
+
+    Returns:
+        str: Path of the corresponding NifTI file.
+    """
+    extension = get_file_extension(filename)
+    if not "nii" in extension:
+        filename = filename.replace(extension, ".nii.gz")
+    return filename

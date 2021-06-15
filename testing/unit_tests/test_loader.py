@@ -158,7 +158,7 @@ def test_dropout_input(seg_pair):
 def test_load_dataset_2d_png(download_data_testing_test_files,
                              loader_parameters, model_parameters, transform_parameters):
     """
-    Test to make sure load_dataset runs with 2D PNG data.
+    Test to make sure load_dataset runs with 2D PNG file and write corresponding NifTI file.
     """
     loader_parameters.update({"model_params": model_parameters})
     bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
@@ -167,6 +167,9 @@ def test_load_dataset_2d_png(download_data_testing_test_files,
                                   **{**loader_parameters, **{'data_list': data_lst,
                                                              'transforms_params': transform_parameters,
                                                              'dataset_type': 'training'}})
+    fname_png = bids_df.df[bids_df.df['filename'] == data_lst[0]]['path'].values[0]
+    fname_nii = imed_loader_utils.update_filename_to_nifti(fname_png)
+    assert os.path.exists(fname_nii) == 1
     assert ds[0]['input'].shape == (1, 756, 764)
     assert ds[0]['gt'].shape == (1, 756, 764)
 
