@@ -323,7 +323,7 @@ class BidsDataframe:
             list_subject_available_derivatives:
             subject_filename:
         """
-        
+
         # If one of the ground truth has ROI_suffix in it, we prefer that one.
         if self.roi_suffix in ('|'.join(list_subject_available_derivatives)):
 
@@ -333,7 +333,7 @@ class BidsDataframe:
                 list_subject_available_derivatives
             ))
             if len(list_roi_derivatives) > 1:
-                logger.warning((f"When evaluating {subject_filename}, "
+                logger.warning(f"When evaluating {subject_filename},"
                                 f"more than one ROI ground truth matching {self.target_groundtruth} found. "
                                 f"Expect ONE ground truth per subject ACROSS sessions/modalities.\n"
                                 f"{pformat(list_roi_derivatives)}")
