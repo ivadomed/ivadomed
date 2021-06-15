@@ -9,7 +9,7 @@ from loguru import logger
 from typing import List
 from ivadomed.keywords import LoaderParamsKW, ROIParamsKW, ContrastParamsKW, BidsDataFrameKW
 from pathlib import Path
-
+from pprint import pformat
 
 def write_derivatives_dataset_description(path_data: str):
     """Writes default dataset_description.json file if not found in path_data/derivatives folder
@@ -29,7 +29,8 @@ def write_derivatives_dataset_description(path_data: str):
     # need to write default dataset_description.json file if not found
     if not os.path.isfile(deriv_desc_file) and not os.path.isfile(label_desc_file):
         f = open(deriv_desc_file, 'w')
-        f.write('{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
+        f.write(
+            '{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
         f.close()
 
 
@@ -71,6 +72,9 @@ class BidsDataframe:
         # If `target_suffix` is a list of lists convert to list
         if any(isinstance(t, list) for t in self.target_suffix):
             self.target_suffix = list(itertools.chain.from_iterable(self.target_suffix))
+
+        # The single source of ground truth, a string to look for in file name
+        self.target_groundtruth: str = loader_params[LoaderParamsKW.TARGET_GROUNDTRUTH]
 
         self.roi_suffix: str = loader_params[LoaderParamsKW.ROI_PARAMS][ROIParamsKW.SUFFIX]
 
@@ -237,7 +241,7 @@ class BidsDataframe:
         if os.path.exists(fname_samples):
             df_samples = pd.read_csv(fname_samples, sep='\t')
             df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None),
-                               how='left')
+                          how='left')
 
         # Add metadata from all _sessions.tsv files, if present
         # Uses pybids function
@@ -267,67 +271,132 @@ class BidsDataframe:
         Returns:
             list, list: subject filenames having derivatives, available derivatives filenames.
         """
-        subject_fnames: list = self.get_subject_fnames()  # all known subjects' fnames
-        deriv_fnames: list = self.get_deriv_fnames()  # all known derivatives
-        has_deriv = []  # subject filenames having derivatives
-        deriv = []  # the available derivatives filenames from ALL subjects... not coindexed with has_deriv???
+        subject_filenames: list = self.get_subject_fnames()  # all known subjects' file names
+        deriv_filenames: list = self.get_deriv_fnames()  # all known derivatives across all subjects
 
-        for subject_fname in subject_fnames:
+        has_deriv = []  # subject filenames having derivatives
+        deriv = []  # the available derivatives filenames from ALL subjects... not co-indexed with has_deriv???
+
+        for subject_filename in subject_filenames:
             # For the current subject, get its list of subject specific available derivatives
-            list_subject_available_derivatives: list = self.get_derivatives(subject_fname, deriv_fnames)
+            list_subject_available_derivatives: list = self.get_derivatives(subject_filename, deriv_filenames)
 
             # Early stop if no derivatives found. Go to next subject.
             if not list_subject_available_derivatives:
-                logger.warning(f"Missing derivatives for {subject_fname}. Skipping.")
+                logger.warning(f"Missing derivatives for {subject_filename}. Skipping.")
                 continue
 
             # Handle subject specific roi_suffix related filtering?
             if self.roi_suffix is not None:
-                if self.roi_suffix in ('|'.join(list_subject_available_derivatives)):
-                    has_deriv.append(subject_fname)
-                    deriv.extend(list_subject_available_derivatives)
-                else:
-                    logger.warning(f"Missing roi_suffix {self.roi_suffix} for {subject_fname}. Skipping.")
+                self.include_first_roi_specific_derivative(deriv, has_deriv, list_subject_available_derivatives,
+                                                           subject_filename)
             else:
-                has_deriv.append(subject_fname)
-                deriv.extend(list_subject_available_derivatives)
-
-            # Warn about when there is a missing derivative
-            for target in self.target_suffix:
-                if target not in str(list_subject_available_derivatives) and target != self.roi_suffix:
-                    logger.warning(f"Missing target_suffix {target} for {subject_fname}")
+                self.include_first_subject_specific_derivative(deriv, has_deriv, list_subject_available_derivatives,
+                                                               subject_filename)
 
         return has_deriv, deriv
 
+    def include_first_subject_specific_derivative(self, deriv: list, has_deriv: list, list_subject_available_derivatives: list,
+                                                  subject_filename: str):
+        """ Include the first derivative/ground truth by including it in the deriv and has_deriv list.
+        Args:
+            deriv:
+            has_deriv:
+            list_subject_available_derivatives:
+            subject_filename:
+        """
+        if len(list_subject_available_derivatives) > 1:
+            logger.warning(f"When evaluating {subject_filename},"
+                           f"more than one ground truth matching '{self.target_groundtruth}' found. "
+                           f"Expected ONE ground truth per subject ACROSS sessions/modalities:\n"
+                           f"{pformat(list_subject_available_derivatives)}")
+            logger.critical(f"First one is chosen: {list_subject_available_derivatives[0]}")
+        has_deriv.append(subject_filename)
+        deriv.extend(list_subject_available_derivatives[0])
+
+    def include_first_roi_specific_derivative(self, deriv: list, has_deriv: list, list_subject_available_derivatives: list,
+                                              subject_filename: str):
+        """ Include the first derivative/ground truth by including it in the deriv and has_deriv list.
+        Args:
+            deriv:
+            has_deriv:
+            list_subject_available_derivatives:
+            subject_filename:
+        """
+        
+        # If one of the ground truth has ROI_suffix in it, we prefer that one.
+        if self.roi_suffix in ('|'.join(list_subject_available_derivatives)):
+
+            # This list is guaranteed to have more than one element because the above if condition.
+            list_roi_derivatives = list(filter(
+                lambda a_derivative_filename: self.roi_suffix in a_derivative_filename,
+                list_subject_available_derivatives
+            ))
+            if len(list_roi_derivatives) > 1:
+                logger.warning((f"When evaluating {subject_filename}, "
+                                f"more than one ROI ground truth matching {self.target_groundtruth} found. "
+                                f"Expect ONE ground truth per subject ACROSS sessions/modalities.\n"
+                                f"{pformat(list_roi_derivatives)}")
+                logger.critical(f"First one is chosen: {list_roi_derivatives[0]}")
+            has_deriv.append(subject_filename)
+            deriv.extend(list_roi_derivatives[0])
+        else:
+            logger.warning(f"Missing roi_suffix {self.roi_suffix} for {subject_filename}. Skipping.")
+
     def get_subject_fnames(self) -> list:
-        """Get the list of subject filenames in dataframe.
+        """Get the list of BIDS validated subject filenames in dataframe.
 
         Returns:
             list: subject filenames.
         """
         return self.df[~self.df['path'].str.contains('derivatives')]['filename'].to_list()
 
+    def get_all_subject_ids_with_derivatives(self) -> list:
+        """Get the list of subject filenames in dataframe regardless of modalities.
+
+        Returns:
+            list: subject IDs
+        """
+        subject_field_from_every_derivative_files: list = self.df[~self.df['path'].str.contains('derivatives')][
+            'subject'].to_list()
+        unique_subjects_with_derivatives: list = list(set(subject_field_from_every_derivative_files))
+        return unique_subjects_with_derivatives
+
     def get_deriv_fnames(self) -> list:
-        """Get the list of derivative filenames in dataframe.
+        """Get the list of BIDS validated derivative filenames in dataframe.
 
         Returns:
             list: derivative filenames.
         """
         return self.df[self.df['path'].str.contains('derivatives')]['filename'].tolist()
 
-    def get_derivatives(self, subject_fname: str, deriv_fnames: List[str]) -> List[str]:
+    def get_derivatives(self, subject_filename: str, deriv_filenames: List[str]) -> List[str]:
         """Given a subject fname full path information, return list of AVAILABLE derivative filenames for the subject
         Args:
-            subject_fname (str): Subject filename, NOT a full path.
-            deriv_fnames (list of str): List of derivative filenames.
+            subject_filename (str): Subject filename, NOT a full path. e.g. sub-ms01_ses-01_FLAIR
+            deriv_filenames (list of str): list of ALL BIDS validated files from the derivative folder
 
         Returns:
             list: a list of all the derivative filenames for that particular subject
+            There shouldn't be too many derivate per subject.
         """
-        prefix_fname = subject_fname.split('.')[0]
+
+        # e.g. sub-ms01
+        subject_id = subject_filename.split('_')[0]
+
         # Obtain the list of files that are directly matching the subject fname.
         # Could be empty.
-        list_derived_matching_subject_fname = list(filter(lambda a_file_name: prefix_fname in a_file_name, deriv_fnames))
+        list_derived_matching_subject_fname = list(filter(
+            lambda a_file_name:
+            # as long as 1) the subject_id and 2) the ground truth target string is in the file name,
+            # we consider that a valid ground truth/derivatives
+            subject_id in a_file_name and self.target_groundtruth in a_file_name,
+            # apply to the entire list of deriv_filenames
+            deriv_filenames
+        ))
+
+        # Sort in place for alphabetical order output.
+        list_derived_matching_subject_fname.sort()
 
         # If multichannel is not used, just do the simple filtering for that particular subject.
         if not self.multichannel:
@@ -335,70 +404,8 @@ class BidsDataframe:
 
         # If no derivative found, return empty list.
         if not list_derived_matching_subject_fname:
+            logger.warning("No derivatives found for the ")
             return list_derived_matching_subject_fname
-
-        # First check - look for ground truth of other contrasts
-        for contrast in self.contrast_lst:
-            prefix_fname = subject_fname.split('_')[0] + "_" + contrast
-            list_derived_matching_subject_fname = list(filter(lambda a_file_name: prefix_fname in a_file_name, deriv_fnames))
-            if list_derived_matching_subject_fname:
-                break
-
-        # Return if found.
-        if list_derived_matching_subject_fname:
-            return list_derived_matching_subject_fname
-
-        # Early return if no session information found in file name.
-        if "_ses-" not in subject_fname:
-            return list_derived_matching_subject_fname
-
-        # This point onward, the file is GUARNTEED to have "_ses-" in the file name.
-        # Get Subject name?
-        subject = subject_fname.split('_')[0]
-
-        # Get Session ID
-        sess_id = subject_fname.split('_')[1]
-
-        # Get the last bit BEFORE the extension?
-        # e.g. sub-unf01_T1w_lesion-manual.nii.gz
-        # would return lesion-manual
-        # e.g. sub-unf01_T1w_ses-01.nii.gz
-        # would return ses-01
-        # sub-X_ses-1_acq-Y_T1w.nii.gz
-        # sub-X_ses-1_acq-Z_T1w.nii.gz
-        contrast_id = subject_fname.split('_')[-1].split(".")[0]
-
-        all_subject_deriv = [d for d in deriv_fnames if subject in d]
-
-        # Second check - in case of ses-* file structure, check for the derivatives in the sessions folder
-        session_list: np.ndarray = np.unique([d.split("_")[1] for d in all_subject_deriv])
-
-        # Session list is reordered to first check for the same contrast-type in the other sessions
-        if len(session_list) > 1:
-            re_ordered_session_lst: list = [sess_id] + session_list.remove(sess_id)
-        else:
-            re_ordered_session_lst: list = session_list
-
-        # For Each session in the re-ordered session list.
-        for session in re_ordered_session_lst:
-            # Contrast list is reordered to first check for the same contrast-type in the other sessions
-            if len(self.contrast_lst) > 1:
-                re_ordered_contrast_lst = [contrast_id] + self.contrast_lst.remove(contrast_id)
-            else:
-                re_ordered_contrast_lst = self.contrast_lst
-            for contrast in re_ordered_contrast_lst:
-                new_prefix_fname = subject_fname.split('.')[0].split('_')[0] + \
-                                   "_" + session + "_" + contrast
-                list_derived_matching_subject_fname = [d for d in deriv_fnames if new_prefix_fname in d]
-                if list_derived_matching_subject_fname:
-                    logger.info(
-                        "Multichannel training: No derivative found for {} "
-                        "- Assigning derivatives from {}".format(
-                            subject_fname,
-                            np.unique(["_".join([x.split("_")[0], x.split("_")[1], contrast])
-                                       for x in list_derived_matching_subject_fname])[0])
-                    )
-                    break
 
         return list_derived_matching_subject_fname
 

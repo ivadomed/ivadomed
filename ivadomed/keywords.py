@@ -10,6 +10,7 @@ class LoaderParamsKW:
     CONTRAST_PARAMS = "contrast_params"
     MULTICHANNEL = "multichannel" # boolean key that is used to change the configuration file ever slightly.
     EXTENSIONS = "extensions"
+    TARGET_GROUNDTRUTH = "target_groundtruth"
 
 
 @dataclass

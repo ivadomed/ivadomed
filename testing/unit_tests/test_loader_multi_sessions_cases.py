@@ -4,6 +4,7 @@ from ivadomed.keywords import LoaderParamsKW, ContrastParamsKW, ROIParamsKW
 
 def case_data_multi_session_contrast():
     loader_parameters = {
+        LoaderParamsKW.TARGET_GROUNDTRUTH: "_lesion-manual-rater1",
         LoaderParamsKW.PATH_DATA: [path_data_multi_sessions_contrasts_tmp],
         LoaderParamsKW.TARGET_SUFFIX: ["_lesion-manual-rater1"],
         LoaderParamsKW.EXTENSIONS: [".nii", ".nii.gz"],
