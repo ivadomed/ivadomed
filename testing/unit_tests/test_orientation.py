@@ -29,6 +29,7 @@ def setup_function():
 @pytest.mark.parametrize('loader_parameters', [{
     "path_data": [__data_testing_dir__],
     "target_suffix": ["_seg-manual"],
+    "target_ground_truth": "_seg-manual",
     "extensions": [".nii.gz"],
     "roi_params": {"suffix": None, "slice_filter_roi": None},
     "contrast_params": {"contrast_lst": ['T1w'],  "balance": {}}

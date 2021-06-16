@@ -64,6 +64,7 @@ def test_inference(download_data_testing_test_files, transforms_dict, test_lst, 
         "contrast_params": {"contrast_lst": ['T2w'], "balance": {}},
         "path_data": [__data_testing_dir__],
         "target_suffix": target_lst,
+        "target_ground_truth": target_lst[0],
         "extensions": [".nii.gz"],
         "roi_params": roi_params,
         "slice_filter_params": {
