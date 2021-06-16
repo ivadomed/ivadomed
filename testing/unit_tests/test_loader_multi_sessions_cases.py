@@ -83,5 +83,5 @@ def case_data_target_single_subject_with_session():
         }
     }
 
-    return loader_parameters, "df_ref_3.csv"
+    return loader_parameters, "df_ref_single_session.csv"
 
