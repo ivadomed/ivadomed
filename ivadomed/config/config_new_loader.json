@@ -13,6 +13,7 @@
         "bids_config": "ivadomed/config/config_bids.json",
         "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": ["_seg-manual"],
+        "target_ground_truth": "_seg-manual",
         "extensions": [],
         "roi_params": {
             "suffix": null,

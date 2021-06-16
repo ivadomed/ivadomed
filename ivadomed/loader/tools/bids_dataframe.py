@@ -101,14 +101,13 @@ class BidsDataframe:
                              f"missing and the pattern string must be EXPLICITLY specified to identify the ground"
                              f"truth.")
 
-
-
         self.target_sessions: List[int] = loader_params.get(LoaderParamsKW.TARGET_SESSIONS)
 
         if not self.target_sessions:
             self.target_sessions = []
-            raise ValueError(f"Loader parameters {LoaderParamsKW.TARGET_SESSIONS} is missing. At least one session"
-                             f'needs to be specified: e.g. {LoaderParamsKW.TARGET_SESSIONS}: [1, 2]')
+            logger.warning(f"Loader parameters {LoaderParamsKW.TARGET_SESSIONS} is missing. Presuming  single session "
+                           f"study without session parameters. Multisession analyses needs to be specified: e.g. "
+                           f"{LoaderParamsKW.TARGET_SESSIONS}: [1, 2]")
         else:
             # Convert them all to string
             self.target_sessions = list(map(str, self.target_sessions))
@@ -154,6 +153,10 @@ class BidsDataframe:
         if self.derivatives:
             self.df = self.second_pass_dataframe_creation()
 
+            # If multiple target sessions are specified, we filter for subjects that 1) doesn't have those sessions.
+            if self.target_sessions:
+                self.df = self.check_multi_session_ground_truth_and_modalities(self.df)
+
         # Reset index
         self.df.reset_index(drop=True, inplace=True)
 
@@ -179,16 +182,21 @@ class BidsDataframe:
                 self.df[BidsDataFrameKW.FILENAME].str.contains('|'.join(has_deriv))
                 # 2) all known derivatives only
                 | self.df[BidsDataFrameKW.FILENAME].str.contains('|'.join(deriv))
-                ]
+            ]
         else:
             # Raise error and exit if no derivatives are found for any subject files
-            raise RuntimeError("Derivatives not found.")
+            raise RuntimeError("Not a single derivative was found.")
 
         return second_pass_dataframe
 
     def first_pass_data_frame_creation(self) -> pd.DataFrame:
         """
-        First pass through the data and create a BIDS DataFrame.
+        Conduct the first pass through the data and create a BIDS DataFrame.
+        1) Across all self.paths_data
+        2) Force index/microsopcy/CT scans
+        3) Non-Multisession Version: must have one of the many CONTRASTS, one of the many EXTENSIONS,
+        4) Multisession Version: must have one of the many CONTRASTS, one of the many SESSIONS, one of the many EXTENSIONS
+
 
         Returns: the first past BIDS Dataframe.
         """
@@ -261,43 +269,18 @@ class BidsDataframe:
 
             # and with 2) derivative files of chosen target_suffix from loader parameters
             filter_derivative_files_of_chosen_target_suffix = (
-                    df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
-                    & df_next[BidsDataFrameKW.FILENAME].str.contains('|'.join(self.target_suffix))
+                df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
+                & df_next[BidsDataFrameKW.FILENAME].str.contains('|'.join(self.target_suffix))
             )
 
             # Combine them together.
-            df_next = df_next[filter_subject_files_of_chosen_contrasts_and_extensions
-                              | filter_derivative_files_of_chosen_target_suffix]
+            df_next: pd.DataFrame = df_next[
+                filter_subject_files_of_chosen_contrasts_and_extensions
+                | filter_derivative_files_of_chosen_target_suffix
+            ]
 
-            # Exclude subject with missing sessions or missing modalities
-            exclude_subject_list = []
-            for subject in df_next[BidsDataFrameKW.SUBJECT].dropna().unique().tolist():
-                df_subject = df_next[df_next[BidsDataFrameKW.SUBJECT] == subject]
-                sessions = df_subject[BidsDataFrameKW.SESSION].unique().tolist()
-                if not set(list(map(int, self.target_sessions))).issubset(set(list(map(int, sessions)))):
-                    exclude_subject_list.append(subject)
-                else:
-                    for session in sessions:
-                        df_session = df_subject[df_subject[BidsDataFrameKW.SESSION] == session]
-                        suffixes = df_session[BidsDataFrameKW.SUFFIX].unique().tolist()
-                        if not set(self.contrast_lst).issubset(set(suffixes)):
-                            exclude_subject_list.append(subject)
-                            break
-
-            if exclude_subject_list:
-                filter_subject_exclude_subject_list = (
-                    ~df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
-                    & ~df_next[BidsDataFrameKW.SUBJECT].str.contains('|'.join(exclude_subject_list), na=False)
-                )
-                filter_derivative_exclude_subject_list = (
-                    df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
-                    & ~df_next[BidsDataFrameKW.FILENAME].str.contains('|'.join(exclude_subject_list))
-                )
-                df_next = df_next[filter_derivative_exclude_subject_list
-                                  | filter_subject_exclude_subject_list]
-
+            # Warning if no subject files are found in path_data
             if df_next[~df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)].empty:
-                # Warning if no subject files are found in path_data
                 logger.warning(f"No subject files were found in '{path_data}' dataset. Skipping dataset.")
 
             else:
@@ -310,6 +293,60 @@ class BidsDataframe:
                 first_pass_data_frame = pd.concat([first_pass_data_frame, df_next], join='outer', ignore_index=True)
 
         return first_pass_data_frame
+
+    def check_multi_session_ground_truth_and_modalities(self, df_next):
+        """
+        Go through the BIDSDataFrame, exclude subject missing sessions and mandatory modalities.
+        Args:
+            df_next:
+        """
+
+        # Exclude subject with missing sessions or missing modalities
+        list_excluded_subjects: list = []
+        list_unique_subjects: list = df_next[BidsDataFrameKW.SUBJECT].dropna().unique().tolist()
+
+        for subject in list_unique_subjects:
+
+            # Select all files with that subject
+            df_subject: pd.DataFrame = df_next[df_next[BidsDataFrameKW.SUBJECT] == subject]
+
+            # Select all subjects' unique sessions
+            current_subject_sessions: list = df_subject[BidsDataFrameKW.SESSION].unique().tolist()
+
+            # Target Session Set:
+            set_required_sessions: set = set(list(map(int, self.target_sessions)))
+            set_current_subject_sessions: set = set(list(map(int, current_subject_sessions)))
+
+            # When missing session set, exclude the subjects.
+            if not set_required_sessions.issubset(set_current_subject_sessions):
+                list_excluded_subjects.append(subject)
+                continue
+
+            # Otherwise, go through each of subject's session.
+            for session in current_subject_sessions:
+                # Retrieve all subject's information with matching session
+                df_session = df_subject[df_subject[BidsDataFrameKW.SESSION] == session]
+
+                set_current_subject_suffixes: set = set(df_session[BidsDataFrameKW.SUFFIX].unique().tolist())
+                set_current_contrast_list: set = set(self.contrast_lst)
+
+                # When missing a contrast, exclude the subject.
+                if not set_current_contrast_list.issubset(set_current_subject_suffixes):
+                    list_excluded_subjects.append(subject)
+                    break
+
+        if list_excluded_subjects:
+            filter_subject_exclude_subject_list = (
+                    ~df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
+                    & ~df_next[BidsDataFrameKW.SUBJECT].str.contains('|'.join(list_excluded_subjects), na=False)
+            )
+            filter_derivative_exclude_subject_list = (
+                    df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
+                    & ~df_next[BidsDataFrameKW.FILENAME].str.contains('|'.join(list_excluded_subjects))
+            )
+            df_next = df_next[filter_derivative_exclude_subject_list
+                              | filter_subject_exclude_subject_list]
+        return df_next
 
     def add_tsv_metadata(self, df, path_data, layout):
 
@@ -389,8 +426,8 @@ class BidsDataframe:
 
         return has_deriv, deriv
 
-    def include_first_subject_specific_derivative(self, deriv: list, has_deriv: list, list_subject_available_derivatives: list,
-                                                  subject_filename: str):
+    def include_first_subject_specific_derivative(self, deriv: list, has_deriv: list,
+                                                  list_subject_available_derivatives: list, subject_filename: str):
         """ Include the first derivative/ground truth by including it in the deriv and has_deriv list.
         Args:
             deriv:
@@ -407,8 +444,8 @@ class BidsDataframe:
         has_deriv.append(subject_filename)
         deriv.extend(list_subject_available_derivatives[0])
 
-    def include_first_roi_specific_derivative(self, deriv: list, has_deriv: list, list_subject_available_derivatives: list,
-                                              subject_filename: str):
+    def include_first_roi_specific_derivative(self, deriv: list, has_deriv: list,
+                                              list_subject_available_derivatives: list, subject_filename: str):
         """ Include the first derivative/ground truth by including it in the deriv and has_deriv list.
         Args:
             deriv:

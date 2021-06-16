@@ -23,6 +23,7 @@ from ivadomed import inference as imed_inference
 from ivadomed.loader import loader as imed_loader, film as imed_film
 from ivadomed.loader.tools import utils as imed_loader_utils
 from loguru import logger
+from ivadomed.keywords import LoaderParamsKW, ContrastParamsKW
 
 cudnn.benchmark = True
 
@@ -168,10 +169,18 @@ def set_model_params(context, loader_params):
 
     model_params['is_2d'] = False if "Modified3DUNet" in model_params['name'] else model_params['is_2d']
     # Get in_channel from contrast_lst
-    if loader_params["multichannel"]:
-        model_params["in_channel"] = len(loader_params["contrast_params"]["contrast_lst"])
+
+    # Multi Channels + Multi Sessions
+    if loader_params["multichannel"] and loader_params.get(LoaderParamsKW.TARGET_SESSIONS):
+        model_params["in_channel"] = len(loader_params.get(LoaderParamsKW.TARGET_SESSIONS)) * \
+        len(loader_params.get(LoaderParamsKW.CONTRAST_PARAMS).get(ContrastParamsKW.CONTRAST_LIST))
+    # Multi Channels Only + Single Session
+    elif loader_params["multichannel"] and not loader_params.get(LoaderParamsKW.TARGET_SESSIONS):
+        model_params["in_channel"] = len(loader_params.get(LoaderParamsKW.CONTRAST_PARAMS).get(ContrastParamsKW.CONTRAST_LIST))
+    # Single Channel + Single Session
     else:
         model_params["in_channel"] = 1
+
     # Get out_channel from target_suffix
     model_params["out_channel"] = len(loader_params["target_suffix"])
     # If multi-class output, then add background class

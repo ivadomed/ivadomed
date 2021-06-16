@@ -69,7 +69,7 @@ def case_data_target_specific_session_contrast():
 
     return loader_parameters, "df_ref_selective_session.csv"
 
-def case_3():
+def case_data_target_single_subject_with_session():
     loader_parameters = {
         LoaderParamsKW.MULTICHANNEL: "true",
         LoaderParamsKW.TARGET_SESSIONS: [5],

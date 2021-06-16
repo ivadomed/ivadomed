@@ -30,7 +30,9 @@ def test_get_unique_session_list():
     assert np.array_equal(get_unique_session_list(df), ["aaa", "bbb"])
 
 
-def bids_multi_sessions_contrasts_dataframe_anat_helper(loader_parameters, target_csv):
+def bids_multi_sessions_contrasts_dataframe_anat_helper(loader_parameters: dict, target_csv: str):
+    # Create the bids frame.
+    # Compare the output with the target_csv
     bids_df = ivadomed.loader.tools.bids_dataframe.BidsDataframe(loader_parameters,
                                                                  str(path_data_multi_sessions_contrasts_tmp),
                                                                  derivatives=True)
@@ -47,7 +49,7 @@ def bids_multi_sessions_contrasts_dataframe_anat_helper(loader_parameters, targe
 @parametrize_with_cases("loader_parameters, target_csv", cases=[
     case_data_target_specific_session_contrast,
     case_data_multi_session_contrast,
-    case_3
+    case_data_target_single_subject_with_session
 ])
 def test_bids_multi_sessions_contrasts_dataframe_anat(download_data_multi_sessions_contrasts_test_files,
                                                       loader_parameters,
@@ -83,7 +85,8 @@ def test_bids_multi_sessions_contrasts_dataframe_anat_missing_session(download_d
                                                                       loader_parameters,
                                                                       target_csv):
     """
-    Test for when multi-sessions and multi-contrasts, how the filtering and ground truth identification process works.
+    Test for when multi-sessions and multi-contrasts, how the filtering and ground truth identification process works
+    when we have a subject's entire session missing
     """
     dir = os.path.join(path_data_multi_sessions_contrasts_tmp, "sub-ms01", "ses-01")
 
@@ -91,14 +94,6 @@ def test_bids_multi_sessions_contrasts_dataframe_anat_missing_session(download_d
 
     bids_multi_sessions_contrasts_dataframe_anat_helper(loader_parameters, target_csv)
 
-
-def test_shutil():
-    wild_card = str(path_data_multi_sessions_contrasts_source / '.*')
-    shutil.copytree(path_data_multi_sessions_contrasts_source,
-                    path_data_multi_sessions_contrasts_tmp,
-                    ignore=shutil.ignore_patterns(wild_card))
-
-
 def teardown_function():
-    #remove_tmp_dir()
+    remove_tmp_dir()
     pass

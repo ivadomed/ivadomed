@@ -12,6 +12,7 @@
         "path_data": ["data_example_spinegeneric"],
         "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": ["_seg-manual"],
+        "target_ground_truth": "_seg-manual",
         "extensions": [".nii.gz"],
         "roi_params": {
             "suffix": null,

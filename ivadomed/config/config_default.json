@@ -13,6 +13,7 @@
         "path_data": ["path_data"],
         "subject_selection": {"n": [], "metadata": [], "value": []},
         "target_suffix": [],
+        "target_ground_truth": null,
         "extensions": [],
         "roi_params": {
             "suffix": null,

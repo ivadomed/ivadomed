@@ -7,6 +7,7 @@
     "loader_parameters": {
         "path_data": ["../duke/sct_testing/large/"],
         "target_suffix": ["_lesion-manual"],
+        "target_ground_truth": "_lesion-manual",
         "extensions": [".nii.gz"],
         "roi_params": {
             "suffix": "_seg-manual",
