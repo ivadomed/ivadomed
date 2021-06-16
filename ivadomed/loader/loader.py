@@ -36,7 +36,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         contrast_params (dict): Contains image contrasts related parameters.
         slice_filter_params (dict): Contains slice_filter parameters, see :doc:`configuration_file` for more details.
         slice_axis (string): Choice between "axial", "sagittal", "coronal" ; controls the axis used to extract the 2D
-            data from 3D nifti files. 2D png/tif/jpg files use default "axial.
+            data from 3D NifTI files. 2D PNG/TIF/JPG files use default "axial.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
         metadata_type (str): Choice between None, "mri_params", "contrasts".
@@ -175,8 +175,8 @@ class SegmentationPair(object):
         metadata (list): Metadata list with each item corresponding to an image (contrast) in input_filenames.
             For single channel, the list will contain metadata related to one image.
         cache (bool): If the data should be cached in memory or not.
-        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         prepro_transforms (dict): Output of get_preprocessing_transforms.
 
     Attributes:
@@ -184,12 +184,11 @@ class SegmentationPair(object):
         gt_filenames (list): List of ground truth filenames.
         metadata (dict): Dictionary containing metadata of input and gt.
         cache (bool): If the data should be cached in memory or not.
-        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         prepro_transforms (dict): Transforms to be applied before training.
-        input_handle (list): List of input nifty data as 'nibabel.nifti1.Nifti1Image' object or png/tif/jpg data as 'ndarray'
-        gt_handle (list): List of gt nifty data as 'nibabel.nifti1.Nifti1Image' object or png/tif/jpg data as 'ndarray'
-        extension (str): File extension of input files
+        input_handle (list): List of input NifTI data as 'nibabel.nifti1.Nifti1Image' object
+        gt_handle (list): List of gt (ground truth) NifTI data as 'nibabel.nifti1.Nifti1Image' object
     """
 
     def __init__(self, input_filenames, gt_filenames, metadata=None, slice_axis=2, cache=True, prepro_transforms=None,
@@ -204,19 +203,6 @@ class SegmentationPair(object):
         self.prepro_transforms = prepro_transforms
         # list of the images
         self.input_handle = []
-
-        # Ordered list of supported file extensions
-        # TODO: Implement support of the following OMETIFF formats (#739):
-        # [".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf"]
-        # They are included in the list to avoid a ".ome.tif" or ".ome.tiff" following the ".tif" or ".tiff" pipeline
-        ext_lst = [".nii", ".nii.gz", ".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf", ".tif",
-                   ".tiff", ".png", ".jpg", ".jpeg"]
-
-        # Returns the first match from the list
-        self.extension = next((ext for ext in ext_lst if input_filenames[0].lower().endswith(ext)), None)
-        # TODO: remove "ome" from condition when implementing OMETIFF support (#739)
-        if (not self.extension) or ("ome" in self.extension):
-            raise RuntimeError("The input file type of '{}' is not supported".format(input_filenames[0]))
 
         # loop over the filenames (list)
         for input_file in self.input_filenames:
@@ -249,16 +235,16 @@ class SegmentationPair(object):
                 raise RuntimeError('Input and ground truth with different dimensions.')
 
         for idx, handle in enumerate(self.input_handle):
-            self.input_handle[idx] = self.apply_canonical(handle)
+            self.input_handle[idx] = nib.as_closest_canonical(handle)
 
         # Labeled data (ie not inference time)
         if self.gt_filenames is not None:
             for idx, gt in enumerate(self.gt_handle):
                 if gt is not None:
                     if not isinstance(gt, list):  # this tissue has annotation from only one rater
-                        self.gt_handle[idx] = self.apply_canonical(gt)
+                        self.gt_handle[idx] = nib.as_closest_canonical(gt)
                     else:  # this tissue has annotation from several raters
-                        self.gt_handle[idx] = [self.apply_canonical(gt_rater) for gt_rater in gt]
+                        self.gt_handle[idx] = [nib.as_closest_canonical(gt_rater) for gt_rater in gt]
 
         # If binary classification, then extract labels from GT mask
 
@@ -273,7 +259,7 @@ class SegmentationPair(object):
         """Return the tuple (input, ground truth) representing both the input and ground truth shapes."""
         input_shape = []
         for handle in self.input_handle:
-            shape = imed_loader_utils.orient_shapes_hwd(self.get_shape(handle), self.slice_axis)
+            shape = imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis)
             input_shape.append(tuple(shape))
 
             if not len(set(input_shape)):
@@ -286,7 +272,7 @@ class SegmentationPair(object):
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
                     gt = [gt]
                 for gt_rater in gt:
-                    shape = imed_loader_utils.orient_shapes_hwd(self.get_shape(gt_rater), self.slice_axis)
+                    shape = imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis)
                     gt_shape.append(tuple(shape))
 
                 if not len(set(gt_shape)):
@@ -300,7 +286,7 @@ class SegmentationPair(object):
 
         input_data = []
         for handle in self.input_handle:
-            hwd_oriented = imed_loader_utils.orient_img_hwd(self.get_data(handle, cache_mode), self.slice_axis)
+            hwd_oriented = imed_loader_utils.orient_img_hwd(handle.get_fdata(cache_mode, dtype=np.float32), self.slice_axis)
             input_data.append(hwd_oriented)
 
         gt_data = []
@@ -310,11 +296,11 @@ class SegmentationPair(object):
         for gt in self.gt_handle:
             if gt is not None:
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
-                    hwd_oriented = imed_loader_utils.orient_img_hwd(self.get_data(gt, cache_mode), self.slice_axis)
+                    hwd_oriented = imed_loader_utils.orient_img_hwd(gt.get_fdata(cache_mode, dtype=np.float32), self.slice_axis)
                     gt_data.append(hwd_oriented)
                 else:  # this tissue has annotation from several raters
                     hwd_oriented_list = [
-                        imed_loader_utils.orient_img_hwd(self.get_data(gt_rater, cache_mode),
+                        imed_loader_utils.orient_img_hwd(gt_rater.get_fdata(cache_mode, dtype=np.float32),
                                                          self.slice_axis) for gt_rater in gt]
                     gt_data.append([hwd_oriented for hwd_oriented in hwd_oriented_list])
             else:
@@ -339,8 +325,8 @@ class SegmentationPair(object):
             if gt is not None:
                 if not isinstance(gt, list):  # this tissue has annotation from only one rater
                     gt_meta_dict.append(imed_loader_utils.SampleMetadata({
-                        "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(gt), self.slice_axis),
-                        "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(gt), self.slice_axis),
+                        "zooms": imed_loader_utils.orient_shapes_hwd(gt.header.get_zooms(), self.slice_axis),
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt.header.get_data_shape(), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"],
                         "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
                             0] else None,
@@ -349,8 +335,8 @@ class SegmentationPair(object):
                     }))
                 else:
                     gt_meta_dict.append([imed_loader_utils.SampleMetadata({
-                        "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(gt_rater), self.slice_axis),
-                        "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(gt_rater), self.slice_axis),
+                        "zooms": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_zooms(), self.slice_axis),
+                        "data_shape": imed_loader_utils.orient_shapes_hwd(gt_rater.header.get_data_shape(), self.slice_axis),
                         "gt_filenames": self.metadata[0]["gt_filenames"][idx_class][idx_rater],
                         "bounding_box": self.metadata[0]["bounding_box"] if 'bounding_box' in self.metadata[
                             0] else None,
@@ -370,8 +356,8 @@ class SegmentationPair(object):
         input_meta_dict = []
         for handle in self.input_handle:
             input_meta_dict.append(imed_loader_utils.SampleMetadata({
-                "zooms": imed_loader_utils.orient_shapes_hwd(self.get_voxel_size(handle), self.slice_axis),
-                "data_shape": imed_loader_utils.orient_shapes_hwd(self.get_shape(handle), self.slice_axis),
+                "zooms": imed_loader_utils.orient_shapes_hwd(handle.header.get_zooms(), self.slice_axis),
+                "data_shape": imed_loader_utils.orient_shapes_hwd(handle.header.get_data_shape(), self.slice_axis),
                 "data_type": 'im',
                 "crop_params": {}
             }))
@@ -440,124 +426,90 @@ class SegmentationPair(object):
         return dreturn
 
     def read_file(self, filename):
-        """Read file according to file type.
+        """Read file according to file extension and returns 'nibabel.nifti1.Nifti1Image' object.
+
         Args:
             filename (str): Subject filename.
+
+        Returns:
+            'nibabel.nifti1.Nifti1Image' object
         """
-        if "nii" in self.extension:
+        extension = imed_loader_utils.get_file_extension(filename)
+        # TODO: remove "ome" from condition when implementing OMETIFF support (#739)
+        if (not extension) or ("ome" in extension):
+            raise RuntimeError("The input file extension '{}' of '{}' is not supported. ivadomed supports the following "
+                               "file extensions: '.nii', '.nii.gz', '.png', '.tif', '.tiff', '.jpg' and '.jpeg'."
+                               .format(extension, os.path.basename(filename)))
+
+        if "nii" in extension:
             # For '.nii' and '.nii.gz' extentions
-            # Returns 'nibabel.nifti1.Nifti1Image' object
-            return nib.load(filename)
-
-        # TODO: (#739) implement OMETIFF behavior (elif "ome" in self.extension)
-
+            img = nib.load(filename)
         else:
-            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
-            # Returns data from file as a 3D numpy array
-            # Behavior for grayscale only, behavior TBD for RGB or RBGA
-            if "tif" in self.extension:
-                return np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1)
+            img = self.convert_file_to_nifti(filename, extension)
+        return img
+
+    def convert_file_to_nifti(self, filename, extension):
+        """
+        Convert a non-NifTI image into a 'nibabel.nifti1.Nifti1Image' object and save to a file.
+        This method is especially relevant for making microscopy data compatible with NifTI-only
+        pipelines.
+
+        The implementation of this method is dependent on the development of the corresponding
+        microscopy BEP (github.com/ivadomed/ivadomed/issues/301, bids.neuroimaging.io/bep031):
+        * "pixdim" (zooms) for Nifti1Image object is extracted from PixelSize metadata (from BIDS JSON sidecar)
+        * PixelSize definition in example dataset is a scalar in micrometers (BIDS BEP031 v0.0.2)
+        * PixelSize definition may change for 2D [X, Y] and 3D [X, Y, Z] arrays in micrometers (BIDS BEP031 v0.0.3)
+
+        TODO: (#739) implement OMETIFF behavior (if "ome" in extension)
+
+        Args:
+            filename (str): Subject filename.
+            extension (str): File extension.
+
+        Returns:
+            'nibabel.nifti1.Nifti1Image' object
+        """
+        # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
+        # Read image as grayscale in numpy array (behavior TBD in ivadomed for RGB or RBGA)
+        if "tif" in extension:
+            img = np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1)
+        else:
+            img = np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
+
+        # Convert numpy array to Nifti1Image object with 4x4 identity affine matrix
+        img = nib.Nifti1Image(img, affine=np.eye(4))
+
+        # Get pixel size in um from json metadata and convert to mm
+        array_length = [2, 3]        # Accepted array length for 'PixelSize' metadata
+        conversion_factor = 0.001    # Conversion factor from um to mm
+        if 'PixelSize' in self.metadata[0]:
+            ps_in_um = self.metadata[0]['PixelSize']
+            if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
+                ps_in_um = np.asarray(ps_in_um)
+            elif isinstance(ps_in_um, float):
+                ps_in_um = np.asarray([ps_in_um, ps_in_um])
             else:
-                return np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
-
-
-    def apply_canonical(self, data):
-        """Apply nibabel as_closest_canonical function to nifti data only.
-        Args:
-            data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
-                for nifti or png/tif/jpg file respectively.
-        """
-        if "nii" in self.extension:
-            # For '.nii' and '.nii.gz' extentions
-            # Returns 'nibabel.nifti1.Nifti1Image' object
-            return nib.as_closest_canonical(data)
-
-        # TODO: (#739)  implement OMETIFF behavior (elif "ome" in self.extension)
-
+                raise RuntimeError("'PixelSize' metadata type is not supported. Format must be 2D [X, Y] array,"
+                                   " 3D [X, Y, Z] array or float.")
+            # Note: pixdim[1,2,3] must be non-zero in Nifti objects even if there is only one slice.
+            # When ps_in_um[2] (pixdim[3]) is not present or 0, we assign the same PixelSize as ps_in_um[0] (pixdim[1])
+            ps_in_um = np.resize(ps_in_um, 3)
+            if ps_in_um[2] == 0:
+                ps_in_um[2] = ps_in_um[0]
+            ps_in_mm = tuple(ps_in_um * conversion_factor)
         else:
-            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
-            # Returns data as is in numpy array
-            return data
+            # TODO: Fix behavior for run_segment_command and inference, no BIDS metadata (#306)
+            raise RuntimeError("'PixelSize' is missing from metadata")
 
-    def get_shape(self, data):
-        """Returns data shape according to file type.
-        Args:
-            data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
-                for nifti or png/tif/jpg file respectively.
-        Returns:
-            ndarray: Data shape.
-        """
-        if "nii" in self.extension:
-            # For '.nii' and '.nii.gz' extentions
-            return data.header.get_data_shape()
+        # Set "pixdim" (zooms) in Nifti1Image object header
+        img.header.set_zooms((ps_in_mm))
 
-        # TODO: (#739) implement OMETIFF behavior (elif "ome" in self.extension)
+        # If it doesn't already exist, save NifTI file in path_data alongside PNG/TIF/JPG file
+        fname_out = imed_loader_utils.update_filename_to_nifti(filename)
+        if not os.path.exists(fname_out):
+            nib.save(img, fname_out)
 
-        else:
-            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
-            return data.shape
-
-    def get_voxel_size(self, data):
-        """Returns voxel sizes in mm according to file type.
-        Args:
-            data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
-                for nifti and png/tif/jpg file respectively.
-        Returns:
-            tuple: Voxel size in mm
-        """
-        if "nii" in self.extension:
-            # For '.nii' and '.nii.gz' extentions
-            # Read zooms metadata from nifti file header
-            return data.header.get_zooms()
-
-        # TODO: (#739) implement OMETIFF behavior (elif "ome" in self.extension)
-
-        else:
-            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
-            # Voxel size is extracted from PixelSize metadata (from BIDS JSON sidecar)
-            # PixelSize definition in example dataset is a scalar in micrometers (BIDS BEP031 v 0.0.2)
-            # PixelSize definition may change for 2D [X, Y] and 3D [X, Y, Z] arrays in micrometers (BIDS BEP031 v 0.0.3)
-            # This method supports both behaviors.
-            # TODO: Update behavior to follow BEP microscopy development (#301)
-
-            array_length = [2, 3]        # Accepted array length for 'PixelSize' metadata
-            conversion_factor = 0.001    # Conversion factor from um to mm
-            if 'PixelSize' in self.metadata[0]:
-                ps_in_um = self.metadata[0]['PixelSize']
-                if isinstance(ps_in_um, list) and (len(ps_in_um) in array_length):
-                    ps_in_um = np.asarray(ps_in_um)
-                    ps_in_um.resize(3)
-                elif isinstance(ps_in_um, float):
-                    ps_in_um = np.asarray([ps_in_um, ps_in_um, 0])
-                else:
-                    raise RuntimeError("'PixelSize' metadata type is not supported. Format must be 2D [X, Y] array, "
-                                       "3D [X, Y, Z] array or float.")
-                ps_in_mm = tuple(ps_in_um * conversion_factor)
-            else:
-                # TODO: Fix behavior for run_segment_command and inference, no BIDS metadata (#306)
-                raise RuntimeError("'PixelSize' is missing from metadata")
-            return ps_in_mm
-
-    def get_data(self, data, cache_mode):
-        """Get nifti file data.
-        Args:
-            data ('nibabel.nifti1.Nifti1Image' object or 'ndarray'):
-                for nifti and png/tif/jpg file respectively.
-            cache_mode (str): cache mode for nifti files
-        Returns:
-            ndarray: File data.
-        """
-        if "nii" in self.extension:
-            # For '.nii' and '.nii.gz' extentions
-            # Load data from file as numpy array
-            return data.get_fdata(cache_mode, dtype=np.float32)
-
-        # TODO: (#739) implement OME-TIFF behavior (elif "ome" in self.extension)
-
-        else:
-            # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
-            # Returns data as is in numpy array
-            return data
+        return img
 
 
 class MRI2DSegmentationDataset(Dataset):
@@ -568,8 +520,8 @@ class MRI2DSegmentationDataset(Dataset):
             truth filename, ROI filename, metadata).
         length (list): Size of each dimensions of the patches, length equals 0 (no patching) or 2 (2d patching).
         stride (list): Size of the pixels' shift between patches, length equals 0 (no patching) or 2 (2d patching).
-        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         cache (bool): if the data should be cached in memory or not.
         transform (torchvision.Compose): transformations to apply.
         slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
@@ -591,8 +543,8 @@ class MRI2DSegmentationDataset(Dataset):
         prepro_transforms (Compose): Transformations to apply before training.
         transform (Compose): Transformations to apply during training.
         cache (bool): Tf the data should be cached in memory or not.
-        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
         n_contrasts (int): Number of input contrasts.
         has_bounding_box (bool): True if bounding box in all metadata, else False.
@@ -1047,8 +999,8 @@ class BidsDataset(MRI2DSegmentationDataset):
         target_suffix (list): List of suffixes for target masks.
         contrast_params (dict): Contains image contrasts related parameters.
         model_params (dict): Dictionary containing model parameters.
-        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         cache (bool): If the data should be cached in memory or not.
         transform (list): Transformation list (length 2) composed of preprocessing transforms (Compose) and transforms
             to apply during training (Compose).
