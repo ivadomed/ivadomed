@@ -428,7 +428,7 @@ class BidsDataframe:
         self.df = self.exclude_subjects(list_exclude_subject, self.df)
 
         subject_filenames: list = self.get_subject_fnames()  # all known subjects' file names
-        deriv_filenames: list = self.get_deriv_fnames()  # all known derivatives across all subjects
+        deriv_filenames = self.get_deriv_fnames()  # all known derivatives across all subjects
 
         has_deriv = []  # subject filenames having derivatives
         deriv = []  # the available derivatives filenames from ALL subjects... not co-indexed with has_deriv???
