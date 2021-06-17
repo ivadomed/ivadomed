@@ -335,17 +335,24 @@ class BidsDataframe:
                     list_excluded_subjects.append(subject)
                     break
 
-        if list_excluded_subjects:
-            filter_subject_exclude_subject_list = (
-                    ~df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
-                    & ~df_next[BidsDataFrameKW.SUBJECT].str.contains('|'.join(list_excluded_subjects), na=False)
-            )
-            filter_derivative_exclude_subject_list = (
-                    df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
-                    & ~df_next[BidsDataFrameKW.FILENAME].str.contains('|'.join(list_excluded_subjects))
-            )
-            df_next = df_next[filter_derivative_exclude_subject_list
-                              | filter_subject_exclude_subject_list]
+        df_next = self.exclude_subjects(list_excluded_subjects, df_next)
+
+        return df_next
+
+    def exclude_subjects(self, list_exclude_subject, df_next):
+        if not list_exclude_subject:
+            return df_next
+
+        filter_subject_exclude_subject_list = (
+            ~df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
+            & ~df_next[BidsDataFrameKW.SUBJECT].str.contains('|'.join(list_exclude_subject), na=False)
+        )
+        filter_derivative_exclude_subject_list = (
+            df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
+            & ~df_next[BidsDataFrameKW.FILENAME].str.contains('|'.join(list_exclude_subject))
+        )
+        df_next = df_next[filter_derivative_exclude_subject_list
+                          | filter_subject_exclude_subject_list]
         return df_next
 
     def add_tsv_metadata(self, df, path_data, layout):
@@ -401,6 +408,25 @@ class BidsDataframe:
         Returns:
             list, list: subject filenames having derivatives, available derivatives filenames.
         """
+        list_exclude_subject = []
+        deriv_filenames: list = self.get_deriv_fnames()  # all known derivatives across all subjects
+        list_unique_subjects: list = self.df[BidsDataFrameKW.SUBJECT].dropna().unique().tolist()
+
+        for subject in list_unique_subjects:
+            list_derived_matching_subject = list(filter(
+                lambda a_file_name:
+                subject in a_file_name,
+                deriv_filenames
+            ))
+
+            list_derived_target_suffix = list(map(
+                lambda filename: '_' + filename.split('_')[-1].split('.')[0], list_derived_matching_subject))
+            # derivatives for each subject must contain at least ONE of EACH of the target_suffix
+            if not set(self.target_suffix).issubset(set(list_derived_target_suffix)):
+                list_exclude_subject.append(subject)
+
+        self.df = self.exclude_subjects(list_exclude_subject, self.df)
+
         subject_filenames: list = self.get_subject_fnames()  # all known subjects' file names
         deriv_filenames: list = self.get_deriv_fnames()  # all known derivatives across all subjects
 
@@ -524,13 +550,6 @@ class BidsDataframe:
             # apply to the entire list of deriv_filenames
             deriv_filenames
         ))
-
-        list_derived_target_suffix = list(map(
-            lambda filename: '_' + filename.split('_')[-1].split('.')[0], list_derived_matching_subject_fname))
-        # derivatives for each subject must contain at least ONE of EACH of the target_suffix
-        if not set(self.target_suffix).issubset(set(list_derived_target_suffix)):
-            logger.warning(f"No derivative found for {subject_id} with one of each target suffix from {self.target_suffix}")
-            return []
 
         # Sort in place for alphabetical order output.
         list_derived_matching_subject_fname.sort()
