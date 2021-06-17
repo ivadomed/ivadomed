@@ -518,12 +518,19 @@ class BidsDataframe:
         # Could be empty.
         list_derived_matching_subject_fname = list(filter(
             lambda a_file_name:
-            # as long as 1) the subject_id and 2) the ground truth target string is in the file name,
+            # as long as 1) the subject_id
             # we consider that a valid ground truth/derivatives
-            subject_id in a_file_name and self.target_ground_truth in a_file_name,
+            subject_id in a_file_name,
             # apply to the entire list of deriv_filenames
             deriv_filenames
         ))
+
+        list_derived_target_suffix = list(map(
+            lambda filename: '_' + filename.split('_')[-1].split('.')[0], list_derived_matching_subject_fname))
+        # derivatives for each subject must contain at least ONE of EACH of the target_suffix
+        if not set(self.target_suffix).issubset(set(list_derived_target_suffix)):
+            logger.warning(f"No derivative found for {subject_id} with one of each target suffix from {self.target_suffix}")
+            return []
 
         # Sort in place for alphabetical order output.
         list_derived_matching_subject_fname.sort()

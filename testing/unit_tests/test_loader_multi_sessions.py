@@ -79,6 +79,24 @@ def test_bids_multi_sessions_contrasts_dataframe_anat_missing_modality(download_
 
 
 @parametrize_with_cases("loader_parameters, target_csv", cases=[
+    case_data_multi_session_contrast_mismatching_target_suffix,
+])
+def test_bids_multi_sessions_contrasts_dataframe_anat_mismatching_target_suffix(download_data_multi_sessions_contrasts_test_files,
+                                                                                loader_parameters,
+                                                                                target_csv):
+    """
+    Test for when derivative target suffix mismatches
+    """
+    try:
+        bids_multi_sessions_contrasts_dataframe_anat_helper(loader_parameters, target_csv)
+        assert False
+    except RuntimeError:
+        pass
+    except:
+        assert False
+
+
+@parametrize_with_cases("loader_parameters, target_csv", cases=[
     case_data_multi_session_contrast_missing_session,
 ])
 def test_bids_multi_sessions_contrasts_dataframe_anat_missing_session(download_data_multi_sessions_contrasts_test_files,
