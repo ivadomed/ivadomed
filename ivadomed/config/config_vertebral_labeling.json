@@ -98,7 +98,6 @@
                     "size": [320,128]
             },
 
-      "NumpyToTensor": {},
       "NormalizeInstance": {"applied_to": ["im"]}
     }
 }
