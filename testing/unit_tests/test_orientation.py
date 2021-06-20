@@ -4,6 +4,8 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 import logging
+
+from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
@@ -101,8 +103,8 @@ def test_image_orientation(download_data_testing_test_files, loader_parameters):
                                 num_workers=1)
 
             input_filename, gt_filename, roi_filename, metadata = ds.filename_pairs[0]
-            segpair = imed_loader.SegmentationPair(input_filename, gt_filename, metadata=metadata,
-                                                   slice_axis=slice_axis)
+            segpair = SegmentationPair(input_filename, gt_filename, metadata=metadata,
+                                                                         slice_axis=slice_axis)
             nib_original = nib.load(gt_filename[0])
             # Get image with original, ras and hwd orientations
             input_init = nib_original.get_fdata()
