@@ -11,6 +11,7 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from torch import tensor
 
+from ivadomed.loader.mri3d_subvolume_segmentation_dataset import MRI3DSubVolumeSegmentationDataset
 from ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
 from ivadomed.transforms import UndoCompose
 from ivadomed import config_manager as imed_config_manager
@@ -357,10 +358,10 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     is_2d_patch = bool(length_2D)
 
     if kernel_3D:
-        ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
-                                                           transform=tranform_lst,
-                                                           length=context["Modified3DUNet"]["length_3D"],
-                                                           stride=context["Modified3DUNet"]["stride_3D"])
+        ds = MRI3DSubVolumeSegmentationDataset(filename_pairs,
+                                               transform=tranform_lst,
+                                               length=context["Modified3DUNet"]["length_3D"],
+                                               stride=context["Modified3DUNet"]["stride_3D"])
         logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} volumes of shape "
                      f"{context['Modified3DUNet']['length_3D']}.")
     else:
