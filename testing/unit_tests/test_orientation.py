@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 import logging
 
+from ivadomed.loader.bids3d_dataset import Bids3DDataset
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed import metrics as imed_metrics
@@ -88,15 +89,15 @@ def test_image_orientation(download_data_testing_test_files, loader_parameters):
                                  multichannel=False)
                 ds.load_filenames()
             else:
-                ds = imed_loader.Bids3DDataset(bids_df=bids_df,
-                                               subject_file_lst=train_lst,
-                                               target_suffix=target_suffix,
-                                               model_params=model_params,
-                                               contrast_params=contrast_params,
-                                               metadata_choice=False,
-                                               slice_axis=slice_axis,
-                                               transform=tranform_lst,
-                                               multichannel=False)
+                ds = Bids3DDataset(bids_df=bids_df,
+                                   subject_file_lst=train_lst,
+                                   target_suffix=target_suffix,
+                                   model_params=model_params,
+                                   contrast_params=contrast_params,
+                                   metadata_choice=False,
+                                   slice_axis=slice_axis,
+                                   transform=tranform_lst,
+                                   multichannel=False)
 
             loader = DataLoader(ds, batch_size=1,
                                 shuffle=True, pin_memory=True,
