@@ -1,15 +1,14 @@
 import copy
 import itertools
 import os
-
 import bids as pybids
-import numpy as np
 import pandas as pd
 from loguru import logger
 from typing import List
 from ivadomed.keywords import LoaderParamsKW, ROIParamsKW, ContrastParamsKW, BidsDataFrameKW
 from pathlib import Path
 from pprint import pformat
+
 
 def write_derivatives_dataset_description(path_data: str):
     """Writes default dataset_description.json file if not found in path_data/derivatives folder
@@ -112,9 +111,6 @@ class BidsDataframe:
             # Convert them all to string
             self.target_sessions = list(map(str, self.target_sessions))
 
-
-
-
         # Create dataframe, which contain much information like file path, base file, extensions. etc
         self.df: pd.DataFrame = pd.DataFrame()
         self.create_bids_dataframe()
@@ -136,7 +132,7 @@ class BidsDataframe:
         # Filter for those files that has
         # 1) subject files of chosen contrasts and extensions,
         # 2) derivative files of chosen target_suffix from loader parameters
-        self.df = self.first_pass_data_frame_creation()
+        self.df = self.first_inclusive_pass_data_frame_creation()
 
         if self.df.empty:
             # Raise error and exit if no subject files are found in any path data
@@ -151,11 +147,11 @@ class BidsDataframe:
 
         # If indexing of derivatives is true, do a second pass to filter for ONLY data that has self target_ground truth
         if self.derivatives:
-            self.df = self.second_pass_dataframe_creation()
+            self.df = self.second_exclusive_pass_dataframe_creation_removing_subjects_without_derivatives()
 
             # If multiple target sessions are specified, we filter for subjects that 1) doesn't have those sessions.
             if self.target_sessions:
-                self.df = self.check_multi_session_ground_truth_and_modalities(self.df)
+                self.df = self.third_exclusive_pass_df_creation_check_modalities_sessions_combinations(self.df)
 
         # Reset index
         self.df.reset_index(drop=True, inplace=True)
@@ -163,7 +159,7 @@ class BidsDataframe:
         # Drop columns with all null values
         self.df.dropna(axis=1, inplace=True, how='all')
 
-    def second_pass_dataframe_creation(self) -> pd.DataFrame:
+    def second_exclusive_pass_dataframe_creation_removing_subjects_without_derivatives(self) -> pd.DataFrame:
         """
         Further filtering the dataframes based on those that has the appropriate target ground truth derivatives.
 
@@ -185,18 +181,17 @@ class BidsDataframe:
             ]
         else:
             # Raise error and exit if no derivatives are found for any subject files
-            raise RuntimeError("Not a single derivative was found.")
+            raise RuntimeError("Not a single derivative was found. Training MUST at least have some ground truth labels.")
 
         return second_pass_dataframe
 
-    def first_pass_data_frame_creation(self) -> pd.DataFrame:
+    def first_inclusive_pass_data_frame_creation(self) -> pd.DataFrame:
         """
         Conduct the first pass through the data and create a BIDS DataFrame.
         1) Across all self.paths_data
         2) Force index/microsopcy/CT scans
         3) Non-Multisession Version: must have one of the many CONTRASTS, one of the many EXTENSIONS,
         4) Multisession Version: must have one of the many CONTRASTS, one of the many SESSIONS, one of the many EXTENSIONS
-
 
         Returns: the first past BIDS Dataframe.
         """
@@ -294,7 +289,7 @@ class BidsDataframe:
 
         return first_pass_data_frame
 
-    def check_multi_session_ground_truth_and_modalities(self, df_next):
+    def third_exclusive_pass_df_creation_check_modalities_sessions_combinations(self, df_next):
         """
         Go through the BIDSDataFrame, exclude subject missing sessions and mandatory modalities.
         Args:
@@ -322,12 +317,14 @@ class BidsDataframe:
                 list_excluded_subjects.append(subject)
                 continue
 
-            # Otherwise, go through each of subject's session.
-            for session in current_subject_sessions:
+            # Otherwise, go through each of TARGET SESSIONS for this subject.
+            for session in self.target_sessions:
                 # Retrieve all subject's information with matching session
                 df_session = df_subject[df_subject[BidsDataFrameKW.SESSION] == session]
 
+                # Retrieve the unique set of suffix/modalities for this SUBJECT + SESSION
                 set_current_subject_suffixes: set = set(df_session[BidsDataFrameKW.SUFFIX].unique().tolist())
+                # Find the set from the requirement
                 set_current_contrast_list: set = set(self.contrast_lst)
 
                 # When missing a contrast, exclude the subject.
@@ -339,23 +336,39 @@ class BidsDataframe:
 
         return df_next
 
-    def exclude_subjects(self, list_exclude_subject, df_next):
+    def exclude_subjects(self, list_exclude_subject: list, df_next: pd.DataFrame):
+        """
+        Given a BIDSDataFrame, exclude all source files and derivative files that contain the subject IDs from the list
+        of the excluded subjects.
+        Args:
+            list_exclude_subject:
+            df_next:
+
+        Returns:
+
+        """
+
         if not list_exclude_subject:
             return df_next
 
         filter_subject_exclude_subject_list = (
+            # Non-derivative files
             ~df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
+            # Subject contains any of the excluded subjects
             & ~df_next[BidsDataFrameKW.SUBJECT].str.contains('|'.join(list_exclude_subject), na=False)
         )
         filter_derivative_exclude_subject_list = (
+            # Derivative files
             df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)
+            # Subject contains any of the excluded subjects
             & ~df_next[BidsDataFrameKW.FILENAME].str.contains('|'.join(list_exclude_subject))
         )
+        # OR combined them to gether.
         df_next = df_next[filter_derivative_exclude_subject_list
                           | filter_subject_exclude_subject_list]
         return df_next
 
-    def add_tsv_metadata(self, df, path_data, layout):
+    def add_tsv_metadata(self, df: pd.DataFrame, path_data: str, layout: pybids.BIDSLayout):
 
         """Add tsv files metadata to dataframe.
         Args:
@@ -534,7 +547,7 @@ class BidsDataframe:
 
         Returns:
             list: a list of all the derivative filenames for that particular subject
-            There shouldn't be too many derivate per subject.
+            There shouldn't be too many derivatives per subject.
         """
 
         # e.g. sub-ms01

@@ -47,15 +47,11 @@ class BidsDataFrameKW:
     PATH = "path"   # full path.
     FILENAME = "filename"  # the actual file's name (base)
     PARTICIPANT_ID = "participant_id"  # i.e.    sub-unf01
-
     SUBJECT = "subject"  # i.e.  unf01
     SUFFIX = "suffix"   # T1w
     SESSION = "session"  # session field (single int) in Bids DataFrame
     EXTENSION = "extension"   # .nii.gz
     DERIVATIVES = "derivatives"
-
-
-
 
 @dataclass
 class ROIParamsKW:
@@ -73,20 +69,3 @@ class MetadataParamsKW:
 class MetadataChoiceKW:
     MRI_PARAMS = "mri_params"
     CONTRASTS = "contrasts"
-
-
-@dataclass
-class FileStemKW:
-    """
-    Everything MUST be using lower case here to allow case insensitive file name comparisons.
-    """
-    list_subject = ["sub-", "subject", "subj"]
-    list_acquisition = ["acq-"]
-    list_sample = ["sample-"]
-    list_session = ["ses-", "session-"]
-    list_run = ["run-"]
-    list_contrasts = ["T1w", "T2w", "T2star", "ct", "sem", "FLAIR"]
-    list_derivative = ["lesion-", "seg-", "labels-"]
-    list_location = ["mid"]
-    list_stats = ["heatmap"]
-
