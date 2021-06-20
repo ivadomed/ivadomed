@@ -366,13 +366,13 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                      f"{context['Modified3DUNet']['length_3D']}.")
     else:
         ds = MRI2DSegmentationDataset(filename_pairs,
-                                                                                 length=length_2D,
-                                                                                 stride=stride_2D,
-                                                                                 slice_axis=slice_axis,
-                                                                                 cache=True,
-                                                                                 transform=tranform_lst,
-                                                                                 slice_filter_fn=imed_loader_utils.SliceFilter(
-                                                      **loader_params["slice_filter_params"]))
+                                      length=length_2D,
+                                      stride=stride_2D,
+                                      slice_axis=slice_axis,
+                                      cache=True,
+                                      transform=tranform_lst,
+                                      slice_filter_fn=imed_loader_utils.SliceFilter(
+                                          **loader_params["slice_filter_params"]))
         ds.load_filenames()
         if is_2d_patch:
             logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} patches of shape {length_2D}.")
