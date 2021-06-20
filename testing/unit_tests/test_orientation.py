@@ -78,14 +78,14 @@ def test_image_orientation(download_data_testing_test_files, loader_parameters):
         for slice_axis in [0, 1, 2]:
             if dim == '2d':
                 ds = BidsDataset(bids_df=bids_df,
-                                                              subject_file_lst=train_lst,
-                                                              target_suffix=target_suffix,
-                                                              contrast_params=contrast_params,
-                                                              model_params=model_params,
-                                                              metadata_choice=False,
-                                                              slice_axis=slice_axis,
-                                                              transform=tranform_lst,
-                                                              multichannel=False)
+                                 subject_file_lst=train_lst,
+                                 target_suffix=target_suffix,
+                                 contrast_params=contrast_params,
+                                 model_params=model_params,
+                                 metadata_choice=False,
+                                 slice_axis=slice_axis,
+                                 transform=tranform_lst,
+                                 multichannel=False)
                 ds.load_filenames()
             else:
                 ds = imed_loader.Bids3DDataset(bids_df=bids_df,
