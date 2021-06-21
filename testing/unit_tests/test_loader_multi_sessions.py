@@ -15,7 +15,7 @@ from loguru import logger
 
 
 def setup_function():
-    # Dedicated setup function for multisession data.
+    # Dedicated setup function for multi-session data.
     remove_tmp_dir()
     os.mkdir(path_temp)
     if os.path.exists(path_data_multi_sessions_contrasts_source):
@@ -30,17 +30,33 @@ def test_get_unique_session_list():
     assert np.array_equal(get_unique_session_list(df), ["aaa", "bbb"])
 
 
-def bids_multi_sessions_contrasts_dataframe_anat_helper(loader_parameters: dict, target_csv: str):
+def bids_dataframe_comparison_framework(loader_parameters: dict, target_csv: str):
+    """
+    Main test function used to unit tests generated files with expected files.
+    Args:
+        loader_parameters: dict
+        target_csv:
+
+    Returns:
+
+    """
     # Create the bids frame.
-    # Compare the output with the target_csv
     bids_df = ivadomed.loader.tools.bids_dataframe.BidsDataframe(loader_parameters,
                                                                  str(path_data_multi_sessions_contrasts_tmp),
                                                                  derivatives=True)
+    # Drop path as that can varies across runs.
     df_test = bids_df.df.drop(columns=['path'])
+
+    # Sorting to ensure consistencies.
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
+
+    # Compare the output with the target reference CSV from the data repo.
     csv_ref = os.path.join(loader_parameters["path_data"][0], target_csv)
+
     csv_test = os.path.join(loader_parameters["path_data"][0], "df_test.csv")
     df_test.to_csv(csv_test, index=False)
+
+    # Calculate differences and ensure they are the same.
     diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
     assert diff == {'added': [], 'removed': [], 'changed': [],
                     'columns_added': [], 'columns_removed': []}
@@ -57,7 +73,7 @@ def test_bids_multi_sessions_contrasts_dataframe_anat(download_data_multi_sessio
     """
     Test for when multi-sessions and multi-contrasts, how the filtering and ground truth identification process works.
     """
-    bids_multi_sessions_contrasts_dataframe_anat_helper(loader_parameters, target_csv)
+    bids_dataframe_comparison_framework(loader_parameters, target_csv)
 
 
 @parametrize_with_cases("loader_parameters, target_csv", cases=[
@@ -75,7 +91,7 @@ def test_bids_multi_sessions_contrasts_dataframe_anat_missing_modality(download_
     os.remove(file_1)
     os.remove(file_2)
 
-    bids_multi_sessions_contrasts_dataframe_anat_helper(loader_parameters, target_csv)
+    bids_dataframe_comparison_framework(loader_parameters, target_csv)
 
 
 @parametrize_with_cases("loader_parameters, target_csv", cases=[
@@ -88,7 +104,7 @@ def test_bids_multi_sessions_contrasts_dataframe_anat_mismatching_target_suffix(
     Test for when derivative target suffix mismatches
     """
     try:
-        bids_multi_sessions_contrasts_dataframe_anat_helper(loader_parameters, target_csv)
+        bids_dataframe_comparison_framework(loader_parameters, target_csv)
         assert False
     except RuntimeError:
         pass
@@ -110,7 +126,7 @@ def test_bids_multi_sessions_contrasts_dataframe_anat_missing_session(download_d
 
     shutil.rmtree(dir)
 
-    bids_multi_sessions_contrasts_dataframe_anat_helper(loader_parameters, target_csv)
+    bids_dataframe_comparison_framework(loader_parameters, target_csv)
 
 def teardown_function():
     remove_tmp_dir()

@@ -1,5 +1,5 @@
 from testing.common_testing_util import path_data_multi_sessions_contrasts_tmp
-from ivadomed.keywords import LoaderParamsKW, ContrastParamsKW, ROIParamsKW
+from ivadomed.keywords import LoaderParamsKW, ContrastParamsKW
 
 
 def case_data_multi_session_contrast():
@@ -63,7 +63,7 @@ def case_data_multi_session_contrast_missing_modality():
         LoaderParamsKW.EXTENSIONS: [".nii", ".nii.gz"],
         "roi_params": {"suffix": None, "slice_filter_roi": None},
         LoaderParamsKW.CONTRAST_PARAMS: {
-            ContrastParamsKW.CONTRAST_LIST: ["T1w", "T2w", "FLAIR", "PD"]
+            ContrastParamsKW.CONTRAST_LIST: ["T1w", "T2w"]
         }
     }
 

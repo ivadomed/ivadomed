@@ -147,7 +147,7 @@ class BidsDataframe:
 
         # If indexing of derivatives is true, do a second pass to filter for ONLY data that has self target_ground truth
         if self.derivatives:
-            self.df = self.second_exclusive_pass_dataframe_creation_removing_subjects_without_derivatives()
+            self.df = self.second_exclusive_pass_dataframe_creation_removing_subjects_without_derivatives(self.df)
 
             # If multiple target sessions are specified, we filter for subjects that 1) doesn't have those sessions.
             if self.target_sessions:
@@ -159,9 +159,15 @@ class BidsDataframe:
         # Drop columns with all null values
         self.df.dropna(axis=1, inplace=True, how='all')
 
-    def second_exclusive_pass_dataframe_creation_removing_subjects_without_derivatives(self) -> pd.DataFrame:
+    def second_exclusive_pass_dataframe_creation_removing_subjects_without_derivatives(self, first_df: pd.DataFrame) -> pd.DataFrame:
         """
         Further filtering the dataframes based on those that has the appropriate target ground truth derivatives.
+        Args:
+            first_df (pd.DataFrame): DataFrame generated from FIRST pass inclusive search
+
+        Returns:
+            second_pass_dataframe (pd.DataFrame): DataFrame filtered for:
+            1) subjects with at least one of each self.suffix
 
         """
         # Get:
@@ -173,11 +179,11 @@ class BidsDataframe:
 
         # Filter dataframe to keep
         if has_deriv:
-            second_pass_dataframe = self.df[
+            second_pass_dataframe = first_df[
                 # 1) subjects files and
-                self.df[BidsDataFrameKW.FILENAME].str.contains('|'.join(has_deriv))
+                first_df[BidsDataFrameKW.FILENAME].str.contains('|'.join(has_deriv))
                 # 2) all known derivatives only
-                | self.df[BidsDataFrameKW.FILENAME].str.contains('|'.join(deriv))
+                | first_df[BidsDataFrameKW.FILENAME].str.contains('|'.join(deriv))
             ]
         else:
             # Raise error and exit if no derivatives are found for any subject files
@@ -276,7 +282,8 @@ class BidsDataframe:
 
             # Warning if no subject files are found in path_data
             if df_next[~df_next[BidsDataFrameKW.PATH].str.contains(BidsDataFrameKW.DERIVATIVES)].empty:
-                logger.warning(f"No subject files were found in '{path_data}' dataset. Skipping dataset.")
+                logger.warning(f"No subject files were found in '{path_data}' dataset during FIRST PASS. "
+                               f"Skipping dataset.")
 
             else:
                 # Add tsv files metadata to dataframe
@@ -448,11 +455,20 @@ class BidsDataframe:
 
         for subject_filename in subject_filenames:
             # For the current subject, get its list of subject specific available derivatives
+            # These COULD be across sessions/modalities!
             list_subject_available_derivatives: list = self.get_derivatives(subject_filename, deriv_filenames)
 
             # Early stop if no derivatives found. Go to next subject.
             if not list_subject_available_derivatives:
-                logger.warning(f"Missing derivatives for {subject_filename}. Skipping.")
+                logger.warning(f"Missing ALL derivatives for {subject_filename}. Skipping.")
+                continue
+            # Check for all the mandatory modalities and ensure that they
+
+            at_least_one_of_each_derivatives_found: bool = self.check_for_at_least_one_of_each_derivative_suffix(
+                list_subject_available_derivatives, subject_filename
+            )
+            if not at_least_one_of_each_derivatives_found:
+                logger.warning(f"Missing at least some mandatory derivatives for {subject_filename}. Skipping.")
                 continue
 
             # Handle subject specific roi_suffix related filtering?
@@ -460,13 +476,41 @@ class BidsDataframe:
                 self.include_first_roi_specific_derivative(deriv, has_deriv, list_subject_available_derivatives,
                                                            subject_filename)
             else:
-                self.include_first_subject_specific_derivative(deriv, has_deriv, list_subject_available_derivatives,
-                                                               subject_filename)
+                self.include_first_subject_specific_derivatives(deriv, has_deriv, list_subject_available_derivatives,
+                                                                subject_filename)
 
         return has_deriv, deriv
 
-    def include_first_subject_specific_derivative(self, deriv: list, has_deriv: list,
-                                                  list_subject_available_derivatives: list, subject_filename: str):
+    def check_for_at_least_one_of_each_derivative_suffix(self, list_subject_available_derivatives: list, subject_filename: str):
+        """
+        Go through each derivative, check to ensure it is in at least ONE file of the list_subject_available_derivatives
+
+        Args:
+            list_subject_available_derivatives (list):
+            subject_filename (str):
+
+        Returns:
+
+        """
+
+        for target_derivative in self.target_suffix:
+            target_derivative_found: bool = any(
+                list(
+                    # Map the check function to the file list
+                    map(
+                        lambda a_derivative: target_derivative in a_derivative,
+                        list_subject_available_derivatives
+                    )
+                )
+            )
+            if target_derivative_found:
+                logger.warning(f"No target derivatives found for {target_derivative} for {subject_filename}. Skipping.")
+                return False
+
+        return True
+
+    def include_first_subject_specific_derivatives(self, deriv: list, has_deriv: list,
+                                                   list_subject_available_derivatives: list, subject_filename: str):
         """ Include the first derivative/ground truth by including it in the deriv and has_deriv list.
         Args:
             deriv:
@@ -474,14 +518,38 @@ class BidsDataframe:
             list_subject_available_derivatives:
             subject_filename:
         """
-        if len(list_subject_available_derivatives) > 1:
-            logger.warning(f"When evaluating {subject_filename},"
-                           f"more than one ground truth matching '{self.target_ground_truth}' found. "
-                           f"Expected ONE ground truth per subject ACROSS sessions/modalities:\n"
-                           f"{pformat(list_subject_available_derivatives)}")
-            logger.critical(f"First one is chosen: {list_subject_available_derivatives[0]}")
+        # Go through each suffix.
+        target_suffix: str
+        for target_suffix in self.target_suffix:
+
+            # Generate the list of related derivatives.
+            list_target_suffix_derivatives: list = list(
+                    # Map the check function to the file list
+                    filter(
+                        lambda a_derivative: target_suffix in a_derivative,
+                        list_subject_available_derivatives
+                    )
+                )
+
+            # If the list is emtpy, warn .
+            if not list_target_suffix_derivatives:
+                logger.critical(f"No target derivatives found for {target_suffix} for {subject_filename} during "
+                                f"inclusion check. Skipping.")
+                return
+
+            # If the list hast multiple ground truth
+            if len(list_target_suffix_derivatives) > 1:
+                    logger.warning(f"When evaluating {subject_filename},"
+                                   f"more than one ground truth matching '{target_suffix}' found. "
+                                   f"Expected ONE ground truth PER subject PER target_suffix ACROSS sessions/modalities:"
+                                   f"\n{pformat(list_subject_available_derivatives)}")
+                    logger.critical(f"First one is chosen: {list_subject_available_derivatives[0]}")
+
+            # Update derivative list
+            deriv.append(list_subject_available_derivatives[0])
+
+        # Update this list only ONCE, if any issue, arises, it would have returned earlier (e.g. empty list)
         has_deriv.append(subject_filename)
-        deriv.extend(list_subject_available_derivatives[0])
 
     def include_first_roi_specific_derivative(self, deriv: list, has_deriv: list,
                                               list_subject_available_derivatives: list, subject_filename: str):
@@ -494,23 +562,49 @@ class BidsDataframe:
         """
 
         # If one of the ground truth has ROI_suffix in it, we prefer that one.
-        if self.roi_suffix in ('|'.join(list_subject_available_derivatives)):
-
-            # This list is guaranteed to have more than one element because the above if condition.
-            list_roi_derivatives = list(filter(
-                lambda a_derivative_filename: self.roi_suffix in a_derivative_filename,
-                list_subject_available_derivatives
-            ))
-            if len(list_roi_derivatives) > 1:
-                logger.warning(f"When evaluating {subject_filename},"
-                                f"more than one ROI ground truth matching {self.target_ground_truth} found. "
-                                f"Expect ONE ground truth per subject ACROSS sessions/modalities.\n"
-                                f"{pformat(list_roi_derivatives)}")
-                logger.critical(f"First one is chosen: {list_roi_derivatives[0]}")
-            has_deriv.append(subject_filename)
-            deriv.extend(list_roi_derivatives[0])
-        else:
+        if self.roi_suffix not in ('|'.join(list_subject_available_derivatives)):
             logger.warning(f"Missing roi_suffix {self.roi_suffix} for {subject_filename}. Skipping.")
+            return
+
+        # This additional layer of filtering for only ROI suffix.
+        list_roi_derivatives = list(filter(
+            lambda a_derivative_filename: self.roi_suffix in a_derivative_filename,
+            list_subject_available_derivatives
+        ))
+
+        # Go through each suffix.
+        target_suffix: str
+        for target_suffix in self.target_suffix:
+
+            # Generate the list of related derivatives.
+            list_target_suffix_derivatives: list = list(
+                # Map the check function to the file list
+                filter(
+                    lambda a_derivative: target_suffix in a_derivative,
+                    list_roi_derivatives
+                )
+            )
+
+            # If the list is emtpy, warn .
+            if not list_target_suffix_derivatives:
+                logger.critical(f"No target derivatives matching {self.roi_suffix} found for {target_suffix} for "
+                                f"{subject_filename} during inclusion check. Skipping.")
+                return
+
+            # If the list hast multiple ground truth
+            if len(list_target_suffix_derivatives) > 1:
+                logger.warning(f"When evaluating {subject_filename},"
+                               f"more than one derivative matching '{target_suffix}' found. "
+                               f"Expected ONE ground truth PER subject PER target_suffix ACROSS sessions/modalities:"
+                               f"\n{pformat(list_subject_available_derivatives)}")
+                logger.critical(f"First one is chosen: {list_subject_available_derivatives[0]}")
+
+            # Update derivative list
+            deriv.append(list_subject_available_derivatives[0])
+
+        # Update this list only ONCE, if any issue, arises, it would have returned earlier (e.g. empty list)
+        has_deriv.append(subject_filename)
+
 
     def get_subject_fnames(self) -> list:
         """Get the list of BIDS validated subject filenames in dataframe.
@@ -573,7 +667,7 @@ class BidsDataframe:
 
         # If no derivative found, return empty list.
         if not list_derived_matching_subject_fname:
-            logger.warning("No derivatives found for the ")
+            logger.warning(f"No derivatives found for {subject_filename}")
             return list_derived_matching_subject_fname
 
         return list_derived_matching_subject_fname
