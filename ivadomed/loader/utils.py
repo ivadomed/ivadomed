@@ -877,3 +877,44 @@ def update_filename_to_nifti(filename):
     if not "nii" in extension:
         filename = filename.replace(extension, ".nii.gz")
     return filename
+
+
+def dropout_input(seg_pair):
+    """Applies input-level dropout: zero to all channels minus one will be randomly set to zeros. This function verifies
+    if some channels are already empty. Always at least one input channel will be kept.
+
+    Args:
+        seg_pair (dict): Batch containing torch tensors (input and gt) and metadata.
+
+    Return:
+        seg_pair (dict): Batch containing torch tensors (input and gt) and metadata with channel(s) dropped.
+    """
+    n_channels = seg_pair['input'].size(0)
+    # Verify if the input is multichannel
+    if n_channels > 1:
+        # Verify if some channels are already empty
+        n_unique_values = [len(torch.unique(input_data)) > 1 for input_data in seg_pair['input']]
+        idx_empty = np.where(np.invert(n_unique_values))[0]
+
+        # Select how many channels will be dropped between 0 and n_channels - 1 (keep at least one input)
+        n_dropped = random.randint(0, n_channels - 1)
+
+        if n_dropped > len(idx_empty):
+            # Remove empty channel to the number of channels to drop
+            n_dropped = n_dropped - len(idx_empty)
+            # Select which channels will be dropped
+            idx_dropped = []
+            while len(idx_dropped) != n_dropped:
+                idx = random.randint(0, n_channels - 1)
+                # Don't include the empty channel in the dropped channels
+                if idx not in idx_empty:
+                    idx_dropped.append(idx)
+        else:
+            idx_dropped = idx_empty
+
+        seg_pair['input'][idx_dropped] = torch.zeros_like(seg_pair['input'][idx_dropped])
+
+    else:
+        logger.warning("\n Impossible to apply input-level dropout since input is not multi-channel.")
+
+    return seg_pair

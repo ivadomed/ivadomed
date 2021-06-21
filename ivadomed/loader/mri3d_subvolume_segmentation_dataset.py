@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 
 from ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
 from ivadomed.loader import utils as imed_loader_utils
-from ivadomed.loader.loader import dropout_input
+from ivadomed.loader.utils import dropout_input
 from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
 
