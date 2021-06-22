@@ -127,7 +127,6 @@
             "applied_to": ["im", "gt"],
             "dataset_type": ["training"]
         },
-      "NumpyToTensor": {},
       "NormalizeInstance": {"applied_to": ["im"]}
     }
 }
