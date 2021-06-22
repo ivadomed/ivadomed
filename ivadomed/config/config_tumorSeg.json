@@ -106,7 +106,6 @@
             "translate": [0.03, 0.03],
             "dataset_type": ["training"]
         },
-      "NumpyToTensor": {},
       "NormalizeInstance": {"applied_to": ["im"]}
     }
 }

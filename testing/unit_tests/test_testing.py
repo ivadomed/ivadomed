@@ -36,7 +36,6 @@ def setup_function():
         "CenterCrop": {
                 "size": [48, 48]
             },
-        "NumpyToTensor": {},
         "NormalizeInstance": {"applied_to": ["im"]}
     }])
 @pytest.mark.parametrize('test_lst', [['sub-unf01']])

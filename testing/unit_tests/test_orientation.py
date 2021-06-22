@@ -53,7 +53,6 @@ def test_image_orientation(download_data_testing_test_files, loader_parameters):
             {
                 "size": [176, 128, 160]
             },
-        "NumpyToTensor": {},
         "NormalizeInstance": {"applied_to": ['im']}
     }
 
