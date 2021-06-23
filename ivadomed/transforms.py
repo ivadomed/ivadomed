@@ -118,6 +118,8 @@ class Compose(object):
 
             # call transform
             if transform in globals():
+                if transform == "NumpyToTensor":
+                    continue
                 params_cur = {k: parameters[k] for k in parameters if k != "applied_to" and k != "preprocessing"}
                 transform_obj = globals()[transform](**params_cur)
             else:
@@ -148,6 +150,8 @@ class Compose(object):
             return None, None
         else:
             for tr in self.transform[data_type].transforms:
+                if isinstance(tr, NumpyToTensor):
+                    continue
                 sample, metadata = tr(sample, metadata)
 
             if not preprocessing:
@@ -179,6 +183,8 @@ class UndoCompose(object):
             numpy_to_tensor = NumpyToTensor()
             sample, metadata = numpy_to_tensor.undo_transform(sample, metadata)
             for tr in self.transforms.transform[data_type].transforms[::-1]:
+                if isinstance(tr, NumpyToTensor):
+                    continue
                 sample, metadata = tr.undo_transform(sample, metadata)
             return sample, metadata
 
