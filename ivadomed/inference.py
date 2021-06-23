@@ -299,9 +299,9 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         fname_images (list): list of image filenames (e.g. .nii.gz) to segment. Multichannel models require multiple
             images to segment, e.i., len(fname_images) > 1.
         gpu_id (int): Number representing gpu number if available. Currently does NOT support multiple GPU segmentation.
-        options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename
-            (e.g., .nii.gz) containing processing information (e.i., spinal cord segmentation, spinal location or MS
-            lesion classification)
+        options (dict): Contains postprocessing steps, film metadata, microscopy PixelSize metadata and prior filename
+            (fname_prior) which is an image filename (e.g., .nii.gz) containing processing information
+            (e.g., spinal cord segmentation, spinal location or MS lesion classification).
             e.g., spinal cord centerline, used to crop the image prior to segment it if provided.
             The segmentation is not performed on the slices that are empty in this image.
 
@@ -345,7 +345,10 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         logger.warning("fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
-    # TODO: Add PixelSize from options to filename_pairs metadata for microscopy inference (issue #306)
+    # Add microscopy PixelSize metadata from options to metadata for filenames_pairs
+    if (options is not None) and ('PixelSize' in options):
+        metadata['PixelSize'] = options['PixelSize']
+
     filename_pairs = [(fname_images, None, fname_roi, metadata if isinstance(metadata, list) else [metadata])]
 
     kernel_3D = bool('Modified3DUNet' in context and context['Modified3DUNet']['applied']) or \
