@@ -456,7 +456,9 @@ class SegmentationPair(object):
 
         The implementation of this method is dependent on the development of the corresponding
         microscopy BEP (github.com/ivadomed/ivadomed/issues/301, bids.neuroimaging.io/bep031):
-        * "pixdim" (zooms) for Nifti1Image object is extracted from PixelSize metadata (from BIDS JSON sidecar)
+        * "pixdim" (zooms) for Nifti1Image object is extracted as follows:
+            * For train, test and segment commands, PixelSize is taken from the metadata in BIDS JSON sidecar file.
+            * For inference with the segment_volume function, PixelSize must be provided in the 'options' argument.
         * PixelSize definition in example dataset is a scalar in micrometers (BIDS BEP031 v0.0.2)
         * PixelSize definition may change for 2D [X, Y] and 3D [X, Y, Z] arrays in micrometers (BIDS BEP031 v0.0.3)
 
@@ -498,7 +500,6 @@ class SegmentationPair(object):
                 ps_in_um[2] = ps_in_um[0]
             ps_in_mm = tuple(ps_in_um * conversion_factor)
         else:
-            # TODO: Fix behavior for run_segment_command and inference, no BIDS metadata (#306)
             raise RuntimeError("'PixelSize' is missing from metadata")
 
         # Set "pixdim" (zooms) in Nifti1Image object header
