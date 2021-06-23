@@ -228,7 +228,7 @@ def run_segment_command(context, model_params):
     model_config['postprocessing'] = context['postprocessing']
     with open(path_model_config, 'w') as fp:
         json.dump(model_config, fp, indent=4)
-    options = None
+    options = {}
 
     # Initialize a list of already seen subject ids for multichannel
     seen_subj_ids = []
@@ -261,11 +261,15 @@ def run_segment_command(context, model_params):
         else:
             fname_img = bids_df.df[bids_df.df['filename'] == subject]['path'].to_list()
 
+        # Add film metadata to options for segment_volume
         if 'film_layers' in model_params and any(model_params['film_layers']) and model_params['metadata']:
             metadata = bids_df.df[bids_df.df['filename'] == subject][model_params['metadata']].values[0]
-            options = {'metadata': metadata}
+            options['metadata'] = metadata
 
-        # TODO: Add PixelSize to options for microscopy inference (issue #306)
+        # Add microscopy PixelSize metadata to options for segment_volume
+        if 'PixelSize' in bids_df.df.columns:
+            options['PixelSize'] = bids_df.df.loc[bids_df.df['filename'] == subject]['PixelSize'].values[0]
+
         if fname_img:
             pred_list, target_list = imed_inference.segment_volume(path_model,
                                                                    fname_images=fname_img,
