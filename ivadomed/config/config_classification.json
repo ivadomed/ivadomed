@@ -108,7 +108,6 @@
             "applied_to": ["im"],
             "dataset_type": ["training"]
         },
-      "NumpyToTensor": {"applied_to": ["im"]},
       "NormalizeInstance": {"applied_to": ["im"]}
     }
 }
