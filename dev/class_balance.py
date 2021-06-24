@@ -17,7 +17,7 @@ import numpy as np
 
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed import config_manager as imed_config_manager
-from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
+from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import utils as imed_utils
 from ivadomed import transforms as imed_transforms
 

@@ -6,7 +6,6 @@ from torchvision import transforms as torch_transforms
 
 from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed import config_manager as imed_config_manager
-from ivadomed.loader import loader as imed_loader
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
