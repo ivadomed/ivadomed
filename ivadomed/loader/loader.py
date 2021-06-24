@@ -3,6 +3,8 @@ from loguru import logger
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
+from ivadomed.loader.bids3d_dataset import Bids3DDataset
+from ivadomed.loader.bids_dataset import BidsDataset
 
 
 def load_dataset(bids_df, data_list, transforms_params, model_params, target_suffix, roi_params,
@@ -41,8 +43,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
     Note: For more details on the parameters transform_params, target_suffix, roi_params, contrast_params,
     slice_filter_params and object_detection_params see :doc:`configuration_file`.
     """
-    from ivadomed.loader.bids3d_dataset import Bids3DDataset
-    from ivadomed.loader.bids_dataset import BidsDataset
+
     # Compose transforms
     tranform_lst, _ = imed_transforms.prepare_transforms(copy.deepcopy(transforms_params), requires_undo)
 
