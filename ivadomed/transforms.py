@@ -118,6 +118,8 @@ class Compose(object):
 
             # call transform
             if transform in globals():
+                if transform == "NumpyToTensor":
+                    continue
                 params_cur = {k: parameters[k] for k in parameters if k != "applied_to" and k != "preprocessing"}
                 transform_obj = globals()[transform](**params_cur)
             else:
