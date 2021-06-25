@@ -119,6 +119,9 @@ class ConfigurationManager(object):
         for k in keys:
             # Verify if key is still in the dict
             if k in context:
+                if k == "NumpyToTensor":
+                    del context[k]
+                    continue
                 v = context[k]
                 # Verify if value is a dictionary
                 if isinstance(v, collections.abc.Mapping):
