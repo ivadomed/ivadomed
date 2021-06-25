@@ -28,6 +28,59 @@ ROI_PATH = os.path.join(__data_testing_dir__, "derivatives", "labels", "sub-unf0
                         "sub-unf01_T1w_seg-manual.nii.gz")
 
 
+def test_segment_volume_2d_NumpyToTensor_retrocompatibility(download_functional_test_files):
+    model = imed_models.Unet(in_channel=1,
+                             out_channel=1,
+                             depth=2,
+                             drop_rate=DROPOUT,
+                             bn_momentum=BN)
+
+    if not os.path.exists(PATH_MODEL):
+        os.mkdir(PATH_MODEL)
+
+    torch.save(model, os.path.join(PATH_MODEL, "model_test.pt"))
+    config = {
+        "loader_parameters": {
+            "slice_filter_params": {
+                "filter_empty_mask": False,
+                "filter_empty_input": False
+            },
+            "roi_params": {
+                "suffix": "_seg-manual",
+                "slice_filter_roi": 10
+            },
+            "slice_axis": "axial"
+        },
+        "transformation": {
+            "Resample": {"wspace": 0.75, "hspace": 0.75},
+            "ROICrop": {"size": [48, 48]},
+            "RandomTranslation": {
+                "translate": [0.03, 0.03],
+                "applied_to": ["im", "gt"],
+                "dataset_type": ["training"]
+            },
+            "NumpyToTensor": {},
+            "NormalizeInstance": {"applied_to": ["im"]}
+        },
+        "postprocessing": {},
+        "training_parameters": {
+            "batch_size": BATCH_SIZE
+        }
+    }
+
+    PATH_CONFIG = os.path.join(PATH_MODEL, 'model_test.json')
+    with open(PATH_CONFIG, 'w') as fp:
+        json.dump(config, fp)
+
+    nib_lst, _ = imed_inference.segment_volume(PATH_MODEL, [IMAGE_PATH], options={'fname_prior': ROI_PATH})
+    nib_img = nib_lst[0]
+    assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
+    assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
+    assert nib_img.dataobj.dtype == 'float32'
+
+    shutil.rmtree(PATH_MODEL)
+
+
 def test_segment_volume_2d(download_functional_test_files):
     model = imed_models.Unet(in_channel=1,
                              out_channel=1,
