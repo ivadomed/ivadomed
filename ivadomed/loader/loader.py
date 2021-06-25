@@ -632,7 +632,6 @@ class MRI2DSegmentationDataset(Dataset):
 
     def load_filenames(self):
         """Load preprocessed pair data (input and gt) in handler."""
-
         for input_filenames, gt_filenames, roi_filename, metadata in self.filename_pairs:
             roi_pair = SegmentationPair(input_filenames, roi_filename, metadata=metadata, slice_axis=self.slice_axis,
                                         cache=self.cache, prepro_transforms=self.prepro_transforms)
@@ -755,9 +754,6 @@ class MRI2DSegmentationDataset(Dataset):
 
         # Update metadata_input with metadata_roi
         metadata_gt = imed_loader_utils.update_metadata(metadata_input, metadata_gt)
-
-
-
 
         if self.task == "segmentation":
             # Run transforms on images
