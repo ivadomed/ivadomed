@@ -365,17 +365,23 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         logger.warning("fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
-    # Add microscopy PixelSize metadata from options to metadata for filenames_pairs
+    kernel_3D = bool('Modified3DUNet' in context and context['Modified3DUNet']['applied']) or \
+                not context['default_model']['is_2d']
+
+    # Assign length_2D and stride_2D for 2D patching
+    length_2D = context["default_model"]["length_2D"] if "length_2D" in context["default_model"] else []
+    stride_2D = context["default_model"]["stride_2D"] if "stride_2D" in context["default_model"] else []
+    is_2d_patch = bool(length_2D)
+
+    # Adjust stride_2D with overlap_2D option if present
+    if is_2d_patch and (options is not None) and ('overlap_2D' in options):
+        stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, options['overlap_2D'])]
+
+    # Add microscopy PixelSize from options to metadata for filenames_pairs
     if (options is not None) and ('PixelSize' in options):
         metadata['PixelSize'] = options['PixelSize']
 
     filename_pairs = [(fname_images, None, fname_roi, metadata if isinstance(metadata, list) else [metadata])]
-
-    kernel_3D = bool('Modified3DUNet' in context and context['Modified3DUNet']['applied']) or \
-                not context['default_model']['is_2d']
-    length_2D = context["default_model"]["length_2D"] if "length_2D" in context["default_model"] else []
-    stride_2D = context["default_model"]["stride_2D"] if "stride_2D" in context["default_model"] else []
-    is_2d_patch = bool(length_2D)
 
     if kernel_3D:
         ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
