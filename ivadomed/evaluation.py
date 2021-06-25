@@ -7,6 +7,7 @@ from loguru import logger
 from scipy.ndimage import label, generate_binary_structure
 from tqdm import tqdm
 
+from ivadomed import inference as imed_inference
 from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
 from ivadomed.loader import utils as imed_loader_utils
@@ -53,6 +54,10 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
         fname_gt = bids_df.df[bids_df.df['filename']
                           .str.contains('|'.join(bids_df.get_derivatives(subj_acq, all_deriv)))]['path'].to_list()
 
+        # Get filename extension of first ground-truth before updating path to NifTI
+        # Used for writing PNG painted files when subject file is not NifTI
+        extension = imed_loader_utils.get_file_extension(fname_gt[0])
+
         # Check fname_gt extentions and update paths if not NifTI
         fname_gt = [imed_loader_utils.update_filename_to_nifti(fname) for fname in fname_gt]
 
@@ -81,6 +86,16 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
         fname_paint = fname_pred.split('.nii.gz')[0] + '_painted.nii.gz'
         nib_painted = nib.Nifti1Image(data_painted, nib_pred.affine)
         nib.save(nib_painted, fname_paint)
+
+        # Write painted PNG if subject file is not NifTI
+        # For Microscopy PNG/TIF files
+        # TODO: implement OMETIFF behavior (elif "ome" in extension)
+        if "nii" not in extension:
+            painted_list = imed_inference.split_classes(nib_painted)
+            imed_inference.pred_to_png(painted_list,
+                                       target_suffix,
+                                       os.path.join(path_preds, subj_acq),
+                                       painted=True)
 
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
