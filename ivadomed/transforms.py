@@ -205,7 +205,6 @@ class NumpyToTensor(ImedTransform):
         sample = np.array(sample)
         # Use np.ascontiguousarray to avoid axes permutations issues
         arr_contig = np.ascontiguousarray(sample, dtype=sample.dtype)
-
         return torch.from_numpy(arr_contig), metadata
 
 
@@ -1107,7 +1106,6 @@ def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
     Returns:
         tuple: Segmentation pair and roi pair.
     """
-
     if transforms is None:
         return (seg_pair, roi_pair)
 
