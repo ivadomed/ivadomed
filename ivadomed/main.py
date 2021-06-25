@@ -280,9 +280,17 @@ def run_segment_command(context, model_params):
                 os.makedirs(pred_path)
 
             for pred, target in zip(pred_list, target_list):
-                filename = subject.split('.')[0] + target + "_pred" + \
-                           ".nii.gz"
+                filename = subject.split('.')[0] + target + "_pred" + ".nii.gz"
                 nib.save(pred, os.path.join(pred_path, filename))
+
+            # Get subject file extension and write PNG if not NifTI
+            # For Microscopy PNG/TIF files
+            # TODO: implement OMETIFF behavior (elif "ome" in extension)
+            extension = imed_loader_utils.get_file_extension(subject)
+            if "nii" not in extension:
+                imed_inference.pred_to_png(pred_list,
+                                           target_list,
+                                           os.path.join(pred_path, subject).replace(extension, ''))
 
 
 def run_command(context, n_gif=0, thr_increment=None, resume_training=False):
