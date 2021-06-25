@@ -3,6 +3,7 @@ import nibabel as nib
 import numpy as np
 import onnxruntime
 import torch
+import imageio
 import joblib
 from typing import List
 
@@ -201,6 +202,25 @@ def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fn
         nib.save(nib_pred, fname_out)
 
     return nib_pred
+
+
+def pred_to_png(pred_list: list, target_list: list, subj_path: str, painted: bool = False):
+    """Save the network predictions as PNG files with suffix "_target_pred".
+
+    Args:
+        pred_list (list of np arrays): list of 2D predictions.
+        target_list (list of str): list of target suffixes.
+        subj_path (str): Path of the subject filename in output folder without extension
+            (e.g. "path_output/pred_masks/sub-01_sample-01_SEM").
+        painted (bool): If True, the suffix "_painted" is appended to the filename.
+    """
+    for pred, target in zip(pred_list, target_list):
+        if painted:
+            filename = subj_path + target + "_pred_painted.png"
+        else:
+            filename = subj_path + target + "_pred.png"
+        data = pred.get_fdata()
+        imageio.imwrite(filename, data, format='png')
 
 
 def process_transformations(context: dict, fname_roi: str, fname_prior: str, metadata: dict, slice_axis: int,
