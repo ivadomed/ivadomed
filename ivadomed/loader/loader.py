@@ -763,7 +763,7 @@ class MRI2DSegmentationDataset(Dataset):
             # Make sure stack_gt is binarized
             if stack_gt is not None and not self.soft_gt:
                 stack_gt = imed_postpro.threshold_predictions(stack_gt, thr=0.5).astype(np.uint8)
-                
+
         else:
             # Force no transformation on labels for classification task
             # stack_gt is a tensor of size 1x1, values: 0 or 1
