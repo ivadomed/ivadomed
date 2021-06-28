@@ -81,7 +81,7 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
     """
     t = os.listdir(path)
     t.remove('derivatives')
-    
+
     for i in range(len(t)):
         sub = t[i]
         path_image = os.path.join(path, t[i], 'anat', t[i] + suffix + '.nii.gz')
