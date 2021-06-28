@@ -29,6 +29,10 @@
             "pattern": "[_/\\\\]+ce-([a-zA-Z0-9]+)"
         },
         {
+            "name": "staining",
+            "pattern": "[_/\\\\]+stain-([a-zA-Z0-9]+)"
+        },
+        {
             "name": "reconstruction",
             "pattern": "[_/\\\\]+rec-([a-zA-Z0-9]+)"
         },
@@ -82,10 +86,6 @@
             "pattern": "[_/\\\\]+chunk-([0-9]+)"
         },
         {
-            "name": "downsampling",
-            "pattern": "[_/\\\\]+down-([0-9]+)"
-        },
-        {
             "name": "suffix",
             "pattern": "[._]*([a-zA-Z0-9]*?)\\.[^/\\\\]+$"
         },
@@ -99,7 +99,7 @@
         },
         {
             "name": "datatype",
-            "pattern": "[/\\\\]+(func|anat|fmap|dwi|meg|eeg|microscopy|ct)[/\\\\]+"
+            "pattern": "[/\\\\]+(anat|beh|dwi|eeg|fmap|func|ieeg|meg|perf|microscopy|ct)[/\\\\]+"
         },
         {
             "name": "extension",
