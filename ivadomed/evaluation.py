@@ -50,8 +50,14 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
     for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
         # Fnames of pred and ground-truth
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
-        fname_gt = bids_df.df[bids_df.df['filename']
+        derivatives = bids_df.df[bids_df.df['filename']
                           .str.contains('|'.join(bids_df.get_derivatives(subj_acq, all_deriv)))]['path'].to_list()
+        # Ordering ground-truth the same as target_suffix
+        fname_gt = [None] * len(target_suffix)
+        for deriv in derivatives:
+            for idx, suffix in enumerate(target_suffix):
+                if suffix in deriv:
+                    fname_gt[idx] = deriv
 
         # Check fname_gt extentions and update paths if not NifTI
         fname_gt = [imed_loader_utils.update_filename_to_nifti(fname) for fname in fname_gt]
