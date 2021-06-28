@@ -9,9 +9,6 @@ def setup_function():
     create_tmp_dir()
 
 
-# TODO (#720): un-silence this test. This test was silenced because it was failing after introducing the copy of the header in #714.
-#  It might be possible to solve the issue with the test by initializing the "image" with a proper shape, i.e. one that
-#  would match that of the prediction.
 def test_save_rgb(download_data_testing_test_files):
     # Create image with shape HxWxDxC
     image = [[[[0 for i in range(10)] for i in range(10)] for i in range(4)] for i in range(3)]
