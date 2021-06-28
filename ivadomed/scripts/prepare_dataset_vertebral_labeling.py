@@ -6,7 +6,7 @@ import numpy as np
 import os
 import ivadomed.maths as imed_maths
 import ivadomed.loader.utils as imed_loader_utils
-
+import textwrap
 
 def mask2label(path_label, aim=0):
     """Retrieve points coordinates and value from a label file containing singl voxel label.
@@ -114,7 +114,20 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class = argparse.RawDescriptionHelpFormatter,
+        description = textwrap.dedent("""
+            This function takes as input a path to a dataset and generates a set of images:
+                (i) mid-sagittal image and
+                (ii) heatmap of disc labels associated with the mid-sagittal image. Please refer to for more details. 
+            
+            Example:
+                python3 prepare_dataset_vertebral_labeling.py --path /data/data-multi-subject/ -s _T2w
+            
+            Reference:
+                https://github.com/neuropoly/vertebral-labeling-deep-learning
+                """)
+    )
     parser.add_argument("-p", "--path", dest="path", required=False, type=str,
                         help="Path to bids folder")
     parser.add_argument("-s", "--suffix", dest="suffix", required=False,
