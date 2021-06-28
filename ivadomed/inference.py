@@ -319,8 +319,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         fname_images (list): list of image filenames (e.g. .nii.gz) to segment. Multichannel models require multiple
             images to segment, e.i., len(fname_images) > 1.
         gpu_id (int): Number representing gpu number if available. Currently does NOT support multiple GPU segmentation.
-        options (dict): Contains postprocessing steps, film metadata, microscopy PixelSize metadata and prior filename
-            (fname_prior) which is an image filename (e.g., .nii.gz) containing processing information
+        options (dict): Contains postprocessing steps, film metadata, microscopy PixelSize and overlap_2D metadata, and
+            prior filename (fname_prior) which is an image filename (e.g., .nii.gz) containing processing information
             (e.g., spinal cord segmentation, spinal location or MS lesion classification).
             e.g., spinal cord centerline, used to crop the image prior to segment it if provided.
             The segmentation is not performed on the slices that are empty in this image.
