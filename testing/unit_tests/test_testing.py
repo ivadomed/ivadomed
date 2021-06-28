@@ -132,7 +132,7 @@ def test_inference(download_data_testing_test_files, transforms_dict, test_lst, 
     }])
 @pytest.mark.parametrize('test_lst',
     [['sub-rat3_ses-01_sample-data9_SEM.png', 'sub-rat3_ses-02_sample-data10_SEM.png']])
-@pytest.mark.parametrize('target_lst', [["_seg-axon-manual"]])
+@pytest.mark.parametrize('target_lst', [["_seg-axon-manual", "_seg-myelin-manual"]])
 @pytest.mark.parametrize('roi_params', [{"suffix": None, "slice_filter_roi": None}])
 @pytest.mark.parametrize('testing_params', [{
     "binarize_maxpooling": {},
@@ -151,7 +151,7 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
     """
     cuda_available, device = imed_utils.define_device(GPU_ID)
 
-    model_params = {"name": "Unet", "is_2d": True}
+    model_params = {"name": "Unet", "is_2d": True, "out_channel": 3}
     loader_params = {
         "transforms_params": transforms_dict,
         "data_list": test_lst,
@@ -192,21 +192,11 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
     })
 
     # Model
-    model = imed_models.Unet()
+    model = imed_models.Unet(out_channel=model_params['out_channel'])
 
     if cuda_available:
         model.cuda()
     model.eval()
-
-    metric_fns = [imed_metrics.dice_score,
-                  imed_metrics.hausdorff_score,
-                  imed_metrics.precision_score,
-                  imed_metrics.recall_score,
-                  imed_metrics.specificity_score,
-                  imed_metrics.intersection_over_union,
-                  imed_metrics.accuracy_score]
-
-    metric_mgr = imed_metrics.MetricManager(metric_fns)
 
     if not os.path.isdir(__output_dir__):
         os.makedirs(__output_dir__)
@@ -218,7 +208,7 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
                                                    ofolder=__output_dir__,
                                                    cuda_available=cuda_available)
 
-    assert len(os.listdir(__output_dir__)) == len(test_lst)
+    assert len([x for x in os.listdir(__output_dir__) if x.endswith(".nii.gz")]) == len(test_lst)
 
 
 def teardown_function():
