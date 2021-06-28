@@ -46,7 +46,7 @@
             "name": "DiceLoss"
         },
         "training_time": {
-            "num_epochs": 5,
+            "num_epochs": 15,
             "early_stopping_patience": 50,
             "early_stopping_epsilon": 0.001
         },
@@ -82,6 +82,9 @@
         "applied": false,
         "metadata": "contrasts",
         "film_layers": [0, 1, 0, 0, 0, 0, 0, 0]
+    },
+    "postprocessing": {
+        "binarize_maxpooling": {}
     },
     "transformation": {
       "CenterCrop": {
