@@ -46,7 +46,7 @@
             "name": "DiceLoss"
         },
         "training_time": {
-            "num_epochs": 5,
+            "num_epochs": 15,
             "early_stopping_patience": 50,
             "early_stopping_epsilon": 0.001
         },
@@ -75,13 +75,16 @@
         "bn_momentum": 0.1,
         "final_activation": "sigmoid",
         "depth": 3,
-        "length_2D": [],
-        "stride_2D": []
+        "length_2D": [128, 128],
+        "stride_2D": [104, 104]
     },
     "FiLMedUnet": {
         "applied": false,
         "metadata": "contrasts",
         "film_layers": [0, 1, 0, 0, 0, 0, 0, 0]
+    },
+    "postprocessing": {
+        "binarize_maxpooling": {}
     },
     "transformation": {
       "CenterCrop": {

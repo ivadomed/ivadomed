@@ -182,6 +182,9 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
 
             if model_params["is_2d"]:
                 preds_idx_arr = None
+                idx_slice = batch['input_metadata'][smp_idx][0]['slice_index']
+                n_slices = batch['input_metadata'][smp_idx][0]['data_shape'][-1]
+                last_slice_bool = (idx_slice + 1 == n_slices)
                 last_sample_bool = (last_batch_bool and smp_idx == len(preds_cpu) - 1)
 
                 length_2D = model_params["length_2D"] if "length_2D" in model_params else []
@@ -191,30 +194,34 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     preds_idx_undo, metadata_idx, last_patch_bool, image, weight_matrix = \
                         imed_inference.image_reconstruction(batch, preds_cpu, testing_params['undo_transforms'],
                                                             smp_idx, image, weight_matrix)
-                    # If last patch of the slice
-                    if last_patch_bool:
-                        # preds_idx_undo is a list n_label arrays
-                        preds_idx_arr = np.array(preds_idx_undo)
-
-                        # TODO: gt_filenames should not be a list
-                        fname_ref = list(filter(None, metadata_idx[0]['gt_filenames']))[0]
-
                 else:
+                    # Set last_patch_bool to True (only one patch per slice)
+                    last_patch_bool = True
                     # undo transformations for slice
                     preds_idx_undo, metadata_idx = testing_params["undo_transforms"](preds_cpu[smp_idx],
                                                                                      batch['gt_metadata'][smp_idx],
                                                                                      data_type='gt')
+                if last_patch_bool:
                     # preds_idx_undo is a list n_label arrays
                     preds_idx_arr = np.array(preds_idx_undo)
 
                     # TODO: gt_filenames should not be a list
                     fname_ref = list(filter(None, metadata_idx[0]['gt_filenames']))[0]
 
+                if preds_idx_arr is not None:
+                    # add new sample to pred_tmp_lst, of size n_label X h X w ...
+                    pred_tmp_lst.append(preds_idx_arr)
+
+                    # TODO: slice_index should be stored in gt_metadata as well
+                    z_tmp_lst.append(int(idx_slice))
+                    filenames = metadata_idx[0]['gt_filenames']
+
                 # NEW COMPLETE VOLUME
-                if pred_tmp_lst and (fname_ref != fname_tmp or last_sample_bool) and task != "classification":
+                if (pred_tmp_lst and ((last_patch_bool and last_slice_bool) or last_sample_bool)
+                    and task != "classification"):
                     # save the completely processed file as a NifTI file
                     if ofolder:
-                        fname_pred = os.path.join(ofolder, Path(fname_tmp).name)
+                        fname_pred = os.path.join(ofolder, Path(fname_ref).name)
                         fname_pred = fname_pred.rsplit("_", 1)[0] + '_pred.nii.gz'
                         # If Uncertainty running, then we save each simulation result
                         if testing_params['uncertainty']['applied']:
@@ -224,7 +231,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         fname_pred = None
                     output_nii = imed_inference.pred_to_nib(data_lst=pred_tmp_lst,
                                                         z_lst=z_tmp_lst,
-                                                        fname_ref=fname_tmp,
+                                                        fname_ref=fname_ref,
                                                         fname_out=fname_pred,
                                                         slice_axis=slice_axis,
                                                         kernel_dim='2d',
@@ -247,17 +254,10 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         #                              fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                         #                              imed_utils.AXIS_DCT[testing_params['slice_axis']])
 
-                    # re-init pred_stack_lst
+
+                    # re-init pred_stack_lst and last_slice_bool
                     pred_tmp_lst, z_tmp_lst = [], []
-
-                if preds_idx_arr is not None:
-                    # add new sample to pred_tmp_lst, of size n_label X h X w ...
-                    pred_tmp_lst.append(preds_idx_arr)
-
-                    # TODO: slice_index should be stored in gt_metadata as well
-                    z_tmp_lst.append(int(batch['input_metadata'][smp_idx][0]['slice_index']))
-                    fname_tmp = fname_ref
-                    filenames = metadata_idx[0]['gt_filenames']
+                    last_slice_bool = False
 
             else:
                 pred_undo, metadata, last_sample_bool, volume, weight_matrix = \
