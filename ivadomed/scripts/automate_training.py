@@ -472,7 +472,7 @@ def format_results(results_df, config_list, param_list):
 
 def automate_training(file_config, file_config_hyper, fixed_split, all_combin, path_data=None,
                       n_iterations=1, run_test=False, all_logs=False, thr_increment=None,
-                      multi_params=False, output_dir=None):
+                      multi_params=False, output_dir=None, plot_comparison=False):
     """Automate multiple training processes on multiple GPUs.
 
     Hyperparameter optimization of models is tedious and time-consuming. This function automatizes
@@ -774,8 +774,8 @@ def automate_training(file_config, file_config_hyper, fixed_split, all_combin, p
     if n_iterations > 1:
         compute_statistics(results_df, n_iterations, run_test)
 
-    # If the test is selected, also show the violinplots
-    if run_test:
+    # If the test is selected, also show the violin plots
+    if plot_comparison:
         output_folders = [config_list[i]["path_output"] for i in range(len(config_list))]
         violin_plots.visualize_and_compare_models(ofolders=output_folders)
 

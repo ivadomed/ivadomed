@@ -1,9 +1,11 @@
 import logging
 import os
 import pytest
-from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir, __data_testing_dir__, download_functional_test_files, \
-    check_sha256
+from pytest_console_scripts import script_runner
+from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir, __data_testing_dir__, \
+    download_functional_test_files, check_sha256
 from testing.common_testing_util import remove_tmp_dir
+
 logger = logging.getLogger(__name__)
 
 

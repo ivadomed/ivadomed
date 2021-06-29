@@ -12,7 +12,7 @@
         "path_data": ["data_example_microscopy_sem"],
         "bids_config": "ivadomed/config/config_bids.json",
         "subject_selection": {"n": [], "metadata": [], "value": []},
-        "target_suffix": ["_seg-myelin-manual"],
+        "target_suffix": ["_seg-axon-manual", "_seg-myelin-manual"],
         "extensions": [".png"],
         "roi_params": {
             "suffix": null,
@@ -37,7 +37,7 @@
         "split_method" : "sample_id",
         "data_testing": {"data_type": null, "data_value":[]},
         "balance": null,
-        "train_fraction": 0.6,
+        "train_fraction": 0.2,
         "test_fraction": 0.2
     },
     "training_parameters": {
@@ -46,7 +46,7 @@
             "name": "DiceLoss"
         },
         "training_time": {
-            "num_epochs": 1,
+            "num_epochs": 15,
             "early_stopping_patience": 50,
             "early_stopping_epsilon": 0.001
         },
@@ -75,20 +75,21 @@
         "bn_momentum": 0.1,
         "final_activation": "sigmoid",
         "depth": 3,
-        "length_2D": [512, 512],
-        "stride_2D": [488, 488]
+        "length_2D": [128, 128],
+        "stride_2D": [104, 104]
     },
     "FiLMedUnet": {
         "applied": false,
         "metadata": "contrasts",
         "film_layers": [0, 1, 0, 0, 0, 0, 0, 0]
     },
+    "postprocessing": {
+        "binarize_maxpooling": {}
+    },
     "transformation": {
-      "Resample": {
-            "wspace": 0.0001,
-            "hspace": 0.0001
+      "CenterCrop": {
+            "size": [256, 256]
       },
-      "NumpyToTensor": {},
       "NormalizeInstance": {"applied_to": ["im"]}
     }
 }
