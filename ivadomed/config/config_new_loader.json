@@ -75,8 +75,8 @@
         "bn_momentum": 0.1,
         "final_activation": "sigmoid",
         "depth": 3,
-        "length_2D": [],
-        "stride_2D": []
+        "length_2D": [128, 128],
+        "stride_2D": [104, 104]
     },
     "FiLMedUnet": {
         "applied": false,
