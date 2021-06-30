@@ -316,11 +316,25 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         fname_images (list): list of image filenames (e.g. .nii.gz) to segment. Multichannel models require multiple
             images to segment, e.i., len(fname_images) > 1.
         gpu_id (int): Number representing gpu number if available. Currently does NOT support multiple GPU segmentation.
-        options (dict): Contains postprocessing steps, film metadata, microscopy PixelSize and overlap_2D metadata, and
-            prior filename (fname_prior) which is an image filename (e.g., .nii.gz) containing processing information
-            (e.g., spinal cord segmentation, spinal location or MS lesion classification).
-            e.g., spinal cord centerline, used to crop the image prior to segment it if provided.
-            The segmentation is not performed on the slices that are empty in this image.
+        options (dict): This can optionally contain any of the following key-value pairs:
+            * 'binarize_prediction': (float) Binarize segmentation with specified threshold.
+                                     Predictions below the threshold become 0, and predictions above or equal to
+                                     threshold become 1. Set to 0 for no thresholding (i.e., soft segmentation).
+            * 'fill_holes': (int) "Fill small holes in the segmentation, choices=(0, 1).
+            * 'keep_largest': (int) Keep the largest connected-objects from the output segmentation.
+                              Specify the number of objects to keep. To keep all objects, set to 0.
+            * 'remove_small': (str) Minimal object size to keep with unit (mm3 or vox). A single value can be provided
+                              or one value per prediction class. Single value example: "1mm3", "5vox". Multiple values
+                              example: "10 20 10vox" (remove objects smaller than 10 voxels for class 1 and 3,
+                              and smaller than 20 voxels for class 2).
+            * 'PixelSize': (list of float) List of microscopy PixelSize in micrometers.
+                           Length equals 2 [X, Y] for 2D or 3 [X, Y, Z] for 3D.
+            * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [X, Y].
+            * 'metadata': (str) Film metadata.
+            * 'fname_prior': (str) An image filename (e.g., .nii.gz) containing processing information
+                (e.g., spinal cord segmentation, spinal location or MS lesion classification).
+                e.g., spinal cord centerline, used to crop the image prior to segment it if provided.
+                The segmentation is not performed on the slices that are empty in this image.
 
     Returns:
         list: List of nibabel objects containing the soft segmentation(s), one per prediction class.
