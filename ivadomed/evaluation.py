@@ -61,7 +61,6 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
                     fname_gt[idx] = deriv
 
         # Get filename extension of first ground-truth before updating path to NifTI
-        # Used for writing PNG painted files when subject file is not NifTI
         extension = imed_loader_utils.get_file_extension(fname_gt[0])
 
         # Check fname_gt extentions and update paths if not NifTI
@@ -93,9 +92,7 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
         nib_painted = nib.Nifti1Image(data_painted, nib_pred.affine)
         nib.save(nib_painted, fname_paint)
 
-        # Write painted PNG if subject file is not NifTI
-        # For Microscopy PNG/TIF files
-        # TODO: implement OMETIFF behavior (elif "ome" in extension)
+        # For Microscopy PNG/TIF files (TODO: implement OMETIFF behavior)
         if "nii" not in extension:
             painted_list = imed_inference.split_classes(nib_painted)
             imed_inference.pred_to_png(painted_list,

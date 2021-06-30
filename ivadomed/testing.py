@@ -254,9 +254,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         #                              fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                         #                              imed_utils.AXIS_DCT[testing_params['slice_axis']])
 
-                    # Get subject file extension and write PNG if not NifTI
-                    # For Microscopy PNG/TIF files
-                    # TODO: implement OMETIFF behavior (elif "ome" in extension)
+                    # For Microscopy PNG/TIF files (TODO: implement OMETIFF behavior)
                     extension = imed_loader_utils.get_file_extension(fname_ref)
                     if "nii" not in extension and fname_pred:
                         output_list = imed_inference.split_classes(output_nii)
