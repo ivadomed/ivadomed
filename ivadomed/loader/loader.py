@@ -460,7 +460,9 @@ class SegmentationPair(object):
             * For train, test and segment commands, PixelSize is taken from the metadata in BIDS JSON sidecar file.
             * For inference with the segment_volume function, PixelSize must be provided in the 'options' argument.
         * PixelSize definition in example dataset is a scalar in micrometers (BIDS BEP031 v0.0.2)
-        * PixelSize definition may change for 2D [X, Y] and 3D [X, Y, Z] arrays in micrometers (BIDS BEP031 v0.0.3)
+        * PixelSize definition changed for list of 2-numbers [X, Y] or 3-numbers [X, Y, Z] in micrometers
+          for 2D and 3D respectively (BIDS BEP031 v0.0.3)
+        * Both PixelSize definitions are supported in this function.
 
         TODO: (#739) implement OMETIFF behavior (if "ome" in extension)
 
