@@ -95,10 +95,10 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
     """Returns one hot encoder which is needed to update the model parameters when FiLMedUnet is applied.
 
     Args:
-        context (dict): configuration dict.
-        folder_model (str): foldername which contains trained model and its configuration file.
-        options (dict): contains postprocessing steps and prior filename containing processing information
-        ds (Dataset): dataset used for the segmentation.
+        context (dict): Configuration dict.
+        folder_model (str): Foldername which contains trained model and its configuration file.
+        options (dict): Contains film metadata information.
+        ds (Dataset): Dataset used for the segmentation.
 
     Returns:
         dict: onehotencoder used in the model params.
@@ -260,8 +260,8 @@ def set_option(options: dict, postpro: dict, context: dict, key: str):
        Otherwise, when the key is already found in the postprocessing attritute of the context, we remove it
 
     Args:
-        options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename.
-        postpro (dict): postprocessing settings.
+        options (dict): Contains postprocessing steps information.
+        postpro (dict): Postprocessing settings.
         context (dict): Configuration dict.
         key (str): The key of the postprocessing option we wish to set.
 
@@ -279,7 +279,7 @@ def set_postprocessing_options(options: dict, context: dict):
     """Updates the postprocessing options based on existing settings found in options.
 
     Args:
-        options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename.
+        options (dict): Contains postprocessing steps information.
         context (dict): Configuration dict.
     """
     postpro = {}
