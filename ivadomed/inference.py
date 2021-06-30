@@ -204,7 +204,7 @@ def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fn
     return nib_pred
 
 
-def pred_to_png(pred_list: list, target_list: list, subj_path: str, painted: bool = False):
+def pred_to_png(pred_list: list, target_list: list, subj_path: str, suffix: str = ''):
     """Save the network predictions as PNG files with suffix "_target_pred".
 
     Args:
@@ -212,13 +212,10 @@ def pred_to_png(pred_list: list, target_list: list, subj_path: str, painted: boo
         target_list (list of str): list of target suffixes.
         subj_path (str): Path of the subject filename in output folder without extension
             (e.g. "path_output/pred_masks/sub-01_sample-01_SEM").
-        painted (bool): If True, the suffix "_painted" is appended to the filename.
+        suffix (str): additional suffix to append to the filename.
     """
     for pred, target in zip(pred_list, target_list):
-        if painted:
-            filename = subj_path + target + "_pred_painted.png"
-        else:
-            filename = subj_path + target + "_pred.png"
+        filename = subj_path + target + "_pred" + suffix + ".png"
         data = pred.get_fdata()
         imageio.imwrite(filename, data, format='png')
 

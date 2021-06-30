@@ -101,7 +101,7 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
             imed_inference.pred_to_png(painted_list,
                                        target_suffix,
                                        os.path.join(path_preds, subj_acq),
-                                       painted=True)
+                                       suffix="_painted")
 
         # SAVE RESULTS FOR THIS PRED
         results_pred['image_id'] = subj_acq
