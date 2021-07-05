@@ -263,6 +263,7 @@ class Resample(ImedTransform):
 
         if len(zooms) == 2:
             zooms += [1.0]
+
         if self.flag_pixel:
             hfactor = self.hspace / sample.shape[0]
             wfactor = self.wspace / sample.shape[1]
