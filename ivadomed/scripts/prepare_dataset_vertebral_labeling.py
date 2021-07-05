@@ -128,26 +128,27 @@ def get_parser():
                 https://github.com/neuropoly/vertebral-labeling-deep-learning
                 """)
     )
-    parser.add_argument("-p", "--path", dest="path", required=False, type=str,
-                        help="Path to bids folder")
-    parser.add_argument("-s", "--suffix", dest="suffix", required=False,
-                        type=str, help="Suffix of the input file as in sub-xxxSUFFIX.nii.gz (E.g., _T2w)")
-    parser.add_argument("-a", "--aim", dest="aim", default=0, type=int,
-                        help="-1 or positive int. If set to any positive int,"
-                             " only label with this value will be taken into account ")
+    parser.add_argument("-p", "--path", dest="path", required=True, type=str,
+                        help="Path to bids folder",
+                        metavar=imed_utils.Metavar.file)
+    parser.add_argument("-s", "--suffix", dest="suffix", required=True, type=str,
+                        help="""Suffix of the input file as in
+                                sub-xxxSUFFIX.nii.gz (E.g., _T2w)""",
+                        metavar=imed_utils.Metavar.str)
+    parser.add_argument("-a", "--aim", dest="aim", default=-1, type=int,
+                        help="""-1 or positive int. If set to any positive int,
+                                only label with this value will be taken into account""",
+                        metavar=imed_utils.Metavar.int)
     return parser
 
 
-def main():
+def main(args=None):
     imed_utils.init_ivadomed()
 
     parser = get_parser()
-    args = parser.parse_args()
-    bids_path = args.path
-    suffix = args.suffix
-    aim = args.aim
-    # Run Script
-    extract_mid_slice_and_convert_coordinates_to_heatmaps(bids_path, suffix, aim)
+    args = imed_utils.get_arguments(parser, args)
+    extract_mid_slice_and_convert_coordinates_to_heatmaps(path=args.path, suffix=args.suffix,
+                                                          aim=args.aim)
 
 if __name__=='__main__':
     main()
