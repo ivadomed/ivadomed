@@ -79,20 +79,21 @@ working under a virtual environment, which could be set as follows:
      virtualenv venv-ivadomed --python=python3.6
 
 
-Step 2: Install PyTorch 1.5 and TorchVision (CPU)
-+++++++++++++++++++++++++++++++++++++++++++++++++++
-::
+Step 2: Install PyTorch 1.5 and TorchVision
++++++++++++++++++++++++++++++++++++++++++++
 
-    pip install -r requirements.txt
-
-
-(Optional) Alternative Step 2: Install PyTorch 1.5 and TorchVision (GPU)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-If you have a GPU and it has CUDA already setup etc, do the follow or use whatever CUDA version you have.
+If you have a compatible NVIDIA GPU that supports CUDA, run the following command:
 
 ::
 
     pip install -r requirements_gpu.txt
+
+
+If you do not have a compatible GPU, run the following installer to use ``ivadomed`` with CPU.
+
+::
+
+    pip install -r requirements.txt
 
 
 Step 3: Install from release (recommended)
