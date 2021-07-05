@@ -287,6 +287,9 @@ def set_postprocessing_options(options: dict, context: dict):
     if 'binarize_prediction' in options and options['binarize_prediction']:
         postpro['binarize_prediction'] = {"thr": options['binarize_prediction']}
 
+    if 'binarize_maxpooling' in options and options['binarize_maxpooling'] is not None:
+        set_option(options, postpro, context, 'binarize_maxpooling')
+
     if 'keep_largest' in options and options['keep_largest'] is not None:
         set_option(options, postpro, context, 'keep_largest')
 
@@ -319,13 +322,14 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         options (dict): This can optionally contain any of the following key-value pairs:
             * 'binarize_prediction': (float) Binarize segmentation with specified threshold.
                                      Predictions below the threshold become 0, and predictions above or equal to
-                                     threshold become 1. Set to 0 for no thresholding (i.e., soft segmentation).
-            * 'fill_holes': (int) "Fill small holes in the segmentation, choices=(0, 1).
-            * 'keep_largest': (int) Keep the largest connected-objects from the output segmentation.
-                              Specify the number of objects to keep. To keep all objects, set to 0.
-            * 'remove_small': (str) Minimal object size to keep with unit (mm3 or vox). A single value can be provided
-                              or one value per prediction class. Single value example: "1mm3", "5vox". Multiple values
-                              example: "10 20 10vox" (remove objects smaller than 10 voxels for class 1 and 3,
+                                     threshold become 1. Set to -1 for no thresholding (i.e., soft segmentation).
+            * 'binarize_maxpooling': (bool) Binarize by setting to 1 the voxel having the maximum prediction across
+                                     all classes. Useful for multiclass models.
+            * 'fill_holes': (bool) Fill small holes in the segmentation.
+            * 'keep_largest': (bool) Keep the largest connected-object from the output segmentation.
+            * 'remove_small': (list of str) Minimal object size to keep with unit (mm3 or vox). A single value can be provided
+                              or one value per prediction class. Single value example: ["1mm3"], ["5vox"]. Multiple values
+                              example: ["10", "20", "10vox"] (remove objects smaller than 10 voxels for class 1 and 3,
                               and smaller than 20 voxels for class 2).
             * 'PixelSize': (list of float) List of microscopy PixelSize in micrometers.
                            Length equals 2 [X, Y] for 2D or 3 [X, Y, Z] for 3D.
@@ -350,7 +354,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     # Load model training config
     context = imed_config_manager.ConfigurationManager(fname_model_metadata).get_config()
 
-    postpro_list = ['binarize_prediction', 'keep_largest', ' fill_holes', 'remove_small']
+    postpro_list = ['binarize_prediction', 'binarize_maxpooling', 'keep_largest', ' fill_holes',
+                    'remove_small']
     if options is not None and any(pp in options for pp in postpro_list):
         set_postprocessing_options(options, context)
 
