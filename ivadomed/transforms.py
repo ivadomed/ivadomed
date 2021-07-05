@@ -3,6 +3,7 @@ import functools
 import math
 import numbers
 import random
+
 import numpy as np
 import torch
 from scipy.ndimage import zoom
@@ -259,6 +260,7 @@ class Resample(ImedTransform):
         is_2d = sample.shape[-1] == 1
         metadata['preresample_shape'] = sample.shape
         zooms = list(metadata["zooms"])
+
         if len(zooms) == 2:
             zooms += [1.0]
         if self.flag_pixel:
@@ -275,6 +277,7 @@ class Resample(ImedTransform):
         data_out = zoom(sample,
                         zoom=params_resample,
                         order=1 if metadata['data_type'] == 'gt' else 2)
+
         # Data type
         data_out = data_out.astype(sample.dtype)
 
