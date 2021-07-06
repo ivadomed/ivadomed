@@ -336,8 +336,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
             * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [X, Y].
             * 'metadata': (str) Film metadata.
             * 'fname_prior': (str) An image filename (e.g., .nii.gz) containing processing information
-                (e.g., spinal cord segmentation, spinal location or MS lesion classification).
-                e.g., spinal cord centerline, used to crop the image prior to segment it if provided.
+                (e.g., spinal cord segmentation, spinal location or MS lesion classification, spinal cord centerline), 
+                used to crop the image prior to segment it if provided.
                 The segmentation is not performed on the slices that are empty in this image.
 
     Returns:
