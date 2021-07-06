@@ -13,8 +13,9 @@ from sklearn.externals import joblib
 
 from torchvision import transforms as torch_transforms
 
+from ivadomed.loader.bids_dataset import BidsDataset
 from ivadomed import config_manager as imed_config_manager
-from ivadomed.loader import loader as imed_loader, utils as imed_loader_utils
+from ivadomed.loader import utils as imed_loader_utils
 from ivadomed import utils as imed_utils
 from ivadomed import transforms as imed_transforms
 
@@ -62,12 +63,12 @@ def run_main(context):
     metadata_dct = {}
     for subset in ['train', 'valid', 'test']:
         metadata_dct[subset] = {}
-        ds = imed_loader.BidsDataset(context["path_data"],
-                                     subject_lst=split_dct[subset],
-                                     contrast_lst=context["contrast_train_validation"]
-                                     if subset != "test" else context["contrast_test"],
-                                     transform=no_transform,
-                                     slice_filter_fn=imed_loader_utils.SliceFilter())
+        ds = BidsDataset(context["path_data"],
+                         subject_lst=split_dct[subset],
+                         contrast_lst=context["contrast_train_validation"]
+                         if subset != "test" else context["contrast_test"],
+                         transform=no_transform,
+                         slice_filter_fn=imed_loader_utils.SliceFilter())
 
         for m in metadata_type:
             if m in metadata_dct:
