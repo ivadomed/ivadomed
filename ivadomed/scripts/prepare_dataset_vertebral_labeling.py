@@ -122,7 +122,7 @@ def get_parser():
                 (ii) heatmap of disc labels associated with the mid-sagittal image. Please refer to for more details. 
             
             Example:
-                python3 prepare_dataset_vertebral_labeling.py --path /data/data-multi-subject/ -s _T2w
+                python3 prepare_dataset_vertebral_labeling.py --path /data/data-multi-subject/ -s _T1w
             
             Reference:
                 https://github.com/neuropoly/vertebral-labeling-deep-learning
