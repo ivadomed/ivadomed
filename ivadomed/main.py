@@ -552,5 +552,6 @@ def run_main():
                 thr_increment=args.thr_increment if args.thr_increment else None,
                 resume_training=bool(args.resume_training))
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     run_main()
