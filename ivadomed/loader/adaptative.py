@@ -9,8 +9,9 @@ import pandas as pd
 from loguru import logger
 from tqdm import tqdm
 
+from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
+from ivadomed.loader import utils as imed_loader_utils, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
 
@@ -400,11 +401,11 @@ class BIDStoHDF5:
                 else:
                     grp = hdf5_file.create_group(str(subject_id))
 
-                roi_pair = imed_loader.SegmentationPair(input_filename, roi_filename, metadata=metadata,
-                                                        slice_axis=self.slice_axis, cache=False, soft_gt=self.soft_gt)
+                roi_pair = SegmentationPair(input_filename, roi_filename, metadata=metadata,
+                                                                              slice_axis=self.slice_axis, cache=False, soft_gt=self.soft_gt)
 
-                seg_pair = imed_loader.SegmentationPair(input_filename, gt_filename, metadata=metadata,
-                                                        slice_axis=self.slice_axis, cache=False, soft_gt=self.soft_gt)
+                seg_pair = SegmentationPair(input_filename, gt_filename, metadata=metadata,
+                                                                              slice_axis=self.slice_axis, cache=False, soft_gt=self.soft_gt)
                 logger.info("gt filename", gt_filename)
                 input_data_shape, _ = seg_pair.get_pair_shapes()
 

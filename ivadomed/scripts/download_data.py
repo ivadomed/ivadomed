@@ -22,7 +22,7 @@ DICT_URL = {
             `Spine Generic <https://github.com/spine-generic/data-multi-subject>`_.
             Used for Tutorial and example in Ivadomed."""},
     "data_testing": {
-        "url": ["https://github.com/ivadomed/data-testing/archive/r20210322.zip"],
+        "url": ["https://github.com/ivadomed/data-testing/archive/r20210628.zip"],
         "description": "Data Used for integration/unit test in Ivadomed."},
     "t2_tumor": {
         "url": ["https://github.com/ivadomed/t2_tumor/archive/r20200621.zip"],
