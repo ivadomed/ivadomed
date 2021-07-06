@@ -13,7 +13,7 @@ def mask2label(path_label, aim=0):
 
     Args:
         path_label (str): path of nifti image
-        aim (int): -1 will return all points with label between 3 and 30 , any other int > 0
+        aim (int): 0 will return all points with label between 3 and 30 , any other int > 0
             will return only the coordinates of points with label defined by aim.
 
     Returns:
@@ -58,7 +58,7 @@ def rotate_nifti(X):
     return img
 
 
-def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=-1):
+def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=0):
     """
     This function takes as input a path to a dataset  and generates a set of images:
     (i) mid-sagittal image and
@@ -135,8 +135,8 @@ def get_parser():
                         help="""Suffix of the input file as in
                                 sub-xxxSUFFIX.nii.gz (E.g., _T2w)""",
                         metavar=imed_utils.Metavar.str)
-    parser.add_argument("-a", "--aim", dest="aim", default=-1, type=int,
-                        help="""-1 or positive int. If set to any positive int,
+    parser.add_argument("-a", "--aim", dest="aim", default=0, type=int,
+                        help="""0 or positive int. If set to any positive int,
                                 only label with this value will be taken into account""",
                         metavar=imed_utils.Metavar.int)
     return parser
