@@ -6,7 +6,7 @@ Supported OS
 
 Currently, we only support ``MacOS`` and ``Linux`` operating systems. ``Windows``
 users have the possibility to install and use ``ivadomed`` via
-`Windows Subsystem for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/>`_.For MacOs users, we strongly recommend to follow the bellow steps before the installation.
+`Windows Subsystem for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/>`_. The steps below (about updating bashrc) are strongly recommended for MacOS users in the installation process but are optional for Linux users.
 
 Open your bash/zsh script file with editor on your computer.
 
