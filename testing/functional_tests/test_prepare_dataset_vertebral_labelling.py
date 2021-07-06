@@ -15,11 +15,11 @@ def test_prepare_dataset_vertebral_labeling(download_functional_test_files):
                                                   '--suffix', '_T2w',
                                                   '--aim', '3'])
     assert os.path.exists(os.path.join(
-        __data_testing_dir__, "derivatives/labels/sub-unf01/anat/sub-unf01_T2w_mid_heatmap3.nii.gz"))
+        __data_testing_dir__, "derivatives/labels/sub-unf01/anat/sub-unf01_rec-mid_T2w_heatmap3.nii.gz"))
     assert os.path.exists(os.path.join(
-        __data_testing_dir__, "derivatives/labels/sub-unf02/anat/sub-unf02_T2w_mid_heatmap3.nii.gz"))
+        __data_testing_dir__, "derivatives/labels/sub-unf02/anat/sub-unf02_rec-mid_T2w_heatmap3.nii.gz"))
     assert os.path.exists(os.path.join(
-        __data_testing_dir__, "derivatives/labels/sub-unf03/anat/sub-unf03_T2w_mid_heatmap3.nii.gz"))
+        __data_testing_dir__, "derivatives/labels/sub-unf03/anat/sub-unf03_rec-mid_T2w_heatmap3.nii.gz"))
 
 
 def teardown_function():
