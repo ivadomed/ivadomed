@@ -1,11 +1,11 @@
 {
     "command": "train",
     "gpu_ids": [0],
-    "path_output": "/data/example/labeling_t0test1",
+    "path_output": "data/example/labeling_t0test1",
     "model_name": "pose_model",
     "debugging": false,
     "loader_parameters": {
-        "path_data": ["/data/data-multi-subject"],
+        "path_data": ["data/data-multi-subject"],
         "target_suffix": ["_heatmap0"],
         "extensions": [".nii.gz"],
         "roi_params": {
