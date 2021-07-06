@@ -95,6 +95,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
     else:
         # Task selection
         task = imed_utils.get_task(model_params["name"])
+
         dataset = BidsDataset(bids_df=bids_df,
                               subject_file_lst=data_list,
                               target_suffix=target_suffix,
@@ -641,6 +642,7 @@ class MRI2DSegmentationDataset(Dataset):
                                         soft_gt=self.soft_gt)
 
             input_data_shape, _ = seg_pair.get_pair_shapes()
+
             for idx_pair_slice in range(input_data_shape[-1]):
                 slice_seg_pair = seg_pair.get_pair_slice(idx_pair_slice, gt_type=self.task)
                 self.has_bounding_box = imed_obj_detect.verify_metadata(slice_seg_pair, self.has_bounding_box)
