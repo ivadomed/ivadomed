@@ -112,5 +112,3 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         logger.info("Loaded {} {} slices for the {} set.".format(len(dataset), slice_axis, dataset_type))
 
     return dataset
-
-
