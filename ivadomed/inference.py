@@ -10,12 +10,15 @@ from loguru import logger
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from torch import tensor
+
+from ivadomed.loader.mri3d_subvolume_segmentation_dataset import MRI3DSubVolumeSegmentationDataset
+from ivadomed.loader.mri2d_segmentation_dataset import MRI2DSegmentationDataset
 from ivadomed.transforms import UndoCompose
 from ivadomed import config_manager as imed_config_manager
 from ivadomed import models as imed_models
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
+from ivadomed.loader import utils as imed_loader_utils, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
 from ivadomed import training as imed_training
@@ -355,21 +358,21 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     is_2d_patch = bool(length_2D)
 
     if kernel_3D:
-        ds = imed_loader.MRI3DSubVolumeSegmentationDataset(filename_pairs,
-                                                           transform=tranform_lst,
-                                                           length=context["Modified3DUNet"]["length_3D"],
-                                                           stride=context["Modified3DUNet"]["stride_3D"])
+        ds = MRI3DSubVolumeSegmentationDataset(filename_pairs,
+                                               transform=tranform_lst,
+                                               length=context["Modified3DUNet"]["length_3D"],
+                                               stride=context["Modified3DUNet"]["stride_3D"])
         logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} volumes of shape "
                      f"{context['Modified3DUNet']['length_3D']}.")
     else:
-        ds = imed_loader.MRI2DSegmentationDataset(filename_pairs,
-                                                  length=length_2D,
-                                                  stride=stride_2D,
-                                                  slice_axis=slice_axis,
-                                                  cache=True,
-                                                  transform=tranform_lst,
-                                                  slice_filter_fn=imed_loader_utils.SliceFilter(
-                                                      **loader_params["slice_filter_params"]))
+        ds = MRI2DSegmentationDataset(filename_pairs,
+                                      length=length_2D,
+                                      stride=stride_2D,
+                                      slice_axis=slice_axis,
+                                      cache=True,
+                                      transform=tranform_lst,
+                                      slice_filter_fn=imed_loader_utils.SliceFilter(
+                                          **loader_params["slice_filter_params"]))
         ds.load_filenames()
         if is_2d_patch:
             logger.info(f"Loaded {len(ds)} {loader_params['slice_axis']} patches of shape {length_2D}.")
