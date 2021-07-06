@@ -107,7 +107,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
     """
     # INIT STORAGE VARIABLES
     preds_npy_list, gt_npy_list, filenames = [], [], []
-    pred_tmp_lst, z_tmp_lst, fname_tmp = [], [], ''
+    pred_tmp_lst, z_tmp_lst = [], []
     image = None
     volume = None
     weight_matrix = None
@@ -250,7 +250,7 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                         # TODO: put back the code below. See #720
                         # imed_visualize.save_color_labels(np.stack(pred_tmp_lst, -1),
                         #                              False,
-                        #                              fname_tmp,
+                        #                              fname_ref,
                         #                              fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
                         #                              imed_utils.AXIS_DCT[testing_params['slice_axis']])
 
