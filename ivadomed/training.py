@@ -272,6 +272,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                                 gif_dict["gif"][i_gif].add(overlap, label=str(epoch))
 
                 num_steps += 1
+
                 # METRICS COMPUTATION
                 gt_npy = gt_samples.cpu().numpy()
                 preds_npy = preds.data.cpu().numpy()

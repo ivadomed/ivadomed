@@ -84,6 +84,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
     else:
         # Task selection
         task = imed_utils.get_task(model_params["name"])
+
         dataset = BidsDataset(bids_df=bids_df,
                               subject_file_lst=data_list,
                               target_suffix=target_suffix,
@@ -111,4 +112,5 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         logger.info("Loaded {} {} slices for the {} set.".format(len(dataset), slice_axis, dataset_type))
 
     return dataset
+
 

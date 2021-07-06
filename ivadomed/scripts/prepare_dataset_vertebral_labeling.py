@@ -144,11 +144,11 @@ def get_parser():
 
 def main(args=None):
     imed_utils.init_ivadomed()
-
     parser = get_parser()
     args = imed_utils.get_arguments(parser, args)
     extract_mid_slice_and_convert_coordinates_to_heatmaps(path=args.path, suffix=args.suffix,
                                                           aim=args.aim)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()

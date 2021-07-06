@@ -540,6 +540,7 @@ def create_dataset_and_ivadomed_version_log(context):
 
 def run_main():
     imed_utils.init_ivadomed()
+
     parser = get_parser()
     args = parser.parse_args()
 
