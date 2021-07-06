@@ -4,7 +4,6 @@ channels:
   - pytorch
 dependencies:
   - python>=3.6, < 3.9
-  - anaconda
   - pip
   - pip:
       - --requirement requirements.txt
