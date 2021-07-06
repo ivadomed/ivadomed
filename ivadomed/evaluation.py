@@ -3,11 +3,13 @@ import os
 import nibabel as nib
 import numpy as np
 import pandas as pd
+from loguru import logger
 from scipy.ndimage import label, generate_binary_structure
 from tqdm import tqdm
 
 from ivadomed import metrics as imed_metrics
 from ivadomed import postprocessing as imed_postpro
+from ivadomed.loader import utils as imed_loader_utils
 
 # labels of paint_objects method
 TP_COLOUR = 1
@@ -28,7 +30,7 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
         pd.Dataframe: results for each image.
     """
     path_preds = os.path.join(path_output, 'pred_masks')
-    print('\nRun Evaluation on {}\n'.format(path_preds))
+    logger.info('\nRun Evaluation on {}\n'.format(path_preds))
 
     # OUTPUT RESULT FOLDER
     path_results = os.path.join(path_output, 'results_eval')
@@ -48,8 +50,17 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
     for subj_acq in tqdm(subj_acq_lst, desc="Evaluation"):
         # Fnames of pred and ground-truth
         fname_pred = os.path.join(path_preds, subj_acq + '_pred.nii.gz')
-        fname_gt = bids_df.df[bids_df.df['filename']
+        derivatives = bids_df.df[bids_df.df['filename']
                           .str.contains('|'.join(bids_df.get_derivatives(subj_acq, all_deriv)))]['path'].to_list()
+        # Ordering ground-truth the same as target_suffix
+        fname_gt = [None] * len(target_suffix)
+        for deriv in derivatives:
+            for idx, suffix in enumerate(target_suffix):
+                if suffix in deriv:
+                    fname_gt[idx] = deriv
+
+        # Check fname_gt extentions and update paths if not NifTI
+        fname_gt = [imed_loader_utils.update_filename_to_nifti(fname) for fname in fname_gt]
 
         # Uncertainty
         data_uncertainty = None
@@ -84,7 +95,7 @@ def evaluate(bids_df, path_output, target_suffix, eval_params):
     df_results = df_results.set_index('image_id')
     df_results.to_csv(os.path.join(path_results, 'evaluation_3Dmetrics.csv'))
 
-    print(df_results.head(5))
+    logger.info(df_results.head(5))
     return df_results
 
 

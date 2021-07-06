@@ -6,6 +6,7 @@ import random
 
 import numpy as np
 import torch
+from loguru import logger
 from scipy.ndimage import zoom
 from scipy.ndimage.filters import gaussian_filter
 from scipy.ndimage.interpolation import map_coordinates, affine_transform
@@ -118,6 +119,8 @@ class Compose(object):
 
             # call transform
             if transform in globals():
+                if transform == "NumpyToTensor":
+                    continue
                 params_cur = {k: parameters[k] for k in parameters if k != "applied_to" and k != "preprocessing"}
                 transform_obj = globals()[transform](**params_cur)
             else:
@@ -127,7 +130,7 @@ class Compose(object):
             # check if undo_transform method is implemented
             if requires_undo:
                 if not hasattr(transform_obj, 'undo_transform'):
-                    print('{} transform not included since no undo_transform available for it.'.format(transform))
+                    logger.info('{} transform not included since no undo_transform available for it.'.format(transform))
                     continue
 
             if "im" in list_applied_to:
@@ -142,13 +145,17 @@ class Compose(object):
             "gt": torchvision_transforms.Compose(list_tr_gt),
             "roi": torchvision_transforms.Compose(list_tr_roi)}
 
-    def __call__(self, sample, metadata, data_type='im'):
+    def __call__(self, sample, metadata, data_type='im', preprocessing=False):
         if self.transform[data_type] is None or len(metadata) == 0:
             # In case self.transform[data_type] is None
             return None, None
         else:
             for tr in self.transform[data_type].transforms:
                 sample, metadata = tr(sample, metadata)
+
+            if not preprocessing:
+                numpy_to_tensor = NumpyToTensor()
+                sample, metadata = numpy_to_tensor(sample, metadata)
             return sample, metadata
 
 
@@ -172,6 +179,8 @@ class UndoCompose(object):
             # In case self.transforms.transform[data_type] is None
             return None, None
         else:
+            numpy_to_tensor = NumpyToTensor()
+            sample, metadata = numpy_to_tensor.undo_transform(sample, metadata)
             for tr in self.transforms.transform[data_type].transforms[::-1]:
                 sample, metadata = tr.undo_transform(sample, metadata)
             return sample, metadata
@@ -1117,17 +1126,20 @@ def apply_preprocessing_transforms(transforms, seg_pair, roi_pair=None):
     if roi_pair is not None:
         stack_roi, metadata_roi = transforms(sample=roi_pair["gt"],
                                              metadata=roi_pair['gt_metadata'],
-                                             data_type="roi")
+                                             data_type="roi",
+                                             preprocessing=True)
         metadata_input = imed_loader_utils.update_metadata(metadata_roi, metadata_input)
     # Run transforms on images
     stack_input, metadata_input = transforms(sample=seg_pair["input"],
                                              metadata=metadata_input,
-                                             data_type="im")
+                                             data_type="im",
+                                             preprocessing=True)
     # Run transforms on gt
     metadata_gt = imed_loader_utils.update_metadata(metadata_input, seg_pair['gt_metadata'])
     stack_gt, metadata_gt = transforms(sample=seg_pair["gt"],
                                        metadata=metadata_gt,
-                                       data_type="gt")
+                                       data_type="gt",
+                                       preprocessing=True)
 
     seg_pair = {
         'input': stack_input,

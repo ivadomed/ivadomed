@@ -1,6 +1,5 @@
 import copy
 import datetime
-import logging
 import os
 import random
 import time
@@ -8,6 +7,7 @@ import time
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
+from loguru import logger
 from torch import optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -22,7 +22,6 @@ from ivadomed import visualize as imed_visualize
 from ivadomed.loader import utils as imed_loader_utils
 
 cudnn.benchmark = True
-logger = logging.getLogger(__name__)
 
 
 def train(model_params, dataset_train, dataset_val, training_params, path_output, device,
@@ -83,8 +82,8 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
 
     # GET MODEL
     if training_params["transfer_learning"]["retrain_model"]:
-        print("\nLoading pretrained model's weights: {}.")
-        print("\tFreezing the {}% first layers.".format(
+        logger.info("Loading pretrained model's weights: {}.")
+        logger.info("\tFreezing the {}% first layers.".format(
             100 - training_params["transfer_learning"]['retrain_fraction'] * 100.))
         old_model_path = training_params["transfer_learning"]["retrain_model"]
         fraction = training_params["transfer_learning"]['retrain_fraction']
@@ -96,7 +95,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         model = imed_models.set_model_for_retrain(old_model_path, retrain_fraction=fraction, map_location=device,
                                                   reset=reset)
     else:
-        print("\nInitialising model's weights from scratch.")
+        logger.info("Initialising model's weights from scratch.")
         model_class = getattr(imed_models, model_params["name"])
         model = model_class(**model_params)
     if cuda_available:
@@ -112,7 +111,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     optimizer = optim.Adam(params_to_opt, lr=initial_lr)
     scheduler, step_scheduler_batch = get_scheduler(copy.copy(training_params["scheduler"]["lr_scheduler"]), optimizer,
                                                     num_epochs)
-    print("\nScheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
+    logger.info("Scheduler parameters: {}".format(training_params["scheduler"]["lr_scheduler"]))
 
     # Resume
     start_epoch = 1
@@ -132,8 +131,8 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                     state[k] = v.to(device)
 
     # LOSS
-    print("\nSelected Loss: {}".format(training_params["loss"]["name"]))
-    print("\twith the parameters: {}".format(
+    logger.info("Selected Loss: {}".format(training_params["loss"]["name"]))
+    logger.info("\twith the parameters: {}".format(
         [training_params["loss"][k] for k in training_params["loss"] if k != "name"]))
     loss_fct = get_loss_function(copy.copy(training_params["loss"]))
     loss_dice_fct = imed_losses.DiceLoss()  # For comparison when another loss is used
@@ -212,6 +211,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
         train_dice_loss_total_avg = train_dice_loss_total / num_steps
         if training_params["loss"]["name"] != "DiceLoss":
             msg += "\tDice training loss: {:.4f}.".format(train_dice_loss_total_avg)
+        logger.info(msg)
         tqdm.write(msg)
 
         # CURRICULUM LEARNING
@@ -295,10 +295,11 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
             val_dice_loss_total_avg = val_dice_loss_total / num_steps
             if training_params["loss"]["name"] != "DiceLoss":
                 msg += "\tDice validation loss: {:.4f}.".format(val_dice_loss_total_avg)
-            tqdm.write(msg)
+            logger.info(msg)
             end_time = time.time()
             total_time = end_time - start_time
-            tqdm.write("Epoch {} took {:.2f} seconds.".format(epoch, total_time))
+            msg_epoch = "Epoch {} took {:.2f} seconds.".format(epoch, total_time)
+            logger.info(msg_epoch)
 
             # UPDATE BEST RESULTS
             if val_loss_total_avg < best_validation_loss:
@@ -326,7 +327,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
                 if val_diff < training_params["training_time"]["early_stopping_epsilon"]:
                     patience_count += 1
                 if patience_count >= training_params["training_time"]["early_stopping_patience"]:
-                    print("Stopping training due to {} epochs without improvements".format(patience_count))
+                    logger.info("Stopping training due to {} epochs without improvements".format(patience_count))
                     break
 
     # Save final model
@@ -367,7 +368,7 @@ def train(model_params, dataset_train, dataset_val, training_params, path_output
     writer.close()
     final_time = time.time()
     duration_time = final_time - begin_time
-    print('begin ' + time.strftime('%H:%M:%S', time.localtime(begin_time)) + "| End " +
+    logger.info('begin ' + time.strftime('%H:%M:%S', time.localtime(begin_time)) + "| End " +
           time.strftime('%H:%M:%S', time.localtime(final_time)) +
           "| duration " + str(datetime.timedelta(seconds=duration_time)))
 
@@ -483,7 +484,7 @@ def load_checkpoint(model, optimizer, gif_dict, scheduler, fname):
     validation_loss = 0
     patience_count = 0
     try:
-        print("\nLoading checkpoint: {}".format(fname))
+        logger.info("Loading checkpoint: {}".format(fname))
         checkpoint = torch.load(fname)
         start_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['state_dict'])
@@ -492,7 +493,7 @@ def load_checkpoint(model, optimizer, gif_dict, scheduler, fname):
         scheduler = checkpoint['scheduler']
         gif_dict = checkpoint['gif_dict']
         patience_count = checkpoint['patience_count']
-        print("... Resume training from epoch #{}".format(start_epoch))
+        logger.info("... Resume training from epoch #{}".format(start_epoch))
     except:
         logger.warning("\nNo checkpoint found at: {}".format(fname))
 

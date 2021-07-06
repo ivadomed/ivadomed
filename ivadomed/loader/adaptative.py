@@ -6,10 +6,12 @@ import h5py
 import nibabel as nib
 import numpy as np
 import pandas as pd
+from loguru import logger
 from tqdm import tqdm
 
+from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed import transforms as imed_transforms
-from ivadomed.loader import utils as imed_loader_utils, loader as imed_loader, film as imed_film
+from ivadomed.loader import utils as imed_loader_utils, film as imed_film
 from ivadomed.object_detection import utils as imed_obj_detect
 from ivadomed import utils as imed_utils
 
@@ -77,9 +79,9 @@ class Dataframe:
         """
         try:
             self.df = pd.read_csv(path)
-            print("Dataframe has been correctly loaded from {}.".format(path))
+            logger.info("Dataframe has been correctly loaded from {}.".format(path))
         except FileNotFoundError:
-            print("No csv file found")
+            logger.error("No csv file found")
 
     def save(self, path):
         """Save the dataframe into a csv file.
@@ -89,9 +91,9 @@ class Dataframe:
         """
         try:
             self.df.to_csv(path, index=False)
-            print("Dataframe has been saved at {}.".format(path))
+            logger.info("Dataframe has been saved at {}.".format(path))
         except FileNotFoundError:
-            print("Wrong path.")
+            logger.error("Wrong path.")
     
     def process_key(self, key, grp, line, subject, col_names):
         assert key in grp.keys()
@@ -150,7 +152,7 @@ class Dataframe:
         col_names = [col for col in empty_line.keys()]
         col_names.append('Subjects')
         df = pd.DataFrame(columns=col_names)
-        print(hdf5_file.attrs['patients_id'])
+        logger.info(hdf5_file.attrs['patients_id'])
         # Filling the data frame
         for subject in hdf5_file.attrs['patients_id']:
             # Getting the Group the corresponding patient
@@ -207,7 +209,7 @@ class BIDStoHDF5:
     def __init__(self, bids_df, subject_file_lst, target_suffix, contrast_lst, path_hdf5, contrast_balance=None,
                  slice_axis=2, metadata_choice=False, slice_filter_fn=None, roi_params=None, transform=None,
                  object_detection_params=None, soft_gt=False):
-        print("Starting conversion")
+        logger.info("Starting conversion")
 
         # Sort subject_file_lst and create a sub-dataframe from bids_df containing only subjects from subject_file_lst
         subject_file_lst = sorted(subject_file_lst)
@@ -272,7 +274,7 @@ class BIDStoHDF5:
 
         # Save images into HDF5 file
         self._load_filenames()
-        print("Files loaded.")
+        logger.info("Files loaded.")
 
     def process_subject(self, bids_df, subject, df_subjects, c, tot, contrast_balance, target_suffix, all_deriv,
                         roi_params, bounding_box_dict, metadata_choice, list_patients):
@@ -399,12 +401,12 @@ class BIDStoHDF5:
                 else:
                     grp = hdf5_file.create_group(str(subject_id))
 
-                roi_pair = imed_loader.SegmentationPair(input_filename, roi_filename, metadata=metadata,
-                                                        slice_axis=self.slice_axis, cache=False, soft_gt=self.soft_gt)
+                roi_pair = SegmentationPair(input_filename, roi_filename, metadata=metadata,
+                                                                              slice_axis=self.slice_axis, cache=False, soft_gt=self.soft_gt)
 
-                seg_pair = imed_loader.SegmentationPair(input_filename, gt_filename, metadata=metadata,
-                                                        slice_axis=self.slice_axis, cache=False, soft_gt=self.soft_gt)
-                print("gt filename", gt_filename)
+                seg_pair = SegmentationPair(input_filename, gt_filename, metadata=metadata,
+                                                                              slice_axis=self.slice_axis, cache=False, soft_gt=self.soft_gt)
+                logger.info("gt filename", gt_filename)
                 input_data_shape, _ = seg_pair.get_pair_shapes()
 
                 useful_slices = []
@@ -430,12 +432,12 @@ class BIDStoHDF5:
                 contrast = input_metadata['contrast']
                 
                 # Inputs
-                print(len(input_volumes))
-                print("grp= ", str(subject_id))
+                logger.info(len(input_volumes))
+                logger.info("grp= ", str(subject_id))
                 key = "inputs/{}".format(contrast)
-                print("key = ", key)
+                logger.info("key = ", key)
                 if len(input_volumes) < 1:
-                    print("list empty")
+                    logger.warning("list empty")
                     continue
                 grp.create_dataset(key, data=input_volumes)
                 
@@ -514,7 +516,7 @@ class HDF5Dataset:
         metadata_choice = False if metadata_choice is None else metadata_choice
         # Getting HDS5 dataset file
         if not os.path.exists(model_params["path_hdf5"]):
-            print("Computing hdf5 file of the data")
+            logger.info("Computing hdf5 file of the data")
             bids_to_hdf5 = BIDStoHDF5(bids_df=bids_df,
                                       subject_file_lst=subject_file_lst,
                                       path_hdf5=model_params["path_hdf5"],
@@ -540,8 +542,8 @@ class HDF5Dataset:
                                        dim=self.dim, filter_slices=slice_filter_fn)
             if complet:
                 self.df_object.clean(self.cst_lst)
-            print("after cleaning")
-            print(self.df_object.df.head())
+            logger.info("after cleaning")
+            logger.info(self.df_object.df.head())
 
             self.initial_dataframe = self.df_object.df
 
@@ -566,17 +568,17 @@ class HDF5Dataset:
         with h5py.File(self.path_hdf5, "r") as hdf5_file:
             for ct in contrast_lst:
                 if ct not in keys:
-                    print("Key error: status has no key {}".format(ct))
+                    logger.warning("Key error: status has no key {}".format(ct))
                     continue
                 if self.status[ct]:
-                    print("Contrast {} already in RAM".format(ct))
+                    logger.info("Contrast {} already in RAM".format(ct))
                 else:
-                    print("Loading contrast {} in RAM...".format(ct), end='')
+                    logger.info("Loading contrast {} in RAM...".format(ct), end='')
                     for sub in self.dataframe.index:
                         if self.filter_slices:
                             slices = self.dataframe.at[sub, 'Slices']
                             self.dataframe.at[sub, ct] = hdf5_file[self.dataframe.at[sub, ct]][np.array(slices)]
-                    print("Done.")
+                    logger.info("Done.")
                 self.status[ct] = True
 
     def set_transform(self, transform):
@@ -694,7 +696,7 @@ class HDF5Dataset:
                 strategies that could be implemented are Active Learning, Curriculum Learning, ...
         """
         if strategy == 'Missing':
-            print("Probalility of missing contrast = {}".format(p))
+            logger.info("Probalility of missing contrast = {}".format(p))
             for idx in range(len(self.dataframe)):
                 missing_mod = np.random.choice(2, len(self.cst_lst), p=[p, 1 - p])
                 # if all contrasts are removed from a subject randomly choose 1
@@ -703,7 +705,7 @@ class HDF5Dataset:
                     missing_mod[np.random.randint(2, size=1)] = 1
                 self.cst_matrix[idx, ] = missing_mod
 
-            print("Missing contrasts = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
+            logger.info("Missing contrasts = {}".format(self.cst_matrix.size - self.cst_matrix.sum()))
 
 
 def HDF5ToBIDS(path_hdf5, subjects, path_dir):

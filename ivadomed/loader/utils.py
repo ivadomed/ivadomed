@@ -1,11 +1,11 @@
 import collections.abc
 import re
 import os
-import logging
 import numpy as np
 import pandas as pd
 import torch
 import joblib
+from loguru import logger
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
 from ivadomed import utils as imed_utils
@@ -29,7 +29,12 @@ __numpy_type_map = {
 TRANSFORM_PARAMS = ['elastic', 'rotation', 'scale', 'offset', 'crop_params', 'reverse',
                     'translation', 'gaussian_noise']
 
-logger = logging.getLogger(__name__)
+# Ordered list of supported file extensions
+# TODO: Implement support of the following OMETIFF formats (#739):
+# [".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf"]
+# They are included in the list to avoid a ".ome.tif" or ".ome.tiff" following the ".tif" or ".tiff" pipeline
+EXT_LST = [".nii", ".nii.gz", ".ome.tif", ".ome.tiff", ".ome.tf2", ".ome.tf8", ".ome.btf", ".tif",
+           ".tiff", ".png", ".jpg", ".jpeg"]
 
 
 def split_dataset(df, split_method, data_testing, random_seed, train_frac=0.8, test_frac=0.1):
@@ -437,28 +442,6 @@ class BalancedSampler(torch.utils.data.sampler.Sampler):
         return self.num_samples
 
 
-def clean_metadata(metadata_lst):
-    """Remove keys from metadata. The keys to be deleted are stored in a list.
-
-    Args:
-        metadata_lst (list): List of SampleMetadata.
-
-    Returns:
-        list: List of SampleMetadata with removed keys.
-    """
-    metadata_out = []
-
-    if metadata_lst is not None:
-        TRANSFORM_PARAMS.remove('crop_params')
-        for metadata_cur in metadata_lst:
-            for key_ in list(metadata_cur.keys()):
-                if key_ in TRANSFORM_PARAMS:
-                    del metadata_cur.metadata[key_]
-            metadata_out.append(metadata_cur)
-        TRANSFORM_PARAMS.append('crop_params')
-    return metadata_out
-
-
 def update_metadata(metadata_src_lst, metadata_dest_lst):
     """Update metadata keys with a reference metadata.
 
@@ -610,7 +593,7 @@ class BidsDataframe:
             self.target_suffix.append(self.roi_suffix)
 
         # extensions from loader parameters
-        self.extensions = loader_params['extensions']
+        self.extensions = loader_params['extensions'] if loader_params['extensions'] else [".nii", ".nii.gz"]
 
         # contrast_lst from loader parameters
         self.contrast_lst = [] if 'contrast_lst' not in loader_params['contrast_params'] \
@@ -643,7 +626,7 @@ class BidsDataframe:
             # Force index of subject subfolders containing CT-scan files under "anat" or "ct" folder based on extensions and modality suffix.
             # TODO: remove force indexing of microscopy files after BEP microscopy is merged in BIDS
             # TODO: remove force indexing of CT-scan files after BEP CT-scan is merged in BIDS
-            ext_microscopy = ('.png', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
+            ext_microscopy = ('.png', '.tif', '.tiff', '.ome.tif', '.ome.tiff', '.ome.tf2', '.ome.tf8', '.ome.btf')
             ext_ct = ('.nii.gz', '.nii')
             suffix_ct = ('ct', 'CT')
             force_index = []
@@ -678,18 +661,19 @@ class BidsDataframe:
             # Drop rows with json, tsv and LICENSE files in case no extensions are provided in config file for filtering
             df_next = df_next[~df_next['filename'].str.endswith(tuple(['.json', '.tsv', 'LICENSE']))]
 
-            # Update dataframe with subject files of chosen contrasts and extensions,
-            # and with derivative files of chosen target_suffix from loader parameters
+            # Update dataframe with subject files of chosen contrasts
+            # and with derivative files of chosen target_suffix
             df_next = df_next[(~df_next['path'].str.contains('derivatives')
-                               & df_next['suffix'].str.contains('|'.join(self.contrast_lst))
-                               & df_next['extension'].str.contains('|'.join(self.extensions)))
+                               & df_next['suffix'].str.contains('|'.join(self.contrast_lst)))
                                | (df_next['path'].str.contains('derivatives')
                                & df_next['filename'].str.contains('|'.join(self.target_suffix)))]
 
-            if df_next[~df_next['path'].str.contains('derivatives')].empty:
-                # Warning if no subject files are found in path_data
-                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(path_data))
+            # Update dataframe with files of chosen extensions
+            df_next = df_next[df_next['filename'].str.endswith(tuple(self.extensions))]
 
+            # Warning if no subject files are found in path_data
+            if df_next[~df_next['path'].str.contains('derivatives')].empty:
+                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(path_data))
             else:
                 # Add tsv files metadata to dataframe
                 df_next = self.add_tsv_metadata(df_next, path_data, layout)
@@ -844,9 +828,9 @@ class BidsDataframe:
         """
         try:
             self.df.to_csv(path, index=False)
-            print("Dataframe has been saved in {}.".format(path))
+            logger.info("Dataframe has been saved in {}.".format(path))
         except FileNotFoundError:
-            print("Wrong path, bids_dataframe.csv could not be saved in {}.".format(path))
+            logger.error("Wrong path, bids_dataframe.csv could not be saved in {}.".format(path))
 
     def write_derivatives_dataset_description(self, path_data):
         """Writes default dataset_description.json file if not found in path_data/derivatives folder
@@ -859,3 +843,78 @@ class BidsDataframe:
             f = open(deriv_desc_file, 'w')
             f.write('{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
             f.close()
+
+
+def get_file_extension(filename):
+    """ Get file extension if it is supported
+    Args:
+        filename (str): Path of the file.
+
+    Returns:
+        str: File extension
+    """
+    # Find the first match from the list of supported file extensions
+    extension = next((ext for ext in EXT_LST if filename.lower().endswith(ext)), None)
+    return extension
+
+
+def update_filename_to_nifti(filename):
+    """ 
+    Update filename extension to 'nii.gz' if not a NifTI file.
+    
+    This function is used to help make non-NifTI files (e.g. PNG/TIF/JPG)
+    compatible with NifTI-only pipelines. The expectation is that a NifTI
+    version of the file has been created alongside the original file, which
+    allows the extension to be cleanly swapped for a `.nii.gz` extension.
+
+    Args:
+        filename (str): Path of original file.
+
+    Returns:
+        str: Path of the corresponding NifTI file.
+    """
+    extension = get_file_extension(filename)
+    if not "nii" in extension:
+        filename = filename.replace(extension, ".nii.gz")
+    return filename
+
+
+def dropout_input(seg_pair):
+    """Applies input-level dropout: zero to all channels minus one will be randomly set to zeros. This function verifies
+    if some channels are already empty. Always at least one input channel will be kept.
+
+    Args:
+        seg_pair (dict): Batch containing torch tensors (input and gt) and metadata.
+
+    Return:
+        seg_pair (dict): Batch containing torch tensors (input and gt) and metadata with channel(s) dropped.
+    """
+    n_channels = seg_pair['input'].size(0)
+    # Verify if the input is multichannel
+    if n_channels > 1:
+        # Verify if some channels are already empty
+        n_unique_values = [len(torch.unique(input_data)) > 1 for input_data in seg_pair['input']]
+        idx_empty = np.where(np.invert(n_unique_values))[0]
+
+        # Select how many channels will be dropped between 0 and n_channels - 1 (keep at least one input)
+        n_dropped = random.randint(0, n_channels - 1)
+
+        if n_dropped > len(idx_empty):
+            # Remove empty channel to the number of channels to drop
+            n_dropped = n_dropped - len(idx_empty)
+            # Select which channels will be dropped
+            idx_dropped = []
+            while len(idx_dropped) != n_dropped:
+                idx = random.randint(0, n_channels - 1)
+                # Don't include the empty channel in the dropped channels
+                if idx not in idx_empty:
+                    idx_dropped.append(idx)
+        else:
+            idx_dropped = idx_empty
+
+        seg_pair['input'][idx_dropped] = torch.zeros_like(seg_pair['input'][idx_dropped])
+
+    else:
+        logger.warning("\n Impossible to apply input-level dropout since input is not multi-channel.")
+
+    return seg_pair
