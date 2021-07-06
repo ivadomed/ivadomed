@@ -145,9 +145,11 @@ def test_inference(download_data_testing_test_files, transforms_dict, test_lst, 
 def test_inference_2d_microscopy(download_data_testing_test_files, transforms_dict, test_lst, target_lst, roi_params,
         testing_params):
     """
-    This test checks if number of predictions equals number of test subjects on 2d microscopy data
+    This test checks if the number of NifTI predictions equals the number of test subjects on 2d microscopy data.
     Used to catch a bug where the last slice of the last volume wasn't appended to the prediction
     (see: https://github.com/ivadomed/ivadomed/issues/823)
+    Also tests the conversions to PNG predictions when source files are not Nifti and checks if the number of PNG
+    predictions is 2x the number of test subjects (2-class model, outputs 1 PNG per class per subject).
     """
     cuda_available, device = imed_utils.define_device(GPU_ID)
 
@@ -209,6 +211,7 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
                                                    cuda_available=cuda_available)
 
     assert len([x for x in os.listdir(__output_dir__) if x.endswith(".nii.gz")]) == len(test_lst)
+    assert len([x for x in os.listdir(__output_dir__) if x.endswith(".png")]) == 2*len(test_lst)
 
 
 def teardown_function():

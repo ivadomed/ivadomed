@@ -3,6 +3,7 @@ import nibabel as nib
 import numpy as np
 import onnxruntime
 import torch
+import imageio
 import joblib
 from typing import List
 
@@ -97,10 +98,10 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
     """Returns one hot encoder which is needed to update the model parameters when FiLMedUnet is applied.
 
     Args:
-        context (dict): configuration dict.
-        folder_model (str): foldername which contains trained model and its configuration file.
-        options (dict): contains postprocessing steps and prior filename containing processing information
-        ds (Dataset): dataset used for the segmentation.
+        context (dict): Configuration dict.
+        folder_model (str): Foldername which contains trained model and its configuration file.
+        options (dict): Contains film metadata information.
+        ds (Dataset): Dataset used for the segmentation.
 
     Returns:
         dict: onehotencoder used in the model params.
@@ -206,6 +207,22 @@ def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fn
     return nib_pred
 
 
+def pred_to_png(pred_list: list, target_list: list, subj_path: str, suffix: str = ''):
+    """Save the network predictions as PNG files with suffix "_target_pred".
+
+    Args:
+        pred_list (list of np arrays): list of 2D predictions.
+        target_list (list of str): list of target suffixes.
+        subj_path (str): Path of the subject filename in output folder without extension
+            (e.g. "path_output/pred_masks/sub-01_sample-01_SEM").
+        suffix (str): additional suffix to append to the filename.
+    """
+    for pred, target in zip(pred_list, target_list):
+        filename = subj_path + target + "_pred" + suffix + ".png"
+        data = pred.get_fdata()
+        imageio.imwrite(filename, data, format='png')
+
+
 def process_transformations(context: dict, fname_roi: str, fname_prior: str, metadata: dict, slice_axis: int,
                             fname_images: list) -> dict:
     """Sets the transformation based on context parameters. When ROI is not provided center-cropping is applied.
@@ -246,8 +263,8 @@ def set_option(options: dict, postpro: dict, context: dict, key: str):
        Otherwise, when the key is already found in the postprocessing attritute of the context, we remove it
 
     Args:
-        options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename.
-        postpro (dict): postprocessing settings.
+        options (dict): Contains postprocessing steps information.
+        postpro (dict): Postprocessing settings.
         context (dict): Configuration dict.
         key (str): The key of the postprocessing option we wish to set.
 
@@ -265,13 +282,16 @@ def set_postprocessing_options(options: dict, context: dict):
     """Updates the postprocessing options based on existing settings found in options.
 
     Args:
-        options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename.
+        options (dict): Contains postprocessing steps information.
         context (dict): Configuration dict.
     """
     postpro = {}
 
     if 'binarize_prediction' in options and options['binarize_prediction']:
         postpro['binarize_prediction'] = {"thr": options['binarize_prediction']}
+
+    if 'binarize_maxpooling' in options and options['binarize_maxpooling'] is not None:
+        set_option(options, postpro, context, 'binarize_maxpooling')
 
     if 'keep_largest' in options and options['keep_largest'] is not None:
         set_option(options, postpro, context, 'keep_largest')
@@ -302,11 +322,26 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         fname_images (list): list of image filenames (e.g. .nii.gz) to segment. Multichannel models require multiple
             images to segment, e.i., len(fname_images) > 1.
         gpu_id (int): Number representing gpu number if available. Currently does NOT support multiple GPU segmentation.
-        options (dict): Contains postprocessing steps and prior filename (fname_prior) which is an image filename
-            (e.g., .nii.gz) containing processing information (e.i., spinal cord segmentation, spinal location or MS
-            lesion classification)
-            e.g., spinal cord centerline, used to crop the image prior to segment it if provided.
-            The segmentation is not performed on the slices that are empty in this image.
+        options (dict): This can optionally contain any of the following key-value pairs:
+            * 'binarize_prediction': (float) Binarize segmentation with specified threshold.
+                                     Predictions below the threshold become 0, and predictions above or equal to
+                                     threshold become 1. Set to -1 for no thresholding (i.e., soft segmentation).
+            * 'binarize_maxpooling': (bool) Binarize by setting to 1 the voxel having the maximum prediction across
+                                     all classes. Useful for multiclass models.
+            * 'fill_holes': (bool) Fill small holes in the segmentation.
+            * 'keep_largest': (bool) Keep the largest connected-object for each class from the output segmentation.
+            * 'remove_small': (list of str) Minimal object size to keep with unit (mm3 or vox). A single value can be provided
+                              or one value per prediction class. Single value example: ["1mm3"], ["5vox"]. Multiple values
+                              example: ["10", "20", "10vox"] (remove objects smaller than 10 voxels for class 1 and 3,
+                              and smaller than 20 voxels for class 2).
+            * 'PixelSize': (list of float) List of microscopy PixelSize in micrometers.
+                           Length equals 2 [X, Y] for 2D or 3 [X, Y, Z] for 3D.
+            * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [X, Y].
+            * 'metadata': (str) Film metadata.
+            * 'fname_prior': (str) An image filename (e.g., .nii.gz) containing processing information
+                (e.g., spinal cord segmentation, spinal location or MS lesion classification, spinal cord centerline), 
+                used to crop the image prior to segment it if provided.
+                The segmentation is not performed on the slices that are empty in this image.
 
     Returns:
         list: List of nibabel objects containing the soft segmentation(s), one per prediction class.
@@ -322,7 +357,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     # Load model training config
     context = imed_config_manager.ConfigurationManager(fname_model_metadata).get_config()
 
-    postpro_list = ['binarize_prediction', 'keep_largest', ' fill_holes', 'remove_small']
+    postpro_list = ['binarize_prediction', 'binarize_maxpooling', 'keep_largest', ' fill_holes',
+                    'remove_small']
     if options is not None and any(pp in options for pp in postpro_list):
         set_postprocessing_options(options, context)
 
@@ -348,14 +384,23 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
         logger.warning("fname_roi has not been specified, then the entire volume is processed.")
         loader_params["slice_filter_params"]["filter_empty_mask"] = False
 
-    # TODO: Add PixelSize from options to filename_pairs metadata for microscopy inference (issue #306)
-    filename_pairs = [(fname_images, None, fname_roi, metadata if isinstance(metadata, list) else [metadata])]
-
     kernel_3D = bool('Modified3DUNet' in context and context['Modified3DUNet']['applied']) or \
                 not context['default_model']['is_2d']
+
+    # Assign length_2D and stride_2D for 2D patching
     length_2D = context["default_model"]["length_2D"] if "length_2D" in context["default_model"] else []
     stride_2D = context["default_model"]["stride_2D"] if "stride_2D" in context["default_model"] else []
     is_2d_patch = bool(length_2D)
+
+    # Adjust stride_2D with overlap_2D option if present
+    if is_2d_patch and (options is not None) and ('overlap_2D' in options):
+        stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, options['overlap_2D'])]
+
+    # Add microscopy PixelSize from options to metadata for filenames_pairs
+    if (options is not None) and ('PixelSize' in options):
+        metadata['PixelSize'] = options['PixelSize']
+
+    filename_pairs = [(fname_images, None, fname_roi, metadata if isinstance(metadata, list) else [metadata])]
 
     if kernel_3D:
         ds = MRI3DSubVolumeSegmentationDataset(filename_pairs,
