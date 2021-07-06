@@ -17,6 +17,8 @@ Open your bash/zsh script file with editor on your computer.
 
     If you are using zsh shell
     ::
+
+        
         vim ~/.zshrc
 
 Write in your .bashrc/.zshrc file with following line.
