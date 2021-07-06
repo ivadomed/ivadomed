@@ -326,7 +326,7 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
             * 'binarize_maxpooling': (bool) Binarize by setting to 1 the voxel having the maximum prediction across
                                      all classes. Useful for multiclass models.
             * 'fill_holes': (bool) Fill small holes in the segmentation.
-            * 'keep_largest': (bool) Keep the largest connected-object from the output segmentation.
+            * 'keep_largest': (bool) Keep the largest connected-object for each class from the output segmentation.
             * 'remove_small': (list of str) Minimal object size to keep with unit (mm3 or vox). A single value can be provided
                               or one value per prediction class. Single value example: ["1mm3"], ["5vox"]. Multiple values
                               example: ["10", "20", "10vox"] (remove objects smaller than 10 voxels for class 1 and 3,
