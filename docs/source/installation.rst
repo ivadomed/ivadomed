@@ -39,14 +39,22 @@ There are fundamentally two different approaches to install ``IvadoMed``:
 Approach 1: Conda
 ------------------
 
-Step 1: Create new Conda Env called IvadoMedEnv (may taken 5 to 15 minutes)
+Step 1: Clone the `ivadomed <https://github.com/ivadomed/ivadomed>`_ repository.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+::
+
+    git clone https://github.com/neuropoly/ivadomed.git
+    cd ivadomed
+
+Step 2: Create new Conda Env called IvadoMedEnv (may taken 5 to 15 minutes)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 ::
 
     conda env create --file environment.yml
 
-Step 2 : Activate environment and use
+Step 3 : Activate environment and use
 ++++++++++++++++++++++++++++++++++++++
 
 ::
@@ -83,7 +91,7 @@ Step 2: Clone the `ivadomed <https://github.com/ivadomed/ivadomed>`_ repository.
 
 ::
 
-    git clone git@github.com:ivadomed/ivadomed.git
+    git clone https://github.com/neuropoly/ivadomed.git
     cd ivadomed
 
 Step 3: Install PyTorch 1.5 and TorchVision (CPU)
