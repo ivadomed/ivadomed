@@ -245,10 +245,6 @@ def check_exe(name):
     return None
 
 
-class ArgParseException(Exception):
-    pass
-
-
 def get_arguments(parser, args):
     """Get arguments from function input or command line.
 
@@ -258,13 +254,10 @@ def get_arguments(parser, args):
             should be formatted like this:
             ["-d", "SOME_ARG", "--model", "SOME_ARG"]
     """
-    try:
-        if args:
-            args = parser.parse_args(args)
-        else:
-            args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    except SystemExit:
-        raise ArgParseException('Error parsing args')
+    if args:
+        args = parser.parse_args(args)
+    else:
+        args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     return args
 
 

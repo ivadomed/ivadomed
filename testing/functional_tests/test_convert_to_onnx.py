@@ -4,7 +4,6 @@ import os
 from testing.functional_tests.t_utils import create_tmp_dir, __data_testing_dir__, download_functional_test_files
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed.scripts import convert_to_onnx
-from ivadomed.utils import ArgParseException
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +20,12 @@ def test_convert_to_onnx(download_functional_test_files):
 
 
 def test_convert_to_onnx_no_model():
-    with pytest.raises(ArgParseException, match=r"Error parsing args"):
+    with pytest.raises(SystemExit, match="2"):
         convert_to_onnx.main(args=['-d', '2'])
 
 
 def test_convert_to_onnx_no_dimension():
-    with pytest.raises(ArgParseException, match=r"Error parsing args"):
+    with pytest.raises(SystemExit, match="2"):
         convert_to_onnx.main(args=['-m', f'{__model_path__}'])
 
 

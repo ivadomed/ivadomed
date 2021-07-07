@@ -4,7 +4,6 @@ import os
 from testing.functional_tests.t_utils import __tmp_dir__, create_tmp_dir
 from testing.common_testing_util import remove_dataset, remove_tmp_dir
 from ivadomed.scripts import download_data
-from ivadomed.utils import ArgParseException
 logger = logging.getLogger(__name__)
 
 
@@ -22,7 +21,7 @@ def test_download_data():
 
 
 def test_download_data_no_dataset_specified():
-    with pytest.raises(ArgParseException, match=r"Error parsing args"):
+    with pytest.raises(SystemExit, match="2"):
         download_data.main()
 
 
