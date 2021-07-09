@@ -67,8 +67,8 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=0):
     for i in range(len(t)):
         sub = t[i]
         path_image = os.path.join(path, t[i], 'anat', t[i] + suffix + '.nii.gz')
-        print('Applying pre-process on patient '+sub)
-        if os.path.isfile(path_image):     
+        if os.path.isfile(path_image):
+            print('Applying pre-process on patient ' + sub)
             path_label = os.path.join(path, 'derivatives', 'labels', t[i], 'anat', t[i] + suffix +
                     '_labels-disc-manual.nii.gz')
             list_points = mask2label(path_label, aim=aim)
