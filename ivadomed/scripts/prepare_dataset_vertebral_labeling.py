@@ -8,6 +8,7 @@ import ivadomed.maths as imed_maths
 import ivadomed.loader.utils as imed_loader_utils
 import textwrap
 
+
 def mask2label(path_label, aim=0):
     """Retrieve points coordinates and value from a label file containing singl voxel label.
 
@@ -39,6 +40,7 @@ def mask2label(path_label, aim=0):
                 list_label_image.append([x, y, z, arr[x, y, z]])
     list_label_image.sort(key=lambda x: x[3])
     return list_label_image
+
 
 def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=0):
     """
