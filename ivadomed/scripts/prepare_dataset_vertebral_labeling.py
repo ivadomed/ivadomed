@@ -40,24 +40,6 @@ def mask2label(path_label, aim=0):
     list_label_image.sort(key=lambda x: x[3])
     return list_label_image
 
-
-def rotate_nifti(X):
-    """ Rotate the nifti image to be upright.
-    Args:
-        X (nifti): nifti image 
-
-    Returns:
-        nifti: rotated nifti image
-
-    """
-    X2 = X.get_fdata()[0]
-    X2 = np.flip(X2, axis = 0)
-    X2 = np.flip(X2, axis = 1)
-    X2 = np.expand_dims(X2, axis = 0)
-    img   = nib.Nifti1Image(X2, np.eye(4))
-    return img
-
-
 def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=0):
     """
     This function takes as input a path to a dataset  and generates a set of images:
@@ -94,7 +76,6 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=0):
             nib_ref_can = nib.as_closest_canonical(image_ref)
             imsh = np.array(nib_ref_can.dataobj).shape
             mid_nifti = imed_preprocessing.get_midslice_average(path_image, list_points[0][0], slice_axis=0)
-            mid_nifti = rotate_nifti(mid_nifti)
             nib.save(mid_nifti, os.path.join(path, t[i], 'anat', t[i] +'_rec-mid'+ suffix + '.nii.gz'))
             lab = nib.load(path_label)
             nib_ref_can = nib.as_closest_canonical(lab)
@@ -106,7 +87,6 @@ def extract_mid_slice_and_convert_coordinates_to_heatmaps(path, suffix, aim=0):
             heatmap = imed_maths.heatmap_generation(label_array[:, :], 10)
             arr_pred_ref_space = imed_loader_utils.reorient_image(np.expand_dims(heatmap[:, :], axis=0), 2, lab, nib_ref_can)
             nib_pred = nib.Nifti1Image(arr_pred_ref_space, lab.affine)
-            nib_pred = rotate_nifti(nib_pred)
             nib.save(nib_pred, os.path.join(path, 'derivatives', 'labels', t[i], 'anat', t[i]+'_rec-mid' +suffix+ '_heatmap'+str(aim)
                                             + '.nii.gz'))
         else:
