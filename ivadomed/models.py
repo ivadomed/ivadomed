@@ -1568,7 +1568,8 @@ class HourglassNet(nn.Module):
         self.layer2 = self._make_residual(block, self.inplanes, 1)
         self.layer3 = self._make_residual(block, self.num_feats, 1)
         self.maxpool = nn.MaxPool2d(2, stride=2)
-        self.scale_score = nn.Upsample(scale_factor=4, mode='bilinear')
+        # NB: align_corners=False is the default behavior, but we set to silence a noisy (harmless) message
+        self.scale_score = nn.Upsample(scale_factor=4, mode='bilinear', align_corners=False)
 
         # build hourglass modules
         ch = self.num_feats*block.expansion
