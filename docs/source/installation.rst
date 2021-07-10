@@ -6,7 +6,7 @@ Supported OS
 
 Currently, we only support ``MacOS`` and ``Linux`` operating systems. ``Windows``
 users have the possibility to install and use ``ivadomed`` via
-`Windows Subsystem for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/>`_.For MacOs users, we strongly recommend to follow the bellow steps before the installation.
+`Windows Subsystem for Linux (WSL) <https://docs.microsoft.com/en-us/windows/wsl/>`_. The steps below (about updating bashrc) are strongly recommended for MacOS users in the installation process but are optional for Linux users.
 
 Open your bash/zsh script file with editor on your computer.
 
@@ -17,6 +17,7 @@ Open your bash/zsh script file with editor on your computer.
 
     If you are using zsh shell
     ::
+        
         vim ~/.zshrc
 
 Write in your .bashrc/.zshrc file with following line.
@@ -44,7 +45,6 @@ Step 1: Create new Conda Env called IvadoMedEnv (may taken 5 to 15 minutes)
 ::
 
     conda env create --file environment.yml
-
 
 Step 2 : Activate environment and use
 ++++++++++++++++++++++++++++++++++++++
@@ -78,15 +78,22 @@ working under a virtual environment, which could be set as follows:
 
      virtualenv venv-ivadomed --python=python3.6
 
+Step 2: Clone the `ivadomed <https://github.com/ivadomed/ivadomed>`_ repository.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Step 2: Install PyTorch 1.5 and TorchVision (CPU)
-+++++++++++++++++++++++++++++++++++++++++++++++++++
+::
+
+    git clone git@github.com:ivadomed/ivadomed.git
+    cd ivadomed
+
+Step 3: Install PyTorch 1.5 and TorchVision (CPU)
++++++++++++++++++++++++++++++++++++++++++++++++++
 ::
 
     pip install -r requirements.txt
 
 
-(Optional) Alternative Step 2: Install PyTorch 1.5 and TorchVision (GPU)
+(Optional) Alternative Step 3: Install PyTorch 1.5 and TorchVision (GPU)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 If you have a GPU and it has CUDA already setup etc, do the follow or use whatever CUDA version you have.
 
@@ -95,7 +102,7 @@ If you have a GPU and it has CUDA already setup etc, do the follow or use whatev
     pip install -r requirements_gpu.txt
 
 
-Step 3: Install from release (recommended)
+Step 4: Install from release (recommended)
 ++++++++++++++++++++++++++++++++++++++++++
 
 Install ``ivadomed`` and its requirements from
@@ -106,8 +113,8 @@ Install ``ivadomed`` and its requirements from
     pip install --upgrade pip
     pip install ivadomed
 
-(Optional) Alternative Step 3 for Developers: Install from source
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+(Optional) Alternative Step 4 for Developers: Install from source
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Bleeding-edge developments are available on the project's master branch
 on Github. Installation procedure is the following:
@@ -119,8 +126,8 @@ on Github. Installation procedure is the following:
     pip install -e .
 
 
-(Optional) Step 4 for Developers Install pre-commit hooks
-+++++++++++++++++++++++++++++++++++++++++++++++++++++
+(Optional) Step 5 for Developers Install pre-commit hooks
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 We use ``pre-commit`` to enforce a limit on file size.
 After you've installed ``ivadomed``, install the hooks:
