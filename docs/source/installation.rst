@@ -81,25 +81,29 @@ working under a virtual environment, which could be set as follows:
 Step 2: Clone the `ivadomed <https://github.com/ivadomed/ivadomed>`_ repository.
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+
 ::
 
     git clone git@github.com:ivadomed/ivadomed.git
     cd ivadomed
+ 
 
-Step 3: Install PyTorch 1.5 and TorchVision (CPU)
-+++++++++++++++++++++++++++++++++++++++++++++++++
+Step 3: Install PyTorch 1.5 and TorchVision
++++++++++++++++++++++++++++++++++++++++++++
+
+If you have a compatible NVIDIA GPU that supports CUDA, run the following command:
+
+::
+   
+   pip install -r requirements_gpu.txt
+
+
+If you do not have a compatible GPU, run the following installer to use ``ivadomed`` with CPU.
+
+
 ::
 
     pip install -r requirements.txt
-
-
-(Optional) Alternative Step 3: Install PyTorch 1.5 and TorchVision (GPU)
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-If you have a GPU and it has CUDA already setup etc, do the follow or use whatever CUDA version you have.
-
-::
-
-    pip install -r requirements_gpu.txt
 
 
 Step 4: Install from release (recommended)
@@ -117,11 +121,10 @@ Install ``ivadomed`` and its requirements from
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Bleeding-edge developments are available on the project's master branch
-on Github. Installation procedure is the following:
+on Github. Installation procedure is the following at repository root:
 
 ::
 
-    git clone https://github.com/neuropoly/ivadomed.git
     cd ivadomed
     pip install -e .
 
