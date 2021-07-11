@@ -10,7 +10,6 @@ on:
       - master
   # Trigger the workflow on pull requests, but reveal no secrets, do not use pull_request_target, see:
   # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request_target
-  pull_request:
 
 env:
   # Even when given -y, apt will still sometimes hang at a prompt if a package
@@ -57,9 +56,12 @@ jobs:
 
       # Step 2: Install requirement dependencies.
       - name: Update miniconda environment with "environment.yml"
-        uses: matthewrmshin/conda-action@v1
+        uses: conda-incubator/setup-miniconda@v2
         with:
-          args: conda env update -f ./requirements.yml
+          activate-environment: IvadoMedEnv
+          environment-file: environment.yml
+          python-version: ${{ matrix.python-version }}
+          auto-activate-base: false
 
       # Step 3: install additional pytest/dev related dependencies
       - name: Install IvadoMed Main Modules
