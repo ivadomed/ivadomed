@@ -6,10 +6,9 @@ name: Run conda based env setup and tests on all platforms
 on:
   # Trigger the workflow on push but only for the master branch
   workflow_dispatch:
-    branches:
-      - master
   # Trigger the workflow on pull requests, but reveal no secrets, do not use pull_request_target, see:
   # https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request_target
+  pull_request:
 
 env:
   # Even when given -y, apt will still sometimes hang at a prompt if a package
