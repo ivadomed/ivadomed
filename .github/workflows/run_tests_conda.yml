@@ -54,7 +54,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       # Step 2: Install requirement dependencies.
-      - name: Update miniconda environment with "environment.yml"
+      - name: Update miniconda environment with "environment_dev.yml"
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: IvadoMedEnv
