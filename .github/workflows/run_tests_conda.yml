@@ -92,7 +92,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          conda activate IvadoMedEnv
           pip3 install --upgrade coveralls
           coveralls --finish
 
