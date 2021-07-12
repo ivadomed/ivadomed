@@ -64,6 +64,7 @@ jobs:
 
       # Step 3: install additional pytest/dev related dependencies
       - name: Install IvadoMed Main Modules
+        shell: bash -l {0}
         run: |
           conda activate IvadoMedEnv
           pip install -e .
@@ -74,6 +75,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
           COVERALLS_PARALLEL: true
+        shell: bash -l {0}
         run: |
           conda activate IvadoMedEnv
           pytest . -v --cov ivadomed/ --cov-report term-missing
