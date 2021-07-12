@@ -266,7 +266,7 @@ def run_segment_command(context, model_params):
             metadata = bids_df.df[bids_df.df['filename'] == subject][model_params['metadata']].values[0]
             options['metadata'] = metadata
 
-        # Add microscopy PixelSize metadata to options for segment_volume
+        # Add microscopy pixel size metadata to options for segment_volume
         if 'PixelSize' in bids_df.df.columns:
             options['pixel_size'] = bids_df.df.loc[bids_df.df['filename'] == subject]['PixelSize'].values[0]
 
