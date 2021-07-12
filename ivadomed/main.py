@@ -240,7 +240,7 @@ def run_segment_command(context, model_params):
     model_config['postprocessing'] = context['postprocessing']
     with open(path_model_config, 'w') as fp:
         json.dump(model_config, fp, indent=4)
-    options = None
+    options = {}
 
     # Initialize a list of already seen subject ids for multichannel
     seen_subj_ids = []
@@ -297,9 +297,14 @@ def run_segment_command(context, model_params):
         else:
             fname_img = bids_df.df[bids_df.df['filename'] == subject]['path'].to_list()
 
+        # Add film metadata to options for segment_volume
         if 'film_layers' in model_params and any(model_params['film_layers']) and model_params['metadata']:
             metadata = bids_df.df[bids_df.df['filename'] == subject][model_params['metadata']].values[0]
-            options = {'metadata': metadata}
+            options['metadata'] = metadata
+
+        # Add microscopy PixelSize metadata to options for segment_volume
+        if 'PixelSize' in bids_df.df.columns:
+            options['PixelSize'] = bids_df.df.loc[bids_df.df['filename'] == subject]['PixelSize'].values[0]
 
         if fname_img:
             pred_list, target_list = imed_inference.segment_volume(path_model,
@@ -311,9 +316,15 @@ def run_segment_command(context, model_params):
                 os.makedirs(pred_path)
 
             for pred, target in zip(pred_list, target_list):
-                filename = subject.split('.')[0] + target + "_pred" + \
-                           ".nii.gz"
+                filename = subject.split('.')[0] + target + "_pred" + ".nii.gz"
                 nib.save(pred, os.path.join(pred_path, filename))
+
+            # For Microscopy PNG/TIF files (TODO: implement OMETIFF behavior)
+            extension = imed_loader_utils.get_file_extension(subject)
+            if "nii" not in extension:
+                imed_inference.pred_to_png(pred_list,
+                                           target_list,
+                                           os.path.join(pred_path, subject).replace(extension, ''))
 
 
 def run_command(context, n_gif=0, thr_increment=None, resume_training=False):

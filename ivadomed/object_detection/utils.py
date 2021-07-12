@@ -9,8 +9,7 @@ from scipy import ndimage
 
 from ivadomed import postprocessing as imed_postpro
 from ivadomed import transforms as imed_transforms
-from ivadomed import inference as imed_inference
-from ivadomed.loader.tools import utils as imed_loader_utils
+from ivadomed.loader import utils as imed_loader_utils
 
 
 def get_bounding_boxes(mask):
@@ -107,6 +106,7 @@ def generate_bounding_box_file(subject_path_list, model_path, path_output, gpu_i
         dict: Dictionary containing bounding boxes related to their image.
 
     """
+    from ivadomed import inference as imed_inference
     bounding_box_dict = {}
     if safety_factor is None:
         safety_factor = [1.0, 1.0, 1.0]

@@ -5,6 +5,7 @@ import argparse
 import nibabel as nib
 import numpy as np
 import random
+import torch
 
 import ivadomed.loader.tools.sample_metadata
 from ivadomed import config_manager as imed_config_manager
@@ -159,7 +160,10 @@ def run_visualization(input, config, number, output, roi):
                 before = np.rot90(imed_maths.rescale_values_array(data[0], 0.0, 1.0))
             else:
                 before = after
-            after = np.rot90(imed_maths.rescale_values_array(stack_im[0], 0.0, 1.0))
+            if isinstance(stack_im[0], torch.Tensor):
+                after = np.rot90(imed_maths.rescale_values_array(stack_im[0].numpy(), 0.0, 1.0))
+            else:
+                after = np.rot90(imed_maths.rescale_values_array(stack_im[0], 0.0, 1.0))
             # Plot
             imed_utils.plot_transformed_sample(before,
                                                after,

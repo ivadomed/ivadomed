@@ -1,4 +1,3 @@
-from __future__ import annotations
 import copy
 import random
 
@@ -7,9 +6,9 @@ import torch
 from torch.utils.data import Dataset
 
 from ivadomed import transforms as imed_transforms, postprocessing as imed_postpro
-from ivadomed.loader.tools.utils import dropout_input
-from ivadomed.loader.semgnetation_pair import SegmentationPair
-from ivadomed.loader.tools import utils as imed_loader_utils
+from ivadomed.loader import utils as imed_loader_utils
+from ivadomed.loader.utils import dropout_input
+from ivadomed.loader.segmentation_pair import SegmentationPair
 from ivadomed.object_detection import utils as imed_obj_detect
 
 
@@ -21,8 +20,8 @@ class MRI2DSegmentationDataset(Dataset):
             truth filename, ROI filename, metadata).
         length (list): Size of each dimensions of the patches, length equals 0 (no patching) or 2 (2d patching).
         stride (list): Size of the pixels' shift between patches, length equals 0 (no patching) or 2 (2d patching).
-        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         cache (bool): if the data should be cached in memory or not.
         transform (torchvision.Compose): transformations to apply.
         slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
@@ -44,14 +43,13 @@ class MRI2DSegmentationDataset(Dataset):
         prepro_transforms (Compose): Transformations to apply before training.
         transform (Compose): Transformations to apply during training.
         cache (bool): Tf the data should be cached in memory or not.
-        slice_axis (int): Indicates the axis used to extract 2D slices from 3D nifti files:
-            "axial": 2, "sagittal": 0, "coronal": 1. 2D png/tif/jpg files use default "axial": 2.
+        slice_axis (int): Indicates the axis used to extract 2D slices from 3D NifTI files:
+            "axial": 2, "sagittal": 0, "coronal": 1. 2D PNG/TIF/JPG files use default "axial": 2.
         slice_filter_fn (dict): Slice filter parameters, see :doc:`configuration_file` for more details.
         n_contrasts (int): Number of input contrasts.
         has_bounding_box (bool): True if bounding box in all metadata, else False.
         task (str): Choice between segmentation or classification. If classification: GT is discrete values, \
             If segmentation: GT is binary mask.
-        roi_params (dict): a dictionary containing the parameters related to ROI.
         soft_gt (bool): If True, ground truths are not binarized before being fed to the network. Otherwise, ground
         truths are thresholded (0.5) after the data augmentation operations.
         slice_filter_roi (bool): Indicates whether a slice filtering is done based on ROI data.
@@ -61,23 +59,13 @@ class MRI2DSegmentationDataset(Dataset):
 
     """
 
-    def __init__(self, filename_pairs: list, length: list = None, stride: list = None, slice_axis: int = 2,
-                 cache: bool = True, transform=None, slice_filter_fn: dict = None, task: str = "segmentation",
-                 roi_params: dict = None, soft_gt: bool = False, is_input_dropout: bool = False):
-        self.indexes: list = []
-        self.handlers: list = []
+    def __init__(self, filename_pairs, length=[], stride=[], slice_axis=2, cache=True, transform=None,
+                 slice_filter_fn=None, task="segmentation", roi_params=None, soft_gt=False, is_input_dropout=False):
+        self.indexes = []
+        self.handlers = []
         self.filename_pairs = filename_pairs
-
-        if length is None:
-            self.length = []
-        else:
-            self.length = length
-
-        if stride is None:
-            self.stride = []
-        else:
-            self.stride = stride
-
+        self.length = length
+        self.stride = stride
         self.is_2d_patch = True if self.length else False
         self.prepro_transforms, self.transform = transform
         self.cache = cache

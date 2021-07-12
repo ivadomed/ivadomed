@@ -1,10 +1,10 @@
 import copy
 from loguru import logger
-
-from ivadomed.loader.tools.slice_filter import SliceFilter
 from ivadomed import transforms as imed_transforms
 from ivadomed import utils as imed_utils
-from ivadomed.loader import adaptative as imed_adaptative
+from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
+from ivadomed.loader.bids3d_dataset import Bids3DDataset
+from ivadomed.loader.bids_dataset import BidsDataset
 
 
 def load_dataset(bids_df, data_list, transforms_params, model_params, target_suffix, roi_params,
@@ -26,7 +26,7 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
         contrast_params (dict): Contains image contrasts related parameters.
         slice_filter_params (dict): Contains slice_filter parameters, see :doc:`configuration_file` for more details.
         slice_axis (string): Choice between "axial", "sagittal", "coronal" ; controls the axis used to extract the 2D
-            data from 3D nifti files. 2D png/tif/jpg files use default "axial.
+            data from 3D NifTI files. 2D PNG/TIF/JPG files use default "axial.
         multichannel (bool): If True, the input contrasts are combined as input channels for the model. Otherwise, each
             contrast is processed individually (ie different sample / tensor).
         metadata_type (str): Choice between None, "mri_params", "contrasts".
@@ -43,8 +43,6 @@ def load_dataset(bids_df, data_list, transforms_params, model_params, target_suf
     Note: For more details on the parameters transform_params, target_suffix, roi_params, contrast_params,
     slice_filter_params and object_detection_params see :doc:`configuration_file`.
     """
-    from ivadomed.loader.bids3d_dataset import Bids3DDataset
-    from ivadomed.loader.bids_dataset import BidsDataset
 
     # Compose transforms
     tranform_lst, _ = imed_transforms.prepare_transforms(copy.deepcopy(transforms_params), requires_undo)
