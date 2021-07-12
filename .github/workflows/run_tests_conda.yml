@@ -54,8 +54,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       # Step 2: Install requirement dependencies.
-      # Step 3: install additional pytest/dev related dependencies
-      # Step 4: Full Pytest
       - name: Update miniconda environment with "environment_dev.yml"
         uses: conda-incubator/setup-miniconda@v2
         with:
@@ -63,12 +61,19 @@ jobs:
           environment-file: environment_dev.yml
           python-version: ${{ matrix.python-version }}
           auto-activate-base: false
+
+      # Step 3: install additional pytest/dev related dependencies
+      - name: Install IvadoMed Main Modules
+        run: |
+          pip install -e .
+
+      # Step 4: Full Pytest
+      - name: Test with pytest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
           COVERALLS_PARALLEL: true
         run: |
-          pip install -e .                  
           pytest . -v --cov ivadomed/ --cov-report term-missing
           coveralls --service=github
 
