@@ -22,7 +22,7 @@ def test_save_rgb(download_data_testing_test_files):
         binarize=False,
         gt_filename=os.path.join(
             __data_testing_dir__,
-            "rgb_test_file.nii.gz"),
+            "derivatives/labels/sub-unf01/anat/sub-unf01_T2w_lesion-manual.nii.gz"),
         output_filename=os.path.join(__tmp_dir__, "rgb_test.nii.gz"),
         slice_axis=0
     )

@@ -119,7 +119,7 @@ def get_onehotencoder(context: dict, folder_model: str, options: dict, ds: Datas
 
 def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fname_out: str, slice_axis: int,
                 debug: bool = False, kernel_dim: str='2d', bin_thr: float=0.5, discard_noise: bool = True,
-                postprocessing: dict = None) -> nib.Nifti1Image:
+                postprocessing: dict = None, color_label: bool = False) -> nib.Nifti1Image:
     """Save the network predictions as nibabel object.
 
     Based on the header of `fname_ref` image, it creates a nibabel object from the Network predictions (`data_lst`).
@@ -195,11 +195,18 @@ def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fn
 
     # Here we prefer to copy the header (rather than just the affine matrix), in order to preserve the qform_code.
     # See: https://github.com/ivadomed/ivadomed/issues/711
-    nib_pred = nib.Nifti1Image(
-        dataobj=arr_pred_ref_space,
-        affine=None,
-        header=nib_ref.header.copy()
-    )
+    if color_label:
+        nib_pred = nib.Nifti1Image(
+            dataobj=arr_pred_ref_space,
+            affine=None,
+            header=None
+        )
+    else:
+        nib_pred = nib.Nifti1Image(
+            dataobj=arr_pred_ref_space,
+            affine=None,
+            header=nib_ref.header.copy()
+        )
     # save as NifTI file
     if fname_out is not None:
         nib.save(nib_pred, fname_out)
