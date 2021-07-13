@@ -334,8 +334,8 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
                               or one value per prediction class. Single value example: ["1mm3"], ["5vox"]. Multiple values
                               example: ["10", "20", "10vox"] (remove objects smaller than 10 voxels for class 1 and 3,
                               and smaller than 20 voxels for class 2).
-            * 'PixelSize': (list of float) List of microscopy PixelSize in micrometers.
-                           Length equals 2 [X, Y] for 2D or 3 [X, Y, Z] for 3D.
+            * 'pixel_size': (list of float) List of microscopy pixel size in micrometers.
+                            Length equals 2 [X, Y] for 2D or 3 [X, Y, Z] for 3D.
             * 'overlap_2D': (list of int) List of overlaps in pixels for 2D patching. Length equals 2 [X, Y].
             * 'metadata': (str) Film metadata.
             * 'fname_prior': (str) An image filename (e.g., .nii.gz) containing processing information
@@ -396,9 +396,9 @@ def segment_volume(folder_model: str, fname_images: list, gpu_id: int = 0, optio
     if is_2d_patch and (options is not None) and ('overlap_2D' in options):
         stride_2D = [x1 - x2 for (x1, x2) in zip(length_2D, options['overlap_2D'])]
 
-    # Add microscopy PixelSize from options to metadata for filenames_pairs
-    if (options is not None) and ('PixelSize' in options):
-        metadata['PixelSize'] = options['PixelSize']
+    # Add microscopy pixel size from options to metadata for filenames_pairs
+    if (options is not None) and ('pixel_size' in options):
+        metadata['PixelSize'] = options['pixel_size']
 
     filename_pairs = [(fname_images, None, fname_roi, metadata if isinstance(metadata, list) else [metadata])]
 
