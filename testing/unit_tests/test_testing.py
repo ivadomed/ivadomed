@@ -210,7 +210,7 @@ def test_inference_2d_microscopy(download_data_testing_test_files, transforms_di
                                                    ofolder=__output_dir__,
                                                    cuda_available=cuda_available)
 
-    assert len([x for x in os.listdir(__output_dir__) if x.endswith(".nii.gz")]) == len(test_lst)
+    assert len([x for x in os.listdir(__output_dir__) if x.endswith(".nii.gz")]) == 2*len(test_lst)
     assert len([x for x in os.listdir(__output_dir__) if x.endswith(".png")]) == 2*len(test_lst)
 
 

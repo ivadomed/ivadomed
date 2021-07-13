@@ -301,12 +301,11 @@ def run_inference(test_loader, model, model_params, testing_params, ofolder, cud
                     if pred_undo.shape[0] > 1 and ofolder:
                         logger.warning('No color labels saved due to a temporary issue. For more details see:'
                                        'https://github.com/ivadomed/ivadomed/issues/720')
-                        # TODO: put back the code below. See #720
-                        # imed_visualize.save_color_labels(pred_undo,
-                        #                              False,
-                        #                              batch['input_metadata'][smp_idx][0]['input_filenames'],
-                        #                              fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
-                        #                              slice_axis)
+                        imed_visualize.save_color_labels(pred_undo,
+                                                     False,
+                                                     batch['input_metadata'][smp_idx][0]['input_filenames'],
+                                                     fname_pred.split(".nii.gz")[0] + '_color.nii.gz',
+                                                     slice_axis)
 
     if 'film_layers' in model_params and any(model_params['film_layers']):
         save_film_params(gammas_dict, betas_dict, metadata_values_lst, model_params["depth"],
