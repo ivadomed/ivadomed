@@ -214,10 +214,6 @@ class BIDStoHDF5:
         # Sort subject_file_lst and create a sub-dataframe from bids_df containing only subjects from subject_file_lst
         subject_file_lst = sorted(subject_file_lst)
         df_subjects = bids_df.df[bids_df.df['filename'].isin(subject_file_lst)]
-        # Backward compatibility for subject_file_lst containing participant_ids instead of filenames
-        if df_subjects.empty:
-            df_subjects = bids_df.df[bids_df.df['participant_id'].isin(subject_file_lst)]
-            subject_file_lst = sorted(df_subjects['filename'].to_list())
 
         self.soft_gt = soft_gt
         self.dt = h5py.special_dtype(vlen=str)
