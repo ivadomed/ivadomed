@@ -196,6 +196,7 @@ def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fn
     # Here we prefer to copy the header (rather than just the affine matrix), in order to preserve the qform_code.
     # See: https://github.com/ivadomed/ivadomed/issues/711
     if color_label:
+        # this sets the datatype to RGB for colored label
         super(nib.Nifti1Header, nib_ref.header).set_data_dtype(128)
 
     nib_pred = nib.Nifti1Image(
