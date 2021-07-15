@@ -196,17 +196,14 @@ def pred_to_nib(data_lst: List[np.ndarray], z_lst: List[int], fname_ref: str, fn
     # Here we prefer to copy the header (rather than just the affine matrix), in order to preserve the qform_code.
     # See: https://github.com/ivadomed/ivadomed/issues/711
     if color_label:
-        nib_pred = nib.Nifti1Image(
-            dataobj=arr_pred_ref_space,
-            affine=None,
-            header=None
-        )
-    else:
-        nib_pred = nib.Nifti1Image(
-            dataobj=arr_pred_ref_space,
-            affine=None,
-            header=nib_ref.header.copy()
-        )
+        super(nib.Nifti1Header, nib_ref.header).set_data_dtype(128)
+
+    nib_pred = nib.Nifti1Image(
+        dataobj=arr_pred_ref_space,
+        affine=None,
+        header=nib_ref.header.copy()
+    )
+
     # save as NifTI file
     if fname_out is not None:
         nib.save(nib_pred, fname_out)
