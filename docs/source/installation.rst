@@ -61,6 +61,13 @@ Step 3 : Activate environment and use
 
     conda activate IvadoMedEnv
 
+Step 4 : Install from source
+++++++++++++++++++++++++++++++++++++++
+
+::
+
+    pip install -e .
+
 Note that this is NOT compatible with ComputeCanada because of their no anaconda policy: https://docs.computecanada.ca/wiki/Anaconda/en
 
 
@@ -70,7 +77,7 @@ Approach 2: Venv
 Step 1: Setup Python Virtual Environment.
 +++++++++++++++++++++++++++++++++++++++++
 
-``ivadomed`` requires Python >= 3.6 and <3.9. We recommend
+``ivadomed`` requires Python >= 3.6 and <3.9 (If you are using compute canada, you can load modules (e.g. python 3.9) as mentioned  `here <https://intranet.neuro.polymtl.ca/computing-resources/compute-canada#modules>`_ and `also here <https://docs.computecanada.ca/wiki/Utiliser_des_modules/en#Loading_modules_automatically>`_ ). We recommend
 working under a virtual environment, which could be set as follows:
 
 ::
