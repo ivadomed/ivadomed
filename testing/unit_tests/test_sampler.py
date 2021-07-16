@@ -46,7 +46,7 @@ def _cmpt_label(ds_loader):
         },
     "NumpyToTensor": {}
 }])
-@pytest.mark.parametrize('train_lst', [['sub-unf01']])
+@pytest.mark.parametrize('train_lst', [['sub-unf01_T2w.nii.gz']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('roi_params', [{"suffix": "_seg-manual", "slice_filter_roi": 10}])
 def test_sampler(download_data_testing_test_files, transforms_dict, train_lst, target_lst, roi_params):
