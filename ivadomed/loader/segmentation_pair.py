@@ -325,6 +325,10 @@ class SegmentationPair(object):
         else:
             img = np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1).astype(np.uint8)
 
+        # Convert ground-truth values of 0 and 255 to 0 and 1 in uint8
+        if is_gt:
+            img = img // 255
+
         # Convert numpy array to Nifti1Image object with 4x4 identity affine matrix
         img = nib.Nifti1Image(img, affine=np.eye(4))
 
