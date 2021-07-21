@@ -319,11 +319,11 @@ class SegmentationPair(object):
             'nibabel.nifti1.Nifti1Image' object
         """
         # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
-        # Read image as grayscale in numpy array (behavior TBD in ivadomed for RGB or RBGA)
+        # Read image as 8 bit grayscale in numpy array (behavior TBD in ivadomed for RGB, RBGA or higher bit depth)
         if "tif" in extension:
-            img = np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1)
+            img = np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1).astype(np.uint8)
         else:
-            img = np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
+            img = np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1).astype(np.uint8)
 
         # Convert numpy array to Nifti1Image object with 4x4 identity affine matrix
         img = nib.Nifti1Image(img, affine=np.eye(4))
