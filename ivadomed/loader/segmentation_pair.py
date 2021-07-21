@@ -64,9 +64,9 @@ class SegmentationPair(object):
             for gt in self.gt_filenames:
                 if gt is not None:
                     if isinstance(gt, str):  # this tissue has annotation from only one rater
-                        self.gt_handle.append(self.read_file(gt))
+                        self.gt_handle.append(self.read_file(gt, is_gt=True))
                     else:  # this tissue has annotation from several raters
-                        self.gt_handle.append([self.read_file(gt_rater) for gt_rater in gt])
+                        self.gt_handle.append([self.read_file(gt_rater, is_gt=True) for gt_rater in gt])
                 else:
                     self.gt_handle.append(None)
 
@@ -268,11 +268,12 @@ class SegmentationPair(object):
 
         return dreturn
 
-    def read_file(self, filename):
+    def read_file(self, filename, is_gt=False):
         """Read file according to file extension and returns 'nibabel.nifti1.Nifti1Image' object.
 
         Args:
             filename (str): Subject filename.
+            is_gt (bool): Indicate if the file is a ground-truth.
 
         Returns:
             'nibabel.nifti1.Nifti1Image' object
@@ -288,10 +289,10 @@ class SegmentationPair(object):
             # For '.nii' and '.nii.gz' extentions
             img = nib.load(filename)
         else:
-            img = self.convert_file_to_nifti(filename, extension)
+            img = self.convert_file_to_nifti(filename, extension, is_gt)
         return img
 
-    def convert_file_to_nifti(self, filename, extension):
+    def convert_file_to_nifti(self, filename, extension, is_gt=False):
         """
         Convert a non-NifTI image into a 'nibabel.nifti1.Nifti1Image' object and save to a file.
         This method is especially relevant for making microscopy data compatible with NifTI-only
@@ -312,6 +313,7 @@ class SegmentationPair(object):
         Args:
             filename (str): Subject filename.
             extension (str): File extension.
+            is_gt (bool): Indicate if the file is a ground-truth.
 
         Returns:
             'nibabel.nifti1.Nifti1Image' object
