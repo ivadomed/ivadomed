@@ -113,6 +113,7 @@ class MRI2DSegmentationDataset(Dataset):
                 item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                       slice_seg_pair,
                                                                       slice_roi_pair)
+
                 # If is_2d_patch, create handlers list for indexing patch
                 if self.is_2d_patch:
                     for metadata in item[0]['input_metadata']:
