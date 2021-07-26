@@ -113,7 +113,6 @@ class MRI2DSegmentationDataset(Dataset):
                 item = imed_transforms.apply_preprocessing_transforms(self.prepro_transforms,
                                                                       slice_seg_pair,
                                                                       slice_roi_pair)
-
                 # If is_2d_patch, create handlers list for indexing patch
                 if self.is_2d_patch:
                     for metadata in item[0]['input_metadata']:
@@ -178,7 +177,7 @@ class MRI2DSegmentationDataset(Dataset):
             seg_pair_slice, roi_pair_slice = copy.deepcopy(self.indexes[index])
 
         # In case multiple raters
-        if seg_pair_slice['gt'] is not None and isinstance(seg_pair_slice['gt'][0], list):
+        if seg_pair_slice['gt'] and isinstance(seg_pair_slice['gt'][0], list):
             # Randomly pick a rater
             idx_rater = random.randint(0, len(seg_pair_slice['gt'][0]) - 1)
             # Use it as ground truth for this iteration
