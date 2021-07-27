@@ -20,7 +20,7 @@ def setup_function():
     create_tmp_dir()
 
 
-@pytest.mark.parametrize('train_lst', [['sub-unf01']])
+@pytest.mark.parametrize('train_lst', [['sub-unf01_T2w.nii.gz']])
 @pytest.mark.parametrize('target_lst', [["_lesion-manual"]])
 @pytest.mark.parametrize('config', [
     {
@@ -83,7 +83,7 @@ def test_bounding_box(download_data_testing_test_files, train_lst, target_lst, c
     if not os.path.exists(PATH_OUTPUT):
         os.mkdir(PATH_OUTPUT)
     current_dir = os.getcwd()
-    sub = train_lst[0]
+    sub = train_lst[0].split('_')[0]
     contrast = config['contrast_params']['contrast_lst'][0]
     bb_path = os.path.join(current_dir, __data_testing_dir__, sub, "anat", sub + "_" + contrast + ".nii.gz")
     bounding_box_dict[bb_path] = coord
