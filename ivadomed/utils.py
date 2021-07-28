@@ -266,8 +266,12 @@ def get_arguments(parser, args):
             args = parser.parse_args(args)
         else:
             args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    except SystemExit:
-        raise ArgParseException('Error parsing args')
+    except SystemExit as e:
+        if e.code != 0:  # Calling `--help` raises SystemExit with 0 exit code (i.e. not an ArgParseException)
+            raise ArgParseException('Error parsing args')
+        else:
+            sys.exit(0)
+
     return args
 
 
