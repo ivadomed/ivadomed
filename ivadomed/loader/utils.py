@@ -200,6 +200,22 @@ def get_subdatasets_subject_files_list(split_params, df, path_output, subject_se
         # Load subjects lists
         old_split = joblib.load(split_params["fname_split"])
         train_lst, valid_lst, test_lst = old_split['train'], old_split['valid'], old_split['test']
+
+        # Backward compatibility for subject_file_lst containing participant_ids instead of filenames
+        df_subjects = df[df['filename'].isin(train_lst)]
+        if df_subjects.empty:
+            df_train = df[df['participant_id'].isin(train_lst)]
+            train_lst = sorted(df_train['filename'].to_list())
+
+        df_subjects = df[df['filename'].isin(valid_lst)]
+        if df_subjects.empty:
+            df_valid = df[df['participant_id'].isin(valid_lst)]
+            valid_lst = sorted(df_valid['filename'].to_list())
+
+        df_subjects = df[df['filename'].isin(test_lst)]
+        if df_subjects.empty:
+            df_test = df[df['participant_id'].isin(test_lst)]
+            test_lst = sorted(df_test['filename'].to_list())
     else:
         train_lst, valid_lst, test_lst = get_new_subject_file_split(df=df,
                                                                     split_method=split_params['split_method'],
