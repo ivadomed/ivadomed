@@ -653,13 +653,13 @@ class BidsDataframe:
                     if path_object.name == "samples.tsv" or path_object.name == "samples.json":
                         force_index.append(path_object.name)
                     if (path_object.name.endswith(ext_microscopy) and path_object.parent.name == "microscopy" and
-                            (str(path_object.parent).replace(str(path_data), '').startswith("sub"))):
-                        force_index.append(str(path_object.parent).replace(str(path_data), ''))
+                            (str(path_object.parent).replace(str(path_data) + os.sep, '').startswith("sub"))):
+                        force_index.append(str(path_object.parent).replace(str(path_data) + os.sep, ''))
                     # CT-scan
                     if (path_object.name.endswith(ext_ct) and path_object.name.split('.')[0].endswith(suffix_ct) and
                             (path_object.parent.name == "anat" or path_object.parent.name == "ct") and
-                            (str(path_object.parent).replace(str(path_data), '').startswith("sub"))):
-                        force_index.append(str(path_object.parent).replace(str(path_data), ''))
+                            (str(path_object.parent).replace(str(path_data) + os.sep, '').startswith("sub"))):
+                        force_index.append(str(path_object.parent).replace(str(path_data) + os.sep, ''))
             indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
 
             if self.derivatives:
