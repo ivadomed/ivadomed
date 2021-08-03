@@ -10,12 +10,12 @@
 
 import matplotlib
 import pandas as pd
-import os
 import numpy as np
 import itertools
 import seaborn as sns
 from scipy.stats import ks_2samp
 from ivadomed.utils import init_ivadomed
+from pathlib import Path
 import argparse
 matplotlib.rcParams['toolbar'] = 'None'  # Remove buttons
 
@@ -131,10 +131,10 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=[]):
 
     # Do a quick check that all the required files are present
     for folder in ofolders:
-        if not os.path.exists(os.path.join(folder, 'results_eval', 'evaluation_3Dmetrics.csv')):
-            print('evaluation_3Dmetrics.csv file is not present within ' + os.path.join(folder, 'results_eval'))
+        if not Path(folder, 'results_eval', 'evaluation_3Dmetrics.csv').exists():
+            print('evaluation_3Dmetrics.csv file is not present within ' + str(Path(folder, 'results_eval')))
             raise Exception('evaluation_3Dmetrics.csv missing')
-        if not os.path.exists(os.path.join(folder, 'bids_dataframe.csv')):
+        if not Path(folder, 'bids_dataframe.csv').exists():
             print('bids_dataframe.csv file is not present within ' + folder)
             raise Exception('bids_dataframe.csv missing')
 
@@ -145,10 +145,10 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=[]):
     df = pd.DataFrame([], columns=columnNames)
 
     for folder in ofolders:
-        result = pd.read_csv(os.path.join(folder, 'results_eval', 'evaluation_3Dmetrics.csv'))
+        result = pd.read_csv(str(Path(folder, 'results_eval', 'evaluation_3Dmetrics.csv')))
 
         if metadata:
-            participant_metadata = pd.read_table(os.path.join(folder, 'bids_dataframe.csv'), sep=',')
+            participant_metadata = pd.read_table(str(Path(folder, 'bids_dataframe.csv')), sep=',')
             # Select only the subjects that satisfy the --metadata input
             selected_subjects = participant_metadata[participant_metadata[metadata[0]] == metadata[1]]["filename"].tolist()
             selected_subjects = [i.replace(".nii.gz", "") for i in selected_subjects]
@@ -163,7 +163,7 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=[]):
         if not result.empty:
             scores = result[metric]
 
-            folders = [os.path.basename(os.path.normpath(folder))] * len(scores)
+            folders = [Path(folder).resolve().name] * len(scores)
             subject_id = result["image_id"]
             combined = np.column_stack((folders, scores.astype(np.object, folders), subject_id)).T
             singleFolderDF = pd.DataFrame(combined, columnNames).T
@@ -187,17 +187,15 @@ def visualize_and_compare_models(ofolders, metric="dice_class0", metadata=[]):
         # Display the mean performance on top of every violinplot
         for i in range(len(ofolders)):
             # This will be used to plot the mean value on top of each individual violinplot
-            temp = df[metric][df['EvaluationModel'] == os.path.basename(os.path.normpath(ofolders[i]))]
+            temp = df[metric][df['EvaluationModel'] == Path(ofolders[i]).resolve().name]
             plt.text(i, df[metric].max() + 0.07, str((100 * temp.mean()).round() / 100), ha='center', va='top',
                      color='r', picker=True)
 
         if len(ofolders) > 1 and len(ofolders) < 5:
             # Perform a Kolmogorov–Smirnov test for all combinations of results & connect the corresponding Violinplots
             for i in range(len(combinedNumbers)):
-                dataX = df[metric][df['EvaluationModel'] ==
-                                        os.path.basename(os.path.normpath(combinedFolders[i][0]))]
-                dataY = df[metric][df['EvaluationModel'] ==
-                                        os.path.basename(os.path.normpath(combinedFolders[i][1]))]
+                dataX = df[metric][df['EvaluationModel'] == Path(combinedFolders[i][0]).resolve().name]
+                dataY = df[metric][df['EvaluationModel'] == Path(combinedFolders[i][1]).resolve().name]
 
                 ks_test = ks_2samp(dataX, dataY)
 
