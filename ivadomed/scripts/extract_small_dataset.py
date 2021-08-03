@@ -83,9 +83,9 @@ def extract_small_dataset(input, output, n=10, contrast_list=None, include_deriv
         iderivatives = Path(input).joinpath("derivatives", "labels")
 
     # Get subject list
-    subject_list = [str(s) for s in Path(input).iterdir()
-                    if str(s).startswith("sub-") and Path(input).joinpath(s).is_dir()
-                    and str(s) not in EXCLUDED_SUBJECT]
+    subject_list = [s.name for s in Path(input).iterdir()
+                    if s.name.startswith("sub-") and s.is_dir()
+                    and s.name not in EXCLUDED_SUBJECT]
 
     # Randomly select subjects
     if seed != -1:
