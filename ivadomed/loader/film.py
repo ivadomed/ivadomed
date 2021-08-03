@@ -1,5 +1,5 @@
 import json
-import os
+from pathlib import Path
 from copy import deepcopy
 
 import numpy as np
@@ -11,7 +11,7 @@ from sklearn.preprocessing import OneHotEncoder
 
 from ivadomed import __path__
 
-with open(os.path.join(__path__[0], "config/contrast_dct.json"), "r") as fhandle:
+with Path(__path__[0]).joinpath("config", "contrast_dct.json").open(mode="r") as fhandle:
     GENERIC_CONTRAST = json.load(fhandle)
 MANUFACTURER_CATEGORY = {'Siemens': 0, 'Philips': 1, 'GE': 2}
 CONTRAST_CATEGORY = {"T1w": 0, "T2w": 1, "T2star": 2,
@@ -274,12 +274,12 @@ def save_film_params(gammas, betas, metadata_values, depth, ofolder):
 
     # Save the numpy arrays for gammas/betas inside files.npy in log_directory
     for i in range(1, 2 * depth + 3):
-        gamma_layer_path = os.path.join(ofolder, "gamma_layer_{}.npy".format(i))
-        np.save(gamma_layer_path, gammas_dict[i])
-        beta_layer_path = os.path.join(ofolder, "beta_layer_{}.npy".format(i))
-        np.save(beta_layer_path, betas_dict[i])
+        gamma_layer_path = Path(ofolder).joinpath("gamma_layer_{}.npy".format(i))
+        np.save(str(gamma_layer_path), gammas_dict[i])
+        beta_layer_path = Path(ofolder).joinpath("beta_layer_{}.npy".format(i))
+        np.save(str(beta_layer_path), betas_dict[i])
 
     # Convert into numpy and save the metadata_values of all batch images
     metadata_values = np.array(metadata_values)
-    contrast_path = os.path.join(ofolder, "metadata_values.npy")
-    np.save(contrast_path, metadata_values)
+    contrast_path = Path(ofolder).joinpath("metadata_values.npy")
+    np.save(str(contrast_path), metadata_values)
