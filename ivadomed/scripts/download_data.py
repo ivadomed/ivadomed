@@ -222,16 +222,16 @@ def install_data(url, dest_folder, keep=False):
         for path_object in Path(extraction_folder).iterdir():
             if path_object.name in ("__MACOSX",):
                 continue
-            bundle_folder = path_object.parent
+            bundle_folder = path_object
     else:
         # bomb scenario -> stay here
-        bundle_folder = extraction_folder
+        bundle_folder = Path(extraction_folder)
 
     # Copy over
-    for path_object in Path(bundle_folder).glob("**/*"):
+    for path_object in bundle_folder.glob("**/*"):
         if path_object.is_dir():
             if path_object.name not in ("__MACOSX",):
-                relpath = path_object.relative_to(Path(bundle_folder))
+                relpath = path_object.relative_to(bundle_folder)
                 dstpath = Path(dest_folder).joinpath(relpath)
                 if dstpath.exists():
                     logger.debug("- d- %s", str(relpath))
@@ -239,7 +239,7 @@ def install_data(url, dest_folder, keep=False):
                     logger.debug("- d+ %s", relpath)
                     dstpath.mkdir(parents=True)
         if path_object.is_file():
-            relpath = path_object.relative_to(Path(bundle_folder))
+            relpath = path_object.relative_to(bundle_folder)
             dstpath = Path(dest_folder).joinpath(relpath)
             if dstpath.exists():
                 logger.debug("- f! %s", relpath)
