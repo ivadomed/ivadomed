@@ -1,5 +1,4 @@
-import os
-
+from pathlib import Path
 import imageio
 import nibabel as nib
 import numpy as np
@@ -282,7 +281,7 @@ class SegmentationPair(object):
         if (not extension) or ("ome" in extension):
             raise RuntimeError("The input file extension '{}' of '{}' is not supported. ivadomed supports the following "
                                "file extensions: '.nii', '.nii.gz', '.png', '.tif', '.tiff', '.jpg' and '.jpeg'."
-                               .format(extension, os.path.basename(filename)))
+                               .format(extension, Path(filename).stem))
 
         if "nii" in extension:
             # For '.nii' and '.nii.gz' extentions
@@ -352,7 +351,7 @@ class SegmentationPair(object):
 
         # If it doesn't already exist, save NifTI file in path_data alongside PNG/TIF/JPG file
         fname_out = imed_loader_utils.update_filename_to_nifti(filename)
-        if not os.path.exists(fname_out):
+        if not Path(fname_out).exists():
             nib.save(img, fname_out)
 
         return img
