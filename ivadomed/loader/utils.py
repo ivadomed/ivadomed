@@ -1,10 +1,11 @@
 import collections.abc
 import re
-import os
 import numpy as np
 import pandas as pd
 import torch
 import joblib
+import os
+from pathlib import Path
 from loguru import logger
 from sklearn.model_selection import train_test_split
 from torch._six import string_classes, int_classes
@@ -178,7 +179,7 @@ def get_new_subject_file_split(df, split_method, data_testing, random_seed,
 
     # save the subject distribution
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    split_path = os.path.join(path_output, "split_datasets.joblib")
+    split_path = Path(path_output).joinpath("split_datasets.joblib")
     joblib.dump(split_dct, split_path)
 
     return train_lst, valid_lst, test_lst
@@ -623,7 +624,7 @@ class BidsDataframe:
         self.create_bids_dataframe()
 
         # Save dataframe as csv file
-        self.save(os.path.join(path_output, "bids_dataframe.csv"))
+        self.save(str(Path(path_output).joinpath("bids_dataframe.csv")))
 
     def create_bids_dataframe(self):
         """Generate the dataframe."""
@@ -634,7 +635,7 @@ class BidsDataframe:
         pybids.config.set_option('extension_initial_dot', True)
 
         for path_data in self.paths_data:
-            path_data = os.path.join(path_data, '')
+            path_data = Path(path_data).joinpath('')
 
             # Initialize BIDSLayoutIndexer and BIDSLayout
             # validate=True by default for both indexer and layout, BIDS-validator is not skipped
@@ -646,25 +647,25 @@ class BidsDataframe:
             ext_ct = ('.nii.gz', '.nii')
             suffix_ct = ('ct', 'CT')
             force_index = []
-            for root, dirs, files in os.walk(path_data):
-                for file in files:
+            for path_object in path_data.glob('**/*'):
+                if path_object.is_file():
                     # Microscopy
-                    if file == "samples.tsv" or file == "samples.json":
-                        force_index.append(file)
-                    if (file.endswith(ext_microscopy) and os.path.basename(root) == "microscopy" and
-                            (root.replace(path_data, '').startswith("sub"))):
-                        force_index.append(os.path.join(root.replace(path_data, '')))
+                    if path_object.name == "samples.tsv" or path_object.name == "samples.json":
+                        force_index.append(path_object.name)
+                    if (path_object.name.endswith(ext_microscopy) and path_object.parent.name == "microscopy" and
+                            (str(path_object.parent).replace(str(path_data), '').startswith("sub"))):
+                        force_index.append(str(path_object.parent).replace(str(path_data), ''))
                     # CT-scan
-                    if (file.endswith(ext_ct) and file.split('.')[0].endswith(suffix_ct) and
-                            (os.path.basename(root) == "anat" or os.path.basename(root) == "ct") and
-                            (root.replace(path_data, '').startswith("sub"))):
-                        force_index.append(os.path.join(root.replace(path_data, '')))
+                    if (path_object.name.endswith(ext_ct) and path_object.name.split('.')[0].endswith(suffix_ct) and
+                            (path_object.parent.name == "anat" or path_object.parent.name == "ct") and
+                            (str(path_object.parent).replace(str(path_data), '').startswith("sub"))):
+                        force_index.append(str(path_object.parent).replace(str(path_data), ''))
             indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
 
             if self.derivatives:
-                self.write_derivatives_dataset_description(path_data)
+                self.write_derivatives_dataset_description(str(path_data))
 
-            layout = pybids.BIDSLayout(path_data, config=self.bids_config, indexer=indexer,
+            layout = pybids.BIDSLayout(str(path_data), config=self.bids_config, indexer=indexer,
                                        derivatives=self.derivatives)
 
             # Transform layout to dataframe with all entities and json metadata
@@ -689,10 +690,10 @@ class BidsDataframe:
 
             # Warning if no subject files are found in path_data
             if df_next[~df_next['path'].str.contains('derivatives')].empty:
-                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(path_data))
+                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(str(path_data)))
             else:
                 # Add tsv files metadata to dataframe
-                df_next = self.add_tsv_metadata(df_next, path_data, layout)
+                df_next = self.add_tsv_metadata(df_next, str(path_data), layout)
 
                 # TODO: check if other files are needed for EEG and DWI
 
@@ -749,9 +750,9 @@ class BidsDataframe:
         # TODO: use pybids function after BEP microscopy is merged in BIDS
         if 'sample' in df:
             df['sample_id'] = "sample-" + df['sample']
-        fname_samples = os.path.join(path_data, "samples.tsv")
-        if os.path.exists(fname_samples):
-            df_samples = pd.read_csv(fname_samples, sep='\t')
+        fname_samples = Path(path_data).joinpath("samples.tsv")
+        if fname_samples.exists():
+            df_samples = pd.read_csv(str(fname_samples), sep='\t')
             df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None),
                                how='left')
 
@@ -766,11 +767,12 @@ class BidsDataframe:
         # TODO: use pybids function after BEP microscopy is merged in BIDS
         # TODO: verify merge behavior with EEG and DWI scans files, tested with anat and microscopy only
         df_scans = pd.DataFrame()
-        for root, dirs, files in os.walk(path_data):
-            for file in files:
-                if file.endswith("scans.tsv"):
-                    df_temp = pd.read_csv(os.path.join(root, file), sep='\t')
+        for path_object in Path(path_data).glob("**/*"):
+            if path_object.is_file():
+                if path_object.name.endswith("scans.tsv"):
+                    df_temp = pd.read_csv(str(path_object), sep='\t')
                     df_scans = pd.concat([df_scans, df_temp], ignore_index=True)
+
         if not df_scans.empty:
             df_scans['filename'] = df_scans['filename'].apply(os.path.basename)
             df = pd.merge(df, df_scans, on=['filename'], suffixes=("_x", None), how='left')
@@ -855,7 +857,7 @@ class BidsDataframe:
         deriv_desc_file = '{}/derivatives/{}.json'.format(path_data, filename)
         label_desc_file = '{}/derivatives/labels/{}.json'.format(path_data, filename)
         # need to write default dataset_description.json file if not found
-        if not os.path.isfile(deriv_desc_file) and not os.path.isfile(label_desc_file):
+        if not Path(deriv_desc_file).is_file() and not Path(label_desc_file).is_file():
             f = open(deriv_desc_file, 'w')
             f.write('{"Name": "Example dataset", "BIDSVersion": "1.0.2", "PipelineDescription": {"Name": "Example pipeline"}}')
             f.close()
