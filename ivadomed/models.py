@@ -1498,4 +1498,4 @@ def get_model_filenames(folder_model):
             raise FileNotFoundError(fname_model)
     else:
         raise FileNotFoundError(folder_model)
-    return fname_model, fname_model_metadata
+    return str(fname_model), str(fname_model_metadata)
