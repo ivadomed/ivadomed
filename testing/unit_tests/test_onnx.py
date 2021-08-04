@@ -19,7 +19,7 @@ def setup_function():
 IMAGE_PATH = Path(__data_testing_dir__, "sub-unf01", "anat", "sub-unf01_T1w.nii.gz")
 PATH_MODEL = Path(__data_testing_dir__, 'model')
 PATH_MODEL_ONNX = Path(PATH_MODEL, 'model.onnx')
-PATH_MODEL_PT = PATH_MODEL_ONNX.with_suffix('pt')
+PATH_MODEL_PT = PATH_MODEL_ONNX.with_suffix('.pt')
 LENGTH_3D = (112, 112, 112)
 
 
