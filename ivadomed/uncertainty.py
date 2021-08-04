@@ -18,7 +18,7 @@ def run_uncertainty(ifolder):
     """
     # list subj_acq prefixes
     subj_acq_lst = [f.name.split('_pred')[0] for f in Path(ifolder).iterdir()
-                    if f.name.endswith('.nii.gz') and '_pred' in f]
+                    if f.name.endswith('.nii.gz') and '_pred' in f.name]
     # remove duplicates
     subj_acq_lst = list(set(subj_acq_lst))
     # keep only the images where unc has not been computed yet
