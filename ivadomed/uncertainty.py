@@ -1,7 +1,7 @@
 import nibabel as nib
-import os
 from tqdm import tqdm
 from scipy.ndimage import label, generate_binary_structure
+from pathlib import Path
 import json
 import numpy as np
 from ivadomed import postprocessing as imed_postpro
@@ -17,41 +17,40 @@ def run_uncertainty(ifolder):
         ifolder (str): Folder containing the Monte Carlo samples.
     """
     # list subj_acq prefixes
-    subj_acq_lst = [f.split('_pred')[0] for f in os.listdir(ifolder)
-                    if f.endswith('.nii.gz') and '_pred' in f]
+    subj_acq_lst = [f.name.split('_pred')[0] for f in Path(ifolder).iterdir()
+                    if f.name.endswith('.nii.gz') and '_pred' in f]
     # remove duplicates
     subj_acq_lst = list(set(subj_acq_lst))
     # keep only the images where unc has not been computed yet
-    subj_acq_lst = [f for f in subj_acq_lst if not os.path.isfile(
-        os.path.join(ifolder, f + '_unc-cv.nii.gz'))]
+    subj_acq_lst = [f for f in subj_acq_lst if not Path(ifolder, f + '_unc-cv.nii.gz').is_file()]
 
     # loop across subj_acq
     for subj_acq in tqdm(subj_acq_lst, desc="Uncertainty Computation"):
         # hard segmentation from MC samples
-        fname_pred = os.path.join(ifolder, subj_acq + '_pred.nii.gz')
+        fname_pred = Path(ifolder, subj_acq + '_pred.nii.gz')
         # fname for soft segmentation from MC simulations
-        fname_soft = os.path.join(ifolder, subj_acq + '_soft.nii.gz')
+        fname_soft = Path(ifolder, subj_acq + '_soft.nii.gz')
         # find Monte Carlo simulations
-        fname_pred_lst = [os.path.join(ifolder, f)
-                          for f in os.listdir(ifolder) if subj_acq + '_pred_' in f and
-                          ('_painted' not in f) and ('_color' not in f)]
+        fname_pred_lst = [str(f)
+                          for f in Path(ifolder).iterdir() if subj_acq + '_pred_' in f.name and
+                          ('_painted' not in f.name) and ('_color' not in f.name)]
 
         # if final segmentation from Monte Carlo simulations has not been generated yet
-        if not os.path.isfile(fname_pred) or not os.path.isfile(fname_soft):
+        if not fname_pred.is_file() or not fname_soft.is_file():
             # threshold used for the hard segmentation
             thr = 1. / len(fname_pred_lst)  # 1 for all voxels where at least on MC sample predicted 1
             # average then argmax
-            combine_predictions(fname_pred_lst, fname_pred, fname_soft, thr=thr)
+            combine_predictions(fname_pred_lst, str(fname_pred), str(fname_soft), thr=thr)
 
-        fname_unc_vox = os.path.join(ifolder, subj_acq + '_unc-vox.nii.gz')
-        if not os.path.isfile(fname_unc_vox):
+        fname_unc_vox = Path(ifolder, subj_acq + '_unc-vox.nii.gz')
+        if not fname_unc_vox.is_file():
             # compute voxel-wise uncertainty map
-            voxelwise_uncertainty(fname_pred_lst, fname_unc_vox)
+            voxelwise_uncertainty(fname_pred_lst, str(fname_unc_vox))
 
-        fname_unc_struct = os.path.join(ifolder, subj_acq + '_unc.nii.gz')
-        if not os.path.isfile(os.path.join(ifolder, subj_acq + '_unc-cv.nii.gz')):
+        fname_unc_struct = Path(ifolder, subj_acq + '_unc.nii.gz')
+        if not Path(ifolder, subj_acq + '_unc-cv.nii.gz').is_file():
             # compute structure-wise uncertainty
-            structurewise_uncertainty(fname_pred_lst, fname_pred, fname_unc_vox, fname_unc_struct)
+            structurewise_uncertainty(fname_pred_lst, str(fname_pred), str(fname_unc_vox), str(fname_unc_struct))
 
 
 def combine_predictions(fname_lst, fname_hard, fname_prob, thr=0.5):
