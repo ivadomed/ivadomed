@@ -1,11 +1,11 @@
-import os
 import shutil
 import pytest
+from pathlib import Path
 from ivadomed.utils import init_ivadomed
 from testing.common_testing_util import remove_tmp_dir, path_repo_root, path_temp, path_data_testing_tmp, \
     path_data_testing_source, download_dataset
 
-__test_dir__ = os.path.join(path_repo_root, 'testing/unit_tests')
+__test_dir__ = Path(path_repo_root, 'testing/unit_tests')
 __data_testing_dir__ = path_data_testing_tmp
 __tmp_dir__ = path_temp
 
@@ -34,7 +34,7 @@ def create_tmp_dir(copy_data_testing_dir=True):
             into the ``tmp`` folder.
     """
     remove_tmp_dir()
-    os.mkdir(path_temp)
-    if os.path.exists(path_data_testing_source) and copy_data_testing_dir:
+    Path(path_temp).mkdir()
+    if Path(path_data_testing_source).exists() and copy_data_testing_dir:
         shutil.copytree(path_data_testing_source,
                         path_data_testing_tmp)

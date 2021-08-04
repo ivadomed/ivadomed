@@ -1,4 +1,3 @@
-import os
 import pytest
 import csv_diff
 import logging
@@ -8,6 +7,7 @@ from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __t
 from testing.common_testing_util import remove_tmp_dir
 from ivadomed.loader import utils as imed_loader_utils
 from ivadomed.loader import loader as imed_loader
+from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
@@ -16,7 +16,7 @@ def setup_function():
 
 
 @pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [os.path.join(__data_testing_dir__, "microscopy_png")],
+    "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": [["_seg-myelin-manual", "_seg-axon-manual"]],
     "extensions": [".png"],
@@ -34,8 +34,8 @@ def test_bids_df_microscopy_png(download_data_testing_test_files, loader_paramet
     bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
     df_test = bids_df.df.drop(columns=['path'])
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
-    csv_ref = os.path.join(loader_parameters["path_data"][0], "df_ref.csv")
-    csv_test = os.path.join(loader_parameters["path_data"][0], "df_test.csv")
+    csv_ref = Path(loader_parameters["path_data"][0], "df_ref.csv")
+    csv_test = Path(loader_parameters["path_data"][0], "df_test.csv")
     df_test.to_csv(csv_test, index=False)
     diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
     assert diff == {'added': [], 'removed': [], 'changed': [], 'columns_added': [], 'columns_removed': []}
@@ -59,8 +59,8 @@ def test_bids_df_anat(download_data_testing_test_files, loader_parameters):
     bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
     df_test = bids_df.df.drop(columns=['path'])
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
-    csv_ref = os.path.join(loader_parameters["path_data"][0], "df_ref.csv")
-    csv_test = os.path.join(loader_parameters["path_data"][0], "df_test.csv")
+    csv_ref = Path(loader_parameters["path_data"][0], "df_ref.csv")
+    csv_test = Path(loader_parameters["path_data"][0], "df_test.csv")
     df_test.to_csv(csv_test, index=False)
     diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
     assert diff == {'added': [], 'removed': [], 'changed': [],
@@ -68,7 +68,7 @@ def test_bids_df_anat(download_data_testing_test_files, loader_parameters):
 
 
 @pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [__data_testing_dir__, os.path.join(__data_testing_dir__, "microscopy_png")],
+    "path_data": [__data_testing_dir__, str(Path(__data_testing_dir__, "microscopy_png"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-manual", "seg-axon-manual"],
     "extensions": [".nii.gz", ".png"],
@@ -83,8 +83,8 @@ def test_bids_df_multi(download_data_testing_test_files, loader_parameters):
     bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
     df_test = bids_df.df.drop(columns=['path'])
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
-    csv_ref = os.path.join(loader_parameters["path_data"][0], "df_ref_multi.csv")
-    csv_test = os.path.join(loader_parameters["path_data"][0], "df_test_multi.csv")
+    csv_ref = Path(loader_parameters["path_data"][0], "df_ref_multi.csv")
+    csv_test = Path(loader_parameters["path_data"][0], "df_test_multi.csv")
     df_test.to_csv(csv_test, index=False)
     diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
     assert diff == {'added': [], 'removed': [], 'changed': [],
@@ -92,7 +92,7 @@ def test_bids_df_multi(download_data_testing_test_files, loader_parameters):
 
 
 @pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [os.path.join(__data_testing_dir__, "ct_scan")],
+    "path_data": [str(Path(__data_testing_dir__, "ct_scan"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-manual"],
     "extensions": [".nii.gz"],
@@ -108,8 +108,8 @@ def test_bids_df_ctscan(download_data_testing_test_files, loader_parameters):
     bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
     df_test = bids_df.df.drop(columns=['path'])
     df_test = df_test.sort_values(by=['filename']).reset_index(drop=True)
-    csv_ref = os.path.join(loader_parameters["path_data"][0], "df_ref.csv")
-    csv_test = os.path.join(loader_parameters["path_data"][0], "df_test.csv")
+    csv_ref = Path(loader_parameters["path_data"][0], "df_ref.csv")
+    csv_test = Path(loader_parameters["path_data"][0], "df_test.csv")
     df_test.to_csv(csv_test, index=False)
     diff = csv_diff.compare(csv_diff.load_csv(open(csv_ref)), csv_diff.load_csv(open(csv_test)))
     assert diff == {'added': [], 'removed': [], 'changed': [], 'columns_added': [], 'columns_removed': []}
@@ -136,7 +136,7 @@ def test_dropout_input(seg_pair):
 
 
 @pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [os.path.join(__data_testing_dir__, "microscopy_png")],
+    "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual"],
     "extensions": [".png"],
@@ -170,13 +170,13 @@ def test_load_dataset_2d_png(download_data_testing_test_files,
                                                              'dataset_type': 'training'}})
     fname_png = bids_df.df[bids_df.df['filename'] == data_lst[0]]['path'].values[0]
     fname_nii = imed_loader_utils.update_filename_to_nifti(fname_png)
-    assert os.path.exists(fname_nii) == 1
+    assert Path(fname_nii).exists() == 1
     assert ds[0]['input'].shape == (1, 756, 764)
     assert ds[0]['gt'].shape == (1, 756, 764)
 
 
 @pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [os.path.join(__data_testing_dir__, "microscopy_png")],
+    "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual"],
     "extensions": [".png"],
@@ -220,7 +220,7 @@ def test_2d_patches(download_data_testing_test_files,
 
 
 @pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [os.path.join(__data_testing_dir__, "microscopy_png")],
+    "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": ["_seg-myelin-manual", "_seg-axon-manual"],
     "extensions": [".png"],
@@ -256,7 +256,7 @@ def test_get_target_filename_list(loader_parameters, model_parameters, transform
 
 
 @pytest.mark.parametrize('loader_parameters', [{
-    "path_data": [os.path.join(__data_testing_dir__, "microscopy_png")],
+    "path_data": [str(Path(__data_testing_dir__, "microscopy_png"))],
     "bids_config": f"{path_repo_root}/ivadomed/config/config_bids.json",
     "target_suffix": [["_seg-myelin-manual", "_seg-axon-manual"], ["_seg-myelin-manual", "_seg-axon-manual"]],
     "extensions": [".png"],

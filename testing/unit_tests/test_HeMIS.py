@@ -1,4 +1,3 @@
-import os
 import time
 import pytest
 import numpy as np
@@ -13,6 +12,7 @@ from ivadomed import models
 from ivadomed import utils as imed_utils
 from ivadomed.loader import utils as imed_loader_utils, adaptative as imed_adaptative
 from ivadomed import training as imed_training
+from pathlib import Path
 import logging
 from testing.unit_tests.t_utils import create_tmp_dir, __data_testing_dir__, __tmp_dir__, \
     download_data_testing_test_files
@@ -29,8 +29,8 @@ BN = 0.1
 N_EPOCHS = 10
 INIT_LR = 0.01
 p = 0.0001
-__path_hdf5__ = os.path.join(__data_testing_dir__, "mytestfile.hdf5")
-__path_csv__ = os.path.join(__data_testing_dir__, "hdf5.csv")
+__path_hdf5__ = Path(__data_testing_dir__, "mytestfile.hdf5")
+__path_csv__ = Path(__data_testing_dir__, "hdf5.csv")
 
 
 def setup_function():
@@ -228,14 +228,14 @@ def test_HeMIS(download_data_testing_test_files, loader_parameters, p=0.0001):
 
 @pytest.mark.run(order=2)
 def test_hdf5_bids(download_data_testing_test_files):
-    __output_dir__ = os.path.join(__tmp_dir__, "test_adap_bids")
-    os.makedirs(__output_dir__)
+    __output_dir__ = Path(__tmp_dir__, "test_adap_bids")
+    __output_dir__.mkdir(parents=True)
     imed_adaptative.HDF5ToBIDS(
-        __path_hdf5__,
+        str(__path_hdf5__,)
         ['sub-unf01'],
-        __output_dir__)
-    assert os.path.isdir(os.path.join(__output_dir__, "sub-unf01/anat"))
-    assert os.path.isdir(os.path.join(__output_dir__, "derivatives/labels/sub-unf01/anat"))
+        str(__output_dir__))
+    assert Path(__output_dir__, "sub-unf01/anat").is_dir()
+    assert Path(__output_dir__, "derivatives/labels/sub-unf01/anat").is_dir()
     print('\n [INFO]: Test of HeMIS passed successfully.')
 
 
