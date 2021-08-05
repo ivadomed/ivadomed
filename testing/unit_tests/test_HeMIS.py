@@ -231,7 +231,7 @@ def test_hdf5_bids(download_data_testing_test_files):
     __output_dir__ = Path(__tmp_dir__, "test_adap_bids")
     __output_dir__.mkdir(parents=True)
     imed_adaptative.HDF5ToBIDS(
-        str(__path_hdf5__,)
+        str(__path_hdf5__),
         ['sub-unf01'],
         str(__output_dir__))
     assert Path(__output_dir__, "sub-unf01/anat").is_dir()

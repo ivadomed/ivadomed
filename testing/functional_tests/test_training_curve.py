@@ -14,8 +14,8 @@ def test_training_curve(download_functional_test_files):
     __data_testing_dir__ = Path(__tmp_dir__, "data_functional_testing")
     __input_dir__ = Path(__data_testing_dir__, 'tensorboard_events')
     __output_dir__ = Path(__tmp_dir__, 'output_training_curve')
-    training_curve.main(args=['--input', __input_dir__,
-                              '--output', __output_dir__])
+    training_curve.main(args=['--input', str(__input_dir__),
+                              '--output', str(__output_dir__)])
     assert __output_dir__.exists()
     assert Path(__output_dir__, "accuracy_score.png").exists()
     assert Path(__output_dir__, "dice_score.png").exists()

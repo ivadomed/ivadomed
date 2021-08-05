@@ -28,7 +28,7 @@ def check_sha256(file_config):
     initial_config = imed_config_manager.ConfigurationManager(file_config).get_config()
     result = []
     name = "config_file.json"
-    for path_object in Path(initial_config["path_output"]).glob("**/*"):
+    for path_object in Path(initial_config["path_output"]).parent.glob("**/*"):
         if path_object.is_file() and name in path_object.name:
             result.append(str(path_object))
     assert result != []

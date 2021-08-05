@@ -16,7 +16,7 @@ def test_download_data():
     for dataset in download_data.DICT_URL:
         output_folder = Path(__tmp_dir__, dataset)
         download_data.main(args=['-d', dataset,
-                                 '-o', output_folder])
+                                 '-o', str(output_folder)])
         assert output_folder.exists()
         remove_dataset(dataset=dataset)
 

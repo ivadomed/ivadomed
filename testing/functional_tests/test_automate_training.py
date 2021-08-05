@@ -31,7 +31,7 @@ def test_automate_training(download_functional_test_files, script_runner):
     assert Path(__output_dir__, 'average_eval.csv').exists()
 
     # check sha256 is recorded in config_file.json
-    check_sha256(file_config)
+    check_sha256(str(file_config))
 
 
 @pytest.mark.script_launch_mode('subprocess')
@@ -53,8 +53,8 @@ def test_automate_training_run_test(download_functional_test_files, script_runne
     assert Path(__output_dir__, 'average_eval.csv').exists()
 
     # check sha256 is recorded in config_file.json
-    check_sha256(file_config)
+    check_sha256(str(file_config))
 
 
-def teardown_function():
-    remove_tmp_dir()
+# def teardown_function():
+#     remove_tmp_dir()

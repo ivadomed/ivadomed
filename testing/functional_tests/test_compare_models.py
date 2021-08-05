@@ -14,9 +14,9 @@ def setup_function():
 def test_compare_models(download_functional_test_files):
     __output_file__ = Path(__tmp_dir__, 'comparison_results.csv')
     path_df = Path(__data_testing_dir__, 'temporary_results.csv')
-    compare_models.main(args=['-df', path_df,
+    compare_models.main(args=['-df', str(path_df),
                               '-n', '2',
-                              '-o', __output_file__])
+                              '-o', str(__output_file__)])
     assert __output_file__.exists()
 
 

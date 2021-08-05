@@ -18,10 +18,10 @@ def test_visualize_transforms_n_1(download_functional_test_files):
     __config_file__ = Path(__data_testing_dir__, "model_config.json")
     __label_file__ = Path(__data_testing_dir__,
                                   'derivatives/labels/sub-test001/anat/sub-unf01_T1w_seg-manual.nii.gz')
-    visualize_transforms.main(args=['--input', __input_file__,
-                                    '--output', __output_dir__,
-                                    '--config', __config_file__,
-                                    '-r', __label_file__])
+    visualize_transforms.main(args=['--input', str(__input_file__),
+                                    '--output', str(__output_dir__),
+                                    '--config', str(__config_file__),
+                                    '-r', str(__label_file__)])
     assert __output_dir__.exists()
     output_files = [f.name for f in __output_dir__.iterdir()]
     assert len(output_files) == 5
@@ -38,10 +38,10 @@ def test_visualize_transforms_n_2(download_functional_test_files):
     __config_file__ = Path(__data_testing_dir__, "model_config.json")
     __label_file__ = Path(__data_testing_dir__,
                                   'derivatives/labels/sub-test001/anat/sub-unf01_T1w_seg-manual.nii.gz')
-    visualize_transforms.main(args=['--input', __input_file__,
-                                    '--output', __output_dir__,
-                                    '--config', __config_file__,
-                                    '-r', __label_file__,
+    visualize_transforms.main(args=['--input', str(__input_file__),
+                                    '--output', str(__output_dir__),
+                                    '--config', str(__config_file__),
+                                    '-r', str(__label_file__),
                                     '-n', '2'])
     assert __output_dir__.exists()
     output_files = [f.name for f in __output_dir__.iterdir()]

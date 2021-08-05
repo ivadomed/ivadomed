@@ -72,7 +72,7 @@ def test_segment_volume_2d_NumpyToTensor_retrocompatibility(download_functional_
     with open(PATH_CONFIG, 'w') as fp:
         json.dump(config, fp)
 
-    nib_lst, _ = imed_inference.segment_volume(str(PATH_MODEL), [str(IMAGE_PATH)], options={'fname_prior': ROI_PATH})
+    nib_lst, _ = imed_inference.segment_volume(str(PATH_MODEL), [str(IMAGE_PATH)], options={'fname_prior': str(ROI_PATH)})
     nib_img = nib_lst[0]
     assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
     assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
@@ -124,7 +124,7 @@ def test_segment_volume_2d(download_functional_test_files):
     with open(PATH_CONFIG, 'w') as fp:
         json.dump(config, fp)
 
-    nib_lst, _ = imed_inference.segment_volume(str(PATH_MODEL), [str(IMAGE_PATH)], options={'fname_prior': ROI_PATH})
+    nib_lst, _ = imed_inference.segment_volume(str(PATH_MODEL), [str(IMAGE_PATH)], options={'fname_prior': str(ROI_PATH)})
     nib_img = nib_lst[0]
     assert np.squeeze(nib_img.get_fdata()).shape == nib.load(IMAGE_PATH).shape
     assert (nib_img.dataobj.max() <= 1.0) and (nib_img.dataobj.min() >= 0.0)
