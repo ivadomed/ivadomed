@@ -160,8 +160,8 @@ def test_dropout_input(seg_pair):
 def test_load_dataset_2d_png(download_data_testing_test_files,
                              loader_parameters, model_parameters, transform_parameters):
     """
-    Test to make sure load_dataset runs with 2D PNG files, writes corresponding NifTI files,
-    and convert ground-truth values of 0 and 255 to 0 and 1.
+    Test to make sure load_dataset runs with 2D PNG files, writes corresponding NIfTI files,
+    and binarizes ground-truth values to 0 and 1.
     """
     loader_parameters.update({"model_params": model_parameters})
     bids_df = imed_loader_utils.BidsDataframe(loader_parameters, __tmp_dir__, derivatives=True)
