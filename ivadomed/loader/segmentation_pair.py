@@ -5,6 +5,7 @@ import nibabel as nib
 import numpy as np
 
 from ivadomed.loader import utils as imed_loader_utils
+from ivadomed import postprocessing as imed_postpro
 
 
 class SegmentationPair(object):
@@ -325,9 +326,9 @@ class SegmentationPair(object):
         else:
             img = np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1).astype(np.uint8)
 
-        # Convert ground-truth values of 0 and 255 to 0 and 1 in uint8
+        # Binarize ground-truth values (0-255) to 0 and 1 in uint8 with threshold 0.5
         if is_gt:
-            img = img // 255
+            img = imed_postpro.threshold_predictions(img / 255, thr=0.5).astype(np.uint8)
 
         # Convert numpy array to Nifti1Image object with 4x4 identity affine matrix
         img = nib.Nifti1Image(img, affine=np.eye(4))
