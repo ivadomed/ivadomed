@@ -5,6 +5,7 @@ import nibabel as nib
 import numpy as np
 
 from ivadomed.loader import utils as imed_loader_utils
+from ivadomed import postprocessing as imed_postpro
 
 
 class SegmentationPair(object):
@@ -64,9 +65,9 @@ class SegmentationPair(object):
             for gt in self.gt_filenames:
                 if gt is not None:
                     if isinstance(gt, str):  # this tissue has annotation from only one rater
-                        self.gt_handle.append(self.read_file(gt))
+                        self.gt_handle.append(self.read_file(gt, is_gt=True))
                     else:  # this tissue has annotation from several raters
-                        self.gt_handle.append([self.read_file(gt_rater) for gt_rater in gt])
+                        self.gt_handle.append([self.read_file(gt_rater, is_gt=True) for gt_rater in gt])
                 else:
                     self.gt_handle.append(None)
 
@@ -268,11 +269,12 @@ class SegmentationPair(object):
 
         return dreturn
 
-    def read_file(self, filename):
+    def read_file(self, filename, is_gt=False):
         """Read file according to file extension and returns 'nibabel.nifti1.Nifti1Image' object.
 
         Args:
             filename (str): Subject filename.
+            is_gt (bool): Indicate if the file is a ground-truth.
 
         Returns:
             'nibabel.nifti1.Nifti1Image' object
@@ -288,10 +290,10 @@ class SegmentationPair(object):
             # For '.nii' and '.nii.gz' extentions
             img = nib.load(filename)
         else:
-            img = self.convert_file_to_nifti(filename, extension)
+            img = self.convert_file_to_nifti(filename, extension, is_gt)
         return img
 
-    def convert_file_to_nifti(self, filename, extension):
+    def convert_file_to_nifti(self, filename, extension, is_gt=False):
         """
         Convert a non-NifTI image into a 'nibabel.nifti1.Nifti1Image' object and save to a file.
         This method is especially relevant for making microscopy data compatible with NifTI-only
@@ -312,16 +314,21 @@ class SegmentationPair(object):
         Args:
             filename (str): Subject filename.
             extension (str): File extension.
+            is_gt (bool): Indicate if the file is a ground-truth.
 
         Returns:
             'nibabel.nifti1.Nifti1Image' object
         """
         # For '.png', '.tif', '.tiff', '.jpg' and 'jpeg' extentions
-        # Read image as grayscale in numpy array (behavior TBD in ivadomed for RGB or RBGA)
+        # Read image as 8 bit grayscale in numpy array (behavior TBD in ivadomed for RGB, RBGA or higher bit depth)
         if "tif" in extension:
-            img = np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1)
+            img = np.expand_dims(imageio.imread(filename, format='tiff-pil', as_gray=True), axis=-1).astype(np.uint8)
         else:
-            img = np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1)
+            img = np.expand_dims(imageio.imread(filename, as_gray=True), axis=-1).astype(np.uint8)
+
+        # Binarize ground-truth values (0-255) to 0 and 1 in uint8 with threshold 0.5
+        if is_gt:
+            img = imed_postpro.threshold_predictions(img / 255, thr=0.5).astype(np.uint8)
 
         # Convert numpy array to Nifti1Image object with 4x4 identity affine matrix
         img = nib.Nifti1Image(img, affine=np.eye(4))
