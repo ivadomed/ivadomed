@@ -179,7 +179,7 @@ def get_new_subject_file_split(df, split_method, data_testing, random_seed,
 
     # save the subject distribution
     split_dct = {'train': train_lst, 'valid': valid_lst, 'test': test_lst}
-    split_path = Path(path_output).joinpath("split_datasets.joblib")
+    split_path = Path(path_output, "split_datasets.joblib")
     joblib.dump(split_dct, split_path)
 
     return train_lst, valid_lst, test_lst
@@ -624,7 +624,7 @@ class BidsDataframe:
         self.create_bids_dataframe()
 
         # Save dataframe as csv file
-        self.save(str(Path(path_output).joinpath("bids_dataframe.csv")))
+        self.save(str(Path(path_output, "bids_dataframe.csv")))
 
     def create_bids_dataframe(self):
         """Generate the dataframe."""
@@ -653,13 +653,13 @@ class BidsDataframe:
                     if path_object.name == "samples.tsv" or path_object.name == "samples.json":
                         force_index.append(path_object.name)
                     if (path_object.name.endswith(ext_microscopy) and path_object.parent.name == "microscopy" and
-                            (str(path_object.parent).replace(str(path_data) + os.sep, '').startswith("sub"))):
-                        force_index.append(str(path_object.parent).replace(str(path_data) + os.sep, ''))
+                            (path_object.parts[len(path_data.parts)]).startswith('sub')):
+                        force_index.append(str(Path(*path_object.parent.parts[len(path_data.parts):])))
                     # CT-scan
                     if (path_object.name.endswith(ext_ct) and path_object.name.split('.')[0].endswith(suffix_ct) and
                             (path_object.parent.name == "anat" or path_object.parent.name == "ct") and
-                            (str(path_object.parent).replace(str(path_data) + os.sep, '').startswith("sub"))):
-                        force_index.append(str(path_object.parent).replace(str(path_data) + os.sep, ''))
+                            (path_object.parts[len(path_data.parts)]).startswith('sub')):
+                        force_index.append(str(Path(*path_object.parent.parts[len(path_data.parts):])))
             indexer = pybids.BIDSLayoutIndexer(force_index=force_index)
 
             if self.derivatives:
@@ -690,7 +690,7 @@ class BidsDataframe:
 
             # Warning if no subject files are found in path_data
             if df_next[~df_next['path'].str.contains('derivatives')].empty:
-                logger.warning("No subject files were found in '{}' dataset. Skipping dataset.".format(str(path_data)))
+                logger.warning(f"No subject files were found in '{path_data}' dataset. Skipping dataset.")
             else:
                 # Add tsv files metadata to dataframe
                 df_next = self.add_tsv_metadata(df_next, str(path_data), layout)
@@ -750,7 +750,7 @@ class BidsDataframe:
         # TODO: use pybids function after BEP microscopy is merged in BIDS
         if 'sample' in df:
             df['sample_id'] = "sample-" + df['sample']
-        fname_samples = Path(path_data).joinpath("samples.tsv")
+        fname_samples = Path(path_data, "samples.tsv")
         if fname_samples.exists():
             df_samples = pd.read_csv(str(fname_samples), sep='\t')
             df = pd.merge(df, df_samples, on=['participant_id', 'sample_id'], suffixes=("_x", None),
